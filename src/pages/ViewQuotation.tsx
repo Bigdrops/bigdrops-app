@@ -28,6 +28,7 @@ import { getPdfDesignPreset, resolvePdfWebFontFamily } from '@/lib/pdfDesignPres
 import { renderRichTextContent } from '@/lib/richText'
 import { supabase } from '@/supabase'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import { formatQuotationStatus } from '@/components/quotation/quotationStatus'
 import { archiveQuotationRecord, convertQuotationToInvoice, deleteQuotationRecord, downloadQuotationCsvFile, duplicateQuotationRecord, loadQuotationViewData, updateQuotationStatus } from './viewQuotationActions'
 
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -603,6 +604,7 @@ export default function ViewQuotation() {
           documentPreview={
             <QuotationDocumentPreview
               quotation={quotation}
+              viewModel={{ statusLabel: formatQuotationStatus(quotation?.status) }}
               previewModel={quotation}
               pdfOutput={pdfOutput}
               settingsData={settings}

@@ -83,8 +83,8 @@ export function FormCommercialTerms({
   return (
     <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <div>
-        <SectionLabel color="#d97706">Commercial Terms</SectionLabel>
-        <div className="grid grid-cols-2 gap-4 border-b border-[var(--bd-border-soft)] pb-4">
+        <SectionLabel color="amber">Commercial Terms</SectionLabel>
+        <div className="grid grid-cols-2 gap-4 border-b border-[hsl(var(--bd-border))] pb-4">
             <div>
               <label className={labelCls}>Payment Terms</label>
               <Select 
@@ -123,7 +123,7 @@ export function FormCommercialTerms({
           open={openSections.discount}
           onToggle={() => toggleSection('discount')}
           icon={Percent}
-          iconTone={{ bg: '#fff7ed', fg: '#d97706' }}
+          iconTone={{ bg: 'amber', fg: 'amber' }}
         >
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -169,7 +169,7 @@ export function FormCommercialTerms({
           open={openSections.vat}
           onToggle={() => toggleSection('vat')}
           icon={Percent}
-          iconTone={{ bg: '#ecfdf5', fg: '#059669' }}
+          iconTone={{ bg: 'emerald', fg: 'emerald' }}
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -191,7 +191,7 @@ export function FormCommercialTerms({
           open={openSections.wht}
           onToggle={() => toggleSection('wht')}
           icon={Percent}
-          iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
+          iconTone={{ bg: 'violet', fg: 'violet' }}
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -224,18 +224,23 @@ export function FormCommercialTerms({
           open={openSections.charges}
           onToggle={() => toggleSection('charges')}
           icon={Plus}
-          iconTone={{ bg: '#fef3c7', fg: '#b45309' }}
+          iconTone={{ bg: 'amber-strong', fg: 'amber-strong' }}
         >
           <div className="space-y-3">
             {extraCharges.map((charge) => (
               <div key={charge.id} className="flex gap-2">
-                <div className="flex-1">
+                <div className="relative flex-1">
                   <Input
                     value={String(charge.label || '')}
                     onChange={(event) => onUpdateExtraCharge(charge.id, 'label', event.target.value)}
                     placeholder="Label (e.g. Transport)"
-                    className={fieldCls}
+                    className={`${fieldCls} ${charge.withTax !== false ? 'pr-9' : ''}`}
                   />
+                  {charge.withTax !== false ? (
+                    <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-[hsl(var(--bd-text-muted))]">
+                      <Percent className="h-3.5 w-3.5" />
+                    </span>
+                  ) : null}
                 </div>
                 <div className="w-28">
                   <NumericInput
@@ -248,7 +253,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveExtraCharge(charge.id)}
-                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -258,14 +263,14 @@ export function FormCommercialTerms({
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(true)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-amber-border)] hover:bg-[var(--bd-amber-bg)] hover:text-[var(--bd-amber-dark)]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))]"
                >
                  + Charge (with Tax)
                </button>
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(false)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-border)] hover:bg-[var(--bd-bg)]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted))]"
                >
                  + Charge (No Tax)
                </button>
@@ -280,7 +285,7 @@ export function FormCommercialTerms({
           open={openSections.fields}
           onToggle={() => toggleSection('fields')}
           icon={Plus}
-          iconTone={{ bg: '#f0f4ff', fg: '#4338ca' }}
+          iconTone={{ bg: 'indigo', fg: 'indigo' }}
         >
           <div className="space-y-3">
             {additionalFields.map((field) => (
@@ -300,7 +305,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveAdditionalField(field.id)}
-                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-transparent bg-transparent text-[var(--bd-text4)] transition hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition hover:bg-[hsl(var(--bd-status-danger-bg))] hover:text-[hsl(var(--bd-status-danger-text))]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -309,7 +314,7 @@ export function FormCommercialTerms({
             <button
               type="button"
               onClick={onAddAdditionalField}
-              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] py-2 text-[12px] font-bold text-[var(--bd-text2)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
+              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))]"
             >
               Add Additional Field
             </button>
