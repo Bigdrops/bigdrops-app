@@ -83,7 +83,7 @@ export function normalizeExtraCharges(
     makeExtraCharge({
       ...charge,
       value: Number(charge?.value || 0),
-      withTax: charge?.withTax !== false,
+      withTax: charge?.withTax === true,
     }),
   )
 }

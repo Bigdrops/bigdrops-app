@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import {
   ADVANCE_SUFFIX_DEFAULT,
 } from '@/domain/invoice/advanceChildFlow'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
+import { formatCurrency } from '@/lib/formatters/money'
 
 type AdvanceMode = 'percent' | 'fixed'
 type AdvanceSheetMode = 'create' | 'edit' | 'view'
@@ -173,9 +174,16 @@ export default function InvoiceAdvanceSheet({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
-                    {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="advance-value" className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
+                      {advanceMode === 'fixed' ? 'Amount' : 'Percentage'}
+                    </Label>
+                    {advanceMode === 'percent' && (
+                      <span className="text-[10px] font-black tracking-tight text-[hsl(var(--bd-text-muted))]">
+                        {formatCurrency(contractValue * (Number(advanceInputValue) || 0) / 100)}
+                      </span>
+                    )}
+                  </div>
                   <NumericInput
                     id="advance-value"
                     min={0}
@@ -186,6 +194,16 @@ export default function InvoiceAdvanceSheet({
                     disabled={isViewMode || advanceSaving}
                     className="h-10 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-sm font-bold text-[hsl(var(--bd-text))] shadow-none ring-offset-0 focus:border-[hsl(var(--bd-input-focus))] focus:ring-0"
                   />
+                  {advanceMode === 'fixed' && (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] font-black tracking-tight text-[hsl(var(--bd-text-muted))]">Fixed Amount</span>
+                      <span className="text-[10px] font-black tracking-tight text-[hsl(var(--bd-text-muted))]">
+                        {Number(advanceInputValue) > 0 && contractValue > 0
+                          ? `${((Number(advanceInputValue) / contractValue) * 100).toFixed(1)}%`
+                          : '0%'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
