@@ -28,6 +28,10 @@ export type ParseError = {
 export type ExtraChargeImport = {
   label: string
   value: number
+  withTax?: boolean
+  taxable?: boolean
+  tax?: boolean
+  appliesTax?: boolean
 }
 
 export type ParsedImportRoot = {

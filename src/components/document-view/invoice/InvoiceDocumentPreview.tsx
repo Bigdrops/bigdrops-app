@@ -47,6 +47,7 @@ export default function InvoiceDocumentPreview({
         <div className="doc-id-block">
           <div className="doc-type-label">INVOICE</div>
           <div className="doc-number">{invoice?.invoice_number || 'Draft'}</div>
+          {invoice?.invoice_title ? <div className="doc-invoice-title">{invoice.invoice_title}</div> : null}
         </div>
       </div>
 
@@ -114,7 +115,7 @@ export default function InvoiceDocumentPreview({
                   {item?.detail ? <div className="item-desc">{item.detail}</div> : null}
                   {(item?.facts || []).length > 0 && (
                     <div className="item-facts">
-                      {(item.facts as string[]).filter(Boolean).map((fact: string, factIdx: number) => (
+                      {(item.facts as string[]).filter(Boolean).filter((fact: string) => !fact.startsWith('Qty:')).map((fact: string, factIdx: number) => (
                         <div key={factIdx} className="item-fact">{fact}</div>
                       ))}
                     </div>

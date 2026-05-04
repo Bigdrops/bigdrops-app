@@ -11,6 +11,28 @@ import {
 
 const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number'])
 
+function parseTaxFlag(charge: Record<string, unknown>): boolean {
+  const withTax = charge.withTax
+  const taxable = charge.taxable
+  const tax = charge.tax
+  const appliesTax = charge.appliesTax
+  
+  const flag = withTax ?? taxable ?? tax ?? appliesTax
+  
+  if (flag === undefined) return false
+  
+  if (typeof flag === 'boolean') return flag
+  
+  if (typeof flag === 'string') {
+    const lower = flag.toLowerCase().trim()
+    if (lower === 'true' || lower === 'yes' || lower === 'tax' || lower === 'taxable') {
+      return true
+    }
+  }
+  
+  return false
+}
+
 function detectCollisions(record: Record<string, unknown>, contextLabel: string) {
   const seen = new Map<string, string>()
 
@@ -142,6 +164,7 @@ export function normalizeImportData(
               .map((entry) => ({
                 label: normalizeText(entry.label) || '',
                 value: parseNumberish(entry.value) ?? 0,
+                withTax: parseTaxFlag(entry),
               }))
               .filter((entry) => entry.label.trim() !== '')
           : undefined,

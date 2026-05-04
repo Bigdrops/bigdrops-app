@@ -28,7 +28,7 @@ export const quotationImportAdapter = {
     if (result.topLevel.notes !== undefined) updateTopLevelField('notes', result.topLevel.notes)
     if (result.topLevel.terms !== undefined) updateTopLevelField('terms', result.topLevel.terms)
     if (result.topLevel.extra_charges !== undefined) {
-      setExtraCharges(result.topLevel.extra_charges.map((charge) => makeExtraCharge({ ...charge, withTax: true })))
+      setExtraCharges(result.topLevel.extra_charges.map((charge) => makeExtraCharge({ ...charge })))
     }
   },
 }
