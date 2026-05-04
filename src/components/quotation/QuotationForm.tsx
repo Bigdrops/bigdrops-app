@@ -37,242 +37,23 @@ import {
 import { feedback } from '@/lib/feedback'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { formatQuotationStatus } from './quotationStatus'
-
-function canUseOfflineQuotationDrafts() {
-  return canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
-}
-
-function makeQuotationGroupId() {
-  return `quo_group_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-function toGroupMetaMap(groups: Array<{ id: string; name: string; showSubtotal?: boolean }>) {
-  return Object.fromEntries(groups.map((group) => [group.id, { name: group.name, showSubtotal: !!group.showSubtotal }]))
-}
-
-function parseGroupMeta(value: unknown): Record<string, { name?: string; showSubtotal?: boolean }> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [key, {}]
-      const record = entry as Record<string, unknown>
-      return [
-        key,
-        {
-          name: typeof record.name === 'string' ? record.name : undefined,
-          showSubtotal: record.showSubtotal === true,
-        },
-      ]
-    }),
-  )
-}
-
-function parseChargeLabels(value: unknown): Record<string, string> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).map(([key, label]) => [
-      key,
-      typeof label === 'string' ? label : String(label || ''),
-    ]),
-  )
-}
-
-function normalizeQuotationGrouping(
-  items: InvoiceItem[],
-  groupMeta: Record<string, { name?: string; showSubtotal?: boolean }> = {},
-) {
-  const headerOrder: string[] = []
-  const headerById = new Map<string, { id: string; name: string; showSubtotal: boolean }>()
-  const rawToCanonical = new Map<string, string>()
-  const seenCanonical = new Set<string>()
-
-  items.forEach((item) => {
-    if (item.row_type !== 'group_header') return
-    const rawId = String(item.group_id || '').trim()
-    let canonicalId = rawId && !seenCanonical.has(rawId) ? rawId : makeQuotationGroupId()
-    while (seenCanonical.has(canonicalId)) canonicalId = makeQuotationGroupId()
-
-    seenCanonical.add(canonicalId)
-    if (rawId && !rawToCanonical.has(rawId)) rawToCanonical.set(rawId, canonicalId)
-
-    const meta = (rawId && groupMeta[rawId]) || groupMeta[canonicalId] || {}
-    const name = String(item.group_name || '').trim() || String(meta.name || '').trim() || `Group ${headerOrder.length + 1}`
-
-    headerOrder.push(canonicalId)
-    headerById.set(canonicalId, {
-      id: canonicalId,
-      name,
-      showSubtotal: !!meta.showSubtotal,
-    })
-  })
-
-  const normalizedItems = items.map((item, index) => {
-    if (item.row_type === 'group_header') {
-      const rawId = String(item.group_id || '').trim()
-      const canonicalId =
-        (rawId && rawToCanonical.get(rawId)) ||
-        headerOrder.find((groupId) => headerById.get(groupId)?.name === item.group_name) ||
-        makeQuotationGroupId()
-
-      const group = headerById.get(canonicalId) || {
-        id: canonicalId,
-        name: String(item.group_name || '').trim() || `Group ${index + 1}`,
-        showSubtotal: false,
-      }
-
-      return {
-        ...item,
-        row_type: 'group_header' as const,
-        group_id: canonicalId,
-        group_name: group.name,
-        sort_order: index,
-      }
-    }
-
-    const rawId = String(item.group_id || '').trim()
-    const canonicalId = rawId ? rawToCanonical.get(rawId) : null
-
-    return {
-      ...item,
-      row_type: 'standard' as const,
-      group_id: canonicalId || null,
-      group_name: canonicalId ? item.group_name || '' : '',
-      sort_order: index,
-    }
-  })
-
-  return {
-    items: normalizedItems,
-    groups: headerOrder.map((groupId) => headerById.get(groupId)).filter(Boolean) as Array<{
-      id: string
-      name: string
-      showSubtotal: boolean
-    }>,
-  }
-}
-
-function buildCustomFields({
-  quotation,
-  columns,
-  headerFields,
-  additionalFields,
-  discountType,
-  discountTiming,
-  whtType,
-  notesTitle,
-  termsTitle,
-  mergeQtyUnit,
-  showItemImages,
-  groups,
-  attachments,
-  extraCharges,
-  chargeLabels,
-  signatoryId,
-  pdfOutput,
-}: {
-  quotation: QuotationEditorState
-  columns: ColumnConfig[]
-  headerFields: InvoiceFieldEntry[]
-  additionalFields: InvoiceFieldEntry[]
-  discountType: 'fixed' | 'percent'
-  discountTiming: 'before' | 'after'
-  whtType: 'fixed' | 'percent'
-  notesTitle: string
-  termsTitle: string
-  mergeQtyUnit: boolean
-  showItemImages: boolean
-  groups: Array<{ id: string; name: string; showSubtotal?: boolean }>
-  attachments: Array<Record<string, unknown>>
-  extraCharges: ExtraCharge[]
-  chargeLabels: Record<string, string>
-  signatoryId: string | null
-  pdfOutput: PdfOutputState
-}) {
-  const groupMeta = toGroupMetaMap(groups)
-
-  return {
-    quotationTitle: quotation.quotation_title || '',
-    clientName: quotation.client_name || '',
-    notesHtml: quotation.notes || '',
-    termsHtml: quotation.terms || '',
-    header: headerFields.filter((field) => field.label && field.value),
-    additionalFields: filterPopulatedAdditionalFields(additionalFields),
-    columnConfig: columns,
-    notesTitle,
-    termsTitle,
-    mergeQtyUnit,
-    showItemImages,
-    attachments,
-    extraCharges: extraCharges.filter((charge) => String(charge.label || '').trim()),
-    chargeLabels,
-    signatoryId,
-    pdfOutput,
-    payment_terms: quotation.payment_terms || '',
-    custom_payment_terms: quotation.custom_payment_terms || '',
-    discountType,
-    discountTiming,
-    whtType,
-    groupMeta,
-    calculationInputs: buildCalculationInputs({
-      invoice: quotation,
-      discountType,
-      discountTiming,
-      whtType,
-    }),
-  }
-}
-
-function toQuotationItem(item: InvoiceItem, quotationId: string, sortOrder: number) {
-  const row = toDbItem(item, quotationId, sortOrder) as Record<string, unknown>
-  delete row.invoice_id
-  return { ...row, quotation_id: quotationId }
-}
-
-type QuotationGroupState = { id: string; name: string; showSubtotal: boolean }
-type QuotationEditorState = Quotation & {
-  project_id?: string
-  payment_terms?: string
-  custom_payment_terms?: string
-}
-type SignatoryRow = { id: string; name: string; role?: string | null; signature_url?: string | null }
-type BankAccountRow = {
-  id: string
-  bank_name?: string | null
-  account_name?: string | null
-  account_number?: string | null
-  sort_code?: string | null
-  is_default?: boolean | null
-}
-type PdfOutputState = {
-  showBankDetails: boolean
-  bankAccountId: string | null
-  showFooter: boolean
-  showTagline: boolean
-}
-
-type RfqConversionPrefillState = ProjectPrefillState & {
-  sourceRfq?: {
-    rfqId?: string
-    rfqNumber?: string
-    title?: string
-    notes?: string
-    items?: Array<{
-      id?: string
-      description?: string
-      quantity?: number
-      unit?: string
-      specification?: string
-      notes?: string
-    }>
-  }
-}
-
-const defaultPdfOutput: PdfOutputState = {
-  showBankDetails: true,
-  bankAccountId: null,
-  showFooter: true,
-  showTagline: true,
-}
+import type {
+  BankAccountRow,
+  QuotationEditorState,
+  QuotationGroupState,
+  RfqConversionPrefillState,
+  SignatoryRow,
+} from './quotationFormTypes'
+import { defaultPdfOutput, canUseOfflineQuotationDrafts } from './quotationFormConstants'
+import { useQuotationLineItems } from './useQuotationLineItems'
+import {
+  makeQuotationGroupId,
+  parseGroupMeta,
+  parseChargeLabels,
+  normalizeQuotationGrouping,
+  buildCustomFields,
+  toQuotationItem,
+} from './quotationFormUtils'
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
@@ -533,121 +314,29 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     setGroups(normalized.groups)
   }
 
+  const lineItemsHandlers = useQuotationLineItems({ items, setItems, groups, setGroups })
+  const {
+    addQuotationItem,
+    insertItemAfter,
+    updateItem,
+    applyRowPatch,
+    resetItemOverrides,
+    removeItemAt,
+    moveItemBy,
+    addQuotationGroup,
+    updateGroupName,
+    toggleGroupSubtotal,
+    deleteGroup,
+    addItemToGroup,
+  } = lineItemsHandlers
+
   const updateQuotation = <K extends keyof QuotationEditorState>(field: K, value: QuotationEditorState[K]) =>
     setQuotation((current) => ({ ...current, [field]: value }))
-
-  const updateItem = (index: number, field: string, value: unknown) =>
-    commitGrouping((current) =>
-      current.map((item, itemIndex) => {
-        if (itemIndex !== index) return item
-        if (field === 'custom_data') return { ...item, custom_data: value as InvoiceItem['custom_data'] }
-        return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
-      }),
-    )
-
-  const applyRowPatch = (itemIndex: number, patch: Partial<InvoiceItem>) =>
-    commitGrouping((current) => current.map((item, index) => (index === itemIndex ? { ...item, ...patch } : item)))
-
-  const resetItemOverrides = (fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
-    commitGrouping((current) =>
-      current.map((item) => {
-        if (item.row_type !== 'standard') return item
-        const patch: Partial<InvoiceItem> = {}
-        if (fields.vat) patch.vat_rate = null
-        if (fields.discount) patch.discount_rate = null
-        if (fields.install) {
-          patch.install_rate = null
-          patch.install_rate_override = false
-        }
-        return { ...item, ...patch }
-      }),
-    )
-
-  const addUngroupedItem = (insertAt: number | null = null, groupId: string | null = null, groupName = '') => {
-    commitGrouping((current) => {
-      const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
-      if (insertAt === null || insertAt >= current.length) return [...current, { ...newItem, sort_order: current.length }]
-      const next = [...current]
-      next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
-      return next.map((item, index) => ({ ...item, sort_order: index }))
-    })
-  }
-
-  const addQuotationItem = () => addUngroupedItem()
-  const insertItemAfter = (index: number) => {
-    const item = items[index]
-    addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
-  }
-
-  const addQuotationGroup = () => {
-    const base = makeEmptyGroup()
-    const groupId = base.id || makeQuotationGroupId()
-    const group = { ...base, id: groupId, name: base.name || `Group ${groups.length + 1}`, showSubtotal: !!base.showSubtotal }
-
-    commitGrouping(
-      (current) => {
-        const groupHeader: InvoiceItem = {
-          ...makeEmptyItem(),
-          row_type: 'group_header',
-          group_id: group.id,
-          group_name: group.name,
-          description: '',
-          sort_order: current.length,
-        }
-
-        return [
-          ...current.map((item, index) => ({ ...item, sort_order: index })),
-          groupHeader,
-        ]
-      },
-      (current) => [...current, group],
-    )
-  }
-
-  const updateGroupName = (groupId: string, newName: string) =>
-    commitGrouping(
-      (current) => current.map((item) => (item.row_type === 'group_header' && item.group_id === groupId ? { ...item, group_name: newName } : item)),
-      (current) => current.map((group) => (group.id === groupId ? { ...group, name: newName } : group)),
-    )
-
-  const toggleGroupSubtotal = (groupId: string) =>
-    commitGrouping(
-      (current) => current,
-      (current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group)),
-    )
-
-  const deleteGroup = (groupId: string) =>
-    commitGrouping(
-      (current) =>
-        current
-          .filter((item) => !(item.row_type === 'group_header' && item.group_id === groupId))
-          .map((item, index) => (item.group_id === groupId ? { ...item, group_id: null, group_name: '', sort_order: index } : { ...item, sort_order: index })),
-      (current) => current.filter((group) => group.id !== groupId),
-    )
 
   const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
   const normalizedGrouping = useMemo(() => normalizeQuotationGrouping(items, normalizedGroupMeta), [items, normalizedGroupMeta])
   const normalizedItems = normalizedGrouping.items
   const normalizedGroups = normalizedGrouping.groups
-
-  const addItemToGroup = (groupId: string) => {
-    const group = normalizedGroups.find((entry) => entry.id === groupId)
-    if (!group) return
-
-    commitGrouping((current) => {
-      let insertAt = current.findIndex((item) => item.row_type === 'group_header' && item.group_id === groupId)
-      if (insertAt === -1) insertAt = current.length - 1
-
-      for (let index = insertAt + 1; index < current.length; index += 1) {
-        if (current[index].row_type === 'group_header') break
-        if (current[index].group_id === groupId) insertAt = index
-      }
-
-      const next = [...current]
-      next.splice(insertAt + 1, 0, { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: '' })
-      return next.map((item, index) => ({ ...item, sort_order: index }))
-    })
-  }
 
   const handleImportApply = (result: ApplyImportResult) => {
     quotationImportAdapter.applyResult({
@@ -919,78 +608,6 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
   if (loading) {
     return <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground shadow-sm sm:px-6">Loading quotation...</div>
-  }
-
-  const removeItemAt = (itemIndex: number) =>
-    commitGrouping((current) => current.filter((_, entryIndex) => entryIndex !== itemIndex).map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })))
-
-  const moveItemBy = (itemIndex: number, direction: number) => {
-    commitGrouping((current) => {
-      const snapshot = normalizeQuotationGrouping(current, toGroupMetaMap(groupsRef.current))
-      const rows = [...snapshot.items]
-      const row = rows[itemIndex]
-      if (!row) return rows
-
-      const getGroupBlockEnd = (startIndex: number) => {
-        let endIndex = startIndex
-        for (let cursor = startIndex + 1; cursor < rows.length; cursor += 1) {
-          if (rows[cursor].row_type === 'group_header') break
-          if (rows[cursor].group_id === rows[startIndex].group_id) endIndex = cursor
-        }
-        return endIndex
-      }
-
-      const getBlockRange = (startIndex: number) => {
-        const target = rows[startIndex]
-        if (!target) return { start: startIndex, end: startIndex }
-        if (target.row_type === 'group_header') return { start: startIndex, end: getGroupBlockEnd(startIndex) }
-        return { start: startIndex, end: startIndex }
-      }
-
-      if (row.row_type === 'group_header') {
-        const block = rows.slice(itemIndex, getGroupBlockEnd(itemIndex) + 1)
-        const remainder = [...rows.slice(0, itemIndex), ...rows.slice(itemIndex + block.length)]
-        let insertAt = itemIndex
-
-        if (direction < 0) {
-          if (itemIndex === 0) return rows
-          const previousBlockStart = (() => {
-            if (remainder[itemIndex - 1]?.row_type !== 'group_header') return itemIndex - 1
-            for (let cursor = itemIndex - 1; cursor >= 0; cursor -= 1) {
-              if (remainder[cursor].row_type === 'group_header') return cursor
-            }
-            return 0
-          })()
-          insertAt = previousBlockStart
-        } else {
-          const nextBlockStart = itemIndex
-          insertAt = nextBlockStart >= remainder.length ? remainder.length : getBlockRange(nextBlockStart).end + 1
-        }
-
-        remainder.splice(insertAt, 0, ...block)
-        return remainder.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-      }
-
-      const nextIndex = itemIndex + direction
-      if (nextIndex < 0 || nextIndex >= rows.length) return rows
-
-      const moving = { ...row }
-      const anchor = rows[nextIndex]
-      if (!anchor) return rows
-      const remainder = rows.filter((_, index) => index !== itemIndex)
-
-      if (direction < 0) {
-        moving.group_id = anchor.row_type === 'group_header' ? anchor.group_id || null : anchor.group_id || null
-        moving.group_name = ''
-        remainder.splice(anchor.row_type === 'group_header' ? nextIndex + 1 : nextIndex, 0, moving)
-      } else {
-        moving.group_id = anchor.row_type === 'group_header' ? null : anchor.group_id || null
-        moving.group_name = ''
-        remainder.splice(nextIndex, 0, moving)
-      }
-
-      return remainder.map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex }))
-    })
   }
 
   const invoiceLikeQuotation = {
