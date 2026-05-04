@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
-import { DocumentLivePreviewCard } from '@/components/document/DocumentViewShell'
+import QuotationDocumentPreview from '@/components/document-view/quotation/QuotationDocumentPreview'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import QuotationHeroMeta from '@/components/document-view/quotation/QuotationHeroMeta'
@@ -600,34 +600,13 @@ export default function ViewQuotation() {
         <QuotationViewPage
           document={docProps}
           metrics={metrics}
-          preview={
-            <DocumentLivePreviewCard
-              templateLabel="Live PDF"
-              documentLabel="Quotation"
-              documentNumber={quotation.quotation_number || 'Quotation'}
-              companyName={settings?.company_name || ''}
-              companyTagline={pdfOutput.showTagline ? settings?.company_tagline || '' : ''}
-              companyLines={companyLines}
-              recipientLabel="Prepared For"
-              recipientName={quotation.client_name || 'Unassigned'}
-              recipientLines={clientLines}
-              meta={[
-                { label: 'Issue Date', value: quotation.issue_date || 'Not set' },
-                { label: 'Valid Until', value: quotation.valid_until || 'Open' },
-                { label: 'Status', value: quotation.status || 'open' },
-              ]}
-              detailRows={previewDetailRows}
-              items={previewItems}
-              totals={previewTotals}
-              amountInWords={pdfOutput.showAmountInWords === false ? '' : quotation.amount_in_words || ''}
-              bankDetails={pdfOutput.showBankDetails ? selectedPreviewBank : null}
-              notesSections={previewNotesSections}
-              signatory={null}
-              companyLogoUrl={resolveCanonicalLogoUrl(settings)}
-              accentColor={getPdfDesignPreset('quotation').accentColor}
-              headerFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').headerFont)}
-              bodyFontFamily={resolvePdfWebFontFamily(getPdfDesignPreset('quotation').bodyFont)}
-              previewNote="Preview reflects the current quotation record and PDF output settings."
+          documentPreview={
+            <QuotationDocumentPreview
+              quotation={quotation}
+              viewModel={viewModel}
+              previewModel={previewModel}
+              pdfOutput={pdfOutput}
+              settingsData={settingsData}
             />
           }
           onConvert={() => ui.openModal(MODAL_CONVERT)}
