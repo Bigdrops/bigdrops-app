@@ -148,7 +148,7 @@
 /* Items table */
 .doc-items-head {
   display: grid;
-  grid-template-columns: 1fr 60px 80px;
+  grid-template-columns: 1fr 80px;
   gap: 0;
   padding: 8px 16px;
   background: var(--bg);
@@ -167,7 +167,7 @@
 
 .doc-item-row {
   display: grid;
-  grid-template-columns: 1fr 60px 80px;
+  grid-template-columns: 1fr 80px;
   gap: 0;
   padding: 11px 16px;
   border-bottom: 1px solid var(--border-soft);
@@ -176,13 +176,7 @@
 
 .merged-qty .doc-items-head,
 .merged-qty .doc-item-row {
-  grid-template-columns: 1fr 90px 80px;
-}
-
-.merged-qty .item-qty {
-  text-align: left;
-  font-family: var(--font-ui);
-  font-weight: 600;
+  grid-template-columns: 1fr 80px;
 }
 
 .doc-item-row.group-hd {
@@ -238,7 +232,7 @@
 }
 
 .item-fact {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text2);
   background: var(--bg);
@@ -254,14 +248,6 @@
   border-radius: 6px;
   border: 1px solid var(--border-soft);
   margin-top: 8px;
-}
-
-.item-qty {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text2);
-  text-align: right;
-  padding-top: 1px;
 }
 
 .item-amount {
@@ -420,13 +406,7 @@
   }
   
   .item-fact {
-    font-size: 8px;
-  }
-  
-  .item-qty {
-    text-align: left;
-    padding-top: 4px;
-    font-size: 12px;
+    font-size: 9px;
   }
   
   .item-amount {

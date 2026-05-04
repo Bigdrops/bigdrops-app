@@ -105,9 +105,6 @@ export default function InvoiceDocumentPreview({
               )
             }
 
-            const qtyFact = (item?.facts || []).find((f: string) => f.startsWith('Qty:'))
-            const cleanQty = qtyFact ? qtyFact.replace('Qty:', '').trim() : '—'
-
             return (
               <div className="doc-item-row" key={index}>
                 <div className="item-body">
@@ -115,7 +112,7 @@ export default function InvoiceDocumentPreview({
                   {item?.detail ? <div className="item-desc">{item.detail}</div> : null}
                   {(item?.facts || []).length > 0 && (
                     <div className="item-facts">
-                      {(item.facts as string[]).filter(Boolean).filter((fact: string) => !fact.startsWith('Qty:')).map((fact: string, factIdx: number) => (
+                      {(item.facts as string[]).filter(Boolean).map((fact: string, factIdx: number) => (
                         <div key={factIdx} className="item-fact">{fact}</div>
                       ))}
                     </div>
@@ -124,7 +121,6 @@ export default function InvoiceDocumentPreview({
                     <img className="item-image" src={item.imageUrl} alt={item?.label || 'Item image'} />
                   ) : null}
                 </div>
-                <div className="item-qty">{cleanQty}</div>
                 <div className="item-amount">{item?.value || '—'}</div>
               </div>
             )
