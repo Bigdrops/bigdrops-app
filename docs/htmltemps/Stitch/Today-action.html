@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Compliance Hub - Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#1b1b1d",
+                    "background": "#fcf8fa",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface": "#fcf8fa",
+                    "surface-container": "#f0edef",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "secondary-container": "#d0e1fb",
+                    "tertiary-fixed": "#fcdeb5",
+                    "on-background": "#1b1b1d",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#7c839b",
+                    "inverse-surface": "#303032",
+                    "surface-container-low": "#f6f3f5",
+                    "on-tertiary-fixed": "#271901",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-surface-variant": "#45464d",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "inverse-on-surface": "#f3f0f2",
+                    "on-error": "#ffffff",
+                    "secondary": "#505f76",
+                    "primary-fixed": "#dae2fd",
+                    "inverse-primary": "#bec6e0",
+                    "surface-dim": "#dcd9db",
+                    "tertiary-container": "#271901",
+                    "on-secondary-container": "#54647a",
+                    "surface-container-high": "#eae7e9",
+                    "surface-tint": "#565e74",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#131b2e",
+                    "primary": "#000000",
+                    "surface-bright": "#fcf8fa",
+                    "outline-variant": "#c6c6cd",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "tertiary": "#000000",
+                    "on-tertiary-container": "#98805d",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e4e2e4",
+                    "surface-variant": "#e4e2e4",
+                    "on-secondary-fixed": "#0b1c30",
+                    "outline": "#76777d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "20px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "lg": "32px",
+                    "xl": "48px",
+                    "xs": "8px",
+                    "md": "24px",
+                    "sm": "16px"
+            },
+            "fontFamily": {
+                    "data-mono": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-bold": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none flex justify-between items-center w-full px-4 h-16 transition-colors duration-200 font-['Inter'] antialiased">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged corporate executive in a crisp white shirt and navy tie, set against a softly blurred modern office background with neutral gray tones. The lighting is flattering and professional, evoking a sense of corporate leadership and compliance authority within a light-themed interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAS09nS-zQUcHcpGihHEp-wjzNP5WiT0Gf0EbosMclU6loWbnFGLEVMO2T_7Jomx9CIiGgAcqJtI1S3_o4nbR8SP96Wtjh0-7z8K7xadZrJr7D8709ClDKuNA6cZkfYJfOhnbFUHCFSz3JqqvWCfhL1h8R06qIEo1lk6OUseR3wiwHvfDbvbnI739Dylvi1lahAofGELfCfCg2G1ogyKsjJyEKDtr4g4AvwvaDYlmrrJIuWPV57zw7uM5UxPDk1FtsoqGPVCVCnC64"/>
+</div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-slate-50">Compliance Hub</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-50">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-28 px-margin-mobile max-w-md mx-auto">
+<!-- Compact Summary Section -->
+<section class="mb-lg">
+<div class="grid grid-cols-3 gap-xs">
+<!-- Overdue Card -->
+<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col items-center">
+<span class="text-label-bold font-label-bold text-error uppercase tracking-wider mb-1">Overdue</span>
+<span class="text-headline-md font-headline-md text-on-surface">3</span>
+<div class="w-full h-1 bg-error/10 rounded-full mt-2">
+<div class="w-3/4 h-full bg-error rounded-full"></div>
+</div>
+</div>
+<!-- Due Soon Card -->
+<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col items-center">
+<span class="text-label-bold font-label-bold text-on-tertiary-container uppercase tracking-wider mb-1">Due Soon</span>
+<span class="text-headline-md font-headline-md text-on-surface">5</span>
+<div class="w-full h-1 bg-tertiary-fixed-dim/20 rounded-full mt-2">
+<div class="w-1/2 h-full bg-on-tertiary-container rounded-full"></div>
+</div>
+</div>
+<!-- Missing Card -->
+<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col items-center">
+<span class="text-label-bold font-label-bold text-secondary uppercase tracking-wider mb-1">Missing</span>
+<span class="text-headline-md font-headline-md text-on-surface">12</span>
+<div class="w-full h-1 bg-secondary-container rounded-full mt-2">
+<div class="w-1/4 h-full bg-secondary rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Action Queue Section -->
+<section class="mb-lg">
+<div class="flex justify-between items-center mb-sm">
+<h2 class="text-headline-sm font-headline-sm">Action Queue</h2>
+<span class="text-body-sm font-body-sm text-on-primary-container">3 urgent</span>
+</div>
+<div class="space-y-sm">
+<!-- Action Item 1 -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-sm flex items-start gap-sm">
+<div class="bg-error-container text-on-error-container w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined">priority_high</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-body-lg font-semibold text-on-surface">VAT Return Overdue</h3>
+<p class="text-body-sm text-error font-medium mb-sm">3 days late • Q3 Filing</p>
+<div class="flex gap-2">
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-label-bold font-label-bold transition-all active:scale-95">Resolve</button>
+<button class="border border-slate-200 text-on-surface px-4 py-1.5 rounded-lg text-label-bold font-label-bold">View</button>
+</div>
+</div>
+</div>
+<!-- Action Item 2 -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-sm flex items-start gap-sm">
+<div class="bg-secondary-container text-on-secondary-container w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-body-lg font-semibold text-on-surface">WHT Receipt Missing</h3>
+<p class="text-body-sm text-secondary font-medium mb-sm">Vendor X • Inv #4492</p>
+<div class="flex gap-2">
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-label-bold font-label-bold transition-all active:scale-95">Upload</button>
+<button class="border border-slate-200 text-on-surface px-4 py-1.5 rounded-lg text-label-bold font-label-bold">Ignore</button>
+</div>
+</div>
+</div>
+<!-- Action Item 3 -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-sm flex items-start gap-sm">
+<div class="bg-tertiary-fixed text-on-tertiary-fixed-variant w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined">pending_actions</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-body-lg font-semibold text-on-surface">Income Tax Filing</h3>
+<p class="text-body-sm text-on-tertiary-fixed-variant font-medium mb-sm">Due in 2 days • Annual</p>
+<div class="flex gap-2">
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-lg text-label-bold font-label-bold transition-all active:scale-95">Prepare</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Activity -->
+<section>
+<div class="flex justify-between items-center mb-sm">
+<h2 class="text-headline-sm font-headline-sm">Recent Activity</h2>
+<button class="text-body-sm font-body-sm text-on-primary-container">See All</button>
+</div>
+<div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+<div class="divide-y divide-slate-100">
+<div class="p-sm flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-green-600 bg-green-50 p-2 rounded-full">check_circle</span>
+<div>
+<p class="text-body-sm font-semibold text-on-surface">Payroll Tax Submitted</p>
+<p class="text-xs text-slate-500">October 2023 Period</p>
+</div>
+</div>
+<span class="text-xs font-mono text-slate-400">2h ago</span>
+</div>
+<div class="p-sm flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-blue-600 bg-blue-50 p-2 rounded-full">visibility</span>
+<div>
+<p class="text-body-sm font-semibold text-on-surface">Audit Log Reviewed</p>
+<p class="text-xs text-slate-500">External Auditor Access</p>
+</div>
+</div>
+<span class="text-xs font-mono text-slate-400">5h ago</span>
+</div>
+<div class="p-sm flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-amber-600 bg-amber-50 p-2 rounded-full">history_edu</span>
+<div>
+<p class="text-body-sm font-semibold text-on-surface">New Obligation Created</p>
+<p class="text-xs text-slate-500">Digital Service Tax</p>
+</div>
+</div>
+<span class="text-xs font-mono text-slate-400">Yesterday</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Primary Action FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary-container text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-transform active:scale-90">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_rgba(15,23,42,0.05)] flex justify-around items-center px-2 py-3 pb-safe transition-all font-['Inter']">
+<a class="flex flex-col items-center justify-center text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[11px] font-medium mt-0.5">Today</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 transition-transform active:scale-95 hover:text-slate-700" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="text-[11px] font-medium mt-0.5">VAT</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 transition-transform active:scale-95 hover:text-slate-700" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[11px] font-medium mt-0.5">WHT</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 transition-transform active:scale-95 hover:text-slate-700" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-[11px] font-medium mt-0.5">Filings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 transition-transform active:scale-95 hover:text-slate-700" href="#">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="text-[11px] font-medium mt-0.5">Obligations</span>
+</a>
+</nav>
+</body></html>

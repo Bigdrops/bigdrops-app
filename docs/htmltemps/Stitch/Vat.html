@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>VAT Workflow | Compliance Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-surface": "#1b1b1d",
+                "background": "#fcf8fa",
+                "primary-fixed-dim": "#bec6e0",
+                "surface": "#fcf8fa",
+                "surface-container": "#f0edef",
+                "surface-container-lowest": "#ffffff",
+                "primary-container": "#131b2e",
+                "on-primary-fixed-variant": "#3f465c",
+                "secondary-container": "#d0e1fb",
+                "tertiary-fixed": "#fcdeb5",
+                "on-background": "#1b1b1d",
+                "secondary-fixed-dim": "#b7c8e1",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "on-primary-container": "#7c839b",
+                "inverse-surface": "#303032",
+                "surface-container-low": "#f6f3f5",
+                "on-tertiary-fixed": "#271901",
+                "secondary-fixed": "#d3e4fe",
+                "on-surface-variant": "#45464d",
+                "on-tertiary-fixed-variant": "#574425",
+                "inverse-on-surface": "#f3f0f2",
+                "on-error": "#ffffff",
+                "secondary": "#505f76",
+                "primary-fixed": "#dae2fd",
+                "inverse-primary": "#bec6e0",
+                "surface-dim": "#dcd9db",
+                "tertiary-container": "#271901",
+                "on-secondary-container": "#54647a",
+                "surface-container-high": "#eae7e9",
+                "surface-tint": "#565e74",
+                "on-tertiary": "#ffffff",
+                "on-primary-fixed": "#131b2e",
+                "primary": "#000000",
+                "surface-bright": "#fcf8fa",
+                "outline-variant": "#c6c6cd",
+                "on-secondary": "#ffffff",
+                "error": "#ba1a1a",
+                "on-secondary-fixed-variant": "#38485d",
+                "tertiary": "#000000",
+                "on-tertiary-container": "#98805d",
+                "tertiary-fixed-dim": "#dec29a",
+                "on-primary": "#ffffff",
+                "surface-container-highest": "#e4e2e4",
+                "surface-variant": "#e4e2e4",
+                "on-secondary-fixed": "#0b1c30",
+                "outline": "#76777d"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter": "20px",
+                "margin-mobile": "16px",
+                "base": "4px",
+                "lg": "32px",
+                "xl": "48px",
+                "xs": "8px",
+                "md": "24px",
+                "sm": "16px"
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none docked full-width top-0 sticky z-50 transition-colors duration-200">
+<div class="flex justify-between items-center w-full px-4 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A professional corporate headshot of a finance executive in a well-lit modern office setting. The individual is wearing a crisp white shirt and navy blazer, conveying authority and confidence. The lighting is soft and natural, emphasizing a high-end light-mode aesthetic. The background is slightly blurred with minimalist architectural lines in tones of white and cool gray." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfJNiu4u_aRAAc1xTGDBjgViPyjS-vWT9tzhP6A0Z2pyLwcH1TYdlN0ou_vhFWVSLMG_kb5wUj2OqwN7K9FolIHnBQUU4SnhVVWH8JES_JzvLXczFUOTUwgxuoxu5esMnMGh_ZFifVmqnh_n-JhnhkTPcdXxBf5yoTzPYXFuAFf1HadSg5KpCq168sWJ8Y0rdOht0-2eACS5TcfFbtLoRMT7RBUPme_Idm9FuGvb_raqoVerauCdl6xhXqAKggO2jG9pKFSINdjXk"/>
+</div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-slate-50 antialiased">VAT Workflow</h1>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-50 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-margin-mobile pt-sm space-y-md">
+<!-- Period Selector -->
+<section class="flex items-center gap-xs overflow-x-auto hide-scrollbar py-2">
+<button class="whitespace-nowrap px-md py-xs rounded-full bg-primary-container text-white text-body-sm font-semibold shadow-sm">
+                Q3 2023
+            </button>
+<button class="whitespace-nowrap px-md py-xs rounded-full bg-surface-container-highest text-on-surface-variant text-body-sm font-medium hover:bg-surface-container-high transition-colors">
+                September
+            </button>
+<button class="whitespace-nowrap px-md py-xs rounded-full bg-surface-container-highest text-on-surface-variant text-body-sm font-medium hover:bg-surface-container-high transition-colors">
+                August
+            </button>
+<button class="whitespace-nowrap px-md py-xs rounded-full bg-surface-container-highest text-on-surface-variant text-body-sm font-medium hover:bg-surface-container-high transition-colors">
+                July
+            </button>
+</section>
+<!-- VAT Summary Card -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-[0_4px_6px_rgba(15,23,42,0.05)] p-sm space-y-md">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-label-bold text-on-surface-variant uppercase tracking-wider mb-base">Net VAT Position</p>
+<h2 class="text-display-lg font-display-lg text-primary">€14,280.50</h2>
+</div>
+<span class="bg-error-container text-on-error-container px-xs py-1 rounded-lg text-label-bold">
+                    DUE SOON
+                </span>
+</div>
+<div class="grid grid-cols-2 gap-sm pt-sm border-t border-slate-100">
+<div>
+<div class="flex items-center gap-1 mb-base">
+<span class="material-symbols-outlined text-[16px] text-error">arrow_upward</span>
+<p class="text-label-bold text-on-surface-variant">Output VAT</p>
+</div>
+<p class="text-headline-sm font-headline-sm text-on-surface">€28,450.00</p>
+</div>
+<div>
+<div class="flex items-center gap-1 mb-base">
+<span class="material-symbols-outlined text-[16px] text-secondary">arrow_downward</span>
+<p class="text-label-bold text-on-surface-variant">Input VAT</p>
+</div>
+<p class="text-headline-sm font-headline-sm text-on-surface">€14,169.50</p>
+</div>
+</div>
+<!-- Compliance Meter -->
+<div class="pt-base">
+<div class="flex justify-between text-label-bold text-on-surface-variant mb-xs">
+<span>Audit Readiness</span>
+<span>92%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 92%"></div>
+</div>
+</div>
+</section>
+<!-- Compact Ledger -->
+<section class="space-y-sm">
+<div class="flex justify-between items-center">
+<h3 class="text-headline-sm font-headline-sm">Contributing Records</h3>
+<button class="text-label-bold text-primary-container flex items-center gap-1">
+                    View All <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+<div class="space-y-xs">
+<!-- Record 1 -->
+<div class="bg-white p-sm rounded-xl border border-slate-200 flex items-center justify-between active:bg-slate-50 transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<p class="text-body-lg font-semibold text-on-surface">Amazon Web Services</p>
+<p class="text-body-sm text-on-surface-variant">24 Sep 2023 • Vendor</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-body-lg font-bold text-on-surface">€1,200.00</p>
+<p class="text-label-bold text-secondary">VAT: €240.00</p>
+</div>
+</div>
+<!-- Record 2 -->
+<div class="bg-white p-sm rounded-xl border border-slate-200 flex items-center justify-between active:bg-slate-50 transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-body-lg font-semibold text-on-surface">Global Tech Solutions</p>
+<p class="text-body-sm text-on-surface-variant">22 Sep 2023 • Customer</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-body-lg font-bold text-on-surface">€8,500.00</p>
+<p class="text-label-bold text-on-primary-container">VAT: €1,700.00</p>
+</div>
+</div>
+<!-- Record 3 -->
+<div class="bg-white p-sm rounded-xl border border-slate-200 flex items-center justify-between active:bg-slate-50 transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div>
+<p class="text-body-lg font-semibold text-on-surface">Apple Enterprise</p>
+<p class="text-body-sm text-on-surface-variant">19 Sep 2023 • Vendor</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-body-lg font-bold text-on-surface">€3,499.00</p>
+<p class="text-label-bold text-secondary">VAT: €699.80</p>
+</div>
+</div>
+<!-- Record 4 -->
+<div class="bg-white p-sm rounded-xl border border-slate-200 flex items-center justify-between active:bg-slate-50 transition-colors">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="text-body-lg font-semibold text-on-surface">Local Marketing Ltd</p>
+<p class="text-body-sm text-on-surface-variant">15 Sep 2023 • Customer</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-body-lg font-bold text-on-surface">€4,200.00</p>
+<p class="text-label-bold text-on-primary-container">VAT: €840.00</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-primary-container text-white rounded-2xl shadow-xl flex items-center justify-center active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_rgba(15,23,42,0.05)]">
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform hover:text-slate-700 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[11px] font-medium font-['Inter'] mt-1">Today</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="text-[11px] font-medium font-['Inter'] mt-1">VAT</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform hover:text-slate-700 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[11px] font-medium font-['Inter'] mt-1">WHT</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform hover:text-slate-700 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="text-[11px] font-medium font-['Inter'] mt-1">Filings</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform hover:text-slate-700 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">event_upcoming</span>
+<span class="text-[11px] font-medium font-['Inter'] mt-1">Obligations</span>
+</div>
+</nav>
+</body></html>

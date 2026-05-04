@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#1b1b1d",
+                    "background": "#fcf8fa",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface": "#fcf8fa",
+                    "surface-container": "#f0edef",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "secondary-container": "#d0e1fb",
+                    "tertiary-fixed": "#fcdeb5",
+                    "on-background": "#1b1b1d",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#7c839b",
+                    "inverse-surface": "#303032",
+                    "surface-container-low": "#f6f3f5",
+                    "on-tertiary-fixed": "#271901",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-surface-variant": "#45464d",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "inverse-on-surface": "#f3f0f2",
+                    "on-error": "#ffffff",
+                    "secondary": "#505f76",
+                    "primary-fixed": "#dae2fd",
+                    "inverse-primary": "#bec6e0",
+                    "surface-dim": "#dcd9db",
+                    "tertiary-container": "#271901",
+                    "on-secondary-container": "#54647a",
+                    "surface-container-high": "#eae7e9",
+                    "surface-tint": "#565e74",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#131b2e",
+                    "primary": "#000000",
+                    "surface-bright": "#fcf8fa",
+                    "outline-variant": "#c6c6cd",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "tertiary": "#000000",
+                    "on-tertiary-container": "#98805d",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e4e2e4",
+                    "surface-variant": "#e4e2e4",
+                    "on-secondary-fixed": "#0b1c30",
+                    "outline": "#76777d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "20px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "lg": "32px",
+                    "xl": "48px",
+                    "xs": "8px",
+                    "md": "24px",
+                    "sm": "16px"
+            },
+            "fontFamily": {
+                    "data-mono": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "label-bold": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-4 h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User" data-alt="A professional close-up portrait of a finance officer in a corporate setting. The lighting is soft and natural, emphasizing a calm and focused demeanor. The background is a blurred modern office with glass partitions and clean white surfaces, maintaining a light-mode corporate aesthetic with high-key lighting and professional clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvk9fqzNg02Q1XSfyhWSpLK7SUk1xQMjbF3GkYKsqi-nN-Eq4B1x2sn5TvKCOpbbgIEnSTw7TbE2XD3vOdUGkJ0UhbdEMXzFtvYcYw4gKq2NIlemmx5bIrmAzMjhNqPTvNR2V346YYpnPykrYaT2MxUzV6euLGpPq031qe33gsbpLUbXguLsZTVd0PpOrg1ICRaBLdHNGeVtZcEykiSKmIfFRN6zedP9MuzHtnmTD5QhrG_4DcD1e8dh53kUReVUsCUQRJZeFFJKA"/>
+</div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-slate-50 font-['Inter'] antialiased">Filings</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-50" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-margin-mobile pt-sm">
+<!-- View Toggles -->
+<section class="mb-md overflow-x-auto hide-scrollbar -mx-margin-mobile px-margin-mobile">
+<div class="flex gap-xs min-w-max">
+<button class="px-md py-xs rounded-full bg-primary-container text-on-primary-container font-label-bold text-label-bold border border-transparent shadow-sm">Open</button>
+<button class="px-md py-xs rounded-full bg-white border border-outline-variant text-on-surface-variant font-label-bold text-label-bold hover:bg-surface-container transition-colors">Overdue</button>
+<button class="px-md py-xs rounded-full bg-white border border-outline-variant text-on-surface-variant font-label-bold text-label-bold hover:bg-surface-container transition-colors">Paid</button>
+<button class="px-md py-xs rounded-full bg-white border border-outline-variant text-on-surface-variant font-label-bold text-label-bold hover:bg-surface-container transition-colors">All</button>
+</div>
+</section>
+<!-- Filing List -->
+<div class="space-y-sm">
+<!-- Card 1: Overdue -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-[0_4px_6px_rgba(15,23,42,0.05)]">
+<div class="flex justify-between items-start mb-xs">
+<div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 mb-1">Overdue</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">VAT Return</h3>
+</div>
+<div class="text-right">
+<p class="text-body-sm font-label-bold text-on-surface">Mar 2024</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Period</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-sm py-xs border-y border-slate-50 my-xs">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Due Amount</p>
+<p class="text-data-mono font-data-mono text-on-surface">$12,450.00</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Paid Amount</p>
+<p class="text-data-mono font-data-mono text-error">$0.00</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-xs text-body-sm">
+<div class="flex gap-3">
+<button class="flex items-center gap-1 text-primary hover:underline">
+<span class="material-symbols-outlined text-[16px]" data-icon="link">link</span>
+<span class="text-[12px] font-medium">Source</span>
+</button>
+<button class="flex items-center gap-1 text-primary hover:underline">
+<span class="material-symbols-outlined text-[16px]" data-icon="assignment">assignment</span>
+<span class="text-[12px] font-medium">Obligation</span>
+</button>
+</div>
+<span class="text-[11px] text-on-surface-variant">Due Apr 15</span>
+</div>
+</div>
+<!-- Card 2: Pending -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-[0_4px_6px_rgba(15,23,42,0.05)]">
+<div class="flex justify-between items-start mb-xs">
+<div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 mb-1">Pending</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">WHT Payment</h3>
+</div>
+<div class="text-right">
+<p class="text-body-sm font-label-bold text-on-surface">Q1 2024</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Period</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-sm py-xs border-y border-slate-50 my-xs">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Due Amount</p>
+<p class="text-data-mono font-data-mono text-on-surface">$3,820.00</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Paid Amount</p>
+<p class="text-data-mono font-data-mono text-on-surface-variant">$1,500.00</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-xs text-body-sm">
+<div class="flex gap-3">
+<button class="flex items-center gap-1 text-primary hover:underline">
+<span class="material-symbols-outlined text-[16px]" data-icon="link">link</span>
+<span class="text-[12px] font-medium">Source</span>
+</button>
+</div>
+<span class="text-[11px] text-on-surface-variant">Due May 20</span>
+</div>
+</div>
+<!-- Card 3: Paid -->
+<div class="bg-white border border-slate-200 rounded-xl p-sm shadow-[0_4px_6px_rgba(15,23,42,0.05)]">
+<div class="flex justify-between items-start mb-xs">
+<div>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 mb-1">Paid</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Corporate Tax</h3>
+</div>
+<div class="text-right">
+<p class="text-body-sm font-label-bold text-on-surface">FY 2023</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Period</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-sm py-xs border-y border-slate-50 my-xs">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Due Amount</p>
+<p class="text-data-mono font-data-mono text-on-surface-variant line-through">$45,000.00</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Paid Amount</p>
+<p class="text-data-mono font-data-mono text-on-surface">$45,000.00</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-xs text-body-sm">
+<div class="flex gap-3">
+<button class="flex items-center gap-1 text-primary hover:underline">
+<span class="material-symbols-outlined text-[16px]" data-icon="history_edu">history_edu</span>
+<span class="text-[12px] font-medium">Receipt</span>
+</button>
+</div>
+<span class="text-[11px] text-on-surface-variant">Submitted Mar 02</span>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB -->
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-primary-container text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined text-[32px] text-on-primary" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_rgba(15,23,42,0.05)]">
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-medium font-['Inter']">Today</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="text-[11px] font-medium font-['Inter']">VAT</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="text-[11px] font-medium font-['Inter']">WHT</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="text-[11px] font-medium font-['Inter']">Filings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="event_upcoming">event_upcoming</span>
+<span class="text-[11px] font-medium font-['Inter']">Obligations</span>
+</a>
+</nav>
+</body></html>
