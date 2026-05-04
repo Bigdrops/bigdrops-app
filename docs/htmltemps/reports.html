@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Finance OS - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "tertiary-fixed-dim": "#a1d2a7",
+                  "tertiary-container": "#00210b",
+                  "on-error": "#ffffff",
+                  "surface-bright": "#fff9ec",
+                  "secondary": "#625e52",
+                  "inverse-on-surface": "#f6f0e3",
+                  "surface-dim": "#dfdacd",
+                  "secondary-container": "#e6dfd0",
+                  "primary-fixed-dim": "#c8c6c4",
+                  "on-primary-fixed": "#1c1c1b",
+                  "secondary-fixed": "#e9e2d3",
+                  "primary-container": "#1c1c1b",
+                  "on-background": "#1d1c14",
+                  "on-secondary-fixed-variant": "#4a473b",
+                  "tertiary-fixed": "#bcefc2",
+                  "on-tertiary-fixed": "#00210b",
+                  "error": "#ba1a1a",
+                  "surface-container-high": "#eee8db",
+                  "outline-variant": "#c6c7c1",
+                  "inverse-primary": "#c8c6c4",
+                  "on-secondary": "#ffffff",
+                  "on-primary": "#ffffff",
+                  "surface-tint": "#5f5e5d",
+                  "on-primary-fixed-variant": "#474745",
+                  "secondary-fixed-dim": "#ccc6b7",
+                  "surface": "#FBF5E8",
+                  "on-tertiary-container": "#608e68",
+                  "on-primary-container": "#858382",
+                  "on-secondary-container": "#676256",
+                  "surface-container": "#f3ede0",
+                  "on-surface-variant": "#454743",
+                  "on-error-container": "#93000a",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-variant": "#e8e2d5",
+                  "on-tertiary-fixed-variant": "#22502f",
+                  "surface-container-highest": "#e8e2d5",
+                  "surface-container-low": "#f9f3e6",
+                  "background": "#fff9ec",
+                  "on-secondary-fixed": "#1e1b12",
+                  "tertiary": "#4C7A55",
+                  "primary": "#1B1B1A",
+                  "on-surface": "#1d1c14",
+                  "on-tertiary": "#ffffff",
+                  "error-container": "#ffdad6",
+                  "inverse-surface": "#333028",
+                  "outline": "#767872",
+                  "primary-fixed": "#e5e2e0"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "xl": "64px",
+                  "gutter": "16px",
+                  "margin": "32px",
+                  "lg": "32px",
+                  "sm": "8px",
+                  "md": "16px"
+          },
+          "fontFamily": {
+                  "h1": ["Manrope"],
+                  "display": ["Manrope"],
+                  "label": ["Manrope"],
+                  "body": ["Manrope"],
+                  "h2": ["Manrope"]
+          },
+          "fontSize": {
+                  "h1": ["2.1rem", {"lineHeight": "1.2", "fontWeight": "500"}],
+                  "display": ["4rem", {"lineHeight": "1.1", "letterSpacing": "-0.03em", "fontWeight": "500"}],
+                  "label": ["0.72rem", {"lineHeight": "1.0", "letterSpacing": "0.2em", "fontWeight": "500"}],
+                  "body": ["0.98rem", {"lineHeight": "1.6", "fontWeight": "400"}],
+                  "h2": ["1.5rem", {"lineHeight": "1.3", "fontWeight": "500"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { background-color: #fff9ec; color: #1B1B1A; font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-background">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col py-8 z-50 bg-[#FCFCF9] border-r border-[#E2E2D1] w-64">
+<div class="px-8 mb-12 flex items-center gap-3">
+<div class="w-10 h-10 bg-tertiary rounded-lg flex items-center justify-center">
+<img class="w-6 h-6 object-contain" data-alt="A minimalist logo for a finance application, featuring a stylized geometric 'F' in birch wood textures against a deep forest pine background. The design is clean, professional, and follows Scandinavian functionalist principles with high-key lighting and precise lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5C4j8h-yRlOB3H39o2wi2zmxEJo3wXfDdQtOIf22cGSLI5UuOPaSS4U4qP5nFDuumTJe2Wt42obq41WdgyWAoD4e481k9SGD27NE2h6uEUkpwpcgmpKjdXSpH6lpMdCPpnApifLaMN3ttHAfpW7zx-CFF7axC0zeoFR5AJJ0eLjZDBY8hzIz5yComS2xedbPNEEZoIkX5T7Y-KnOZE1NENbiRWeh3b1mgHVzljIDvFJZB0GJLRB_W5r23gyeEO4TOlgFaMbC53M0"/>
+</div>
+<div>
+<h1 class="text-lg font-black text-[#1B1B1A] uppercase tracking-tighter">Finance OS</h1>
+<p class="text-[10px] text-secondary font-bold uppercase tracking-[0.2em]">Management Suite</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<!-- Active: Dashboard -->
+<a class="flex items-center px-4 py-3 gap-4 border-r-2 border-[#2D4739] text-[#2D4739] bg-[#F5F5F0] transition-transform active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope text-sm uppercase tracking-wider font-bold">Dashboard</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-4 text-[#70706B] hover:text-[#2D4739] hover:bg-[#F5F5F0] transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Collections</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-4 text-[#70706B] hover:text-[#2D4739] hover:bg-[#F5F5F0] transition-colors" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Risk Analysis</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-4 text-[#70706B] hover:text-[#2D4739] hover:bg-[#F5F5F0] transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Reporting</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-4 text-[#70706B] hover:text-[#2D4739] hover:bg-[#F5F5F0] transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Archive</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-2 pt-8 border-t border-[#E2E2D1]">
+<button class="w-full py-4 mb-4 bg-tertiary text-white rounded-lg font-manrope text-sm uppercase tracking-widest font-bold transition-transform active:scale-95">
+        New Report
+      </button>
+<a class="flex items-center px-4 py-2 gap-4 text-[#70706B] hover:text-[#2D4739]" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Support</span>
+</a>
+<a class="flex items-center px-4 py-2 gap-4 text-[#70706B] hover:text-[#2D4739]" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-manrope text-sm uppercase tracking-wider">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-16 px-8 w-full sticky top-0 z-40 bg-[#F5F5F0] border-b border-[#E2E2D1]">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-[#1B1B1A] font-h1">Finance OS</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-[#2D4739] font-bold font-manrope text-sm" href="#">Overview</a>
+<a class="text-[#70706B] hover:bg-[#E2E2D1] transition-colors px-3 py-1 rounded font-manrope text-sm" href="#">Ledger</a>
+<a class="text-[#70706B] hover:bg-[#E2E2D1] transition-colors px-3 py-1 rounded font-manrope text-sm" href="#">Invoices</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined text-secondary hover:bg-[#E2E2D1] p-2 rounded-full cursor-pointer transition-colors">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-[#F5F5F0]"></span>
+</div>
+<span class="material-symbols-outlined text-secondary hover:bg-[#E2E2D1] p-2 rounded-full cursor-pointer transition-colors">settings</span>
+<div class="flex items-center gap-3 pl-4 border-l border-[#E2E2D1]">
+<div class="text-right">
+<p class="text-sm font-bold text-primary leading-none">Oladipo Archer</p>
+<p class="text-[10px] text-secondary font-medium">Compliance Lead</p>
+</div>
+<img alt="User profile" class="w-10 h-10 rounded-full border border-secondary object-cover" data-alt="Professional headshot of a person with a serene and focused expression, set against a warm, neutral birch wood background. The lighting is soft and natural, creating a professional yet calm Scandinavian aesthetic. High-resolution digital photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlNaslKDb8Sbf1SxzfwlkeUiXMVI1TsTOa2Dlz5oGiXu1HBOEw4FDJSorRpRh91KwNAszsIYgeQQVk2wCOO_1n6rc_KC5NhIuoaY7cji_1YuWIsqlP7HgyA9qbNJ7K8IPcm2cno22gP6Dif2Og3LjSip7kDVGaVzVoKHDLsaT7bVKzIFw9SI8M3ZD6LqJ6bhR0XGpBQjZEielifeEbCZRZ2ZgmkCpsLaST7utVrdDjUnwigydix11O1kinXmonTWR9CSHTTnrImxg"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-margin max-w-7xl mx-auto w-full space-y-xl">
+<!-- Hero Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-end">
+<div class="lg:col-span-8 space-y-md">
+<h2 class="font-h1 text-h1 text-primary">Receivables, Collections &amp; Tax Specimens</h2>
+<p class="font-body text-body text-secondary max-w-2xl">
+            A comprehensive field guide to organizational liquidity. This view aggregates live ledger data into specimens of risk, progress, and mandatory tax obligations across all active specimens.
+          </p>
+</div>
+<div class="lg:col-span-4 flex justify-end">
+<button class="bg-tertiary text-white px-lg py-md rounded font-label uppercase tracking-widest flex items-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'opsz' 18;">file_download</span>
+            Export Report
+          </button>
+</div>
+</section>
+<!-- Main KPI Bento -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Hero KPI Card -->
+<div class="md:col-span-2 bg-surface p-lg rounded-xl border border-secondary-container flex flex-col justify-between min-h-[220px]">
+<div>
+<span class="font-label text-secondary block mb-sm">TOTAL EXPOSURE</span>
+<div class="flex items-baseline gap-sm">
+<h3 class="font-display text-display text-primary leading-none">₦42.8M</h3>
+<span class="font-label text-tertiary-fixed-variant bg-tertiary-fixed px-2 py-0.5 rounded-full">+12.4%</span>
+</div>
+</div>
+<div class="flex gap-lg border-t border-secondary-container pt-md mt-lg">
+<div>
+<p class="text-[10px] text-secondary font-bold uppercase tracking-widest">Active Units</p>
+<p class="text-h2 font-h2">1,248</p>
+</div>
+<div>
+<p class="text-[10px] text-secondary font-bold uppercase tracking-widest">Risk Index</p>
+<p class="text-h2 font-h2 text-tertiary">Low</p>
+</div>
+</div>
+</div>
+<!-- Metric Cards -->
+<div class="bg-surface p-lg rounded-xl border border-secondary-container flex flex-col justify-between">
+<div>
+<span class="font-label text-secondary block mb-sm">PAST DUE</span>
+<h3 class="text-h2 font-h2 text-error">₦8.2M</h3>
+<p class="text-[10px] text-secondary-container mt-1">19% of total exposure</p>
+</div>
+<div class="h-2 w-full bg-secondary-container rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-error" style="width: 19%"></div>
+</div>
+</div>
+<div class="bg-surface p-lg rounded-xl border border-secondary-container flex flex-col justify-between">
+<div>
+<span class="font-label text-secondary block mb-sm">COLLECTED</span>
+<h3 class="text-h2 font-h2 text-tertiary">₦34.6M</h3>
+<p class="text-[10px] text-secondary-container mt-1">81% target reached</p>
+</div>
+<div class="h-2 w-full bg-secondary-container rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 81%"></div>
+</div>
+</div>
+</section>
+<!-- Charts & Insights Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Collection Trend -->
+<div class="lg:col-span-8 bg-surface p-lg rounded-xl border border-secondary-container">
+<div class="flex justify-between items-center mb-xl">
+<h4 class="font-h2 text-primary">Collection Trend</h4>
+<div class="flex gap-md">
+<button class="text-[10px] font-bold uppercase tracking-widest px-2 border-b-2 border-tertiary">30D</button>
+<button class="text-[10px] font-bold uppercase tracking-widest px-2 text-secondary">90D</button>
+</div>
+</div>
+<div class="flex items-end justify-between h-48 gap-4 px-4">
+<!-- Simulated Bar Chart -->
+<div class="flex-1 bg-secondary-container/30 h-[40%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex-1 bg-secondary-container/30 h-[60%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex-1 bg-tertiary h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary-container/30 h-[50%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex-1 bg-secondary-container/30 h-[70%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex-1 bg-secondary-container/30 h-[95%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex-1 bg-secondary-container/30 h-[30%] rounded-t-sm hover:bg-tertiary/20 transition-colors"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] text-secondary font-bold uppercase tracking-widest px-4">
+<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+</div>
+</div>
+<!-- Aging Buckets & Tax -->
+<div class="lg:col-span-4 space-y-lg">
+<div class="bg-surface p-lg rounded-xl border border-secondary-container">
+<h4 class="font-label text-secondary mb-md">AGING BUCKETS</h4>
+<div class="space-y-md">
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>0-30 Days</span>
+<span>₦24.1M</span>
+</div>
+<div class="h-1 w-full bg-secondary-container rounded-full">
+<div class="h-full bg-tertiary w-[56%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>31-60 Days</span>
+<span>₦12.5M</span>
+</div>
+<div class="h-1 w-full bg-secondary-container rounded-full">
+<div class="h-full bg-secondary w-[29%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>61-90 Days</span>
+<span>₦4.2M</span>
+</div>
+<div class="h-1 w-full bg-secondary-container rounded-full">
+<div class="h-full bg-error w-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-primary text-white p-lg rounded-xl flex flex-col justify-between min-h-[140px]">
+<div>
+<span class="font-label text-primary-fixed block mb-sm opacity-60">TAX POSITION</span>
+<h3 class="text-h2 font-h2 text-white">₦4.2M <span class="text-xs font-normal opacity-60 ml-2">Estimated</span></h3>
+</div>
+<div class="flex items-center gap-2 text-xs text-tertiary-fixed font-bold">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+              Provisioned for Q4
+            </div>
+</div>
+</div>
+</section>
+<!-- Table & Side Panels -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-lg pb-xl">
+<!-- Table -->
+<div class="lg:col-span-8 bg-surface rounded-xl border border-secondary-container overflow-hidden">
+<div class="p-lg border-b border-secondary-container flex justify-between items-center">
+<h4 class="font-h2 text-primary">High-Risk Receivables</h4>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:text-primary">filter_list</span>
+<span class="text-xs font-bold uppercase tracking-widest text-secondary">Filter</span>
+</div>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-secondary-container bg-surface-container-low">
+<th class="p-md font-label text-secondary">CLIENT</th>
+<th class="p-md font-label text-secondary">INVOICE ID</th>
+<th class="p-md font-label text-secondary">STATUS</th>
+<th class="p-md font-label text-secondary text-right">AMOUNT</th>
+</tr>
+</thead>
+<tbody class="font-body text-sm">
+<tr class="border-b border-secondary-container hover:bg-surface-container-low transition-colors">
+<td class="p-md font-bold">Zenith Tech Solutions</td>
+<td class="p-md text-secondary">#INV-8821</td>
+<td class="p-md"><span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-[10px] font-bold uppercase">Overdue</span></td>
+<td class="p-md font-bold text-right">₦2,400,000</td>
+</tr>
+<tr class="border-b border-secondary-container hover:bg-surface-container-low transition-colors">
+<td class="p-md font-bold">Lumina Global</td>
+<td class="p-md text-secondary">#INV-8845</td>
+<td class="p-md"><span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase">Pending</span></td>
+<td class="p-md font-bold text-right">₦1,150,000</td>
+</tr>
+<tr class="border-b border-secondary-container hover:bg-surface-container-low transition-colors">
+<td class="p-md font-bold">Apex Logistics Ltd</td>
+<td class="p-md text-secondary">#INV-8910</td>
+<td class="p-md"><span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-[10px] font-bold uppercase">Critical</span></td>
+<td class="p-md font-bold text-right">₦4,800,000</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-md font-bold">Nordic Interior Design</td>
+<td class="p-md text-secondary">#INV-9002</td>
+<td class="p-md"><span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase">Grace Period</span></td>
+<td class="p-md font-bold text-right">₦850,000</td>
+</tr>
+</tbody>
+</table>
+<div class="p-md bg-surface-container-low text-center border-t border-secondary-container">
+<button class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary">View All Records</button>
+</div>
+</div>
+<!-- Side Panels -->
+<div class="lg:col-span-4 space-y-lg">
+<div class="bg-surface p-lg rounded-xl border border-secondary-container">
+<div class="flex items-center gap-sm mb-md text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+<h4 class="font-label uppercase tracking-widest text-primary">Field Notes</h4>
+</div>
+<div class="space-y-md">
+<div class="p-md bg-background rounded border border-secondary-container/50">
+<p class="text-xs text-secondary italic mb-sm">"Collection rates are 4% higher this quarter due to the new automated reminder specimens."</p>
+<p class="text-[10px] font-bold text-primary">— System Audit, Oct 24</p>
+</div>
+<div class="p-md bg-background rounded border border-secondary-container/50">
+<p class="text-xs text-secondary italic mb-sm">"Critical risk identified in Apex Logistics; suggest immediate manual specimen handling."</p>
+<p class="text-[10px] font-bold text-primary">— O. Archer</p>
+</div>
+</div>
+</div>
+<div class="bg-surface p-lg rounded-xl border border-secondary-container">
+<div class="flex items-center gap-sm mb-md text-secondary">
+<span class="material-symbols-outlined">lightbulb</span>
+<h4 class="font-label uppercase tracking-widest text-primary">Handling</h4>
+</div>
+<ul class="space-y-md">
+<li class="flex gap-md items-start">
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="text-[10px] font-bold text-on-tertiary-fixed-variant">1</span>
+</div>
+<p class="text-xs text-secondary">Review tax specimens for Q4 before EOM reconciliation.</p>
+</li>
+<li class="flex gap-md items-start">
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="text-[10px] font-bold text-on-tertiary-fixed-variant">2</span>
+</div>
+<p class="text-xs text-secondary">Trigger manual collection specimen for items &gt;₦2M overdue.</p>
+</li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
