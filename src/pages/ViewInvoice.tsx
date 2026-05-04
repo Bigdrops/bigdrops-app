@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
-import InvoiceHtmlView from '@/components/document-view/invoice/InvoiceHtmlView'
+import InvoiceDocumentPreview from '@/components/document-view/invoice/InvoiceDocumentPreview'
 import {
   InvoiceHero,
   InvoicePageShell,
@@ -950,7 +950,7 @@ export default function ViewInvoice() {
 
         <InvoiceViewPage
           documentPreview={
-            <InvoiceHtmlView
+            <InvoiceDocumentPreview
               invoice={invoice}
               viewModel={viewModel}
               previewModel={previewModel}
