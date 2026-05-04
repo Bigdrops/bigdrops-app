@@ -39,6 +39,7 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { formatQuotationStatus } from './quotationStatus'
 import type {
   BankAccountRow,
+  PdfOutputState,
   QuotationEditorState,
   QuotationGroupState,
   RfqConversionPrefillState,
@@ -51,6 +52,7 @@ import {
   parseGroupMeta,
   parseChargeLabels,
   normalizeQuotationGrouping,
+  toGroupMetaMap,
   buildCustomFields,
   toQuotationItem,
 } from './quotationFormUtils'
