@@ -53,8 +53,11 @@
 }
 
 .action:disabled {
-  opacity: 0.55;
+  border-color: hsl(var(--bd-border));
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text-muted));
   cursor: not-allowed;
+  opacity: 1;
 }
 
 .iconWrapper {
@@ -132,6 +135,18 @@
 .destructive .label,
 .destructive .description {
   color: hsl(var(--bd-status-danger-text));
+}
+
+.action:disabled .label,
+.action:disabled .description,
+.action:disabled .statusPill {
+  color: hsl(var(--bd-text-muted));
+}
+
+.action:disabled .iconWrapper {
+  border-color: hsl(var(--bd-border));
+  background: hsl(var(--bd-card-bg));
+  color: hsl(var(--bd-text-muted));
 }
 
 .divider {

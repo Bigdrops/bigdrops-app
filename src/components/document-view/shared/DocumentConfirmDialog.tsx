@@ -24,6 +24,13 @@ export default function DocumentConfirmDialog({
   onConfirm,
   onCancel,
 }: DocumentConfirmDialogProps) {
+  const cancelButtonClass =
+    'h-10 min-w-28 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 text-sm font-semibold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))] disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+
+  const confirmButtonClass = destructive
+    ? 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-status-danger-text))] hover:brightness-95 disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+    : 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-transparent bg-[hsl(var(--bd-button-primary-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))] disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+
   return (
     <DocumentModal
       open={open}
@@ -36,7 +43,7 @@ export default function DocumentConfirmDialog({
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="h-10 min-w-28 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))]"
+            className={cancelButtonClass}
           >
             {cancelLabel}
           </Button>
@@ -47,11 +54,7 @@ export default function DocumentConfirmDialog({
               onConfirm()
               onCancel()
             }}
-            className={
-              destructive
-                ? 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-status-danger-text))] hover:opacity-90 disabled:opacity-60'
-                : 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-button-primary-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))] disabled:opacity-60'
-            }
+            className={confirmButtonClass}
           >
             {confirmLabel}
           </Button>

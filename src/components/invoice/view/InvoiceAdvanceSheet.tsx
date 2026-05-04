@@ -1,6 +1,5 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 
-import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +10,7 @@ import {
   ADVANCE_SECONDARY_LABEL_DEFAULT,
   ADVANCE_SUFFIX_DEFAULT,
 } from '@/domain/invoice/advanceChildFlow'
+import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 
 type AdvanceMode = 'percent' | 'fixed'
 type AdvanceSheetMode = 'create' | 'edit' | 'view'
@@ -276,13 +276,15 @@ export default function InvoiceAdvanceSheet({
         </SheetContent>
       </Sheet>
 
-      <ConfirmActionDialog
+      <DocumentConfirmDialog
         open={deleteConfirmOpen}
-        onOpenChange={onDeleteConfirmOpenChange}
         title="Delete Advance Invoice?"
         description="This will delete the selected advance child invoice."
+        cancelLabel="Cancel"
         confirmLabel="Delete"
+        destructive
         onConfirm={onDeleteConfirm}
+        onCancel={() => onDeleteConfirmOpenChange(false)}
       />
     </>
   )

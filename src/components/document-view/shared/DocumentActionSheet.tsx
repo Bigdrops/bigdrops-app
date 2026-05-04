@@ -35,8 +35,8 @@ export default function DocumentActionSheet({
             }}
             className={
               action.destructive
-                ? 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-4 text-left text-[hsl(var(--bd-status-danger-text))] transition-opacity hover:opacity-90'
-                : 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-4 text-left text-[hsl(var(--bd-text))] transition-colors hover:bg-[hsl(var(--bd-surface-muted))]'
+                ? 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 py-4 text-left text-[hsl(var(--bd-status-danger-text))] transition-colors hover:brightness-95 disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+                : 'flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-4 text-left text-[hsl(var(--bd-text))] transition-colors hover:bg-[hsl(var(--bd-surface-muted))] disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
             }
           >
             {action.icon}
