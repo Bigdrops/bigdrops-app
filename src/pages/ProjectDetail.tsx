@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 
@@ -9,9 +9,10 @@ import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading
 import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { feedback } from '@/lib/feedback'
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { supabase } from '../supabase'
+
+import { useProjectDocumentFetch } from '@/hooks/useProjectDocumentFetch'
 
 // Subcomponents
 import ProjectDetailHeader from '@/components/project/detail/ProjectDetailHeader'
@@ -31,89 +32,23 @@ import {
   DOC_TYPE_LABELS,
 } from '@/domain/projectDetailUtils'
 
-interface Project {
-  id: string
-  name: string
-  status: string
-  project_value: number | null
-  po_number: string | null
-  start_date: string | null
-  notes: string | null
-  location: string | null
-  project_code: string | null
-  client_id: string | null
-  client_name: string | null
-  [key: string]: any
-}
-
-interface Financials {
-  total_invoiced: number
-  cash_collected: number
-  wht_collected: number
-  outstanding: number
-  invoice_count: number
-}
-
-interface Invoice {
-  id: string
-  invoice_number: string
-  invoice_title: string | null
-  status: string
-  total: number
-  issue_date: string
-  document_type: string
-  custom_fields: any
-  invoiceFinancials: {
-    balance_due: number
-    computed_status: string
-    cash_received: number
-  } | null
-}
-
-interface CSR {
-  id: string
-  csr_number: string
-  title: string | null
-  status: string
-  created_at: string
-}
-
-interface Quotation {
-  id: string
-  quotation_number: string
-  status: string
-  total: number
-  issue_date: string
-}
-
-interface Waybill {
-  id: string
-  waybill_number: string
-  status: string
-  date: string | null
-  created_at: string
-  type: string | null
-}
-
-interface ProjectDoc {
-  id: string
-  name: string
-  url: string
-  created_at: string
-}
-
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [project, setProject] = useState<Project | null>(null)
-  const [financials, setFinancials] = useState<Financials | null>(null)
-  const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [csrs, setCsrs] = useState<CSR[]>([])
-  const [quotations, setQuotations] = useState<Quotation[]>([])
-  const [waybills, setWaybills] = useState<Waybill[]>([])
-  const [projectDocs, setProjectDocs] = useState<ProjectDoc[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    project,
+    financials,
+    invoices,
+    csrs,
+    quotations,
+    waybills,
+    projectDocs,
+    timeline,
+    loading,
+    refresh: fetchAll,
+  } = useProjectDocumentFetch(id)
+
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -130,90 +65,19 @@ export default function ProjectDetail() {
   const [editForm, setEditForm] = useState<any>({})
   const [actionsOpen, setActionsOpen] = useState(false)
 
-  useEffect(() => {
-    if (id) {
-      fetchAll()
-    }
-  }, [id])
-
-  const fetchAll = async () => {
-    setLoading(true)
-
-    try {
-      const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
-        supabase.from('projects').select('*').eq('id', id).single(),
-        applyParentInvoiceFilter(supabase
-          .from('invoices')
-          .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
-          .eq('project_id', id)
-          .is('archived_at', null))
-          .order('issue_date', { ascending: false }),
-        supabase
-          .from('csrs')
-          .select('id, csr_number, title, status, created_at')
-          .eq('project_id', id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('quotations')
-          .select('id, quotation_number, status, total, issue_date')
-          .eq('project_id', id)
-          .order('issue_date', { ascending: false }),
-        supabase
-          .from('waybills')
-          .select('id, waybill_number, status, date, created_at, type')
-          .eq('project_id', id)
-          .order('created_at', { ascending: false }),
-        supabase.from('project_financials_v').select('*').eq('project_id', id).single(),
-        supabase.from('project_documents').select('*').eq('project_id', id).order('created_at', { ascending: false }),
-      ])
-
-      const projectData = projectRes.data
-      const invoiceRows = invoiceRes.data || []
-      const invoiceIds = invoiceRows.map((invoice) => invoice.id)
-
-      let invoiceFinancialsById: Record<string, any> = {}
-      if (invoiceIds.length > 0) {
-        const { data: invoiceFinancialsRows } = await supabase
-          .from('invoice_financials_v')
-          .select('id, balance_due, computed_status, cash_received')
-          .in('id', invoiceIds)
-
-        invoiceFinancialsById = (invoiceFinancialsRows || []).reduce((acc: Record<string, any>, row) => {
-          acc[row.id] = row
-          return acc
-        }, {})
-      }
-
-      const enrichedInvoices: Invoice[] = invoiceRows.map((invoice) => ({
-        ...invoice,
-        invoiceFinancials: invoiceFinancialsById[invoice.id] || null,
-      }))
-
-      setProject(projectData)
-      setFinancials(financialsRes.data || null)
-      setInvoices(enrichedInvoices)
-      setCsrs(csrRes.data || [])
-      setQuotations(quotationRes.data || [])
-      setWaybills(waybillRes.data || [])
-      setProjectDocs(projectDocsRes.data || [])
+  React.useEffect(() => {
+    if (project) {
       setEditForm({
-        name: projectData?.name || '',
-        status: projectData?.status || 'active',
-        project_value: projectData?.project_value ?? null,
-        po_number: projectData?.po_number || '',
-        start_date: projectData?.start_date || '',
-        notes: projectData?.notes || '',
-        location: projectData?.location || '',
+        name: project.name || '',
+        status: project.status || 'active',
+        project_value: project.project_value ?? null,
+        po_number: project.po_number || '',
+        start_date: project.start_date || '',
+        notes: project.notes || '',
+        location: project.location || '',
       })
-    } catch (err) {
-      console.error('[ProjectDetail] fetchAll error:', err)
-      feedback.error('Failed to load project', {
-        description: 'Please refresh and try again.',
-      })
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [project])
 
   const handleSaveEdit = async () => {
     setSaving(true)
@@ -407,29 +271,6 @@ export default function ProjectDetail() {
     })
     fetchAll()
   }
-
-  const timeline: any[] = [
-    ...invoices.map((invoice) => ({
-      ...invoice,
-      _type: 'invoice',
-      _date: invoice.issue_date,
-    })),
-    ...csrs.map((csr) => ({
-      ...csr,
-      _type: 'csr',
-      _date: csr.created_at,
-    })),
-    ...quotations.map((quotation) => ({
-      ...quotation,
-      _type: 'quotation',
-      _date: quotation.issue_date,
-    })),
-    ...waybills.map((waybill) => ({
-      ...waybill,
-      _type: 'waybill',
-      _date: waybill.date || waybill.created_at,
-    })),
-  ].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime())
 
   if (loading) {
     return (
