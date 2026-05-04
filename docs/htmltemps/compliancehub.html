@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Hub — Sun &amp; Shield</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Design tokens */
+            --bd-surface: #ffffff;
+            --bd-surface-secondary: #f9fafb;
+            --bd-border: #e5e7eb;
+            --bd-text: #111827;
+            --bd-text-secondary: #6b7280;
+            --bd-primary: #2563eb;
+            --bd-primary-light: #eff6ff;
+            --bd-status-info: #0ea5e9;
+            --bd-status-warning: #f59e0b;
+            --bd-status-danger: #ef4444;
+            --bd-status-success: #10b981;
+            --bd-radius-sm: 6px;
+            --bd-radius-md: 8px;
+            --bd-radius-lg: 12px;
+            --bd-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --bd-shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --bd-shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+            --bd-transition: 0.2s ease;
+            --bd-font: 'Inter', system-ui, -apple-system, sans-serif;
+            --bd-font-size-sm: 0.8rem;
+            --bd-font-size: 0.9rem;
+            --bd-font-size-lg: 1.1rem;
+            --bd-line-height: 1.5;
+
+            /* Layout */
+            --sidebar-width: 240px;
+            --topbar-height: 56px;
+            --filterbar-height: 48px;
+            --bottomnav-height: 64px;
+            --detail-width: 480px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--bd-font);
+            font-size: var(--bd-font-size);
+            line-height: var(--bd-line-height);
+            color: var(--bd-text);
+            background: var(--bd-surface-secondary);
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (desktop) */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bd-surface);
+            border-right: 1px solid var(--bd-border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            flex-shrink: 0;
+            z-index: 30;
+        }
+        .sidebar-logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--bd-border);
+        }
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex: 1;
+        }
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: var(--bd-radius-sm);
+            text-decoration: none;
+            color: var(--bd-text-secondary);
+            font-weight: 500;
+            font-size: var(--bd-font-size-sm);
+            transition: background var(--bd-transition), color var(--bd-transition);
+        }
+        .sidebar nav a:hover { background: var(--bd-primary-light); color: var(--bd-primary); }
+        .sidebar nav a.active { background: var(--bd-primary); color: white; font-weight: 600; }
+        .sidebar-settings { margin-top: auto; border-top: 1px solid var(--bd-border); padding-top: 1rem; }
+
+        /* Main area */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Top bar */
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bd-surface);
+            border-bottom: 1px solid var(--bd-border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .topbar-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            height: var(--filterbar-height);
+            background: var(--bd-surface);
+            border-bottom: 1px solid var(--bd-border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            position: sticky;
+            top: var(--topbar-height);
+            z-index: 19;
+        }
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            border: 1px solid var(--bd-border);
+            border-radius: 20px;
+            font-size: var(--bd-font-size-sm);
+            cursor: pointer;
+            background: var(--bd-surface);
+            transition: border-color var(--bd-transition), background var(--bd-transition);
+        }
+        .filter-chip.active {
+            border-color: var(--bd-primary);
+            background: var(--bd-primary-light);
+            color: var(--bd-primary);
+            font-weight: 600;
+        }
+        .filter-chip:hover { border-color: var(--bd-primary); }
+        .filter-more {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: var(--bd-font-size-sm);
+            color: var(--bd-text-secondary);
+            cursor: pointer;
+            background: var(--bd-surface);
+            border: 1px dashed var(--bd-border);
+        }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Master list column */
+        .master-col {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        /* Detail panel (desktop) */
+        .detail-panel {
+            width: var(--detail-width);
+            border-left: 1px solid var(--bd-border);
+            background: var(--bd-surface);
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            z-index: 40;
+            overflow-y: auto;
+            box-shadow: var(--bd-shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-panel.open { transform: translateX(0); }
+        .detail-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--bd-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: inherit;
+            z-index: 1;
+        }
+        .detail-body { padding: 1.25rem; flex: 1; }
+        .detail-close {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--bd-border);
+            background: var(--bd-surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--bd-text-secondary);
+        }
+
+        /* Bottom sheet (mobile) */
+        .bottom-sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .bottom-sheet-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 80vh;
+            background: var(--bd-surface);
+            border-radius: var(--bd-radius-lg) var(--bd-radius-lg) 0 0;
+            box-shadow: var(--bd-shadow-lg);
+            z-index: 51;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .bottom-sheet.open { transform: translateY(0); }
+        .bottom-sheet-handle {
+            width: 40px; height: 4px;
+            background: var(--bd-border);
+            border-radius: 2px;
+            margin: 0.75rem auto 0.5rem;
+        }
+
+        /* KPI strip */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .kpi-card {
+            background: var(--bd-surface);
+            border: 1px solid var(--bd-border);
+            border-radius: var(--bd-radius-md);
+            padding: 1rem;
+            cursor: pointer;
+            transition: border-color var(--bd-transition);
+        }
+        .kpi-card:hover { border-color: var(--bd-primary); }
+        .kpi-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--bd-text-secondary);
+            margin-bottom: 0.3rem;
+        }
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .kpi-value.danger { color: var(--bd-status-danger); }
+        .kpi-value.warning { color: var(--bd-status-warning); }
+        .kpi-value.success { color: var(--bd-status-success); }
+        .kpi-value.info { color: var(--bd-status-info); }
+        .kpi-delta {
+            font-size: 0.7rem;
+            margin-top: 0.2rem;
+            color: var(--bd-text-secondary);
+        }
+
+        /* Action queue rows */
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--bd-border);
+            cursor: pointer;
+            transition: background var(--bd-transition);
+            position: relative;
+        }
+        .queue-item:hover { background: var(--bd-primary-light); }
+        .queue-item .due-badge {
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .badge-overdue { background: #fee2e2; color: var(--bd-status-danger); }
+        .badge-due-soon { background: #fef3c7; color: var(--bd-status-warning); }
+        .badge-upcoming { background: #e0f2fe; color: var(--bd-status-info); }
+
+        /* Swipe action buttons (mobile) */
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .swipe-actions {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: stretch;
+            transform: translateX(100%);
+            transition: transform 0.2s ease;
+        }
+        .swipe-action-btn {
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .swipe-verify { background: var(--bd-status-success); }
+        .swipe-request { background: var(--bd-status-info); }
+
+        /* Bottom navigation (mobile) */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--bottomnav-height);
+            background: var(--bd-surface);
+            border-top: 1px solid var(--bd-border);
+            justify-content: space-around;
+            align-items: center;
+            z-index: 30;
+        }
+        .bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            text-decoration: none;
+            color: var(--bd-text-secondary);
+            font-size: 0.65rem;
+            font-weight: 500;
+            padding: 0.5rem 0;
+        }
+        .bottom-nav a.active { color: var(--bd-primary); font-weight: 700; }
+        .bottom-nav a svg { width: 24px; height: 24px; }
+
+        /* FAB (mobile) */
+        .fab {
+            display: none;
+            position: fixed;
+            bottom: calc(var(--bottomnav-height) + 1rem);
+            right: 1.5rem;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: var(--bd-primary);
+            color: white;
+            box-shadow: var(--bd-shadow-md);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 35;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive breakpoints */
+        @media (min-width: 1280px) {
+            .bottom-nav, .fab { display: none; }
+            .bottom-sheet, .bottom-sheet-overlay { display: none; }
+        }
+        @media (max-width: 1279px) {
+            .sidebar { display: none; }
+            .detail-panel { display: none; }
+            .master-col { width: 100%; }
+        }
+        @media (max-width: 767px) {
+            .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { gap: 0.5rem; }
+            .fab { display: flex; }
+            .bottom-nav { display: flex; }
+        }
+
+        /* Utilities */
+        .btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: var(--bd-radius-sm);
+            font-weight: 600;
+            font-size: var(--bd-font-size-sm);
+            border: 1px solid var(--bd-border);
+            background: var(--bd-surface);
+            color: var(--bd-text);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background var(--bd-transition);
+        }
+        .btn:hover { background: var(--bd-primary-light); }
+        .btn-primary {
+            background: var(--bd-primary);
+            border-color: var(--bd-primary);
+            color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .hidden { display: none !important; }
+
+        /* Keyboard shortcut hint */
+        .shortcut-hint {
+            background: var(--bd-primary-light);
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--bd-radius-sm);
+            font-size: 0.7rem;
+            color: var(--bd-primary);
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar (desktop) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">Compliance</div>
+            <nav id="desktopNav">
+                <a href="#" class="active" data-section="today">Today</a>
+                <a href="#" data-section="vat">VAT</a>
+                <a href="#" data-section="wht">WHT Receipts</a>
+                <a href="#" data-section="filings">Filings</a>
+                <a href="#" data-section="obligations">Obligations</a>
+            </nav>
+            <div class="sidebar-settings">
+                <a href="#">Settings</a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="main">
+            <!-- Top bar -->
+            <div class="topbar">
+                <div class="topbar-title" id="sectionTitle">Today</div>
+                <div class="topbar-actions">
+                    <span class="shortcut-hint" title="Keyboard shortcuts">N New · E Edit · F Filter · Space Detail</span>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="filter-bar" id="filterBar">
+                <span class="filter-label" style="font-size:0.75rem; color:var(--bd-text-secondary);">Period</span>
+                <div class="filter-chip active">This Month</div>
+                <div class="filter-chip">Last Month</div>
+                <div class="filter-chip">Q2 2026</div>
+                <span class="filter-divider" style="width:1px; background:var(--bd-border); height:24px; margin:0 0.5rem;"></span>
+                <span class="filter-label" style="font-size:0.75rem; color:var(--bd-text-secondary);">Status</span>
+                <div class="filter-chip active">All</div>
+                <div class="filter-chip">Open</div>
+                <div class="filter-chip">Overdue</div>
+                <div class="filter-more" onclick="openBottomSheet('more-filters')">+ Filters</div>
+            </div>
+
+            <!-- Content area: master-detail -->
+            <div class="content" id="contentArea">
+                <!-- Master list -->
+                <div class="master-col" id="masterCol">
+                    <!-- KPI Strip -->
+                    <div class="kpi-strip">
+                        <div class="kpi-card" onclick="navigateTo('vat')">
+                            <div class="kpi-label">VAT Charged</div>
+                            <div class="kpi-value">₦178,346</div>
+                            <div class="kpi-delta">Output exposure</div>
+                        </div>
+                        <div class="kpi-card" onclick="navigateTo('vat')">
+                            <div class="kpi-label">Recoverable VAT</div>
+                            <div class="kpi-value success">₦120,000</div>
+                            <div class="kpi-delta">Input claims</div>
+                        </div>
+                        <div class="kpi-card" onclick="navigateTo('wht')">
+                            <div class="kpi-label">WHT Awaiting Receipt</div>
+                            <div class="kpi-value warning">₦45,200</div>
+                            <div class="kpi-delta">3 untracked</div>
+                        </div>
+                        <div class="kpi-card" onclick="navigateTo('obligations')">
+                            <div class="kpi-label">Due This Period</div>
+                            <div class="kpi-value info">2 filings</div>
+                            <div class="kpi-delta">Next: 15 Jun</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Queue (Today section) -->
+                    <div id="section-content">
+                        <!-- dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Detail panel (desktop side sheet) -->
+                <div class="detail-panel" id="detailPanel">
+                    <div class="detail-header">
+                        <div>
+                            <div style="font-size:0.75rem; color:var(--bd-text-secondary); text-transform:uppercase; letter-spacing:0.05em;" id="detailType">INVOICE</div>
+                            <div style="font-weight:700; font-size:1.1rem; margin-top:0.2rem;" id="detailTitle">INV-0045</div>
+                        </div>
+                        <button class="detail-close" onclick="closeDetail()">✕</button>
+                    </div>
+                    <div class="detail-body" id="detailBody">
+                        <!-- content injected -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom navigation (mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+        <a
