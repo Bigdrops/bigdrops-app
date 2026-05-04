@@ -9,7 +9,7 @@
   justify-content: center;
   padding: 60px 0;
   gap: 12px;
-  color: #9c9589;
+  color: hsl(var(--bd-text-muted));
   font-size: 14px;
 }
 
@@ -20,7 +20,7 @@
 }
 
 .summaryCard {
-  background: #f1f5f9;
+  background: hsl(var(--bd-surface-muted));
   border-radius: 16px;
   padding: 16px;
   display: flex;
@@ -39,20 +39,20 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #64748b;
+  color: hsl(var(--bd-text-muted));
 }
 
 .summaryValue {
   font-family: var(--dv-font-mono);
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: hsl(var(--bd-text));
 }
 
 .summaryValueSub {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: hsl(var(--bd-text-soft));
 }
 
 .fieldGroup {
@@ -66,14 +66,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #94a3b8;
+  color: hsl(var(--bd-text-muted) / 0.7);
 }
 
 .typeToggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: hsl(var(--bd-surface-muted));
+  border: 1px solid hsl(var(--bd-border));
   border-radius: 12px;
   padding: 4px;
 }
@@ -85,33 +85,33 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: hsl(var(--bd-text-muted));
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .toggleBtn.active {
-  background: #ffffff;
-  color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: hsl(var(--bd-surface));
+  color: hsl(var(--bd-text));
+  box-shadow: 0 1px 3px hsl(var(--bd-text) / 0.1);
 }
 
 .formInput, .formSelect, .formTextarea {
   width: 100%;
   padding: 10px 14px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: hsl(var(--bd-surface));
+  border: 1px solid hsl(var(--bd-border));
   border-radius: 12px;
   font-family: inherit;
   font-size: 14px;
-  color: #1e293b;
+  color: hsl(var(--bd-text));
   outline: none;
   transition: all 0.2s;
 }
 
 .formInput:focus, .formSelect:focus, .formTextarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: hsl(var(--bd-focus-ring));
+  box-shadow: 0 0 0 3px hsl(var(--bd-focus-ring) / 0.1);
 }
 
 .inputIconWrap {
@@ -123,7 +123,7 @@
 .innerIcon {
   position: absolute;
   left: 14px;
-  color: #94a3b8;
+  color: hsl(var(--bd-text-muted));
   pointer-events: none;
 }
 
@@ -143,8 +143,8 @@
 }
 
 .settlementCard {
-  background: #fdfcfb;
-  border: 1px solid #f3f1ee;
+  background: hsl(var(--bd-surface) / 0.5);
+  border: 1px solid hsl(var(--bd-border) / 0.5);
   border-radius: 16px;
   padding: 16px;
   display: flex;
@@ -157,7 +157,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 13px;
-  color: #64748b;
+  color: hsl(var(--bd-text-muted));
   font-weight: 500;
 }
 
@@ -165,27 +165,27 @@
   font-family: var(--dv-font-mono);
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: hsl(var(--bd-text));
 }
 
 .settleRem {
   font-family: var(--dv-font-mono);
   font-size: 15px;
   font-weight: 700;
-  color: #dc2626;
+  color: hsl(var(--bd-status-danger-text));
 }
 
 .settlePaid {
   font-family: var(--dv-font-mono);
   font-size: 15px;
   font-weight: 700;
-  color: #16a34a;
+  color: hsl(var(--bd-status-success-text));
 }
 
 .errorBanner {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #dc2626;
+  background: hsl(var(--bd-status-danger-bg));
+  border: 1px solid hsl(var(--bd-status-danger-border));
+  color: hsl(var(--bd-status-danger-text));
   padding: 12px;
   border-radius: 12px;
   font-size: 13px;
@@ -200,41 +200,41 @@
 
 .btnCancel {
   flex: 1;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: hsl(var(--bd-surface-muted));
+  border: 1px solid hsl(var(--bd-border));
   border-radius: 14px;
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: hsl(var(--bd-text-soft));
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btnCancel:hover {
-  background: #f1f5f9;
+  background: hsl(var(--bd-surface));
 }
 
 .btnSave {
   flex: 2;
-  background: #1e293b;
+  background: hsl(var(--bd-button-primary-bg));
   border: none;
   border-radius: 14px;
   padding: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: hsl(var(--bd-button-primary-text));
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.15);
+  box-shadow: 0 4px 12px hsl(var(--bd-button-primary-bg) / 0.15);
 }
 
 .btnSave:hover {
-  background: #334155;
+  background: hsl(var(--bd-button-primary-hover-bg));
 }
 
 .btnSave:disabled {

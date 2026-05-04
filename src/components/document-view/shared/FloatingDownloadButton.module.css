@@ -12,7 +12,7 @@
   color: hsl(var(--bd-fab-text));
   padding: 12px 24px;
   font-size: 14px;
-  box-shadow: 0 10px 25px -5px hsla(var(--bd-button-primary-bg), 0.4);
+  box-shadow: 0 10px 25px -5px hsl(var(--bd-button-primary-bg) / 0.4);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: -0.01em;
   text-transform: uppercase;
@@ -20,7 +20,7 @@
 
 .button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px hsla(var(--bd-text), 0.2), 0 10px 10px -5px hsla(var(--bd-text), 0.1);
+  box-shadow: 0 20px 25px -5px hsl(var(--bd-text) / 0.2), 0 10px 10px -5px hsl(var(--bd-text) / 0.1);
   filter: brightness(1.1);
 }
 

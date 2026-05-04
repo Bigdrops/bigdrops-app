@@ -142,7 +142,7 @@ export function DocumentActionSheet({ open, onOpenChange, title, subtitle, actio
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="flex h-[50vh] max-h-[50vh] flex-col overflow-hidden rounded-t-[26px] px-0 pb-4"
+        className="flex h-[50vh] max-h-[50vh] flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] px-0 pb-4"
       >
         <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-[hsl(var(--bd-border))]" />
         <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-4 pb-3 pt-3 text-left">
@@ -230,7 +230,7 @@ export function DocumentPdfSheet({
 }: DocumentPdfSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[30px] px-0 pb-6">
+      <SheetContent side="bottom" className="h-[50vh] max-h-[50vh] overflow-hidden rounded-t-[var(--bd-overlay-radius)] px-0 pb-6">
         <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-[hsl(var(--bd-border))]" />
         <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-5 pb-4 pt-4 text-left">
           <SheetTitle className="text-base font-extrabold text-[hsl(var(--bd-text))]">{title}</SheetTitle>

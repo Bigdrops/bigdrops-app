@@ -51,7 +51,7 @@ export default function ActionsSheet({
     label: action.label,
     description: action.description,
     icon: action.key === 'qtyUnitMerge' ? <Zap /> : <action.icon />,
-    tone: action.key === 'qtyUnitMerge' && mergeQtyUnit ? "success" : "default",
+    tone: action.tone || "default",
     isSwitch: action.key === 'qtyUnitMerge',
     isActive: action.key === 'qtyUnitMerge' ? mergeQtyUnit : false,
     closeOnClick: action.key !== 'qtyUnitMerge',

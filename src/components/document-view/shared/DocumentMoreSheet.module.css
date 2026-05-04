@@ -20,7 +20,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #ffffff;
+  background: hsl(var(--bd-card-bg));
   border-radius: 24px 24px 0 0;
   z-index: 101;
   max-width: 640px;
@@ -40,7 +40,7 @@
 .handle {
   width: 40px;
   height: 4px;
-  background: #e2e8f0;
+  background: hsl(var(--bd-overlay-handle-bg));
   border-radius: 2px;
   margin: 0 auto 16px;
 }
@@ -48,7 +48,7 @@
 .title {
   font-size: 18px;
   font-weight: 800;
-  color: #1e293b;
+  color: hsl(var(--bd-overlay-text));
   margin-bottom: 20px;
   padding: 0 4px;
 }
@@ -62,7 +62,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #94a3b8;
+  color: hsl(var(--bd-overlay-muted));
   margin-bottom: 8px;
   padding: 0 4px;
 }
@@ -88,7 +88,7 @@
 }
 
 .selected {
-  background: #eff6ff;
+  background: hsl(var(--bd-surface-muted));
 }
 
 .action:active:not(:disabled) {
@@ -109,8 +109,8 @@
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: #f8fafc;
-  color: #64748b;
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text-muted));
   flex-shrink: 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -123,20 +123,20 @@
 }
 
 .selected .iconWrapper {
-  background: #dbeafe;
-  color: #1d4ed8;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.14);
+  background: hsl(var(--bd-status-info-bg));
+  color: hsl(var(--bd-status-info-text));
+  box-shadow: inset 0 0 0 1px hsl(var(--bd-status-info-border));
 }
 
 .destructive .iconWrapper {
-  background: #fff1f2;
-  color: #e11d48;
+  background: hsl(var(--bd-status-danger-bg));
+  color: hsl(var(--bd-status-danger-text));
 }
 
 .action:hover:not(:disabled).destructive .iconWrapper {
-  background: #e11d48;
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
+  background: hsl(var(--bd-status-danger-text));
+  color: hsl(var(--bd-surface));
+  box-shadow: 0 4px 16px hsl(var(--bd-status-danger-border) / 0.3);
 }
 
 .body {
@@ -147,13 +147,13 @@
 .label {
   font-size: 14px;
   font-weight: 700;
-  color: #1a202c;
+  color: hsl(var(--bd-text));
   line-height: 1.4;
 }
 
 .description {
   font-size: 12px;
-  color: #718096;
+  color: hsl(var(--bd-text-muted));
   margin-top: 1px;
   line-height: 1.4;
 }
@@ -166,9 +166,9 @@
   min-width: 56px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #64748b;
+  border: 1px solid hsl(var(--bd-border));
+  background: hsl(var(--bd-card-bg));
+  color: hsl(var(--bd-text-muted));
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -176,21 +176,21 @@
 }
 
 .statusPillActive {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #ffffff;
+  border-color: hsl(var(--bd-status-success-border));
+  background: hsl(var(--bd-status-success-bg));
+  color: hsl(var(--bd-status-success-text));
 }
 
 .destructive .label {
-  color: #e11d48;
+  color: hsl(var(--bd-status-danger-text));
 }
 
 .destructive .description {
-  color: #fb7185;
+  color: hsl(var(--bd-status-danger-text) / 0.8);
 }
 
 .divider {
   height: 1px;
-  background: #f1f5f9;
+  background: hsl(var(--bd-border));
   margin: 16px 4px 8px;
 }

@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(250, 249, 247, 0.92);
+  background: hsl(var(--bd-surface) / 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--dv-border-soft);
@@ -96,10 +96,10 @@
   color: var(--dv-text);
 }
 
-.iconBtn.amber {
-  color: var(--dv-amber);
+.iconBtn.primary {
+  color: var(--dv-primary);
 }
 
-.iconBtn.amber:hover {
-  background: var(--dv-amber-bg);
+.iconBtn.primary:hover {
+  background: var(--dv-primary-bg);
 }

@@ -33,7 +33,7 @@ interface InvoiceViewPageProps {
   documentPreview: ReactNode
   previewControls?: ReactNode
   activityHistory?: ReactNode
-  paymentSummary: Array<{ label: string; value: string; tone?: 'green' | 'amber' }>
+  paymentSummary: Array<{ label: string; value: string; tone?: 'success' | 'warning' }>
   paymentProgressLabel: string
   paymentProgressWidth: string
   paymentHistory: Array<{
@@ -93,7 +93,7 @@ export default function InvoiceViewPage({
   return (
     <div className={styles.stack}>
       <div className={styles['action-row']}>
-        <button type="button" className={`${styles.btn} ${styles['btn-amber']}`} onClick={onRecordPayment} disabled={!canRecordPayment}>
+        <button type="button" className={`${styles.btn} ${styles['btn-primary']}`} onClick={onRecordPayment} disabled={!canRecordPayment}>
           <Plus size={18} strokeWidth={2.5} />
           <span>Record Payment</span>
         </button>
@@ -127,7 +127,7 @@ export default function InvoiceViewPage({
                 {gPaymentSummary.map((cell) => (
                   <div key={cell.label} className={styles['pay-sum-cell']}>
                     <div className={styles['pay-sum-lbl']}>{cell.label}</div>
-                    <div className={`${styles['pay-sum-val']} ${cell.tone ? styles[cell.tone] : ''}`}>
+                    <div className={`${styles['pay-sum-val']} ${cell.tone === 'success' ? styles.green : cell.tone === 'warning' ? styles.amber : ''}`}>
                       {cell.value}
                     </div>
                   </div>

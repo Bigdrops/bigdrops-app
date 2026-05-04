@@ -145,7 +145,7 @@ export function UnifiedActionSheet({
       >
         {!hideIcons && action.icon && (
           <div className={cn(
-            "grid place-items-center shadow-sm ring-1 ring-black/5", 
+            "grid place-items-center shadow-sm ring-1 ring-[hsl(var(--bd-border)/0.2)]", 
             action.isSwitch && action.isActive
               ? "bg-[hsl(var(--bd-status-success-text))] text-[hsl(var(--bd-surface))]"
               : tone.iconBg,
@@ -171,7 +171,7 @@ export function UnifiedActionSheet({
              action.isActive ? "bg-[hsl(var(--bd-status-success-text))] border-transparent" : "bg-[hsl(var(--bd-surface-muted))] border-[hsl(var(--bd-border))]"
            )}>
               <div className={cn(
-                "absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all shadow-sm",
+                "absolute top-0.5 h-3 w-3 rounded-full bg-[hsl(var(--bd-card-bg))] transition-all shadow-sm",
                 action.isActive ? "left-[1.125rem]" : "left-0.5"
               )} />
            </div>

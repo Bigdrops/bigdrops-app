@@ -936,8 +936,8 @@ export default function ViewInvoice() {
           status={docProps.status}
           metrics={[
             { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set', tone: 'default' },
-            { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'positive' },
-            { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'positive' },
+            { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'success' },
+            { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'success' },
           ]}
           meta={[
             { label: 'Client', value: invoice.client_name || 'Unassigned' },
@@ -975,7 +975,7 @@ export default function ViewInvoice() {
             </>
           }
           paymentSummary={[
-            { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'green' },
+            { label: 'Cash Received', value: formatNaira(viewModel.cashReceived || 0), tone: 'success' },
             {
               label: 'Payments',
               value: `${viewModel.activePaymentCount || 0} recorded`,
@@ -983,7 +983,7 @@ export default function ViewInvoice() {
             {
               label: 'Balance Due',
               value: formatNaira(viewModel.balanceDue || 0),
-              tone: (viewModel.balanceDue || 0) > 0 ? 'amber' : 'green',
+              tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'success',
             },
           ]}
           paymentProgressLabel={`${viewModel.invoiceTotal > 0 ? Math.min(100, Math.round((viewModel.cashReceived / viewModel.invoiceTotal) * 100)) : 0}% settled · ${formatNaira(viewModel.balanceDue || 0)} remaining`}

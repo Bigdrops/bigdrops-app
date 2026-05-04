@@ -50,7 +50,7 @@ export default function ModuleRowCard({
     >
       {isSelected && (
         <div className="absolute -left-1 top-1/2 -translate-y-1/2 md:hidden">
-           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--bd-button-primary-bg))] text-white shadow-sm ring-2 ring-white">
+           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-sm ring-2 ring-[hsl(var(--bd-surface))]">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
            </div>
         </div>
@@ -98,7 +98,7 @@ export default function ModuleRowCard({
             <div className="mt-0.5">
               <span
                 className={cn(
-                  "inline-flex h-5 items-center rounded-full px-2 text-[9px] font-black uppercase tracking-wider shadow-sm ring-1 ring-black/5",
+                  "inline-flex h-5 items-center rounded-full px-2 text-[9px] font-black uppercase tracking-wider shadow-sm ring-1 ring-[hsl(var(--bd-border)/0.1)]",
                   statusClassName
                 )}
               >

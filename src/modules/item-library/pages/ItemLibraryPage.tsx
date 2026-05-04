@@ -330,19 +330,19 @@ export default function ItemLibraryPage() {
       hidePageHeader
       contentClassName="mx-auto w-full max-w-6xl px-0 py-0 md:px-6 md:py-6"
     >
-      <div className="overflow-hidden bg-[radial-gradient(circle_at_top,_#f8f1e6_0%,_#eee4d6_36%,_#e5dac9_100%)] md:rounded-[28px] md:border md:border-[#d6c6b0] md:shadow-[0_24px_60px_rgba(88,67,41,0.12)]">
-        <header className="flex h-[54px] items-center gap-4 border-b border-[#d7c7b3] bg-[#f3eadf]/95 px-5 backdrop-blur-sm">
+      <div className="overflow-hidden bg-[hsl(var(--bd-app-bg))] md:rounded-[var(--bd-radius-xl)] md:border md:border-[hsl(var(--bd-border))] md:shadow-lg">
+        <header className="flex h-[54px] items-center gap-4 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))]/95 px-5 backdrop-blur-sm">
           <button
             type="button"
             onClick={() => window.history.back()}
             aria-label="Go back"
-            className="hidden items-center gap-[6px] rounded-[8px] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[#7c6954] transition-all duration-150 hover:bg-[#e6dacb] hover:text-[#2a2118] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c6a45] md:flex"
+            className="hidden items-center gap-[6px] rounded-[var(--bd-radius-sm)] border-none bg-transparent px-[10px] py-[6px] text-[13px] font-semibold text-[hsl(var(--bd-text-muted))] transition-all duration-150 hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))] md:flex"
           >
             <BackArrow />
           </button>
 
           <div className="flex flex-1 items-center justify-center">
-            <div className="flex items-center gap-1 rounded-[12px] border border-[#ccb79b] bg-[#fffaf1]/50 p-[3px] shadow-[inset_0_1px_2px_rgba(94,72,46,0.05)]">
+            <div className="flex items-center gap-1 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/50 p-[3px] shadow-sm">
               <button
                 type="button"
                 onClick={() => {
@@ -352,8 +352,8 @@ export default function ItemLibraryPage() {
                 className={[
                   "rounded-[9px] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
                   workflowMode === 'library'
-                    ? "bg-[#8c6a45] text-white shadow-[0_2px_4px_rgba(88,67,41,0.2)]"
-                    : "text-[#7b644c] hover:bg-[#efe4d4]"
+                    ? "bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-sm"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
                 ].join(' ')}
               >
                 Library
@@ -365,15 +365,15 @@ export default function ItemLibraryPage() {
                   setViewMode('catalog')
                 }}
                 className={[
-                  "relative rounded-[9px] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
+                  "relative rounded-[var(--bd-radius-md)] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
                   workflowMode === 'cleanup'
-                    ? "bg-[#8c6a45] text-white shadow-[0_2px_4px_rgba(88,67,41,0.2)]"
-                    : "text-[#7b644c] hover:bg-[#efe4d4]"
+                    ? "bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-sm"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
                 ].join(' ')}
               >
                 Cleanup Hub
                 {totalUnresolvedIssues > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#a06d2b] px-1 text-[9px] font-bold text-white ring-2 ring-[#f3eadf]">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[hsl(var(--bd-status-warning-bg))] px-1 text-[9px] font-bold text-[hsl(var(--bd-status-warning-text))] ring-2 ring-[hsl(var(--bd-card-bg))]">
                     {totalUnresolvedIssues}
                   </span>
                 )}
@@ -395,7 +395,7 @@ export default function ItemLibraryPage() {
         )}
 
         {summaryError ? (
-          <div className="border-b border-[#e0b7b1] bg-[#fff4f1] px-5 py-3 text-[12px] text-[#a0362b]">
+          <div className="border-b border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-5 py-3 text-[12px] text-[hsl(var(--bd-status-danger-text))]">
             {summaryError.message || 'Failed to load item library.'}
           </div>
         ) : null}
@@ -441,11 +441,11 @@ export default function ItemLibraryPage() {
           ) : null}
 
           <div className={showLeftPanel ? (mobileDetailOpen ? 'flex w-full flex-col overflow-hidden md:flex-1' : 'hidden md:flex md:flex-1 md:flex-col md:overflow-hidden') : 'flex w-full flex-col overflow-hidden'}>
-            <div className="flex-shrink-0 border-b border-[#e8e4dc] bg-[#faf9f7] md:hidden">
+            <div className="flex-shrink-0 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] md:hidden">
               <button
                 type="button"
                 onClick={() => setMobileDetailOpen(false)}
-                className="flex items-center gap-[6px] border-none bg-transparent px-4 py-3 text-[13px] font-semibold text-[#8a8277] transition-colors hover:text-[#1a1814]"
+                className="flex items-center gap-[6px] border-none bg-transparent px-4 py-3 text-[13px] font-semibold text-[hsl(var(--bd-text-muted))] transition-colors hover:text-[hsl(var(--bd-text))]"
               >
                 <BackArrow />
                 {workflowMode === 'library' ? 'Library' : 'Cleanup'}
@@ -454,15 +454,15 @@ export default function ItemLibraryPage() {
 
             <div className="flex-1 overflow-hidden">
               {workflowMode === 'cleanup' && viewMode !== 'catalog' ? (
-                <div className="flex items-center justify-between border-b border-[#ddd0bf] bg-[#f8f1e6]/80 px-4 py-3">
+                <div className="flex items-center justify-between border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/80 px-4 py-3">
                   <button
                     type="button"
                     onClick={() => setViewMode('catalog')}
-                    className="text-[12px] font-bold text-[#8c6a45] transition-colors hover:text-[#5d432b]"
+                    className="text-[12px] font-bold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:opacity-80"
                   >
                     Back to Cleanup Hub
                   </button>
-                  <div className="text-[11px] font-semibold text-[#8a745f]">
+                  <div className="text-[11px] font-semibold text-[hsl(var(--bd-text-muted))]">
                     {viewMode === 'duplicates'
                       ? 'Fix Duplicate Items (Manual)'
                       : viewMode === 'duplicates_outsourced'
@@ -477,34 +477,34 @@ export default function ItemLibraryPage() {
               ) : null}
 
               {workflowMode === 'cleanup' && viewMode === 'duplicates_choice' ? (
-                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[hsl(var(--bd-surface-muted))]">
                    <div className="max-w-2xl space-y-6">
                       <div className="space-y-2">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">How do you want to handle duplicates?</h2>
-                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Choose a review method for the {totalUnresolvedIssues} duplicate groups detected in your catalog.</p>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[hsl(var(--bd-text))]">How do you want to handle duplicates?</h2>
+                        <p className="text-[hsl(var(--bd-text-muted))] text-[13px] leading-relaxed">Choose a review method for the {totalUnresolvedIssues} duplicate groups detected in your catalog.</p>
                       </div>
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <button 
                           onClick={() => setViewMode('duplicates')}
-                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-6 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg))] hover:shadow-md group"
                         >
-                          <div className="text-sm font-bold text-[#2c2218]">Review Manually in App</div>
-                          <div className="text-[11px] text-[#8a8277]">Side-by-side comparison with full price and history audit.</div>
+                          <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Review Manually in App</div>
+                          <div className="text-[11px] text-[hsl(var(--bd-text-muted))]">Side-by-side comparison with full price and history audit.</div>
                         </button>
 
                         <button 
                           onClick={() => setViewMode('duplicates_outsourced')}
-                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-6 text-center transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-6 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg))] hover:shadow-md group"
                         >
-                          <div className="text-sm font-bold text-[#2c2218]">Use AI for Duplicate Review</div>
-                          <div className="text-[11px] text-[11px] text-[#8a8277]">Export all groups for AI review. Faster for large lists.</div>
+                          <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Use AI for Duplicate Review</div>
+                          <div className="text-[11px] text-[hsl(var(--bd-text-muted))]">Export all groups for AI review. Faster for large lists.</div>
                         </button>
                       </div>
 
                       <button 
                         onClick={() => setViewMode('catalog')}
-                        className="text-[12px] font-bold text-[#8c6a45] hover:underline"
+                        className="text-[12px] font-bold text-[hsl(var(--bd-button-primary-bg))] hover:underline"
                       >
                         Cancel and return to Hub
                       </button>
@@ -551,40 +551,40 @@ export default function ItemLibraryPage() {
                   error={null}
                 />
               ) : showCleanupLauncher ? (
-                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[#faf9f7]">
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-[hsl(var(--bd-surface-muted))]">
                    <div className="max-w-3xl space-y-6">
                       <div className="space-y-2">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-[#2c2218]">Cleanup Hub</h2>
-                        <p className="text-[#7c6954] text-[13px] leading-relaxed">Choose the cleanup job you want to run. No lists are opened until you choose a workflow.</p>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[hsl(var(--bd-text))]">Cleanup Hub</h2>
+                        <p className="text-[hsl(var(--bd-text-muted))] text-[13px] leading-relaxed">Choose the cleanup job you want to run. No lists are opened until you choose a workflow.</p>
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-3">
                         <button 
                           onClick={() => setViewMode('duplicates_choice')}
-                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 text-left transition-all hover:border-[hsl(var(--bd-button-primary-bg))] hover:shadow-md group"
                         >
                           <div className="flex w-full items-center justify-between">
-                            <span className="text-sm font-bold text-[#2c2218]">Fix Duplicate Items</span>
-                            <span className="rounded-full bg-[#e8d5bc] px-2.5 py-0.5 text-[10px] font-bold text-[#634a31] group-hover:bg-[#8c6a45] group-hover:text-white transition-colors">{totalUnresolvedIssues} groups</span>
+                            <span className="text-sm font-bold text-[hsl(var(--bd-text))]">Fix Duplicate Items</span>
+                            <span className="rounded-full bg-[hsl(var(--bd-surface-muted))] px-2.5 py-0.5 text-[10px] font-bold text-[hsl(var(--bd-text-muted))] group-hover:bg-[hsl(var(--bd-button-primary-bg))] group-hover:text-[hsl(var(--bd-button-primary-text))] transition-colors">{totalUnresolvedIssues} groups</span>
                           </div>
-                          <span className="text-[11px] text-[#8a8277]">Review detected duplicate groups, inspect history, and merge manually or via AI outsource.</span>
+                          <span className="text-[11px] text-[hsl(var(--bd-text-muted))]">Review detected duplicate groups, inspect history, and merge manually or via AI outsource.</span>
                         </button>
 
                         <button 
                           onClick={() => setViewMode('advanced_cleanup')}
-                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                          className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 text-left transition-all hover:border-[hsl(var(--bd-button-primary-bg))] hover:shadow-md group"
                         >
-                          <span className="text-sm font-bold text-[#2c2218]">Clean &amp; Standardize Catalog</span>
-                          <span className="text-[11px] text-[#8a8277]">Run a locked full-catalog cleanup session with numeric batches, AI review, and safe merge apply support.</span>
+                          <span className="text-sm font-bold text-[hsl(var(--bd-text))]">Clean &amp; Standardize Catalog</span>
+                          <span className="text-[11px] text-[hsl(var(--bd-text-muted))]">Run a locked full-catalog cleanup session with numeric batches, AI review, and safe merge apply support.</span>
                         </button>
 
                         {mergeHistoryCount > 0 ? (
                           <button 
                             onClick={() => setViewMode('merge_history')}
-                            className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[#d6c6b0] bg-[#fffaf1] p-5 text-left transition-all hover:border-[#8c6a45] hover:shadow-[0_12px_24px_rgba(88,67,41,0.08)] group"
+                            className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-5 text-left transition-all hover:border-[hsl(var(--bd-button-primary-bg))] hover:shadow-md group"
                           >
-                            <span className="text-sm font-bold text-[#2c2218]">Review Past Changes</span>
-                            <span className="text-[11px] text-[#8a8277]">Open merge history and audit the catalog cleanup trail.</span>
+                            <span className="text-sm font-bold text-[hsl(var(--bd-text))]">Review Past Changes</span>
+                            <span className="text-[11px] text-[hsl(var(--bd-text-muted))]">Open merge history and audit the catalog cleanup trail.</span>
                           </button>
                         ) : null}
                       </div>

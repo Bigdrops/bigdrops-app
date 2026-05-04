@@ -57,7 +57,7 @@ export function FormFooter({
         type="button"
         onClick={onFloatingSave}
         disabled={saving}
-        className="fixed bottom-[98px] right-4 z-[60] flex h-[48px] w-[48px] items-center justify-center rounded-[var(--bd-radius)] bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8 disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-soft))] disabled:opacity-100"
+        className="fixed bottom-[94px] right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8 transition-transform active:scale-95 disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-soft))] disabled:opacity-100"
       >
         <Save className="h-5 w-5" />
       </button>

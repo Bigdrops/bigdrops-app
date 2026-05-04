@@ -14,7 +14,7 @@ export type InvoiceHeroMetric = {
   label: string
   value: string
   hint?: string
-  tone?: 'default' | 'positive' | 'warning'
+  tone?: 'default' | 'positive' | 'warning' | 'success'
 }
 
 type InvoiceHeroMetaItem = {
@@ -92,7 +92,7 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
             <div
               className={[
                 styles['money-val'],
-                metric.tone === 'positive' ? styles.green : '',
+                metric.tone === 'success' || metric.tone === 'positive' ? styles.green : '',
                 metric.tone === 'warning' ? styles.amber : '',
               ].join(' ')}
             >

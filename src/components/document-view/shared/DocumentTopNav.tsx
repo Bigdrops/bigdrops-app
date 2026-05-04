@@ -44,7 +44,7 @@ export default function DocumentTopNav({
         {onCustomize && (
           <button
             type="button"
-            className={`${styles.iconBtn} ${styles.amber}`}
+            className={`${styles.iconBtn} ${styles.primary}`}
             title="Customize"
             onClick={onCustomize}
           >
