@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Invoice · Nigeria</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9eef2 0%, #dbe1e6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 1.5rem;
+        }
+
+        /* card */
+        .invoice-card {
+            max-width: 880px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 4px 18px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header area with subtle depth */
+        .invoice-header {
+            background: linear-gradient(115deg, #0b2b3b 0%, #1b4a5f 100%);
+            padding: 2rem 2.5rem;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid #2aa38f;
+        }
+
+        .brand h1 {
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            color: white;
+        }
+
+        .brand span {
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+            margin-top: 4px;
+            color: #c7e4f0;
+        }
+
+        .invoice-title {
+            text-align: right;
+        }
+
+        .invoice-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .invoice-title p {
+            font-size: 1rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        /* company & client details */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem 2.5rem;
+            background: #f9fcff;
+            border-bottom: 1px solid #dbe4eb;
+        }
+
+        .detail-block p {
+            margin: 0.3rem 0;
+            color: #1a2c3c;
+        }
+
+        .detail-block .label {
+            font-weight: 600;
+            color: #0b2b3b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .client-block {
+            background: #ffffff;
+            padding: 1.2rem 1.5rem;
+            border-radius: 24px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02), 0 8px 18px -8px rgba(0,50,70,0.15);
+        }
+
+        .company-meta {
+            color: #305d74;
+            font-weight: 500;
+        }
+
+        /* table area */
+        .items-table {
+            padding: 1.5rem 2.5rem 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 30, 40, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #113946;
+            color: white;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-size: 0.8rem;
+            padding: 1rem 1rem;
+            text-align: left;
+        }
+
+        td {
+            padding: 1rem 1rem;
+            border-bottom: 1px solid #dde7ed;
+            background: white;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .item-desc {
+            font-weight: 500;
+            color: #142f3b;
+        }
+
+        .amount-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: #1a4b5c;
+        }
+
+        /* summary section */
+        .summary {
+            background: #f2f8fd;
+            margin: 1.2rem 2.5rem 2rem;
+            padding: 1.8rem 2rem;
+            border-radius: 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 12px 24px -16px #0f3d4d;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            width: 280px;
+            margin-bottom: 0.7rem;
+            font-size: 1rem;
+            color: #1b4f62;
+        }
+
+        .summary-line.total {
+            font-size: 1.4rem;
+            font-weight: 700;
+            border-top: 2px dashed #2aa38f;
+            padding-top: 0.8rem;
+            margin-top: 0.4rem;
+            color: #003349;
+        }
+
+        .summary-line.total span:last-child {
+            color: #1d7769;
+            font-size: 1.8rem;
+        }
+
+        .currency {
+            font-weight: 600;
+            color: #266a7a;
+        }
+
+        /* footer */
+        .footer-note {
+            padding: 1.2rem 2.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #cbdae6;
+            background: #ffffff;
+            font-size: 0.9rem;
+            color: #3c5b6e;
+        }
+
+        .bank-info {
+            background: #ebf3f8;
+            padding: 0.6rem 1.4rem;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+
+        .bank-info i {
+            color: #0f5b70;
+            margin-right: 0.3rem;
+        }
+
+        .small-note {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-card">
+        <!-- header -->
+        <div class="invoice-header">
+            <div class="brand">
+                <h1>NIGERIA VENTURES</h1>
+                <span>RC 1234567 · Lagos, NG</span>
+            </div>
+            <div class="invoice-title">
+                <h2>INVOICE</h2>
+                <p># INV-2025-0421</p>
+            </div>
+        </div>
+
+        <!-- billing details -->
+        <div class="details-grid">
+            <div class="detail-block">
+                <div class="label">BILL TO</div>
+                <div class="client-block">
+                    <p style="font-weight:700; font-size:1.1rem;">Afri-Tech Solutions</p>
+                    <p>14B Allen Avenue, Ikeja</p>
+                    <p>Lagos, Nigeria</p>
+                    <p style="margin-top:0.8rem;">attn: <strong>Mr. Adebayo O.</strong></p>
+                </div>
+            </div>
+            <div class="detail-block">
+                <div class="label">COMPANY DETAILS</div>
+                <p class="company-meta">📧 hello@nigeriaventures.ng</p>
+                <p class="company-meta">📞 +234 812 345 6789</p>
+                <p class="company-meta">🏦 0123456789 · GTBank (PLC)</p>
+                <p style="margin-top:1.2rem;"><span style="font-weight:600;">Issue:</span> 15 Apr 2025</p>
+                <p><span style="font-weight:600;">Due:</span> 15 May 2025</p>
+            </div>
+        </div>
+
+        <!-- invoice items table -->
+        <div class="items-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Qty</th>
+                        <th>Unit Price (₦)</th>
+                        <th>Amount (₦)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="item-desc">Website development – business portal</td>
+                        <td>1</td>
+                        <td class="amount-cell">850,000.00</td>
+                        <td class="amount-cell">850,000.00</td>
+                    </tr>
+                    <tr>
+                        <td class="item-desc">UI/UX design (homepage & dashboard)</td>
+                        <td>2</td>
+                        <td class="amount-cell">225,000.00</td>
+                        <td class="amount-cell">450,000.00</td>
+                    </tr>
+                    <tr>
+                        <td class="item-desc">Hosting setup & maintenance (annual)</td>
+                        <td>1</td>
+                        <td class="amount-cell">120,000.00</td>
+                        <td class="amount-cell">120,000.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- summary & totals -->
+        <div class="summary">
+            <div class="summary-line">
+                <span>Subtotal</span>
+                <span class="currency">₦ 1,420,000.00</span>
+            </div>
+            <div class="summary-line">
+                <span>VAT (7.5%)</span>
+                <span class="currency">₦ 106,500.00</span>
+            </div>
+            <div class="summary-line total">
+                <span>TOTAL DUE</span>
+                <span class="currency">₦ 1,526,500.00</span>
+            </div>
+        </div>
+
+        <!-- footer -->
+        <div class="footer-note">
+            <div class="bank-info">
+                <i>🏦</i> Bank: 0123456789 (GTBank) · Nigeria Ventures
+            </div>
+            <div class="small-note">
+                Thank you for your business
+            </div>
+        </div>
+    </div>
+</body>
+</html>
