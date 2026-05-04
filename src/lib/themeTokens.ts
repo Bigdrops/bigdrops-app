@@ -129,6 +129,7 @@ export const THEME_NON_COLOR_TOKENS = [
   "bd-font-h1-size",
   "bd-font-h1-weight",
   "bd-font-h1-spacing",
+  "bd-font-label-weight",
   "bd-label-letter-spacing",
   "bd-overlay-radius",
   "bd-space-xs",
@@ -199,7 +200,7 @@ export function normalizeThemeTokenValue(
     return /^\s*-?\d+(\.\d+)?(em|px|rem)\s*$/.test(raw) ? raw : null
   }
 
-  if (token === "bd-font-h1-weight" || token === "bd-font-display-weight") {
+  if (token === "bd-font-h1-weight" || token === "bd-font-display-weight" || token === "bd-font-label-weight") {
     return /^\s*\d{3}\s*$/.test(raw) ? raw : null
   }
 

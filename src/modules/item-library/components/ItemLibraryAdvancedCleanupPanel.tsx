@@ -90,19 +90,19 @@ function SectionTitle({
 }) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#947d63]">{eyebrow}</div>
-      <h2 className="mt-1 text-[18px] font-extrabold text-[#2f2419]">{title}</h2>
-      <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-[#8b7863]">{description}</p>
+      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">{eyebrow}</div>
+      <h2 className="mt-1 text-[18px] font-extrabold text-bd-text">{title}</h2>
+      <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-bd-text-muted">{description}</p>
     </div>
   )
 }
 
 function StatCard({ label, value, meta }: { label: string; value: string; meta: string }) {
   return (
-    <div className="rounded-[14px] border border-[#dbc8ae] bg-[#fff9f1] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.06)]">
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98836c]">{label}</div>
-      <div className="mt-2 font-['JetBrains_Mono'] text-[18px] font-bold text-[#2f2419]">{value}</div>
-      <p className="mt-1 text-[11px] text-[#8d7963]">{meta}</p>
+    <div className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">{label}</div>
+      <div className="mt-2 font-mono text-[18px] font-bold text-bd-text">{value}</div>
+      <p className="mt-1 text-[11px] text-bd-text-muted">{meta}</p>
     </div>
   )
 }
@@ -111,9 +111,9 @@ function ValidationBanner({ errors }: { errors: string[] }) {
   if (!errors.length) return null
 
   return (
-    <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3">
-      <div className="text-[12px] font-bold text-[#8f3f35]">Import result needs correction</div>
-      <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-[#9a4a3f]">
+    <div className="rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg px-4 py-3">
+      <div className="text-[12px] font-bold text-bd-status-danger-text">Import result needs correction</div>
+      <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-bd-status-danger-text">
         {asArray(errors).map((error) => (
           <li key={error}>• {error}</li>
         ))}
@@ -372,9 +372,9 @@ export function ItemLibraryAdvancedCleanupPanel({
     }, [aliases, duplicateGroups, items, resolvedBatchSize])
 
     return (
-      <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
+      <div className="h-full overflow-y-auto bg-bd-app-bg">
         <div className="mx-auto max-w-3xl space-y-5 p-5 pb-28 md:p-6">
-          <section className="rounded-[22px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fffaf4_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)] md:p-6">
+          <section className="rounded-xl border border-bd-border bg-bd-surface p-5 shadow-lg md:p-6">
             <SectionTitle
               eyebrow="Cleanup Setup"
               title="Clean & Standardize Catalog"
@@ -382,7 +382,7 @@ export function ItemLibraryAdvancedCleanupPanel({
             />
 
             <div className="mt-5">
-              <div className="inline-flex w-full flex-wrap gap-2 rounded-[18px] border border-[#dbc8ae] bg-[#f3e7d8] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+              <div className="inline-flex w-full flex-wrap gap-2 rounded-lg border border-bd-border bg-bd-surface-muted p-2">
                 {['25', '50', '100', 'all', 'custom'].map((option) => {
                   const isSelected = batchSizeOption === option
 
@@ -392,10 +392,10 @@ export function ItemLibraryAdvancedCleanupPanel({
                       type="button"
                       onClick={() => setBatchSizeOption(option as '25' | '50' | '100' | 'all' | 'custom')}
                       className={[
-                        'flex min-w-[72px] flex-1 items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-[13px] font-bold transition-all duration-150',
+                        'flex min-w-[72px] flex-1 items-center justify-center gap-2 rounded-md border px-4 py-3 text-[13px] font-bold transition-all duration-150',
                         isSelected
-                          ? 'border-[#8c6a45] bg-[#fffaf2] text-[#4f3824] shadow-[0_10px_18px_rgba(88,67,41,0.12)]'
-                          : 'border-transparent bg-transparent text-[#7d654d] hover:border-[#ccb79b] hover:bg-[#f9f1e6]',
+                          ? 'border-bd-border-strong bg-bd-surface text-bd-text shadow-sm'
+                          : 'border-transparent bg-transparent text-bd-text-muted hover:border-bd-border hover:bg-bd-surface-muted/50',
                       ].join(' ')}
                     >
                       {isSelected ? <Check className="h-4 w-4" /> : null}
@@ -407,8 +407,8 @@ export function ItemLibraryAdvancedCleanupPanel({
             </div>
 
             {batchSizeOption === 'custom' ? (
-              <div className="mt-4 rounded-[16px] border border-[#dbc8ae] bg-[#fff8ef] p-4">
-                <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9a7c5e]">
+              <div className="mt-4 rounded-lg border border-bd-border bg-bd-surface-muted p-4">
+                <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
                   Custom batch size
                 </label>
                 <input
@@ -418,14 +418,14 @@ export function ItemLibraryAdvancedCleanupPanel({
                   placeholder="Enter a positive number"
                   aria-invalid={customBatchInvalid}
                   className={[
-                    'mt-2 w-full rounded-[12px] border bg-[#fffdf8] px-4 py-3 text-[14px] font-semibold text-[#2c2218] outline-none transition-colors',
+                    'mt-2 w-full rounded-md border bg-bd-surface px-4 py-3 text-[14px] font-semibold text-bd-text outline-none transition-colors',
                     customBatchInvalid
-                      ? 'border-[#cf7c6f] focus:border-[#b8594a]'
-                      : 'border-[#d4c2ad] focus:border-[#a07a52]',
+                      ? 'border-bd-status-danger-border focus:border-bd-status-danger-text'
+                      : 'border-bd-input-border focus:border-bd-input-focus',
                   ].join(' ')}
                 />
                 {customBatchInvalid ? (
-                  <p className="mt-2 text-[11px] font-medium text-[#b8594a]">Enter a valid positive whole number.</p>
+                  <p className="mt-2 text-[11px] font-medium text-bd-status-danger-text">Enter a valid positive whole number.</p>
                 ) : null}
               </div>
             ) : null}
@@ -433,14 +433,14 @@ export function ItemLibraryAdvancedCleanupPanel({
             {resolvedBatchSize && sessionEstimate ? (
               <div className="mt-4 space-y-4">
                 {batchSizeOption === 'all' && items.length > 300 ? (
-                  <div className="rounded-[16px] border border-[#cf7c6f] bg-[#fff2ee] px-4 py-4 shadow-[0_12px_24px_rgba(184,89,74,0.08)]">
+                  <div className="rounded-lg border border-bd-status-danger-border bg-bd-status-danger-bg px-4 py-4 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#b8594a] text-white">
+                      <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-bd-status-danger-text text-white">
                         <Sparkles className="h-4 w-4" />
                       </div>
                       <div>
-                        <div className="text-[15px] font-extrabold text-[#8f3f35]">Large catalog detected</div>
-                        <p className="mt-1 text-[12px] leading-relaxed text-[#9a4a3f]">
+                        <div className="text-[15px] font-extrabold text-bd-status-danger-text">Large catalog detected</div>
+                        <p className="mt-1 text-[12px] leading-relaxed text-bd-status-danger-text opacity-90">
                           This may be too large for one AI review. Consider 50 or 100 items per batch for better results.
                         </p>
                       </div>
@@ -448,16 +448,16 @@ export function ItemLibraryAdvancedCleanupPanel({
                   </div>
                 ) : null}
 
-                <div className="rounded-[16px] border border-[#d3bb9f] bg-[#fff4df] px-4 py-4 shadow-[0_12px_24px_rgba(88,67,41,0.06)]">
+                <div className="rounded-lg border border-bd-border bg-bd-surface-muted px-4 py-4 shadow-sm">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#8c6a45] text-white">
+                    <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-bd-button-primary-bg text-bd-button-primary-text">
                       <Check className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-[15px] font-extrabold text-[#2f2419]">
+                      <div className="text-[15px] font-extrabold text-bd-text">
                         {resolvedBatchSize.toLocaleString()} items per batch selected
                       </div>
-                      <p className="mt-1 text-[12px] leading-relaxed text-[#6f5b46]">
+                      <p className="mt-1 text-[12px] leading-relaxed text-bd-text-muted">
                         You&apos;ll review about {sessionEstimate.batch_count.toLocaleString()} batch{sessionEstimate.batch_count === 1 ? '' : 'es'}. Duplicate groups will stay together.
                       </p>
                     </div>
@@ -468,12 +468,12 @@ export function ItemLibraryAdvancedCleanupPanel({
           </section>
 
           <div className="sticky bottom-3 z-10">
-            <div className="rounded-[20px] border border-[#d6c2a8] bg-[#fffaf2]/95 p-3 shadow-[0_18px_34px_rgba(88,67,41,0.14)] backdrop-blur-md">
+            <div className="rounded-2xl border border-bd-border bg-bd-surface/95 p-3 shadow-xl backdrop-blur-md">
               <button
                 type="button"
                 onClick={handleLockSession}
                 disabled={!resolvedBatchSize}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-[14px] border border-[#9a6f3e] bg-[#8c6a45] px-4 py-3.5 text-[13px] font-bold text-white shadow-[0_10px_18px_rgba(88,67,41,0.18)] transition-colors hover:bg-[#775636] disabled:cursor-not-allowed disabled:border-[#ccb79b] disabled:bg-[#d9c8b2] disabled:text-[#7f6a55]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-bd-button-primary-bg px-4 py-3.5 text-[13px] font-bold text-bd-button-primary-text shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-bd-surface-muted disabled:text-bd-text-muted"
               >
                 <LockKeyhole className="h-4 w-4" />
                 Start Cleanup Session
@@ -490,9 +490,9 @@ export function ItemLibraryAdvancedCleanupPanel({
 
   if (isDuplicates) {
     return (
-      <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
+      <div className="h-full overflow-y-auto bg-bd-app-bg">
         <div className="space-y-4 p-5 pb-20">
-          <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
+          <section className="rounded-xl border border-bd-border bg-bd-surface p-5 shadow-lg">
             <SectionTitle
               eyebrow="Cleanup Hub"
               title="Outsource Duplicate Review"
@@ -516,7 +516,7 @@ export function ItemLibraryAdvancedCleanupPanel({
           </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+            <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
               <SectionTitle
                 eyebrow="1. Export"
                 title="Export All Duplicates"
@@ -527,7 +527,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="flex w-full items-center justify-between rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[12px] font-bold text-[#523b25]"
+                  className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface px-4 py-2.5 text-[12px] font-bold text-bd-text transition-colors hover:bg-bd-surface-muted"
                 >
                   <div className="flex items-center gap-2">
                     <Download className="h-4 w-4" />
@@ -538,10 +538,10 @@ export function ItemLibraryAdvancedCleanupPanel({
                 <button
                   type="button"
                   onClick={() => void handleCopy(aiPrompt, 'prompt')}
-                  className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+                  className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface-muted/50 px-4 py-2.5 text-[12px] font-semibold text-bd-text-muted transition-colors hover:bg-bd-surface-muted"
                 >
                   <div className="flex items-center gap-2">
-                    {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
                     {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
                   </div>
                   <Sparkles className="h-4 w-4 opacity-40" />
@@ -549,10 +549,10 @@ export function ItemLibraryAdvancedCleanupPanel({
                 <button
                   type="button"
                   onClick={() => void handleCopy(exportJson, 'json')}
-                  className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+                  className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface-muted/50 px-4 py-2.5 text-[12px] font-semibold text-bd-text-muted transition-colors hover:bg-bd-surface-muted"
                 >
                   <div className="flex items-center gap-2">
-                    {copyState === 'json' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    {copyState === 'json' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
                     {copyState === 'json' ? 'Batch JSON copied' : 'Copy batch JSON'}
                   </div>
                   <FileJson className="h-4 w-4 opacity-40" />
@@ -560,7 +560,7 @@ export function ItemLibraryAdvancedCleanupPanel({
               </div>
             </section>
 
-            <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+            <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
               <SectionTitle
                 eyebrow="2. Import Review"
                 title="Paste AI result"
@@ -583,12 +583,12 @@ export function ItemLibraryAdvancedCleanupPanel({
                 }}
                 placeholder="Paste AI result JSON here..."
                 spellCheck={false}
-                className="mt-4 min-h-[150px] w-full rounded-[14px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 font-['JetBrains_Mono'] text-[11px] text-[#2c2218] outline-none placeholder:text-[#ad9984] focus:border-[#a07a52]"
+                className="mt-4 min-h-[150px] w-full rounded-md border border-bd-input-border bg-bd-input-bg px-4 py-3 font-mono text-[11px] text-bd-text outline-none placeholder:text-bd-text-muted focus:border-bd-input-focus"
               />
             </section>
           </div>
 
-          <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+          <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
             <SectionTitle
               eyebrow="3. Preview Decisions"
               title="Review what is safe to apply now"
@@ -599,9 +599,9 @@ export function ItemLibraryAdvancedCleanupPanel({
               <ValidationBanner errors={validation.errors} />
 
               {!importText.trim() ? (
-                <div className="rounded-[14px] border border-dashed border-[#d9c8b2] bg-[#fcf7ef] px-4 py-8 text-center">
-                  <div className="text-[13px] font-semibold text-[#715d49]">No AI result pasted yet</div>
-                  <p className="mt-1 text-[11px] text-[#9a8873]">Paste the AI output to preview decisions.</p>
+                <div className="rounded-md border border-dashed border-bd-border bg-bd-surface-muted px-4 py-8 text-center">
+                  <div className="text-[13px] font-semibold text-bd-text-muted">No AI result pasted yet</div>
+                  <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the AI output to preview decisions.</p>
                 </div>
               ) : validation.preview ? (
                 <div className="space-y-4">
@@ -611,11 +611,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                   </div>
 
                   {applyableMerges.length ? (
-                    <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                    <div className="rounded-md border border-bd-border bg-bd-surface p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Applyable merges</div>
-                          <div className="mt-1 text-[13px] font-black text-[#2c2218]">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Applyable merges</div>
+                          <div className="mt-1 text-[13px] font-black text-bd-text">
                             {applyableMerges.length} merge suggestion{applyableMerges.length === 1 ? '' : 's'}
                           </div>
                         </div>
@@ -623,7 +623,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                           type="button"
                           onClick={() => void handleApplySupportedDecisions()}
                           disabled={applyLoading}
-                          className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-md border border-transparent bg-bd-button-primary-bg px-4 py-2 text-[11px] font-bold text-bd-button-primary-text transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {applyLoading ? 'Applying...' : 'Apply supported merges'}
                         </button>
@@ -631,9 +631,9 @@ export function ItemLibraryAdvancedCleanupPanel({
 
                       <div className="mt-3 space-y-3">
                         {asArray(applyableMerges as CleanupPreviewGroup[]).map((merge) => (
-                          <article key={merge.group_id} className="rounded-[12px] bg-[#f9f2e7] p-3">
-                            <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
-                            <p className="mt-1 text-[11px] text-[#6f5b46]">
+                          <article key={merge.group_id} className="rounded-md bg-bd-surface-muted p-3">
+                            <h3 className="text-[13px] font-bold text-bd-text">{merge.canonical_name}</h3>
+                            <p className="mt-1 text-[11px] text-bd-text-muted">
                               Group: {merge.export_label} • Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item) => item.name).join(', ')}
                             </p>
                           </article>
@@ -643,13 +643,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                   ) : null}
 
                   {(preview as CleanupImportPreview).rejected_groups?.length ? (
-                    <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8f3f35]">Rejected proposals</div>
+                    <div className="rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg p-4">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-status-danger-text">Rejected proposals</div>
                       <div className="mt-3 space-y-2">
                         {asArray((preview as CleanupImportPreview).rejected_groups).map((rejected) => (
-                          <div key={rejected.group_id} className="rounded-[12px] bg-[#ffeae4] p-3">
-                            <div className="text-[12px] font-bold text-[#8f3f35]">{rejected.group_id}</div>
-                            <div className="mt-0.5 text-[11px] text-[#9a4a3f]">{rejected.reason}</div>
+                          <div key={rejected.group_id} className="rounded-md bg-bd-status-danger-bg p-3 border border-bd-status-danger-border/30">
+                            <div className="text-[12px] font-bold text-bd-status-danger-text">{rejected.group_id}</div>
+                            <div className="mt-0.5 text-[11px] text-bd-status-danger-text opacity-90">{rejected.reason}</div>
                           </div>
                         ))}
                       </div>
@@ -657,16 +657,16 @@ export function ItemLibraryAdvancedCleanupPanel({
                   ) : null}
 
                   {ignoredGroups.length ? (
-                    <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Ignored groups</div>
-                      <p className="mt-2 text-[11px] text-[#6f5b46]">{asArray(ignoredGroups).map((g: any) => g.label).join(', ')}</p>
+                    <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Ignored groups</div>
+                      <p className="mt-2 text-[11px] text-bd-text-muted">{asArray(ignoredGroups).map((g: any) => g.label).join(', ')}</p>
                     </div>
                   ) : null}
 
                   {currentBatchState?.applyResults.length ? (
-                    <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
-                      <div className="mt-2 space-y-1 text-[11px] text-[#2c2218]">
+                    <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Apply results</div>
+                      <div className="mt-2 space-y-1 text-[11px] text-bd-text">
                         {asArray(currentBatchState.applyResults).map((result) => (
                           <div key={`${result.group_id}-${result.status}`}>
                             {result.canonical_name}: {result.status}
@@ -677,13 +677,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                   ) : null}
 
                   {applyError ? (
-                    <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3 text-[11px] text-[#9a4a3f]">
+                    <div className="rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg px-4 py-3 text-[11px] text-bd-status-danger-text">
                       {applyError}
                     </div>
                   ) : null}
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] px-4 py-3">
-                    <div className="text-[11px] text-[#6f5b46]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-bd-border bg-bd-surface-muted px-4 py-3">
+                    <div className="text-[11px] text-bd-text-muted">
                       Finalize review and apply merges. All proposals must come from the exported groups.
                     </div>
                     <div className="flex gap-2">
@@ -694,7 +694,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                           setCurrentBatchIndex(0)
                           setApplyError(null)
                         }}
-                        className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a]"
+                        className="rounded-md border border-bd-border bg-bd-surface px-3 py-2 text-[11px] font-semibold text-bd-text transition-colors hover:bg-bd-surface-muted"
                       >
                         Reset Flow
                       </button>
@@ -710,9 +710,9 @@ export function ItemLibraryAdvancedCleanupPanel({
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,_#efe5d7_0%,_#e8dccb_100%)]">
+    <div className="h-full overflow-y-auto bg-bd-app-bg">
       <div className="space-y-4 p-5 pb-20">
-        <section className="rounded-[18px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)] p-5 shadow-[0_20px_36px_rgba(93,68,42,0.10)]">
+        <section className="rounded-xl border border-bd-border bg-bd-surface p-5 shadow-lg">
           <SectionTitle
             eyebrow="Cleanup Hub"
             title={`Batch ${currentBatchIndex + 1} of ${batchCount}`}
@@ -743,8 +743,8 @@ export function ItemLibraryAdvancedCleanupPanel({
                   className={[
                     'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em]',
                     index === currentBatchIndex
-                      ? 'border-[#8c6a45] bg-[#f5e7d3] text-[#6e4f2d]'
-                      : 'border-[#d7c3aa] bg-[#fffaf5] text-[#947d63]',
+                      ? 'border-bd-border-strong bg-bd-surface-muted text-bd-text'
+                      : 'border-bd-border bg-bd-surface text-bd-text-muted',
                   ].join(' ')}
                 >
                   {batch.title}: {status.replace('_', ' ')}
@@ -755,7 +755,7 @@ export function ItemLibraryAdvancedCleanupPanel({
         </section>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+          <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
             <SectionTitle
               eyebrow="1. Export"
               title="Release only this batch"
@@ -766,7 +766,7 @@ export function ItemLibraryAdvancedCleanupPanel({
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex w-full items-center justify-between rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[12px] font-bold text-[#523b25]"
+                className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface px-4 py-2.5 text-[12px] font-bold text-bd-text transition-colors hover:bg-bd-surface-muted"
               >
                 <div className="flex items-center gap-2">
                   <Download className="h-4 w-4" />
@@ -777,10 +777,10 @@ export function ItemLibraryAdvancedCleanupPanel({
               <button
                 type="button"
                 onClick={() => void handleCopy(aiPrompt, 'prompt')}
-                className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+                className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface-muted/50 px-4 py-2.5 text-[12px] font-semibold text-bd-text-muted transition-colors hover:bg-bd-surface-muted"
               >
                 <div className="flex items-center gap-2">
-                  {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
                   {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
                 </div>
                 <Sparkles className="h-4 w-4 opacity-40" />
@@ -788,10 +788,10 @@ export function ItemLibraryAdvancedCleanupPanel({
               <button
                 type="button"
                 onClick={() => void handleCopy(exportJson, 'json')}
-                className="flex w-full items-center justify-between rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-4 py-2.5 text-[12px] font-semibold text-[#6d543a]"
+                className="flex w-full items-center justify-between rounded-md border border-bd-border bg-bd-surface-muted/50 px-4 py-2.5 text-[12px] font-semibold text-bd-text-muted transition-colors hover:bg-bd-surface-muted"
               >
                 <div className="flex items-center gap-2">
-                  {copyState === 'json' ? <ClipboardCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copyState === 'json' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
                   {copyState === 'json' ? 'Batch JSON copied' : 'Copy batch JSON'}
                 </div>
                 <FileJson className="h-4 w-4 opacity-40" />
@@ -799,7 +799,7 @@ export function ItemLibraryAdvancedCleanupPanel({
             </div>
           </section>
 
-          <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+          <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
             <SectionTitle
               eyebrow="2. Import Review"
               title="Paste AI result"
@@ -822,12 +822,12 @@ export function ItemLibraryAdvancedCleanupPanel({
               }}
               placeholder="Paste AI result JSON here..."
               spellCheck={false}
-              className="mt-4 min-h-[150px] w-full rounded-[14px] border border-[#d4c2ad] bg-[#fbf5ec] px-4 py-3 font-['JetBrains_Mono'] text-[11px] text-[#2c2218] outline-none placeholder:text-[#ad9984] focus:border-[#a07a52]"
+              className="mt-4 min-h-[150px] w-full rounded-md border border-bd-input-border bg-bd-input-bg px-4 py-3 font-mono text-[11px] text-bd-text outline-none placeholder:text-bd-text-muted focus:border-bd-input-focus"
             />
           </section>
         </div>
 
-        <section className="rounded-[16px] border border-[#d8c5ad] bg-[#fff8ef] p-4 shadow-[0_16px_28px_rgba(95,72,46,0.08)]">
+        <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
           <SectionTitle
             eyebrow="3. Preview Decisions"
             title="Review what is safe to apply now"
@@ -838,9 +838,9 @@ export function ItemLibraryAdvancedCleanupPanel({
             <ValidationBanner errors={validation.errors} />
 
             {!importText.trim() ? (
-              <div className="rounded-[14px] border border-dashed border-[#d9c8b2] bg-[#fcf7ef] px-4 py-8 text-center">
-                <div className="text-[13px] font-semibold text-[#715d49]">No AI result pasted yet</div>
-                <p className="mt-1 text-[11px] text-[#9a8873]">Paste the AI output to preview decisions for this batch.</p>
+              <div className="rounded-md border border-dashed border-bd-border bg-bd-surface-muted px-4 py-8 text-center">
+                <div className="text-[13px] font-semibold text-bd-text-muted">No AI result pasted yet</div>
+                <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the AI output to preview decisions for this batch.</p>
               </div>
             ) : validation.preview ? (
               <div className="space-y-4">
@@ -852,11 +852,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                 </div>
 
                 {applyableMerges.length ? (
-                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
+                  <div className="rounded-md border border-bd-border bg-bd-surface p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Applyable merges</div>
-                        <div className="mt-1 text-[13px] font-black text-[#2c2218]">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Applyable merges</div>
+                        <div className="mt-1 text-[13px] font-black text-bd-text">
                           {applyableMerges.length} merge suggestion{applyableMerges.length === 1 ? '' : 's'}
                         </div>
                       </div>
@@ -864,7 +864,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                         type="button"
                         onClick={() => void handleApplySupportedDecisions()}
                         disabled={applyLoading}
-                        className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-md border border-transparent bg-bd-button-primary-bg px-4 py-2 text-[11px] font-bold text-bd-button-primary-text transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {applyLoading ? 'Applying...' : 'Apply supported merges'}
                       </button>
@@ -872,9 +872,9 @@ export function ItemLibraryAdvancedCleanupPanel({
 
                     <div className="mt-3 space-y-3">
                       {asArray(applyableMerges as any[]).map((merge) => (
-                        <article key={`${merge.winner?.item_id}-${merge.canonical_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3">
-                          <h3 className="text-[13px] font-bold text-[#2c2218]">{merge.canonical_name}</h3>
-                          <p className="mt-1 text-[11px] text-[#6f5b46]">
+                        <article key={`${merge.winner?.item_id}-${merge.canonical_name}`} className="rounded-md bg-bd-surface-muted p-3">
+                          <h3 className="text-[13px] font-bold text-bd-text">{merge.canonical_name}</h3>
+                          <p className="mt-1 text-[11px] text-bd-text-muted">
                             Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item: any) => item.name).join(', ')}
                           </p>
                         </article>
@@ -884,13 +884,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                 ) : null}
 
                 {renameSuggestions.length ? (
-                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Rename suggestions</div>
+                  <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Rename suggestions</div>
                     <div className="mt-3 space-y-2">
                       {asArray(renameSuggestions).map((suggestion) => (
-                        <div key={`${suggestion.item?.item_id}-${suggestion.suggested_name}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                        <div key={`${suggestion.item?.item_id}-${suggestion.suggested_name}`} className="rounded-md bg-bd-surface-muted p-3 text-[11px] text-bd-text">
                           {suggestion.item?.name} → {suggestion.suggested_name}
-                          <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
+                          <span className="ml-2 font-bold text-bd-text-muted">Preview only</span>
                         </div>
                       ))}
                     </div>
@@ -898,13 +898,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                 ) : null}
 
                 {aliasSuggestions.length ? (
-                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Alias suggestions</div>
+                  <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Alias suggestions</div>
                     <div className="mt-3 space-y-2">
                       {asArray(aliasSuggestions).map((suggestion) => (
-                        <div key={`${suggestion.item?.item_id}-${asArray(suggestion.suggested_aliases).join('|')}`} className="rounded-[12px] bg-[#f9f2e7] p-3 text-[11px] text-[#2c2218]">
+                        <div key={`${suggestion.item?.item_id}-${asArray(suggestion.suggested_aliases).join('|')}`} className="rounded-md bg-bd-surface-muted p-3 text-[11px] text-bd-text">
                           {suggestion.item?.name}: {asArray(suggestion.suggested_aliases).join(', ')}
-                          <span className="ml-2 font-bold text-[#9a7c5e]">Preview only</span>
+                          <span className="ml-2 font-bold text-bd-text-muted">Preview only</span>
                         </div>
                       ))}
                     </div>
@@ -912,16 +912,16 @@ export function ItemLibraryAdvancedCleanupPanel({
                 ) : null}
 
                 {reviewRequiredItems.length ? (
-                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Review required</div>
-                    <p className="mt-2 text-[11px] text-[#6f5b46]">{asArray(reviewRequiredItems).map((item) => item.name).join(', ')}</p>
+                  <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Review required</div>
+                    <p className="mt-2 text-[11px] text-bd-text-muted">{asArray(reviewRequiredItems).map((item) => item.name).join(', ')}</p>
                   </div>
                 ) : null}
 
                 {currentBatchState?.applyResults.length ? (
-                  <div className="rounded-[14px] border border-[#d7c3aa] bg-white p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Apply results</div>
-                    <div className="mt-2 space-y-1 text-[11px] text-[#2c2218]">
+                  <div className="rounded-md border border-bd-border bg-bd-surface p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Apply results</div>
+                    <div className="mt-2 space-y-1 text-[11px] text-bd-text">
                       {asArray(currentBatchState.applyResults).map((result) => (
                         <div key={`${result.group_id}-${result.status}`}>
                           {result.canonical_name}: {result.status}
@@ -932,13 +932,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                 ) : null}
 
                 {applyError ? (
-                  <div className="rounded-[14px] border border-[#e4c3ba] bg-[#fff2ee] px-4 py-3 text-[11px] text-[#9a4a3f]">
+                  <div className="rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg px-4 py-3 text-[11px] text-bd-status-danger-text">
                     {applyError}
                   </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#dac8b1] bg-[#fcf7ef] px-4 py-3">
-                  <div className="text-[11px] text-[#6f5b46]">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-bd-border bg-bd-surface-muted px-4 py-3">
+                  <div className="text-[11px] text-bd-text-muted">
                     Move on after reviewing this batch. Supported merge applies refresh the library data first.
                   </div>
                   <div className="flex gap-2">
@@ -950,7 +950,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                         setCurrentBatchIndex(0)
                         setApplyError(null)
                       }}
-                      className="rounded-[10px] border border-[#d5c2aa] bg-[#fbf4ea] px-3 py-2 text-[11px] font-semibold text-[#6d543a]"
+                      className="rounded-md border border-bd-border bg-bd-surface px-3 py-2 text-[11px] font-semibold text-bd-text transition-colors hover:bg-bd-surface-muted"
                     >
                       Start new session
                     </button>
@@ -958,7 +958,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                       type="button"
                       onClick={() => setCurrentBatchIndex((value) => value + 1)}
                       disabled={!hasNextBatch || !canAdvance}
-                      className="rounded-[10px] border border-[#c6a175] bg-[#e7d2b4] px-4 py-2.5 text-[11px] font-bold text-[#523b25] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-md border border-bd-border bg-bd-surface px-4 py-2.5 text-[11px] font-bold text-bd-text transition-colors hover:bg-bd-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {hasNextBatch ? 'Next batch' : 'Last batch'}
                     </button>

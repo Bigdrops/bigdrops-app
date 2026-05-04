@@ -21,10 +21,10 @@ export function ItemLibraryDuplicateGroupCard({
   return (
     <section
       className={[
-        'rounded-[16px] border p-3 shadow-[0_12px_24px_rgba(102,77,48,0.08),inset_0_1px_0_rgba(255,255,255,0.4)]',
+        'rounded-xl border p-3 shadow-md',
         isSelected
-          ? 'border-[#c8ab82] bg-[linear-gradient(180deg,_#fbf3e6_0%,_#f1dfc8_100%)]'
-          : 'border-[#d9c8b4] bg-[linear-gradient(180deg,_#fff9f1_0%,_#f7ecde_100%)]',
+          ? 'border-bd-border-strong bg-bd-surface-muted'
+          : 'border-bd-border bg-bd-surface',
       ].join(' ')}
     >
       <button
@@ -34,11 +34,11 @@ export function ItemLibraryDuplicateGroupCard({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#917b62]">Possible duplicates</div>
-            <h3 className="mt-1 text-[14px] font-extrabold leading-tight text-[#2d2319]">{group.label}</h3>
-            <p className="mt-1 text-[11px] leading-relaxed text-[#8c7964]">{group.reason}</p>
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Possible duplicates</div>
+            <h3 className="mt-1 text-[14px] font-extrabold leading-tight text-bd-text">{group.label}</h3>
+            <p className="mt-1 text-[11px] leading-relaxed text-bd-text-muted">{group.reason}</p>
           </div>
-          <div className="rounded-full border border-[#d3bea1] bg-[#efe0cb] px-2.5 py-1 font-['JetBrains_Mono'] text-[10px] font-bold text-[#6b5138]">
+          <div className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 font-mono text-[10px] font-bold text-bd-text">
             {group.members.length} names
           </div>
         </div>
@@ -53,22 +53,22 @@ export function ItemLibraryDuplicateGroupCard({
               type="button"
               onClick={() => onInspectItem(group.group_id, member.item_id)}
               className={[
-                'w-full rounded-[12px] border px-3 py-2 text-left transition-all duration-150',
+                'w-full rounded-lg border px-3 py-2 text-left transition-all duration-150',
                 memberSelected
-                  ? 'border-[#b58d63] bg-[#ead7be] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
-                  : 'border-[#ddd0bf] bg-[#fffaf3] hover:bg-[#f8efe2]',
+                  ? 'border-bd-button-primary-bg bg-bd-surface-muted shadow-sm'
+                  : 'border-bd-border bg-bd-surface hover:bg-bd-surface-muted',
               ].join(' ')}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-[12px] font-semibold text-[#31261b]">{member.name}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[#8b7761]">
+                  <div className="truncate text-[12px] font-semibold text-bd-text">{member.name}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-bd-text-muted">
                     <span>{formatCompactUsageCount(member.usage_count)}</span>
                     <span>•</span>
                     <span>{formatLastUsedDate(member.last_used_at)}</span>
                   </div>
                 </div>
-                <div className="font-['JetBrains_Mono'] text-[11px] font-semibold text-[#5e4935]">
+                <div className="font-mono text-[11px] font-semibold text-bd-text opacity-90">
                   {formatItemPrice(member.last_sold_price, 'No sales yet')}
                 </div>
               </div>

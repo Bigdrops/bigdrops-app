@@ -28,7 +28,7 @@ type ItemLibraryDuplicateMergeCardProps = {
 
 function PreviewPill({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full border border-[#d6c2a8] bg-[#f4e6d2] px-2.5 py-1 text-[10px] font-semibold text-[#6b5238] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+    <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 text-[10px] font-semibold text-bd-text shadow-sm">
       {children}
     </span>
   )
@@ -105,18 +105,18 @@ export function ItemLibraryDuplicateMergeCard({
   }
 
   return (
-    <section className="mt-4 rounded-[16px] border border-[#d6c2a8] bg-[linear-gradient(180deg,_#fff8ef_0%,_#f7ecde_100%)] p-4 shadow-[0_18px_30px_rgba(92,68,41,0.08)]">
+    <section className="mt-4 rounded-xl border border-bd-border bg-bd-surface p-4 shadow-lg">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#917a61]">Manual merge</div>
-          <h3 className="mt-1 text-[16px] font-extrabold text-[#2d2319]">Choose primary item</h3>
-          <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-[#8b7863]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Manual merge</div>
+          <h3 className="mt-1 text-[16px] font-extrabold text-bd-text">Choose primary item</h3>
+          <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-bd-text-muted">
             Review the similar names below, keep one primary item active, and merge the others into it. This only
             relinks catalog references. Historical document descriptions stay unchanged.
           </p>
         </div>
 
-        <div className="rounded-full border border-[#d8c3a8] bg-[#efe1cd] px-3 py-1 font-['JetBrains_Mono'] text-[10px] font-bold text-[#6b5038]">
+        <div className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1 font-mono text-[10px] font-bold text-bd-text">
           {group.members.length} candidates
         </div>
       </div>
@@ -131,12 +131,12 @@ export function ItemLibraryDuplicateMergeCard({
             <div
               key={member.item_id}
               className={[
-                'rounded-[14px] border p-3 transition-all duration-150',
+                'rounded-lg border p-3 transition-all duration-150',
                 isWinner
-                  ? 'border-[#c49d70] bg-[#f1ddc1] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
+                  ? 'border-bd-border-strong bg-bd-surface-muted shadow-sm'
                   : isInspected
-                    ? 'border-[#cfb391] bg-[#f8eddc]'
-                    : 'border-[#dfd0be] bg-[#fffaf3]',
+                    ? 'border-bd-border bg-bd-surface/50'
+                    : 'border-bd-border bg-bd-surface',
               ].join(' ')}
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -149,8 +149,8 @@ export function ItemLibraryDuplicateMergeCard({
                         className={[
                           'relative rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-all duration-200',
                           isWinner
-                            ? 'border-[#8b6845] bg-[#8b6845] text-[#fffcf9] shadow-[0_4px_12px_rgba(139,104,69,0.3)]'
-                            : 'border-[#d7c4ab] bg-[#f7efe3] text-[#907b64] hover:bg-[#efe1cf]',
+                            ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm'
+                            : 'border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface',
                         ].join(' ')}
                       >
                         {isWinner ? (
@@ -166,11 +166,11 @@ export function ItemLibraryDuplicateMergeCard({
                       </button>
                       <div className={[
                         "truncate text-[13px] font-bold transition-colors",
-                        isWinner ? "text-[#2f2419]" : "text-[#5e4a36]"
+                        isWinner ? "text-bd-text" : "text-bd-text-muted"
                       ].join(' ')}>{member.name}</div>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#8d7a65]">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-bd-text-muted">
                       <PreviewPill>{formatCompactUsageCount(member.usage_count)} uses</PreviewPill>
                       <PreviewPill>{formatItemPrice(member.last_sold_price, 'No sales')}</PreviewPill>
                       <span className="opacity-60">{formatLastUsedDate(member.last_used_at)}</span>
@@ -179,13 +179,13 @@ export function ItemLibraryDuplicateMergeCard({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="inline-flex items-center gap-2 rounded-full border border-[#d8c5ad] bg-[#fbf5ec] px-3 py-1.5 text-[11px] font-semibold text-[#6d543b]">
+                  <label className="inline-flex items-center gap-2 rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-semibold text-bd-text">
                     <input
                       type="checkbox"
                       checked={isMerged}
                       disabled={isWinner}
                       onChange={() => handleToggleMerged(member.item_id)}
-                      className="h-3.5 w-3.5 rounded border-[#b89a76] text-[#8b6845] focus:ring-[#8b6845]"
+                      className="h-3.5 w-3.5 rounded border-bd-input-border text-bd-button-primary-bg focus:ring-bd-input-focus"
                     />
                     Merge into primary
                   </label>
@@ -196,8 +196,8 @@ export function ItemLibraryDuplicateMergeCard({
                     className={[
                       'rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors',
                       isInspected
-                        ? 'border-[#c29a6e] bg-[#ead7be] text-[#5f4730]'
-                        : 'border-[#d8c5ad] bg-[#fff8ef] text-[#8b745c] hover:bg-[#f4e7d4]',
+                        ? 'border-bd-border-strong bg-bd-surface text-bd-text'
+                        : 'border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface',
                     ].join(' ')}
                   >
                     Inspect history
@@ -209,16 +209,16 @@ export function ItemLibraryDuplicateMergeCard({
         })}
       </div>
 
-      <div className="mt-4 rounded-[14px] border border-[#dbc8ae] bg-[#fcf7ef] p-4 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="mt-4 rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-inner">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#947f67]">Consolidation Plan</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Consolidation Plan</div>
             <div className="mt-1 flex items-center gap-2">
-              <span className="text-[14px] font-bold text-[#2f2419]">
+              <span className="text-[14px] font-bold text-bd-text">
                 {preview?.winner.name || 'Choose a primary item'}
               </span>
               {preview && (
-                 <span className="rounded-full bg-[#8b6845] px-2 py-0.5 text-[9px] font-bold text-white">PRIMARY</span>
+                 <span className="rounded-full bg-bd-button-primary-bg px-2 py-0.5 text-[9px] font-bold text-bd-button-primary-text">PRIMARY</span>
               )}
             </div>
           </div>
@@ -227,48 +227,48 @@ export function ItemLibraryDuplicateMergeCard({
             type="button"
             disabled={disableMerge}
             onClick={() => setConfirmOpen(true)}
-            className="rounded-[10px] border border-[#c5a074] bg-[#e7d2b3] px-5 py-2.5 text-[12px] font-bold text-[#523b25] shadow-[0_12px_22px_rgba(92,68,41,0.12),inset_0_1px_0_rgba(255,255,255,0.5)] transition-all duration-200 hover:bg-[#dcc39f] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-transparent bg-bd-button-primary-bg px-5 py-2.5 text-[12px] font-bold text-bd-button-primary-text shadow-sm transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Confirm merge
           </button>
         </div>
 
         {aliasesLoading ? (
-          <p className="mt-3 text-[11px] text-[#8b7863]">Loading existing aliases for this group…</p>
+          <p className="mt-3 text-[11px] text-bd-text-muted">Loading existing aliases for this group…</p>
         ) : null}
 
         {aliasesError ? (
-          <p className="mt-3 rounded-[10px] border border-[#e4c3ba] bg-[#fff2ee] px-3 py-2 text-[11px] text-[#9c4338]">
+          <p className="mt-3 rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-2 text-[11px] text-bd-status-danger-text">
             We could not load alias details yet, so merge confirmation is paused until that finishes cleanly.
           </p>
         ) : null}
 
         {submissionError ? (
-          <p className="mt-3 rounded-[10px] border border-[#e4c3ba] bg-[#fff2ee] px-3 py-2 text-[11px] text-[#9c4338]">
+          <p className="mt-3 rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-2 text-[11px] text-bd-status-danger-text">
             {submissionError}
           </p>
         ) : null}
 
         {preview ? (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Primary item</div>
-              <div className="mt-2 text-[13px] font-bold text-[#2f2419]">{preview.winner.name}</div>
-              <div className="mt-1 font-['JetBrains_Mono'] text-[11px] text-[#8c7762]">{preview.winner.item_id}</div>
+            <div className="rounded-md border border-bd-border bg-bd-surface p-3">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Primary item</div>
+              <div className="mt-2 text-[13px] font-bold text-bd-text">{preview.winner.name}</div>
+              <div className="mt-1 font-mono text-[11px] text-bd-text-muted opacity-60">{preview.winner.item_id}</div>
             </div>
 
-            <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">History relinks</div>
-              <div className="mt-2 text-[13px] font-bold text-[#2f2419]">
+            <div className="rounded-md border border-bd-border bg-bd-surface p-3">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">History relinks</div>
+              <div className="mt-2 text-[13px] font-bold text-bd-text">
                 {preview.relinkedHistoryRows.toLocaleString()} linked {preview.relinkedHistoryRows === 1 ? 'row' : 'rows'}
               </div>
-              <p className="mt-1 text-[11px] text-[#8b7761]">
+              <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">
                 Invoice and quotation `item_id` references will move to the selected primary item.
               </p>
             </div>
 
-            <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Merge into primary</div>
+            <div className="rounded-md border border-bd-border bg-bd-surface p-3">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Merge into primary</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {preview.mergedMembers.map((member) => (
                   <PreviewPill key={member.item_id}>{member.name}</PreviewPill>
@@ -276,19 +276,19 @@ export function ItemLibraryDuplicateMergeCard({
               </div>
             </div>
 
-            <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Aliases kept</div>
+            <div className="rounded-md border border-bd-border bg-bd-surface p-3">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Aliases kept</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {preview.aliasesToKeep.length ? (
                   preview.aliasesToKeep.map((alias) => <PreviewPill key={alias}>{alias}</PreviewPill>)
                 ) : (
-                  <span className="text-[11px] text-[#917d68]">No extra aliases will be added from this selection.</span>
+                  <span className="text-[11px] text-bd-text-muted">No extra aliases will be added from this selection.</span>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[12px] border border-[#dfcfbd] bg-[#fffaf3] p-3 md:col-span-2">
-              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98826a]">Retired catalog items</div>
+            <div className="rounded-md border border-bd-border bg-bd-surface p-3 md:col-span-2">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Retired catalog items</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {preview.retiredItems.map((member) => (
                   <PreviewPill key={member.item_id}>{member.name}</PreviewPill>
@@ -297,30 +297,31 @@ export function ItemLibraryDuplicateMergeCard({
             </div>
           </div>
         ) : (
-          <p className="mt-3 text-[11px] text-[#8b7863]">
+          <p className="mt-3 text-[11px] text-bd-text-muted">
             Select one primary item and at least one duplicate item to merge before confirming.
           </p>
         )}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-bd-border bg-bd-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm merge</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-bd-text">Confirm merge</AlertDialogTitle>
+            <AlertDialogDescription className="text-bd-text-muted">
               {preview
                 ? `${preview.mergedMembers.length} item name${preview.mergedMembers.length === 1 ? '' : 's'} will be merged into ${preview.winner.name}. Document descriptions stay as they were recorded; only catalog links and aliases are updated.`
                 : 'Review the merge preview before confirming.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={mergeLoading}>Keep reviewing</AlertDialogCancel>
+            <AlertDialogCancel disabled={mergeLoading} className="rounded-lg border-bd-border bg-bd-surface text-bd-text hover:bg-bd-surface-muted">Keep reviewing</AlertDialogCancel>
             <AlertDialogAction
               disabled={disableMerge}
               onClick={(event) => {
                 event.preventDefault()
                 void handleConfirmMerge()
               }}
+              className="rounded-lg border-transparent bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
             >
               {mergeLoading ? 'Merging…' : 'Apply merge'}
             </AlertDialogAction>
