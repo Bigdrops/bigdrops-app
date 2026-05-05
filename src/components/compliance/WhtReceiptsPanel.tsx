@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,19 +13,12 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { 
-  FileText, 
   ReceiptIcon, 
-  PlusCircle, 
-  ExternalLink,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   Loader2,
   FileJson
 } from 'lucide-react'
@@ -34,7 +26,9 @@ import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
-import { getStatusClasses } from '@/lib/statusTheme'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
+import WhtReceiptStatusStrip from './WhtReceiptStatusStrip'
+import WhtReceiptQueueRow, { type WhtPaymentRecord, type WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
 
 interface WhtReceiptsPanelProps {
   payments: any[]
@@ -43,33 +37,135 @@ interface WhtReceiptsPanelProps {
   onReceiptsChanged?: () => void
 }
 
-const statusToneMap: Record<WhtReceiptStatus, string> = {
-  pending: 'neutral',
-  requested: 'warning',
-  received: 'info',
-  verified: 'success'
+const statusRank: Record<'untracked' | WhtReceiptStatus, number> = {
+  untracked: 1,
+  requested: 2,
+  pending: 3,
+  received: 4,
+  verified: 5,
 }
 
 export default function WhtReceiptsPanel({ payments, receipts, loading, onReceiptsChanged }: WhtReceiptsPanelProps) {
+  const { isMobile } = useLayoutMode()
   const [localReceipts, setLocalReceipts] = useState<WhtReceipt[]>(receipts)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<WhtReceiptQueueEntry | null>(null)
+  const [draftStatus, setDraftStatus] = useState<WhtReceiptStatus>('pending')
+  const [draftReceiptNumber, setDraftReceiptNumber] = useState('')
+  const [draftNotes, setDraftNotes] = useState('')
 
-  const whtPayments = payments.filter(p => Number(p.wht_amount || 0) > 0)
+  useEffect(() => {
+    if (!loading) {
+      setLocalReceipts(receipts)
+    }
+  }, [loading, receipts])
 
-  // Sync prop changes to local state
-  if (receipts.length !== localReceipts.length && !loading) {
-    setLocalReceipts(receipts)
+  const whtPayments = useMemo<WhtPaymentRecord[]>(
+    () => payments.filter((payment) => Number(payment.wht_amount || 0) > 0),
+    [payments],
+  )
+
+  const paymentById = useMemo(
+    () => new Map(whtPayments.map((payment) => [payment.id, payment])),
+    [whtPayments],
+  )
+
+  const receiptByPaymentId = useMemo(
+    () => new Map(localReceipts.map((receipt) => [receipt.payment_id, receipt])),
+    [localReceipts],
+  )
+
+  const queueEntries = useMemo(() => {
+    const untracked = whtPayments
+      .filter((payment) => !receiptByPaymentId.has(payment.id))
+      .map<WhtReceiptQueueEntry>((payment) => ({
+        id: `untracked-${payment.id}`,
+        rank: statusRank.untracked,
+        status: 'untracked',
+        actionLabel: 'Initialize tracking',
+        payment,
+        receipt: null,
+      }))
+
+    const tracked = localReceipts.map<WhtReceiptQueueEntry>((receipt) => {
+      const payment = paymentById.get(receipt.payment_id) || {
+        id: receipt.payment_id,
+        invoice_id: receipt.invoice_id,
+        invoice_number: receipt.invoice_id ? 'Invoice record' : null,
+        client_name: receipt.client_name,
+        date: receipt.received_at || receipt.created_at,
+        wht_amount: receipt.wht_amount,
+      }
+
+      const actionLabel =
+        receipt.receipt_status === 'received'
+          ? 'Verify / Review'
+          : receipt.receipt_status === 'verified'
+            ? 'View details'
+            : 'Update receipt'
+
+      return {
+        id: receipt.id,
+        rank: statusRank[receipt.receipt_status],
+        status: receipt.receipt_status,
+        actionLabel,
+        payment,
+        receipt,
+      }
+    })
+
+    return [...untracked, ...tracked].sort((left, right) => {
+      if (left.rank !== right.rank) return left.rank - right.rank
+
+      const leftDate = left.payment.date ? new Date(left.payment.date).getTime() : Number.POSITIVE_INFINITY
+      const rightDate = right.payment.date ? new Date(right.payment.date).getTime() : Number.POSITIVE_INFINITY
+
+      if (leftDate !== rightDate) return leftDate - rightDate
+
+      return Number(right.payment.wht_amount || 0) - Number(left.payment.wht_amount || 0)
+    })
+  }, [localReceipts, paymentById, receiptByPaymentId, whtPayments])
+
+  const counts = useMemo(
+    () => ({
+      untracked: queueEntries.filter((entry) => entry.status === 'untracked').length,
+      requested: queueEntries.filter((entry) => entry.status === 'requested').length,
+      pending: queueEntries.filter((entry) => entry.status === 'pending').length,
+      received: queueEntries.filter((entry) => entry.status === 'received').length,
+      verified: queueEntries.filter((entry) => entry.status === 'verified').length,
+    }),
+    [queueEntries],
+  )
+
+  const attentionEntries = queueEntries.filter((entry) => entry.status !== 'verified')
+  const verifiedEntries = queueEntries.filter((entry) => entry.status === 'verified')
+  const showTrackedSuccessState =
+    whtPayments.length > 0 && attentionEntries.length === 0 && verifiedEntries.length > 0
+
+  const openEntry = (entry: WhtReceiptQueueEntry) => {
+    setSelectedEntry(entry)
+    setDraftStatus(entry.receipt?.receipt_status || 'pending')
+    setDraftReceiptNumber(entry.receipt?.receipt_number || '')
+    setDraftNotes(entry.receipt?.notes || '')
   }
 
-  async function initializeRecord(payment: any) {
+  const closeSheet = () => {
+    setSelectedEntry(null)
+    setDraftStatus('pending')
+    setDraftReceiptNumber('')
+    setDraftNotes('')
+  }
+
+  async function initializeRecord(payment: WhtPaymentRecord) {
     try {
       setProcessingId(payment.id)
+      const nextWhtAmount = payment.wht_amount == null ? null : Number(payment.wht_amount)
       const newRecord: Partial<WhtReceipt> = {
         payment_id: payment.id,
         invoice_id: payment.invoice_id,
         client_name: payment.client_name,
-        wht_amount: payment.wht_amount,
+        wht_amount: Number.isFinite(nextWhtAmount) ? nextWhtAmount : null,
         receipt_status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -83,14 +179,18 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
       if (error) throw error
       if (data) {
-        setLocalReceipts([...localReceipts, data])
+        setLocalReceipts((current) => [...current, data])
+        onReceiptsChanged?.()
         feedback.success('WHT tracking initialized')
+        return data
       }
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'create' }))
     } finally {
       setProcessingId(null)
     }
+
+    return null
   }
 
   async function updateRecord(receipt: WhtReceipt, updates: Partial<WhtReceipt>) {
@@ -105,14 +205,62 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
       if (error) throw error
       if (data) {
-        setLocalReceipts(localReceipts.map(r => r.id === data.id ? data : r))
+        setLocalReceipts((current) => current.map((row) => (row.id === data.id ? data : row)))
+        onReceiptsChanged?.()
         feedback.success('Receipt updated')
+        return data
       }
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'update' }))
     } finally {
       setProcessingId(null)
     }
+
+    return null
+  }
+
+  const handleSave = async () => {
+    if (!selectedEntry) return
+
+    if (!selectedEntry.receipt) {
+      const created = await initializeRecord(selectedEntry.payment)
+      if (!created) return
+
+      setSelectedEntry({
+        ...selectedEntry,
+        id: created.id,
+        status: created.receipt_status,
+        actionLabel: 'Update receipt',
+        receipt: created,
+      })
+      setDraftStatus(created.receipt_status)
+      setDraftReceiptNumber(created.receipt_number || '')
+      setDraftNotes(created.notes || '')
+      return
+    }
+
+    const nextReceiptNumber = draftReceiptNumber.trim() || null
+    const nextNotes = draftNotes.trim() || null
+    const updates: Partial<WhtReceipt> = {}
+
+    if (draftStatus !== selectedEntry.receipt.receipt_status) {
+      updates.receipt_status = draftStatus
+    }
+    if (nextReceiptNumber !== (selectedEntry.receipt.receipt_number || null)) {
+      updates.receipt_number = nextReceiptNumber
+    }
+    if (nextNotes !== (selectedEntry.receipt.notes || null)) {
+      updates.notes = nextNotes
+    }
+
+    if (Object.keys(updates).length === 0) {
+      closeSheet()
+      return
+    }
+
+    const updated = await updateRecord(selectedEntry.receipt, updates)
+    if (!updated) return
+    closeSheet()
   }
 
   if (loading) {
@@ -128,229 +276,237 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
   return (
     <div className="space-y-4">
-      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))]">
-        <CardHeader className="border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
+      <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
             <ReceiptIcon className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))]" />
-            WHT Deductions Tracking
-          </CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest">
+              WHT Receipts
+            </h3>
+            <p className="text-sm text-[hsl(var(--bd-text-muted))]">
+              Track missing, requested, received, and verified withholding tax evidence.
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+            className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+          >
             <FileJson className="h-3 w-3 mr-1.5" />
             Import JSON
           </Button>
-        </CardHeader>
-        <CardContent className="p-4">
-          {whtPayments.length === 0 ? (
-            <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-10 text-center">
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT recorded</div>
-              <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">No payments with WHT deductions have been recorded yet.</div>
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {whtPayments.map((p) => {
-                const receipt = localReceipts.find(r => r.payment_id === p.id)
-                const isProcessing = processingId === p.id
+        </div>
 
-                return (
-                  <div
-                    key={p.id}
-                    className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm transition-colors hover:bg-[hsl(var(--bd-surface-muted))]"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">
-                          {p.invoice_id ? (
+        <div className="space-y-4 p-4">
+          <WhtReceiptStatusStrip counts={counts} />
+
+          <section className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm">
+            <div className="flex flex-col gap-2 border-b border-[hsl(var(--bd-border))] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">Attention Queue</h4>
+                <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                  Untracked payments and follow-up receipts are ordered ahead of cleared evidence.
+                </p>
+              </div>
+              {counts.pending > 0 ? (
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+                  {counts.pending} pending in follow-up
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-3 p-4">
+              {whtPayments.length === 0 && localReceipts.length === 0 ? (
+                <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-10 text-center">
+                  <p className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT receipt tracking yet.</p>
+                  <p className="mt-2 text-sm text-[hsl(var(--bd-text-muted))]">
+                    WHT receipt actions will appear here when payments include WHT deductions.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {showTrackedSuccessState ? (
+                    <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-4">
+                      <p className="text-sm font-bold text-[hsl(var(--bd-status-success-text))]">All WHT receipts are tracked.</p>
+                      <p className="mt-1 text-sm text-[hsl(var(--bd-status-success-text))]">
+                        No missing or requested receipts need attention.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {attentionEntries.length > 0 ? (
+                    <div className="space-y-3">
+                      {attentionEntries.map((entry) => (
+                        <WhtReceiptQueueRow
+                          key={entry.id}
+                          entry={entry}
+                          onOpen={openEntry}
+                          processing={processingId === entry.payment.id}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {verifiedEntries.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between pt-2">
+                        <h5 className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+                          Verified receipts
+                        </h5>
+                        <span className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))]">{verifiedEntries.length} cleared</span>
+                      </div>
+                      {verifiedEntries.map((entry) => (
+                        <WhtReceiptQueueRow
+                          key={entry.id}
+                          entry={entry}
+                          onOpen={openEntry}
+                          processing={processingId === entry.payment.id}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <Sheet open={!!selectedEntry} onOpenChange={(open) => !open && closeSheet()}>
+        <SheetContent
+          side={isMobile ? 'bottom' : 'right'}
+          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl"
+        >
+          {selectedEntry ? (
+            <>
+              <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
+                <SheetTitle>WHT Receipt Detail</SheetTitle>
+                <SheetDescription>
+                  Review payment context, update receipt status, and manage evidence notes.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto px-5 py-5">
+                <div className="space-y-5">
+                  <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Client</p>
+                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                          {selectedEntry.payment.client_name || selectedEntry.receipt?.client_name || 'Unknown client'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Invoice</p>
+                        <div className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                          {selectedEntry.payment.invoice_id ? (
                             <Link
-                              to={`/invoices/${p.invoice_id}`}
+                              to={`/invoices/${selectedEntry.payment.invoice_id}`}
                               className="transition-colors hover:text-[hsl(var(--bd-button-primary-bg))] hover:underline"
                             >
-                              {p.invoice_number || '—'}
+                              {selectedEntry.payment.invoice_number || 'Invoice record'}
                             </Link>
                           ) : (
-                            p.invoice_number || '—'
+                            selectedEntry.payment.invoice_number || 'Payment-linked WHT'
                           )}
                         </div>
-                        <div className="truncate text-[11px] text-[hsl(var(--bd-text-muted))]">{p.client_name || '—'}</div>
                       </div>
-                      
-                      {receipt ? (
-                        <Badge variant="outline" className={`${getStatusClasses(statusToneMap[receipt.receipt_status] as any)} text-[9px] font-bold uppercase rounded-full`}>
-                          {receipt.receipt_status}
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[9px] font-bold uppercase text-[hsl(var(--bd-text-muted))]"
-                        >
-                          Untracked
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mt-4">
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-tight text-[hsl(var(--bd-text-muted))]">WHT Amount</div>
-                        <div className="text-base font-black text-[hsl(var(--bd-status-danger-text))]">{formatNaira(p.wht_amount)}</div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Payment date</p>
+                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                          {selectedEntry.payment.date ? formatDisplayDate(selectedEntry.payment.date) : 'No payment date'}
+                        </p>
                       </div>
-                      <div className="flex flex-col justify-end items-end">
-                        {receipt ? (
-                          <Sheet>
-                            <SheetTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 rounded-full px-3 text-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-button-primary-bg))]"
-                              >
-                                {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3 mr-1" />}
-                                Manage
-                              </Button>
-                            </SheetTrigger>
-                            <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl">
-                              <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
-                                <SheetTitle>WHT Receipt Detail</SheetTitle>
-                                <SheetDescription>
-                                  Manage certification for {p.invoice_number || 'this payment'}.
-                                </SheetDescription>
-                              </SheetHeader>
-                              <div className="flex-1 overflow-y-auto px-6 py-6">
-                                <div className="space-y-6">
-                                  <div className="space-y-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-4">
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="text-[hsl(var(--bd-text-muted))]">Amount Withheld</span>
-                                      <span className="font-bold text-[hsl(var(--bd-status-danger-text))]">{formatNaira(p.wht_amount)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="text-[hsl(var(--bd-text-muted))]">Payment Date</span>
-                                      <span className="font-semibold text-[hsl(var(--bd-text))]">{formatDisplayDate(p.date)}</span>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Current Status</Label>
-                                      <div className="flex flex-wrap gap-2">
-                                        {(['pending', 'requested', 'received', 'verified'] as WhtReceiptStatus[]).map((s) => (
-                                          <Button
-                                            key={s}
-                                            variant={receipt.receipt_status === s ? 'default' : 'outline'}
-                                            size="sm"
-                                            className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-[0.14em]"
-                                            onClick={() => updateRecord(receipt, { receipt_status: s })}
-                                            disabled={isProcessing}
-                                          >
-                                            {s.charAt(0).toUpperCase() + s.slice(1)}
-                                          </Button>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                      <Label htmlFor="receipt_number" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
-                                        Credential / Receipt Number
-                                      </Label>
-                                      <Input 
-                                        id="receipt_number"
-                                        placeholder="e.g. FIRS-12345"
-                                        defaultValue={receipt.receipt_number || ''}
-                                        onBlur={(e) => {
-                                          if (e.target.value !== receipt.receipt_number) {
-                                            updateRecord(receipt, { receipt_number: e.target.value })
-                                          }
-                                        }}
-                                        className="h-10"
-                                      />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Notes</Label>
-                                      <Textarea
-                                      placeholder="Add follow-up notes..."
-                                      defaultValue={receipt.notes || ''}
-                                      onBlur={(e) => {
-                                        if (e.target.value !== receipt.notes) {
-                                          updateRecord(receipt, { notes: e.target.value })
-                                        }
-                                      }}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
-                                <SheetClose asChild>
-                                  <Button variant="outline" className="h-10 sm:min-w-28">
-                                    Done
-                                  </Button>
-                                </SheetClose>
-                              </SheetFooter>
-                            </SheetContent>
-                          </Sheet>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 rounded-full px-3"
-                            onClick={() => initializeRecord(p)}
-                            disabled={isProcessing}
-                          >
-                            {isProcessing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <PlusCircle className="h-3 w-3 mr-1" />}
-                            Initialize
-                          </Button>
-                        )}
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">WHT amount</p>
+                        <p className="mt-1 text-sm font-black text-[hsl(var(--bd-status-danger-text))]">
+                          {formatNaira(selectedEntry.payment.wht_amount)}
+                        </p>
                       </div>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-text-muted))]">Pending</div>
-            <div className="text-lg font-black text-[hsl(var(--bd-text))]">
-              {localReceipts.filter(r => r.receipt_status === 'pending').length}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] p-4 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-status-warning-text))]">
-            <AlertCircle className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-status-warning-text))]">Requested</div>
-            <div className="text-lg font-black text-[hsl(var(--bd-status-warning-text))]">
-              {localReceipts.filter(r => r.receipt_status === 'requested').length}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] p-4 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-status-success-text))]">
-            <CheckCircle2 className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase text-[hsl(var(--bd-status-success-text))]">Verified</div>
-            <div className="text-lg font-black text-[hsl(var(--bd-status-success-text))]">
-              {localReceipts.filter(r => r.receipt_status === 'verified' || r.receipt_status === 'received').length}
-            </div>
-          </div>
-        </div>
-      </div>
+                  <div className="space-y-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                    <div className="space-y-2">
+                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Current receipt status</Label>
+                      {selectedEntry.receipt ? (
+                        <div className="flex flex-wrap gap-2">
+                          {(['pending', 'requested', 'received', 'verified'] as WhtReceiptStatus[]).map((status) => (
+                            <Button
+                              key={status}
+                              type="button"
+                              variant={draftStatus === status ? 'default' : 'outline'}
+                              className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-[0.18em]"
+                              onClick={() => setDraftStatus(status)}
+                              disabled={processingId === selectedEntry.payment.id}
+                            >
+                              {status}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-3 text-sm text-[hsl(var(--bd-status-warning-text))]">
+                          Initializing tracking will create a pending receipt record for this payment.
+                        </div>
+                      )}
+                    </div>
 
-      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
-        <CardContent className="flex items-center gap-3 p-4">
-          <FileText className="h-5 w-5 text-[hsl(var(--bd-text-muted))]" />
-          <div className="text-xs text-[hsl(var(--bd-text-muted))]">
-            <span className="font-bold text-[hsl(var(--bd-text))]">Storage Tip:</span> WHT Receipt records initialized here help track the lifecycle of tax deduction evidence needed for CIT audits.
-          </div>
-        </CardContent>
-      </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="wht-receipt-number" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                        Receipt reference / number
+                      </Label>
+                      <Input
+                        id="wht-receipt-number"
+                        value={draftReceiptNumber}
+                        onChange={(event) => setDraftReceiptNumber(event.target.value)}
+                        placeholder="e.g. FIRS-12345"
+                        disabled={!selectedEntry.receipt || processingId === selectedEntry.payment.id}
+                        className="h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="wht-receipt-notes" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                        Notes
+                      </Label>
+                      <Textarea
+                        id="wht-receipt-notes"
+                        value={draftNotes}
+                        onChange={(event) => setDraftNotes(event.target.value)}
+                        placeholder="Add follow-up notes..."
+                        disabled={!selectedEntry.receipt || processingId === selectedEntry.payment.id}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+                <SheetClose asChild>
+                  <Button variant="outline" className="h-10 sm:min-w-28">
+                    Cancel
+                  </Button>
+                </SheetClose>
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={processingId === selectedEntry.payment.id}
+                  className="h-10 sm:min-w-36"
+                >
+                  {!selectedEntry.receipt
+                    ? 'Initialize tracking'
+                    : processingId === selectedEntry.payment.id
+                      ? 'Saving...'
+                      : 'Save changes'}
+                </Button>
+              </SheetFooter>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+
       <ComplianceJsonImportSheet 
         open={importOpen}
         onOpenChange={setImportOpen}
