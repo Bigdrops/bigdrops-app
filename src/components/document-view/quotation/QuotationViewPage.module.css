@@ -5,31 +5,32 @@
   padding-bottom: calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 64px);
 }
 
-.actionStack {
+.documentBody {
+  margin-top: 24px;
+  background: var(--dv-surface);
+  border: 1px solid var(--dv-border);
+  border-radius: var(--dv-radius-xl);
+  box-shadow: var(--dv-shadow);
+}
+
+.stack > :first-child {
   margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .previewControls {
-  display: grid;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
 }
 
 .supportingArea {
-  display: grid;
-  gap: 16px;
-  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .section {
-  border: 1px solid hsl(var(--bd-border));
-  border-radius: 24px;
-  background: hsl(var(--bd-surface));
-  padding: 18px;
-  box-shadow: 0 18px 36px -32px hsl(var(--bd-shadow-color, 220 35% 12%) / 0.2);
+  margin-top: 28px;
 }
 
 .sectionHd {

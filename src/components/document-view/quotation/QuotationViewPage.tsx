@@ -1,7 +1,6 @@
 import { Paperclip } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import DocumentSection from '../shared/DocumentSection'
 import DocumentRelatedDocsSection, { type RelatedDocumentItem } from '../shared/DocumentRelatedDocsSection'
 import type { BaseDocument } from '../types/documentView'
 import QuotationPrimaryActions from './QuotationPrimaryActions'
@@ -61,13 +60,11 @@ export default function QuotationViewPage({
 
   return (
     <div className={styles.stack}>
-      <div className={styles.actionStack}>
-        <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} onDownload={onDownload} />
-      </div>
+      <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} onDownload={onDownload} />
 
-      <DocumentSection title="Quotation Document">
+      <div className={styles.documentBody}>
         {previewContent}
-      </DocumentSection>
+      </div>
 
       {previewControls ? (
         <div className={styles.previewControls}>

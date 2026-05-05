@@ -6,7 +6,6 @@ import AuditTrailPanel from '@/components/audit/AuditTrailPanel'
 import QuotationDocumentPreview from '@/components/document-view/quotation/QuotationDocumentPreview'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import QuotationHeroMeta from '@/components/document-view/quotation/QuotationHeroMeta'
 import QuotationMoreSheet from '@/components/document-view/quotation/QuotationMoreSheet'
 import QuotationViewPage from '@/components/document-view/quotation/QuotationViewPage'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
@@ -640,7 +639,7 @@ export default function ViewQuotation() {
     title: quotation.quotation_title || 'Quotation',
     status: (quotation.status || 'open') as any,
   }
-  const quotationHeroTag = quotation.quotation_title || quotation.client_name || ''
+  const quotationHeroSubtitle = quotation.quotation_title || quotation.client_name || 'No client specified'
 
   return (
     <>
@@ -667,11 +666,10 @@ export default function ViewQuotation() {
         }
         hero={
           <DocumentHero
-            eyebrow={quotation.quotation_title || 'Quotation'}
+            eyebrow="Quotation"
             title={docProps.number}
-            subtitle={quotation.client_name || 'No client specified'}
+            subtitle={quotationHeroSubtitle}
             status={docProps.status}
-            meta={quotationHeroTag ? <QuotationHeroMeta threadTag={quotationHeroTag} /> : undefined}
           />
         }
         floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
