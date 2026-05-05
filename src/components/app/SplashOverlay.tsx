@@ -42,11 +42,14 @@ export default function SplashOverlay({
         className,
       )}
     >
-      <div className="relative flex w-full max-w-sm flex-col items-center">
+      <div className="relative flex w-full max-w-3xl flex-col items-center">
         <div
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[280px] w-[280px] -translate-x-1/2 -translate-y-[52%] rounded-full',
+            'pointer-events-none absolute left-1/2 top-1/2 -z-10 rounded-full',
+            'h-[280px] w-[280px] -translate-x-1/2 -translate-y-[52%]',
+            'sm:h-[360px] sm:w-[360px]',
+            'md:h-[460px] md:w-[460px]',
             'bg-[radial-gradient(circle,hsl(var(--primary)_/_0.12)_0%,hsl(var(--primary)_/_0.06)_34%,transparent_74%)]',
             'animate-[bd-halo_3.2s_ease-in-out_infinite]',
           )}
@@ -58,13 +61,15 @@ export default function SplashOverlay({
           <h1
             className={cn(
               'brand-wordmark text-[34px] font-semibold tracking-[-0.04em] text-foreground',
+              'sm:text-[40px]',
+              'md:text-[44px]',
               circuitPosition === 'above' ? 'mt-3' : '',
             )}
           >
             BigDrops
           </h1>
 
-          <p className="mt-2 text-center text-[15px] leading-6 text-muted-foreground">
+          <p className="mt-2 text-center text-[15px] leading-6 text-muted-foreground sm:text-[16px]">
             {tip}
           </p>
 
@@ -79,54 +84,164 @@ export default function SplashOverlay({
 
 function SplashCircuit() {
   return (
-    <div aria-hidden="true" className="relative h-[150px] w-[320px] overflow-visible">
-      <CircuitBoard
-        width={320}
-        height={150}
-        showGrid={false}
-        variant="auto"
-        pulseSpeed={1.6}
-        traceWidth={2}
-        nodes={[
-          {
-            id: 'session',
-            x: 50,
-            y: 75,
-            label: 'Session',
-            status: 'active',
-            size: 'sm',
-          },
-          {
-            id: 'auth',
-            x: 160,
-            y: 45,
-            label: 'Auth',
-            status: 'processing',
-            size: 'md',
-          },
-          {
-            id: 'workspace',
-            x: 270,
-            y: 75,
-            label: 'Workspace',
-            status: 'active',
-            size: 'sm',
-          },
-        ]}
-        connections={[
-          {
-            from: 'session',
-            to: 'auth',
-            animated: true,
-          },
-          {
-            from: 'auth',
-            to: 'workspace',
-            animated: true,
-          },
-        ]}
-        className="absolute inset-0"
-      />
+    <div
+      aria-hidden="true"
+      className={cn(
+        'relative overflow-visible',
+        'h-[150px] w-[320px]',
+        'sm:h-[180px] sm:w-[420px]',
+        'md:h-[220px] md:w-[560px]',
+      )}
+    >
+      <div className="block sm:hidden">
+        <CircuitBoard
+          width={320}
+          height={150}
+          showGrid={false}
+          variant="auto"
+          pulseSpeed={1.6}
+          traceWidth={2}
+          nodes={[
+            {
+              id: 'session',
+              x: 50,
+              y: 75,
+              label: 'Session',
+              status: 'active',
+              size: 'sm',
+            },
+            {
+              id: 'auth',
+              x: 160,
+              y: 45,
+              label: 'Auth',
+              status: 'processing',
+              size: 'md',
+            },
+            {
+              id: 'workspace',
+              x: 270,
+              y: 75,
+              label: 'Workspace',
+              status: 'active',
+              size: 'sm',
+            },
+          ]}
+          connections={[
+            {
+              from: 'session',
+              to: 'auth',
+              animated: true,
+            },
+            {
+              from: 'auth',
+              to: 'workspace',
+              animated: true,
+            },
+          ]}
+          className="absolute inset-0"
+        />
+      </div>
+
+      <div className="hidden sm:block md:hidden">
+        <CircuitBoard
+          width={420}
+          height={180}
+          showGrid={false}
+          variant="auto"
+          pulseSpeed={1.7}
+          traceWidth={2}
+          nodes={[
+            {
+              id: 'session',
+              x: 65,
+              y: 90,
+              label: 'Session',
+              status: 'active',
+              size: 'sm',
+            },
+            {
+              id: 'auth',
+              x: 210,
+              y: 55,
+              label: 'Auth',
+              status: 'processing',
+              size: 'md',
+            },
+            {
+              id: 'workspace',
+              x: 355,
+              y: 90,
+              label: 'Workspace',
+              status: 'active',
+              size: 'sm',
+            },
+          ]}
+          connections={[
+            {
+              from: 'session',
+              to: 'auth',
+              animated: true,
+            },
+            {
+              from: 'auth',
+              to: 'workspace',
+              animated: true,
+            },
+          ]}
+          className="absolute inset-0"
+        />
+      </div>
+
+      <div className="hidden md:block">
+        <CircuitBoard
+          width={560}
+          height={220}
+          showGrid={false}
+          variant="auto"
+          pulseSpeed={1.8}
+          traceWidth={2}
+          nodes={[
+            {
+              id: 'session',
+              x: 80,
+              y: 110,
+              label: 'Session',
+              status: 'active',
+              size: 'md',
+            },
+            {
+              id: 'auth',
+              x: 280,
+              y: 65,
+              label: 'Authenticate',
+              status: 'processing',
+              size: 'lg',
+            },
+            {
+              id: 'workspace',
+              x: 480,
+              y: 110,
+              label: 'Workspace',
+              status: 'active',
+              size: 'md',
+            },
+          ]}
+          connections={[
+            {
+              from: 'session',
+              to: 'auth',
+              animated: true,
+            },
+            {
+              from: 'auth',
+              to: 'workspace',
+              animated: true,
+            },
+          ]}
+          className="absolute inset-0"
+        />
+      </div>
     </div>
   )
 }
