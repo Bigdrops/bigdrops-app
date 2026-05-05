@@ -65,8 +65,12 @@ function copyText(value: string) {
   return Promise.resolve()
 }
 
-function asArray<T>(value: T[] | null | undefined): T[] {
+function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : []
+}
+
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return safeArray(value)
 }
 
 function downloadJson(filename: string, value: string) {
@@ -139,7 +143,7 @@ function createMergeProposal(
   mergedItemIds: string[],
   canonicalName: string,
 ): CleanupApplyProposal {
-  const itemMap = new Map(exportPayload.items.map((item) => [item.item_id, item]))
+  const itemMap = new Map(safeArray(exportPayload.items).map((item) => [item.item_id, item]))
   const winner = itemMap.get(winnerItemId)
 
   return {
@@ -246,7 +250,13 @@ export function ItemLibraryAdvancedCleanupPanel({
   const aliasSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.alias_suggestions || [] : []
   const ignoredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.ignored_items || [] : []
   const reviewRequiredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.review_required_items || [] : []
-  const ignoredGroups = isDuplicates ? (preview as CleanupImportPreview)?.ignored_groups || [] : []
+  const rawIgnoredGroups = isDuplicates ? (preview as CleanupImportPreview)?.ignored_groups || [] : []
+  const ignoredGroups = useMemo(() => {
+    return safeArray(rawIgnoredGroups).map((g: any) => ({
+      group_id: g?.group_id || 'unknown',
+      export_label: g?.label || g?.export_label || 'Unnamed Group',
+    }))
+  }, [rawIgnoredGroups])
 
   const markBatchStatus = (status: CatalogCleanupBatchStatus) => {
     if (!currentBatch) return
@@ -318,16 +328,16 @@ export function ItemLibraryAdvancedCleanupPanel({
       setApplyError(null)
 
       const proposals: CleanupApplyProposal[] = isDuplicates
-        ? (applyableMerges as CleanupPreviewGroup[])
+        ? safeArray(applyableMerges as CleanupPreviewGroup[])
             .filter((merge) => merge && merge.group_id && (merge.winner_item_id || merge.winner?.item_id))
             .map((merge) => createCleanupApplyProposal(merge))
-        : (applyableMerges as any[])
-            .filter((merge) => merge && merge.winner?.item_id && asArray(merge.merged_items).length > 0)
+        : safeArray(applyableMerges as any[])
+            .filter((merge) => merge && merge.winner?.item_id && safeArray(merge.merged_items).length > 0)
             .map((merge) =>
               createMergeProposal(
                 currentExportPayload as CatalogCleanupBatchExportPayload,
                 merge.winner.item_id,
-                asArray(merge.merged_items).map((item: any) => item.item_id),
+                safeArray(merge.merged_items).map((item: any) => item.item_id),
                 merge.canonical_name,
               ),
             )
@@ -630,11 +640,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                       </div>
 
                       <div className="mt-3 space-y-3">
-                        {asArray(applyableMerges as CleanupPreviewGroup[]).map((merge) => (
+                        {safeArray(applyableMerges as CleanupPreviewGroup[]).map((merge) => (
                           <article key={merge.group_id} className="rounded-md bg-bd-surface-muted p-3">
                             <h3 className="text-[13px] font-bold text-bd-text">{merge.canonical_name}</h3>
                             <p className="mt-1 text-[11px] text-bd-text-muted">
-                              Group: {merge.export_label} • Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item) => item.name).join(', ')}
+                              Group: {merge.export_label} • Winner: {merge.winner?.name} • Merge: {safeArray(merge.merged_items).map((item) => item.name).join(', ')}
                             </p>
                           </article>
                         ))}
@@ -646,7 +656,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                     <div className="rounded-md border border-bd-status-danger-border bg-bd-status-danger-bg p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-status-danger-text">Rejected proposals</div>
                       <div className="mt-3 space-y-2">
-                        {asArray((preview as CleanupImportPreview).rejected_groups).map((rejected) => (
+                        {safeArray((preview as CleanupImportPreview).rejected_groups).map((rejected) => (
                           <div key={rejected.group_id} className="rounded-md bg-bd-status-danger-bg p-3 border border-bd-status-danger-border/30">
                             <div className="text-[12px] font-bold text-bd-status-danger-text">{rejected.group_id}</div>
                             <div className="mt-0.5 text-[11px] text-bd-status-danger-text opacity-90">{rejected.reason}</div>
@@ -659,15 +669,15 @@ export function ItemLibraryAdvancedCleanupPanel({
                   {ignoredGroups.length ? (
                     <div className="rounded-md border border-bd-border bg-bd-surface p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Ignored groups</div>
-                      <p className="mt-2 text-[11px] text-bd-text-muted">{asArray(ignoredGroups).map((g: any) => g.label).join(', ')}</p>
+                      <p className="mt-2 text-[11px] text-bd-text-muted">{safeArray(ignoredGroups).map((g: any) => g.export_label).join(', ')}</p>
                     </div>
                   ) : null}
 
-                  {currentBatchState?.applyResults.length ? (
+                  {currentBatchState?.applyResults && currentBatchState.applyResults.length ? (
                     <div className="rounded-md border border-bd-border bg-bd-surface p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Apply results</div>
                       <div className="mt-2 space-y-1 text-[11px] text-bd-text">
-                        {asArray(currentBatchState.applyResults).map((result) => (
+                        {safeArray(currentBatchState.applyResults).map((result) => (
                           <div key={`${result.group_id}-${result.status}`}>
                             {result.canonical_name}: {result.status}
                           </div>

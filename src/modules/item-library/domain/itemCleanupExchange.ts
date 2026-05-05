@@ -75,8 +75,12 @@ function readString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function asArray<T>(value: T[] | null | undefined): T[] {
+function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : []
+}
+
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return safeArray(value)
 }
 
 function readStringArray(value: unknown) {
@@ -676,7 +680,7 @@ export function validateCatalogCleanupBatchImport(
     return { ok: false, errors: topLevelErrors, preview: null, parsed: null }
   }
 
-  const itemMap = new Map(exportPayload.items.map((item) => [item.item_id, item]))
+  const itemMap = new Map(safeArray(exportPayload.items).map((item) => [item.item_id, item]))
   const mergeResult = parseCatalogCleanupMergeSuggestions(parsedJson.merge_suggestions, itemMap)
   const renameResult = parseCatalogCleanupRenameSuggestions(parsedJson.rename_suggestions, itemMap)
   const aliasResult = parseCatalogCleanupAliasSuggestions(parsedJson.alias_suggestions, itemMap)
@@ -942,7 +946,7 @@ export function validateFlaggedCleanupImport(
     }
   }
 
-  const exportGroups = new Map(exportPayload.groups.map((group) => [group.group_id, group]))
+  const exportGroups = new Map(safeArray(exportPayload.groups).map((group) => [group.group_id, group]))
   const ignoredGroups = ignoredGroupIds
     .map((groupId) => exportGroups.get(groupId))
     .filter((group): group is FlaggedCleanupExportGroup => Boolean(group))
@@ -1070,7 +1074,7 @@ export function isCleanupProposalStale(
     }
   }
 
-  const groupItemIds = new Set(exportGroup.items.map((item) => item.item_id))
+  const groupItemIds = new Set(safeArray(exportGroup.items).map((item) => item.item_id))
   if (!groupItemIds.has(proposal.winner_item_id)) {
     return {
       stale: true,
@@ -1092,7 +1096,7 @@ export function isCleanupProposalStale(
 export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupApplyProposal {
   const mergedItemIds = asArray(group.merged_item_ids).length > 0 
     ? asArray(group.merged_item_ids)
-    : asArray(group.merged_items).map(item => item.item_id)
+    : safeArray(group.merged_items).map(item => item.item_id)
 
   if (!group.group_id || !group.winner_item_id || mergedItemIds.length === 0) {
     throw new Error(`Invalid cleanup proposal for group ${group.group_id || 'unknown'}: missing required IDs or merge items.`)
