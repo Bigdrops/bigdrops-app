@@ -160,7 +160,7 @@ export default function ViewQuotation() {
     try {
       const result = await shareDocument({
         title: quotation?.quotation_number || 'Quotation',
-        text: quotation?.quotation_title || 'Quotation',
+        text: quotation?.quotation_title || undefined,
       })
       showToast(result === 'shared' ? 'Share sheet opened' : 'Link copied', result === 'shared' ? 'Quotation share is ready.' : 'Quotation link copied.', 'success')
     } catch (error) {
@@ -228,7 +228,9 @@ export default function ViewQuotation() {
   const previewDetailRows = [
     { label: 'Client', value: quotation?.client_name || 'Unassigned' },
     { label: 'PO Number', value: quotation?.po_number || '' },
-    { label: 'Title', value: quotation?.quotation_title || '' },
+    ...(quotation?.quotation_title
+      ? [{ label: 'Title', value: quotation.quotation_title }]
+      : []),
     ...((Array.isArray(customFields.header) ? customFields.header : []).filter((field: any) => field?.label && field?.value).map((field: any) => ({
       label: String(field.label),
       value: String(field.value),
@@ -636,10 +638,10 @@ export default function ViewQuotation() {
   const docProps: BaseDocument = {
     id: quotation.id,
     number: quotation.quotation_number,
-    title: quotation.quotation_title || 'Quotation',
+    title: quotation.quotation_title || '',
     status: (quotation.status || 'open') as any,
   }
-  const quotationHeroSubtitle = quotation.quotation_title || quotation.client_name || 'No client specified'
+  const quotationHeroSubtitle = quotation.quotation_title || undefined
 
   return (
     <>
@@ -647,7 +649,7 @@ export default function ViewQuotation() {
         topNav={
           <DocumentTopNav
             title={docProps.number}
-            subtitle={quotation.quotation_title || 'Quotation'}
+            subtitle={quotation.quotation_title || undefined}
             backLabel="Quotations"
             onBack={() => navigate('/quotations')}
             onShare={() => void handleShare()}
