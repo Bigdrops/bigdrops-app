@@ -114,6 +114,11 @@
   box-shadow: 0 0 0 3px hsl(var(--bd-focus-ring) / 0.1);
 }
 
+.formInputError {
+  border-color: hsl(var(--bd-status-danger-border));
+  box-shadow: 0 0 0 3px hsl(var(--bd-status-danger-border) / 0.12);
+}
+
 .inputIconWrap {
   position: relative;
   display: flex;
@@ -142,14 +147,40 @@
   min-height: 80px;
 }
 
+.fieldError {
+  color: hsl(var(--bd-status-danger-text));
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.footerPanel {
+  position: sticky;
+  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 12px;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(
+      180deg,
+      hsl(var(--bd-card-bg) / 0) 0%,
+      hsl(var(--bd-card-bg) / 0.92) 18%,
+      hsl(var(--bd-card-bg)) 100%
+    );
+  backdrop-filter: blur(10px);
+}
+
 .settlementCard {
-  background: hsl(var(--bd-surface) / 0.5);
-  border: 1px solid hsl(var(--bd-border) / 0.5);
+  background: hsl(var(--bd-surface) / 0.92);
+  border: 1px solid hsl(var(--bd-border) / 0.65);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 8px 24px hsl(var(--bd-text) / 0.06);
 }
 
 .settleRow {
@@ -195,12 +226,6 @@
 .footerActions {
   display: flex;
   gap: 12px;
-  margin-top: 10px;
-  position: sticky;
-  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
-  padding-top: 12px;
-  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
-  background: hsl(var(--bd-card-bg));
 }
 
 .btnCancel {

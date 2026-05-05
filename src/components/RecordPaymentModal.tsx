@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { Textarea } from "@/components/ui/textarea"
+import { feedback } from "@/lib/feedback"
 
 type InvoiceSummary = {
   id: string
@@ -148,9 +149,16 @@ export default function RecordPaymentModal({
   const currentBalance = Math.max(0, Number(invoice?.total || 0) - previousSettled)
   const amountPaid = form.type === "full" ? currentBalance : Number(form.amount || 0)
   const remainingBalance = Math.max(0, currentBalance - amountPaid)
+  const amountExceedsBalance = form.type === "partial" && amountPaid > currentBalance + 0.01
+  const amountError = amountExceedsBalance ? "Amount paid cannot exceed the remaining balance" : ""
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
+
+  const showValidationError = React.useCallback((message: string) => {
+    setError(message)
+    feedback.error(message)
+  }, [])
 
   const handleSave = async () => {
     setError("")
@@ -165,8 +173,8 @@ export default function RecordPaymentModal({
       return
     }
 
-    if (amountPaid > currentBalance) {
-      setError("Amount paid cannot exceed the remaining balance")
+    if (amountPaid > currentBalance + 0.01) {
+      showValidationError("Amount paid cannot exceed the remaining balance")
       return
     }
 
@@ -279,10 +287,16 @@ export default function RecordPaymentModal({
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Amount (₦)</div>
               <NumericInput
                 min={0}
+                className={amountError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
                 value={form.amount}
                 onChange={(val) => setField("amount", val)}
                 placeholder="Enter amount"
               />
+              {amountError ? (
+                <div className="mt-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                  {amountError}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -341,38 +355,40 @@ export default function RecordPaymentModal({
             />
           </div>
 
-          <div className="rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium text-muted-foreground">Settlement</span>
-              <span className="font-bold text-foreground">{formatMoney(amountPaid)}</span>
+          <div className="sticky bottom-0 -mx-5 mt-2 space-y-3 border-t border-border/70 bg-card/95 px-5 pb-4 pt-3 backdrop-blur">
+            <div className="rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 shadow-sm">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">Settlement</span>
+                <span className="font-bold text-foreground">{formatMoney(amountPaid)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">Remaining Balance</span>
+                <span className={remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
+                  {formatMoney(remainingBalance)}
+                </span>
+              </div>
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium text-muted-foreground">Remaining Balance</span>
-              <span className={remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
-                {formatMoney(remainingBalance)}
-              </span>
-            </div>
-          </div>
 
-          {error ? (
-            <div className="rounded-[var(--bd-radius-lg)] bg-red-600 px-3 py-2 text-xs text-white">
-              {error}
-            </div>
-          ) : null}
+            {error ? (
+              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                {error}
+              </div>
+            ) : null}
 
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={close}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || loadingBalance}
-              className="flex-1 bg-green-600 text-white hover:bg-green-700"
-            >
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {saving ? "Saving..." : "Record Payment"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" className="flex-1" onClick={close}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={saving || loadingBalance}
+                className="flex-1 bg-green-600 text-white hover:bg-green-700"
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {saving ? "Saving..." : "Record Payment"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

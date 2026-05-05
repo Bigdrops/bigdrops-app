@@ -28,7 +28,6 @@ export function getStatusTone(status: string | null | undefined): StatusTone {
   if ([
     'partial', 
     'partially_paid', 
-    'overpaid',
     'dispatched', 
     'in_progress', 
     'pending_action', 

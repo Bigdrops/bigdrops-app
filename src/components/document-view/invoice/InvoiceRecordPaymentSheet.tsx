@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Loader2, Plus, Banknote, Calendar, Receipt } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Loader2, Banknote, Calendar } from 'lucide-react'
 import { supabase } from '@/supabase'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,6 +7,7 @@ import styles from './InvoiceRecordPaymentSheet.module.css'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { feedback } from '@/lib/feedback'
 
 interface InvoiceSummary {
   id: string
@@ -116,15 +117,22 @@ export default function InvoiceRecordPaymentSheet({
   const currentBalance = Math.max(0, Number(invoice?.total || 0) - previousSettled)
   const amountPaid = form.type === 'full' ? currentBalance : Number(form.amount || 0)
   const remainingBalance = Math.max(0, currentBalance - amountPaid)
+  const amountExceedsBalance = form.type === 'partial' && amountPaid > currentBalance + 0.01
+  const amountError = amountExceedsBalance ? 'Amount cannot exceed balance' : ''
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
+
+  const showValidationError = useCallback((message: string) => {
+    setError(message)
+    feedback.error(message)
+  }, [])
 
   const handleSave = async () => {
     setError('')
     if (!form.date) return setError('Payment date is required')
     if (amountPaid <= 0) return setError('Amount must be greater than 0')
-    if (amountPaid > currentBalance + 0.01) return setError('Amount cannot exceed balance')
+    if (amountPaid > currentBalance + 0.01) return showValidationError('Amount cannot exceed balance')
 
     setSaving(true)
     try {
@@ -227,11 +235,12 @@ export default function InvoiceRecordPaymentSheet({
               <div className={styles.fieldGroup}>
                 <label className={styles.formLabel}>Amount (₦)</label>
                 <NumericInput
-                  className={styles.formInput}
+                  className={`${styles.formInput} ${amountError ? styles.formInputError : ''}`}
                   value={form.amount}
                   onChange={(val) => setField('amount', val)}
                   placeholder="0.00"
                 />
+                {amountError ? <div className={styles.fieldError}>{amountError}</div> : null}
               </div>
             )}
 
@@ -304,34 +313,36 @@ export default function InvoiceRecordPaymentSheet({
               />
             </div>
 
-            <div className={styles.settlementCard}>
-              <div className={styles.settleRow}>
-                <span>Amount to Record</span>
-                <span className={styles.settleAmount}>{formatNaira(amountPaid)}</span>
+            <div className={styles.footerPanel}>
+              <div className={styles.settlementCard}>
+                <div className={styles.settleRow}>
+                  <span>Amount to Record</span>
+                  <span className={styles.settleAmount}>{formatNaira(amountPaid)}</span>
+                </div>
+                <div className={styles.settleRow}>
+                  <span>New Balance</span>
+                  <span className={remainingBalance > 0 ? styles.settleRem : styles.settlePaid}>
+                    {formatNaira(remainingBalance)}
+                  </span>
+                </div>
               </div>
-              <div className={styles.settleRow}>
-                <span>New Balance</span>
-                <span className={remainingBalance > 0 ? styles.settleRem : styles.settlePaid}>
-                  {formatNaira(remainingBalance)}
-                </span>
+
+              {error ? <div className={styles.errorBanner}>{error}</div> : null}
+
+              <div className={styles.footerActions}>
+                <button type="button" className={styles.btnCancel} onClick={onClose} disabled={saving}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.btnSave}
+                  onClick={() => void handleSave()}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="animate-spin" size={18} /> : <Banknote size={18} />}
+                  {saving ? 'Saving...' : 'Record Payment'}
+                </button>
               </div>
-            </div>
-
-            {error && <div className={styles.errorBanner}>{error}</div>}
-
-            <div className={styles.footerActions}>
-              <button type="button" className={styles.btnCancel} onClick={onClose} disabled={saving}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.btnSave}
-                onClick={() => void handleSave()}
-                disabled={saving}
-              >
-                {saving ? <Loader2 className="animate-spin" size={18} /> : <Banknote size={18} />}
-                {saving ? 'Saving...' : 'Record Payment'}
-              </button>
             </div>
           </div>
         )}

@@ -646,7 +646,7 @@ export default function Invoices() {
     {
       label: "Status",
       value: statusFilter,
-      options: ["All", "Unpaid", "Partially Paid", "Paid", "Overpaid"],
+      options: ["All", "Unpaid", "Partially Paid", "Paid"],
       onChange: setStatusFilter,
     },
     {
