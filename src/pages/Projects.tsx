@@ -99,7 +99,7 @@ export default function Projects() {
 
     const { data } = await supabase
       .from('projects')
-      .select('*')
+      .select('id, name, project_code, status, project_value, start_date, created_at, client_name')
       .is('archived_at', null)
       .order('start_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })

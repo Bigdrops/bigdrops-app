@@ -69,7 +69,7 @@ export default function Clients() {
         setLoading(true)
       }
 
-      const { data, error } = await supabase.from("clients").select("*").order("name")
+      const { data, error } = await supabase.from("clients").select("id, name, phone, city, state, category").order("name")
 
       if (!mounted) return
       if (error) {
