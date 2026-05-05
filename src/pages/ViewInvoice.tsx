@@ -816,7 +816,7 @@ export default function ViewInvoice() {
         topNav={
           <DocumentTopNav
             title={docProps.number}
-            subtitle={invoice.invoice_title || 'Tax Invoice'}
+            subtitle={invoice.invoice_title || 'Invoice'}
             backLabel="Invoices"
             onBack={() => navigate('/invoices')}
             onShare={handleShare}
@@ -962,11 +962,7 @@ export default function ViewInvoice() {
           title={docProps.title}
           clientName={invoice.client_name || 'No client specified'}
           status={docProps.status}
-          metrics={[
-            { label: 'Total Due', value: formatNaira(viewModel.invoiceTotal || 0), hint: invoice.issue_date ? `Issued ${formatDisplayDate(invoice.issue_date)}` : 'Issue date not set', tone: 'default' },
-            { label: 'Received', value: formatNaira(viewModel.cashReceived || 0), hint: `${viewModel.activePaymentCount || 0} payment${viewModel.activePaymentCount === 1 ? '' : 's'} recorded`, tone: 'success' },
-            { label: 'Balance Due', value: formatNaira(viewModel.balanceDue || 0), hint: invoice.due_date ? `Due ${formatDisplayDate(invoice.due_date)}` : 'Open due date', tone: (viewModel.balanceDue || 0) > 0 ? 'warning' : 'success' },
-          ]}
+          metrics={[]}
           meta={[
             { label: 'Client', value: invoice.client_name || 'Unassigned' },
             { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },

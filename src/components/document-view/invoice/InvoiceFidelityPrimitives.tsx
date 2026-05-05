@@ -90,23 +90,25 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
         </div>
       </div>
 
-      <div className={styles['money-strip']}>
-        {guardedMetrics.map((metric) => (
-          <div key={metric.label} className={styles['money-cell']}>
-            <div className={styles['money-lbl']}>{metric.label}</div>
-            <div
-              className={[
-                styles['money-val'],
-                metric.tone === 'success' || metric.tone === 'positive' ? styles.green : '',
-                metric.tone === 'warning' ? styles.amber : '',
-              ].join(' ')}
-            >
-              {metric.value || '—'}
+      {guardedMetrics.length > 0 ? (
+        <div className={styles['money-strip']}>
+          {guardedMetrics.map((metric) => (
+            <div key={metric.label} className={styles['money-cell']}>
+              <div className={styles['money-lbl']}>{metric.label}</div>
+              <div
+                className={[
+                  styles['money-val'],
+                  metric.tone === 'success' || metric.tone === 'positive' ? styles.green : '',
+                  metric.tone === 'warning' ? styles.amber : '',
+                ].join(' ')}
+              >
+                {metric.value || '—'}
+              </div>
+              {metric.hint ? <div className={styles['money-hint']}>{metric.hint}</div> : null}
             </div>
-            {metric.hint ? <div className={styles['money-hint']}>{metric.hint}</div> : null}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </section>
   )
 }

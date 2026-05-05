@@ -316,6 +316,77 @@ export default function ViewQuotation() {
       : null,
   ].filter(Boolean)
 
+  const previewAttachmentLinks = Array.isArray(customFields.attachments)
+    ? customFields.attachments
+        .filter((entry: any) => entry?.url)
+        .map((entry: any, index: number) => ({
+          label: String(entry.label || entry.name || `Reference ${index + 1}`),
+          url: String(entry.url),
+        }))
+        .filter((entry: { url: string }) => entry.url)
+    : []
+
+  const quotationPreviewModel = useMemo(() => ({
+    selectedPreviewBank,
+    companyPreviewLines: companyLines,
+    clientPreviewLines: clientLines,
+    previewDetailRows: previewDetailRows,
+    previewItems,
+    previewTotals,
+    previewAmountInWords: pdfOutput.showAmountInWords === false ? '' : String(quotation?.amount_in_words || ''),
+    previewNotesSections: [
+      quotation?.notes
+        ? {
+            title: customFields.notesTitle || 'Notes',
+            kind: 'html' as const,
+            html: String(quotation.notes),
+          }
+        : null,
+      quotation?.terms
+        ? {
+            title: customFields.termsTitle || 'Terms and Conditions',
+            kind: 'html' as const,
+            html: String(quotation.terms),
+          }
+        : null,
+      ...(Array.isArray(customFields.additionalFields) && customFields.additionalFields.length > 0
+        ? [{
+            title: 'Additional Fields',
+            kind: 'fields' as const,
+            fields: customFields.additionalFields
+              .filter((field: any) => field?.label || field?.value)
+              .map((field: any) => ({
+                label: String(field?.label || ''),
+                value: String(field?.value || ''),
+              })),
+          }]
+        : []),
+      ...(previewAttachmentLinks.length > 0
+        ? [{
+            title: 'Reference Links',
+            kind: 'links' as const,
+            links: previewAttachmentLinks,
+          }]
+        : []),
+    ].filter(Boolean),
+  }), [
+    clientLines,
+    companyLines,
+    customFields.additionalFields,
+    customFields.attachments,
+    customFields.notesTitle,
+    customFields.termsTitle,
+    pdfOutput.showAmountInWords,
+    previewAttachmentLinks,
+    previewDetailRows,
+    previewItems,
+    previewTotals,
+    quotation?.amount_in_words,
+    quotation?.notes,
+    quotation?.terms,
+    selectedPreviewBank,
+  ])
+
   const handleDownload = async () => {
     if (!quotation || downloading) return
     setDownloading(true)
@@ -487,12 +558,7 @@ export default function ViewQuotation() {
     title: quotation.quotation_title || 'Quotation',
     status: (quotation.status || 'open') as any,
   }
-
-  const metrics = [
-    { label: 'Subtotal', value: formatNaira(totals?.subtotal || 0) },
-    { label: 'VAT', value: formatNaira(totals?.vatAmount || 0) },
-    { label: 'Total Amount', value: formatNaira(totals?.totalPayable || 0), status: 'info' as const },
-  ]
+  const quotationHeroTag = quotation.quotation_number || quotation.quotation_title || quotation.client_name || ''
 
   return (
     <>
@@ -523,7 +589,7 @@ export default function ViewQuotation() {
             title={docProps.number}
             subtitle={quotation.client_name || 'No client specified'}
             status={docProps.status}
-            meta={<QuotationHeroMeta threadTag={quotation.id?.slice(0, 8)} />}
+            meta={quotationHeroTag ? <QuotationHeroMeta threadTag={quotationHeroTag} /> : undefined}
           />
         }
         floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
@@ -600,12 +666,11 @@ export default function ViewQuotation() {
       >
         <QuotationViewPage
           document={docProps}
-          metrics={metrics}
           documentPreview={
             <QuotationDocumentPreview
               quotation={quotation}
               viewModel={{ statusLabel: formatQuotationStatus(quotation?.status) }}
-              previewModel={quotation}
+              previewModel={quotationPreviewModel}
               pdfOutput={pdfOutput}
               settingsData={settings}
             />
