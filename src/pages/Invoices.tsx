@@ -34,6 +34,7 @@ import { formatStatusLabel } from "@/lib/formatters/status"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
+import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 
 const PAGE_SIZE = 25
 const INVOICE_CACHE_KEY = "bd:list:invoices:v1:all"
@@ -57,6 +58,7 @@ export type InvoiceRow = {
   status: string | null
   project_id: string | null
   custom_fields: any
+  payments?: any[]
 }
 
 export default function Invoices() {
@@ -88,7 +90,7 @@ export default function Invoices() {
   const buildInvoiceQuery = () => {
     let query = applyParentInvoiceFilter(supabase
       .from("invoices")
-      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields")
+      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
       .is("archived_at", null))
 
     const searchTerm = search.trim()
@@ -156,7 +158,12 @@ export default function Invoices() {
               String(row.invoice_number || "").toLowerCase().includes(searchTerm) || 
               String(row.client_name || "").toLowerCase().includes(searchTerm)
             const matchesClient = clientFilter === "All" || row.client_name === clientFilter
-            const matchesStatus = statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase()
+            const { paymentState } = calculateInvoiceFinancialState({
+              invoiceTotal: Number(row.total || 0),
+              status: row.status,
+              payments: row.payments,
+            })
+            const matchesStatus = statusFilter === "All" || paymentState === statusFilter.toLowerCase().replace(' ', '_')
             
             let matchesDate = true
             if (dateFilter !== "All Time" && row.issue_date) {
@@ -247,7 +254,14 @@ export default function Invoices() {
             return invoiceNumber.includes(searchTerm) || clientName.includes(searchTerm)
           })
           .filter((row: any) => clientFilter === "All" || row.client_name === clientFilter)
-          .filter((row: any) => statusFilter === "All" || String(row.status || "").toLowerCase() === statusFilter.toLowerCase())
+          .filter((row: any) => {
+            const { paymentState } = calculateInvoiceFinancialState({
+              invoiceTotal: Number(row.total || 0),
+              status: row.status,
+              payments: row.payments,
+            })
+            return statusFilter === "All" || paymentState === statusFilter.toLowerCase().replace(' ', '_')
+          })
           .filter((row: any) => {
             if (dateFilter === "All Time") return true
             if (!row.issue_date) return false
@@ -598,8 +612,13 @@ export default function Invoices() {
   const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
 
   const renderInvoiceRow = (invoice: InvoiceRow) => {
-    const tone = getStatusTone(invoice.status || 'unpaid')
-    const statusClasses = getStatusClasses(tone)
+    const { displayStatus, statusTone } = calculateInvoiceFinancialState({
+      invoiceTotal: Number(invoice.total || 0),
+      status: invoice.status,
+      payments: invoice.payments,
+    })
+    
+    const statusClasses = getStatusClasses(statusTone)
     
     return (
       <ModuleRowCard
@@ -608,7 +627,7 @@ export default function Invoices() {
         subtitle={invoice.invoice_number || "Invoice"}
         tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
         amount={formatNaira(invoice.total)}
-        statusLabel={formatInvoiceStatusLabel(invoice.status)}
+        statusLabel={displayStatus}
         statusClassName={statusClasses}
         onClick={() => navigate(`/invoices/${invoice.id}`)}
         onActionClick={() => setActiveInvoice(invoice)}
@@ -707,12 +726,18 @@ export default function Invoices() {
         title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
         subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : undefined}
         actions={activeInvoice ? (() => {
+          const { paymentState } = calculateInvoiceFinancialState({
+            invoiceTotal: Number(activeInvoice.total || 0),
+            status: activeInvoice.status,
+            payments: activeInvoice.payments,
+          })
+
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label,
             hasProject: invoiceProjectState.hasProject,
             documentActionLabel: invoiceDocumentState.label,
             hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
-            isPaid: activeInvoice.status === "paid",
+            isPaid: paymentState === "paid",
             isStandalone,
           })
 
