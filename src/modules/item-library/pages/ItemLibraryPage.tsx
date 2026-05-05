@@ -9,6 +9,7 @@ import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
+import { getCleanupExportItemIds } from '../domain/cleanupExportPayload'
 import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import {
   useItemAliases,
@@ -17,7 +18,13 @@ import {
   useItemMerge,
   useItemMergeHistory,
 } from '../hooks'
-import type { CatalogCleanupBatchExportPayload, CleanupApplyProposal, CleanupApplyResult, ItemLibraryMergeRequest } from '../types'
+import type {
+  CatalogCleanupBatchExportPayload,
+  CleanupApplyProposal,
+  CleanupApplyResult,
+  FlaggedCleanupBatchExportPayload,
+  ItemLibraryMergeRequest,
+} from '../types'
 import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
 
 function DownloadIcon() {
@@ -227,11 +234,11 @@ export default function ItemLibraryPage() {
   }
 
   const handleApplyCleanupProposals = async (
-    exportPayload: CatalogCleanupBatchExportPayload,
+    exportPayload: CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
     proposals: CleanupApplyProposal[],
   ): Promise<CleanupApplyResult[]> => {
     const results: CleanupApplyResult[] = []
-    const validItemIds = new Set(exportPayload.items.map((item) => item.item_id))
+    const validItemIds = getCleanupExportItemIds(exportPayload)
 
     for (const proposal of proposals) {
       const winnerInBatch = validItemIds.has(proposal.winner_item_id)

@@ -6,6 +6,7 @@ import {
   validateFlaggedCleanupImport,
   createCleanupApplyProposal,
 } from '../../modules/item-library/domain/itemCleanupExchange.ts'
+import { getCleanupExportItemIds } from '../../modules/item-library/domain/cleanupExportPayload.ts'
 
 const duplicateGroups = Array.from({ length: 10 }, (_, i) => ({
   group_id: `group-${i}`,
@@ -100,4 +101,63 @@ test('regression: duplicate outsource flow handles malformed arrays and missing 
     assert.ok(g.group_id)
     assert.ok(g.label)
   })
+})
+
+test('getCleanupExportItemIds supports catalog and flagged cleanup payloads', () => {
+  const flaggedPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups: duplicateGroups.slice(0, 2),
+    aliases: [],
+  })
+
+  const flaggedIds = getCleanupExportItemIds(flaggedPayload)
+  assert.deepEqual(
+    [...flaggedIds].sort(),
+    ['item-0-1', 'item-0-2', 'item-1-1', 'item-1-2'],
+  )
+
+  const catalogPayload = {
+    export_type: 'catalog_cleanup_batch',
+    schema_version: 1,
+    session: {
+      session_id: 'session-1',
+      batch_size: 2,
+      batch_index: 0,
+      batch_count: 1,
+    },
+    batch_id: 'batch-1',
+    generated_at: '2026-05-05T00:00:00.000Z',
+    scope: {
+      mode: 'full_catalog_batch',
+      item_count: 2,
+    },
+    items: [
+      {
+        item_id: 'catalog-1',
+        name: 'Catalog Item 1',
+        standard_price: null,
+        last_sold_price: null,
+        usage_count: 0,
+        aliases: [],
+        appears_in_invoice: false,
+        appears_in_quotation: false,
+        cleanup_flags: [],
+        duplicate_group_id: null,
+      },
+      {
+        item_id: 'catalog-2',
+        name: 'Catalog Item 2',
+        standard_price: null,
+        last_sold_price: null,
+        usage_count: 0,
+        aliases: [],
+        appears_in_invoice: false,
+        appears_in_quotation: false,
+        cleanup_flags: [],
+        duplicate_group_id: null,
+      },
+    ],
+  }
+
+  const catalogIds = getCleanupExportItemIds(catalogPayload)
+  assert.deepEqual([...catalogIds].sort(), ['catalog-1', 'catalog-2'])
 })
