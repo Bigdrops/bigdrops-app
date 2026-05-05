@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components/ui/status-badge'
 
 type QueueSeverity = 'overdue' | 'warning' | 'info'
 type QueueTarget = 'vat' | 'wht' | 'filings' | 'obligations'
@@ -17,12 +18,6 @@ export interface ComplianceActionItem {
   dueLabel?: string
   periodLabel?: string
   secondaryMeta?: string[]
-}
-
-const severityBadgeClasses: Record<QueueSeverity, string> = {
-  overdue: 'border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]',
-  warning: 'border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
-  info: 'border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
 }
 
 const sourceBadgeClasses: Record<ComplianceActionItem['sourceType'], string> = {
@@ -46,9 +41,9 @@ export default function ComplianceActionRow({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${severityBadgeClasses[item.severity]}`}>
+            <StatusBadge variant={item.severity === 'overdue' ? 'danger' : item.severity === 'warning' ? 'warning' : 'info'}>
               {item.statusLabel}
-            </span>
+            </StatusBadge>
             <span className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${sourceBadgeClasses[item.sourceType]}`}>
               {item.sourceType}
             </span>

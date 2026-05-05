@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
-import { getStatusClasses, type StatusTone } from '@/lib/statusTheme'
+import { getStatusTone, type StatusTone } from '@/lib/statusTheme'
 import { type WhtReceipt } from '@/domain/compliance/types'
 
 export type WhtPaymentRecord = {
@@ -32,14 +33,14 @@ const statusMeta: Record<
   WhtQueueStatus,
   {
     label: string
-    tone: StatusTone
+    variant: StatusTone
   }
 > = {
-  untracked: { label: 'Untracked', tone: 'danger' },
-  requested: { label: 'Requested', tone: 'warning' },
-  pending: { label: 'Pending', tone: 'info' },
-  received: { label: 'Received', tone: 'info' },
-  verified: { label: 'Verified', tone: 'success' },
+  untracked: { label: 'Untracked', variant: 'danger' },
+  requested: { label: 'Requested', variant: 'warning' },
+  pending: { label: 'Pending', variant: 'info' },
+  received: { label: 'Received', variant: 'info' },
+  verified: { label: 'Verified', variant: 'success' },
 }
 
 export default function WhtReceiptQueueRow({
@@ -72,9 +73,9 @@ export default function WhtReceiptQueueRow({
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] xl:items-center">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={`${getStatusClasses(meta.tone)} rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em]`}>
+            <StatusBadge variant={meta.variant} dot>
               {meta.label}
-            </Badge>
+            </StatusBadge>
             {hasNotes ? (
               <Badge
                 variant="outline"
