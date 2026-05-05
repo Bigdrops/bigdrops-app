@@ -5,16 +5,24 @@ import path from 'node:path'
 
 const read = (relativePath) => fs.readFileSync(path.resolve(relativePath), 'utf8').replace(/\s+/g, ' ')
 
-test('quotation view passes a live preview model, avoids raw id hero tags, and keeps footer clearance', () => {
+test('quotation view passes a live preview model, restores real support sections, avoids raw id hero tags, and keeps footer clearance', () => {
   const viewQuotationSource = read('src/pages/ViewQuotation.tsx')
   const quotationViewPageSource = read('src/components/document-view/quotation/QuotationViewPage.tsx')
   const quotationViewCss = read('src/components/document-view/quotation/QuotationViewPage.module.css')
 
   assert.match(viewQuotationSource, /const quotationPreviewModel = useMemo\(\(\) => \(\{/)
   assert.match(viewQuotationSource, /previewModel=\{quotationPreviewModel\}/)
+  assert.match(viewQuotationSource, /const relatedDocuments = useMemo<RelatedDocumentItem\[\]>/)
+  assert.match(viewQuotationSource, /<PdfBankControls/)
+  assert.match(viewQuotationSource, /<PdfDocumentOptionsCard/)
+  assert.match(viewQuotationSource, /<AuditTrailPanel/)
+  assert.match(viewQuotationSource, /attachments=\{quotationAttachments\}/)
   assert.doesNotMatch(viewQuotationSource, /previewModel=\{quotation\}/)
   assert.doesNotMatch(viewQuotationSource, /quotation\.id\?\.slice\(0,\s*8\)/)
   assert.doesNotMatch(quotationViewPageSource, /QuotationMoneyStrip/)
+  assert.match(quotationViewPageSource, /<DocumentRelatedDocsSection items=\{guardedRelatedDocuments\} \/>/)
+  assert.match(quotationViewPageSource, /<SupportingSection title="Attachments">/)
+  assert.match(quotationViewCss, /\.supportingArea/)
   assert.match(quotationViewCss, /padding-bottom:\s*calc\(/)
 })
 

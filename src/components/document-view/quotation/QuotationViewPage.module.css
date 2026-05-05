@@ -12,6 +12,64 @@
   gap: 8px;
 }
 
+.previewControls {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.supportingArea {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.section {
+  border: 1px solid hsl(var(--bd-border));
+  border-radius: 24px;
+  background: hsl(var(--bd-surface));
+  padding: 18px;
+  box-shadow: 0 18px 36px -32px hsl(var(--bd-shadow-color, 220 35% 12%) / 0.2);
+}
+
+.sectionHd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sectionLabel {
+  font-family: var(--dv-font-ui);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+}
+
+.attachmentsScroller {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.attachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 14px;
+  border: 1px solid hsl(var(--bd-border));
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text));
+  font-family: var(--dv-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .sectionLink {
   font-size: 12px;
   font-weight: 700;

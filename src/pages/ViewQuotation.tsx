@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
+import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
+import AuditTrailPanel from '@/components/audit/AuditTrailPanel'
 import QuotationDocumentPreview from '@/components/document-view/quotation/QuotationDocumentPreview'
 import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutputCustomizeSheet'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
@@ -11,6 +12,7 @@ import QuotationViewPage from '@/components/document-view/quotation/QuotationVie
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
 import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
+import type { RelatedDocumentItem } from '@/components/document-view/shared/DocumentRelatedDocsSection'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 
@@ -29,6 +31,7 @@ import { renderRichTextContent } from '@/lib/richText'
 import { supabase } from '@/supabase'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { formatQuotationStatus } from '@/components/quotation/quotationStatus'
+import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { archiveQuotationRecord, convertQuotationToInvoice, deleteQuotationRecord, downloadQuotationCsvFile, duplicateQuotationRecord, loadQuotationViewData, updateQuotationStatus } from './viewQuotationActions'
 
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -83,6 +86,7 @@ export default function ViewQuotation() {
   const [downloading, setDownloading] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [converting, setConverting] = useState(false)
+  const [linkedProject, setLinkedProject] = useState<{ id: string; name?: string | null } | null>(null)
 
   useEffect(() => {
     const loadQuotation = async () => {
@@ -107,6 +111,7 @@ export default function ViewQuotation() {
           ...(data.customFields?.pdfOutput || {}),
           showBalanceDue: false,
         })
+        setLinkedProject(data.quotation?.project_id ? await fetchProjectSummary(data.quotation.project_id) : null)
       } catch (err) {
         console.error('Failed to load quotation', err)
       } finally {
@@ -128,6 +133,7 @@ export default function ViewQuotation() {
     setSettings(data.settings)
     setBankAccounts(data.bankAccounts)
     setCustomFields(data.customFields)
+    setLinkedProject(data.quotation?.project_id ? await fetchProjectSummary(data.quotation.project_id) : null)
   }
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
@@ -185,6 +191,10 @@ export default function ViewQuotation() {
     setQuotation((current: any) => (current ? { ...current, custom_fields: nextCustomFields } : current))
     showToast('Settings saved', 'Quotation PDF output settings updated.', 'success')
   }
+
+  const handleInlinePdfOutputChange = useCallback((nextPdfOutput: PdfOutputSettingsValue) => {
+    void handleSaveCustomization(nextPdfOutput)
+  }, [handleSaveCustomization])
 
   const previewBankAccounts = (Array.isArray(bankAccounts) ? bankAccounts : []).map((account) => ({
     id: account.id,
@@ -325,6 +335,78 @@ export default function ViewQuotation() {
         }))
         .filter((entry: { url: string }) => entry.url)
     : []
+
+  const quotationAttachments = Array.isArray(customFields.attachments)
+    ? customFields.attachments
+        .filter((entry: any) => entry?.label || entry?.name || entry?.url)
+        .map((entry: any, index: number) => ({
+          id: String(entry.id || entry.url || `${index}`),
+          label: String(entry.label || entry.name || entry.url || `Attachment ${index + 1}`),
+        }))
+    : []
+
+  const relatedDocuments = useMemo<RelatedDocumentItem[]>(() => {
+    const relations = getQuotationDocumentRelations(quotation)
+    const nextItems: RelatedDocumentItem[] = []
+
+    if (relations.source && (relations.source.id || relations.source.number)) {
+      const sourceType = relations.source.type === 'invoice' ? 'Invoice' : 'Quotation'
+      nextItems.push({
+        id: String(relations.source.id || relations.source.number || 'source'),
+        title: `${sourceType} ${relations.source.number || relations.source.id || 'Linked source'}`,
+        subtitle: 'Source document',
+        kind: relations.source.type === 'quotation' ? 'quotation' : 'document',
+        onClick: relations.source.id
+          ? () => navigate(`/${relations.source?.type === 'invoice' ? 'invoices' : 'quotations'}/${relations.source?.id}`)
+          : undefined,
+      })
+    }
+
+    if (Array.isArray(relations.derived)) {
+      relations.derived
+        .filter((entry) => entry && typeof entry === 'object' && (entry.id || entry.number))
+        .forEach((entry, index) => {
+          const isQuotation = entry.type === 'quotation'
+          nextItems.push({
+            id: String(entry.id || `${entry.type || 'document'}-${index}`),
+            title: `${isQuotation ? 'Quotation' : 'Invoice'} ${entry.number || entry.id || 'Linked document'}`,
+            subtitle: isQuotation ? 'Derived quotation' : 'Generated invoice',
+            kind: isQuotation ? 'quotation' : 'document',
+            onClick: entry.id
+              ? () => navigate(`/${isQuotation ? 'quotations' : 'invoices'}/${entry.id}`)
+              : undefined,
+          })
+        })
+    }
+
+    if (linkedProject?.id || linkedProject?.name || quotation?.project_id) {
+      nextItems.push({
+        id: String(linkedProject?.id || quotation?.project_id || 'project'),
+        title: linkedProject?.name || 'Linked project',
+        subtitle: 'Project connected to this quotation',
+        kind: 'project',
+        onClick: linkedProject?.id ? () => navigate(`/projects/${linkedProject.id}`) : undefined,
+      })
+    }
+
+    return nextItems
+  }, [linkedProject?.id, linkedProject?.name, navigate, quotation, quotation?.project_id])
+
+  const previewControls = useMemo(() => (
+    <>
+      <PdfBankControls
+        value={pdfOutput}
+        onChange={handleInlinePdfOutputChange}
+        bankAccounts={previewBankAccounts}
+      />
+      <PdfDocumentOptionsCard
+        value={pdfOutput}
+        onChange={handleInlinePdfOutputChange}
+        companyTagline={String(settings?.company_tagline || '')}
+        footerText={String(settings?.footer_text || '')}
+      />
+    </>
+  ), [handleInlinePdfOutputChange, pdfOutput, previewBankAccounts, settings?.company_tagline, settings?.footer_text])
 
   const quotationPreviewModel = useMemo(() => ({
     selectedPreviewBank,
@@ -675,6 +757,17 @@ export default function ViewQuotation() {
               settingsData={settings}
             />
           }
+          previewControls={previewControls}
+          relatedDocuments={relatedDocuments}
+          activityHistory={(
+            <AuditTrailPanel
+              entityType="quotation"
+              entityId={quotation.id}
+              entityLabel={quotation.quotation_number}
+              defaultOpen={false}
+            />
+          )}
+          attachments={quotationAttachments}
           onConvert={() => ui.openModal(MODAL_CONVERT)}
           onEdit={() => navigate(`/quotations/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}
