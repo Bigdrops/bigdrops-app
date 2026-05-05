@@ -1,40 +1,39 @@
-import { DocumentPrimaryActionRow, DocumentPrimaryButton } from '../shared/DocumentActionButtons'
+import { Download, Edit3 } from 'lucide-react'
+
+import styles from '../invoice/InvoicePresentation.module.css'
 
 interface QuotationPrimaryActionsProps {
   onConvert: () => void
   onEdit: () => void
-  onDuplicate?: () => void
+  onDownload: () => void
 }
 
 export default function QuotationPrimaryActions({
   onConvert,
   onEdit,
-  onDuplicate,
+  onDownload,
 }: QuotationPrimaryActionsProps) {
   return (
-    <DocumentPrimaryActionRow>
-      <DocumentPrimaryButton variant="amber" onClick={onConvert}>
+    <div className={styles['action-row']}>
+      <button type="button" className={`${styles.btn} ${styles['btn-primary']}`} onClick={onConvert}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
-        Convert to Invoice
-      </DocumentPrimaryButton>
-      <DocumentPrimaryButton variant="outline" onClick={onEdit}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
-        Edit
-      </DocumentPrimaryButton>
-      {onDuplicate && (
-        <DocumentPrimaryButton variant="outline" onClick={onDuplicate}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-          Duplicate
-        </DocumentPrimaryButton>
-      )}
-    </DocumentPrimaryActionRow>
+        <span>Convert</span>
+      </button>
+      <button type="button" className={`${styles.btn} ${styles['btn-outline']}`} onClick={onEdit}>
+        <Edit3 size={17} strokeWidth={2} />
+        <span>Edit</span>
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles['btn-outline']} ${styles['icon-only']}`}
+        onClick={onDownload}
+        title="Download PDF"
+        aria-label="Download PDF"
+      >
+        <Download size={18} strokeWidth={2} />
+      </button>
+    </div>
   )
 }

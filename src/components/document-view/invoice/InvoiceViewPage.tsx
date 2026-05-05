@@ -101,7 +101,7 @@ export default function InvoiceViewPage({
           <Edit3 size={17} strokeWidth={2} />
           <span>Edit</span>
         </button>
-        <button type="button" className={`${styles.btn} ${styles['btn-outline']} ${styles['icon-only']}`} onClick={onDownload} title="Download PDF">
+        <button type="button" className={`${styles.btn} ${styles['btn-outline']} ${styles['icon-only']}`} onClick={onDownload} title="Download PDF" aria-label="Download PDF">
           <Download size={18} strokeWidth={2} />
         </button>
       </div>

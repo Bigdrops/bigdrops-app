@@ -13,15 +13,19 @@ export default function FloatingDownloadButton({
   onClick,
   disabled = false,
 }: FloatingDownloadButtonProps) {
+  const accessibleLabel = 'Download PDF'
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
       className={`${styles.button} ${disabled ? styles.disabled : ''}`.trim()}
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
     >
       <Download size={16} strokeWidth={2.2} />
-      {label}
+      <span className={styles.srOnly}>{label}</span>
     </button>
   )
 }

@@ -12,6 +12,7 @@ interface QuotationViewPageProps {
   onConvert: () => void
   onEdit: () => void
   onDuplicate: () => void
+  onDownload: () => void
   onCopyNumber: () => void
 }
 
@@ -21,15 +22,16 @@ export default function QuotationViewPage({
   preview,
   onConvert,
   onEdit,
-  onDuplicate,
-  onCopyNumber,
+  onDuplicate: _onDuplicate,
+  onDownload,
+  onCopyNumber: _onCopyNumber,
 }: QuotationViewPageProps) {
   const previewContent = documentPreview || preview
 
   return (
     <div className={styles.stack}>
       <div className={styles.actionStack}>
-        <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} onDuplicate={onDuplicate} />
+        <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} onDownload={onDownload} />
       </div>
 
       <DocumentSection title="Quotation Document">

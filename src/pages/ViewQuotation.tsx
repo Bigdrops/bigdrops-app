@@ -558,7 +558,7 @@ export default function ViewQuotation() {
     title: quotation.quotation_title || 'Quotation',
     status: (quotation.status || 'open') as any,
   }
-  const quotationHeroTag = quotation.quotation_number || quotation.quotation_title || quotation.client_name || ''
+  const quotationHeroTag = quotation.quotation_title || quotation.client_name || ''
 
   return (
     <>
@@ -678,6 +678,7 @@ export default function ViewQuotation() {
           onConvert={() => ui.openModal(MODAL_CONVERT)}
           onEdit={() => navigate(`/quotations/edit/${id}`)}
           onDuplicate={() => void handleDuplicate()}
+          onDownload={() => void handleDownload()}
           onCopyNumber={handleCopyNumber}
         />
       </DocumentPage>

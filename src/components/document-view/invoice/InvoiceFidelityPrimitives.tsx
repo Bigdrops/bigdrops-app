@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import styles from './InvoicePresentation.module.css'
 import FloatingDownloadButton from '../shared/FloatingDownloadButton'
+import heroStyles from '../shared/DocumentHero.module.css'
 
 type InvoicePageShellProps = {
   children: ReactNode
@@ -62,7 +63,7 @@ export function InvoiceFloatingDownloadButton({
     <FloatingDownloadButton
       onClick={onClick}
       disabled={disabled}
-      label={disabled ? 'Preparing...' : 'Download PDF'}
+      label="Download PDF"
     />
   )
 }
@@ -77,7 +78,7 @@ export function InvoiceHero({ eyebrow, number, title, clientName, status, metric
       <div className={styles['hero-top']}>
         <div className={styles['hero-left']}>
           <div className={styles['doc-label']}>{eyebrow || 'Invoice'}</div>
-          <div className={styles['invoice-num']}>{number || '—'}</div>
+          <div className={`${heroStyles.title} ${styles.heroNumberMeta}`}>{number || '—'}</div>
           <div className={styles['invoice-sub']}>{clientName || 'Unassigned Client'}</div>
           {title && title.toUpperCase() !== 'INVOICE' && (
              <div className={styles['thread-tag']}>{title}</div>
