@@ -5,13 +5,13 @@ import {
   ClipboardCheck,
   FileSignature,
   FolderKanban,
-  Menu,
   Receipt,
   TrendingUp,
   Truck,
   FileText,
   ClipboardList,
 } from 'lucide-react'
+import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 import type { ComponentType } from 'react'
 
 import { MobileChromeContext } from '@/components/Layout'
@@ -201,7 +201,11 @@ export function DashboardOverview({
               className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-muted text-foreground"
               aria-label="Open navigation menu"
             >
-              <Menu className="h-3.5 w-3.5" />
+              <SidebarToggleIcon
+                isOpen={mobileChrome.sidebarOpen}
+                strokeWidth={2}
+                className="size-5 text-[hsl(var(--bd-text))]"
+              />
             </button>
 
             <div className="min-w-0">

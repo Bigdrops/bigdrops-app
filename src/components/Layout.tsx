@@ -48,10 +48,12 @@ import { MobileMoreSheet } from './layout/MobileMoreSheet'
 
 export interface MobileChromeContextValue {
   openSidebar: () => void
+  sidebarOpen: boolean
 }
 
 export const MobileChromeContext = React.createContext<MobileChromeContextValue>({ 
-  openSidebar: () => {} 
+  openSidebar: () => {},
+  sidebarOpen: false
 })
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -137,8 +139,9 @@ export default function Layout({
   const mobileChromeValue = React.useMemo(
     () => ({
       openSidebar,
+      sidebarOpen,
     }),
-    [openSidebar]
+    [openSidebar, sidebarOpen]
   )
 
   React.useEffect(() => {
@@ -169,6 +172,7 @@ export default function Layout({
                 subtitle={settings?.company_name || 'Invoicing and Projects'}
                 accentClassName="tone-info-accent"
                 onMenuClick={openSidebar}
+                isOpen={sidebarOpen}
                 className="rounded-none border-x-0 border-t-0 shadow-none"
               />
             </div>
@@ -180,6 +184,7 @@ export default function Layout({
               <MobilePageHeader
                 title={title}
                 onMenuClick={openSidebar}
+                isOpen={sidebarOpen}
               />
             </div>
           ) : null}

@@ -276,6 +276,7 @@ export default function ModuleShell<T>({
           accentClassName={toneStyle.accent}
           eyebrowClassName={toneStyle.foreground}
           onMenuClick={mobileChrome.openSidebar}
+          isOpen={mobileChrome.sidebarOpen}
           hideGlobalSearch
           className="rounded-none border-x-0 border-t-0 shadow-none"
           actions={

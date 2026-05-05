@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Menu, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
+import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 import { cn } from '@/lib/utils'
 import { SettingsNav } from './SettingsNav'
 import { SettingsSectionFrame } from './SettingsSectionFrame'
@@ -23,7 +24,7 @@ export function SettingsShell({
   isAdmin
 }: SettingsShellProps) {
   const [viewportWidth, setViewportWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
-  const { openSidebar } = React.useContext(MobileChromeContext)
+  const { openSidebar, sidebarOpen } = React.useContext(MobileChromeContext)
 
   React.useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth)
@@ -60,7 +61,11 @@ export function SettingsShell({
                 onClick={openSidebar}
                 className="h-9 w-9 rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-[hsl(var(--bd-text))]"
               >
-                <Menu size={18} />
+                <SidebarToggleIcon
+                  isOpen={sidebarOpen}
+                  strokeWidth={2}
+                  className="size-5 text-[hsl(var(--bd-text))]"
+                />
               </Button>
               <h1 className="text-lg font-bold tracking-tight text-[hsl(var(--bd-text))]">Settings</h1>
             </div>

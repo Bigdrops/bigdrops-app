@@ -1,10 +1,8 @@
 import type { ReactNode } from 'react'
-
-import { Menu } from 'lucide-react'
-
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
+import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 
 type MobilePageHeaderProps = {
   title: string
@@ -13,6 +11,7 @@ type MobilePageHeaderProps = {
   accentClassName?: string
   eyebrowClassName?: string
   onMenuClick: () => void
+  isOpen?: boolean
   actions?: ReactNode
   className?: string
   hideGlobalSearch?: boolean
@@ -25,6 +24,7 @@ export default function MobilePageHeader({
   accentClassName = 'tone-neutral-accent',
   eyebrowClassName,
   onMenuClick,
+  isOpen = false,
   actions,
   className,
   hideGlobalSearch = false,
@@ -45,7 +45,11 @@ export default function MobilePageHeader({
           className="mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]"
           aria-label="Open navigation menu"
         >
-          <Menu className="h-4.5 w-4.5" />
+          <SidebarToggleIcon
+            isOpen={isOpen}
+            strokeWidth={2}
+            className="size-5 text-[hsl(var(--bd-text))]"
+          />
         </Button>
 
         <div className="min-w-0 flex-1">
