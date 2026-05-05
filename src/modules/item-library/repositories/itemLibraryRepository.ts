@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { isImportedDescriptionItemId } from '../domain/cleanupApply'
 import type {
   ItemAlias,
   ItemCatalogItem,
@@ -12,7 +13,6 @@ import type {
 import {
   buildFallbackHistoryRows,
   buildFallbackSummaryItems,
-  isImportedDescriptionItemId,
 } from './importedItemFallback'
 
 function toNumber(value: unknown): number | null {

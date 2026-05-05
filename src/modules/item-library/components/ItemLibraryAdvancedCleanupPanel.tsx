@@ -678,8 +678,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Apply results</div>
                       <div className="mt-2 space-y-1 text-[11px] text-bd-text">
                         {safeArray(currentBatchState.applyResults).map((result) => (
-                          <div key={`${result.group_id}-${result.status}`}>
-                            {result.canonical_name}: {result.status}
+                          <div key={`${result.group_id}-${result.status}`} className="rounded-md bg-bd-surface-muted px-3 py-2">
+                            <div>
+                              {result.canonical_name}: {result.status}
+                            </div>
+                            <div className="mt-1 text-bd-text-muted">
+                              {result.message}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -933,8 +938,13 @@ export function ItemLibraryAdvancedCleanupPanel({
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Apply results</div>
                     <div className="mt-2 space-y-1 text-[11px] text-bd-text">
                       {asArray(currentBatchState.applyResults).map((result) => (
-                        <div key={`${result.group_id}-${result.status}`}>
-                          {result.canonical_name}: {result.status}
+                        <div key={`${result.group_id}-${result.status}`} className="rounded-md bg-bd-surface-muted px-3 py-2">
+                          <div>
+                            {result.canonical_name}: {result.status}
+                          </div>
+                          <div className="mt-1 text-bd-text-muted">
+                            {result.message}
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -6,6 +6,10 @@ import {
   validateFlaggedCleanupImport,
   createCleanupApplyProposal,
 } from '../../modules/item-library/domain/itemCleanupExchange.ts'
+import {
+  getSyntheticCleanupItemIdFailure,
+  hasSyntheticCleanupItemIds,
+} from '../../modules/item-library/domain/cleanupApply.ts'
 import { getCleanupExportItemIds } from '../../modules/item-library/domain/cleanupExportPayload.ts'
 
 const duplicateGroups = Array.from({ length: 10 }, (_, i) => ({
@@ -160,4 +164,54 @@ test('getCleanupExportItemIds supports catalog and flagged cleanup payloads', ()
 
   const catalogIds = getCleanupExportItemIds(catalogPayload)
   assert.deepEqual([...catalogIds].sort(), ['catalog-1', 'catalog-2'])
+})
+
+test('synthetic cleanup item id helper blocks imported fallback proposals and allows real catalog ids', () => {
+  const syntheticWinnerProposal = {
+    group_id: 'group-synthetic-winner',
+    export_label: 'Imported winner',
+    canonical_name: 'Imported winner',
+    winner_item_id: 'imported-desc:cable%20lug%2010mm',
+    merged_item_ids: ['550e8400-e29b-41d4-a716-446655440000'],
+    aliases_to_keep: [],
+    aliases_to_retire: [],
+  }
+
+  assert.equal(hasSyntheticCleanupItemIds(syntheticWinnerProposal), true)
+  assert.match(
+    getSyntheticCleanupItemIdFailure(syntheticWinnerProposal),
+    /imported fallback items that are not saved catalog records yet/i,
+  )
+
+  const syntheticMergedProposal = {
+    group_id: 'group-synthetic-merged',
+    export_label: 'Imported merged',
+    canonical_name: 'Imported merged',
+    winner_item_id: '550e8400-e29b-41d4-a716-446655440001',
+    merged_item_ids: ['imported-desc:cable%20lug%2016mm'],
+    aliases_to_keep: [],
+    aliases_to_retire: [],
+  }
+
+  assert.equal(hasSyntheticCleanupItemIds(syntheticMergedProposal), true)
+  assert.match(
+    getSyntheticCleanupItemIdFailure(syntheticMergedProposal),
+    /imported fallback items that are not saved catalog records yet/i,
+  )
+
+  const realCatalogProposal = {
+    group_id: 'group-real',
+    export_label: 'Real ids',
+    canonical_name: 'Real ids',
+    winner_item_id: '550e8400-e29b-41d4-a716-446655440002',
+    merged_item_ids: [
+      '550e8400-e29b-41d4-a716-446655440003',
+      '550e8400-e29b-41d4-a716-446655440004',
+    ],
+    aliases_to_keep: [],
+    aliases_to_retire: [],
+  }
+
+  assert.equal(hasSyntheticCleanupItemIds(realCatalogProposal), false)
+  assert.equal(getSyntheticCleanupItemIdFailure(realCatalogProposal), null)
 })

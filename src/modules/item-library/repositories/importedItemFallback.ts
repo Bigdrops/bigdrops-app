@@ -1,4 +1,7 @@
 import type { ItemCatalogItem, ItemHistoryRow } from '../types'
+import { isImportedDescriptionItemId } from '../domain/cleanupApply'
+
+const IMPORTED_ITEM_PREFIX = 'imported-desc:'
 
 type RawHistorySourceRow = {
   id?: string | null
@@ -17,8 +20,6 @@ type RawHistorySourceRow = {
 type DocumentMetadata = { number: string | null; date: string | null }
 type DocumentMetadataLookup = Map<string, DocumentMetadata>
 
-const IMPORTED_ITEM_PREFIX = 'imported-desc:'
-
 function toNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null
   const parsed = Number(value)
@@ -30,11 +31,7 @@ export function normalizeImportedDescription(value: unknown) {
 }
 
 export function createImportedDescriptionItemId(description: string) {
-  return `${IMPORTED_ITEM_PREFIX}${encodeURIComponent(normalizeImportedDescription(description))}`
-}
-
-export function isImportedDescriptionItemId(itemId: string) {
-  return itemId.startsWith(IMPORTED_ITEM_PREFIX)
+  return `imported-desc:${encodeURIComponent(normalizeImportedDescription(description))}`
 }
 
 export function decodeImportedDescriptionItemId(itemId: string) {

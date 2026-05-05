@@ -8,6 +8,7 @@ import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplic
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
+import { getSyntheticCleanupItemIdFailure } from '../domain/cleanupApply'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { getCleanupExportItemIds } from '../domain/cleanupExportPayload'
 import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
@@ -249,6 +250,17 @@ export default function ItemLibraryPage() {
           canonical_name: proposal.canonical_name,
           status: 'stale',
           message: 'This merge proposal no longer matches the locked current batch.',
+        })
+        continue
+      }
+
+      const syntheticFailure = getSyntheticCleanupItemIdFailure(proposal)
+      if (syntheticFailure) {
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'failed',
+          message: syntheticFailure,
         })
         continue
       }
