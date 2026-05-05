@@ -28,6 +28,7 @@ export function getStatusTone(status: string | null | undefined): StatusTone {
   if ([
     'partial', 
     'partially_paid', 
+    'overpaid',
     'dispatched', 
     'in_progress', 
     'pending_action', 
@@ -41,9 +42,12 @@ export function getStatusTone(status: string | null | undefined): StatusTone {
     'past_due',
     'rejected', 
     'cancelled', 
+    'canceled',
     'failed', 
     'error', 
-    'voided'
+    'voided',
+    'void',
+    'deleted'
   ].includes(normalized)) return 'danger'
 
   // Info

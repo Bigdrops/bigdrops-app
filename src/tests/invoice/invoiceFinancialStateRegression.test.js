@@ -31,6 +31,18 @@ describe('calculateInvoiceFinancialState', () => {
     expect(result.settledAmount).toBe(40)
   })
 
+  test('invoice total 100, cash 40 + WHT 10 -> partially paid', () => {
+    const result = calculateInvoiceFinancialState({
+      invoiceTotal: 100,
+      payments: [{ cash_amount: 40, wht_amount: 10 }],
+      tolerance,
+    })
+    expect(result.paymentState).toBe('partially_paid')
+    expect(result.displayStatus).toBe('Partially Paid')
+    expect(result.balanceDue).toBe(50)
+    expect(result.settledAmount).toBe(50)
+  })
+
   test('invoice total 100, payment amount 100 -> paid', () => {
     const result = calculateInvoiceFinancialState({
       invoiceTotal: 100,
@@ -53,10 +65,10 @@ describe('calculateInvoiceFinancialState', () => {
     expect(result.balanceDue).toBe(0)
   })
 
-  test('invoice total 100, cash 105 -> overpaid', () => {
+  test('invoice total 100, cash 101 -> overpaid', () => {
     const result = calculateInvoiceFinancialState({
       invoiceTotal: 100,
-      payments: [{ cash_amount: 105 }],
+      payments: [{ cash_amount: 101 }],
       tolerance,
     })
     expect(result.paymentState).toBe('overpaid')
@@ -68,7 +80,7 @@ describe('calculateInvoiceFinancialState', () => {
     const result = calculateInvoiceFinancialState({
       invoiceTotal: 100,
       status: 'archived',
-      payments: [{ amount: 100 }],
+      payments: [{ amount: 40 }],
     })
     expect(result.paymentState).toBe('archived')
     expect(result.displayStatus).toBe('Archived')

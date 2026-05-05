@@ -30,10 +30,9 @@ import { shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
 import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
-import { formatStatusLabel } from "@/lib/formatters/status"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
-import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
+import { getStatusClasses } from "@/lib/statusTheme"
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 
 const PAGE_SIZE = 25
@@ -59,6 +58,20 @@ export type InvoiceRow = {
   project_id: string | null
   custom_fields: any
   payments?: any[]
+}
+
+const getInvoiceFinancialState = (invoice: Pick<InvoiceRow, "total" | "status" | "payments">) =>
+  calculateInvoiceFinancialState({
+    invoiceTotal: Number(invoice.total || 0),
+    status: invoice.status,
+    payments: invoice.payments,
+  })
+
+const normalizeInvoiceStatusFilter = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "_")
+
+const matchesInvoiceStatusFilter = (invoice: Pick<InvoiceRow, "total" | "status" | "payments">, filterValue: string) => {
+  if (filterValue === "All") return true
+  return getInvoiceFinancialState(invoice).paymentState === normalizeInvoiceStatusFilter(filterValue)
 }
 
 export default function Invoices() {
@@ -101,10 +114,6 @@ export default function Invoices() {
 
     if (clientFilter !== "All") {
       query = query.eq("client_name", clientFilter)
-    }
-
-    if (statusFilter !== "All") {
-      query = query.eq("status", statusFilter.toLowerCase())
     }
 
     if (dateFilter !== "All Time") {
@@ -158,12 +167,7 @@ export default function Invoices() {
               String(row.invoice_number || "").toLowerCase().includes(searchTerm) || 
               String(row.client_name || "").toLowerCase().includes(searchTerm)
             const matchesClient = clientFilter === "All" || row.client_name === clientFilter
-            const { paymentState } = calculateInvoiceFinancialState({
-              invoiceTotal: Number(row.total || 0),
-              status: row.status,
-              payments: row.payments,
-            })
-            const matchesStatus = statusFilter === "All" || paymentState === statusFilter.toLowerCase().replace(' ', '_')
+            const matchesStatus = matchesInvoiceStatusFilter(row, statusFilter)
             
             let matchesDate = true
             if (dateFilter !== "All Time" && row.issue_date) {
@@ -212,6 +216,7 @@ export default function Invoices() {
       if (error) throw error
 
       const allRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
+      const filteredRows = allRows.filter((row: any) => matchesInvoiceStatusFilter(row, statusFilter))
       
       // Update the "all" cache if we just fetched the base list (no search/client filters that Supabase handled)
       // Actually, since buildInvoiceQuery handles filters on server, we only update the 'all' cache if no filters were sent to server.
@@ -219,12 +224,12 @@ export default function Invoices() {
         writeListCache(INVOICE_CACHE_KEY, allRows)
       }
 
-      const nextRows = allRows.slice(from, to + 1)
+      const nextRows = filteredRows.slice(from, to + 1)
 
       setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-      setTotalCount(allRows.length)
+      setTotalCount(filteredRows.length)
       setPage(pageIndex)
-      setHasMore(to + 1 < allRows.length)
+      setHasMore(to + 1 < filteredRows.length)
 
       if (canUseNativeSqlite() && allRows.length > 0) {
         void cacheInvoiceList(allRows).catch((cacheError) => {
@@ -254,14 +259,7 @@ export default function Invoices() {
             return invoiceNumber.includes(searchTerm) || clientName.includes(searchTerm)
           })
           .filter((row: any) => clientFilter === "All" || row.client_name === clientFilter)
-          .filter((row: any) => {
-            const { paymentState } = calculateInvoiceFinancialState({
-              invoiceTotal: Number(row.total || 0),
-              status: row.status,
-              payments: row.payments,
-            })
-            return statusFilter === "All" || paymentState === statusFilter.toLowerCase().replace(' ', '_')
-          })
+          .filter((row: any) => matchesInvoiceStatusFilter(row, statusFilter))
           .filter((row: any) => {
             if (dateFilter === "All Time") return true
             if (!row.issue_date) return false
@@ -609,14 +607,8 @@ export default function Invoices() {
     },
   })
 
-  const formatInvoiceStatusLabel = (status: string | null | undefined) => formatStatusLabel(status, { fallback: "unpaid", lowercase: true })
-
   const renderInvoiceRow = (invoice: InvoiceRow) => {
-    const { displayStatus, statusTone } = calculateInvoiceFinancialState({
-      invoiceTotal: Number(invoice.total || 0),
-      status: invoice.status,
-      payments: invoice.payments,
-    })
+    const { displayStatus, statusTone } = getInvoiceFinancialState(invoice)
     
     const statusClasses = getStatusClasses(statusTone)
     
@@ -654,7 +646,7 @@ export default function Invoices() {
     {
       label: "Status",
       value: statusFilter,
-      options: ["All", "Unpaid", "Partially Paid", "Paid"],
+      options: ["All", "Unpaid", "Partially Paid", "Paid", "Overpaid"],
       onChange: setStatusFilter,
     },
     {
@@ -724,13 +716,12 @@ export default function Invoices() {
         }}
         eyebrow="Invoice"
         title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
-        subtitle={activeInvoice ? `${formatNaira(activeInvoice.total)} · Fast access actions from list context` : undefined}
+        subtitle={activeInvoice ? (() => {
+          const { displayStatus } = getInvoiceFinancialState(activeInvoice)
+          return `${formatNaira(activeInvoice.total)} · ${displayStatus} · Fast access actions from list context`
+        })() : undefined}
         actions={activeInvoice ? (() => {
-          const { paymentState } = calculateInvoiceFinancialState({
-            invoiceTotal: Number(activeInvoice.total || 0),
-            status: activeInvoice.status,
-            payments: activeInvoice.payments,
-          })
+          const { paymentState } = getInvoiceFinancialState(activeInvoice)
 
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label,
