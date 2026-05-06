@@ -37,6 +37,7 @@ const normalizeTitle = (title: string) =>
 
 import {
   BUILTIN_COLUMNS,
+  getResetColumnConfigs,
   normalizeColumnConfig,
 } from '../domain/invoice'
 
@@ -118,7 +119,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     setColumns(cols => cols.filter(c => c.key !== key))
     
   const resetColumns = () => 
-    setColumns(BUILTIN_COLUMNS.map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn))
+    setColumns(getResetColumnConfigs().map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn))
     
   const moveColumn = (key: string, dir: number) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)

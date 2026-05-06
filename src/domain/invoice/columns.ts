@@ -20,6 +20,15 @@ export const BUILTIN_COLUMNS: ColumnConfig[] = [
   { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, visibilityMode: 'hide_display', removable: false },
 ]
 
+const RESET_COLUMN_ORDER = [
+  'description',
+  'quantity',
+  'unit',
+  'unit_price',
+  'make',
+  'amount',
+] as const
+
 export const COLUMN_TYPES: ColumnTypeOption[] = [
   { value: 'text', label: 'Text' },
   { value: 'number', label: 'Number' },
@@ -62,6 +71,19 @@ export function normalizeColumnConfig(column: ColumnConfig): ColumnConfig {
     visible: visibilityMode === 'show',
     visibilityMode,
   }
+}
+
+export function getResetColumnConfigs(): ColumnConfig[] {
+  const builtinsByKey = new Map(BUILTIN_COLUMNS.map((column) => [column.key, column]))
+  const orderedKeys = [
+    ...RESET_COLUMN_ORDER,
+    ...BUILTIN_COLUMNS.map((column) => column.key).filter((key) => !RESET_COLUMN_ORDER.includes(key as (typeof RESET_COLUMN_ORDER)[number])),
+  ]
+
+  return orderedKeys
+    .map((key) => builtinsByKey.get(key))
+    .filter(Boolean)
+    .map((column) => normalizeColumnConfig({ ...column! }))
 }
 
 export function mergeColumnConfigs(columns: ColumnConfig[] = []): ColumnConfig[] {
