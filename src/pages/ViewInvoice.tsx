@@ -288,6 +288,14 @@ export default function ViewInvoice() {
     feedback.info(title, options)
   }
 
+  const openSavedAdvanceActions = useCallback((advanceInvoice: any | null | undefined) => {
+    if (advanceInvoice?.id) {
+      openAdvanceDetails(advanceInvoice, 'view')
+      return true
+    }
+    return false
+  }, [openAdvanceDetails])
+
   const downloadInvoicePdfDocument = useCallback(async ({
     targetInvoice,
     targetItems,
@@ -553,6 +561,7 @@ export default function ViewInvoice() {
     try {
       let savedId: string | null = null
       let created = true
+      let savedAdvanceInvoice: any | null = null
       if (advanceSheetMode === 'edit' && selectedAdvanceInvoice?.id) {
         const updated = await updateAdvanceInvoiceRecord({
           advanceInvoiceId: String(selectedAdvanceInvoice.id),
@@ -565,6 +574,7 @@ export default function ViewInvoice() {
           threadPosition: Number(parseCustomFields(selectedAdvanceInvoice.custom_fields)?.advance_invoice?.position || 1),
         })
         savedId = updated?.id ?? null
+        savedAdvanceInvoice = updated || null
       } else {
         const result = await createAdvanceInvoiceRecord({
           parentInvoice: invoice,
@@ -576,6 +586,7 @@ export default function ViewInvoice() {
         })
         savedId = result?.invoice?.id ?? null
         created = result?.created === true
+        savedAdvanceInvoice = result?.invoice || null
       }
 
       if (!savedId) {
@@ -596,20 +607,27 @@ export default function ViewInvoice() {
         throw new Error('Saved advance invoice could not be verified. It may not appear on this page.')
       }
 
+      const didOpenActions = openSavedAdvanceActions(savedAdvanceInvoice)
+      if (!didOpenActions) {
+        closeAdvanceSheet(false)
+      }
       showToast(
         advanceSheetMode === 'edit'
           ? 'Advance invoice updated'
           : created
             ? 'Advance invoice created'
-            : 'Advance invoice already exists',
-        advanceSheetMode === 'edit'
-          ? 'Advance child record saved successfully.'
-          : created
-            ? 'Advance child record saved successfully.'
-            : 'Opened the existing advance child invoice instead of creating another one.',
-        'success'
+            : 'Advance invoice ready',
+        didOpenActions
+          ? (advanceSheetMode === 'edit'
+              ? 'Advance invoice updated.'
+              : created
+                ? 'Advance invoice created. You can download, edit, or delete it below.'
+                : 'Advance invoice is ready. You can download, edit, or delete it below.')
+          : (advanceSheetMode === 'edit'
+              ? 'Advance invoice updated. You can download, edit, or delete it below.'
+              : 'Advance invoice created. You can download, edit, or delete it below.'),
+        'success',
       )
-      closeAdvanceSheet(false)
     } catch (error) {
       showToast('Advance invoice failed', error instanceof Error ? error.message : 'Could not save advance invoice')
     } finally {
