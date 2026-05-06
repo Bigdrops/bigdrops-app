@@ -162,6 +162,7 @@ export function buildAdvanceChildInvoicePayload({
   const advanceConfig = {
     mode,
     value: numericInput,
+    contractValue,
     primaryLabel: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
     secondaryLabel: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
     parentId: parentInvoice?.id || null,

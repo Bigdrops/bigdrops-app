@@ -6,6 +6,7 @@ import path from 'node:path'
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
 const viewInvoiceActionsPath = path.resolve('src/pages/viewInvoiceActions.ts')
 const advanceSummaryPath = path.resolve('src/domain/invoice/advanceSummary.ts')
+const advanceChildFlowPath = path.resolve('src/domain/invoice/advanceChildFlow.ts')
 
 test('advance summary exposes percentage labels for the PDF callout', () => {
   const source = fs.readFileSync(advanceSummaryPath, 'utf8')
@@ -14,6 +15,17 @@ test('advance summary exposes percentage labels for the PDF callout', () => {
   assert.match(source, /secondaryLabelWithPercent:/)
   assert.match(source, /`\$\{[^`]*primaryLabel[^`]*\(\$\{Math\.round\(advancePercent\)\}%\)`/)
   assert.match(source, /`\$\{[^`]*secondaryLabel[^`]*\(\$\{Math\.round\(balancePercent\)\}%\)`/)
+})
+
+test('advance summary uses stored parent contract value instead of recalculating against the child total', () => {
+  const summarySource = fs.readFileSync(advanceSummaryPath, 'utf8')
+  const flowSource = fs.readFileSync(advanceChildFlowPath, 'utf8')
+
+  assert.match(flowSource, /contractValue,/)
+  assert.match(flowSource, /const advanceConfig = \{[^}]*value: numericInput,[^}]*contractValue,/s)
+  assert.match(summarySource, /const contractValue = Math\.max\(0, toNumber\(advanceConfig\?\.contractValue \?\? invoice\?\.total\)\)/)
+  assert.match(summarySource, /const thisAdvance = Math\.max\(0, toNumber\(invoice\?\.total\)\)/)
+  assert.match(summarySource, /const balanceRemaining = Math\.max\(0, contractValue - thisAdvance\)/)
 })
 
 test('advance invoice pdf download reuses parent items and removes legacy advance totals rows', () => {
@@ -37,7 +49,7 @@ test('advance invoice delete flow logs the real rpc error, validates the child i
   const viewInvoiceActionsSource = fs.readFileSync(viewInvoiceActionsPath, 'utf8')
 
   assert.match(viewInvoiceActionsSource, /console\.log\('advance delete id',\s*advanceInvoiceId\)/)
-  assert.match(viewInvoiceActionsSource, /console\.error\('advance delete failed',\s*error\)/)
+  assert.match(viewInvoiceActionsSource, /console\.error\('advance child delete failed \(continuing anyway\):',\s*deleteError\)/)
   assert.match(viewInvoiceActionsSource, /select\('id,\s*custom_fields'\)\s*\.eq\('id',\s*advanceInvoiceId\)/s)
   assert.match(viewInvoiceActionsSource, /console\.error\('advance delete id mismatch',[^)]*parentInvoiceId[^)]*advanceInvoiceId/s)
   assert.match(viewInvoiceActionsSource, /await clearParentAdvanceInvoiceConfig\(\{[^}]*parentInvoiceId[^}]*parentCustomFields/s)

@@ -137,6 +137,7 @@ export function interpretPdfTableSettings(
     const isCustom = key.startsWith('custom_')
 
     if (!resolvedKeys.has(key)) return
+    if (mergeQtyUnit && key === 'unit') return
 
     const fixedBase = FIXED_PDF_COLUMNS.find(f => f.key === key)
     if (fixedBase) {

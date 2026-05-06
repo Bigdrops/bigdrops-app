@@ -49,10 +49,7 @@ export function getAdvanceSummaryValues(
     advanceConfig = parsed?.advance_invoice
   }
 
-  // contractValue is no longer persisted - derive from parent invoice via custom_fields or use child total as fallback
-  // This is a legacy calculation path - prefer parent total when calculating summary
-  // For display purposes, we use the child invoice total as the base reference
-  const contractValue = Math.max(0, toNumber(invoice?.total))
+  const contractValue = Math.max(0, toNumber(advanceConfig?.contractValue ?? invoice?.total))
   const thisAdvance = Math.max(0, toNumber(invoice?.total))
   const balanceRemaining = Math.max(0, contractValue - thisAdvance)
 
