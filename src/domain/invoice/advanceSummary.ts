@@ -2,8 +2,12 @@ import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,
 } from './advanceChildFlow'
+import {
+  getAdvanceInvoiceMetadata,
+  isAdvanceInvoiceChild,
+} from './advanceMetadata'
 
-import { safeParseJson } from '@/lib/json/safeParseJson'
+import { safeParseJson } from '../../lib/json/safeParseJson'
 
 type AdvanceInvoiceLike = {
   custom_fields?: any
@@ -30,18 +34,16 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export function isAdvanceInvoiceOutput(invoice: AdvanceInvoiceLike | null | undefined) {
-  const advanceConfig = invoice?.custom_fields?.advance_invoice
-  if (typeof invoice?.custom_fields === 'string') {
-    const parsed = safeParseJson(invoice.custom_fields, {} as any)
-    return parsed?.advance_invoice?.role === 'advance'
-  }
-  return advanceConfig?.role === 'advance'
+  return isAdvanceInvoiceChild(invoice)
 }
 
 export function getAdvanceSummaryValues(
   invoice: AdvanceInvoiceLike | null | undefined,
 ): AdvanceSummaryValues | null {
-  if (!isAdvanceInvoiceOutput(invoice)) return null
+  const parentMetadata = getAdvanceInvoiceMetadata(invoice)
+  const isChildOutput = isAdvanceInvoiceOutput(invoice)
+
+  if (!parentMetadata && !isChildOutput) return null
 
   let advanceConfig = invoice?.custom_fields?.advance_invoice
   if (typeof invoice?.custom_fields === 'string') {
@@ -49,16 +51,30 @@ export function getAdvanceSummaryValues(
     advanceConfig = parsed?.advance_invoice
   }
 
-  const contractValue = Math.max(0, toNumber(advanceConfig?.contractValue ?? invoice?.total))
-  const thisAdvance = Math.max(0, toNumber(invoice?.total))
+  const contractValue = Math.max(
+    0,
+    toNumber(parentMetadata?.contract_value ?? advanceConfig?.contractValue ?? invoice?.total),
+  )
+  const thisAdvance = Math.max(
+    0,
+    toNumber(parentMetadata?.amount ?? invoice?.total),
+  )
   const balanceRemaining = Math.max(0, contractValue - thisAdvance)
 
   const advancePercent = contractValue > 0 ? (thisAdvance / contractValue) * 100 : 0
   const balancePercent = Math.max(0, 100 - advancePercent)
   const roundedAdvancePercent = Math.round(advancePercent)
   const roundedBalancePercent = Math.round(balancePercent)
-  const primaryLabel = advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT
-  const secondaryLabel = advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT
+  const primaryLabel =
+    parentMetadata?.primary_label ||
+    advanceConfig?.primaryLabel ||
+    advanceConfig?.primary_label ||
+    ADVANCE_PRIMARY_LABEL_DEFAULT
+  const secondaryLabel =
+    parentMetadata?.secondary_label ||
+    advanceConfig?.secondaryLabel ||
+    advanceConfig?.secondary_label ||
+    ADVANCE_SECONDARY_LABEL_DEFAULT
 
   return {
     contractValue,

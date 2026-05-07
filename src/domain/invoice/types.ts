@@ -20,8 +20,19 @@ export interface InvoiceAttachment {
 
 export interface AdvanceConfig {
   enabled?: boolean
-  mode: 'percent' | 'fixed'
+  mode: 'percent' | 'percentage' | 'fixed'
   value: number
+  amount?: number
+  document_number?: string
+  issued_at?: string
+  due_at?: string
+  primary_label?: string
+  secondary_label?: string
+  contract_value?: number
+  legacy_child_invoice_id?: string | null
+  legacy_child_invoice_number?: string | null
+  legacy_child_invoice_total?: number
+  print_snapshot?: unknown
   childInvoiceId?: string | null
   suffix?: string
   primaryLabel?: string

@@ -2,7 +2,11 @@ export const ADVANCE_SUFFIX_DEFAULT = 'A'
 export const ADVANCE_PRIMARY_LABEL_DEFAULT = 'Advance invoice due now'
 export const ADVANCE_SECONDARY_LABEL_DEFAULT = 'Balance upon completion'
 
-import { safeParseJson } from '@/lib/json/safeParseJson'
+import {
+  getAdvanceInvoiceMetadata,
+  isAdvanceInvoiceParent,
+} from './advanceMetadata'
+import { safeParseJson } from '../../lib/json/safeParseJson'
 
 export type AdvanceMode = 'percent' | 'fixed'
 
@@ -76,15 +80,21 @@ export function calculateAdvanceAmount({
 }
 
 export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | undefined) {
-  let advanceConfig = invoice?.custom_fields?.advance_invoice
+  const normalizedMetadata = isAdvanceInvoiceParent(invoice)
+    ? getAdvanceInvoiceMetadata(invoice)
+    : null
 
+  let advanceConfig = invoice?.custom_fields?.advance_invoice
   if (typeof invoice?.custom_fields === 'string') {
     const parsed = safeParseJson(invoice.custom_fields, {} as any)
     advanceConfig = parsed?.advance_invoice
   }
 
-  const mode: AdvanceMode = advanceConfig?.mode === 'fixed' ? 'fixed' : 'percent'
-  const inputValue = advanceConfig?.value ?? (advanceConfig?.mode === 'fixed' ? 0 : 30)
+  const mode: AdvanceMode =
+    normalizedMetadata?.mode === 'fixed' || advanceConfig?.mode === 'fixed'
+      ? 'fixed'
+      : 'percent'
+  const inputValue = normalizedMetadata?.value ?? advanceConfig?.value ?? (mode === 'fixed' ? 0 : 30)
   const invoiceNumber = String(invoice?.invoice_number || '')
   
   // Preserve existing suffix in config, even if empty string
@@ -104,8 +114,18 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
     mode,
     inputValue: Number(inputValue),
     suffix: finalSuffix,
-    primaryLabel: String(advanceConfig?.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT),
-    secondaryLabel: String(advanceConfig?.secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT),
+    primaryLabel: String(
+      normalizedMetadata?.primary_label ||
+      advanceConfig?.primaryLabel ||
+      advanceConfig?.primary_label ||
+      ADVANCE_PRIMARY_LABEL_DEFAULT,
+    ),
+    secondaryLabel: String(
+      normalizedMetadata?.secondary_label ||
+      advanceConfig?.secondaryLabel ||
+      advanceConfig?.secondary_label ||
+      ADVANCE_SECONDARY_LABEL_DEFAULT,
+    ),
   }
 }
 
