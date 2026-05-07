@@ -1,12 +1,18 @@
-import { AlertTriangle, Banknote, BriefcaseBusiness, FileSpreadsheet, Receipt, Wallet } from 'lucide-react'
+import { AlertTriangle, Banknote, BriefcaseBusiness, Receipt } from 'lucide-react'
 import { ReportsMetricStrip } from './ReportsMetricStrip'
 import { EmptyState, ErrorBanner } from './ReportShared'
 import { OverviewSummary } from './reportTypes'
 
+type OverviewTaxSummary = OverviewSummary & {
+  expectedWhtExposure: string
+  actualWhtDeducted: string
+  vatLessActualWht: string
+}
+
 interface OverviewSectionProps {
   isActive: boolean
   isLoading: boolean
-  summary: OverviewSummary
+  summary: OverviewTaxSummary
 }
 
 const panelToneClasses = {
@@ -162,7 +168,7 @@ export function OverviewSection({ isActive, isLoading, summary }: OverviewSectio
         <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-5">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">
             <Banknote className="h-4 w-4 text-[hsl(var(--bd-status-success-text))]" />
-            Tax Position
+            VAT Less Actual WHT
           </div>
           {summary.unsupported.tax ? (
             <div className="mt-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 text-sm text-[hsl(var(--bd-text-muted))]">
@@ -170,15 +176,22 @@ export function OverviewSection({ isActive, isLoading, summary }: OverviewSectio
             </div>
           ) : (
             <>
-              <div className="mt-4 text-3xl font-black text-[hsl(var(--bd-text))]">{summary.taxPosition}</div>
+              <div className="mt-4 text-3xl font-black text-[hsl(var(--bd-text))]">{summary.vatLessActualWht}</div>
+              <div className="mt-2 text-xs text-[hsl(var(--bd-text-muted))]">
+                VAT charged on invoices minus WHT actually deducted from recorded payments.
+              </div>
               <div className="mt-3 grid gap-3">
                 <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3">
                   <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">VAT Charged</div>
                   <div className="mt-1 text-sm font-bold text-[hsl(var(--bd-text))]">{summary.vatCharged}</div>
                 </div>
                 <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">WHT Received</div>
-                  <div className="mt-1 text-sm font-bold text-[hsl(var(--bd-text))]">{summary.whtReceived}</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Expected WHT Exposure</div>
+                  <div className="mt-1 text-sm font-bold text-[hsl(var(--bd-text))]">{summary.expectedWhtExposure}</div>
+                </div>
+                <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Actual WHT Deducted</div>
+                  <div className="mt-1 text-sm font-bold text-[hsl(var(--bd-text))]">{summary.actualWhtDeducted}</div>
                 </div>
               </div>
             </>
@@ -327,8 +340,8 @@ export function OverviewSection({ isActive, isLoading, summary }: OverviewSectio
               </div>
               <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-[hsl(var(--bd-text-muted))]">WHT captured on collections</span>
-                  <span className="text-lg font-black text-[hsl(var(--bd-text))]">{summary.whtReceived}</span>
+                  <span className="text-xs text-[hsl(var(--bd-text-muted))]">Actual WHT deducted on payments</span>
+                  <span className="text-lg font-black text-[hsl(var(--bd-text))]">{summary.actualWhtDeducted}</span>
                 </div>
               </div>
             </div>

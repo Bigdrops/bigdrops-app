@@ -17,6 +17,7 @@ import {
 import {
   formatDate,
   formatMoney,
+  computeReportTaxMetrics,
   getAgingBucket,
   getPresetRange,
   getReceivableStatusLabel,
@@ -58,6 +59,12 @@ const TAB_METADATA: Record<ReportTab, { title: string; description: string }> = 
     title: 'Tax Positions',
     description: 'Calculated VAT and Withholding Tax positions for compliance tracking.'
   }
+}
+
+type ReportsOverviewSummary = OverviewSummary & {
+  expectedWhtExposure: string
+  actualWhtDeducted: string
+  vatLessActualWht: string
 }
 
 export default function Reports() {
@@ -296,7 +303,7 @@ export default function Reports() {
     return Array.from(clients).sort((left, right) => left.localeCompare(right))
   }, [overviewReceivables, collections, overviewProjects, overviewTaxInvoices])
 
-  const overviewSummary = useMemo<OverviewSummary>(() => {
+  const overviewSummary = useMemo<ReportsOverviewSummary>(() => {
     const searchTerm = search.trim().toLowerCase()
     const matchesSearch = (...values: Array<string | null | undefined>) =>
       !searchTerm || values.some((value) => String(value || '').toLowerCase().includes(searchTerm))
@@ -322,9 +329,12 @@ export default function Reports() {
     const pastDueRows = outstandingReceivables.filter((row) => isPastDue(row.due_date, row.balance_due))
     const pastDueValue = pastDueRows.reduce((sum, row) => sum + Number(row.balance_due || 0), 0)
     const collectedValue = filteredCollections.reduce((sum, row) => sum + Number(row.cash_amount || 0), 0)
-    const vatChargedValue = filteredTaxInvoices.reduce((sum, row) => sum + Number(row.vat || 0), 0)
-    const whtReceivedValue = filteredCollections.reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-    const taxPositionValue = vatChargedValue - whtReceivedValue
+    const {
+      vatChargedValue,
+      expectedWhtExposureValue,
+      actualWhtDeductedValue,
+      vatLessActualWhtValue,
+    } = computeReportTaxMetrics(filteredTaxInvoices, filteredCollections)
 
     const bucketLabels: Array<{ key: 'current' | '1_30' | '31_60' | '61_plus'; label: string; source: string; tone: 'info' | 'warning' | 'danger' }> = [
       { key: 'current', label: 'Current', source: 'Current', tone: 'info' },
@@ -398,9 +408,12 @@ export default function Reports() {
       pastDuePercent: totalExposureValue > 0 ? Math.round((pastDueValue / totalExposureValue) * 100) : 0,
       collectedAmount: formatMoney(collectedValue),
       collectionCount: filteredCollections.length,
-      taxPosition: formatMoney(taxPositionValue),
+      taxPosition: formatMoney(vatLessActualWhtValue),
       vatCharged: formatMoney(vatChargedValue),
-      whtReceived: formatMoney(whtReceivedValue),
+      whtReceived: formatMoney(actualWhtDeductedValue),
+      expectedWhtExposure: formatMoney(expectedWhtExposureValue),
+      actualWhtDeducted: formatMoney(actualWhtDeductedValue),
+      vatLessActualWht: formatMoney(vatLessActualWhtValue),
       projectsWithOutstanding: filteredProjects.filter((row) => Number(row.outstanding || 0) > 0).length,
       agingBuckets,
       highRiskReceivables,

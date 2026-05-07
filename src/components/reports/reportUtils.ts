@@ -1,8 +1,34 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
-import { DatePreset, InvoiceFinancialRow, MetricTone } from './reportTypes'
+import type { DatePreset, InvoiceFinancialRow, MetricTone } from './reportTypes'
 
 export const formatMoney = (value: number | null | undefined) => formatNaira(value)
+
+type ReportTaxInvoiceLike = {
+  vat?: number | null
+  wht?: number | null
+}
+
+type ReportTaxPaymentLike = {
+  wht_amount?: number | null
+}
+
+export const computeReportTaxMetrics = (
+  invoices: ReportTaxInvoiceLike[],
+  payments: ReportTaxPaymentLike[],
+) => {
+  const vatChargedValue = invoices.reduce((sum, row) => sum + Number(row?.vat || 0), 0)
+  const expectedWhtExposureValue = invoices.reduce((sum, row) => sum + Number(row?.wht || 0), 0)
+  const actualWhtDeductedValue = payments.reduce((sum, row) => sum + Number(row?.wht_amount || 0), 0)
+  const vatLessActualWhtValue = vatChargedValue - actualWhtDeductedValue
+
+  return {
+    vatChargedValue,
+    expectedWhtExposureValue,
+    actualWhtDeductedValue,
+    vatLessActualWhtValue,
+  }
+}
 
 export const formatDate = (value: string | null | undefined) =>
   formatDisplayDate(value, {

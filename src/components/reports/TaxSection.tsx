@@ -14,6 +14,7 @@ import {
 } from './reportTypes'
 import {
   formatMoney,
+  computeReportTaxMetrics,
   isWithinRange,
 } from './reportUtils'
 import { EmptyState, ErrorBanner, Filters, LoadingState, MetricStrip } from './ReportShared'
@@ -125,30 +126,32 @@ export function TaxSection({
   }, [collections, start, end, clientFilter, searchTerm])
 
   const metrics = useMemo<Metric[]>(() => {
-    const vatCharged = filteredTaxInvoices
-      .reduce((sum, row) => sum + Number(row.vat || 0), 0)
-
-    const whtDeducted = filteredCollections
-      .reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-
-    const whtReceived = filteredCollections
-      .reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-
-    const netPosition = vatCharged - whtDeducted
+    const {
+      vatChargedValue,
+      expectedWhtExposureValue,
+      actualWhtDeductedValue,
+      vatLessActualWhtValue,
+    } = computeReportTaxMetrics(filteredTaxInvoices, filteredCollections)
 
     return [
-      { label: 'VAT Charged', value: formatMoney(vatCharged), tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
-      { label: 'WHT Deducted', value: formatMoney(whtDeducted), tone: 'red', icon: <FileSpreadsheet className="h-4 w-4" /> },
-      { label: 'WHT Received', value: formatMoney(whtReceived), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
-      { label: 'Net Position', value: formatMoney(netPosition), tone: netPosition >= 0 ? 'blue' : 'red', icon: <Banknote className="h-4 w-4" /> },
+      { label: 'VAT Charged', value: formatMoney(vatChargedValue), tone: 'amber', icon: <Receipt className="h-4 w-4" /> },
+      { label: 'Expected WHT Exposure', value: formatMoney(expectedWhtExposureValue), tone: 'blue', icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: 'Actual WHT Deducted', value: formatMoney(actualWhtDeductedValue), tone: 'green', icon: <Wallet className="h-4 w-4" /> },
+      { label: 'VAT Less Actual WHT', value: formatMoney(vatLessActualWhtValue), tone: vatLessActualWhtValue >= 0 ? 'blue' : 'red', icon: <Banknote className="h-4 w-4" /> },
     ]
   }, [filteredTaxInvoices, filteredCollections])
 
   const isLoading = loading || loadedRange !== rangeKey || isCollectionsLoading
 
-  const vatCharged = filteredTaxInvoices.reduce((sum, row) => sum + Number(row.vat || 0), 0)
-  const whtDeducted = filteredCollections.reduce((sum, row) => sum + Number(row.wht_amount || 0), 0)
-  const netPosition = vatCharged - whtDeducted
+  const {
+    vatChargedValue,
+    expectedWhtExposureValue,
+    actualWhtDeductedValue,
+    vatLessActualWhtValue,
+  } = useMemo(
+    () => computeReportTaxMetrics(filteredTaxInvoices, filteredCollections),
+    [filteredTaxInvoices, filteredCollections],
+  )
 
   return (
     <div className="space-y-4">
@@ -191,18 +194,38 @@ export function TaxSection({
                 <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-700">VAT Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-black text-slate-900">{formatMoney(vatCharged)}</div>
+                <div className="text-2xl font-black text-slate-900">{formatMoney(vatChargedValue)}</div>
                 <p className="mt-1 text-[11px] text-muted-foreground">Total VAT charged on active invoices for this period.</p>
               </CardContent>
             </Card>
 
-            <Card className="border-red-200 bg-red-50/50 shadow-sm transition hover:shadow-md">
+            <Card className="border-blue-200 bg-blue-50/50 shadow-sm transition hover:shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-red-700">WHT Summary</CardTitle>
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-blue-700">Expected WHT Exposure</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-black text-slate-900">{formatMoney(whtDeducted)}</div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Total WHT deducted from payments received this period.</p>
+                <div className="text-2xl font-black text-slate-900">{formatMoney(expectedWhtExposureValue)}</div>
+                <p className="mt-1 text-[11px] text-muted-foreground">Total invoice-level WHT expected to be withheld in this period.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 bg-green-50/50 shadow-sm transition hover:shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-green-700">Actual WHT Deducted</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-black text-slate-900">{formatMoney(actualWhtDeductedValue)}</div>
+                <p className="mt-1 text-[11px] text-muted-foreground">Total payment-level WHT actually deducted from recorded collections in this period.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 bg-slate-50/50 shadow-sm transition hover:shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-700">VAT Less Actual WHT</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-black text-slate-900">{formatMoney(vatLessActualWhtValue)}</div>
+                <p className="mt-1 text-[11px] text-muted-foreground">VAT charged on invoices minus WHT actually deducted from recorded payments.</p>
               </CardContent>
             </Card>
           </div>
@@ -233,7 +256,7 @@ export function TaxSection({
             <CardContent className="p-4 flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-amber-500" />
               <div className="text-xs text-muted-foreground font-medium">
-                Net tax position for this period is <span className={netPosition >= 0 ? "text-blue-700 font-bold" : "text-red-700 font-bold"}>{formatMoney(netPosition)}</span>
+                VAT less actual WHT for this period is <span className={vatLessActualWhtValue >= 0 ? "text-blue-700 font-bold" : "text-red-700 font-bold"}>{formatMoney(vatLessActualWhtValue)}</span>
               </div>
             </CardContent>
           </Card>
