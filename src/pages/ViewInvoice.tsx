@@ -700,6 +700,7 @@ export default function ViewInvoice() {
     try {
       const result = await deleteAdvanceInvoiceRecord({
         parentInvoiceId: String(invoice.id),
+        parentInvoiceNumber: invoice.invoice_number ?? undefined,
         parentCustomFields: invoice.custom_fields,
       })
       setInvoice((current: any) => {
@@ -717,8 +718,8 @@ export default function ViewInvoice() {
       setAdvanceDeleteConfirmOpen(false)
       closeAdvanceSheet(false)
       showToast(
-        'Advance invoice cleared',
-        result.message || 'Advance settings were cleared from the parent invoice.',
+        'Advance removed',
+        'Advance details were cleared from the parent invoice.',
         'success'
       )
     } catch (error) {

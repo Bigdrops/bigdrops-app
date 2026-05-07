@@ -124,7 +124,7 @@ export default function InvoiceAdvanceSheet({
                 Advance Invoice
               </SheetTitle>
               <SheetDescription className="text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
-                Set numbering, advance mode, and labels for the child invoice.
+                Set numbering, advance mode, and labels stored on the parent invoice.
               </SheetDescription>
             </SheetHeader>
 
@@ -265,7 +265,7 @@ export default function InvoiceAdvanceSheet({
                     disabled={advanceSaving || advancePdfGenerating}
                     className="h-10 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-xs font-semibold text-[hsl(var(--bd-status-danger-text))] hover:opacity-90"
                   >
-                    Delete
+                    Remove
                   </Button>
                 </div>
               ) : (
@@ -296,10 +296,10 @@ export default function InvoiceAdvanceSheet({
 
       <DocumentConfirmDialog
         open={deleteConfirmOpen}
-        title="Delete Advance Invoice?"
-        description="This will delete the selected advance child invoice."
+        title="Remove Advance Details?"
+        description="This removes the advance section from the parent invoice. Historical audit records remain available."
         cancelLabel="Cancel"
-        confirmLabel="Delete"
+        confirmLabel="Remove"
         destructive
         onConfirm={onDeleteConfirm}
         onCancel={() => onDeleteConfirmOpenChange(false)}

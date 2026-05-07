@@ -11,9 +11,123 @@ import {
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow, withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
 
+const ADVANCE_AUDIT_TRACKED_FIELDS = [
+  'mode',
+  'input_value',
+  'suffix',
+  'primary_label',
+  'secondary_label',
+  'amount',
+  'document_number',
+]
+
 function getSafeAdvanceDeleteMessage(error: any, fallback = 'Could not delete advance invoice') {
   const message = typeof error?.message === 'string' ? error.message.trim() : ''
   return message || fallback
+}
+
+async function recordAdvanceCreated({
+  parentInvoiceId,
+  parentInvoiceNumber,
+  advanceMetadata,
+}: {
+  parentInvoiceId: string
+  parentInvoiceNumber: string | null
+  advanceMetadata: Record<string, any>
+}) {
+  const { recordAuditLog } = await import('@/lib/audit')
+  try {
+    await recordAuditLog({
+      entityType: 'invoice',
+      recordId: parentInvoiceId,
+      entityLabel: parentInvoiceNumber ?? undefined,
+      action: 'CREATE',
+      oldData: null,
+      newData: {
+        mode: advanceMetadata.mode,
+        input_value: advanceMetadata.input_value,
+        suffix: advanceMetadata.suffix,
+        primary_label: advanceMetadata.primary_label,
+        secondary_label: advanceMetadata.secondary_label,
+        document_number: advanceMetadata.document_number,
+        amount: advanceMetadata.amount,
+      },
+      trackedFields: ADVANCE_AUDIT_TRACKED_FIELDS,
+      reason: 'Advance invoice metadata created on parent invoice',
+    })
+  } catch (auditErr) {
+    console.error('Advance create audit failed:', auditErr)
+  }
+}
+
+async function recordAdvanceUpdated({
+  parentInvoiceId,
+  parentInvoiceNumber,
+  oldMetadata,
+  newMetadata,
+}: {
+  parentInvoiceId: string
+  parentInvoiceNumber: string | null
+  oldMetadata: Record<string, any> | null
+  newMetadata: Record<string, any>
+}) {
+  const { recordAuditLog } = await import('@/lib/audit')
+  try {
+    await recordAuditLog({
+      entityType: 'invoice',
+      recordId: parentInvoiceId,
+      entityLabel: parentInvoiceNumber ?? undefined,
+      action: 'UPDATE',
+      oldData: oldMetadata,
+      newData: {
+        mode: newMetadata.mode,
+        input_value: newMetadata.input_value,
+        suffix: newMetadata.suffix,
+        primary_label: newMetadata.primary_label,
+        secondary_label: newMetadata.secondary_label,
+        document_number: newMetadata.document_number,
+        amount: newMetadata.amount,
+      },
+      trackedFields: ADVANCE_AUDIT_TRACKED_FIELDS,
+      reason: 'Advance invoice metadata updated on parent invoice',
+    })
+  } catch (auditErr) {
+    console.error('Advance update audit failed:', auditErr)
+  }
+}
+
+async function recordAdvanceCleared({
+  parentInvoiceId,
+  parentInvoiceNumber,
+  clearedMetadata,
+}: {
+  parentInvoiceId: string
+  parentInvoiceNumber: string | null
+  clearedMetadata: Record<string, any>
+}) {
+  const { recordAuditLog } = await import('@/lib/audit')
+  try {
+    await recordAuditLog({
+      entityType: 'invoice',
+      recordId: parentInvoiceId,
+      entityLabel: parentInvoiceNumber ?? undefined,
+      action: 'DELETE',
+      oldData: {
+        mode: clearedMetadata.mode,
+        input_value: clearedMetadata.input_value,
+        suffix: clearedMetadata.suffix,
+        primary_label: clearedMetadata.primary_label,
+        secondary_label: clearedMetadata.secondary_label,
+        document_number: clearedMetadata.document_number,
+        amount: clearedMetadata.amount,
+      },
+      newData: null,
+      trackedFields: ADVANCE_AUDIT_TRACKED_FIELDS,
+      reason: 'Advance invoice details removed from parent invoice metadata',
+    })
+  } catch (auditErr) {
+    console.error('Advance clear audit failed:', auditErr)
+  }
 }
 
 function buildAdvanceMetadataBackedRecord({
@@ -185,11 +299,26 @@ export async function createAdvanceInvoiceRecord({
     printSnapshot: existingMetadata?.print_snapshot,
   })
 
-  await saveParentAdvanceInvoiceConfig({
+await saveParentAdvanceInvoiceConfig({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
     advanceMetadata: metadata,
   })
+
+  if (existingMetadata) {
+    await recordAdvanceUpdated({
+      parentInvoiceId: String(parentInvoice.id),
+      parentInvoiceNumber: parentInvoice.invoice_number,
+      oldMetadata: existingMetadata,
+      newMetadata: metadata,
+    })
+  } else {
+    await recordAdvanceCreated({
+      parentInvoiceId: String(parentInvoice.id),
+      parentInvoiceNumber: parentInvoice.invoice_number,
+      advanceMetadata: metadata,
+    })
+  }
 
   return {
     invoice: buildAdvanceMetadataBackedRecord({
@@ -235,10 +364,17 @@ export async function updateAdvanceInvoiceRecord({
     printSnapshot: existingMetadata?.print_snapshot,
   })
 
-  await saveParentAdvanceInvoiceConfig({
+await saveParentAdvanceInvoiceConfig({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
     advanceMetadata: metadata,
+  })
+
+  await recordAdvanceUpdated({
+    parentInvoiceId: String(parentInvoice.id),
+    parentInvoiceNumber: parentInvoice.invoice_number,
+    oldMetadata: existingMetadata,
+    newMetadata: metadata,
   })
 
   return buildAdvanceMetadataBackedRecord({
@@ -249,16 +385,28 @@ export async function updateAdvanceInvoiceRecord({
 
 export async function deleteAdvanceInvoiceRecord({
   parentInvoiceId,
+  parentInvoiceNumber,
   parentCustomFields,
 }: {
   advanceInvoiceId?: string
   parentInvoiceId: string
+  parentInvoiceNumber?: string | null
   parentCustomFields: unknown
 }) {
+  const existingMetadata = getAdvanceInvoiceMetadata(parentCustomFields as any)
+
   await clearParentAdvanceInvoiceConfig({
     parentInvoiceId,
     parentCustomFields,
   })
+
+  if (existingMetadata) {
+    await recordAdvanceCleared({
+      parentInvoiceId,
+      parentInvoiceNumber: parentInvoiceNumber ?? null,
+      clearedMetadata: existingMetadata,
+    })
+  }
 
   return {
     status: 'cleared' as const,
