@@ -2,6 +2,7 @@ import { supabase } from '@/supabase'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
 import { voidInvoicePayment as voidPayment, refreshInvoicePaymentState } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
+import { archiveInvoice, deleteInvoice, duplicateInvoice, updateInvoiceStatus as updateStatus } from '@/modules/invoices/services/invoiceLifecycleService'
 import {
   buildAdvanceParentInvoiceMetadata,
 } from '@/domain/invoice/advanceChildFlow'
@@ -224,27 +225,8 @@ export async function duplicateInvoiceDraft({
   invoice: any
   items: any[]
 }) {
-  const { data: all } = await supabase.from('invoices').select('invoice_number').like('invoice_number', 'SASINV-B%').order('created_at', { ascending: false })
-  let nextNum = 1
-  if (all && all.length > 0) {
-    const nums = all
-      .map((entry: any) => parseInt(String(entry.invoice_number || '').replace('SASINV-B', ''), 10))
-      .filter((value: number) => !Number.isNaN(value))
-    nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
-  }
-  return {
-    prefill: {
-      ...invoice,
-      invoice_number: `SASINV-B${String(nextNum).padStart(3, '0')}`,
-      client_id: null,
-      client_name: '',
-      project_id: null,
-      status: 'unpaid',
-      issue_date: new Date().toISOString().split('T')[0],
-      due_date: null,
-    },
-    prefillItems: items.map((item) => ({ ...item, id: null })),
-  }
+  const result = await duplicateInvoice({ invoice, items })
+  return result
 }
 
 export function buildWaybillPrefill(invoice: any) {
@@ -260,13 +242,17 @@ export function buildWaybillPrefill(invoice: any) {
 }
 
 export async function archiveInvoiceRecord(id: string) {
-  const { error } = await supabase.from('invoices').update({ archived_at: new Date().toISOString() }).eq('id', id)
-  if (error) throw error
+  const result = await archiveInvoice({ invoiceId: id })
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to archive invoice')
+  }
 }
 
 export async function deleteInvoiceRecord(id: string) {
-  const { error } = await supabase.from('invoices').delete().eq('id', id)
-  if (error) throw error
+  const result = await deleteInvoice({ invoiceId: id })
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to delete invoice')
+  }
 }
 
 export async function createAdvanceInvoiceRecord({

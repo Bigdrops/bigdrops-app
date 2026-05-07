@@ -2,6 +2,7 @@ import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { voidInvoicePayment, refreshInvoicePaymentState } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
+import { archiveInvoice, deleteInvoice } from '@/modules/invoices/services/invoiceLifecycleService'
 import {
   buildTrailLink,
   parseDocumentCustomFields,
@@ -347,7 +348,11 @@ export function useInvoiceMutations({
   const confirmDelete = async () => {
     setShowDeleteConfirm(false)
     await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    await supabase.from('invoices').delete().eq('id', id)
+    const result = await deleteInvoice({ invoiceId: id })
+    if (!result.success) {
+      feedback.error('Delete failed', { description: result.error || 'Could not delete invoice' })
+      return
+    }
     navigate('/invoices')
   }
 
@@ -358,7 +363,11 @@ export function useInvoiceMutations({
 
   const confirmArchive = async () => {
     setShowArchiveConfirm(false)
-    await supabase.from('invoices').update({ archived_at: new Date().toISOString() }).eq('id', id)
+    const result = await archiveInvoice({ invoiceId: id })
+    if (!result.success) {
+      feedback.error('Archive failed', { description: result.error || 'Could not archive invoice' })
+      return
+    }
     navigate('/invoices')
   }
 
