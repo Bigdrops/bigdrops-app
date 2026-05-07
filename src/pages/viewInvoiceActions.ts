@@ -1,13 +1,13 @@
 import { supabase } from '@/supabase'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
 import {
-  ADVANCE_PRIMARY_LABEL_DEFAULT,
-  ADVANCE_SECONDARY_LABEL_DEFAULT,
-  ADVANCE_SUFFIX_DEFAULT,
-  buildAdvanceChildInvoicePayload,
-  getAdvanceDraftFromInvoice,
+  buildAdvanceParentInvoiceMetadata,
 } from '@/domain/invoice/advanceChildFlow'
-import { parseCustomFields } from '@/domain/invoice'
+import {
+  clearAdvanceInvoiceMetadata,
+  getAdvanceInvoiceMetadata,
+  mergeAdvanceInvoiceMetadata,
+} from '@/domain/invoice/advanceMetadata'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow, withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
 
@@ -16,47 +16,37 @@ function getSafeAdvanceDeleteMessage(error: any, fallback = 'Could not delete ad
   return message || fallback
 }
 
-function buildParentAdvanceInvoiceConfig({
+function buildAdvanceMetadataBackedRecord({
   parentInvoice,
-  childInvoiceId,
-  mode,
-  inputValue,
-  suffix,
-  primaryLabel,
-  secondaryLabel,
+  metadata,
 }: {
   parentInvoice: any
-  childInvoiceId: string
-  mode: 'percent' | 'fixed'
-  inputValue: number | string
-  suffix: string | undefined
-  primaryLabel: string
-  secondaryLabel: string
+  metadata: any
 }) {
   return {
-    role: 'parent',
-    childInvoiceId,
-    mode,
-    value: Number(inputValue),
-    suffix: suffix === undefined ? ADVANCE_SUFFIX_DEFAULT : suffix,
-    primaryLabel: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
-    secondaryLabel: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    ...parentInvoice,
+    id: metadata.legacy_child_invoice_id || null,
+    invoice_number: metadata.document_number || 'Advance Invoice',
+    invoice_title: parentInvoice?.invoice_title || 'Advance Invoice',
+    total: Number(metadata.amount || 0),
+    status: metadata.status || 'unpaid',
+    issue_date: metadata.issued_at || parentInvoice?.issue_date || null,
+    due_date: metadata.due_at || parentInvoice?.due_date || null,
+    custom_fields: mergeAdvanceInvoiceMetadata(parentInvoice?.custom_fields, metadata),
+    _advanceMetadataOnly: true,
   }
 }
 
 async function saveParentAdvanceInvoiceConfig({
   parentInvoiceId,
   parentCustomFields,
-  advanceConfig,
+  advanceMetadata,
 }: {
   parentInvoiceId: string
   parentCustomFields: unknown
-  advanceConfig: Record<string, unknown>
+  advanceMetadata: any
 }) {
-  const nextCustomFields = {
-    ...parseCustomFields(parentCustomFields),
-    advance_invoice: advanceConfig,
-  }
+  const nextCustomFields = mergeAdvanceInvoiceMetadata(parentCustomFields, advanceMetadata)
 
   const { error } = await supabase
     .from('invoices')
@@ -75,11 +65,7 @@ async function clearParentAdvanceInvoiceConfig({
   parentInvoiceId: string
   parentCustomFields: unknown
 }) {
-  const nextCustomFields = {
-    ...parseCustomFields(parentCustomFields),
-  }
-
-  delete nextCustomFields.advance_invoice
+  const nextCustomFields = clearAdvanceInvoiceMetadata(parentCustomFields)
 
   const { error } = await supabase
     .from('invoices')
@@ -182,79 +168,36 @@ export async function createAdvanceInvoiceRecord({
   primaryLabel: string
   secondaryLabel: string
 }) {
-  const { data: existingAdvance, error: existingAdvanceError } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, invoice_title, total, custom_fields')
-    .ilike('custom_fields', `%"parentId":"${parentInvoice?.id}"%`)
-    .is('archived_at', null)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (existingAdvanceError) throw existingAdvanceError
-
-  if (existingAdvance) {
-    const existingDraft = getAdvanceDraftFromInvoice(existingAdvance)
-    await saveParentAdvanceInvoiceConfig({
-      parentInvoiceId: String(parentInvoice.id),
-      parentCustomFields: parentInvoice.custom_fields,
-      advanceConfig: buildParentAdvanceInvoiceConfig({
-        parentInvoice,
-        childInvoiceId: String(existingAdvance.id),
-        mode: existingDraft.mode,
-        inputValue: existingDraft.inputValue,
-        suffix: existingDraft.suffix,
-        primaryLabel: existingDraft.primaryLabel,
-        secondaryLabel: existingDraft.secondaryLabel,
-      }),
-    })
-    return { invoice: existingAdvance, created: false }
-  }
-
-  const payload = buildAdvanceChildInvoicePayload({
+  const existingMetadata = getAdvanceInvoiceMetadata(parentInvoice)
+  const metadata = buildAdvanceParentInvoiceMetadata({
     parentInvoice,
     mode,
     inputValue,
     suffix,
     primaryLabel,
     secondaryLabel,
-    threadPosition: 1,
+    legacyChildInvoiceId: existingMetadata?.legacy_child_invoice_id,
+    legacyChildInvoiceNumber: existingMetadata?.legacy_child_invoice_number,
+    legacyChildInvoiceTotal: existingMetadata?.legacy_child_invoice_total,
+    issuedAt: existingMetadata?.issued_at,
+    dueAt: existingMetadata?.due_at,
+    status: existingMetadata?.status,
+    printSnapshot: existingMetadata?.print_snapshot,
   })
-
-  console.log('Advance invoice insert payload:', payload)
-
-  const { data, error } = await supabase
-    .from('invoices')
-    .insert([{
-      ...payload,
-      custom_fields: JSON.stringify(payload.custom_fields)
-    }])
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Supabase error creating advance invoice:', error)
-    throw new Error(`Could not save advance invoice: ${error.message}`)
-  }
-  if (!data) {
-    throw new Error('Could not save advance invoice: No data returned from server')
-  }
 
   await saveParentAdvanceInvoiceConfig({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
-    advanceConfig: buildParentAdvanceInvoiceConfig({
-      parentInvoice,
-      childInvoiceId: String(data.id),
-      mode,
-      inputValue,
-      suffix,
-      primaryLabel,
-      secondaryLabel,
-    }),
+    advanceMetadata: metadata,
   })
 
-  return { invoice: data, created: true }
+  return {
+    invoice: buildAdvanceMetadataBackedRecord({
+      parentInvoice,
+      metadata,
+    }),
+    created: !existingMetadata,
+  }
 }
 
 export async function updateAdvanceInvoiceRecord({
@@ -265,9 +208,8 @@ export async function updateAdvanceInvoiceRecord({
   suffix,
   primaryLabel,
   secondaryLabel,
-  threadPosition,
 }: {
-  advanceInvoiceId: string
+  advanceInvoiceId?: string | null
   parentInvoice: any
   mode: 'percent' | 'fixed'
   inputValue: number | string
@@ -276,128 +218,51 @@ export async function updateAdvanceInvoiceRecord({
   secondaryLabel: string
   threadPosition?: number
 }) {
-  const payload = buildAdvanceChildInvoicePayload({
+  const existingMetadata = getAdvanceInvoiceMetadata(parentInvoice)
+  const metadata = buildAdvanceParentInvoiceMetadata({
     parentInvoice,
     mode,
     inputValue,
     suffix,
     primaryLabel,
     secondaryLabel,
-    threadPosition,
+    legacyChildInvoiceId: existingMetadata?.legacy_child_invoice_id || advanceInvoiceId,
+    legacyChildInvoiceNumber: existingMetadata?.legacy_child_invoice_number,
+    legacyChildInvoiceTotal: existingMetadata?.legacy_child_invoice_total,
+    issuedAt: existingMetadata?.issued_at,
+    dueAt: existingMetadata?.due_at,
+    status: existingMetadata?.status,
+    printSnapshot: existingMetadata?.print_snapshot,
   })
-
-  console.log('Advance invoice update payload:', payload)
-
-  const { data, error } = await supabase
-    .from('invoices')
-    .update({
-      ...payload,
-      custom_fields: JSON.stringify(payload.custom_fields)
-    })
-    .eq('id', advanceInvoiceId)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Supabase error updating advance invoice:', error)
-    throw new Error(`Could not save advance invoice: ${error.message}`)
-  }
-  if (!data) {
-    throw new Error('Could not save advance invoice: No data returned from server')
-  }
 
   await saveParentAdvanceInvoiceConfig({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
-    advanceConfig: buildParentAdvanceInvoiceConfig({
-      parentInvoice,
-      childInvoiceId: String(data.id),
-      mode,
-      inputValue,
-      suffix,
-      primaryLabel,
-      secondaryLabel,
-    }),
+    advanceMetadata: metadata,
   })
 
-  return data
+  return buildAdvanceMetadataBackedRecord({
+    parentInvoice,
+    metadata,
+  })
 }
 
 export async function deleteAdvanceInvoiceRecord({
-  advanceInvoiceId,
   parentInvoiceId,
   parentCustomFields,
 }: {
-  advanceInvoiceId: string
+  advanceInvoiceId?: string
   parentInvoiceId: string
   parentCustomFields: unknown
 }) {
-  console.log('advance delete id', advanceInvoiceId)
-
-  const parentAdvanceConfig = parseCustomFields(parentCustomFields)?.advance_invoice || null
-  const expectedChildId = typeof parentAdvanceConfig?.childInvoiceId === 'string'
-    ? parentAdvanceConfig.childInvoiceId
-    : null
-
-  const { data: childRecord, error: childRecordError } = await supabase
-    .from('invoices')
-    .select('id, custom_fields')
-    .eq('id', advanceInvoiceId)
-    .maybeSingle()
-
-  if (childRecordError) {
-    throw new Error(getSafeAdvanceDeleteMessage(childRecordError))
-  }
-
-  const childAdvanceConfig = parseCustomFields(childRecord?.custom_fields)?.advance_invoice || null
-  const childParentId = typeof childAdvanceConfig?.parentId === 'string'
-    ? childAdvanceConfig.parentId
-    : null
-
-  const idMismatch =
-    advanceInvoiceId === parentInvoiceId ||
-    (expectedChildId !== null && expectedChildId !== advanceInvoiceId) ||
-    (childParentId !== null && childParentId !== parentInvoiceId)
-
-  if (idMismatch) {
-    console.error('advance delete id mismatch', {
-      parentInvoiceId,
-      advanceInvoiceId,
-      parentAdvanceInvoiceId: expectedChildId,
-      childInvoiceId: childRecord?.id || null,
-      childParentId,
-    })
-    throw new Error('Advance invoice delete blocked because the selected child does not match this parent invoice.')
-  }
-
-  if (!childRecord) {
-    await clearParentAdvanceInvoiceConfig({
-      parentInvoiceId,
-      parentCustomFields,
-    })
-    return {
-      status: 'parent-cleared' as const,
-      message: 'Advance invoice record was already missing. Parent settings were cleared.',
-    }
-  }
-
-  const { error: deleteError } = await supabase
-    .from('invoices')
-    .delete()
-    .eq('id', advanceInvoiceId)
-
-  if (deleteError) {
-    console.error('advance child delete failed (continuing anyway):', deleteError)
-  }
-
   await clearParentAdvanceInvoiceConfig({
     parentInvoiceId,
     parentCustomFields,
   })
 
   return {
-    status: 'deleted' as const,
-    message: 'Advance invoice cleared',
+    status: 'cleared' as const,
+    message: 'Advance invoice metadata cleared from the parent invoice.',
   }
 }
 

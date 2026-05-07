@@ -337,7 +337,7 @@ export default function ViewInvoice() {
   }
 
   const openSavedAdvanceActions = useCallback((advanceInvoice: any | null | undefined) => {
-    if (advanceInvoice?.id) {
+    if (advanceInvoice) {
       openAdvanceDetails(advanceInvoice, 'view')
       return true
     }
@@ -607,21 +607,18 @@ export default function ViewInvoice() {
     if (!invoice?.id || advanceSaving) return
     setAdvanceSaving(true)
     try {
-      let savedId: string | null = null
       let created = true
       let savedAdvanceInvoice: any | null = null
-      if (advanceSheetMode === 'edit' && selectedAdvanceInvoice?.id) {
+      if (advanceSheetMode === 'edit' && selectedAdvanceInvoice) {
         const updated = await updateAdvanceInvoiceRecord({
-          advanceInvoiceId: String(selectedAdvanceInvoice.id),
+          advanceInvoiceId: selectedAdvanceInvoice.id || advanceMetadata?.legacy_child_invoice_id || null,
           parentInvoice: invoice,
           mode: advanceMode,
           inputValue: advanceInputValue,
           suffix: advanceSuffixValue,
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
-          threadPosition: Number(parseCustomFields(selectedAdvanceInvoice.custom_fields)?.advance_invoice?.position || 1),
         })
-        savedId = updated?.id ?? null
         savedAdvanceInvoice = updated || null
       } else {
         const result = await createAdvanceInvoiceRecord({
@@ -632,28 +629,21 @@ export default function ViewInvoice() {
           primaryLabel: advancePrimaryLabel,
           secondaryLabel: advanceSecondaryLabel,
         })
-        savedId = result?.invoice?.id ?? null
         created = result?.created === true
         savedAdvanceInvoice = result?.invoice || null
       }
 
-      if (!savedId) {
-        throw new Error('No record returned after save')
-      }
+      if (!savedAdvanceInvoice) throw new Error('No record returned after save')
+
+      setInvoice((current: any) => {
+        if (!current) return current
+        return {
+          ...current,
+          custom_fields: savedAdvanceInvoice.custom_fields,
+        }
+      })
 
       await refresh()
-
-      const { data: verifyRow, error: verifyError } = await supabase
-        .from('invoices')
-        .select('id, custom_fields')
-        .eq('id', savedId)
-        .ilike('custom_fields', `%"parentId":"${invoice.id}"%`)
-        .is('archived_at', null)
-        .single()
-
-      if (verifyError || !verifyRow) {
-        throw new Error('Saved advance invoice could not be verified. It may not appear on this page.')
-      }
 
       const didOpenActions = openSavedAdvanceActions(savedAdvanceInvoice)
       if (!didOpenActions) {
@@ -705,11 +695,10 @@ export default function ViewInvoice() {
   }, [advancePdfGenerating, downloadInvoicePdfDocument, invoice, items, selectedAdvanceInvoice])
 
   const handleAdvanceDelete = async () => {
-    if (!selectedAdvanceInvoice?.id || !invoice?.id || advanceSaving) return
+    if (!invoice?.id || advanceSaving) return
     setAdvanceSaving(true)
     try {
       const result = await deleteAdvanceInvoiceRecord({
-        advanceInvoiceId: String(selectedAdvanceInvoice.id),
         parentInvoiceId: String(invoice.id),
         parentCustomFields: invoice.custom_fields,
       })
@@ -728,10 +717,8 @@ export default function ViewInvoice() {
       setAdvanceDeleteConfirmOpen(false)
       closeAdvanceSheet(false)
       showToast(
-        result.status === 'deleted' ? 'Advance invoice deleted' : 'Advance invoice cleared',
-        result.status === 'deleted'
-          ? 'Advance child record removed.'
-          : (result.message || 'Advance settings were cleared from the parent invoice.'),
+        'Advance invoice cleared',
+        result.message || 'Advance settings were cleared from the parent invoice.',
         'success'
       )
     } catch (error) {

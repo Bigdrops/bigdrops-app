@@ -3,6 +3,7 @@ export const ADVANCE_PRIMARY_LABEL_DEFAULT = 'Advance invoice due now'
 export const ADVANCE_SECONDARY_LABEL_DEFAULT = 'Balance upon completion'
 
 import {
+  buildAdvanceInvoiceMetadata,
   getAdvanceInvoiceMetadata,
   isAdvanceInvoiceParent,
 } from './advanceMetadata'
@@ -219,4 +220,66 @@ export function buildAdvanceChildInvoicePayload({
       advance_invoice: advanceConfig,
     },
   }
+}
+
+export function buildAdvanceParentInvoiceMetadata({
+  parentInvoice,
+  mode,
+  inputValue,
+  suffix,
+  primaryLabel,
+  secondaryLabel,
+  legacyChildInvoiceId,
+  legacyChildInvoiceNumber,
+  legacyChildInvoiceTotal,
+  issuedAt,
+  dueAt,
+  status,
+  printSnapshot,
+}: {
+  parentInvoice: AdvanceParentInvoice
+  mode: AdvanceMode
+  inputValue: string | number
+  suffix: string | undefined
+  primaryLabel: string
+  secondaryLabel: string
+  legacyChildInvoiceId?: string | null
+  legacyChildInvoiceNumber?: string | null
+  legacyChildInvoiceTotal?: number | string | null
+  issuedAt?: string | null
+  dueAt?: string | null
+  status?: string | null
+  printSnapshot?: unknown
+}) {
+  const contractValue = Math.max(0, toNumber(parentInvoice?.total))
+  const numericInput = clamp(
+    toNumber(inputValue),
+    0,
+    mode === 'fixed' ? contractValue : 100,
+  )
+  const finalSuffix = suffix === undefined ? ADVANCE_SUFFIX_DEFAULT : suffix
+  const normalizedMode = mode === 'fixed' ? 'fixed' : 'percentage'
+  const advanceAmount = calculateAdvanceAmount({ contractValue, mode, inputValue: numericInput })
+
+  return buildAdvanceInvoiceMetadata({
+    enabled: true,
+    amount: advanceAmount,
+    mode: normalizedMode,
+    value: numericInput,
+    document_number: getAdvanceNumber(String(parentInvoice?.invoice_number || ''), finalSuffix),
+    issued_at: issuedAt || parentInvoice?.issue_date || undefined,
+    due_at: dueAt || parentInvoice?.due_date || undefined,
+    status: status || 'unpaid',
+    primary_label: primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
+    secondary_label: secondaryLabel || ADVANCE_SECONDARY_LABEL_DEFAULT,
+    suffix: finalSuffix,
+    contract_value: contractValue,
+    legacy_child_invoice_id: legacyChildInvoiceId || undefined,
+    legacy_child_invoice_number: legacyChildInvoiceNumber || undefined,
+    legacy_child_invoice_total:
+      legacyChildInvoiceTotal === null || legacyChildInvoiceTotal === undefined
+        ? undefined
+        : toNumber(legacyChildInvoiceTotal),
+    print_snapshot: printSnapshot,
+  })
 }
