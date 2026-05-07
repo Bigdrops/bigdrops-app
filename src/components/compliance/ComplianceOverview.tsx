@@ -3,6 +3,7 @@ import { AlertCircle, Bell, ClipboardList, Receipt, Wallet } from 'lucide-react'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { type TaxFiling, type TaxInputEntry, type TaxReminder, type WhtReceipt } from '@/domain/compliance/types'
+import { summarizeComplianceWht } from '@/domain/compliance/whtSummary'
 
 import ComplianceActionQueue from './ComplianceActionQueue'
 import { type ComplianceActionItem } from './ComplianceActionRow'
@@ -17,6 +18,7 @@ type InvoiceRecord = {
   client_name?: string | null
   issue_date?: string | null
   vat?: number | string | null
+  wht?: number | string | null
 }
 
 type PaymentRecord = {
@@ -112,6 +114,12 @@ export default function ComplianceOverview({
     .reduce((sum, entry) => sum + getAmount(entry.vat_amount), 0)
 
   const vatCharged = invoices.reduce((sum, invoice) => sum + getAmount(invoice.vat), 0)
+  const {
+    expectedWhtAmount,
+    expectedWhtInvoiceCount,
+    actualWhtAwaitingReceiptAmount,
+    actualWhtPaymentCount,
+  } = summarizeComplianceWht(invoices, payments, receipts)
 
   const receiptByPaymentId = new Map(receipts.map((receipt) => [receipt.payment_id, receipt]))
 
@@ -140,7 +148,7 @@ export default function ComplianceOverview({
   const openFilings = filings.filter((filing) => filing.status === 'draft' || filing.status === 'ready')
 
   const filingsAttentionCount = overdueFilings.length + openFilings.length
-  const whtAwaitingReceiptCount = untrackedWhtPayments.length + requestedReceipts.length + verificationReceipts.length
+  const whtAwaitingReceiptCount = actualWhtPaymentCount
 
   const kpiItems: ComplianceKpiItem[] = [
     {
@@ -151,6 +159,13 @@ export default function ComplianceOverview({
       tone: 'warning',
     },
     {
+      label: 'Expected WHT Exposure',
+      value: formatNaira(expectedWhtAmount),
+      detail: `${expectedWhtInvoiceCount} invoices with configured WHT`,
+      icon: <Receipt className="h-4 w-4" />,
+      tone: expectedWhtInvoiceCount > 0 ? 'info' : 'success',
+    },
+    {
       label: 'Recoverable VAT',
       value: formatNaira(recoverableVatTotal),
       detail: `${taxInputs.filter((entry) => entry.is_recoverable).length} recoverable inputs`,
@@ -158,9 +173,9 @@ export default function ComplianceOverview({
       tone: 'success',
     },
     {
-      label: 'WHT Awaiting Receipt',
-      value: String(whtAwaitingReceiptCount),
-      detail: `${untrackedWhtPayments.length} untracked, ${requestedReceipts.length + verificationReceipts.length} in follow-up`,
+      label: 'Actual WHT Awaiting Receipt',
+      value: formatNaira(actualWhtAwaitingReceiptAmount),
+      detail: `${whtAwaitingReceiptCount} payments awaiting evidence`,
       icon: <AlertCircle className="h-4 w-4" />,
       tone: whtAwaitingReceiptCount > 0 ? 'danger' : 'info',
     },
@@ -377,6 +392,10 @@ export default function ComplianceOverview({
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
         <ComplianceActionQueue items={queueItems} onNavigate={onNavigateSection} />
         <ComplianceRecentActivity items={recentActivityItems} />
+      </div>
+
+      <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-xs text-[hsl(var(--bd-text-muted))]">
+        Expected WHT is configured on invoices. Receipt tracking starts only when WHT is actually deducted on a payment.
       </div>
 
       {queueItems.length > 0 ? (
