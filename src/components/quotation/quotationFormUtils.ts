@@ -3,6 +3,7 @@ import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry } from '@/domain/invo
 import { toDbItem } from '@/domain/invoice'
 import { buildCalculationInputs } from '@/components/useInvoiceColumns.jsx'
 import { filterPopulatedAdditionalFields } from '@/components/useInvoiceColumns.jsx'
+import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import type { QuotationEditorState } from './quotationFormTypes'
 import type { PdfOutputState } from './quotationFormTypes'
 
@@ -157,8 +158,8 @@ export function buildCustomFields({
   return {
     quotationTitle: quotation.quotation_title || '',
     clientName: quotation.client_name || '',
-    notesHtml: quotation.notes || '',
-    termsHtml: quotation.terms || '',
+    notesHtml: normalizeRichTextHtml(quotation.notes || ''),
+    termsHtml: normalizeRichTextHtml(quotation.terms || ''),
     header: headerFields.filter((field) => field.label && field.value),
     additionalFields: filterPopulatedAdditionalFields(additionalFields),
     columnConfig: columns,

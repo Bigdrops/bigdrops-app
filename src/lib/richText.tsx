@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify'
-import { richTextToPlainText } from './richTextPlain'
+import { normalizeRichTextHtml, richTextToPlainText } from '@/components/pdf-new/core/richText'
 
 function canUseDomPurify() {
   return typeof window !== 'undefined' && typeof window.document !== 'undefined'
@@ -8,8 +8,9 @@ function canUseDomPurify() {
 export { richTextToPlainText }
 
 export function sanitizeRichTextHtml(value: unknown) {
-  if (typeof value !== 'string' || !value.trim()) return ''
-  return canUseDomPurify() ? DOMPurify.sanitize(value) : value
+  const normalized = normalizeRichTextHtml(value)
+  if (!normalized) return ''
+  return canUseDomPurify() ? DOMPurify.sanitize(normalized) : normalized
 }
 
 export function renderRichTextContent(value: unknown, className = 'prose prose-sm max-w-none break-words text-foreground') {

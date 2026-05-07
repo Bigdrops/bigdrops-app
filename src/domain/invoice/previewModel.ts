@@ -3,6 +3,7 @@ import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from '@/domain/docu
 import { normalizeQuantity } from '@/domain/invoice/normalize'
 import { resolveColumnBehavior } from '@/domain/invoice/columns'
 import type { ColumnConfig } from '@/domain/invoice/types'
+import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import { getAdditionalFields } from './additionalFields'
 import { buildSummaryRows } from './calculations'
 import type { InvoiceCustomFields } from './types'
@@ -330,14 +331,14 @@ export function buildInvoicePreviewModel({
       ? {
           title: customFieldObject?.notesTitle || 'Notes',
           kind: 'html',
-          html: invoice.notes,
+          html: normalizeRichTextHtml(invoice.notes),
         }
       : null,
     invoice.terms
       ? {
           title: customFieldObject?.termsTitle || 'Terms and Conditions',
           kind: 'html',
-          html: invoice.terms,
+          html: normalizeRichTextHtml(invoice.terms),
         }
       : null,
     ...(additionalFields.length > 0

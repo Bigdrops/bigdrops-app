@@ -119,7 +119,8 @@ export type PdfTotals = {
 export type PdfTextSection = {
   title: string
   content: string
-  format?: 'text' | 'html'
+  plainText?: string
+  format?: 'text' | 'html' | 'rich-text'
 }
 
 export type PdfSignature = {

@@ -11,6 +11,7 @@ import {
   Eraser,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 
 interface ToolbarBtnProps {
   onClick: () => void
@@ -49,14 +50,18 @@ interface RichTextEditorProps {
 export default function RichTextEditor({ value, onChange, placeholder = '' }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ strike: false }),
+      StarterKit.configure({
+        strike: false,
+        bulletList: { keepMarks: true, keepAttributes: false },
+        orderedList: { keepMarks: true, keepAttributes: false },
+      }),
       Underline,
     ],
-    content: value || '',
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    content: normalizeRichTextHtml(value || ''),
+    onUpdate: ({ editor }) => onChange(normalizeRichTextHtml(editor.getHTML())),
     editorProps: {
       attributes: {
-        class: 'min-h-[150px] px-4 py-3.5 text-[15px] leading-[1.7] text-zinc-900 outline-none',
+        class: 'min-h-[150px] px-4 py-3.5 text-[15px] leading-[1.7] text-zinc-900 outline-none [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1',
       },
     },
   })
@@ -64,14 +69,15 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }: Ri
   useEffect(() => {
     if (!editor || editor.isDestroyed) return
     if (value === undefined || value === null) return
-    if (!editor.isFocused && editor.getHTML() !== value) {
-      editor.commands.setContent(value || '', false as any)
+    const normalizedValue = normalizeRichTextHtml(value || '')
+    if (!editor.isFocused && editor.getHTML() !== normalizedValue) {
+      editor.commands.setContent(normalizedValue, false as any)
     }
   }, [value, editor])
 
   if (!editor) return null
 
-  const isEmpty = !value || value === '<p></p>'
+  const isEmpty = editor.isEmpty
 
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-300 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">

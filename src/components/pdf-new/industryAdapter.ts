@@ -1,6 +1,6 @@
 import { formatPdfCurrencyString } from '../../lib/formatters/pdfCurrency'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
-import { richTextToPlainText } from '../../lib/richTextPlain'
+import { normalizeRichTextSection } from './core/richText'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
@@ -98,8 +98,8 @@ export type IndustryTemplateData = {
     secondaryLabel: string | null
     balanceRemaining: string | null
   } | null
-  notes: { title: string; content: string; format?: string } | null
-  terms: { title: string; content: string; format?: string } | null
+  notes: { title: string; content: string; plainText?: string; format?: string } | null
+  terms: { title: string; content: string; plainText?: string; format?: string } | null
   attachments: Array<{ label?: string; url?: string | undefined }>
   additionalFields: Array<{ label: string; value: string }>
   signature: PdfDocumentModel['signature'] | null
@@ -147,14 +147,7 @@ function hasDisplayValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }
 
-function normalizePdfTextSection(section: PdfDocumentModel['notes']) {
-  if (!section?.content) return null
-  return {
-    ...section,
-    content: richTextToPlainText(section.content),
-    format: 'text',
-  }
-}
+const normalizePdfTextSection = normalizeRichTextSection
 
 export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''

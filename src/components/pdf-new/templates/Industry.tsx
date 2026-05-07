@@ -1,5 +1,6 @@
 import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { IndustryTemplateData } from '../industryAdapter'
+import { renderPdfRichText } from '../core/pdfRichText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { lightenHex } from '@/lib/pdfDesignPreset'
 import {
@@ -529,14 +530,30 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {data.notes?.content ? (
         <View style={styles.optionalSection}>
           {data.notes.title ? <Text style={sectionTitleStyle}>{data.notes.title}</Text> : null}
-          <Text style={styles.optionalText}>{data.notes.content}</Text>
+          {renderPdfRichText(data.notes.content, {
+            containerStyle: styles.optionalRichText,
+            paragraphStyle: styles.optionalParagraph,
+            listStyle: styles.optionalList,
+            listItemRowStyle: styles.optionalListItemRow,
+            listMarkerStyle: styles.optionalListMarker,
+            listItemTextStyle: styles.optionalListItemText,
+            fallbackTextStyle: styles.optionalText,
+          }) || <Text style={styles.optionalText}>{data.notes.plainText || ''}</Text>}
         </View>
       ) : null}
 
       {data.terms?.content ? (
         <View style={styles.optionalSection}>
           {data.terms.title ? <Text style={sectionTitleStyle}>{data.terms.title}</Text> : null}
-          <Text style={styles.optionalText}>{data.terms.content}</Text>
+          {renderPdfRichText(data.terms.content, {
+            containerStyle: styles.optionalRichText,
+            paragraphStyle: styles.optionalParagraph,
+            listStyle: styles.optionalList,
+            listItemRowStyle: styles.optionalListItemRow,
+            listMarkerStyle: styles.optionalListMarker,
+            listItemTextStyle: styles.optionalListItemText,
+            fallbackTextStyle: styles.optionalText,
+          }) || <Text style={styles.optionalText}>{data.terms.plainText || ''}</Text>}
         </View>
       ) : null}
 

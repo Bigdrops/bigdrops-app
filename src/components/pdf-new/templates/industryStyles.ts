@@ -439,6 +439,36 @@ export const styles = StyleSheet.create({
     color: '#666666',
     lineHeight: 1.5,
   },
+  optionalRichText: {
+    marginTop: 2,
+  },
+  optionalParagraph: {
+    fontSize: 10,
+    color: '#666666',
+    lineHeight: 1.5,
+    marginBottom: 6,
+  },
+  optionalList: {
+    marginBottom: 6,
+  },
+  optionalListItemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 3,
+  },
+  optionalListMarker: {
+    width: 16,
+    fontSize: 10,
+    color: '#666666',
+    lineHeight: 1.5,
+    fontFamily: 'Helvetica-Bold',
+  },
+  optionalListItemText: {
+    flex: 1,
+    fontSize: 10,
+    color: '#666666',
+    lineHeight: 1.5,
+  },
   attachmentsWrap: { marginTop: 6 },
   attachmentItem: {
     fontSize: 10,

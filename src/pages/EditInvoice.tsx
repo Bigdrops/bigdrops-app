@@ -46,6 +46,7 @@ import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { feedback } from '@/lib/feedback'
 import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
+import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -452,6 +453,8 @@ export default function EditInvoice() {
     })
 
     const buildPayloadStart = timer.phaseStart('build-payload')
+    const normalizedNotes = normalizeRichTextHtml(invoice.notes)
+    const normalizedTerms = normalizeRichTextHtml(invoice.terms)
     const updatePayload: any = {
       invoice_title: invoiceTitle || null,
       po_number: String(invoice.po_number || '').trim() || null,
@@ -461,8 +464,8 @@ export default function EditInvoice() {
       due_date: invoice.due_date || null,
       status,
       payment_terms: paymentTermsValue,
-      notes: invoice.notes,
-      terms: invoice.terms,
+      notes: normalizedNotes,
+      terms: normalizedTerms,
       workmanship: Number(invoice.workmanship || 0),
       transportation: Number(invoice.transportation || 0),
       shipping: Number(invoice.shipping || 0),
@@ -479,8 +482,8 @@ export default function EditInvoice() {
     timer.phaseEnd('build-payload', buildPayloadStart, {
       documentTable: 'invoices',
       payloadBytes: getJsonSizeBytes(updatePayload),
-      notesBytes: getJsonSizeBytes(invoice.notes || ''),
-      termsBytes: getJsonSizeBytes(invoice.terms || ''),
+      notesBytes: getJsonSizeBytes(normalizedNotes),
+      termsBytes: getJsonSizeBytes(normalizedTerms),
       customFieldsBytes: getJsonSizeBytes(customFieldsData),
     })
 

@@ -30,6 +30,7 @@ import { computeDocument } from '@/lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { type ProjectLookupClient, type ProjectPrefillState, validateProjectAssignment } from '@/domain/projects'
+import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import {
   createOfflineQuotationDraft,
   peekNextOfflineQuotationNumber,
@@ -490,6 +491,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     })
 
     const buildPayloadStart = timer.phaseStart('build-payload')
+    const normalizedNotes = normalizeRichTextHtml(quotation.notes || '')
+    const normalizedTerms = normalizeRichTextHtml(quotation.terms || '')
     const payload = {
       quotation_number: quotation.quotation_number || '',
       po_number: poNumber || null,
@@ -500,8 +503,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       issue_date: quotation.issue_date || null,
       valid_until: quotation.valid_until || null,
       status: status || 'open',
-      notes: quotation.notes || '',
-      terms: quotation.terms || '',
+      notes: normalizedNotes,
+      terms: normalizedTerms,
       workmanship: Number(quotation.workmanship || 0),
       transportation: Number(quotation.transportation || 0),
       shipping: Number(quotation.shipping || 0),
@@ -517,8 +520,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     timer.phaseEnd('build-payload', buildPayloadStart, {
       documentTable: 'quotations',
       payloadBytes: getJsonSizeBytes(payload),
-      notesBytes: getJsonSizeBytes(quotation.notes || ''),
-      termsBytes: getJsonSizeBytes(quotation.terms || ''),
+      notesBytes: getJsonSizeBytes(normalizedNotes),
+      termsBytes: getJsonSizeBytes(normalizedTerms),
       customFieldsBytes: getJsonSizeBytes(customFieldsData),
     })
 
