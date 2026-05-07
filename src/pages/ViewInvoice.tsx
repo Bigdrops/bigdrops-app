@@ -58,7 +58,10 @@ import {
   duplicateInvoiceDraft,
   revertInvoiceToQuotation,
   updateAdvanceInvoiceRecord,
+  voidInvoicePayment,
+  syncInvoiceStatusFromFinancials,
 } from './viewInvoiceActions'
+import VoidPaymentDialog from '@/components/document-view/invoice/VoidPaymentDialog'
 
 const SHEET_CUSTOMIZE = 'customize-output'
 const SHEET_MORE = 'more-actions'
@@ -67,6 +70,7 @@ const SHEET_ADVANCE = 'advance'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const MODAL_REVERT = 'revert'
+const MODAL_VOID_PAYMENT = 'void-payment'
 
 type AdvanceSheetMode = 'create' | 'edit' | 'view'
 
@@ -112,6 +116,8 @@ export default function ViewInvoice() {
   const [advanceSuffixValue, setAdvanceSuffixValue] = useState(ADVANCE_SUFFIX_DEFAULT)
   const [advancePrimaryLabel, setAdvancePrimaryLabel] = useState(ADVANCE_PRIMARY_LABEL_DEFAULT)
   const [advanceSecondaryLabel, setAdvanceSecondaryLabel] = useState(ADVANCE_SECONDARY_LABEL_DEFAULT)
+  const [pendingVoidPaymentId, setPendingVoidPaymentId] = useState<string | null>(null)
+  const [voiding, setVoiding] = useState(false)
   const settingsData: any = settings || {}
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
@@ -745,6 +751,28 @@ export default function ViewInvoice() {
     }
   }
 
+  const handleVoidPayment = useCallback((paymentId: string) => {
+    setPendingVoidPaymentId(paymentId)
+    ui.openModal(MODAL_VOID_PAYMENT)
+  }, [ui])
+
+  const confirmVoidPayment = async (reason: string) => {
+    if (!pendingVoidPaymentId || !invoice?.id || voiding) return
+    setVoiding(true)
+    try {
+      await voidInvoicePayment({ paymentId: pendingVoidPaymentId, reason })
+      await syncInvoiceStatusFromFinancials(invoice.id)
+      await refresh()
+      showToast('Payment voided', 'The payment has been reversed and invoice status updated.', 'success')
+      ui.closeModal()
+    } catch (error) {
+      showToast('Void failed', error instanceof Error ? error.message : 'Could not void this payment.')
+    } finally {
+      setVoiding(false)
+      setPendingVoidPaymentId(null)
+    }
+  }
+
   if (loading) {
     return (
       <InvoicePageShell topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
@@ -971,6 +999,18 @@ export default function ViewInvoice() {
               documentLabel={docProps.number || 'Invoice'}
               onLinked={() => refresh()}
             />
+
+            <VoidPaymentDialog
+              open={ui.isModalOpen(MODAL_VOID_PAYMENT)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  ui.closeModal()
+                  setPendingVoidPaymentId(null)
+                }
+              }}
+              onConfirm={confirmVoidPayment}
+              loading={voiding}
+            />
           </>
         }
       >
@@ -1037,6 +1077,8 @@ export default function ViewInvoice() {
             methodLabel: payment.method || 'Payment',
             referenceLabel: payment.reference || '',
             kind: Number(payment.wht_amount || 0) > 0 && Number(payment.cash_amount || 0) === 0 ? 'wht' : 'cash',
+            isVoided: Boolean(payment.voided_at),
+            voidedAt: payment.voided_at,
           }))}
           advanceInvoices={visibleAdvanceInvoices.map((advance: any) => {
             const rawCf = advance.custom_fields
@@ -1061,9 +1103,11 @@ export default function ViewInvoice() {
           }
           attachments={attachments}
           onRecordPayment={() => ui.openSheet(SHEET_RECORD_PAYMENT)}
+          onVoidPayment={handleVoidPayment}
           onEdit={() => navigate(`/invoices/edit/${id}`)}
           onDownload={() => void handleDownload()}
           canRecordPayment={viewModel.canRecordPayment}
+          voidingPaymentId={voiding ? pendingVoidPaymentId : null}
         />
       </InvoicePageShell>
     </>

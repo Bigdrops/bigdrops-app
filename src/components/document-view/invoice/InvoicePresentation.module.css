@@ -378,9 +378,60 @@
 .pay-hist-method { font-size: 12px; font-weight: 600; color: var(--dv-text); }
 .pay-hist-ref { font-size: 11px; color: var(--dv-text-3); font-family: var(--dv-font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 
-.pay-hist-right { text-align: right; flex-shrink: 0; }
+.pay-hist-right { text-align: right; flex-shrink: 0; transition: opacity 0.2s ease; }
 .pay-hist-amount { font-family: var(--dv-font-mono); font-size: 13px; font-weight: 600; color: var(--dv-emerald); }
 .pay-hist-date { font-size: 10px; color: var(--dv-text-3); margin-top: 2px; }
+
+.pay-hist-actions {
+  margin-left: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pay-hist-item:hover .pay-hist-actions {
+  opacity: 1;
+}
+
+.btn-void {
+  background: transparent;
+  border: 1px solid var(--dv-border);
+  color: var(--dv-text-3);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-void:hover {
+  background: var(--dv-rose-bg);
+  color: var(--dv-rose);
+  border-color: var(--dv-rose-border);
+}
+
+.pay-hist-item.voided {
+  opacity: 0.5;
+  background: var(--dv-bg-3);
+}
+
+.pay-hist-item.voided .pay-hist-body,
+.pay-hist-item.voided .pay-hist-right {
+  text-decoration: line-through;
+}
+
+.pay-hist-item.voided .pay-hist-icon {
+  background: var(--dv-bg-3);
+  color: var(--dv-text-4);
+  border-color: var(--dv-border-soft);
+  filter: grayscale(1);
+}
+
+.pay-hist-item.voided .pay-hist-amount {
+  color: var(--dv-text-3);
+}
 
 /* ─── ADVANCE LIST ─── */
 .advance-list { display: flex; flex-direction: column; gap: 7px; }

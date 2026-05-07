@@ -41,6 +41,7 @@ import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
+import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -417,7 +418,9 @@ export default function NewInvoice() {
     }
 
     setSaving(true)
+    const timer = createSaveTimer('invoice-save-total', { mode: 'new', status })
 
+    const buildCustomFieldsStart = timer.phaseStart('build-custom-fields')
     const groupMeta: Record<string, { name: string; showSubtotal: boolean }> = {}
     groups.forEach((group) => {
       groupMeta[group.id] = { name: group.name, showSubtotal: group.showSubtotal }
@@ -447,7 +450,19 @@ export default function NewInvoice() {
       signatoryId,
       pdfOutput,
     }
+    const customFieldsJson = JSON.stringify(customFieldsData)
+    timer.phaseEnd('build-custom-fields', buildCustomFieldsStart, {
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+      attachmentsCount: attachments.length,
+      headerFieldCount: customFields.length,
+      additionalFieldCount: additionalFields.length,
+      extraChargeCount: extraCharges.length,
+      columnCount: columns.length,
+      groupCount: groups.length,
+      pdfOutputBytes: getJsonSizeBytes(pdfOutput),
+    })
 
+    const buildPayloadStart = timer.phaseStart('build-payload')
     const insertPayload: any = {
       invoice_number: invoice.invoice_number,
       po_number: String(invoice.po_number || '').trim() || null,
@@ -468,19 +483,32 @@ export default function NewInvoice() {
       discount: documentTotals.discount,
       vat: documentTotals.vat,
       wht: documentTotals.wht,
-      custom_fields: JSON.stringify(customFieldsData),
+      custom_fields: customFieldsJson,
       work_duration: invoice.work_duration,
       subtotal: documentTotals.subtotal,
       install_rate_total: documentTotals.installRateTotal,
       total: documentTotals.totalPayable,
       amount_in_words: numberToWords(documentTotals.totalPayable),
     }
+    timer.phaseEnd('build-payload', buildPayloadStart, {
+      documentTable: 'invoices',
+      payloadBytes: getJsonSizeBytes(insertPayload),
+      notesBytes: getJsonSizeBytes(invoice.notes || ''),
+      termsBytes: getJsonSizeBytes(invoice.terms || ''),
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+    })
 
+    const saveDocumentRowStart = timer.phaseStart('save-document-row')
     const { data: invoiceRow, error } = await (supabase
       .from('invoices') as any)
       .insert([insertPayload])
       .select()
       .single()
+    timer.phaseEnd('save-document-row', saveDocumentRowStart, {
+      table: 'invoices',
+      operation: 'insert-select-single',
+      supabaseCalls: 1,
+    })
 
     if (error || !invoiceRow) {
       feedback.error('Save failed', {
@@ -494,11 +522,42 @@ export default function NewInvoice() {
       .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
       .map((item, index) => toDbItem(item, invoiceRow.id, index))
 
+    const deleteExistingItemsStart = timer.phaseStart('delete-existing-items')
+    timer.phaseEnd('delete-existing-items', deleteExistingItemsStart, {
+      table: 'invoice_items',
+      skipped: true,
+      supabaseCalls: 0,
+      reason: 'new invoice save does not delete existing rows',
+    })
+
     if (itemsToSave.length > 0) {
+      const insertItemsStart = timer.phaseStart('insert-items')
       await supabase.from('invoice_items').insert(itemsToSave)
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'invoice_items',
+        rowCount: itemsToSave.length,
+        payloadBytes: getJsonSizeBytes(itemsToSave),
+        supabaseCalls: 1,
+      })
+    } else {
+      const insertItemsStart = timer.phaseStart('insert-items')
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'invoice_items',
+        rowCount: 0,
+        skipped: true,
+        supabaseCalls: 0,
+      })
     }
 
     // Audit Trail
+    const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
+    timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
+      skipped: true,
+      supabaseCalls: 0,
+      reason: 'new invoice save navigates without refetch',
+    })
+
+    const saveAuditLogStart = timer.phaseStart('save-audit-log')
     try {
       const { recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
       await recordInvoiceCreated(invoiceRow.id)
@@ -514,9 +573,22 @@ export default function NewInvoice() {
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
     }
+    timer.phaseEnd('save-audit-log', saveAuditLogStart, {
+      tables: ['audit_logs'],
+      rpcCalls: 2,
+      includesAuthLookup: true,
+    })
 
     setSaving(false)
+    const navigationAfterSaveStart = timer.phaseStart('navigation-after-save')
     navigate('/invoices/' + invoiceRow.id)
+    timer.phaseEnd('navigation-after-save', navigationAfterSaveStart, {
+      target: '/invoices/' + invoiceRow.id,
+    })
+    timer.finish({
+      supabaseCalls: itemsToSave.length > 0 ? 4 : 3,
+      itemRowCount: itemsToSave.length,
+    })
   }
 
   return (

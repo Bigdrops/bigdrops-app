@@ -56,6 +56,7 @@ import {
   buildCustomFields,
   toQuotationItem,
 } from './quotationFormUtils'
+import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 
 export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'edit'; quotationId?: string }) {
   const navigate = useNavigate()
@@ -450,7 +451,45 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
 
     setSaving(true)
+    const timer = createSaveTimer('quotation-save-total', {
+      mode: isEdit ? 'edit' : 'new',
+      status: status || 'open',
+      quotationId: quotationId || null,
+    })
     const poNumber = String(quotation.po_number || '').trim()
+    const buildCustomFieldsStart = timer.phaseStart('build-custom-fields')
+    const customFieldsData = buildCustomFields({
+      quotation,
+      columns,
+      headerFields,
+      additionalFields,
+      discountType,
+      discountTiming,
+      whtType,
+      notesTitle,
+      termsTitle,
+      mergeQtyUnit,
+      showItemImages,
+      groups: normalizedGroups,
+      attachments,
+      extraCharges,
+      chargeLabels,
+      signatoryId,
+      pdfOutput,
+    })
+    const customFieldsJson = JSON.stringify(customFieldsData)
+    timer.phaseEnd('build-custom-fields', buildCustomFieldsStart, {
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+      attachmentsCount: attachments.length,
+      headerFieldCount: headerFields.length,
+      additionalFieldCount: additionalFields.length,
+      extraChargeCount: extraCharges.length,
+      columnCount: columns.length,
+      groupCount: normalizedGroups.length,
+      pdfOutputBytes: getJsonSizeBytes(pdfOutput),
+    })
+
+    const buildPayloadStart = timer.phaseStart('build-payload')
     const payload = {
       quotation_number: quotation.quotation_number || '',
       po_number: poNumber || null,
@@ -473,28 +512,15 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       install_rate_total: totals.installRateTotal,
       total: totals.totalPayable,
       amount_in_words: quotation.amount_in_words || '',
-      custom_fields: JSON.stringify(
-        buildCustomFields({
-          quotation,
-          columns,
-          headerFields,
-          additionalFields,
-          discountType,
-          discountTiming,
-          whtType,
-          notesTitle,
-          termsTitle,
-          mergeQtyUnit,
-          showItemImages,
-          groups: normalizedGroups,
-          attachments,
-          extraCharges,
-          chargeLabels,
-          signatoryId,
-          pdfOutput,
-        }),
-      ),
+      custom_fields: customFieldsJson,
     }
+    timer.phaseEnd('build-payload', buildPayloadStart, {
+      documentTable: 'quotations',
+      payloadBytes: getJsonSizeBytes(payload),
+      notesBytes: getJsonSizeBytes(quotation.notes || ''),
+      termsBytes: getJsonSizeBytes(quotation.terms || ''),
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+    })
 
     const persistableItems = normalizedItems.filter((item) =>
       item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim(),
@@ -523,11 +549,17 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     if (!isEdit) {
       let candidateNumber = payload.quotation_number
+      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
       const { data: existing } = await supabase
         .from('quotations')
         .select('id')
         .eq('quotation_number', candidateNumber)
         .maybeSingle()
+      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
+        table: 'quotations',
+        operation: 'pre-save-number-check',
+        supabaseCalls: 1,
+      })
       if (existing) {
         const match = candidateNumber.match(/(\d+)$/)
         const num = match ? parseInt(match[1], 10) : 0
@@ -535,6 +567,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         payload.quotation_number = candidateNumber
         setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
       }
+    } else {
+      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
+      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
+        skipped: true,
+        supabaseCalls: 0,
+        reason: 'edit quotation save does not refetch before navigation',
+      })
     }
 
     const quoteQuery =
@@ -542,7 +581,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         ? supabase.from('quotations').update(payload).eq('id', quotationId).select().single()
         : supabase.from('quotations').insert([payload]).select().single()
 
+    const saveDocumentRowStart = timer.phaseStart('save-document-row')
     const { data: savedQuotation, error } = await quoteQuery
+    timer.phaseEnd('save-document-row', saveDocumentRowStart, {
+      table: 'quotations',
+      operation: isEdit ? 'update-select-single' : 'insert-select-single',
+      supabaseCalls: 1,
+    })
     if (error || !savedQuotation) {
       feedback.error('Save failed', {
         description: getUserFacingMutationMessage(error, { action: 'save' }),
@@ -554,7 +599,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     const resolvedId = String(savedQuotation.id)
     const itemRows = persistableItems.map((item, index) => toQuotationItem(item, resolvedId, index))
 
+    const deleteExistingItemsStart = timer.phaseStart('delete-existing-items')
     const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
+    timer.phaseEnd('delete-existing-items', deleteExistingItemsStart, {
+      table: 'quotation_items',
+      operation: 'delete-by-quotation_id',
+      supabaseCalls: 1,
+    })
     if (deleteError) {
       feedback.error('Save failed', {
         description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
@@ -564,7 +615,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
 
     if (itemRows.length > 0) {
+      const insertItemsStart = timer.phaseStart('insert-items')
       const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'quotation_items',
+        rowCount: itemRows.length,
+        payloadBytes: getJsonSizeBytes(itemRows),
+        supabaseCalls: 1,
+      })
       if (itemError) {
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(itemError, { action: 'save' }),
@@ -572,10 +630,19 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         setSaving(false)
         return
       }
+    } else {
+      const insertItemsStart = timer.phaseStart('insert-items')
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'quotation_items',
+        rowCount: 0,
+        skipped: true,
+        supabaseCalls: 0,
+      })
     }
 
     setSaving(false)
     // Audit Trail
+    const saveAuditLogStart = timer.phaseStart('save-audit-log')
     try {
       const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
       if (!isEdit) {
@@ -603,9 +670,22 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
     }
+    timer.phaseEnd('save-audit-log', saveAuditLogStart, {
+      tables: ['audit_logs'],
+      rpcCalls: isEdit ? 1 : 2,
+      includesAuthLookup: true,
+    })
 
     setSaving(false)
+    const navigationAfterSaveStart = timer.phaseStart('navigation-after-save')
     navigate(`/quotations/${resolvedId}`)
+    timer.phaseEnd('navigation-after-save', navigationAfterSaveStart, {
+      target: `/quotations/${resolvedId}`,
+    })
+    timer.finish({
+      supabaseCalls: (isEdit ? 0 : 1) + 1 + 1 + (itemRows.length > 0 ? 1 : 0) + (isEdit ? 1 : 2),
+      itemRowCount: itemRows.length,
+    })
   }
 
   if (loading) {

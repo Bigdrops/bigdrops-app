@@ -45,6 +45,7 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { feedback } from '@/lib/feedback'
+import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -405,7 +406,9 @@ export default function EditInvoice() {
     }
 
     setSaving(true)
+    const timer = createSaveTimer('invoice-save-total', { mode: 'edit', status, invoiceId: id || null })
 
+    const buildCustomFieldsStart = timer.phaseStart('build-custom-fields')
     const groupMeta: Record<string, { name?: string; showSubtotal?: boolean }> = {}
     groups.forEach((group) => {
       if (group.id) {
@@ -436,7 +439,19 @@ export default function EditInvoice() {
       signatoryId,
       pdfOutput,
     }
+    const customFieldsJson = JSON.stringify(customFieldsData)
+    timer.phaseEnd('build-custom-fields', buildCustomFieldsStart, {
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+      attachmentsCount: attachments.length,
+      headerFieldCount: customFields.length,
+      additionalFieldCount: additionalFields.length,
+      extraChargeCount: extraCharges.length,
+      columnCount: columns.length,
+      groupCount: groups.length,
+      pdfOutputBytes: getJsonSizeBytes(pdfOutput),
+    })
 
+    const buildPayloadStart = timer.phaseStart('build-payload')
     const updatePayload: any = {
       invoice_title: invoiceTitle || null,
       po_number: String(invoice.po_number || '').trim() || null,
@@ -454,18 +469,31 @@ export default function EditInvoice() {
       discount: documentTotals.discount,
       vat: documentTotals.vat,
       wht: documentTotals.wht,
-      custom_fields: JSON.stringify(customFieldsData),
+      custom_fields: customFieldsJson,
       work_duration: invoice.work_duration,
       subtotal: documentTotals.subtotal,
       install_rate_total: documentTotals.installRateTotal,
       total: documentTotals.totalPayable,
       amount_in_words: numberToWords(documentTotals.totalPayable),
     }
+    timer.phaseEnd('build-payload', buildPayloadStart, {
+      documentTable: 'invoices',
+      payloadBytes: getJsonSizeBytes(updatePayload),
+      notesBytes: getJsonSizeBytes(invoice.notes || ''),
+      termsBytes: getJsonSizeBytes(invoice.terms || ''),
+      customFieldsBytes: getJsonSizeBytes(customFieldsData),
+    })
 
+    const saveDocumentRowStart = timer.phaseStart('save-document-row')
     const { error } = await (supabase
       .from('invoices') as any)
       .update(updatePayload)
       .eq('id', id)
+    timer.phaseEnd('save-document-row', saveDocumentRowStart, {
+      table: 'invoices',
+      operation: 'update',
+      supabaseCalls: 1,
+    })
 
     if (error) {
       feedback.error('Save failed', {
@@ -479,7 +507,13 @@ export default function EditInvoice() {
       .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
       .map((item, index) => toDbItem(item, id, index))
 
+    const deleteExistingItemsStart = timer.phaseStart('delete-existing-items')
     const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
+    timer.phaseEnd('delete-existing-items', deleteExistingItemsStart, {
+      table: 'invoice_items',
+      operation: 'delete-by-invoice_id',
+      supabaseCalls: 1,
+    })
     if (deleteError) {
       feedback.error('Save failed', {
         description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
@@ -489,7 +523,14 @@ export default function EditInvoice() {
     }
 
     if (itemsToSave.length > 0) {
+      const insertItemsStart = timer.phaseStart('insert-items')
       const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'invoice_items',
+        rowCount: itemsToSave.length,
+        payloadBytes: getJsonSizeBytes(itemsToSave),
+        supabaseCalls: 1,
+      })
       if (insertError) {
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(insertError, { action: 'save' }),
@@ -497,12 +538,27 @@ export default function EditInvoice() {
         setSaving(false)
         return
       }
+    } else {
+      const insertItemsStart = timer.phaseStart('insert-items')
+      timer.phaseEnd('insert-items', insertItemsStart, {
+        table: 'invoice_items',
+        rowCount: 0,
+        skipped: true,
+        supabaseCalls: 0,
+      })
     }
 
     // Audit Trail
+    const saveAuditLogStart = timer.phaseStart('save-audit-log')
     try {
       const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
+      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
       const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
+      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
+        table: 'invoices',
+        operation: 'select-single',
+        supabaseCalls: 1,
+      })
       
       await recordAuditLog({
         entityType: 'invoice',
@@ -516,9 +572,22 @@ export default function EditInvoice() {
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
     }
+    timer.phaseEnd('save-audit-log', saveAuditLogStart, {
+      tables: ['audit_logs'],
+      rpcCalls: 1,
+      includesAuthLookup: true,
+    })
 
     setSaving(false)
+    const navigationAfterSaveStart = timer.phaseStart('navigation-after-save')
     navigate('/invoices/' + id)
+    timer.phaseEnd('navigation-after-save', navigationAfterSaveStart, {
+      target: '/invoices/' + id,
+    })
+    timer.finish({
+      supabaseCalls: itemsToSave.length > 0 ? 5 : 4,
+      itemRowCount: itemsToSave.length,
+    })
   }
 
   return (

@@ -43,6 +43,8 @@ interface InvoiceViewPageProps {
     methodLabel: string
     referenceLabel: string
     kind: 'cash' | 'wht'
+    isVoided?: boolean
+    voidedAt?: string | null
   }>
   advanceInvoices: Array<{
     id: string
@@ -63,9 +65,11 @@ interface InvoiceViewPageProps {
     label: string
   }>
   onRecordPayment: () => void
+  onVoidPayment: (id: string) => void
   onEdit: () => void
   onDownload: () => void
   canRecordPayment: boolean
+  voidingPaymentId?: string | null
 }
 
 export default function InvoiceViewPage({
@@ -80,9 +84,11 @@ export default function InvoiceViewPage({
   relatedDocuments,
   attachments,
   onRecordPayment,
+  onVoidPayment,
   onEdit,
   onDownload,
-  canRecordPayment
+  canRecordPayment,
+  voidingPaymentId,
 }: InvoiceViewPageProps) {
   const gPaymentSummary = Array.isArray(paymentSummary) ? paymentSummary : []
   const gPaymentHistory = Array.isArray(paymentHistory) ? paymentHistory : []
@@ -141,7 +147,7 @@ export default function InvoiceViewPage({
               </div>
               <div className={styles['payment-hist']}>
                 {gPaymentHistory.map((item) => (
-                  <div key={item.id} className={styles['pay-hist-item']}>
+                  <div key={item.id} className={`${styles['pay-hist-item']} ${item.isVoided ? styles.voided : ''}`}>
                     <div className={`${styles['pay-hist-icon']} ${item.kind === 'wht' ? styles.wht : ''}`}>
                       <Receipt size={16} />
                     </div>
@@ -153,6 +159,18 @@ export default function InvoiceViewPage({
                       <div className={styles['pay-hist-amount']}>{item.amountLabel}</div>
                       <div className={styles['pay-hist-date']}>{item.dateLabel}</div>
                     </div>
+                    {!item.isVoided && (
+                      <div className={styles['pay-hist-actions']}>
+                        <button
+                          type="button"
+                          className={styles['btn-void']}
+                          onClick={() => onVoidPayment(item.id)}
+                          disabled={voidingPaymentId === item.id}
+                        >
+                          {voidingPaymentId === item.id ? '...' : 'Void'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
