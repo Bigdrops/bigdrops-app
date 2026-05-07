@@ -79,36 +79,60 @@ export function getAuditFieldLabel(field: string): string {
   return FIELD_LABELS[field] || toTitleCase(field)
 }
 
-export function formatAuditValue(field: string, value: unknown): string {
+function stripHtml(html: string): string {
+  if (!html) return ''
+  // Basic HTML stripping that works in both Node and Browser
+  return html
+    .replace(/<[^>]*>?/gm, ' ') // Replace tags with space to avoid merging words
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .trim()
+}
+
+function truncate(text: string, length: number = 180): string {
+  if (!text) return ''
+  if (text.length <= length) return text
+  return text.substring(0, length).trim() + '...'
+}
+
+export function formatAuditValue(field: string, value: unknown): { preview: string; full?: string } {
   if (!hasMeaningfulAuditValue(value)) {
-    return EMPTY_VALUE
+    return { preview: EMPTY_VALUE }
   }
 
   if (CURRENCY_FIELDS.has(field)) {
-    return formatNaira(value as string | number, { preserveFraction: true })
+    return { preview: formatNaira(value as string | number, { preserveFraction: true }) }
   }
 
   if (DATE_FIELDS.has(field)) {
-    return formatDisplayDate(value as string, { fallback: EMPTY_VALUE })
+    return { preview: formatDisplayDate(value as string, { fallback: EMPTY_VALUE }) }
   }
 
   if (field === 'status') {
-    return toTitleCase(String(value))
+    return { preview: toTitleCase(String(value)) }
   }
 
   if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No'
+    return { preview: value ? 'Yes' : 'No' }
   }
 
   if (Array.isArray(value)) {
-    return value.length ? `${value.length} item${value.length === 1 ? '' : 's'}` : EMPTY_VALUE
+    return { preview: value.length ? `${value.length} item${value.length === 1 ? '' : 's'}` : EMPTY_VALUE }
   }
 
   if (typeof value === 'object') {
-    return 'Updated'
+    return { preview: 'Updated' }
   }
 
-  return String(value)
+  const stringValue = String(value)
+  const isHtml = /<[a-z][\s\S]*>/i.test(stringValue)
+  
+  const processedValue = isHtml ? stripHtml(stringValue) : stringValue
+  const preview = truncate(processedValue)
+
+  return {
+    preview,
+    full: processedValue.length > preview.length ? processedValue : undefined,
+  }
 }
 
 export function getAuditActionLabel(entityType: AuditEntityType | string, action: string): string {
@@ -121,12 +145,19 @@ export function buildAuditTrailChanges(row: AuditLogRecord): AuditTrailChange[] 
 
   return changes
     .filter((c) => isMeaningfulAuditChange(c.old, c.new))
-    .map((c) => ({
-      field: c.field,
-      label: getAuditFieldLabel(c.field),
-      oldValue: formatAuditValue(c.field, c.old),
-      newValue: formatAuditValue(c.field, c.new),
-    }))
+    .map((c) => {
+      const oldFormatted = formatAuditValue(c.field, c.old)
+      const newFormatted = formatAuditValue(c.field, c.new)
+      
+      return {
+        field: c.field,
+        label: getAuditFieldLabel(c.field),
+        oldValue: oldFormatted.preview,
+        newValue: newFormatted.preview,
+        oldValueFull: oldFormatted.full,
+        newValueFull: newFormatted.full,
+      }
+    })
 }
 
 export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] {

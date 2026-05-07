@@ -30,6 +30,8 @@ export interface AuditTrailChange {
   label: string
   oldValue: string
   newValue: string
+  oldValueFull?: string
+  newValueFull?: string
 }
 
 export interface AuditTrailEntry {
