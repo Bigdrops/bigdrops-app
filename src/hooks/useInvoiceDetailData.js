@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { supabase } from '@/supabase'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
@@ -11,6 +11,7 @@ import {
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
 import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
 import { mapDbInvoiceItem } from '@/domain/invoice'
+import { getAdvanceInvoiceMetadata } from '@/domain/invoice/advanceMetadata'
 
 function canUseInvoiceCacheFallback() {
   return (
@@ -66,6 +67,7 @@ export function useInvoiceDetailData(id) {
   const [relatedAdvanceInvoices, setRelatedAdvanceInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const advanceMetadata = useMemo(() => getAdvanceInvoiceMetadata(invoice), [invoice])
 
   const fetchInvoice = useCallback(async () => {
     const { data, error: invoiceError } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -290,6 +292,7 @@ export function useInvoiceDetailData(id) {
     invoice,
     items,
     payments,
+    advanceMetadata,
     relatedCsrs,
     relatedWaybills,
     relatedAdvanceInvoices,

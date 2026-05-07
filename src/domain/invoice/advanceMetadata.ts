@@ -81,6 +81,70 @@ function normalizeMode(value: unknown): AdvanceInvoiceMetadataMode {
   return value === 'fixed' ? 'fixed' : 'percentage'
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function deriveAdvanceAmount({
+  amount,
+  legacyChildTotal,
+  contractValue,
+  mode,
+  value,
+}: {
+  amount: unknown
+  legacyChildTotal: unknown
+  contractValue: unknown
+  mode: AdvanceInvoiceMetadataMode
+  value: unknown
+}) {
+  const explicitAmount = toNumber(amount)
+  if (explicitAmount > 0) return explicitAmount
+
+  const explicitLegacyChildTotal = toNumber(legacyChildTotal)
+  if (explicitLegacyChildTotal > 0) return explicitLegacyChildTotal
+
+  const numericValue = Math.max(0, toNumber(value))
+  const numericContractValue = Math.max(0, toNumber(contractValue))
+
+  if (mode === 'fixed') {
+    return roundCurrency(clamp(numericValue, 0, numericContractValue || numericValue))
+  }
+
+  if (numericContractValue <= 0) return 0
+  return roundCurrency(numericContractValue * (clamp(numericValue, 0, 100) / 100))
+}
+
+function deriveDocumentNumber({
+  documentNumber,
+  legacyChildInvoiceNumber,
+  parentInvoiceNumber,
+  suffix,
+}: {
+  documentNumber: unknown
+  legacyChildInvoiceNumber: unknown
+  parentInvoiceNumber: unknown
+  suffix: unknown
+}) {
+  const explicitDocumentNumber = pickString(documentNumber)
+  if (explicitDocumentNumber) return explicitDocumentNumber
+
+  const explicitLegacyNumber = pickString(legacyChildInvoiceNumber)
+  if (explicitLegacyNumber) return explicitLegacyNumber
+
+  const parentNumber = pickString(parentInvoiceNumber)
+  if (!parentNumber) return undefined
+
+  if (suffix === undefined) return undefined
+  const nextSuffix = String(suffix)
+  if (!nextSuffix.trim()) return parentNumber
+  return `${parentNumber}-${nextSuffix.trim()}`
+}
+
 function hasMeaningfulParentMetadata(config: AdvanceConfigLike | null) {
   if (!config) return false
 
@@ -159,9 +223,16 @@ export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): Adva
   const record = (input && typeof input === 'object' ? input : null) as Record<string, unknown> | null
   const mode = normalizeMode(config?.mode)
   const value = Math.max(0, toNumber(config?.value))
+  const contractValue = toNumber(config?.contract_value ?? config?.contractValue ?? record?.total)
   const amount = Math.max(
     0,
-    toNumber(config?.amount ?? config?.legacy_child_invoice_total ?? record?.total),
+    deriveAdvanceAmount({
+      amount: config?.amount,
+      legacyChildTotal: config?.legacy_child_invoice_total,
+      contractValue,
+      mode,
+      value,
+    }),
   )
 
   return buildAdvanceInvoiceMetadata({
@@ -169,13 +240,15 @@ export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): Adva
     amount,
     mode,
     value,
-    document_number:
-      pickString(config?.document_number) ||
-      pickString(config?.legacy_child_invoice_number) ||
-      pickString(record?.invoice_number),
+    document_number: deriveDocumentNumber({
+      documentNumber: config?.document_number,
+      legacyChildInvoiceNumber: config?.legacy_child_invoice_number,
+      parentInvoiceNumber: record?.invoice_number,
+      suffix: config?.suffix,
+    }),
     issued_at: pickString(config?.issued_at) || pickString(record?.issue_date),
     due_at: pickString(config?.due_at) || pickString(record?.due_date),
-    status: pickString(config?.status) || pickString(record?.status),
+    status: pickString(config?.status) || 'unpaid',
     primary_label:
       pickString(config?.primary_label) ||
       pickString(config?.primaryLabel),
@@ -183,7 +256,7 @@ export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): Adva
       pickString(config?.secondary_label) ||
       pickString(config?.secondaryLabel),
     suffix: pickString(config?.suffix),
-    contract_value: toNumber(config?.contract_value ?? config?.contractValue),
+    contract_value: contractValue,
     legacy_child_invoice_id:
       pickString(config?.legacy_child_invoice_id) ||
       pickString(config?.childInvoiceId),

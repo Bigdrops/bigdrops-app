@@ -23,8 +23,9 @@ test('advance summary uses stored parent contract value instead of recalculating
 
   assert.match(flowSource, /contractValue,/)
   assert.match(flowSource, /const advanceConfig = \{[^}]*value: numericInput,[^}]*contractValue,/s)
-  assert.match(summarySource, /const contractValue = Math\.max\(0, toNumber\(advanceConfig\?\.contractValue \?\? invoice\?\.total\)\)/)
-  assert.match(summarySource, /const thisAdvance = Math\.max\(0, toNumber\(invoice\?\.total\)\)/)
+  assert.match(summarySource, /const parentMetadata = getAdvanceInvoiceMetadata\(invoice\)/)
+  assert.match(summarySource, /const contractValue = Math\.max\([\s\S]*parentMetadata\?\.contract_value[\s\S]*advanceConfig\?\.contractValue[\s\S]*invoice\?\.total/s)
+  assert.match(summarySource, /const thisAdvance = Math\.max\([\s\S]*parentMetadata\?\.amount[\s\S]*invoice\?\.total/s)
   assert.match(summarySource, /const balanceRemaining = Math\.max\(0, contractValue - thisAdvance\)/)
 })
 
@@ -57,6 +58,7 @@ test('advance invoice delete flow logs the real rpc error, validates the child i
 
   assert.match(viewInvoiceSource, /await deleteAdvanceInvoiceRecord\(\{\s*advanceInvoiceId:\s*String\(selectedAdvanceInvoice\.id\),\s*parentInvoiceId:\s*String\(invoice\.id\),\s*parentCustomFields:\s*invoice\.custom_fields,/s)
   assert.match(viewInvoiceSource, /const hasParentAdvanceConfig = Boolean\(customFields\?\.advance_invoice\)/)
-  assert.match(viewInvoiceSource, /const visibleAdvanceInvoices = hasParentAdvanceConfig \? \(Array\.isArray\(relatedAdvanceInvoices\) \? relatedAdvanceInvoices : \[\]\) : \[\]/)
+  assert.match(viewInvoiceSource, /const activeAdvanceRecord = useMemo\(/)
+  assert.match(viewInvoiceSource, /const visibleAdvanceInvoices = hasParentAdvanceConfig && activeAdvanceRecord \? \[activeAdvanceRecord\] : \[\]/)
   assert.match(viewInvoiceSource, /setInvoice\(\(current(?::\s*any)?\) => \{/)
 })

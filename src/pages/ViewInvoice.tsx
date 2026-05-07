@@ -89,6 +89,7 @@ export default function ViewInvoice() {
     invoice,
     items,
     payments,
+    advanceMetadata,
     relatedCsrs,
     relatedWaybills,
     relatedAdvanceInvoices,
@@ -122,10 +123,51 @@ export default function ViewInvoice() {
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields])
   const hasParentAdvanceConfig = Boolean(customFields?.advance_invoice)
-  const visibleAdvanceInvoices = hasParentAdvanceConfig ? (Array.isArray(relatedAdvanceInvoices) ? relatedAdvanceInvoices : []) : []
   const pdfTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || 'industry'
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice])
   const contractValue = Math.max(0, Number(invoice?.total || 0))
+  const primaryRelatedAdvanceInvoice = useMemo(
+    () => (Array.isArray(relatedAdvanceInvoices) && relatedAdvanceInvoices[0]) ? relatedAdvanceInvoices[0] : null,
+    [relatedAdvanceInvoices],
+  )
+  const activeAdvanceRecord = useMemo(() => {
+    if (!advanceMetadata) {
+      return primaryRelatedAdvanceInvoice
+    }
+
+    const fallbackConfig = parseCustomFields(primaryRelatedAdvanceInvoice?.custom_fields)
+    const fallbackAdvanceConfig = fallbackConfig?.advance_invoice || {}
+    const resolvedDocumentNumber =
+      advanceMetadata.document_number ||
+      primaryRelatedAdvanceInvoice?.invoice_number ||
+      (invoice?.invoice_number && advanceMetadata.suffix !== undefined
+        ? (String(advanceMetadata.suffix || '').trim()
+            ? `${invoice.invoice_number}-${String(advanceMetadata.suffix).trim()}`
+            : invoice.invoice_number)
+        : null)
+
+    return {
+      ...invoice,
+      ...primaryRelatedAdvanceInvoice,
+      id: advanceMetadata.legacy_child_invoice_id || primaryRelatedAdvanceInvoice?.id || null,
+      invoice_number: resolvedDocumentNumber || primaryRelatedAdvanceInvoice?.invoice_number || 'Advance Invoice',
+      invoice_title: primaryRelatedAdvanceInvoice?.invoice_title || invoice?.invoice_title || 'Advance Invoice',
+      total: Number(advanceMetadata.amount || primaryRelatedAdvanceInvoice?.total || 0),
+      status: advanceMetadata.status || primaryRelatedAdvanceInvoice?.status || 'unpaid',
+      issue_date: advanceMetadata.issued_at || primaryRelatedAdvanceInvoice?.issue_date || invoice?.issue_date || null,
+      due_date: advanceMetadata.due_at || primaryRelatedAdvanceInvoice?.due_date || invoice?.due_date || null,
+      amount_in_words: primaryRelatedAdvanceInvoice?.amount_in_words || invoice?.amount_in_words || '',
+      custom_fields: {
+        ...(customFields || {}),
+        advance_invoice: {
+          ...fallbackAdvanceConfig,
+          ...advanceMetadata,
+        },
+      },
+      _advanceMetadataOnly: true,
+    }
+  }, [advanceMetadata, customFields, invoice, primaryRelatedAdvanceInvoice])
+  const visibleAdvanceInvoices = hasParentAdvanceConfig && activeAdvanceRecord ? [activeAdvanceRecord] : []
 
   const resetAdvanceDraft = useCallback(() => {
     setAdvanceMode('percent')
@@ -642,7 +684,7 @@ export default function ViewInvoice() {
   }
 
   const handleAdvanceDownload = useCallback(async () => {
-    if (!selectedAdvanceInvoice?.id || advancePdfGenerating) return
+    if (!selectedAdvanceInvoice || advancePdfGenerating) return
     setAdvancePdfGenerating(true)
     try {
       await downloadInvoicePdfDocument({
@@ -1080,14 +1122,14 @@ export default function ViewInvoice() {
             isVoided: Boolean(payment.voided_at),
             voidedAt: payment.voided_at,
           }))}
-          advanceInvoices={visibleAdvanceInvoices.map((advance: any) => {
+          advanceInvoices={visibleAdvanceInvoices.map((advance: any, index: number) => {
             const rawCf = advance.custom_fields
             const cf = typeof rawCf === 'string' ? parseCustomFields(rawCf) : (rawCf || {})
             const advConfig = cf.advance_invoice || {}
             return {
-              id: String(advance.id),
+              id: String(advance.id || `advance-${index}`),
               title: advance.invoice_number || advance.invoice_title || 'Advance Invoice',
-              subtitle: advConfig.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
+              subtitle: advConfig.primary_label || advConfig.primaryLabel || ADVANCE_PRIMARY_LABEL_DEFAULT,
               amountLabel: formatNaira(Number(advance.total || 0)),
               onOpen: () => openAdvanceDetails(advance, 'view'),
             }

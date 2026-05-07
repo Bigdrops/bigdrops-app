@@ -13,11 +13,14 @@ import { getAdvanceSummaryValues } from '../../domain/invoice/advanceSummary.ts'
 
 test('reads legacy parent metadata into canonical advance metadata', () => {
   const metadata = getAdvanceInvoiceMetadata({
+    invoice_number: 'INV-001',
+    total: 100000,
     advance_invoice: {
       role: 'parent',
       childInvoiceId: 'child-1',
       mode: 'percentage',
       value: 30,
+      suffix: 'A',
       primaryLabel: 'Advance',
       secondaryLabel: 'Balance',
       contractValue: 100000,
@@ -26,9 +29,10 @@ test('reads legacy parent metadata into canonical advance metadata', () => {
 
   assert.deepEqual(metadata, {
     enabled: true,
-    amount: 0,
+    amount: 30000,
     mode: 'percentage',
     value: 30,
+    document_number: 'INV-001',
     primary_label: 'Advance',
     secondary_label: 'Balance',
     contract_value: 100000,
@@ -131,3 +135,29 @@ test('advance summary can build from canonical parent metadata without child-row
   })
 })
 
+test('advance summary falls back to child-row totals only when parent metadata is absent', () => {
+  const summary = getAdvanceSummaryValues({
+    total: 25000,
+    custom_fields: {
+      advance_invoice: {
+        role: 'advance',
+        parentId: 'parent-1',
+        contractValue: 100000,
+        primaryLabel: 'Advance',
+        secondaryLabel: 'Balance',
+      },
+    },
+  })
+
+  assert.deepEqual(summary, {
+    contractValue: 100000,
+    thisAdvance: 25000,
+    balanceRemaining: 75000,
+    advancePercent: 25,
+    balancePercent: 75,
+    primaryLabel: 'Advance',
+    secondaryLabel: 'Balance',
+    primaryLabelWithPercent: 'Advance (25%)',
+    secondaryLabelWithPercent: 'Balance (75%)',
+  })
+})
