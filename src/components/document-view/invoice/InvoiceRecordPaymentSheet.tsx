@@ -8,6 +8,11 @@ import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { feedback } from '@/lib/feedback'
+import {
+  buildFullPaymentPreset,
+  getPaymentEntrySummary,
+  validatePaymentEntry,
+} from '@/components/invoice/paymentEntryHelpers'
 
 interface InvoiceSummary {
   id: string
@@ -34,7 +39,8 @@ type PaymentMethod = 'Transfer' | 'Cash' | 'POS' | 'Cheque' | 'Other'
 type PaymentType = 'full' | 'partial'
 
 interface FormState {
-  amount: number | null
+  cashReceived: number | null
+  whtDeducted: number | null
   date: string
   method: PaymentMethod
   reference: string
@@ -43,7 +49,8 @@ interface FormState {
 }
 
 const DEFAULT_FORM = (): FormState => ({
-  amount: null,
+  cashReceived: null,
+  whtDeducted: 0,
   date: new Date().toISOString().split('T')[0] || '',
   method: 'Transfer',
   reference: '',
@@ -64,6 +71,7 @@ export default function InvoiceRecordPaymentSheet({
   const [loadingData, setLoadingData] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [submitAttempted, setSubmitAttempted] = useState(false)
 
   useEffect(() => {
     if (!open || !invoice?.id) return
@@ -107,6 +115,7 @@ export default function InvoiceRecordPaymentSheet({
 
     setForm(DEFAULT_FORM())
     setError('')
+    setSubmitAttempted(false)
     void loadData()
 
     return () => {
@@ -115,13 +124,50 @@ export default function InvoiceRecordPaymentSheet({
   }, [open, invoice?.id])
 
   const currentBalance = Math.max(0, Number(invoice?.total || 0) - previousSettled)
-  const amountPaid = form.type === 'full' ? currentBalance : Number(form.amount || 0)
-  const remainingBalance = Math.max(0, currentBalance - amountPaid)
-  const amountExceedsBalance = form.type === 'partial' && amountPaid > currentBalance + 0.01
-  const amountError = amountExceedsBalance ? 'Amount cannot exceed balance' : ''
+  const settlementSummary = getPaymentEntrySummary({
+    balanceDue: currentBalance,
+    cashReceived: form.cashReceived,
+    whtDeducted: form.whtDeducted,
+  })
+  const validation = validatePaymentEntry({
+    balanceDue: currentBalance,
+    cashReceived: form.cashReceived,
+    whtDeducted: form.whtDeducted,
+  })
+  const amountError = submitAttempted ? validation.message : ''
+  const amountFieldHasError = submitAttempted && Boolean(amountError || validation.cashError || validation.whtError)
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
+
+  useEffect(() => {
+    if (!open || loadingData) return
+    setForm((current) => {
+      if (current.type !== 'full') return current
+      if (current.cashReceived !== null) return current
+      return {
+        ...current,
+        ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+      }
+    })
+  }, [currentBalance, loadingData, open])
+
+  const applyFullPaymentPreset = useCallback(() => {
+    setForm((current) => ({
+      ...current,
+      type: 'full',
+      ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+    }))
+  }, [currentBalance])
+
+  const applyPartialPaymentPreset = useCallback(() => {
+    setForm((current) => ({
+      ...current,
+      type: 'partial',
+      cashReceived: current.cashReceived ?? null,
+      whtDeducted: current.whtDeducted ?? 0,
+    }))
+  }, [])
 
   const showValidationError = useCallback((message: string) => {
     setError(message)
@@ -130,9 +176,9 @@ export default function InvoiceRecordPaymentSheet({
 
   const handleSave = async () => {
     setError('')
-    if (!form.date) return setError('Payment date is required')
-    if (amountPaid <= 0) return setError('Amount must be greater than 0')
-    if (amountPaid > currentBalance + 0.01) return showValidationError('Amount cannot exceed balance')
+    setSubmitAttempted(true)
+    if (!form.date) return showValidationError('Payment date is required')
+    if (!validation.isValid) return showValidationError(validation.message)
 
     setSaving(true)
     try {
@@ -140,9 +186,9 @@ export default function InvoiceRecordPaymentSheet({
 
       const payload = {
         invoice_id: invoice.id,
-        cash_amount: amountPaid,
-        wht_amount: 0,
-        amount: amountPaid,
+        cash_amount: settlementSummary.cashReceived,
+        wht_amount: settlementSummary.whtDeducted,
+        amount: settlementSummary.settlementTotal,
         date: form.date,
         method: form.method,
         reference: form.reference || null,
@@ -217,32 +263,63 @@ export default function InvoiceRecordPaymentSheet({
                 <button
                   type="button"
                   className={`${styles.toggleBtn} ${form.type === 'full' ? styles.active : ''}`}
-                  onClick={() => setField('type', 'full')}
+                  onClick={applyFullPaymentPreset}
                 >
                   Full Payment
                 </button>
                 <button
                   type="button"
                   className={`${styles.toggleBtn} ${form.type === 'partial' ? styles.active : ''}`}
-                  onClick={() => setField('type', 'partial')}
+                  onClick={applyPartialPaymentPreset}
                 >
                   Partial
                 </button>
               </div>
             </div>
 
-            {form.type === 'partial' && (
-              <div className={styles.fieldGroup}>
-                <label className={styles.formLabel}>Amount (₦)</label>
-                <NumericInput
-                  className={`${styles.formInput} ${amountError ? styles.formInputError : ''}`}
-                  value={form.amount}
-                  onChange={(val) => setField('amount', val)}
-                  placeholder="0.00"
-                />
-                {amountError ? <div className={styles.fieldError}>{amountError}</div> : null}
+            <div className={styles.fieldGroup}>
+              <div className={styles.amountHeader}>
+                <label className={styles.formLabel}>Settlement Details</label>
+                <button type="button" className={styles.inlineAction} onClick={applyFullPaymentPreset}>
+                  Use balance as cash
+                </button>
               </div>
-            )}
+              <div className={styles.helperText}>
+                Settlement = Cash received + WHT deducted.
+                {form.type === 'full' ? ' Full payment should match the remaining balance.' : ''}
+              </div>
+              <div className={styles.amountGrid}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.formLabel}>Cash Received (₦)</label>
+                  <NumericInput
+                    min={0}
+                    className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
+                    value={form.cashReceived}
+                    onChange={(val) => setField('cashReceived', val)}
+                    placeholder="0.00"
+                  />
+                  {submitAttempted && validation.cashError ? (
+                    <div className={styles.fieldError}>{validation.cashError}</div>
+                  ) : null}
+                </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.formLabel}>WHT Deducted (₦)</label>
+                  <NumericInput
+                    min={0}
+                    className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
+                    value={form.whtDeducted}
+                    onChange={(val) => setField('whtDeducted', val)}
+                    placeholder="0.00"
+                  />
+                  {submitAttempted && validation.whtError ? (
+                    <div className={styles.fieldError}>{validation.whtError}</div>
+                  ) : null}
+                </div>
+              </div>
+              {amountError ? (
+                <div className={styles.inlineErrorBox}>{amountError}</div>
+              ) : null}
+            </div>
 
             <div className={styles.grid2}>
               <div className={styles.fieldGroup}>
@@ -316,13 +393,23 @@ export default function InvoiceRecordPaymentSheet({
             <div className={styles.footerPanel}>
               <div className={styles.settlementCard}>
                 <div className={styles.settleRow}>
-                  <span>Amount to Record</span>
-                  <span className={styles.settleAmount}>{formatNaira(amountPaid)}</span>
+                  <span>Cash Received</span>
+                  <span className={styles.settleAmount}>{formatNaira(settlementSummary.cashReceived)}</span>
                 </div>
                 <div className={styles.settleRow}>
-                  <span>New Balance</span>
-                  <span className={remainingBalance > 0 ? styles.settleRem : styles.settlePaid}>
-                    {formatNaira(remainingBalance)}
+                  <span>WHT Deducted</span>
+                  <span className={styles.settleAmount}>{formatNaira(settlementSummary.whtDeducted)}</span>
+                </div>
+                <div className={styles.settleRow}>
+                  <span>Total Settlement</span>
+                  <span className={styles.settleAmount}>{formatNaira(settlementSummary.settlementTotal)}</span>
+                </div>
+                <div className={styles.settleRow}>
+                  <span>Remaining Balance</span>
+                  <span
+                    className={settlementSummary.remainingBalance > 0 ? styles.settleRem : styles.settlePaid}
+                  >
+                    {formatNaira(settlementSummary.remainingBalance)}
                   </span>
                 </div>
               </div>

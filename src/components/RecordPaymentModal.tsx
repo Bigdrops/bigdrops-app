@@ -22,6 +22,11 @@ import {
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { Textarea } from "@/components/ui/textarea"
 import { feedback } from "@/lib/feedback"
+import {
+  buildFullPaymentPreset,
+  getPaymentEntrySummary,
+  validatePaymentEntry,
+} from "@/components/invoice/paymentEntryHelpers"
 
 type InvoiceSummary = {
   id: string
@@ -54,7 +59,8 @@ type FinancialRow = {
 }
 
 type FormState = {
-  amount: number | null
+  cashReceived: number | null
+  whtDeducted: number | null
   date: string
   method: PaymentMethod
   reference: string
@@ -63,7 +69,8 @@ type FormState = {
 }
 
 const DEFAULT_FORM = (): FormState => ({
-  amount: null,
+  cashReceived: null,
+  whtDeducted: 0,
   date: new Date().toISOString().split("T")[0] || "",
   method: "Transfer",
   reference: "",
@@ -89,6 +96,7 @@ export default function RecordPaymentModal({
   const [loadingBalance, setLoadingBalance] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState("")
+  const [submitAttempted, setSubmitAttempted] = React.useState(false)
 
   const close = React.useCallback(() => {
     onOpenChange?.(false)
@@ -139,6 +147,7 @@ export default function RecordPaymentModal({
 
     setForm(DEFAULT_FORM())
     setError("")
+    setSubmitAttempted(false)
     void loadModalData()
 
     return () => {
@@ -147,13 +156,50 @@ export default function RecordPaymentModal({
   }, [controlledOpen, invoice?.id])
 
   const currentBalance = Math.max(0, Number(invoice?.total || 0) - previousSettled)
-  const amountPaid = form.type === "full" ? currentBalance : Number(form.amount || 0)
-  const remainingBalance = Math.max(0, currentBalance - amountPaid)
-  const amountExceedsBalance = form.type === "partial" && amountPaid > currentBalance + 0.01
-  const amountError = amountExceedsBalance ? "Amount paid cannot exceed the remaining balance" : ""
+  const settlementSummary = getPaymentEntrySummary({
+    balanceDue: currentBalance,
+    cashReceived: form.cashReceived,
+    whtDeducted: form.whtDeducted,
+  })
+  const validation = validatePaymentEntry({
+    balanceDue: currentBalance,
+    cashReceived: form.cashReceived,
+    whtDeducted: form.whtDeducted,
+  })
+  const amountError = submitAttempted ? validation.message : ""
+  const amountFieldHasError = submitAttempted && Boolean(amountError || validation.cashError || validation.whtError)
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
+
+  React.useEffect(() => {
+    if (!controlledOpen || loadingBalance) return
+    setForm((current) => {
+      if (current.type !== "full") return current
+      if (current.cashReceived !== null) return current
+      return {
+        ...current,
+        ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+      }
+    })
+  }, [controlledOpen, currentBalance, loadingBalance])
+
+  const applyFullPaymentPreset = React.useCallback(() => {
+    setForm((current) => ({
+      ...current,
+      type: "full",
+      ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+    }))
+  }, [currentBalance])
+
+  const applyPartialPaymentPreset = React.useCallback(() => {
+    setForm((current) => ({
+      ...current,
+      type: "partial",
+      cashReceived: current.cashReceived ?? null,
+      whtDeducted: current.whtDeducted ?? 0,
+    }))
+  }, [])
 
   const showValidationError = React.useCallback((message: string) => {
     setError(message)
@@ -162,30 +208,26 @@ export default function RecordPaymentModal({
 
   const handleSave = async () => {
     setError("")
+    setSubmitAttempted(true)
 
     if (!form.date) {
-      setError("Payment date is required")
+      showValidationError("Payment date is required")
       return
     }
 
-    if (amountPaid <= 0) {
-      setError("Amount paid must be greater than 0")
-      return
-    }
-
-    if (amountPaid > currentBalance + 0.01) {
-      showValidationError("Amount paid cannot exceed the remaining balance")
+    if (!validation.isValid) {
+      showValidationError(validation.message)
       return
     }
 
     setSaving(true)
     const payload = {
       invoice_id: invoice.id,
-      cash_amount: amountPaid,
-      wht_amount: 0,
+      cash_amount: settlementSummary.cashReceived,
+      wht_amount: settlementSummary.whtDeducted,
       wht_rate: null,
       wht_type: null,
-      amount: amountPaid,
+      amount: settlementSummary.settlementTotal,
       date: form.date,
       method: form.method,
       reference: form.reference || null,
@@ -270,7 +312,7 @@ export default function RecordPaymentModal({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setField("type", type)}
+                    onClick={type === "full" ? applyFullPaymentPreset : applyPartialPaymentPreset}
                     className={`px-2.5 py-2.5 text-sm font-bold capitalize transition-colors ${
                       active ? "bg-emerald-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
                     }`}
@@ -282,23 +324,59 @@ export default function RecordPaymentModal({
             </div>
           </div>
 
-          {form.type === "partial" ? (
-            <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Amount (₦)</div>
-              <NumericInput
-                min={0}
-                className={amountError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
-                value={form.amount}
-                onChange={(val) => setField("amount", val)}
-                placeholder="Enter amount"
-              />
-              {amountError ? (
-                <div className="mt-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
-                  {amountError}
-                </div>
-              ) : null}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Settlement Details</div>
+              <button
+                type="button"
+                onClick={applyFullPaymentPreset}
+                className="text-xs font-semibold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:text-[hsl(var(--bd-button-primary-hover-bg))]"
+              >
+                Use balance as cash
+              </button>
             </div>
-          ) : null}
+            <div className="text-xs text-muted-foreground">
+              Settlement = Cash received + WHT deducted.
+              {form.type === "full" ? " Full payment should match the remaining balance." : ""}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
+                <NumericInput
+                  min={0}
+                  className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
+                  value={form.cashReceived}
+                  onChange={(val) => setField("cashReceived", val)}
+                  placeholder="Enter cash received"
+                />
+                {submitAttempted && validation.cashError ? (
+                  <div className="mt-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                    {validation.cashError}
+                  </div>
+                ) : null}
+              </div>
+              <div>
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">WHT Deducted (₦)</div>
+                <NumericInput
+                  min={0}
+                  className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
+                  value={form.whtDeducted}
+                  onChange={(val) => setField("whtDeducted", val)}
+                  placeholder="Enter WHT deducted"
+                />
+                {submitAttempted && validation.whtError ? (
+                  <div className="mt-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                    {validation.whtError}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            {amountError ? (
+              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                {amountError}
+              </div>
+            ) : null}
+          </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -358,13 +436,21 @@ export default function RecordPaymentModal({
           <div className="sticky bottom-0 -mx-5 mt-2 space-y-3 border-t border-border/70 bg-card/95 px-5 pb-4 pt-3 backdrop-blur">
             <div className="rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 shadow-sm">
               <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-medium text-muted-foreground">Settlement</span>
-                <span className="font-bold text-foreground">{formatMoney(amountPaid)}</span>
+                <span className="font-medium text-muted-foreground">Cash Received</span>
+                <span className="font-bold text-foreground">{formatMoney(settlementSummary.cashReceived)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">WHT Deducted</span>
+                <span className="font-bold text-foreground">{formatMoney(settlementSummary.whtDeducted)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">Total Settlement</span>
+                <span className="font-bold text-foreground">{formatMoney(settlementSummary.settlementTotal)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium text-muted-foreground">Remaining Balance</span>
-                <span className={remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
-                  {formatMoney(remainingBalance)}
+                <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
+                  {formatMoney(settlementSummary.remainingBalance)}
                 </span>
               </div>
             </div>

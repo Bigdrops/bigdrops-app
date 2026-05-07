@@ -61,6 +61,39 @@
   gap: 6px;
 }
 
+.amountHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inlineAction {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: hsl(var(--bd-button-primary-bg));
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inlineAction:hover {
+  color: hsl(var(--bd-button-primary-hover-bg));
+}
+
+.helperText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .formLabel {
   font-size: 11px;
   font-weight: 700;
@@ -149,6 +182,16 @@
 
 .fieldError {
   color: hsl(var(--bd-status-danger-text));
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.inlineErrorBox {
+  background: hsl(var(--bd-status-danger-bg));
+  border: 1px solid hsl(var(--bd-status-danger-border));
+  color: hsl(var(--bd-status-danger-text));
+  padding: 10px 12px;
+  border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -274,7 +317,8 @@
 }
 
 @media (max-width: 640px) {
-  .grid2 {
+  .grid2,
+  .amountGrid {
     grid-template-columns: 1fr;
   }
 
