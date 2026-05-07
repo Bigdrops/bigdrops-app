@@ -31,11 +31,11 @@ export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
       <div className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden="true" />
       <div className="absolute -left-[5px] top-5 h-2.5 w-2.5 rounded-full border border-border bg-background" aria-hidden="true" />
 
-      <div className="flex flex-wrap items-start justify-between gap-3 pl-4">
+      <div className="flex flex-col gap-3 pl-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-foreground">{entry.actorLabel}</span>
-            <Badge variant="outline" className="border-border/70 bg-muted/40 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+            <span className="min-w-0 break-words text-sm font-semibold text-foreground">{entry.actorLabel}</span>
+            <Badge variant="outline" className="shrink-0 border-border/70 bg-muted/40 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               {String(entry.action || 'update').replace(/_/g, ' ')}
             </Badge>
           </div>
@@ -46,10 +46,10 @@ export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-start sm:gap-2">
           <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{entry.timestamp}</span>
+            <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="whitespace-nowrap">{entry.timestamp}</span>
           </div>
 
           {entry.changes.length > 0 && (
