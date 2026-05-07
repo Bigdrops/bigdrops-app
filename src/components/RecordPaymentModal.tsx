@@ -1,7 +1,6 @@
 import * as React from "react"
 import { Loader2 } from "lucide-react"
 
-import { supabase } from "../supabase"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,6 +26,9 @@ import {
   getPaymentEntrySummary,
   validatePaymentEntry,
 } from "@/components/invoice/paymentEntryHelpers"
+import { loadBankAccountsList, calculatePreviousSettled, recordInvoicePayment } from "@/modules/invoices/services/paymentService"
+import type { BankAccountSummary } from "@/modules/invoices/types/paymentTypes"
+import type { PaymentMethod, PaymentType } from "@/modules/invoices/types/paymentTypes"
 
 type InvoiceSummary = {
   id: string
@@ -35,15 +37,7 @@ type InvoiceSummary = {
   total: number
 }
 
-type BankAccount = {
-  id: string
-  bank_name?: string | null
-  account_number?: string | null
-  is_default?: boolean | null
-}
-
-type PaymentMethod = "Transfer" | "Cash" | "POS" | "Cheque" | "Other"
-type PaymentType = "full" | "partial"
+type BankAccount = BankAccountSummary
 
 type RecordPaymentModalProps = {
   invoice: InvoiceSummary
@@ -52,10 +46,6 @@ type RecordPaymentModalProps = {
   onSuccess?: () => void | Promise<void>
   onClose?: () => void
   onSaved?: () => void | Promise<void>
-}
-
-type FinancialRow = {
-  computed_status?: string | null
 }
 
 type FormState = {
@@ -109,39 +99,17 @@ export default function RecordPaymentModal({
     let cancelled = false
     const loadModalData = async () => {
       setLoadingBalance(true)
-      const [{ data, error }, { data: bankData, error: bankError }] = await Promise.all([
-        supabase
-          .from("payments")
-          .select("cash_amount,wht_amount")
-          .eq("invoice_id", invoice.id)
-          .is("voided_at", null),
-        supabase
-          .from("bank_accounts")
-          .select("*")
-          .order("is_default", { ascending: false }),
+      const [previousSettledValue, bankAccountsData] = await Promise.all([
+        calculatePreviousSettled(invoice.id),
+        loadBankAccountsList(),
       ])
 
       if (cancelled) return
 
-      if (error) {
-        setError(error.message)
-        setPreviousSettled(0)
-      } else {
-        const total = (data || []).reduce(
-          (sum, row) => sum + Number(row.cash_amount || 0) + Number(row.wht_amount || 0),
-          0,
-        )
-        setPreviousSettled(total)
-      }
-      if (bankError) {
-        setError((current) => current || bankError.message)
-        setBankAccounts([])
-        setSelectedBankId("")
-      } else {
-        const nextBanks = (bankData || []) as BankAccount[]
-        setBankAccounts(nextBanks)
-        setSelectedBankId(nextBanks[0]?.id || "")
-      }
+      setPreviousSettled(previousSettledValue)
+      const nextBanks = bankAccountsData as BankAccount[]
+      setBankAccounts(nextBanks)
+      setSelectedBankId(nextBanks[0]?.id || "")
       setLoadingBalance(false)
     }
 
@@ -221,47 +189,24 @@ export default function RecordPaymentModal({
     }
 
     setSaving(true)
-    const payload = {
-      invoice_id: invoice.id,
-      cash_amount: settlementSummary.cashReceived,
-      wht_amount: settlementSummary.whtDeducted,
-      wht_rate: null,
-      wht_type: null,
-      amount: settlementSummary.settlementTotal,
+
+    const result = await recordInvoicePayment({
+      invoiceId: invoice.id,
+      settlement: {
+        cashReceived: settlementSummary.cashReceived,
+        whtDeducted: settlementSummary.whtDeducted,
+        settlementTotal: settlementSummary.settlementTotal,
+        remainingBalance: settlementSummary.remainingBalance,
+      },
       date: form.date,
       method: form.method,
-      reference: form.reference || null,
-      notes: form.notes || null,
-      source: "live",
-      bank_account_id: form.method === "Transfer" && selectedBankId ? selectedBankId : null,
-    }
+      reference: form.reference,
+      notes: form.notes,
+      bankAccountId: form.method === "Transfer" && selectedBankId ? selectedBankId : null,
+    })
 
-    const { error: insertError } = await supabase.from("payments").insert(payload)
-    if (insertError) {
-      setError(getUserFacingMutationMessage(insertError, { action: 'record' }))
-      setSaving(false)
-      return
-    }
-
-    const { data: financialRow, error: financialError } = await supabase
-      .from("invoice_financials_v")
-      .select("*")
-      .eq("id", invoice.id)
-      .single<FinancialRow>()
-
-    if (financialError) {
-      setError(getUserFacingMutationMessage(financialError, { action: 'record' }))
-      setSaving(false)
-      return
-    }
-
-    const { error: statusError } = await supabase
-      .from("invoices")
-      .update({ status: financialRow?.computed_status || "unpaid" })
-      .eq("id", invoice.id)
-
-    if (statusError) {
-      setError(getUserFacingMutationMessage(statusError, { action: 'record' }))
+    if (!result.success) {
+      setError(result.error || getUserFacingMutationMessage(null, { action: 'record' }))
       setSaving(false)
       return
     }

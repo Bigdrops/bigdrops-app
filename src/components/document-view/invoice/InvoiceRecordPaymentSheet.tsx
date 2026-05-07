@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Loader2, Banknote, Calendar } from 'lucide-react'
-import { supabase } from '@/supabase'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import styles from './InvoiceRecordPaymentSheet.module.css'
@@ -13,6 +12,9 @@ import {
   getPaymentEntrySummary,
   validatePaymentEntry,
 } from '@/components/invoice/paymentEntryHelpers'
+import { loadBankAccountsList, calculatePreviousSettled, recordInvoicePayment } from '@/modules/invoices/services/paymentService'
+import type { BankAccountSummary } from '@/modules/invoices/types/paymentTypes'
+import type { PaymentMethod, PaymentType } from '@/modules/invoices/types/paymentTypes'
 
 interface InvoiceSummary {
   id: string
@@ -21,12 +23,7 @@ interface InvoiceSummary {
   total: number
 }
 
-interface BankAccount {
-  id: string
-  bank_name?: string | null
-  account_number?: string | null
-  is_default?: boolean | null
-}
+type BankAccount = BankAccountSummary
 
 interface InvoiceRecordPaymentSheetProps {
   open: boolean
@@ -34,9 +31,6 @@ interface InvoiceRecordPaymentSheetProps {
   onSaved: () => void
   invoice: InvoiceSummary
 }
-
-type PaymentMethod = 'Transfer' | 'Cash' | 'POS' | 'Cheque' | 'Other'
-type PaymentType = 'full' | 'partial'
 
 interface FormState {
   cashReceived: number | null
@@ -79,37 +73,17 @@ export default function InvoiceRecordPaymentSheet({
     let cancelled = false
     const loadData = async () => {
       setLoadingData(true)
-      const [{ data: paymentData, error: paymentError }, { data: bankData, error: bankError }] = await Promise.all([
-        supabase
-          .from('payments')
-          .select('cash_amount,wht_amount')
-          .eq('invoice_id', invoice.id)
-          .is('voided_at', null),
-        supabase
-          .from('bank_accounts')
-          .select('*')
-          .order('is_default', { ascending: false }),
+      const [previousSettledValue, bankAccountsData] = await Promise.all([
+        calculatePreviousSettled(invoice.id),
+        loadBankAccountsList(),
       ])
 
       if (cancelled) return
 
-      if (paymentError) {
-        setError(paymentError.message)
-      } else {
-        const total = (paymentData || []).reduce(
-          (sum, row) => sum + Number(row.cash_amount || 0) + Number(row.wht_amount || 0),
-          0
-        )
-        setPreviousSettled(total)
-      }
-
-      if (bankError) {
-        setError((curr) => curr || bankError.message)
-      } else {
-        const banks = (bankData || []) as BankAccount[]
-        setBankAccounts(banks)
-        setSelectedBankId(banks[0]?.id || '')
-      }
+      setPreviousSettled(previousSettledValue)
+      const banks = bankAccountsData as BankAccount[]
+      setBankAccounts(banks)
+      setSelectedBankId(banks[0]?.id || '')
       setLoadingData(false)
     }
 
@@ -182,46 +156,34 @@ export default function InvoiceRecordPaymentSheet({
 
     setSaving(true)
     try {
-      const { data: previousInvoice } = await supabase.from('invoices').select('*').eq('id', invoice.id).single()
-
-      const payload = {
-        invoice_id: invoice.id,
-        cash_amount: settlementSummary.cashReceived,
-        wht_amount: settlementSummary.whtDeducted,
-        amount: settlementSummary.settlementTotal,
+      const result = await recordInvoicePayment({
+        invoiceId: invoice.id,
+        settlement: {
+          cashReceived: settlementSummary.cashReceived,
+          whtDeducted: settlementSummary.whtDeducted,
+          settlementTotal: settlementSummary.settlementTotal,
+          remainingBalance: settlementSummary.remainingBalance,
+        },
         date: form.date,
-        method: form.method,
-        reference: form.reference || null,
-        notes: form.notes || null,
-        source: 'live',
-        bank_account_id: form.method === 'Transfer' && selectedBankId ? selectedBankId : null,
+        method: form.method as PaymentMethod,
+        reference: form.reference,
+        notes: form.notes,
+        bankAccountId: form.method === 'Transfer' && selectedBankId ? selectedBankId : null,
+      })
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to record payment')
       }
 
-      const { data: paymentRow, error: insertError } = await supabase.from('payments').insert(payload).select().single()
-      if (insertError) throw insertError
-
-      // Audit Trail
       try {
-        const { recordPaymentRecorded, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
-        if (paymentRow) {
-          await recordPaymentRecorded(invoice.id, paymentRow.amount, form.notes.trim() || null)
+        const { recordPaymentRecorded } = await import('@/lib/audit')
+        if (result.paymentId) {
+          await recordPaymentRecorded(invoice.id, settlementSummary.settlementTotal, form.notes.trim() || null)
         }
-        const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', invoice.id).single()
-        await recordAuditLog({
-          entityType: 'invoice',
-          recordId: invoice.id,
-          entityLabel: updatedInvoice?.invoice_number || invoice.invoice_number,
-          action: 'UPDATE',
-          oldData: previousInvoice,
-          newData: updatedInvoice,
-          trackedFields: INVOICE_TRACKED_FIELDS,
-          reason: form.notes.trim() || null,
-        })
       } catch (auditErr) {
         console.error('Audit trail failed:', auditErr)
       }
 
-      // Refresh status via financials view if needed, but for now we'll just signal refresh
       onSaved()
       onClose()
     } catch (err) {

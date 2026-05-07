@@ -1,5 +1,7 @@
 import { supabase } from '@/supabase'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
+import { voidInvoicePayment as voidPayment, refreshInvoicePaymentState } from '@/modules/invoices/services/paymentService'
+import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
 import {
   buildAdvanceParentInvoiceMetadata,
 } from '@/domain/invoice/advanceChildFlow'
@@ -485,29 +487,22 @@ export async function revertInvoiceToQuotation({
 }
 
 export async function voidInvoicePayment({ paymentId, reason }: { paymentId: string; reason: string }) {
-  const { error } = await supabase
-    .from('payments')
-    .update({
-      voided_at: new Date().toISOString(),
-      void_reason: reason,
-    })
-    .eq('id', paymentId)
-
-  if (error) throw error
-}
-
-export async function syncInvoiceStatusFromFinancials(invoiceId: string) {
-  const { data } = await supabase
-    .from('invoice_financials_v')
-    .select('computed_status')
-    .eq('id', invoiceId)
-    .single()
-
-  if (data?.computed_status) {
-    const { error } = await supabase
-      .from('invoices')
-      .update({ status: data.computed_status })
-      .eq('id', invoiceId)
-    if (error) throw error
+  const invoiceId = await fetchInvoiceIdForPayment(paymentId)
+  if (!invoiceId) {
+    throw new Error('Could not find invoice for payment')
   }
+
+  const result = await voidPayment({
+    paymentId,
+    invoiceId,
+    reason,
+  })
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to void payment')
+  }
+
+  return result
 }
+
+export const syncInvoiceStatusFromFinancials = refreshInvoicePaymentState

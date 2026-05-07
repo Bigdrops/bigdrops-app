@@ -1,5 +1,7 @@
 import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
+import { voidInvoicePayment, refreshInvoicePaymentState } from '@/modules/invoices/services/paymentService'
+import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
 import {
   buildTrailLink,
   parseDocumentCustomFields,
@@ -360,21 +362,6 @@ export function useInvoiceMutations({
     navigate('/invoices')
   }
 
-  const syncInvoiceStatusFromFinancials = async () => {
-    const { data } = await supabase
-      .from('invoice_financials_v')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (data?.computed_status) {
-      await supabase
-        .from('invoices')
-        .update({ status: data.computed_status })
-        .eq('id', id)
-    }
-  }
-
   const handleVoidPayment = async (paymentId: string | number) => {
     setPendingVoidPaymentId(paymentId)
     setVoidReason('')
@@ -387,21 +374,26 @@ export function useInvoiceMutations({
     setShowVoidDialog(false)
 
     setVoidingPaymentId(pendingVoidPaymentId)
-    const { error } = await supabase
-      .from('payments')
-      .update({
-        voided_at: new Date().toISOString(),
-        void_reason: reason,
-      })
-      .eq('id', pendingVoidPaymentId)
 
-    if (error) {
-      feedback.error('Void failed', { description: error.message })
+    const invoiceId = await fetchInvoiceIdForPayment(String(pendingVoidPaymentId))
+    if (!invoiceId) {
+      feedback.error('Void failed', { description: 'Could not find invoice for payment' })
       setVoidingPaymentId(null)
       return
     }
 
-    await syncInvoiceStatusFromFinancials()
+    const result = await voidInvoicePayment({
+      paymentId: String(pendingVoidPaymentId),
+      invoiceId,
+      reason,
+    })
+
+    if (!result.success) {
+      feedback.error('Void failed', { description: result.error || 'Unknown error' })
+      setVoidingPaymentId(null)
+      return
+    }
+
     await refresh()
     setVoidingPaymentId(null)
     setPendingVoidPaymentId(null)
