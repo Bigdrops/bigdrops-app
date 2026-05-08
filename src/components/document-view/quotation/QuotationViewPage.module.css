@@ -9,6 +9,10 @@
   margin-top: 16px;
 }
 
+.documentBody > :first-child {
+  box-shadow: var(--dv-shadow);
+}
+
 
 .stack > :first-child {
   margin-top: 14px;
@@ -45,6 +49,14 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: hsl(var(--bd-text-muted));
+}
+
+.sectionCard {
+  background: var(--dv-surface);
+  border: 1px solid var(--dv-border);
+  border-radius: var(--dv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--dv-shadow-sm);
 }
 
 .attachmentsScroller {

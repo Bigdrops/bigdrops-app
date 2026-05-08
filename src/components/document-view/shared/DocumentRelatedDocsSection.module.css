@@ -10,17 +10,25 @@
 }
 
 .section-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: var(--dv-text-2);
+}
+
+.section-card {
+  background: var(--dv-surface);
+  border: 1px solid var(--dv-border);
+  border-radius: var(--dv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--dv-shadow-sm);
 }
 
 .linked-list { 
   display: flex; 
   flex-direction: column; 
-  gap: 7px; 
+  gap: 0; 
 }
 
 .linked-item {
@@ -28,13 +36,16 @@
   align-items: center;
   gap: 12px;
   padding: 11px 14px;
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--dv-border-soft);
   cursor: pointer;
   transition: all 0.15s;
   text-decoration: none;
-  box-shadow: var(--dv-shadow-sm);
+}
+
+.linked-item:last-child {
+  border-bottom: none;
 }
 
 .linked-item:hover { 

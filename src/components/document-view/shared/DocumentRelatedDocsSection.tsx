@@ -31,23 +31,25 @@ export default function DocumentRelatedDocsSection({
       <div className={styles['section-hd']}>
         <div className={styles['section-label']}>{title}</div>
       </div>
-      <div className={styles['linked-list']}>
-        {items.map((doc) => (
-          <div key={doc.id} className={styles['linked-item']} onClick={doc.onClick}>
-            <div className={`${styles['linked-icon']} ${styles[doc.kind] || ''}`}>
-              {doc.kind === 'quotation' ? (
-                <FileText size={16} />
-              ) : (
-                <LinkIcon size={16} />
-              )}
+      <div className={styles['section-card']}>
+        <div className={styles['linked-list']}>
+          {items.map((doc) => (
+            <div key={doc.id} className={styles['linked-item']} onClick={doc.onClick}>
+              <div className={`${styles['linked-icon']} ${styles[doc.kind] || ''}`}>
+                {doc.kind === 'quotation' ? (
+                  <FileText size={16} />
+                ) : (
+                  <LinkIcon size={16} />
+                )}
+              </div>
+              <div className={styles['linked-body']}>
+                <div className={styles['linked-title']}>{doc.title}</div>
+                <div className={styles['linked-sub']}>{doc.subtitle}</div>
+              </div>
+              <ExternalLink size={14} className={styles['linked-chev']} />
             </div>
-            <div className={styles['linked-body']}>
-              <div className={styles['linked-title']}>{doc.title}</div>
-              <div className={styles['linked-sub']}>{doc.subtitle}</div>
-            </div>
-            <ExternalLink size={14} className={styles['linked-chev']} />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )

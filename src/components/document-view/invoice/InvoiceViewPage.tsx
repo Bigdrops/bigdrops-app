@@ -32,7 +32,9 @@ function SupportingSection({
           </button>
         )}
       </div>
-      {children}
+      <div className={styles["section-card"]}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -130,8 +132,7 @@ export default function InvoiceViewPage({
                 : undefined
             }
           >
-            <div className={styles["payment-card"]}>
-              <div className={styles["payment-summary-grid"]}>
+            <div className={styles["payment-summary-grid"]}>
                 {gPaymentSummary.map((cell) => (
                   <div key={cell.label} className={styles["pay-sum-cell"]}>
                     <div className={styles["pay-sum-lbl"]}>{cell.label}</div>
@@ -195,7 +196,6 @@ export default function InvoiceViewPage({
                     )}
                   </div>
                 ))}
-              </div>
             </div>
           </SupportingSection>
         )}

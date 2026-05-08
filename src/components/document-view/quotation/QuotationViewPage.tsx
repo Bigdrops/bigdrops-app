@@ -19,7 +19,9 @@ function SupportingSection({ title, children }: SupportingSectionProps) {
       <div className={styles.sectionHd}>
         <div className={styles.sectionLabel}>{title}</div>
       </div>
-      {children}
+      <div className={styles.sectionCard}>
+        {children}
+      </div>
     </section>
   );
 }

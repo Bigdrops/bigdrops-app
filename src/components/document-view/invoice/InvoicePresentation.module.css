@@ -345,6 +345,14 @@
   color: hsl(var(--bd-text-muted));
 }
 
+.section-card {
+  background: hsl(var(--bd-surface));
+  border: 1px solid hsl(var(--bd-border));
+  border-radius: var(--dv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--dv-shadow-sm);
+}
+
 
 .section-link {
   font-size: 12px;
@@ -366,6 +374,10 @@
 /* ─── DOCUMENT STAGE ─── */
 .documentBody {
   margin-top: 16px;
+}
+
+.documentBody > :first-child {
+  box-shadow: var(--dv-shadow);
 }
 
 
@@ -542,24 +554,26 @@
 }
 
 /* ─── ADVANCE LIST ─── */
-.advance-list { display: flex; flex-direction: column; gap: 7px; }
+.advance-list { display: flex; flex-direction: column; gap: 0; }
 
 .advance-item-row {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 11px 14px;
-  background: hsl(var(--bd-surface));
-  border: 1px solid hsl(var(--bd-border));
-  border-radius: var(--dv-radius);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
   cursor: pointer;
   transition: all 0.15s;
-  box-shadow: var(--dv-shadow-sm);
+}
+
+.advance-item-row:last-child {
+  border-bottom: none;
 }
 
 .advance-item-row:hover {
   background: hsl(var(--bd-surface-muted));
-  border-color: hsl(var(--bd-primary-bg) / 0.3);
 }
 
 .advance-body { flex: 1; min-width: 0; }
