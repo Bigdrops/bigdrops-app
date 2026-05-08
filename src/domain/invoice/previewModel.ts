@@ -150,6 +150,11 @@ export type BuildInvoicePreviewModelInput = {
   bankAccounts?: BankAccountLike[]
   customFieldObject?: CustomFieldObjectLike
   pdfOutput?: PdfOutputLike
+  selectedSignatory?: {
+    name?: string | null
+    role?: string | null
+    signatureUrl?: string | null
+  } | null
   poNumber?: string
   invoiceTotal: number
   cashReceived: number
@@ -172,6 +177,7 @@ export function buildInvoicePreviewModel({
   bankAccounts = [],
   customFieldObject,
   pdfOutput,
+  selectedSignatory,
   poNumber,
   invoiceTotal,
   cashReceived,
@@ -193,14 +199,6 @@ export function buildInvoicePreviewModel({
     || previewBankAccounts.find((account) => account.isDefault)
     || previewBankAccounts[0]
     || null
-
-  const selectedSignatory = customFieldObject?.selectedSignatory
-    ? {
-        name: customFieldObject.selectedSignatory.name || '',
-        role: customFieldObject.selectedSignatory.role || '',
-        signatureUrl: customFieldObject.selectedSignatory.signatureUrl || '',
-      }
-    : null
 
   const companyPreviewLines = [
     settings?.company_address,
@@ -368,7 +366,13 @@ export function buildInvoicePreviewModel({
   return {
     previewBankAccounts,
     selectedPreviewBank,
-    selectedSignatory,
+    selectedSignatory: selectedSignatory
+      ? {
+          name: selectedSignatory.name || '',
+          role: selectedSignatory.role || '',
+          signatureUrl: selectedSignatory.signatureUrl || '',
+        }
+      : null,
     companyPreviewLines,
     clientPreviewLines,
     topHeaderFields,
