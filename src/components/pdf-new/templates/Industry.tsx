@@ -586,8 +586,16 @@ export default function IndustryTemplate({ data }: TemplateProps) {
       {data.signature && (data.signature.imageUrl || data.signature.name) ? (
         <View style={styles.signatureWrap}>
           <View style={styles.signatureBox}>
-            {data.signature.imageUrl ? (
-              <Image src={data.signature.imageUrl} style={styles.signatureImage} />
+            {typeof data.signature.imageUrl === 'string' &&
+            data.signature.imageUrl.trim() ? (
+              <Image
+                src={{
+                  uri: data.signature.imageUrl,
+                  method: 'GET',
+                  headers: {},
+                }}
+                style={styles.signatureImage}
+              />
             ) : null}
             <View style={styles.signatureLine} />
             {data.signature.name ? <Text style={styles.signerName}>{data.signature.name}</Text> : null}
