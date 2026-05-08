@@ -194,6 +194,14 @@ export function buildInvoicePreviewModel({
     || previewBankAccounts[0]
     || null
 
+  const selectedSignatory = customFieldObject?.selectedSignatory
+    ? {
+        name: customFieldObject.selectedSignatory.name || '',
+        role: customFieldObject.selectedSignatory.role || '',
+        signatureUrl: customFieldObject.selectedSignatory.signatureUrl || '',
+      }
+    : null
+
   const companyPreviewLines = [
     settings?.company_address,
     [settings?.company_city, settings?.company_state].filter(Boolean).join(', '),
@@ -360,6 +368,7 @@ export function buildInvoicePreviewModel({
   return {
     previewBankAccounts,
     selectedPreviewBank,
+    selectedSignatory,
     companyPreviewLines,
     clientPreviewLines,
     topHeaderFields,
