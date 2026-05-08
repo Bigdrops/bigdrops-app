@@ -6,12 +6,9 @@
 }
 
 .documentBody {
-  margin-top: 24px;
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius-xl);
-  box-shadow: var(--dv-shadow);
+  margin-top: 16px;
 }
+
 
 .stack > :first-child {
   margin-top: 14px;

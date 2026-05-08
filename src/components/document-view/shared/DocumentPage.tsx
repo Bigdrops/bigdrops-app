@@ -1,17 +1,19 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
-import styles from './DocumentPage.module.css'
+import styles from "./DocumentPage.module.css";
 
 interface DocumentPageProps {
-  topNav?: ReactNode
-  hero?: ReactNode
-  children: ReactNode
-  floating?: ReactNode
-  overlays?: ReactNode
+  topNav?: ReactNode;
+  actionRow?: ReactNode;
+  hero?: ReactNode;
+  children: ReactNode;
+  floating?: ReactNode;
+  overlays?: ReactNode;
 }
 
 export default function DocumentPage({
   topNav,
+  actionRow,
   hero,
   children,
   floating,
@@ -19,7 +21,12 @@ export default function DocumentPage({
 }: DocumentPageProps) {
   return (
     <div className={styles.page}>
-      {topNav}
+      {(topNav || actionRow) && (
+        <div className={styles.topContainer}>
+          {topNav}
+          {actionRow && <div className={styles.actionRow}>{actionRow}</div>}
+        </div>
+      )}
       <main className={styles.content}>
         {hero ? <div className={styles.hero}>{hero}</div> : null}
         {children}
@@ -31,5 +38,5 @@ export default function DocumentPage({
       ) : null}
       {overlays}
     </div>
-  )
+  );
 }

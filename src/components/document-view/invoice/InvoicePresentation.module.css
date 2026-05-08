@@ -324,37 +324,27 @@
   flex-shrink: 0;
 }
 
-/* ─── SECTIONS ─── */
+/* ─── SECTIONS (Operational Cards) ─── */
 .section {
-  margin-top: 28px;
-}
-
-@media (min-width: 640px) {
-  .section {
-    margin-top: 36px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .section {
-    margin-top: 44px;
-  }
+  margin-top: 24px;
 }
 
 .section-hd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding: 0 4px;
 }
 
 .section-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: hsl(var(--bd-text-muted));
 }
+
 
 .section-link {
   font-size: 12px;
@@ -375,12 +365,9 @@
 
 /* ─── DOCUMENT STAGE ─── */
 .documentBody {
-  margin-top: 24px;
-  background: hsl(var(--bd-surface));
-  border: 1px solid hsl(var(--bd-border));
-  border-radius: var(--dv-radius-xl);
-  box-shadow: var(--dv-shadow);
+  margin-top: 16px;
 }
+
 
 .previewControls {
   margin-top: 14px;

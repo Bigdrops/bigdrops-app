@@ -1,14 +1,16 @@
-import { Paperclip } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { Paperclip } from "lucide-react";
+import type { ReactNode } from "react";
 
-import DocumentRelatedDocsSection, { type RelatedDocumentItem } from '../shared/DocumentRelatedDocsSection'
-import type { BaseDocument } from '../types/documentView'
-import QuotationPrimaryActions from './QuotationPrimaryActions'
-import styles from './QuotationViewPage.module.css'
+import DocumentRelatedDocsSection, {
+  type RelatedDocumentItem,
+} from "../shared/DocumentRelatedDocsSection";
+import type { BaseDocument } from "../types/documentView";
+import QuotationPrimaryActions from "./QuotationPrimaryActions";
+import styles from "./QuotationViewPage.module.css";
 
 interface SupportingSectionProps {
-  title: string
-  children: ReactNode
+  title: string;
+  children: ReactNode;
 }
 
 function SupportingSection({ title, children }: SupportingSectionProps) {
@@ -19,25 +21,25 @@ function SupportingSection({ title, children }: SupportingSectionProps) {
       </div>
       {children}
     </section>
-  )
+  );
 }
 
 interface QuotationViewPageProps {
-  document: BaseDocument
-  documentPreview?: ReactNode
-  preview?: ReactNode // deprecated, use documentPreview
-  previewControls?: ReactNode
-  relatedDocuments?: RelatedDocumentItem[]
-  activityHistory?: ReactNode
+  document: BaseDocument;
+  documentPreview?: ReactNode;
+  preview?: ReactNode; // deprecated, use documentPreview
+  previewControls?: ReactNode;
+  relatedDocuments?: RelatedDocumentItem[];
+  activityHistory?: ReactNode;
   attachments?: Array<{
-    id: string
-    label: string
-  }>
-  onConvert: () => void
-  onEdit: () => void
-  onDuplicate: () => void
-  onDownload: () => void
-  onCopyNumber: () => void
+    id: string;
+    label: string;
+  }>;
+  onConvert: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDownload: () => void;
+  onCopyNumber: () => void;
 }
 
 export default function QuotationViewPage({
@@ -54,22 +56,19 @@ export default function QuotationViewPage({
   onDownload,
   onCopyNumber: _onCopyNumber,
 }: QuotationViewPageProps) {
-  const previewContent = documentPreview || preview
-  const guardedRelatedDocuments = Array.isArray(relatedDocuments) ? relatedDocuments : []
-  const guardedAttachments = Array.isArray(attachments) ? attachments : []
+  const previewContent = documentPreview || preview;
+  const guardedRelatedDocuments = Array.isArray(relatedDocuments)
+    ? relatedDocuments
+    : [];
+  const guardedAttachments = Array.isArray(attachments) ? attachments : [];
 
   return (
     <div className={styles.stack}>
-      <QuotationPrimaryActions onConvert={onConvert} onEdit={onEdit} onDownload={onDownload} />
+      <div className={styles.documentBody}>{previewContent}</div>
 
-      <div className={styles.documentBody}>
-        {previewContent}
-      </div>
 
       {previewControls ? (
-        <div className={styles.previewControls}>
-          {previewControls}
-        </div>
+        <div className={styles.previewControls}>{previewControls}</div>
       ) : null}
 
       <div className={styles.supportingArea}>
@@ -91,5 +90,5 @@ export default function QuotationViewPage({
         ) : null}
       </div>
     </div>
-  )
+  );
 }

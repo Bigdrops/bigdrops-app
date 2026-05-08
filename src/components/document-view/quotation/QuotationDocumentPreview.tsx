@@ -1,33 +1,46 @@
-import './QuotationDocumentPreview.css'
-import { renderRichTextContent } from '@/lib/richText'
+import "./QuotationDocumentPreview.css";
+import { renderRichTextContent } from "@/lib/richText";
+import DocumentPreviewShell from "../shared/DocumentPreviewShell";
 
 type QuotationDocumentPreviewProps = {
-  quotation: any
-  viewModel: any
-  previewModel: any
-  pdfOutput: any
-  settingsData: any
-}
+  quotation: any;
+  viewModel: any;
+  previewModel: any;
+  pdfOutput: any;
+  settingsData: any;
+};
 
 export default function QuotationDocumentPreview({
   quotation,
   viewModel,
   previewModel,
-  pdfOutput,
+  pdfOutput: _pdfOutput,
   settingsData,
 }: QuotationDocumentPreviewProps) {
-  const items = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : []
-  const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
-  const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
-  const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
-  const detailRows = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : []
-  const notesSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
+  const items = Array.isArray(previewModel?.previewItems)
+    ? previewModel.previewItems
+    : [];
+  const totals = Array.isArray(previewModel?.previewTotals)
+    ? previewModel.previewTotals
+    : [];
+  const companyLines = Array.isArray(previewModel?.companyPreviewLines)
+    ? previewModel.companyPreviewLines
+    : [];
+  const clientLines = Array.isArray(previewModel?.clientPreviewLines)
+    ? previewModel.clientPreviewLines
+    : [];
+  const detailRows = Array.isArray(previewModel?.previewDetailRows)
+    ? previewModel.previewDetailRows
+    : [];
+  const notesSections = Array.isArray(previewModel?.previewNotesSections)
+    ? previewModel.previewNotesSections
+    : [];
 
   return (
-    <div className="quotationDocumentPreview">
-      <div className="doc-top-accent" />
+    <DocumentPreviewShell>
+      <div className="quotationDocumentPreview">
+        <div className="doc-head">
 
-      <div className="doc-head">
         <div className="doc-company">
           {settingsData?.company_logo_url ? (
             <div className="doc-logo-container" style={{ marginBottom: '1rem' }}>
@@ -41,12 +54,19 @@ export default function QuotationDocumentPreview({
             ))}
           </div>
         </div>
-        <div className="doc-id-block">
-          <div className="doc-type-label">QUOTATION</div>
-          <div className="doc-number">{quotation?.quotation_number || 'Draft'}</div>
-          {quotation?.quotation_title ? <div className="doc-quotation-title">{quotation.quotation_title}</div> : null}
+      </div>
+
+      <div className="doc-summary">
+        <div className="doc-type-label">Quotation</div>
+        <div className="doc-title">{quotation?.quotation_title || 'Quotation'}</div>
+        <div className="doc-meta-chips">
+          <span className="doc-meta-chip">Ref {quotation?.quotation_number || 'Draft'}</span>
+          {quotation?.issue_date ? (
+            <span className="doc-meta-chip">Issued {quotation.issue_date}</span>
+          ) : null}
         </div>
       </div>
+
 
       <div className="doc-meta-grid">
         <div className="doc-meta-cell">
@@ -178,6 +198,7 @@ export default function QuotationDocumentPreview({
           </div>
         ))}
       </div>
-    </div>
-  )
+      </div>
+    </DocumentPreviewShell>
+  );
 }

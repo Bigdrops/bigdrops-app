@@ -69,6 +69,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── DOTTED GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, var(--dv-primary) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+
 *,
 *::before,
 *::after {
@@ -88,3 +100,4 @@ body {
   background: var(--dv-border);
   border-radius: 2px;
 }
+
