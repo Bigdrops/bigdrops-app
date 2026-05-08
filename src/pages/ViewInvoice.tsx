@@ -489,7 +489,13 @@ export default function ViewInvoice() {
           : null,
         additionalSections: [],
         referenceLinks,
-        signature: null,
+        signature: targetPreviewModel?.selectedSignatory
+          ? {
+              name: targetPreviewModel.selectedSignatory.name || '',
+              role: targetPreviewModel.selectedSignatory.role || '',
+              imageUrl: targetPreviewModel.selectedSignatory.signatureUrl || '',
+            }
+          : null,
         logo: {
           imageUrl: resolveCanonicalLogoUrl(settingsData),
           altText: String(settingsData?.company_name || ''),
