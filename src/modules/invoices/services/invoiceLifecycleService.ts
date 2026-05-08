@@ -1,5 +1,5 @@
 import { supabase } from "@/supabase"
-import type { DuplicateInvoicePrefill } from "./types/invoiceTypes"
+import type { DuplicateInvoicePrefill } from "../types/invoiceTypes"
 
 export interface ArchiveInvoiceInput {
   invoiceId: string
