@@ -9,7 +9,6 @@ import { useDocumentUIState } from '@/components/document-view/hooks/useDocument
 import QuotationMoreSheet from '@/components/document-view/quotation/QuotationMoreSheet'
 import QuotationViewPage from '@/components/document-view/quotation/QuotationViewPage'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
-import DocumentHero from '@/components/document-view/shared/DocumentHero'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import type { RelatedDocumentItem } from '@/components/document-view/shared/DocumentRelatedDocsSection'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
@@ -22,6 +21,7 @@ import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 import { BUILTIN_COLUMNS, buildSummaryRows, normalizeInvoicePdfTemplateId } from '@/domain/invoice'
 import type { InvoicePdfTemplateId } from '@/domain/invoice/types'
+import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
@@ -81,6 +81,7 @@ export default function ViewQuotation() {
   const [settings, setSettings] = useState<any>(null)
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [customFields, setCustomFields] = useState<Record<string, any>>({})
+  const [resolvedSignatory, setResolvedSignatory] = useState<ReturnType<typeof resolveDocumentSignatory>>(null)
   const [pdfOutput, setPdfOutput] = useState<PdfOutputSettingsValue>(defaultPdfOutput)
   const [downloading, setDownloading] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
@@ -104,6 +105,7 @@ export default function ViewQuotation() {
         setClient(data.client)
         setSettings(data.settings)
         setBankAccounts(data.bankAccounts)
+        setResolvedSignatory(data.signatory || null)
         setCustomFields(data.customFields)
         setPdfOutput({
           ...defaultPdfOutput,
@@ -131,6 +133,7 @@ export default function ViewQuotation() {
     setClient(data.client)
     setSettings(data.settings)
     setBankAccounts(data.bankAccounts)
+    setResolvedSignatory(data.signatory || null)
     setCustomFields(data.customFields)
     setLinkedProject(data.quotation?.project_id ? await fetchProjectSummary(data.quotation.project_id) : null)
   }
@@ -411,6 +414,7 @@ export default function ViewQuotation() {
 
   const quotationPreviewModel = useMemo(() => ({
     selectedPreviewBank,
+    signatory: resolvedSignatory,
     companyPreviewLines: companyLines,
     clientPreviewLines: clientLines,
     previewDetailRows: previewDetailRows,
@@ -467,6 +471,7 @@ export default function ViewQuotation() {
     quotation?.amount_in_words,
     quotation?.notes,
     quotation?.terms,
+    resolvedSignatory,
     selectedPreviewBank,
   ])
 
@@ -516,7 +521,7 @@ export default function ViewQuotation() {
             phone: String(client?.phone || ''),
             email: String(client?.email || ''),
           },
-          headerFields: previewDetailRows.map((row) => ({ label: row.label, value: row.value })),
+          headerFields: (quotationPreviewModel.previewDetailRows || []).map((row) => ({ label: row.label, value: row.value })),
           columns: resolvedTable.columns,
           mergeQtyUnit: resolvedTable.mergeQtyUnit,
           items: (Array.isArray(items) ? items : []).map((item, index) => ({
@@ -542,12 +547,18 @@ export default function ViewQuotation() {
             rows: previewTotals.map((row) => ({ key: row.label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: row.label, amount: Number(String(row.value).replace(/[^\d.-]/g, '')) || 0, emphasis: row.emphasis === true })),
             amountInWords: pdfOutput.showAmountInWords === false ? '' : String(quotation.amount_in_words || ''),
           },
-          bankDetails: pdfOutput.showBankDetails && selectedPreviewBank ? selectedPreviewBank : null,
+          bankDetails: pdfOutput.showBankDetails && quotationPreviewModel.selectedPreviewBank ? quotationPreviewModel.selectedPreviewBank : null,
           notes: quotation.notes ? { title: customFields.notesTitle || 'Notes', content: quotation.notes, format: 'html' } : null,
           terms: quotation.terms ? { title: customFields.termsTitle || 'Terms and Conditions', content: quotation.terms, format: 'html' } : null,
           additionalSections: [],
           referenceLinks,
-          signature: null,
+          signature: quotationPreviewModel.signatory
+            ? {
+                name: quotationPreviewModel.signatory.name || '',
+                role: quotationPreviewModel.signatory.role || '',
+                imageUrl: quotationPreviewModel.signatory.signatureUrl || '',
+              }
+            : null,
           logo: {
             imageUrl: resolveCanonicalLogoUrl(settings),
             altText: String(settings?.company_name || ''),
@@ -641,8 +652,6 @@ export default function ViewQuotation() {
     title: quotation.quotation_title || '',
     status: (quotation.status || 'open') as any,
   }
-  const quotationHeroSubtitle = quotation.quotation_title || undefined
-
   return (
     <>
       <DocumentPage
@@ -664,14 +673,6 @@ export default function ViewQuotation() {
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
               </svg>
             }
-          />
-        }
-        hero={
-          <DocumentHero
-            eyebrow="Quotation"
-            title={docProps.number}
-            subtitle={quotationHeroSubtitle}
-            status={docProps.status}
           />
         }
         floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}

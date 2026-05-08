@@ -4,15 +4,17 @@ import { normalizeSettings } from '@/hooks/useSettings'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, toQuotationItemRow, withSourceTrail } from '@/domain/documentConversion'
 import { buildQuotationFormState, getNextQuotationNumber, type DbQuotation, type DbQuotationItem } from '@/domain/quotation'
 import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '@/domain/invoice'
+import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
 
 export async function loadQuotationViewData(id: string) {
-  const [quoRes, itemsRes, settingsRes, bankAccountsRes] = await Promise.all([
+  const [quoRes, itemsRes, settingsRes, bankAccountsRes, signatoriesRes] = await Promise.all([
     supabase.from('quotations').select('*').eq('id', id).single(),
     supabase.from('quotation_items').select('*').eq('quotation_id', id).order('sort_order'),
     supabase.from('settings').select('*').eq('id', 1).single(),
     supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+    supabase.from('signatories').select('id, name, role, signature_url').order('name'),
   ])
 
   if (quoRes.error || !quoRes.data) {
@@ -55,6 +57,7 @@ export async function loadQuotationViewData(id: string) {
     client: clientRes.data || null,
     settings: normalizeSettings(settingsRes.data),
     bankAccounts: bankAccountsRes.data || [],
+    signatory: resolveDocumentSignatory(parsedCustomFields?.signatoryId, signatoriesRes.data || []),
     customFields: parsedCustomFields,
   }
 }

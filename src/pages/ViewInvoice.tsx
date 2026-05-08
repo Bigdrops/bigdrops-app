@@ -3,11 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PdfBankControls, PdfDocumentOptionsCard, PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import InvoiceDocumentPreview from '@/components/document-view/invoice/InvoiceDocumentPreview'
-import {
-  InvoiceHero,
-  InvoicePageShell,
-  InvoiceFloatingDownloadButton,
-} from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
+import { InvoiceFloatingDownloadButton } from '@/components/document-view/invoice/InvoiceFidelityPrimitives'
 import InvoiceMoreSheet from '@/components/document-view/invoice/InvoiceMoreSheet'
 import InvoiceRecordPaymentSheet from '@/components/document-view/invoice/InvoiceRecordPaymentSheet'
 import InvoiceAdvanceSheet from '@/components/invoice/view/InvoiceAdvanceSheet'
@@ -17,6 +13,7 @@ import PdfOutputCustomizeSheet from '@/components/document-view/shared/PdfOutput
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
+import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
@@ -39,7 +36,7 @@ import {
   parseCustomFields,
 } from '@/domain/invoice'
 import type { InvoicePdfTemplateId } from '@/domain/invoice/types'
-import { buildInvoicePreviewModel } from '@/domain/invoice/previewModel'
+import { buildInvoicePreviewModel, resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { buildInvoiceViewModel } from '@/domain/invoice/viewModel'
 import { useInvoiceDetailData } from '@/hooks/useInvoiceDetailData'
 import { formatDisplayDate } from '@/lib/formatters/date'
@@ -97,6 +94,7 @@ export default function ViewInvoice() {
     client,
     settings,
     bankAccounts,
+    signatories,
     linkedProject,
     loading,
     refresh,
@@ -207,6 +205,11 @@ export default function ViewInvoice() {
     }
   }, [invoice?.custom_fields])
 
+  const resolvedSignatory = useMemo(
+    () => resolveDocumentSignatory((customFields as any)?.signatoryId, Array.isArray(signatories) ? signatories : []),
+    [customFields, signatories],
+  )
+
   const previewTotalsSource = useMemo(() => {
     if (!invoice) return null
 
@@ -307,7 +310,7 @@ export default function ViewInvoice() {
         bankAccounts: Array.isArray(bankAccounts) ? bankAccounts : [],
         customFieldObject: customFields as any,
         pdfOutput,
-        selectedSignatory: (customFields as any)?.selectedSignatory || null,
+        signatory: resolvedSignatory,
         poNumber: String(invoice?.po_number || ''),
         invoiceTotal: previewTotalsSource?.invoiceTotal || 0,
         cashReceived: viewModel.cashReceived || 0,
@@ -323,7 +326,7 @@ export default function ViewInvoice() {
           : undefined,
         formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
       }),
-    [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, previewTotalsSource, viewModel.cashReceived],
+    [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, resolvedSignatory, previewTotalsSource, viewModel.cashReceived],
   )
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
@@ -376,7 +379,7 @@ export default function ViewInvoice() {
       bankAccounts: Array.isArray(bankAccounts) ? bankAccounts : [],
       customFieldObject: targetCustomFields as any,
       pdfOutput,
-      selectedSignatory: (targetCustomFields as any)?.selectedSignatory || null,
+      signatory: resolveDocumentSignatory(targetCustomFields?.signatoryId, Array.isArray(signatories) ? signatories : []),
       poNumber: String(targetInvoice?.po_number || ''),
       invoiceTotal: totals.totalPayable || Number(targetInvoice?.total || 0),
       cashReceived: settledTotal,
@@ -491,11 +494,11 @@ export default function ViewInvoice() {
           : null,
         additionalSections: [],
         referenceLinks,
-        signature: targetPreviewModel?.selectedSignatory
+        signature: targetPreviewModel?.signatory
           ? {
-              name: targetPreviewModel.selectedSignatory.name || '',
-              role: targetPreviewModel.selectedSignatory.role || '',
-              imageUrl: targetPreviewModel.selectedSignatory.signatureUrl || '',
+              name: targetPreviewModel.signatory.name || '',
+              role: targetPreviewModel.signatory.role || '',
+              imageUrl: targetPreviewModel.signatory.signatureUrl || '',
             }
           : null,
         logo: {
@@ -509,7 +512,7 @@ export default function ViewInvoice() {
       },
       templateId: targetTemplateId,
     })
-  }, [bankAccounts, client, id, pdfOutput, settings, settingsData])
+  }, [bankAccounts, client, id, pdfOutput, settings, settingsData, signatories])
 
   const handleCopyNumber = async () => {
     if (!invoice?.invoice_number) return
@@ -813,9 +816,9 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <InvoicePageShell topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Invoices" onBack={() => navigate('/invoices')} />}>
         <CenteredSpinner />
-      </InvoicePageShell>
+      </DocumentPage>
     )
   }
 
@@ -896,7 +899,7 @@ export default function ViewInvoice() {
 
   return (
     <>
-      <InvoicePageShell
+      <DocumentPage
         topNav={
           <DocumentTopNav
             title={docProps.number}
@@ -918,7 +921,7 @@ export default function ViewInvoice() {
           />
         }
         floating={<InvoiceFloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
-        overlay={
+        overlays={
           <>
             <PdfOutputCustomizeSheet
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
@@ -1052,21 +1055,6 @@ export default function ViewInvoice() {
           </>
         }
       >
-        <InvoiceHero
-          eyebrow="Invoice"
-          number={docProps.number}
-          title={docProps.title}
-          clientName={invoice.client_name || 'No client specified'}
-          status={docProps.status}
-          metrics={[]}
-          meta={[
-            { label: 'Client', value: invoice.client_name || 'Unassigned' },
-            { label: 'Issue date', value: invoice.issue_date ? formatDisplayDate(invoice.issue_date) : 'Not set' },
-            { label: 'Due date', value: invoice.due_date ? formatDisplayDate(invoice.due_date) : 'Open' },
-            { label: linkedProject ? 'Project' : sourceDocument ? 'Source' : 'PO number', value: (linkedProject?.name && String(linkedProject.name)) || (sourceDocument?.number && String(sourceDocument.number)) || invoice.po_number || 'Not linked' },
-          ]}
-        />
-
         <InvoiceViewPage
           documentPreview={
             <InvoiceDocumentPreview
@@ -1147,7 +1135,7 @@ export default function ViewInvoice() {
           canRecordPayment={viewModel.canRecordPayment}
           voidingPaymentId={voiding ? pendingVoidPaymentId : null}
         />
-      </InvoicePageShell>
+      </DocumentPage>
     </>
   )
 }

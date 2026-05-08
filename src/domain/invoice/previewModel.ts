@@ -43,6 +43,12 @@ export type PreviewNoteSection =
   | { title: string; kind: 'fields'; fields: Array<{ label: string; value: string }> }
   | { title: string; kind: 'links'; links: { label: string; url: string }[] }
 
+export type PreviewSignatory = {
+  name: string
+  role: string
+  signatureUrl: string
+}
+
 type InvoiceLike = {
   custom_fields?: unknown
   client_name?: string | null
@@ -108,6 +114,14 @@ type BankAccountLike = {
   is_default?: boolean | null
 }
 
+type SignatoryLike = {
+  id?: string | null
+  name?: string | null
+  role?: string | null
+  signature_url?: string | null
+  signatureUrl?: string | null
+}
+
 type CustomFieldObjectLike = {
   header?: Array<{ label?: string | null; value?: string | null }>
   additionalFields?: Array<{ label?: string | null; value?: string | null }>
@@ -150,11 +164,7 @@ export type BuildInvoicePreviewModelInput = {
   bankAccounts?: BankAccountLike[]
   customFieldObject?: CustomFieldObjectLike
   pdfOutput?: PdfOutputLike
-  selectedSignatory?: {
-    name?: string | null
-    role?: string | null
-    signatureUrl?: string | null
-  } | null
+  signatory?: PreviewSignatory | null
   poNumber?: string
   invoiceTotal: number
   cashReceived: number
@@ -169,6 +179,22 @@ export type BuildInvoicePreviewModelInput = {
   formatMoney: (value: number) => string
 }
 
+export function resolveDocumentSignatory(
+  signatoryId: unknown,
+  signatories: SignatoryLike[] = [],
+): PreviewSignatory | null {
+  if (typeof signatoryId !== 'string' || !signatoryId.trim()) return null
+
+  const matchedSignatory = signatories.find((entry) => String(entry?.id || '') === String(signatoryId))
+  if (!matchedSignatory) return null
+
+  return {
+    name: String(matchedSignatory.name || '').trim(),
+    role: String(matchedSignatory.role || '').trim(),
+    signatureUrl: String(matchedSignatory.signature_url || matchedSignatory.signatureUrl || '').trim(),
+  }
+}
+
 export function buildInvoicePreviewModel({
   invoice,
   items,
@@ -177,7 +203,7 @@ export function buildInvoicePreviewModel({
   bankAccounts = [],
   customFieldObject,
   pdfOutput,
-  selectedSignatory,
+  signatory,
   poNumber,
   invoiceTotal,
   cashReceived,
@@ -366,11 +392,11 @@ export function buildInvoicePreviewModel({
   return {
     previewBankAccounts,
     selectedPreviewBank,
-    selectedSignatory: selectedSignatory
+    signatory: signatory
       ? {
-          name: selectedSignatory.name || '',
-          role: selectedSignatory.role || '',
-          signatureUrl: selectedSignatory.signatureUrl || '',
+          name: signatory.name || '',
+          role: signatory.role || '',
+          signatureUrl: signatory.signatureUrl || '',
         }
       : null,
     companyPreviewLines,
