@@ -2,6 +2,18 @@
   margin-top: 28px;
 }
 
+@media (min-width: 640px) {
+  .section {
+    margin-top: 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    margin-top: 44px;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -16,7 +28,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted));
 }
 
 .description {
@@ -24,7 +36,7 @@
   font-size: 12px;
   font-weight: 500;
   line-height: 1.45;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
 }
 
 .body {

@@ -5,9 +5,22 @@
 }
 
 .content {
-  max-width: 680px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 16px calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 40px);
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: 0 24px calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 48px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    max-width: 800px;
+    padding: 0 32px calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 56px);
+  }
 }
 
 .hero {
@@ -24,10 +37,23 @@
 }
 
 .floatingInner {
-  max-width: 680px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 16px;
   display: flex;
   justify-content: flex-end;
   pointer-events: auto;
+}
+
+@media (min-width: 640px) {
+  .floatingInner {
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .floatingInner {
+    max-width: 800px;
+    padding: 0 32px;
+  }
 }
