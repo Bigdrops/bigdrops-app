@@ -1,5 +1,4 @@
 import { Download, Edit3 } from 'lucide-react'
-
 import styles from '../invoice/InvoicePresentation.module.css'
 
 interface QuotationPrimaryActionsProps {
@@ -16,7 +15,7 @@ export default function QuotationPrimaryActions({
   return (
     <div className={styles['action-row']}>
       <button type="button" className={`${styles.btn} ${styles['btn-primary']}`} onClick={onConvert}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
         </svg>
         <span>Convert to Invoice</span>
@@ -27,7 +26,7 @@ export default function QuotationPrimaryActions({
       </button>
       <button
         type="button"
-        className={`${styles.btn} ${styles['btn-outline']} ${styles['icon-only']}`}
+        className={styles['btn-pill']}
         onClick={onDownload}
         title="Download PDF"
         aria-label="Download PDF"

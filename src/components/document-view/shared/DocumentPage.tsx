@@ -5,33 +5,33 @@ import styles from "./DocumentPage.module.css";
 interface DocumentPageProps {
   topNav?: ReactNode;
   actionRow?: ReactNode;
-  hero?: ReactNode;
   children: ReactNode;
   floating?: ReactNode;
   overlays?: ReactNode;
 }
 
+/**
+ * TRUE STRUCTURAL TRANSPLANT
+ * Mirrors viewpage.html hierarchy 1:1
+ */
 export default function DocumentPage({
   topNav,
   actionRow,
-  hero,
   children,
   floating,
   overlays,
 }: DocumentPageProps) {
   return (
-    <div className={styles.page}>
-      {topNav && <div className={styles.topContainer}>{topNav}</div>}
+    <div className={styles.workspace}>
+      <header className={styles.topbar}>{topNav}</header>
+
       {actionRow && <div className={styles.actionStrip}>{actionRow}</div>}
-      <main className={styles.content}>
-        {hero ? <div className={styles.hero}>{hero}</div> : null}
+
+      <main className={styles.scrollBody}>
         {children}
       </main>
-      {floating ? (
-        <div className={styles.floatingDock}>
-          <div className={styles.floatingInner}>{floating}</div>
-        </div>
-      ) : null}
+
+      {floating && <div className={styles.floating}>{floating}</div>}
       {overlays}
     </div>
   );

@@ -1,6 +1,5 @@
 import './InvoiceDocumentPreview.css'
 import { renderRichTextContent } from '@/lib/richText'
-import DocumentPreviewShell from '../shared/DocumentPreviewShell'
 
 type InvoiceDocumentPreviewProps = {
   invoice: any
@@ -11,23 +10,26 @@ type InvoiceDocumentPreviewProps = {
   mergeQtyUnit?: boolean
 }
 
+/**
+ * TRUE STRUCTURAL TRANSPLANT
+ * Mirrors viewpage.html internal .inv-card structure
+ */
 export default function InvoiceDocumentPreview({
   invoice,
   viewModel,
   previewModel,
-  pdfOutput,
   settingsData,
   mergeQtyUnit,
 }: InvoiceDocumentPreviewProps) {
   const items = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : []
   const totals = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : []
-  const balanceDue = previewModel?.previewBalanceDue || null
   const companyLines = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : []
   const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
   const detailRows = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : []
   const notesSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
   const signatory = previewModel?.signatory || null
   const statusLabel = String(viewModel?.statusLabel || invoice?.status || 'Draft')
+  
   const statusTone =
     /paid/i.test(statusLabel)
       ? 'success'
@@ -37,202 +39,178 @@ export default function InvoiceDocumentPreview({
           ? 'danger'
           : 'neutral'
 
-  const metaChips = [
-    invoice?.invoice_number ? `Ref ${invoice.invoice_number}` : null,
-    invoice?.po_number ? `PO ${invoice.po_number}` : null,
-    invoice?.issue_date ? `Issued ${invoice.issue_date}` : null,
-  ].filter(Boolean)
-
   return (
-    <DocumentPreviewShell>
-      <div className={`invoiceDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
-        <div className="doc-head">
-          <div className="doc-company">
-            {settingsData?.company_logo_url ? (
-              <div className="doc-logo-container">
-                <img src={settingsData.company_logo_url} alt="Logo" className="doc-logo" />
-              </div>
-            ) : null}
-            <div className="doc-co-name">{settingsData?.company_name || 'BigDrops'}</div>
-            <div className="doc-co-addr">
+    <div className={`invoiceDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
+      {/* 1. inv-top */}
+      <div className="inv-top">
+        <div className="brand-block">
+          <div className="brand-logo">
+            {settingsData?.company_name ? settingsData.company_name.substring(0, 3) : 'BD'}
+          </div>
+          <div>
+            <div className="brand-name">{settingsData?.company_name || 'BigDrops'}</div>
+            <div className="brand-sub">
               {companyLines.map((line: string, i: number) => (
                 <div key={i}>{line}</div>
               ))}
             </div>
           </div>
-
-          <div className={`doc-status-pill ${statusTone}`}>{statusLabel}</div>
         </div>
+        <div className={`status-pill ${statusTone}`}>{statusLabel}</div>
+      </div>
 
-        <div className="doc-summary">
-          <div className="doc-type-label">Invoice</div>
-          <div className="doc-title">{invoice?.invoice_title || 'Invoice'}</div>
-          {metaChips.length > 0 ? (
-            <div className="doc-meta-chips">
-              {metaChips.map((chip) => (
-                <span key={chip} className="doc-meta-chip">{chip}</span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="doc-meta-grid">
-          <div className="doc-meta-cell">
-            <div className="doc-meta-lbl">Bill To</div>
-            <div className="doc-meta-val">{invoice?.client_name || 'Unassigned Client'}</div>
-            <div className="doc-meta-sub">
-              {clientLines.map((line: string, i: number) => (
-                <div key={i}>{line}</div>
-              ))}
-            </div>
-          </div>
-          <div className="doc-meta-cell">
-            <div className="doc-meta-lbl">Details</div>
-            <div className="doc-meta-val">Issued {invoice?.issue_date || '—'}</div>
-            <div className="doc-meta-sub">Due {invoice?.due_date || 'Open'}</div>
-            <div className="doc-meta-sub">Status {statusLabel}</div>
-          </div>
-        </div>
-
-        {detailRows.length > 0 && (
-          <div className="doc-detail-grid">
-            {detailRows.map((row: any, index: number) => (
-              <div className="doc-detail-cell" key={index}>
-                <span className="doc-detail-label">{row?.label || ''}</span>
-                <span className="doc-detail-value">{row?.value || '—'}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="doc-items">
-          <div className="doc-items-head">
-            <div className="doc-col-lbl">Description</div>
-            <div className="doc-col-lbl r">Amount</div>
-          </div>
-
-          {items.length > 0 ? (
-            items.map((item: any, index: number) => {
-              if (item?.type === 'group') {
-                return (
-                  <div className="doc-item-row group-hd" key={index}>
-                    <div className="group-name">{item?.label}</div>
-                  </div>
-                )
-              }
-
-              if (item?.type === 'group_footer') {
-                return (
-                  <div className="doc-item-row group-ft" key={index}>
-                    <div className="group-footer-value">{item?.showSubtotal ? item?.value || '' : ''}</div>
-                  </div>
-                )
-              }
-
-              return (
-                <div className="doc-item-row" key={index}>
-                  <div className="item-body">
-                    <div className="item-name">{item?.label || 'Item'}</div>
-                    {item?.detail ? <div className="item-desc">{item.detail}</div> : null}
-                    {(item?.facts || []).length > 0 && (
-                      <div className="item-facts">
-                        {(item.facts as string[]).filter(Boolean).map((fact: string, factIdx: number) => (
-                          <div key={factIdx} className="item-fact">{fact}</div>
-                        ))}
-                      </div>
-                    )}
-                    {item?.imageUrl ? (
-                      <img className="item-image" src={item.imageUrl} alt={item?.label || 'Item image'} />
-                    ) : null}
-                  </div>
-                  <div className="item-amount">{item?.value || '—'}</div>
-                </div>
-              )
-            })
-          ) : (
-            <div className="doc-item-row">
-              <div className="item-body">
-                <div className="item-desc">No items added to this invoice.</div>
-              </div>
+      {/* 2. inv-body */}
+      <div className="inv-body">
+        <div className="inv-title">{invoice?.invoice_title || 'Invoice'}</div>
+        <div className="meta-chips">
+          {invoice?.invoice_number && (
+            <div className="meta-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {invoice.invoice_number}
             </div>
           )}
+          {invoice?.po_number && (
+            <div className="meta-chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              {invoice.po_number}
+            </div>
+          )}
+          {invoice?.issue_date && (
+             <div className="meta-chip">{invoice.issue_date}</div>
+          )}
         </div>
+      </div>
 
-        <div className="doc-totals">
-          {totals.map((row: any, index: number) => {
-            const isGrand = row?.emphasis && row?.label?.toLowerCase() === 'total'
-            const isBalance = row?.emphasis && row?.label?.toLowerCase().includes('balance')
+      {/* 3. info-grid */}
+      <div className="info-grid">
+        <div className="info-cell">
+          <div className="info-label">Bill To</div>
+          <div className="info-value">{invoice?.client_name || 'Unassigned Client'}</div>
+          <div className="info-sub">
+            {clientLines.map((line: string, i: number) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+        </div>
+        <div className="info-cell">
+          <div className="info-label">Details</div>
+          {detailRows.length > 0 ? (
+            detailRows.map((row: any, index: number) => (
+              <div key={index} className="info-value-small">
+                {row?.label}: {row?.value || '—'}
+              </div>
+            ))
+          ) : (
+             <div className="info-value-small">Issued: {invoice?.issue_date || '—'}</div>
+          )}
+        </div>
+      </div>
+
+      {/* 4. item-list */}
+      <div className="item-list">
+        {items.length > 0 ? (
+          items.map((item: any, index: number) => {
+            if (item?.type === 'group') {
+              return (
+                <div className="item-row group-hd" key={index}>
+                  <div className="group-name">{item?.label}</div>
+                </div>
+              )
+            }
+            if (item?.type === 'group_footer') {
+              return (
+                <div className="item-row group-ft" key={index}>
+                   <div className="group-footer-value">{item?.showSubtotal ? item?.value || '' : ''}</div>
+                </div>
+              )
+            }
 
             return (
-              <div
-                key={index}
-                className={`totals-row ${isGrand ? 'grand' : ''} ${isBalance ? 'balance' : ''}`}
-              >
-                <div className="totals-lbl">{row?.label || 'Subtotal'}</div>
-                <div className="totals-val">{row?.value || '—'}</div>
+              <div className="item-row" key={index}>
+                <div className="item-num">{index + 1}</div>
+                <div className="item-body">
+                  <div className="item-name">{item?.label || 'Item'}</div>
+                  {item?.detail && <div className="item-sub">{item.detail}</div>}
+                  <div className="item-meta">
+                    {(item?.facts || []).filter(Boolean).map((fact: string, factIdx: number) => (
+                      <span key={factIdx} className="item-pill">{fact}</span>
+                    ))}
+                  </div>
+                  {item?.imageUrl && (
+                    <img className="item-thumb" src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" />
+                  )}
+                </div>
+                <div className="item-amount">{item?.value || '—'}</div>
               </div>
             )
-          })}
-          {previewModel?.previewAmountInWords ? (
-            <div className="amount-words">{previewModel.previewAmountInWords}</div>
-          ) : null}
-          {balanceDue ? (
-            <div className="totals-row balance">
-              <div className="totals-lbl">{balanceDue.label}</div>
-              <div className="totals-val">{balanceDue.value}</div>
-            </div>
-          ) : null}
-        </div>
-
-        {signatory ? (
-          <div className="doc-signature">
-            <div className="doc-footer-lbl">Authorized Signatory</div>
-            <div className="doc-signature-card">
-              <div className="doc-signature-media">
-                {signatory.signatureUrl ? (
-                  <img src={signatory.signatureUrl} alt={`${signatory.name} signature`} className="doc-signature-image" />
-                ) : (
-                  <div className="doc-signature-fallback">SIG</div>
-                )}
-              </div>
-              <div className="doc-signature-copy">
-                <div className="doc-signature-name">{signatory.name || 'Authorized signatory'}</div>
-                {signatory.role ? <div className="doc-signature-role">{signatory.role}</div> : null}
-              </div>
-            </div>
+          })
+        ) : (
+          <div className="item-row">
+             <div className="item-body">
+               <div className="item-sub">No items added.</div>
+             </div>
           </div>
-        ) : null}
+        )}
+      </div>
 
-        <div className="doc-footer">
+      {/* 5. totals-list */}
+      <div className="totals-list">
+        {totals.map((row: any, index: number) => {
+          const isGrand = row?.emphasis && row?.label?.toLowerCase() === 'total'
+          if (isGrand) {
+             return (
+               <div key={index} className="totals-grand">
+                 <span className="lbl">{row.label} Payable</span>
+                 <span className="val">{row.value}</span>
+               </div>
+             )
+          }
+          return (
+            <div key={index} className="totals-row">
+              <span className="lbl">{row.label}</span>
+              <span className="val">{row.value}</span>
+            </div>
+          )
+        })}
+        {previewModel?.previewAmountInWords && (
+          <div className="amount-words">{previewModel.previewAmountInWords}</div>
+        )}
+      </div>
+
+      {/* 6. Signature & Footer (Notes) */}
+      {signatory && (
+        <>
+          <div className="section-header">Authorized Signatory</div>
+          <div className="item-list">
+             <div className="item-row">
+                <div className="item-body">
+                  {signatory.signatureUrl ? (
+                    <img src={signatory.signatureUrl} alt="Signature" className="doc-signature-image" />
+                  ) : (
+                    <div className="signature-fallback">Authorized Signature</div>
+                  )}
+                  <div className="item-name" style={{ marginTop: '8px' }}>{signatory.name}</div>
+                  {signatory.role && <div className="item-sub">{signatory.role}</div>}
+                </div>
+             </div>
+          </div>
+        </>
+      )}
+
+      {notesSections.length > 0 && (
+        <div className="doc-notes">
           {notesSections.map((section: any, index: number) => (
-            <div className="doc-footer-section" key={`${section?.title || 'section'}-${index}`}>
-              <div className="doc-footer-lbl">{section?.title || 'Notes'}</div>
+            <div className="notes-section" key={index}>
+              <div className="notes-label">{section?.title || 'Notes'}</div>
               {section?.kind === 'html' ? (
-                <div className="doc-footer-rich-text">{renderRichTextContent(section?.html, 'prose prose-sm max-w-none break-words text-foreground')}</div>
-              ) : section?.kind === 'fields' ? (
-                <div className="doc-footer-fields">
-                  {(Array.isArray(section?.fields) ? section.fields : []).map((field: any, fieldIndex: number) => (
-                    <div className="doc-footer-field" key={`${field?.label || 'field'}-${fieldIndex}`}>
-                      {field?.label ? <div className="doc-footer-field-label">{field.label}</div> : null}
-                      <div className="doc-footer-text">{field?.value || '—'}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : section?.kind === 'links' ? (
-                <div className="doc-footer-links">
-                  {(Array.isArray(section?.links) ? section.links : []).map((link: any, linkIndex: number) => (
-                    <a key={`${link?.label || 'link'}-${linkIndex}`} href={link?.url || '#'} target="_blank" rel="noreferrer">
-                      {link?.label || link?.url || 'Reference'}
-                    </a>
-                  ))}
-                </div>
+                <div className="notes-content">{renderRichTextContent(section?.html)}</div>
               ) : (
-                <div className="doc-footer-text">{section?.text || ''}</div>
+                <div className="notes-content">{section?.text || section?.value || ''}</div>
               )}
             </div>
           ))}
         </div>
-      </div>
-    </DocumentPreviewShell>
+      )}
+    </div>
   )
 }

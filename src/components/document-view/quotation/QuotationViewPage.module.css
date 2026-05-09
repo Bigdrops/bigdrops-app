@@ -1,44 +1,18 @@
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 0 calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 64px);
-}
-
-.documentBody {
-  margin-top: 16px;
-}
-
-.documentBody > :first-child {
-  box-shadow: var(--dv-shadow);
-}
-
-
-.stack > :first-child {
-  margin-top: 14px;
-}
-
-.previewControls {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.supportingArea {
-  display: flex;
-  flex-direction: column;
-}
-
-.section {
-  margin-top: 0;
+.sectionCard {
+  background: var(--dv-surface);
+  border: 1px solid var(--dv-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 
+    rgba(0, 0, 0, 0.05) 0px 1px 3px 0px,
+    rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
 }
 
 .sectionHd {
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
   border-bottom: 1px solid var(--dv-border);
   background: var(--dv-bg-2);
 }
@@ -46,54 +20,11 @@
 .sectionLabel {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--dv-text);
+  letter-spacing: -0.26px;
 }
 
-.sectionCard {
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: rgba(17, 26, 74, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px, rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset;
-}
-
-.attachmentsScroller {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.attachChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  border-radius: 999px;
-  padding: 0 14px;
-  border: 1px solid hsl(var(--bd-border));
-  background: hsl(var(--bd-surface-muted));
-  color: hsl(var(--bd-text));
-  font-family: var(--dv-font-ui);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.sectionLink {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--dv-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 5px;
-  transition: background 0.15s, color 0.15s;
-  font-family: var(--dv-font-ui);
-}
-
-.sectionLink:hover {
-  background: var(--dv-primary-bg);
-  color: var(--dv-text);
+/* FLATTENING WRAPPERS */
+.documentBody, .supportingArea, .stack {
+  display: contents;
 }
