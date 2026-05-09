@@ -17,22 +17,23 @@ function SupportingSection({
   title,
   action,
   children,
-}: SupportingSectionProps) {
+  isPayment,
+}: SupportingSectionProps & { isPayment?: boolean }) {
   return (
-    <section className={styles.section}>
-      <div className={styles["section-hd"]}>
-        <div className={styles["section-label"]}>{title}</div>
+    <section className={styles["section-card"]}>
+      <div className={isPayment ? styles["payment-section-hd"] : styles["section-hd"]}>
+        <div className={isPayment ? styles["payment-section-label"] : styles["section-label"]}>{title}</div>
         {action && (
           <button
             type="button"
-            className={styles["section-link"]}
+            className={isPayment ? styles["btn-record"] : styles["section-link"]}
             onClick={action.onClick}
           >
             {action.label}
           </button>
         )}
       </div>
-      <div className={styles["section-card"]}>
+      <div>
         {children}
       </div>
     </section>
@@ -126,6 +127,7 @@ export default function InvoiceViewPage({
         {gPaymentSummary.length > 0 && (
           <SupportingSection
             title="Payments"
+            isPayment
             action={
               canRecordPayment
                 ? { label: "+ Record", onClick: onRecordPayment }

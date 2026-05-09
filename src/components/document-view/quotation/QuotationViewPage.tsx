@@ -15,11 +15,11 @@ interface SupportingSectionProps {
 
 function SupportingSection({ title, children }: SupportingSectionProps) {
   return (
-    <section className={styles.section}>
+    <section className={styles.sectionCard}>
       <div className={styles.sectionHd}>
         <div className={styles.sectionLabel}>{title}</div>
       </div>
-      <div className={styles.sectionCard}>
+      <div>
         {children}
       </div>
     </section>

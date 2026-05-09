@@ -1,8 +1,8 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding-bottom: calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 64px);
+  gap: 12px;
+  padding: 16px 0 calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom) + 64px);
 }
 
 .documentBody {
@@ -31,32 +31,32 @@
 }
 
 .section {
-  margin-top: 28px;
+  margin-top: 0;
 }
 
 .sectionHd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--dv-border);
+  background: var(--dv-bg-2);
 }
 
 .sectionLabel {
-  font-family: var(--dv-font-ui);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: hsl(var(--bd-text-muted));
+  color: var(--dv-text);
 }
 
 .sectionCard {
   background: var(--dv-surface);
   border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius-lg);
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: var(--dv-shadow-sm);
+  box-shadow: rgba(17, 26, 74, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px, rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset;
 }
 
 .attachmentsScroller {

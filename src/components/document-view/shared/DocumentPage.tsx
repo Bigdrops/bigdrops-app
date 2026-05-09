@@ -21,12 +21,8 @@ export default function DocumentPage({
 }: DocumentPageProps) {
   return (
     <div className={styles.page}>
-      {(topNav || actionRow) && (
-        <div className={styles.topContainer}>
-          {topNav}
-          {actionRow && <div className={styles.actionRow}>{actionRow}</div>}
-        </div>
-      )}
+      {topNav && <div className={styles.topContainer}>{topNav}</div>}
+      {actionRow && <div className={styles.actionStrip}>{actionRow}</div>}
       <main className={styles.content}>
         {hero ? <div className={styles.hero}>{hero}</div> : null}
         {children}

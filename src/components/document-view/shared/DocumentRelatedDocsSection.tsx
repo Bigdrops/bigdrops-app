@@ -27,11 +27,11 @@ export default function DocumentRelatedDocsSection({
   if (!items || items.length === 0) return null
 
   return (
-    <section className={styles.section}>
+    <section className={styles['section-card']}>
       <div className={styles['section-hd']}>
         <div className={styles['section-label']}>{title}</div>
       </div>
-      <div className={styles['section-card']}>
+      <div>
         <div className={styles['linked-list']}>
           {items.map((doc) => (
             <div key={doc.id} className={styles['linked-item']} onClick={doc.onClick}>

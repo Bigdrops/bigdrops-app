@@ -18,11 +18,11 @@ export default function InvoiceAdvanceInvoicesSection({
   if (!items.length) return null
 
   return (
-    <section className={styles.section}>
+    <section className={styles['section-card']}>
       <div className={styles['section-hd']}>
         <div className={styles['section-label']}>Advance Invoices</div>
       </div>
-      <div className={styles['section-card']}>
+      <div>
         <div className={styles['advance-list']}>
           {items.map((adv) => (
             <div key={adv.id} className={styles['advance-item-row']} onClick={adv.onOpen}>
