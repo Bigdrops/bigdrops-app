@@ -5,6 +5,7 @@ import styles from "./DocumentPage.module.css";
 interface DocumentPageProps {
   topNav?: ReactNode;
   actionRow?: ReactNode;
+  hero?: ReactNode;
   children: ReactNode;
   floating?: ReactNode;
   overlays?: ReactNode;
@@ -17,6 +18,7 @@ interface DocumentPageProps {
 export default function DocumentPage({
   topNav,
   actionRow,
+  hero,
   children,
   floating,
   overlays,
@@ -26,6 +28,8 @@ export default function DocumentPage({
       <header className={styles.topbar}>{topNav}</header>
 
       {actionRow && <div className={styles.actionStrip}>{actionRow}</div>}
+
+      {hero}
 
       <main className={styles.scrollBody}>
         {children}

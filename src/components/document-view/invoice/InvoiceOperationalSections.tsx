@@ -1,0 +1,63 @@
+import React from "react";
+import { PaymentHistoryCard } from "./sections/PaymentHistoryCard";
+import { AdvanceInvoicesCard } from "./sections/AdvanceInvoicesCard";
+import { RelatedDocsCard } from "./sections/RelatedDocsCard";
+import { ActivityCard } from "./sections/ActivityCard";
+
+interface InvoiceOperationalSectionsProps {
+  payments: any[];
+  viewModel: any;
+  advanceInvoices: any[];
+  relatedCsrs: any[];
+  relatedWaybills: any[];
+  sourceDocument: any;
+  invoiceId: string;
+  
+  onRecordPayment: () => void;
+  onVoidPayment: (id: string) => void;
+  onCreateAdvance: () => void;
+  onViewAdvance: (advance: any) => void;
+  onViewDoc: (type: string, id: string) => void;
+}
+
+export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProps> = ({
+  payments,
+  viewModel,
+  advanceInvoices,
+  relatedCsrs,
+  relatedWaybills,
+  sourceDocument,
+  invoiceId,
+  
+  onRecordPayment,
+  onVoidPayment,
+  onCreateAdvance,
+  onViewAdvance,
+  onViewDoc,
+}) => {
+  return (
+    <>
+      <PaymentHistoryCard 
+        payments={payments}
+        viewModel={viewModel}
+        onRecordPayment={onRecordPayment}
+        onVoidPayment={onVoidPayment}
+      />
+
+      <AdvanceInvoicesCard 
+        advanceInvoices={advanceInvoices}
+        onCreateAdvance={onCreateAdvance}
+        onViewAdvance={onViewAdvance}
+      />
+
+      <RelatedDocsCard 
+        relatedCsrs={relatedCsrs}
+        relatedWaybills={relatedWaybills}
+        sourceDocument={sourceDocument}
+        onViewDoc={onViewDoc}
+      />
+
+      <ActivityCard documentId={invoiceId} />
+    </>
+  );
+};
