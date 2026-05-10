@@ -1,16 +1,15 @@
 import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
-import { voidInvoicePayment, refreshInvoicePaymentState } from '@/modules/invoices/services/paymentService'
+import { voidInvoicePayment } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
-import { archiveInvoice, deleteInvoice } from '@/modules/invoices/services/invoiceLifecycleService'
 import {
-  buildTrailLink,
-  parseDocumentCustomFields,
-  toQuotationItemRow,
-  withSourceTrail,
-} from '@/domain/documentConversion'
-import { getNextQuotationNumber } from '@/domain/quotation'
-import { toDbItem } from '@/domain/invoice'
+  archiveInvoice,
+  deleteInvoice,
+  changeInvoiceStatus,
+  attachExistingDocument,
+  duplicateInvoice,
+} from '@/modules/invoices/services/invoiceLifecycleService'
+import { revertInvoiceToQuotationService } from '@/modules/invoices/services/invoiceConversionService'
 
 type NavigateFn = (to: string, options?: unknown) => void
 
@@ -119,12 +118,7 @@ export function useInvoiceMutations({
 }: UseInvoiceMutationsArgs) {
   const handleAttachExisting = async (item: { id?: string }) => {
     if (!item?.id || !attachKind) return
-    if (attachKind === 'csr') {
-      await supabase.from('csrs').update({ linked_invoice_id: invoice.id }).eq('id', item.id)
-    }
-    if (attachKind === 'waybill') {
-      await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', item.id)
-    }
+    await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind })
     setShowAttachSheet(false)
     setAttachKind(null)
     await refresh()
@@ -163,60 +157,18 @@ export function useInvoiceMutations({
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === invoice.status) return
-    const { data: previousInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
-    const oldStatus = previousInvoice?.status ?? invoice.status
-    const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id)
-    if (error) throw error
-
-    // Audit Trail
-    try {
-      const { recordInvoiceStatusChanged, recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
-      const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
-      await recordInvoiceStatusChanged(id!, oldStatus, newStatus)
-      await recordAuditLog({
-        entityType: 'invoice',
-        recordId: id!,
-        entityLabel: updatedInvoice?.invoice_number || invoice.invoice_number || null,
-        action: 'STATUS_CHANGE',
-        oldData: previousInvoice || invoice,
-        newData: updatedInvoice,
-        trackedFields: INVOICE_TRACKED_FIELDS,
-      })
-    } catch (auditErr) {
-      console.error('Audit trail failed:', auditErr)
-    }
-
+    const oldStatus = invoice.status || 'unpaid'
+    const result = await changeInvoiceStatus({ invoiceId: id, oldStatus, newStatus })
+    if (!result.success) throw new Error(result.error)
     await refresh()
   }
 
   const handleClone = async () => {
     setShowMore(false)
     try {
-      const { data: all } = await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .like('invoice_number', 'SASINV-B%')
-        .order('created_at', { ascending: false })
-      let nextNum = 1
-      if (all && all.length > 0) {
-        const nums = all.map((entry) => parseInt(entry.invoice_number.replace('SASINV-B', ''))).filter((n) => !Number.isNaN(n))
-        nextNum = Math.max(...nums) + 1
-      }
-      const newNumber = 'SASINV-B' + String(nextNum).padStart(3, '0')
+      const result = await duplicateInvoice({ invoice, items })
       navigate('/invoices/new', {
-        state: {
-          prefill: {
-            ...invoice,
-            invoice_number: newNumber,
-            client_id: null,
-            client_name: '',
-            project_id: null,
-            status: 'unpaid',
-            issue_date: new Date().toISOString().split('T')[0],
-            due_date: null,
-          },
-          prefillItems: items.map((item) => ({ ...item, id: null })),
-        },
+        state: result,
       })
     } catch (err: any) {
       feedback.error('Clone failed', { description: err?.message || 'Unknown error' })
@@ -228,108 +180,11 @@ export function useInvoiceMutations({
     setShowRevertConfirm(false)
     setConverting(true)
     try {
-      let safeProjectId = invoice.project_id || null
-      if (safeProjectId) {
-        const { validateProjectAssignment } = await import('@/domain/projects')
-        const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
-          projectId: safeProjectId,
-          documentClientId: invoice.client_id,
-          documentClientName: invoice.client_name,
-        })
-        if (projectError || !project) safeProjectId = null
-      }
-
-      const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
-        supabase.from('quotations').select('quotation_number'),
-        supabase.from('invoices').select('custom_fields').eq('id', id).single(),
-      ])
-
-      const nextQuotationNumber = getNextQuotationNumber(quotationRows || [])
-      const sourceInvoiceFields = parseDocumentCustomFields(latestInvoice?.custom_fields || customFieldObject)
-      const poValue = poNumber || null
-      const sourceLink = buildTrailLink({
-        id: invoice.id,
-        type: 'invoice',
-        number: invoice.invoice_number,
-        project_id: invoice.project_id || null,
-        po_number: poValue,
+      const createdQuotation = await revertInvoiceToQuotationService({
+        invoice,
+        items,
+        customFields: customFieldObject,
       })
-
-      const quotationCustomFields = withSourceTrail(
-        {
-          ...sourceInvoiceFields,
-          quotationTitle: invoice.invoice_title || '',
-          clientName: invoice.client_name || '',
-          notesHtml: invoice.notes || '',
-          termsHtml: invoice.terms || '',
-        },
-        sourceLink
-      )
-
-      const quotationPayload = {
-        quotation_number: nextQuotationNumber,
-        po_number: poValue,
-        quotation_title: invoice.invoice_title || null,
-        client_id: invoice.client_id || null,
-        client_name: invoice.client_name || '',
-        project_id: safeProjectId,
-        issue_date: invoice.issue_date || new Date().toISOString().split('T')[0],
-        valid_until: invoice.due_date || null,
-        status: 'open',
-        notes: invoice.notes || '',
-        terms: invoice.terms || '',
-        workmanship: Number(invoice.workmanship || 0),
-        transportation: Number(invoice.transportation || 0),
-        shipping: Number(invoice.shipping || 0),
-        discount: Number(invoice.discount || 0),
-        vat: Number(invoice.vat || 0),
-        wht: Number(invoice.wht || 0),
-        subtotal: Number(invoice.subtotal || 0),
-        install_rate_total: Number(invoice.install_rate_total || 0),
-        total: Number(invoice.total || 0),
-        amount_in_words: invoice.amount_in_words || '',
-        custom_fields: JSON.stringify(quotationCustomFields),
-      }
-
-      const { data: createdQuotation, error: quotationError } = await supabase
-        .from('quotations')
-        .insert([quotationPayload])
-        .select()
-        .single()
-
-      if (quotationError || !createdQuotation) throw new Error(quotationError?.message || 'Failed to create quotation')
-
-      const itemRows = items
-        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-        .map((item, index) => toQuotationItemRow(item, createdQuotation.id, index))
-
-      if (itemRows.length > 0) {
-        const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
-        if (itemError) {
-          await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-          throw new Error(itemError.message)
-        }
-      }
-
-      const { error: deleteItemsError } = await supabase.from('invoice_items').delete().eq('invoice_id', id)
-      if (deleteItemsError) {
-        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
-        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-        throw new Error(deleteItemsError.message)
-      }
-
-      const { error: deleteInvoiceError } = await supabase.from('invoices').delete().eq('id', id)
-      if (deleteInvoiceError) {
-        await supabase.from('invoice_items').insert(
-          items
-            .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-            .map((item, index) => toDbItem(item, id, index))
-        )
-        await supabase.from('quotation_items').delete().eq('quotation_id', createdQuotation.id)
-        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-        throw new Error(deleteInvoiceError.message)
-      }
-
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err: any) {
       feedback.error('Revert to quotation failed', {
@@ -348,7 +203,7 @@ export function useInvoiceMutations({
   const confirmDelete = async () => {
     setShowDeleteConfirm(false)
     await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    const result = await deleteInvoice({ invoiceId: id })
+    const result = await deleteInvoice(id)
     if (!result.success) {
       feedback.error('Delete failed', { description: result.error || 'Could not delete invoice' })
       return
@@ -363,7 +218,7 @@ export function useInvoiceMutations({
 
   const confirmArchive = async () => {
     setShowArchiveConfirm(false)
-    const result = await archiveInvoice({ invoiceId: id })
+    const result = await archiveInvoice(id)
     if (!result.success) {
       feedback.error('Archive failed', { description: result.error || 'Could not archive invoice' })
       return

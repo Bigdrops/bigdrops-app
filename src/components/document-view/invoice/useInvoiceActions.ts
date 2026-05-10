@@ -2,27 +2,17 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabase";
 import { feedback } from "@/lib/feedback";
-import { 
-  parseCustomFields 
-} from "@/domain/invoice";
-import { 
+import { parseCustomFields } from "@/domain/invoice";
+import {
   getAdvanceDraftFromInvoice,
   ADVANCE_SUFFIX_DEFAULT,
   ADVANCE_PRIMARY_LABEL_DEFAULT,
-  ADVANCE_SECONDARY_LABEL_DEFAULT
+  ADVANCE_SECONDARY_LABEL_DEFAULT,
 } from "@/domain/invoice/advanceChildFlow";
-import { 
-  archiveInvoiceRecord, 
-  deleteInvoiceRecord, 
-  revertInvoiceToQuotation, 
-  voidInvoicePayment, 
-  syncInvoiceStatusFromFinancials,
-  updateAdvanceInvoiceRecord,
-  createAdvanceInvoiceRecord,
-  deleteAdvanceInvoiceRecord,
-  downloadInvoiceCsvFile,
-  duplicateInvoiceDraft
-} from "@/pages/viewInvoiceActions";
+import { downloadInvoiceCsvFile, createAdvanceInvoiceRecord, updateAdvanceInvoiceRecord, deleteAdvanceInvoiceRecord } from "@/pages/viewInvoiceActions";
+import { archiveInvoice, deleteInvoice, duplicateInvoice, syncAndGetInvoiceStatus } from "@/modules/invoices/services/invoiceLifecycleService";
+import { voidInvoicePayment } from "@/modules/invoices/services/paymentService";
+import { revertInvoiceToQuotationService } from "@/modules/invoices/services/invoiceConversionService";
 import { downloadInvoicePdfDocument } from "./invoicePdfActions";
 
 const SHEET_CUSTOMIZE = "customize-output";
@@ -103,7 +93,8 @@ export function useInvoiceActions({
   const handleArchive = async () => {
     if (!invoice?.id) return;
     try {
-      await archiveInvoiceRecord(invoice.id);
+      const result = await archiveInvoice(invoice.id);
+      if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
       showToast("Archive failed", error?.message || "Could not archive.");
@@ -113,7 +104,8 @@ export function useInvoiceActions({
   const handleDelete = async () => {
     if (!invoice?.id) return;
     try {
-      await deleteInvoiceRecord(invoice.id);
+      const result = await deleteInvoice(invoice.id);
+      if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
       showToast("Delete failed", error?.message || "Could not delete.");
@@ -124,7 +116,7 @@ export function useInvoiceActions({
     if (!invoice?.id || reverting) return;
     setReverting(true);
     try {
-      const createdQuotation = await revertInvoiceToQuotation({ invoice, items, customFields });
+      const createdQuotation = await revertInvoiceToQuotationService({ invoice, items, customFields });
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error: any) {
       showToast("Revert failed", error?.message || "Could not revert.");
@@ -137,9 +129,8 @@ export function useInvoiceActions({
   const handleDuplicate = async () => {
     if (!invoice) return;
     try {
-      navigate("/invoices/new", {
-        state: await duplicateInvoiceDraft({ invoice, items: Array.isArray(items) ? items : [] }),
-      });
+      const { prefill, prefillItems } = await duplicateInvoice({ invoice, items: Array.isArray(items) ? items : [] });
+      navigate("/invoices/new", { state: { prefill, prefillItems } });
     } catch (error: any) {
       showToast("Clone failed", error?.message || "Could not duplicate.");
     }
@@ -194,8 +185,9 @@ export function useInvoiceActions({
     if (!pendingVoidPaymentId || !invoice?.id || voiding) return;
     setVoiding(true);
     try {
-      await voidInvoicePayment({ paymentId: pendingVoidPaymentId, reason });
-      await syncInvoiceStatusFromFinancials(invoice.id);
+      const result = await voidInvoicePayment({ paymentId: pendingVoidPaymentId, reason });
+      if (!result.success) throw new Error(result.error);
+      await syncInvoiceStatus(invoice.id);
       await refresh();
       showToast("Payment voided", "Reversed and status updated.", "success");
       ui.closeModal();
@@ -205,6 +197,12 @@ export function useInvoiceActions({
       setVoiding(false);
       setPendingVoidPaymentId(null);
     }
+  };
+
+  const syncInvoiceStatus = async (invoiceId: string) => {
+    const result = await syncAndGetInvoiceStatus(invoiceId);
+    if (!result.success) throw new Error(result.error);
+    return result.status;
   };
 
   const openAdvanceDetails = useCallback((advanceInvoice: any, mode: any = "view") => {

@@ -1,32 +1,21 @@
 import { supabase } from "@/supabase"
 import type { DuplicateInvoicePrefill } from "../types/invoiceTypes"
+import { syncInvoiceStatusFromFinancials as repositorySyncStatus } from "../repositories/paymentRepository"
+import { attachChildDocument } from "./invoiceChildDocService"
 
-export interface ArchiveInvoiceInput {
+export interface ChangeInvoiceStatusInput {
   invoiceId: string
+  oldStatus: string
+  newStatus: string
 }
 
-export interface DeleteInvoiceInput {
-  invoiceId: string
-}
-
-export interface DuplicateInvoiceInput {
-  invoice: any
-  items: any[]
-}
-
-export interface UpdateStatusInput {
-  invoiceId: string
-  status: string
-}
-
-export interface InvoiceLifecycleResult {
+export interface ChangeInvoiceStatusResult {
   success: boolean
+  status?: string
   error?: string
 }
 
-export async function archiveInvoice({
-  invoiceId,
-}: ArchiveInvoiceInput): Promise<InvoiceLifecycleResult> {
+export async function archiveInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
       .from("invoices")
@@ -43,9 +32,7 @@ export async function archiveInvoice({
   }
 }
 
-export async function deleteInvoice({
-  invoiceId,
-}: DeleteInvoiceInput): Promise<InvoiceLifecycleResult> {
+export async function deleteInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
       .from("invoices")
@@ -60,6 +47,90 @@ export async function deleteInvoice({
   } catch (err) {
     return { success: false, error: String(err) }
   }
+}
+
+export async function changeInvoiceStatus({
+  invoiceId,
+  oldStatus,
+  newStatus,
+}: ChangeInvoiceStatusInput): Promise<ChangeInvoiceStatusResult> {
+  if (newStatus === oldStatus) {
+    return { success: true, status: newStatus }
+  }
+
+  try {
+    const { data: previousInvoice } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("id", invoiceId)
+      .single()
+
+    const { error } = await supabase
+      .from("invoices")
+      .update({ status: newStatus })
+      .eq("id", invoiceId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    try {
+      const { recordInvoiceStatusChanged, recordAuditLog } = await import("@/lib/audit")
+      const { data: updatedInvoice } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", invoiceId)
+        .single()
+
+      await recordInvoiceStatusChanged(invoiceId, oldStatus, newStatus)
+      await recordAuditLog({
+        entityType: "invoice",
+        recordId: invoiceId,
+        entityLabel: updatedInvoice?.invoice_number || null,
+        action: "STATUS_CHANGE",
+        oldData: previousInvoice,
+        newData: updatedInvoice,
+        trackedFields: (await import("@/lib/audit")).INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error("Audit trail failed:", auditErr)
+    }
+
+    return { success: true, status: newStatus }
+  } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function syncAndGetInvoiceStatus(invoiceId: string): Promise<ChangeInvoiceStatusResult> {
+  try {
+    const result = await repositorySyncStatus(invoiceId)
+    return { success: true, status: result }
+  } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function attachExistingDocument({
+  invoiceId,
+  childId,
+  kind,
+}: {
+  invoiceId: string
+  childId: string
+  kind: "csr" | "waybill"
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    await attachChildDocument({ invoiceId, childId, kind })
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
+export interface DuplicateInvoiceInput {
+  invoice: any
+  items: any[]
 }
 
 export async function duplicateInvoice({
@@ -94,25 +165,5 @@ export async function duplicateInvoice({
       due_date: null,
     },
     prefillItems: items.map((item) => ({ ...item, id: null })),
-  }
-}
-
-export async function updateInvoiceStatus({
-  invoiceId,
-  status,
-}: UpdateStatusInput): Promise<InvoiceLifecycleResult> {
-  try {
-    const { error } = await supabase
-      .from("invoices")
-      .update({ status })
-      .eq("id", invoiceId)
-
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
-    return { success: true }
-  } catch (err) {
-    return { success: false, error: String(err) }
   }
 }

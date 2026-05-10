@@ -7,6 +7,11 @@ import {
   getAdvanceInvoiceMetadata,
   isAdvanceInvoiceParent,
 } from './advanceMetadata'
+import {
+  isLegacyAdvanceChildRow,
+  isOrphanAdvanceChildRow,
+  isArchivedOrQuarantinedAdvanceChildRow,
+} from './advanceLegacyCleanup'
 import { safeParseJson } from '../../lib/json/safeParseJson'
 
 export type AdvanceMode = 'percent' | 'fixed'
@@ -46,6 +51,15 @@ type AdvanceInvoiceLike = {
   custom_fields?: any
   advance_primary_label?: string | null
   advance_secondary_label?: string | null
+  archived_at?: string | null
+}
+
+function canUseLegacyChildFallback(invoice: AdvanceInvoiceLike | null | undefined): boolean {
+  if (!invoice) return false
+  if (!isLegacyAdvanceChildRow(invoice)) return false
+  if (isArchivedOrQuarantinedAdvanceChildRow(invoice)) return false
+  if (isOrphanAdvanceChildRow(invoice as any)) return false
+  return true
 }
 
 function toNumber(value: number | string | null | undefined) {
@@ -91,17 +105,20 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
     advanceConfig = parsed?.advance_invoice
   }
 
+  const useLegacyFallback = normalizedMetadata === null && canUseLegacyChildFallback(invoice)
+
   const mode: AdvanceMode =
-    normalizedMetadata?.mode === 'fixed' || advanceConfig?.mode === 'fixed'
+    normalizedMetadata?.mode === 'fixed' || (useLegacyFallback && advanceConfig?.mode === 'fixed')
       ? 'fixed'
       : 'percent'
-  const inputValue = normalizedMetadata?.value ?? advanceConfig?.value ?? (mode === 'fixed' ? 0 : 30)
+  const inputValue = normalizedMetadata?.value ?? (useLegacyFallback ? advanceConfig?.value : undefined) ?? (mode === 'fixed' ? 0 : 30)
   const invoiceNumber = String(invoice?.invoice_number || '')
-  
+
   // Preserve existing suffix in config, even if empty string
   // Only default to ADVANCE_SUFFIX_DEFAULT if suffix is undefined (not present in config)
-  const suffix = advanceConfig?.suffix
-  const hasExistingSuffix = 'suffix' in (advanceConfig || {})
+  // Only use legacy config if fallback is allowed
+  const suffix = useLegacyFallback ? advanceConfig?.suffix : undefined
+  const hasExistingSuffix = useLegacyFallback && 'suffix' in (advanceConfig || {})
 
   // If no suffix exists in config, derive from invoice number or default
   let finalSuffix: string
@@ -117,15 +134,15 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
     suffix: finalSuffix,
     primaryLabel: String(
       normalizedMetadata?.primary_label ||
-      advanceConfig?.primaryLabel ||
-      advanceConfig?.primary_label ||
-      ADVANCE_PRIMARY_LABEL_DEFAULT,
+      (useLegacyFallback ? advanceConfig?.primaryLabel : undefined) ||
+      (useLegacyFallback ? advanceConfig?.primary_label : undefined) ||
+      ADVANCE_PRIMARY_LABEL_DEFAULT
     ),
     secondaryLabel: String(
       normalizedMetadata?.secondary_label ||
-      advanceConfig?.secondaryLabel ||
-      advanceConfig?.secondary_label ||
-      ADVANCE_SECONDARY_LABEL_DEFAULT,
+      (useLegacyFallback ? advanceConfig?.secondaryLabel : undefined) ||
+      (useLegacyFallback ? advanceConfig?.secondary_label : undefined) ||
+      ADVANCE_SECONDARY_LABEL_DEFAULT
     ),
   }
 }

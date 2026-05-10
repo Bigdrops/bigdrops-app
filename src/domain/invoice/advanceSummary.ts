@@ -6,6 +6,11 @@ import {
   getAdvanceInvoiceMetadata,
   isAdvanceInvoiceChild,
 } from './advanceMetadata'
+import {
+  isLegacyAdvanceChildRow,
+  isOrphanAdvanceChildRow,
+  isArchivedOrQuarantinedAdvanceChildRow,
+} from './advanceLegacyCleanup'
 
 import { safeParseJson } from '../../lib/json/safeParseJson'
 
@@ -37,6 +42,14 @@ export function isAdvanceInvoiceOutput(invoice: AdvanceInvoiceLike | null | unde
   return isAdvanceInvoiceChild(invoice)
 }
 
+function canUseLegacyChildFallback(invoice: AdvanceInvoiceLike | null | undefined): boolean {
+  if (!invoice) return false
+  if (!isLegacyAdvanceChildRow(invoice)) return false
+  if (isArchivedOrQuarantinedAdvanceChildRow(invoice)) return false
+  if (isOrphanAdvanceChildRow(invoice as any)) return false
+  return true
+}
+
 export function getAdvanceSummaryValues(
   invoice: AdvanceInvoiceLike | null | undefined,
 ): AdvanceSummaryValues | null {
@@ -51,13 +64,15 @@ export function getAdvanceSummaryValues(
     advanceConfig = parsed?.advance_invoice
   }
 
-  const contractValue = Math.max(
+  const useLegacyFallback = parentMetadata === null && canUseLegacyChildFallback(invoice)
+
+const contractValue = Math.max(
     0,
-    toNumber(parentMetadata?.contract_value ?? advanceConfig?.contractValue ?? invoice?.total),
+    toNumber(parentMetadata?.contract_value ?? (useLegacyFallback ? advanceConfig?.contractValue : undefined) ?? (useLegacyFallback ? invoice?.total : undefined)),
   )
   const thisAdvance = Math.max(
     0,
-    toNumber(parentMetadata?.amount ?? invoice?.total),
+    toNumber(parentMetadata?.amount ?? (useLegacyFallback ? invoice?.total : undefined)),
   )
   const balanceRemaining = Math.max(0, contractValue - thisAdvance)
 
@@ -67,13 +82,13 @@ export function getAdvanceSummaryValues(
   const roundedBalancePercent = Math.round(balancePercent)
   const primaryLabel =
     parentMetadata?.primary_label ||
-    advanceConfig?.primaryLabel ||
-    advanceConfig?.primary_label ||
+    (useLegacyFallback ? advanceConfig?.primaryLabel : undefined) ||
+    (useLegacyFallback ? advanceConfig?.primary_label : undefined) ||
     ADVANCE_PRIMARY_LABEL_DEFAULT
   const secondaryLabel =
     parentMetadata?.secondary_label ||
-    advanceConfig?.secondaryLabel ||
-    advanceConfig?.secondary_label ||
+    (useLegacyFallback ? advanceConfig?.secondaryLabel : undefined) ||
+    (useLegacyFallback ? advanceConfig?.secondary_label : undefined) ||
     ADVANCE_SECONDARY_LABEL_DEFAULT
 
   return {
