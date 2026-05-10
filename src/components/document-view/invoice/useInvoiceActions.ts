@@ -185,7 +185,7 @@ export function useInvoiceActions({
     if (!pendingVoidPaymentId || !invoice?.id || voiding) return;
     setVoiding(true);
     try {
-      const result = await voidInvoicePayment({ paymentId: pendingVoidPaymentId, reason });
+      const result = await voidInvoicePayment({ paymentId: pendingVoidPaymentId, invoiceId: invoice.id, reason });
       if (!result.success) throw new Error(result.error);
       await syncInvoiceStatus(invoice.id);
       await refresh();
