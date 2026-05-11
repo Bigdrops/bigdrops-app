@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, Split } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
 import { formatNaira } from "@/lib/formatters/money";
 import { formatDisplayDate } from "@/lib/formatters/date";
@@ -24,7 +24,6 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className={styles.sectionHeaderLeft}>
-          <Split size={16} />
           <span>Advance Invoices</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -35,7 +34,7 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
               onCreateAdvance();
             }}
           >
-            {advanceInvoices.length > 0 ? "Manage" : "Split"}
+            CREATE
           </button>
           <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
             <ChevronDown size={14} />

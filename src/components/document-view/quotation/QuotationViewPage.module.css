@@ -28,6 +28,16 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #011821;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sectionLabel svg {
+    width: 16px;
+    height: 16px;
+    color: #111a4a;
+    flex-shrink: 0;
 }
 
 /* FLATTENING WRAPPERS */

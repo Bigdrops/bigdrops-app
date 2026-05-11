@@ -27,7 +27,6 @@ interface QuotationViewPageProps {
 export default function QuotationViewPage({
   documentPreview,
   preview,
-  previewControls,
   relatedDocuments,
   activityHistory,
   attachments,
@@ -42,11 +41,6 @@ export default function QuotationViewPage({
     <>
       {/* Main preview — no shell wrapper */}
       {previewContent}
-
-      {/* PDF controls */}
-      {previewControls && (
-        <div style={{ marginTop: 12 }}>{previewControls}</div>
-      )}
 
       {/* Related docs */}
       {guardedRelatedDocuments.length > 0 && (

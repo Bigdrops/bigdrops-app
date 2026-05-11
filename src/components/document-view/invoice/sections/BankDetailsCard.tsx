@@ -40,8 +40,10 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
                 background: "#fff",
                 position: "absolute",
                 top: 3,
-                ...(isOpen ? { right: 3 } : { left: 3 }),
-                transition: "left 0.2s, right 0.2s",
+                left: 3,
+                transform: isOpen ? "translateX(20px)" : "translateX(0)",
+                transition: "transform 0.2s",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
               }}
             />
           </span>

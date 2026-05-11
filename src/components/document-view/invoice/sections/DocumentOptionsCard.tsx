@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
 
@@ -11,17 +11,25 @@ interface DocumentOptionsCardProps {
 }
 
 export const DocumentOptionsCard: React.FC<DocumentOptionsCardProps> = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className={styles.card}>
-      <div className={styles.sectionHeader}>
+      <div
+        className={styles.sectionHeader}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className={styles.sectionHeaderLeft}>
           <span>Document Options</span>
         </div>
         <button
-          className={styles.sectionChevron}
+          className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}
           aria-label="Toggle document options"
           type="button"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
         >
           <ChevronDown size={14} />
         </button>
