@@ -79,14 +79,16 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
 
   return (
     <div className={styles.workspace}>
-      <InvoiceTopNav 
+      <InvoiceTopNav
         title="Invoices"
         subtitle={`${invoice?.invoice_number || "Draft"} · ${invoice?.invoice_title || ""}`}
         onBack={onBack}
         onShare={onShare}
+        onCustomize={onCustomize}
+        onMore={onMore}
       />
-      
-      <InvoiceActionRow 
+
+      <InvoiceActionRow
         onRecordPayment={onRecordPayment}
         onEdit={onEdit}
         onDownload={onDownload}
@@ -96,7 +98,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
       />
 
       <div className={styles.scrollBody}>
-        <InvoiceDocumentCard 
+        <InvoiceDocumentCard
           invoice={invoice}
           items={items}
           previewModel={previewModel}
@@ -107,8 +109,8 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         />
 
         <BankDetailsCard bankAccounts={bankAccounts} />
-        
-        <DocumentOptionsCard 
+
+        <DocumentOptionsCard
           pdfOutput={pdfOutput}
           onOutputChange={onOutputChange}
           onToggleMergeQtyUnit={onToggleMergeQtyUnit}
@@ -116,7 +118,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
           onCustomize={onCustomize}
         />
 
-        <InvoiceOperationalSections 
+        <InvoiceOperationalSections
           payments={payments}
           viewModel={viewModel}
           advanceInvoices={advanceInvoices}

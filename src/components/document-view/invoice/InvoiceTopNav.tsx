@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, Share2 } from "lucide-react";
+import { ChevronLeft, Share2, Palette, MoreVertical } from "lucide-react";
 import styles from "./InvoiceWorkspace.module.css";
 
 interface InvoiceTopNavProps {
@@ -7,6 +7,8 @@ interface InvoiceTopNavProps {
   subtitle: string;
   onBack: () => void;
   onShare: () => void;
+  onCustomize: () => void;
+  onMore: () => void;
 }
 
 export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
@@ -14,12 +16,14 @@ export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
   subtitle,
   onBack,
   onShare,
+  onCustomize,
+  onMore,
 }) => {
   return (
     <header className={styles.topbar}>
       <div className={styles.topbarLeft}>
-        <button 
-          className={styles.topbarIcon} 
+        <button
+          className={styles.topbarIcon}
           onClick={onBack}
           aria-label="Back"
         >
@@ -31,12 +35,26 @@ export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
         </div>
       </div>
       <div className={styles.topbarRight}>
-        <button 
-          className={styles.topbarAction} 
+        <button
+          className={styles.topbarAction}
           onClick={onShare}
           aria-label="Share"
         >
           <Share2 size={18} />
+        </button>
+        <button
+          className={styles.topbarAction}
+          onClick={onCustomize}
+          aria-label="Customize"
+        >
+          <Palette size={18} />
+        </button>
+        <button
+          className={styles.topbarAction}
+          onClick={onMore}
+          aria-label="More"
+        >
+          <MoreVertical size={18} />
         </button>
       </div>
     </header>

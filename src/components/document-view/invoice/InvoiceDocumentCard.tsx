@@ -24,7 +24,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   companySub,
 }) => {
   const status = invoice?.status?.toUpperCase() || "UNPAID";
-  
+
   return (
     <div className={styles.invCard}>
       <div className={styles.invTop}>
@@ -36,16 +36,22 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
               "LOGO"
             )}
           </div>
-          <div className={styles.brandText}>
-            <div className={styles.brandName}>{companyName || "Company Name"}</div>
-            <div className={styles.brandSub}>{companySub || "Company Tagline"}</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div className={styles.brandName}>
+              {companyName || "Company Name"}
+            </div>
+            <div className={styles.brandSub}>
+              {companySub || "Company Tagline"}
+            </div>
           </div>
         </div>
         <div className={styles.statusPill}>{status}</div>
       </div>
 
       <div className={styles.invBody}>
-        <h1 className={styles.invTitle}>{invoice?.invoice_title || "Invoice"}</h1>
+        <h1 className={styles.invTitle}>
+          {invoice?.invoice_title || "Invoice"}
+        </h1>
         <div className={styles.metaChips}>
           <div className={styles.metaChip}>
             <Hash size={12} />
@@ -67,11 +73,15 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
       <div className={styles.infoGrid}>
         <div className={styles.infoCell}>
           <div className={styles.infoLabel}>Bill To</div>
-          <div className={styles.infoValue}>{invoice?.client_name || "Client Name"}</div>
+          <div className={styles.infoValue}>
+            {invoice?.client_name || "Client Name"}
+          </div>
         </div>
         <div className={styles.infoCell}>
           <div className={styles.infoLabel}>Amount Due</div>
-          <div className={styles.infoValue}>{formatNaira(viewModel?.balanceDue || 0)}</div>
+          <div className={styles.infoValue}>
+            {formatNaira(viewModel?.balanceDue || 0)}
+          </div>
         </div>
       </div>
 
@@ -79,13 +89,24 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
       <div className={styles.itemList}>
         {items.map((item, index) => (
           <div key={item.id || index} className={styles.itemRow}>
-            <div className={styles.itemNum}>{(index + 1).toString().padStart(2, '0')}</div>
+            <div className={styles.itemNum}>
+              {(index + 1).toString().padStart(2, "0")}
+            </div>
             <div className={styles.itemBody}>
               <div className={styles.itemName}>{item.description}</div>
-              {item.sub_description && <div className={styles.itemSub}>{item.sub_description}</div>}
+              {item.sub_description && (
+                <div className={styles.itemSub}>{item.sub_description}</div>
+              )}
               <div className={styles.itemMeta}>
-                <span className={styles.itemPill}>Qty: <strong>{item.quantity} {item.unit}</strong></span>
-                <span className={styles.itemPill}>Price: <strong>{formatNaira(item.unit_price)}</strong></span>
+                <span className={styles.itemPill}>
+                  Qty:{" "}
+                  <strong>
+                    {item.quantity} {item.unit}
+                  </strong>
+                </span>
+                <span className={styles.itemPill}>
+                  Price: <strong>{formatNaira(item.unit_price)}</strong>
+                </span>
               </div>
             </div>
             <div className={styles.itemAmount}>{formatNaira(item.amount)}</div>
@@ -96,35 +117,84 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
       {/* Totals */}
       <div className={styles.totalsList}>
         <div className={styles.totalsRow}>
-          <span className={styles.lbl}>Subtotal</span>
-          <span className={styles.val}>{formatNaira(previewModel?.totals?.rawSubtotal || 0)}</span>
+          <span style={{ color: "var(--slate)", fontWeight: 400 }}>
+            Subtotal
+          </span>
+          <span
+            style={{
+              fontWeight: 600,
+              fontFamily: "var(--font-mono)",
+              textAlign: "right",
+              minWidth: "100px",
+            }}
+          >
+            {formatNaira(previewModel?.totals?.rawSubtotal || 0)}
+          </span>
         </div>
         {previewModel?.totals?.vatAmount > 0 && (
           <div className={styles.totalsRow}>
-            <span className={styles.lbl}>VAT</span>
-            <span className={styles.val}>{formatNaira(previewModel?.totals?.vatAmount)}</span>
+            <span style={{ color: "var(--slate)", fontWeight: 400 }}>VAT</span>
+            <span
+              style={{
+                fontWeight: 600,
+                fontFamily: "var(--font-mono)",
+                textAlign: "right",
+                minWidth: "100px",
+              }}
+            >
+              {formatNaira(previewModel?.totals?.vatAmount)}
+            </span>
           </div>
         )}
         <div className={styles.totalsDivider} />
         <div className={styles.totalsGrand}>
-          <span className={styles.lbl}>Total</span>
-          <span className={styles.val}>{formatNaira(invoice?.total || 0)}</span>
+          <span style={{ color: "var(--slate)", fontWeight: 400 }}>Total</span>
+          <span
+            style={{
+              fontWeight: 600,
+              fontFamily: "var(--font-mono)",
+              textAlign: "right",
+              minWidth: "100px",
+            }}
+          >
+            {formatNaira(invoice?.total || 0)}
+          </span>
         </div>
         {invoice?.amount_in_words && (
           <div className={styles.amountWords}>{invoice.amount_in_words}</div>
         )}
 
         {previewModel?.signatory?.signatureUrl && (
-          <div style={{ marginTop: "24px", textAlign: "right", width: "100%", maxWidth: "320px" }}>
-            <div style={{ fontSize: "10px", color: "var(--slate)", textTransform: "uppercase", marginBottom: "8px" }}>
+          <div
+            style={{
+              marginTop: "24px",
+              textAlign: "right",
+              width: "100%",
+              maxWidth: "320px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "10px",
+                color: "var(--slate)",
+                textTransform: "uppercase",
+                marginBottom: "8px",
+              }}
+            >
               Authorized Signature
             </div>
-            <img 
-              src={previewModel.signatory.signatureUrl} 
-              alt="Signature" 
-              style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} 
+            <img
+              src={previewModel.signatory.signatureUrl}
+              alt="Signature"
+              style={{
+                maxHeight: "80px",
+                maxWidth: "100%",
+                objectFit: "contain",
+              }}
             />
-            <div style={{ fontWeight: 600, fontSize: "13px", marginTop: "4px" }}>
+            <div
+              style={{ fontWeight: 600, fontSize: "13px", marginTop: "4px" }}
+            >
               {previewModel.signatory.name}
             </div>
             {previewModel.signatory.role && (
