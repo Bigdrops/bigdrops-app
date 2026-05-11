@@ -6,28 +6,55 @@ interface BankDetailsCardProps {
   bankAccounts: any[];
 }
 
-export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({ bankAccounts }) => {
+export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
+  bankAccounts,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
 
   if (!bankAccounts || bankAccounts.length === 0) return null;
 
   return (
     <div className={styles.card}>
-      <div 
-        className={styles.sectionHeader} 
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <div className={styles.sectionHeader} onClick={() => setIsOpen(!isOpen)}>
         <div className={styles.sectionHeaderLeft}>
           <CreditCard size={16} />
           <span>Bank Details</span>
         </div>
-        <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
-          <ChevronDown size={14} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              display: "inline-block",
+              width: 44,
+              height: 24,
+              borderRadius: 12,
+              background: "var(--deep-plum)",
+              position: "relative",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: "50%",
+                background: "#fff",
+                position: "absolute",
+                top: 3,
+                ...(isOpen ? { right: 3 } : { left: 3 }),
+                transition: "left 0.2s, right 0.2s",
+              }}
+            />
+          </span>
+          <div
+            className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}
+          >
+            <ChevronDown size={14} />
+          </div>
         </div>
       </div>
-      
+
       {isOpen && (
-        <div style={{ padding: "14px 0" }}>
+        <>
           {bankAccounts.map((bank, index) => (
             <div key={index} className={styles.bankDetail}>
               <div className={styles.bankName}>{bank.bank_name}</div>
@@ -41,7 +68,7 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({ bankAccounts }
               </div>
             </div>
           ))}
-        </div>
+        </>
       )}
     </div>
   );

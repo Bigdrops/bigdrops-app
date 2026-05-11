@@ -82,6 +82,11 @@
     background: var(--fog-gray);
 }
 
+.topbarIcon svg {
+    width: 20px;
+    height: 20px;
+}
+
 .topbarText {
     display: flex;
     flex-direction: column;
@@ -138,6 +143,11 @@
     transform: translateY(-1px);
 }
 
+.topbarAction svg {
+    width: 18px;
+    height: 18px;
+}
+
 .actionRow {
     background: var(--ghost-white);
     padding: 12px 16px;
@@ -162,6 +172,7 @@
     transition: all 0.15s;
     white-space: nowrap;
     letter-spacing: -0.28px;
+    font-family: var(--font-display);
 }
 
 .btn:active {
@@ -221,7 +232,7 @@
 .scrollBody {
     display: flex;
     flex-direction: column;
-    padding: 16px 16px 100px;
+    padding: 12px 16px 100px;
     gap: 0;
     position: relative;
     z-index: 1;

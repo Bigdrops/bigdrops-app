@@ -92,8 +92,6 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         onRecordPayment={onRecordPayment}
         onEdit={onEdit}
         onDownload={onDownload}
-        onShare={onShare}
-        onMore={onMore}
         isPaid={isPaid}
       />
 

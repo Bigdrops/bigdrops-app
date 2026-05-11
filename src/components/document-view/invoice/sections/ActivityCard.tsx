@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ChevronDown, Activity } from "lucide-react";
+import { Activity, ChevronDown } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
-import AuditTrailPanel from "@/components/audit/AuditTrailPanel";
+import useAuditTrail from "@/hooks/useAuditTrail";
+import type { AuditTrailEntry } from "@/domain/audit/auditTypes";
 
 interface ActivityCardProps {
   documentId: string;
@@ -9,29 +10,118 @@ interface ActivityCardProps {
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({ documentId }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const { entries, loading, error } = useAuditTrail({
+    entityType: "invoice",
+    entityId: documentId,
+    enabled: isOpen,
+  });
+
+  const toggleEntry = (id: string) =>
+    setExpandedId((prev) => (prev === id ? null : id));
 
   return (
     <div className={styles.card}>
-      <div 
-        className={styles.sectionHeader} 
-        onClick={() => setIsOpen(!isOpen)}
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div
+        className={styles.sectionHeader}
+        onClick={() => setIsOpen((o) => !o)}
       >
         <div className={styles.sectionHeaderLeft}>
           <Activity size={16} />
-          <span>Activity & History</span>
+          <span>Activity &amp; History</span>
         </div>
-        <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
+        <div
+          className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}
+        >
           <ChevronDown size={14} />
         </div>
       </div>
 
+      {/* ── Body ──────────────────────────────────────────────────────── */}
       {isOpen && (
-        <div style={{ padding: "0 18px 18px" }}>
-          <AuditTrailPanel 
-            entityType="invoice"
-            entityId={documentId}
-            defaultOpen
-          />
+        <div className={styles.itemList}>
+          {/* Loading */}
+          {loading && (
+            <div className={styles.itemRow}>
+              <span style={{ fontSize: 13, color: "var(--slate)" }}>
+                Loading history…
+              </span>
+            </div>
+          )}
+
+          {/* Error */}
+          {!loading && error && (
+            <div className={styles.itemRow}>
+              <span style={{ fontSize: 13, color: "#c0392b" }}>{error}</span>
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && !error && entries.length === 0 && (
+            <div className={styles.activityRow}>
+              <span style={{ fontSize: 13, color: "var(--slate)" }}>
+                No history recorded yet.
+              </span>
+            </div>
+          )}
+
+          {/* Entries */}
+          {!loading &&
+            !error &&
+            entries.map((entry: AuditTrailEntry) => {
+              const hasChanges = entry.changes && entry.changes.length > 0;
+              const isExpanded = expandedId === entry.id;
+
+              return (
+                <React.Fragment key={entry.id}>
+                  <div
+                    className={styles.activityRow}
+                    style={{ borderBottom: "1px solid var(--steel-gray)" }}
+                    onClick={() => hasChanges && toggleEntry(entry.id)}
+                  >
+                    <span className={styles.activityLabel}>
+                      {entry.actorLabel}&nbsp;{entry.actionLabel}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--slate)",
+                        flexShrink: 0,
+                        marginLeft: 12,
+                      }}
+                    >
+                      {entry.timestamp}
+                    </span>
+                  </div>
+
+                  {/* Change detail rows */}
+                  {hasChanges &&
+                    isExpanded &&
+                    entry.changes.map((change) => (
+                      <div
+                        key={change.field}
+                        style={{
+                          fontSize: 11,
+                          color: "var(--slate)",
+                          padding: "4px 18px",
+                          background: "var(--fog-gray)",
+                          borderBottom: "1px solid var(--steel-gray)",
+                        }}
+                      >
+                        <strong style={{ color: "var(--ink-blue)" }}>
+                          {change.label}
+                        </strong>
+                        {": "}
+                        {change.oldValue || "—"}
+                        {" → "}
+                        {change.newValue || "—"}
+                      </div>
+                    ))}
+                </React.Fragment>
+              );
+            })}
         </div>
       )}
     </div>
