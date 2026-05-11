@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { InvoiceItem } from '@/domain/invoice'
@@ -46,11 +46,16 @@ export function useQuotationLineItems({
     groupsRef.current = groups
   }, [items, groups])
 
+  useLayoutEffect(() => {
+    updateRefs()
+  }, [items, groups, updateRefs])
+
   const commitGrouping = useCallback(
     (
       nextItemsInput: InvoiceItem[] | ((current: InvoiceItem[]) => InvoiceItem[]),
       nextGroupsInput?: QuotationGroupState[] | ((current: QuotationGroupState[]) => QuotationGroupState[]),
     ) => {
+      updateRefs()
       const baseItems = itemsRef.current
       const baseGroups = groupsRef.current
       const nextItems = typeof nextItemsInput === 'function' ? nextItemsInput(baseItems) : nextItemsInput
@@ -62,7 +67,7 @@ export function useQuotationLineItems({
       setItems(normalized.items)
       setGroups(normalized.groups)
     },
-    [setItems, setGroups],
+    [setItems, setGroups, updateRefs],
   )
 
   const updateItem = useCallback(

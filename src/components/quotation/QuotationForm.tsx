@@ -112,6 +112,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [showItemImages, setShowItemImages] = useState(false)
   const [groups, setGroups] = useState<QuotationGroupState[]>([])
   const [initialQuotationSnapshot, setInitialQuotationSnapshot] = useState<Record<string, unknown> | null>(null)
+  const [initialNotes, setInitialNotes] = useState('')
+  const [initialTerms, setInitialTerms] = useState('')
   const [items, setItems] = useState<InvoiceItem[]>([
     { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
   ])
@@ -243,6 +245,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
           custom_payment_terms: String(state.quotation.custom_fields?.custom_payment_terms || ''),
         })
         setInitialQuotationSnapshot(quotationRow as Record<string, unknown>)
+        setInitialNotes(quotationRow.notes as string || '')
+        setInitialTerms(quotationRow.terms as string || '')
         setItems(normalizedGrouping.items)
         setColumns(state.columns)
         setHeaderFields(state.headerFields)
@@ -307,7 +311,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     nextGroupsInput?: QuotationGroupState[] | ((current: QuotationGroupState[]) => QuotationGroupState[]),
   ) => {
     const baseItems = itemsRef.current
-    const baseGroups = groupsRef.current
+    const baseGroups = groups
     const nextItems = typeof nextItemsInput === 'function' ? nextItemsInput(baseItems) : nextItemsInput
     const nextGroups = typeof nextGroupsInput === 'function' ? nextGroupsInput(baseGroups) : nextGroupsInput ?? baseGroups
 
@@ -490,9 +494,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       pdfOutputBytes: getJsonSizeBytes(pdfOutput),
     })
 
-    const buildPayloadStart = timer.phaseStart('build-payload')
-    const normalizedNotes = normalizeRichTextHtml(quotation.notes || '')
-    const normalizedTerms = normalizeRichTextHtml(quotation.terms || '')
+const buildPayloadStart = timer.phaseStart('build-payload')
+    const notesChanged = quotation.notes !== initialNotes
+    const termsChanged = quotation.terms !== initialTerms
+    const normalizedNotes = notesChanged ? normalizeRichTextHtml(quotation.notes || '') : initialNotes
+    const normalizedTerms = termsChanged ? normalizeRichTextHtml(quotation.terms || '') : initialTerms
     const payload = {
       quotation_number: quotation.quotation_number || '',
       po_number: poNumber || null,
@@ -517,12 +523,14 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       amount_in_words: quotation.amount_in_words || '',
       custom_fields: customFieldsJson,
     }
-    timer.phaseEnd('build-payload', buildPayloadStart, {
+timer.phaseEnd('build-payload', buildPayloadStart, {
       documentTable: 'quotations',
       payloadBytes: getJsonSizeBytes(payload),
       notesBytes: getJsonSizeBytes(normalizedNotes),
       termsBytes: getJsonSizeBytes(normalizedTerms),
       customFieldsBytes: getJsonSizeBytes(customFieldsData),
+      notesNormalized: notesChanged,
+      termsNormalized: termsChanged,
     })
 
     const persistableItems = normalizedItems.filter((item) =>

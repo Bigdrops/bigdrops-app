@@ -68,15 +68,22 @@ function isSamePayload(
   return JSON.stringify(left ?? null) === JSON.stringify(right ?? null)
 }
 
+let _actorCache: { sessionKey: string; actor: { id: string | null; label: string } } | null = null
+
 async function getActor() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const sessionKey = session?.access_token ?? ''
+  if (_actorCache && _actorCache.sessionKey === sessionKey) {
+    return _actorCache.actor
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  return {
-    id: user?.id ?? null,
-    label: user?.email ?? 'web',
-  }
+  const actor = { id: user?.id ?? null, label: user?.email ?? 'web' }
+  _actorCache = { sessionKey, actor }
+  return actor
 }
 
 export async function recordAuditLog({

@@ -35,8 +35,8 @@ export default function DocumentPage({
         {children}
       </main>
 
-      {floating && <div className={styles.floating}>{floating}</div>}
       {overlays}
+      {floating && <div className={styles.floating}>{floating}</div>}
     </div>
   );
 }

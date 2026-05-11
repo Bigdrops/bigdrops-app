@@ -453,10 +453,19 @@ export default function EditInvoice() {
     })
 
     const buildPayloadStart = timer.phaseStart('build-payload')
-    const normalizedNotes = normalizeRichTextHtml(invoice.notes)
-    const normalizedTerms = normalizeRichTextHtml(invoice.terms)
+    const notesChanged = invoice.notes !== initialInvoiceSnapshot?.notes
+    const termsChanged = invoice.terms !== initialInvoiceSnapshot?.terms
+    const normalizedNotes = notesChanged ? normalizeRichTextHtml(invoice.notes) : (initialInvoiceSnapshot?.notes ?? invoice.notes)
+    const normalizedTerms = termsChanged ? normalizeRichTextHtml(invoice.terms) : (initialInvoiceSnapshot?.terms ?? invoice.terms)
+    const updatedInvoice = {
+      ...invoice,
+      notes: normalizedNotes,
+      terms: normalizedTerms,
+      subtotal: documentTotals.subtotal,
+      install_rate_total: documentTotals.installRateTotal,
+      total: documentTotals.totalPayable,
+    }
     const updatePayload: any = {
-      invoice_title: invoiceTitle || null,
       po_number: String(invoice.po_number || '').trim() || null,
       client_id: invoice.client_id || null,
       client_name: invoice.client_name,
@@ -485,6 +494,8 @@ export default function EditInvoice() {
       notesBytes: getJsonSizeBytes(normalizedNotes),
       termsBytes: getJsonSizeBytes(normalizedTerms),
       customFieldsBytes: getJsonSizeBytes(customFieldsData),
+      notesNormalized: notesChanged,
+      termsNormalized: termsChanged,
     })
 
     const saveDocumentRowStart = timer.phaseStart('save-document-row')
@@ -551,22 +562,14 @@ export default function EditInvoice() {
       })
     }
 
-    // Audit Trail
     const saveAuditLogStart = timer.phaseStart('save-audit-log')
     try {
       const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
-      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
-      const { data: updatedInvoice } = await supabase.from('invoices').select('*').eq('id', id).single()
-      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
-        table: 'invoices',
-        operation: 'select-single',
-        supabaseCalls: 1,
-      })
-      
+      timer.phaseEnd('post-save-refetch', null, { skipped: true, reason: 'no refetch — use merged snapshot' })
       await recordAuditLog({
         entityType: 'invoice',
         recordId: id || '',
-        entityLabel: updatedInvoice?.invoice_number || initialInvoiceSnapshot?.invoice_number || null,
+        entityLabel: initialInvoiceSnapshot?.invoice_number || null,
         action: 'UPDATE',
         oldData: initialInvoiceSnapshot,
         newData: updatedInvoice,
