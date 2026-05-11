@@ -5,26 +5,6 @@ import DocumentRelatedDocsSection, {
   type RelatedDocumentItem,
 } from "../shared/DocumentRelatedDocsSection";
 import type { BaseDocument } from "../types/documentView";
-import DocumentPreviewShell from "../shared/DocumentPreviewShell";
-import styles from "./QuotationViewPage.module.css";
-
-interface SupportingSectionProps {
-  title: string;
-  children: ReactNode;
-}
-
-function SupportingSection({ title, children }: SupportingSectionProps) {
-  return (
-    <section className={styles.sectionCard}>
-      <div className={styles.sectionHd}>
-        <div className={styles.sectionLabel}>{title}</div>
-      </div>
-      <div>
-        {children}
-      </div>
-    </section>
-  );
-}
 
 interface QuotationViewPageProps {
   document: BaseDocument;
@@ -44,10 +24,6 @@ interface QuotationViewPageProps {
   onCopyNumber: () => void;
 }
 
-/**
- * TRUE STRUCTURAL TRANSPLANT
- * Flat sequence of modules mirroring the HTML reference.
- */
 export default function QuotationViewPage({
   documentPreview,
   preview,
@@ -64,27 +40,81 @@ export default function QuotationViewPage({
 
   return (
     <>
-      <DocumentPreviewShell>
-        {previewContent}
-      </DocumentPreviewShell>
+      {/* Main preview — no shell wrapper */}
+      {previewContent}
 
-      {previewControls}
+      {/* PDF controls */}
+      {previewControls && (
+        <div style={{ marginTop: 12 }}>{previewControls}</div>
+      )}
 
-      <DocumentRelatedDocsSection items={guardedRelatedDocuments} />
+      {/* Related docs */}
+      {guardedRelatedDocuments.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <DocumentRelatedDocsSection items={guardedRelatedDocuments} />
+        </div>
+      )}
 
-      {activityHistory}
+      {/* Activity history */}
+      {activityHistory && (
+        <div style={{ marginTop: 12 }}>{activityHistory}</div>
+      )}
 
+      {/* Attachments */}
       {guardedAttachments.length > 0 && (
-        <SupportingSection title="Attachments">
-          <div style={{ padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div
+          style={{
+            marginTop: 12,
+            background: "#ffffff",
+            borderRadius: 8,
+            border: "1px solid #e3e4e8",
+            overflow: "hidden",
+            boxShadow:
+              "rgba(17,26,74,0.05) 0px 0px 0px 1px, rgba(0,0,0,0.1) 0px 1px 2px 0px",
+          }}
+        >
+          <div
+            style={{
+              padding: "14px 18px",
+              borderBottom: "1px solid #e3e4e8",
+              fontSize: 13,
+              fontWeight: 700,
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.04em",
+              color: "#011821",
+            }}
+          >
+            Attachments
+          </div>
+          <div
+            style={{
+              padding: "14px 18px",
+              display: "flex",
+              flexWrap: "wrap" as const,
+              gap: 8,
+            }}
+          >
             {guardedAttachments.map((file) => (
-              <div key={file.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--dv-bg-2)', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', border: '1px solid var(--dv-border)' }}>
+              <div
+                key={file.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#f6f6f8",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  border: "1px solid #e3e4e8",
+                  color: "#011821",
+                }}
+              >
                 <Paperclip size={14} />
                 <span>{file.label}</span>
               </div>
             ))}
           </div>
-        </SupportingSection>
+        </div>
       )}
     </>
   );

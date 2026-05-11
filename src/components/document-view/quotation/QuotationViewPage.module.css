@@ -1,30 +1,38 @@
 .sectionCard {
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 
-    rgba(0, 0, 0, 0.05) 0px 1px 3px 0px,
-    rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    background: #ffffff;
+    border: 1px solid #e3e4e8;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow:
+        rgba(17, 26, 74, 0.05) 0px 0px 0px 1px,
+        rgba(0, 0, 0, 0.1) 0px 1px 2px 0px,
+        rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset;
+}
+
+.sectionCard + .sectionCard {
+    margin-top: 12px;
 }
 
 .sectionHd {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--dv-border);
-  background: var(--dv-bg-2);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e3e4e8;
+    background: #ffffff;
 }
 
 .sectionLabel {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dv-text);
-  letter-spacing: -0.26px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #011821;
 }
 
 /* FLATTENING WRAPPERS */
-.documentBody, .supportingArea, .stack {
-  display: contents;
+.documentBody,
+.supportingArea,
+.stack {
+    display: contents;
 }

@@ -8,6 +8,7 @@ import {
   PdfOutputSettingsValue,
 } from "@/components/PdfOutputSettings";
 import AuditTrailPanel from "@/components/audit/AuditTrailPanel";
+import { QuotationActivityCard } from "@/components/document-view/quotation/QuotationActivityCard";
 import QuotationDocumentPreview from "@/components/document-view/quotation/QuotationDocumentPreview";
 import PdfOutputCustomizeSheet from "@/components/document-view/shared/PdfOutputCustomizeSheet";
 import { useDocumentUIState } from "@/components/document-view/hooks/useDocumentUIState";
@@ -955,28 +956,82 @@ export default function ViewQuotation() {
           <>
             <button
               type="button"
-              className="bd-btn-primary flex-1"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "#ec652b",
+                color: "#ffffff",
+                flex: 1,
+                justifyContent: "center",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 18px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                letterSpacing: "-0.28px",
+                whiteSpace: "nowrap" as const,
+                boxShadow:
+                  "rgba(0,0,0,0.1) 0px 4px 8px 0px, rgba(0,0,0,0.1) 0px 2px 4px 0px, rgba(0,0,0,0.25) 0px 1px 1px 0px",
+                fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
+                transition: "all 0.15s",
+              }}
               onClick={() => ui.openModal(MODAL_CONVERT)}
             >
-              <Zap size={16} strokeWidth={2.5} fill="currentColor" />
+              <Zap size={14} strokeWidth={2.5} fill="currentColor" />
               <span>Convert to Invoice</span>
             </button>
             <button
               type="button"
-              className="bd-btn-outline flex-1"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: "#ffffff",
+                color: "#111a4a",
+                flex: 1,
+                justifyContent: "center",
+                border: "1px solid #111a4a",
+                borderRadius: 8,
+                padding: "10px 18px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                letterSpacing: "-0.28px",
+                whiteSpace: "nowrap" as const,
+                fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
+                transition: "all 0.15s",
+              }}
               onClick={() => navigate(`/quotations/edit/${id}`)}
             >
-              <Edit3 size={17} strokeWidth={2} />
+              <Edit3 size={14} strokeWidth={2} />
               <span>Edit</span>
             </button>
             <button
               type="button"
-              className="bd-btn-outline px-3"
+              style={{
+                width: 40,
+                height: 40,
+                padding: 0,
+                flexShrink: 0,
+                background: "#ffffff",
+                border: "1px solid #e3e4e8",
+                borderRadius: 8,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#011821",
+                transition: "all 0.15s",
+                boxShadow: "rgba(0,0,0,0.05) 0px 1px 2px 0px",
+                opacity: downloading ? 0.6 : 1,
+              }}
               onClick={() => void handleDownload()}
               disabled={downloading}
               title="Download PDF"
             >
-              <Download size={18} strokeWidth={2} />
+              <Download size={17} strokeWidth={2} />
             </button>
           </>
         }
@@ -1077,14 +1132,7 @@ export default function ViewQuotation() {
           }
           previewControls={previewControls}
           relatedDocuments={relatedDocuments}
-          activityHistory={
-            <AuditTrailPanel
-              entityType="quotation"
-              entityId={quotation.id}
-              entityLabel={quotation.quotation_number}
-              defaultOpen={false}
-            />
-          }
+          activityHistory={<QuotationActivityCard documentId={quotation.id} />}
           attachments={quotationAttachments}
           onConvert={() => ui.openModal(MODAL_CONVERT)}
           onEdit={() => navigate(`/quotations/edit/${id}`)}
