@@ -1,8 +1,14 @@
 import styles from './QuotationMoneyStrip.module.css'
-import type { QuotationMetric } from './quotationViewMockData'
+
+interface MoneyStripItem {
+  label: string
+  value: string
+  tone?: 'default' | 'amber' | 'green'
+  hint?: string
+}
 
 interface QuotationMoneyStripProps {
-  items: QuotationMetric[]
+  items: MoneyStripItem[]
 }
 
 export default function QuotationMoneyStrip({ items }: QuotationMoneyStripProps) {

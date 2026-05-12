@@ -1,20 +1,33 @@
 import styles from './InvoicePaymentsSection.module.css'
-import {
-  invoicePaymentHistory,
-  type InvoicePaymentEntry,
-} from './invoiceViewMockData'
+
+interface PaymentEntry {
+  method: string
+  reference: string
+  amount: string
+  date: string
+  kind?: 'payment' | 'wht' | 'voided'
+  tag?: string
+}
 
 interface InvoicePaymentsSectionProps {
   paidValue: string
+  whtAppliedValue: string
   balanceValue: string
+  paidPercent: number
+  entries: PaymentEntry[]
   onVoidPayment: () => void
 }
 
 export default function InvoicePaymentsSection({
   paidValue,
+  whtAppliedValue,
   balanceValue,
+  paidPercent,
+  entries,
   onVoidPayment,
 }: InvoicePaymentsSectionProps) {
+  const clampedPercent = Math.max(0, Math.min(100, paidPercent))
+
   return (
     <div className={styles.card}>
       <div className={styles.summaryGrid}>
@@ -24,22 +37,25 @@ export default function InvoicePaymentsSection({
         </div>
         <div className={styles.summaryCell}>
           <div className={styles.summaryLabel}>WHT Applied</div>
-          <div className={styles.summaryValue}>₦350,000</div>
+          <div className={styles.summaryValue}>{whtAppliedValue}</div>
         </div>
       </div>
 
       <div className={styles.progressWrap}>
         <div className={styles.progressBar}>
-          <div className={styles.progressFill} />
+          <div
+            className={styles.progressFill}
+            style={{ width: `${clampedPercent}%` }}
+          />
         </div>
         <div className={styles.progressMeta}>
-          <span>42% settled</span>
+          <span>{clampedPercent}% settled</span>
           <span>{balanceValue} remaining</span>
         </div>
       </div>
 
       <div>
-        {invoicePaymentHistory.map((entry) => (
+        {entries.map((entry) => (
           <PaymentHistoryItem key={entry.reference} entry={entry} onClick={onVoidPayment} />
         ))}
       </div>
@@ -47,7 +63,7 @@ export default function InvoicePaymentsSection({
   )
 }
 
-function PaymentHistoryItem({ entry, onClick }: { entry: InvoicePaymentEntry, onClick: () => void }) {
+function PaymentHistoryItem({ entry, onClick }: { entry: PaymentEntry, onClick: () => void }) {
   const iconClassName =
     entry.kind === 'wht'
       ? `${styles.icon} ${styles.iconWht}`

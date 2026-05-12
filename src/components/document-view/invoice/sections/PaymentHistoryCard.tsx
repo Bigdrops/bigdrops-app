@@ -24,25 +24,28 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
       <div 
         className={styles.sectionHeader} 
         onClick={() => setIsOpen(!isOpen)}
-        style={{ background: "rgba(236, 101, 43, 0.06)" }}
+        style={{ background: "rgba(236, 101, 43, 0.06)", cursor: "pointer", userSelect: "none" }}
       >
         <div className={styles.sectionHeaderLeft} style={{ color: "var(--action-orange)" }}>
           <Receipt size={16} color="var(--action-orange)" />
           <span>Payment History</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button 
-            className={styles.btnRecord} 
+          <span
+            className={styles.btnRecord}
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               onRecordPayment();
             }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onRecordPayment(); } }}
           >
             Record
-          </button>
-          <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
+          </span>
+          <span className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`} aria-hidden="true">
             <ChevronDown size={14} />
-          </div>
+          </span>
         </div>
       </div>
 

@@ -1132,6 +1132,9 @@ export default function ViewQuotation() {
           }
           previewControls={previewControls}
           bankAccounts={bankAccounts}
+          pdfOutput={pdfOutput}
+          onOutputChange={handleInlinePdfOutputChange}
+          onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
           relatedDocuments={relatedDocuments}
           activityHistory={<QuotationActivityCard documentId={quotation.id} />}
           attachments={quotationAttachments}

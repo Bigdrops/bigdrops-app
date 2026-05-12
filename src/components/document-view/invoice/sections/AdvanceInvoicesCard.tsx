@@ -22,23 +22,24 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
       <div 
         className={styles.sectionHeader} 
         onClick={() => setIsOpen(!isOpen)}
+        style={{ cursor: "pointer", userSelect: "none" }}
       >
         <div className={styles.sectionHeaderLeft}>
           <span>Advance Invoices</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button 
-            className={styles.btnRecord} 
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateAdvance();
-            }}
+          <span
+            className={styles.btnRecord}
+            role="button"
+            tabIndex={0}
+            onClick={(e) => { e.stopPropagation(); onCreateAdvance(); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onCreateAdvance(); } }}
           >
             CREATE
-          </button>
-          <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
+          </span>
+          <span className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`} aria-hidden="true">
             <ChevronDown size={14} />
-          </div>
+          </span>
         </div>
       </div>
 

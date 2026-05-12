@@ -1,5 +1,6 @@
 import './InvoiceDocumentPreview.css'
 import { renderRichTextContent } from '@/lib/richText'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 
 type InvoiceDocumentPreviewProps = {
   invoice: any
@@ -39,21 +40,27 @@ export default function InvoiceDocumentPreview({
           ? 'danger'
           : 'neutral'
 
+  const logoUrl = resolveCanonicalLogoUrl(settingsData)
+  const companyName = settingsData?.company_name || ''
+  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : ''
+
   return (
     <div className={`invoiceDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
       {/* 1. inv-top */}
       <div className="inv-top">
         <div className="brand-block">
           <div className="brand-logo">
-            {settingsData?.company_name ? settingsData.company_name.substring(0, 3) : 'BD'}
+            {logoUrl
+              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+              : initials || null}
           </div>
           <div>
-            <div className="brand-name">{settingsData?.company_name || 'BigDrops'}</div>
-            <div className="brand-sub">
-              {companyLines.map((line: string, i: number) => (
-                <div key={i}>{line}</div>
-              ))}
-            </div>
+            {companyName && <div className="brand-name">{companyName}</div>}
+            {companyLines.length > 0 && (
+              <div className="brand-sub">
+                {companyLines.map((line: string, i: number) => <div key={i}>{line}</div>)}
+              </div>
+            )}
           </div>
         </div>
         <div className={`status-pill ${statusTone}`}>{statusLabel}</div>
@@ -85,7 +92,7 @@ export default function InvoiceDocumentPreview({
       <div className="info-grid">
         <div className="info-cell">
           <div className="info-label">Bill To</div>
-          <div className="info-value">{invoice?.client_name || 'Unassigned Client'}</div>
+          <div className="info-value">{invoice?.client_name || '—'}</div>
           <div className="info-sub">
             {clientLines.map((line: string, i: number) => (
               <div key={i}>{line}</div>
@@ -160,7 +167,7 @@ export default function InvoiceDocumentPreview({
           if (isGrand) {
              return (
                <div key={index} className="totals-grand">
-                 <span className="lbl">{row.label} Payable</span>
+                 <span className="lbl">{row.label}</span>
                  <span className="val">{row.value}</span>
                </div>
              )

@@ -164,6 +164,13 @@ export function shouldExcludeFromRuntime(invoice: AdvanceLegacyChildRow & { pare
   return status === 'quarantined' || status === 'orphan'
 }
 
+export function isLegacyAdvanceChildRowForRuntime(invoice: { custom_fields?: unknown } | null | undefined): boolean {
+  if (!isLegacyAdvanceChildRow(invoice)) return false
+  // Legacy rows with a parent are still legacy - they should not appear as regular child invoices in UI
+  // The only advance child rows that should appear are the canonical ones created via parent metadata
+  return true
+}
+
 export function getActiveLegacyAdvanceChildren(
   invoices: Array<AdvanceLegacyChildRow & { parent_invoice_id?: string | null; archived_at?: string }>,
 ): Array<AdvanceLegacyChildRow & { parent_invoice_id?: string | null; archived_at?: string }> {

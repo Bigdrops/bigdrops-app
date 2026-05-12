@@ -7,6 +7,7 @@ import DocumentRelatedDocsSection, {
   type RelatedDocumentItem,
 } from "../shared/DocumentRelatedDocsSection";
 import type { BaseDocument } from "../types/documentView";
+import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 
 interface QuotationViewPageProps {
   document: BaseDocument;
@@ -14,6 +15,9 @@ interface QuotationViewPageProps {
   preview?: ReactNode;
   previewControls?: ReactNode;
   bankAccounts?: any[];
+  pdfOutput?: Partial<PdfOutputSettingsValue>;
+  onOutputChange?: (next: PdfOutputSettingsValue) => void;
+  onCustomize?: () => void;
   relatedDocuments?: RelatedDocumentItem[];
   activityHistory?: ReactNode;
   attachments?: Array<{ id: string; label: string }>;
@@ -30,6 +34,9 @@ export default function QuotationViewPage({
   documentPreview,
   preview,
   bankAccounts = [],
+  pdfOutput,
+  onOutputChange,
+  onCustomize,
   relatedDocuments,
   activityHistory,
   attachments,
@@ -44,7 +51,12 @@ export default function QuotationViewPage({
 
       <BankDetailsCard bankAccounts={bankAccounts} />
 
-      <DocumentOptionsCard />
+      <DocumentOptionsCard
+        pdfOutput={pdfOutput}
+        onOutputChange={onOutputChange}
+        onCustomize={onCustomize}
+        hideMergeQty
+      />
 
       {guardedRelatedDocuments.length > 0 && (
         <DocumentRelatedDocsSection items={guardedRelatedDocuments} />

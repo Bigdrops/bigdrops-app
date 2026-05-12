@@ -12,6 +12,7 @@ import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/docume
 import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
 import { mapDbInvoiceItem } from '@/domain/invoice'
 import { getAdvanceInvoiceMetadata } from '@/domain/invoice/advanceMetadata'
+import { isLegacyAdvanceChildRowForRuntime } from '@/domain/invoice/advanceLegacyCleanup'
 
 function canUseInvoiceCacheFallback() {
   return (
@@ -111,7 +112,9 @@ export function useInvoiceDetailData(id) {
       throw advanceError
     }
 
-    setRelatedAdvanceInvoices(data || [])
+    // Filter out legacy advance child rows - only canonical child rows should appear in UI
+    const filteredData = (data || []).filter((inv) => !isLegacyAdvanceChildRowForRuntime(inv))
+    setRelatedAdvanceInvoices(filteredData)
   }, [id])
 
   const fetchPayments = useCallback(async () => {

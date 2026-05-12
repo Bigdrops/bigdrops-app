@@ -10,6 +10,7 @@ import {
   getInvoicePdfOutput,
   normalizeInvoicePdfTemplateId 
 } from "@/domain/invoice";
+import { isAdvanceInvoiceChild } from "@/domain/invoice/advanceMetadata";
 import { formatNaira } from "@/lib/formatters/money";
 import { getInvoiceSourceDocument } from "@/domain/documentRelationships";
 import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
@@ -29,6 +30,8 @@ export default function ViewInvoice() {
   const location = useLocation();
   const ui = useDocumentUIState();
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const {
     invoice, items, payments, advanceMetadata, relatedCsrs, relatedWaybills,
     relatedAdvanceInvoices, invoiceFinancials, client, settings, bankAccounts,
@@ -47,11 +50,11 @@ export default function ViewInvoice() {
   const pdfTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry";
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice]);
   
-  const viewModel = useMemo(() => buildInvoiceViewModel({
-    invoice, items: items || [], payments: payments || [], relatedCsrs: relatedCsrs || [],
-    relatedWaybills: relatedWaybills || [], financials: invoiceFinancials || null,
-    project: linkedProject || null, sourceDocument: sourceDocument || null
-  }), [invoice, items, payments, relatedCsrs, relatedWaybills, invoiceFinancials, linkedProject, sourceDocument]);
+   const viewModel = useMemo(() => buildInvoiceViewModel({
+     invoice, items: items || [], payments: payments || [], relatedCsrs: relatedCsrs || [],
+     relatedWaybills: relatedWaybills || [], financials: invoiceFinancials || null,
+     project: linkedProject || null, sourceDocument: sourceDocument || null
+   }), [invoice, items, payments, relatedCsrs, relatedWaybills, invoiceFinancials, linkedProject, sourceDocument]);
 
   const resolvedSignatory = useMemo(() => resolveDocumentSignatory(
     (customFields as any)?.signatoryId, signatories || []
@@ -68,10 +71,29 @@ export default function ViewInvoice() {
     formatMoney: (v) => formatNaira(v, { preserveFraction: true })
   }), [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, resolvedSignatory, viewModel]);
 
+  // Quarantine: Prevent direct access to advance child invoices (legacy or canonical)
+  // They should only be viewed in the context of their parent invoice.
+  useEffect(() => {
+    if (loading || !invoice || isRedirecting) return;
+
+    if (isAdvanceInvoiceChild(invoice)) {
+      const advanceConfig = (invoice.custom_fields as any)?.advance_invoice;
+      const parentId = advanceConfig?.parentId;
+      if (parentId) {
+        setIsRedirecting(true);
+        navigate(`/invoices/view/${parentId}`, { replace: true });
+      } else {
+        // Orphan child - no parent to redirect to, go to invoice list
+        setIsRedirecting(true);
+        navigate('/invoices', { state: { error: 'Advance invoice is not accessible directly' } });
+      }
+    }
+  }, [invoice, loading, navigate, isRedirecting]);
+
   const actions = useInvoiceActions({
-    invoice, items, payments, client, settings, bankAccounts, signatories,
-    advanceMetadata, viewModel, ui, refresh, setInvoice, pdfOutput, setPdfOutput,
-    pdfTemplateId, settingsData: settings
+    invoice, items, payments, client, settings, bankAccounts,
+    signatories, advanceMetadata, viewModel, ui, refresh, setInvoice,
+    pdfOutput, setPdfOutput, pdfTemplateId, settingsData: settings
   });
 
   if (loading) return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;

@@ -1,8 +1,14 @@
 import styles from './InvoiceMoneyStrip.module.css'
-import type { InvoiceMetric } from './invoiceViewMockData'
+
+interface MoneyStripItem {
+  label: string
+  value: string
+  tone?: 'default' | 'amber' | 'green'
+  hint?: string
+}
 
 interface InvoiceMoneyStripProps {
-  items: InvoiceMetric[]
+  items: MoneyStripItem[]
 }
 
 export default function InvoiceMoneyStrip({ items }: InvoiceMoneyStripProps) {
