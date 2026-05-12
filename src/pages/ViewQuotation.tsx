@@ -1131,6 +1131,7 @@ export default function ViewQuotation() {
             />
           }
           previewControls={previewControls}
+          bankAccounts={bankAccounts}
           relatedDocuments={relatedDocuments}
           activityHistory={<QuotationActivityCard documentId={quotation.id} />}
           attachments={quotationAttachments}

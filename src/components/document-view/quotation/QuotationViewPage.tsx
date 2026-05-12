@@ -1,6 +1,8 @@
 import { Paperclip } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { BankDetailsCard } from "../invoice/sections/BankDetailsCard";
+import { DocumentOptionsCard } from "../invoice/sections/DocumentOptionsCard";
 import DocumentRelatedDocsSection, {
   type RelatedDocumentItem,
 } from "../shared/DocumentRelatedDocsSection";
@@ -11,12 +13,10 @@ interface QuotationViewPageProps {
   documentPreview?: ReactNode;
   preview?: ReactNode;
   previewControls?: ReactNode;
+  bankAccounts?: any[];
   relatedDocuments?: RelatedDocumentItem[];
   activityHistory?: ReactNode;
-  attachments?: Array<{
-    id: string;
-    label: string;
-  }>;
+  attachments?: Array<{ id: string; label: string }>;
   onConvert: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -24,47 +24,43 @@ interface QuotationViewPageProps {
   onCopyNumber: () => void;
 }
 
+const GAP = 12;
+
 export default function QuotationViewPage({
   documentPreview,
   preview,
+  bankAccounts = [],
   relatedDocuments,
   activityHistory,
   attachments,
 }: QuotationViewPageProps) {
   const previewContent = documentPreview || preview;
-  const guardedRelatedDocuments = Array.isArray(relatedDocuments)
-    ? relatedDocuments
-    : [];
+  const guardedRelatedDocuments = Array.isArray(relatedDocuments) ? relatedDocuments : [];
   const guardedAttachments = Array.isArray(attachments) ? attachments : [];
 
   return (
-    <>
-      {/* Main preview — no shell wrapper */}
+    <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
       {previewContent}
 
-      {/* Related docs */}
+      <BankDetailsCard bankAccounts={bankAccounts} />
+
+      <DocumentOptionsCard />
+
       {guardedRelatedDocuments.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <DocumentRelatedDocsSection items={guardedRelatedDocuments} />
-        </div>
+        <DocumentRelatedDocsSection items={guardedRelatedDocuments} />
       )}
 
-      {/* Activity history */}
-      {activityHistory && (
-        <div style={{ marginTop: 12 }}>{activityHistory}</div>
-      )}
+      {activityHistory}
 
-      {/* Attachments */}
       {guardedAttachments.length > 0 && (
         <div
           style={{
-            marginTop: 12,
             background: "#ffffff",
             borderRadius: 8,
             border: "1px solid #e3e4e8",
             overflow: "hidden",
             boxShadow:
-              "rgba(17,26,74,0.05) 0px 0px 0px 1px, rgba(0,0,0,0.1) 0px 1px 2px 0px",
+              "rgba(17,26,74,0.05) 0px 0px 0px 1px, rgba(0,0,0,0.1) 0px 1px 2px 0px, rgba(255,255,255,0.5) 0px 0px 0px 1px inset",
           }}
         >
           <div
@@ -80,14 +76,7 @@ export default function QuotationViewPage({
           >
             Attachments
           </div>
-          <div
-            style={{
-              padding: "14px 18px",
-              display: "flex",
-              flexWrap: "wrap" as const,
-              gap: 8,
-            }}
-          >
+          <div style={{ padding: "14px 18px", display: "flex", flexWrap: "wrap" as const, gap: 8 }}>
             {guardedAttachments.map((file) => (
               <div
                 key={file.id}
@@ -110,6 +99,6 @@ export default function QuotationViewPage({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

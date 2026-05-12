@@ -232,7 +232,7 @@
 .scrollBody {
     display: flex;
     flex-direction: column;
-    padding: 16px 16px 100px;
+    padding: 12px 0 100px;
     gap: 0;
     position: relative;
     z-index: 1;
@@ -765,16 +765,26 @@
 
 .activityRow {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
-    padding: 14px 18px;
-    cursor: pointer;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--steel-gray);
+    cursor: default;
+}
+
+.activityRow:last-child {
+    border-bottom: none;
 }
 
 .activityLabel {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--ink-blue);
+    letter-spacing: -0.26px;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
 }
 
 .fab {

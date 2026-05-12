@@ -15,24 +15,25 @@ export const DocumentOptionsCard: React.FC<DocumentOptionsCardProps> = () => {
 
   return (
     <div className={styles.card}>
+      {/* Single touch target — no nested interactive elements */}
       <div
+        role="button"
+        tabIndex={0}
         className={styles.sectionHeader}
-        onClick={() => setIsOpen(!isOpen)}
+        style={{ cursor: "pointer", userSelect: "none" }}
+        onClick={() => setIsOpen((o) => !o)}
+        onKeyDown={(e) => e.key === "Enter" && setIsOpen((o) => !o)}
+        aria-expanded={isOpen}
       >
         <div className={styles.sectionHeaderLeft}>
           <span>Document Options</span>
         </div>
-        <button
+        <span
           className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}
-          aria-label="Toggle document options"
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(!isOpen);
-          }}
+          aria-hidden="true"
         >
           <ChevronDown size={14} />
-        </button>
+        </span>
       </div>
     </div>
   );

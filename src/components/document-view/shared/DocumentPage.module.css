@@ -43,7 +43,7 @@
 .scrollBody {
     display: flex;
     flex-direction: column;
-    padding: 16px 16px 100px;
+    padding: 12px 0 100px;
     gap: 0;
     background: transparent;
     position: relative;
