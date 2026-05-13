@@ -183,9 +183,10 @@ export function resolveDocumentSignatory(
   signatoryId: unknown,
   signatories: SignatoryLike[] = [],
 ): PreviewSignatory | null {
-  if (typeof signatoryId !== 'string' || !signatoryId.trim()) return null
+  const id = signatoryId === null || signatoryId === undefined ? '' : String(signatoryId).trim()
+  if (!id) return null
 
-  const matchedSignatory = signatories.find((entry) => String(entry?.id || '') === String(signatoryId))
+  const matchedSignatory = signatories.find((entry) => String(entry?.id ?? '') === id)
   if (!matchedSignatory) return null
 
   return {

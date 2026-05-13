@@ -86,12 +86,12 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         onShare={onShare}
         onCustomize={onCustomize}
         onMore={onMore}
+        onDownload={onDownload}
       />
 
       <InvoiceActionRow
         onRecordPayment={onRecordPayment}
         onEdit={onEdit}
-        onDownload={onDownload}
         isPaid={isPaid}
       />
 

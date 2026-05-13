@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, Share2, Palette, MoreVertical } from "lucide-react";
+import { ChevronLeft, Share2, Palette, MoreVertical, Download } from "lucide-react";
 import styles from "./InvoiceWorkspace.module.css";
 
 interface InvoiceTopNavProps {
@@ -9,6 +9,7 @@ interface InvoiceTopNavProps {
   onShare: () => void;
   onCustomize: () => void;
   onMore: () => void;
+  onDownload: () => void;
 }
 
 export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
@@ -18,6 +19,7 @@ export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
   onShare,
   onCustomize,
   onMore,
+  onDownload,
 }) => {
   return (
     <header className={styles.topbar}>
@@ -55,6 +57,13 @@ export const InvoiceTopNav: React.FC<InvoiceTopNavProps> = ({
           aria-label="More"
         >
           <MoreVertical size={18} />
+        </button>
+        <button
+          className={styles.topbarAction}
+          onClick={onDownload}
+          aria-label="Download"
+        >
+          <Download size={18} />
         </button>
       </div>
     </header>

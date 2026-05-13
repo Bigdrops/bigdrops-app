@@ -6,10 +6,8 @@ type QuotationDocumentPreviewProps = {
   quotation: any
   viewModel: any
   previewModel: any
-  pdfOutput: any
   settingsData: any
   mergeQtyUnit?: boolean
-  signatory?: { name: string; role: string; signatureUrl: string } | null
 }
 
 /**

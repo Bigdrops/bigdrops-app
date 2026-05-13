@@ -171,7 +171,7 @@ export function normalizeSettings(data) {
    * We only migrate if company_logo_url is null or missing, ensuring an empty string (intended removal) is respected.
    */
   const hasLegacyLogo = nextData.logo_url && String(nextData.logo_url).trim().length > 0
-  const hasCompanyLogo = nextData.company_logo_url !== null && nextData.company_logo_url !== undefined
+  const hasCompanyLogo = typeof nextData.company_logo_url === 'string' && nextData.company_logo_url.trim().length > 0
   
   if (hasLegacyLogo && !hasCompanyLogo) {
     console.log('[useSettings] Migrating legacy logo_url to company_logo_url:', nextData.logo_url)

@@ -48,11 +48,12 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--steel-gray);
-    padding: 12px 16px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    min-height: 52px;
 }
 
 .topbarLeft {
@@ -101,6 +102,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    width: 100%;
 }
 
 .topbarSub {
@@ -111,6 +113,7 @@
     text-overflow: ellipsis;
     margin-top: 1px;
     font-weight: 400;
+    width: 100%;
 }
 
 .topbarRight {
@@ -121,8 +124,8 @@
 }
 
 .topbarAction {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 8px;
     background: var(--fog-gray);
     border: 1px solid var(--steel-gray);

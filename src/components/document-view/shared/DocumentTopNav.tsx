@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { ChevronLeft, Share2, MoreHorizontal } from 'lucide-react'
+import { ChevronLeft, Share2, MoreHorizontal, Download } from 'lucide-react'
 import styles from './DocumentTopNav.module.css'
 
 interface DocumentTopNavProps {
@@ -10,6 +10,7 @@ interface DocumentTopNavProps {
   onShare?: () => void
   onCustomize?: () => void
   onMore?: () => void
+  onDownload?: () => void
   customizeIcon?: ReactNode
 }
 
@@ -20,6 +21,7 @@ export default function DocumentTopNav({
   onShare,
   onCustomize,
   onMore,
+  onDownload,
   customizeIcon,
 }: DocumentTopNavProps) {
   return (
@@ -88,6 +90,17 @@ export default function DocumentTopNav({
             aria-label="More actions"
           >
             <MoreHorizontal size={17} strokeWidth={2.4} />
+          </button>
+        )}
+        {onDownload && (
+          <button
+            type="button"
+            className={styles.iconBtn}
+            title="Download"
+            onClick={onDownload}
+            aria-label="Download"
+          >
+            <Download size={17} strokeWidth={2.4} />
           </button>
         )}
       </div>
