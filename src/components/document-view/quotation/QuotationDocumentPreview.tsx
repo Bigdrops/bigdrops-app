@@ -9,6 +9,7 @@ type QuotationDocumentPreviewProps = {
   pdfOutput: any
   settingsData: any
   mergeQtyUnit?: boolean
+  signatory?: { name: string; role: string; signatureUrl: string } | null
 }
 
 /**
@@ -28,6 +29,7 @@ export default function QuotationDocumentPreview({
   const clientLines = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : []
   const detailRows = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : []
   const notesSections = Array.isArray(previewModel?.previewNotesSections) ? previewModel.previewNotesSections : []
+  const signatory = previewModel?.signatory || null
   const statusLabel = String(viewModel?.statusLabel || quotation?.status || 'Draft')
   
   const statusTone =
@@ -136,6 +138,9 @@ export default function QuotationDocumentPreview({
                       <span key={factIdx} className="item-pill">{fact}</span>
                     ))}
                   </div>
+                  {item?.imageUrl && (
+                    <img src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" style={{ width: '100%', maxWidth: 200, height: 120, borderRadius: 6, objectFit: 'cover', border: '1px solid #e3e4e8', background: '#f6f6f8', marginTop: 8, display: 'block' }} />
+                  )}
                 </div>
                 <div className="item-amount">{item?.value || '—'}</div>
               </div>
@@ -170,6 +175,20 @@ export default function QuotationDocumentPreview({
           )
         })}
       </div>
+
+      {signatory && (
+        <div style={{ borderTop: '1px solid #e3e4e8', padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          {signatory.signatureUrl ? (
+            <img src={signatory.signatureUrl} alt="Signature" style={{ maxHeight: 80, width: 'auto', display: 'block' }} />
+          ) : (
+            <div style={{ fontStyle: 'italic', color: '#7c7f88' }}>Authorized Signature</div>
+          )}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#011821' }}>{signatory.name}</div>
+            {signatory.role && <div style={{ fontSize: 12, color: '#7c7f88', marginTop: 2 }}>{signatory.role}</div>}
+          </div>
+        </div>
+      )}
 
       {notesSections.length > 0 && (
         <div className="doc-notes">

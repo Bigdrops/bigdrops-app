@@ -3,6 +3,7 @@ import { Hash, Calendar, FileText } from "lucide-react";
 import styles from "./InvoiceWorkspace.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
+import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
 
 interface InvoiceDocumentCardProps {
   invoice: any;
@@ -26,6 +27,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   const status = invoice?.status?.toUpperCase() || "UNPAID";
   const initials = companyName ? companyName.substring(0, 2).toUpperCase() : "";
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
+  const signatory = previewModel?.signatory || null;
 
   return (
     <div className={styles.invCard}>
@@ -100,6 +102,14 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
                   </span>
                 )}
               </div>
+              {resolveCanonicalItemImageUrl(item) && (
+                <img
+                  className={styles.itemThumb}
+                  src={resolveCanonicalItemImageUrl(item)!}
+                  alt={item.description || "Item image"}
+                  loading="lazy"
+                />
+              )}
             </div>
             <div className={styles.itemAmount}>{formatNaira(item.amount)}</div>
           </div>
@@ -130,6 +140,20 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
           <div className={styles.amountWords}>{previewModel.previewAmountInWords}</div>
         )}
       </div>
+
+      {signatory && (
+        <div style={{ borderTop: "1px solid var(--steel-gray)", padding: "16px 18px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+          {signatory.signatureUrl ? (
+            <img src={signatory.signatureUrl} alt="Signature" style={{ maxHeight: 80, width: "auto", display: "block" }} />
+          ) : (
+            <div style={{ fontStyle: "italic", color: "var(--slate)" }}>Authorized Signature</div>
+          )}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-blue)" }}>{signatory.name}</div>
+            {signatory.role && <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 2 }}>{signatory.role}</div>}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
