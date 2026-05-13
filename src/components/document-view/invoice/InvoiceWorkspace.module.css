@@ -48,12 +48,12 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--steel-gray);
-    padding: 8px 16px;
+    padding: 6px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 52px;
+    min-height: 44px;
 }
 
 .topbarLeft {
@@ -124,8 +124,8 @@
 }
 
 .topbarAction {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     background: var(--fog-gray);
     border: 1px solid var(--steel-gray);

@@ -33,6 +33,7 @@ export function resolveCanonicalLogoUrl(value: any): string | null {
     return resolvePersistedMediaUrl(
       value.company_logo_url,
       value.companyLogoUrl,
+      value.logo_url,
       value.imageUrl,
     )
   }

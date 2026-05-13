@@ -4,12 +4,12 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid #e3e4e8;
-    padding: 8px 16px;
+    padding: 6px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 52px;
+    min-height: 44px;
 }
 
 .backButton {
@@ -76,8 +76,8 @@
 }
 
 .iconBtn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     background: #f6f6f8;
     border: 1px solid #e3e4e8;

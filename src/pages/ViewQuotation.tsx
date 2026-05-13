@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Edit3, Zap } from "lucide-react";
+import { Download, Edit3, Zap } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -932,7 +932,6 @@ export default function ViewQuotation() {
             onShare={() => void handleShare()}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
-            onDownload={() => void handleDownload()}
             customizeIcon={
               <svg
                 width="18"
@@ -1008,6 +1007,31 @@ export default function ViewQuotation() {
             >
               <Edit3 size={14} strokeWidth={2} />
               <span>Edit</span>
+            </button>
+            <button
+              type="button"
+              style={{
+                width: 40,
+                height: 40,
+                padding: 0,
+                flexShrink: 0,
+                background: "#ffffff",
+                border: "1px solid #e3e4e8",
+                borderRadius: 8,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#011821",
+                transition: "all 0.15s",
+                boxShadow: "rgba(0,0,0,0.05) 0px 1px 2px 0px",
+                opacity: downloading ? 0.6 : 1,
+              }}
+              onClick={() => void handleDownload()}
+              disabled={downloading}
+              title="Download PDF"
+            >
+              <Download size={17} strokeWidth={2} />
             </button>
           </>
         }
