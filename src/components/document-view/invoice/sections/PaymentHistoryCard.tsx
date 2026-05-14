@@ -24,10 +24,10 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
       <div 
         className={styles.sectionHeader} 
         onClick={() => setIsOpen(!isOpen)}
-        style={{ background: "rgba(236, 101, 43, 0.06)", cursor: "pointer", userSelect: "none" }}
+        style={{ background: 'hsl(var(--bd-accent) / 0.06)', cursor: "pointer", userSelect: "none" }}
       >
-        <div className={styles.sectionHeaderLeft} style={{ color: "var(--action-orange)" }}>
-          <Receipt size={16} color="var(--action-orange)" />
+        <div className={styles.sectionHeaderLeft} style={{ color: "var(--bd-accent)" }}>
+          <Receipt size={16} color="var(--bd-accent)" />
           <span>Payment History</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -86,7 +86,7 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                     {formatDisplayDate(payment.payment_date)} • {payment.notes || "No notes"}
                   </div>
                   {payment.voided_at && (
-                    <div className={styles.itemPill} style={{ color: "red", borderColor: "red" }}>
+                    <div className={styles.itemPill} style={{ color: 'hsl(var(--bd-status-danger-text))', borderColor: 'hsl(var(--bd-status-danger-text))' }}>
                       VOIDED
                     </div>
                   )}
@@ -95,7 +95,7 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                   <div className={styles.itemAmount}>{formatNaira(payment.cash_amount)}</div>
                   {!payment.voided_at && (
                     <button 
-                      style={{ fontSize: "10px", color: "red", background: "none", border: "none", cursor: "pointer", marginTop: "4px" }}
+                      style={{ fontSize: "10px", color: 'hsl(var(--bd-status-danger-text))', background: "none", border: "none", cursor: "pointer", marginTop: "4px" }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onVoidPayment(payment.id);
@@ -108,7 +108,7 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
               </div>
             ))}
             {payments.length === 0 && (
-              <div className={styles.itemRow} style={{ justifyContent: "center", color: "var(--slate)" }}>
+              <div className={styles.itemRow} style={{ justifyContent: "center", color: "hsl(var(--bd-text-muted))" }}>
                 No payments recorded yet.
               </div>
             )}

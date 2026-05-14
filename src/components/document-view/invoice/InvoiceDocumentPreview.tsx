@@ -51,7 +51,7 @@ export default function InvoiceDocumentPreview({
         <div className="brand-block">
           <div className="brand-logo">
             {logoUrl
-              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
               : initials || null}
           </div>
           <div>

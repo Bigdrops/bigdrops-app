@@ -50,7 +50,7 @@ export default function QuotationDocumentPreview({
         <div className="brand-block">
           <div className="brand-logo">
             {logoUrl
-              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
               : initials || null}
           </div>
           <div>
@@ -137,7 +137,7 @@ export default function QuotationDocumentPreview({
                     ))}
                   </div>
                   {item?.imageUrl && (
-                    <img src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" style={{ width: '100%', maxWidth: 200, height: 120, borderRadius: 6, objectFit: 'cover', border: '1px solid #e3e4e8', background: '#f6f6f8', marginTop: 8, display: 'block' }} />
+                    <img src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" style={{ width: '100%', maxWidth: 200, height: 120, borderRadius: 'var(--bd-radius-md)', objectFit: 'cover', border: '1px solid hsl(var(--bd-border))', background: 'hsl(var(--bd-surface-muted))', marginTop: 8, display: 'block' }} />
                   )}
                 </div>
                 <div className="item-amount">{item?.value || '—'}</div>
@@ -175,15 +175,15 @@ export default function QuotationDocumentPreview({
       </div>
 
       {signatory && (
-        <div style={{ borderTop: '1px solid #e3e4e8', padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div style={{ borderTop: '1px solid hsl(var(--bd-border))', padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
           {signatory.signatureUrl ? (
             <img src={signatory.signatureUrl} alt="Signature" style={{ maxHeight: 80, width: 'auto', display: 'block' }} />
           ) : (
-            <div style={{ fontStyle: 'italic', color: '#7c7f88' }}>Authorized Signature</div>
+            <div style={{ fontStyle: 'italic', color: 'hsl(var(--bd-text-muted))' }}>Authorized Signature</div>
           )}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#011821' }}>{signatory.name}</div>
-            {signatory.role && <div style={{ fontSize: 12, color: '#7c7f88', marginTop: 2 }}>{signatory.role}</div>}
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'hsl(var(--bd-text))' }}>{signatory.name}</div>
+            {signatory.role && <div style={{ fontSize: 12, color: 'hsl(var(--bd-text-muted))', marginTop: 2 }}>{signatory.role}</div>}
           </div>
         </div>
       )}

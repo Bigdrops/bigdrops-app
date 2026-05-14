@@ -42,7 +42,7 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
               onClick={() => onViewDoc(sourceDocument.type, sourceDocument.id)}
               style={{ cursor: "pointer" }}
             >
-              <FileText size={16} color="var(--deep-plum)" style={{ marginTop: "2px" }} />
+              <FileText size={16} color="hsl(var(--bd-brand))" style={{ marginTop: "2px" }} />
               <div className={styles.itemBody}>
                 <div className={styles.itemName}>Source {sourceDocument.type}</div>
                 <div className={styles.itemSub}>{sourceDocument.number}</div>
@@ -78,7 +78,7 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
             </div>
           ))}
           {!hasDocs && (
-            <div className={styles.itemRow} style={{ justifyContent: "center", color: "var(--slate)", fontSize: "13px" }}>
+            <div className={styles.itemRow} style={{ justifyContent: "center", color: "hsl(var(--bd-text-muted))", fontSize: "13px" }}>
               No related documents found.
             </div>
           )}

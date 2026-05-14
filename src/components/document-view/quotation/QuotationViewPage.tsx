@@ -67,7 +67,7 @@ export default function QuotationViewPage({
       {guardedAttachments.length > 0 && (
         <div
           style={{
-            background: "#ffffff",
+            background: "hsl(var(--bd-surface))",
             borderRadius: 8,
             border: "1px solid #e3e4e8",
             overflow: "hidden",

@@ -22,15 +22,15 @@
 .brand-logo {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: var(--bd-radius-lg);
   background: var(--dv-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: hsl(var(--bd-surface));
   font-weight: 800;
   font-size: 14px;
-  box-shadow: rgba(17, 26, 74, 0.2) 0px 2px 4px 0px;
+  box-shadow: hsl(var(--bd-brand) / 0.2) 0px 2px 4px 0px;
 }
 
 .brand-name {
@@ -49,7 +49,7 @@
 
 .status-pill {
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--bd-radius-md);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -57,9 +57,9 @@
   border: 1.5px solid var(--dv-border);
 }
 
-.status-pill.danger { color: #ef4444; border-color: #fecaca; background: #fef2f2; }
-.status-pill.success { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
-.status-pill.warning { color: #d97706; border-color: #fde68a; background: #fffbeb; }
+.status-pill.danger { color: hsl(var(--bd-status-danger-text)); border-color: hsl(var(--bd-status-danger-border)); background: hsl(var(--bd-status-danger-bg)); }
+.status-pill.success { color: hsl(var(--bd-status-success-text)); border-color: hsl(var(--bd-status-success-border)); background: hsl(var(--bd-status-success-bg)); }
+.status-pill.warning { color: hsl(var(--bd-status-warning-text)); border-color: hsl(var(--bd-status-warning-border)); background: hsl(var(--bd-surface))beb; }
 
 .inv-body {
   padding: 0 18px 16px;
@@ -84,7 +84,7 @@
   background: var(--dv-bg-2);
   border: 1px solid var(--dv-border);
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--bd-radius-md);
   font-size: 11px;
   font-weight: 600;
   color: var(--dv-text-2);
@@ -205,7 +205,7 @@
 .item-thumb {
   width: 100%;
   max-width: 400px;
-  border-radius: 8px;
+  border-radius: var(--bd-radius-lg);
   margin-top: 10px;
   border: 1px solid var(--dv-border);
 }

@@ -44,17 +44,17 @@ export const QuotationActivityCard: React.FC<QuotationActivityCardProps> = ({ do
         <div className={styles.itemList}>
           {loading && (
             <div className={styles.activityRow}>
-              <span className={styles.activityLabel} style={{ color: "var(--slate)" }}>Loading…</span>
+              <span className={styles.activityLabel} style={{ color: "hsl(var(--bd-text-muted))" }}>Loading…</span>
             </div>
           )}
           {!loading && error && (
             <div className={styles.activityRow}>
-              <span className={styles.activityLabel} style={{ color: "#c0392b" }}>{error}</span>
+              <span className={styles.activityLabel} style={{ color: 'hsl(var(--bd-status-danger-text))' }}>{error}</span>
             </div>
           )}
           {!loading && !error && entries.length === 0 && (
             <div className={styles.activityRow}>
-              <span className={styles.activityLabel} style={{ color: "var(--slate)" }}>No history recorded yet.</span>
+              <span className={styles.activityLabel} style={{ color: "hsl(var(--bd-text-muted))" }}>No history recorded yet.</span>
             </div>
           )}
           {!loading && !error && entries.map((entry: AuditTrailEntry) => {
@@ -70,7 +70,7 @@ export const QuotationActivityCard: React.FC<QuotationActivityCardProps> = ({ do
                   <span className={styles.activityLabel}>
                     {entry.actorLabel} {entry.actionLabel}
                   </span>
-                  <span style={{ fontSize: 11, color: "var(--slate)", flexShrink: 0, fontFamily: "var(--font-mono)" }}>
+                  <span style={{ fontSize: 11, color: "hsl(var(--bd-text-muted))", flexShrink: 0, fontFamily: '\"IBM Plex Mono\", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
                     {entry.timestamp}
                   </span>
                 </div>
@@ -79,13 +79,13 @@ export const QuotationActivityCard: React.FC<QuotationActivityCardProps> = ({ do
                     key={change.field}
                     style={{
                       fontSize: 11,
-                      color: "var(--slate)",
+                      color: "hsl(var(--bd-text-muted))",
                       padding: "6px 18px 6px 28px",
-                      background: "var(--fog-gray)",
-                      borderBottom: "1px solid var(--steel-gray)",
+                      background: "hsl(var(--bd-surface-muted))",
+                      borderBottom: "1px solid hsl(var(--bd-border))",
                     }}
                   >
-                    <strong style={{ color: "var(--ink-blue)", fontWeight: 600 }}>{change.label}</strong>
+                    <strong style={{ color: "hsl(var(--bd-text))", fontWeight: 600 }}>{change.label}</strong>
                     {": "}{change.oldValue || "—"}{" → "}{change.newValue || "—"}
                   </div>
                 ))}

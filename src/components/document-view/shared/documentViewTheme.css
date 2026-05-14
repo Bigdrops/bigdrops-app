@@ -33,13 +33,13 @@
   --dv-amber-border: hsl(var(--bd-status-warning-border));
   --dv-amber-dark: hsl(var(--bd-status-warning-text));
   
-  --dv-emerald: hsl(var(--bd-success));
-  --dv-emerald-bg: hsl(var(--bd-success) / 0.1);
-  --dv-emerald-border: hsl(var(--bd-success) / 0.2);
+  --dv-emerald: hsl(var(--bd-status-success-text));
+  --dv-emerald-bg: hsl(var(--bd-status-success-text) / 0.1);
+  --dv-emerald-border: hsl(var(--bd-status-success-text) / 0.2);
   
-  --dv-rose: hsl(var(--bd-error));
-  --dv-rose-bg: hsl(var(--bd-error) / 0.1);
-  --dv-rose-border: hsl(var(--bd-error) / 0.2);
+  --dv-rose: hsl(var(--bd-status-danger-text));
+  --dv-rose-bg: hsl(var(--bd-status-danger-text) / 0.1);
+  --dv-rose-border: hsl(var(--bd-status-danger-text) / 0.2);
   
   /* Typography */
   --dv-font-ui: 'Plus Jakarta Sans', sans-serif;

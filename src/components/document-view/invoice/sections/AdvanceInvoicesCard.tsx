@@ -62,7 +62,7 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
             </div>
           ))}
           {advanceInvoices.length === 0 && (
-            <div className={styles.itemRow} style={{ justifyContent: "center", color: "var(--slate)", fontSize: "13px" }}>
+            <div className={styles.itemRow} style={{ justifyContent: "center", color: "hsl(var(--bd-text-muted))", fontSize: "13px" }}>
               No advance invoices generated.
             </div>
           )}

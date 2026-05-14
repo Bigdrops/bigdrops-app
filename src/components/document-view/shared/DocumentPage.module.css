@@ -1,6 +1,6 @@
 .workspace {
     min-height: 100vh;
-    background: #ffffff;
+    background: hsl(var(--bd-surface));
     color: #011821;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     position: relative;
@@ -30,7 +30,7 @@
 }
 
 .actionStrip {
-    background: #ffffff;
+    background: hsl(var(--bd-surface));
     padding: 12px 16px;
     display: flex;
     gap: 8px;

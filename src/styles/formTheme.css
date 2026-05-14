@@ -178,6 +178,17 @@
   --bd-violet-bg: #f5f3ff;
   --bd-violet-border: #ddd6fe;
 
+  /* Brand & Accent Tokens */
+  --bd-brand: 240 56% 18%;
+  --bd-brand-foreground: 0 0% 100%;
+  --bd-accent: 20 83% 48%;
+  --bd-accent-foreground: 0 0% 100%;
+
+  /* Shadow Tokens */
+  --bd-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --bd-shadow-md: 0 0 0 1px rgba(17, 26, 74, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  --bd-shadow-lg: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+
   /* Icon Tokens */
   --bd-icon-size-sm: 14px;
   --bd-icon-size-md: 18px;

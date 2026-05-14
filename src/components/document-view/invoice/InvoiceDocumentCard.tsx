@@ -145,15 +145,15 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
       </div>
 
       {signatory && (
-        <div style={{ borderTop: "1px solid var(--steel-gray)", padding: "16px 18px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+        <div style={{ borderTop: "1px solid hsl(var(--bd-border))", padding: "16px 18px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
           {signatory.signatureUrl ? (
             <img src={signatory.signatureUrl} alt="Signature" style={{ maxHeight: 80, width: "auto", display: "block" }} />
           ) : (
-            <div style={{ fontStyle: "italic", color: "var(--slate)" }}>Authorized Signature</div>
+            <div style={{ fontStyle: "italic", color: "hsl(var(--bd-text-muted))" }}>Authorized Signature</div>
           )}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-blue)" }}>{signatory.name}</div>
-            {signatory.role && <div style={{ fontSize: 12, color: "var(--slate)", marginTop: 2 }}>{signatory.role}</div>}
+            <div style={{ fontSize: 14, fontWeight: 600, color: "hsl(var(--bd-text))" }}>{signatory.name}</div>
+            {signatory.role && <div style={{ fontSize: 12, color: "hsl(var(--bd-text-muted))", marginTop: 2 }}>{signatory.role}</div>}
           </div>
         </div>
       )}

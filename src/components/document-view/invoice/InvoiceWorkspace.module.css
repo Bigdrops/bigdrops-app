@@ -1,30 +1,9 @@
-:root {
-    --ink-blue: #011821;
-    --code-black: #000000;
-    --ghost-white: #ffffff;
-    --fog-gray: #f6f6f8;
-    --steel-gray: #e3e4e8;
-    --charcoal: #232730;
-    --slate: #7c7f88;
-    --deep-plum: #111a4a;
-    --action-orange: #ec652b;
-    --success-moss: #44b48b;
-    --info-blue: #7ea7e9;
-    --notification-teal: #88deeb;
-    --font-display:
-        "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, sans-serif;
-    --font-mono:
-        "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        monospace;
-}
-
 .workspace {
     composes: document-view-root from global;
     min-height: 100vh;
-    background: var(--ghost-white);
-    color: var(--ink-blue);
-    font-family: var(--font-display);
+    background: hsl(var(--bd-surface));
+    color: hsl(var(--bd-text));
+    font-family: var(--bd-font-family);
     position: relative;
 }
 
@@ -44,10 +23,10 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.92);
+    background: hsl(var(--bd-surface) / 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     padding: 6px 16px;
     display: flex;
     align-items: center;
@@ -67,10 +46,10 @@
 .topbarIcon {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: var(--bd-radius-lg);
     background: transparent;
     border: none;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,7 +59,7 @@
 }
 
 .topbarIcon:hover {
-    background: var(--fog-gray);
+    background: hsl(var(--bd-surface-muted));
 }
 
 .topbarIcon svg {
@@ -98,7 +77,7 @@
     font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.32px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -107,7 +86,7 @@
 
 .topbarSub {
     font-size: 13px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -126,10 +105,10 @@
 .topbarAction {
     width: 40px;
     height: 40px;
-    border-radius: 8px;
-    background: var(--fog-gray);
-    border: 1px solid var(--steel-gray);
-    color: var(--ink-blue);
+    border-radius: var(--bd-radius-lg);
+    background: hsl(var(--bd-surface-muted));
+    border: 1px solid hsl(var(--bd-border));
+    color: hsl(var(--bd-text));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,11 +117,11 @@
     transition: all 0.15s;
     box-shadow:
         rgba(0, 0, 0, 0.05) 0px 1px 2px 0px,
-        rgb(255, 255, 255) 0px 0px 0px 1px inset;
+        hsl(var(--bd-surface)) 0px 0px 0px 1px inset;
 }
 
 .topbarAction:hover {
-    background: var(--steel-gray);
+    background: hsl(var(--bd-border));
     transform: translateY(-1px);
 }
 
@@ -152,12 +131,12 @@
 }
 
 .actionRow {
-    background: var(--ghost-white);
+    background: hsl(var(--bd-surface));
     padding: 12px 16px;
     display: flex;
     gap: 8px;
     align-items: center;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     position: relative;
     z-index: 1;
 }
@@ -167,7 +146,7 @@
     align-items: center;
     gap: 6px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--bd-radius-lg);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -175,7 +154,7 @@
     transition: all 0.15s;
     white-space: nowrap;
     letter-spacing: -0.28px;
-    font-family: var(--font-display);
+    font-family: var(--bd-font-family);
 }
 
 .btn:active {
@@ -183,8 +162,8 @@
 }
 
 .btnPrimary {
-    background: var(--action-orange);
-    color: var(--ghost-white);
+    background: hsl(var(--bd-accent));
+    color: hsl(var(--bd-surface));
     flex: 1;
     justify-content: center;
     box-shadow:
@@ -194,20 +173,20 @@
 }
 
 .btnPrimary:hover {
-    background: #d85a24;
+    background: hsl(var(--bd-accent));
     transform: translateY(-1px);
 }
 
 .btnSecondary {
-    background: var(--ghost-white);
-    color: var(--deep-plum);
+    background: hsl(var(--bd-surface));
+    color: hsl(var(--bd-brand));
     flex: 1;
     justify-content: center;
-    border: 1px solid var(--deep-plum);
+    border: 1px solid hsl(var(--bd-brand));
 }
 
 .btnSecondary:hover {
-    background: var(--fog-gray);
+    background: hsl(var(--bd-surface-muted));
 }
 
 .btnPill {
@@ -216,20 +195,20 @@
     padding: 0;
     justify-content: center;
     flex-shrink: 0;
-    background: var(--ghost-white);
-    border: 1px solid var(--steel-gray);
-    border-radius: 8px;
+    background: hsl(var(--bd-surface));
+    border: 1px solid hsl(var(--bd-border));
+    border-radius: var(--bd-radius-lg);
     cursor: pointer;
     display: flex;
     align-items: center;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     transition: all 0.15s;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    box-shadow: var(--bd-shadow-sm);
 }
 
 .btnPill:hover {
-    background: var(--fog-gray);
-    border-color: var(--slate);
+    background: hsl(var(--bd-surface-muted));
+    border-color: hsl(var(--bd-text-muted));
 }
 
 .scrollBody {
@@ -242,14 +221,11 @@
 }
 
 .card {
-    background: var(--ghost-white);
-    border-radius: 8px;
+    background: hsl(var(--bd-surface));
+    border-radius: var(--bd-radius-lg);
     overflow: hidden;
-    border: 1px solid var(--steel-gray);
-    box-shadow:
-        rgba(17, 26, 74, 0.05) 0px 0px 0px 1px,
-        rgba(0, 0, 0, 0.1) 0px 1px 2px 0px,
-        rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset;
+    border: 1px solid hsl(var(--bd-border));
+    box-shadow: var(--bd-shadow-md);
 }
 
 .card + .card {
@@ -257,14 +233,11 @@
 }
 
 .invCard {
-    background: var(--ghost-white);
-    border-radius: 8px;
+    background: hsl(var(--bd-surface));
+    border-radius: var(--bd-radius-lg);
     overflow: hidden;
-    border: 1px solid var(--steel-gray);
-    box-shadow:
-        rgba(17, 26, 74, 0.05) 0px 0px 0px 1px,
-        rgba(0, 0, 0, 0.1) 0px 1px 2px 0px,
-        rgba(255, 255, 255, 0.5) 0px 0px 0px 1px inset;
+    border: 1px solid hsl(var(--bd-border));
+    box-shadow: var(--bd-shadow-md);
 }
 
 .invTop {
@@ -284,36 +257,36 @@
 .brandLogo {
     width: 44px;
     height: 44px;
-    border-radius: 8px;
-    background: var(--deep-plum);
+    border-radius: var(--bd-radius-lg);
+    background: hsl(var(--bd-brand));
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--ghost-white);
+    color: hsl(var(--bd-surface));
     font-weight: 700;
     font-size: 13px;
     letter-spacing: -0.26px;
-    box-shadow: rgba(17, 26, 74, 0.2) 0px 2px 4px 0px;
+    box-shadow: hsl(var(--bd-brand) / 0.2) 0px 2px 4px 0px;
 }
 
 .brandLogoImg {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: var(--bd-radius-lg);
 }
 
 .brandName {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.28px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
 }
 
 .brandSub {
     font-size: 12px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     line-height: 1.4;
     margin-top: 2px;
     font-weight: 400;
@@ -321,14 +294,14 @@
 
 .statusPill {
     padding: 5px 12px;
-    border-radius: 8px;
+    border-radius: var(--bd-radius-lg);
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    border: 1.5px solid rgba(236, 101, 43, 0.35);
-    background: rgba(236, 101, 43, 0.08);
-    color: #c44a1a;
+    border: 1.5px solid hsl(var(--bd-accent) / 0.35);
+    background: hsl(var(--bd-accent) / 0.08);
+    color: hsl(var(--bd-accent));
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -341,7 +314,7 @@
     font-size: 18px;
     font-weight: 600;
     letter-spacing: -0.36px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     margin-bottom: 10px;
     line-height: 1.4;
 }
@@ -359,17 +332,17 @@
     font-size: 12px;
     font-weight: 500;
     padding: 4px 10px;
-    border-radius: 6px;
-    background: var(--fog-gray);
-    color: var(--charcoal);
-    border: 1px solid var(--steel-gray);
+    border-radius: var(--bd-radius-md);
+    background: hsl(var(--bd-surface-muted));
+    color: hsl(var(--bd-text-muted));
+    border: 1px solid hsl(var(--bd-border));
     letter-spacing: -0.24px;
 }
 
 .infoGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border-top: 1px solid var(--steel-gray);
+    border-top: 1px solid hsl(var(--bd-border));
 }
 
 .infoCell {
@@ -377,7 +350,7 @@
 }
 
 .infoCell:first-child {
-    border-right: 1px solid var(--steel-gray);
+    border-right: 1px solid hsl(var(--bd-border));
 }
 
 .infoLabel {
@@ -385,14 +358,14 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     margin-bottom: 4px;
 }
 
 .infoValue {
     font-size: 14px;
     font-weight: 600;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     letter-spacing: -0.28px;
 }
 
@@ -401,9 +374,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     cursor: pointer;
-    background: var(--ghost-white);
+    background: hsl(var(--bd-surface));
 }
 
 .sectionHeaderLeft {
@@ -414,33 +387,33 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
 }
 
 .sectionChevron {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
-    border: 1px solid var(--steel-gray);
-    background: var(--ghost-white);
+    border-radius: var(--bd-radius-lg);
+    border: 1px solid hsl(var(--bd-border));
+    background: hsl(var(--bd-surface));
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    box-shadow: var(--bd-shadow-sm);
 }
 
 .sectionChevron:hover {
-    background: var(--fog-gray);
-    border-color: var(--slate);
+    background: hsl(var(--bd-surface-muted));
+    border-color: hsl(var(--bd-text-muted));
 }
 
 .sectionChevron svg {
     width: 14px;
     height: 14px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     transition: transform 0.2s;
 }
 
@@ -450,32 +423,32 @@
 
 .btnRecord {
     padding: 6px 14px;
-    border-radius: 8px;
+    border-radius: var(--bd-radius-lg);
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--action-orange);
-    background: rgba(236, 101, 43, 0.08);
-    border: 1.5px solid rgba(236, 101, 43, 0.3);
+    color: hsl(var(--bd-accent));
+    background: hsl(var(--bd-accent) / 0.08);
+    border: 1.5px solid hsl(var(--bd-accent) / 0.30);
     cursor: pointer;
-    font-family: var(--font-display);
+    font-family: var(--bd-font-family);
     white-space: nowrap;
     transition: all 0.15s;
 }
 
 .btnRecord:hover {
-    background: rgba(236, 101, 43, 0.15);
+    background: hsl(var(--bd-accent) / 0.15);
     border-color: rgba(236, 101, 43, 0.5);
 }
 
 .itemList {
-    border-top: 1px solid var(--steel-gray);
+    border-top: 1px solid hsl(var(--bd-border));
 }
 
 .itemRow {
     padding: 14px 18px;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -488,12 +461,12 @@
 .itemNum {
     width: 24px;
     height: 24px;
-    border-radius: 6px;
-    background: var(--deep-plum);
-    color: var(--ghost-white);
+    border-radius: var(--bd-radius-md);
+    background: hsl(var(--bd-brand));
+    color: hsl(var(--bd-surface));
     font-size: 11px;
     font-weight: 700;
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -509,13 +482,13 @@
     font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.28px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     margin-bottom: 2px;
 }
 
 .itemSub {
     font-size: 12px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     line-height: 1.45;
     margin-bottom: 8px;
     font-weight: 400;
@@ -530,18 +503,18 @@
 .itemPill {
     font-size: 11px;
     font-weight: 500;
-    color: var(--slate);
-    background: var(--fog-gray);
-    border: 1px solid var(--steel-gray);
+    color: hsl(var(--bd-text-muted));
+    background: hsl(var(--bd-surface-muted));
+    border: 1px solid hsl(var(--bd-border));
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: var(--bd-radius-md);
 }
 
 .itemAmount {
     font-size: 14px;
     font-weight: 600;
-    font-family: var(--font-mono);
-    color: var(--ink-blue);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: hsl(var(--bd-text));
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -550,10 +523,10 @@
     width: 100%;
     max-width: 200px;
     height: 120px;
-    border-radius: 6px;
+    border-radius: var(--bd-radius-md);
     object-fit: cover;
-    border: 1px solid var(--steel-gray);
-    background: var(--fog-gray);
+    border: 1px solid hsl(var(--bd-border));
+    background: hsl(var(--bd-surface-muted));
     margin-top: 8px;
     display: block;
 }
@@ -564,8 +537,8 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 4px;
-    border-top: 2px solid var(--ink-blue);
-    background: var(--fog-gray);
+    border-top: 2px solid hsl(var(--bd-text));
+    background: hsl(var(--bd-surface-muted));
 }
 
 .totalsRow {
@@ -578,12 +551,12 @@
 }
 
 .totalsRow .lbl {
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
 }
 
 .totalsRow .val {
     font-weight: 600;
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     text-align: right;
     min-width: 100px;
 }
@@ -591,7 +564,7 @@
 .totalsDivider {
     width: 100%;
     max-width: 320px;
-    border-top: 2px solid var(--ink-blue);
+    border-top: 2px solid hsl(var(--bd-text));
     margin: 8px 0 4px;
 }
 
@@ -606,15 +579,15 @@
 }
 
 .totalsGrand .val {
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     text-align: right;
     min-width: 100px;
-    color: var(--action-orange);
+    color: hsl(var(--bd-accent));
 }
 
 .amountWords {
     font-size: 11px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     font-style: italic;
     text-align: right;
     width: 100%;
@@ -626,18 +599,18 @@
 .bankDetail {
     margin: 0 18px 14px;
     padding: 16px;
-    background: var(--fog-gray);
-    border-radius: 8px;
+    background: hsl(var(--bd-surface-muted));
+    border-radius: var(--bd-radius-lg);
     font-size: 13px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    border: 1px solid var(--steel-gray);
+    border: 1px solid hsl(var(--bd-border));
 }
 
 .bankDetail .lbl {
     font-size: 10px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-weight: 600;
@@ -645,7 +618,7 @@
 
 .bankDetail .val {
     font-weight: 600;
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     margin-top: 2px;
 }
 
@@ -654,7 +627,7 @@
     font-weight: 700;
     font-size: 14px;
     margin-bottom: 4px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
 }
 
 .paymentHeader {
@@ -662,8 +635,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--steel-gray);
-    background: rgba(236, 101, 43, 0.06);
+    border-bottom: 1px solid hsl(var(--bd-border));
+    background: hsl(var(--bd-accent) / 0.06);
 }
 
 .paymentHeaderLeft {
@@ -674,7 +647,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--action-orange);
+    color: hsl(var(--bd-accent));
 }
 
 .paymentBody {
@@ -689,16 +662,16 @@
 }
 
 .payRow .lbl {
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
 }
 
 .payRow .val {
     font-weight: 600;
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .payRowDue .val {
-    color: var(--action-orange);
+    color: hsl(var(--bd-accent));
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.4px;
@@ -712,20 +685,20 @@
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     margin-bottom: 6px;
 }
 
 .progressTrack {
     height: 6px;
-    background: var(--steel-gray);
+    background: hsl(var(--bd-border));
     border-radius: 10px;
     overflow: hidden;
 }
 
 .progressFill {
     height: 100%;
-    background: var(--action-orange);
+    background: hsl(var(--bd-accent));
     border-radius: 10px;
     transition: width 0.3s ease;
 }
@@ -735,7 +708,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
 }
 
 .advRow:last-child {
@@ -745,12 +718,12 @@
 .advLeft .num {
     font-size: 14px;
     font-weight: 600;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
 }
 
 .advLeft .sub {
     font-size: 12px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     margin-top: 2px;
 }
 
@@ -762,8 +735,8 @@
 
 .advAmount {
     font-weight: 600;
-    font-family: var(--font-mono);
-    color: var(--action-orange);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: hsl(var(--bd-accent));
 }
 
 .activityRow {
@@ -772,7 +745,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 10px 18px;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     cursor: default;
 }
 
@@ -783,7 +756,7 @@
 .activityLabel {
     font-size: 13px;
     font-weight: 500;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     letter-spacing: -0.26px;
     line-height: 1.4;
     flex: 1;
@@ -797,38 +770,38 @@
     z-index: 200;
     width: 52px;
     height: 52px;
-    border-radius: 8px;
-    background: var(--deep-plum);
+    border-radius: var(--bd-radius-lg);
+    background: hsl(var(--bd-brand));
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: rgba(17, 26, 74, 0.3) 0px 6px 20px 0px;
+    box-shadow: hsl(var(--bd-brand) / 0.3) 0px 6px 20px 0px;
     transition: all 0.15s;
 }
 
 .fab:hover {
     transform: translateY(-2px);
-    box-shadow: rgba(17, 26, 74, 0.4) 0px 8px 24px 0px;
+    box-shadow: hsl(var(--bd-brand) / 0.4) 0px 8px 24px 0px;
 }
 
 .fab svg {
     width: 22px;
     height: 22px;
-    color: var(--ghost-white);
+    color: hsl(var(--bd-surface));
 }
 
 /* ── Standalone utility classes ─────────────────────────────────────────── */
 
 .lbl {
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     font-weight: 400;
 }
 
 .val {
     font-weight: 600;
-    font-family: var(--font-mono);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     text-align: right;
     min-width: 100px;
     letter-spacing: -0.28px;
@@ -843,12 +816,12 @@
     font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.28px;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
 }
 
 .sub {
     font-size: 12px;
-    color: var(--slate);
+    color: hsl(var(--bd-text-muted));
     margin-top: 2px;
     font-weight: 400;
 }
@@ -860,7 +833,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 18px;
-    border-bottom: 1px solid var(--steel-gray);
+    border-bottom: 1px solid hsl(var(--bd-border));
     cursor: pointer;
     user-select: none;
     min-height: 44px;
@@ -871,13 +844,13 @@
 }
 
 .optRow:active {
-    background: var(--fog-gray);
+    background: hsl(var(--bd-surface-muted));
 }
 
 .optLabel {
     font-size: 13px;
     font-weight: 500;
-    color: var(--ink-blue);
+    color: hsl(var(--bd-text));
     letter-spacing: -0.26px;
 }
 
@@ -891,18 +864,18 @@
 }
 
 .optToggle[data-on="true"] {
-    background: var(--deep-plum);
+    background: hsl(var(--bd-brand));
 }
 
 .optToggle[data-on="false"] {
-    background: var(--steel-gray);
+    background: hsl(var(--bd-border));
 }
 
 .optToggleKnob {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #fff;
+    background: hsl(var(--bd-surface));
     position: absolute;
     top: 3px;
     left: 3px;
@@ -923,16 +896,16 @@
     padding: 10px 18px;
     background: none;
     border: none;
-    border-top: 1px solid var(--steel-gray);
+    border-top: 1px solid hsl(var(--bd-border));
     font-size: 12px;
     font-weight: 600;
-    color: var(--deep-plum);
+    color: hsl(var(--bd-brand));
     cursor: pointer;
     letter-spacing: -0.24px;
-    font-family: var(--font-display);
+    font-family: var(--bd-font-family);
     text-align: center;
 }
 
 .optCustomizeBtn:active {
-    background: var(--fog-gray);
+    background: hsl(var(--bd-surface-muted));
 }
