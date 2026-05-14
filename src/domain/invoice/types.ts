@@ -18,6 +18,24 @@ export interface InvoiceAttachment {
   [key: string]: unknown
 }
 
+/**
+ * Advance invoice configuration stored in invoice custom_fields.advance_invoice.
+ *
+ * CANONICAL (active runtime):
+ *   enabled, mode, value, amount, document_number, issued_at, due_at,
+ *   status, primary_label, secondary_label, suffix, contract_value,
+ *   print_snapshot
+ *
+ * LEGACY TRACEABILITY (historical only — stored for backfill/diagnostics):
+ *   legacy_child_invoice_id, legacy_child_invoice_number,
+ *   legacy_child_invoice_total
+ *
+ * TRANSITIONAL (camelCase aliases read during migration, never written):
+ *   childInvoiceId, primaryLabel, secondaryLabel, contractValue
+ *
+ * HISTORICAL CHILD-ROW DETECTION (needed by legacy cleanup / diagnostics):
+ *   role, parentId, position
+ */
 export interface AdvanceConfig {
   enabled?: boolean
   mode: 'percent' | 'percentage' | 'fixed'
@@ -28,19 +46,22 @@ export interface AdvanceConfig {
   due_at?: string
   primary_label?: string
   secondary_label?: string
+  suffix?: string
   contract_value?: number
+  print_snapshot?: unknown
+
   legacy_child_invoice_id?: string | null
   legacy_child_invoice_number?: string | null
   legacy_child_invoice_total?: number
-  print_snapshot?: unknown
+
   childInvoiceId?: string | null
-  suffix?: string
   primaryLabel?: string
   secondaryLabel?: string
-  parentId?: string | null
-  role?: string | null
-  position?: number
   contractValue?: number
+
+  role?: string | null
+  parentId?: string | null
+  position?: number
 }
 
 export interface InvoicePdfOutput {

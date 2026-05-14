@@ -7,7 +7,6 @@ import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,
   ADVANCE_SUFFIX_DEFAULT,
-  buildAdvanceChildInvoicePayload,
   buildAdvanceParentInvoiceMetadata,
   calculateAdvanceAmount,
   getAdvanceDraftFromInvoice,
@@ -28,61 +27,48 @@ test('advance child flow calculates percent and fixed amounts from the parent to
   assert.equal(calculateAdvanceAmount({ contractValue: 250000, mode: 'fixed', inputValue: '95000' }), 95000)
 })
 
-test('advance child flow builds a child payload without converting the parent invoice into advance mode', () => {
-  const payload = buildAdvanceChildInvoicePayload({
-    parentInvoice: {
-      id: 'parent-1',
-      invoice_number: 'INV-001',
-      invoice_title: 'Main Invoice',
-      client_id: 'client-1',
-      client_name: 'Acme Ltd',
-      project_id: 'project-1',
-      issue_date: '2026-04-21',
-      due_date: '2026-04-30',
-      notes: 'Parent notes',
-      terms: 'Parent terms',
-      total: 500000,
-      custom_fields: '{"foo":"bar"}',
-    },
-    mode: 'percent',
-    inputValue: '30',
-    suffix: 'A',
-    primaryLabel: ADVANCE_PRIMARY_LABEL_DEFAULT,
-    secondaryLabel: ADVANCE_SECONDARY_LABEL_DEFAULT,
-  })
-
-  assert.equal(payload.invoice_number, 'INV-001-A')
-  const customFields = typeof payload.custom_fields === 'string' ? JSON.parse(payload.custom_fields) : payload.custom_fields
-  const config = customFields.advance_invoice
-  assert.equal(config.parentId, 'parent-1')
-  assert.equal(config.role, 'advance')
-  assert.equal(config.mode, 'percent')
-  assert.equal(config.value, 30)
-  assert.equal(config.contractValue, 500000)
-  assert.equal(payload.total, 150000)
-  assert.equal(config.primaryLabel, ADVANCE_PRIMARY_LABEL_DEFAULT)
-  assert.equal(config.secondaryLabel, ADVANCE_SECONDARY_LABEL_DEFAULT)
-  assert.equal(payload.invoice_title, 'Main Invoice')
-})
-
-test('advance child flow can prefill edit state from an existing child invoice', () => {
+test('getAdvanceDraftFromInvoice reads from parent metadata only — no legacy fallback', () => {
   const draft = getAdvanceDraftFromInvoice({
-    invoice_number: 'INV-001-A',
-    total: 125000,
+    invoice_number: 'INV-001',
     custom_fields: {
       advance_invoice: {
-        mode: 'percent',
-        value: 25,
-        contractValue: 500000,
-        primaryLabel: 'Advance invoice due now',
-        secondaryLabel: 'Balance upon completion',
-      }
-    }
+        enabled: true,
+        amount: 30000,
+        mode: 'percentage',
+        value: 30,
+        primary_label: 'Metadata Primary',
+        secondary_label: 'Metadata Secondary',
+        suffix: 'B',
+      },
+    },
   })
 
   assert.deepEqual(draft, {
     mode: 'percent',
-    inputValue: '25',
+    inputValue: 30,
+    suffix: 'B',
+    primaryLabel: 'Metadata Primary',
+    secondaryLabel: 'Metadata Secondary',
+  })
+})
+
+test('getAdvanceDraftFromInvoice returns defaults for non-parent invoices', () => {
+  const draft = getAdvanceDraftFromInvoice({
+    invoice_number: 'INV-002',
+    total: 5000,
+    custom_fields: {
+      advance_invoice: {
+        role: 'advance',
+        parentId: 'parent-1',
+        mode: 'fixed',
+        value: 500,
+      },
+    },
+  })
+
+  assert.deepEqual(draft, {
+    mode: 'percent',
+    inputValue: 30,
     suffix: 'A',
     primaryLabel: 'Advance invoice due now',
     secondaryLabel: 'Balance upon completion',

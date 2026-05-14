@@ -7,6 +7,7 @@ import {
   getAdvanceInvoiceMetadata,
   isAdvanceInvoiceChild,
   isAdvanceInvoiceParent,
+  isMalformedAdvanceMetadata,
   mergeAdvanceInvoiceMetadata,
 } from '../../domain/invoice/advanceMetadata.ts'
 import { getAdvanceSummaryValues } from '../../domain/invoice/advanceSummary.ts'
@@ -135,7 +136,7 @@ test('advance summary can build from canonical parent metadata without child-row
   })
 })
 
-test('advance summary falls back to child-row totals only when parent metadata is absent', () => {
+test('advance summary returns null when parent metadata is absent — no legacy fallback', () => {
   const summary = getAdvanceSummaryValues({
     total: 25000,
     custom_fields: {
@@ -149,15 +150,60 @@ test('advance summary falls back to child-row totals only when parent metadata i
     },
   })
 
-  assert.deepEqual(summary, {
-    contractValue: 100000,
-    thisAdvance: 25000,
-    balanceRemaining: 75000,
-    advancePercent: 25,
-    balancePercent: 75,
-    primaryLabel: 'Advance',
-    secondaryLabel: 'Balance',
-    primaryLabelWithPercent: 'Advance (25%)',
-    secondaryLabelWithPercent: 'Balance (75%)',
+  assert.equal(summary, null)
+})
+
+test('rejects malformed metadata with unknown keys', () => {
+  assert.equal(isMalformedAdvanceMetadata({ enabled: true, amount: 5000, mode: 'fixed', value: 5000, unknownKey: 'oops' }), true)
+})
+
+test('rejects non-object input as malformed', () => {
+  assert.equal(isMalformedAdvanceMetadata(null), true)
+  assert.equal(isMalformedAdvanceMetadata(undefined), true)
+  assert.equal(isMalformedAdvanceMetadata('string'), true)
+  assert.equal(isMalformedAdvanceMetadata(123), true)
+  assert.equal(isMalformedAdvanceMetadata([]), true)
+})
+
+test('rejects advance child role as malformed parent metadata', () => {
+  assert.equal(isMalformedAdvanceMetadata({ role: 'advance', amount: 100 }), true)
+})
+
+test('rejects non-finite numeric fields', () => {
+  assert.equal(isMalformedAdvanceMetadata({ enabled: true, amount: NaN, mode: 'fixed', value: 5000 }), true)
+  assert.equal(isMalformedAdvanceMetadata({ enabled: true, amount: 5000, mode: 'fixed', value: Infinity }), true)
+})
+
+test('rejects invalid mode string', () => {
+  assert.equal(isMalformedAdvanceMetadata({ enabled: true, amount: 5000, mode: 'invalid', value: 5000 }), true)
+})
+
+test('accepts valid metadata shape', () => {
+  assert.equal(isMalformedAdvanceMetadata({ enabled: true, amount: 5000, mode: 'fixed', value: 5000 }), false)
+  assert.equal(isMalformedAdvanceMetadata({
+    enabled: true,
+    amount: 30000,
+    mode: 'percentage',
+    value: 30,
+    document_number: 'INV-001-A',
+    primary_label: 'Advance',
+    secondary_label: 'Balance',
+    contract_value: 100000,
+  }), false)
+})
+
+test('getAdvanceInvoiceMetadata returns null for malformed config', () => {
+  const result = getAdvanceInvoiceMetadata({
+    custom_fields: {
+      advance_invoice: {
+        enabled: true,
+        amount: 5000,
+        mode: 'wtf',
+        value: 5000,
+        unknownKey: 'bad',
+      },
+    },
   })
+
+  assert.equal(result, null)
 })

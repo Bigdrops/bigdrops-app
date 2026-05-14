@@ -1,4 +1,30 @@
+/**
+ * =============================================================================
+ * HISTORICAL / DIAGNOSTIC ACCESS BOUNDARY
+ * =============================================================================
+ *
+ * This file is the sole gateway for interacting with legacy advance child rows.
+ * All functions here deal with the OLD model where advances were separate DB
+ * rows with `role: 'advance'` in custom_fields.
+ *
+ * ACTIVE RUNTIME (src/domain/invoice/advanceMetadata.ts):
+ *   Parent `custom_fields.advance_invoice` is the canonical source of truth.
+ *   No function in this file is used to hydrate or derive active advance state.
+ *
+ * HISTORICAL / DIAGNOSTIC (this file):
+ *   Classification, counting, backfill, and migration utilities for legacy
+ *   child rows. Used by:
+ *     - UI filters (exclude legacy rows from invoice lists)
+ *     - Diagnostics / migration verification
+ *     - Backfill tooling
+ *
+ * WARNING: Do not reintroduce child-row authority into the active runtime.
+ * Legacy child rows are historical artifacts only.
+ * =============================================================================
+ */
+
 import { safeParseJson } from '../../lib/json/safeParseJson'
+import { isAdvanceInvoiceParent } from './advanceMetadata'
 
 export type AdvanceLegacyChildRow = {
   id: string
@@ -159,16 +185,53 @@ export function buildCanonicalMetadataFromLegacyChild(
   }
 }
 
+/**
+ * =============================================================================
+ * EXPLICIT HISTORICAL ACCESS BOUNDARY
+ * =============================================================================
+ *
+ * These helpers deterministically separate active runtime invoices from
+ * historical legacy artifacts. Use them to prevent accidental reintroduction
+ * of child-row authority into the active runtime.
+ */
+
+/**
+ * Returns true when an invoice row carries canonical parent-side advance
+ * metadata and should be treated as the active runtime source of truth.
+ * Legacy child rows and rows without advance metadata return false.
+ */
+export function isActiveRuntimeAdvanceMetadata(
+  invoice: { custom_fields?: unknown } | null | undefined,
+): boolean {
+  if (!invoice) return false
+  return isAdvanceInvoiceParent(invoice) && !isLegacyAdvanceChildRow(invoice)
+}
+
+/**
+ * Returns true when an invoice row is a legacy advance child row that exists
+ * solely as a historical artifact. These rows must never drive runtime behavior,
+ * UI display, or metadata derivation in the active code path.
+ */
+export function isHistoricalAdvanceArtifact(
+  invoice: { custom_fields?: unknown } | null | undefined,
+): boolean {
+  return isLegacyAdvanceChildRow(invoice)
+}
+
 export function shouldExcludeFromRuntime(invoice: AdvanceLegacyChildRow & { parent_invoice_id?: string | null; archived_at?: string }): boolean {
   const status = getLegacyAdvanceStatus(invoice)
   return status === 'quarantined' || status === 'orphan'
 }
 
+/**
+ * Returns true for ANY legacy advance child row.
+ *
+ * Used by the UI filter in useInvoiceDetailData.js to EXCLUDE legacy child rows
+ * from the advance invoices list. All legacy child rows are historical artifacts
+ * and should never appear in the active UI.
+ */
 export function isLegacyAdvanceChildRowForRuntime(invoice: { custom_fields?: unknown } | null | undefined): boolean {
-  if (!isLegacyAdvanceChildRow(invoice)) return false
-  // Legacy rows with a parent are still legacy - they should not appear as regular child invoices in UI
-  // The only advance child rows that should appear are the canonical ones created via parent metadata
-  return true
+  return isLegacyAdvanceChildRow(invoice) ?? false
 }
 
 export function getActiveLegacyAdvanceChildren(

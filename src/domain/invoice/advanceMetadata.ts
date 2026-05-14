@@ -78,7 +78,9 @@ function getRawAdvanceConfig(input: AdvanceCarrier | unknown): AdvanceConfigLike
 }
 
 function normalizeMode(value: unknown): AdvanceInvoiceMetadataMode {
-  return value === 'fixed' ? 'fixed' : 'percentage'
+  if (value === 'fixed') return 'fixed'
+  if (value === 'percentage' || value === 'percent') return 'percentage'
+  return 'percentage'
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -88,6 +90,16 @@ function clamp(value: number, min: number, max: number) {
 function roundCurrency(value: number) {
   return Math.round(value * 100) / 100
 }
+
+const VALID_METADATA_KEYS = new Set<string>([
+  'enabled', 'amount', 'mode', 'value',
+  'document_number', 'issued_at', 'due_at', 'status',
+  'primary_label', 'secondary_label', 'suffix',
+  'contract_value',
+  'legacy_child_invoice_id', 'legacy_child_invoice_number',
+  'legacy_child_invoice_total',
+  'print_snapshot',
+])
 
 function deriveAdvanceAmount({
   amount,
@@ -149,6 +161,9 @@ function hasMeaningfulParentMetadata(config: AdvanceConfigLike | null) {
   if (!config) return false
 
   if (config.role === 'advance') return false
+
+  if (isMalformedAdvanceMetadata(config)) return false
+
   if (config.enabled === true) return true
   if (config.amount !== undefined) return true
   if (config.value !== undefined) return true
@@ -179,7 +194,8 @@ export function buildAdvanceInvoiceMetadata(
   },
 ): AdvanceInvoiceMetadata {
   const mode = normalizeMode(input.mode)
-  const value = Math.max(0, toNumber(input.value))
+  const rawValue = toNumber(input.value)
+  const value = mode === 'percentage' ? clamp(rawValue, 0, 100) : Math.max(0, rawValue)
   const amount = Math.max(0, toNumber(input.amount))
   const contractValue = toNumber(input.contract_value)
   const childTotal = toNumber(input.legacy_child_invoice_total)
@@ -205,7 +221,7 @@ export function buildAdvanceInvoiceMetadata(
   ]
 
   for (const [key, valueCandidate] of optionalFields) {
-    if (valueCandidate !== undefined) {
+    if (valueCandidate !== undefined && VALID_METADATA_KEYS.has(key)) {
       ;(metadata as Record<string, unknown>)[key] = valueCandidate
     }
   }
@@ -216,9 +232,36 @@ export function buildAdvanceInvoiceMetadata(
   return metadata
 }
 
+export function isMalformedAdvanceMetadata(input: unknown): boolean {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return true
+  
+  const record = input as Record<string, unknown>
+
+  if (record.role === 'advance') return true
+
+  if (record.enabled !== undefined && typeof record.enabled !== 'boolean') return true
+
+  if (record.mode !== undefined && typeof record.mode !== 'string') return true
+  if (typeof record.mode === 'string' && !['fixed', 'percentage', 'percent'].includes(record.mode as string)) return true
+
+  if (record.amount !== undefined && record.amount !== null && !Number.isFinite(Number(record.amount))) return true
+  if (record.value !== undefined && record.value !== null && !Number.isFinite(Number(record.value))) return true
+  if (record.contract_value !== undefined && record.contract_value !== null && !Number.isFinite(Number(record.contract_value))) return true
+
+  for (const key of Object.keys(record)) {
+    if (!VALID_METADATA_KEYS.has(key) && key !== 'role') {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): AdvanceInvoiceMetadata | null {
   const config = getRawAdvanceConfig(input)
   if (!hasMeaningfulParentMetadata(config)) return null
+
+  if (isMalformedAdvanceMetadata(config)) return null
 
   const record = (input && typeof input === 'object' ? input : null) as Record<string, unknown> | null
   const mode = normalizeMode(config?.mode)
@@ -267,17 +310,38 @@ export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): Adva
   })
 }
 
-export function mergeAdvanceInvoiceMetadata(customFields: unknown, metadata: AdvanceInvoiceMetadata) {
+export function mergeAdvanceInvoiceMetadata(customFields: unknown, metadata: AdvanceInvoiceMetadata): Record<string, unknown> & { advance_invoice: AdvanceInvoiceMetadata } {
   return {
     ...parseAdvanceContainer(customFields),
     advance_invoice: buildAdvanceInvoiceMetadata(metadata),
   }
 }
 
-export function clearAdvanceInvoiceMetadata(customFields: unknown) {
+export function clearAdvanceInvoiceMetadata(customFields: unknown): Record<string, unknown> {
   const nextCustomFields = {
     ...parseAdvanceContainer(customFields),
   }
   delete nextCustomFields.advance_invoice
   return nextCustomFields
+}
+
+/**
+ * Normalize and validate advance metadata in one step.
+ * Returns null if the input is malformed or cannot be normalized safely.
+ * This is the fail-closed entry point for external callers.
+ * Preserves unrelated custom_fields keys.
+ */
+export function normalizeAdvanceMetadata(
+  input: Partial<AdvanceInvoiceMetadata> & {
+    mode?: AdvanceInvoiceMetadataMode | 'percent'
+    value?: number | string
+    amount?: number | string
+    contract_value?: number | string
+    legacy_child_invoice_total?: number | string
+  },
+): AdvanceInvoiceMetadata | null {
+  if (isMalformedAdvanceMetadata(input)) return null
+  const built = buildAdvanceInvoiceMetadata(input)
+  if (isMalformedAdvanceMetadata(built)) return null
+  return built
 }
