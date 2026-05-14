@@ -3,7 +3,7 @@ import { Hash, Calendar, FileText } from "lucide-react";
 import styles from "./InvoiceWorkspace.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
-import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
+import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from "@/domain/documentMedia";
 
 interface InvoiceDocumentCardProps {
   invoice: any;
@@ -13,6 +13,7 @@ interface InvoiceDocumentCardProps {
   logoUrl?: string | null;
   companyName?: string;
   companySub?: string;
+  settings?: any;
 }
 
 export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
@@ -23,19 +24,21 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   logoUrl,
   companyName,
   companySub,
+  settings,
 }) => {
   const status = invoice?.status?.toUpperCase() || "UNPAID";
   const initials = companyName ? companyName.substring(0, 2).toUpperCase() : "";
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
   const signatory = previewModel?.signatory || null;
+  const resolvedLogoUrl = logoUrl || resolveCanonicalLogoUrl(settings);
 
   return (
     <div className={styles.invCard}>
       <div className={styles.invTop}>
         <div className={styles.brandBlock}>
           <div className={styles.brandLogo}>
-            {logoUrl
-              ? <img src={logoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
+            {resolvedLogoUrl
+              ? <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
               : initials || null}
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>

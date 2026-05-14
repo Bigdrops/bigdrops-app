@@ -25,6 +25,7 @@ interface InvoiceWorkspaceProps {
   logoUrl?: string;
   companyName?: string;
   companySub?: string;
+  settings?: any;
 
   // Actions
   onBack: () => void;
@@ -59,6 +60,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
   logoUrl,
   companyName,
   companySub,
+  settings,
 
   onBack,
   onShare,
@@ -104,6 +106,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
           logoUrl={logoUrl}
           companyName={companyName}
           companySub={companySub}
+          settings={settings}
         />
 
         <BankDetailsCard bankAccounts={bankAccounts} />

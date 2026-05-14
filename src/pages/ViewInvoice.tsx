@@ -125,6 +125,7 @@ export default function ViewInvoice() {
         logoUrl={resolveCanonicalLogoUrl(settings)}
         companyName={settings?.company_name || ""}
         companySub={settings?.company_tagline || ""}
+        settings={settings}
         
         onBack={() => navigate("/invoices")}
         onShare={actions.handleShare}
