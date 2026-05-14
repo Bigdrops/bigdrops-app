@@ -21,6 +21,7 @@ import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/dom
 import { loadItemPriceContext, resolveExactItemMatch } from '@/modules/item-library/services'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
+import { formatNaira } from '@/lib/formatters/money'
 import type { InvoiceItem } from '@/domain/invoice/types'
 import type { ItemSuggestion } from '@/modules/item-library/types'
 
@@ -41,10 +42,6 @@ function ItemMiniBtn({ children, className = '', ...props }: ItemMiniBtnProps) {
       {children}
     </button>
   )
-}
-
-function formatCurrency(value: number | string | null | undefined): string {
-  return `NGN ${Number(value || 0).toLocaleString()}`
 }
 
 interface MobileItemCardProps {
@@ -400,7 +397,7 @@ export default function MobileItemCard({
             </div>
             <div className="min-w-0 text-right">
               <div className="font-mono text-[18px] font-extrabold tracking-[-0.03em] text-[var(--bd-text)]">
-                {formatCurrency(computedAmount).replace('NGN', '').trim()}
+                {formatNaira(computedAmount).replace('₦', '').trim()}
               </div>
             </div>
           </div>

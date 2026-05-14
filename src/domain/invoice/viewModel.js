@@ -26,7 +26,7 @@ export function buildInvoiceViewModel({
   const invoiceTotal = toNumber(safeInvoice.total)
   const cashReceived = toNumber(financials?.cash_received)
   const settledTotal = toNumber(financials?.settled_total || cashReceived)
-  const balanceDue = Math.max(0, toNumber(financials?.balance_due ?? invoiceTotal - settledTotal))
+  const balanceDue = Math.max(0, toNumber(financials?.balance_due ?? invoiceTotal))
 
   const paymentHistory = (() => {
     let runningBalance = invoiceTotal

@@ -1,145 +1,50 @@
-import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { normalizeQuantity } from '@/domain/invoice/normalize'
 import { resolveColumnBehavior } from '@/domain/invoice/columns'
-import type { ColumnConfig } from '@/domain/invoice/types'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
-import { getAdditionalFields } from './additionalFields'
-import { buildSummaryRows } from './calculations'
-import type { InvoiceCustomFields } from './types'
 
-import { getAdvanceSummaryValues } from './advanceSummary'
+import type {
+  PreviewBankAccount,
+  PreviewDetailRow,
+  PreviewItem,
+  PreviewTotalRow,
+  PreviewNoteSection,
+  PreviewSignatory,
+  InvoiceLike,
+  InvoiceItemLike,
+  ClientLike,
+  SettingsLike,
+  BankAccountLike,
+  SignatoryLike,
+  CustomFieldObjectLike,
+  PdfOutputLike,
+  BuildInvoicePreviewModelInput,
+} from './renderTypes'
 
-export type PreviewBankAccount = {
-  id: string
-  bankName: string
-  accountName: string
-  accountNumber: string
-  sortCode: string
-  isDefault: boolean
-}
+import {
+  buildBankAccountsProjection,
+  resolveSelectedBankAccount,
+  buildCompanyPreviewLines,
+  buildClientPreviewLines,
+  buildSignatoryProjection,
+  buildTotalsProjection,
+  buildBalanceDisplayProjection,
+  buildAmountInWordsProjection,
+  buildAdvanceDisplayProjection,
+  buildDetailRowsProjection,
+  buildAdditionalFieldsProjection,
+  buildAttachmentLinksProjection,
+  buildNotesSectionsProjection,
+} from './projections'
 
-export type PreviewDetailRow = {
-  label: string
-  value: string
-}
-
-export type PreviewItem =
-  | { type: 'group'; label: string }
-  | { type: 'group_footer'; value: string; showSubtotal: boolean }
-  | { type: 'line'; label: string; detail: string; value: string; facts: string[]; imageUrl?: string | null }
-
-export type PreviewTotalRow = {
-  label: string
-  value: string
-  emphasis?: boolean
-  valueClassName?: string
-  labelClassName?: string
-}
-
-export type PreviewNoteSection =
-  | { title: string; kind: 'html'; html: string }
-  | { title: string; kind: 'text'; text: string }
-  | { title: string; kind: 'fields'; fields: Array<{ label: string; value: string }> }
-  | { title: string; kind: 'links'; links: { label: string; url: string }[] }
-
-export type PreviewSignatory = {
-  name: string
-  role: string
-  signatureUrl: string
-}
-
-type InvoiceLike = {
-  custom_fields?: unknown
-  client_name?: string | null
-  payment_terms?: string | null
-  invoice_title?: string | null
-  document_type?: string | null
-  work_duration?: string | null
-  subtotal?: number | string | null
-  vat?: number | string | null
-  workmanship?: number | string | null
-  transportation?: number | string | null
-  shipping?: number | string | null
-  discount?: number | string | null
-  wht?: number | string | null
-  total?: number | string | null
-  amount_in_words?: string | null
-  notes?: string | null
-  terms?: string | null
-}
-
-type InvoiceItemLike = {
-  row_type?: string | null
-  group_name?: string | null
-  description?: string | null
-  sub_description?: string | null
-  amount?: number | string | null
-  quantity?: number | string | null
-  unit_price?: number | string | null
-  unit?: string | null
-  make?: string | null
-  install_rate?: number | string | null
-  vat_rate?: number | string | null
-  discount_rate?: number | string | null
-  custom_data?: Record<string, unknown> | null
-  group_id?: string | null
-  image_url?: string | null
-}
-
-type ClientLike = {
-  contact_person?: string | null
-  address?: string | null
-  city?: string | null
-  state?: string | null
-  phone?: string | null
-  email?: string | null
-}
-
-type SettingsLike = {
-  company_address?: string | null
-  company_city?: string | null
-  company_state?: string | null
-  company_vat?: string | null
-  company_phone?: string | null
-  company_email?: string | null
-}
-
-type BankAccountLike = {
-  id: string
-  bank_name?: string | null
-  account_name?: string | null
-  account_number?: string | null
-  sort_code?: string | null
-  is_default?: boolean | null
-}
-
-type SignatoryLike = {
-  id?: string | null
-  name?: string | null
-  role?: string | null
-  signature_url?: string | null
-  signatureUrl?: string | null
-}
-
-type CustomFieldObjectLike = {
-  header?: Array<{ label?: string | null; value?: string | null }>
-  additionalFields?: Array<{ label?: string | null; value?: string | null }>
-  bottom?: Array<{ text?: string | null }>
-  attachments?: Array<{ url?: string | null; label?: string | null; name?: string | null }>
-  columnConfig?: Array<ColumnConfig>
-  notesTitle?: string | null
-  termsTitle?: string | null
-} & InvoiceCustomFields
-
-type PdfOutputLike = {
-  bankAccountId?: string | null
-  showBalanceDue?: boolean
-  showAmountInWords?: boolean
-  showVatPercentage?: boolean
-  showWhtPercentage?: boolean
-  showDiscountPercentage?: boolean
-}
+export type {
+  PreviewBankAccount,
+  PreviewDetailRow,
+  PreviewItem,
+  PreviewTotalRow,
+  PreviewNoteSection,
+  PreviewSignatory,
+  BuildInvoicePreviewModelInput,
+} from './renderTypes'
 
 function resolveLineAmount(item: InvoiceItemLike) {
   const explicitAmount = Number(item.amount)
@@ -154,29 +59,6 @@ function resolvePreviewGroupSubtotal(items: InvoiceItemLike[], groupId: string |
     if (item.group_id !== groupId) return subtotal
     return subtotal + resolveLineAmount(item)
   }, 0)
-}
-
-export type BuildInvoicePreviewModelInput = {
-  invoice: InvoiceLike
-  items: InvoiceItemLike[]
-  client?: ClientLike
-  settings?: SettingsLike
-  bankAccounts?: BankAccountLike[]
-  customFieldObject?: CustomFieldObjectLike
-  pdfOutput?: PdfOutputLike
-  signatory?: PreviewSignatory | null
-  poNumber?: string
-  invoiceTotal: number
-  cashReceived: number
-  balanceDue: number
-  totals?: {
-    rawSubtotal?: number
-    vatAmount?: number
-    discountAmount?: number
-    whtAmount?: number
-    installRateTotal?: number
-  }
-  formatMoney: (value: number) => string
 }
 
 export function resolveDocumentSignatory(
@@ -212,57 +94,16 @@ export function buildInvoicePreviewModel({
   totals,
   formatMoney,
 }: BuildInvoicePreviewModelInput) {
-  const previewBankAccounts: PreviewBankAccount[] = bankAccounts.map((account) => ({
-    id: account.id,
-    bankName: account.bank_name || '',
-    accountName: account.account_name || '',
-    accountNumber: account.account_number || '',
-    sortCode: account.sort_code || '',
-    isDefault: account.is_default === true,
-  }))
-
-  const selectedPreviewBank =
-    previewBankAccounts.find((account) => account.id === pdfOutput?.bankAccountId)
-    || previewBankAccounts.find((account) => account.isDefault)
-    || previewBankAccounts[0]
-    || null
-
-  const companyPreviewLines = [
-    settings?.company_address,
-    [settings?.company_city, settings?.company_state].filter(Boolean).join(', '),
-    settings?.company_vat ? `VAT Number: ${settings.company_vat}` : null,
-    settings?.company_phone ? `Phone: ${settings.company_phone}` : null,
-    settings?.company_email ? `Email: ${settings.company_email}` : null,
-  ].filter(Boolean) as string[]
-
-  const clientPreviewLines = [
-    client?.contact_person ? `Attn: ${client.contact_person}` : null,
-    client?.address || null,
-    [client?.city, client?.state].filter(Boolean).join(', '),
-    client?.phone || null,
-    client?.email || null,
-  ].filter(Boolean) as string[]
-
+  const previewBankAccounts = buildBankAccountsProjection(bankAccounts)
+  const selectedPreviewBank = resolveSelectedBankAccount(previewBankAccounts, pdfOutput?.bankAccountId)
+  const companyPreviewLines = buildCompanyPreviewLines(settings)
+  const clientPreviewLines = buildClientPreviewLines(client)
   const topHeaderFields = Array.isArray(customFieldObject?.header)
     ? customFieldObject.header.filter((field) => field?.label && field?.value)
     : []
 
-  const additionalFields = getAdditionalFields(customFieldObject)
-    .map((field) => ({
-      label: String(field.label || '').trim(),
-      value: String(field.value || '').trim(),
-    }))
-    .filter((field) => field.label || field.value)
-
-  const attachmentLinks = Array.isArray(customFieldObject?.attachments)
-    ? customFieldObject.attachments
-        .filter((entry) => entry?.url)
-        .map((entry, index) => ({
-          label: entry?.label || entry?.name || `Reference ${index + 1}`,
-          url: entry?.url || '',
-        }))
-        .filter((entry) => entry.url)
-    : []
+  const additionalFields = buildAdditionalFieldsProjection(customFieldObject)
+  const attachmentLinks = buildAttachmentLinksProjection(customFieldObject)
 
   const resolvedColumns = resolveColumnBehavior(
     Array.isArray(customFieldObject?.columnConfig) ? customFieldObject.columnConfig : [],
@@ -272,12 +113,7 @@ export function buildInvoicePreviewModel({
   const visibleColumnKeys = new Set(resolvedColumns.map((column) => column.key))
   const previewCustomColumns = resolvedColumns.filter((column) => String(column?.key || '').startsWith('custom_'))
 
-  const previewDetailRows: PreviewDetailRow[] = [
-    { label: 'PO Number', value: poNumber || '' },
-    { label: 'Payment Terms', value: invoice.payment_terms || '' },
-    { label: 'Work Duration', value: invoice.work_duration || '' },
-    ...topHeaderFields.map((field) => ({ label: field.label || '', value: field.value || '' })),
-  ].filter((row) => String(row.value || '').trim().length > 0)
+  const previewDetailRows = buildDetailRowsProjection({ customFieldObject, poNumber, invoice })
 
   const previewItems: PreviewItem[] = items.map((item, index) => {
     if (item.row_type === 'group_header') {
@@ -341,87 +177,30 @@ export function buildInvoicePreviewModel({
     return nextItems
   }).flat()
 
-  const advanceSummary = getAdvanceSummaryValues(invoice)
-  const summaryLabels = getPdfSummaryLabels(invoice, pdfOutput)
-
-  const previewTotals: PreviewTotalRow[] = [
-    ...buildSummaryRows({
-      invoice,
-      totals,
-      customFields: customFieldObject,
-      chargeLabels: customFieldObject?.chargeLabels,
-      summaryLabels,
-    }).map((row) => ({
-      label: row.label,
-      value: formatMoney(Number(row.amount || 0)),
-      valueClassName: row.tone === 'danger' ? 'text-red-600' : undefined,
-    })),
-    { label: 'Total', value: formatMoney(invoiceTotal), emphasis: true, valueClassName: 'text-slate-950' },
-  ]
-
-  const previewNotesSections: PreviewNoteSection[] = [
-    invoice.notes
-      ? {
-          title: customFieldObject?.notesTitle || 'Notes',
-          kind: 'html',
-          html: normalizeRichTextHtml(invoice.notes),
-        }
-      : null,
-    invoice.terms
-      ? {
-          title: customFieldObject?.termsTitle || 'Terms and Conditions',
-          kind: 'html',
-          html: normalizeRichTextHtml(invoice.terms),
-        }
-      : null,
-    ...(additionalFields.length > 0
-      ? [{
-          title: 'Additional Fields',
-          kind: 'fields' as const,
-          fields: additionalFields,
-        }]
-      : []),
-    ...(attachmentLinks.length > 0
-      ? [{
-          title: 'Reference Links',
-          kind: 'links' as const,
-          links: attachmentLinks,
-        }]
-      : []),
-  ].filter(Boolean) as PreviewNoteSection[]
+  const advanceSummary = buildAdvanceDisplayProjection(invoice)
+  const previewTotals = buildTotalsProjection({
+    invoice, totals, customFieldObject, invoiceTotal, balanceDue, pdfOutput, formatMoney,
+  })
+  const previewAmountInWords = buildAmountInWordsProjection(invoice, pdfOutput)
+  const previewBalanceDueRow = buildBalanceDisplayProjection(balanceDue, pdfOutput, formatMoney)
+  const previewNotesSections = buildNotesSectionsProjection({
+    invoice, customFieldObject, additionalFields, attachmentLinks,
+  })
 
   return {
     previewBankAccounts,
     selectedPreviewBank,
-    signatory: signatory
-      ? {
-          name: signatory.name || '',
-          role: signatory.role || '',
-          signatureUrl: signatory.signatureUrl || '',
-        }
-      : null,
+    signatory: buildSignatoryProjection(signatory),
     companyPreviewLines,
     clientPreviewLines,
     topHeaderFields,
     previewDetailRows,
     previewItems,
     previewTotals,
-    previewAmountInWords: pdfOutput?.showAmountInWords === false ? '' : String(invoice.amount_in_words || ''),
-    previewBalanceDue: pdfOutput?.showBalanceDue === false
-      ? null
-      : {
-          label: 'Balance Due',
-          value: formatMoney(balanceDue),
-          emphasis: true,
-          valueClassName: balanceDue > 0 ? 'text-red-600' : 'text-emerald-600',
-        },
+    previewAmountInWords,
+    previewBalanceDue: previewBalanceDueRow,
     previewBalanceDueAmount: pdfOutput?.showBalanceDue === false ? null : balanceDue,
     previewNotesSections,
-    advanceSummary: advanceSummary
-      ? {
-          ...advanceSummary,
-          requestedAmount: advanceSummary.thisAdvance,
-        }
-      : null,
+    advanceSummary,
   }
 }

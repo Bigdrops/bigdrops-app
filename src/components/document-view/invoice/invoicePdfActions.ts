@@ -7,6 +7,7 @@ import { InvoicePdfTemplateId } from "@/domain/invoice/types";
 import { computeDocument } from "@/lib/Calculations";
 import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/invoice/previewModel";
 import { formatNaira } from "@/lib/formatters/money";
+import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState";
 import { resolveCanonicalLogoUrl, resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset";
 import { getAdvanceSummaryValues } from "@/domain/invoice/advanceSummary";
@@ -47,10 +48,11 @@ export const downloadInvoicePdfDocument = async ({
     columns: savedColumns as any,
   });
 
-  const settledTotal = (Array.isArray(targetPayments) ? targetPayments : []).reduce((sum, payment) => {
-    if (payment?.voided_at) return sum;
-    return sum + Number(payment?.cash_amount || 0) + Number(payment?.wht_amount || 0);
-  }, 0);
+  const paymentFinancialState = calculateInvoiceFinancialState({
+    invoiceTotal: totals.totalPayable || Number(targetInvoice?.total || 0),
+    status: targetInvoice?.status || 'unpaid',
+    payments: Array.isArray(targetPayments) ? targetPayments : [],
+  });
 
   const targetPreviewModel = buildInvoicePreviewModel({
     invoice: targetInvoice || {},
@@ -63,8 +65,8 @@ export const downloadInvoicePdfDocument = async ({
     signatory: resolveDocumentSignatory(targetCustomFields?.signatoryId, Array.isArray(signatories) ? signatories : []),
     poNumber: String(targetInvoice?.po_number || ""),
     invoiceTotal: totals.totalPayable || Number(targetInvoice?.total || 0),
-    cashReceived: settledTotal,
-    balanceDue: Math.max(0, (totals.totalPayable || Number(targetInvoice?.total || 0)) - settledTotal),
+    cashReceived: paymentFinancialState.settledAmount,
+    balanceDue: paymentFinancialState.balanceDue,
     totals: {
       rawSubtotal: totals.subtotal,
       vatAmount: totals.vat,

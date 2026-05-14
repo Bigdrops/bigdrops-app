@@ -10,6 +10,7 @@ import { ChevronRight, ChevronUp } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { formatNaira } from '@/lib/formatters/money'
 
 export const pageCardCls =
   'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-none'
@@ -63,7 +64,7 @@ function getIconToneClass(iconTone?: IconTone) {
 }
 
 export function formatCurrency(value: number | string | null | undefined) {
-  return `NGN ${Number(value || 0).toLocaleString()}`
+  return formatNaira(value)
 }
 
 interface SectionLabelProps {

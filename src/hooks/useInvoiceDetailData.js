@@ -13,6 +13,7 @@ import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
 import { mapDbInvoiceItem } from '@/domain/invoice'
 import { getAdvanceInvoiceMetadata } from '@/domain/invoice/advanceMetadata'
 import { isLegacyAdvanceChildRowForRuntime } from '@/domain/invoice/advanceLegacyCleanup'
+import { calculateInvoiceFinancialState } from '@/domain/invoice/financialState'
 
 function canUseInvoiceCacheFallback() {
   return (
@@ -30,24 +31,18 @@ function canWriteInvoiceCache() {
 }
 
 function buildCachedInvoiceFinancials(invoiceRow, paymentRows) {
-  const invoiceTotal = Number(invoiceRow?.total || 0)
-  const settledTotal = (paymentRows || []).reduce((sum, payment) => {
-    if (payment?.voided_at) return sum
-    return sum + Number(payment?.cash_amount || 0) + Number(payment?.wht_amount || 0)
-  }, 0)
-  const balanceDue = Math.max(0, invoiceTotal - settledTotal)
+  const financialState = calculateInvoiceFinancialState({
+    invoiceTotal: Number(invoiceRow?.total || 0),
+    status: invoiceRow?.status || 'unpaid',
+    payments: paymentRows || [],
+  })
 
   return {
     id: invoiceRow?.id || null,
-    cash_received: settledTotal,
-    settled_total: settledTotal,
-    balance_due: balanceDue,
-    computed_status:
-      balanceDue <= 0 && invoiceTotal > 0
-        ? 'paid'
-        : settledTotal > 0
-          ? 'partially_paid'
-          : invoiceRow?.status || 'unpaid',
+    cash_received: financialState.settledAmount,
+    settled_total: financialState.settledAmount,
+    balance_due: financialState.balanceDue,
+    computed_status: financialState.paymentState,
   }
 }
 

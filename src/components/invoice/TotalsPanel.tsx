@@ -3,16 +3,13 @@ import { ChevronDown, ChevronUp, Minus, Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Switch } from '@/components/ui/switch'
+import { formatNaira } from '@/lib/formatters/money'
 
 const sectionLabelCls = 'mb-3 flex items-center gap-2 px-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]'
 const inputCls =
   'h-11 rounded-[12px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[14px] text-[hsl(var(--bd-text))] shadow-none transition placeholder:text-[hsl(var(--bd-text-muted))] focus:border-[hsl(var(--bd-button-primary-bg))] focus:bg-[hsl(var(--bd-card-bg))] focus:ring-0 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))]/15'
 const cardCls =
   'rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm'
-
-function formatCurrency(value: number | string) {
-  return `NGN ${Number(value || 0).toLocaleString()}`
-}
 
 function getToneColor(tone: string) {
   if (tone === 'emerald') return 'hsl(var(--bd-emerald))'
@@ -221,7 +218,7 @@ export default function TotalsPanel({
                 <span className="text-[hsl(var(--bd-text-muted))]">{row.label}</span>
                 <span className={`font-bold ${row.negative ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-text))]'}`}>
                   {row.negative ? '-' : ''}
-                  {formatCurrency(Math.abs(Number(row.value || 0)))}
+                  {formatNaira(Math.abs(Number(row.value || 0)))}
                 </span>
               </div>
             ))}
@@ -232,11 +229,11 @@ export default function TotalsPanel({
               Total Payable
             </div>
             <div className="mt-2 text-[36px] font-black leading-none tracking-[-0.04em] text-[hsl(var(--bd-button-primary-bg))]">
-              {formatCurrency(totalPayable)}
+              {formatNaira(totalPayable)}
             </div>
             <div className="mt-3 flex items-center justify-between border-t border-[hsl(var(--bd-border))] pt-3 text-[12px] text-[hsl(var(--bd-text-muted))]">
               <span>Grand Total</span>
-              <span>{formatCurrency(grandTotal)}</span>
+              <span>{formatNaira(grandTotal)}</span>
             </div>
             {amountInWords ? (
               <div className="mt-3 border-t border-[hsl(var(--bd-border))] pt-3 text-[12px] italic text-[hsl(var(--bd-text-muted))]">
@@ -351,7 +348,7 @@ export default function TotalsPanel({
           {discountAmount > 0 ? (
             <div className="flex items-center justify-between rounded-[14px] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-3 py-2 text-[13px] font-bold text-[hsl(var(--bd-status-danger-text))]">
               <span>Discount Amount</span>
-              <span>-{formatCurrency(discountAmount)}</span>
+              <span>-{formatNaira(discountAmount)}</span>
             </div>
           ) : null}
         </div>
@@ -382,7 +379,7 @@ export default function TotalsPanel({
           {whtAmount > 0 ? (
             <div className="flex items-center justify-between rounded-[14px] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-3 py-2 text-[13px] font-bold text-[hsl(var(--bd-status-danger-text))]">
               <span>WHT Amount</span>
-              <span>-{formatCurrency(whtAmount)}</span>
+              <span>-{formatNaira(whtAmount)}</span>
             </div>
           ) : null}
           <div className="flex items-start gap-2 rounded-[14px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-3 text-[12px] text-[hsl(var(--bd-text-muted))]">

@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
+const financialProjectionPath = path.resolve('src/domain/invoice/projections/financialProjection.ts')
 const documentMediaPath = path.resolve('src/domain/documentMedia.ts')
 const industryStylesPath = path.resolve('src/components/pdf-new/templates/industryStyles.ts')
 const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
@@ -25,13 +26,14 @@ test('invoice preview detail rows exclude duplicate title and client header entr
 })
 
 test('advance invoices keep the shared totals block and balance due rows', () => {
-  const source = fs.readFileSync(previewModelPath, 'utf8').replace(/\s+/g, ' ')
+  const projectionSource = fs.readFileSync(financialProjectionPath, 'utf8').replace(/\s+/g, ' ')
+  const previewSource = fs.readFileSync(previewModelPath, 'utf8').replace(/\s+/g, ' ')
 
-  assert.match(source, /const previewTotals: PreviewTotalRow\[] = \[ \.\.\.buildSummaryRows\(\{/)
-  assert.doesNotMatch(source, /Contract Value/)
-  assert.doesNotMatch(source, /This Advance/)
-  assert.match(source, /previewBalanceDue: pdfOutput\?\.showBalanceDue === false \? null : \{/)
-  assert.match(source, /previewBalanceDueAmount: pdfOutput\?\.showBalanceDue === false \? null : balanceDue/)
+  assert.match(projectionSource, /buildSummaryRows\(\{/)
+  assert.doesNotMatch(previewSource, /Contract Value/)
+  assert.doesNotMatch(previewSource, /This Advance/)
+  assert.match(previewSource, /previewBalanceDue: previewBalanceDueRow/)
+  assert.match(previewSource, /previewBalanceDueAmount: pdfOutput\?\.showBalanceDue === false \? null : balanceDue/)
 })
 
 test('merged qty and unit render as a tight single token', () => {

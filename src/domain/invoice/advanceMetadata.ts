@@ -101,24 +101,28 @@ const VALID_METADATA_KEYS = new Set<string>([
   'print_snapshot',
 ])
 
+/**
+ * Authority order for advance amount derivation:
+ * 1. explicit amount (stored in metadata) — sole runtime authority
+ * 2. calculated from mode + value (fixed/percentage of contract value)
+ *
+ * Legacy child totals (legacy_child_invoice_total) are preserved in metadata
+ * for historical traceability only. They must NEVER outrank explicit or
+ * calculated amounts in the active runtime.
+ */
 function deriveAdvanceAmount({
   amount,
-  legacyChildTotal,
   contractValue,
   mode,
   value,
 }: {
   amount: unknown
-  legacyChildTotal: unknown
   contractValue: unknown
   mode: AdvanceInvoiceMetadataMode
   value: unknown
 }) {
   const explicitAmount = toNumber(amount)
   if (explicitAmount > 0) return explicitAmount
-
-  const explicitLegacyChildTotal = toNumber(legacyChildTotal)
-  if (explicitLegacyChildTotal > 0) return explicitLegacyChildTotal
 
   const numericValue = Math.max(0, toNumber(value))
   const numericContractValue = Math.max(0, toNumber(contractValue))
@@ -271,7 +275,6 @@ export function getAdvanceInvoiceMetadata(input: AdvanceCarrier | unknown): Adva
     0,
     deriveAdvanceAmount({
       amount: config?.amount,
-      legacyChildTotal: config?.legacy_child_invoice_total,
       contractValue,
       mode,
       value,

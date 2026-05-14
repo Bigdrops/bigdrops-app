@@ -225,7 +225,7 @@ export function useInvoiceActions({
     try {
       const result = advanceSheetMode === "edit" 
         ? await updateAdvanceInvoiceRecord({ 
-            advanceInvoiceId: selectedAdvanceInvoice?.id || advanceMetadata?.legacy_child_invoice_id || null,
+            advanceInvoiceId: selectedAdvanceInvoice?.id || null,
             parentInvoice: invoice, mode: advanceMode, inputValue: advanceInputValue, suffix: advanceSuffixValue,
             primaryLabel: advancePrimaryLabel, secondaryLabel: advanceSecondaryLabel 
           })
