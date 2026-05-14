@@ -1,15 +1,10 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
-import { canUseNativeSqlite } from "@/lib/native/capacitor"
-import {
-  cacheInvoiceList,
-  getCachedInvoiceList,
-} from "@/lib/native/invoiceCache"
-import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
+import { invalidateListCache } from '@/lib/cache/listCache'
 import Layout from "../components/Layout"
 import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
@@ -26,378 +21,45 @@ import {
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
-import { shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
 import { getStatusClasses } from "@/lib/statusTheme"
+import { useInvoiceList, INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 
-const PAGE_SIZE = 25
-const INVOICE_CACHE_KEY = "bd:list:invoices:v1:all"
-const INVOICE_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-function canUseInvoiceCacheFallback() {
-  return (
-    canUseNativeSqlite() &&
-    typeof navigator !== "undefined" &&
-    navigator.onLine === false
-  )
-}
-
-export type InvoiceRow = {
-  id: string
-  invoice_number: string | null
-  client_name: string | null
-  issue_date: string | null
-  created_at: string
-  total: number | null
-  status: string | null
-  project_id: string | null
-  custom_fields: any
-  payments?: any[]
-}
-
-const getInvoiceFinancialState = (invoice: Pick<InvoiceRow, "total" | "status" | "payments">) =>
-  calculateInvoiceFinancialState({
-    invoiceTotal: Number(invoice.total || 0),
-    status: invoice.status,
-    payments: invoice.payments,
-  })
-
-const normalizeInvoiceStatusFilter = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "_")
-
-const matchesInvoiceStatusFilter = (invoice: Pick<InvoiceRow, "total" | "status" | "payments">, filterValue: string) => {
-  if (filterValue === "All") return true
-  return getInvoiceFinancialState(invoice).paymentState === normalizeInvoiceStatusFilter(filterValue)
-}
-
 export default function Invoices() {
-  const [invoices, setInvoices]           = useState<InvoiceRow[]>([])
+  const {
+    invoices,
+    totalCount,
+    hasMore,
+    loadingMore,
+    page,
+    clientOptions,
+    search, setSearch,
+    clientFilter, setClientFilter,
+    statusFilter, setStatusFilter,
+    dateFilter, setDateFilter,
+    sortBy, setSortBy,
+    fetchInvoices,
+    fetchClientOptions,
+    resetFilters,
+  } = useInvoiceList()
+
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
-  const [search, setSearch]               = useState("")
-  const [clientFilter, setClientFilter]   = useState("All")
-  const [statusFilter, setStatusFilter]   = useState("All")
-  const [dateFilter, setDateFilter]       = useState("All Time")
-  const [sortBy, setSortBy]               = useState("Newest")
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [attachKind, setAttachKind]       = useState<"csr" | "waybill" | null>(null)
   const [showAttachSheet, setShowAttachSheet] = useState(false)
-  const [clientOptions, setClientOptions] = useState<string[]>([])
-  const [totalCount, setTotalCount]       = useState(0)
-  const [page, setPage]                   = useState(0)
-  const [hasMore, setHasMore]             = useState(false)
-  const [loadingMore, setLoadingMore]     = useState(false)
   const [activeInvoiceRelatedDocs, setActiveInvoiceRelatedDocs] = useState<{ csrs: any[], waybills: any[] }>({ csrs: [], waybills: [] })
   const [activeInvoiceProject, setActiveInvoiceProject] = useState<any>(null)
   const [activeInvoiceCustomFields, setActiveInvoiceCustomFields] = useState<any>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const navigate = useNavigate()
-
-  const buildInvoiceQuery = () => {
-    let query = applyParentInvoiceFilter(supabase
-      .from("invoices")
-      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
-      .is("archived_at", null))
-
-    const searchTerm = search.trim()
-    if (searchTerm) {
-      const escapedTerm = searchTerm.replace(/,/g, " ")
-      query = query.or(`invoice_number.ilike.%${escapedTerm}%,client_name.ilike.%${escapedTerm}%`)
-    }
-
-    if (clientFilter !== "All") {
-      query = query.eq("client_name", clientFilter)
-    }
-
-    if (dateFilter !== "All Time") {
-      const now = new Date()
-      if (dateFilter === "This Month") {
-        const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-        query = query.gte("issue_date", from)
-      }
-      if (dateFilter === "Last Month") {
-        const from = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10)
-        const to = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10)
-        query = query.gte("issue_date", from).lte("issue_date", to)
-      }
-      if (dateFilter === "This Year") {
-        const from = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)
-        query = query.gte("issue_date", from)
-      }
-    }
-
-    if (sortBy === "Oldest") {
-      return query.order("issue_date", { ascending: true, nullsFirst: false })
-    }
-    if (sortBy === "Highest Value") {
-      return query
-        .order("total", { ascending: false, nullsFirst: false })
-        .order("issue_date", { ascending: false, nullsFirst: false })
-    }
-    if (sortBy === "Lowest Value") {
-      return query
-        .order("total", { ascending: true, nullsFirst: false })
-        .order("issue_date", { ascending: false, nullsFirst: false })
-    }
-    return query.order("issue_date", { ascending: false, nullsFirst: false })
-  }
-
-  const fetchInvoices = async (pageIndex = 0, replace = false) => {
-    const isInitialLoad = pageIndex === 0 && replace
-    const hasFilters = search.trim() !== "" || clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time"
-
-    // Only attempt list caching for the primary "All" view or when we have a full cache to filter against
-    if (isInitialLoad) {
-      const cached = readListCache<InvoiceRow>(INVOICE_CACHE_KEY)
-      if (cached) {
-        let rowsToDisplay = cached.rows
-        
-        // If we have filters, apply them to the cached "all" list
-        if (hasFilters) {
-          const searchTerm = search.trim().toLowerCase()
-          rowsToDisplay = cached.rows.filter((row: any) => {
-            const matchesSearch = !searchTerm || 
-              String(row.invoice_number || "").toLowerCase().includes(searchTerm) || 
-              String(row.client_name || "").toLowerCase().includes(searchTerm)
-            const matchesClient = clientFilter === "All" || row.client_name === clientFilter
-            const matchesStatus = matchesInvoiceStatusFilter(row, statusFilter)
-            
-            let matchesDate = true
-            if (dateFilter !== "All Time" && row.issue_date) {
-              const issueTime = new Date(row.issue_date).getTime()
-              const now = new Date()
-              if (dateFilter === "This Month") {
-                matchesDate = issueTime >= new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-              } else if (dateFilter === "Last Month") {
-                const fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
-                const toDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime()
-                matchesDate = issueTime >= fromDate && issueTime <= toDate
-              } else if (dateFilter === "This Year") {
-                matchesDate = issueTime >= new Date(now.getFullYear(), 0, 1).getTime()
-              }
-            }
-            
-            return matchesSearch && matchesClient && matchesStatus && matchesDate
-          })
-
-          // Apply sorting to the filtered cached rows
-          rowsToDisplay.sort((left: any, right: any) => {
-            if (sortBy === "Highest Value") return Number(right.total || 0) - Number(left.total || 0)
-            if (sortBy === "Lowest Value") return Number(left.total || 0) - Number(right.total || 0)
-            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
-            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
-            return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
-          })
-        }
-
-        setInvoices(rowsToDisplay.slice(0, PAGE_SIZE))
-        setTotalCount(rowsToDisplay.length)
-        setPage(0)
-        setHasMore(PAGE_SIZE < rowsToDisplay.length)
-
-        if (isListCacheFresh(cached, INVOICE_CACHE_TTL)) {
-          return // Fresh enough, skip network
-        }
-      }
-    }
-
-    setLoadingMore(true)
-    const from = pageIndex * PAGE_SIZE
-    const to = from + PAGE_SIZE - 1
-    try {
-      const { data, error } = await buildInvoiceQuery()
-      if (error) throw error
-
-      const allRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
-      const filteredRows = allRows.filter((row: any) => matchesInvoiceStatusFilter(row, statusFilter))
-      
-      // Update the "all" cache if we just fetched the base list (no search/client filters that Supabase handled)
-      // Actually, since buildInvoiceQuery handles filters on server, we only update the 'all' cache if no filters were sent to server.
-      if (!hasFilters) {
-        writeListCache(INVOICE_CACHE_KEY, allRows)
-      }
-
-      const nextRows = filteredRows.slice(from, to + 1)
-
-      setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-      setTotalCount(filteredRows.length)
-      setPage(pageIndex)
-      setHasMore(to + 1 < filteredRows.length)
-
-      if (canUseNativeSqlite() && allRows.length > 0) {
-        void cacheInvoiceList(allRows).catch((cacheError) => {
-          console.warn("Invoice list cache write failed:", cacheError)
-        })
-      }
-    } catch (error) {
-      if (!canUseInvoiceCacheFallback()) {
-        setInvoices((current) => (replace ? [] : current))
-        setTotalCount((current) => (replace ? 0 : current))
-        setHasMore(false)
-        console.warn("Invoice list fetch failed:", error)
-        return
-      }
-
-      try {
-        const cachedRows = await getCachedInvoiceList()
-        const searchTerm = search.trim().toLowerCase()
-
-        const filteredRows = cachedRows
-          .filter((row: any) => !row.archived_at)
-          .filter(shouldIncludeInvoiceInList)
-          .filter((row: any) => {
-            if (!searchTerm) return true
-            const invoiceNumber = String(row.invoice_number || "").toLowerCase()
-            const clientName = String(row.client_name || "").toLowerCase()
-            return invoiceNumber.includes(searchTerm) || clientName.includes(searchTerm)
-          })
-          .filter((row: any) => clientFilter === "All" || row.client_name === clientFilter)
-          .filter((row: any) => matchesInvoiceStatusFilter(row, statusFilter))
-          .filter((row: any) => {
-            if (dateFilter === "All Time") return true
-            if (!row.issue_date) return false
-
-            const issueTime = new Date(row.issue_date).getTime()
-            if (Number.isNaN(issueTime)) return false
-
-            const now = new Date()
-            if (dateFilter === "This Month") {
-              const fromDate = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-              return issueTime >= fromDate
-            }
-            if (dateFilter === "Last Month") {
-              const fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime()
-              const toDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime()
-              return issueTime >= fromDate && issueTime <= toDate
-            }
-            if (dateFilter === "This Year") {
-              const fromDate = new Date(now.getFullYear(), 0, 1).getTime()
-              return issueTime >= fromDate
-            }
-
-            return true
-          })
-          .sort((left: any, right: any) => {
-            if (sortBy === "Highest Value") {
-              return Number(right.total || 0) - Number(left.total || 0)
-            }
-            if (sortBy === "Lowest Value") {
-              return Number(left.total || 0) - Number(right.total || 0)
-            }
-
-            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
-            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
-            return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
-          })
-
-        const nextRows = filteredRows.slice(from, to + 1)
-
-        setInvoices((current) => (replace ? nextRows : [...current, ...nextRows]))
-        setTotalCount(filteredRows.length)
-        setPage(pageIndex)
-        setHasMore(to + 1 < filteredRows.length)
-      } catch (cacheError) {
-        console.warn("Invoice list cache fallback failed:", cacheError)
-        setInvoices((current) => (replace ? [] : current))
-        setTotalCount((current) => (replace ? 0 : current))
-        setHasMore(false)
-      }
-    } finally {
-      setLoadingMore(false)
-    }
-  }
-
-  const fetchClientOptions = async () => {
-    // Try cache first
-    const cached = readListCache<InvoiceRow>(INVOICE_CACHE_KEY)
-    if (cached) {
-      const nextOptions = Array.from(
-        new Set(cached.rows.filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
-      ).sort((a: any, b: any) => a.localeCompare(b))
-      setClientOptions(nextOptions)
-      if (isListCacheFresh(cached, INVOICE_CACHE_TTL)) return
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("client_name, custom_fields")
-        .is("archived_at", null)
-
-      if (error) throw error
-
-      const nextOptions = Array.from(
-        new Set(((data as any[]) || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
-      ).sort((a: any, b: any) => a.localeCompare(b))
-
-      setClientOptions(nextOptions)
-    } catch (error) {
-      if (!canUseInvoiceCacheFallback()) {
-        console.warn("Invoice client options fetch failed:", error)
-        setClientOptions([])
-        return
-      }
-
-      try {
-        const cachedRows = await getCachedInvoiceList()
-        const nextOptions = Array.from(
-          new Set((cachedRows || []).filter(shouldIncludeInvoiceInList).map((row: any) => row.client_name).filter(Boolean)),
-        ).sort((a: any, b: any) => a.localeCompare(b))
-        setClientOptions(nextOptions)
-      } catch (cacheError) {
-        console.warn("Invoice client options cache fallback failed:", cacheError)
-        setClientOptions([])
-      }
-    }
-  }
-
-  useEffect(() => {
-    fetchClientOptions()
-  }, [])
-
-  useEffect(() => {
-    setInvoices([])
-    setPage(0)
-    setHasMore(false)
-    fetchInvoices(0, true)
-  }, [clientFilter, dateFilter, search, sortBy, statusFilter])
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadActiveInvoiceRelationships = async () => {
-      if (!activeInvoice?.id) {
-        setActiveInvoiceRelatedDocs({ csrs: [], waybills: [] })
-        setActiveInvoiceProject(null)
-        setActiveInvoiceCustomFields(null)
-        return
-      }
-
-      const [relatedDocs, project, invoiceMeta] = await Promise.all([
-        fetchInvoiceChildDocuments(activeInvoice.id),
-        activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
-        supabase.from("invoices").select("custom_fields").eq("id", activeInvoice.id).single(),
-      ])
-
-      if (cancelled) return
-      setActiveInvoiceRelatedDocs(relatedDocs)
-      setActiveInvoiceProject(project)
-      setActiveInvoiceCustomFields(invoiceMeta.data?.custom_fields || null)
-    }
-
-    void loadActiveInvoiceRelationships()
-
-    return () => {
-      cancelled = true
-    }
-  }, [activeInvoice?.id, activeInvoice?.project_id])
 
   const closeSheet = () => {
     setActiveInvoice(null)
@@ -406,26 +68,20 @@ export default function Invoices() {
     setActiveInvoiceCustomFields(null)
   }
 
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────
-
   const handleView  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }
   const handleEdit  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) } }
   const handleAdvance = () => {
     const invoiceId = activeInvoice?.id
     closeSheet()
     if (!invoiceId) return
-    navigate(`/invoices/${invoiceId}`, {
-      state: { openAdvanceSheet: true },
-    })
+    navigate(`/invoices/${invoiceId}`, { state: { openAdvanceSheet: true } })
   }
 
   const handleRevertToQuote = () => {
     const invoiceId = activeInvoice?.id
     closeSheet()
     if (!invoiceId) return
-    navigate(`/invoices/${invoiceId}`, {
-      state: { openRevertModal: true },
-    })
+    navigate(`/invoices/${invoiceId}`, { state: { openRevertModal: true } })
   }
 
   const handleClone = async () => {
@@ -434,13 +90,8 @@ export default function Invoices() {
     if (!inv) return;
     try {
       const { data: invoiceDetail, error: invoiceDetailError } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("id", inv.id)
-        .single()
-
+        .from("invoices").select("*").eq("id", inv.id).single()
       if (invoiceDetailError || !invoiceDetail) throw invoiceDetailError || new Error("Invoice not found")
-
       const { data: all } = await supabase
         .from("invoices").select("invoice_number").like("invoice_number", "SASINV-B%").order("created_at", { ascending: false })
       let nextNum = 1
@@ -511,6 +162,29 @@ export default function Invoices() {
     }
   }
 
+  useEffect(() => {
+    let cancelled = false
+    const loadActiveInvoiceRelationships = async () => {
+      if (!activeInvoice?.id) {
+        setActiveInvoiceRelatedDocs({ csrs: [], waybills: [] })
+        setActiveInvoiceProject(null)
+        setActiveInvoiceCustomFields(null)
+        return
+      }
+      const [relatedDocs, project, invoiceMeta] = await Promise.all([
+        fetchInvoiceChildDocuments(activeInvoice.id),
+        activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
+        supabase.from("invoices").select("custom_fields").eq("id", activeInvoice.id).single(),
+      ])
+      if (cancelled) return
+      setActiveInvoiceRelatedDocs(relatedDocs)
+      setActiveInvoiceProject(project)
+      setActiveInvoiceCustomFields(invoiceMeta.data?.custom_fields || null)
+    }
+    void loadActiveInvoiceRelationships()
+    return () => { cancelled = true }
+  }, [activeInvoice?.id, activeInvoice?.project_id])
+
   const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument({ custom_fields: activeInvoiceCustomFields }) : null
   const isStandalone = Boolean(activeInvoice) && !activeInvoiceSource
   const invoiceProjectState = getProjectActionState({ projectId: activeInvoice?.project_id, project: activeInvoiceProject })
@@ -521,9 +195,7 @@ export default function Invoices() {
 
   const activeInvoiceLinkedSections = activeInvoice ? [
     createLinkedDocumentsSection({
-      key: "source",
-      title: "Source",
-      description: "Documents this invoice came from.",
+      key: "source", title: "Source", description: "Documents this invoice came from.",
       items: activeInvoiceSource ? [
         createLinkedDocumentItem({
           key: `source-${activeInvoiceSource.id || activeInvoiceSource.number || "invoice-source"}`,
@@ -537,49 +209,15 @@ export default function Invoices() {
       ].filter(Boolean) : [],
     }),
     createLinkedDocumentsSection({
-      key: "generated",
-      title: "Generated / Child Documents",
-      description: "Documents created from this invoice.",
+      key: "generated", title: "Generated / Child Documents", description: "Documents created from this invoice.",
       items: [
-        createLinkedDocumentItem({
-          key: "attach-csr",
-          label: "Attach Existing CSR",
-          subtitle: "Search and link a CSR to this invoice",
-          onClick: () => {
-            setShowLinkedDocuments(false)
-            setAttachKind("csr")
-            setShowAttachSheet(true)
-          },
-        }),
-        createLinkedDocumentItem({
-          key: "attach-waybill",
-          label: "Attach Existing Waybill",
-          subtitle: "Search and link a waybill to this invoice",
-          onClick: () => {
-            setShowLinkedDocuments(false)
-            setAttachKind("waybill")
-            setShowAttachSheet(true)
-          },
-        }),
-        ...(activeInvoiceRelatedDocs.csrs || []).map((csr: any) => createLinkedDocumentItem({
-          key: `csr-${csr.id}`,
-          label: `CSR ${csr.csr_number || csr.id}`,
-          subtitle: "Open linked CSR",
-          onClick: () => navigate(`/csr/${csr.id}`),
-        })),
-        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill: any) => createLinkedDocumentItem({
-          key: `waybill-${waybill.id}`,
-          label: `Waybill ${waybill.waybill_number || waybill.id}`,
-          subtitle: "Open linked waybill",
-          onClick: () => navigate(`/waybills/${waybill.id}`),
-        })),
+        createLinkedDocumentItem({ key: "attach-csr", label: "Attach Existing CSR", subtitle: "Search and link a CSR to this invoice", onClick: () => { setShowLinkedDocuments(false); setAttachKind("csr"); setShowAttachSheet(true) } }),
+        createLinkedDocumentItem({ key: "attach-waybill", label: "Attach Existing Waybill", subtitle: "Search and link a waybill to this invoice", onClick: () => { setShowLinkedDocuments(false); setAttachKind("waybill"); setShowAttachSheet(true) } }),
+        ...(activeInvoiceRelatedDocs.csrs || []).map((csr: any) => createLinkedDocumentItem({ key: `csr-${csr.id}`, label: `CSR ${csr.csr_number || csr.id}`, subtitle: "Open linked CSR", onClick: () => navigate(`/csr/${csr.id}`) })),
+        ...(activeInvoiceRelatedDocs.waybills || []).map((waybill: any) => createLinkedDocumentItem({ key: `waybill-${waybill.id}`, label: `Waybill ${waybill.waybill_number || waybill.id}`, subtitle: "Open linked waybill", onClick: () => navigate(`/waybills/${waybill.id}`) })),
       ].filter(Boolean),
     }),
-    createLinkedProjectSection({
-      project: activeInvoiceProject,
-      description: "Project connected to this invoice.",
-      onOpenProject: () => navigate(`/projects/${activeInvoiceProject.id}`),
-    }),
+    createLinkedProjectSection({ project: activeInvoiceProject, description: "Project connected to this invoice.", onOpenProject: () => navigate(`/projects/${activeInvoiceProject.id}`) }),
   ] : []
 
   const handleAttachExisting = async (item: any) => {
@@ -597,21 +235,17 @@ export default function Invoices() {
   }
 
   const formatInvoiceDate = (value: string | null | undefined) => formatDisplayDate(value, {
-    fallback: "",
-    invalidFallback: "",
-    locale: "en-GB",
-    dateOptions: {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    },
+    fallback: "", invalidFallback: "", locale: "en-GB",
+    dateOptions: { day: "2-digit", month: "short", year: "numeric" },
   })
 
   const renderInvoiceRow = (invoice: InvoiceRow) => {
-    const { displayStatus, statusTone } = getInvoiceFinancialState(invoice)
-    
+    const { displayStatus, statusTone } = calculateInvoiceFinancialState({
+      invoiceTotal: Number(invoice.total || 0),
+      status: invoice.status,
+      payments: invoice.payments,
+    })
     const statusClasses = getStatusClasses(statusTone)
-    
     return (
       <ModuleRowCard
         key={invoice.id}
@@ -627,213 +261,85 @@ export default function Invoices() {
     )
   }
 
-
-  const resetFilters = () => {
-    setSearch("")
-    setClientFilter("All")
-    setStatusFilter("All")
-    setDateFilter("All Time")
-    setSortBy("Newest")
-  }
-
   const filterOptions = useMemo(() => ([
-    {
-      label: "Client",
-      value: clientFilter,
-      options: ["All", ...clientOptions],
-      onChange: setClientFilter,
-    },
-    {
-      label: "Status",
-      value: statusFilter,
-      options: ["All", "Unpaid", "Partially Paid", "Paid"],
-      onChange: setStatusFilter,
-    },
-    {
-      label: "Date",
-      value: dateFilter,
-      options: ["All Time", "This Month", "Last Month", "This Year"],
-      onChange: setDateFilter,
-    },
-    {
-      label: "Sort",
-      value: sortBy,
-      options: ["Newest", "Oldest", "Highest Value", "Lowest Value"],
-      onChange: setSortBy,
-    },
+    { label: "Client", value: clientFilter, options: ["All", ...clientOptions], onChange: setClientFilter },
+    { label: "Status", value: statusFilter, options: ["All", "Unpaid", "Partially Paid", "Paid"], onChange: setStatusFilter },
+    { label: "Date", value: dateFilter, options: ["All Time", "This Month", "Last Month", "This Year"], onChange: setDateFilter },
+    { label: "Sort", value: sortBy, options: ["Newest", "Oldest", "Highest Value", "Lowest Value"], onChange: setSortBy },
   ]), [clientFilter, clientOptions, dateFilter, sortBy, statusFilter])
 
   const hasActiveFilters = (
-    clientFilter !== "All" ||
-    statusFilter !== "All" ||
-    dateFilter !== "All Time" ||
-    sortBy !== "Newest"
+    clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time" || sortBy !== "Newest"
   )
-
-  const renderInvoiceRowNumber = (invoice: InvoiceRow) => invoice.invoice_number || "Invoice"
-
-  const renderInvoiceRowDate = (invoice: InvoiceRow) => formatInvoiceDate(invoice.issue_date) || "No date"
 
   return (
     <Layout title="Invoices" hidePageHeader>
       <ModuleShell
-        eyebrow="Sales"
-        title="Invoices"
-        summary={`${totalCount} invoices total`}
-        tone="blue"
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search by invoice number or client..."
-        filters={filterOptions}
-        hasActiveFilters={hasActiveFilters}
-        onResetFilters={resetFilters}
-        records={invoices}
-        renderRow={renderInvoiceRow}
-        loadMoreLabel="Load more invoices"
+        eyebrow="Sales" title="Invoices" summary={`${totalCount} invoices total`} tone="blue"
+        searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search by invoice number or client..."
+        filters={filterOptions} hasActiveFilters={hasActiveFilters} onResetFilters={resetFilters}
+        records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
-               <Receipt className="h-6 w-6" />
-            </div>
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]"><Receipt className="h-6 w-6" /></div>
             <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No Invoices Found</div>
-            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] max-w-[280px] mx-auto">
-              Create your first invoice to start tracking sales, or adjust your filters to find existing records.
-            </div>
+            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] max-w-[280px] mx-auto">Create your first invoice to start tracking sales, or adjust your filters to find existing records.</div>
           </div>
         )}
-        onPrimaryAction={() => navigate("/invoices/new")}
-        primaryActionLabel="New Invoice"
-        hasMore={hasMore}
-        loadingMore={loadingMore}
-        onLoadMore={() => fetchInvoices(page + 1, false)}
+        onPrimaryAction={() => navigate("/invoices/new")} primaryActionLabel="New Invoice"
+        hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => fetchInvoices(page + 1, false)}
       />
-
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
-        onOpenChange={(open) => {
-          if (!open) setActiveInvoice(null)
-        }}
+        onOpenChange={(open) => { if (!open) setActiveInvoice(null) }}
         eyebrow="Invoice"
         title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
         subtitle={activeInvoice ? (() => {
-          const { displayStatus } = getInvoiceFinancialState(activeInvoice)
+          const { displayStatus } = (() => {
+            const { calculateInvoiceFinancialState } = require("@/domain/invoice/financialState") as any
+            return calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments }) || {}
+          })()
           return `${formatNaira(activeInvoice.total)} · ${displayStatus} · Fast access actions from list context`
         })() : undefined}
         actions={activeInvoice ? (() => {
-          const { paymentState } = getInvoiceFinancialState(activeInvoice)
-
+          const { paymentState } = (() => {
+            const { calculateInvoiceFinancialState } = require("@/domain/invoice/financialState") as any
+            return calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments }) || {}
+          })()
           const actionDefs = getInvoiceListActionDefs({
-            projectActionLabel: invoiceProjectState.label,
-            hasProject: invoiceProjectState.hasProject,
-            documentActionLabel: invoiceDocumentState.label,
-            hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
-            isPaid: paymentState === "paid",
-            isStandalone,
+            projectActionLabel: invoiceProjectState.label, hasProject: invoiceProjectState.hasProject,
+            documentActionLabel: invoiceDocumentState.label, hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
+            isPaid: paymentState === "paid", isStandalone,
           })
-
           const iconMap: Record<string, React.ReactNode> = {
-            eye: <Eye className="h-6 w-6" />,
-            pencil: <Pencil className="h-6 w-6" />,
-            folderOpen: <FolderOpen className="h-6 w-6" />,
-            folderPlus: <FolderPlus className="h-6 w-6" />,
-            workflow: <Workflow className="h-6 w-6" />,
-            gitBranchPlus: <GitBranchPlus className="h-6 w-6" />,
-            dollarSign: <DollarSign className="h-6 w-6" />,
-            copy: <Copy className="h-6 w-6" />,
-            fileOutput: <FileOutput className="h-6 w-6" />,
-            wrench: <Wrench className="h-6 w-6" />,
-            truck: <Truck className="h-6 w-6" />,
-            archive: <Archive className="h-6 w-6" />,
-            trash: <Trash2 className="h-6 w-6" />,
+            eye: <Eye className="h-6 w-6" />, pencil: <Pencil className="h-6 w-6" />, folderOpen: <FolderOpen className="h-6 w-6" />,
+            folderPlus: <FolderPlus className="h-6 w-6" />, workflow: <Workflow className="h-6 w-6" />, gitBranchPlus: <GitBranchPlus className="h-6 w-6" />,
+            dollarSign: <DollarSign className="h-6 w-6" />, copy: <Copy className="h-6 w-6" />, fileOutput: <FileOutput className="h-6 w-6" />,
+            wrench: <Wrench className="h-6 w-6" />, truck: <Truck className="h-6 w-6" />, archive: <Archive className="h-6 w-6" />, trash: <Trash2 className="h-6 w-6" />,
           }
-
           const handlers: Record<string, () => void> = {
-            view: handleView,
-            edit: handleEdit,
-            project: () => {
-              activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true)
-            },
+            view: handleView, edit: handleEdit,
+            project: () => { activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true) },
             documents: () => setShowLinkedDocuments(true),
             payment: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) },
-            clone: handleClone,
-            advance: handleAdvance,
-            quote: handleRevertToQuote,
+            clone: handleClone, advance: handleAdvance, quote: handleRevertToQuote,
             csr: () => { closeSheet(); feedback.info("Service reports are not available in this version.") },
             waybill: () => { closeSheet(); feedback.info("Waybills are not available in this version.") },
             archive: () => setShowArchiveWarn(true),
           }
-
-          return actionDefs.map((action) => ({
-            key: action.key,
-            label: action.label,
-            icon: iconMap[action.iconKey],
-            onClick: handlers[action.key],
-            closeOnClick: action.closeOnClick,
-          }))
+          return actionDefs.map((action) => ({ key: action.key, label: action.label, icon: iconMap[action.iconKey], onClick: handlers[action.key], closeOnClick: action.closeOnClick }))
         })() : []}
         deleteAction={activeInvoice ? (() => {
           const deleteDef = getInvoiceListDeleteActionDef()
-          return {
-            key: deleteDef.key,
-            label: deleteDef.label,
-            icon: <Trash2 className="h-6 w-6" />,
-            onClick: () => setShowDeleteWarn(true),
-            closeOnClick: deleteDef.closeOnClick,
-          }
+          return { key: deleteDef.key, label: deleteDef.label, icon: <Trash2 className="h-6 w-6" />, onClick: () => setShowDeleteWarn(true), closeOnClick: deleteDef.closeOnClick }
         })() : undefined}
       />
-      <ConfirmActionDialog
-        open={showArchiveWarn}
-        onOpenChange={setShowArchiveWarn}
-        title="Archive invoice?"
-        description="This invoice will be hidden from the active list until it is restored from archives."
-        confirmLabel="Archive"
-        onConfirm={() => { void handleArchive() }}
-        loading={isArchiving}
-      />
-      <ConfirmActionDialog
-        open={showDeleteWarn}
-        onOpenChange={setShowDeleteWarn}
-        title="Delete invoice?"
-        description="Deleting is permanent and cannot be undone."
-        confirmLabel="Delete Forever"
-        onConfirm={() => { void handleDelete() }}
-        loading={isDeleting}
-      />
-      <LinkedDocumentsSheet
-        open={showLinkedDocuments}
-        onOpenChange={setShowLinkedDocuments}
-        title="Linked Documents"
-        subtitle={activeInvoice?.invoice_number || "Invoice"}
-        sections={activeInvoiceLinkedSections}
-      />
-      <AttachExistingDocumentSheet
-        open={showAttachSheet}
-        onOpenChange={setShowAttachSheet}
-        title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"}
-        description={activeInvoice?.invoice_number || "Invoice"}
-        table={attachKind === "csr" ? "csrs" : "waybills"}
-        numberField={attachKind === "csr" ? "csr_number" : "waybill_number"}
-        clientField="client_name"
-        poField="po_number"
-        linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"}
-        currentInvoiceId={activeInvoice?.id}
-        currentClientName={activeInvoice?.client_name || undefined}
-        searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"}
-        onAttach={handleAttachExisting}
-      />
-      <ProjectLinkDialog
-        open={showProjectLinkDialog}
-        onOpenChange={setShowProjectLinkDialog}
-        tableName="invoices"
-        recordId={activeInvoice?.id || null}
-        documentLabel="Invoice"
-        onLinked={async () => {
-          await Promise.all([fetchInvoices(0, true), fetchClientOptions()])
-          setActiveInvoice(null)
-        }}
-      />
+      <ConfirmActionDialog open={showArchiveWarn} onOpenChange={setShowArchiveWarn} title="Archive invoice?" description="This invoice will be hidden from the active list until it is restored from archives." confirmLabel="Archive" onConfirm={() => { void handleArchive() }} loading={isArchiving} />
+      <ConfirmActionDialog open={showDeleteWarn} onOpenChange={setShowDeleteWarn} title="Delete invoice?" description="Deleting is permanent and cannot be undone." confirmLabel="Delete Forever" onConfirm={() => { void handleDelete() }} loading={isDeleting} />
+      <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeInvoice?.invoice_number || "Invoice"} sections={activeInvoiceLinkedSections} />
+      <AttachExistingDocumentSheet open={showAttachSheet} onOpenChange={setShowAttachSheet} title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"} description={activeInvoice?.invoice_number || "Invoice"} table={attachKind === "csr" ? "csrs" : "waybills"} numberField={attachKind === "csr" ? "csr_number" : "waybill_number"} clientField="client_name" poField="po_number" linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"} currentInvoiceId={activeInvoice?.id} currentClientName={activeInvoice?.client_name || undefined} searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"} onAttach={handleAttachExisting} />
+      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { await Promise.all([fetchInvoices(0, true), fetchClientOptions()]); setActiveInvoice(null) }} />
     </Layout>
   )
 }

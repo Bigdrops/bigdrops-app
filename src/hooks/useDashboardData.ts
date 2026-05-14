@@ -229,14 +229,15 @@ function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[]
   return items.slice(0, 3)
 }
 
-function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[]) {
+function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[], opts?: { useIssueDate?: boolean }) {
+  const useIssueDate = opts?.useIssueDate ?? false
   return mergeRecentDocs([
     ...invoices.map((doc) => ({
       id: doc.id,
       type: 'Invoice' as const,
       number: doc.invoice_number,
       client: doc.client_name || 'Walking Client',
-      date: doc.created_at,
+      date: useIssueDate ? (doc.issue_date || doc.created_at) : doc.created_at,
       status: String(doc.status || ''),
       amount: doc.total,
       path: `/invoices/${doc.id}`,
@@ -246,7 +247,7 @@ function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[],
       type: 'Quotation' as const,
       number: doc.quotation_number,
       client: doc.client_name || 'Walking Client',
-      date: doc.created_at,
+      date: useIssueDate ? (doc.issue_date || doc.created_at) : doc.created_at,
       status: String(doc.status || ''),
       amount: doc.total,
       path: `/quotations/${doc.id}`,
@@ -270,72 +271,6 @@ function buildClassicRecentDocs(invoices: any[], quotations: any[], csrs: any[],
       status: String(doc.status || ''),
       amount: null,
       meta: doc.vehicle_plate || 'Waybill',
-      path: `/waybills/${doc.id}`,
-    })),
-    ...rfqs.map((doc) => ({
-      id: doc.id,
-      type: 'RFQ' as const,
-      number: doc.rfq_number || 'RFQ',
-      client: doc.vendor_name || 'No vendor',
-      date: doc.created_at,
-      status: 'Open',
-      amount: null,
-      path: `/rfqs/${doc.id}`,
-    })),
-    ...boqs.map((doc) => ({
-      id: doc.id,
-      type: 'BOQ' as const,
-      number: doc.boq_number || 'BOQ',
-      client: doc.vendor_name || 'No vendor',
-      date: doc.created_at,
-      status: 'Local',
-      amount: null,
-      path: `/boqs/${doc.id}`,
-    })),
-  ])
-}
-
-function buildOverviewRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[]) {
-  return mergeRecentDocs([
-    ...invoices.map((doc) => ({
-      id: doc.id,
-      type: 'Invoice' as const,
-      number: doc.invoice_number,
-      client: doc.client_name || 'Walking Client',
-      date: doc.issue_date || doc.created_at,
-      status: String(doc.status || ''),
-      amount: doc.total,
-      path: `/invoices/${doc.id}`,
-    })),
-    ...quotations.map((doc) => ({
-      id: doc.id,
-      type: 'Quotation' as const,
-      number: doc.quotation_number,
-      client: doc.client_name || 'Walking Client',
-      date: doc.issue_date || doc.created_at,
-      status: String(doc.status || ''),
-      amount: doc.total,
-      path: `/quotations/${doc.id}`,
-    })),
-    ...csrs.map((doc) => ({
-      id: doc.id,
-      type: 'CSR' as const,
-      number: doc.csr_number,
-      client: doc.client_name || 'Walking Client',
-      date: doc.created_at,
-      status: String(doc.status || ''),
-      amount: null,
-      path: `/csr/${doc.id}`,
-    })),
-    ...waybills.map((doc) => ({
-      id: doc.id,
-      type: 'Waybill' as const,
-      number: doc.waybill_number || 'Waybill',
-      client: doc.client_name || 'No client',
-      date: doc.created_at || doc.date,
-      status: String(doc.status || ''),
-      amount: null,
-      meta: doc.vehicle_plate,
       path: `/waybills/${doc.id}`,
     })),
     ...rfqs.map((doc) => ({
@@ -478,7 +413,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
         const reminders = buildClassicPriorityItems(projects, invoices, quotations)
         
-        const nextRecentDocs = buildClassicRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
+        const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
         const nextHeroStats = {
           collections: thisMonthCollections,
           openWork: reminders.length || pendingFollowUp,
@@ -567,7 +502,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       ).length
       const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
 
-      const nextRecentDocs = buildOverviewRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
+      const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: true })
       const nextHeroStats = {
         collections: thisMonthCollections,
         openWork: reminders.length || pendingFollowUp,
