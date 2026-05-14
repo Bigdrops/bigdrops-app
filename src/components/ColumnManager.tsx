@@ -237,6 +237,13 @@ type CustomColumnCardProps = {
   onToggleFull: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onRemoveCustom: (key: string) => void
+  onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
+  onDragOver: (e: DragEvent<HTMLElement>) => void
+  onDrop: (e: DragEvent<HTMLElement>, targetKey: string) => void
+  onMoveUp?: (key: string) => void
+  onMoveDown?: (key: string) => void
+  disableMoveUp: boolean
+  disableMoveDown: boolean
 }
 
 function CustomColumnCard({
@@ -245,6 +252,13 @@ function CustomColumnCard({
   onToggleFull,
   onUpdate,
   onRemoveCustom,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onMoveUp,
+  onMoveDown,
+  disableMoveUp,
+  disableMoveDown,
 }: CustomColumnCardProps) {
   const isShown = (col.visibilityMode || 'show') === 'show'
 
@@ -258,6 +272,40 @@ function CustomColumnCard({
       )}
     >
       <div className="flex items-start gap-3">
+        <div className="flex shrink-0 flex-col gap-1 pt-1">
+          <button
+            type="button"
+            draggable
+            onDragStart={(e) => onDragStart(e, col.key)}
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, col.key)}
+            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)]"
+            aria-label={`Drag ${col.label}`}
+            title="Drag to reorder"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onMoveUp?.(col.key)}
+            disabled={disableMoveUp}
+            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
+            aria-label={`Move ${col.label} up`}
+          >
+            <ChevronDown className="h-4 w-4 rotate-180" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveDown?.(col.key)}
+            disabled={disableMoveDown}
+            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
+            aria-label={`Move ${col.label} down`}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => onToggle(col.key)}
@@ -600,19 +648,35 @@ export default function ColumnManager({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {customCols.map((col) => (
-                      <CustomColumnCard
-                        key={col.key}
-                        col={col}
-                        onToggle={onToggle}
-                        onToggleFull={onToggleFull}
-                        onUpdate={(key, field, val) => {
-                          if (field === 'label') handleUpdateLabel(key, val as string)
-                          else onUpdate(key, field, val)
-                        }}
-                        onRemoveCustom={onRemoveCustom}
-                      />
-                    ))}
+                    {customCols.map((col) => {
+                      const idx = columns.findIndex((c) => c.key === col.key)
+                      return (
+                        <CustomColumnCard
+                          key={col.key}
+                          col={col}
+                          onToggle={onToggle}
+                          onToggleFull={onToggleFull}
+                          onUpdate={(key, field, val) => {
+                            if (field === 'label') handleUpdateLabel(key, val as string)
+                            else onUpdate(key, field, val)
+                          }}
+                          onRemoveCustom={onRemoveCustom}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          onMoveUp={(key) => {
+                            if (!onMove || idx <= 0) return
+                            onMove(key, idx - 1)
+                          }}
+                          onMoveDown={(key) => {
+                            if (!onMove || idx >= columns.length - 1) return
+                            onMove(key, idx + 1)
+                          }}
+                          disableMoveUp={idx <= 0}
+                          disableMoveDown={idx >= columns.length - 1}
+                        />
+                      )
+                    })}
                   </div>
                 )}
               </div>

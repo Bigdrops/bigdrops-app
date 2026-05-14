@@ -91,18 +91,24 @@ export function mergeColumnConfigs(columns: ColumnConfig[] = []): ColumnConfig[]
     return BUILTIN_COLUMNS.map((column) => normalizeColumnConfig({ ...column }))
   }
 
+  const builtinByKey = new Map(BUILTIN_COLUMNS.map((column) => [column.key, column]))
   const savedByKey = new Map(columns.map((column) => [column.key, column]))
-  const mergedBuiltins = BUILTIN_COLUMNS.map((column) =>
-    normalizeColumnConfig({
-      ...column,
-      ...(savedByKey.get(column.key) || {}),
-    }),
-  )
-  const customColumns = columns
-    .filter((column) => !BUILTIN_COLUMNS.some((builtin) => builtin.key === column.key))
-    .map((column) => normalizeColumnConfig(column))
+  const seenBuiltinKeys = new Set<string>()
 
-  return [...mergedBuiltins, ...customColumns]
+  const merged: ColumnConfig[] = columns.map((saved) => {
+    const builtin = builtinByKey.get(saved.key)
+    if (builtin) {
+      seenBuiltinKeys.add(saved.key)
+      return normalizeColumnConfig({ ...builtin, ...saved })
+    }
+    return normalizeColumnConfig(saved)
+  })
+
+  const missingBuiltins = BUILTIN_COLUMNS
+    .filter((column) => !seenBuiltinKeys.has(column.key))
+    .map((column) => normalizeColumnConfig({ ...column, ...(savedByKey.get(column.key) || {}) }))
+
+  return [...merged, ...missingBuiltins]
 }
 
 function isEmptyColumnValue(value: unknown): boolean {
@@ -144,9 +150,7 @@ export function resolveColumnBehavior(
   items: InvoiceItem[] = [],
   context: 'form' | 'pdf' | 'view',
 ): ColumnConfig[] {
-  const orderedColumns = mergeColumnConfigs(columns)
-
-  return orderedColumns
+  return columns
     .map(normalizeColumnConfig)
     .filter((column) => {
       if (ALWAYS_VISIBLE_COLUMN_KEYS.has(column.key)) return true
@@ -171,42 +175,50 @@ export function getActiveColumns(columns: ColumnConfig[] = []): ColumnConfig[] {
 
 export function getPdfColumns(columns: ColumnConfig[] = [], items: InvoiceItem[] = []): PdfColumnDefinition[] {
   const activeColumns = resolveColumnBehavior(columns, items, 'pdf')
-  const getColumn = (key: string) => activeColumns.find((column) => column.key === key)
-  const customColumns = activeColumns.filter((column) => column.key.startsWith('custom_'))
 
-  const orderedColumns: Array<PdfColumnDefinition | null> = [
+  const builtinPdfProps: Record<string, Pick<PdfColumnDefinition, 'align' | 'pdfWidth' | 'pdfFlex'>> = {
+    description: { align: 'left', pdfWidth: 0, pdfFlex: 2.9 },
+    make: { align: 'left', pdfWidth: 48, pdfFlex: 1.25 },
+    quantity: { align: 'center', pdfWidth: 28, pdfFlex: 0.7 },
+    unit: { align: 'center', pdfWidth: 34, pdfFlex: 0.85 },
+    unit_price: { align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
+    amount: { align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
+    install_rate: { align: 'right', pdfWidth: 54, pdfFlex: 1.15 },
+    vat_rate: { align: 'center', pdfWidth: 32, pdfFlex: 0.8 },
+    discount_rate: { align: 'center', pdfWidth: 40, pdfFlex: 0.95 },
+  }
+
+  const ordered: PdfColumnDefinition[] = [
     { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20, pdfFlex: 0.45 },
-    { key: 'description', label: 'Description', kind: 'builtin', align: 'left', pdfWidth: 0, pdfFlex: 2.9 },
-    getColumn('make')
-      ? { key: 'make', label: getColumn('make')?.label || 'Make', kind: 'builtin', align: 'left', pdfWidth: 48, pdfFlex: 1.25 }
-      : null,
-    { key: 'quantity', label: 'Qty', kind: 'builtin', align: 'center', pdfWidth: 28, pdfFlex: 0.7 },
-    getColumn('unit')
-      ? { key: 'unit', label: getColumn('unit')?.label || 'Unit', kind: 'builtin', align: 'center', pdfWidth: 34, pdfFlex: 0.85 }
-      : null,
-    { key: 'unit_price', label: 'Unit Price', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.2 },
-    { key: 'amount', label: 'Amount', kind: 'builtin', align: 'right', pdfWidth: 62, pdfFlex: 1.35 },
-    getColumn('install_rate')
-      ? { key: 'install_rate', label: getColumn('install_rate')?.label || 'Install Rate', kind: 'builtin', align: 'right', pdfWidth: 54, pdfFlex: 1.15 }
-      : null,
-    getColumn('vat_rate')
-      ? { key: 'vat_rate', label: getColumn('vat_rate')?.label || 'VAT %', kind: 'builtin', align: 'center', pdfWidth: 32, pdfFlex: 0.8 }
-      : null,
-    getColumn('discount_rate')
-      ? { key: 'discount_rate', label: getColumn('discount_rate')?.label || 'Disc %', kind: 'builtin', align: 'center', pdfWidth: 40, pdfFlex: 0.95 }
-      : null,
-    ...customColumns.map((column) => ({
-      key: column.key,
-      label: column.label || 'Custom',
-      kind: 'custom' as const,
-      type: column.type || 'text',
-      align: column.type === 'number' ? 'right' as const : 'left' as const,
-      pdfWidth: column.type === 'number' ? 52 : 64,
-      pdfFlex: column.type === 'number' ? 1.05 : 1.25,
-    })),
   ]
 
-  return orderedColumns.filter(Boolean) as PdfColumnDefinition[]
+  for (const col of activeColumns) {
+    if (col.key.startsWith('custom_')) {
+      ordered.push({
+        key: col.key,
+        label: col.label || 'Custom',
+        kind: 'custom',
+        type: col.type || 'text',
+        align: col.type === 'number' ? 'right' : 'left',
+        pdfWidth: col.type === 'number' ? 52 : 64,
+        pdfFlex: col.type === 'number' ? 1.05 : 1.25,
+      })
+    } else {
+      const props = builtinPdfProps[col.key]
+      if (props) {
+        ordered.push({
+          key: col.key,
+          label: col.label,
+          kind: 'builtin',
+          align: props.align,
+          pdfWidth: props.pdfWidth,
+          pdfFlex: props.pdfFlex,
+        })
+      }
+    }
+  }
+
+  return ordered
 }
 
 function formatPdfPercentValue(value: number | string | null | undefined, zeroLabel: string): string {

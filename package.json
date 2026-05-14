@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
-    "audit:load": "node scripts/check-load-risk.cjs"
+    "audit:load": "node scripts/check-load-risk.cjs",
+    "audit:supabase-queries": "npx tsx tools/audit-supabase-queries.ts"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.0",

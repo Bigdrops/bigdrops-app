@@ -39,6 +39,7 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export function isAdvanceInvoiceOutput(invoice: AdvanceInvoiceLike | null | undefined) {
+  if (getAdvanceInvoiceMetadata(invoice) !== null) return true
   return isAdvanceInvoiceChild(invoice)
 }
 

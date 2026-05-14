@@ -104,7 +104,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
         counter++
       }
 
-      return [...cols, { 
+      return [...cols, normalizeColumnConfig({ 
         key: 'custom_' + Date.now(), 
         label: title, 
         type: 'text', 
@@ -112,7 +112,7 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
         visibilityMode: 'show',
         removable: true, 
         includeInTotal: false 
-      } as InvoiceColumn]
+      }) as InvoiceColumn]
     })
     
   const removeCustomColumn = (key: string) => 

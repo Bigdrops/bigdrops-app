@@ -147,6 +147,16 @@ export function getAdvanceDraftFromInvoice(invoice: AdvanceInvoiceLike | null | 
   }
 }
 
+/**
+ * Builds a draft child invoice payload with `role: 'advance'` in custom_fields.
+ *
+ * @deprecated Since the parent-metadata cutover (2026-05). Child rows are no longer
+ *   written to the database. All advance writes go to the parent's
+ *   `custom_fields.advance_invoice` via `saveParentAdvanceInvoiceConfig` /
+ *   `mergeAdvanceInvoiceMetadata`. This function is retained only for legacy
+ *   compatibility and will be removed after all historical child rows are
+ *   migrated or quarantined.
+ */
 export function buildAdvanceChildInvoicePayload({
   parentInvoice,
   mode,
