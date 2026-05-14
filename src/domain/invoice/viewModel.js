@@ -24,6 +24,9 @@ export function buildInvoiceViewModel({
   const computedStatus = financials?.computed_status || safeInvoice.status || 'unpaid'
   const statusLabel = String(computedStatus || '').replace(/_/g, ' ')
   const invoiceTotal = toNumber(safeInvoice.total)
+
+  // LEGACY: Payment fields below are superseded by buildPaymentSummaryProjection from financialState.ts.
+  // Use calculateInvoiceFinancialState + buildPaymentSummaryProjection for new consumers.
   const cashReceived = toNumber(financials?.cash_received)
   const settledTotal = toNumber(financials?.settled_total || cashReceived)
   const balanceDue = Math.max(0, toNumber(financials?.balance_due ?? invoiceTotal))
@@ -54,6 +57,7 @@ export function buildInvoiceViewModel({
   const paymentTotal = safePayments.reduce((sum, payment) => {
     return sum + toNumber(payment.cash_amount) + toNumber(payment.wht_amount)
   }, 0)
+  // END LEGACY
 
   const relatedDocuments = [...safeRelatedCsrs, ...safeRelatedWaybills]
   const projectState = getProjectActionState({ projectId: safeInvoice.project_id, project })

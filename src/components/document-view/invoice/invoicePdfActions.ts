@@ -10,7 +10,7 @@ import { formatNaira } from "@/lib/formatters/money";
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState";
 import { resolveCanonicalLogoUrl, resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset";
-import { getAdvanceSummaryValues } from "@/domain/invoice/advanceSummary";
+
 
 export const downloadInvoicePdfDocument = async ({
   targetInvoice,
@@ -77,7 +77,6 @@ export const downloadInvoicePdfDocument = async ({
     formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
   });
 
-  const targetAdvanceSummary = getAdvanceSummaryValues(targetInvoice);
   const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
     mergeQtyUnit: targetCustomFields?.mergeQtyUnit === true,
     items: Array.isArray(targetItems) ? targetItems : [],
@@ -156,15 +155,15 @@ export const downloadInvoicePdfDocument = async ({
         rows: (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
           key: String(row.label || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
           label: String(row.label || ""),
-          amount: Number(String(row.value || "0").replace(/[^\d.-]/g, "")) || 0,
+          amount: row.rawAmount ?? (Number(String(row.value || "0").replace(/[^\d.-]/g, "")) || 0),
           emphasis: row.emphasis === true,
         })),
         amountInWords: String(targetPreviewModel?.previewAmountInWords || ""),
         balanceDue: targetPreviewModel?.previewBalanceDueAmount ?? null,
         advanceSummary: targetPreviewModel?.advanceSummary ? {
           ...targetPreviewModel.advanceSummary,
-          primaryLabel: targetAdvanceSummary?.primaryLabelWithPercent || targetPreviewModel.advanceSummary.primaryLabel,
-          secondaryLabel: targetAdvanceSummary?.secondaryLabelWithPercent || targetPreviewModel.advanceSummary.secondaryLabel,
+          primaryLabel: targetPreviewModel.advanceSummary.primaryLabelWithPercent || targetPreviewModel.advanceSummary.primaryLabel,
+          secondaryLabel: targetPreviewModel.advanceSummary.secondaryLabelWithPercent || targetPreviewModel.advanceSummary.secondaryLabel,
         } : null,
       },
       bankDetails: pdfOutput.showBankDetails ? targetPreviewModel?.selectedPreviewBank : null,

@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card'
+import { resolveLineAmount } from '@/domain/invoice/projections/lineItemResolvers'
 
 interface InvoiceLineItemRow {
   id?: string | null
@@ -68,7 +69,7 @@ export default function InvoiceLineItemsCard({ items, formatMoney }: InvoiceLine
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="text-sm font-extrabold text-foreground">
-                    {formatMoney(item.amount || quantity * unitPrice)}
+                    {formatMoney(resolveLineAmount(item))}
                   </div>
                   <div className="text-[11px] text-muted-foreground">
                     {formatMoney(unitPrice)} each

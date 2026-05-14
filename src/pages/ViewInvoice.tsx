@@ -4,6 +4,7 @@ import { useInvoiceDetailData } from "@/hooks/useInvoiceDetailData";
 import { useDocumentUIState } from "@/components/document-view/hooks/useDocumentUIState";
 import { buildInvoiceViewModel } from "@/domain/invoice/viewModel";
 import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/invoice/previewModel";
+import { buildBankAccountsProjection } from "@/domain/invoice/projections/partyProjection";
 import { 
   parseCustomFields, 
   DEFAULT_INVOICE_PDF_OUTPUT, 
@@ -98,13 +99,7 @@ export default function ViewInvoice() {
   if (loading) return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
   if (!invoice) return null;
 
-  const previewBankAccounts = (bankAccounts || []).map((account: any) => ({
-    id: String(account.id),
-    bankName: account.bank_name || "",
-    accountName: account.account_name || "",
-    accountNumber: account.account_number || "",
-    isDefault: account.is_default === true,
-  }));
+  const previewBankAccounts = buildBankAccountsProjection(bankAccounts || []);
 
   return (
     <>

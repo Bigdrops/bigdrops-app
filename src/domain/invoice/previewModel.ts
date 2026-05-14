@@ -10,7 +10,6 @@ import type {
   PreviewNoteSection,
   PreviewSignatory,
   InvoiceLike,
-  InvoiceItemLike,
   ClientLike,
   SettingsLike,
   BankAccountLike,
@@ -34,6 +33,8 @@ import {
   buildAdditionalFieldsProjection,
   buildAttachmentLinksProjection,
   buildNotesSectionsProjection,
+  resolveLineAmount,
+  resolvePreviewGroupSubtotal,
 } from './projections'
 
 export type {
@@ -45,21 +46,6 @@ export type {
   PreviewSignatory,
   BuildInvoicePreviewModelInput,
 } from './renderTypes'
-
-function resolveLineAmount(item: InvoiceItemLike) {
-  const explicitAmount = Number(item.amount)
-  if (Number.isFinite(explicitAmount) && explicitAmount !== 0) return explicitAmount
-  return normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
-}
-
-function resolvePreviewGroupSubtotal(items: InvoiceItemLike[], groupId: string | null | undefined) {
-  if (!groupId) return 0
-  return items.reduce((subtotal, item) => {
-    if (item.row_type === 'group_header') return subtotal
-    if (item.group_id !== groupId) return subtotal
-    return subtotal + resolveLineAmount(item)
-  }, 0)
-}
 
 export function resolveDocumentSignatory(
   signatoryId: unknown,
@@ -147,7 +133,7 @@ export function buildInvoicePreviewModel({
       detail: item.sub_description || '',
       imageUrl: resolveCanonicalItemImageUrl(item),
       value: visibleColumnKeys.has('amount')
-        ? formatMoney(Number(item.amount || (normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)) || 0))
+        ? formatMoney(resolveLineAmount(item))
         : '',
       facts: [
         visibleColumnKeys.has('quantity')

@@ -11,9 +11,10 @@ export {
   buildBalanceDisplayProjection,
   buildAmountInWordsProjection,
   buildAdvanceDisplayProjection,
+  buildPaymentSummaryProjection,
 } from './financialProjection'
 
-export type { TotalsProjectionInput } from './financialProjection'
+export type { TotalsProjectionInput, PaymentSummaryProjection } from './financialProjection'
 
 export {
   buildDetailRowsProjection,
@@ -24,3 +25,8 @@ export {
 } from './contentProjection'
 
 export type { DetailRowsProjectionInput, NotesSectionsProjectionInput } from './contentProjection'
+
+export {
+  resolveLineAmount,
+  resolvePreviewGroupSubtotal,
+} from './lineItemResolvers'

@@ -22,6 +22,7 @@ export type PreviewItem =
 export type PreviewTotalRow = {
   label: string
   value: string
+  rawAmount?: number
   emphasis?: boolean
   valueClassName?: string
   labelClassName?: string

@@ -109,7 +109,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
           settings={settings}
         />
 
-        <BankDetailsCard bankAccounts={bankAccounts} />
+        <BankDetailsCard bankAccounts={previewModel?.previewBankAccounts || bankAccounts} />
 
         <DocumentOptionsCard
           pdfOutput={pdfOutput}
@@ -127,6 +127,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
           relatedWaybills={relatedWaybills}
           sourceDocument={sourceDocument}
           invoiceId={invoice?.id}
+          invoiceTotal={invoice?.total || 0}
           onRecordPayment={onRecordPayment}
           onVoidPayment={onVoidPayment}
           onCreateAdvance={onCreateAdvance}

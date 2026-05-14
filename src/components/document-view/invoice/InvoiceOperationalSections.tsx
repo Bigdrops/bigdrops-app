@@ -12,6 +12,7 @@ interface InvoiceOperationalSectionsProps {
   relatedWaybills: any[];
   sourceDocument: any;
   invoiceId: string;
+  invoiceTotal?: number;
   
   onRecordPayment: () => void;
   onVoidPayment: (id: string) => void;
@@ -28,6 +29,7 @@ export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProp
   relatedWaybills,
   sourceDocument,
   invoiceId,
+  invoiceTotal,
   
   onRecordPayment,
   onVoidPayment,
@@ -39,6 +41,7 @@ export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProp
     <>
       <PaymentHistoryCard 
         payments={payments}
+        invoiceTotal={invoiceTotal || viewModel?.invoiceTotal || 0}
         viewModel={viewModel}
         onRecordPayment={onRecordPayment}
         onVoidPayment={onVoidPayment}

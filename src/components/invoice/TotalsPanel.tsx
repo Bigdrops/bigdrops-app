@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Switch } from '@/components/ui/switch'
 import { formatNaira } from '@/lib/formatters/money'
+import { buildSummaryRows } from '@/domain/invoice/calculations'
 
 const sectionLabelCls = 'mb-3 flex items-center gap-2 px-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]'
 const inputCls =
@@ -182,21 +183,20 @@ export default function TotalsPanel({
 
   const summaryRows = useMemo(
     () =>
-      [
-        { label: 'Subtotal', value: rawSubtotal, negative: false },
-        installRateTotal > 0 ? { label: 'Install Rate', value: installRateTotal, negative: false } : null,
-        workmanship > 0 ? { label: chargeLabels.workmanship || 'Workmanship', value: workmanship, negative: false } : null,
-        transportation > 0 ? { label: chargeLabels.transportation || 'Transportation', value: transportation, negative: false } : null,
-        shipping > 0 ? { label: chargeLabels.shipping || 'Shipping', value: shipping, negative: false } : null,
-        discountAmount > 0 ? { label: 'Discount', value: -discountAmount, negative: true } : null,
-        { label: 'VAT', value: vatAmount, negative: false },
-        whtAmount > 0 ? { label: 'WHT', value: -whtAmount, negative: true } : null,
-      ].filter((row): row is { label: string; value: number; negative: boolean } => row !== null),
+      buildSummaryRows({
+        invoice: { workmanship, transportation, shipping } as any,
+        totals: { rawSubtotal, vatAmount, discountAmount, whtAmount, installRateTotal },
+        customFields: { chargeLabels, discountTiming } as any,
+        chargeLabels,
+      }).map((row) => ({
+        label: row.label,
+        value: row.amount,
+        negative: row.tone === 'danger',
+      })),
     [
-      chargeLabels.shipping,
-      chargeLabels.transportation,
-      chargeLabels.workmanship,
+      chargeLabels,
       discountAmount,
+      discountTiming,
       installRateTotal,
       rawSubtotal,
       shipping,

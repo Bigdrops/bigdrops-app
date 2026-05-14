@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ChevronDown, Receipt } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
 import previewStyles from "../../shared/DocumentPreview.module.css";
 import { formatNaira } from "@/lib/formatters/money";
 import { formatDisplayDate } from "@/lib/formatters/date";
+import { buildPaymentSummaryProjection } from "@/domain/invoice/projections/financialProjection";
 
 interface PaymentHistoryCardProps {
   payments: any[];
+  invoiceTotal: number;
   viewModel: any;
   onRecordPayment: () => void;
   onVoidPayment: (id: string) => void;
@@ -14,11 +16,17 @@ interface PaymentHistoryCardProps {
 
 export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
   payments,
+  invoiceTotal,
   viewModel,
   onRecordPayment,
   onVoidPayment,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+
+  const paymentSummary = useMemo(
+    () => buildPaymentSummaryProjection(invoiceTotal, payments || [], (v) => formatNaira(v)),
+    [invoiceTotal, payments],
+  );
 
   return (
     <div className={styles.card}>
@@ -55,22 +63,22 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
           <div className={previewStyles.paymentBody}>
             <div className={previewStyles.payRow}>
               <span className={previewStyles.lbl}>Settled Total</span>
-              <span className={previewStyles.val}>{formatNaira(viewModel?.settledTotal || 0)}</span>
+              <span className={previewStyles.val}>{paymentSummary.settledTotalFormatted}</span>
             </div>
             <div className={`${previewStyles.payRow} ${previewStyles.payRowDue}`}>
               <span className={previewStyles.lbl}>Balance Due</span>
-              <span className={previewStyles.val}>{formatNaira(viewModel?.balanceDue || 0)}</span>
+              <span className={previewStyles.val}>{paymentSummary.balanceDueFormatted}</span>
             </div>
             
             <div className={previewStyles.progressBar}>
               <div className={previewStyles.progressLabel}>
                 <span>Payment Progress</span>
-                <span>{viewModel?.paymentProgress || 0}%</span>
+                <span>{paymentSummary.paymentProgress}%</span>
               </div>
               <div className={previewStyles.progressTrack}>
                 <div 
                   className={previewStyles.progressFill} 
-                  style={{ width: `${viewModel?.paymentProgress || 0}%` }}
+                  style={{ width: `${paymentSummary.paymentProgress}%` }}
                 />
               </div>
             </div>
