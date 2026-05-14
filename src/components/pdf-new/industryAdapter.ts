@@ -2,6 +2,7 @@ import { formatPdfCurrencyString } from '../../lib/formatters/pdfCurrency'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { normalizeRichTextSection } from './core/richText'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia'
+import { resolvePreviewGroupSubtotal } from '@/domain/invoice/projections/lineItemResolvers'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
 type IndustryTemplateDesign = Pick<
@@ -161,25 +162,18 @@ function formatPreparedCell(column: PdfColumnDefinition | undefined, cell: unkno
   return formatPdfMoney(cell)
 }
 
-function resolveLineAmount(item: PdfDocumentModel['items'][number]) {
-  if (typeof item.amount === 'number' && Number.isFinite(item.amount)) return item.amount
-
-  const unitPrice = Number(item.unitPrice || 0)
-  const quantity = Number(item.quantity || 0)
-  const derivedAmount = unitPrice * quantity
-
-  return Number.isFinite(derivedAmount) ? derivedAmount : 0
-}
-
 function resolveGroupSubtotal(model: PdfDocumentModel, groupId: string | null) {
   if (!groupId) return 0
-  let subtotal = 0
-  for (const item of model.items) {
-    if (item.rowType !== 'line') continue
-    if (item.groupId !== groupId) continue
-    subtotal += resolveLineAmount(item)
-  }
-  return subtotal
+  return resolvePreviewGroupSubtotal(
+    model.items.map((item) => ({
+      row_type: item.rowType || '',
+      group_id: item.groupId || null,
+      amount: item.amount ?? null,
+      quantity: item.quantity ?? null,
+      unit_price: item.unitPrice ?? null,
+    })),
+    groupId,
+  )
 }
 
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {

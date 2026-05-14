@@ -255,7 +255,7 @@ export default function ViewQuotation() {
             />
           }
           previewControls={previewControls}
-          bankAccounts={bankAccounts}
+          bankAccounts={previewModel.previewBankAccounts || bankAccounts}
           pdfOutput={pdfOutput}
           onOutputChange={actions.handleInlinePdfOutputChange}
           onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}

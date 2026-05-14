@@ -165,10 +165,12 @@ export function getStandardRowEntries(items: InvoiceItem[]) {
 }
 
 export function getColumnLabel(columnKey: string, columns: ColumnConfig[]) {
+  const col = columns.find((column) => column.key === columnKey)
+  if (col?.label) return col.label
   if (columnKey === 'description') return 'Description'
   if (columnKey === 'sub_description') return 'Sub Description'
   if (columnKey === 'quantity') return 'Quantity'
   if (columnKey === 'unit') return 'Unit'
   if (columnKey === 'unit_price') return 'Unit Price'
-  return columns.find((column) => column.key === columnKey)?.label || columnKey
+  return columnKey
 }

@@ -1,15 +1,13 @@
 import { useState, type DragEvent, type ReactNode } from 'react'
 import {
+  Check,
   ChevronDown,
   Eye,
   EyeOff,
   GripVertical,
   Plus,
   RotateCcw,
-  Trash2,
   X,
-  Slash,
-  Power,
 } from 'lucide-react'
 
 import { Button } from '../components/ui/button'
@@ -18,15 +16,16 @@ import { Input } from '../components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { COLUMN_TYPES } from './useInvoiceColumns'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
 
-const normalizeTitle = (title: string) => 
-  title.trim().toLowerCase().replace(/\s+/g, ' ')
-
-const FIXED_PDF_COLUMNS: Array<{ key: string; label: string }> = [
-  { key: 'description', label: 'Description' },
-]
+const TOTAL_AFFECTING_COLUMNS = new Set([
+  'quantity',
+  'unit_price',
+  'amount',
+  'install_rate',
+  'vat_rate',
+  'discount_rate',
+])
 
 type ColumnUpdateValue = string | boolean
 
@@ -66,6 +65,37 @@ function SectionTitle({ children, action }: SectionTitleProps) {
   )
 }
 
+function FixedColumnRow({
+  col,
+  onUpdate,
+}: {
+  col: ColumnConfig
+  onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
+}) {
+  return (
+    <div className="rounded-[18px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-3">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <Input
+            value={col.label || ''}
+            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+            placeholder="Column label"
+            className="h-11 rounded-[14px] border-[var(--bd-border)] bg-[var(--bd-bg)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
+          />
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+              Fixed
+            </span>
+            <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+              Text
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type BuiltInColumnRowProps = {
   col: ColumnConfig
   onToggle: (key: string) => void
@@ -78,7 +108,7 @@ type BuiltInColumnRowProps = {
   onMoveDown?: (key: string) => void
   disableMoveUp: boolean
   disableMoveDown: boolean
-  typeLabel: (type: string | undefined) => string
+  affectsTotals: boolean
 }
 
 function BuiltInColumnRow({
@@ -93,30 +123,25 @@ function BuiltInColumnRow({
   onMoveDown,
   disableMoveUp,
   disableMoveDown,
-  typeLabel,
+  affectsTotals,
 }: BuiltInColumnRowProps) {
   const mode = col.visibilityMode || 'show'
   const isShown = mode === 'show'
   const isFullHidden = mode === 'hide_full'
-  const isDisplayHidden = mode === 'hide_display'
 
-  const PROTECTED_COLUMNS = ['description', 'quantity', 'unit_price', 'amount']
-  const isProtected = PROTECTED_COLUMNS.includes(col.key)
-  const isDescription = col.key === 'description'
+  const typeLabel = affectsTotals ? 'Num' : 'Text'
 
   return (
     <div
       className={cn(
         'rounded-[18px] border px-3 py-3 transition',
-        isShown
-          ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]'
-          : isFullHidden
-            ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] opacity-50 grayscale-[0.5]'
-            : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-85',
+        isFullHidden
+          ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] opacity-40'
+          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]',
       )}
     >
-      <div className={cn("flex items-start gap-3", isFullHidden && "pointer-events-none opacity-60")}>
-        <div className="flex shrink-0 flex-col gap-1 pt-1 pointer-events-auto">
+      <div className="flex items-start gap-3">
+        <div className="flex shrink-0 flex-col gap-1 pt-1">
           <button
             type="button"
             draggable={!isFullHidden}
@@ -124,53 +149,39 @@ function BuiltInColumnRow({
             onDragOver={onDragOver}
             onDrop={(e) => onDrop(e, col.key)}
             className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)]"
-            aria-label={`Drag ${col.label}`}
             title="Drag to reorder"
           >
             <GripVertical className="h-4 w-4" />
           </button>
-
           <button
             type="button"
-            onClick={() => !isDescription && onToggle(col.key)}
-            disabled={isDescription || isFullHidden}
-            className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
-              isShown
-                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
-                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
-              (isDescription || isFullHidden) && 'opacity-30'
-            )}
-            aria-label={isShown ? `Hide ${col.label}` : `Show ${col.label}`}
-            title={isDescription ? 'Description cannot be hidden' : isShown ? 'Hide from display' : 'Show on display'}
+            onClick={() => onMoveUp?.(col.key)}
+            disabled={disableMoveUp}
+            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
           >
-            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            <ChevronDown className="h-4 w-4 rotate-180" />
           </button>
-
-          {!isProtected && (
-            <button
-              type="button"
-              onClick={() => onToggleFull(col.key)}
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
-                isFullHidden
-                  ? 'border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)]'
-                  : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]'
-              )}
-              aria-label={isFullHidden ? `Enable ${col.label}` : `Disable ${col.label}`}
-              title={isFullHidden ? 'Enable column' : 'Remove column from document'}
-            >
-              <Power className="h-3 w-3" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => onMoveDown?.(col.key)}
+            disabled={disableMoveDown}
+            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className={cn('min-w-0 flex-1', isFullHidden && 'opacity-60')}>
           <Input
             value={col.label || ''}
             onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
             placeholder="Column label"
-            className="h-11 rounded-[14px] border-[var(--bd-border)] bg-[var(--bd-bg)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
+            className={cn(
+              'h-11 rounded-[14px] px-4 text-[14px] font-semibold transition',
+              isFullHidden
+                ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)] line-through'
+                : 'border-[var(--bd-border)] bg-[var(--bd-bg)] text-[var(--bd-text)]',
+            )}
           />
 
           {col.key === 'install_rate' ? (
@@ -181,50 +192,55 @@ function BuiltInColumnRow({
                 value={col.formula || 0}
                 onChange={(val) => onUpdate(col.key, 'formula', String(val))}
                 placeholder="e.g. 0.15"
-                className="h-10 rounded-[12px] border-[var(--bd-border)] bg-[var(--bd-bg)] text-sm"
+                className={cn(
+                  'h-10 rounded-[12px] text-sm',
+                  isFullHidden
+                    ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-60'
+                    : 'border-[var(--bd-border)] bg-[var(--bd-bg)]',
+                )}
               />
-              <span className="shrink-0 text-xs font-semibold text-[var(--bd-text3)]">Multiplier</span>
+              <span className="shrink-0 text-xs font-semibold text-[var(--bd-text3)]">
+                Multiplier
+              </span>
             </div>
           ) : null}
 
-          <div className="mt-2 flex items-center gap-2">
-            <div className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-              {typeLabel(col.type || 'text')}
-            </div>
-            <div
-              className={cn(
-                'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em]',
-                isShown
-                  ? 'border-[var(--bd-emerald-border)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]'
-                  : isFullHidden
-                    ? 'border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)]'
-                    : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)]',
-              )}
-            >
-              {isShown ? 'Visible' : isFullHidden ? 'Disabled' : 'Hidden'}
-            </div>
+          <div className="mt-2 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+            {typeLabel}
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col gap-1 pt-1">
           <button
             type="button"
-            onClick={() => onMoveUp?.(col.key)}
-            disabled={disableMoveUp}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-            aria-label={`Move ${col.label} up`}
+            onClick={() => onToggle(col.key)}
+            className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
+              isShown
+                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
+                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+              isFullHidden && 'opacity-30',
+            )}
+            title={isShown ? 'Hide from display' : 'Show on display'}
           >
-            <ChevronDown className="h-4 w-4 rotate-180" />
+            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           </button>
-          <button
-            type="button"
-            onClick={() => onMoveDown?.(col.key)}
-            disabled={disableMoveDown}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-            aria-label={`Move ${col.label} down`}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
+
+          {affectsTotals ? (
+            <button
+              type="button"
+              onClick={() => onToggleFull(col.key)}
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
+                isFullHidden
+                  ? 'border-green-500/25 bg-green-50 text-green-700'
+                  : 'border-red-500/25 bg-red-50 text-red-600',
+              )}
+              title={isFullHidden ? 'Restore to totals' : 'Remove from totals'}
+            >
+              {isFullHidden ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
@@ -234,7 +250,6 @@ function BuiltInColumnRow({
 type CustomColumnCardProps = {
   col: ColumnConfig
   onToggle: (key: string) => void
-  onToggleFull: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onRemoveCustom: (key: string) => void
   onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
@@ -249,7 +264,6 @@ type CustomColumnCardProps = {
 function CustomColumnCard({
   col,
   onToggle,
-  onToggleFull,
   onUpdate,
   onRemoveCustom,
   onDragStart,
@@ -280,18 +294,15 @@ function CustomColumnCard({
             onDragOver={onDragOver}
             onDrop={(e) => onDrop(e, col.key)}
             className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)]"
-            aria-label={`Drag ${col.label}`}
             title="Drag to reorder"
           >
             <GripVertical className="h-4 w-4" />
           </button>
-
           <button
             type="button"
             onClick={() => onMoveUp?.(col.key)}
             disabled={disableMoveUp}
             className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-            aria-label={`Move ${col.label} up`}
           >
             <ChevronDown className="h-4 w-4 rotate-180" />
           </button>
@@ -300,26 +311,10 @@ function CustomColumnCard({
             onClick={() => onMoveDown?.(col.key)}
             disabled={disableMoveDown}
             className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-            aria-label={`Move ${col.label} down`}
           >
             <ChevronDown className="h-4 w-4" />
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => onToggle(col.key)}
-          className={cn(
-            'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border transition',
-            isShown
-              ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
-              : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
-          )}
-          aria-label={isShown ? `Hide ${col.label}` : `Show ${col.label}`}
-          title={isShown ? 'Hide column' : 'Show column'}
-        >
-          {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </button>
 
         <div className="min-w-0 flex-1">
           <Input
@@ -328,82 +323,33 @@ function CustomColumnCard({
             placeholder="Column label"
             className="h-11 rounded-[14px] border-[var(--bd-border)] bg-[var(--bd-bg)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
           />
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-full border border-[var(--bd-border)] bg-[var(--bd-bg)] p-1">
-              {COLUMN_TYPES.map((t) => {
-                const value = t.value
-                const label = t.label
-                const active = col.type === value
-
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => onUpdate(col.key, 'type', value)}
-                    className={cn(
-                      'rounded-full px-3 py-1.5 text-[12px] font-medium transition',
-                      active
-                        ? 'bg-[var(--bd-surface)] text-[var(--bd-text)] shadow-[0_1px_4px_rgba(15,23,42,0.05)]'
-                        : 'text-[var(--bd-text3)]',
-                    )}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-
-            {col.type === 'number' ? (
-              <label className="ml-auto flex items-center gap-2 text-[13px] text-[var(--bd-text2)]">
-                <input
-                  type="checkbox"
-                  checked={!!col.includeInTotal}
-                  onChange={(e) => onUpdate(col.key, 'includeInTotal', e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                Add to total
-              </label>
-            ) : null}
+          <div className="mt-2 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+            Text
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onToggleFull(col.key)}
-          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95"
-          aria-label={`Delete ${col.label}`}
-          title="Delete custom column"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-type FixedColumnRowProps = {
-  col: { key: string; label: string }
-}
-
-function FixedColumnRow({ col }: FixedColumnRowProps) {
-  return (
-    <div className="rounded-[18px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-3">
-      <div className="flex items-start gap-3">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] text-[var(--bd-text4)]">
-          <Eye className="h-4 w-4" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <Input
-            value={col.label}
-            readOnly
-            className="h-11 rounded-[14px] border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
-          />
-
-          <div className="mt-2 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-            Fixed PDF
-          </div>
+        <div className="flex shrink-0 flex-col gap-1 pt-1">
+          <button
+            type="button"
+            onClick={() => onToggle(col.key)}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-[10px] border transition',
+              isShown
+                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
+                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+            )}
+            title={isShown ? 'Hide column' : 'Show column'}
+          >
+            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemoveCustom(col.key)}
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95"
+            title="Delete custom column"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -493,31 +439,12 @@ export default function ColumnManager({
   onResetItemOverrides,
 }: ColumnManagerProps) {
   const [confirmReset, setConfirmReset] = useState<boolean>(false)
-  const [duplicateTitleError, setDuplicateTitleError] = useState<string | null>(null)
 
-  const fixedColumnKeys = new Set(FIXED_PDF_COLUMNS.map((column) => column.key))
-  const builtinCols = columns.filter((c) => !c.key.startsWith('custom_') && !fixedColumnKeys.has(c.key))
+  const descriptionCol = columns.find((c) => c.key === 'description')
+  const builtinCols = columns.filter(
+    (c) => !c.key.startsWith('custom_') && c.key !== 'description',
+  )
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
-
-  const handleUpdateLabel = (key: string, newLabel: string) => {
-    const normalizedNew = normalizeTitle(newLabel)
-    if (normalizedNew) {
-      const duplicate = columns.find(c => 
-        c.key !== key && 
-        (c.visibilityMode || 'show') !== 'hide_full' && 
-        normalizeTitle(c.label || '') === normalizedNew
-      )
-      
-      if (duplicate) {
-        setDuplicateTitleError(`${newLabel.trim()} is already used. Choose a unique column title.`)
-        // Still allow typing but set error
-        onUpdate(key, 'label', newLabel)
-        return
-      }
-    }
-    setDuplicateTitleError(null)
-    onUpdate(key, 'label', newLabel)
-  }
 
   const standardItems = items.filter((i) => i.row_type === 'standard')
   const vatOverrideCount = standardItems.filter((i) => i.vat_rate != null).length
@@ -547,17 +474,6 @@ export default function ColumnManager({
     setConfirmReset(false)
   }
 
-  const typeLabel = (type: string | undefined) =>
-    (
-      {
-        install_rate: 'Install Rate',
-        vat_rate: 'VAT %',
-        discount_rate: 'Discount %',
-        make: 'Make',
-        unit: 'Unit',
-      } as Record<string, string>
-    )[type || ''] || type || ''
-
   return (
     <>
       <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
@@ -586,43 +502,51 @@ export default function ColumnManager({
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 pb-4 pt-5 sm:px-5">
-              <SectionTitle>A. Standard PDF (Fixed)</SectionTitle>
-              <div className="space-y-3">
-                {FIXED_PDF_COLUMNS.map((col) => (
-                  <FixedColumnRow key={col.key} col={col} />
-                ))}
-              </div>
+              {descriptionCol ? (
+                <>
+                  <SectionTitle>Standard PDF</SectionTitle>
+                  <div className="space-y-3">
+                    <FixedColumnRow
+                      col={descriptionCol}
+                      onUpdate={(key, field, val) => onUpdate(key, field, val as string)}
+                    />
+                  </div>
+                </>
+              ) : null}
 
               <div className="mt-7">
-                <SectionTitle>B. Form Fields (Built-ins)</SectionTitle>
-                <div className="space-y-3">
-                  {builtinCols.map((col, index) => (
-                    <BuiltInColumnRow
-                      key={col.key}
-                      col={col}
-                      onToggle={onToggle}
-                      onToggleFull={onToggleFull}
-                      onUpdate={(key, field, val) => {
-                        if (field === 'label') handleUpdateLabel(key, val as string)
-                        else onUpdate(key, field, val)
-                      }}
-                      onDragStart={handleDragStart}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      onMoveUp={(key) => {
-                        if (!onMove || index === 0) return
-                        onMove(key, index - 1)
-                      }}
-                      onMoveDown={(key) => {
-                        if (!onMove || index === builtinCols.length - 1) return
-                        onMove(key, index + 1)
-                      }}
-                      disableMoveUp={index === 0}
-                      disableMoveDown={index === builtinCols.length - 1}
-                      typeLabel={typeLabel}
-                    />
-                  ))}
-                </div>
+                <SectionTitle>Form Fields</SectionTitle>
+                {builtinCols.length > 0 ? (
+                  <div className="space-y-3">
+                    {builtinCols.map((col, index) => (
+                      <BuiltInColumnRow
+                        key={col.key}
+                        col={col}
+                        onToggle={onToggle}
+                        onToggleFull={onToggleFull}
+                        onUpdate={(key, field, val) => onUpdate(key, field, val)}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onMoveUp={(key) => {
+                          if (!onMove || index === 0) return
+                          onMove(key, index - 1)
+                        }}
+                        onMoveDown={(key) => {
+                          if (!onMove || index === builtinCols.length - 1) return
+                          onMove(key, index + 1)
+                        }}
+                        disableMoveUp={index === 0}
+                        disableMoveDown={index === builtinCols.length - 1}
+                        affectsTotals={TOTAL_AFFECTING_COLUMNS.has(col.key)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[24px] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] px-6 py-8 text-center text-sm text-[var(--bd-text3)]">
+                    No form fields configured
+                  </div>
+                )}
               </div>
 
               <div className="mt-7">
@@ -639,7 +563,7 @@ export default function ColumnManager({
                     </Button>
                   }
                 >
-                  C. Custom Columns
+                  Custom Columns
                 </SectionTitle>
 
                 {customCols.length === 0 ? (
@@ -655,11 +579,7 @@ export default function ColumnManager({
                           key={col.key}
                           col={col}
                           onToggle={onToggle}
-                          onToggleFull={onToggleFull}
-                          onUpdate={(key, field, val) => {
-                            if (field === 'label') handleUpdateLabel(key, val as string)
-                            else onUpdate(key, field, val)
-                          }}
+                          onUpdate={(key, field, val) => onUpdate(key, field, val)}
                           onRemoveCustom={onRemoveCustom}
                           onDragStart={handleDragStart}
                           onDragOver={handleDragOver}
@@ -683,7 +603,7 @@ export default function ColumnManager({
 
               {onResetItemOverrides ? (
                 <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-                  <div className="text-[16px] font-bold text-[var(--bd-text)]">D. Row Overrides Status</div>
+                  <div className="text-[16px] font-bold text-[var(--bd-text)]">Row Overrides Status</div>
 
                   <div className="mt-4 space-y-2.5">
                     <OverrideRow
@@ -742,16 +662,10 @@ export default function ColumnManager({
             </div>
 
             <div className="border-t border-[var(--bd-border-soft)] px-6 py-4">
-              {duplicateTitleError && (
-                <div className="mb-3 rounded-[12px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] px-4 py-2.5 text-xs font-bold text-[var(--bd-rose)]">
-                  {duplicateTitleError}
-                </div>
-              )}
               <Button
                 type="button"
                 onClick={onClose}
-                disabled={!!duplicateTitleError}
-                className="h-[54px] w-full rounded-[18px] bg-[var(--bd-text)] text-[18px] font-bold text-white hover:brightness-95 disabled:opacity-50"
+                className="h-[54px] w-full rounded-[18px] bg-[var(--bd-text)] text-[18px] font-bold text-white hover:brightness-95"
               >
                 Done
               </Button>

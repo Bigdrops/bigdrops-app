@@ -31,6 +31,8 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
   const signatory = previewModel?.signatory || null;
   const resolvedLogoUrl = logoUrl || resolveCanonicalLogoUrl(settings);
+  const detailRows: any[] = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [];
+  const poRow = detailRows.find((row: any) => row?.label === 'PO Number');
 
   return (
     <div className={styles.invCard}>
@@ -66,12 +68,12 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
               <span>Issued {formatDisplayDate(invoice.issue_date)}</span>
             </div>
           )}
-          {invoice?.po_number && (
+          {poRow?.value ? (
             <div className={styles.metaChip}>
               <FileText size={12} />
-              <span>PO: {invoice.po_number}</span>
+              <span>PO: {poRow.value}</span>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -82,7 +84,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
         </div>
         <div className={styles.infoCell}>
           <div className={styles.infoLabel}>Amount Due</div>
-          <div className={styles.infoValue}>{formatNaira(viewModel?.balanceDue || 0)}</div>
+          <div className={styles.infoValue}>{previewModel?.previewBalanceDue?.value || formatNaira(viewModel?.balanceDue || 0)}</div>
         </div>
       </div>
 

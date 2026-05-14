@@ -60,14 +60,14 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
         <>
           {bankAccounts.map((bank, index) => (
             <div key={index} className={previewStyles.bankDetail}>
-              <div className={previewStyles.bankName}>{bank.bankName || bank.bank_name}</div>
+              <div className={previewStyles.bankName}>{bank.bankName}</div>
               <div>
                 <div className={previewStyles.lbl}>Account Name</div>
-                <div className={previewStyles.val}>{bank.accountName || bank.account_name}</div>
+                <div className={previewStyles.val}>{bank.accountName}</div>
               </div>
               <div>
                 <div className={previewStyles.lbl}>Account Number</div>
-                <div className={previewStyles.val}>{bank.accountNumber || bank.account_number}</div>
+                <div className={previewStyles.val}>{bank.accountNumber}</div>
               </div>
             </div>
           ))}
