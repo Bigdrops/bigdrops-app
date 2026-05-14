@@ -4,7 +4,6 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  GripVertical,
   Plus,
   RotateCcw,
   X,
@@ -13,7 +12,6 @@ import {
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
-import { NumericInput } from '@/components/ui/numeric-input'
 import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
@@ -49,6 +47,71 @@ export interface ColumnManagerProps {
   onResetItemOverrides?: (fields: OverrideResetFields) => void
 }
 
+type ColumnDragHandlers = {
+  onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
+  onDragOver: (e: DragEvent<HTMLElement>) => void
+  onDrop: (e: DragEvent<HTMLElement>, targetKey: string) => void
+}
+
+function GripHandle({
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: {
+  draggable: boolean
+  onDragStart: (e: DragEvent<HTMLElement>) => void
+  onDragOver: (e: DragEvent<HTMLElement>) => void
+  onDrop: (e: DragEvent<HTMLElement>) => void
+}) {
+  return (
+    <div
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className="grid grid-cols-2 gap-[2.5px] w-[14px] h-5 shrink-0 cursor-grab active:cursor-grabbing opacity-35 hover:opacity-100 transition-opacity select-none"
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <span key={i} className="w-[3px] h-[3px] bg-[var(--bd-text3)] rounded-full" />
+      ))}
+    </div>
+  )
+}
+
+function ReorderButtons({
+  onUp,
+  onDown,
+  disableUp,
+  disableDown,
+}: {
+  onUp: () => void
+  onDown: () => void
+  disableUp: boolean
+  disableDown: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-0 shrink-0">
+      <button
+        type="button"
+        onClick={onUp}
+        disabled={disableUp}
+        className="w-[18px] h-[14px] border-0 bg-transparent cursor-pointer flex items-center justify-center text-[var(--bd-text3)] hover:text-[var(--bd-text)] disabled:opacity-25 disabled:cursor-default p-0 transition-colors"
+      >
+        <ChevronDown className="w-[10px] h-[10px] rotate-180" />
+      </button>
+      <button
+        type="button"
+        onClick={onDown}
+        disabled={disableDown}
+        className="w-[18px] h-[14px] border-0 bg-transparent cursor-pointer flex items-center justify-center text-[var(--bd-text3)] hover:text-[var(--bd-text)] disabled:opacity-25 disabled:cursor-default p-0 transition-colors"
+      >
+        <ChevronDown className="w-[10px] h-[10px]" />
+      </button>
+    </div>
+  )
+}
+
 type SectionTitleProps = {
   children: ReactNode
   action?: ReactNode
@@ -73,24 +136,20 @@ function FixedColumnRow({
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
 }) {
   return (
-    <div className="rounded-[18px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-3">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <Input
-            value={col.label || ''}
-            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
-            placeholder="Column label"
-            className="h-11 rounded-[14px] border-[var(--bd-border)] bg-[var(--bd-bg)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
-          />
-          <div className="mt-2 flex items-center gap-2">
-            <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-              Fixed
-            </span>
-            <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-              Text
-            </span>
-          </div>
-        </div>
+    <div className="flex items-center min-h-[46px] px-[14px] py-[7px] gap-2 border-b border-[var(--bd-border-soft)] last:border-b-0 bg-[var(--bd-bg)]">
+      <div className="min-w-0 flex-1 flex items-center gap-2">
+        <Input
+          value={col.label || ''}
+          onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+          placeholder="Column label"
+          className="h-9 rounded-[6px] border border-transparent hover:border-[var(--bd-border)] bg-transparent px-2 text-[14px] font-medium text-[var(--bd-text)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)] flex-1"
+        />
+        <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+          Fixed
+        </span>
+        <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+          Text
+        </span>
       </div>
     </div>
   )
@@ -101,15 +160,12 @@ type BuiltInColumnRowProps = {
   onToggle: (key: string) => void
   onToggleFull: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
-  onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
-  onDragOver: (e: DragEvent<HTMLElement>) => void
-  onDrop: (e: DragEvent<HTMLElement>, targetKey: string) => void
-  onMoveUp?: (key: string) => void
-  onMoveDown?: (key: string) => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
   disableMoveUp: boolean
   disableMoveDown: boolean
   affectsTotals: boolean
-}
+} & ColumnDragHandlers
 
 function BuiltInColumnRow({
   col,
@@ -129,139 +185,93 @@ function BuiltInColumnRow({
   const isShown = mode === 'show'
   const isFullHidden = mode === 'hide_full'
 
-  const typeLabel = affectsTotals ? 'Num' : 'Text'
-
   return (
     <div
       className={cn(
-        'rounded-[18px] border px-3 py-3 transition',
-        isFullHidden
-          ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] opacity-40'
-          : 'border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.04)]',
+        'flex items-center min-h-[46px] px-[10px] py-[7px] gap-2 border-b border-[var(--bd-border-soft)] last:border-b-0 transition hover:bg-[var(--bd-bg)]',
+        isFullHidden && 'opacity-40',
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex shrink-0 flex-col gap-1 pt-1">
-          <button
-            type="button"
-            draggable={!isFullHidden}
-            onDragStart={(e) => onDragStart(e, col.key)}
-            onDragOver={onDragOver}
-            onDrop={(e) => onDrop(e, col.key)}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)]"
-            title="Drag to reorder"
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveUp?.(col.key)}
-            disabled={disableMoveUp}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-          >
-            <ChevronDown className="h-4 w-4 rotate-180" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveDown?.(col.key)}
-            disabled={disableMoveDown}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
+      <GripHandle
+        draggable={!isFullHidden}
+        onDragStart={(e) => onDragStart(e, col.key)}
+        onDragOver={onDragOver}
+        onDrop={(e) => onDrop(e, col.key)}
+      />
 
-        <div className={cn('min-w-0 flex-1', isFullHidden && 'opacity-60')}>
-          <Input
-            value={col.label || ''}
-            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
-            placeholder="Column label"
+      <ReorderButtons
+        onUp={() => onMoveUp?.()}
+        onDown={() => onMoveDown?.()}
+        disableUp={disableMoveUp}
+        disableDown={disableMoveDown}
+      />
+
+      <div className={cn('min-w-0 flex-1 flex items-center gap-2', isFullHidden && 'opacity-60')}>
+        <Input
+          value={col.label || ''}
+          onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+          placeholder="Column label"
+          className={cn(
+            'h-9 rounded-[6px] px-2 text-[14px] font-medium transition flex-1',
+            isFullHidden
+              ? 'border-transparent bg-transparent text-[var(--bd-text3)] line-through hover:border-[var(--bd-border-soft)]'
+              : 'border-transparent bg-transparent text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)]',
+          )}
+        />
+        <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+          {affectsTotals ? 'Num' : 'Text'}
+        </span>
+      </div>
+
+      <div className="flex gap-1 shrink-0 self-start mt-[2px]">
+        <button
+          type="button"
+          onClick={() => onToggle(col.key)}
+          className={cn(
+            'w-[30px] h-7 rounded-[6px] border flex items-center justify-center transition',
+            isShown
+              ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
+              : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+            isFullHidden && 'opacity-30',
+          )}
+          title={isShown ? 'Hide from display' : 'Show on display'}
+        >
+          {isShown ? <Eye className="w-[13px] h-[13px]" /> : <EyeOff className="w-[13px] h-[13px]" />}
+        </button>
+
+        {affectsTotals ? (
+          <button
+            type="button"
+            onClick={() => onToggleFull(col.key)}
             className={cn(
-              'h-11 rounded-[14px] px-4 text-[14px] font-semibold transition',
+              'w-[30px] h-7 rounded-[6px] border flex items-center justify-center transition',
               isFullHidden
-                ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text3)] line-through'
-                : 'border-[var(--bd-border)] bg-[var(--bd-bg)] text-[var(--bd-text)]',
+                ? 'border-green-500/25 bg-green-50 text-green-700'
+                : 'border-red-500/25 bg-red-50 text-red-600',
             )}
-          />
-
-          {col.key === 'install_rate' ? (
-            <div className="mt-2 flex items-center gap-2">
-              <NumericInput
-                step={0.01}
-                min={0}
-                value={col.formula || 0}
-                onChange={(val) => onUpdate(col.key, 'formula', String(val))}
-                placeholder="e.g. 0.15"
-                className={cn(
-                  'h-10 rounded-[12px] text-sm',
-                  isFullHidden
-                    ? 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-60'
-                    : 'border-[var(--bd-border)] bg-[var(--bd-bg)]',
-                )}
-              />
-              <span className="shrink-0 text-xs font-semibold text-[var(--bd-text3)]">
-                Multiplier
-              </span>
-            </div>
-          ) : null}
-
-          <div className="mt-2 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-            {typeLabel}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col gap-1 pt-1">
-          <button
-            type="button"
-            onClick={() => onToggle(col.key)}
-            className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
-              isShown
-                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
-                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
-              isFullHidden && 'opacity-30',
-            )}
-            title={isShown ? 'Hide from display' : 'Show on display'}
+            title={isFullHidden ? 'Restore to totals' : 'Remove from totals'}
           >
-            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            {isFullHidden ? <Check className="w-[13px] h-[13px]" /> : <X className="w-[13px] h-[13px]" />}
           </button>
-
-          {affectsTotals ? (
-            <button
-              type="button"
-              onClick={() => onToggleFull(col.key)}
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-[9px] border transition',
-                isFullHidden
-                  ? 'border-green-500/25 bg-green-50 text-green-700'
-                  : 'border-red-500/25 bg-red-50 text-red-600',
-              )}
-              title={isFullHidden ? 'Restore to totals' : 'Remove from totals'}
-            >
-              {isFullHidden ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-            </button>
-          ) : null}
-        </div>
+        ) : null}
       </div>
     </div>
   )
 }
 
-type CustomColumnCardProps = {
+type CustomColumnRowProps = {
   col: ColumnConfig
   onToggle: (key: string) => void
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
   onRemoveCustom: (key: string) => void
-  onDragStart: (e: DragEvent<HTMLElement>, key: string) => void
-  onDragOver: (e: DragEvent<HTMLElement>) => void
-  onDrop: (e: DragEvent<HTMLElement>, targetKey: string) => void
-  onMoveUp?: (key: string) => void
-  onMoveDown?: (key: string) => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
   disableMoveUp: boolean
   disableMoveDown: boolean
-}
+  deleting?: boolean
+} & ColumnDragHandlers
 
-function CustomColumnCard({
+function CustomColumnRow({
   col,
   onToggle,
   onUpdate,
@@ -273,114 +283,67 @@ function CustomColumnCard({
   onMoveDown,
   disableMoveUp,
   disableMoveDown,
-}: CustomColumnCardProps) {
+  deleting,
+}: CustomColumnRowProps) {
   const isShown = (col.visibilityMode || 'show') === 'show'
 
   return (
     <div
       className={cn(
-        'rounded-[20px] border p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition',
-        isShown
-          ? 'border-[var(--bd-border)] bg-[var(--bd-surface)]'
-          : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg)] opacity-80',
+        'flex items-center min-h-[46px] px-[10px] py-[7px] gap-2 border-b border-[var(--bd-border-soft)] last:border-b-0 transition-all duration-200 hover:bg-[var(--bd-bg)]',
+        deleting && 'opacity-0 -translate-x-2',
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex shrink-0 flex-col gap-1 pt-1">
-          <button
-            type="button"
-            draggable
-            onDragStart={(e) => onDragStart(e, col.key)}
-            onDragOver={onDragOver}
-            onDrop={(e) => onDrop(e, col.key)}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)]"
-            title="Drag to reorder"
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveUp?.(col.key)}
-            disabled={disableMoveUp}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-          >
-            <ChevronDown className="h-4 w-4 rotate-180" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMoveDown?.(col.key)}
-            disabled={disableMoveDown}
-            className="flex h-7 w-7 items-center justify-center rounded-[9px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text2)] disabled:opacity-30"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
+      <GripHandle
+        draggable
+        onDragStart={(e) => onDragStart(e, col.key)}
+        onDragOver={onDragOver}
+        onDrop={(e) => onDrop(e, col.key)}
+      />
 
-        <div className="min-w-0 flex-1">
-          <Input
-            value={col.label || ''}
-            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
-            placeholder="Column label"
-            className="h-11 rounded-[14px] border-[var(--bd-border)] bg-[var(--bd-bg)] px-4 text-[14px] font-semibold text-[var(--bd-text)]"
-          />
-          <div className="mt-2 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-            Text
-          </div>
-        </div>
+      <ReorderButtons
+        onUp={() => onMoveUp?.()}
+        onDown={() => onMoveDown?.()}
+        disableUp={disableMoveUp}
+        disableDown={disableMoveDown}
+      />
 
-        <div className="flex shrink-0 flex-col gap-1 pt-1">
-          <button
-            type="button"
-            onClick={() => onToggle(col.key)}
-            className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-[10px] border transition',
-              isShown
-                ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
-                : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
-            )}
-            title={isShown ? 'Hide column' : 'Show column'}
-          >
-            {isShown ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => onRemoveCustom(col.key)}
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95"
-            title="Delete custom column"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-type OverrideRowProps = {
-  label: string
-  count: number
-  onReset: () => void
-}
-
-function OverrideRow({ label, count, onReset }: OverrideRowProps) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[14px] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-[14px] font-medium text-[var(--bd-text)]">{label}</span>
-        <span className="rounded-full bg-[var(--bd-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--bd-text3)]">
-          {count}
+      <div className="min-w-0 flex-1 flex items-center gap-2">
+        <Input
+          value={col.label || ''}
+          onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+          placeholder="Column label"
+          className="h-9 rounded-[6px] border-transparent bg-transparent px-2 text-[14px] font-medium text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)] flex-1"
+        />
+        <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+          Text
         </span>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onReset}
-        disabled={count === 0}
-        className="h-8 rounded-full border-[var(--bd-border)] px-3 text-xs font-semibold text-[var(--bd-text2)] disabled:opacity-40"
-      >
-        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-        Reset
-      </Button>
+
+      <div className="flex gap-1 shrink-0 self-start mt-[2px]">
+        <button
+          type="button"
+          onClick={() => onToggle(col.key)}
+          className={cn(
+            'w-[30px] h-7 rounded-[6px] border flex items-center justify-center transition',
+            isShown
+              ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text)]'
+              : 'border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] text-[var(--bd-text3)]',
+          )}
+          title={isShown ? 'Hide column' : 'Show column'}
+        >
+          {isShown ? <Eye className="w-[13px] h-[13px]" /> : <EyeOff className="w-[13px] h-[13px]" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onRemoveCustom(col.key)}
+          className="w-[30px] h-7 rounded-[6px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] flex items-center justify-center transition hover:brightness-95"
+          title="Delete custom column"
+        >
+          <X className="w-[13px] h-[13px]" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -438,7 +401,9 @@ export default function ColumnManager({
   items = [],
   onResetItemOverrides,
 }: ColumnManagerProps) {
-  const [confirmReset, setConfirmReset] = useState<boolean>(false)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [overridesOpen, setOverridesOpen] = useState(false)
+  const [deletingKey, setDeletingKey] = useState<string | null>(null)
 
   const descriptionCol = columns.find((c) => c.key === 'description')
   const builtinCols = columns.filter(
@@ -447,10 +412,49 @@ export default function ColumnManager({
   const customCols = columns.filter((c) => c.key.startsWith('custom_'))
 
   const standardItems = items.filter((i) => i.row_type === 'standard')
-  const vatOverrideCount = standardItems.filter((i) => i.vat_rate != null).length
-  const discountOverrideCount = standardItems.filter((i) => i.discount_rate != null).length
-  const installOverrideCount = standardItems.filter((i) => i.install_rate_override === true).length
-  const totalOverrideCount = vatOverrideCount + discountOverrideCount + installOverrideCount
+
+  const overrideEntries: Array<{
+    id: string
+    name: string
+    detail: string
+    onReset: () => void
+  }> = []
+  if (onResetItemOverrides) {
+    standardItems.forEach((item) => {
+      if (item.vat_rate != null) {
+        overrideEntries.push({
+          id: `${item.id || item._uiKey || ''}_vat`,
+          name: item.description?.trim() || 'Row item',
+          detail: `VAT Rate → ${item.vat_rate}%`,
+          onReset: () => onResetItemOverrides({ vat: true }),
+        })
+      }
+      if (item.discount_rate != null) {
+        overrideEntries.push({
+          id: `${item.id || item._uiKey || ''}_discount`,
+          name: item.description?.trim() || 'Row item',
+          detail: `Discount Rate → ${item.discount_rate}%`,
+          onReset: () => onResetItemOverrides({ discount: true }),
+        })
+      }
+      if (item.install_rate_override) {
+        overrideEntries.push({
+          id: `${item.id || item._uiKey || ''}_install`,
+          name: item.description?.trim() || 'Row item',
+          detail: `Install Rate → ${item.install_rate ?? 0}×`,
+          onReset: () => onResetItemOverrides({ install: true }),
+        })
+      }
+    })
+  }
+
+  const handleDeleteCustom = (key: string) => {
+    setDeletingKey(key)
+    setTimeout(() => {
+      onRemoveCustom(key)
+      setDeletingKey(null)
+    }, 200)
+  }
 
   const handleDragStart = (e: DragEvent<HTMLElement>, key: string) => {
     e.dataTransfer.setData('text/plain', key)
@@ -474,6 +478,12 @@ export default function ColumnManager({
     setConfirmReset(false)
   }
 
+  const dragHandlers: ColumnDragHandlers = {
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDrop: handleDrop,
+  }
+
   return (
     <>
       <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
@@ -484,13 +494,13 @@ export default function ColumnManager({
           <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[var(--bd-border)]" />
 
           <div className="flex max-h-[90dvh] flex-col overflow-hidden">
+            {/* ── Header ── */}
             <div className="flex items-start justify-between border-b border-[var(--bd-border-soft)] px-6 pb-4 pt-3">
               <div>
                 <h2 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--bd-text)]">
                   Table Settings
                 </h2>
               </div>
-
               <button
                 type="button"
                 onClick={onClose}
@@ -501,11 +511,13 @@ export default function ColumnManager({
               </button>
             </div>
 
+            {/* ── Body ── */}
             <div className="flex-1 overflow-y-auto px-4 pb-4 pt-5 sm:px-5">
+              {/* ── Standard PDF ── */}
               {descriptionCol ? (
                 <>
                   <SectionTitle>Standard PDF</SectionTitle>
-                  <div className="space-y-3">
+                  <div className="rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
                     <FixedColumnRow
                       col={descriptionCol}
                       onUpdate={(key, field, val) => onUpdate(key, field, val as string)}
@@ -514,10 +526,12 @@ export default function ColumnManager({
                 </>
               ) : null}
 
+              {/* ── Form Fields ── */}
               <div className="mt-7">
                 <SectionTitle>Form Fields</SectionTitle>
-                {builtinCols.length > 0 ? (
-                  <div className="space-y-3">
+
+                {builtinCols.length > 0 || customCols.length > 0 ? (
+                  <div className="rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
                     {builtinCols.map((col, index) => (
                       <BuiltInColumnRow
                         key={col.key}
@@ -525,142 +539,138 @@ export default function ColumnManager({
                         onToggle={onToggle}
                         onToggleFull={onToggleFull}
                         onUpdate={(key, field, val) => onUpdate(key, field, val)}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        onMoveUp={(key) => {
+                        onMoveUp={() => {
                           if (!onMove || index === 0) return
-                          onMove(key, index - 1)
+                          onMove(col.key, index - 1)
                         }}
-                        onMoveDown={(key) => {
+                        onMoveDown={() => {
                           if (!onMove || index === builtinCols.length - 1) return
-                          onMove(key, index + 1)
+                          onMove(col.key, index + 1)
                         }}
                         disableMoveUp={index === 0}
                         disableMoveDown={index === builtinCols.length - 1}
                         affectsTotals={TOTAL_AFFECTING_COLUMNS.has(col.key)}
+                        {...dragHandlers}
                       />
                     ))}
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] px-6 py-8 text-center text-sm text-[var(--bd-text3)]">
-                    No form fields configured
-                  </div>
-                )}
-              </div>
 
-              <div className="mt-7">
-                <SectionTitle
-                  action={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onAddCustom}
-                      className="h-10 rounded-full border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 text-sm font-semibold text-[var(--bd-text2)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add column
-                    </Button>
-                  }
-                >
-                  Custom Columns
-                </SectionTitle>
-
-                {customCols.length === 0 ? (
-                  <div className="rounded-[24px] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] px-6 py-8 text-center text-sm text-[var(--bd-text3)]">
-                    No custom columns yet
-                  </div>
-                ) : (
-                  <div className="space-y-3">
                     {customCols.map((col) => {
                       const idx = columns.findIndex((c) => c.key === col.key)
                       return (
-                        <CustomColumnCard
+                        <CustomColumnRow
                           key={col.key}
                           col={col}
                           onToggle={onToggle}
                           onUpdate={(key, field, val) => onUpdate(key, field, val)}
-                          onRemoveCustom={onRemoveCustom}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          onMoveUp={(key) => {
+                          onRemoveCustom={handleDeleteCustom}
+                          onMoveUp={() => {
                             if (!onMove || idx <= 0) return
-                            onMove(key, idx - 1)
+                            onMove(col.key, idx - 1)
                           }}
-                          onMoveDown={(key) => {
+                          onMoveDown={() => {
                             if (!onMove || idx >= columns.length - 1) return
-                            onMove(key, idx + 1)
+                            onMove(col.key, idx + 1)
                           }}
                           disableMoveUp={idx <= 0}
                           disableMoveDown={idx >= columns.length - 1}
+                          deleting={deletingKey === col.key}
+                          {...dragHandlers}
                         />
                       )
                     })}
                   </div>
+                ) : (
+                  <div className="rounded-[12px] border border-dashed border-[var(--bd-border)] bg-[var(--bd-bg)] px-6 py-8 text-center text-sm text-[var(--bd-text3)]">
+                    No form fields configured
+                  </div>
                 )}
+
+                {/* ── Add Custom Column ── */}
+                <button
+                  type="button"
+                  onClick={onAddCustom}
+                  className="mt-3 flex w-full items-center gap-2 px-[14px] py-[10px] text-[14px] font-semibold text-[var(--bd-text3)] hover:text-[var(--bd-text)] transition-colors"
+                >
+                  <Plus className="w-[14px] h-[14px]" />
+                  Add Custom Column
+                </button>
+
+                {/* ── Reset to defaults ── */}
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(true)}
+                  className="mt-1 px-[14px] py-2 text-[12px] font-medium text-[var(--bd-text3)] hover:text-[var(--bd-text)] transition-colors underline underline-offset-2 decoration-dotted decoration-[var(--bd-border-soft)]"
+                >
+                  Reset to defaults
+                </button>
               </div>
 
-              {onResetItemOverrides ? (
-                <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-                  <div className="text-[16px] font-bold text-[var(--bd-text)]">Row Overrides Status</div>
+              {/* ── Row Overrides ── */}
+              {onResetItemOverrides && overrideEntries.length > 0 ? (
+                <div className="mt-6 rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOverridesOpen(!overridesOpen)}
+                    className="flex items-center justify-between w-full h-11 px-[18px] hover:bg-[var(--bd-bg)] transition-colors"
+                  >
+                    <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--bd-text)]">
+                      <span className="w-[6px] h-[6px] rounded-full bg-[var(--bd-text3)] shrink-0" />
+                      Row Overrides
+                      <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2 py-[1px] text-[10px] font-bold text-[var(--bd-text3)]">
+                        {overrideEntries.length} item
+                        {overrideEntries.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        'w-[14px] h-[14px] text-[var(--bd-text3)] transition-transform duration-200',
+                        overridesOpen && 'rotate-180',
+                      )}
+                    />
+                  </button>
 
-                  <div className="mt-4 space-y-2.5">
-                    <OverrideRow
-                      label="VAT"
-                      count={vatOverrideCount}
-                      onReset={() => onResetItemOverrides({ vat: true })}
-                    />
-                    <OverrideRow
-                      label="Discount"
-                      count={discountOverrideCount}
-                      onReset={() => onResetItemOverrides({ discount: true })}
-                    />
-                    <OverrideRow
-                      label="Install"
-                      count={installOverrideCount}
-                      onReset={() => onResetItemOverrides({ install: true })}
-                    />
-                  </div>
+                  {overridesOpen && (
+                    <div className="border-t border-[var(--bd-border-soft)]">
+                      {overrideEntries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="flex items-center justify-between px-[18px] py-[10px] border-b border-[var(--bd-border-soft)] last:border-b-0 gap-3"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-semibold text-[var(--bd-text)] truncate">
+                              {entry.name}
+                            </div>
+                            <div className="text-[11px] text-[var(--bd-text3)] mt-[1px]">
+                              {entry.detail}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={entry.onReset}
+                            className="shrink-0 text-[11px] font-semibold text-[var(--bd-text3)] border border-[var(--bd-border-soft)] rounded-[6px] px-[10px] py-[4px] hover:bg-[var(--bd-bg)] transition-colors"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      ))}
 
-                  <div className="mt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={totalOverrideCount === 0}
-                      onClick={() =>
-                        onResetItemOverrides({ vat: true, discount: true, install: true })
-                      }
-                      className="h-10 rounded-full border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] px-4 text-sm font-semibold text-[var(--bd-rose)] disabled:opacity-40"
-                    >
-                      <RotateCcw className="mr-2 h-4 w-4" />
-                      Reset all overrides
-                    </Button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onResetItemOverrides({ vat: true, discount: true, install: true })
+                        }
+                        className="w-full py-[10px] text-[13px] font-semibold text-[var(--bd-text3)] hover:bg-[var(--bd-bg)] transition-colors"
+                      >
+                        <RotateCcw className="inline w-[12px] h-[12px] mr-1.5 -mt-0.5" />
+                        Reset All Overrides
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : null}
-
-              <div className="mt-7 rounded-[24px] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-[15px] font-semibold text-[var(--bd-text)]">
-                      Reset Table Settings
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setConfirmReset(true)}
-                    className="h-10 rounded-full border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] px-4 text-sm font-semibold text-[var(--bd-rose)] hover:brightness-95"
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Reset
-                  </Button>
-                </div>
-              </div>
             </div>
 
+            {/* ── Footer ── */}
             <div className="border-t border-[var(--bd-border-soft)] px-6 py-4">
               <Button
                 type="button"
