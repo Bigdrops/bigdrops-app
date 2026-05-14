@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Table Settings — Column Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0F1620;
+            --secondary: #61738C;
+            --tertiary: #F2A03D;
+            --neutral: #EDF1F7;
+            --surface: #FFFFFF;
+            --on-primary: #FFFFFF;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+            --font-label: 'Outfit', sans-serif;
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 22px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 32px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--neutral);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+
+        .sheet {
+            width: 100%;
+            max-width: 440px;
+            height: 92vh;
+            max-height: 840px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(15,22,32,0.06), 0 0 0 1px rgba(15,22,32,0.04);
+        }
+
+        /* ── Header ── */
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 16px;
+            border-bottom: 1px solid #dce1e8;
+            flex-shrink: 0;
+            background: var(--surface);
+        }
+        .header-left { display: flex; flex-direction: column; gap: 2px; }
+        .sheet-eyebrow {
+            font-family: var(--font-label);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            color: var(--tertiary);
+            text-transform: uppercase;
+        }
+        .sheet-title {
+            font-family: var(--font-display);
+            font-size: 2.1rem;
+            font-weight: 400;
+            color: var(--primary);
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+        .sheet-close {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #bcc3cf;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .sheet-close:hover { background: var(--neutral); color: var(--primary); }
+        .sheet-close svg { width: 14px; height: 14px; }
+
+        /* ── Body ── */
+        .sheet-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .sheet-body::-webkit-scrollbar { width: 3px; }
+        .sheet-body::-webkit-scrollbar-track { background: transparent; }
+        .sheet-body::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 2px; }
+
+        /* ── Section ── */
+        .section { border-bottom: 1px solid #dce1e8; }
+        .section:last-child { border-bottom: none; }
+        .section-label {
+            font-family: var(--font-label);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            color: var(--secondary);
+            text-transform: uppercase;
+            padding: 14px 18px 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dce1e8;
+        }
+
+        /* ── Row ── */
+        .row {
+            display: flex;
+            align-items: center;
+            min-height: 46px;
+            padding: 7px 10px 7px 14px;
+            gap: 8px;
+            border-bottom: 1px solid #dce1e8;
+            transition: background 0.12s, opacity 0.25s;
+            position: relative;
+        }
+        .row:last-child { border-bottom: none; }
+        .row:hover { background: var(--neutral); }
+        .row.fixed { background: var(--neutral); }
+        .row.fixed:hover { background: #e2e6ed; }
+
+        /* Hard hidden */
+        .row.hard-hidden { opacity: 0.38; }
+        .row.hard-hidden .col-name-input { text-decoration: line-through; text-decoration-color: var(--secondary); color: var(--secondary); }
+        .row.hard-hidden .col-value-input { text-decoration: line-through; text-decoration-color: var(--secondary); }
+
+        /* Drag handle */
+        .grip {
+            width: 14px;
+            height: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5px;
+            cursor: grab;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+            user-select: none;
+        }
+        .row:hover .grip { opacity: 1; }
+        .grip:active { cursor: grabbing; }
+        .grip span {
+            width: 3px;
+            height: 3px;
+            background: var(--secondary);
+            border-radius: 50%;
+        }
+
+        /* Reorder btns */
+        .reorder-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex-shrink: 0;
+        }
+        .reorder-btn {
+            width: 18px;
+            height: 14px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            transition: color 0.12s;
+            padding: 0;
+            border-radius: var(--radius-sm);
+        }
+        .reorder-btn svg { width: 10px; height: 10px; }
+        .reorder-btn:hover { color: var(--tertiary); }
+
+        /* Column content */
+        .col-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .col-name-input {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary);
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 3px 5px;
+            border-radius: var(--radius-sm);
+            width: 100%;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+            letter-spacing: -0.01em;
+        }
+        .col-name-input:hover { border-color: #bcc3cf; background: var(--surface); }
+        .col-name-input:focus { border-color: var(--tertiary); background: #FFF9F2; }
+        .col-name-input.fixed-label { cursor: default; pointer-events: none; }
+
+        /* Inline value */
+        .col-value-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .col-value-input {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            color: var(--primary);
+            border: 1px solid #bcc3cf;
+            border-radius: var(--radius-sm);
+            padding: 3px 7px;
+            width: 60px;
+            outline: none;
+            background: var(--surface);
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .col-value-input:focus { border-color: var(--tertiary); background: #FFF9F2; }
+        .col-value-unit {
+            font-family: var(--font-label);
+            font-size: 0.65rem;
+            color: var(--secondary);
+            letter-spacing: 0.04em;
+            font-weight: 500;
+        }
+
+        /* Type badge */
+        .type-tag {
+            font-family: var(--font-label);
+            font-size: 0.6rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            padding: 3px 6px;
+            border-radius: var(--radius-sm);
+            background: #e6eaf0;
+            color: var(--secondary);
+            border: 1px solid #dce1e8;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            align-self: flex-start;
+            margin-top: 3px;
+        }
+
+        /* Fixed pill */
+        .fixed-pill {
+            font-family: var(--font-label);
+            font-size: 0.55rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            padding: 2px 6px;
+            background: #e6eaf0;
+            color: var(--secondary);
+            border-radius: 20px;
+            border: 1px solid #dce1e8;
+            text-transform: uppercase;
+            align-self: flex-start;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        /* ── Row actions ── */
+        .row-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 2px;
+        }
+        .action-btn {
+            width: 30px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #bcc3cf;
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .action-btn:hover::before { opacity: 0.06; }
+        .action-btn svg { width: 13px; height: 13px; position: relative; z-index: 1; }
+
+        .action-btn.eye-show { color: var(--primary); border-color: #bcc3cf; }
+        .action-btn.eye-hide { color: var(--secondary); border-color: #dce1e8; background: var(--neutral); }
+        .action-btn.x-active { color: #C0392B; border-color: rgba(192,57,43,0.25); background: #FEF2F2; }
+        .action-btn.tick-restore { color: #15803D; border-color: rgba(21,128,61,0.25); background: #F0FDF4; }
+
+        /* ── Accordion ── */
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 44px;
+            padding: 0 18px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.12s;
+        }
+        .accordion-header:hover { background: var(--neutral); }
+        .accordion-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+        }
+        .accordion-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--tertiary);
+        }
+        .accordion-badge {
+            font-family: var(--font-label);
+            font-size: 0.6rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: var(--tertiary);
+            background: #FFF4E5;
+            border: 1px solid rgba(242,160,61,0.18);
+            padding: 2px 7px;
+            border-radius: 20px;
+        }
+        .accordion-chevron {
+            width: 14px; height: 14px;
+            color: var(--secondary);
+            transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+        }
+        .accordion-chevron.open { transform: rotate(180deg); }
+
+        /* ── Override list ── */
+        .override-list { display: none; border-top: 1px solid #dce1e8; }
+        .override-list.open { display: block; }
+        .override-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            border-bottom: 1px solid #dce1e8;
+            gap: 12px;
+        }
+        .override-item:last-child { border-bottom: none; }
+        .override-item-name { font-size: 0.8rem; font-weight: 600; color: var(--primary); }
+        .override-item-detail { font-size: 0.7rem; color: var(--secondary); margin-top: 2px; }
+        .override-reset-btn {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--tertiary);
+            background: transparent;
+            border: 1px solid rgba(242,160,61,0.25);
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .override-reset-btn:hover { background: #FFF4E5; }
+        .override-reset-all {
+            display: block;
+            width: 100%;
+            padding: 10px 18px;
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--tertiary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.15s;
+        }
+        .override-reset-all:hover { background: #FFF4E5; }
+
+        /* ── Add custom ── */
+        .add-custom-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 18px;
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--tertiary);
+            cursor: pointer;
+            transition: background 0.15s;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+        .add-custom-btn:hover { background: #FFF4E5; }
+        .add-custom-btn svg { width: 14px; height: 14px; }
+
+        /* ── Footer ── */
+        .sheet-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #dce1e8;
+            flex-shrink: 0;
+            display: flex;
+            gap: 8px;
+            background: var(--surface);
+        }
+        .btn {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            padding: 12px 20px;
+            transition: all 0.15s;
+            flex: 1;
+            text-align: center;
+        }
+        .btn-secondary {
+            background: var(--neutral);
+            color: var(--primary);
+            border: 1px solid #dce1e8;
+        }
+        .btn-secondary:hover { background: #e2e6ed; }
+        .btn-primary {
+            background: var(--tertiary);
+            color: var(--on-primary);
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* ── Row animation ── */
+        @keyframes rowIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        .row-new { animation: rowIn 0.22s ease both; }
+    </style>
+</head>
+<body>
+
+    <div class="sheet">
+        <!-- Header -->
+        <div class="sheet-header">
+            <div class="header-left">
+                <span class="sheet-eyebrow">Invoice · PDF</span>
+                <h2 class="sheet-title">Table Settings</h2>
+            </div>
+            <button class="sheet-close" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <div class="sheet-body">
+
+            <!-- A. Standard PDF (Fixed) -->
+            <div class="section">
+                <div class="section-label">Standard PDF</div>
+                <div class="row fixed">
+                    <div class="col-content">
+                        <input class="col-name-input fixed-label" value="Description" readonly />
+                    </div>
+                    <span class="fixed-pill">Fixed</span>
+                    <span class="type-tag">Text</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. Form Fields -->
+            <div class="section" id="formFieldsSection">
+                <div class="section-label">Form Fields</div>
+
+                <!-- Quantity — total-affecting — visible -->
+                <div class="row" data-column="quantity" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Quantity" />
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button class="action-btn x-active" title="Remove from totals" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Unit Price — hard hidden -->
+                <div class="row hard-hidden" data-column="unit_price" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Unit Price" />
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-hide" title="Hidden" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A10.01 10.01 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/></svg>
+                        </button>
+                        <button class="action-btn tick-restore" title="Restore" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Amount — visible -->
+                <div class="row" data-column="amount" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Amount" />
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button class="action-btn x-active" title="Remove from totals" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Make / Brand — non-total — visible -->
+                <div class="row" data-column="make" data-affects-totals="false">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Make / Brand" />
+                    </div>
+                    <span class="type-tag">Text</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Unit — soft hidden -->
+                <div class="row" data-column="unit" data-affects-totals="false">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Unit" />
+                    </div>
+                    <span class="type-tag">Text</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-hide" title="Hidden" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A10.01 10.01 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Install Rate — soft hidden + value -->
+                <div class="row" data-column="install_rate" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Install Rate" />
+                        <div class="col-value-row">
+                            <input class="col-value-input" value="0" type="number" step="any" />
+                            <span class="col-value-unit">multiplier</span>
+                        </div>
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-hide" title="Hidden" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A10.01 10.01 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/></svg>
+                        </button>
+                        <button class="action-btn x-active" title="Remove from totals" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VAT Rate — visible + value -->
+                <div class="row" data-column="vat_rate" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="VAT Rate" />
+                        <div class="col-value-row">
+                            <input class="col-value-input" value="7.5" type="number" step="any" />
+                            <span class="col-value-unit">%</span>
+                        </div>
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        <button class="action-btn x-active" title="Remove from totals" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Discount Rate — hard hidden + value -->
+                <div class="row hard-hidden" data-column="discount_rate" data-affects-totals="true">
+                    <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="reorder-btns">
+                        <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="col-content">
+                        <input class="col-name-input" value="Discount Rate" />
+                        <div class="col-value-row">
+                            <input class="col-value-input" value="5" type="number" step="any" />
+                            <span class="col-value-unit">%</span>
+                        </div>
+                    </div>
+                    <span class="type-tag">Num</span>
+                    <div class="row-actions">
+                        <button class="action-btn eye-hide" title="Hidden" onclick="toggleEye(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A10.01 10.01 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/></svg>
+                        </button>
+                        <button class="action-btn tick-restore" title="Restore" onclick="toggleHardHide(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom columns -->
+                <div id="customColumnsContainer"></div>
+
+                <!-- Add custom column -->
+                <button class="add-custom-btn" onclick="addCustomColumn()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Custom Column
+                </button>
+            </div>
+
+            <!-- C. Row Overrides -->
+            <div class="section">
+                <div class="accordion-header" onclick="toggleOverrides()">
+                    <div class="accordion-title">
+                        <span class="accordion-dot"></span>
+                        Row Overrides
+                        <span class="accordion-badge">3 items</span>
+                    </div>
+                    <svg class="accordion-chevron" id="overridesChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="override-list" id="overrideList">
+                    <div class="override-item">
+                        <div>
+                            <div class="override-item-name">Item 4 — Distribution board panel</div>
+                            <div class="override-item-detail">Install Rate → 1.5×</div>
+                        </div>
+                        <button class="override-reset-btn">Reset</button>
+                    </div>
+                    <div class="override-item">
+                        <div>
+                            <div class="override-item-name">Item 7 — PPR pipe</div>
+                            <div class="override-item-detail">VAT Rate → 5%</div>
+                        </div>
+                        <button class="override-reset-btn">Reset</button>
+                    </div>
+                    <div class="override-item">
+                        <div>
+                            <div class="override-item-name">Item 11 — Copper pipe coil</div>
+                            <div class="override-item-detail">Discount Rate → 10%</div>
+                        </div>
+                        <button class="override-reset-btn">Reset</button>
+                    </div>
+                    <button class="override-reset-all">Reset All Overrides</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="sheet-footer">
+            <button class="btn btn-secondary">Reset Defaults</button>
+            <button class="btn btn-primary">Apply Changes</button>
+        </div>
+    </div>
+
+    <script>
+        let customColumnCounter = 0;
+        const EYE_OPEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        const EYE_CLOSED = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M6.53 6.53A10.01 10.01 0 0 0 1 12s4 8 11 8a9.74 9.74 0 0 0 5.39-1.61"/></svg>`;
+        const X_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        const TICK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+        function toggleEye(btn) {
+            const showing = btn.classList.contains('eye-show');
+            btn.classList.toggle('eye-show', !showing);
+            btn.classList.toggle('eye-hide', showing);
+            btn.title = showing ? 'Hidden' : 'Visible';
+            btn.innerHTML = showing ? EYE_CLOSED : EYE_OPEN;
+        }
+
+        function toggleHardHide(btn) {
+            const row = btn.closest('.row');
+            if (!row) return;
+            const restoring = btn.classList.contains('tick-restore');
+            if (restoring) {
+                row.classList.remove('hard-hidden');
+                btn.classList.remove('tick-restore');
+                btn.classList.add('x-active');
+                btn.title = 'Remove from totals';
+                btn.innerHTML = X_ICON;
+            } else {
+                row.classList.add('hard-hidden');
+                btn.classList.remove('x-active');
+                btn.classList.add('tick-restore');
+                btn.title = 'Restore';
+                btn.innerHTML = TICK_ICON;
+            }
+        }
+
+        function addCustomColumn() {
+            customColumnCounter++;
+            const container = document.getElementById('customColumnsContainer');
+            const row = document.createElement('div');
+            row.className = 'row row-new';
+            row.setAttribute('data-column', `custom-${Date.now()}`);
+            row.setAttribute('data-affects-totals', 'false');
+            row.setAttribute('data-custom', 'true');
+            row.innerHTML = `
+                <div class="grip"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="reorder-btns">
+                    <button class="reorder-btn" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+                    <button class="reorder-btn" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                </div>
+                <div class="col-content">
+                    <input class="col-name-input" value="Custom Column ${customColumnCounter}" />
+                </div>
+                <span class="type-tag">Text</span>
+                <div class="row-actions">
+                    <button class="action-btn eye-show" title="Visible" onclick="toggleEye(this)">${EYE_OPEN}</button>
+                    <button class="action-btn x-active" title="Delete column" onclick="deleteCustomColumn(this)">${X_ICON}</button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function deleteCustomColumn(btn) {
+            const row = btn.closest('.row');
+            if (row && row.getAttribute('data-custom') === 'true') {
+                row.style.transition = 'opacity 0.18s, transform 0.18s';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-10px)';
+                setTimeout(() => row.remove(), 200);
+            }
+        }
+
+        function toggleOverrides() {
+            document.getElementById('overrideList').classList.toggle('open');
+            document.getElementById('overridesChevron').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
