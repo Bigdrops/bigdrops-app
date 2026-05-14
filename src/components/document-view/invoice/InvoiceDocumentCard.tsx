@@ -1,6 +1,6 @@
 import React from "react";
 import { Hash, Calendar, FileText } from "lucide-react";
-import styles from "./InvoiceWorkspace.module.css";
+import styles from "../shared/DocumentPreview.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from "@/domain/documentMedia";

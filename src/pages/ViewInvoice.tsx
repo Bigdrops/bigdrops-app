@@ -27,7 +27,6 @@ import "@/components/document-view/shared/documentViewTheme.css";
 export default function ViewInvoice() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const ui = useDocumentUIState();
 
   const [isRedirecting, setIsRedirecting] = useState(false);

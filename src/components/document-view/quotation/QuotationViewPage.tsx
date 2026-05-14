@@ -69,21 +69,20 @@ export default function QuotationViewPage({
           style={{
             background: "hsl(var(--bd-surface))",
             borderRadius: 8,
-            border: "1px solid #e3e4e8",
+            border: "1px solid hsl(var(--bd-border))",
             overflow: "hidden",
-            boxShadow:
-              "rgba(17,26,74,0.05) 0px 0px 0px 1px, rgba(0,0,0,0.1) 0px 1px 2px 0px, rgba(255,255,255,0.5) 0px 0px 0px 1px inset",
+            boxShadow: "var(--bd-shadow-md)",
           }}
         >
           <div
             style={{
               padding: "14px 18px",
-              borderBottom: "1px solid #e3e4e8",
+              borderBottom: "1px solid hsl(var(--bd-border))",
               fontSize: 13,
               fontWeight: 700,
               textTransform: "uppercase" as const,
               letterSpacing: "0.04em",
-              color: "#011821",
+              color: "hsl(var(--bd-text))",
             }}
           >
             Attachments
@@ -96,12 +95,12 @@ export default function QuotationViewPage({
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  background: "#f6f6f8",
+                  background: "hsl(var(--bd-surface-muted))",
                   padding: "4px 10px",
                   borderRadius: 6,
                   fontSize: 12,
-                  border: "1px solid #e3e4e8",
-                  color: "#011821",
+                  border: "1px solid hsl(var(--bd-border))",
+                  color: "hsl(var(--bd-text))",
                 }}
               >
                 <Paperclip size={14} />

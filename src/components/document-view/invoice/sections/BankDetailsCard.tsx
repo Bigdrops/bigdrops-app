@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, CreditCard } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
+import previewStyles from "../../shared/DocumentPreview.module.css";
 
 interface BankDetailsCardProps {
   bankAccounts: any[];
@@ -58,15 +59,15 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
       {isOpen && (
         <>
           {bankAccounts.map((bank, index) => (
-            <div key={index} className={styles.bankDetail}>
-              <div className={styles.bankName}>{bank.bank_name}</div>
+            <div key={index} className={previewStyles.bankDetail}>
+              <div className={previewStyles.bankName}>{bank.bank_name}</div>
               <div>
-                <div className={styles.lbl}>Account Name</div>
-                <div className={styles.val}>{bank.account_name}</div>
+                <div className={previewStyles.lbl}>Account Name</div>
+                <div className={previewStyles.val}>{bank.account_name}</div>
               </div>
               <div>
-                <div className={styles.lbl}>Account Number</div>
-                <div className={styles.val}>{bank.account_number}</div>
+                <div className={previewStyles.lbl}>Account Number</div>
+                <div className={previewStyles.val}>{bank.account_number}</div>
               </div>
             </div>
           ))}

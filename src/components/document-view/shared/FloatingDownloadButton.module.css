@@ -2,20 +2,20 @@
     width: 52px;
     height: 52px;
     border-radius: 8px;
-    background: #111a4a;
+    background: hsl(var(--bd-brand));
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: rgba(17, 26, 74, 0.3) 0px 6px 20px 0px;
+    box-shadow: hsl(var(--bd-brand) / 0.3) 0px 6px 20px 0px;
     transition: all 0.15s;
-    color: #ffffff;
+    color: hsl(var(--bd-surface));
 }
 
 .button:hover {
     transform: translateY(-2px);
-    box-shadow: rgba(17, 26, 74, 0.4) 0px 8px 24px 0px;
+    box-shadow: hsl(var(--bd-brand) / 0.4) 0px 8px 24px 0px;
 }
 
 .button:active {
@@ -25,14 +25,14 @@
 .button svg {
     width: 22px;
     height: 22px;
-    color: #ffffff;
+    color: hsl(var(--bd-surface));
 }
 
 .disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none !important;
-    box-shadow: rgba(17, 26, 74, 0.15) 0px 4px 12px 0px !important;
+    box-shadow: hsl(var(--bd-brand) / 0.15) 0px 4px 12px 0px !important;
 }
 
 .srOnly {

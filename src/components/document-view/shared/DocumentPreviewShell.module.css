@@ -1,6 +1,6 @@
 .document {
-    background: #ffffff;
-    border: 1px solid #e3e4e8;
+    background: hsl(var(--bd-surface));
+    border: 1px solid hsl(var(--bd-border));
     border-radius: 8px;
     overflow: hidden;
     box-shadow:

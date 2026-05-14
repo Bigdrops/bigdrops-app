@@ -58,7 +58,7 @@
 
 .subtitle {
     font-size: 13px;
-    color: #7c7f88;
+    color: hsl(var(--bd-text-muted));
     font-weight: 400;
     white-space: nowrap;
     overflow: hidden;

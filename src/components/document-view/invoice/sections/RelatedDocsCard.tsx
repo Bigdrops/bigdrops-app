@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Link2, FileText } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
+import previewStyles from "../../shared/DocumentPreview.module.css";
 
 interface RelatedDocsCardProps {
   relatedCsrs: any[];
@@ -43,9 +44,9 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
               style={{ cursor: "pointer" }}
             >
               <FileText size={16} color="hsl(var(--bd-brand))" style={{ marginTop: "2px" }} />
-              <div className={styles.itemBody}>
-                <div className={styles.itemName}>Source {sourceDocument.type}</div>
-                <div className={styles.itemSub}>{sourceDocument.number}</div>
+              <div className={previewStyles.itemBody}>
+                <div className={previewStyles.itemName}>Source {sourceDocument.type}</div>
+                <div className={previewStyles.itemSub}>{sourceDocument.number}</div>
               </div>
             </div>
           )}
@@ -57,9 +58,9 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
               style={{ cursor: "pointer" }}
             >
               <FileText size={16} color="var(--success-moss)" style={{ marginTop: "2px" }} />
-              <div className={styles.itemBody}>
-                <div className={styles.itemName}>CSR</div>
-                <div className={styles.itemSub}>{csr.csr_number}</div>
+              <div className={previewStyles.itemBody}>
+                <div className={previewStyles.itemName}>CSR</div>
+                <div className={previewStyles.itemSub}>{csr.csr_number}</div>
               </div>
             </div>
           ))}

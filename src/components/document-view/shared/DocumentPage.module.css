@@ -1,7 +1,7 @@
 .workspace {
     min-height: 100vh;
     background: hsl(var(--bd-surface));
-    color: #011821;
+    color: hsl(var(--bd-text));
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
     position: relative;
     -webkit-font-smoothing: antialiased;
@@ -35,7 +35,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    border-bottom: 1px solid #e3e4e8;
+    border-bottom: 1px solid hsl(var(--bd-border));
     position: relative;
     z-index: 10;
 }

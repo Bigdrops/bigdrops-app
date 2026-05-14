@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Receipt } from "lucide-react";
 import styles from "../InvoiceWorkspace.module.css";
+import previewStyles from "../../shared/DocumentPreview.module.css";
 import { formatNaira } from "@/lib/formatters/money";
 import { formatDisplayDate } from "@/lib/formatters/date";
 
@@ -51,24 +52,24 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
 
       {isOpen && (
         <>
-          <div className={styles.paymentBody}>
-            <div className={styles.payRow}>
-              <span className={styles.lbl}>Settled Total</span>
-              <span className={styles.val}>{formatNaira(viewModel?.settledTotal || 0)}</span>
+          <div className={previewStyles.paymentBody}>
+            <div className={previewStyles.payRow}>
+              <span className={previewStyles.lbl}>Settled Total</span>
+              <span className={previewStyles.val}>{formatNaira(viewModel?.settledTotal || 0)}</span>
             </div>
-            <div className={`${styles.payRow} ${styles.payRowDue}`}>
-              <span className={styles.lbl}>Balance Due</span>
-              <span className={styles.val}>{formatNaira(viewModel?.balanceDue || 0)}</span>
+            <div className={`${previewStyles.payRow} ${previewStyles.payRowDue}`}>
+              <span className={previewStyles.lbl}>Balance Due</span>
+              <span className={previewStyles.val}>{formatNaira(viewModel?.balanceDue || 0)}</span>
             </div>
             
-            <div className={styles.progressBar}>
-              <div className={styles.progressLabel}>
+            <div className={previewStyles.progressBar}>
+              <div className={previewStyles.progressLabel}>
                 <span>Payment Progress</span>
                 <span>{viewModel?.paymentProgress || 0}%</span>
               </div>
-              <div className={styles.progressTrack}>
+              <div className={previewStyles.progressTrack}>
                 <div 
-                  className={styles.progressFill} 
+                  className={previewStyles.progressFill} 
                   style={{ width: `${viewModel?.paymentProgress || 0}%` }}
                 />
               </div>
@@ -78,21 +79,21 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
           <div className={styles.itemList}>
             {payments.map((payment, index) => (
               <div key={payment.id || index} className={styles.itemRow}>
-                <div className={styles.itemBody}>
-                  <div className={styles.itemName}>
+                <div className={previewStyles.itemBody}>
+                  <div className={previewStyles.itemName}>
                     {payment.payment_method ? `${payment.payment_method} Payment` : "Payment Received"}
                   </div>
-                  <div className={styles.itemSub}>
+                  <div className={previewStyles.itemSub}>
                     {formatDisplayDate(payment.payment_date)} • {payment.notes || "No notes"}
                   </div>
                   {payment.voided_at && (
-                    <div className={styles.itemPill} style={{ color: 'hsl(var(--bd-status-danger-text))', borderColor: 'hsl(var(--bd-status-danger-text))' }}>
+                    <div className={previewStyles.itemPill} style={{ color: 'hsl(var(--bd-status-danger-text))', borderColor: 'hsl(var(--bd-status-danger-text))' }}>
                       VOIDED
                     </div>
                   )}
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div className={styles.itemAmount}>{formatNaira(payment.cash_amount)}</div>
+                  <div className={previewStyles.itemAmount}>{formatNaira(payment.cash_amount)}</div>
                   {!payment.voided_at && (
                     <button 
                       style={{ fontSize: "10px", color: 'hsl(var(--bd-status-danger-text))', background: "none", border: "none", cursor: "pointer", marginTop: "4px" }}
