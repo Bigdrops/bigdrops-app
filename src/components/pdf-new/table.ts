@@ -39,10 +39,10 @@ type BuildPdfRowCellsOptions = {
 const CONFIGURABLE_DEFAULT_COLUMNS: SavedColumnConfig[] = [
   { key: 'description', label: 'Description', visible: true, visibilityMode: 'show' },
   { key: 'quantity', label: 'Quantity', visible: true, visibilityMode: 'show' },
-  { key: 'unit_price', label: 'Unit Price', visible: true, visibilityMode: 'show' },
-  { key: 'amount', label: 'Amount', visible: true, visibilityMode: 'show' },
   { key: 'make', label: 'Make', visible: true, visibilityMode: 'show' },
   { key: 'unit', label: 'Unit', visible: true, visibilityMode: 'show' },
+  { key: 'unit_price', label: 'Unit Price', visible: true, visibilityMode: 'show' },
+  { key: 'amount', label: 'Amount', visible: true, visibilityMode: 'show' },
   { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: false, visibilityMode: 'hide_display', formula: '' },
   { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false, visibilityMode: 'hide_display' },
   { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, visibilityMode: 'hide_display' },

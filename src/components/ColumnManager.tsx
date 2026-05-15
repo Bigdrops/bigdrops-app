@@ -549,27 +549,30 @@ export default function ColumnManager({
 
                 {builtinCols.length > 0 || customCols.length > 0 ? (
                   <div className="rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
-                    {builtinCols.map((col, index) => (
-                      <BuiltInColumnRow
-                        key={col.key}
-                        col={col}
-                        onToggle={onToggle}
-                        onToggleFull={onToggleFull}
-                        onUpdate={(key, field, val) => onUpdate(key, field, val)}
-                        onMoveUp={() => {
-                          if (!onMove || index === 0) return
-                          onMove(col.key, index - 1)
-                        }}
-                        onMoveDown={() => {
-                          if (!onMove || index === builtinCols.length - 1) return
-                          onMove(col.key, index + 1)
-                        }}
-                        disableMoveUp={index === 0}
-                        disableMoveDown={index === builtinCols.length - 1}
-                        affectsTotals={TOTAL_AFFECTING_COLUMNS.has(col.key)}
-                        {...dragHandlers}
-                      />
-                    ))}
+                    {builtinCols.map((col) => {
+                      const absIdx = columns.findIndex((c) => c.key === col.key)
+                      return (
+                        <BuiltInColumnRow
+                          key={col.key}
+                          col={col}
+                          onToggle={onToggle}
+                          onToggleFull={onToggleFull}
+                          onUpdate={(key, field, val) => onUpdate(key, field, val)}
+                          onMoveUp={() => {
+                            if (!onMove || absIdx <= 1) return
+                            onMove(col.key, absIdx - 1)
+                          }}
+                          onMoveDown={() => {
+                            if (!onMove || absIdx >= columns.length - 1) return
+                            onMove(col.key, absIdx + 1)
+                          }}
+                          disableMoveUp={absIdx <= 1}
+                          disableMoveDown={absIdx >= columns.length - 1}
+                          affectsTotals={TOTAL_AFFECTING_COLUMNS.has(col.key)}
+                          {...dragHandlers}
+                        />
+                      )
+                    })}
 
                     {customCols.map((col) => {
                       const idx = columns.findIndex((c) => c.key === col.key)

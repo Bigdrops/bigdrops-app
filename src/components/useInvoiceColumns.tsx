@@ -124,18 +124,21 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
   const moveColumn = (key: string, dir: number) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)
     if (idx < 0) return cols
+    if (key === 'description') return cols
     
     if (typeof dir === 'number' && Math.abs(dir) !== 1) {
-      const newIdx = dir
-      if (newIdx < 1 || newIdx >= cols.length) return cols
+      let newIdx = dir
+      if (newIdx < 0 || newIdx >= cols.length) return cols
+      if (newIdx === 0) newIdx = 1
       const next = [...cols]
       const [col] = next.splice(idx, 1)
       next.splice(newIdx, 0, col)
       return next
     }
     
-    const newIdx = idx + dir
-    if (newIdx < 1 || newIdx >= cols.length) return cols
+    let newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= cols.length) return cols
+    if (newIdx === 0) newIdx = 1
     const next = [...cols]
     ;[next[idx], next[newIdx]] = [next[newIdx], next[idx]]
     return next

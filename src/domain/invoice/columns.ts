@@ -8,26 +8,38 @@ import type {
 } from './types'
 import { normalizeQuantity } from './normalize'
 
+export const DEFAULT_COLUMN_ORDER = [
+  'description',
+  'quantity',
+  'make',
+  'unit',
+  'unit_price',
+  'amount',
+  'install_rate',
+  'vat_rate',
+  'discount_rate',
+] as const
+
 export const BUILTIN_COLUMNS: ColumnConfig[] = [
   { key: 'description', label: 'Description', visible: true, visibilityMode: 'show', removable: false },
   { key: 'quantity', label: 'Quantity', visible: true, visibilityMode: 'show', removable: false },
-  { key: 'unit_price', label: 'Unit Price', visible: true, visibilityMode: 'show', removable: false },
-  { key: 'amount', label: 'Amount', visible: true, visibilityMode: 'show', removable: false },
   { key: 'make', label: 'Make', visible: true, visibilityMode: 'show', removable: false },
   { key: 'unit', label: 'Unit', visible: true, visibilityMode: 'show', removable: false },
+  { key: 'unit_price', label: 'Unit Price', visible: true, visibilityMode: 'show', removable: false },
+  { key: 'amount', label: 'Amount', visible: true, visibilityMode: 'show', removable: false },
   { key: 'install_rate', label: 'Install Rate', type: 'install_rate', visible: false, visibilityMode: 'hide_display', removable: false, includeInTotal: true, formula: '' },
   { key: 'vat_rate', label: 'VAT Rate', type: 'vat_rate', visible: false, visibilityMode: 'hide_display', removable: false },
   { key: 'discount_rate', label: 'Discount Rate', type: 'discount_rate', visible: false, visibilityMode: 'hide_display', removable: false },
 ]
 
-const RESET_COLUMN_ORDER = [
-  'description',
-  'quantity',
-  'unit',
-  'unit_price',
-  'make',
-  'amount',
-] as const
+export function getResetColumnConfigs(): ColumnConfig[] {
+  const builtinsByKey = new Map(BUILTIN_COLUMNS.map((column) => [column.key, column]))
+
+  return DEFAULT_COLUMN_ORDER
+    .map((key) => builtinsByKey.get(key))
+    .filter(Boolean)
+    .map((column) => normalizeColumnConfig({ ...column! }))
+}
 
 export const COLUMN_TYPES: ColumnTypeOption[] = [
   { value: 'text', label: 'Text' },
@@ -71,19 +83,6 @@ export function normalizeColumnConfig(column: ColumnConfig): ColumnConfig {
     visible: visibilityMode === 'show',
     visibilityMode,
   }
-}
-
-export function getResetColumnConfigs(): ColumnConfig[] {
-  const builtinsByKey = new Map(BUILTIN_COLUMNS.map((column) => [column.key, column]))
-  const orderedKeys = [
-    ...RESET_COLUMN_ORDER,
-    ...BUILTIN_COLUMNS.map((column) => column.key).filter((key) => !RESET_COLUMN_ORDER.includes(key as (typeof RESET_COLUMN_ORDER)[number])),
-  ]
-
-  return orderedKeys
-    .map((key) => builtinsByKey.get(key))
-    .filter(Boolean)
-    .map((column) => normalizeColumnConfig({ ...column! }))
 }
 
 export function mergeColumnConfigs(columns: ColumnConfig[] = []): ColumnConfig[] {
