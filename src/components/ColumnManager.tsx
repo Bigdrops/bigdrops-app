@@ -702,7 +702,7 @@ export default function ColumnManager({
               <Button
                 type="button"
                 onClick={onClose}
-                className="h-[54px] w-full rounded-[18px] bg-[var(--bd-text)] text-[18px] font-bold text-white hover:brightness-95"
+                className="h-[54px] w-full rounded-[18px] text-[18px] font-bold"
               >
                 Done
               </Button>
