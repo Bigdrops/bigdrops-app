@@ -135,6 +135,12 @@
     min-height: 100dvh;
   }
 
+  html[data-keyboard-open="true"],
+  html[data-keyboard-open="true"] body,
+  html[data-keyboard-open="true"] #root {
+    min-height: 100lvh;
+  }
+
   html {
     background: hsl(var(--background));
     padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
@@ -529,6 +535,17 @@ html[data-layout-mode="desktop"] {
 
 html[data-separating-fold="true"] {
   --app-has-separating-fold: 1;
+}
+
+@media (max-width: 767px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
+html[data-keyboard-open="true"] .app-ambient::before,
+html[data-keyboard-open="true"] .app-ambient::after {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

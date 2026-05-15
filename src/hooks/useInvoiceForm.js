@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 export function useIsNarrow() {
   const [isNarrow, setIsNarrow] = useState(window.innerWidth < 768)
+  const lastWidth = useRef(window.innerWidth)
   useEffect(() => {
-    const handler = () => setIsNarrow(window.innerWidth < 768)
+    const handler = () => {
+      const currentWidth = window.innerWidth
+      if (currentWidth === lastWidth.current) return
+      lastWidth.current = currentWidth
+      setIsNarrow(currentWidth < 768)
+    }
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
   }, [])

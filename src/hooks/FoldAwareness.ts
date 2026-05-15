@@ -53,7 +53,12 @@ export function useFoldAwareness() {
 
     void setup()
 
+    let lastWidth = 0
+
     const onResize = async () => {
+      const currentWidth = window.innerWidth
+      if (currentWidth === lastWidth) return
+      lastWidth = currentWidth
       const next = await getFoldInfo()
       if (isActive) {
         setInfo(next)

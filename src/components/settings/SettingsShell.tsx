@@ -26,8 +26,15 @@ export function SettingsShell({
   const [viewportWidth, setViewportWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
   const { openSidebar, sidebarOpen } = React.useContext(MobileChromeContext)
 
+  const lastWidth = React.useRef(typeof window !== 'undefined' ? window.innerWidth : 1200)
+
   React.useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth)
+    const handleResize = () => {
+      const currentWidth = window.innerWidth
+      if (currentWidth === lastWidth.current) return
+      lastWidth.current = currentWidth
+      setViewportWidth(currentWidth)
+    }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useState, useRef, type Dispatch, type SetStateAction } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,7 +86,14 @@ export default function InvoiceAdvanceSheet({
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
 
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const lastWidth = { current: window.innerWidth }
+
+    const handleResize = () => {
+      const currentWidth = window.innerWidth
+      if (currentWidth === lastWidth.current) return
+      lastWidth.current = currentWidth
+      setIsMobile(currentWidth < 768)
+    }
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
