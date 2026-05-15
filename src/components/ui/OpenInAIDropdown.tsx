@@ -25,13 +25,14 @@ export function OpenInAIDropdown({ prompt, onClaudeCopy }: Props) {
     openInAI(value, prompt)
   }
 
+  // modal=false prevents Sheet focus-trap conflict
   return (
-    <DropdownMenu modal={false}>  {/* modal=false prevents Sheet focus-trap conflict */}
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-feedback-info,220_90%_45%))] bg-[hsl(var(--bd-status-info-bg,220_90%_96%))] hover:brightness-95 px-[var(--bd-space-md)] transition-colors gap-1"
+          className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(217_91%_35%)] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] px-[var(--bd-space-md)] transition-colors gap-1"
         >
           <ExternalLink className="h-3 w-3" />
           Open in AI

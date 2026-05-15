@@ -116,7 +116,7 @@ export function JsonImportUI({
               variant="ghost"
               size="sm"
               onClick={handleCopyPrompt}
-              className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-feedback-success))] bg-[hsl(var(--bd-status-success-bg))] hover:brightness-95 px-[var(--bd-space-md)] transition-colors"
+              className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(142_46%_28%)] bg-[hsl(142_71%_45%/0.15)] hover:brightness-95 px-[var(--bd-space-md)] transition-colors"
             >
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
               {copied ? 'Copied' : 'AI Prompt'}
