@@ -287,9 +287,76 @@ export default function NewInvoice() {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= items.length) return
     setItems((current) => {
-      const next = [...current]
-      ;[next[index], next[nextIndex]] = [next[nextIndex], next[index]]
-      return next.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
+      const rows = [...current]
+      const moving = rows[index]
+      const anchor = rows[nextIndex]
+      if (!moving || !anchor) return current
+
+      if (moving.row_type === 'group_header') {
+        const blockEnd = (() => {
+          let end = index
+          for (let cursor = index + 1; cursor < rows.length; cursor += 1) {
+            if (rows[cursor].row_type === 'group_header') break
+            if (rows[cursor].group_id === moving.group_id) end = cursor
+          }
+          return end
+        })()
+        const block = rows.splice(index, blockEnd - index + 1)
+        const insertAt = direction < 0
+          ? (() => {
+              if (index === 0) return 0
+              const remainder = rows
+              for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+                if (remainder[cursor].row_type === 'group_header') return cursor
+              }
+              return index - 1 >= 0 ? index - 1 : 0
+            })()
+          : (() => {
+              if (index >= rows.length) return rows.length
+              for (let cursor = index; cursor < rows.length; cursor += 1) {
+                if (rows[cursor].row_type === 'group_header') {
+                  let end = cursor
+                  for (let sub = cursor + 1; sub < rows.length; sub += 1) {
+                    if (rows[sub].row_type === 'group_header') break
+                    if (rows[sub].group_id === rows[cursor].group_id) end = sub
+                  }
+                  return end + 1
+                }
+              }
+              return index + 1
+            })()
+        rows.splice(insertAt, 0, ...block)
+        return rows.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
+      }
+
+      if (moving.row_type === 'standard') {
+        const remainder = rows.filter((_, i) => i !== index)
+        const targetGroupId =
+          direction < 0
+            ? anchor.row_type === 'group_header'
+              ? anchor.group_id
+              : anchor.group_id
+            : anchor.row_type === 'group_header'
+              ? null
+              : anchor.group_id
+        const targetGroupName = targetGroupId
+          ? groups.find((g) => g.id === targetGroupId)?.name || ''
+          : ''
+        const insertPos =
+          direction < 0 && anchor.row_type === 'group_header'
+            ? remainder.findIndex((r) => r === anchor) + 1
+            : remainder.findIndex((r) => r === anchor)
+
+        const moved = {
+          ...moving,
+          group_id: targetGroupId || null,
+          group_name: targetGroupName,
+        }
+        remainder.splice(insertPos, 0, moved)
+        return remainder.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
+      }
+
+      return current
     })
   }
 

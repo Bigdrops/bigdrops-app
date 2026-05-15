@@ -38,7 +38,8 @@ export async function handleDownloadQuotationPdf(input: {
       interpretPdfTableSettings,
     } = await import("@/components/pdf-new");
     const pdfDesignPreset = getPdfDesignPreset("quotation");
-    const resolvedTable = interpretPdfTableSettings(BUILTIN_COLUMNS as any, {
+    const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS;
+    const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: customFields?.mergeQtyUnit === true,
       items: Array.isArray(items) ? items : [],
     });

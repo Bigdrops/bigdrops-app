@@ -42,17 +42,18 @@ export default function QuotationDocumentPreview({
 
   const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settingsData), [settingsData])
   const companyName = settingsData?.company_name || ''
+  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : ''
 
   return (
     <div className={`quotationDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
       {/* 1. inv-top */}
       <div className="inv-top">
         <div className="brand-block">
-          {logoUrl && (
-            <div className="brand-logo">
-              <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
-            </div>
-          )}
+          <div className="brand-logo">
+            {logoUrl
+              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
+              : initials || null}
+          </div>
           <div>
             {companyName && <div className="brand-name">{companyName}</div>}
             {companyLines.length > 0 && (
