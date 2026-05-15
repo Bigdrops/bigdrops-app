@@ -1,5 +1,4 @@
-import { ChevronDown, ExternalLink } from 'lucide-react'
-
+import { ExternalLink, ChevronDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,48 +6,45 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { openInAI, type AITarget } from '@/lib/openInAI'
+import { openInAI, AITarget } from '@/lib/openInAI'
+
+const AI_OPTIONS: { label: string; value: AITarget }[] = [
+  { label: 'ChatGPT', value: 'chatgpt' },
+  { label: 'Gemini', value: 'gemini' },
+  { label: 'Claude', value: 'claude' },
+]
 
 interface Props {
   prompt: string
   onClaudeCopy?: () => void
 }
 
-const TARGETS: { key: AITarget; label: string }[] = [
-  { key: 'chatgpt', label: 'ChatGPT' },
-  { key: 'gemini', label: 'Gemini' },
-  { key: 'claude', label: 'Claude' },
-]
-
 export function OpenInAIDropdown({ prompt, onClaudeCopy }: Props) {
-  const handleSelect = (target: AITarget) => {
-    if (target === 'claude' && onClaudeCopy) {
-      onClaudeCopy()
-    }
-    openInAI(target, prompt)
+  const handle = (value: AITarget) => {
+    if (value === 'claude') onClaudeCopy?.()
+    openInAI(value, prompt)
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>  {/* modal=false prevents Sheet focus-trap conflict */}
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-feedback-success))] bg-[hsl(var(--bd-status-success-bg))] hover:brightness-95 px-[var(--bd-space-md)] transition-colors"
+          className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-feedback-info,220_90%_45%))] bg-[hsl(var(--bd-status-info-bg,220_90%_96%))] hover:brightness-95 px-[var(--bd-space-md)] transition-colors gap-1"
         >
-          <ExternalLink className="h-3 w-3 mr-1" />
+          <ExternalLink className="h-3 w-3" />
           Open in AI
-          <ChevronDown className="h-3 w-3 ml-0.5 opacity-60" />
+          <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36">
-        {TARGETS.map(({ key, label }) => (
+      <DropdownMenuContent align="end" className="z-[200]">
+        {AI_OPTIONS.map((opt) => (
           <DropdownMenuItem
-            key={key}
-            onClick={() => handleSelect(key)}
-            className="text-xs font-semibold"
+            key={opt.value}
+            onSelect={() => handle(opt.value)}
           >
-            {label}
+            {opt.label}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
