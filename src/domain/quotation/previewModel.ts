@@ -2,22 +2,14 @@ import { formatNaira } from "@/lib/formatters/money";
 import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
 import { buildSummaryRows } from "@/domain/invoice";
-import { renderRichTextContent } from "@/lib/richText";
-
-function resolvePreviewLineAmount(item: any) {
-  return Number(
-    item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
-  );
-}
-
-function resolveGroupSubtotal(items: any[], groupId: string | null | undefined) {
-  if (!groupId) return 0;
-  return items.reduce((subtotal, item) => {
-    if (item?.row_type === "group_header") return subtotal;
-    if (item?.group_id !== groupId) return subtotal;
-    return subtotal + resolvePreviewLineAmount(item);
-  }, 0);
-}
+import {
+  buildBankAccountsProjection,
+  resolveSelectedBankAccount,
+  buildCompanyPreviewLines,
+  buildClientPreviewLines,
+  resolveLineAmount,
+  resolvePreviewGroupSubtotal,
+} from "@/domain/invoice/projections";
 
 export interface QuotationPreviewModelInput {
   quotation: any;
@@ -38,35 +30,10 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
     customFields, resolvedSignatory, pdfOutput, linkedProject,
   } = input;
 
-  const previewBankAccounts = (Array.isArray(bankAccounts) ? bankAccounts : []).map((account) => ({
-    id: account.id,
-    bankName: account.bank_name || "",
-    accountName: account.account_name || "",
-    accountNumber: account.account_number || "",
-    sortCode: account.sort_code || "",
-    isDefault: account.is_default === true,
-  }));
-
-  const selectedPreviewBank =
-    previewBankAccounts.find((account) => account.id === pdfOutput.bankAccountId) ||
-    previewBankAccounts.find((account) => account.isDefault) ||
-    previewBankAccounts[0] ||
-    null;
-
-  const companyLines = [
-    settings?.company_address,
-    [settings?.company_city, settings?.company_state].filter(Boolean).join(", "),
-    settings?.company_phone,
-    settings?.company_email,
-  ].filter(Boolean);
-
-  const clientLines = [
-    client?.contact_person ? `Attn: ${client.contact_person}` : null,
-    client?.address || null,
-    [client?.city, client?.state].filter(Boolean).join(", "),
-    client?.phone || null,
-    client?.email || null,
-  ].filter(Boolean);
+  const previewBankAccounts = buildBankAccountsProjection(Array.isArray(bankAccounts) ? bankAccounts : []);
+  const selectedPreviewBank = resolveSelectedBankAccount(previewBankAccounts, pdfOutput.bankAccountId);
+  const companyPreviewLines = buildCompanyPreviewLines(settings);
+  const clientPreviewLines = buildClientPreviewLines(client);
 
   const previewDetailRows = [
     { label: "Client", value: quotation?.client_name || "Unassigned" },
@@ -157,8 +124,8 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
   return {
     previewBankAccounts,
     selectedPreviewBank,
-    companyLines,
-    clientLines,
+    companyPreviewLines,
+    clientPreviewLines,
     previewDetailRows,
     previewItems,
     previewTotals,
@@ -185,7 +152,7 @@ export function buildQuotationPreviewItems(items: any[], customFields: Record<st
           nextItems.push({
             type: "group_footer",
             showSubtotal,
-            value: showSubtotal ? formatNaira(resolveGroupSubtotal(sourceItems, groupId)) : "",
+            value: showSubtotal ? formatNaira(resolvePreviewGroupSubtotal(sourceItems, groupId)) : "",
           });
         }
         return nextItems;
@@ -215,7 +182,7 @@ export function buildQuotationPreviewItems(items: any[], customFields: Record<st
         nextItems.push({
           type: "group_footer",
           showSubtotal,
-          value: showSubtotal ? formatNaira(resolveGroupSubtotal(sourceItems, groupId)) : "",
+          value: showSubtotal ? formatNaira(resolvePreviewGroupSubtotal(sourceItems, groupId)) : "",
         });
       }
 

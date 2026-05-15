@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
@@ -117,8 +117,6 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const [items, setItems] = useState<InvoiceItem[]>([
     { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
   ])
-  const itemsRef = useRef(items)
-  const groupsRef = useRef(groups)
   const {
     columns,
     setColumns,
@@ -133,14 +131,6 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     moveColumn,
     customColumns,
   } = useInvoiceColumns()
-
-  useEffect(() => {
-    itemsRef.current = items
-  }, [items])
-
-  useEffect(() => {
-    groupsRef.current = groups
-  }, [groups])
 
   useEffect(() => {
     if (isEdit) return
@@ -185,7 +175,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       : []
 
     if (nextItems.length > 0) {
-      commitGrouping(nextItems)
+      lineItemsHandlers.commitGrouping(nextItems)
     }
   }, [isEdit, prefill.sourceRfq])
 
@@ -306,22 +296,6 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     void load()
   }, [isEdit, navigate, quotationId, setColumns])
 
-  const commitGrouping = (
-    nextItemsInput: InvoiceItem[] | ((current: InvoiceItem[]) => InvoiceItem[]),
-    nextGroupsInput?: QuotationGroupState[] | ((current: QuotationGroupState[]) => QuotationGroupState[]),
-  ) => {
-    const baseItems = itemsRef.current
-    const baseGroups = groups
-    const nextItems = typeof nextItemsInput === 'function' ? nextItemsInput(baseItems) : nextItemsInput
-    const nextGroups = typeof nextGroupsInput === 'function' ? nextGroupsInput(baseGroups) : nextGroupsInput ?? baseGroups
-
-    const normalized = normalizeQuotationGrouping(nextItems, toGroupMetaMap(nextGroups))
-    itemsRef.current = normalized.items
-    groupsRef.current = normalized.groups
-    setItems(normalized.items)
-    setGroups(normalized.groups)
-  }
-
   const lineItemsHandlers = useQuotationLineItems({ items, setItems, groups, setGroups })
   const {
     addQuotationItem,
@@ -350,7 +324,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     quotationImportAdapter.applyResult({
       result,
       setColumns,
-      setItems: (nextItems) => commitGrouping(nextItems),
+      setItems: (nextItems) => lineItemsHandlers.commitGrouping(nextItems),
       updateTopLevelField: (field, value) => {
         if (field === 'title') updateQuotation('quotation_title', value)
         else updateQuotation(field as any, value)

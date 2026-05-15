@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
@@ -113,6 +113,8 @@ export default function EditInvoice() {
   const [baseCustomFields, setBaseCustomFields] = useState<any>({})
   const [items, setItems] = useState<InvoiceItem[]>([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem])
   const [groups, setGroups] = useState<InvoiceGroup[]>([])
+  const itemsRef = useRef(items)
+  useEffect(() => { itemsRef.current = items }, [items])
   const {
     columns,
     setColumns,
@@ -267,7 +269,7 @@ export default function EditInvoice() {
   const removeItem = (index: number) =>
     setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
   const insertItemAfter = (index: number) => {
-    const item = items[index]
+    const item = itemsRef.current[index]
     addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
   }
   const moveItem = (index: number, direction: number) => {

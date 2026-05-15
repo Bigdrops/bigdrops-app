@@ -27,7 +27,6 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   settings,
 }) => {
   const status = invoice?.status?.toUpperCase() || "UNPAID";
-  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : "";
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
   const signatory = previewModel?.signatory || null;
   const resolvedLogoUrl = logoUrl || resolveCanonicalLogoUrl(settings);
@@ -38,11 +37,11 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
     <div className={styles.invCard}>
       <div className={styles.invTop}>
         <div className={styles.brandBlock}>
-          <div className={styles.brandLogo}>
-            {resolvedLogoUrl
-              ? <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
-              : initials || null}
-          </div>
+          {resolvedLogoUrl && (
+            <div className={styles.brandLogo}>
+              <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
+            </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column" }}>
             {companyName && <div className={styles.brandName}>{companyName}</div>}
             {companySub && <div className={styles.brandSub}>{companySub}</div>}
@@ -79,7 +78,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
 
       <div className={styles.infoGrid}>
         <div className={styles.infoCell}>
-          <div className={styles.infoLabel}>Bill To</div>
+          <div className={styles.infoLabel}>Client</div>
           <div className={styles.infoValue}>{invoice?.client_name || "—"}</div>
         </div>
         <div className={styles.infoCell}>

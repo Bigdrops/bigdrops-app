@@ -12,6 +12,7 @@ import {
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Sheet, SheetContent } from '../components/ui/sheet'
 import { cn } from '@/lib/utils'
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice/types'
@@ -206,21 +207,37 @@ function BuiltInColumnRow({
         disableDown={disableMoveDown}
       />
 
-      <div className={cn('min-w-0 flex-1 flex items-center gap-2', isFullHidden && 'opacity-60')}>
-        <Input
-          value={col.label || ''}
-          onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
-          placeholder="Column label"
-          className={cn(
-            'h-9 rounded-[6px] px-2 text-[14px] font-medium transition flex-1',
-            isFullHidden
-              ? 'border-transparent bg-transparent text-[var(--bd-text3)] line-through hover:border-[var(--bd-border-soft)]'
-              : 'border-transparent bg-transparent text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)]',
-          )}
-        />
-        <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
-          {affectsTotals ? 'Num' : 'Text'}
-        </span>
+      <div className={cn('min-w-0 flex-1', isFullHidden && 'opacity-60')}>
+        <div className="flex items-center gap-2">
+          <Input
+            value={col.label || ''}
+            onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+            placeholder="Column label"
+            className={cn(
+              'h-9 rounded-[6px] px-2 text-[14px] font-medium transition flex-1',
+              isFullHidden
+                ? 'border-transparent bg-transparent text-[var(--bd-text3)] line-through hover:border-[var(--bd-border-soft)]'
+                : 'border-transparent bg-transparent text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)]',
+            )}
+          />
+          <span className="shrink-0 inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--bd-text3)]">
+            {affectsTotals ? 'Num' : 'Text'}
+          </span>
+        </div>
+
+        {col.key === 'install_rate' ? (
+          <div className="mt-1 flex items-center gap-1.5">
+            <NumericInput
+              step={0.01}
+              min={0}
+              value={col.formula || 0}
+              onChange={(val) => onUpdate(col.key, 'formula', String(val))}
+              placeholder="0"
+              className="h-7 w-[64px] rounded-[5px] border-[var(--bd-border)] bg-[var(--bd-bg)] text-xs"
+            />
+            <span className="text-[11px] font-semibold text-[var(--bd-text3)]">multiplier</span>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex gap-1 shrink-0 self-start mt-[2px]">
@@ -357,12 +374,12 @@ type ResetConfirmDialogProps = {
 function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
-      <DialogContent className="max-w-sm rounded-[20px] bg-[var(--bd-surface)] p-0">
+      <DialogContent className="max-w-sm p-0">
         <div className="p-5">
           <DialogHeader className="mb-3">
             <DialogTitle>Reset table to default?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-[var(--bd-text2)]">
+          <p className="text-sm text-[hsl(var(--bd-overlay-muted))]">
             This restores columns, labels, and layout. Items are not removed.
           </p>
           <div className="mt-5 flex gap-2">
@@ -606,7 +623,7 @@ export default function ColumnManager({
               </div>
 
               {/* ── Row Overrides ── */}
-              {onResetItemOverrides && overrideEntries.length > 0 ? (
+              {onResetItemOverrides ? (
                 <div className="mt-6 rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
                   <button
                     type="button"
@@ -616,10 +633,12 @@ export default function ColumnManager({
                     <div className="flex items-center gap-2 text-[14px] font-semibold text-[var(--bd-text)]">
                       <span className="w-[6px] h-[6px] rounded-full bg-[var(--bd-text3)] shrink-0" />
                       Row Overrides
-                      <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2 py-[1px] text-[10px] font-bold text-[var(--bd-text3)]">
-                        {overrideEntries.length} item
-                        {overrideEntries.length !== 1 ? 's' : ''}
-                      </span>
+                      {overrideEntries.length > 0 ? (
+                        <span className="inline-flex rounded-full border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2 py-[1px] text-[10px] font-bold text-[var(--bd-text3)]">
+                          {overrideEntries.length} item
+                          {overrideEntries.length !== 1 ? 's' : ''}
+                        </span>
+                      ) : null}
                     </div>
                     <ChevronDown
                       className={cn(
@@ -631,39 +650,47 @@ export default function ColumnManager({
 
                   {overridesOpen && (
                     <div className="border-t border-[var(--bd-border-soft)]">
-                      {overrideEntries.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-center justify-between px-[18px] py-[10px] border-b border-[var(--bd-border-soft)] last:border-b-0 gap-3"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-[13px] font-semibold text-[var(--bd-text)] truncate">
-                              {entry.name}
+                      {overrideEntries.length > 0 ? (
+                        <>
+                          {overrideEntries.map((entry) => (
+                            <div
+                              key={entry.id}
+                              className="flex items-center justify-between px-[18px] py-[10px] border-b border-[var(--bd-border-soft)] last:border-b-0 gap-3"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-[13px] font-semibold text-[var(--bd-text)] truncate">
+                                  {entry.name}
+                                </div>
+                                <div className="text-[11px] text-[var(--bd-text3)] mt-[1px]">
+                                  {entry.detail}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={entry.onReset}
+                                className="shrink-0 text-[11px] font-semibold text-[var(--bd-text3)] border border-[var(--bd-border-soft)] rounded-[6px] px-[10px] py-[4px] hover:bg-[var(--bd-bg)] transition-colors"
+                              >
+                                Reset
+                              </button>
                             </div>
-                            <div className="text-[11px] text-[var(--bd-text3)] mt-[1px]">
-                              {entry.detail}
-                            </div>
-                          </div>
+                          ))}
+
                           <button
                             type="button"
-                            onClick={entry.onReset}
-                            className="shrink-0 text-[11px] font-semibold text-[var(--bd-text3)] border border-[var(--bd-border-soft)] rounded-[6px] px-[10px] py-[4px] hover:bg-[var(--bd-bg)] transition-colors"
+                            onClick={() =>
+                              onResetItemOverrides({ vat: true, discount: true, install: true })
+                            }
+                            className="w-full py-[10px] text-[13px] font-semibold text-[var(--bd-text3)] hover:bg-[var(--bd-bg)] transition-colors"
                           >
-                            Reset
+                            <RotateCcw className="inline w-[12px] h-[12px] mr-1.5 -mt-0.5" />
+                            Reset All Overrides
                           </button>
+                        </>
+                      ) : (
+                        <div className="px-[18px] py-[14px] text-[13px] text-[var(--bd-text3)] text-center">
+                          No overrides applied
                         </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onResetItemOverrides({ vat: true, discount: true, install: true })
-                        }
-                        className="w-full py-[10px] text-[13px] font-semibold text-[var(--bd-text3)] hover:bg-[var(--bd-bg)] transition-colors"
-                      >
-                        <RotateCcw className="inline w-[12px] h-[12px] mr-1.5 -mt-0.5" />
-                        Reset All Overrides
-                      </button>
+                      )}
                     </div>
                   )}
                 </div>

@@ -41,18 +41,17 @@ export default function QuotationDocumentPreview({
 
   const logoUrl = resolveCanonicalLogoUrl(settingsData)
   const companyName = settingsData?.company_name || ''
-  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : ''
 
   return (
     <div className={`quotationDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
       {/* 1. inv-top */}
       <div className="inv-top">
         <div className="brand-block">
-          <div className="brand-logo">
-            {logoUrl
-              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
-              : initials || null}
-          </div>
+          {logoUrl && (
+            <div className="brand-logo">
+              <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
+            </div>
+          )}
           <div>
             {companyName && <div className="brand-name">{companyName}</div>}
             {companyLines.length > 0 && (
@@ -67,7 +66,9 @@ export default function QuotationDocumentPreview({
 
       {/* 2. inv-body */}
       <div className="inv-body">
-        <div className="inv-title">{quotation?.quotation_title || 'Quotation'}</div>
+        {quotation?.quotation_title && (
+          <div className="inv-title">{quotation.quotation_title}</div>
+        )}
         <div className="meta-chips">
           {quotation?.quotation_number && (
             <div className="meta-chip">
@@ -84,7 +85,7 @@ export default function QuotationDocumentPreview({
       {/* 3. info-grid */}
       <div className="info-grid">
         <div className="info-cell">
-          <div className="info-label">Quote For</div>
+          <div className="info-label">Client</div>
           <div className="info-value">{quotation?.client_name || '—'}</div>
           <div className="info-sub">
             {clientLines.map((line: string, i: number) => (
@@ -100,9 +101,7 @@ export default function QuotationDocumentPreview({
                 {row?.label}: {row?.value || '—'}
               </div>
             ))
-          ) : (
-             <div className="info-value-small">Issued: {quotation?.issue_date || '—'}</div>
-          )}
+          ) : null}
         </div>
       </div>
 

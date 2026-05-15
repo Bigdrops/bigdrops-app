@@ -15,8 +15,8 @@ export async function handleDownloadQuotationPdf(input: {
   items: any[];
   settings: any;
   customFields: Record<string, any>;
-  companyLines: string[];
-  clientLines: string[];
+  companyPreviewLines: string[];
+  clientPreviewLines: string[];
   client: any;
   pdfOutput: any;
   previewModel: any;
@@ -25,8 +25,8 @@ export async function handleDownloadQuotationPdf(input: {
   setDownloading: (v: boolean) => void;
 }) {
   const {
-    quotation, id, items, settings, customFields, companyLines,
-    clientLines, client, pdfOutput, previewModel, previewTotals,
+    quotation, id, items, settings, customFields, companyPreviewLines,
+    clientPreviewLines, client, pdfOutput, previewModel, previewTotals,
     showToast, setDownloading,
   } = input;
 
@@ -67,7 +67,7 @@ export async function handleDownloadQuotationPdf(input: {
         issuer: {
           label: "From",
           name: String(settings?.company_name || ""),
-          addressLines: companyLines,
+          addressLines: companyPreviewLines,
           phone: String(settings?.company_phone || ""),
           email: String(settings?.company_email || ""),
           taxId: String(settings?.company_vat || ""),
@@ -76,7 +76,7 @@ export async function handleDownloadQuotationPdf(input: {
           label: "Prepared For",
           name: String(quotation.client_name || ""),
           attention: String(client?.contact_person || ""),
-          addressLines: clientLines,
+          addressLines: clientPreviewLines,
           phone: String(client?.phone || ""),
           email: String(client?.email || ""),
         },
