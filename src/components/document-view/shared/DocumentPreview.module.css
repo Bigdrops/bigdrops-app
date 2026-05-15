@@ -163,7 +163,7 @@
     color: hsl(var(--bd-surface));
     font-size: 11px;
     font-weight: 700;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,7 +210,7 @@
 .itemAmount {
     font-size: 14px;
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     color: hsl(var(--bd-text));
     white-space: nowrap;
     flex-shrink: 0;
@@ -255,7 +255,7 @@
 
 .totalsRow .val {
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
 }
@@ -278,7 +278,7 @@
 }
 
 .totalsGrand .val {
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
     color: hsl(var(--bd-accent));
@@ -319,7 +319,7 @@
 
 .bankDetail .val {
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     margin-top: 2px;
 }
 
@@ -370,7 +370,7 @@
 
 .payRow .val {
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
 }
 
 .payRowDue .val {
@@ -417,7 +417,7 @@
 
 .val {
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
     letter-spacing: -0.28px;

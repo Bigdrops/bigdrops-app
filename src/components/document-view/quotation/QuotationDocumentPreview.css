@@ -5,12 +5,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    font-family:
-        "Inter",
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        sans-serif;
+    font-family: var(--bd-font-family);
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: -0.28px;
@@ -214,9 +209,7 @@
     color: hsl(var(--bd-surface));
     font-size: 11px;
     font-weight: 700;
-    font-family:
-        "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        monospace;
+    font-family: var(--dv-font-mono);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -271,9 +264,7 @@
 .item-amount {
     font-size: 14px;
     font-weight: 600;
-    font-family:
-        "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        monospace;
+    font-family: var(--dv-font-mono);
     color: hsl(var(--bd-text));
     white-space: nowrap;
     flex-shrink: 0;
@@ -306,7 +297,7 @@
 .group-footer-value {
     font-size: 12px;
     font-weight: 600;
-    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-family: var(--dv-font-mono);
     color: hsl(var(--bd-text-muted));
 }
 
@@ -351,9 +342,7 @@
 
 .totals-list .val {
     font-weight: 600;
-    font-family:
-        "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        monospace;
+    font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
     letter-spacing: -0.28px;
@@ -365,9 +354,7 @@
 }
 
 .totals-grand .val {
-    font-family:
-        "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        monospace;
+    font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
     color: hsl(var(--bd-accent));

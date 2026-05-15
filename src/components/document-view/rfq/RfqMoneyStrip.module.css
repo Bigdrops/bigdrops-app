@@ -53,4 +53,4 @@
   margin-top: 1px;
 }
 
-.red { color: #dc2626; }
+.red { color: var(--dv-red-accent); }

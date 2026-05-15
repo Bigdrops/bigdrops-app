@@ -60,7 +60,7 @@
 .progressFill {
   width: 42%;
   height: 100%;
-  background: linear-gradient(90deg, var(--dv-emerald), #34d399);
+  background: linear-gradient(90deg, var(--dv-emerald), hsl(var(--bd-status-success-text) / 0.6));
   border-radius: 3px;
 }
 

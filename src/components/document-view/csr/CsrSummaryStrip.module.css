@@ -48,15 +48,15 @@
 }
 
 .blue {
-  color: #2563eb;
+  color: var(--dv-sky);
 }
 
 .purple {
-  color: #7c3aed;
+  color: var(--dv-violet);
 }
 
 .red {
-  color: #dc2626;
+  color: var(--dv-red-accent);
 }
 
 .hint {

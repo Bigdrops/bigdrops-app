@@ -27,7 +27,18 @@
   --dv-primary-light: hsl(var(--bd-fab-bg) / 0.8);
   --dv-primary-text: hsl(var(--bd-fab-text));
   
-  /* Semantic Colors */
+  /* Accent / CTA — maps to the active theme accent */
+  --dv-accent: hsl(var(--bd-accent));
+  --dv-accent-bg: hsl(var(--bd-accent) / 0.08);
+  --dv-accent-border: hsl(var(--bd-accent) / 0.35);
+  --dv-accent-hover-bg: hsl(var(--bd-accent) / 0.15);
+  
+  /* Brand — deep logo / brand block */
+  --dv-brand: hsl(var(--bd-brand));
+  --dv-brand-bg: hsl(var(--bd-brand) / 0.1);
+  --dv-brand-border: hsl(var(--bd-brand) / 0.2);
+  
+  /* Semantic Status */
   --dv-amber: hsl(var(--bd-status-warning-text));
   --dv-amber-bg: hsl(var(--bd-status-warning-bg));
   --dv-amber-border: hsl(var(--bd-status-warning-border));
@@ -40,6 +51,15 @@
   --dv-rose: hsl(var(--bd-status-danger-text));
   --dv-rose-bg: hsl(var(--bd-status-danger-text) / 0.1);
   --dv-rose-border: hsl(var(--bd-status-danger-text) / 0.2);
+  
+  /* Semantic Color Accents (for summary strips, badges) */
+  --dv-sky: hsl(var(--bd-status-info-text));
+  --dv-violet: hsl(262 83% 58%);   /* purple accent — no native bd counterpart */
+  --dv-red-accent: hsl(var(--bd-status-danger-text));
+  
+  /* Inline shadows */
+  --dv-shadow-md: var(--bd-shadow-md);
+  --dv-shadow-inset-surface: var(--bd-shadow-sm);
   
   /* Typography */
   --dv-font-ui: 'Plus Jakarta Sans', sans-serif;

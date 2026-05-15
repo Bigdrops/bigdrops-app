@@ -27,9 +27,12 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   settings,
 }) => {
   const status = invoice?.status?.toUpperCase() || "UNPAID";
+  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : "";
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
   const signatory = previewModel?.signatory || null;
   const resolvedLogoUrl = logoUrl || resolveCanonicalLogoUrl(settings);
+  const companyLines: string[] = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : [];
+  const clientLines: string[] = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : [];
   const detailRows: any[] = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [];
   const poRow = detailRows.find((row: any) => row?.label === 'PO Number');
 
@@ -37,14 +40,17 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
     <div className={styles.invCard}>
       <div className={styles.invTop}>
         <div className={styles.brandBlock}>
-          {resolvedLogoUrl && (
-            <div className={styles.brandLogo}>
-              <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
-            </div>
-          )}
+          <div className={styles.brandLogo}>
+            {resolvedLogoUrl
+              ? <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
+              : initials || null}
+          </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {companyName && <div className={styles.brandName}>{companyName}</div>}
             {companySub && <div className={styles.brandSub}>{companySub}</div>}
+            {companyLines.length > 0 && companyLines.map((line, i) => (
+              <div key={i} style={{ fontSize: 11, color: "hsl(var(--bd-text-muted))", marginTop: i === 0 ? 4 : 0, lineHeight: 1.4 }}>{line}</div>
+            ))}
           </div>
         </div>
         <div className={styles.statusPill}>{status}</div>
@@ -80,6 +86,11 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
         <div className={styles.infoCell}>
           <div className={styles.infoLabel}>Client</div>
           <div className={styles.infoValue}>{invoice?.client_name || "—"}</div>
+          {clientLines.length > 0 && (
+            <div style={{ marginTop: 6, fontSize: 12, color: "hsl(var(--bd-text-muted))", lineHeight: 1.5 }}>
+              {clientLines.map((line, i) => <div key={i}>{line}</div>)}
+            </div>
+          )}
         </div>
         <div className={styles.infoCell}>
           <div className={styles.infoLabel}>Amount Due</div>
