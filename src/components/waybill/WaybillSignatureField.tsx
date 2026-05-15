@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { feedback } from '@/lib/feedback'
+import { processSignature, dataURItoFile } from '@/lib/processSignature'
 import { supabase } from '@/supabase'
 import { SignatureRole, normalizeSignatureEvidence } from './waybillUtils'
 
@@ -76,9 +77,12 @@ export function WaybillSignatureField({
     if (!file) return
 
     setUploading(true)
-    const ext = file.name.split('.').pop()
+
+    const processedDataURI = await processSignature(file)
+    const processedFile = dataURItoFile(processedDataURI, `${role}_sig_${Date.now()}.png`)
+    const ext = processedFile.name.split('.').pop()
     const path = `${role}_sig_${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('signatures').upload(path, file, { upsert: true })
+    const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
     if (error) {
       feedback.error('Upload failed', { description: `Upload failed: ${error.message}` })
       setUploading(false)

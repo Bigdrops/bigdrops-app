@@ -31,11 +31,9 @@
     width: 44px;
     height: 44px;
     border-radius: var(--bd-radius-lg);
-    background: hsl(var(--bd-brand));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: hsl(var(--bd-surface));
     font-weight: 700;
     font-size: 13px;
     letter-spacing: -0.26px;

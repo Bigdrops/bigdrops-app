@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pencil, Plus, Trash2, Upload, UserCheck, ShieldCheck, Loader2 } from 'lucide-react'
 import { uploadFile } from '@/hooks/useSettings'
+import { processSignature, dataURItoFile } from '@/lib/processSignature'
 import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
@@ -110,9 +111,11 @@ export function SignatoriesSettingsSection() {
 
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop()
+      const processedDataURI = await processSignature(file)
+      const processedFile = dataURItoFile(processedDataURI, `signature_${Date.now()}.png`)
+      const ext = processedFile.name.split('.').pop()
       const path = `signature/${Date.now()}.${String(ext)}`
-      const url = await uploadFile('signatures', path, file)
+      const url = await uploadFile('signatures', path, processedFile)
       updateForm('signature_url', url)
       feedback.success('Signature uploaded')
     } catch (error) {
