@@ -36,7 +36,7 @@ export default function WaybillMoreSheet({
         fontWeight: 700,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
-        color: '#9c9589',
+        color: 'hsl(var(--bd-text-muted))',
         padding: '16px 8px 8px',
       }}
     >
@@ -45,7 +45,7 @@ export default function WaybillMoreSheet({
   )
 
   const Divider = () => (
-    <div style={{ height: 1, background: '#ede9e1', margin: '8px 0' }} />
+    <div style={{ height: 1, background: 'hsl(var(--bd-border))', margin: '8px 0' }} />
   )
 
   const Action = ({
@@ -84,21 +84,21 @@ export default function WaybillMoreSheet({
           width: 38,
           height: 38,
           borderRadius: 10,
-          background: danger ? '#fce7f3' : '#f4f2ee',
+          background: danger ? 'hsl(var(--bd-status-danger-bg))' : 'hsl(var(--bd-surface-muted))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          color: danger ? '#be185d' : '#57534a',
+          color: danger ? 'hsl(var(--bd-status-danger-text))' : 'hsl(var(--bd-text-muted))',
         }}
       >
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: danger ? '#be185d' : '#1a1814' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: danger ? 'hsl(var(--bd-status-danger-text))' : 'hsl(var(--bd-text))' }}>
           {label}
         </div>
-        <div style={{ fontSize: 11, color: danger ? 'rgba(190,24,93,0.6)' : '#9c9589', marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: danger ? 'hsl(var(--bd-status-danger-text) / 0.6)' : 'hsl(var(--bd-text-muted))', marginTop: 2 }}>
           {desc}
         </div>
       </div>

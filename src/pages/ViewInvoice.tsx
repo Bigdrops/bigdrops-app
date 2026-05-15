@@ -96,6 +96,8 @@ export default function ViewInvoice() {
     pdfOutput, setPdfOutput, pdfTemplateId, settingsData: settings
   });
 
+  const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settings), [settings]);
+
   if (loading) return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
   if (!invoice) return null;
 
@@ -103,7 +105,7 @@ export default function ViewInvoice() {
 
   return (
     <>
-      <InvoiceWorkspace 
+      <InvoiceWorkspace
         invoice={invoice}
         items={items || []}
         payments={payments || []}
@@ -116,7 +118,7 @@ export default function ViewInvoice() {
         viewModel={viewModel}
         pdfOutput={pdfOutput}
         mergeQtyUnit={customFields?.mergeQtyUnit === true}
-        logoUrl={resolveCanonicalLogoUrl(settings)}
+        logoUrl={logoUrl}
         companyName={settings?.company_name || ""}
         companySub={settings?.company_tagline || ""}
         settings={settings}

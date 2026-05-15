@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import './QuotationDocumentPreview.css'
 import { renderRichTextContent } from '@/lib/richText'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
@@ -39,7 +40,7 @@ export default function QuotationDocumentPreview({
           ? 'danger'
           : 'neutral'
 
-  const logoUrl = resolveCanonicalLogoUrl(settingsData)
+  const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settingsData), [settingsData])
   const companyName = settingsData?.company_name || ''
 
   return (
