@@ -19,7 +19,7 @@
   justify-content: center;
   border: none;
   border-radius: 8px;
-  padding: 10px 18px;
+  padding: 14px 18px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -40,7 +40,7 @@
   justify-content: center;
   border: 1px solid hsl(var(--bd-brand));
   border-radius: 8px;
-  padding: 10px 18px;
+  padding: 14px 18px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
