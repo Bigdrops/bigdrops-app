@@ -5,6 +5,7 @@ import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from "@/domain/documentMedia";
 import DocumentBrandBlock from "../shared/DocumentBrandBlock";
+import DocumentMetaChips from "../shared/DocumentMetaChips";
 
 interface InvoiceDocumentCardProps {
   invoice: any;
@@ -61,26 +62,15 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
         {invoice?.invoice_title && (
           <h1 className={styles.invTitle}>{invoice.invoice_title}</h1>
         )}
-        <div className={styles.metaChips}>
-          {invoice?.invoice_number && (
-            <div className={styles.metaChip}>
-              <Hash size={12} />
-              <span>{invoice.invoice_number}</span>
-            </div>
-          )}
-          {invoice?.issue_date && (
-            <div className={styles.metaChip}>
-              <Calendar size={12} />
-              <span>Issued {formatDisplayDate(invoice.issue_date)}</span>
-            </div>
-          )}
-          {poRow?.value ? (
-            <div className={styles.metaChip}>
-              <FileText size={12} />
-              <span>PO: {poRow.value}</span>
-            </div>
-          ) : null}
-        </div>
+        <DocumentMetaChips
+          className={styles.metaChips}
+          itemClassName={styles.metaChip}
+          items={[
+            ...(invoice?.invoice_number ? [{ icon: Hash, label: "Invoice Number", value: invoice.invoice_number }] : []),
+            ...(invoice?.issue_date ? [{ icon: Calendar, label: "Issue Date", value: `Issued ${formatDisplayDate(invoice.issue_date)}` }] : []),
+            ...(poRow?.value ? [{ icon: FileText, label: "PO Number", value: `PO: ${poRow.value}` }] : []),
+          ]}
+        />
       </div>
 
       <div className={styles.infoGrid}>

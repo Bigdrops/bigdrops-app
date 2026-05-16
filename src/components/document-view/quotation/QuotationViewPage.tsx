@@ -1,8 +1,8 @@
 import { Paperclip } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { BankDetailsCard } from "../invoice/sections/BankDetailsCard";
-import { DocumentOptionsCard } from "../invoice/sections/DocumentOptionsCard";
+import { BankDetailsCard } from "../shared/BankDetailsCard";
+import { DocumentOptionsCard } from "../shared/DocumentOptionsCard";
 import DocumentRelatedDocsSection, {
   type RelatedDocumentItem,
 } from "../shared/DocumentRelatedDocsSection";

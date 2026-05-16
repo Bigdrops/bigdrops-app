@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, CreditCard } from "lucide-react";
-import styles from "../InvoiceWorkspace.module.css";
-import previewStyles from "../../shared/DocumentPreview.module.css";
+import styles from "../invoice/InvoiceWorkspace.module.css";
+import previewStyles from "./DocumentPreview.module.css";
 
 interface BankDetailsCardProps {
   bankAccounts: any[];

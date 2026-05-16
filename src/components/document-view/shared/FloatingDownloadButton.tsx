@@ -1,5 +1,6 @@
 import { Download } from 'lucide-react'
 
+import FloatingDocumentButton from './FloatingDocumentButton'
 import styles from './FloatingDownloadButton.module.css'
 
 interface FloatingDownloadButtonProps {
@@ -16,16 +17,17 @@ export default function FloatingDownloadButton({
   const accessibleLabel = 'Download PDF'
 
   return (
-    <button
-      type="button"
+    <FloatingDocumentButton
       disabled={disabled}
-      onClick={onClick}
+      onClick={onClick || (() => {})}
       className={`${styles.button} ${disabled ? styles.disabled : ''}`.trim()}
-      aria-label={accessibleLabel}
-      title={accessibleLabel}
-    >
-      <Download size={16} strokeWidth={2.2} />
-      <span className={styles.srOnly}>{label}</span>
-    </button>
+      label={accessibleLabel}
+      icon={
+        <>
+          <Download size={16} strokeWidth={2.2} />
+          <span className={styles.srOnly}>{label}</span>
+        </>
+      }
+    />
   )
 }

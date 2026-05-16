@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Settings2 } from "lucide-react";
-import styles from "../InvoiceWorkspace.module.css";
+import styles from "../invoice/InvoiceWorkspace.module.css";
 import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 
 interface DocumentOptionsCardProps {

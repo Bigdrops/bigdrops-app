@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { Calendar, Hash } from 'lucide-react'
 import './QuotationDocumentPreview.css'
 import previewStyles from '../shared/DocumentPreview.module.css'
 import DocumentBrandBlock from '../shared/DocumentBrandBlock'
+import DocumentMetaChips from '../shared/DocumentMetaChips'
 import { renderRichTextContent } from '@/lib/richText'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 
@@ -73,17 +75,14 @@ export default function QuotationDocumentPreview({
         {quotation?.quotation_title && (
           <div className="inv-title">{quotation.quotation_title}</div>
         )}
-        <div className="meta-chips">
-          {quotation?.quotation_number && (
-            <div className="meta-chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {quotation.quotation_number}
-            </div>
-          )}
-          {quotation?.issue_date && (
-             <div className="meta-chip">{quotation.issue_date}</div>
-          )}
-        </div>
+        <DocumentMetaChips
+          className="meta-chips"
+          itemClassName="meta-chip"
+          items={[
+            ...(quotation?.quotation_number ? [{ icon: Hash, label: 'Quotation Number', value: quotation.quotation_number }] : []),
+            ...(quotation?.issue_date ? [{ icon: Calendar, label: 'Issue Date', value: quotation.issue_date }] : []),
+          ]}
+        />
       </div>
 
       {/* 3. info-grid */}

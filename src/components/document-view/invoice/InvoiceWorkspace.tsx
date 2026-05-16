@@ -1,12 +1,13 @@
 import React from "react";
+import { Download } from "lucide-react";
 import styles from "./InvoiceWorkspace.module.css";
 import { InvoiceTopNav } from "./InvoiceTopNav";
 import { InvoiceActionRow } from "./InvoiceActionRow";
 import { InvoiceDocumentCard } from "./InvoiceDocumentCard";
-import { BankDetailsCard } from "./sections/BankDetailsCard";
-import { DocumentOptionsCard } from "./sections/DocumentOptionsCard";
+import { BankDetailsCard } from "../shared/BankDetailsCard";
+import { DocumentOptionsCard } from "../shared/DocumentOptionsCard";
 import { InvoiceOperationalSections } from "./InvoiceOperationalSections";
-import { FloatingFAB } from "./FloatingFAB";
+import FloatingDocumentButton from "../shared/FloatingDocumentButton";
 
 interface InvoiceWorkspaceProps {
   // Data
@@ -136,7 +137,12 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         />
       </div>
 
-      <FloatingFAB onClick={onFabClick} />
+      <FloatingDocumentButton
+        onClick={onFabClick}
+        icon={<Download size={22} />}
+        label="Download"
+        className={styles.fab}
+      />
     </div>
   );
 };
