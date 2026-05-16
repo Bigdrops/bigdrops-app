@@ -198,7 +198,7 @@ export function DashboardOverview({
             <button
               type="button"
               onClick={mobileChrome.openSidebar}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-muted text-foreground"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] border border-border bg-muted text-foreground"
               aria-label="Open navigation menu"
             >
               <SidebarToggleIcon

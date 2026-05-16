@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import './QuotationDocumentPreview.css'
+import previewStyles from '../shared/DocumentPreview.module.css'
 import { renderRichTextContent } from '@/lib/richText'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 
@@ -176,15 +177,15 @@ export default function QuotationDocumentPreview({
       </div>
 
       {signatory && (
-        <div style={{ borderTop: '1px solid hsl(var(--bd-border))', padding: '16px 18px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div className={previewStyles.signatoryBlock}>
           {signatory.signatureUrl ? (
-            <img src={signatory.signatureUrl} alt="Signature" style={{ maxHeight: 80, width: 'auto', display: 'block' }} />
+            <img src={signatory.signatureUrl} alt="Signature" className={previewStyles.signatoryImage} />
           ) : (
-            <div style={{ fontStyle: 'italic', color: 'hsl(var(--bd-text-muted))' }}>Authorized Signature</div>
+            <div className={previewStyles.signatoryFallback}>Authorized Signature</div>
           )}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'hsl(var(--bd-text))' }}>{signatory.name}</div>
-            {signatory.role && <div style={{ fontSize: 12, color: 'hsl(var(--bd-text-muted))', marginTop: 2 }}>{signatory.role}</div>}
+            <div className={previewStyles.signatoryName}>{signatory.name}</div>
+            {signatory.role && <div className={previewStyles.signatoryRole}>{signatory.role}</div>}
           </div>
         </div>
       )}

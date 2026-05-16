@@ -57,7 +57,7 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
               onClick={() => onViewDoc("csr", csr.id)}
               style={{ cursor: "pointer" }}
             >
-              <FileText size={16} color="var(--success-moss)" style={{ marginTop: "2px" }} />
+              <FileText size={16} color="hsl(var(--bd-status-success-text))" style={{ marginTop: "2px" }} />
               <div className={previewStyles.itemBody}>
                 <div className={previewStyles.itemName}>CSR</div>
                 <div className={previewStyles.itemSub}>{csr.csr_number}</div>
@@ -71,7 +71,7 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
               onClick={() => onViewDoc("waybill", wb.id)}
               style={{ cursor: "pointer" }}
             >
-              <FileText size={16} color="var(--info-blue)" style={{ marginTop: "2px" }} />
+              <FileText size={16} color="hsl(var(--bd-status-info-text))" style={{ marginTop: "2px" }} />
               <div className={styles.itemBody}>
                 <div className={styles.itemName}>Waybill</div>
                 <div className={styles.itemSub}>{wb.waybill_number}</div>
