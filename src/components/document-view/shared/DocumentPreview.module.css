@@ -334,9 +334,9 @@
     background: hsl(var(--bd-surface-muted));
     border-radius: var(--bd-radius-lg);
     font-size: 13px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     border: 1px solid hsl(var(--bd-border));
 }
 
@@ -354,8 +354,13 @@
     margin-top: 2px;
 }
 
+.bankDetailValue {
+    font-weight: 600;
+    font-size: 13px;
+    color: hsl(var(--bd-text));
+}
+
 .bankName {
-    grid-column: span 2;
     font-weight: 700;
     font-size: 14px;
     margin-bottom: 4px;

@@ -2,11 +2,31 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  border-bottom: 1px solid var(--dv-border);
-  padding: 0;
+  border-bottom: 1px solid hsl(var(--bd-border));
+  padding: 12px 16px;
   background: hsl(var(--bd-surface));
   position: relative;
   z-index: 1;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--bd-radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 14px 18px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  letter-spacing: -0.28px;
+  font-family: var(--bd-font-family);
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btnPrimary {
