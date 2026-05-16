@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import './QuotationDocumentPreview.css'
 import previewStyles from '../shared/DocumentPreview.module.css'
+import DocumentBrandBlock from '../shared/DocumentBrandBlock'
 import { renderRichTextContent } from '@/lib/richText'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 
@@ -43,18 +44,18 @@ export default function QuotationDocumentPreview({
 
   const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settingsData), [settingsData])
   const companyName = settingsData?.company_name || ''
-  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : ''
 
   return (
     <div className={`quotationDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
       {/* 1. inv-top */}
       <div className="inv-top">
         <div className="brand-block">
-          <div className="brand-logo">
-            {logoUrl
-              ? <img src={logoUrl} alt={companyName || 'Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 'var(--bd-radius-lg)' }} />
-              : initials || null}
-          </div>
+          <DocumentBrandBlock
+            logoUrl={logoUrl}
+            companyName={companyName}
+            className="brand-logo"
+            imgClassName={previewStyles.brandLogoImg}
+          />
           <div>
             {companyName && <div className="brand-name">{companyName}</div>}
             {companyLines.length > 0 && (

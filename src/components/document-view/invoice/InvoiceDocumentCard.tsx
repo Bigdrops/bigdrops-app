@@ -4,6 +4,7 @@ import styles from "../shared/DocumentPreview.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from "@/domain/documentMedia";
+import DocumentBrandBlock from "../shared/DocumentBrandBlock";
 
 interface InvoiceDocumentCardProps {
   invoice: any;
@@ -27,7 +28,6 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   settings,
 }) => {
   const status = invoice?.status?.toUpperCase() || "UNPAID";
-  const initials = companyName ? companyName.substring(0, 2).toUpperCase() : "";
   const totals: any[] = Array.isArray(previewModel?.previewTotals) ? previewModel.previewTotals : [];
   const signatory = previewModel?.signatory || null;
   const resolvedLogoUrl = logoUrl || resolveCanonicalLogoUrl(settings);
@@ -40,11 +40,12 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
     <div className={styles.invCard}>
       <div className={styles.invTop}>
         <div className={styles.brandBlock}>
-          <div className={styles.brandLogo}>
-            {resolvedLogoUrl
-              ? <img src={resolvedLogoUrl} alt={companyName || "Logo"} className={styles.brandLogoImg} />
-              : initials || null}
-          </div>
+          <DocumentBrandBlock
+            logoUrl={resolvedLogoUrl}
+            companyName={companyName || ""}
+            className={styles.brandLogo}
+            imgClassName={styles.brandLogoImg}
+          />
           <div style={{ display: "flex", flexDirection: "column" }}>
             {companyName && <div className={styles.brandName}>{companyName}</div>}
             {companySub && <div className={styles.brandSub}>{companySub}</div>}
