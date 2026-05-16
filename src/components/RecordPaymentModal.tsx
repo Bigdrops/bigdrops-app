@@ -229,20 +229,20 @@ export default function RecordPaymentModal({
 
         <div className="space-y-4 px-5 py-4">
           <div
-            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-emerald-600 bg-emerald-50 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-3"
           >
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
               <div className="mt-1 text-sm font-semibold text-foreground">{invoice.client_name || "No client name"}</div>
             </div>
-            <div className="text-right text-base font-bold text-green-600">{formatMoney(invoice.total)}</div>
+            <div className="text-right text-base font-bold text-[hsl(var(--bd-status-success-text))]">{formatMoney(invoice.total)}</div>
           </div>
 
           <div
-            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-blue-600 bg-blue-50 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)] px-4 py-3"
           >
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current Balance</div>
-            <div className="flex items-center gap-2 text-sm font-bold text-red-600">
+            <div className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--destructive))]">
               {loadingBalance ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
               {formatMoney(currentBalance)}
             </div>
