@@ -38,7 +38,7 @@ export default function QuotationDocumentPreview({
   const statusTone =
     /accepted/i.test(statusLabel)
       ? 'success'
-      : /sent/i.test(statusLabel)
+      : /sent|open/i.test(statusLabel)
         ? 'warning'
         : /rejected/i.test(statusLabel)
           ? 'danger'

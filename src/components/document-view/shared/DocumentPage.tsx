@@ -27,7 +27,7 @@ export default function DocumentPage({
     <div className={styles.workspace}>
       <header className={styles.topbar}>{topNav}</header>
 
-      {actionRow && <div className={styles.actionStrip}>{actionRow}</div>}
+      {actionRow && <div className={styles.actionStripNoGutter}>{actionRow}</div>}
 
       {hero}
 

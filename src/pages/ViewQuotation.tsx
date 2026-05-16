@@ -188,11 +188,11 @@ export default function ViewQuotation() {
         }
         actionRow={
           <div className={styles.actionRow}>
-            <button type="button" className={styles.btnPrimary} onClick={() => ui.openModal(MODAL_CONVERT)}>
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => ui.openModal(MODAL_CONVERT)}>
               <Zap size={14} strokeWidth={2.5} fill="currentColor" />
               <span>Convert to Invoice</span>
             </button>
-            <button type="button" className={styles.btnSecondary} onClick={() => navigate(`/quotations/edit/${id}`)}>
+            <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => navigate(`/quotations/edit/${id}`)}>
               <Edit3 size={14} strokeWidth={2} />
               <span>Edit</span>
             </button>

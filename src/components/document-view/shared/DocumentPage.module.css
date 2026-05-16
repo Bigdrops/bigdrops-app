@@ -40,6 +40,13 @@
     z-index: 10;
 }
 
+.actionStripNoGutter {
+    background: hsl(var(--bd-surface));
+    border-bottom: 1px solid hsl(var(--bd-border));
+    position: relative;
+    z-index: 10;
+}
+
 .scrollBody {
     display: flex;
     flex-direction: column;

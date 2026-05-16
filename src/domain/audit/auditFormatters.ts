@@ -63,6 +63,18 @@ export function hasMeaningfulAuditValue(value: unknown): boolean {
   return !isEmptyAuditValue(value)
 }
 
+function safeStringify(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return ''
+  }
+}
+
 export function isMeaningfulAuditChange(oldValue: unknown, newValue: unknown): boolean {
   if (!hasMeaningfulAuditValue(oldValue) && !hasMeaningfulAuditValue(newValue)) {
     return false
@@ -72,7 +84,14 @@ export function isMeaningfulAuditChange(oldValue: unknown, newValue: unknown): b
     return false
   }
 
-  return String(oldValue ?? '') !== String(newValue ?? '')
+  const oldNormalized = safeStringify(oldValue)
+  const newNormalized = safeStringify(newValue)
+
+  if (oldNormalized === '' && newNormalized === '') {
+    return false
+  }
+
+  return oldNormalized !== newNormalized
 }
 
 export function getAuditFieldLabel(field: string): string {
@@ -81,10 +100,18 @@ export function getAuditFieldLabel(field: string): string {
 
 function stripHtml(html: string): string {
   if (!html) return ''
-  // Basic HTML stripping that works in both Node and Browser
+
+  if (typeof document !== 'undefined') {
+    try {
+      return new DOMParser().parseFromString(html, 'text/html').body.textContent || ''
+    } catch {
+      // DOMParser unavailable or parse failed — fall through to regex
+    }
+  }
+
   return html
-    .replace(/<[^>]*>?/gm, ' ') // Replace tags with space to avoid merging words
-    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .replace(/<[^>]*>?/gm, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 

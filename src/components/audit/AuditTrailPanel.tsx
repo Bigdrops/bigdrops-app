@@ -1,12 +1,16 @@
 import { ChevronDown, History } from 'lucide-react'
-import { useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 
 import AuditTrailItem from '@/components/audit/AuditTrailItem'
+import ErrorBoundary from '@/components/audit/ErrorBoundary'
 import { SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import type { AuditEntityType } from '@/domain/audit/auditTypes'
 import { cn } from '@/lib/utils'
 import useAuditTrail from '@/hooks/useAuditTrail'
+
+const WINDOW_LIMIT = 30
+const QUERY_LIMIT = 50
 
 interface AuditTrailPanelProps {
   entityType: AuditEntityType
@@ -28,11 +32,41 @@ export default function AuditTrailPanel({
   }
 
   const [open, setOpen] = useState(defaultOpen)
-  const { entries, loading, error } = useAuditTrail({
+  const { entries, loading, error, refetch, loadOlder } = useAuditTrail({
     entityType,
     entityId,
     enabled: open,
   })
+
+  const [visibleCount, setVisibleCount] = useState(WINDOW_LIMIT)
+
+  useEffect(() => {
+    setVisibleCount(entries.length > WINDOW_LIMIT ? WINDOW_LIMIT : entries.length)
+  }, [entityId, entityType, entries.length])
+
+  const visibleEntries = useMemo(
+    () => entries.slice(0, visibleCount),
+    [entries, visibleCount],
+  )
+
+  const hasMoreCached = visibleCount < entries.length
+  const hasMoreOnServer = entries.length >= QUERY_LIMIT && !hasMoreCached
+  const canLoadMore = hasMoreCached || hasMoreOnServer
+
+  const lastEntry = entries[entries.length - 1]
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMoreCached) {
+      startTransition(() => {
+        setVisibleCount((prev) => Math.min(prev + WINDOW_LIMIT, entries.length))
+      })
+      return
+    }
+
+    if (hasMoreOnServer && lastEntry?.rawTimestamp) {
+      void loadOlder(lastEntry.rawTimestamp)
+    }
+  }, [hasMoreCached, hasMoreOnServer, lastEntry, loadOlder, entries.length])
 
   return (
     <section className={cn('rounded-[24px] border border-border bg-card shadow-sm', className)}>
@@ -55,32 +89,45 @@ export default function AuditTrailPanel({
         </CollapsibleTrigger>
 
         <CollapsibleContent className="border-t border-border/70 px-4 py-4 sm:px-5">
-          {loading ? (
-            <div className="space-y-3">
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-          ) : null}
+          <ErrorBoundary onRetry={() => void refetch()}>
+            {loading ? (
+              <div className="space-y-3">
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            ) : null}
 
-          {!loading && error ? (
-            <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground">
-              {error}
-            </div>
-          ) : null}
+            {!loading && error ? (
+              <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground">
+                {error}
+              </div>
+            ) : null}
 
-          {!loading && !error && entries.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-4 py-5 text-sm text-muted-foreground">
-              No history recorded yet.
-            </div>
-          ) : null}
+            {!loading && !error && entries.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 px-4 py-5 text-sm text-muted-foreground">
+                No history recorded yet.
+              </div>
+            ) : null}
 
-          {!loading && !error && entries.length > 0 ? (
-            <div className="space-y-3 pl-2">
-              {entries.map((entry) => (
-                <AuditTrailItem key={entry.id} entry={entry} />
-              ))}
-            </div>
-          ) : null}
+            {!loading && !error && entries.length > 0 ? (
+              <div className="space-y-3 pl-2">
+                {visibleEntries.map((entry) => (
+                  <AuditTrailItem key={entry.id} entry={entry} />
+                ))}
+                {canLoadMore && !loading && (
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    className="w-full rounded-xl border border-dashed border-border/70 bg-background/50 px-4 py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                  >
+                    {hasMoreCached
+                      ? `Show older entries (${entries.length - visibleCount} more)`
+                      : 'Load older entries from server'}
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </ErrorBoundary>
         </CollapsibleContent>
       </Collapsible>
     </section>

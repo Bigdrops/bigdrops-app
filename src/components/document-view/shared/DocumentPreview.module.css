@@ -65,9 +65,9 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    border: 1.5px solid hsl(var(--bd-accent) / 0.35);
-    background: hsl(var(--bd-accent) / 0.08);
-    color: hsl(var(--bd-accent));
+    border: 1.5px solid hsl(var(--bd-status-warning-border));
+    background: hsl(var(--bd-status-warning-bg));
+    color: hsl(var(--bd-status-warning-text));
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -279,7 +279,7 @@
     font-family: var(--dv-font-mono);
     text-align: right;
     min-width: 100px;
-    color: hsl(var(--bd-accent));
+    color: hsl(var(--primary));
 }
 
 .amountWords {

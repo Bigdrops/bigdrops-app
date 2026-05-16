@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Clock3 } from 'lucide-react'
-import { useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,17 +11,24 @@ interface AuditTrailItemProps {
   entry: AuditTrailEntry
 }
 
-export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
+const AuditTrailItem = memo(function AuditTrailItem({ entry }: AuditTrailItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showFullFields, setShowFullFields] = useState<Record<string, boolean>>({})
 
-  const toggleFullField = (fieldKey: string) => {
-    setShowFullFields((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }))
-  }
+  const handleExpandToggle = useCallback(() => {
+    setIsExpanded((prev) => !prev)
+  }, [])
 
-  const changedFieldsLabel = entry.changes.length > 0
-    ? `Changed ${entry.changes.length} field${entry.changes.length === 1 ? '' : 's'}: ${entry.changes.map((c) => c.label).join(', ')}`
-    : 'No fields changed'
+  const handleToggleFullField = useCallback((fieldKey: string) => {
+    setShowFullFields((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }))
+  }, [])
+
+  const changedFieldsLabel = useMemo(() => {
+    if (entry.changes.length === 0) return 'No fields changed'
+    return `Changed ${entry.changes.length} field${entry.changes.length === 1 ? '' : 's'}: ${entry.changes.map((c) => c.label).join(', ')}`
+  }, [entry.changes])
+
+  const hasChanges = entry.changes.length > 0
 
   return (
     <article
@@ -40,7 +47,7 @@ export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{entry.actionLabel}</p>
-          
+
           <div className="mt-2 text-xs font-medium text-muted-foreground/80">
             {changedFieldsLabel}
           </div>
@@ -52,11 +59,11 @@ export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
             <span className="whitespace-nowrap">{entry.timestamp}</span>
           </div>
 
-          {entry.changes.length > 0 && (
+          {hasChanges && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={handleExpandToggle}
               className="h-7 px-2 text-[11px] font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             >
               {isExpanded ? 'Hide changes' : 'View changes'}
@@ -70,44 +77,65 @@ export default function AuditTrailItem({ entry }: AuditTrailItemProps) {
         </div>
       </div>
 
-      {isExpanded && entry.changes.length > 0 ? (
-        <div className="mt-4 space-y-2.5 pl-4">
-          {entry.changes.map((change) => {
-            const fieldKey = `${entry.id}-${change.field}`
-            const isTruncated = !!(change.oldValueFull || change.newValueFull)
-            const showingFull = showFullFields[fieldKey]
-
-            return (
-              <div key={fieldKey} className="rounded-xl border border-border/60 bg-card/60 px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    {change.label}
-                  </div>
-                  {isTruncated && (
-                    <button
-                      onClick={() => toggleFullField(fieldKey)}
-                      className="text-[10px] font-medium text-primary hover:underline"
-                    >
-                      {showingFull ? 'Show preview' : 'Show full text'}
-                    </button>
-                  )}
-                </div>
-                <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-[1fr,auto,1fr] sm:items-center">
-                  <div className={cn('text-sm text-muted-foreground/70', !showingFull && 'line-clamp-3')}>
-                    {showingFull && change.oldValueFull ? change.oldValueFull : change.oldValue}
-                  </div>
-                  <div className="hidden sm:block">
-                    <span className="px-2 text-muted-foreground/50">→</span>
-                  </div>
-                  <div className={cn('text-sm font-medium text-foreground', !showingFull && 'line-clamp-3')}>
-                    {showingFull && change.newValueFull ? change.newValueFull : change.newValue}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+      {isExpanded && hasChanges ? (
+        <ChangeList
+          entryId={entry.id}
+          changes={entry.changes}
+          showFullFields={showFullFields}
+          onToggleFullField={handleToggleFullField}
+        />
       ) : null}
     </article>
   )
+})
+
+interface ChangeListProps {
+  entryId: string
+  changes: AuditTrailEntry['changes']
+  showFullFields: Record<string, boolean>
+  onToggleFullField: (fieldKey: string) => void
 }
+
+const ChangeList = memo(function ChangeList({ entryId, changes, showFullFields, onToggleFullField }: ChangeListProps) {
+  return (
+    <div className="mt-4 space-y-2.5 pl-4">
+      {changes.map((change) => {
+        const fieldKey = `${entryId}-${change.field}`
+        const isTruncated = !!(change.oldValueFull || change.newValueFull)
+        const showingFull = showFullFields[fieldKey]
+
+        return (
+          <div key={fieldKey} className="rounded-xl border border-border/60 bg-card/60 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {change.label}
+              </div>
+              {isTruncated && (
+                <button
+                  type="button"
+                  onClick={() => onToggleFullField(fieldKey)}
+                  className="text-[10px] font-medium text-primary hover:underline"
+                >
+                  {showingFull ? 'Show preview' : 'Show full text'}
+                </button>
+              )}
+            </div>
+            <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-[1fr,auto,1fr] sm:items-center">
+              <div className={cn('text-sm text-muted-foreground/70', !showingFull && 'line-clamp-3')}>
+                {showingFull && change.oldValueFull ? change.oldValueFull : change.oldValue}
+              </div>
+              <div className="hidden sm:block">
+                <span className="px-2 text-muted-foreground/50">→</span>
+              </div>
+              <div className={cn('text-sm font-medium text-foreground', !showingFull && 'line-clamp-3')}>
+                {showingFull && change.newValueFull ? change.newValueFull : change.newValue}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+})
+
+export default AuditTrailItem
