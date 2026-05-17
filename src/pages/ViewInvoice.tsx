@@ -104,59 +104,58 @@ export default function ViewInvoice() {
   const previewBankAccounts = buildBankAccountsProjection(bankAccounts || []);
 
   return (
-    <>
-      <InvoiceWorkspace
-        invoice={invoice}
-        items={items || []}
-        payments={payments || []}
-        bankAccounts={bankAccounts || []}
-        advanceInvoices={relatedAdvanceInvoices || []}
-        relatedCsrs={relatedCsrs || []}
-        relatedWaybills={relatedWaybills || []}
-        sourceDocument={sourceDocument}
-        previewModel={previewModel}
-        viewModel={viewModel}
-        pdfOutput={pdfOutput}
-        mergeQtyUnit={customFields?.mergeQtyUnit === true}
-        logoUrl={logoUrl}
-        companyName={settings?.company_name || ""}
-        companySub={settings?.company_tagline || ""}
-        settings={settings}
-        
-        onBack={() => navigate("/invoices")}
-        onShare={actions.handleShare}
-        onRecordPayment={() => ui.openSheet("record-payment")}
-        onEdit={() => navigate(`/invoices/edit/${id}`)}
-        onDownload={actions.handleDownload}
-        onMore={() => ui.openSheet("more-actions")}
-        onVoidPayment={actions.confirmVoidPayment}
-        onCreateAdvance={actions.openCreateAdvanceSheet}
-        onViewAdvance={(adv) => actions.openAdvanceDetails(adv, "view")}
-        onViewDoc={(type, docId) => navigate(`/${type === 'quotation' ? 'quotations' : type === 'csr' ? 'csr' : 'waybills'}/${docId}`)}
-        onOutputChange={actions.handleSaveCustomization}
-        onToggleMergeQtyUnit={actions.handleToggleMergeQtyUnit}
-        onCustomize={() => ui.openSheet("customize-output")}
-        onFabClick={actions.handleDownload}
-      />
-
-      <InvoiceOverlays 
-        invoice={invoice}
-        ui={ui}
-        viewModel={viewModel}
-        pdfOutput={pdfOutput}
-        pdfTemplateId={pdfTemplateId}
-        previewBankAccounts={previewBankAccounts}
-        settingsData={settings}
-        customFields={customFields}
-        id={id!}
-        contractValue={invoice.total || 0}
-        refresh={refresh}
-        closeAdvanceSheet={(next: boolean) => {
-          if (next) ui.openSheet("advance");
-          else ui.closeSheet();
-        }}
-        {...actions}
-      />
-    </>
+    <InvoiceWorkspace
+      invoice={invoice}
+      items={items || []}
+      payments={payments || []}
+      bankAccounts={bankAccounts || []}
+      advanceInvoices={relatedAdvanceInvoices || []}
+      relatedCsrs={relatedCsrs || []}
+      relatedWaybills={relatedWaybills || []}
+      sourceDocument={sourceDocument}
+      previewModel={previewModel}
+      viewModel={viewModel}
+      pdfOutput={pdfOutput}
+      mergeQtyUnit={customFields?.mergeQtyUnit === true}
+      logoUrl={logoUrl}
+      companyName={settings?.company_name || ""}
+      companySub={settings?.company_tagline || ""}
+      settings={settings}
+      
+      onBack={() => navigate("/invoices")}
+      onShare={actions.handleShare}
+      onRecordPayment={() => ui.openSheet("record-payment")}
+      onEdit={() => navigate(`/invoices/edit/${id}`)}
+      onDownload={actions.handleDownload}
+      onMore={() => ui.openSheet("more-actions")}
+      onVoidPayment={actions.confirmVoidPayment}
+      onCreateAdvance={actions.openCreateAdvanceSheet}
+      onViewAdvance={(adv) => actions.openAdvanceDetails(adv, "view")}
+      onViewDoc={(type, docId) => navigate(`/${type === 'quotation' ? 'quotations' : type === 'csr' ? 'csr' : 'waybills'}/${docId}`)}
+      onOutputChange={actions.handleSaveCustomization}
+      onToggleMergeQtyUnit={actions.handleToggleMergeQtyUnit}
+      onCustomize={() => ui.openSheet("customize-output")}
+      onFabClick={actions.handleDownload}
+      overlays={
+        <InvoiceOverlays 
+          invoice={invoice}
+          ui={ui}
+          viewModel={viewModel}
+          pdfOutput={pdfOutput}
+          pdfTemplateId={pdfTemplateId}
+          previewBankAccounts={previewBankAccounts}
+          settingsData={settings}
+          customFields={customFields}
+          id={id!}
+          contractValue={invoice.total || 0}
+          refresh={refresh}
+          closeAdvanceSheet={(next: boolean) => {
+            if (next) ui.openSheet("advance");
+            else ui.closeSheet();
+          }}
+          {...actions}
+        />
+      }
+    />
   );
 }

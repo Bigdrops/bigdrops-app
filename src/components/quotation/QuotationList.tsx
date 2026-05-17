@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
+import { loadQuotations as fetchQuotationsFromService, loadQuotationById, loadQuotationNumbers, loadQuotationItems, archiveQuotation, deleteQuotation, cloneQuotation } from '@/modules/quotations/services/quotationService'
 
 const QUOTATION_CACHE_KEY = 'bd:list:quotations:v1:all'
 const QUOTATION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -74,11 +75,7 @@ export default function QuotationList() {
       }
     }
 
-    const { data } = await supabase
-      .from('quotations')
-      .select('*')
-      .is('archived_at', null)
-      .order('issue_date', { ascending: false })
+    const data = await fetchQuotationsFromService()
     const rows = (data || []) as DbQuotation[]
     setQuotations(rows)
     writeListCache(QUOTATION_CACHE_KEY, rows)
@@ -125,12 +122,14 @@ export default function QuotationList() {
   const handleArchive = async (id: string) => {
     setArchiveId(null)
     setBusyAction(`archive:${id}`)
-    const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
-    setBusyAction(null)
-    if (error) {
+    try {
+      await archiveQuotation(id)
+    } catch (error: any) {
+      setBusyAction(null)
       feedback.error('Archive failed', { description: error.message })
       return
     }
+    setBusyAction(null)
     invalidateListCache(QUOTATION_CACHE_KEY)
     await loadQuotations()
   }
@@ -138,87 +137,32 @@ export default function QuotationList() {
   const handleDelete = async (id: string) => {
     setDeleteId(null)
     setBusyAction(`delete:${id}`)
-    const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', id)
-    if (itemError) {
+    try {
+      await deleteQuotation(id)
+    } catch (error: any) {
       setBusyAction(null)
-      feedback.error('Delete failed', { description: itemError.message })
-      return
-    }
-    const { error } = await supabase.from('quotations').delete().eq('id', id)
-    setBusyAction(null)
-    if (error) {
       feedback.error('Delete failed', { description: error.message })
-      return
     }
+    setBusyAction(null)
     invalidateListCache(QUOTATION_CACHE_KEY)
     await loadQuotations()
   }
 
   const handleClone = async (id: string) => {
     setBusyAction(`clone:${id}`)
-    const { data: quotationRow, error: quotationError } = await supabase.from('quotations').select('*').eq('id', id).single()
-    if (quotationError || !quotationRow) {
+    try {
+      const createdQuotation = await cloneQuotation(id)
+      setBusyAction(null)
+      setActiveQuotation(null)
+      invalidateListCache(QUOTATION_CACHE_KEY)
+      await loadQuotations()
+      navigate(`/quotations/${createdQuotation.id}`)
+    } catch (error: any) {
       setBusyAction(null)
       feedback.error('Clone failed', {
-        description: quotationError?.message || 'Quotation not found',
+        description: error.message || 'Unable to clone quotation',
       })
-      return
     }
-
-    const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
-    
-    let safeProjectId = quotationRow.project_id || null
-    if (safeProjectId) {
-      const { validateProjectAssignment } = await import('@/domain/projects')
-      const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
-        projectId: safeProjectId,
-        documentClientId: quotationRow.client_id,
-        documentClientName: quotationRow.client_name,
-      })
-      if (projectError || !project) safeProjectId = null
-    }
-
-    const payload = {
-      ...quotationRow,
-      project_id: safeProjectId,
-      quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>),
-      status: 'open',
-      issue_date: new Date().toISOString().split('T')[0],
-      archived_at: null,
-    } as Record<string, unknown>
-    delete payload.id
-    delete payload.created_at
-    delete payload.updated_at
-
-    const { data: createdQuotation, error: createError } = await supabase.from('quotations').insert([payload]).select().single()
-    if (createError || !createdQuotation) {
-      setBusyAction(null)
-      feedback.error('Clone failed', {
-        description: createError?.message || 'Unable to create clone',
-      })
-      return
-    }
-
-    const { data: itemRows } = await supabase.from('quotation_items').select('*').eq('quotation_id', id)
-    if (itemRows?.length) {
-      const nextItems = itemRows.map(({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...item }) => ({
-        ...item,
-        quotation_id: createdQuotation.id,
-      }))
-      const { error: itemError } = await supabase.from('quotation_items').insert(nextItems)
-      if (itemError) {
-        await supabase.from('quotations').delete().eq('id', createdQuotation.id)
-        setBusyAction(null)
-        feedback.error('Clone failed', { description: itemError.message })
-        return
-      }
-    }
-
-    setBusyAction(null)
-    setActiveQuotation(null)
-    invalidateListCache(QUOTATION_CACHE_KEY)
-    await loadQuotations()
-    navigate(`/quotations/${createdQuotation.id}`)
   }
 
   const handleRetryQueueItem = async (queueItemId: string) => {

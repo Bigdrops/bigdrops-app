@@ -21,6 +21,7 @@ import {
 import { getDocumentActionState, getProjectActionState } from "@/domain/document/documentActionState"
 import { getInvoiceListActionDefs, getInvoiceListDeleteActionDef } from "@/domain/invoice/actions"
 import { fetchInvoiceChildDocuments, fetchProjectSummary, getInvoiceSourceDocument } from "@/domain/documentRelationships"
+import { loadInvoiceById, loadInvoiceItems, loadInvoiceCustomFields } from "@/modules/invoices/services/invoiceService"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
@@ -89,9 +90,8 @@ export default function Invoices() {
     closeSheet()
     if (!inv) return;
     try {
-      const { data: invoiceDetail, error: invoiceDetailError } = await supabase
-        .from("invoices").select("*").eq("id", inv.id).single()
-      if (invoiceDetailError || !invoiceDetail) throw invoiceDetailError || new Error("Invoice not found")
+      const invoiceDetail = await loadInvoiceById(inv.id)
+      if (!invoiceDetail) throw new Error("Invoice not found")
       const { data: all } = await supabase
         .from("invoices").select("invoice_number").like("invoice_number", "SASINV-B%").order("created_at", { ascending: false })
       let nextNum = 1
@@ -100,7 +100,7 @@ export default function Invoices() {
         nextNum = Math.max(...nums) + 1
       }
       const newNumber = "SASINV-B" + String(nextNum).padStart(3, "0")
-      const { data: srcItems } = await supabase.from("invoice_items").select("*").eq("invoice_id", inv.id).order("sort_order")
+      const srcItems = await loadInvoiceItems(inv.id)
       invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {
         state: {
@@ -171,15 +171,15 @@ export default function Invoices() {
         setActiveInvoiceCustomFields(null)
         return
       }
-      const [relatedDocs, project, invoiceMeta] = await Promise.all([
+      const [relatedDocs, project, customFields] = await Promise.all([
         fetchInvoiceChildDocuments(activeInvoice.id),
         activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
-        supabase.from("invoices").select("custom_fields").eq("id", activeInvoice.id).single(),
+        loadInvoiceCustomFields(activeInvoice.id),
       ])
       if (cancelled) return
       setActiveInvoiceRelatedDocs(relatedDocs)
       setActiveInvoiceProject(project)
-      setActiveInvoiceCustomFields(invoiceMeta.data?.custom_fields || null)
+      setActiveInvoiceCustomFields(customFields)
     }
     void loadActiveInvoiceRelationships()
     return () => { cancelled = true }

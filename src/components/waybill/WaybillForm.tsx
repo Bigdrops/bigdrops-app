@@ -245,34 +245,24 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
     setSaving(true)
     try {
       const finalFields = buildWaybillCustomFields(customFields, { customColumns })
-      if (canUseOfflineWaybillDrafts()) {
-        await createOfflineWaybillDraft({
-            ...waybill,
-            items,
-            custom_fields: finalFields as any
-        })
-        feedback.success('Saved offline', { description: 'Draft preserved locally.' })
-        if (onSaved) onSaved()
-        else navigate('/waybills')
-        return
-      }
-
-      const payload = {
-        ...waybill,
+      
+      const { saveWaybill } = await import('@/domain/waybill/waybillMutations')
+      
+      const result = await saveWaybill({
+        waybill,
         items,
         custom_fields: finalFields,
-        status: normalizeWaybillStatus(waybill.status)
-      }
+        mode,
+        waybillId,
+        isOffline: canUseOfflineWaybillDrafts()
+      });
 
-      if (mode === 'new') {
-        const { error } = await supabase.from('waybills').insert([payload])
-        if (error) throw error
+      if (result.status === 'offline') {
+        feedback.success('Saved offline', { description: 'Draft preserved locally.' })
       } else {
-        const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
-        if (error) throw error
+        feedback.success('Waybill saved', { description: 'Database updated successfully.' })
       }
-
-      feedback.success('Waybill saved', { description: 'Database updated successfully.' })
+      
       if (onSaved) onSaved()
       else navigate('/waybills')
     } catch (error) {

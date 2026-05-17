@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Archive, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { supabase } from '@/supabase'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { normalizeDbRfq, denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
+import { loadRfqsFromSupabase, archiveRfq, deleteRfq } from '@/domain/rfq/rfqService'
 import MobileFab from '@/components/layout/MobileFab'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
@@ -109,22 +109,18 @@ export const RfqList: React.FC = () => {
   }
 
   const supabaseFetchAndCache = async () => {
-    const { data, error } = await supabase
-      .from('rfqs')
-      .select('*')
-      .is('archived_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      feedback.error('Error loading RFQs', { description: error.message })
-    } else {
-      const rows = (data || [])
+    try {
+      const data = await loadRfqsFromSupabase();
+      const rows = data || [];
       setRfqs(rows.map(row => normalizeDbRfq(row)))
       if (rows.length > 0) {
         writeListCache(RFQ_CACHE_KEY, rows)
       }
+    } catch (error: any) {
+      feedback.error('Error loading RFQs', { description: error.message })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -133,38 +129,34 @@ export const RfqList: React.FC = () => {
 
   const handleArchive = async (id: string) => {
     setIsArchiving(true);
-    const { error } = await supabase.from('rfqs').update({ archived_at: new Date().toISOString() }).eq('id', id);
-    setIsArchiving(false);
-    if (error) {
-      feedback.error('Archive failed', { description: error.message });
-    } else {
+    try {
+      await archiveRfq(id);
       feedback.success('RFQ archived');
       setRfqs(prev => prev.filter(r => r.id !== id));
       invalidateListCache(RFQ_CACHE_KEY);
       setArchiveId(null);
       setActiveRfq(null);
+    } catch (error: any) {
+      feedback.error('Archive failed', { description: error.message });
+    } finally {
+      setIsArchiving(false);
     }
   };
 
 
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
-    const { error: itemsError } = await supabase.from('rfq_items').delete().eq('rfq_id', id);
-    if (itemsError) {
+    try {
+      await deleteRfq(id);
+      feedback.success('RFQ deleted');
+      setRfqs(prev => prev.filter(r => r.id !== id))
+      invalidateListCache(RFQ_CACHE_KEY);
+      setDeleteId(null);
+      setActiveRfq(null);
+    } catch (error: any) {
+      feedback.error('Delete failed', { description: error.message });
+    } finally {
       setIsDeleting(false);
-      feedback.error('Delete failed', { description: itemsError.message });
-      return;
-    }
-    const { error } = await supabase.from('rfqs').delete().eq('id', id);
-    setIsDeleting(false);
-    if (error) {
-       feedback.error('Delete failed', { description: error.message });
-    } else {
-       feedback.success('RFQ deleted');
-       setRfqs(prev => prev.filter(r => r.id !== id))
-       invalidateListCache(RFQ_CACHE_KEY);
-       setDeleteId(null);
-       setActiveRfq(null);
     }
   };
 

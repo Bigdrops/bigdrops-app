@@ -10,7 +10,6 @@ import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
-import { supabase } from '../supabase'
 import { feedback } from '@/lib/feedback'
 import LinkedDocumentsSheet from "@/components/document/LinkedDocumentsSheet"
 import AttachExistingDocumentSheet from "@/components/document/AttachExistingDocumentSheet"
@@ -33,6 +32,7 @@ import {
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatStatusLabel } from "@/lib/formatters/status"
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
+import { loadCsrsFromSupabase, archiveCsr, deleteCsr, attachInvoiceToCsr } from "@/domain/csr/csrService"
 
 export type CsrRow = {
   id: string
@@ -106,18 +106,16 @@ export default function CSR() {
   }
 
   const supabaseFetchAndCache = async () => {
-    const { data } = await supabase
-      .from("csrs")
-      .select("*")
-      .is('archived_at', null)
-      .order("date", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-
-    const rows = (data as CsrRow[]) || []
-    setCsrs(rows)
-    setLoading(false)
-    if (rows.length > 0) {
-      writeListCache(CSR_CACHE_KEY, rows)
+    try {
+      const rows = await loadCsrsFromSupabase()
+      setCsrs(rows)
+      if (rows.length > 0) {
+        writeListCache(CSR_CACHE_KEY, rows)
+      }
+    } catch (error: any) {
+      feedback.error('Error loading CSRs', { description: error.message })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -228,11 +226,12 @@ export default function CSR() {
 
   const attachInvoice = async (invoice: { id: string } | null) => {
     if (!activeCsr?.id || !invoice?.id) return
-    await supabase.from("csrs").update({ linked_invoice_id: invoice.id }).eq("id", activeCsr.id)
-    const { data } = await supabase.from("csrs").select("*").eq("id", activeCsr.id).single()
-    if (data) {
-      setActiveCsr(data as CsrRow)
+    try {
+      const data = await attachInvoiceToCsr(activeCsr.id, invoice.id)
+      setActiveCsr(data)
       setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id) : null)
+    } catch (error: any) {
+      feedback.error('Attachment failed', { description: error.message })
     }
     setShowAttachInvoice(false)
   }
@@ -297,35 +296,37 @@ export default function CSR() {
   const handleArchive = async () => {
     if (!archiveId) return
     setIsArchiving(true)
-    const { error } = await supabase.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
-    setIsArchiving(false)
-    if (error) {
+    try {
+      await archiveCsr(archiveId)
+      feedback.success('CSR archived')
+      setArchiveId(null)
+      setActiveCsr(null)
+      invalidateListCache(CSR_CACHE_KEY)
+      await supabaseFetchAndCache()
+    } catch (error: any) {
       feedback.error('Archive failed', { description: error.message })
-      return
+    } finally {
+      setIsArchiving(false)
     }
-    feedback.success('CSR archived')
-    setArchiveId(null)
-    setActiveCsr(null)
-    invalidateListCache(CSR_CACHE_KEY)
-    await supabaseFetchAndCache()
   }
 
   const handleDelete = async () => {
     if (!deleteId) return
     setIsDeleting(true)
-    const { error } = await supabase.from("csrs").delete().eq("id", deleteId)
-    setIsDeleting(false)
-    if (error) {
+    try {
+      await deleteCsr(deleteId)
+      feedback.success('CSR deleted')
+      setDeleteId(null)
+      setActiveCsr(null)
+      invalidateListCache(CSR_CACHE_KEY)
+      await supabaseFetchAndCache()
+    } catch (error: any) {
       feedback.error('Delete failed', {
         description: error.message,
       })
-      return
+    } finally {
+      setIsDeleting(false)
     }
-    feedback.success('CSR deleted')
-    setDeleteId(null)
-    setActiveCsr(null)
-    invalidateListCache(CSR_CACHE_KEY)
-    await supabaseFetchAndCache()
   }
 
   const handleRetryQueueItem = async (queueItemId: string) => {
