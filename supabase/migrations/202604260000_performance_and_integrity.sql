@@ -65,7 +65,10 @@ BEGIN
     LOOP
         INSERT INTO quotation_items (
             quotation_id, description, quantity, unit_price, amount, 
-            unit, list_index, row_type, group_name
+            unit, list_index, row_type, group_name,
+            item_id, sub_description, make, install_rate, install_rate_override,
+            vat_rate, discount_rate, group_id, sort_order, image_url, custom_data,
+            section
         )
         VALUES (
             v_quotation_id,
@@ -76,7 +79,19 @@ BEGIN
             v_item->>'unit',
             (v_item->>'list_index')::INTEGER,
             v_item->>'row_type',
-            v_item->>'group_name'
+            v_item->>'group_name',
+            NULLIF(v_item->>'item_id', '')::UUID,
+            v_item->>'sub_description',
+            v_item->>'make',
+            (v_item->>'install_rate')::NUMERIC,
+            (v_item->>'install_rate_override')::BOOLEAN,
+            (v_item->>'vat_rate')::NUMERIC,
+            (v_item->>'discount_rate')::NUMERIC,
+            NULLIF(v_item->>'group_id', '')::UUID,
+            COALESCE((v_item->>'sort_order')::INTEGER, (v_item->>'list_index')::INTEGER),
+            v_item->>'image_url',
+            (v_item->>'custom_data')::JSONB,
+            v_item->>'section'
         );
     END LOOP;
 

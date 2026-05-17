@@ -176,7 +176,7 @@ export async function convertQuotationToInvoice({
     project_id: quotation.project_id || null,
     issue_date: quotation.issue_date || new Date().toISOString().split('T')[0],
     due_date: quotation.valid_until || null,
-    status: 'unpaid',
+    status: quotation.status || 'unpaid',
     document_type: 'INVOICE',
     payment_terms: null,
     notes: quotation.notes || '',
