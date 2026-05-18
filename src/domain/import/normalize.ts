@@ -1,4 +1,4 @@
-import type { ImportMode, ParsedImportRoot, NormalizedImportData, NormalizedImportItem } from './types'
+import type { ImportMode, ParsedImportRoot, NormalizedImportData, NormalizedImportItem, NormalizedImportGroup } from './types'
 import {
   inferColumnType,
   isDangerousKey,
@@ -8,6 +8,10 @@ import {
   parseNumberish,
   toSnakeCase,
 } from './utils'
+
+function generateGroupId(): string {
+  return 'grp_' + Math.random().toString(36).substring(2, 11)
+}
 
 const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number'])
 
@@ -151,6 +155,21 @@ export function normalizeImportData(
   const notes = normalizeText(input.notes)
   const terms = normalizeText(input.terms)
 
+  const groups: NormalizedImportGroup[] = Array.isArray(input.groups)
+    ? input.groups
+        .map((grp): NormalizedImportGroup | null => {
+          const groupName = normalizeText(grp.name as string)
+          if (!groupName) return null
+          return {
+            id: grp.id ? String(grp.id) : generateGroupId(),
+            name: groupName,
+            showSubtotal: typeof grp.showSubtotal === 'boolean' ? grp.showSubtotal : false,
+            itemIds: Array.isArray(grp.itemIds) ? grp.itemIds.filter((id): id is string => typeof id === 'string') : [],
+          }
+        })
+        .filter((g): g is NonNullable<typeof g> => g !== null)
+    : []
+
   return {
     ok: true,
     data: {
@@ -176,6 +195,7 @@ export function normalizeImportData(
         sampleValues: value.values.slice(0, 3),
         inferredType: inferColumnType(value.values),
       })),
+      groups,
     },
   }
 }

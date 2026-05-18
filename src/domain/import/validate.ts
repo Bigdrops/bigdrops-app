@@ -46,6 +46,7 @@ export function validateImportData(
         items: validItems,
         unknownCandidates: normalized.unknownCandidates,
         skippedRows,
+        groups: normalized.groups || [],
       },
     }
   }
@@ -94,6 +95,7 @@ export function validateImportData(
       items: normalized.items,
       unknownCandidates: normalized.unknownCandidates,
       skippedRows: [],
+      groups: normalized.groups || [],
     },
   }
 }

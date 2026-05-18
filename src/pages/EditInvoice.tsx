@@ -427,6 +427,7 @@ export default function EditInvoice() {
         else updateInvoice(field, value)
       },
       setExtraCharges,
+      setGroups,
     })
   }
 

@@ -45,31 +45,111 @@ export function buildApplyResult({
   skippedRows = [],
   exemptOverwriteIds = [],
   createItem,
+  existingGroups = [],
 }: BuildApplyResultOptions) {
   const exemptSet = new Set(exemptOverwriteIds)
   const overwriteTargets = mode === 'Update' ? detectOverwriteTargets(resolved, existingItems) : []
 
   if (mode === 'Add') {
-    const importedItems = resolved.items.map((item, index) => {
-      const nextItem = assignResolvedFields(
-        {
-          ...createItem(),
-          row_type: 'standard',
-          group_id: null,
-          group_name: '',
-          sort_order: existingItems.length + index,
-        },
-        item,
-        exemptSet,
-      )
+    const groups = resolved.groups || []
+    const itemTempRefMap = new Map<string, number>()
 
-      return {
-        ...nextItem,
-        row_type: 'standard' as const,
-        group_id: null,
-        group_name: '',
+    resolved.items.forEach((item, index) => {
+      const tempRef = item.baseFields.temp_ref as string | undefined
+      if (tempRef) {
+        itemTempRefMap.set(tempRef, index)
       }
     })
+
+    const groupedItemIndices = new Set<number>()
+
+    groups.forEach((group) => {
+      group.itemIds.forEach((tempRef) => {
+        const idx = itemTempRefMap.get(tempRef)
+        if (idx !== undefined) groupedItemIndices.add(idx)
+      })
+    })
+
+    resolved.items.forEach((item, idx) => {
+      const itemGroupId = item.baseFields.group_id as string | undefined
+      if (itemGroupId) {
+        const groupIdx = groups.findIndex((g) => g.id === itemGroupId)
+        if (groupIdx !== -1) groupedItemIndices.add(idx)
+      }
+    })
+
+    const importedItems: InvoiceItem[] = []
+    let currentSortOrder = existingItems.length
+
+    groups.forEach((group) => {
+      importedItems.push({
+        ...createItem(),
+        row_type: 'group_header',
+        group_id: group.id,
+        group_name: group.name,
+        sort_order: currentSortOrder++,
+        description: group.name,
+        quantity: 0,
+        unit_price: 0,
+      })
+
+      resolved.items.forEach((item, itemIndex) => {
+        const itemTempRef = item.baseFields.temp_ref as string | undefined
+        const itemGroupId = item.baseFields.group_id as string | undefined
+        const matchedViaItemIds = group.itemIds.includes(itemTempRef || '')
+        const matchedViaGroupId = itemGroupId === group.id
+
+        if (matchedViaItemIds || matchedViaGroupId) {
+          const nextItem = assignResolvedFields(
+            {
+              ...createItem(),
+              row_type: 'standard',
+              group_id: group.id,
+              group_name: group.name,
+              sort_order: currentSortOrder++,
+            },
+            item,
+            exemptSet,
+          )
+
+          importedItems.push({
+            ...nextItem,
+            row_type: 'standard' as const,
+            group_id: group.id,
+            group_name: group.name,
+          })
+        }
+      })
+    })
+
+    resolved.items.forEach((item, index) => {
+      if (!groupedItemIndices.has(index)) {
+        const nextItem = assignResolvedFields(
+          {
+            ...createItem(),
+            row_type: 'standard',
+            group_id: null,
+            group_name: '',
+            sort_order: currentSortOrder++,
+          },
+          item,
+          exemptSet,
+        )
+
+        importedItems.push({
+          ...nextItem,
+          row_type: 'standard' as const,
+          group_id: null,
+          group_name: '',
+        })
+      }
+    })
+
+    const resultGroups = groups.map((g) => ({
+      id: g.id,
+      name: g.name,
+      showSubtotal: g.showSubtotal,
+    }))
 
     return {
       mode,
@@ -81,6 +161,7 @@ export function buildApplyResult({
       updatedRowNumbers: [],
       overwriteTargets: [],
       skippedRows,
+      groups: resultGroups,
     }
   }
 
@@ -107,5 +188,6 @@ export function buildApplyResult({
     updatedRowNumbers: resolved.items.map((item) => item.row_number).filter((value): value is number => typeof value === 'number'),
     overwriteTargets,
     skippedRows,
+    groups: existingGroups,
   }
 }

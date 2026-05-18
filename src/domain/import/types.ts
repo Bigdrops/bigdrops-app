@@ -10,6 +10,8 @@ export type ImportFieldKey =
   | 'unit_price'
   | 'make'
   | 'row_number'
+  | 'temp_ref'
+  | 'group_id'
 
 export type AcceptedTopLevelKey = 'title' | 'po_number' | 'notes' | 'terms' | 'extra_charges' | 'items'
 
@@ -34,11 +36,19 @@ export type ExtraChargeImport = {
   appliesTax?: boolean
 }
 
+export type ParsedImportGroup = {
+  id?: string
+  name: string
+  showSubtotal?: boolean
+  itemIds?: string[]
+}
+
 export type ParsedImportRoot = {
   po_number?: unknown
   notes?: unknown
   terms?: unknown
   extra_charges?: Array<Record<string, unknown>>
+  groups?: ParsedImportGroup[]
   items: Array<Record<string, unknown>>
 }
 
@@ -64,10 +74,18 @@ export type UnknownColumnCandidate = {
   inferredType: 'text' | 'number'
 }
 
+export type NormalizedImportGroup = {
+  id?: string
+  name: string
+  showSubtotal: boolean
+  itemIds: string[]
+}
+
 export type NormalizedImportData = {
   topLevel: ImportTopLevelData
   items: NormalizedImportItem[]
   unknownCandidates: UnknownColumnCandidate[]
+  groups: NormalizedImportGroup[]
 }
 
 export type ValidationIssue = {
@@ -80,6 +98,7 @@ export type ValidatedImportData = {
   items: NormalizedImportItem[]
   unknownCandidates: UnknownColumnCandidate[]
   skippedRows: ValidationIssue[]
+  groups: NormalizedImportGroup[]
 }
 
 export type ResolvedImportItem = {
@@ -94,6 +113,7 @@ export type ResolvedImportData = {
   items: ResolvedImportItem[]
   columns: ColumnConfig[]
   createdColumns: ColumnConfig[]
+  groups: NormalizedImportGroup[]
 }
 
 export type OverwriteTarget = {
@@ -115,6 +135,7 @@ export type ApplyImportResult = {
   updatedRowNumbers: number[]
   overwriteTargets: OverwriteTarget[]
   skippedRows: ValidationIssue[]
+  groups: { id: string; name: string; showSubtotal: boolean }[]
 }
 
 export type BuildApplyResultOptions = {
@@ -125,4 +146,5 @@ export type BuildApplyResultOptions = {
   skippedRows?: ValidationIssue[]
   exemptOverwriteIds?: string[]
   createItem: () => InvoiceItem
+  existingGroups?: { id: string; name: string; showSubtotal: boolean }[]
 }

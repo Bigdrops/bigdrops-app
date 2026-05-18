@@ -1,5 +1,5 @@
 import { generateImportPrompt } from '@/domain/import/promptGenerator'
-import { makeEmptyItem, makeExtraCharge, type ColumnConfig, type ExtraCharge, type InvoiceItem } from '@/domain/invoice'
+import { makeEmptyItem, makeExtraCharge, makeEmptyGroup, type ColumnConfig, type ExtraCharge, type InvoiceGroup, type InvoiceItem } from '@/domain/invoice'
 import type { ApplyImportResult, ImportMode } from '@/domain/import/types'
 
 export const invoiceImportAdapter = {
@@ -13,12 +13,14 @@ export const invoiceImportAdapter = {
     setItems,
     updateTopLevelField,
     setExtraCharges,
+    setGroups,
   }: {
     result: ApplyImportResult
     setColumns: (columns: ColumnConfig[]) => void
     setItems: (items: InvoiceItem[]) => void
     updateTopLevelField: (field: 'title' | 'po_number' | 'notes' | 'terms', value: string) => void
     setExtraCharges: (charges: ExtraCharge[]) => void
+    setGroups: (groups: InvoiceGroup[]) => void
   }) {
     setColumns(result.columns)
     setItems(result.items)
@@ -29,6 +31,9 @@ export const invoiceImportAdapter = {
     if (result.topLevel.terms !== undefined) updateTopLevelField('terms', result.topLevel.terms)
     if (result.topLevel.extra_charges !== undefined) {
       setExtraCharges(result.topLevel.extra_charges.map((charge) => makeExtraCharge({ ...charge })))
+    }
+    if (result.groups && result.groups.length > 0) {
+      setGroups(result.groups.map((g) => makeEmptyGroup(g.name)))
     }
   },
 }

@@ -438,6 +438,7 @@ export default function NewInvoice() {
         else updateInvoice(field, value)
       },
       setExtraCharges,
+      setGroups,
     })
   }
 
