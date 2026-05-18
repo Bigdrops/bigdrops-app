@@ -13,7 +13,7 @@ function generateGroupId(): string {
   return 'grp_' + Math.random().toString(36).substring(2, 11)
 }
 
-const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number'])
+const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number', 'temp_ref', 'group_id'])
 
 function parseTaxFlag(charge: Record<string, unknown>): boolean {
   const withTax = charge.withTax
