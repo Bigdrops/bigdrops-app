@@ -36,9 +36,19 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     extra_charges: [
       { label: "Delivery", value: 5000 }
     ],
-    items: mode === 'Update' 
-      ? [ { row_number: 1, ...itemSchema } ] 
-      : [ itemSchema ]
+    ...(mode === 'Add' ? {
+      groups: [
+        {
+          id: "grp_1",
+          name: "Section or Category Name",
+          showSubtotal: false,
+          itemIds: ["item_1", "item_2"]
+        }
+      ]
+    } : {}),
+    items: mode === 'Update'
+      ? [{ row_number: 1, ...itemSchema }]
+      : [{ temp_ref: "item_1", group_id: "grp_1", ...itemSchema }]
   }
 
   const rules = [
@@ -51,6 +61,14 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     `JSON only.`,
     mode === 'Update' ? `row_number refers to the current visible table row numbering starting at 1` : ``,
     mode === 'Update' ? `Include only fields that should change inside each row` : ``,
+    ...(mode === 'Add' ? [
+      `If source has section headings or categories, create a "groups" array`,
+      `Assign each group a stable id: "grp_1", "grp_2", etc.`,
+      `Add a unique "temp_ref" to every item: "item_1", "item_2", etc.`,
+      `Set "group_id" on each item matching its group's "id"`,
+      `List item temp_refs in the group's "itemIds" array`,
+      `If no sections exist in the source, omit "groups" entirely and omit "temp_ref" and "group_id" from items`,
+    ] : []),
     `Exclude always: amount, vat_rate, discount_rate, install_rate, totals, or calculated fields`,
     `Import must reflect the active form configuration: only include shown columns.`,
   ].filter(Boolean)
@@ -63,7 +81,7 @@ ${JSON.stringify(jsonStructure, null, 2)}
 
 Rules:
 ${rules.map(r => `- ${r}`).join('\n')}
-- Use exactly these keys for item fields: ${Object.keys(itemSchema).join(', ')}
+- Use exactly these keys for item fields: ${mode === 'Add' ? 'temp_ref, group_id, ' : ''}${Object.keys(itemSchema).join(', ')}
 ${Object.keys(customSchema).length > 0 ? `- Use these keys inside "custom_fields": ${Object.keys(customSchema).join(', ')}` : ''}
 - Do not guess missing values
 - Do not add top-level fields outside this structure`
