@@ -18,11 +18,14 @@ import { supabase } from '@/supabase'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, setPdfDesignPreset, PDF_FILLABLE_FONT_OPTIONS, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
+import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'
@@ -46,6 +49,7 @@ export default function ViewCSR() {
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
+  const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
@@ -115,7 +119,7 @@ export default function ViewCSR() {
       await downloadPdfFromElement({
         fileName: previewData.csr_number || 'csr',
         subdirectory: 'csr',
-        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset: getPdfDesignPreset('csr') }) as any,
+        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset }) as any,
       })
       showToast('Download ready', `${previewData.csr_number || 'CSR'} exported as PDF.`, 'success')
     } catch (error) {
@@ -231,27 +235,49 @@ export default function ViewCSR() {
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
               onClose={ui.closeSheet}
               title="Customize CSR PDF"
-              subtitle="Template choice is stored locally for the CSR view, and the PDF design preset is reused by download."
+              subtitle="Choose a template and customize fillable text appearance."
             >
               <div className="space-y-4">
                 <div className="rounded-[24px] border border-border bg-card p-4">
                   <div className="mb-3 text-sm font-semibold text-foreground">Template</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: '1', label: 'Pulse Frame' },
-                      { id: '2', label: 'Signal Bands' },
-                      { id: '3', label: 'Zinc' },
-                      { id: '4', label: 'Crimson' },
-                    ].map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className={`rounded-[16px] border px-3 py-3 text-sm font-medium ${template === option.id ? 'border-slate-950 bg-slate-950 text-white' : 'border-border bg-white text-foreground'}`}
-                        onClick={() => setTemplate(option.id)}
+                  <CsrTemplateCarousel value={template} onChange={setTemplate} />
+                </div>
+                <div className="rounded-[24px] border border-border bg-card p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">Fillable Text</div>
+                  <div className="text-xs text-muted-foreground mb-3">
+                    Controls the handwriting-style font and ink color for dynamic values in the PDF.
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Font</div>
+                      <Select
+                        value={designPreset.fillableFont}
+                        onValueChange={(next) => setDesignPreset((prev) => ({ ...prev, fillableFont: next as PdfFillableFontChoice, fillableFontMode: 'custom' }))}
                       >
-                        {option.label}
-                      </button>
-                    ))}
+                        <SelectTrigger className="h-11 rounded-[14px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PDF_FILLABLE_FONT_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="text-[10px] text-muted-foreground">
+                        {PDF_FILLABLE_FONT_OPTIONS.find((o) => o.value === designPreset.fillableFont)?.description}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Color</div>
+                      <Input
+                        value={designPreset.fillableColor}
+                        onChange={(e) => setDesignPreset((prev) => ({ ...prev, fillableColor: e.target.value }))}
+                        className="h-11 rounded-[14px] font-mono"
+                        placeholder="#0f172a"
+                      />
+                    </div>
                   </div>
                 </div>
                 <button
@@ -261,8 +287,9 @@ export default function ViewCSR() {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
                     }
+                    setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()
-                    showToast('Customization saved', 'CSR template updated.', 'success')
+                    showToast('Customization saved', 'CSR template and fillable settings updated.', 'success')
                   }}
                 >
                   Save Settings
