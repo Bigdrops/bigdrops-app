@@ -125,6 +125,34 @@ export function FormLineItems({
     return rows
   }, [groupMap, items])
 
+  const groupIdSet = useMemo(() => new Set(groups.map((g: any) => g.id)), [groups])
+
+  const groupEntries = useMemo(() => {
+    return groups.map((group: any) => {
+      const groupItems = items
+        .map((item: any, idx: number) => ({ item, idx }))
+        .filter(({ item }) => item.group_id === group.id && item.row_type === 'standard')
+        .map(({ item, idx }, i, arr) => ({
+          item,
+          index: idx,
+          number: getItemNumber(idx),
+          isFirst: i === 0,
+          isLast: i === arr.length - 1,
+        }))
+      return { group, items: groupItems }
+    })
+  }, [groups, items])
+
+  const groupedItemIndices = useMemo(() => {
+    const indices = new Set<number>()
+    items.forEach((item: any, idx: number) => {
+      if (item.group_id && groupIdSet.has(item.group_id)) {
+        indices.add(idx)
+      }
+    })
+    return indices
+  }, [items, groupIdSet])
+
   return (
     <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <SectionLabel
@@ -151,16 +179,16 @@ export function FormLineItems({
       </div>
 
       <div className="space-y-0">
-        {lineItemRows.map((row: any) =>
-          row.type === 'group' ? (
+        {groupEntries.map(({ group, items: groupItems }) =>
+          groupItems.length > 0 ? (
             <MobileGroupCard
-              key={row.key}
-              group={row.group}
-              items={row.items}
+              key={group.id}
+              group={group}
+              items={groupItems}
               invoice={invoice}
               enableItemSuggestions={true}
               customColumns={customColumns}
-              groupSubtotal={computedGroupMap.get(row.group.id)?.subtotal || 0}
+              groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
               onUpdateGroupName={onUpdateGroupName}
               onToggleGroupSubtotal={onToggleGroupSubtotal}
               onDeleteGroup={onDeleteGroup}
@@ -173,7 +201,11 @@ export function FormLineItems({
               getColumn={getColumn}
               getComputedAmount={getComputedAmount}
             />
-          ) : (
+          ) : null,
+        )}
+        {lineItemRows
+          .filter((row: any) => row.type !== 'group' && !groupedItemIndices.has(row.index))
+          .map((row: any) => (
             <MobileItemCard
               key={row.key}
               item={row.item}
@@ -193,8 +225,7 @@ export function FormLineItems({
               isVisible={isVisible}
               getColumn={getColumn}
             />
-          ),
-        )}
+          ))}
       </div>
 
       <div className="mt-3 flex gap-2">
