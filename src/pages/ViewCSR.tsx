@@ -15,16 +15,14 @@ import FloatingDownloadButton from '@/components/document-view/shared/FloatingDo
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
-import CSRPreviewPanel from '@/components/csr/CSRPreviewPanel'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'
@@ -48,7 +46,6 @@ export default function ViewCSR() {
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
-  const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
@@ -118,7 +115,7 @@ export default function ViewCSR() {
       await downloadPdfFromElement({
         fileName: previewData.csr_number || 'csr',
         subdirectory: 'csr',
-        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset }) as any,
+        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset: getPdfDesignPreset('csr') }) as any,
       })
       showToast('Download ready', `${previewData.csr_number || 'CSR'} exported as PDF.`, 'success')
     } catch (error) {
@@ -257,10 +254,6 @@ export default function ViewCSR() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-[24px] border border-border bg-card p-4">
-                  <div className="mb-3 text-sm font-semibold text-foreground">PDF Design</div>
-                  <DocumentTemplateDesignOverrides value={designPreset} onChange={setDesignPreset} />
-                </div>
                 <button
                   type="button"
                   className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
@@ -268,9 +261,8 @@ export default function ViewCSR() {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
                     }
-                    setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()
-                    showToast('Customization saved', 'CSR preview and PDF settings updated.', 'success')
+                    showToast('Customization saved', 'CSR template updated.', 'success')
                   }}
                 >
                   Save Settings
