@@ -25,7 +25,10 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
+import { PenLine } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 
 const SHEET_MORE = 'more-actions'
@@ -34,10 +37,25 @@ const MODAL_COMPLETE = 'complete'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const CSR_TEMPLATE_KEY = 'csr_view_template'
+const CSR_USE_DEFAULT_KEY = 'csr_use_template_default'
+
+const CSR_FILLABLE_SWATCHES = ['#0033aa', '#1d4ed8', '#000000', '#1a1a1a', '#dc2626']
+
+const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
+  '1': { font: 'Inter', color: '#1d4ed8' },
+  '2': { font: 'Inter', color: '#dc2626' },
+  '3': { font: 'Inter', color: '#18181b' },
+  '4': { font: 'Inter', color: '#b91c1c' },
+}
 
 function getStoredTemplate() {
   if (typeof window === 'undefined') return '3'
   return window.localStorage.getItem(CSR_TEMPLATE_KEY) || '3'
+}
+
+function getStoredUseDefault() {
+  if (typeof window === 'undefined') return true
+  return window.localStorage.getItem(CSR_USE_DEFAULT_KEY) !== 'false'
 }
 
 export default function ViewCSR() {
@@ -51,6 +69,7 @@ export default function ViewCSR() {
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
+  const [useTemplateDefault, setUseTemplateDefault] = useState(getStoredUseDefault)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
@@ -240,19 +259,44 @@ export default function ViewCSR() {
               <div className="space-y-4">
                 <div className="rounded-[24px] border border-border bg-card p-4">
                   <div className="mb-3 text-sm font-semibold text-foreground">Template</div>
-                  <CsrTemplateCarousel value={template} onChange={setTemplate} />
+                  <CsrTemplateCarousel value={template} onChange={(next) => {
+                    setTemplate(next)
+                    if (useTemplateDefault) {
+                      const defaults = CSR_TEMPLATE_DEFAULTS[next] || CSR_TEMPLATE_DEFAULTS['3']
+                      setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
+                    }
+                  }} />
                 </div>
                 <div className="rounded-[24px] border border-border bg-card p-4">
-                  <div className="mb-3 text-sm font-semibold text-foreground">Fillable Text</div>
-                  <div className="text-xs text-muted-foreground mb-3">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <PenLine className="h-4 w-4 text-muted-foreground" />
+                    Handwriting Style
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-4">
                     Controls the handwriting-style font and ink color for dynamic values in the PDF.
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+
+                  <div className="flex items-center justify-between gap-3 mb-4 rounded-[14px] border border-border bg-muted/30 px-3 py-2.5">
+                    <div className="text-xs font-medium text-foreground">Use template default</div>
+                    <Switch
+                      checked={useTemplateDefault}
+                      onCheckedChange={(checked) => {
+                        setUseTemplateDefault(checked)
+                        if (checked) {
+                          const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+                          setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className={cn('space-y-4', useTemplateDefault && 'opacity-50 pointer-events-none')}>
                     <div className="space-y-2">
                       <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Font</div>
                       <Select
                         value={designPreset.fillableFont}
                         onValueChange={(next) => setDesignPreset((prev) => ({ ...prev, fillableFont: next as PdfFillableFontChoice, fillableFontMode: 'custom' }))}
+                        disabled={useTemplateDefault}
                       >
                         <SelectTrigger className="h-11 rounded-[14px]">
                           <SelectValue />
@@ -269,12 +313,33 @@ export default function ViewCSR() {
                         {PDF_FILLABLE_FONT_OPTIONS.find((o) => o.value === designPreset.fillableFont)?.description}
                       </div>
                     </div>
+
                     <div className="space-y-2">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Color</div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Ink Color</div>
+                      <div className="flex gap-2">
+                        {CSR_FILLABLE_SWATCHES.map((swatch) => {
+                          const active = designPreset.fillableColor.toLowerCase() === swatch.toLowerCase()
+                          return (
+                            <button
+                              key={swatch}
+                              type="button"
+                              disabled={useTemplateDefault}
+                              onClick={() => setDesignPreset((prev) => ({ ...prev, fillableColor: swatch }))}
+                              className={cn(
+                                'h-9 w-9 rounded-lg border-2 shadow-sm transition',
+                                active ? 'border-slate-950 scale-105 ring-2 ring-slate-950/20' : 'border-transparent hover:border-slate-300',
+                              )}
+                              style={{ backgroundColor: swatch }}
+                              aria-label={`Ink color ${swatch}`}
+                            />
+                          )
+                        })}
+                      </div>
                       <Input
                         value={designPreset.fillableColor}
                         onChange={(e) => setDesignPreset((prev) => ({ ...prev, fillableColor: e.target.value }))}
-                        className="h-11 rounded-[14px] font-mono"
+                        disabled={useTemplateDefault}
+                        className="mt-2 h-9 rounded-[10px] font-mono text-xs"
                         placeholder="#0f172a"
                       />
                     </div>
@@ -286,6 +351,7 @@ export default function ViewCSR() {
                   onClick={() => {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
+                      window.localStorage.setItem(CSR_USE_DEFAULT_KEY, String(useTemplateDefault))
                     }
                     setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()
