@@ -429,6 +429,7 @@ export default function NewInvoice() {
   }
 
   const handleImportApply = (result: any) => {
+    console.warn("[5] STATE SET:", result.groups?.length)
     invoiceImportAdapter.applyResult({
       result,
       setColumns,

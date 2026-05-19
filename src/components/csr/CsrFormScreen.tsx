@@ -44,6 +44,7 @@ type Props = {
   csrMeta: CsrMeta
   materialsRows: MaterialRow[]
   saving: boolean
+  csrNumberReady?: boolean
   onUpdate: (field: string, value: any) => void
   onUpdateMeta: (field: string, value: any) => void
   onUpdateMaterialRow: (index: number, field: string, value: string) => void
@@ -171,6 +172,7 @@ export default function CsrFormScreen({
   csrMeta,
   materialsRows,
   saving,
+  csrNumberReady = true,
   onUpdate,
   onUpdateMeta,
   onUpdateMaterialRow,
@@ -186,6 +188,42 @@ export default function CsrFormScreen({
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
   const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
   const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
+
+  // Track online/offline status
+  const [isOnline, setIsOnline] = React.useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  )
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Store the last known good CSR number for auto-restore
+  const lastGoodCsrNumber = React.useRef<string>(String(csr.csr_number || ''))
+
+  React.useEffect(() => {
+    const current = String(csr.csr_number || '').trim()
+    if (current) {
+      lastGoodCsrNumber.current = current
+    }
+  }, [csr.csr_number])
+
+  const handleCsrNumberBlur = () => {
+    const current = String(csr.csr_number || '').trim()
+    if (!current && lastGoodCsrNumber.current) {
+      onUpdate('csr_number', lastGoodCsrNumber.current)
+    }
+  }
+
+  const saveDisabled = saving || !isOnline || !csrNumberReady || !String(csr.csr_number || '').trim()
 
   React.useEffect(() => {
     let mounted = true
@@ -250,6 +288,7 @@ export default function CsrFormScreen({
                 <TextInput
                   value={String(csr.csr_number || '')}
                   onChange={(event) => onUpdate('csr_number', event.target.value)}
+                  onBlur={handleCsrNumberBlur}
                   className="bg-[hsl(var(--bd-surface-muted))] pl-9 font-mono font-bold"
                 />
               </div>
@@ -716,11 +755,19 @@ export default function CsrFormScreen({
         </Section>
       </div>
 
+      {/* Offline Indicator */}
+      {!isOnline && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-[13px] font-bold text-white sm:bottom-auto sm:top-0">
+          <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+          You are offline — save is disabled
+        </div>
+      )}
+
       {/* Floating Save Button */}
       <div className="hidden sm:block fixed bottom-6 right-6 z-30">
         <button
           onClick={onSave}
-          disabled={saving}
+          disabled={saveDisabled}
           className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
         >
           <Save className="h-6 w-6" />
@@ -732,6 +779,7 @@ export default function CsrFormScreen({
           onClick={onSave} 
           icon={Save} 
           ariaLabel="Save CSR" 
+          disabled={saveDisabled}
         />
       </div>
 

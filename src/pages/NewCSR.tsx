@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
 import { feedback } from '@/lib/feedback'
@@ -19,6 +19,7 @@ import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { validateProjectAssignment } from '@/domain/projects'
+import { createCsr } from '@/domain/csr/csrService'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -51,6 +52,7 @@ export default function NewCSR() {
   const [csr, setCsr] = useState(() => createDefaultCsr(isField))
   const [csrMeta, setCsrMeta] = useState(() => ({ ...DEFAULT_CSR_META }))
   const [materialsRows, setMaterialsRows] = useState([{ ...DEFAULT_MATERIAL_ROW }])
+  const csrNumberPopulated = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -60,6 +62,7 @@ export default function NewCSR() {
         try {
           const nextNumber = await peekNextOfflineCsrNumber()
           if (mounted) {
+            csrNumberPopulated.current = true
             setCsr((current: any) => ({
               ...current,
               csr_number: current.csr_number || nextNumber,
@@ -83,6 +86,7 @@ export default function NewCSR() {
       const nextNumber = getNextCsrNumber(latestNumber)
 
       if (mounted) {
+        csrNumberPopulated.current = true
         setCsr((current: any) => ({
           ...current,
           csr_number: current.csr_number || nextNumber,
@@ -197,6 +201,13 @@ export default function NewCSR() {
   }
 
   const handleSave = async () => {
+    if (!csrNumberPopulated.current || !String(csr.csr_number || '').trim()) {
+      feedback.error('CSR number not ready', {
+        description: 'Please wait for the CSR number to be assigned before saving.',
+      })
+      return
+    }
+
     if (!isField && !csr.client_id) {
       feedback.error('Client required', { description: 'Please select a client before saving' })
       return
@@ -251,42 +262,42 @@ export default function NewCSR() {
     }
 
     setSaving(true)
-    const { data: savedCsr, error } = await supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
+    try {
+      const savedCsr = await createCsr(csrData)
 
-    if (error) {
+      setSaving(false)
+
+      if (isField) {
+        try {
+          const technicianSignatory = csrData.technician_signatory_id
+            ? (
+                await supabase
+                  .from('signatories')
+                  .select('id, name, role, signature_url')
+                  .eq('id', csrData.technician_signatory_id)
+                  .maybeSingle()
+              ).data
+            : null
+          const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
+          const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+          const url = URL.createObjectURL(blob)
+          const anchor = document.createElement('a')
+          anchor.href = url
+          anchor.download = (csrData.csr_number || 'csr') + '.pdf'
+          anchor.click()
+        } catch (error) {
+          console.error('Failed to generate PDF', error)
+        }
+      }
+
+      navigate('/csr/' + savedCsr.id)
+    } catch (error) {
+      console.error('[NewCSR] Save failed', error)
       feedback.error('Save failed', {
-        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        description: getUserFacingMutationMessage(error, { action: 'create' }),
       })
       setSaving(false)
-      return
     }
-
-    setSaving(false)
-
-    if (isField) {
-      try {
-        const technicianSignatory = csrData.technician_signatory_id
-          ? (
-              await supabase
-                .from('signatories')
-                .select('id, name, role, signature_url')
-                .eq('id', csrData.technician_signatory_id)
-                .maybeSingle()
-            ).data
-          : null
-        const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
-        const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
-        const url = URL.createObjectURL(blob)
-        const anchor = document.createElement('a')
-        anchor.href = url
-        anchor.download = (csrData.csr_number || 'csr') + '.pdf'
-        anchor.click()
-      } catch (error) {
-        console.error('Failed to generate PDF', error)
-      }
-    }
-
-    navigate('/csr/' + savedCsr.id)
   }
 
   return (
@@ -297,6 +308,7 @@ export default function NewCSR() {
         csrMeta={csrMeta as any}
         materialsRows={materialsRows}
         saving={saving}
+        csrNumberReady={csrNumberPopulated.current && Boolean(String(csr.csr_number || '').trim())}
         onUpdate={update}
         onUpdateMeta={updateMeta}
         onUpdateMaterialRow={updateMaterialRow}

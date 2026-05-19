@@ -11,17 +11,25 @@ export const quotationImportAdapter = {
     result,
     setColumns,
     setItems,
+    setGroups,
     updateTopLevelField,
     setExtraCharges,
   }: {
     result: ApplyImportResult
     setColumns: (columns: ColumnConfig[]) => void
     setItems: (items: InvoiceItem[]) => void
+    setGroups: (groups: { id: string; name: string; showSubtotal: boolean }[]) => void
     updateTopLevelField: (field: 'title' | 'po_number' | 'notes' | 'terms', value: string) => void
     setExtraCharges: (charges: ExtraCharge[]) => void
   }) {
+    console.warn('[QA] applyResult called with', result.groups?.length || 0, 'groups')
     setColumns(result.columns)
     setItems(result.items)
+
+    if (result.groups && result.groups.length > 0) {
+      console.warn('[QA] Setting groups:', result.groups.length)
+      setGroups(result.groups)
+    }
 
     if (result.topLevel.title !== undefined) updateTopLevelField('title', result.topLevel.title)
     if (result.topLevel.po_number !== undefined) updateTopLevelField('po_number', result.topLevel.po_number)

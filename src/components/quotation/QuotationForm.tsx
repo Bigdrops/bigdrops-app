@@ -324,7 +324,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     quotationImportAdapter.applyResult({
       result,
       setColumns,
-      setItems: (nextItems) => lineItemsHandlers.commitGrouping(nextItems),
+      setItems: (nextItems) => lineItemsHandlers.commitGrouping(nextItems, result.groups || []),
+      setGroups: () => {}, // No-op: groups are handled by commitGrouping
       updateTopLevelField: (field, value) => {
         if (field === 'title') updateQuotation('quotation_title', value)
         else updateQuotation(field as any, value)

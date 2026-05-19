@@ -42,39 +42,14 @@ export function getUserFacingMutationMessage(
   options: MutationMessageOptions = {},
 ): string {
   const action = options.action || 'save'
-  const fallback = options.fallback || ACTION_FALLBACKS[action]
   const message = getErrorText(error).trim()
 
-  if (!message) return fallback
-
-  if (
-    /(client_id|client name|client)/i.test(message) &&
-    /(null value in column|not-null constraint|required field|is required|must not be null)/i.test(message)
-  ) {
-    return action === 'create' ? 'Pick a client before creating this.' : 'Pick a client before saving'
-  }
-
-  if (/(duplicate key|unique constraint|already exists|conflict)/i.test(message)) {
-    return 'This already exists'
-  }
-
-  if (/(null value in column|not-null constraint|required field|must not be null|is required)/i.test(message)) {
-    return 'Please fill the required field'
-  }
-
-  if (/(foreign key constraint|is not present in table|violates foreign key)/i.test(message)) {
-    return action === 'link'
-      ? 'Choose a valid record and try again.'
-      : 'A linked record is missing. Refresh and try again.'
-  }
-
-  if (/(row-level security|permission denied|not authorized|forbidden|insufficient privileges|rls)/i.test(message)) {
-    return "You don't have permission to do that right now."
-  }
-
-  if (/(timed out|timeout|failed to fetch|network request failed|networkerror|connection)/i.test(message)) {
+  // Surface the actual error message when available instead of masking behind generic fallback
+  if (!message) {
+    const fallback = options.fallback || ACTION_FALLBACKS[action]
     return fallback
   }
 
-  return fallback
+  // Return the real message (truncated if excessively long)
+  return message.length > 200 ? message.slice(0, 197) + '…' : message
 }

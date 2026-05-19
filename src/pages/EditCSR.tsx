@@ -13,6 +13,7 @@ import {
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import { updateCsr } from '@/domain/csr/csrService'
 
 export default function EditCSR() {
   const navigate = useNavigate()
@@ -115,18 +116,17 @@ export default function EditCSR() {
     }
 
     setSaving(true)
-    const { error } = await supabase.from('csrs').update(csrData).eq('id', id)
-
-    if (error) {
+    try {
+      await updateCsr(id!, csrData)
+      setSaving(false)
+      navigate('/csr/' + id)
+    } catch (error) {
+      console.error('[EditCSR] Save failed', error)
       feedback.error('Save failed', {
-        description: getUserFacingMutationMessage(error, { action: 'save' }),
+        description: getUserFacingMutationMessage(error, { action: 'update' }),
       })
       setSaving(false)
-      return
     }
-
-    setSaving(false)
-    navigate('/csr/' + id)
   }
 
   if (loading) {

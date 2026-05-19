@@ -170,6 +170,8 @@ export function normalizeImportData(
         .filter((g): g is NonNullable<typeof g> => g !== null)
     : []
 
+  console.warn("[2] NORMALIZED:", groups.length)
+
   return {
     ok: true,
     data: {
