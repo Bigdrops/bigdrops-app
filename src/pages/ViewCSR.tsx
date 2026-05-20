@@ -292,10 +292,12 @@ export default function ViewCSR() {
                 </div>
 
                 <div>
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
                     <PenLine className="h-4 w-4 text-muted-foreground" />
-                    Ink Color
+                    Customize text appearance
                   </div>
+
+                  <div className="mb-3 text-xs font-medium text-muted-foreground">Ink Color</div>
                   <div className="flex items-center gap-2 mb-3">
                     <button
                       type="button"
@@ -366,10 +368,7 @@ export default function ViewCSR() {
                 </div>
 
                 <div>
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <PenLine className="h-4 w-4 text-muted-foreground" />
-                    Handwriting Font
-                  </div>
+                  <div className="mb-3 text-xs font-medium text-muted-foreground">Handwriting Font</div>
                   <div className="flex items-center gap-2 mb-3">
                     <button
                       type="button"
