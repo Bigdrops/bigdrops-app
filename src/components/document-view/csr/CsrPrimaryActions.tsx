@@ -3,11 +3,15 @@ import { DocumentPrimaryActionRow, DocumentPrimaryButton } from '../shared/Docum
 interface CsrPrimaryActionsProps {
   onComplete: () => void
   onEdit: () => void
+  onDownload?: () => void
+  downloading?: boolean
 }
 
 export default function CsrPrimaryActions({
   onComplete,
   onEdit,
+  onDownload,
+  downloading,
 }: CsrPrimaryActionsProps) {
   return (
     <DocumentPrimaryActionRow>
@@ -24,6 +28,15 @@ export default function CsrPrimaryActions({
         </svg>
         Edit
       </DocumentPrimaryButton>
+      {onDownload ? (
+        <DocumentPrimaryButton variant="outline" onClick={onDownload}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </DocumentPrimaryButton>
+      ) : null}
     </DocumentPrimaryActionRow>
   )
 }

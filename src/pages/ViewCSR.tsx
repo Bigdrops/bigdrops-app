@@ -44,9 +44,9 @@ const CSR_FILLABLE_SWATCHES = ['#0033aa', '#1d4ed8', '#000000', '#1a1a1a', '#dc2
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
   '1': { font: 'Inter', color: '#1d4ed8' },
-  '2': { font: 'Inter', color: '#dc2626' },
+  '2': { font: 'Roboto', color: '#7f1d1d' },
   '3': { font: 'Inter', color: '#18181b' },
-  '4': { font: 'Inter', color: '#b91c1c' },
+  '4': { font: 'Roboto', color: '#b91c1c' },
 }
 
 function getStoredTemplate() {
@@ -72,6 +72,15 @@ export default function ViewCSR() {
   const [template, setTemplate] = useState(getStoredTemplate)
   const [useTemplateDefault, setUseTemplateDefault] = useState(getStoredUseDefault)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
+
+  // Apply template defaults on mount when switch is OFF (useTemplateDefault)
+  useEffect(() => {
+    if (useTemplateDefault) {
+      const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+      setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -429,6 +438,8 @@ export default function ViewCSR() {
           documentPreview={<CsrDocumentPreview csr={csr} previewModel={previewData} settingsData={settings} />}
           onComplete={() => ui.openModal(MODAL_COMPLETE)}
           onEdit={() => navigate(`/csr/edit/${id}`)}
+          onDownload={() => void handleDownload()}
+          downloading={downloading}
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />

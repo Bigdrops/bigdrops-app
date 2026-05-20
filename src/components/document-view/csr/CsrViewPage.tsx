@@ -14,6 +14,8 @@ interface CsrViewPageProps {
   preview?: ReactNode // deprecated, use documentPreview
   onComplete: () => void
   onEdit: () => void
+  onDownload?: () => void
+  downloading?: boolean
   onDuplicate: () => void
   onCopyNumber: () => void
 }
@@ -25,6 +27,8 @@ export default function CsrViewPage({
   preview,
   onComplete,
   onEdit,
+  onDownload,
+  downloading,
   onDuplicate,
   onCopyNumber,
 }: CsrViewPageProps) {
@@ -35,7 +39,7 @@ export default function CsrViewPage({
       <CsrSummaryStrip items={metrics} />
 
       <div className={styles.actionStack}>
-        <CsrPrimaryActions onComplete={onComplete} onEdit={onEdit} />
+        <CsrPrimaryActions onComplete={onComplete} onEdit={onEdit} onDownload={onDownload} downloading={downloading} />
       </div>
 
       <DocumentSection title="Service report content">
