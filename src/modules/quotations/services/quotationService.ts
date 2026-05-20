@@ -6,7 +6,7 @@ export async function loadQuotations() {
     .from("quotations")
     .select("*")
     .is("archived_at", null)
-    .order("issue_date", { ascending: false })
+    .order("created_at", { ascending: false })
 
   if (error) throw error
   return data || []

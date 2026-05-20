@@ -96,19 +96,20 @@ export function useInvoiceList() {
     }
 
     if (sortBy === "Oldest") {
-      return query.order("issue_date", { ascending: true, nullsFirst: false })
+      return query.order("created_at", { ascending: true })
     }
     if (sortBy === "Highest Value") {
       return query
         .order("total", { ascending: false, nullsFirst: false })
-        .order("issue_date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
     }
     if (sortBy === "Lowest Value") {
       return query
         .order("total", { ascending: true, nullsFirst: false })
-        .order("issue_date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
     }
-    return query.order("issue_date", { ascending: false, nullsFirst: false })
+    return query
+      .order("created_at", { ascending: false })
   }
 
   const fetchInvoices = async (pageIndex = 0, replace = false) => {
@@ -150,8 +151,8 @@ export function useInvoiceList() {
           rowsToDisplay.sort((left: any, right: any) => {
             if (sortBy === "Highest Value") return Number(right.total || 0) - Number(left.total || 0)
             if (sortBy === "Lowest Value") return Number(left.total || 0) - Number(right.total || 0)
-            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
-            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
+            const leftTime = new Date(left.created_at || 0).getTime() || 0
+            const rightTime = new Date(right.created_at || 0).getTime() || 0
             return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
           })
         }
@@ -249,8 +250,8 @@ export function useInvoiceList() {
               return Number(left.total || 0) - Number(right.total || 0)
             }
 
-            const leftTime = new Date(left.issue_date || left.created_at || 0).getTime() || 0
-            const rightTime = new Date(right.issue_date || right.created_at || 0).getTime() || 0
+            const leftTime = new Date(left.created_at || 0).getTime() || 0
+            const rightTime = new Date(right.created_at || 0).getTime() || 0
             return sortBy === "Oldest" ? leftTime - rightTime : rightTime - leftTime
           })
 

@@ -467,12 +467,12 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         applyParentInvoiceFilter(supabase
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields'))
-          .order('issue_date', { ascending: false })
-          .limit(8),
-        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('issue_date', { ascending: false }).limit(8),
-        supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
+        supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(8),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
-        supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
+        supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
         supabase.rpc('get_dashboard_financial_metrics', {
           p_now: nowIso,
           p_end_of_week: endOfWeekIso,
@@ -502,7 +502,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       ).length
       const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
 
-      const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: true })
+      const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: false })
       const nextHeroStats = {
         collections: thisMonthCollections,
         openWork: reminders.length || pendingFollowUp,
