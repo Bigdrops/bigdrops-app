@@ -186,8 +186,7 @@ export default function CsrFormScreen({
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [clientPickerOpen, setClientPickerOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
-  const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
-  const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
+
 
   // Track online/offline status
   const [isOnline, setIsOnline] = React.useState(() =>
@@ -692,63 +691,18 @@ export default function CsrFormScreen({
           {csrMeta.showAcknowledgement ? (
             <div className="space-y-3">
               <div>
-                <FieldLabel>Name</FieldLabel>
+                <FieldLabel>Recipient name/title</FieldLabel>
                 <TextInput
                   value={String(csr.acknowledgement_name || '')}
                   onChange={(event) => onUpdate('acknowledgement_name', event.target.value)}
                 />
               </div>
               <div>
-                <FieldLabel>Recipient / Witness Role</FieldLabel>
-                <TextInput
-                  value={String(csrMeta.recipientRole || '')}
-                  onChange={(event) => onUpdateMeta('recipientRole', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Customer Feedback</FieldLabel>
+                <FieldLabel>Comment</FieldLabel>
                 <TextArea
                   value={String(csr.customer_feedback || '')}
                   onChange={(event) => onUpdate('customer_feedback', event.target.value)}
                 />
-              </div>
-
-              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
-                <div className="text-[13px] font-bold text-[hsl(var(--bd-text))]">Recipient Signature</div>
-                <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
-                  {recipientSignatureName || 'Leave blank for offline sign.'}
-                </div>
-                <input
-                  ref={recipientSignatureInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0]
-                    setRecipientSignatureName(file?.name || '')
-                  }}
-                />
-                <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-                  <button
-                    type="button"
-                    onClick={() => recipientSignatureInputRef.current?.click()}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-button-primary-text))]"
-                  >
-                    Upload signature
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRecipientSignatureName('')
-                      if (recipientSignatureInputRef.current) {
-                        recipientSignatureInputRef.current.value = ''
-                      }
-                    }}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))]"
-                  >
-                    Leave blank
-                  </button>
-                </div>
               </div>
             </div>
           ) : null}

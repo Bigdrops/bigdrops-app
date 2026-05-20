@@ -200,7 +200,9 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
       <Page size="A4" style={styles.page}>
         <View style={styles.headerTop}>
           {branding.logoUrl ? (
-            <Image src={branding.logoUrl} style={styles.logoImage} />
+            <View style={{ backgroundColor: '#ffffff', borderRadius: 4, padding: 2 }}>
+              <Image src={branding.logoUrl} style={styles.logoImage} />
+            </View>
           ) : null}
           <PdfBrandBlock styles={styles} branding={branding} />
           <View style={styles.idBox}>

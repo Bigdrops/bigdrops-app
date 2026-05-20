@@ -9,6 +9,9 @@ import {
   hasOperationalReadings,
   hasMaterials,
   hasText,
+  getTechnicianName,
+  getTechnicianRole,
+  getTechnicianSignatureUrl,
 } from './utils'
 import {
   StructuredTopIdentity,
@@ -17,9 +20,9 @@ import {
   MaterialsPillsInline,
   StatusListChecks,
   ServiceTimeSection,
-  CustomerFeedbackSection,
-  AcknowledgementBlock,
   PdfField,
+  PdfSignatureCard,
+  PdfSection,
 } from './components'
 import type { CsrPdfProps } from './types'
 
@@ -296,15 +299,42 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
           <ServiceTimeSection styles={styles} csr={csr} />
         </Band>
 
-        {shouldRender(true, csr.customer_feedback) ? (
-          <Band colorStyle={styles.bandKeyRed} title="Feedback" sub="Customer response after job completion.">
-            <CustomerFeedbackSection styles={styles} csr={csr} />
-          </Band>
-        ) : null}
-
         {csr.showAcknowledgement || csr.showTechnicianSignLine ? (
           <Band colorStyle={styles.bandKeyCharcoal} title="Acknowledgement" sub="Recipient identity, approval, and signature fields.">
-            <AcknowledgementBlock styles={styles} csr={csr} />
+            <PdfSection styles={styles} title="Acknowledgement">
+              {csr.showAcknowledgement ? (
+                <View style={styles.grid4}>
+                  <PdfField styles={styles} label="Recipient name/title" value={csr.acknowledgement_name} span={4} />
+                </View>
+              ) : null}
+
+              {shouldRender(true, csr.customer_feedback) ? (
+                <View style={styles.textAreaOnly}>
+                  <Text style={styles.fieldLabel}>Comment</Text>
+                  <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.signRow}>
+                {csr.showAcknowledgement ? (
+                  <PdfSignatureCard
+                    styles={styles}
+                    label="Recipient Signature"
+                    name={safe(csr.acknowledgement_name)}
+                  />
+                ) : null}
+
+                {csr.showTechnicianSignLine ? (
+                  <PdfSignatureCard
+                    styles={styles}
+                    label="Technician Signature"
+                    name={getTechnicianName(csr)}
+                    role={getTechnicianRole(csr)}
+                    signatureUrl={getTechnicianSignatureUrl(csr)}
+                  />
+                ) : null}
+              </View>
+            </PdfSection>
           </Band>
         ) : null}
 
