@@ -18,15 +18,12 @@ import { supabase } from '@/supabase'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, PDF_FILLABLE_FONT_OPTIONS, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { PenLine } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -38,15 +35,23 @@ const MODAL_COMPLETE = 'complete'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const CSR_TEMPLATE_KEY = 'csr_view_template'
-const CSR_USE_DEFAULT_KEY = 'csr_use_template_default'
+const CSR_CUSTOM_FONT_KEY = 'csr_custom_font'
+const CSR_CUSTOM_COLOR_KEY = 'csr_custom_color'
 
-const CSR_FILLABLE_SWATCHES = ['#0033aa', '#1d4ed8', '#000000', '#1a1a1a', '#dc2626']
+const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
+
+const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
+  { value: 'Reenie Beanie', label: 'Reenie Beanie' },
+  { value: 'Caveat', label: 'Caveat' },
+  { value: 'Kalam', label: 'Kalam' },
+  { value: 'Patrick Hand', label: 'Patrick Hand' },
+]
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
-  '1': { font: 'Inter', color: '#1d4ed8' },
-  '2': { font: 'Roboto', color: '#7f1d1d' },
-  '3': { font: 'Inter', color: '#18181b' },
-  '4': { font: 'Roboto', color: '#b91c1c' },
+  '1': { font: 'Inter', color: '#111827' },
+  '2': { font: 'Inter', color: '#0f172a' },
+  '3': { font: 'Inter', color: '#3b82f6' },
+  '4': { font: 'Inter', color: '#1e293b' },
 }
 
 function getStoredTemplate() {
@@ -54,9 +59,14 @@ function getStoredTemplate() {
   return window.localStorage.getItem(CSR_TEMPLATE_KEY) || '3'
 }
 
-function getStoredUseDefault() {
-  if (typeof window === 'undefined') return true
-  return window.localStorage.getItem(CSR_USE_DEFAULT_KEY) !== 'false'
+function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
+  if (typeof window === 'undefined') return 'auto'
+  return (window.localStorage.getItem(CSR_CUSTOM_FONT_KEY) as any) || 'auto'
+}
+
+function getStoredCustomColor(): 'auto' | string {
+  if (typeof window === 'undefined') return 'auto'
+  return window.localStorage.getItem(CSR_CUSTOM_COLOR_KEY) || 'auto'
 }
 
 export default function ViewCSR() {
@@ -70,17 +80,26 @@ export default function ViewCSR() {
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
-  const [useTemplateDefault, setUseTemplateDefault] = useState(getStoredUseDefault)
+  const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
+  const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
-  // Apply template defaults on mount when switch is OFF (useTemplateDefault)
-  useEffect(() => {
-    if (useTemplateDefault) {
-      const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
-      setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
+  // Compute effective preset based on auto/custom toggles
+  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string) => {
+    const defaults = CSR_TEMPLATE_DEFAULTS[tmpl] || CSR_TEMPLATE_DEFAULTS['3']
+    return {
+      ...designPreset,
+      fillableFont: font === 'auto' ? defaults.font : font,
+      fillableColor: color === 'auto' ? defaults.color : color,
+      fillableFontMode: 'custom' as const,
     }
+  }
+
+  // Keep designPreset in sync with toggle state
+  useEffect(() => {
+    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [template, customFont, customColor])
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -266,105 +285,148 @@ export default function ViewCSR() {
               title="Customize CSR PDF"
               subtitle="Choose a template and customize fillable text appearance."
             >
-              <div className="space-y-4">
-                <div className="rounded-[24px] border border-border bg-card p-4">
+              <div className="space-y-5">
+                <div>
                   <div className="mb-3 text-sm font-semibold text-foreground">Template</div>
-                  <CsrTemplateCarousel value={template} onChange={(next) => {
-                    setTemplate(next)
-                    if (useTemplateDefault) {
-                      const defaults = CSR_TEMPLATE_DEFAULTS[next] || CSR_TEMPLATE_DEFAULTS['3']
-                      setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
-                    }
-                  }} />
+                  <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
-                <div className="rounded-[24px] border border-border bg-card p-4">
+
+                <div>
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
                     <PenLine className="h-4 w-4 text-muted-foreground" />
-                    Handwriting Style
+                    Ink Color
                   </div>
-                  <div className="text-xs text-muted-foreground mb-4">
-                    Controls the handwriting-style font and ink color for dynamic values in the PDF.
-                  </div>
-
-                  <div className="flex items-center justify-between gap-4 mb-4">
-                    <Label htmlFor="csr-use-template-default" className="text-sm font-semibold text-[hsl(var(--bd-text))]">
-                      Custom handwriting
-                    </Label>
-                    <Switch
-                      id="csr-use-template-default"
-                      checked={!useTemplateDefault}
-                      onCheckedChange={(checked) => {
-                        setUseTemplateDefault(!checked)
-                        if (!checked) {
-                          const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
-                          setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
-                        }
+                  <div className="flex items-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setCustomColor('auto')}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        customColor === 'auto'
+                          ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                      )}
+                    >
+                      Auto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+                        setCustomColor(defaults.color)
                       }}
-                    />
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        customColor !== 'auto'
+                          ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                      )}
+                    >
+                      Custom
+                    </button>
                   </div>
-
-                  <div className={cn('space-y-4', useTemplateDefault && 'opacity-50 pointer-events-none')}>
+                  {customColor !== 'auto' ? (
                     <div className="space-y-2">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Font</div>
-                      <Select
-                        value={designPreset.fillableFont}
-                        onValueChange={(next) => setDesignPreset((prev) => ({ ...prev, fillableFont: next as PdfFillableFontChoice, fillableFontMode: 'custom' }))}
-                        disabled={useTemplateDefault}
-                      >
-                        <SelectTrigger className="h-11 rounded-[14px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PDF_FILLABLE_FONT_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="text-[10px] text-muted-foreground">
-                        {PDF_FILLABLE_FONT_OPTIONS.find((o) => o.value === designPreset.fillableFont)?.description}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Ink Color</div>
                       <div className="flex gap-2">
-                        {CSR_FILLABLE_SWATCHES.map((swatch) => {
-                          const active = designPreset.fillableColor.toLowerCase() === swatch.toLowerCase()
+                        {CSR_COLOR_SWATCHES.map((swatch) => {
+                          const active = customColor.toLowerCase() === swatch.toLowerCase()
                           return (
                             <button
                               key={swatch}
                               type="button"
-                              disabled={useTemplateDefault}
-                              onClick={() => setDesignPreset((prev) => ({ ...prev, fillableColor: swatch }))}
+                              onClick={() => setCustomColor(swatch)}
                               className={cn(
-                                'h-9 w-9 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-slate-950 scale-105 ring-2 ring-slate-950/20' : 'border-transparent hover:border-slate-300',
+                                'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                                active ? 'border-foreground scale-110 ring-2 ring-foreground/20' : 'border-transparent hover:border-muted-foreground/40',
                               )}
                               style={{ backgroundColor: swatch }}
-                              aria-label={`Ink color ${swatch}`}
+                              aria-label={`Color ${swatch}`}
                             />
                           )
                         })}
+                        <button
+                          type="button"
+                          onClick={() => {}}
+                          className={cn(
+                            'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                            !CSR_COLOR_SWATCHES.includes(customColor) ? 'border-foreground scale-110 ring-2 ring-foreground/20' : 'border-transparent',
+                          )}
+                          style={{ backgroundColor: customColor }}
+                          aria-label="Current color"
+                        />
                       </div>
                       <Input
-                        value={designPreset.fillableColor}
-                        onChange={(e) => setDesignPreset((prev) => ({ ...prev, fillableColor: e.target.value }))}
-                        disabled={useTemplateDefault}
-                        className="mt-2 h-9 rounded-[10px] font-mono text-xs"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        className="h-9 rounded-[10px] font-mono text-xs"
                         placeholder="#0f172a"
                       />
                     </div>
-                  </div>
+                  ) : null}
                 </div>
+
+                <div>
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <PenLine className="h-4 w-4 text-muted-foreground" />
+                    Handwriting Font
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setCustomFont('auto')}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        customFont === 'auto'
+                          ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                      )}
+                    >
+                      Auto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customFont === 'auto') setCustomFont('Caveat')
+                      }}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        customFont !== 'auto'
+                          ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                      )}
+                    >
+                      Custom
+                    </button>
+                  </div>
+                  {customFont !== 'auto' ? (
+                    <div className="flex flex-wrap gap-2">
+                      {CSR_HANDWRITING_FONTS.map((font) => (
+                        <button
+                          key={font.value}
+                          type="button"
+                          onClick={() => setCustomFont(font.value)}
+                          className={cn(
+                            'rounded-full px-4 py-2 text-sm border transition',
+                            customFont === font.value
+                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
+                              : 'bg-transparent text-foreground border-border hover:border-foreground/30',
+                          )}
+                        >
+                          {font.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
                 <button
                   type="button"
                   className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
                   onClick={() => {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
-                      window.localStorage.setItem(CSR_USE_DEFAULT_KEY, String(useTemplateDefault))
+                      window.localStorage.setItem(CSR_CUSTOM_FONT_KEY, customFont)
+                      window.localStorage.setItem(CSR_CUSTOM_COLOR_KEY, customColor)
                     }
                     setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()
