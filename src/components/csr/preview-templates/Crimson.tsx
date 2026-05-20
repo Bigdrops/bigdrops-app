@@ -224,9 +224,6 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
     signSpace: {
       height: tight ? 10 : 18,
       marginBottom: 4,
-      borderBottomWidth: 1,
-      borderBottomColor: '#94a3b8',
-      borderStyle: 'dashed',
     },
     signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {

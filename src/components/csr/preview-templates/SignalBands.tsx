@@ -135,10 +135,8 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     pill: {
       paddingVertical: 4,
       paddingHorizontal: 7,
-      backgroundColor: 'transparent',
-      borderWidth: 0,
-      borderColor: 'transparent',
-      borderRadius: 0,
+      marginRight: 4,
+      marginBottom: 4,
     },
     pillText: { fontSize: 7.2, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
 
@@ -196,9 +194,6 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     },
     signSpace: {
       height: tight ? 14 : 18,
-      borderBottomWidth: 1.5,
-      borderBottomColor: '#d6bfa6',
-      borderStyle: 'dashed',
       marginBottom: 4,
     },
     signLabel: { fontSize: 7, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },

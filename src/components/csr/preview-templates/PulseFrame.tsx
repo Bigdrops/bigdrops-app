@@ -179,7 +179,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       borderRadius: 4,
       padding: compact ? 6 : 8,
     },
-    signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 4 },
+    signSpace: { height: tight ? 14 : 18, marginBottom: 4 },
     signLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
       marginTop: compact ? 2 : 4,

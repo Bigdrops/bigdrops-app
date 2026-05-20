@@ -311,7 +311,7 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
             {shouldRender(true, csr.customer_feedback) ? (
               <View style={{ flex: 1 }}>
                 <PdfSection styles={styles} title="Customer Feedback">
-                  <View style={[styles.blockCard, { borderStyle: 'dashed' }]}>
+                  <View style={[styles.blockCard, { borderWidth: 1, borderColor: '#e4e4e7' }]}>
                     <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
                   </View>
                 </PdfSection>
