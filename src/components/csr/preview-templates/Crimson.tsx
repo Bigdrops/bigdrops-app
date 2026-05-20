@@ -62,7 +62,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
       borderTopWidth: 1,
       borderTopColor: '#1e293b',
     },
-    brandBox: { flexDirection: 'row', gap: 8, alignItems: 'center', flex: 1 },
+    brandBox: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', flex: 1 },
     logoSlot: {
       width: 34,
       height: 34,
@@ -73,7 +73,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
     },
     logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: tight ? 13 : 15, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
+    companyName: { fontSize: tight ? 11 : 12.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
     companyTagline: { fontSize: tight ? 5.8 : 6.8, color: '#e2e8f0', textTransform: 'uppercase', marginTop: 2 },
     contactLine: { fontSize: tight ? 5.7 : 6.7, color: '#cbd5e1', marginTop: 3, lineHeight: tight ? 1.1 : 1.35 },
     idBox: {
@@ -89,22 +89,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
     idLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
     idDate: { fontSize: 7, color: '#e2e8f0', marginTop: 3, fontFamily: 'Helvetica-Bold' },
-    docKicker: { fontSize: 6.3, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', letterSpacing: 0.5 },
-    docTitle: { fontSize: tight ? 10 : 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', marginTop: 3, textTransform: 'uppercase' },
-    docSubtext: { fontSize: 6.3, color: '#475569', marginTop: 2, lineHeight: 1.15 },
-    summaryPillRow: { flexDirection: 'row', gap: 6 },
-    summaryPill: {
-      flex: 1,
-      backgroundColor: '#ffffff',
-      borderWidth: 1,
-      borderColor: '#e2e8f0',
-      borderRadius: 999,
-      paddingVertical: tight ? 4 : 5,
-      paddingHorizontal: tight ? 6 : 8,
-    },
-    summaryPillLabel: { fontSize: 5.8, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    summaryPillValue: { fontSize: 7.3, color: fillableColor, fontFamily: fillableBold, marginTop: 2 },
-
+    docTitle: { fontSize: tight ? 10 : 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
     section: { marginBottom: tight ? 4 : compact ? 6 : 8 },
     sectionTitle: {
       fontSize: 7.2,
@@ -207,7 +192,8 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
 
     statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 5, marginTop: 2 },
     statusItem: {
-      width: '24%',
+      flex: 1,
+      minWidth: '18%',
       paddingVertical: tight ? 4 : 5,
       paddingHorizontal: 5,
       borderWidth: 1.2,
@@ -276,10 +262,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           <View style={styles.headerTop}>
             <View style={styles.brandBox}>
               <PdfLogoSlot styles={styles} branding={branding} fallback="L" />
-                <View>
-                  <PdfBrandBlock styles={styles} branding={branding} />
-                  <Text style={[styles.docTitle, { marginTop: 4, letterSpacing: 1 }]}>Customer Service Report</Text>
-                </View>
+              <PdfBrandBlock styles={styles} branding={branding} />
             </View>
             <View style={styles.idBox}>
               <Text style={styles.idLabel}>Service Report Number</Text>
@@ -287,29 +270,32 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               <Text style={styles.idDate}>{safe(csr.date)}</Text>
             </View>
           </View>
+          <View style={styles.headerBottom}>
+            <Text style={styles.docTitle}>Customer Service Report</Text>
+          </View>
         </View>
 
         <PdfSection styles={styles} title="Customer & Job Details">
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-            <View style={[styles.fieldCard, { width: '32%' }]}>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
               <Text style={styles.fieldLabel}>Client Name</Text>
               <Text style={styles.fieldValue}>{safe(csr.client_name)}</Text>
             </View>
-            <View style={[styles.fieldCard, { width: '66%' }]}>
+            <View style={[styles.fieldCard, { flex: 2, width: undefined }]}>
               <Text style={styles.fieldLabel}>Site Address</Text>
               <Text style={styles.fieldValue}>{safe(csr.address)}</Text>
             </View>
             {csr.show_po && hasText(csr.po_number) ? (
-              <View style={[styles.fieldCard, { width: '32%' }]}>
+              <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
                 <Text style={styles.fieldLabel}>Purchase Order (P.O.) Number</Text>
                 <Text style={styles.fieldValue}>{safe(csr.po_number)}</Text>
               </View>
             ) : null}
-            <View style={[styles.fieldCard, { width: csr.show_po && hasText(csr.po_number) ? '32%' : '49%' }]}>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
               <Text style={styles.fieldLabel}>Service Start (Date/Time)</Text>
               <Text style={styles.fieldValue}>{serviceStart || 'Not recorded'}</Text>
             </View>
-            <View style={[styles.fieldCard, { width: csr.show_po && hasText(csr.po_number) ? '32%' : '49%' }]}>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
               <Text style={styles.fieldLabel}>Service End (Date/Time)</Text>
               <Text style={styles.fieldValue}>{serviceEnd || 'Not recorded'}</Text>
             </View>
@@ -324,12 +310,12 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
 
         <PdfSection styles={styles} title="Equipment Details">
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-            <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
-            <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
-            <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>{safe(csr.modelLabel) || 'Model'}</Text><Text style={styles.fieldValue}>{safe(csr.model)}</Text></View>
-            <View style={[styles.fieldCard, { width: '24%' }]}><Text style={styles.fieldLabel}>Capacity</Text><Text style={styles.fieldValue}>{safe(csr.capacity)}</Text></View>
-            <View style={[styles.fieldCard, { width: '49%' }]}><Text style={styles.fieldLabel}>{safe(csr.serialLabel) || 'Serial Number'}</Text><Text style={styles.fieldValue}>{safe(csr.serial_no)}</Text></View>
-            <View style={[styles.fieldCard, { width: '49%' }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.modelLabel) || 'Model'}</Text><Text style={styles.fieldValue}>{safe(csr.model)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Capacity</Text><Text style={styles.fieldValue}>{safe(csr.capacity)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.serialLabel) || 'Serial Number'}</Text><Text style={styles.fieldValue}>{safe(csr.serial_no)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
           </View>
 
           {hasOperationalReadings(csr) ? (

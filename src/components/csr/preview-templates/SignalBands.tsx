@@ -14,7 +14,7 @@ import {
   StructuredTopIdentity,
   SharedEquipmentSection,
   ReadingsStrip,
-  MaterialsPills,
+  MaterialsPillsInline,
   StatusListChecks,
   ServiceTimeSection,
   CustomerFeedbackSection,
@@ -70,7 +70,6 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
       borderWidth: 1,
       borderColor: '#e7d7c8',
       borderRadius: 12,
-      overflow: 'hidden',
     },
     bandKey: {
       width: tight ? 96 : 104,
@@ -86,7 +85,7 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     bandKeySub: { color: '#ffffff', fontSize: 6.4, lineHeight: 1.15 },
     bandMain: { flex: 1, backgroundColor: '#fffdfa' },
 
-    sectionTitle: { display: 'none' },
+    sectionTitle: { height: 0, overflow: 'hidden', margin: 0, padding: 0 },
     section: {},
 
     grid4: { flexDirection: 'row', flexWrap: 'wrap' },
@@ -277,7 +276,7 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
 
         {hasMaterials(csr) ? (
           <Band colorStyle={styles.bandKeyGold} title="Materials" sub="Consumables and replaced items used on site.">
-            <MaterialsPills styles={styles} csr={csr} />
+            <MaterialsPillsInline styles={styles} csr={csr} />
           </Band>
         ) : null}
 

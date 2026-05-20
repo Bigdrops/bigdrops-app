@@ -177,6 +177,26 @@ export function MaterialsPills({ styles, csr }: any) {
   )
 }
 
+/** Inline variant — renders pills without PdfSection wrapper. Use inside Band components. */
+export function MaterialsPillsInline({ styles, csr }: any) {
+  if (!hasMaterials(csr)) return null
+
+  const items = safe(csr.materialsText)
+    .split(/[,\u00b7]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  return (
+    <View style={styles.pillsWrap}>
+      {(items.length ? items : [csr.materialsText]).map((item: any, index: number) => (
+        <View key={`${item}-${index}`} style={styles.pill}>
+          <Text style={styles.pillText}>{item}</Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 export function MaterialsTable({ styles, csr }: any) {
   const rows = getMaterialsRows(csr)
   if (rows.length === 0) return null
