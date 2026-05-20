@@ -64,6 +64,13 @@ export function PdfSection({ styles, title, children }: any) {
 }
 
 export function PdfLogoSlot({ styles, branding, fallback = 'LOGO' }: any) {
+  if (branding.logoUrl) {
+    return (
+      <View style={styles.logoSlot}>
+        <Image src={branding.logoUrl} style={styles.logoImage} />
+      </View>
+    )
+  }
   return (
     <View style={styles.logoSlot}>
       <Text style={styles.logoSlotText}>
@@ -296,6 +303,11 @@ export function StructuredTopIdentity({ styles, csr, branding }: any) {
   return (
     <>
       <View style={styles.headerRow}>
+        {branding.logoUrl ? (
+          <View style={styles.logoSlot}>
+            <Image src={branding.logoUrl} style={styles.logoImage} />
+          </View>
+        ) : null}
         <PdfBrandBlock styles={styles} branding={branding} />
 
         <View style={styles.identityCard}>

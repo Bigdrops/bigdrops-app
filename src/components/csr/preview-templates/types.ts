@@ -3,6 +3,7 @@ export interface CsrPdfBranding {
   companyTagline?: string;
   contactLine?: string;
   footerText?: string;
+  logoUrl?: string;
 }
 
 export interface CsrPdfProps {

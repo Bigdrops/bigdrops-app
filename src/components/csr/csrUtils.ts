@@ -347,6 +347,7 @@ export interface CsrBranding {
   companyTagline: string
   contactLine: string
   footerText: string
+  logoUrl: string
 }
 
 export function getCsrBranding(settings: any = {}): CsrBranding {
@@ -364,6 +365,7 @@ export function getCsrBranding(settings: any = {}): CsrBranding {
     companyTagline,
     contactLine: contactBits.join('  |  '),
     footerText: settings.footer_text || contactBits.join('  |  ') || '',
+    logoUrl: settings.company_logo_url || '',
   }
 }
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import {
   getLayoutDensity,
   getFillablePdfTheme,
@@ -41,8 +41,20 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
     headerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      gap: 8,
       marginBottom: compact ? 6 : 8,
     },
+    logoSlot: {
+      width: 40,
+      height: 40,
+      backgroundColor: '#ffffff',
+      borderWidth: 1,
+      borderColor: '#e4e4e7',
+      borderRadius: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logoImage: { width: 36, height: 36, objectFit: 'contain' },
     brandBlock: { flex: 1 },
     companyName: { fontSize: 16, color: '#09090b', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
     companyTagline: { fontSize: 7, color: '#71717a', marginTop: 3, textTransform: 'uppercase' },
@@ -191,6 +203,11 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.headerTop}>
+          {branding.logoUrl ? (
+            <View style={styles.logoSlot}>
+              <Image src={branding.logoUrl} style={styles.logoImage} />
+            </View>
+          ) : null}
           <PdfBrandBlock styles={styles} branding={branding} />
           <View style={styles.idBox}>
             <Text style={styles.idLabel}>Service Report</Text>

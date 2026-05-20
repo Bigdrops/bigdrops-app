@@ -20,6 +20,7 @@ export function getBranding(branding: any = {}) {
     companyTagline: safe(branding.companyTagline),
     contactLine: safe(branding.contactLine),
     footerText: safe(branding.footerText),
+    logoUrl: safe(branding.logoUrl),
   }
 }
 
