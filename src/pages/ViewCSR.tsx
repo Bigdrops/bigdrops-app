@@ -277,16 +277,16 @@ export default function ViewCSR() {
                     Controls the handwriting-style font and ink color for dynamic values in the PDF.
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 mb-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+                  <div className="flex items-center justify-between gap-4 mb-4">
                     <Label htmlFor="csr-use-template-default" className="text-sm font-semibold text-[hsl(var(--bd-text))]">
-                      Use template handwriting
+                      Custom handwriting
                     </Label>
                     <Switch
                       id="csr-use-template-default"
-                      checked={useTemplateDefault}
+                      checked={!useTemplateDefault}
                       onCheckedChange={(checked) => {
-                        setUseTemplateDefault(checked)
-                        if (checked) {
+                        setUseTemplateDefault(!checked)
+                        if (!checked) {
                           const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
                           setDesignPreset((prev) => ({ ...prev, fillableFont: defaults.font, fillableColor: defaults.color, fillableFontMode: 'custom' }))
                         }
