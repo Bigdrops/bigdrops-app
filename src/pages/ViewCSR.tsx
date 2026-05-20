@@ -40,6 +40,14 @@ const CSR_CUSTOM_COLOR_KEY = 'csr_custom_color'
 
 const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
 
+const CSR_PULSEFRAME_SWATCHES: { label: string; hex: string; textColor: string }[] = [
+  { label: 'Corporate Crimson', hex: '#801515', textColor: '#ffffff' },
+  { label: 'Deep Charcoal', hex: '#22252A', textColor: '#ffffff' },
+  { label: 'Slate Blue-Grey', hex: '#334155', textColor: '#ffffff' },
+  { label: 'Teal Oxide', hex: '#0F766E', textColor: '#ffffff' },
+  { label: 'Warm Alabaster', hex: '#F4F1EA', textColor: '#1A1A1A' },
+]
+
 const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
   { value: 'Reenie Beanie', label: 'Reenie Beanie' },
   { value: 'Caveat', label: 'Caveat' },
@@ -285,28 +293,32 @@ export default function ViewCSR() {
               title="Customize CSR PDF"
               subtitle="Choose a template and customize fillable text appearance."
             >
-              <div className="space-y-5">
-                <div>
-                  <div className="mb-3 text-sm font-semibold text-foreground">Template</div>
+              <div className="space-y-6">
+                {/* Template Selection */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Template</div>
                   <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
 
-                <div>
-                  <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <PenLine className="h-4 w-4 text-muted-foreground" />
-                    Customize text appearance
+                {/* Ink Color Section */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Ink Color</span>
                   </div>
+                  <p className="mb-4 text-xs leading-relaxed text-[hsl(var(--bd-text-muted))]">
+                    Controls the color of fillable text values rendered on the PDF.
+                  </p>
 
-                  <div className="mb-3 text-xs font-medium text-muted-foreground">Ink Color</div>
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-4">
                     <button
                       type="button"
                       onClick={() => setCustomColor('auto')}
                       className={cn(
-                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        'rounded-full px-4 py-2 text-xs font-bold border transition',
                         customColor === 'auto'
                           ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
-                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                          : 'bg-transparent text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
                       )}
                     >
                       Auto
@@ -318,16 +330,61 @@ export default function ViewCSR() {
                         setCustomColor(defaults.color)
                       }}
                       className={cn(
-                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        'rounded-full px-4 py-2 text-xs font-bold border transition',
                         customColor !== 'auto'
                           ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
-                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                          : 'bg-transparent text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
                       )}
                     >
                       Custom
                     </button>
                   </div>
-                  {customColor !== 'auto' ? (
+
+                  {/* Conditional: PulseFrame + Custom color panel */}
+                  {template === '1' && customColor !== 'auto' ? (
+                    <div className="space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
+                      <div className="flex items-center gap-2">
+                        {/* Slot 1: Live swatch */}
+                        <button
+                          type="button"
+                          className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20 transition"
+                          style={{ backgroundColor: customColor }}
+                          aria-label="Live color"
+                        />
+                        {/* Slots 2-6: Curated suggestions */}
+                        {CSR_PULSEFRAME_SWATCHES.map((swatch) => {
+                          const active = customColor.toLowerCase() === swatch.hex.toLowerCase()
+                          return (
+                            <button
+                              key={swatch.hex}
+                              type="button"
+                              onClick={() => setCustomColor(swatch.hex)}
+                              className={cn(
+                                'h-9 w-9 rounded-lg border-2 shadow-sm transition',
+                                active ? 'border-[hsl(var(--bd-text))] scale-110' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
+                              )}
+                              style={{ backgroundColor: swatch.hex }}
+                              aria-label={swatch.label}
+                              title={swatch.label}
+                            />
+                          )
+                        })}
+                      </div>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[hsl(var(--bd-text-muted))]">#</span>
+                        <Input
+                          value={customColor.startsWith('#') ? customColor.slice(1) : customColor}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/^#/, '')
+                            setCustomColor(`#${raw}`)
+                          }}
+                          className="h-10 rounded-[12px] bg-[hsl(var(--bd-surface))] pl-7 font-mono text-xs"
+                          placeholder="0f172a"
+                        />
+                      </div>
+                    </div>
+                  ) : customColor !== 'auto' && template !== '1' ? (
                     <div className="space-y-2">
                       <div className="flex gap-2">
                         {CSR_COLOR_SWATCHES.map((swatch) => {
@@ -339,7 +396,7 @@ export default function ViewCSR() {
                               onClick={() => setCustomColor(swatch)}
                               className={cn(
                                 'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-foreground scale-110 ring-2 ring-foreground/20' : 'border-transparent hover:border-muted-foreground/40',
+                                active ? 'border-[hsl(var(--bd-text))] scale-110 ring-2 ring-[hsl(var(--bd-text))]/20' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
                               )}
                               style={{ backgroundColor: swatch }}
                               aria-label={`Color ${swatch}`}
@@ -351,7 +408,7 @@ export default function ViewCSR() {
                           onClick={() => {}}
                           className={cn(
                             'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                            !CSR_COLOR_SWATCHES.includes(customColor) ? 'border-foreground scale-110 ring-2 ring-foreground/20' : 'border-transparent',
+                            !CSR_COLOR_SWATCHES.includes(customColor) ? 'border-[hsl(var(--bd-text))] scale-110 ring-2 ring-[hsl(var(--bd-text))]/20' : 'border-transparent',
                           )}
                           style={{ backgroundColor: customColor }}
                           aria-label="Current color"
@@ -360,24 +417,29 @@ export default function ViewCSR() {
                       <Input
                         value={customColor}
                         onChange={(e) => setCustomColor(e.target.value)}
-                        className="h-9 rounded-[10px] font-mono text-xs"
+                        className="h-9 rounded-[12px] font-mono text-xs"
                         placeholder="#0f172a"
                       />
                     </div>
                   ) : null}
                 </div>
 
-                <div>
-                  <div className="mb-3 text-xs font-medium text-muted-foreground">Handwriting Font</div>
-                  <div className="flex items-center gap-2 mb-3">
+                {/* Handwriting Font Section */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+                  <div className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Handwriting Font</div>
+                  <p className="mb-4 text-xs leading-relaxed text-[hsl(var(--bd-text-muted))]">
+                    Select the font style used for fillable text values on the PDF output.
+                  </p>
+
+                  <div className="flex items-center gap-2 mb-4">
                     <button
                       type="button"
                       onClick={() => setCustomFont('auto')}
                       className={cn(
-                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        'rounded-full px-4 py-2 text-xs font-bold border transition',
                         customFont === 'auto'
                           ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
-                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                          : 'bg-transparent text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
                       )}
                     >
                       Auto
@@ -388,15 +450,16 @@ export default function ViewCSR() {
                         if (customFont === 'auto') setCustomFont('Caveat')
                       }}
                       className={cn(
-                        'rounded-full px-3 py-1.5 text-xs font-bold border transition',
+                        'rounded-full px-4 py-2 text-xs font-bold border transition',
                         customFont !== 'auto'
                           ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
-                          : 'bg-transparent text-muted-foreground border-border hover:border-foreground/30',
+                          : 'bg-transparent text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
                       )}
                     >
                       Custom
                     </button>
                   </div>
+
                   {customFont !== 'auto' ? (
                     <div className="flex flex-wrap gap-2">
                       {CSR_HANDWRITING_FONTS.map((font) => (
@@ -405,10 +468,10 @@ export default function ViewCSR() {
                           type="button"
                           onClick={() => setCustomFont(font.value)}
                           className={cn(
-                            'rounded-full px-4 py-2 text-sm border transition',
+                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition',
                             customFont === font.value
-                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))]'
-                              : 'bg-transparent text-foreground border-border hover:border-foreground/30',
+                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm'
+                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
                           )}
                         >
                           {font.label}
@@ -418,9 +481,10 @@ export default function ViewCSR() {
                   ) : null}
                 </div>
 
+                {/* Save Button */}
                 <button
                   type="button"
-                  className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="h-12 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-bold text-[hsl(var(--bd-button-primary-text))] transition hover:opacity-90"
                   onClick={() => {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
