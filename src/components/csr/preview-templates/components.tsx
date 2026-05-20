@@ -23,7 +23,7 @@ export function PdfSignatureCard({ styles, label, name = '', role = '', signatur
           <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
         </View>
       ) : (
-        <View style={styles.signSpace} />
+        <View style={{ height: 24, marginBottom: 4 }} />
       )}
       <Text style={styles.signLabel}>{label}</Text>
       {hasText(name) ? <Text style={styles.fieldValue}>{name}</Text> : null}

@@ -1,6 +1,16 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
-import { getLayoutDensity, getFillablePdfTheme, getStatusValue, shouldRender, safe } from './utils'
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import {
+  getLayoutDensity,
+  getFillablePdfTheme,
+  getStatusValue,
+  shouldRender,
+  safe,
+  hasText,
+  getTechnicianName,
+  getTechnicianRole,
+  getTechnicianSignatureUrl,
+} from './utils'
 import {
   StructuredTopIdentity,
   SharedProblemSection,
@@ -11,7 +21,6 @@ import {
   StatusListDots,
   ServiceTimeSection,
   CustomerFeedbackSection,
-  PulseAcknowledgementBlock,
 } from './components'
 import type { CsrPdfProps } from './types'
 
@@ -132,7 +141,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       backgroundColor: '#dbeafe',
       borderWidth: 1,
       borderColor: '#93c5fd',
-      borderRadius: 999,
+      borderRadius: 4,
     },
     pillText: { fontSize: 7.5, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
     serviceGrid: { flexDirection: 'row' },
@@ -167,7 +176,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       flex: 1,
       borderWidth: 1,
       borderColor: '#dbe7f5',
-      borderRadius: 12,
+      borderRadius: 4,
       padding: compact ? 6 : 8,
     },
     signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#93c5fd', borderStyle: 'dashed', marginBottom: 4 },
@@ -239,7 +248,49 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
 
         <ServiceTimeSection styles={styles} csr={csr} />
         <CustomerFeedbackSection styles={styles} csr={csr} />
-        <PulseAcknowledgementBlock styles={styles} csr={csr} />
+
+        {csr.showAcknowledgement || csr.showTechnicianSignLine ? (
+          <PdfSection styles={styles} title="Acknowledgement">
+            {csr.showAcknowledgement ? (
+              <View style={[styles.fieldCard, { width: '100%', borderRightWidth: 0, borderBottomWidth: 0 }]}>
+                <Text style={styles.fieldLabel}>Recipient name/title</Text>
+                <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name) || ' '}</Text>
+              </View>
+            ) : null}
+
+            {shouldRender(true, csr.customer_feedback) ? (
+              <View style={[styles.blockCard, { borderBottomWidth: 1, borderColor: '#e2e8f0' }]}>
+                <Text style={styles.fieldLabel}>Comment</Text>
+                <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.signRow}>
+              {csr.showAcknowledgement ? (
+                <View style={styles.signCard}>
+                  <View style={{ height: 24, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 6, marginBottom: 4 }} />
+                  <Text style={styles.signLabel}>Recipient Signature</Text>
+                  {hasText(csr.acknowledgement_name) ? <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text> : null}
+                </View>
+              ) : null}
+
+              {csr.showTechnicianSignLine ? (
+                <View style={styles.signCard}>
+                  {getTechnicianSignatureUrl(csr) ? (
+                    <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
+                      <Image src={getTechnicianSignatureUrl(csr)} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+                    </View>
+                  ) : (
+                    <View style={{ height: 24, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 6, marginBottom: 4 }} />
+                  )}
+                  <Text style={styles.signLabel}>Technician Signature</Text>
+                  {hasText(getTechnicianName(csr)) ? <Text style={styles.fieldValue}>{getTechnicianName(csr)}</Text> : null}
+                  {hasText(getTechnicianRole(csr)) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{getTechnicianRole(csr)}</Text> : null}
+                </View>
+              ) : null}
+            </View>
+          </PdfSection>
+        ) : null}
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>

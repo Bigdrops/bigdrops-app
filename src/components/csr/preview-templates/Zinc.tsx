@@ -321,26 +321,46 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
         ) : null}
 
         {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
-          <View style={styles.ackGrid}>
-            {csr.showTechnicianSignLine ? (
-              <PdfSignatureCard
-                styles={styles}
-                label="Lead Technician Signature"
-                name={technicianName}
-                role={technicianRole}
-                signatureUrl={technicianSignatureUrl}
-              />
-            ) : null}
-
+          <PdfSection styles={styles} title="Acknowledgement">
             {csr.showAcknowledgement ? (
-              <View style={[styles.signCard, { flex: 2, padding: 8, backgroundColor: '#f4f4f5', borderRadius: 6, borderWidth: 1, borderColor: '#e4e4e7' }]}>
-                <Text style={[styles.signLabel, { color: '#09090b' }]}>Recipient / Signature</Text>
-                <View style={{ marginTop: 6 }}>
-                  <Text style={[styles.fieldLabel, { fontSize: 6.5 }]}>Comment</Text>
-                </View>
+              <View style={[styles.fieldCard, { width: '100%', marginBottom: 4 }]}>
+                <Text style={styles.fieldLabel}>Recipient name/title</Text>
+                <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name) || ' '}</Text>
               </View>
             ) : null}
-          </View>
+
+            {shouldRender(true, csr.customer_feedback) ? (
+              <View style={[styles.blockCard, { marginBottom: 6 }]}>
+                <Text style={styles.fieldLabel}>Comment</Text>
+                <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.ackGrid}>
+              {csr.showAcknowledgement ? (
+                <View style={[styles.signCard, { padding: 8, backgroundColor: '#f4f4f5', borderRadius: 4, borderWidth: 1, borderColor: '#e4e4e7' }]}>
+                  <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4, marginBottom: 4 }} />
+                  <Text style={styles.signLabel}>Recipient Signature</Text>
+                  {hasText(csr.acknowledgement_name) ? <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text> : null}
+                </View>
+              ) : null}
+
+              {csr.showTechnicianSignLine ? (
+                <View style={[styles.signCard, { padding: 8, backgroundColor: '#f4f4f5', borderRadius: 4, borderWidth: 1, borderColor: '#e4e4e7' }]}>
+                  {technicianSignatureUrl ? (
+                    <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
+                      <Image src={technicianSignatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+                    </View>
+                  ) : (
+                    <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4, marginBottom: 4 }} />
+                  )}
+                  <Text style={styles.signLabel}>Technician Signature</Text>
+                  {hasText(technicianName) ? <Text style={styles.fieldValue}>{technicianName}</Text> : null}
+                  {hasText(technicianRole) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
+                </View>
+              ) : null}
+            </View>
+          </PdfSection>
         ) : null}
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}

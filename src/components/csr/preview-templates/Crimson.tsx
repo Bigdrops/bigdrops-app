@@ -21,7 +21,6 @@ import {
   ReadingsStrip,
   MaterialsPills,
   MaterialsTable,
-  CustomerFeedbackSection,
 } from './components'
 import type { CsrPdfProps } from './types'
 
@@ -342,7 +341,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           tightLayout ? <MaterialsPills styles={styles} csr={csr} /> : <MaterialsTable styles={styles} csr={csr} />
         ) : null}
 
-        <PdfSection styles={styles} title="Status & Acknowledgement">
+        <PdfSection styles={styles} title="Status">
           <View style={styles.statusGrid}>
             {CSR_STATUS_OPTIONS_PDF.map((option) => {
               const active = status === option || (option === 'Complete' && status === 'Working solution provided')
@@ -353,39 +352,50 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               )
             })}
           </View>
+        </PdfSection>
 
-          {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
+        {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
+          <PdfSection styles={styles} title="Acknowledgement">
+            {csr.showAcknowledgement ? (
+              <View style={[styles.fieldCard, { width: '100%', marginBottom: 0 }]}>
+                <Text style={styles.fieldLabel}>Recipient name/title</Text>
+                <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name) || ' '}</Text>
+              </View>
+            ) : null}
+
+            {shouldRender(true, csr.customer_feedback) ? (
+              <View style={[styles.blockCard, { marginTop: 6 }]}>
+                <Text style={styles.fieldLabel}>Comment</Text>
+                <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.ackGrid}>
+              {csr.showAcknowledgement ? (
+                <View style={styles.signCard}>
+                  <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
+                  <Text style={styles.signLabel}>Recipient Signature</Text>
+                  {hasText(csr.acknowledgement_name) ? <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text> : null}
+                </View>
+              ) : null}
+
               {csr.showTechnicianSignLine ? (
                 <View style={styles.signCard}>
-                  <View>
-                    {technicianSignatureUrl ? (
-                      <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
-                        <Image src={technicianSignatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
-                      </View>
-                    ) : (
-                      <View style={styles.signSpace} />
-                    )}
-                  </View>
-                  <Text style={styles.signLabel}>Technician Name</Text>
+                  {technicianSignatureUrl ? (
+                    <View style={{ height: 28, marginBottom: 4, justifyContent: 'flex-end' }}>
+                      <Image src={technicianSignatureUrl} style={{ maxHeight: 28, maxWidth: 92, objectFit: 'contain' }} />
+                    </View>
+                  ) : (
+                    <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
+                  )}
+                  <Text style={styles.signLabel}>Technician Signature</Text>
                   <Text style={styles.fieldValue}>{technicianName}</Text>
                   {technicianRole ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
                 </View>
               ) : null}
-
-              {csr.showAcknowledgement ? (
-                <View style={styles.signCard}>
-                  <Text style={styles.signLabel}>Recipient / Signature</Text>
-                  <View style={{ marginTop: 4 }}>
-                    <Text style={[styles.fieldLabel, { fontSize: 6 }]}>Comment</Text>
-                  </View>
-                </View>
-              ) : null}
             </View>
-          ) : null}
-        </PdfSection>
-
-        <CustomerFeedbackSection styles={styles} csr={csr} />
+          </PdfSection>
+        ) : null}
 
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>

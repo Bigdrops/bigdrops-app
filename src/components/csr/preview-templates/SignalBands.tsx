@@ -135,10 +135,10 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     pill: {
       paddingVertical: 4,
       paddingHorizontal: 7,
-      backgroundColor: '#ffedd5',
-      borderWidth: 1,
-      borderColor: '#fdba74',
-      borderRadius: 999,
+      backgroundColor: 'transparent',
+      borderWidth: 0,
+      borderColor: 'transparent',
+      borderRadius: 0,
     },
     pillText: { fontSize: 7.2, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
 
