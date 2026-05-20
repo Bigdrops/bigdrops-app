@@ -1,0 +1,142 @@
+index_statement
+CREATE UNIQUE INDEX clients_pkey ON public.clients USING btree (id);
+CREATE INDEX idx_clients_name ON public.clients USING btree (name);
+CREATE INDEX idx_clients_archived_at ON public.clients USING btree (archived_at);
+"CREATE INDEX idx_projects_status_updated_at ON public.projects USING btree (status, updated_at DESC);"
+CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (id);
+CREATE INDEX idx_projects_client_id ON public.projects USING btree (client_id);
+CREATE INDEX idx_projects_archived_at ON public.projects USING btree (archived_at);
+CREATE INDEX projects_po_number_idx ON public.projects USING btree (po_number);
+CREATE INDEX idx_projects_status ON public.projects USING btree (status);
+CREATE UNIQUE INDEX projects_project_code_key ON public.projects USING btree (project_code);
+CREATE INDEX idx_projects_created_by ON public.projects USING btree (created_by);
+CREATE INDEX idx_projects_updated_by ON public.projects USING btree (updated_by);
+CREATE INDEX idx_projects_updated_at ON public.projects USING btree (updated_at DESC);
+CREATE UNIQUE INDEX device_installations_pkey ON public.device_installations USING btree (id);
+CREATE UNIQUE INDEX idx_device_installations_active_code ON public.device_installations USING btree (device_code) WHERE (active = true);
+CREATE UNIQUE INDEX idx_device_installations_active_installation ON public.device_installations USING btree (installation_id) WHERE (active = true);
+CREATE INDEX idx_device_installations_user_id ON public.device_installations USING btree (user_id);
+CREATE INDEX idx_device_installations_last_seen_at ON public.device_installations USING btree (last_seen_at DESC);
+CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id);
+CREATE INDEX idx_profiles_email ON public.profiles USING btree (email);
+CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
+CREATE INDEX idx_profiles_is_approved ON public.profiles USING btree (is_approved);
+CREATE INDEX idx_profiles_assigned_device_code ON public.profiles USING btree (assigned_device_code);
+CREATE UNIQUE INDEX notification_preferences_pkey ON public.notification_preferences USING btree (id);
+"CREATE UNIQUE INDEX notification_preferences_unique_rule_idx ON public.notification_preferences USING btree (user_id, domain, event_key, channel, COALESCE(threshold_days, '-1'::integer));"
+CREATE INDEX notification_preferences_user_idx ON public.notification_preferences USING btree (user_id);
+CREATE UNIQUE INDEX push_device_tokens_pkey ON public.push_device_tokens USING btree (id);
+"CREATE UNIQUE INDEX push_device_tokens_user_token_idx ON public.push_device_tokens USING btree (user_id, token);"
+CREATE INDEX push_device_tokens_user_active_idx ON public.push_device_tokens USING btree (user_id) WHERE (revoked_at IS NULL);
+CREATE INDEX push_delivery_logs_user_id_idx ON public.push_delivery_logs USING btree (user_id);
+CREATE UNIQUE INDEX push_delivery_logs_pkey ON public.push_delivery_logs USING btree (id);
+CREATE INDEX push_delivery_logs_notification_id_idx ON public.push_delivery_logs USING btree (notification_id);
+CREATE UNIQUE INDEX devices_pkey ON public.devices USING btree (id);
+CREATE UNIQUE INDEX devices_device_code_key ON public.devices USING btree (device_code);
+CREATE INDEX idx_devices_device_code ON public.devices USING btree (device_code);
+CREATE INDEX idx_devices_user_id ON public.devices USING btree (user_id);
+CREATE UNIQUE INDEX settings_pkey ON public.settings USING btree (id);
+CREATE UNIQUE INDEX quotation_items_pkey ON public.quotation_items USING btree (id);
+CREATE INDEX quotation_items_quotation_id_idx ON public.quotation_items USING btree (quotation_id);
+"CREATE INDEX quotation_items_sort_order_idx ON public.quotation_items USING btree (quotation_id, sort_order);"
+CREATE INDEX idx_quotation_items_item_id ON public.quotation_items USING btree (item_id);
+CREATE INDEX idx_quotation_items_description ON public.quotation_items USING btree (description);
+CREATE UNIQUE INDEX project_documents_pkey ON public.project_documents USING btree (id);
+CREATE INDEX idx_project_documents_project_id ON public.project_documents USING btree (project_id);
+CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id);
+CREATE INDEX idx_payments_invoice_id ON public.payments USING btree (invoice_id);
+CREATE UNIQUE INDEX device_sequences_pkey ON public.device_sequences USING btree (id);
+"CREATE UNIQUE INDEX device_sequences_device_code_doc_type_key ON public.device_sequences USING btree (device_code, doc_type);"
+CREATE INDEX idx_device_sequences_device_code ON public.device_sequences USING btree (device_code);
+CREATE UNIQUE INDEX wht_receipts_pkey ON public.wht_receipts USING btree (id);
+CREATE UNIQUE INDEX wht_receipts_payment_id_key ON public.wht_receipts USING btree (payment_id);
+CREATE UNIQUE INDEX invoice_items_pkey ON public.invoice_items USING btree (id);
+CREATE INDEX idx_invoice_items_item_id ON public.invoice_items USING btree (item_id);
+CREATE INDEX idx_invoice_items_description ON public.invoice_items USING btree (description);
+CREATE INDEX idx_invoice_items_invoice_id ON public.invoice_items USING btree (invoice_id);
+CREATE UNIQUE INDEX signatories_pkey ON public.signatories USING btree (id);
+CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id);
+CREATE UNIQUE INDEX tax_settings_pkey ON public.tax_settings USING btree (id);
+CREATE UNIQUE INDEX tax_settings_settings_id_key ON public.tax_settings USING btree (settings_id);
+CREATE UNIQUE INDEX tax_input_entries_pkey ON public.tax_input_entries USING btree (id);
+CREATE UNIQUE INDEX tax_filings_pkey ON public.tax_filings USING btree (id);
+CREATE UNIQUE INDEX tax_reminders_pkey ON public.tax_reminders USING btree (id);
+CREATE INDEX idx_tax_reminders_due_date ON public.tax_reminders USING btree (due_date);
+CREATE UNIQUE INDEX activity_events_pkey ON public.activity_events USING btree (id);
+"CREATE INDEX idx_activity_events_entity ON public.activity_events USING btree (entity_type, entity_id, created_at DESC);"
+"CREATE INDEX idx_activity_events_event_type ON public.activity_events USING btree (event_type, created_at DESC);"
+"CREATE INDEX idx_activity_events_actor ON public.activity_events USING btree (actor_id, created_at DESC);"
+"CREATE INDEX idx_activity_events_scope ON public.activity_events USING btree (scope_type, created_at DESC);"
+CREATE UNIQUE INDEX audit_logs_pkey ON public.audit_logs USING btree (id);
+"CREATE INDEX idx_audit_logs_entity ON public.audit_logs USING btree (entity_type, entity_id, created_at DESC);"
+"CREATE INDEX idx_audit_logs_actor ON public.audit_logs USING btree (actor_id, created_at DESC);"
+"CREATE INDEX idx_audit_logs_action ON public.audit_logs USING btree (action, created_at DESC);"
+"CREATE INDEX idx_audit_logs_scope ON public.audit_logs USING btree (scope_type, created_at DESC);"
+CREATE INDEX idx_waybills_archived_active ON public.waybills USING btree (archived_at) WHERE (archived_at IS NULL);
+CREATE INDEX idx_waybills_archived_at ON public.waybills USING btree (archived_at) WHERE (archived_at IS NOT NULL);
+CREATE UNIQUE INDEX waybills_pkey ON public.waybills USING btree (id);
+CREATE UNIQUE INDEX idx_waybills_waybill_number_unique ON public.waybills USING btree (waybill_number) WHERE (waybill_number IS NOT NULL);
+CREATE INDEX idx_rfqs_archived_active ON public.rfqs USING btree (archived_at) WHERE (archived_at IS NULL);
+CREATE INDEX idx_rfqs_archived_at ON public.rfqs USING btree (archived_at) WHERE (archived_at IS NOT NULL);
+CREATE UNIQUE INDEX rfqs_pkey ON public.rfqs USING btree (id);
+CREATE INDEX idx_rfqs_rfq_number ON public.rfqs USING btree (rfq_number);
+CREATE UNIQUE INDEX rfq_items_pkey ON public.rfq_items USING btree (id);
+CREATE INDEX idx_rfq_items_rfq_id ON public.rfq_items USING btree (rfq_id);
+CREATE INDEX idx_boqs_archived_active ON public.boqs USING btree (archived_at) WHERE (archived_at IS NULL);
+CREATE INDEX idx_boqs_archived_at ON public.boqs USING btree (archived_at) WHERE (archived_at IS NOT NULL);
+CREATE UNIQUE INDEX boqs_pkey ON public.boqs USING btree (id);
+CREATE UNIQUE INDEX boq_rows_pkey ON public.boq_rows USING btree (id);
+"CREATE INDEX idx_boq_rows_boq_sort ON public.boq_rows USING btree (boq_id, sort_order);"
+CREATE UNIQUE INDEX item_catalog_pkey ON public.item_catalog USING btree (id);
+CREATE UNIQUE INDEX idx_item_catalog_normalized_name ON public.item_catalog USING btree (normalized_name);
+CREATE INDEX idx_item_catalog_is_active ON public.item_catalog USING btree (is_active);
+CREATE INDEX idx_item_catalog_created_at ON public.item_catalog USING btree (created_at DESC);
+CREATE UNIQUE INDEX item_aliases_pkey ON public.item_aliases USING btree (id);
+CREATE UNIQUE INDEX idx_item_aliases_normalized_alias_text ON public.item_aliases USING btree (normalized_alias_text);
+CREATE INDEX idx_item_aliases_item_id ON public.item_aliases USING btree (item_id);
+CREATE INDEX idx_item_aliases_is_active ON public.item_aliases USING btree (is_active);
+"CREATE INDEX idx_quotations_status_updated_at ON public.quotations USING btree (status, updated_at DESC);"
+CREATE UNIQUE INDEX quotations_pkey ON public.quotations USING btree (id);
+CREATE UNIQUE INDEX quotations_quotation_number_key ON public.quotations USING btree (quotation_number);
+CREATE INDEX quotations_client_id_idx ON public.quotations USING btree (client_id);
+CREATE INDEX quotations_project_id_idx ON public.quotations USING btree (project_id);
+CREATE INDEX quotations_status_idx ON public.quotations USING btree (status);
+CREATE INDEX quotations_issue_date_idx ON public.quotations USING btree (issue_date DESC);
+CREATE INDEX quotations_archived_at_idx ON public.quotations USING btree (archived_at);
+CREATE INDEX quotations_po_number_idx ON public.quotations USING btree (po_number);
+CREATE INDEX idx_quotations_status ON public.quotations USING btree (status);
+CREATE INDEX idx_quotations_client_id ON public.quotations USING btree (client_id);
+CREATE UNIQUE INDEX idx_quotations_quotation_number_unique ON public.quotations USING btree (quotation_number) WHERE (quotation_number IS NOT NULL);
+CREATE INDEX idx_quotations_created_by ON public.quotations USING btree (created_by);
+CREATE INDEX idx_quotations_updated_by ON public.quotations USING btree (updated_by);
+"CREATE INDEX idx_invoices_status_created_at ON public.invoices USING btree (status, created_at DESC);"
+CREATE UNIQUE INDEX invoices_pkey ON public.invoices USING btree (id);
+CREATE INDEX idx_invoices_created_at ON public.invoices USING btree (created_at DESC);
+CREATE INDEX idx_invoices_archived_at ON public.invoices USING btree (archived_at);
+CREATE INDEX idx_invoices_project_id ON public.invoices USING btree (project_id);
+CREATE INDEX invoices_po_number_idx ON public.invoices USING btree (po_number);
+CREATE INDEX idx_invoices_status ON public.invoices USING btree (status);
+CREATE INDEX idx_invoices_client_id ON public.invoices USING btree (client_id);
+CREATE INDEX idx_invoices_document_type ON public.invoices USING btree (document_type);
+CREATE INDEX idx_invoices_created_by ON public.invoices USING btree (created_by);
+CREATE INDEX idx_invoices_updated_by ON public.invoices USING btree (updated_by);
+CREATE INDEX idx_invoices_updated_at ON public.invoices USING btree (updated_at DESC);
+CREATE INDEX idx_csrs_archived_active ON public.csrs USING btree (archived_at) WHERE (archived_at IS NULL);
+CREATE UNIQUE INDEX csrs_pkey ON public.csrs USING btree (id);
+CREATE INDEX idx_csrs_created_at ON public.csrs USING btree (created_at DESC);
+CREATE INDEX idx_csrs_client_id ON public.csrs USING btree (client_id);
+CREATE INDEX idx_csrs_archived_at ON public.csrs USING btree (archived_at);
+CREATE INDEX idx_csrs_project_id ON public.csrs USING btree (project_id);
+CREATE INDEX csrs_po_number_idx ON public.csrs USING btree (po_number);
+CREATE INDEX idx_csrs_status ON public.csrs USING btree (status);
+CREATE INDEX idx_csrs_technician_signatory_id ON public.csrs USING btree (technician_signatory_id);
+CREATE UNIQUE INDEX idx_csrs_csr_number_unique ON public.csrs USING btree (csr_number) WHERE (csr_number IS NOT NULL);
+CREATE UNIQUE INDEX item_merge_log_pkey ON public.item_merge_log USING btree (id);
+CREATE INDEX idx_item_merge_log_batch_id ON public.item_merge_log USING btree (batch_id);
+CREATE UNIQUE INDEX item_import_batches_pkey ON public.item_import_batches USING btree (id);
+CREATE UNIQUE INDEX notification_runs_pkey ON public.notification_runs USING btree (id);
+"CREATE INDEX notifications_user_state_idx ON public.notifications USING btree (user_id, state);"
+"CREATE INDEX notifications_user_domain_idx ON public.notifications USING btree (user_id, domain);"
+CREATE INDEX notifications_last_generated_idx ON public.notifications USING btree (last_generated_at DESC);
+"CREATE UNIQUE INDEX notifications_scope_user_fingerprint_idx ON public.notifications USING btree (scope_type, scope_id, user_id, fingerprint);"
+CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id);
