@@ -26,6 +26,7 @@ import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { PenLine } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -276,9 +277,12 @@ export default function ViewCSR() {
                     Controls the handwriting-style font and ink color for dynamic values in the PDF.
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 mb-4 rounded-[14px] border border-border bg-muted/30 px-3 py-2.5">
-                    <div className="text-xs font-medium text-foreground">Use template default</div>
+                  <div className="flex items-center justify-between gap-4 mb-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+                    <Label htmlFor="csr-use-template-default" className="text-sm font-semibold text-[hsl(var(--bd-text))]">
+                      Use template handwriting
+                    </Label>
                     <Switch
+                      id="csr-use-template-default"
                       checked={useTemplateDefault}
                       onCheckedChange={(checked) => {
                         setUseTemplateDefault(checked)
