@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import DocumentSection from '../shared/DocumentSection'
 import type { BaseDocument } from '../types/documentView'
 import CsrSummaryStrip from './CsrSummaryStrip'
-import CsrPrimaryActions from './CsrPrimaryActions'
 import styles from './CsrViewPage.module.css'
 import type { CsrMetric } from './csrViewMockData'
 
@@ -12,10 +11,6 @@ interface CsrViewPageProps {
   metrics: CsrMetric[]
   documentPreview?: ReactNode
   preview?: ReactNode // deprecated, use documentPreview
-  onComplete: () => void
-  onEdit: () => void
-  onDownload?: () => void
-  downloading?: boolean
   onDuplicate: () => void
   onCopyNumber: () => void
 }
@@ -25,22 +20,14 @@ export default function CsrViewPage({
   metrics,
   documentPreview,
   preview,
-  onComplete,
-  onEdit,
-  onDownload,
-  downloading,
-  onDuplicate,
-  onCopyNumber,
+  onDuplicate: _onDuplicate,
+  onCopyNumber: _onCopyNumber,
 }: CsrViewPageProps) {
   const previewContent = documentPreview || preview
 
   return (
     <div className={styles.stack}>
       <CsrSummaryStrip items={metrics} />
-
-      <div className={styles.actionStack}>
-        <CsrPrimaryActions onComplete={onComplete} onEdit={onEdit} onDownload={onDownload} downloading={downloading} />
-      </div>
 
       <DocumentSection title="Service report content">
         {previewContent}

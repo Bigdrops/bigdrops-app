@@ -5,6 +5,7 @@ import type { BaseDocument } from '@/components/document-view/types/documentView
 import CsrHeroMeta from '@/components/document-view/csr/CsrHeroMeta'
 import CsrViewPage from '@/components/document-view/csr/CsrViewPage'
 import CsrMoreSheet from '@/components/document-view/csr/CsrMoreSheet'
+import CsrPrimaryActions from '@/components/document-view/csr/CsrPrimaryActions'
 import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
 import DocumentPage from '@/components/document-view/shared/DocumentPage'
 import '@/components/document-view/shared/documentViewTheme.css'
@@ -284,6 +285,14 @@ export default function ViewCSR() {
             }
           />
         }
+        actionRow={
+          <CsrPrimaryActions
+            onComplete={() => ui.openModal(MODAL_COMPLETE)}
+            onEdit={() => navigate(`/csr/edit/${id}`)}
+            onDownload={() => void handleDownload()}
+            downloading={downloading}
+          />
+        }
         hero={
           <DocumentHero
             eyebrow={docProps.title}
@@ -309,106 +318,15 @@ export default function ViewCSR() {
                   <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
 
-                {/* ROW 1: Ink Color Switch (Global) */}
-                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                        <PenLine className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
-                        Ink Color
-                      </div>
-                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override the fillable text color with a custom hex value.</p>
-                    </div>
-                    <Switch
-                      checked={customColor !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
-                          setCustomColor(defaults.color)
-                        } else {
-                          setCustomColor('auto')
-                        }
-                      }}
-                    />
-                  </div>
-
-                  {customColor !== 'auto' ? (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex gap-2">
-                        {CSR_COLOR_SWATCHES.map((swatch) => {
-                          const active = customColor.toLowerCase() === swatch.toLowerCase()
-                          return (
-                            <button
-                              key={swatch}
-                              type="button"
-                              onClick={() => setCustomColor(swatch)}
-                              className={cn(
-                                'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-[hsl(var(--bd-text))] scale-110 ring-2 ring-[hsl(var(--bd-text))]/20' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
-                              )}
-                              style={{ backgroundColor: swatch }}
-                              aria-label={`Color ${swatch}`}
-                            />
-                          )
-                        })}
-                      </div>
-                      <Input
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="h-9 rounded-[12px] font-mono text-xs"
-                        placeholder="#0f172a"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* ROW 2: Handwriting Font Switch (Global) */}
-                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                        <Type className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
-                        Handwriting Font
-                      </div>
-                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Swap the handwriting script used for fillable data entries.</p>
-                    </div>
-                    <Switch
-                      checked={customFont !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setCustomFont('Caveat')
-                        } else {
-                          setCustomFont('auto')
-                        }
-                      }}
-                    />
-                  </div>
-
-                  {customFont !== 'auto' ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {CSR_HANDWRITING_FONTS.map((font) => (
-                        <button
-                          key={font.value}
-                          type="button"
-                          onClick={() => setCustomFont(font.value)}
-                          className={cn(
-                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                            customFont === font.value
-                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20'
-                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
-                          )}
-                        >
-                          {font.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* ROW 3: Template Accent Color Switch (PulseFrame EXCLUSIVE) */}
+                {/* ROW 1: Template Accent Color Switch (PulseFrame EXCLUSIVE) */}
                 {template === '1' ? (
                   <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
-                    <div className="flex items-center justify-between">
+                    <div
+                      className="flex cursor-pointer items-center justify-between select-none"
+                      onClick={() => {
+                        setTemplateAccentColor(templateAccentColor === 'auto' ? '#0046C7' : 'auto')
+                      }}
+                    >
                       <div className="min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
                           <Palette className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
@@ -419,22 +337,19 @@ export default function ViewCSR() {
                       <Switch
                         checked={templateAccentColor !== 'auto'}
                         onCheckedChange={(checked) => {
-                          if (checked) {
-                            setTemplateAccentColor('#0046C7')
-                          } else {
-                            setTemplateAccentColor('auto')
-                          }
+                          setTemplateAccentColor(checked ? '#0046C7' : 'auto')
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
 
                     {templateAccentColor !== 'auto' ? (
                       <div className="mt-4 space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
                         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
-                        <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-6 gap-2">
                           <button
                             type="button"
-                            className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20"
+                            className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-text))] scale-110 shadow-sm transition"
                             style={{ backgroundColor: templateAccentColor }}
                             aria-label="Live color"
                           />
@@ -472,6 +387,115 @@ export default function ViewCSR() {
                     ) : null}
                   </div>
                 ) : null}
+
+                {/* ROW 2: Ink Color Switch (Global) */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                  <div
+                    className="flex cursor-pointer items-center justify-between select-none"
+                    onClick={() => {
+                      if (customColor === 'auto') {
+                        const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+                        setCustomColor(defaults.color)
+                      } else {
+                        setCustomColor('auto')
+                      }
+                    }}
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <PenLine className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                        Ink Color
+                      </div>
+                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override the fillable text color with a custom hex value.</p>
+                    </div>
+                    <Switch
+                      checked={customColor !== 'auto'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+                          setCustomColor(defaults.color)
+                        } else {
+                          setCustomColor('auto')
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {customColor !== 'auto' ? (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex gap-2">
+                        {CSR_COLOR_SWATCHES.map((swatch) => {
+                          const active = customColor.toLowerCase() === swatch.toLowerCase()
+                          return (
+                            <button
+                              key={swatch}
+                              type="button"
+                              onClick={() => setCustomColor(swatch)}
+                              className={cn(
+                                'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                                active ? 'border-[hsl(var(--bd-text))] scale-110 ring-2 ring-[hsl(var(--bd-text))]/20' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
+                              )}
+                              style={{ backgroundColor: swatch }}
+                              aria-label={`Color ${swatch}`}
+                            />
+                          )
+                        })}
+                      </div>
+                      <Input
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        className="h-9 rounded-[12px] font-mono text-xs"
+                        placeholder="#0f172a"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* ROW 3: Handwriting Font Switch (Global) */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                  <div
+                    className="flex cursor-pointer items-center justify-between select-none"
+                    onClick={() => {
+                      setCustomFont(customFont === 'auto' ? 'Caveat' : 'auto')
+                    }}
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <Type className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                        Handwriting Font
+                      </div>
+                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Swap the handwriting script used for fillable data entries.</p>
+                    </div>
+                    <Switch
+                      checked={customFont !== 'auto'}
+                      onCheckedChange={(checked) => {
+                        setCustomFont(checked ? 'Caveat' : 'auto')
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {customFont !== 'auto' ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {CSR_HANDWRITING_FONTS.map((font) => (
+                        <button
+                          key={font.value}
+                          type="button"
+                          onClick={() => setCustomFont(font.value)}
+                          className={cn(
+                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
+                            customFont === font.value
+                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20'
+                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
+                          )}
+                        >
+                          {font.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
 
                 {/* Save Button */}
                 <button
@@ -554,10 +578,6 @@ export default function ViewCSR() {
           document={docProps}
           metrics={metrics}
           documentPreview={<CsrDocumentPreview csr={csr} previewModel={previewData} settingsData={settings} />}
-          onComplete={() => ui.openModal(MODAL_COMPLETE)}
-          onEdit={() => navigate(`/csr/edit/${id}`)}
-          onDownload={() => void handleDownload()}
-          downloading={downloading}
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
