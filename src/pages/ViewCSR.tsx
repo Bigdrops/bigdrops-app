@@ -301,7 +301,7 @@ export default function ViewCSR() {
                   <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
 
-                {/* ROW 1: Ink Color Switch */}
+                {/* ROW 1: Ink Color Switch (Global) */}
                 <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 space-y-0.5">
@@ -324,49 +324,7 @@ export default function ViewCSR() {
                     />
                   </div>
 
-                  {/* PulseFrame-exclusive extended palette */}
-                  {template === '1' && customColor !== 'auto' ? (
-                    <div className="mt-4 space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20"
-                          style={{ backgroundColor: customColor }}
-                          aria-label="Live color"
-                        />
-                        {CSR_PULSEFRAME_SWATCHES.map((swatch) => {
-                          const active = customColor.toLowerCase() === swatch.hex.toLowerCase()
-                          return (
-                            <button
-                              key={swatch.hex}
-                              type="button"
-                              onClick={() => setCustomColor(swatch.hex)}
-                              className={cn(
-                                'h-9 w-9 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-[hsl(var(--bd-text))] scale-110' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
-                              )}
-                              style={{ backgroundColor: swatch.hex }}
-                              aria-label={swatch.label}
-                              title={swatch.label}
-                            />
-                          )
-                        })}
-                      </div>
-                      <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[hsl(var(--bd-text-muted))]">#</span>
-                        <Input
-                          value={customColor.startsWith('#') ? customColor.slice(1) : customColor}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/^#/, '')
-                            setCustomColor(`#${raw}`)
-                          }}
-                          className="h-10 rounded-[12px] bg-[hsl(var(--bd-surface))] pl-7 font-mono text-xs"
-                          placeholder="0f172a"
-                        />
-                      </div>
-                    </div>
-                  ) : customColor !== 'auto' && template !== '1' ? (
+                  {customColor !== 'auto' ? (
                     <div className="mt-4 space-y-2">
                       <div className="flex gap-2">
                         {CSR_COLOR_SWATCHES.map((swatch) => {
@@ -396,46 +354,114 @@ export default function ViewCSR() {
                   ) : null}
                 </div>
 
-                {/* ROW 2: Handwriting Font Switch — PulseFrame exclusive */}
+                {/* ROW 2: Handwriting Font Switch (Global) */}
+                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <Type className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                        Handwriting Font
+                      </div>
+                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Swap the handwriting script used for fillable data entries.</p>
+                    </div>
+                    <Switch
+                      checked={customFont !== 'auto'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setCustomFont('Caveat')
+                        } else {
+                          setCustomFont('auto')
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {customFont !== 'auto' ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {CSR_HANDWRITING_FONTS.map((font) => (
+                        <button
+                          key={font.value}
+                          type="button"
+                          onClick={() => setCustomFont(font.value)}
+                          className={cn(
+                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
+                            customFont === font.value
+                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20'
+                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
+                          )}
+                        >
+                          {font.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* ROW 3: Template Accent Color Switch (PulseFrame EXCLUSIVE) */}
                 {template === '1' ? (
                   <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                          <Type className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
-                          Custom Font
+                          <Palette className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                          Template Accent
                         </div>
-                        <p className="text-xs text-[hsl(var(--bd-text-muted))]">Swap the handwriting script used for fillable data entries.</p>
+                        <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override PulseFrame structural accent with a custom palette.</p>
                       </div>
                       <Switch
-                        checked={customFont !== 'auto'}
+                        checked={customColor !== 'auto' && template === '1'}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setCustomFont('Caveat')
+                            if (customColor === 'auto') {
+                              setCustomColor(CSR_TEMPLATE_DEFAULTS['1'].color)
+                            }
                           } else {
-                            setCustomFont('auto')
+                            setCustomColor('auto')
                           }
                         }}
                       />
                     </div>
 
-                    {customFont !== 'auto' ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {CSR_HANDWRITING_FONTS.map((font) => (
+                    {customColor !== 'auto' ? (
+                      <div className="mt-4 space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
+                        <div className="flex items-center gap-2">
                           <button
-                            key={font.value}
                             type="button"
-                            onClick={() => setCustomFont(font.value)}
-                            className={cn(
-                              'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                              customFont === font.value
-                                ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20'
-                                : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
-                            )}
-                          >
-                            {font.label}
-                          </button>
-                        ))}
+                            className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20"
+                            style={{ backgroundColor: customColor }}
+                            aria-label="Live color"
+                          />
+                          {CSR_PULSEFRAME_SWATCHES.map((swatch) => {
+                            const active = customColor.toLowerCase() === swatch.hex.toLowerCase()
+                            return (
+                              <button
+                                key={swatch.hex}
+                                type="button"
+                                onClick={() => setCustomColor(swatch.hex)}
+                                className={cn(
+                                  'h-9 w-9 rounded-lg border-2 shadow-sm transition',
+                                  active ? 'border-[hsl(var(--bd-text))] scale-110' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
+                                )}
+                                style={{ backgroundColor: swatch.hex }}
+                                aria-label={swatch.label}
+                                title={swatch.label}
+                              />
+                            )
+                          })}
+                        </div>
+                        <div className="relative">
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[hsl(var(--bd-text-muted))]">#</span>
+                          <Input
+                            value={customColor.startsWith('#') ? customColor.slice(1) : customColor}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/^#/, '')
+                              setCustomColor(`#${raw}`)
+                            }}
+                            className="h-10 rounded-[12px] bg-[hsl(var(--bd-surface))] pl-7 font-mono text-xs"
+                            placeholder="0f172a"
+                          />
+                        </div>
                       </div>
                     ) : null}
                   </div>
