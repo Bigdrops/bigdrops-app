@@ -187,13 +187,15 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
   const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
   const stages = ['Arrival', 'Diagnostic', 'Repair', 'Observation', 'Handover']
-  const activeIndex = status === 'Working solution provided' || status === 'Under observation'
-    ? 3
-    : status === 'Complete'
-    ? 4
-    : status === 'Pending for spares' || status === 'Incomplete'
-    ? 2
-    : 1
+  const activeIndex = (() => {
+    if (!status) return 0
+    const normalized = status.toLowerCase()
+    if (normalized === 'complete') return 4
+    if (normalized === 'working solution provided' || normalized === 'under observation') return 3
+    if (normalized === 'pending for spares') return 2
+    if (normalized === 'incomplete') return 1
+    return 0
+  })()
 
   return (
     <Document>

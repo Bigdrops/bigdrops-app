@@ -38,6 +38,7 @@ const MODAL_ARCHIVE = 'archive'
 const CSR_TEMPLATE_KEY = 'csr_view_template'
 const CSR_CUSTOM_FONT_KEY = 'csr_custom_font'
 const CSR_CUSTOM_COLOR_KEY = 'csr_custom_color'
+const CSR_TEMPLATE_ACCENT_KEY = 'csr_template_accent_color'
 
 const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
 
@@ -78,6 +79,11 @@ function getStoredCustomColor(): 'auto' | string {
   return window.localStorage.getItem(CSR_CUSTOM_COLOR_KEY) || 'auto'
 }
 
+function getStoredTemplateAccentColor(): 'auto' | string {
+  if (typeof window === 'undefined') return 'auto'
+  return window.localStorage.getItem(CSR_TEMPLATE_ACCENT_KEY) || 'auto'
+}
+
 export default function ViewCSR() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -91,24 +97,26 @@ export default function ViewCSR() {
   const [template, setTemplate] = useState(getStoredTemplate)
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
+  const [templateAccentColor, setTemplateAccentColor] = useState<'auto' | string>(getStoredTemplateAccentColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   // Compute effective preset based on auto/custom toggles
-  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string) => {
+  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string, accent: 'auto' | string) => {
     const defaults = CSR_TEMPLATE_DEFAULTS[tmpl] || CSR_TEMPLATE_DEFAULTS['3']
     return {
       ...designPreset,
       fillableFont: font === 'auto' ? defaults.font : font,
       fillableColor: color === 'auto' ? defaults.color : color,
       fillableFontMode: 'custom' as const,
+      templateAccentColor: accent === 'auto' ? undefined : accent,
     }
   }
 
   // Keep designPreset in sync with toggle state
   useEffect(() => {
-    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor))
+    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor, templateAccentColor))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template, customFont, customColor])
+  }, [template, customFont, customColor, templateAccentColor])
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -409,36 +417,34 @@ export default function ViewCSR() {
                         <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override PulseFrame structural accent with a custom palette.</p>
                       </div>
                       <Switch
-                        checked={customColor !== 'auto' && template === '1'}
+                        checked={templateAccentColor !== 'auto'}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            if (customColor === 'auto') {
-                              setCustomColor(CSR_TEMPLATE_DEFAULTS['1'].color)
-                            }
+                            setTemplateAccentColor('#0046C7')
                           } else {
-                            setCustomColor('auto')
+                            setTemplateAccentColor('auto')
                           }
                         }}
                       />
                     </div>
 
-                    {customColor !== 'auto' ? (
+                    {templateAccentColor !== 'auto' ? (
                       <div className="mt-4 space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
                         <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20"
-                            style={{ backgroundColor: customColor }}
+                            style={{ backgroundColor: templateAccentColor }}
                             aria-label="Live color"
                           />
                           {CSR_PULSEFRAME_SWATCHES.map((swatch) => {
-                            const active = customColor.toLowerCase() === swatch.hex.toLowerCase()
+                            const active = templateAccentColor.toLowerCase() === swatch.hex.toLowerCase()
                             return (
                               <button
                                 key={swatch.hex}
                                 type="button"
-                                onClick={() => setCustomColor(swatch.hex)}
+                                onClick={() => setTemplateAccentColor(swatch.hex)}
                                 className={cn(
                                   'h-9 w-9 rounded-lg border-2 shadow-sm transition',
                                   active ? 'border-[hsl(var(--bd-text))] scale-110' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
@@ -453,13 +459,13 @@ export default function ViewCSR() {
                         <div className="relative">
                           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[hsl(var(--bd-text-muted))]">#</span>
                           <Input
-                            value={customColor.startsWith('#') ? customColor.slice(1) : customColor}
+                            value={templateAccentColor.startsWith('#') ? templateAccentColor.slice(1) : templateAccentColor}
                             onChange={(e) => {
                               const raw = e.target.value.replace(/^#/, '')
-                              setCustomColor(`#${raw}`)
+                              setTemplateAccentColor(`#${raw}`)
                             }}
                             className="h-10 rounded-[12px] bg-[hsl(var(--bd-surface))] pl-7 font-mono text-xs"
-                            placeholder="0f172a"
+                            placeholder="0046C7"
                           />
                         </div>
                       </div>
@@ -476,6 +482,7 @@ export default function ViewCSR() {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
                       window.localStorage.setItem(CSR_CUSTOM_FONT_KEY, customFont)
                       window.localStorage.setItem(CSR_CUSTOM_COLOR_KEY, customColor)
+                      window.localStorage.setItem(CSR_TEMPLATE_ACCENT_KEY, templateAccentColor)
                     }
                     setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()

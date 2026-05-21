@@ -28,6 +28,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
   const { fillableColor, fillableRegular, fillableBold } = getFillablePdfTheme(designPreset)
+  const templateAccentColor = designPreset?.templateAccentColor
   return StyleSheet.create({
     page: {
       paddingTop: tight ? 10 : compact ? 12 : 14,
@@ -39,12 +40,18 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       fontSize: tight ? 7.7 : compact ? 8.2 : 8.6,
     },
     topWrap: {
-      backgroundColor: '#0f172a',
-      paddingTop: tight ? 9 : 10,
-      paddingBottom: tight ? 28 : compact ? 30 : 34,
-      paddingHorizontal: tight ? 10 : 12,
-      borderRadius: 12,
+      position: 'relative',
       marginBottom: 0,
+      paddingTop: 24,
+      paddingBottom: 24,
+      paddingLeft: 28,
+      paddingRight: 28,
+      backgroundColor: templateAccentColor || '#0f172a',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      height: 40,
+      minHeight: 40,
+      maxHeight: 40,
     },
     headerRow: {
       flexDirection: 'row',
@@ -104,7 +111,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       paddingVertical: tight ? 3 : 4,
       paddingHorizontal: tight ? 6 : 7,
       color: '#ffffff',
-      backgroundColor: '#1d4ed8',
+      backgroundColor: templateAccentColor || '#1d4ed8',
       fontSize: tight ? 6.7 : 7.2,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
@@ -167,7 +174,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
       backgroundColor: '#f8fbff',
     },
     statusDot: { width: 8, height: 8, borderRadius: 99, borderWidth: 1.5, borderColor: '#94a3b8', backgroundColor: '#ffffff' },
-    statusDotActive: { borderColor: '#1d4ed8', backgroundColor: '#1d4ed8' },
+    statusDotActive: { borderColor: templateAccentColor || '#1d4ed8', backgroundColor: templateAccentColor || '#1d4ed8' },
     statusText: { fontSize: 6.8, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
     textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 30 },
     ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
@@ -183,7 +190,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
     signLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
       marginTop: compact ? 2 : 4,
-      backgroundColor: '#0f172a',
+      backgroundColor: templateAccentColor || '#0f172a',
       color: '#ffffff',
       paddingVertical: 4,
       paddingHorizontal: 7,

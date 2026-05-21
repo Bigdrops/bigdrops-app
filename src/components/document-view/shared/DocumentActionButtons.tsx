@@ -10,13 +10,15 @@ export function DocumentPrimaryButton({
   children,
   onClick,
   variant = 'outline',
+  disabled,
 }: {
   children: ReactNode
   onClick: () => void
   variant?: 'amber' | 'outline'
+  disabled?: boolean
 }) {
   return (
-    <button type="button" className={`${styles.button} ${styles[variant]}`} onClick={onClick}>
+    <button type="button" className={`${styles.button} ${styles[variant]}`} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   )

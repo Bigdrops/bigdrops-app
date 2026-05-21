@@ -2,32 +2,32 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
   border: 1px solid transparent;
-  border-radius: var(--dv-radius);
-  font-family: var(--dv-font-ui);
+  border-radius: var(--bd-radius-lg);
+  font-family: var(--bd-font-family);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  min-height: 42px;
+  letter-spacing: -0.28px;
 }
 
 .amber {
   background: hsl(var(--bd-button-primary-bg));
   color: hsl(var(--bd-button-primary-text));
-  padding: 9px 16px;
-  font-size: 13px;
+  padding: 14px 18px;
+  font-size: 14px;
   box-shadow: 0 10px 20px -12px hsl(var(--bd-button-primary-bg) / 0.45);
   border-color: hsl(var(--bd-button-primary-bg));
-  flex: 1 1 210px;
+  flex: 1;
 }
 
 .amber:hover {
@@ -38,9 +38,9 @@
   background: hsl(var(--bd-card-bg));
   color: hsl(var(--bd-text));
   border-color: hsl(var(--bd-border));
-  padding: 9px 14px;
-  font-size: 13px;
-  flex: 0 1 auto;
+  padding: 14px 18px;
+  font-size: 14px;
+  flex: 0 0 auto;
 }
 
 .outline:hover {
@@ -78,11 +78,15 @@
 
 @media (max-width: 640px) {
   .row {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
-  .amber,
+  .amber {
+    flex: 1 1 0%;
+  }
+
   .outline {
-    flex: 1 1 calc(50% - 4px);
+    flex: 0 0 auto;
   }
 }

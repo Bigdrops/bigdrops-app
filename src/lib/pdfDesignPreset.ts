@@ -37,6 +37,7 @@ export type PdfDesignPreset = {
   fillableFont: PdfFillableFontChoice
   fillableFontMode: PdfFillableFontMode
   fillableColor: string
+  templateAccentColor?: string
 }
 
 const DESIGN_PRESET_KEYS: Record<PdfDesignPresetDocument, string> = {
@@ -223,6 +224,7 @@ export function sanitizePdfDesignPreset(
     fillableFont: normalizeFillableFontChoice(value?.fillableFont, fallback.fillableFont),
     fillableFontMode: normalizeFillableFontMode(value?.fillableFontMode),
     fillableColor: normalizeHexColor(value?.fillableColor, fallback.fillableColor),
+    templateAccentColor: normalizeHexColor(value?.templateAccentColor || '', '') || undefined,
   }
 }
 

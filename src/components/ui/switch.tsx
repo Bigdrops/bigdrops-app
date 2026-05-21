@@ -15,7 +15,7 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-[hsl(var(--bd-border))] transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-[hsl(var(--bd-button-primary-bg))] focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))]/15 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-[size=default]:h-[16.6px] data-[size=default]:w-[28px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-[hsl(var(--bd-button-primary-bg))] data-checked:bg-[hsl(var(--bd-button-primary-bg))] data-unchecked:bg-[hsl(var(--bd-surface-muted))] data-disabled:cursor-not-allowed data-disabled:opacity-100",
+        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-[hsl(var(--bd-brand))] focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-brand))/15] aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-[size=default]:h-[16.6px] data-[size=default]:w-[28px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-[hsl(var(--bd-brand))] data-checked:bg-[hsl(var(--bd-brand))] data-unchecked:border-[hsl(var(--bd-border))] data-unchecked:bg-[hsl(var(--bd-surface-muted))] data-disabled:cursor-not-allowed data-disabled:opacity-100",
         className
       )}
       {...props}
