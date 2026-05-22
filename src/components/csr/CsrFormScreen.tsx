@@ -55,11 +55,11 @@ type Props = {
 }
 
 const STATUS_OPTIONS = [
-  'Operational',
-  'Running with observation',
-  'Pending parts',
-  'Temporarily restored',
-  'Not running',
+  'Complete',
+  'Incomplete',
+  'Pending for spares',
+  'Under observation',
+  'Working solution provided',
 ]
 
 const CALL_TYPE_OPTIONS = ['Warranty', 'AMC', 'Paid Service']
@@ -589,8 +589,7 @@ export default function CsrFormScreen({
               <button
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
-                type="button"
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors duration-200 ${
+                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
                   csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >

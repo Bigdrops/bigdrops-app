@@ -186,7 +186,7 @@ function renderCommaMaterials(rows: any[]) {
         {rows.map((row: any, i: number) => {
           const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
           const text = `${safe(row.item)}${qtyUnit ? ` ${qtyUnit}` : ''}`
-          return `${i > 0 ? ' │ ' : ''}${text}`
+          return `${i > 0 ? '  │  ' : ''}${text}`
         }).join('')}
       </Text>
     </View>
