@@ -333,7 +333,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
         </PdfSection>
 
         {hasMaterials(csr) ? (
-          <MaterialsSection styles={styles} csr={csr} preferredStyle={tightLayout ? 'comma' : 'list'} />
+          <MaterialsSection styles={styles} csr={csr} templateId="crimson" preferredStyle={tightLayout ? 'comma' : 'list'} />
         ) : null}
 
         <PdfSection styles={styles} title="Status">

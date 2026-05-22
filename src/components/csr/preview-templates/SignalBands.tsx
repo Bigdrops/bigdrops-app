@@ -282,7 +282,7 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
 
         {hasMaterials(csr) ? (
           <Band colorStyle={styles.bandKeyGold} title="Materials" sub="Consumables and replaced items used on site.">
-            <MaterialsSection styles={styles} csr={csr} noSection />
+            <MaterialsSection styles={styles} csr={csr} templateId="signalbands" noSection />
           </Band>
         ) : null}
 

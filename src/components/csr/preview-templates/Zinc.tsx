@@ -305,7 +305,7 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {hasMaterials(csr) ? (
               <View style={{ flex: 1 }}>
-                <MaterialsSection styles={styles} csr={csr} />
+                <MaterialsSection styles={styles} csr={csr} templateId="zinc" />
               </View>
             ) : null}
             {shouldRender(true, csr.customer_feedback) ? (

@@ -246,7 +246,7 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
               <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
             </View>
           </View>
-          <MaterialsSection styles={styles} csr={csr} />
+          <MaterialsSection styles={styles} csr={csr} templateId="pulseframe" />
         </PdfSection>
 
         <PdfSection styles={styles} title="Status">

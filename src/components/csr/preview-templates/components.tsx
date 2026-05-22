@@ -163,7 +163,14 @@ export function ReadingsStrip({ styles, csr }: any) {
   )
 }
 
-export function MaterialsSection({ styles, csr, preferredStyle, noSection }: any) {
+const TEMPLATE_MAX_PER_COLUMN: Record<string, number> = {
+  signalbands: 5,
+  zinc: 6,
+  crimson: 6,
+  pulseframe: 10,
+}
+
+export function MaterialsSection({ styles, csr, preferredStyle, noSection, templateId }: any) {
   if (!hasMaterials(csr)) return null
 
   const rows = getMaterialsRows(csr)
@@ -171,9 +178,18 @@ export function MaterialsSection({ styles, csr, preferredStyle, noSection }: any
 
   const metaStyle = csr.meta?.materialsOutputStyle || ''
   const resolvedStyle = preferredStyle || (metaStyle === 'comma' ? 'comma' : 'list')
-  const activeStyle = rows.length > 14 ? 'comma' : resolvedStyle
+  const maxPerCol = TEMPLATE_MAX_PER_COLUMN[templateId] || 6
 
-  const content = activeStyle === 'comma' ? renderCommaMaterials(rows) : renderTabulateMaterials(rows)
+  const numBlocks = rows.length <= maxPerCol ? 1
+    : rows.length <= maxPerCol * 2 ? 2
+    : rows.length <= maxPerCol * 3 ? 3
+    : 0
+
+  const activeStyle = numBlocks === 0 ? 'comma' : resolvedStyle
+
+  const content = activeStyle === 'comma'
+    ? renderCommaMaterials(rows)
+    : renderTabulateMaterials(rows, numBlocks)
 
   if (noSection) return content
   return <PdfSection styles={styles} title="Materials Used">{content}</PdfSection>
@@ -193,8 +209,8 @@ function renderCommaMaterials(rows: any[]) {
   )
 }
 
-function renderTabulateMaterials(rows: any[]) {
-  const mid = Math.ceil(rows.length / 2)
+function renderTabulateMaterials(rows: any[], numBlocks: number) {
+  const rowsPerBlock = Math.ceil(rows.length / numBlocks)
   const renderCell = (row: any, index: number) => {
     const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
     const children: any[] = [
@@ -212,16 +228,26 @@ function renderTabulateMaterials(rows: any[]) {
       </View>
     )
   }
+  const blocks: any[] = []
+  for (let b = 0; b < numBlocks; b++) {
+    const start = b * rowsPerBlock
+    const end = Math.min(start + rowsPerBlock, rows.length)
+    const slice = rows.slice(start, end)
+    blocks.push(
+      <View key={`block-${b}`} style={{ flex: 1, paddingHorizontal: 4 }}>
+        {slice.map((row: any, i: number) => renderCell(row, start + i))}
+      </View>
+    )
+    if (b < numBlocks - 1) {
+      blocks.push(
+        <View key={`divider-${b}`} style={{ width: 2, backgroundColor: '#475569' }} />
+      )
+    }
+  }
   return (
     <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 8 }}>
-      <View style={{ flexDirection: 'row' }}>
-        <View style={{ flex: 1, paddingRight: 4 }}>
-          {rows.slice(0, mid).map((row, i) => renderCell(row, i))}
-        </View>
-        <View style={{ width: 2, backgroundColor: '#475569' }} />
-        <View style={{ flex: 1, paddingLeft: 4 }}>
-          {rows.slice(mid).map((row, i) => renderCell(row, mid + i))}
-        </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'stretch' }}>
+        {blocks}
       </View>
     </View>
   )
