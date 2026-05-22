@@ -112,6 +112,11 @@ function isValidDateString(value: string | null | undefined): value is string {
 }
 
 function mergeRecentDocs(docs: RecentDoc[]) {
+  const dropped = docs.filter((doc) => !isValidDateString(doc.date))
+  if (dropped.length > 0) {
+    console.warn('[mergeRecentDocs] dropped docs with invalid dates:', dropped.map((d) => ({ type: d.type, id: d.id, date: d.date })))
+  }
+
   return docs
     .filter((doc) => isValidDateString(doc.date))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -231,7 +236,17 @@ function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[]
 
 function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[], opts?: { useIssueDate?: boolean }) {
   const useIssueDate = opts?.useIssueDate ?? false
-  return mergeRecentDocs([
+
+  console.log('[buildRecentDocs] input counts:', {
+    invoices: invoices.length,
+    quotations: quotations.length,
+    csrs: csrs.length,
+    waybills: waybills.length,
+    rfqs: rfqs.length,
+    boqs: boqs.length,
+  })
+
+  const docs = [
     ...invoices.map((doc) => ({
       id: doc.id,
       type: 'Invoice' as const,
@@ -257,7 +272,7 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
       type: 'CSR' as const,
       number: doc.csr_number,
       client: doc.client_name || 'Walking Client',
-      date: doc.created_at,
+      date: doc.created_at || doc.date,
       status: String(doc.status || ''),
       amount: null,
       path: `/csr/${doc.id}`,
@@ -293,7 +308,11 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
       amount: null,
       path: `/boqs/${doc.id}`,
     })),
-  ])
+  ]
+
+  console.log('[buildRecentDocs] mapped sample dates:', docs.slice(0, 3).map((d) => ({ type: d.type, date: d.date })))
+
+  return mergeRecentDocs(docs)
 }
 
 export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
@@ -356,7 +375,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
             .order('created_at', { ascending: false })
             .limit(8),
           supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
-          supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).limit(5),
           supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
@@ -470,7 +489,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
-        supabase.from('csrs').select('id, csr_number, client_name, status, created_at').order('created_at', { ascending: false }).limit(8),
+        supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).limit(8),
         supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
         supabase.rpc('get_dashboard_financial_metrics', {

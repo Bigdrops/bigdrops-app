@@ -93,6 +93,8 @@ export default function ViewCSR() {
 
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState<any>(null)
+  const [signatories, setSignatories] = useState<any[]>([])
+  const [client, setClient] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
@@ -132,6 +134,18 @@ export default function ViewCSR() {
         }
 
         setCsr(data)
+
+        const { data: signatories } = await supabase.from('signatories').select('*')
+        setSignatories(signatories || [])
+
+        if (data.client_id) {
+          const { data: clientRecord } = await supabase
+            .from('clients')
+            .select('address, city, state')
+            .eq('id', data.client_id)
+            .single()
+          setClient(clientRecord)
+        }
       } catch (err) {
         console.error('Failed to load CSR', err)
       } finally {
@@ -175,7 +189,7 @@ export default function ViewCSR() {
     }
   }
 
-  const previewData = csr ? buildCsrPreviewData(csr) : null
+  const previewData = csr ? buildCsrPreviewData(csr, { signatories, client }) : null
   const branding = getCsrBranding(settings || {})
 
   const handleDownload = async () => {

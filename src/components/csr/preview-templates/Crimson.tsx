@@ -277,7 +277,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               <Text style={styles.fieldValue}>{safe(csr.client_name)}</Text>
             </View>
             <View style={[styles.fieldCard, { flex: 2, width: undefined }]}>
-              <Text style={styles.fieldLabel}>Site Address</Text>
+              <Text style={styles.fieldLabel}>Address</Text>
               <Text style={styles.fieldValue}>{safe(csr.address)}</Text>
             </View>
             {csr.show_po && hasText(csr.po_number) ? (

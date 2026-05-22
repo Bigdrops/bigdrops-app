@@ -218,7 +218,7 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           <View style={styles.grid3}>
             <PdfField styles={styles} label="Client Name" value={csr.client_name} />
             <View style={[styles.fieldCard, { width: '66.66%' }]}>
-              <Text style={styles.fieldLabel}>Site Address</Text>
+              <Text style={styles.fieldLabel}>Address</Text>
               <Text style={styles.fieldValue}>{safe(csr.address)}</Text>
             </View>
             {csr.show_po && hasText(csr.po_number) ? (

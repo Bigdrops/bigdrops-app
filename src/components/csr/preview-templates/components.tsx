@@ -184,22 +184,13 @@ export function MaterialsPills({ styles, csr }: any) {
   )
 }
 
-/** Inline variant — renders pills without PdfSection wrapper. Use inside Band components. */
+/** Inline variant — renders comma-separated text without PdfSection wrapper. Use inside Band components. */
 export function MaterialsPillsInline({ styles, csr }: any) {
   if (!hasMaterials(csr)) return null
 
-  const items = safe(csr.materialsText)
-    .split(/[,\u00b7]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-
   return (
-    <View style={styles.pillsWrap}>
-      {(items.length ? items : [csr.materialsText]).map((item: any, index: number) => (
-        <View key={`${item}-${index}`} style={styles.pill}>
-          <Text style={styles.pillText}>{item}</Text>
-        </View>
-      ))}
+    <View style={{ flexDirection: 'row' }}>
+      <Text style={{ fontSize: 8, color: '#555' }}>{safe(csr.materialsText) || ' '}</Text>
     </View>
   )
 }
@@ -210,16 +201,16 @@ export function MaterialsTable({ styles, csr }: any) {
 
   return (
     <PdfSection styles={styles} title="Materials Used">
-      <View style={styles.tableHeaderRow}>
-        <Text style={[styles.tableHead, { flex: 1.8 }]}>Description</Text>
-        <Text style={[styles.tableHead, { flex: 0.6 }]}>Qty</Text>
-        <Text style={[styles.tableHead, { flex: 0.8, borderRightWidth: 0 }]}>Unit</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <Text style={[styles.tableHead, { width: '50%', borderLeftWidth: 0 }]}>Description</Text>
+        <Text style={[styles.tableHead, { width: '25%' }]}>Qty</Text>
+        <Text style={[styles.tableHead, { width: '25%', borderRightWidth: 0 }]}>Unit</Text>
       </View>
       {rows.map((row: any, index: number) => (
-        <View key={`${row.item}-${index}`} style={styles.tableRow}>
-          <Text style={[styles.tableCell, { flex: 1.8 }]}>{safe(row.item) || ' '}</Text>
-          <Text style={[styles.tableCell, { flex: 0.6 }]}>{safe(row.quantity) || ' '}</Text>
-          <Text style={[styles.tableCell, { flex: 0.8, borderRightWidth: 0 }]}>{safe(row.unit) || ' '}</Text>
+        <View key={`${row.item}-${index}`} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          <Text style={[styles.tableCell, { width: '50%', borderLeftWidth: 0 }]}>{safe(row.item) || ' '}</Text>
+          <Text style={[styles.tableCell, { width: '25%' }]}>{safe(row.quantity) || ' '}</Text>
+          <Text style={[styles.tableCell, { width: '25%', borderRightWidth: 0 }]}>{safe(row.unit) || ' '}</Text>
         </View>
       ))}
     </PdfSection>
@@ -260,6 +251,7 @@ export function AcknowledgementBlock({ styles, csr }: any) {
             label="Customer Sign Line"
             name={safe(csr.acknowledgement_name)}
             role={safe(csr.recipientRole)}
+            signatureUrl={csr.recipient_signature_uri}
           />
         ) : null}
       </View>

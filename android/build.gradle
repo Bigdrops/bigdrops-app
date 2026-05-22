@@ -23,3 +23,25 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_21
+                    targetCompatibility = JavaVersion.VERSION_21
+                }
+                if (project.plugins.hasPlugin("kotlin-android")) {
+                    kotlinOptions {
+                        jvmTarget = "21"
+                    }
+                }
+            }
+        }
+        tasks.withType(JavaCompile) {
+            sourceCompatibility = "21"
+            targetCompatibility = "21"
+        }
+    }
+}

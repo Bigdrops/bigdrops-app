@@ -272,10 +272,17 @@ export default function CsrFormScreen({
               clientName={String(csr.client_name || '')}
               open={clientPickerOpen}
               onOpenChange={setClientPickerOpen}
-              onClientChange={(clientId: string, clientName: string, client: { address?: string | null } | null) => {
+              onClientChange={(clientId: string, clientName: string, client: { address?: string | null; city?: string | null; state?: string | null } | null) => {
                 onUpdate('client_id', clientId || '')
                 onUpdate('client_name', clientName || '')
-                onUpdate('address', client?.address || '')
+                if (client) {
+                  const fullAddress = [client.address, client.city, client.state]
+                    .filter((part) => part && part.trim() !== '')
+                    .join(', ')
+                  onUpdate('address', fullAddress)
+                } else {
+                  onUpdate('address', '')
+                }
               }}
             />
           </div>
@@ -719,6 +726,13 @@ export default function CsrFormScreen({
                   onChange={(event) => {
                     const file = event.target.files?.[0]
                     setRecipientSignatureName(file?.name || '')
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        onUpdate('recipient_signature_uri', reader.result as string)
+                      }
+                      reader.readAsDataURL(file)
+                    }
                   }}
                 />
                 <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
@@ -733,6 +747,7 @@ export default function CsrFormScreen({
                     type="button"
                     onClick={() => {
                       setRecipientSignatureName('')
+                      onUpdate('recipient_signature_uri', '')
                       if (recipientSignatureInputRef.current) {
                         recipientSignatureInputRef.current.value = ''
                       }

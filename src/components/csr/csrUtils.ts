@@ -277,6 +277,7 @@ export interface CsrPreviewOptions {
   materialsText?: string
   signatories?: any[]
   technicianSignatory?: any
+  client?: { address?: string | null; city?: string | null; state?: string | null }
 }
 
 export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions = {}): any {
@@ -323,8 +324,17 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
       ? 'compact'
       : 'comfortable'
 
+  const fullAddress = [
+    options.client?.address,
+    options.client?.city,
+    options.client?.state,
+  ]
+    .filter((part) => part && part.trim() !== '')
+    .join(', ')
+
   return {
     ...csr,
+    address: fullAddress || csr.address || '',
     materialsRows: parsed.materialsRows,
     materialsText,
     meta: parsed.meta,
