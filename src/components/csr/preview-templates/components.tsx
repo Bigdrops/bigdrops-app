@@ -163,57 +163,67 @@ export function ReadingsStrip({ styles, csr }: any) {
   )
 }
 
-export function MaterialsPills({ styles, csr }: any) {
+export function MaterialsSection({ styles, csr, preferredStyle, noSection }: any) {
   if (!hasMaterials(csr)) return null
 
-  const items = safe(csr.materialsText)
-    .split(/[,\u00b7]/)
-    .map((part) => part.trim())
-    .filter(Boolean)
+  const rows = getMaterialsRows(csr)
+  if (rows.length === 0) return null
 
-  return (
-    <PdfSection styles={styles} title="Materials Used">
-      <View style={styles.pillsWrap}>
-        {(items.length ? items : [csr.materialsText]).map((item: any, index: number) => (
-          <View key={`${item}-${index}`} style={styles.pill}>
-            <Text style={styles.pillText}>{item}</Text>
-          </View>
-        ))}
-      </View>
-    </PdfSection>
-  )
+  const metaStyle = csr.meta?.materialsOutputStyle || ''
+  const resolvedStyle = preferredStyle || (metaStyle === 'comma' ? 'comma' : 'list')
+  const activeStyle = rows.length > 14 ? 'comma' : resolvedStyle
+
+  const content = activeStyle === 'comma' ? renderCommaMaterials(rows) : renderTabulateMaterials(rows)
+
+  if (noSection) return content
+  return <PdfSection styles={styles} title="Materials Used">{content}</PdfSection>
 }
 
-/** Inline variant — renders comma-separated text without PdfSection wrapper. Use inside Band components. */
-export function MaterialsPillsInline({ styles, csr }: any) {
-  if (!hasMaterials(csr)) return null
-
+function renderCommaMaterials(rows: any[]) {
   return (
-    <View style={{ flexDirection: 'row' }}>
-      <Text style={{ fontSize: 8, color: '#555' }}>{safe(csr.materialsText) || ' '}</Text>
+    <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 8 }}>
+      <Text style={{ fontSize: 8, color: '#09090b', lineHeight: 1.6 }}>
+        {rows.map((row: any, i: number) => {
+          const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
+          const text = `${safe(row.item)}${qtyUnit ? ` ${qtyUnit}` : ''}`
+          return `${i > 0 ? ' │ ' : ''}${text}`
+        }).join('')}
+      </Text>
     </View>
   )
 }
 
-export function MaterialsTable({ styles, csr }: any) {
-  const rows = getMaterialsRows(csr)
-  if (rows.length === 0) return null
-
-  return (
-    <PdfSection styles={styles} title="Materials Used">
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        <Text style={[styles.tableHead, { width: '50%', borderLeftWidth: 0 }]}>Description</Text>
-        <Text style={[styles.tableHead, { width: '25%' }]}>Qty</Text>
-        <Text style={[styles.tableHead, { width: '25%', borderRightWidth: 0 }]}>Unit</Text>
+function renderTabulateMaterials(rows: any[]) {
+  const mid = Math.ceil(rows.length / 2)
+  const renderCell = (row: any, index: number) => {
+    const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
+    const children: any[] = [
+      <Text key="name" style={{ fontSize: 8, color: '#09090b', flex: 1 }}>{`${index + 1}. ${safe(row.item) || ' '}`}</Text>,
+    ]
+    if (qtyUnit) {
+      children.push(
+        <Text key="pipe" style={{ color: '#94A3B8', fontFamily: 'Helvetica-Bold', marginHorizontal: 1 }}>│</Text>,
+        <Text key="qty" style={{ fontSize: 7, color: '#71717a' }}>{qtyUnit}</Text>,
+      )
+    }
+    return (
+      <View key={index} style={{ flexDirection: 'row', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+        {children}
       </View>
-      {rows.map((row: any, index: number) => (
-        <View key={`${row.item}-${index}`} style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          <Text style={[styles.tableCell, { width: '50%', borderLeftWidth: 0 }]}>{safe(row.item) || ' '}</Text>
-          <Text style={[styles.tableCell, { width: '25%' }]}>{safe(row.quantity) || ' '}</Text>
-          <Text style={[styles.tableCell, { width: '25%', borderRightWidth: 0 }]}>{safe(row.unit) || ' '}</Text>
+    )
+  }
+  return (
+    <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 8 }}>
+      <View style={{ flexDirection: 'row' }}>
+        <View style={{ flex: 1, paddingRight: 4 }}>
+          {rows.slice(0, mid).map((row, i) => renderCell(row, i))}
         </View>
-      ))}
-    </PdfSection>
+        <View style={{ width: 2, backgroundColor: '#475569' }} />
+        <View style={{ flex: 1, paddingLeft: 4 }}>
+          {rows.slice(mid).map((row, i) => renderCell(row, mid + i))}
+        </View>
+      </View>
+    </View>
   )
 }
 

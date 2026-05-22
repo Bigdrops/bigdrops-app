@@ -17,7 +17,7 @@ import {
   StructuredTopIdentity,
   SharedEquipmentSection,
   ReadingsStrip,
-  MaterialsPillsInline,
+  MaterialsSection,
   StatusListChecks,
   ServiceTimeSection,
   PdfField,
@@ -282,7 +282,7 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
 
         {hasMaterials(csr) ? (
           <Band colorStyle={styles.bandKeyGold} title="Materials" sub="Consumables and replaced items used on site.">
-            <MaterialsPillsInline styles={styles} csr={csr} />
+            <MaterialsSection styles={styles} csr={csr} noSection />
           </Band>
         ) : null}
 

@@ -16,10 +16,8 @@ import {
 import {
   PdfBrandBlock,
   PdfSection,
-  PdfField,
-  ReadingsStrip,
-  PdfTextBlock,
-  MaterialsTable,
+  MaterialsSection,
+
   PdfSignatureCard,
 } from './components'
 import type { CsrPdfProps } from './types'
@@ -307,7 +305,7 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {hasMaterials(csr) ? (
               <View style={{ flex: 1 }}>
-                <MaterialsTable styles={styles} csr={csr} />
+                <MaterialsSection styles={styles} csr={csr} />
               </View>
             ) : null}
             {shouldRender(true, csr.customer_feedback) ? (

@@ -589,11 +589,12 @@ export default function CsrFormScreen({
               <button
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
-                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
+                type="button"
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors duration-200 ${
                   csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
                 }`}
               >
-                Enumerate
+                Tabulate
               </button>
             </div>
 

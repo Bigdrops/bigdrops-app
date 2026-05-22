@@ -18,9 +18,7 @@ import {
   PdfLogoSlot,
   PdfBrandBlock,
   PdfSection,
-  ReadingsStrip,
-  MaterialsPills,
-  MaterialsTable,
+  MaterialsSection,
 } from './components'
 import type { CsrPdfProps } from './types'
 
@@ -335,7 +333,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
         </PdfSection>
 
         {hasMaterials(csr) ? (
-          tightLayout ? <MaterialsPills styles={styles} csr={csr} /> : <MaterialsTable styles={styles} csr={csr} />
+          <MaterialsSection styles={styles} csr={csr} preferredStyle={tightLayout ? 'comma' : 'list'} />
         ) : null}
 
         <PdfSection styles={styles} title="Status">

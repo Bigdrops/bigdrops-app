@@ -17,7 +17,7 @@ import {
   SharedEquipmentSection,
   ReadingsCardGrid,
   PdfSection,
-  MaterialsPills,
+  MaterialsSection,
   StatusListDots,
   ServiceTimeSection,
   CustomerFeedbackSection,
@@ -246,7 +246,7 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
               <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
             </View>
           </View>
-          {shouldRender(true, csr.materialsText) ? <MaterialsPills styles={styles} csr={csr} /> : null}
+          <MaterialsSection styles={styles} csr={csr} />
         </PdfSection>
 
         <PdfSection styles={styles} title="Status">
