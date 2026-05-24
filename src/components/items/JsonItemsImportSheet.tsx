@@ -130,8 +130,6 @@ export default function JsonItemsImportSheet({
         return
       }
 
-      console.warn("[1] INPUT:", parsed.data?.groups?.length)
-
       const result = buildApplyResult({
         mode,
         existingItems: items,
@@ -141,10 +139,7 @@ export default function JsonItemsImportSheet({
         createItem: adapter.createItem,
       })
 
-      console.warn("[1.5] ABOUT TO CALL onApplyImport, result.groups:", result.groups?.length, "onApplyImport type:", typeof onApplyImport)
-      console.warn("[1.5b] onApplyImport.name:", (onApplyImport as any).name, "source:", (onApplyImport as any).toString().substring(0, 150))
       onApplyImport(result)
-      console.warn("[1.6] onApplyImport RETURNED")
       feedback.success(mode === 'Add' ? 'Rows added' : 'Rows updated')
       onOpenChange(false)
     } catch (e: any) {

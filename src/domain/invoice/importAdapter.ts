@@ -32,7 +32,6 @@ export const invoiceImportAdapter = {
     if (result.topLevel.extra_charges !== undefined) {
       setExtraCharges(result.topLevel.extra_charges.map((charge) => makeExtraCharge({ ...charge })))
     }
-    console.warn("[4] ADAPTER INPUT:", result.groups?.length)
     if (result.groups && result.groups.length > 0) {
       setGroups(result.groups.map((g) => ({ ...makeEmptyGroup(g.name), id: g.id })))
     }

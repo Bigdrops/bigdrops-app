@@ -31,8 +31,6 @@ const SPLASH_TIPS = [
 
 const RECOVERY_COOLDOWN_MS = 1500
 
-const AUTH_DEBUG = import.meta.env.DEV
-
 let offlineAccessModulePromise: Promise<typeof import('@/lib/native/offlineAccess')> | null = null
 let deviceHydrationModulePromise: Promise<typeof import('@/lib/native/deviceHydration')> | null = null
 
@@ -50,10 +48,7 @@ const loadDeviceHydrationModule = () => {
   return deviceHydrationModulePromise
 }
 
-function debugAuth(...args: any[]) {
-  if (!AUTH_DEBUG) return
-  console.log('[auth-debug]', ...args)
-}
+function debugAuth(...args: any[]) {}
 
 const withBoundary = (element: React.ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
@@ -543,35 +538,6 @@ function App() {
     session?.user?.email,
     waitingForProfileResolution,
   ])
-
-  useEffect(() => {
-    const inspectDB = async () => {
-      console.log('[DB_INSPECTOR] Checking settings table status...')
-      try {
-        const { data, error } = await supabase.from('settings').select('*')
-        if (error) {
-          console.error('[DB_INSPECTOR] Error fetching all settings:', error)
-          return
-        }
-        console.log('[DB_INSPECTOR] All rows in settings:', data)
-        
-        const row1 = (data as any[]).find(r => r.id === 1)
-        if (row1) {
-          console.log('[DB_INSPECTOR] Row ID=1 columns:', Object.keys(row1))
-          console.log('[DB_INSPECTOR] Row ID=1 values:', {
-            company_logo_url: row1.company_logo_url,
-            footer_text: row1.footer_text,
-            logo_url: row1.logo_url
-          })
-        } else {
-          console.warn('[DB_INSPECTOR] No row with ID=1 found!')
-        }
-      } catch (e) {
-        console.error('[DB_INSPECTOR] Failed to inspect DB:', e)
-      }
-    }
-    inspectDB()
-  }, [])
 
   return (
     <>

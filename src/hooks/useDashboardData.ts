@@ -112,11 +112,6 @@ function isValidDateString(value: string | null | undefined): value is string {
 }
 
 function mergeRecentDocs(docs: RecentDoc[]) {
-  const dropped = docs.filter((doc) => !isValidDateString(doc.date))
-  if (dropped.length > 0) {
-    console.warn('[mergeRecentDocs] dropped docs with invalid dates:', dropped.map((d) => ({ type: d.type, id: d.id, date: d.date })))
-  }
-
   return docs
     .filter((doc) => isValidDateString(doc.date))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -237,15 +232,6 @@ function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[]
 function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[], opts?: { useIssueDate?: boolean }) {
   const useIssueDate = opts?.useIssueDate ?? false
 
-  console.log('[buildRecentDocs] input counts:', {
-    invoices: invoices.length,
-    quotations: quotations.length,
-    csrs: csrs.length,
-    waybills: waybills.length,
-    rfqs: rfqs.length,
-    boqs: boqs.length,
-  })
-
   const docs = [
     ...invoices.map((doc) => ({
       id: doc.id,
@@ -309,8 +295,6 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
       path: `/boqs/${doc.id}`,
     })),
   ]
-
-  console.log('[buildRecentDocs] mapped sample dates:', docs.slice(0, 3).map((d) => ({ type: d.type, date: d.date })))
 
   return mergeRecentDocs(docs)
 }

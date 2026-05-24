@@ -51,11 +51,6 @@ export function normalizeQuotationGrouping(
   const rawToCanonical = new Map<string, string>()
   const seenCanonical = new Set<string>()
 
-  console.warn("[NORM] Input items:", items.length, "headers:", items.filter(i => i.row_type === 'group_header').length)
-  console.warn("[NORM] Sample header:", items.find(i => i.row_type === 'group_header'))
-  console.warn("[NORM] Sample item with group:", items.find(i => i.row_type === 'standard' && i.group_id))
-  console.warn("[NORM] groupMeta keys:", Object.keys(groupMeta))
-
   items.forEach((item) => {
     if (item.row_type !== 'group_header') return
     const rawId = String(item.group_id || '').trim()
@@ -75,10 +70,6 @@ export function normalizeQuotationGrouping(
       showSubtotal: !!meta.showSubtotal,
     })
   })
-
-  console.warn("[NORM] rawToCanonical:", Array.from(rawToCanonical.entries()))
-  console.warn("[NORM] headerOrder:", headerOrder)
-  console.warn("[NORM] Output groups:", headerOrder.length)
 
   const normalizedItems = items.map((item, index) => {
     if (item.row_type === 'group_header') {
@@ -114,9 +105,6 @@ export function normalizeQuotationGrouping(
       sort_order: index,
     }
   })
-
-  console.warn("[NORM] Final groups:", headerOrder.map((groupId) => headerById.get(groupId)).filter(Boolean))
-  console.warn("[NORM] Sample normalized item with group:", normalizedItems.find(i => i.row_type === 'standard' && i.group_id))
 
   return {
     items: normalizedItems,

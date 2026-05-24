@@ -22,12 +22,10 @@ export const quotationImportAdapter = {
     updateTopLevelField: (field: 'title' | 'po_number' | 'notes' | 'terms', value: string) => void
     setExtraCharges: (charges: ExtraCharge[]) => void
   }) {
-    console.warn('[QA] applyResult called with', result.groups?.length || 0, 'groups')
     setColumns(result.columns)
     setItems(result.items)
 
     if (result.groups && result.groups.length > 0) {
-      console.warn('[QA] Setting groups:', result.groups.length)
       setGroups(result.groups)
     }
 

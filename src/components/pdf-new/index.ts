@@ -93,15 +93,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       break
   }
 
-  if (activeTemplateId === 'industry' && request.model.identity.kind === 'invoice') {
-    const industryData = templateData as { signature?: { imageUrl?: string | null } | null }
-    console.log('[pdf-new] Industry invoice signature debug', {
-      signature: industryData?.signature || null,
-      imageUrl: industryData?.signature?.imageUrl || '',
-      hasImageUrl: Boolean(industryData?.signature?.imageUrl),
-    })
-  }
-
   const blob = await pdf(
     React.createElement(PdfRenderer, { data: templateData, Template, compact: request.compact }) as any
   ).toBlob()

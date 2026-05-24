@@ -151,11 +151,6 @@ export function buildApplyResult({
       showSubtotal: g.showSubtotal,
     }))
 
-    console.warn("[3] APPLY RESULT:", resultGroups.length, "groups:", resultGroups)
-    console.warn("[3] IMPORTED ITEMS:", importedItems.length, "headers:", importedItems.filter(i => i.row_type === 'group_header').length, "standards:", importedItems.filter(i => i.row_type === 'standard').length)
-    console.warn("[3] SAMPLE HEADER:", importedItems.find(i => i.row_type === 'group_header'))
-    console.warn("[3] SAMPLE GROUPED ITEM:", importedItems.find(i => i.row_type === 'standard' && i.group_id))
-
     return {
       mode,
       items: [...existingItems, ...importedItems].map((item, index) => ({ ...item, sort_order: index })),

@@ -311,7 +311,6 @@ export default function SharedDocumentForm(props: any) {
 
       {showImportSheet && (
         <Suspense fallback={<SheetLoadingState label="import tools" />}>
-          {(console.warn("[SDF] Rendering JsonItemsImportSheet, onApplyImport:", typeof onApplyImport, onApplyImport ? (onApplyImport as any).name : "undefined"), null)}
           <JsonItemsImportSheet
             open={showImportSheet}
             onOpenChange={setShowImportSheet}

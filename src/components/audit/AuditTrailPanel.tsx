@@ -27,10 +27,6 @@ export default function AuditTrailPanel({
   defaultOpen = false,
   className,
 }: AuditTrailPanelProps) {
-  if (process.env.NODE_ENV === 'development' && entityId) {
-    console.debug(`[AuditTrailPanel] Mounting for ${entityType}:${entityLabel || 'unknown'} with ID: ${entityId}`)
-  }
-
   const [open, setOpen] = useState(defaultOpen)
   const { entries, loading, error, refetch, loadOlder } = useAuditTrail({
     entityType,

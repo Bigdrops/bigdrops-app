@@ -90,17 +90,11 @@ export function useQuotationLineItems({
           ? nextGroupsInput(baseGroups)
           : (nextGroupsInput ?? baseGroups);
 
-      console.warn("[CG] commitGrouping called with", nextItems.length, "items and", nextGroups.length, "groups")
-      console.warn("[CG] Input groups:", nextGroups)
-      console.warn("[CG] Sample input item with group:", nextItems.find(i => i.row_type === 'standard' && i.group_id))
-
       const normalized = normalizeQuotationGrouping(
         nextItems,
         toGroupMetaMap(nextGroups),
       )
 
-      console.warn("[CG] Normalized result:", normalized.groups.length, "groups,", normalized.items.filter(i => i.row_type === 'standard' && i.group_id).length, "items with groups")
-      console.warn("[CG] Sample normalized item:", normalized.items.find(i => i.row_type === 'standard' && i.group_id))
       itemsRef.current = normalized.items;
       groupsRef.current = normalized.groups;
       setItems(normalized.items);

@@ -454,7 +454,7 @@ export default function Reports() {
           <ReportsHeader 
             title={activeMetadata.title}
             description={activeMetadata.description}
-            onExport={() => console.log('Exporting data for', tab)}
+            onExport={() => {}}
           />
         }
         navigation={
