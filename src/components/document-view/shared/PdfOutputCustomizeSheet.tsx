@@ -225,11 +225,11 @@ export default function PdfOutputCustomizeSheet({
             type="button"
             onClick={() => setDraftValue((prev) => ({ ...prev, compact: !prev.compact }))}
             className={`relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-              draftValue.compact ? 'bg-[hsl(var(--bd-feedback-success))]' : 'bg-[hsl(var(--bd-border))]'
+              draftValue.compact ? 'bg-slate-950' : 'bg-slate-300'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[hsl(var(--bd-surface))] shadow-md transition-transform duration-200 ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
                 draftValue.compact ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
