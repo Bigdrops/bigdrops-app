@@ -151,6 +151,7 @@ export async function handleDownloadQuotationPdf(input: {
         template: { designPreset: pdfDesignPreset },
       },
       templateId: normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry",
+      compact: pdfOutput.compact === true,
     });
     showToast("Download ready", "Quotation PDF downloaded.", "success");
   } catch (error) {

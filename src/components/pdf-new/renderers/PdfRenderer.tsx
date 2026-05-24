@@ -7,6 +7,7 @@ export type PdfTemplateRendererProps = {
     size: 'A4'
     orientation: 'portrait' | 'landscape'
   }
+  compact?: boolean
 }
 
 export type PdfTemplateRenderer = ComponentType<PdfTemplateRendererProps>
@@ -14,9 +15,10 @@ export type PdfTemplateRenderer = ComponentType<PdfTemplateRendererProps>
 type PdfRendererProps = {
   data: unknown
   Template: PdfTemplateRenderer
+  compact?: boolean
 }
 
-export function PdfRenderer({ data, Template }: PdfRendererProps) {
+export function PdfRenderer({ data, Template, compact }: PdfRendererProps) {
   const fallbackLayout: NonNullable<PdfTemplateRendererProps['layout']> = {
     size: 'A4',
     orientation: 'portrait',
@@ -46,7 +48,7 @@ export function PdfRenderer({ data, Template }: PdfRendererProps) {
 
   return (
     <Document>
-      <Template data={data} layout={layout} />
+      <Template data={data} layout={layout} compact={compact} />
     </Document>
   )
 }

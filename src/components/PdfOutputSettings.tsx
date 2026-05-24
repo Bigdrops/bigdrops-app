@@ -30,6 +30,7 @@ type PdfOutputSettingsValue = {
   showVatPercentage: boolean
   showWhtPercentage: boolean
   showDiscountPercentage: boolean
+  compact: boolean
 }
 
 export type { PdfOutputSettingsValue }
@@ -97,6 +98,7 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
     showVatPercentage: value?.showVatPercentage ?? true,
     showWhtPercentage: value?.showWhtPercentage ?? true,
     showDiscountPercentage: value?.showDiscountPercentage ?? true,
+    compact: value?.compact ?? false,
   }
 }
 
@@ -312,6 +314,16 @@ export function PdfDocumentOptionsCard({
                 <OutputToggle
                   checked={state.showDiscountPercentage}
                   onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+                />
+              }
+            />
+
+            <SettingsRow
+              label="Compact layout (fit to fewer pages)"
+              control={
+                <OutputToggle
+                  checked={state.compact}
+                  onToggle={() => update({ compact: !state.compact })}
                 />
               }
             />

@@ -24,6 +24,7 @@ function defaults(v?: Partial<PdfOutputSettingsValue>): PdfOutputSettingsValue {
     showVatPercentage: v?.showVatPercentage ?? true,
     showWhtPercentage: v?.showWhtPercentage ?? true,
     showDiscountPercentage: v?.showDiscountPercentage ?? true,
+    compact: v?.compact ?? false,
   };
 }
 

@@ -74,6 +74,7 @@ export interface InvoicePdfOutput {
   showVatPercentage: boolean
   showWhtPercentage: boolean
   showDiscountPercentage: boolean
+  compact: boolean
 }
 
 export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'apex', 'bolt', 'obsidian-receipt'] as const

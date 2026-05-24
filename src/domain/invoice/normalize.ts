@@ -22,6 +22,7 @@ export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showVatPercentage: true,
   showWhtPercentage: true,
   showDiscountPercentage: true,
+  compact: false,
 }
 
 export function toNumber(value: unknown, fallback = 0): number {
@@ -112,6 +113,10 @@ export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
       typeof savedPdfOutput.showDiscountPercentage === 'boolean'
         ? savedPdfOutput.showDiscountPercentage
         : DEFAULT_INVOICE_PDF_OUTPUT.showDiscountPercentage,
+    compact:
+      typeof savedPdfOutput.compact === 'boolean'
+        ? savedPdfOutput.compact
+        : DEFAULT_INVOICE_PDF_OUTPUT.compact,
   }
 }
 

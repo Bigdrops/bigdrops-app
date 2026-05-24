@@ -18,6 +18,7 @@ import {
   PdfLogoSlot,
   PdfBrandBlock,
   PdfSection,
+  ReadingsStrip,
   MaterialsSection,
 } from './components'
 import type { CsrPdfProps } from './types'

@@ -15,6 +15,7 @@ export const defaultPdfOutput: PdfOutputSettingsValue = {
   showVatPercentage: true,
   showWhtPercentage: true,
   showDiscountPercentage: true,
+  compact: false,
 };
 
 export function useQuotationViewData() {

@@ -14,6 +14,7 @@ type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   model: TModel
   documentNumber?: string | null
   templateId?: string | null
+  compact?: boolean
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -102,7 +103,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   }
 
   const blob = await pdf(
-    React.createElement(PdfRenderer, { data: templateData, Template }) as any
+    React.createElement(PdfRenderer, { data: templateData, Template, compact: request.compact }) as any
   ).toBlob()
 
   const filename = resolveFilename(request.model, request.documentNumber)

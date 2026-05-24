@@ -3,6 +3,7 @@ import type { IndustryTemplateData } from '../industryAdapter'
 import { renderPdfRichText } from '../core/pdfRichText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { lightenHex } from '@/lib/pdfDesignPreset'
+import { compactIndustry } from '../core/pdfCompact'
 import {
   getCellText,
   getDescriptionMain,
@@ -19,7 +20,7 @@ import {
   renderOptionalList,
 } from './industryTemplateBlocks'
 
-type TemplateProps = { data: IndustryTemplateData }
+type TemplateProps = { data: IndustryTemplateData; compact?: boolean }
 
 const keepWholePdfWord = (word: string) => [word]
 
@@ -31,7 +32,7 @@ function resolveFinalIndustryColumnStyle(column: IndustryTemplateData['table']['
   ]
 }
 
-export default function IndustryTemplate({ data }: TemplateProps) {
+export default function IndustryTemplate({ data, compact }: TemplateProps) {
   const design: IndustryTemplateData['design'] = data?.design || {
     accentColor: null,
     textColor: null,
@@ -83,9 +84,9 @@ export default function IndustryTemplate({ data }: TemplateProps) {
   )
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={[styles.page, compact ? compactIndustry.page : null]}>
       {(data.title || metaRows.length > 0 || data.company?.companyLogoUrl) && (
-        <View style={styles.header}>
+        <View style={[styles.header, compact ? compactIndustry.header : null]}>
           <View style={styles.headerLeft}>
             <Text
               style={[
@@ -100,6 +101,7 @@ export default function IndustryTemplate({ data }: TemplateProps) {
               <Text
                 style={[
                   styles.customTitle,
+                  compact ? compactIndustry.customTitle : null,
                   mutedColor ? { color: mutedColor } : null,
                   bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                 ]}

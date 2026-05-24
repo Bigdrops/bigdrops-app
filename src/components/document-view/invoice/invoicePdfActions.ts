@@ -183,5 +183,6 @@ export const downloadInvoicePdfDocument = async ({
       template: { designPreset: getPdfDesignPreset("invoice") },
     },
     templateId: targetTemplateId,
+    compact: pdfOutput.compact === true,
   });
 };
