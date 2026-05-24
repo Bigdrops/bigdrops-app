@@ -27,7 +27,7 @@ const INDUSTRY_COLUMN_OVERRIDES: Record<string, { width?: number; flex?: number 
 
 export const styles = StyleSheet.create({
   page: {
-    paddingTop: 20,
+    paddingTop: 14,
     paddingBottom: 64,
     paddingHorizontal: 24,
     backgroundColor: '#ffffff',
@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'stretch',
-    marginBottom: 14,
+    marginBottom: 6,
   },
   headerLeft: {
     flexGrow: 1,
@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 9,
+    marginBottom: 4,
   },
   metaLabel: {
     width: 96,
@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
   },
   partyRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 6,
   },
   partyBox: {
     flex: 1,
@@ -142,7 +142,7 @@ export const styles = StyleSheet.create({
     borderTopColor: '#cccccc',
   },
   tableWrap: {
-    marginBottom: 20,
+    marginBottom: 8,
   },
   tableHeaderRow: {
     flexDirection: 'row',
@@ -151,7 +151,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#6c7a78',
   },
   tableHeaderCell: {
-    paddingVertical: 9,
+    paddingVertical: 5,
     paddingHorizontal: 6,
     color: '#ffffff',
     fontSize: 9.5,
@@ -190,7 +190,7 @@ export const styles = StyleSheet.create({
     borderLeftColor: '#d1d5db',
   },
   tableCell: {
-    paddingVertical: 8,
+    paddingVertical: 4,
     paddingHorizontal: 6,
     fontSize: 10,
     color: '#333333',
@@ -238,13 +238,13 @@ export const styles = StyleSheet.create({
     fontSize: 10.2,
     color: '#1f2937',
     fontFamily: 'Helvetica-Bold',
-    lineHeight: 1.35,
+    lineHeight: 1.22,
   },
   descriptionSub: {
     marginTop: 3,
     fontSize: 8.8,
     color: '#6b7280',
-    lineHeight: 1.35,
+    lineHeight: 1.2,
   },
   makeText: { fontSize: 9.6, color: '#6b7280' },
   tightCellText: {
@@ -274,7 +274,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   closingRowNoBank: { justifyContent: 'flex-end' },
   bankBox: {
