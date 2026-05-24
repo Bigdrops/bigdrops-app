@@ -317,16 +317,6 @@ export function PdfDocumentOptionsCard({
                 />
               }
             />
-
-            <SettingsRow
-              label="Compact layout (fit to fewer pages)"
-              control={
-                <OutputToggle
-                  checked={state.compact}
-                  onToggle={() => update({ compact: !state.compact })}
-                />
-              }
-            />
           </div>
         ) : null}
       </CardContent>

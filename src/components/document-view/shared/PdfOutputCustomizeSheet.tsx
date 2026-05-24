@@ -216,6 +216,26 @@ export default function PdfOutputCustomizeSheet({
           </div>
         </div>
 
+        <div className="flex items-center justify-between rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">Compact Layout</div>
+            <div className="mt-0.5 text-xs text-[hsl(var(--bd-text-muted))]">Condense margins and spacing to fit content onto fewer pages</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDraftValue((prev) => ({ ...prev, compact: !prev.compact }))}
+            className={`relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+              draftValue.compact ? 'bg-[hsl(var(--bd-feedback-success))]' : 'bg-[hsl(var(--bd-border))]'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-[hsl(var(--bd-surface))] shadow-md transition-transform duration-200 ${
+                draftValue.compact ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
         <button
           type="button"
           className="h-11 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] transition hover:bg-[hsl(var(--bd-button-primary-bg))]/90 disabled:cursor-not-allowed disabled:opacity-60"
