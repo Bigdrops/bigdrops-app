@@ -331,7 +331,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
       ) : null}
 
       {(hasBankDetails || data.totals.lines.length > 0 || data.advanceSummary || data.totals.mainLine || data.totals.amountInWords || data.totals.balanceDue) ? (
-        <View style={[styles.closingRow, !hasBankDetails ? styles.closingRowNoBank : null]} wrap={false}>
+        <View style={[styles.closingRow, !hasBankDetails ? styles.closingRowNoBank : null]}>
           {hasBankDetails && data.paymentDetails ? (
             <View
               style={[
@@ -586,7 +586,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
       ) : null}
 
       {data.signature && (data.signature.imageUrl || data.signature.name) ? (
-        <View style={styles.signatureWrap}>
+        <View style={styles.signatureWrap} wrap={false}>
           <View style={styles.signatureBox}>
             {typeof data.signature.imageUrl === 'string' &&
             data.signature.imageUrl.trim() ? (
