@@ -331,7 +331,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
       ) : null}
 
       {(hasBankDetails || data.totals.lines.length > 0 || data.advanceSummary || data.totals.mainLine || data.totals.amountInWords || data.totals.balanceDue) ? (
-        <View style={[styles.closingRow, !hasBankDetails ? styles.closingRowNoBank : null]}>
+        <View style={[styles.closingRow, !hasBankDetails ? styles.closingRowNoBank : null]} wrap={false}>
           {hasBankDetails && data.paymentDetails ? (
             <View
               style={[

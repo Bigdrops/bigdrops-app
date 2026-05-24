@@ -27,7 +27,7 @@ const INDUSTRY_COLUMN_OVERRIDES: Record<string, { width?: number; flex?: number 
 
 export const styles = StyleSheet.create({
   page: {
-    paddingTop: 28,
+    paddingTop: 20,
     paddingBottom: 64,
     paddingHorizontal: 24,
     backgroundColor: '#ffffff',
@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'stretch',
-    marginBottom: 18,
+    marginBottom: 14,
   },
   headerLeft: {
     flexGrow: 1,
@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
   },
   partyRow: {
     flexDirection: 'row',
-    marginBottom: 18,
+    marginBottom: 14,
   },
   partyBox: {
     flex: 1,
