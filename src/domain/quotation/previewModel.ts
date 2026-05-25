@@ -1,5 +1,8 @@
 import { formatNaira } from "@/lib/formatters/money";
-import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
+import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
+import { adaptIndustryData } from "@/components/pdf-new/industryAdapter";
+import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf-new/table";
+import type { PdfDocumentModel, PdfColumnDefinition } from "@/components/pdf-new/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
 import { buildSummaryRows } from "@/domain/invoice";
 import {
@@ -7,8 +10,6 @@ import {
   resolveSelectedBankAccount,
   buildCompanyPreviewLines,
   buildClientPreviewLines,
-  resolveLineAmount,
-  resolvePreviewGroupSubtotal,
 } from "@/domain/invoice/projections";
 
 export interface QuotationPreviewModelInput {
@@ -43,8 +44,6 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       .filter((field: any) => field?.label && field?.value)
       .map((field: any) => ({ label: String(field.label), value: String(field.value) })),
   ].filter((row) => String(row.value || "").trim().length > 0);
-
-  const previewItems = buildQuotationPreviewItems(items, customFields);
 
   const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput);
   const previewTotals = [
@@ -127,7 +126,7 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
     companyPreviewLines,
     clientPreviewLines,
     previewDetailRows,
-    previewItems,
+    previewItems: buildQuotationPreviewItems(items, customFields),
     previewTotals,
     previewNotesSections,
     previewAttachmentLinks,
@@ -137,56 +136,99 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
 }
 
 export function buildQuotationPreviewItems(items: any[], customFields: Record<string, any>) {
-  return (Array.isArray(items) ? items : [])
-    .map((item, index, sourceItems) => {
-      if (item.row_type === "group_header") {
-        const groupId = item.group_id || null;
-        const showSubtotal = customFields?.groupMeta?.[groupId || ""]?.showSubtotal === true;
-        const nextItems: any[] = [
-          { type: "group", label: item.group_name || `Group ${index + 1}` },
-        ];
-        const nextItem = sourceItems[index + 1];
-        const shouldCloseImmediately =
-          !nextItem || nextItem.row_type === "group_header" || nextItem.group_id !== groupId;
-        if (shouldCloseImmediately) {
-          nextItems.push({
-            type: "group_footer",
-            showSubtotal,
-            value: showSubtotal ? formatNaira(resolvePreviewGroupSubtotal(sourceItems, groupId)) : "",
-          });
-        }
-        return nextItems;
-      }
+  const sourceItems = Array.isArray(items) ? items : [];
+  const resolvedTable = interpretPdfTableSettings(
+    Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : [],
+    {
+      mergeQtyUnit: customFields?.mergeQtyUnit === true,
+      hideEmptyGroups: customFields?.hideEmptyGroups !== false,
+      items: sourceItems as never[],
+    },
+  );
 
-      const nextItems: any[] = [
-        {
-          type: "line",
-          label: item.description || "Untitled item",
-          detail: item.sub_description || "",
-          imageUrl: resolveCanonicalItemImageUrl(item),
-          value: formatNaira(item.amount || Number(item.quantity || 0) * Number(item.unit_price || 0)),
-          facts: [
-            item.quantity ? `Qty: ${formatMergedQtyUnit(item.quantity, item.unit)}` : null,
-            `Rate: ${formatNaira(item.unit_price || 0)}`,
-            item.make ? `Make: ${item.make}` : null,
-          ].filter(Boolean),
-        },
-      ];
+  const adapted = adaptIndustryData({
+    identity: { id: "", kind: "quotation", number: "", title: "" },
+    items: sourceItems.map((item, index) => ({
+      id: String(item.id || item._uiKey || index),
+      rowType: item.row_type === "group_header" ? "group_header" : "line",
+      groupLabel: item.group_name || null,
+      groupId: item.group_id || null,
+      description: item.description || "",
+      subDescription: item.sub_description || "",
+      make: item.make || "",
+      quantity: item.quantity ?? null,
+      unit: item.unit || "",
+      unitPrice: item.unit_price ?? 0,
+      installRate: item.install_rate ?? null,
+      vatRate: item.vat_rate ?? null,
+      discountRate: item.discount_rate ?? null,
+      amount: item.amount ?? Number(item.quantity || 0) * Number(item.unit_price || 0),
+      imageUrl: resolveCanonicalItemImageUrl(item),
+      cells: item.row_type === "group_header" ? undefined : buildPdfRowCells(item, resolvedTable.columns, {
+        mergeQtyUnit: resolvedTable.mergeQtyUnit,
+        configuredColumns: resolvedTable.configuredColumns,
+      }),
+      customData: {
+        ...(item.custom_data || {}),
+        ...(item.row_type === "group_header" ? {
+          showSubtotal: customFields?.groupMeta?.[item.group_id || ""]?.showSubtotal === true,
+        } : {}),
+      },
+    })),
+    columns: resolvedTable.columns,
+    mergeQtyUnit: resolvedTable.mergeQtyUnit,
+    hideEmptyGroups: resolvedTable.hideEmptyGroups,
+    totals: { rows: [] },
+  } as PdfDocumentModel);
 
-      const groupId = item.group_id || null;
-      const nextItem = sourceItems[index + 1];
-      const groupEndsHere =
-        groupId && (!nextItem || nextItem.row_type === "group_header" || nextItem.group_id !== groupId);
-      if (groupEndsHere) {
-        const showSubtotal = customFields?.groupMeta?.[groupId]?.showSubtotal === true;
-        nextItems.push({
-          type: "group_footer",
-          showSubtotal,
-          value: showSubtotal ? formatNaira(resolvePreviewGroupSubtotal(sourceItems, groupId)) : "",
-        });
-      }
+  return adapted.table.rows.map((row: any, index) => {
+    if (row.isGroupHeader) {
+      return { type: "group", label: String(row.groupLabel || row.groupName || `Group ${index + 1}`) };
+    }
 
-      return nextItems;
+    if (row.isGroupFooter) {
+      return {
+        type: "group_footer",
+        showSubtotal: row.showSubtotal === true,
+        value: row.showSubtotal === true ? String(row.groupSubtotalValue || "") : "",
+      };
+    }
+
+    const description = readDescriptionCell(row.cells?.description);
+    return {
+      type: "line",
+      label: description.main || "Untitled item",
+      detail: description.sub,
+      imageUrl: row.imageUrl || null,
+      value: hasPreviewValue(row.cells?.amount) ? String(row.cells.amount) : "",
+      facts: buildPreviewFacts(row, resolvedTable.columns),
+    };
+  });
+}
+
+function hasPreviewValue(value: unknown) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
+}
+
+function readDescriptionCell(cell: unknown) {
+  if (cell && typeof cell === "object") {
+    const entry = cell as { main?: unknown; sub?: unknown };
+    return {
+      main: String(entry.main || ""),
+      sub: String(entry.sub || ""),
+    };
+  }
+
+  return { main: String(cell || ""), sub: "" };
+}
+
+function buildPreviewFacts(row: any, columns: PdfColumnDefinition[]) {
+  const cells = row?.cells || {};
+  return columns
+    .filter((column) => !["num", "description", "amount"].includes(column.key))
+    .map((column) => {
+      const value = cells[column.key];
+      return hasPreviewValue(value) ? `${column.label}: ${value}` : null;
     })
-    .flat();
+    .filter(Boolean);
 }

@@ -1,6 +1,6 @@
-import { formatMergedQtyUnit, resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
-import { normalizeQuantity } from '@/domain/invoice/normalize'
-import { resolveColumnBehavior } from '@/domain/invoice/columns'
+import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
+import { adaptIndustryData } from '@/components/pdf-new/industryAdapter'
+import { buildPdfRowCells, interpretPdfTableSettings } from '@/components/pdf-new/table'
 
 import type {
   PreviewBankAccount,
@@ -18,6 +18,7 @@ import type {
   PdfOutputLike,
   BuildInvoicePreviewModelInput,
 } from './renderTypes'
+import type { PdfDocumentModel } from '@/components/pdf-new/types'
 
 import {
   buildBankAccountsProjection,
@@ -33,8 +34,6 @@ import {
   buildAdditionalFieldsProjection,
   buildAttachmentLinksProjection,
   buildNotesSectionsProjection,
-  resolveLineAmount,
-  resolvePreviewGroupSubtotal,
 } from './projections'
 
 export type {
@@ -91,77 +90,7 @@ export function buildInvoicePreviewModel({
   const additionalFields = buildAdditionalFieldsProjection(customFieldObject)
   const attachmentLinks = buildAttachmentLinksProjection(customFieldObject)
 
-  const resolvedColumns = resolveColumnBehavior(
-    Array.isArray(customFieldObject?.columnConfig) ? customFieldObject.columnConfig : [],
-    items as never[],
-    'view',
-  )
-  const visibleColumnKeys = new Set(resolvedColumns.map((column) => column.key))
-  const previewCustomColumns = resolvedColumns.filter((column) => String(column?.key || '').startsWith('custom_'))
-
   const previewDetailRows = buildDetailRowsProjection({ customFieldObject, poNumber, invoice })
-
-  const previewItems: PreviewItem[] = items.map((item, index) => {
-    if (item.row_type === 'group_header') {
-      const groupId = item.group_id || null
-      const showSubtotal = customFieldObject?.groupMeta?.[groupId || '']?.showSubtotal === true
-      const nextItems: PreviewItem[] = [{ type: 'group', label: item.group_name || `Group ${index + 1}` }]
-
-      const nextItem = items[index + 1]
-      const shouldCloseImmediately = !nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId
-      if (shouldCloseImmediately) {
-        nextItems.push({
-          type: 'group_footer',
-          showSubtotal,
-          value: showSubtotal ? formatMoney(resolvePreviewGroupSubtotal(items, groupId)) : '',
-        })
-      }
-      return nextItems
-    }
-
-    const customFacts = previewCustomColumns
-      .map((column) => {
-        const key = column?.key || ''
-        const value = key && item.custom_data ? (item.custom_data as Record<string, unknown>)[key] : null
-        return value === null || value === undefined || value === '' ? null : `${column?.label || key}: ${value}`
-      })
-      .filter(Boolean) as string[]
-
-    const nextItems: PreviewItem[] = [{
-      type: 'line',
-      label: item.description || 'Untitled item',
-      detail: item.sub_description || '',
-      imageUrl: resolveCanonicalItemImageUrl(item),
-      value: visibleColumnKeys.has('amount')
-        ? formatMoney(resolveLineAmount(item))
-        : '',
-      facts: [
-        visibleColumnKeys.has('quantity')
-          ? `Qty: ${formatMergedQtyUnit(normalizeQuantity(item.quantity, 1), visibleColumnKeys.has('unit') ? item.unit : '')}`
-          : null,
-        visibleColumnKeys.has('unit_price') ? `Rate: ${formatMoney(Number(item.unit_price || 0))}` : null,
-        visibleColumnKeys.has('make') && item.make ? `Make: ${item.make}` : null,
-        visibleColumnKeys.has('install_rate') && item.install_rate !== null && item.install_rate !== undefined ? `Install: ${item.install_rate}` : null,
-        visibleColumnKeys.has('vat_rate') && item.vat_rate !== null && item.vat_rate !== undefined ? `VAT: ${item.vat_rate}%` : null,
-        visibleColumnKeys.has('discount_rate') && item.discount_rate !== null && item.discount_rate !== undefined ? `Discount: ${item.discount_rate}%` : null,
-        ...customFacts,
-      ].filter(Boolean) as string[],
-    }]
-
-    const groupId = item.group_id || null
-    const nextItem = items[index + 1]
-    const groupEndsHere = groupId && (!nextItem || nextItem.row_type === 'group_header' || nextItem.group_id !== groupId)
-    if (groupEndsHere) {
-      const showSubtotal = customFieldObject?.groupMeta?.[groupId]?.showSubtotal === true
-      nextItems.push({
-        type: 'group_footer',
-        showSubtotal,
-        value: showSubtotal ? formatMoney(resolvePreviewGroupSubtotal(items, groupId)) : '',
-      })
-    }
-
-    return nextItems
-  }).flat()
 
   const advanceSummary = buildAdvanceDisplayProjection(invoice)
   const previewTotals = buildTotalsProjection({
@@ -181,7 +110,7 @@ export function buildInvoicePreviewModel({
     clientPreviewLines,
     topHeaderFields,
     previewDetailRows,
-    previewItems,
+    previewItems: buildInvoicePreviewItems(items, customFieldObject),
     previewTotals,
     previewAmountInWords,
     previewBalanceDue: previewBalanceDueRow,
@@ -189,4 +118,107 @@ export function buildInvoicePreviewModel({
     previewNotesSections,
     advanceSummary,
   }
+}
+
+function hasPreviewValue(value: unknown) {
+  return value !== null && value !== undefined && String(value).trim() !== ''
+}
+
+function readDescriptionCell(cell: unknown) {
+  if (cell && typeof cell === 'object') {
+    const entry = cell as { main?: unknown; sub?: unknown }
+    return {
+      main: String(entry.main || ''),
+      sub: String(entry.sub || ''),
+    }
+  }
+
+  return { main: String(cell || ''), sub: '' }
+}
+
+function buildPreviewFacts(row: any, columns: PdfDocumentModel['columns']) {
+  const cells = row?.cells || {}
+  return (columns || [])
+    .filter((column) => !['num', 'description', 'amount'].includes(column.key))
+    .map((column) => {
+      const value = cells[column.key]
+      return hasPreviewValue(value) ? `${column.label}: ${value}` : null
+    })
+    .filter(Boolean) as string[]
+}
+
+export function buildInvoicePreviewItems(
+  items: BuildInvoicePreviewModelInput['items'],
+  customFieldObject: BuildInvoicePreviewModelInput['customFieldObject'],
+): PreviewItem[] {
+  const sourceItems = Array.isArray(items) ? items : []
+  const resolvedTable = interpretPdfTableSettings(
+    Array.isArray(customFieldObject?.columnConfig) ? customFieldObject.columnConfig : [],
+    {
+      mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
+      hideEmptyGroups: customFieldObject?.hideEmptyGroups !== false,
+      items: sourceItems as never[],
+    },
+  )
+
+  const adapted = adaptIndustryData({
+    identity: { id: '', kind: 'invoice', number: '', title: '' },
+    items: sourceItems.map((item, index) => ({
+      id: String((item as any).id || (item as any)._uiKey || index),
+      rowType: item.row_type === 'group_header' ? 'group_header' : 'line',
+      groupLabel: item.group_name || null,
+      groupId: item.group_id || null,
+      description: item.description || '',
+      subDescription: item.sub_description || '',
+      make: item.make || '',
+      quantity: item.quantity === null || item.quantity === undefined ? null : Number(item.quantity),
+      unit: item.unit || '',
+      unitPrice: item.unit_price === null || item.unit_price === undefined ? null : Number(item.unit_price),
+      installRate: item.install_rate === null || item.install_rate === undefined ? null : Number(item.install_rate),
+      vatRate: item.vat_rate === null || item.vat_rate === undefined ? null : Number(item.vat_rate),
+      discountRate: item.discount_rate === null || item.discount_rate === undefined ? null : Number(item.discount_rate),
+      amount: item.amount === null || item.amount === undefined
+        ? Number(item.quantity || 0) * Number(item.unit_price || 0)
+        : Number(item.amount),
+      imageUrl: resolveCanonicalItemImageUrl(item),
+      cells: item.row_type === 'group_header' ? undefined : buildPdfRowCells(item as never, resolvedTable.columns, {
+        mergeQtyUnit: resolvedTable.mergeQtyUnit,
+        configuredColumns: resolvedTable.configuredColumns,
+      }),
+      customData: {
+        ...(item.custom_data || {}),
+        ...(item.row_type === 'group_header' ? {
+          showSubtotal: customFieldObject?.groupMeta?.[item.group_id || '']?.showSubtotal === true,
+        } : {}),
+      },
+    })),
+    columns: resolvedTable.columns,
+    mergeQtyUnit: resolvedTable.mergeQtyUnit,
+    hideEmptyGroups: resolvedTable.hideEmptyGroups,
+    totals: { rows: [] },
+  } as PdfDocumentModel)
+
+  return adapted.table.rows.map((row: any, index): PreviewItem => {
+    if (row.isGroupHeader) {
+      return { type: 'group', label: String(row.groupLabel || row.groupName || `Group ${index + 1}`) }
+    }
+
+    if (row.isGroupFooter) {
+      return {
+        type: 'group_footer',
+        showSubtotal: row.showSubtotal === true,
+        value: row.showSubtotal === true ? String(row.groupSubtotalValue || '') : '',
+      }
+    }
+
+    const description = readDescriptionCell(row.cells?.description)
+    return {
+      type: 'line',
+      label: description.main || 'Untitled item',
+      detail: description.sub,
+      imageUrl: row.imageUrl || null,
+      value: hasPreviewValue(row.cells?.amount) ? String(row.cells.amount) : '',
+      facts: buildPreviewFacts(row, resolvedTable.columns),
+    }
+  })
 }

@@ -3,7 +3,7 @@ import { Hash, Calendar, FileText } from "lucide-react";
 import styles from "../shared/DocumentPreview.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { formatNaira } from "@/lib/formatters/money";
-import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from "@/domain/documentMedia";
+import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
 import DocumentBrandBlock from "../shared/DocumentBrandBlock";
 import DocumentMetaChips from "../shared/DocumentMetaChips";
 
@@ -20,7 +20,6 @@ interface InvoiceDocumentCardProps {
 
 export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   invoice,
-  items,
   previewModel,
   viewModel,
   logoUrl,
@@ -35,6 +34,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   const companyLines: string[] = Array.isArray(previewModel?.companyPreviewLines) ? previewModel.companyPreviewLines : [];
   const clientLines: string[] = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : [];
   const detailRows: any[] = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [];
+  const previewItems: any[] = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : [];
   const poRow = detailRows.find((row: any) => row?.label === 'PO Number');
 
   return (
@@ -90,36 +90,50 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
       </div>
 
       <div className={styles.itemList}>
-        {items.map((item, index) => (
-          <div key={item.id || index} className={styles.itemRow}>
-            <div className={styles.itemNum}>{(index + 1).toString().padStart(2, "0")}</div>
-            <div className={styles.itemBody}>
-              <div className={styles.itemName}>{item.description}</div>
-              {item.sub_description && <div className={styles.itemSub}>{item.sub_description}</div>}
-              <div className={styles.itemMeta}>
-                {item.quantity != null && (
-                  <span className={styles.itemPill}>
-                    Qty: <strong>{item.quantity}{item.unit ? ` ${item.unit}` : ""}</strong>
-                  </span>
-                )}
-                {item.unit_price != null && (
-                  <span className={styles.itemPill}>
-                    Rate: <strong>{formatNaira(item.unit_price)}</strong>
-                  </span>
+        {previewItems.map((item, index) => {
+          if (item?.type === "group") {
+            return (
+              <div key={`group-${index}`} className={styles.itemRow}>
+                <div className={styles.itemBody}>
+                  <div className={styles.itemName}>{item?.label || "Group"}</div>
+                </div>
+              </div>
+            );
+          }
+
+          if (item?.type === "group_footer") {
+            return (
+              <div key={`group-footer-${index}`} className={styles.itemRow}>
+                <div className={styles.itemBody} />
+                <div className={styles.itemAmount}>{item?.showSubtotal ? item?.value || "" : ""}</div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={`line-${index}`} className={styles.itemRow}>
+              <div className={styles.itemNum}>{(index + 1).toString().padStart(2, "0")}</div>
+              <div className={styles.itemBody}>
+                <div className={styles.itemName}>{item?.label || "Item"}</div>
+                {item?.detail && <div className={styles.itemSub}>{item.detail}</div>}
+                <div className={styles.itemMeta}>
+                  {(item?.facts || []).filter(Boolean).map((fact: string, factIndex: number) => (
+                    <span key={factIndex} className={styles.itemPill}>{fact}</span>
+                  ))}
+                </div>
+                {item?.imageUrl && (
+                  <img
+                    className={styles.itemThumb}
+                    src={item.imageUrl}
+                    alt={item?.label || "Item image"}
+                    loading="lazy"
+                  />
                 )}
               </div>
-              {resolveCanonicalItemImageUrl(item) && (
-                <img
-                  className={styles.itemThumb}
-                  src={resolveCanonicalItemImageUrl(item)!}
-                  alt={item.description || "Item image"}
-                  loading="lazy"
-                />
-              )}
+              <div className={styles.itemAmount}>{item?.value || ""}</div>
             </div>
-            <div className={styles.itemAmount}>{formatNaira(item.amount)}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className={styles.totalsList}>
