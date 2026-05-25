@@ -22,13 +22,12 @@ import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { Textarea } from "@/components/ui/textarea"
 import { feedback } from "@/lib/feedback"
 import {
-  buildFullPaymentPreset,
   getPaymentEntrySummary,
   validatePaymentEntry,
 } from "@/components/invoice/paymentEntryHelpers"
 import { loadBankAccountsList, calculatePreviousSettled, recordInvoicePayment } from "@/modules/invoices/services/paymentService"
 import type { BankAccountSummary } from "@/modules/invoices/types/paymentTypes"
-import type { PaymentMethod, PaymentType } from "@/modules/invoices/types/paymentTypes"
+import type { PaymentMethod } from "@/modules/invoices/types/paymentTypes"
 
 type InvoiceSummary = {
   id: string
@@ -55,7 +54,6 @@ type FormState = {
   method: PaymentMethod
   reference: string
   notes: string
-  type: PaymentType
 }
 
 const DEFAULT_FORM = (): FormState => ({
@@ -64,7 +62,6 @@ const DEFAULT_FORM = (): FormState => ({
   method: "Transfer",
   reference: "",
   notes: "",
-  type: "full",
 })
 
 const formatMoney = (value: number) => `₦${Number(value || 0).toLocaleString()}`
@@ -86,6 +83,7 @@ export default function RecordPaymentModal({
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState("")
   const [submitAttempted, setSubmitAttempted] = React.useState(false)
+  const [isMaxed, setIsMaxed] = React.useState(false)
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
@@ -117,6 +115,7 @@ export default function RecordPaymentModal({
     setForm(DEFAULT_FORM())
     setError("")
     setSubmitAttempted(false)
+    setIsMaxed(false)
     void loadModalData()
 
     return () => {
@@ -139,32 +138,14 @@ export default function RecordPaymentModal({
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
 
-  React.useEffect(() => {
-    if (!controlledOpen || loadingBalance) return
-    setForm((current) => {
-      if (current.type !== "full") return current
-      if (current.cashReceived !== null) return current
-      return {
-        ...current,
-        ...buildFullPaymentPreset(currentBalance),
-      }
-    })
-  }, [controlledOpen, currentBalance, loadingBalance])
-
-  const applyFullPaymentPreset = React.useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      type: "full",
-      ...buildFullPaymentPreset(currentBalance),
-    }))
+  const applyMax = React.useCallback(() => {
+    setForm((current) => ({ ...current, cashReceived: Math.round(currentBalance * 100) / 100 }))
+    setIsMaxed(true)
   }, [currentBalance])
 
-  const applyPartialPaymentPreset = React.useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      type: "partial",
-      cashReceived: current.cashReceived ?? null,
-    }))
+  const clearMax = React.useCallback(() => {
+    setForm((current) => ({ ...current, cashReceived: null }))
+    setIsMaxed(false)
   }, [])
 
   const showValidationError = React.useCallback((message: string) => {
@@ -219,7 +200,7 @@ export default function RecordPaymentModal({
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
       <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-[var(--bd-radius-xl)] bg-card p-0 sm:max-w-[440px]">
         <DialogHeader className="border-b border-border px-5 py-4">
-          <DialogTitle className="border-l-4 border-emerald-500 pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
+          <DialogTitle className="border-l-4 border-[hsl(var(--bd-status-success-border))] pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Save a payment for {invoice.invoice_number}.
           </DialogDescription>
@@ -246,53 +227,43 @@ export default function RecordPaymentModal({
             </div>
           </div>
 
-          <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Type</div>
-            <div className="grid grid-cols-2 overflow-hidden rounded-[var(--bd-radius-lg)] border border-border">
-              {(["full", "partial"] as PaymentType[]).map((type) => {
-                const active = form.type === type
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={type === "full" ? applyFullPaymentPreset : applyPartialPaymentPreset}
-                    className={`px-2.5 py-2.5 text-sm font-bold capitalize transition-colors ${
-                      active ? "bg-emerald-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {type === "full" ? "Full Payment" : "Partial Payment"}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received</div>
-              <button
-                type="button"
-                onClick={applyFullPaymentPreset}
-                className="text-xs font-semibold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:text-[hsl(var(--bd-button-primary-hover-bg))]"
-              >
-                Use balance as cash
-              </button>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
+              {isMaxed ? (
+                <button
+                  type="button"
+                  onClick={clearMax}
+                  className="rounded-[var(--bd-radius-sm)] border border-border bg-[hsl(var(--bd-surface-muted))] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-[hsl(var(--bd-surface))] hover:text-foreground"
+                >
+                  Reset
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={applyMax}
+                  className="rounded-[var(--bd-radius-sm)] border border-[hsl(var(--bd-button-primary-bg)/0.25)] bg-[hsl(var(--bd-button-primary-bg)/0.08)] px-2 py-0.5 text-[11px] font-semibold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.15)]"
+                >
+                  Use Balance
+                </button>
+              )}
             </div>
-            <div>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
-              <NumericInput
-                min={0}
-                className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
-                value={form.cashReceived}
-                onChange={(val) => setField("cashReceived", val)}
-                placeholder="Enter cash received"
-              />
-              {submitAttempted && validation.cashError ? (
-                <div className="mt-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
-                  {validation.cashError}
-                </div>
-              ) : null}
-            </div>
+            <NumericInput
+              min={0}
+              className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
+              value={form.cashReceived}
+              onChange={(val) => {
+                setField("cashReceived", val)
+                setIsMaxed(false)
+              }}
+              placeholder="Enter amount"
+              disabled={isMaxed}
+            />
+            {submitAttempted && validation.cashError ? (
+              <div className="text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+                {validation.cashError}
+              </div>
+            ) : null}
             {amountError ? (
               <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
                 {amountError}
@@ -308,7 +279,7 @@ export default function RecordPaymentModal({
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Payment Mode</div>
               <Select value={form.method} onValueChange={(value) => setField("method", value as PaymentMethod)}>
-                <SelectTrigger className="w-full border-blue-200 bg-background">
+                <SelectTrigger className="w-full border-border bg-background">
                   <SelectValue placeholder="Select payment mode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,10 +294,10 @@ export default function RecordPaymentModal({
           </div>
 
           {form.method === "Transfer" ? (
-            <div className="space-y-1.5 rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3">
-              <label className="text-sm font-medium text-slate-700">Received Into Account</label>
+            <div className="space-y-1.5 rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Received Into Account</label>
               <Select value={selectedBankId} onValueChange={setSelectedBankId}>
-                <SelectTrigger className="w-full border-emerald-200 bg-background">
+                <SelectTrigger className="w-full border-border bg-background">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -356,23 +327,23 @@ export default function RecordPaymentModal({
           </div>
 
           <div className="sticky bottom-0 -mx-5 mt-2 space-y-3 border-t border-border/70 bg-card/95 px-5 pb-4 pt-3 backdrop-blur">
-            <div className="rounded-[var(--bd-radius-lg)] border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 shadow-sm">
+            <div className="rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface)/0.92)] px-4 py-3 shadow-sm">
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium text-muted-foreground">Cash Received</span>
                 <span className="font-bold text-foreground">{formatMoney(settlementSummary.cashReceived)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium text-muted-foreground">Remaining Balance</span>
-                <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>
+                <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-[hsl(var(--destructive))]" : "font-bold text-[hsl(var(--bd-status-success-text))]"}>
                   {formatMoney(settlementSummary.remainingBalance)}
                 </span>
               </div>
             </div>
 
             {invoiceHasWht ? (
-              <div className="rounded-[var(--bd-radius-lg)] border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3 text-xs text-[hsl(var(--bd-status-warning-text))]">
                 <span className="font-bold">💡 WHT Tracking Enabled:</span>{" "}
-                This invoice contains configured WHT. Ensure you verify and track the tax credit receipt within the Compliance Hub dashboard once this payment settlement is completed.
+                This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
               </div>
             ) : null}
 
@@ -390,7 +361,7 @@ export default function RecordPaymentModal({
                 type="button"
                 onClick={handleSave}
                 disabled={saving || loadingBalance}
-                className="flex-1 bg-green-600 text-white hover:bg-green-700"
+                className="flex-1 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
               >
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {saving ? "Saving..." : "Record Payment"}

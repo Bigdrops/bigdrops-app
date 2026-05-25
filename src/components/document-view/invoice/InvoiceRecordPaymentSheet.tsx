@@ -8,13 +8,12 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { feedback } from '@/lib/feedback'
 import {
-  buildFullPaymentPreset,
   getPaymentEntrySummary,
   validatePaymentEntry,
 } from '@/components/invoice/paymentEntryHelpers'
 import { loadBankAccountsList, calculatePreviousSettled, recordInvoicePayment } from '@/modules/invoices/services/paymentService'
 import type { BankAccountSummary } from '@/modules/invoices/types/paymentTypes'
-import type { PaymentMethod, PaymentType } from '@/modules/invoices/types/paymentTypes'
+import type { PaymentMethod } from '@/modules/invoices/types/paymentTypes'
 
 interface InvoiceSummary {
   id: string
@@ -39,7 +38,6 @@ interface FormState {
   method: PaymentMethod
   reference: string
   notes: string
-  type: PaymentType
 }
 
 const DEFAULT_FORM = (): FormState => ({
@@ -48,7 +46,6 @@ const DEFAULT_FORM = (): FormState => ({
   method: 'Transfer',
   reference: '',
   notes: '',
-  type: 'full',
 })
 
 export default function InvoiceRecordPaymentSheet({
@@ -65,6 +62,7 @@ export default function InvoiceRecordPaymentSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [isMaxed, setIsMaxed] = useState(false)
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
@@ -91,6 +89,7 @@ export default function InvoiceRecordPaymentSheet({
     setForm(DEFAULT_FORM())
     setError('')
     setSubmitAttempted(false)
+    setIsMaxed(false)
     void loadData()
 
     return () => {
@@ -113,32 +112,14 @@ export default function InvoiceRecordPaymentSheet({
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
 
-  useEffect(() => {
-    if (!open || loadingData) return
-    setForm((current) => {
-      if (current.type !== 'full') return current
-      if (current.cashReceived !== null) return current
-      return {
-        ...current,
-        ...buildFullPaymentPreset(currentBalance),
-      }
-    })
-  }, [currentBalance, loadingData, open])
-
-  const applyFullPaymentPreset = useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      type: 'full',
-      ...buildFullPaymentPreset(currentBalance),
-    }))
+  const applyMax = useCallback(() => {
+    setForm((current) => ({ ...current, cashReceived: Math.round(currentBalance * 100) / 100 }))
+    setIsMaxed(true)
   }, [currentBalance])
 
-  const applyPartialPaymentPreset = useCallback(() => {
-    setForm((current) => ({
-      ...current,
-      type: 'partial',
-      cashReceived: current.cashReceived ?? null,
-    }))
+  const clearMax = useCallback(() => {
+    setForm((current) => ({ ...current, cashReceived: null }))
+    setIsMaxed(false)
   }, [])
 
   const showValidationError = useCallback((message: string) => {
@@ -218,45 +199,32 @@ export default function InvoiceRecordPaymentSheet({
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.formLabel}>Payment Type</label>
-              <div className={styles.typeToggle}>
-                <button
-                  type="button"
-                  className={`${styles.toggleBtn} ${form.type === 'full' ? styles.active : ''}`}
-                  onClick={applyFullPaymentPreset}
-                >
-                  Full Payment
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.toggleBtn} ${form.type === 'partial' ? styles.active : ''}`}
-                  onClick={applyPartialPaymentPreset}
-                >
-                  Partial
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.fieldGroup}>
               <div className={styles.amountHeader}>
-                <label className={styles.formLabel}>Cash Received</label>
-                <button type="button" className={styles.inlineAction} onClick={applyFullPaymentPreset}>
-                  Use balance as cash
-                </button>
-              </div>
-              <div className={styles.fieldGroup}>
                 <label className={styles.formLabel}>Cash Received (₦)</label>
-                <NumericInput
-                  min={0}
-                  className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
-                  value={form.cashReceived}
-                  onChange={(val) => setField('cashReceived', val)}
-                  placeholder="0.00"
-                />
-                {submitAttempted && validation.cashError ? (
-                  <div className={styles.fieldError}>{validation.cashError}</div>
-                ) : null}
+                {isMaxed ? (
+                  <button type="button" className={styles.inlineAction} onClick={clearMax}>
+                    Reset
+                  </button>
+                ) : (
+                  <button type="button" className={styles.inlineAction} onClick={applyMax}>
+                    Use Balance
+                  </button>
+                )}
               </div>
+              <NumericInput
+                min={0}
+                className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
+                value={form.cashReceived}
+                onChange={(val) => {
+                  setField('cashReceived', val)
+                  setIsMaxed(false)
+                }}
+                placeholder="Enter amount"
+                disabled={isMaxed}
+              />
+              {submitAttempted && validation.cashError ? (
+                <div className={styles.fieldError}>{validation.cashError}</div>
+              ) : null}
               {amountError ? (
                 <div className={styles.inlineErrorBox}>{amountError}</div>
               ) : null}
@@ -348,9 +316,9 @@ export default function InvoiceRecordPaymentSheet({
               </div>
 
               {invoiceHasWht ? (
-                <div className={styles.inlineErrorBox} style={{ borderColor: '#d97706', backgroundColor: '#fffbeb', color: '#92400e' }}>
-                  <span style={{ fontWeight: 700 }}>💡 WHT Tracking Enabled:</span>{' '}
-                  This invoice contains configured WHT. Ensure you verify and track the tax credit receipt within the Compliance Hub dashboard once this payment settlement is completed.
+                <div className={styles.helperText}>
+                  💡 <strong>WHT Tracking Enabled:</strong>{' '}
+                  This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
                 </div>
               ) : null}
 
