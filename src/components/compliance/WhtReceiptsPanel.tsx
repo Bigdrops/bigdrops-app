@@ -29,6 +29,7 @@ import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import WhtReceiptStatusStrip from './WhtReceiptStatusStrip'
 import WhtReceiptQueueRow, { type WhtPaymentRecord, type WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
+import WhtReceiptMatcherAction from './WhtReceiptMatcherAction'
 
 interface WhtReceiptsPanelProps {
   payments: any[]
@@ -51,6 +52,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<WhtReceiptQueueEntry | null>(null)
+  const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null)
   const [draftStatus, setDraftStatus] = useState<WhtReceiptStatus>('pending')
   const [draftReceiptNumber, setDraftReceiptNumber] = useState('')
   const [draftNotes, setDraftNotes] = useState('')
@@ -144,6 +146,11 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
     whtPayments.length > 0 && attentionEntries.length === 0 && verifiedEntries.length > 0
 
   const openEntry = (entry: WhtReceiptQueueEntry) => {
+    const isActionable = entry.status === 'untracked' || entry.status === 'pending' || entry.status === 'requested' || entry.status === 'received'
+    if (isActionable) {
+      setExpandedEntryId((current) => (current === entry.id ? null : entry.id))
+      return
+    }
     setSelectedEntry(entry)
     setDraftStatus(entry.receipt?.receipt_status || 'pending')
     setDraftReceiptNumber(entry.receipt?.receipt_number || '')
@@ -155,6 +162,18 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
     setDraftStatus('pending')
     setDraftReceiptNumber('')
     setDraftNotes('')
+  }
+
+  const handleMatcherComplete = (receipt: WhtReceipt) => {
+    setLocalReceipts((current) => {
+      const exists = current.some((r) => r.id === receipt.id)
+      if (exists) {
+        return current.map((r) => (r.id === receipt.id ? receipt : r))
+      }
+      return [...current, receipt]
+    })
+    setExpandedEntryId(null)
+    onReceiptsChanged?.()
   }
 
   async function initializeRecord(payment: WhtPaymentRecord) {
@@ -339,12 +358,19 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                   {attentionEntries.length > 0 ? (
                     <div className="space-y-3">
                       {attentionEntries.map((entry) => (
-                        <WhtReceiptQueueRow
-                          key={entry.id}
-                          entry={entry}
-                          onOpen={openEntry}
-                          processing={processingId === entry.payment.id}
-                        />
+                        <div key={entry.id}>
+                          <WhtReceiptQueueRow
+                            entry={entry}
+                            onOpen={openEntry}
+                            processing={processingId === entry.payment.id}
+                          />
+                          {expandedEntryId === entry.id ? (
+                            <WhtReceiptMatcherAction
+                              entry={entry}
+                              onComplete={handleMatcherComplete}
+                            />
+                          ) : null}
+                        </div>
                       ))}
                     </div>
                   ) : null}
