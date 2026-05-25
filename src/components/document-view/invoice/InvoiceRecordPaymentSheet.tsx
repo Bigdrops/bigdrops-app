@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Banknote, Calendar, Zap, X } from 'lucide-react'
+import { Loader2, Banknote, Calendar } from 'lucide-react'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import styles from './InvoiceRecordPaymentSheet.module.css'
@@ -62,7 +62,6 @@ export default function InvoiceRecordPaymentSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [isMaxed, setIsMaxed] = useState(false)
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
@@ -89,7 +88,6 @@ export default function InvoiceRecordPaymentSheet({
     setForm(DEFAULT_FORM())
     setError('')
     setSubmitAttempted(false)
-    setIsMaxed(false)
     void loadData()
 
     return () => {
@@ -114,13 +112,7 @@ export default function InvoiceRecordPaymentSheet({
 
   const applyMax = useCallback(() => {
     setForm((current) => ({ ...current, cashReceived: Math.round(currentBalance * 100) / 100 }))
-    setIsMaxed(true)
   }, [currentBalance])
-
-  const clearMax = useCallback(() => {
-    setForm((current) => ({ ...current, cashReceived: null }))
-    setIsMaxed(false)
-  }, [])
 
   const showValidationError = useCallback((message: string) => {
     setError(message)
@@ -205,24 +197,12 @@ export default function InvoiceRecordPaymentSheet({
                   min={0}
                   className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
                   value={form.cashReceived}
-                  onChange={(val) => {
-                    setField('cashReceived', val)
-                    setIsMaxed(false)
-                  }}
+                  onChange={(val) => setField('cashReceived', val)}
                   placeholder="Enter amount"
-                  disabled={isMaxed}
                 />
-                {isMaxed ? (
-                  <button type="button" className={styles.payFullPillSecondary} onClick={clearMax}>
-                    <X size={16} />
-                    Clear & Reset Amount
-                  </button>
-                ) : (
-                  <button type="button" className={styles.payFullPill} onClick={applyMax}>
-                    <Zap size={16} />
-                    Pay Full Balance ({formatNaira(currentBalance)})
-                  </button>
-                )}
+                <button type="button" className={styles.payFullPill} onClick={applyMax}>
+                  Pay Full Balance ({formatNaira(currentBalance)})
+                </button>
                 {submitAttempted && validation.cashError ? (
                   <div className={styles.fieldError}>{validation.cashError}</div>
                 ) : null}

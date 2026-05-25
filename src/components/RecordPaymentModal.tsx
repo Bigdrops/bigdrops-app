@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Loader2, Zap, X } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -83,7 +83,6 @@ export default function RecordPaymentModal({
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState("")
   const [submitAttempted, setSubmitAttempted] = React.useState(false)
-  const [isMaxed, setIsMaxed] = React.useState(false)
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
@@ -115,7 +114,6 @@ export default function RecordPaymentModal({
     setForm(DEFAULT_FORM())
     setError("")
     setSubmitAttempted(false)
-    setIsMaxed(false)
     void loadModalData()
 
     return () => {
@@ -140,13 +138,7 @@ export default function RecordPaymentModal({
 
   const applyMax = React.useCallback(() => {
     setForm((current) => ({ ...current, cashReceived: Math.round(currentBalance * 100) / 100 }))
-    setIsMaxed(true)
   }, [currentBalance])
-
-  const clearMax = React.useCallback(() => {
-    setForm((current) => ({ ...current, cashReceived: null }))
-    setIsMaxed(false)
-  }, [])
 
   const showValidationError = React.useCallback((message: string) => {
     setError(message)
@@ -233,32 +225,16 @@ export default function RecordPaymentModal({
               min={0}
               className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
               value={form.cashReceived}
-              onChange={(val) => {
-                setField("cashReceived", val)
-                setIsMaxed(false)
-              }}
+              onChange={(val) => setField("cashReceived", val)}
               placeholder="Enter amount"
-              disabled={isMaxed}
             />
-            {isMaxed ? (
-              <button
-                type="button"
-                onClick={clearMax}
-                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface-muted))] px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-[hsl(var(--bd-surface))] hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-                Clear & Reset Amount
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={applyMax}
-                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-button-primary-bg)/0.3)] bg-[hsl(var(--bd-button-primary-bg)/0.1)] px-4 py-3 text-sm font-bold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.18)]"
-              >
-                <Zap className="h-4 w-4" />
-                Pay Full Balance ({formatMoney(currentBalance)})
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={applyMax}
+              className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-button-primary-bg)/0.3)] bg-[hsl(var(--bd-button-primary-bg)/0.1)] px-4 py-3 text-sm font-bold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.18)]"
+            >
+              Pay Full Balance ({formatMoney(currentBalance)})
+            </button>
             {submitAttempted && validation.cashError ? (
               <div className="text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
                 {validation.cashError}
