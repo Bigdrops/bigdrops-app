@@ -30,7 +30,7 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
   ].filter((field): field is { label: string; value: string | null | undefined } => Boolean(field?.value))
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
       <View fixed style={[styles.footer, { backgroundColor: surface }]}>
         <Text style={[styles.footerLeft, { color: ink }]}>{safeText(data.footer.documentNumber || data.documentNumber)}</Text>
         <Text

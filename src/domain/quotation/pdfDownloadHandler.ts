@@ -86,6 +86,7 @@ export async function handleDownloadQuotationPdf(input: {
           value: row.value,
         })),
         columns: resolvedTable.columns,
+        pageLayout: resolvedTable.pageLayout,
         mergeQtyUnit: resolvedTable.mergeQtyUnit,
         items: (Array.isArray(items) ? items : []).map((item, index) => ({
           id: String(item.id || item._uiKey || index),

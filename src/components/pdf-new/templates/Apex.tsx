@@ -11,7 +11,7 @@ export default function Apex({ data }: { data: IndustryTemplateData }) {
     'Apex is currently a placeholder PDF template. Your document content remains intact while this layout is being prepared.'
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
       <View style={[styles.heroBand, { backgroundColor: accent }]} />
 
       <View style={styles.content}>

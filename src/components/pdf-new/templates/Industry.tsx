@@ -84,7 +84,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
   )
 
   return (
-    <Page size="A4" style={[styles.page, compact ? compactIndustry.page : null]}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, compact ? compactIndustry.page : null]}>
       {(data.title || metaRows.length > 0 || data.company?.companyLogoUrl) && (
         <View style={[styles.header, compact ? compactIndustry.header : null]}>
           <View style={styles.headerLeft}>

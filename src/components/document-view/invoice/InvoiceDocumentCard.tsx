@@ -38,7 +38,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   const poRow = detailRows.find((row: any) => row?.label === 'PO Number');
 
   return (
-    <div className={styles.invCard}>
+    <div className={styles.invCard} data-orientation={previewModel?.pageLayout?.orientation || "portrait"}>
       <div className={styles.invTop}>
         <div className={styles.brandBlock}>
           <DocumentBrandBlock

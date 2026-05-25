@@ -8,6 +8,11 @@
     box-shadow: var(--bd-shadow-md);
 }
 
+.invCard[data-orientation="landscape"] {
+    width: min(100%, 980px);
+    margin-inline: auto;
+}
+
 .invTop {
     padding: 20px 18px 14px;
     display: flex;

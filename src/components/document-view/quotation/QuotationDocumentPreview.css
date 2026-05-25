@@ -12,6 +12,11 @@
     color: hsl(var(--bd-text));
 }
 
+.quotationDocumentPreview[data-orientation="landscape"] {
+    width: min(100%, 980px);
+    margin-inline: auto;
+}
+
 /* ── inv-top ── */
 .inv-top {
     padding: 20px 18px 14px;

@@ -48,7 +48,10 @@ export default function QuotationDocumentPreview({
   const companyName = settingsData?.company_name || ''
 
   return (
-    <div className={`quotationDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}>
+    <div
+      className={`quotationDocumentPreview ${mergeQtyUnit ? 'merged-qty' : ''}`}
+      data-orientation={previewModel?.pageLayout?.orientation || 'portrait'}
+    >
       {/* 1. inv-top */}
       <div className="inv-top">
         <div className="brand-block">

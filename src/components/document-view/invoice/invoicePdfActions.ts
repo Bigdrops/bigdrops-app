@@ -122,6 +122,7 @@ export const downloadInvoicePdfDocument = async ({
       },
       headerFields: Array.isArray(targetPreviewModel?.previewDetailRows) ? targetPreviewModel.previewDetailRows : [],
       columns: resolvedTable.columns,
+      pageLayout: resolvedTable.pageLayout,
       mergeQtyUnit: resolvedTable.mergeQtyUnit,
       items: (Array.isArray(targetItems) ? targetItems : []).map((item, index) => ({
         id: String(item.id || item._uiKey || index),

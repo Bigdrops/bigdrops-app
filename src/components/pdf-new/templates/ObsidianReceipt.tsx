@@ -301,7 +301,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
 
   // Footer & Final Layout
   return (
-    <Page size="A4" style={[styles.page, { color: text }]}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, { color: text }]}>
       <View fixed style={styles.footerFixed}>
         <Text style={styles.footerLeft}>{safeText(footer?.documentNumber)}</Text>
         <Text

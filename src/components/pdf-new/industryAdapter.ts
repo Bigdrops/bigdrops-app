@@ -438,7 +438,7 @@ export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData
       companyName: model.metaFooter?.companyName || model.issuer?.name || '',
       extraText: model.footerText || '',
     },
-    layout: { size: 'A4', orientation: 'portrait' },
+    layout: model.pageLayout || { size: 'A4', orientation: 'portrait' },
     design: {
       accentColor: model.template?.designPreset?.accentColor || null,
       textColor: model.template?.designPreset?.textColor || null,

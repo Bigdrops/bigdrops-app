@@ -2,7 +2,7 @@ import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
 import { adaptIndustryData } from "@/components/pdf-new/industryAdapter";
 import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf-new/table";
-import type { PdfDocumentModel, PdfColumnDefinition } from "@/components/pdf-new/types";
+import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf-new/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
 import { buildSummaryRows } from "@/domain/invoice";
 import {
@@ -44,6 +44,7 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       .filter((field: any) => field?.label && field?.value)
       .map((field: any) => ({ label: String(field.label), value: String(field.value) })),
   ].filter((row) => String(row.value || "").trim().length > 0);
+  const previewTableSettings = resolveQuotationPreviewTableSettings(items, customFields);
 
   const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput);
   const previewTotals = [
@@ -126,7 +127,8 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
     companyPreviewLines,
     clientPreviewLines,
     previewDetailRows,
-    previewItems: buildQuotationPreviewItems(items, customFields),
+    pageLayout: previewTableSettings.pageLayout,
+    previewItems: buildQuotationPreviewItems(items, customFields, previewTableSettings),
     previewTotals,
     previewNotesSections,
     previewAttachmentLinks,
@@ -135,16 +137,13 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
   };
 }
 
-export function buildQuotationPreviewItems(items: any[], customFields: Record<string, any>) {
+export function buildQuotationPreviewItems(
+  items: any[],
+  customFields: Record<string, any>,
+  tableSettings?: PdfResolvedTableSettings,
+) {
   const sourceItems = Array.isArray(items) ? items : [];
-  const resolvedTable = interpretPdfTableSettings(
-    Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : [],
-    {
-      mergeQtyUnit: customFields?.mergeQtyUnit === true,
-      hideEmptyGroups: customFields?.hideEmptyGroups !== false,
-      items: sourceItems as never[],
-    },
-  );
+  const resolvedTable = tableSettings || resolveQuotationPreviewTableSettings(sourceItems, customFields);
 
   const adapted = adaptIndustryData({
     identity: { id: "", kind: "quotation", number: "", title: "" },
@@ -204,6 +203,18 @@ export function buildQuotationPreviewItems(items: any[], customFields: Record<st
       facts: buildPreviewFacts(row, resolvedTable.columns),
     };
   });
+}
+
+function resolveQuotationPreviewTableSettings(items: any[], customFields: Record<string, any>) {
+  const sourceItems = Array.isArray(items) ? items : [];
+  return interpretPdfTableSettings(
+    Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : [],
+    {
+      mergeQtyUnit: customFields?.mergeQtyUnit === true,
+      hideEmptyGroups: customFields?.hideEmptyGroups !== false,
+      items: sourceItems as never[],
+    },
+  );
 }
 
 function hasPreviewValue(value: unknown) {

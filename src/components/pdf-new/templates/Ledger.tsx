@@ -39,7 +39,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
   );
 
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
       <View style={styles.invoiceContainer}>
         {/* 1. HEADER */}
         <View style={styles.header} wrap={false}>

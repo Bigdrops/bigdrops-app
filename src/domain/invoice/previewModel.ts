@@ -18,7 +18,7 @@ import type {
   PdfOutputLike,
   BuildInvoicePreviewModelInput,
 } from './renderTypes'
-import type { PdfDocumentModel } from '@/components/pdf-new/types'
+import type { PdfDocumentModel, PdfResolvedTableSettings } from '@/components/pdf-new/types'
 
 import {
   buildBankAccountsProjection,
@@ -91,6 +91,7 @@ export function buildInvoicePreviewModel({
   const attachmentLinks = buildAttachmentLinksProjection(customFieldObject)
 
   const previewDetailRows = buildDetailRowsProjection({ customFieldObject, poNumber, invoice })
+  const previewTableSettings = resolveInvoicePreviewTableSettings(items, customFieldObject)
 
   const advanceSummary = buildAdvanceDisplayProjection(invoice)
   const previewTotals = buildTotalsProjection({
@@ -110,7 +111,8 @@ export function buildInvoicePreviewModel({
     clientPreviewLines,
     topHeaderFields,
     previewDetailRows,
-    previewItems: buildInvoicePreviewItems(items, customFieldObject),
+    pageLayout: previewTableSettings.pageLayout,
+    previewItems: buildInvoicePreviewItems(items, customFieldObject, previewTableSettings),
     previewTotals,
     previewAmountInWords,
     previewBalanceDue: previewBalanceDueRow,
@@ -147,12 +149,12 @@ function buildPreviewFacts(row: any, columns: PdfDocumentModel['columns']) {
     .filter(Boolean) as string[]
 }
 
-export function buildInvoicePreviewItems(
+function resolveInvoicePreviewTableSettings(
   items: BuildInvoicePreviewModelInput['items'],
   customFieldObject: BuildInvoicePreviewModelInput['customFieldObject'],
-): PreviewItem[] {
+) {
   const sourceItems = Array.isArray(items) ? items : []
-  const resolvedTable = interpretPdfTableSettings(
+  return interpretPdfTableSettings(
     Array.isArray(customFieldObject?.columnConfig) ? customFieldObject.columnConfig : [],
     {
       mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
@@ -160,6 +162,15 @@ export function buildInvoicePreviewItems(
       items: sourceItems as never[],
     },
   )
+}
+
+export function buildInvoicePreviewItems(
+  items: BuildInvoicePreviewModelInput['items'],
+  customFieldObject: BuildInvoicePreviewModelInput['customFieldObject'],
+  tableSettings?: PdfResolvedTableSettings,
+): PreviewItem[] {
+  const sourceItems = Array.isArray(items) ? items : []
+  const resolvedTable = tableSettings || resolveInvoicePreviewTableSettings(sourceItems, customFieldObject)
 
   const adapted = adaptIndustryData({
     identity: { id: '', kind: 'invoice', number: '', title: '' },

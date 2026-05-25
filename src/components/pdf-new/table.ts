@@ -176,6 +176,7 @@ export function interpretPdfTableSettings(
   return {
     mergeQtyUnit,
     hideEmptyGroups: options.hideEmptyGroups !== false,
+    pageLayout: resolvePdfPageLayout(resultColumns),
     configuredColumns,
     activeColumns: resolvedColumns.map((column) => createPdfColumnDefinition(column)),
     columns: resultColumns,
