@@ -10,7 +10,7 @@ const normalizeAmount = (value: number | null | undefined) => {
 export interface PaymentEntrySummaryInput {
   balanceDue: number
   cashReceived: number | null | undefined
-  whtDeducted: number | null | undefined
+  whtDeducted?: number | null | undefined
 }
 
 export interface PaymentEntrySummary {
@@ -30,17 +30,15 @@ export interface PaymentEntryValidationResult {
 }
 
 export const OVER_BALANCE_MESSAGE =
-  'Settlement cannot exceed the remaining balance. Cash received plus WHT deducted is greater than the amount due.'
+  'Cash received cannot exceed the remaining balance.'
 
 export function getPaymentEntrySummary({
   balanceDue,
   cashReceived,
-  whtDeducted,
 }: PaymentEntrySummaryInput): PaymentEntrySummary {
   const normalizedBalance = Math.max(0, normalizeAmount(balanceDue))
   const normalizedCash = normalizeAmount(cashReceived)
-  const normalizedWht = normalizeAmount(whtDeducted)
-  const settlementTotal = roundCurrency(normalizedCash + normalizedWht)
+  const settlementTotal = roundCurrency(normalizedCash)
   const exceedsBalance = settlementTotal > normalizedBalance + SETTLEMENT_TOLERANCE
   const remainingBalance = roundCurrency(
     Math.max(0, normalizedBalance - Math.min(settlementTotal, normalizedBalance))
@@ -49,7 +47,7 @@ export function getPaymentEntrySummary({
   return {
     balanceDue: normalizedBalance,
     cashReceived: normalizedCash,
-    whtDeducted: normalizedWht,
+    whtDeducted: 0,
     settlementTotal,
     remainingBalance,
     exceedsBalance,
@@ -59,21 +57,20 @@ export function getPaymentEntrySummary({
 export function validatePaymentEntry(input: PaymentEntrySummaryInput): PaymentEntryValidationResult {
   const summary = getPaymentEntrySummary(input)
   const cashError = summary.cashReceived < 0 ? 'Cash received cannot be negative.' : ''
-  const whtError = summary.whtDeducted < 0 ? 'WHT deducted cannot be negative.' : ''
 
-  if (cashError || whtError) {
+  if (cashError) {
     return {
       isValid: false,
-      message: cashError || whtError,
+      message: cashError,
       cashError,
-      whtError,
+      whtError: '',
     }
   }
 
   if (summary.settlementTotal <= 0) {
     return {
       isValid: false,
-      message: 'Enter cash received, WHT deducted, or both before recording payment.',
+      message: 'Enter cash received before recording payment.',
       cashError: '',
       whtError: '',
     }
@@ -96,11 +93,9 @@ export function validatePaymentEntry(input: PaymentEntrySummaryInput): PaymentEn
   }
 }
 
-export function buildFullPaymentPreset(balanceDue: number, whtDeducted = 0) {
+export function buildFullPaymentPreset(balanceDue: number) {
   const normalizedBalance = Math.max(0, normalizeAmount(balanceDue))
-  const normalizedWht = Math.max(0, normalizeAmount(whtDeducted))
   return {
-    cashReceived: roundCurrency(Math.max(0, normalizedBalance - normalizedWht)),
-    whtDeducted: roundCurrency(normalizedWht),
+    cashReceived: roundCurrency(normalizedBalance),
   }
 }

@@ -21,6 +21,7 @@ interface InvoiceSummary {
   invoice_number: string
   client_name?: string
   total: number
+  wht?: number | string | null
 }
 
 type BankAccount = BankAccountSummary
@@ -34,7 +35,6 @@ interface InvoiceRecordPaymentSheetProps {
 
 interface FormState {
   cashReceived: number | null
-  whtDeducted: number | null
   date: string
   method: PaymentMethod
   reference: string
@@ -44,7 +44,6 @@ interface FormState {
 
 const DEFAULT_FORM = (): FormState => ({
   cashReceived: null,
-  whtDeducted: 0,
   date: new Date().toISOString().split('T')[0] || '',
   method: 'Transfer',
   reference: '',
@@ -66,6 +65,8 @@ export default function InvoiceRecordPaymentSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [submitAttempted, setSubmitAttempted] = useState(false)
+
+  const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
   useEffect(() => {
     if (!open || !invoice?.id) return
@@ -101,15 +102,13 @@ export default function InvoiceRecordPaymentSheet({
   const settlementSummary = getPaymentEntrySummary({
     balanceDue: currentBalance,
     cashReceived: form.cashReceived,
-    whtDeducted: form.whtDeducted,
   })
   const validation = validatePaymentEntry({
     balanceDue: currentBalance,
     cashReceived: form.cashReceived,
-    whtDeducted: form.whtDeducted,
   })
   const amountError = submitAttempted ? validation.message : ''
-  const amountFieldHasError = submitAttempted && Boolean(amountError || validation.cashError || validation.whtError)
+  const amountFieldHasError = submitAttempted && Boolean(amountError || validation.cashError)
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }))
@@ -121,7 +120,7 @@ export default function InvoiceRecordPaymentSheet({
       if (current.cashReceived !== null) return current
       return {
         ...current,
-        ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+        ...buildFullPaymentPreset(currentBalance),
       }
     })
   }, [currentBalance, loadingData, open])
@@ -130,7 +129,7 @@ export default function InvoiceRecordPaymentSheet({
     setForm((current) => ({
       ...current,
       type: 'full',
-      ...buildFullPaymentPreset(currentBalance, current.whtDeducted || 0),
+      ...buildFullPaymentPreset(currentBalance),
     }))
   }, [currentBalance])
 
@@ -139,7 +138,6 @@ export default function InvoiceRecordPaymentSheet({
       ...current,
       type: 'partial',
       cashReceived: current.cashReceived ?? null,
-      whtDeducted: current.whtDeducted ?? 0,
     }))
   }, [])
 
@@ -160,7 +158,7 @@ export default function InvoiceRecordPaymentSheet({
         invoiceId: invoice.id,
         settlement: {
           cashReceived: settlementSummary.cashReceived,
-          whtDeducted: settlementSummary.whtDeducted,
+          whtDeducted: 0,
           settlementTotal: settlementSummary.settlementTotal,
           remainingBalance: settlementSummary.remainingBalance,
         },
@@ -241,42 +239,23 @@ export default function InvoiceRecordPaymentSheet({
 
             <div className={styles.fieldGroup}>
               <div className={styles.amountHeader}>
-                <label className={styles.formLabel}>Settlement Details</label>
+                <label className={styles.formLabel}>Cash Received</label>
                 <button type="button" className={styles.inlineAction} onClick={applyFullPaymentPreset}>
                   Use balance as cash
                 </button>
               </div>
-              <div className={styles.helperText}>
-                Settlement = Cash received + WHT deducted.
-                {form.type === 'full' ? ' Full payment should match the remaining balance.' : ''}
-              </div>
-              <div className={styles.amountGrid}>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.formLabel}>Cash Received (₦)</label>
-                  <NumericInput
-                    min={0}
-                    className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
-                    value={form.cashReceived}
-                    onChange={(val) => setField('cashReceived', val)}
-                    placeholder="0.00"
-                  />
-                  {submitAttempted && validation.cashError ? (
-                    <div className={styles.fieldError}>{validation.cashError}</div>
-                  ) : null}
-                </div>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.formLabel}>WHT Deducted (₦)</label>
-                  <NumericInput
-                    min={0}
-                    className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
-                    value={form.whtDeducted}
-                    onChange={(val) => setField('whtDeducted', val)}
-                    placeholder="0.00"
-                  />
-                  {submitAttempted && validation.whtError ? (
-                    <div className={styles.fieldError}>{validation.whtError}</div>
-                  ) : null}
-                </div>
+              <div className={styles.fieldGroup}>
+                <label className={styles.formLabel}>Cash Received (₦)</label>
+                <NumericInput
+                  min={0}
+                  className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
+                  value={form.cashReceived}
+                  onChange={(val) => setField('cashReceived', val)}
+                  placeholder="0.00"
+                />
+                {submitAttempted && validation.cashError ? (
+                  <div className={styles.fieldError}>{validation.cashError}</div>
+                ) : null}
               </div>
               {amountError ? (
                 <div className={styles.inlineErrorBox}>{amountError}</div>
@@ -359,14 +338,6 @@ export default function InvoiceRecordPaymentSheet({
                   <span className={styles.settleAmount}>{formatNaira(settlementSummary.cashReceived)}</span>
                 </div>
                 <div className={styles.settleRow}>
-                  <span>WHT Deducted</span>
-                  <span className={styles.settleAmount}>{formatNaira(settlementSummary.whtDeducted)}</span>
-                </div>
-                <div className={styles.settleRow}>
-                  <span>Total Settlement</span>
-                  <span className={styles.settleAmount}>{formatNaira(settlementSummary.settlementTotal)}</span>
-                </div>
-                <div className={styles.settleRow}>
                   <span>Remaining Balance</span>
                   <span
                     className={settlementSummary.remainingBalance > 0 ? styles.settleRem : styles.settlePaid}
@@ -375,6 +346,13 @@ export default function InvoiceRecordPaymentSheet({
                   </span>
                 </div>
               </div>
+
+              {invoiceHasWht ? (
+                <div className={styles.inlineErrorBox} style={{ borderColor: '#d97706', backgroundColor: '#fffbeb', color: '#92400e' }}>
+                  <span style={{ fontWeight: 700 }}>💡 WHT Tracking Enabled:</span>{' '}
+                  This invoice contains configured WHT. Ensure you verify and track the tax credit receipt within the Compliance Hub dashboard once this payment settlement is completed.
+                </div>
+              ) : null}
 
               {error ? <div className={styles.errorBanner}>{error}</div> : null}
 

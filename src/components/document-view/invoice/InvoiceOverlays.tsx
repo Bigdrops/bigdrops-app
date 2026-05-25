@@ -154,6 +154,7 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
           invoice_number: invoice.invoice_number || "Invoice",
           client_name: invoice.client_name || "",
           total: Number(viewModel.invoiceTotal || 0),
+          wht: invoice.wht,
         }}
       />
 
