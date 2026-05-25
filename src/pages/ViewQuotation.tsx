@@ -211,6 +211,7 @@ export default function ViewQuotation() {
               documentType="quotation" value={pdfOutput} bankAccounts={previewModel.previewBankAccounts}
               companyTagline={String(settings?.company_tagline || "")} footerText={String(settings?.footer_text || "")}
               templateId={normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry"}
+              designOnly
               onSave={(nextValue, nextPreset, nextTemplateId) => actions.handleSaveCustomization(nextValue, nextPreset, nextTemplateId)}
             />
             <QuotationMoreSheet

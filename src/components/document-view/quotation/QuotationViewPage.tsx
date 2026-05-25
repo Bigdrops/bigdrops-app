@@ -1,6 +1,8 @@
 import { Paperclip } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { BankDetailsCard } from "../shared/BankDetailsCard";
+import { DocumentOptionsCard } from "../shared/DocumentOptionsCard";
 import DocumentRelatedDocsSection, {
   type RelatedDocumentItem,
 } from "../shared/DocumentRelatedDocsSection";
@@ -31,6 +33,10 @@ const GAP = 12;
 export default function QuotationViewPage({
   documentPreview,
   preview,
+  bankAccounts = [],
+  pdfOutput,
+  onOutputChange,
+  onCustomize,
   relatedDocuments,
   activityHistory,
   attachments,
@@ -42,6 +48,15 @@ export default function QuotationViewPage({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
       {previewContent}
+
+      <BankDetailsCard bankAccounts={bankAccounts} />
+
+      <DocumentOptionsCard
+        pdfOutput={pdfOutput}
+        onOutputChange={onOutputChange}
+        onCustomize={onCustomize}
+        hideMergeQty
+      />
 
       {guardedRelatedDocuments.length > 0 && (
         <DocumentRelatedDocsSection items={guardedRelatedDocuments} />

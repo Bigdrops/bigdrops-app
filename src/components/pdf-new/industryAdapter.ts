@@ -177,6 +177,7 @@ function resolveGroupSubtotal(model: PdfDocumentModel, groupId: string | null) {
 }
 
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {
+  const hideEmptyGroups = model.hideEmptyGroups !== false
   let lineNumber = 0
   const rows: IndustryTemplateData['table']['rows'] = []
   let currentGroupHeader: any = null
@@ -274,7 +275,33 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
     }
   })
 
-  return rows
+  if (!hideEmptyGroups) return rows
+
+  // Strip empty groups: header immediately followed by footer with no data rows
+  const filtered: typeof rows = []
+  let i = 0
+  while (i < rows.length) {
+    if (rows[i].isGroupHeader) {
+      let j = i + 1
+      while (j < rows.length && !rows[j].isGroupFooter && !rows[j].isGroupHeader) {
+        j++
+      }
+      const hasItems = j > i + 1 || (j < rows.length && !rows[j].isGroupFooter)
+      if (hasItems) {
+        for (let k = i; k <= j && k < rows.length; k++) {
+          filtered.push(rows[k])
+        }
+        i = j + 1
+      } else {
+        i = (j < rows.length && rows[j].isGroupFooter) ? j + 1 : j
+      }
+    } else {
+      filtered.push(rows[i])
+      i++
+    }
+  }
+
+  return filtered
 }
 
 export function adaptIndustryData(model: PdfDocumentModel): IndustryTemplateData {
