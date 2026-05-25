@@ -229,10 +229,6 @@ export function buildPdfRowCells(
 }
 
 export function resolvePdfPageLayout(columns: PdfColumnDefinition[], forceLandscape?: boolean): PdfPageLayout {
-  if (forceLandscape) {
-    return { size: 'A4', orientation: 'landscape' }
-  }
-  const widthDemand = columns.reduce((sum, column) => sum + resolveWeightedColumnWidth(column), 0)
-  const orientation = widthDemand > 600 ? 'landscape' : 'portrait'
+  const orientation = forceLandscape ? 'landscape' : 'portrait'
   return { size: 'A4', orientation }
 }
