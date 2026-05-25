@@ -14,6 +14,10 @@ import {
   safe,
   shouldRender,
 } from './utils'
+import {
+  formatCommaMaterialsText,
+  resolveMaterialColumnBlocks,
+} from './layoutModel'
 
 export function PdfSignatureCard({ styles, label, name = '', role = '', signatureUrl = '' }: any) {
   return (
@@ -26,8 +30,8 @@ export function PdfSignatureCard({ styles, label, name = '', role = '', signatur
         <View style={{ height: 24, marginBottom: 4 }} />
       )}
       <Text style={styles.signLabel}>{label}</Text>
-      {hasText(name) ? <Text style={styles.fieldValue}>{name}</Text> : null}
-      {hasText(role) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{role}</Text> : null}
+      {hasText(name) ? <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{name}</Text> : null}
+      {hasText(role) ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{role}</Text> : null}
     </View>
   )
 }
@@ -125,6 +129,7 @@ export function StatusListChecks({ styles, status }: any) {
 }
 
 export function ReadingsCardGrid({ styles, csr }: any) {
+  csr = csr || {}
   const rows = getPopulatedReadingRows(csr)
   if (!hasOperationalReadings(csr)) return null
 
@@ -143,6 +148,7 @@ export function ReadingsCardGrid({ styles, csr }: any) {
 }
 
 export function ReadingsStrip({ styles, csr }: any) {
+  csr = csr || {}
   const rows = getPopulatedReadingRows(csr)
   if (!hasOperationalReadings(csr)) return null
 
@@ -163,14 +169,8 @@ export function ReadingsStrip({ styles, csr }: any) {
   )
 }
 
-const TEMPLATE_MAX_PER_COLUMN: Record<string, number> = {
-  signalbands: 5,
-  zinc: 6,
-  crimson: 6,
-  pulseframe: 10,
-}
-
 export function MaterialsSection({ styles, csr, preferredStyle, noSection, templateId }: any) {
+  csr = csr || {}
   if (!hasMaterials(csr)) return null
 
   const rows = getMaterialsRows(csr)
@@ -178,13 +178,7 @@ export function MaterialsSection({ styles, csr, preferredStyle, noSection, templ
 
   const metaStyle = csr.meta?.materialsOutputStyle || ''
   const resolvedStyle = preferredStyle || (metaStyle === 'comma' ? 'comma' : 'list')
-  const maxPerCol = TEMPLATE_MAX_PER_COLUMN[templateId] || 6
-
-  const numBlocks = rows.length <= maxPerCol ? 1
-    : rows.length <= maxPerCol * 2 ? 2
-    : rows.length <= maxPerCol * 3 ? 3
-    : 0
-
+  const numBlocks = resolveMaterialColumnBlocks(rows.length, templateId)
   const activeStyle = numBlocks === 0 ? 'comma' : resolvedStyle
 
   const content = activeStyle === 'comma'
@@ -196,14 +190,12 @@ export function MaterialsSection({ styles, csr, preferredStyle, noSection, templ
 }
 
 function renderCommaMaterials(rows: any[]) {
+  const text = formatCommaMaterialsText(rows)
+
   return (
     <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 8 }}>
       <Text style={{ fontSize: 8, color: '#09090b', lineHeight: 1.6 }}>
-        {rows.map((row: any, i: number) => {
-          const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
-          const text = `${safe(row.item)}${qtyUnit ? ` ${qtyUnit}` : ''}`
-          return `${i > 0 ? '  │  ' : ''}${text}`
-        }).join('')}
+        {text}
       </Text>
     </View>
   )
@@ -254,6 +246,7 @@ function renderTabulateMaterials(rows: any[], numBlocks: number) {
 }
 
 export function AcknowledgementBlock({ styles, csr }: any) {
+  csr = csr || {}
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
@@ -296,6 +289,7 @@ export function AcknowledgementBlock({ styles, csr }: any) {
 }
 
 export function PulseAcknowledgementBlock({ styles, csr }: any) {
+  csr = csr || {}
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
@@ -328,6 +322,7 @@ export function PulseAcknowledgementBlock({ styles, csr }: any) {
 }
 
 export function StructuredTopIdentity({ styles, csr, branding }: any) {
+  csr = csr || {}
   return (
     <>
       <View style={styles.headerRow}>
@@ -362,6 +357,7 @@ export function StructuredTopIdentity({ styles, csr, branding }: any) {
 }
 
 export function ServiceTimeSection({ styles, csr }: any) {
+  csr = csr || {}
   const w = getServiceWindow(csr)
   return (
     <PdfSection styles={styles} title="Service Time">
@@ -376,6 +372,7 @@ export function ServiceTimeSection({ styles, csr }: any) {
 }
 
 export function CustomerFeedbackSection({ styles, csr }: any) {
+  csr = csr || {}
   if (!shouldRender(true, csr.customer_feedback)) return null
   return (
     <PdfSection styles={styles} title="Customer Feedback">
@@ -387,6 +384,7 @@ export function CustomerFeedbackSection({ styles, csr }: any) {
 }
 
 export function SharedProblemSection({ styles, csr, title = 'Problem Reported' }: any) {
+  csr = csr || {}
   if (!shouldRender(true, csr.problem_reported)) return null
   return (
     <PdfSection styles={styles} title={title}>
@@ -398,6 +396,7 @@ export function SharedProblemSection({ styles, csr, title = 'Problem Reported' }
 }
 
 export function SharedEquipmentSection({ styles, csr }: any) {
+  csr = csr || {}
   return (
     <PdfSection styles={styles} title="Equipment Information">
       <View style={styles.grid4}>

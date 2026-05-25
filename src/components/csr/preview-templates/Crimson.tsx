@@ -239,6 +239,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+  csr = csr || {}
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
   const styles = createCrimsonStyles(layoutDensity, designPreset)
@@ -385,8 +386,8 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
                     <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
                   )}
                   <Text style={styles.signLabel}>Technician Signature</Text>
-                  <Text style={styles.fieldValue}>{technicianName}</Text>
-                  {technicianRole ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
+                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{technicianName}</Text>
+                  {technicianRole ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
                 </View>
               ) : null}
             </View>

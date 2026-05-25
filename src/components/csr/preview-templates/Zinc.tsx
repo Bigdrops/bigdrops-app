@@ -22,6 +22,7 @@ import {
   MaterialsSection,
   PdfSignatureCard,
 } from './components'
+import { resolveZincLifecycleStages, safeText } from './layoutModel'
 import type { CsrPdfProps } from './types'
 
 function createZincStyles(density = 'comfortable', designPreset: any) {
@@ -126,15 +127,14 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
       backgroundColor: '#3f3f46',
       marginBottom: 6,
     },
-    lifecycleDotPast: { backgroundColor: '#71717a' },
-    lifecycleDotActive: { backgroundColor: '#ffffff' },
+    lifecycleDotActive: { backgroundColor: fillableColor },
     lifecycleLabel: { fontSize: 6.1, color: '#a1a1aa', textAlign: 'center' },
-    lifecycleLabelActive: { color: '#ffffff' },
+    lifecycleLabelActive: { color: fillableColor, fontFamily: fillableBold },
     lifecycleFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
     lifecycleCurrentLabel: { fontSize: 6.4, color: '#a1a1aa', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    lifecycleCurrentText: { fontSize: 8.5, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
-    lifecycleBadge: { backgroundColor: '#ffffff', borderRadius: 4, paddingVertical: 2, paddingHorizontal: 6 },
-    lifecycleBadgeText: { fontSize: 6.6, color: '#000000', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    lifecycleCurrentText: { fontSize: 8.5, color: fillableColor, fontFamily: fillableBold, marginTop: 2 },
+    lifecycleBadge: { backgroundColor: '#ffffff', borderRadius: 4, paddingVertical: 2, paddingHorizontal: 6, borderWidth: 1, borderColor: fillableColor },
+    lifecycleBadgeText: { fontSize: 6.6, color: fillableColor, textTransform: 'uppercase', fontFamily: fillableBold },
 
     tableHeaderRow: {
       flexDirection: 'row',
@@ -181,21 +181,15 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+  csr = csr || {}
   const styles = createZincStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
-  const stages = ['Arrival', 'Diagnostic', 'Repair', 'Observation', 'Handover']
-  const activeIndex = (() => {
-    if (!status) return 0
-    const normalized = status.toLowerCase()
-    if (normalized === 'complete') return 4
-    if (normalized === 'working solution provided' || normalized === 'under observation') return 3
-    if (normalized === 'pending for spares') return 2
-    if (normalized === 'incomplete') return 1
-    return 0
-  })()
+  const stages = resolveZincLifecycleStages(status)
+  const statusLabel = safeText(status) || 'Pending'
+  const lifecycleBadgeLabel = statusLabel === 'Working solution provided' ? 'Under Observation' : statusLabel
 
   return (
     <Document>
@@ -270,20 +264,18 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
         <PdfSection styles={styles} title="Service Lifecycle Position">
           <View style={styles.lifecycleBox}>
             <View style={styles.lifecycleNodes}>
-              {stages.map((stage, index) => {
-                const past = index < activeIndex
-                const active = index === activeIndex
+              {stages.map((stage) => {
+                const active = stage.active
                 return (
-                  <View key={stage} style={styles.lifecycleNode}>
+                  <View key={stage.label} style={styles.lifecycleNode}>
                     <View
                       style={[
                         styles.lifecycleDot,
-                        past ? styles.lifecycleDotPast : null,
                         active ? styles.lifecycleDotActive : null,
                       ]}
                     />
                     <Text style={[styles.lifecycleLabel, active ? styles.lifecycleLabelActive : null]}>
-                      {stage}
+                      {stage.label}
                     </Text>
                   </View>
                 )
@@ -292,12 +284,10 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
             <View style={styles.lifecycleFooter}>
               <View>
                 <Text style={styles.lifecycleCurrentLabel}>Current Status</Text>
-                <Text style={styles.lifecycleCurrentText}>{status || 'Pending'}</Text>
+                <Text style={styles.lifecycleCurrentText}>{statusLabel}</Text>
               </View>
               <View style={styles.lifecycleBadge}>
-                <Text style={styles.lifecycleBadgeText}>
-                  {status === 'Working solution provided' ? 'Under Observation' : status || 'Pending'}
-                </Text>
+                <Text style={styles.lifecycleBadgeText}>{lifecycleBadgeLabel}</Text>
               </View>
             </View>
           </View>
@@ -357,8 +347,8 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
                     <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4, marginBottom: 4 }} />
                   )}
                   <Text style={styles.signLabel}>Technician Signature</Text>
-                  {hasText(technicianName) ? <Text style={styles.fieldValue}>{technicianName}</Text> : null}
-                  {hasText(technicianRole) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
+                  {hasText(technicianName) ? <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{technicianName}</Text> : null}
+                  {hasText(technicianRole) ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
                 </View>
               ) : null}
             </View>

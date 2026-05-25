@@ -202,6 +202,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+  csr = csr || {}
   const styles = createPulseFrameStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 
@@ -291,8 +292,8 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
                     <View style={{ height: 24, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 6, marginBottom: 4 }} />
                   )}
                   <Text style={styles.signLabel}>Technician Signature</Text>
-                  {hasText(getTechnicianName(csr)) ? <Text style={styles.fieldValue}>{getTechnicianName(csr)}</Text> : null}
-                  {hasText(getTechnicianRole(csr)) ? <Text style={[styles.fieldLabel, { marginTop: 2, marginBottom: 0 }]}>{getTechnicianRole(csr)}</Text> : null}
+                  {hasText(getTechnicianName(csr)) ? <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{getTechnicianName(csr)}</Text> : null}
+                  {hasText(getTechnicianRole(csr)) ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{getTechnicianRole(csr)}</Text> : null}
                 </View>
               ) : null}
             </View>

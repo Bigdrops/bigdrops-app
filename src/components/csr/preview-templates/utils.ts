@@ -4,8 +4,9 @@ import {
   getEffectiveFillableFont,
   resolvePdfFontFamily,
 } from '../../../lib/pdfDesignPreset'
+import { safeText } from './layoutModel'
 
-export const safe = (value: any) => String(value || '').trim()
+export const safe = (value: any) => safeText(value)
 export const hasText = (value: any) => !!safe(value)
 
 export function shouldRender(enabled: any, value: any) {
@@ -16,24 +17,24 @@ export function shouldRender(enabled: any, value: any) {
 
 export function getBranding(branding: any = {}) {
   return {
-    companyName: safe(branding.companyName),
-    companyTagline: safe(branding.companyTagline),
-    contactLine: safe(branding.contactLine),
-    footerText: safe(branding.footerText),
-    logoUrl: safe(branding.logoUrl),
+    companyName: safe(branding?.companyName),
+    companyTagline: safe(branding?.companyTagline),
+    contactLine: safe(branding?.contactLine),
+    footerText: safe(branding?.footerText),
+    logoUrl: safe(branding?.logoUrl),
   }
 }
 
 export function getStatusValue(csr: any) {
-  return safe(csr.status)
+  return safe(csr?.status)
 }
 
 export function getServiceWindow(csr: any) {
   return {
-    startDate: safe(csr.start_date),
-    startTime: safe(csr.start_time),
-    endDate: safe(csr.end_date),
-    endTime: safe(csr.end_time),
+    startDate: safe(csr?.start_date),
+    startTime: safe(csr?.start_time),
+    endDate: safe(csr?.end_date),
+    endTime: safe(csr?.end_time),
   }
 }
 
@@ -41,7 +42,7 @@ export function buildReadingRows(csr: any) {
   return CSR_READING_FIELDS.map(({ key, label }: any) => ({
     key,
     label,
-    value: safe(csr[key]),
+    value: safe(csr?.[key]),
   }))
 }
 
@@ -50,15 +51,15 @@ export function getPopulatedReadingRows(csr: any) {
 }
 
 export function hasOperationalReadings(csr: any) {
-  return !!csr.showOperationalReadings && getPopulatedReadingRows(csr).length > 0
+  return !!csr?.showOperationalReadings && getPopulatedReadingRows(csr).length > 0
 }
 
 export function getMaterialsRows(csr: any) {
-  if (Array.isArray(csr.materialsRows)) {
-    const populated = csr.materialsRows.filter((row: any) => row.item || row.quantity || row.unit)
+  if (Array.isArray(csr?.materialsRows)) {
+    const populated = csr.materialsRows.filter((row: any) => row?.item || row?.quantity || row?.unit)
     if (populated.length > 0) return populated
   }
-  return hasText(csr.materialsText) ? [{ item: csr.materialsText || ' ', quantity: '', unit: '' }] : []
+  return hasText(csr?.materialsText) ? [{ item: csr?.materialsText || ' ', quantity: '', unit: '' }] : []
 }
 
 export function hasMaterials(csr: any) {
@@ -66,19 +67,19 @@ export function hasMaterials(csr: any) {
 }
 
 export function getTechnicianName(csr: any) {
-  return safe(csr.technicianSignatory?.name || csr.technicianName)
+  return safe(csr?.technicianSignatory?.name || csr?.technicianName)
 }
 
 export function getTechnicianRole(csr: any) {
-  return safe(csr.technicianSignatory?.role)
+  return safe(csr?.technicianSignatory?.role)
 }
 
 export function getTechnicianSignatureUrl(csr: any) {
-  return safe(csr.technicianSignatory?.signatureUrl)
+  return safe(csr?.technicianSignatory?.signatureUrl)
 }
 
 export function getLayoutDensity(csr: any) {
-  return csr.layoutDensity || 'comfortable'
+  return csr?.layoutDensity || 'comfortable'
 }
 
 export function getFillablePdfTheme(designPreset: any) {

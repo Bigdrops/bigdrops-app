@@ -212,6 +212,7 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+  csr = csr || {}
   const styles = createSignalBandsStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 
