@@ -1,5 +1,8 @@
 .container {
-  padding-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .loadingArea {
@@ -16,7 +19,76 @@
 .formContent {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.scrollRegion {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 12rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-right: 4px;
+  padding-bottom: 8px;
+}
+
+.payFullPill {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--bd-button-primary-bg) / 0.3);
+  background: hsl(var(--bd-button-primary-bg) / 0.1);
+  color: hsl(var(--bd-button-primary-bg));
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payFullPill:hover {
+  background: hsl(var(--bd-button-primary-bg) / 0.18);
+}
+
+.payFullPillSecondary {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--bd-border));
+  background: hsl(var(--bd-surface-muted));
+  color: hsl(var(--bd-text-muted));
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payFullPillSecondary:hover {
+  background: hsl(var(--bd-surface));
+  color: hsl(var(--bd-text));
+}
+
+.dockedFooter {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  border-top: 1px solid hsl(var(--bd-border) / 0.6);
+  background: hsl(var(--bd-card-bg));
 }
 
 .summaryCard {
@@ -197,22 +269,10 @@
 }
 
 .footerPanel {
-  position: sticky;
-  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 4px;
-  padding-top: 12px;
-  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-  background:
-    linear-gradient(
-      180deg,
-      hsl(var(--bd-card-bg) / 0) 0%,
-      hsl(var(--bd-card-bg) / 0.92) 18%,
-      hsl(var(--bd-card-bg)) 100%
-    );
-  backdrop-filter: blur(10px);
 }
 
 .settlementCard {

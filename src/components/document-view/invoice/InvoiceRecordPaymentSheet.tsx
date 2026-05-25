@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Banknote, Calendar } from 'lucide-react'
+import { Loader2, Banknote, Calendar, Zap, X } from 'lucide-react'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import styles from './InvoiceRecordPaymentSheet.module.css'
@@ -187,119 +187,119 @@ export default function InvoiceRecordPaymentSheet({
           </div>
         ) : (
           <div className={styles.formContent}>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>Balance Due</span>
-                <span className={styles.summaryValue}>{formatNaira(currentBalance)}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>Client</span>
-                <span className={styles.summaryValueSub}>{invoice.client_name || 'N/A'}</span>
-              </div>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <div className={styles.amountHeader}>
-                <label className={styles.formLabel}>Cash Received (₦)</label>
-                {isMaxed ? (
-                  <button type="button" className={styles.inlineAction} onClick={clearMax}>
-                    Reset
-                  </button>
-                ) : (
-                  <button type="button" className={styles.inlineAction} onClick={applyMax}>
-                    Use Balance
-                  </button>
-                )}
-              </div>
-              <NumericInput
-                min={0}
-                className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
-                value={form.cashReceived}
-                onChange={(val) => {
-                  setField('cashReceived', val)
-                  setIsMaxed(false)
-                }}
-                placeholder="Enter amount"
-                disabled={isMaxed}
-              />
-              {submitAttempted && validation.cashError ? (
-                <div className={styles.fieldError}>{validation.cashError}</div>
-              ) : null}
-              {amountError ? (
-                <div className={styles.inlineErrorBox}>{amountError}</div>
-              ) : null}
-            </div>
-
-            <div className={styles.grid2}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.formLabel}>Date</label>
-                <div className={styles.inputIconWrap}>
-                  <Calendar size={14} className={styles.innerIcon} />
-                  <input
-                    type="date"
-                    className={`${styles.formInput} ${styles.hasIcon}`}
-                    value={form.date}
-                    onChange={(e) => setField('date', e.target.value)}
-                  />
+            <div className={styles.scrollRegion}>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Balance Due</span>
+                  <span className={styles.summaryValue}>{formatNaira(currentBalance)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryLabel}>Client</span>
+                  <span className={styles.summaryValueSub}>{invoice.client_name || 'N/A'}</span>
                 </div>
               </div>
+
               <div className={styles.fieldGroup}>
-                <label className={styles.formLabel}>Mode</label>
-                <Select value={form.method} onValueChange={(value) => setField('method', value as PaymentMethod)}>
-                  <SelectTrigger className={styles.formSelect}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Transfer">Transfer</SelectItem>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="POS">POS</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className={styles.formLabel}>Cash Received (₦)</label>
+                <NumericInput
+                  min={0}
+                  className={`${styles.formInput} ${amountFieldHasError ? styles.formInputError : ''}`}
+                  value={form.cashReceived}
+                  onChange={(val) => {
+                    setField('cashReceived', val)
+                    setIsMaxed(false)
+                  }}
+                  placeholder="Enter amount"
+                  disabled={isMaxed}
+                />
+                {isMaxed ? (
+                  <button type="button" className={styles.payFullPillSecondary} onClick={clearMax}>
+                    <X size={16} />
+                    Clear & Reset Amount
+                  </button>
+                ) : (
+                  <button type="button" className={styles.payFullPill} onClick={applyMax}>
+                    <Zap size={16} />
+                    Pay Full Balance ({formatNaira(currentBalance)})
+                  </button>
+                )}
+                {submitAttempted && validation.cashError ? (
+                  <div className={styles.fieldError}>{validation.cashError}</div>
+                ) : null}
+                {amountError ? (
+                  <div className={styles.inlineErrorBox}>{amountError}</div>
+                ) : null}
               </div>
-            </div>
 
-            {form.method === 'Transfer' && bankAccounts.length > 0 && (
+              <div className={styles.grid2}>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.formLabel}>Date</label>
+                  <div className={styles.inputIconWrap}>
+                    <Calendar size={14} className={styles.innerIcon} />
+                    <input
+                      type="date"
+                      className={`${styles.formInput} ${styles.hasIcon}`}
+                      value={form.date}
+                      onChange={(e) => setField('date', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className={styles.fieldGroup}>
+                  <label className={styles.formLabel}>Mode</label>
+                  <Select value={form.method} onValueChange={(value) => setField('method', value as PaymentMethod)}>
+                    <SelectTrigger className={styles.formSelect}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Transfer">Transfer</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="POS">POS</SelectItem>
+                      <SelectItem value="Cheque">Cheque</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {form.method === 'Transfer' && bankAccounts.length > 0 && (
+                <div className={styles.fieldGroup}>
+                  <label className={styles.formLabel}>Destination Account</label>
+                  <Select value={selectedBankId} onValueChange={setSelectedBankId}>
+                    <SelectTrigger className={styles.formSelect}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.bank_name} — {b.account_number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className={styles.fieldGroup}>
-                <label className={styles.formLabel}>Destination Account</label>
-                <Select value={selectedBankId} onValueChange={setSelectedBankId}>
-                  <SelectTrigger className={styles.formSelect}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankAccounts.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.bank_name} — {b.account_number}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className={styles.formLabel}>Reference</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  value={form.reference}
+                  onChange={(e) => setField('reference', e.target.value)}
+                  placeholder="Transaction ID / Ref"
+                />
               </div>
-            )}
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.formLabel}>Reference</label>
-              <input
-                type="text"
-                className={styles.formInput}
-                value={form.reference}
-                onChange={(e) => setField('reference', e.target.value)}
-                placeholder="Transaction ID / Ref"
-              />
-            </div>
+              <div className={styles.fieldGroup}>
+                <label className={styles.formLabel}>Notes</label>
+                <textarea
+                  className={styles.formTextarea}
+                  value={form.notes}
+                  onChange={(e) => setField('notes', e.target.value)}
+                  placeholder="Internal notes..."
+                />
+              </div>
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.formLabel}>Notes</label>
-              <textarea
-                className={styles.formTextarea}
-                value={form.notes}
-                onChange={(e) => setField('notes', e.target.value)}
-                placeholder="Internal notes..."
-              />
-            </div>
-
-            <div className={styles.footerPanel}>
               <div className={styles.settlementCard}>
                 <div className={styles.settleRow}>
                   <span>Cash Received</span>
@@ -321,9 +321,10 @@ export default function InvoiceRecordPaymentSheet({
                   This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
                 </div>
               ) : null}
+            </div>
 
+            <div className={styles.dockedFooter}>
               {error ? <div className={styles.errorBanner}>{error}</div> : null}
-
               <div className={styles.footerActions}>
                 <button type="button" className={styles.btnCancel} onClick={onClose} disabled={saving}>
                   Cancel

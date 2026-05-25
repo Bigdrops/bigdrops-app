@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Zap, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -198,15 +198,15 @@ export default function RecordPaymentModal({
 
   return (
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
-      <DialogContent className="max-h-[85vh] max-w-[440px] overflow-y-auto rounded-[var(--bd-radius-xl)] bg-card p-0 sm:max-w-[440px]">
-        <DialogHeader className="border-b border-border px-5 py-4">
+      <DialogContent className="flex max-h-[90vh] max-w-[440px] flex-col overflow-hidden rounded-[var(--bd-radius-xl)] bg-card p-0 sm:max-w-[440px]">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="border-l-4 border-[hsl(var(--bd-status-success-border))] pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Save a payment for {invoice.invoice_number}.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-5 py-4">
+        <div className="max-h-[calc(100vh-12rem)] flex-1 space-y-4 overflow-y-auto px-5 py-4 pr-1">
           <div
             className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-3"
           >
@@ -228,26 +228,7 @@ export default function RecordPaymentModal({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
-              {isMaxed ? (
-                <button
-                  type="button"
-                  onClick={clearMax}
-                  className="rounded-[var(--bd-radius-sm)] border border-border bg-[hsl(var(--bd-surface-muted))] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-[hsl(var(--bd-surface))] hover:text-foreground"
-                >
-                  Reset
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={applyMax}
-                  className="rounded-[var(--bd-radius-sm)] border border-[hsl(var(--bd-button-primary-bg)/0.25)] bg-[hsl(var(--bd-button-primary-bg)/0.08)] px-2 py-0.5 text-[11px] font-semibold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.15)]"
-                >
-                  Use Balance
-                </button>
-              )}
-            </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
             <NumericInput
               min={0}
               className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
@@ -259,6 +240,25 @@ export default function RecordPaymentModal({
               placeholder="Enter amount"
               disabled={isMaxed}
             />
+            {isMaxed ? (
+              <button
+                type="button"
+                onClick={clearMax}
+                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface-muted))] px-4 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-[hsl(var(--bd-surface))] hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+                Clear & Reset Amount
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={applyMax}
+                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-button-primary-bg)/0.3)] bg-[hsl(var(--bd-button-primary-bg)/0.1)] px-4 py-3 text-sm font-bold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.18)]"
+              >
+                <Zap className="h-4 w-4" />
+                Pay Full Balance ({formatMoney(currentBalance)})
+              </button>
+            )}
             {submitAttempted && validation.cashError ? (
               <div className="text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
                 {validation.cashError}
@@ -326,47 +326,47 @@ export default function RecordPaymentModal({
             />
           </div>
 
-          <div className="sticky bottom-0 -mx-5 mt-2 space-y-3 border-t border-border/70 bg-card/95 px-5 pb-4 pt-3 backdrop-blur">
-            <div className="rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface)/0.92)] px-4 py-3 shadow-sm">
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-medium text-muted-foreground">Cash Received</span>
-                <span className="font-bold text-foreground">{formatMoney(settlementSummary.cashReceived)}</span>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2 text-sm">
-                <span className="font-medium text-muted-foreground">Remaining Balance</span>
-                <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-[hsl(var(--destructive))]" : "font-bold text-[hsl(var(--bd-status-success-text))]"}>
-                  {formatMoney(settlementSummary.remainingBalance)}
-                </span>
-              </div>
+          <div className="rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface)/0.92)] px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="font-medium text-muted-foreground">Cash Received</span>
+              <span className="font-bold text-foreground">{formatMoney(settlementSummary.cashReceived)}</span>
             </div>
-
-            {invoiceHasWht ? (
-              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3 text-xs text-[hsl(var(--bd-status-warning-text))]">
-                <span className="font-bold">💡 WHT Tracking Enabled:</span>{" "}
-                This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
-              </div>
-            ) : null}
-
-            {error ? (
-              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
-                {error}
-              </div>
-            ) : null}
-
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" className="flex-1" onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || loadingBalance}
-                className="flex-1 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
-              >
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {saving ? "Saving..." : "Record Payment"}
-              </Button>
+            <div className="mt-2 flex items-center justify-between gap-2 text-sm">
+              <span className="font-medium text-muted-foreground">Remaining Balance</span>
+              <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-[hsl(var(--destructive))]" : "font-bold text-[hsl(var(--bd-status-success-text))]"}>
+                {formatMoney(settlementSummary.remainingBalance)}
+              </span>
             </div>
+          </div>
+
+          {invoiceHasWht ? (
+            <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3 text-xs text-[hsl(var(--bd-status-warning-text))]">
+              <span className="font-bold">💡 WHT Tracking Enabled:</span>{" "}
+              This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
+            </div>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 space-y-3 border-t border-border bg-card px-5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-3">
+          {error ? (
+            <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" className="flex-1" onClick={close}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || loadingBalance}
+              className="flex-1 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
+            >
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {saving ? "Saving..." : "Record Payment"}
+            </Button>
           </div>
         </div>
       </DialogContent>
