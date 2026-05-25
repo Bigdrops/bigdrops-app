@@ -27,6 +27,7 @@ type SavedColumnConfig = {
 
 type InterpretPdfTableSettingsOptions = {
   mergeQtyUnit?: boolean
+  hideEmptyGroups?: boolean
   items?: InvoiceItem[]
 }
 
@@ -174,6 +175,7 @@ export function interpretPdfTableSettings(
 
   return {
     mergeQtyUnit,
+    hideEmptyGroups: options.hideEmptyGroups !== false,
     configuredColumns,
     activeColumns: resolvedColumns.map((column) => createPdfColumnDefinition(column)),
     columns: resultColumns,

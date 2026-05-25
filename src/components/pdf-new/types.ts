@@ -55,6 +55,7 @@ export type PdfPageLayout = {
 
 export type PdfResolvedTableSettings = {
   mergeQtyUnit: boolean
+  hideEmptyGroups: boolean
   configuredColumns: Array<{
     key: string
     label?: string
@@ -176,6 +177,7 @@ export type PdfBaseDocumentModel = {
   items: PdfLineItem[]
   columns?: PdfColumnDefinition[]
   mergeQtyUnit?: boolean
+  hideEmptyGroups?: boolean
   totals: PdfTotals
   bankDetails?: PdfBankDetails | null
   notes?: PdfTextSection | null
