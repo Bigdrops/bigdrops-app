@@ -42,6 +42,7 @@ export async function handleDownloadQuotationPdf(input: {
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: customFields?.mergeQtyUnit === true,
       items: Array.isArray(items) ? items : [],
+      landscapeLayout: pdfOutput?.landscapeLayout === true,
     });
     const referenceLinks = Array.isArray(customFields.attachments)
       ? customFields.attachments

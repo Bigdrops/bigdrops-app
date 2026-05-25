@@ -236,6 +236,26 @@ export default function PdfOutputCustomizeSheet({
           </button>
         </div>
 
+        <div className="flex items-center justify-between rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">Landscape Layout</div>
+            <div className="mt-0.5 text-xs text-[hsl(var(--bd-text-muted))]">Force page orientation to landscape for wider content</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDraftValue((prev) => ({ ...prev, landscapeLayout: !prev.landscapeLayout }))}
+            className={`relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+              draftValue.landscapeLayout ? 'bg-slate-950' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                draftValue.landscapeLayout ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
         <button
           type="button"
           className="h-11 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] transition hover:bg-[hsl(var(--bd-button-primary-bg))]/90 disabled:cursor-not-allowed disabled:opacity-60"

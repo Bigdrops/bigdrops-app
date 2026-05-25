@@ -29,6 +29,7 @@ type InterpretPdfTableSettingsOptions = {
   mergeQtyUnit?: boolean
   hideEmptyGroups?: boolean
   items?: InvoiceItem[]
+  landscapeLayout?: boolean
 }
 
 type BuildPdfRowCellsOptions = {
@@ -176,7 +177,7 @@ export function interpretPdfTableSettings(
   return {
     mergeQtyUnit,
     hideEmptyGroups: options.hideEmptyGroups !== false,
-    pageLayout: resolvePdfPageLayout(resultColumns),
+    pageLayout: resolvePdfPageLayout(resultColumns, options.landscapeLayout),
     configuredColumns,
     activeColumns: resolvedColumns.map((column) => createPdfColumnDefinition(column)),
     columns: resultColumns,
@@ -227,7 +228,10 @@ export function buildPdfRowCells(
   }))
 }
 
-export function resolvePdfPageLayout(columns: PdfColumnDefinition[]): PdfPageLayout {
+export function resolvePdfPageLayout(columns: PdfColumnDefinition[], forceLandscape?: boolean): PdfPageLayout {
+  if (forceLandscape) {
+    return { size: 'A4', orientation: 'landscape' }
+  }
   const widthDemand = columns.reduce((sum, column) => sum + resolveWeightedColumnWidth(column), 0)
   const orientation = widthDemand > 600 ? 'landscape' : 'portrait'
   return { size: 'A4', orientation }

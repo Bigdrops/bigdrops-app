@@ -31,6 +31,7 @@ type PdfOutputSettingsValue = {
   showWhtPercentage: boolean
   showDiscountPercentage: boolean
   compact: boolean
+  landscapeLayout?: boolean
 }
 
 export type { PdfOutputSettingsValue }
@@ -99,6 +100,7 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
     showWhtPercentage: value?.showWhtPercentage ?? true,
     showDiscountPercentage: value?.showDiscountPercentage ?? true,
     compact: value?.compact ?? false,
+    landscapeLayout: value?.landscapeLayout ?? false,
   }
 }
 
