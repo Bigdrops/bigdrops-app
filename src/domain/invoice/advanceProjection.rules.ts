@@ -2,6 +2,20 @@ import { getAdvanceInvoiceMetadata } from "./advanceMetadata";
 import { calculateAdvanceAmount } from "./advanceChildFlow";
 import type { AdvanceInvoiceProjection } from "./advanceProjection.contract";
 
+/**
+ * Derives an Advance Invoice projection from a parent invoice.
+ *
+ * CRITICAL INVARIANT:
+ * This function produces ONLY presentation metadata (number, title, footer context).
+ * It NEVER carries or synthesizes line items.
+ * The parent invoice's items array must be used directly at the point of PDF generation.
+ *
+ * Returns null if:
+ * - invoice is null/undefined
+ * - invoice has no id (fail-closed during loading)
+ * - no valid advance metadata exists
+ * - advance is disabled or has zero amount
+ */
 export function deriveAdvanceInvoiceProjection(
   invoice: any | null | undefined
 ): AdvanceInvoiceProjection | null {
@@ -31,17 +45,6 @@ export function deriveAdvanceInvoiceProjection(
     client_name: invoice.client_name || "",
     client_email: invoice.client_email || "",
     client_address: invoice.client_address || "",
-
-    items: [
-      {
-        description:
-          metadata.secondary_label ||
-          `Advance Payment Request (${metadata.value}%)`,
-        quantity: 1,
-        unit_price: total,
-        total,
-      },
-    ],
 
     isVirtualProjection: true,
   };
