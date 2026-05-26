@@ -87,6 +87,19 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
           <div className={styles.infoLabel}>Amount Due</div>
           <div className={styles.infoValue}>{previewModel?.previewBalanceDue?.value || formatNaira(viewModel?.balanceDue || 0)}</div>
         </div>
+        {detailRows.filter((row: any) => row?.label !== 'PO Number').length > 0 && (
+          <div className={styles.infoCell}>
+            <div className={styles.infoLabel}>Details</div>
+            {detailRows
+              .filter((row: any) => row?.label !== 'PO Number')
+              .map((row: any, index: number) => (
+                <div key={index} style={{ fontSize: 12, color: "hsl(var(--bd-text))", lineHeight: 1.6 }}>
+                  <span style={{ color: "hsl(var(--bd-text-muted))" }}>{row.label}:</span>{" "}
+                  {String(row?.value || '').trim() || "—"}
+                </div>
+              ))}
+          </div>
+        )}
       </div>
 
       <div className={styles.itemList}>

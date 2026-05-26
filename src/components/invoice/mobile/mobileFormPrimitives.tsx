@@ -15,7 +15,7 @@ import { formatNaira } from '@/lib/formatters/money'
 export const pageCardCls =
   'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-none'
 export const fieldCls =
-  'h-11 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[14px] text-[hsl(var(--bd-text))] shadow-none transition placeholder:text-[hsl(var(--bd-text-muted))] focus:border-[hsl(var(--bd-button-primary-bg))] focus:bg-[hsl(var(--bd-card-bg))] focus:ring-0 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))]/15'
+  'h-11 rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[14px] text-[hsl(var(--bd-text))] shadow-none transition placeholder:text-[hsl(var(--bd-text-muted))] focus-visible:border-[hsl(var(--bd-button-primary-bg))] focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))]/15'
 export const labelCls = 'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[hsl(var(--bd-text-muted))]'
 
 export function getSectionDotClass(color?: string) {
