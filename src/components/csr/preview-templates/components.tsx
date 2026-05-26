@@ -194,7 +194,7 @@ function renderCommaMaterials(rows: any[]) {
 
   return (
     <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 8 }}>
-      <Text style={{ fontSize: 8, color: '#09090b', lineHeight: 1.6 }}>
+      <Text style={{ fontSize: 8, color: '#0f172a', fontFamily: 'Helvetica', lineHeight: 1.6 }}>
         {text}
       </Text>
     </View>
@@ -206,7 +206,7 @@ function renderTabulateMaterials(rows: any[], numBlocks: number) {
   const renderCell = (row: any, index: number) => {
     const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
     const children: any[] = [
-      <Text key="name" style={{ fontSize: 8, color: '#09090b', flex: 1 }}>{`${index + 1}. ${safe(row.item) || ' '}`}</Text>,
+      <Text key="name" style={{ fontSize: 8, color: '#0f172a', fontFamily: 'Helvetica', flex: 1 }}>{`${index + 1}. ${safe(row.item) || ' '}`}</Text>,
     ]
     if (qtyUnit) {
       children.push(
