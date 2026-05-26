@@ -254,7 +254,7 @@ export function useInvoiceActions({
       const advanceTargetInvoice = {
         ...invoice,
         invoice_number: advanceInvoiceProjection.invoice_number,
-        invoice_title: advanceInvoiceProjection.invoice_title || invoice.invoice_title,
+        invoice_title: invoice.invoice_title,
         status: advanceInvoiceProjection.status || invoice.status || "unpaid",
         isVirtualProjection: true,
         custom_fields: invoice.custom_fields,

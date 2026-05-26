@@ -66,7 +66,7 @@ export default function Ledger({ data }: { data: IndustryTemplateData }) {
 
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>
-              {safeText(isAdvanceInvoice ? 'ADVANCE INVOICE' : data.title)}
+              {safeText(data.title)}
             </Text>
             {data.customTitle ? (
               <Text style={styles.customTitleText}>
