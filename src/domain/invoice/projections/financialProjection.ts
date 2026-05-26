@@ -75,6 +75,11 @@ export function buildAmountInWordsProjection(
 export function buildAdvanceDisplayProjection(
   invoice: InvoiceLike,
 ): (AdvanceSummaryValues & { requestedAmount: number }) | null {
+  // Advance summary ONLY renders when the invoice is explicitly an advance context
+  // (i.e., a virtual projection). Main invoices must NEVER show advance breakdown UI.
+  const isAdvanceContext = (invoice as any)?.isVirtualProjection === true
+  if (!isAdvanceContext) return null
+
   const advanceSummary = getAdvanceSummaryValues(invoice)
   if (!advanceSummary) return null
   return {
