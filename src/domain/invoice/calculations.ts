@@ -50,8 +50,8 @@ export function buildCalculationInputs({
     vatPercent: vatRate,
     discountValue: Number(invoice?.discount || 0),
     whtValue: Number(invoice?.wht || 0),
-    discountType: discountType || 'fixed',
-    discountTiming: discountTiming || 'after',
+    discountType: discountType || 'percent',
+    discountTiming: discountTiming || 'before',
     whtType: whtType || 'percent',
   }
 }
@@ -67,8 +67,8 @@ export function extractCalculationInputs(
     vatPercent: savedVatRate,
     discountValue: Number(saved.discountValue ?? invoice?.discount ?? 0),
     whtValue: Number(saved.whtValue ?? invoice?.wht ?? 0),
-    discountType: saved.discountType || customFields?.discountType || 'fixed',
-    discountTiming: saved.discountTiming || customFields?.discountTiming || 'after',
+    discountType: saved.discountType || customFields?.discountType || 'percent',
+    discountTiming: saved.discountTiming || customFields?.discountTiming || 'before',
     whtType: saved.whtType || customFields?.whtType || 'percent',
   }
 }

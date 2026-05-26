@@ -16,6 +16,16 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
   onViewAdvance,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const hasExistingAdvance = advanceInvoices && advanceInvoices.length > 0;
+
+  const handleHeaderAction = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (hasExistingAdvance) {
+      onViewAdvance(advanceInvoices[0]);
+    } else {
+      onCreateAdvance();
+    }
+  };
 
   return (
     <div className={styles.card}>
@@ -32,10 +42,10 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
             className={styles.btnRecord}
             role="button"
             tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onCreateAdvance(); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onCreateAdvance(); } }}
+            onClick={handleHeaderAction}
+            onKeyDown={(e) => { if (e.key === "Enter") handleHeaderAction(e); }}
           >
-            CREATE
+            {hasExistingAdvance ? "VIEW/EDIT" : "CREATE"}
           </span>
           <span className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`} aria-hidden="true">
             <ChevronDown size={14} />

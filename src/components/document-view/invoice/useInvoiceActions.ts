@@ -251,9 +251,20 @@ export function useInvoiceActions({
     if (!selectedAdvanceInvoice || advancePdfGenerating) return;
     setAdvancePdfGenerating(true);
     try {
+      // Build an isolated advance invoice payload — only inherit display-relevant
+      // parent fields (company/client context) without overwriting the parent reference.
+      const advanceTargetInvoice = {
+        ...selectedAdvanceInvoice,
+        status: selectedAdvanceInvoice.status || "unpaid",
+        // Carry forward parent context fields that the PDF renderer needs
+        client_name: selectedAdvanceInvoice.client_name || invoice?.client_name,
+        client_email: selectedAdvanceInvoice.client_email || invoice?.client_email,
+        client_address: selectedAdvanceInvoice.client_address || invoice?.client_address,
+      };
       await downloadInvoicePdfDocument({
-        targetInvoice: { ...invoice, ...selectedAdvanceInvoice, status: selectedAdvanceInvoice.status || "unpaid" },
-        targetItems: Array.isArray(items) ? items : [], targetPayments: [],
+        targetInvoice: advanceTargetInvoice,
+        targetItems: Array.isArray(selectedAdvanceInvoice.items) ? selectedAdvanceInvoice.items : [],
+        targetPayments: [],
         client, settings, bankAccounts, signatories, pdfOutput, pdfTemplateId, settingsData
       });
       showToast("Download ready", "Advance PDF downloaded.", "success");
