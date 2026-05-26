@@ -97,106 +97,105 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))]">
-        <div className="flex flex-row items-center justify-between border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
-            <Wallet className="h-4 w-4 text-[hsl(var(--bd-status-warning-text))]" />
-            VAT Input Entries
-          </h3>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportOpen(true)}
-              className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest"
-            >
-              <FileJson className="mr-1.5 h-3 w-3" />
-              Import JSON
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                setEditingEntry({
-                  date: new Date().toISOString().split('T')[0],
-                  is_recoverable: true,
-                  net_amount: 0,
-                  vat_amount: 0,
-                })
-              }
-              className="h-8 rounded-full px-4 text-xs font-bold"
-            >
-              <PlusCircle className="mr-2 h-3 w-3" />
-              Add Entry
-            </Button>
-          </div>
+      <div className="flex flex-row items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
+          <Wallet className="h-4 w-4 text-[hsl(var(--bd-status-warning-text))]" />
+          VAT Input Entries
+        </h3>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+            className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest"
+          >
+            <FileJson className="mr-1.5 h-3 w-3" />
+            Import JSON
+          </Button>
+          <Button
+            size="sm"
+            onClick={() =>
+              setEditingEntry({
+                date: new Date().toISOString().split('T')[0],
+                is_recoverable: true,
+                net_amount: 0,
+                vat_amount: 0,
+              })
+            }
+            className="h-8 rounded-full px-4 text-xs font-bold"
+          >
+            <PlusCircle className="mr-2 h-3 w-3" />
+            Add Entry
+          </Button>
         </div>
-        <div className="p-0">
-          {taxInputs.length === 0 ? (
-            <div className="border-t border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-12 text-center">
-              <Wallet className="mx-auto mb-3 h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20" />
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No VAT Inputs Recorded</div>
-              <div className="mx-auto mt-1 max-w-[280px] text-xs text-[hsl(var(--bd-text-muted))]">
-                Track recoverable VAT from your business purchases and expenses.
-              </div>
+      </div>
+
+      <div className="overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))]">
+        {taxInputs.length === 0 ? (
+          <div className="bg-[hsl(var(--bd-surface-muted))] px-4 py-12 text-center">
+            <Wallet className="mx-auto mb-3 h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20" />
+            <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No VAT Inputs Recorded</div>
+            <div className="mx-auto mt-1 max-w-[280px] text-xs text-[hsl(var(--bd-text-muted))]">
+              Track recoverable VAT from your business purchases and expenses.
             </div>
-          ) : (
-            <div className="divide-y divide-[hsl(var(--bd-border))]">
-              {taxInputs.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="flex flex-col justify-between gap-4 p-4 transition-colors hover:bg-[hsl(var(--bd-surface-muted))] sm:flex-row sm:items-center"
-                >
-                  <div>
-                    <div className="mb-1 flex items-center gap-2">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--bd-text-muted))]">
-                        {formatDisplayDate(entry.date)}
-                      </div>
-                      {!entry.is_recoverable ? (
-                        <span className="rounded-full border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[hsl(var(--bd-status-warning-text))]">
-                          Non-Recoverable
-                        </span>
-                      ) : null}
+          </div>
+        ) : (
+          <div className="divide-y divide-[hsl(var(--bd-border))]">
+            {taxInputs.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-col justify-between gap-4 p-4 transition-colors hover:bg-[hsl(var(--bd-surface-muted))] sm:flex-row sm:items-center"
+              >
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--bd-text-muted))]">
+                      {formatDisplayDate(entry.date)}
                     </div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{entry.vendor_name || 'Unknown Vendor'}</div>
-                    <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[hsl(var(--bd-text-muted))]">
-                      {entry.category ? <span>{entry.category}</span> : null}
-                      {entry.reference ? <span>• Ref: {entry.reference}</span> : null}
-                    </div>
+                    {!entry.is_recoverable ? (
+                      <span className="rounded-full border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[hsl(var(--bd-status-warning-text))]">
+                        Non-Recoverable
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="flex items-center justify-between gap-6 sm:w-auto sm:justify-end">
-                    <div className="text-right">
-                      <div className="mb-0.5 text-xs text-[hsl(var(--bd-text-muted))]">
-                        VAT: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(entry.vat_amount)}</span>
-                      </div>
-                      <div className="text-xs text-[hsl(var(--bd-text-muted))] opacity-70">Net: {formatNaira(entry.net_amount)}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))]"
-                        onClick={() => setEditingEntry(entry)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-50 hover:bg-[hsl(var(--bd-status-danger-bg))] hover:opacity-100"
-                        disabled={isDeleting === entry.id}
-                        onClick={() => {
-                          if (confirm('Delete entry?')) handleDelete(entry.id)
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{entry.vendor_name || 'Unknown Vendor'}</div>
+                  <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[hsl(var(--bd-text-muted))]">
+                    {entry.category ? <span>{entry.category}</span> : null}
+                    {entry.reference ? <span>• Ref: {entry.reference}</span> : null}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="flex items-center justify-between gap-6 sm:w-auto sm:justify-end">
+                  <div className="text-right">
+                    <div className="mb-0.5 text-xs text-[hsl(var(--bd-text-muted))]">
+                      VAT: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(entry.vat_amount)}</span>
+                    </div>
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))] opacity-70">Net: {formatNaira(entry.net_amount)}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))]"
+                      onClick={() => setEditingEntry(entry)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-50 hover:bg-[hsl(var(--bd-status-danger-bg))] hover:opacity-100"
+                      disabled={isDeleting === entry.id}
+                      onClick={() => {
+                        if (confirm('Delete entry?')) handleDelete(entry.id)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Sheet open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>

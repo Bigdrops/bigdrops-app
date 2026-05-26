@@ -322,8 +322,8 @@ export default function ComplianceHub() {
                 </div>
               </div>
 
-              <section className="min-w-0 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm md:p-5">
-                <div className="mb-4 flex items-center gap-3 border-b border-[hsl(var(--bd-border))] pb-3">
+              <section className="min-w-0">
+                <div className="mb-3 flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
                     <ActiveSectionIcon className="h-4 w-4" />
                   </div>

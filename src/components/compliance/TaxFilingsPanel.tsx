@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -21,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ClipboardList, PlusCircle, Edit, Trash2, Loader2, FileJson } from 'lucide-react'
+import { ClipboardList, PlusCircle, Edit, Trash2, FileJson } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
@@ -131,101 +130,100 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
-        <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] flex flex-row items-center justify-between">
-          <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
-            <ClipboardList className="h-4 w-4 text-[hsl(var(--bd-status-success-text))]" />
-            Tax Filing Records
-          </h3>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] hover:opacity-80">
-              <FileJson className="h-3 w-3 mr-1.5" />
-              Import JSON
-            </Button>
-            <Button
-              size="sm"
-              onClick={openNew}
-              className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
-            >
-              <PlusCircle className="h-3 w-3 mr-2" />
-              Add Filing
-            </Button>
-          </div>
+      <div className="flex flex-row items-center justify-between">
+        <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+          <ClipboardList className="h-4 w-4 text-[hsl(var(--bd-status-success-text))]" />
+          Tax Filing Records
+        </h3>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="h-8 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] hover:opacity-80">
+            <FileJson className="h-3 w-3 mr-1.5" />
+            Import JSON
+          </Button>
+          <Button
+            size="sm"
+            onClick={openNew}
+            className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
+          >
+            <PlusCircle className="h-3 w-3 mr-2" />
+            Add Filing
+          </Button>
         </div>
-        <div className="p-0">
-          {filings.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-[hsl(var(--bd-surface-muted))] border-t border-dashed border-[hsl(var(--bd-border))]">
-              <ClipboardList className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Filing Records</div>
-              <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
-                Create records to track VAT, WHT, and CIT submissions and their payment status.
-              </div>
-            </div>
-          ) : (
-            <div className="divide-y divide-[hsl(var(--bd-border))]">
-              {filings.map(filing => (
-                <div
-                  key={filing.id}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[hsl(var(--bd-surface-muted))] transition-colors"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-                        {TAX_TYPE_LABELS[filing.tax_type]}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[filing.status]}`}
-                      >
-                        {filing.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">
-                      {formatDisplayDate(filing.period_start)} — {formatDisplayDate(filing.period_end)}
-                    </div>
-                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5 flex flex-wrap gap-3">
-                      {filing.receipt_reference && <span>Ref: {filing.receipt_reference}</span>}
-                      {filing.portal_reference && <span>Portal: {filing.portal_reference}</span>}
-                      {filing.submitted_at && <span>Filed: {formatDisplayDate(filing.submitted_at)}</span>}
-                    </div>
-                  </div>
+      </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0">
-                    <div className="text-right">
-                      <div className="text-xs text-[hsl(var(--bd-text-muted))]">
-                        Due: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(filing.amount_due)}</span>
-                      </div>
-                      {filing.amount_paid > 0 && (
-                        <div className="text-xs text-[hsl(var(--bd-status-success-text))] font-medium">
-                          Paid: {formatNaira(filing.amount_paid)}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
-                        onClick={() => setEditingFiling(filing)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-40 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
-                        onClick={() => handleDelete(filing.id)}
-                        loading={isDeleting === filing.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+        {filings.length === 0 ? (
+          <div className="text-center py-16 px-4 bg-[hsl(var(--bd-surface-muted))]">
+            <ClipboardList className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
+            <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Filing Records</div>
+            <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
+              Create records to track VAT, WHT, and CIT submissions and their payment status.
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-[hsl(var(--bd-border))]">
+            {filings.map(filing => (
+              <div
+                key={filing.id}
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[hsl(var(--bd-surface-muted))] transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+                      {TAX_TYPE_LABELS[filing.tax_type]}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[filing.status]}`}
+                    >
+                      {filing.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm font-bold text-[hsl(var(--bd-text))]">
+                    {formatDisplayDate(filing.period_start)} — {formatDisplayDate(filing.period_end)}
+                  </div>
+                  <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5 flex flex-wrap gap-3">
+                    {filing.receipt_reference && <span>Ref: {filing.receipt_reference}</span>}
+                    {filing.portal_reference && <span>Portal: {filing.portal_reference}</span>}
+                    {filing.submitted_at && <span>Filed: {formatDisplayDate(filing.submitted_at)}</span>}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-5 shrink-0">
+                  <div className="text-right">
+                    <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+                      Due: <span className="font-bold text-[hsl(var(--bd-text))]">{formatNaira(filing.amount_due)}</span>
+                    </div>
+                    {filing.amount_paid > 0 && (
+                      <div className="text-xs text-[hsl(var(--bd-status-success-text))] font-medium">
+                        Paid: {formatNaira(filing.amount_paid)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                      onClick={() => setEditingFiling(filing)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-40 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
+                      onClick={() => handleDelete(filing.id)}
+                      loading={isDeleting === filing.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Create / Edit Sheet */}

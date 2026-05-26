@@ -295,110 +295,104 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
             <ReceiptIcon className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))]" />
-              WHT Receipts
-            </h3>
-            <p className="text-sm text-[hsl(var(--bd-text-muted))]">
-              Track missing, requested, received, and verified withholding tax evidence.
+            WHT Receipts
+          </h3>
+          <p className="text-sm text-[hsl(var(--bd-text-muted))]">
+            Track missing, requested, received, and verified withholding tax evidence.
+          </p>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setImportOpen(true)}
+          className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+        >
+          <FileJson className="h-3 w-3 mr-1.5" />
+          Import JSON
+        </Button>
+      </div>
+
+      <WhtReceiptStatusStrip counts={counts} />
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">Attention Queue</h4>
+          <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+            Untracked payments and follow-up receipts are ordered ahead of cleared evidence.
+          </p>
+        </div>
+        {counts.pending > 0 ? (
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+            {counts.pending} pending in follow-up
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-3">
+        {whtPayments.length === 0 && localReceipts.length === 0 ? (
+          <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-10 text-center">
+            <p className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT receipt tracking yet.</p>
+            <p className="mt-2 text-sm text-[hsl(var(--bd-text-muted))]">
+              WHT receipt actions will appear here when payments include WHT deductions.
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImportOpen(true)}
-            className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-          >
-            <FileJson className="h-3 w-3 mr-1.5" />
-            Import JSON
-          </Button>
-        </div>
-
-        <div className="space-y-4 p-4">
-          <WhtReceiptStatusStrip counts={counts} />
-
-          <section className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm">
-            <div className="flex flex-col gap-2 border-b border-[hsl(var(--bd-border))] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">Attention Queue</h4>
-                <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
-                  Untracked payments and follow-up receipts are ordered ahead of cleared evidence.
+        ) : (
+          <>
+            {showTrackedSuccessState ? (
+              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-4">
+                <p className="text-sm font-bold text-[hsl(var(--bd-status-success-text))]">All WHT receipts are tracked.</p>
+                <p className="mt-1 text-sm text-[hsl(var(--bd-status-success-text))]">
+                  No missing or requested receipts need attention.
                 </p>
               </div>
-              {counts.pending > 0 ? (
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
-                  {counts.pending} pending in follow-up
-                </p>
-              ) : null}
-            </div>
+            ) : null}
 
-            <div className="space-y-3 p-4">
-              {whtPayments.length === 0 && localReceipts.length === 0 ? (
-                <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-10 text-center">
-                  <p className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT receipt tracking yet.</p>
-                  <p className="mt-2 text-sm text-[hsl(var(--bd-text-muted))]">
-                    WHT receipt actions will appear here when payments include WHT deductions.
-                  </p>
+            {attentionEntries.length > 0 ? (
+              <div className="space-y-3">
+                {attentionEntries.map((entry) => (
+                  <div key={entry.id}>
+                    <WhtReceiptQueueRow
+                      entry={entry}
+                      onOpen={openEntry}
+                      processing={processingId === entry.payment.id}
+                    />
+                    {expandedEntryId === entry.id ? (
+                      <WhtReceiptMatcherAction
+                        entry={entry}
+                        onComplete={handleMatcherComplete}
+                      />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {verifiedEntries.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pt-2">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+                    Verified receipts
+                  </h5>
+                  <span className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))]">{verifiedEntries.length} cleared</span>
                 </div>
-              ) : (
-                <>
-                  {showTrackedSuccessState ? (
-                    <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-4">
-                      <p className="text-sm font-bold text-[hsl(var(--bd-status-success-text))]">All WHT receipts are tracked.</p>
-                      <p className="mt-1 text-sm text-[hsl(var(--bd-status-success-text))]">
-                        No missing or requested receipts need attention.
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {attentionEntries.length > 0 ? (
-                    <div className="space-y-3">
-                      {attentionEntries.map((entry) => (
-                        <div key={entry.id}>
-                          <WhtReceiptQueueRow
-                            entry={entry}
-                            onOpen={openEntry}
-                            processing={processingId === entry.payment.id}
-                          />
-                          {expandedEntryId === entry.id ? (
-                            <WhtReceiptMatcherAction
-                              entry={entry}
-                              onComplete={handleMatcherComplete}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {verifiedEntries.length > 0 ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between pt-2">
-                        <h5 className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
-                          Verified receipts
-                        </h5>
-                        <span className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))]">{verifiedEntries.length} cleared</span>
-                      </div>
-                      {verifiedEntries.map((entry) => (
-                        <WhtReceiptQueueRow
-                          key={entry.id}
-                          entry={entry}
-                          onOpen={openEntry}
-                          processing={processingId === entry.payment.id}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </div>
-          </section>
-        </div>
-      </section>
+                {verifiedEntries.map((entry) => (
+                  <WhtReceiptQueueRow
+                    key={entry.id}
+                    entry={entry}
+                    onOpen={openEntry}
+                    processing={processingId === entry.payment.id}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
 
       <Sheet open={!!selectedEntry} onOpenChange={(open) => !open && closeSheet()}>
         <SheetContent

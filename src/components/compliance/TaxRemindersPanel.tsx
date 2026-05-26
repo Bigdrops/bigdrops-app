@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -140,100 +139,99 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
-        <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] flex flex-row items-center justify-between">
-          <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
-            <Bell className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
-            Tax Obligations & Deadlines
-          </h3>
-          <Button
-            size="sm"
-            onClick={openNew}
-            className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
-          >
-            <PlusCircle className="h-3 w-3 mr-2" />
-            New Deadline
-          </Button>
-        </div>
-        <div className="p-0">
-          {reminders.length === 0 ? (
-            <div className="text-center py-20 px-4 bg-[hsl(var(--bd-surface-muted))] border-t border-dashed border-[hsl(var(--bd-border))]">
-              <Calendar className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
-              <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Tracked Obligations</div>
-              <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
-                Keep track of upcoming VAT deliveries, WHT remittances and tax filing dates.
-              </div>
-            </div>
-          ) : (
-            <div className="divide-y divide-[hsl(var(--bd-border))]">
-              {reminders.map(reminder => (
-                <div
-                  key={reminder.id}
-                  className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-[hsl(var(--bd-surface-muted))]'}`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-                        {TAX_TYPE_LABELS[reminder.tax_type]}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[reminder.status]}`}
-                      >
-                        {reminder.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
-                       Due: {formatDisplayDate(reminder.due_date)}
-                       {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-[hsl(var(--bd-status-danger-text))]" />}
-                    </div>
-                    <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5">
-                      {reminder.period_start && reminder.period_end ? (
-                        <span>Period: {formatDisplayDate(reminder.period_start)} — {formatDisplayDate(reminder.period_end)}</span>
-                      ) : (
-                        <span>One-off Obligation</span>
-                      )}
-                      {reminder.notes && <span className="block italic mt-0.5 line-clamp-1">{reminder.notes}</span>}
-                    </div>
-                  </div>
+      <div className="flex flex-row items-center justify-between">
+        <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
+          <Bell className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
+          Tax Obligations & Deadlines
+        </h3>
+        <Button
+          size="sm"
+          onClick={openNew}
+          className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
+        >
+          <PlusCircle className="h-3 w-3 mr-2" />
+          New Deadline
+        </Button>
+      </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
-                    <div className="flex items-center gap-1">
-                      {reminder.status !== 'resolved' && (
-                        <Button
-                          variant="ghost" 
-                          size="sm"
-                          className="h-8 text-[10px] uppercase font-black tracking-widest text-[hsl(var(--bd-status-success-text))] hover:bg-[hsl(var(--bd-status-success-bg))] px-3"
-                          onClick={() => resolveReminder(reminder.id)}
-                        >
-                          <CheckCircle2 className="h-3 w-3 mr-1.5" />
-                          Resolve
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
-                        onClick={() => setEditingReminder(reminder)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-30 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
-                        onClick={() => handleDelete(reminder.id)}
-                        loading={isDeleting === reminder.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+        {reminders.length === 0 ? (
+          <div className="text-center py-20 px-4 bg-[hsl(var(--bd-surface-muted))]">
+            <Calendar className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
+            <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Tracked Obligations</div>
+            <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
+              Keep track of upcoming VAT deliveries, WHT remittances and tax filing dates.
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-[hsl(var(--bd-border))]">
+            {reminders.map(reminder => (
+              <div
+                key={reminder.id}
+                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-[hsl(var(--bd-surface-muted))]'}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+                      {TAX_TYPE_LABELS[reminder.tax_type]}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] font-bold uppercase rounded-full px-2 border ${STATUS_TONES[reminder.status]}`}
+                    >
+                      {reminder.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
+                     Due: {formatDisplayDate(reminder.due_date)}
+                     {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-[hsl(var(--bd-status-danger-text))]" />}
+                  </div>
+                  <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5">
+                    {reminder.period_start && reminder.period_end ? (
+                      <span>Period: {formatDisplayDate(reminder.period_start)} — {formatDisplayDate(reminder.period_end)}</span>
+                    ) : (
+                      <span>One-off Obligation</span>
+                    )}
+                    {reminder.notes && <span className="block italic mt-0.5 line-clamp-1">{reminder.notes}</span>}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                  <div className="flex items-center gap-1">
+                    {reminder.status !== 'resolved' && (
+                      <Button
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 text-[10px] uppercase font-black tracking-widest text-[hsl(var(--bd-status-success-text))] hover:bg-[hsl(var(--bd-status-success-bg))] px-3"
+                        onClick={() => resolveReminder(reminder.id)}
+                      >
+                        <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                        Resolve
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                      onClick={() => setEditingReminder(reminder)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-30 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
+                      onClick={() => handleDelete(reminder.id)}
+                      loading={isDeleting === reminder.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Sheet open={!!editingReminder} onOpenChange={open => !open && setEditingReminder(null)}>
