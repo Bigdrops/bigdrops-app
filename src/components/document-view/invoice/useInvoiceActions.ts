@@ -32,7 +32,7 @@ export function useInvoiceActions({
   settings,
   bankAccounts,
   signatories,
-  advanceMetadata,
+  advanceInvoiceProjection,
   viewModel,
   ui,
   refresh,

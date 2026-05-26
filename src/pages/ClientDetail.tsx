@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { supabase } from '../supabase'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { feedback } from '@/lib/feedback'
@@ -149,11 +148,11 @@ export default function ClientDetail() {
         projectRecentRes,
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('id', id).single(),
-        applyParentInvoiceFilter(supabase
+        supabase
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, document_type, custom_fields')
           .eq('client_id', id)
-          .is('archived_at', null))
+          .is('archived_at', null)
           .order('issue_date', { ascending: false }),
         supabase
           .from('quotations')

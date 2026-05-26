@@ -99,8 +99,8 @@ export default function NewInvoice() {
 
   const [saving, setSaving] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
-  const [discountType, setDiscountType] = useState<DiscountType>('fixed')
-  const [discountTiming, setDiscountTiming] = useState<DiscountTiming>('after')
+  const [discountType, setDiscountType] = useState<DiscountType>('percent')
+  const [discountTiming, setDiscountTiming] = useState<DiscountTiming>('before')
   const [whtType, setWhtType] = useState<WhtType>('percent')
   const [attachments, setAttachments] = useState<InvoiceAttachment[]>([])
   const [signatories, setSignatories] = useState<any[]>([])

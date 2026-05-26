@@ -103,8 +103,8 @@ export function inferLegacyCalculationInputs({
   const saved = customFields?.calculationInputs
   if (saved) return extractCalculationInputs(invoice, customFields)
 
-  const discountType = customFields?.discountType || 'fixed'
-  const discountTiming = customFields?.discountTiming || 'after'
+  const discountType = customFields?.discountType || 'percent'
+  const discountTiming = customFields?.discountTiming || 'before'
   const whtType = customFields?.whtType || 'percent'
   const standardItems = (items || []).filter((item) => item.row_type === 'standard')
   const subtotal = standardItems.reduce(

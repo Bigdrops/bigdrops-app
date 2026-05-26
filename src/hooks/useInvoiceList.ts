@@ -6,8 +6,6 @@ import {
   getCachedInvoiceList,
 } from "@/lib/native/invoiceCache"
 import { readListCache, writeListCache, isListCacheFresh } from '@/lib/cache/listCache'
-import { shouldIncludeInvoiceInList } from "@/domain/invoice/advanceList"
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 
 export const PAGE_SIZE = 25
@@ -63,10 +61,10 @@ export function useInvoiceList() {
   const [loadingMore, setLoadingMore]     = useState(false)
 
   const buildInvoiceQuery = () => {
-    let query = applyParentInvoiceFilter(supabase
+    let query = supabase
       .from("invoices")
       .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
-      .is("archived_at", null))
+      .is("archived_at", null)
 
     const searchTerm = search.trim()
     if (searchTerm) {
@@ -175,7 +173,7 @@ export function useInvoiceList() {
       const { data, error } = await buildInvoiceQuery()
       if (error) throw error
 
-      const allRows = ((data as any[]) || []).filter(shouldIncludeInvoiceInList)
+      const allRows = ((data as any[]) || [])
       const filteredRows = allRows.filter((row: any) => matchesInvoiceStatusFilter(row, statusFilter))
       
       if (!hasFilters) {
@@ -209,7 +207,7 @@ export function useInvoiceList() {
 
         const filteredRows = cachedRows
           .filter((row: any) => !row.archived_at)
-          .filter(shouldIncludeInvoiceInList)
+          
           .filter((row: any) => {
             if (!searchTerm) return true
             const invoiceNumber = String(row.invoice_number || "").toLowerCase()
@@ -276,7 +274,7 @@ export function useInvoiceList() {
     const cached = readListCache<InvoiceRow>(INVOICE_CACHE_KEY)
     if (cached) {
       const nextOptions = Array.from(
-        new Set(cached.rows.filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+        new Set(cached.rows.map((row) => row.client_name).filter(Boolean)),
       ).sort((a: any, b: any) => a.localeCompare(b))
       setClientOptions(nextOptions)
       if (isListCacheFresh(cached, INVOICE_CACHE_TTL)) return
@@ -291,7 +289,7 @@ export function useInvoiceList() {
       if (error) throw error
 
       const nextOptions = Array.from(
-        new Set(((data as any[]) || []).filter(shouldIncludeInvoiceInList).map((row) => row.client_name).filter(Boolean)),
+        new Set(((data as any[]) || []).map((row) => row.client_name).filter(Boolean)),
       ).sort((a: any, b: any) => a.localeCompare(b))
 
       setClientOptions(nextOptions)
@@ -305,7 +303,7 @@ export function useInvoiceList() {
       try {
         const cachedRows = await getCachedInvoiceList()
         const nextOptions = Array.from(
-          new Set((cachedRows || []).filter(shouldIncludeInvoiceInList).map((row: any) => row.client_name).filter(Boolean)),
+          new Set((cachedRows || []).map((row: any) => row.client_name).filter(Boolean)),
         ).sort((a: any, b: any) => a.localeCompare(b))
         setClientOptions(nextOptions)
       } catch (cacheError) {

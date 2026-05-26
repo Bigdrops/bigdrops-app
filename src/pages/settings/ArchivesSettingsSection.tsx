@@ -9,7 +9,6 @@ import {
   FileCheck,
   ChevronDown,
 } from 'lucide-react'
-import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { supabase } from '@/supabase'
@@ -137,7 +136,6 @@ export function ArchivesSettingsSection() {
         .from('invoices')
         .select('id, invoice_number, client_name, total, status, issue_date, archived_at')
         .not('archived_at', 'is', null)
-        .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
         .order('archived_at', { ascending: false }),
       supabase
         .from('quotations')

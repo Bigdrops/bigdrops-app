@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
-import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
 
 // Shared Report Types & Utils
 import {
@@ -225,7 +224,7 @@ export default function Reports() {
       .from('invoices')
       .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
       .not('status', 'eq', 'archived')
-      .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+      .is('archived_at', null)
       .order('issue_date', { ascending: false })
 
     if (startDate) query = query.gte('issue_date', startDate)

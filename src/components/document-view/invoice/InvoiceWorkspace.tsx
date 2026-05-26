@@ -16,7 +16,7 @@ interface InvoiceWorkspaceProps {
   items: any[];
   payments: any[];
   bankAccounts: any[];
-  advanceInvoices: any[];
+  advanceInvoice: any;
   relatedCsrs: any[];
   relatedWaybills: any[];
   sourceDocument: any;
@@ -52,7 +52,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
   items,
   payments,
   bankAccounts,
-  advanceInvoices,
+  advanceInvoice,
   relatedCsrs,
   relatedWaybills,
   sourceDocument,
@@ -137,7 +137,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
       <InvoiceOperationalSections
         payments={payments}
         viewModel={viewModel}
-        advanceInvoices={advanceInvoices}
+        advanceInvoice={advanceInvoice}
         relatedCsrs={relatedCsrs}
         relatedWaybills={relatedWaybills}
         sourceDocument={sourceDocument}

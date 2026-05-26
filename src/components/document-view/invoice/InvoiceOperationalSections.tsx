@@ -7,7 +7,7 @@ import { ActivityCard } from "./sections/ActivityCard";
 interface InvoiceOperationalSectionsProps {
   payments: any[];
   viewModel: any;
-  advanceInvoices: any[];
+  advanceInvoice: any;
   relatedCsrs: any[];
   relatedWaybills: any[];
   sourceDocument: any;
@@ -24,7 +24,7 @@ interface InvoiceOperationalSectionsProps {
 export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProps> = ({
   payments,
   viewModel,
-  advanceInvoices,
+  advanceInvoice,
   relatedCsrs,
   relatedWaybills,
   sourceDocument,
@@ -48,7 +48,7 @@ export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProp
       />
 
       <AdvanceInvoicesCard 
-        advanceInvoices={advanceInvoices}
+        advanceInvoice={advanceInvoice}
         onCreateAdvance={onCreateAdvance}
         onViewAdvance={onViewAdvance}
       />

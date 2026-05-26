@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertCircle, ArrowRight, Banknote, FileSpreadsheet, Receipt, Wallet } from 'lucide-react'
 import { supabase } from '@/supabase'
-import { ADVANCE_INVOICE_EXCLUSION_FILTER } from '@/domain/invoice/advanceList'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -73,7 +72,7 @@ export function TaxSection({
       .from('invoices')
       .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
       .not('status', 'eq', 'archived')
-      .or(ADVANCE_INVOICE_EXCLUSION_FILTER)
+      .is('archived_at', null)
       .order('issue_date', { ascending: false })
 
     if (startDate) query = query.gte('issue_date', startDate)

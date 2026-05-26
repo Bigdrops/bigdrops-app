@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/supabase'
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
 import { feedback } from '@/lib/feedback'
 
 export interface Project {
@@ -115,11 +114,11 @@ export function useProjectDocumentFetch(projectId: string | undefined): UseProje
     try {
       const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
         supabase.from('projects').select('*').eq('id', projectId).single(),
-        applyParentInvoiceFilter(supabase
+        supabase
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('project_id', projectId)
-          .is('archived_at', null))
+          .is('archived_at', null)
           .order('issue_date', { ascending: false }),
         supabase
           .from('csrs')

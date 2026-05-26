@@ -1,0 +1,8 @@
+export const ADVANCE_INVOICE_INVARIANTS = {
+  NO_DATABASE_QUERIES: true,
+  SINGLETON_ONLY: true,
+  PURE_PROJECTION_ONLY: true,
+  NO_ENTITY_IDENTITY: true,
+  NO_LOCAL_STATE: true,
+  NO_RELATIONAL_BINDING: true,
+} as const;

@@ -11,8 +11,7 @@ import {
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
 import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
 import { mapDbInvoiceItem } from '@/domain/invoice'
-import { getAdvanceInvoiceMetadata } from '@/domain/invoice/advanceMetadata'
-import { isLegacyAdvanceChildRowForRuntime } from '@/domain/invoice/advanceLegacyCleanup'
+import { deriveAdvanceInvoiceProjection } from '@/domain/invoice/advanceProjection.rules'
 import { calculateInvoiceFinancialState } from '@/domain/invoice/financialState'
 
 function canUseInvoiceCacheFallback() {
@@ -60,10 +59,9 @@ export function useInvoiceDetailData(id) {
   const [linkedProject, setLinkedProject] = useState(null)
   const [relatedCsrs, setRelatedCsrs] = useState([])
   const [relatedWaybills, setRelatedWaybills] = useState([])
-  const [relatedAdvanceInvoices, setRelatedAdvanceInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const advanceMetadata = useMemo(() => getAdvanceInvoiceMetadata(invoice), [invoice])
+  const advanceInvoiceProjection = useMemo(() => deriveAdvanceInvoiceProjection(invoice), [invoice])
 
   const fetchInvoice = useCallback(async () => {
     const { data, error: invoiceError } = await supabase.from('invoices').select('*').eq('id', id).single()
@@ -93,23 +91,6 @@ export function useInvoiceDetailData(id) {
     const related = await fetchInvoiceChildDocuments(id)
     setRelatedCsrs(related.csrs || [])
     setRelatedWaybills(related.waybills || [])
-  }, [id])
-
-  const fetchAdvanceInvoices = useCallback(async () => {
-    const { data, error: advanceError } = await supabase
-      .from('invoices')
-      .select('id, invoice_number, invoice_title, total, status, created_at, issue_date, due_date, po_number, client_id, client_name, notes, terms, amount_in_words, custom_fields')
-      .ilike('custom_fields', `%"parentId":"${id}"%`)
-      .is('archived_at', null)
-      .order('created_at', { ascending: true })
-
-    if (advanceError && canUseInvoiceCacheFallback()) {
-      throw advanceError
-    }
-
-    // Filter out legacy advance child rows - only canonical child rows should appear in UI
-    const filteredData = (data || []).filter((inv) => !isLegacyAdvanceChildRowForRuntime(inv))
-    setRelatedAdvanceInvoices(filteredData)
   }, [id])
 
   const fetchPayments = useCallback(async () => {
@@ -186,7 +167,6 @@ export function useInvoiceDetailData(id) {
         fetchItems(),
         fetchPayments(),
         fetchInvoiceRelationships(),
-        fetchAdvanceInvoices(),
         fetchInvoiceFinancials(),
         supabase
           .from('signatories')
@@ -225,7 +205,6 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
-        setRelatedAdvanceInvoices([])
         setCreatorProfile(null)
         console.warn('Invoice detail fetch failed:', refreshError)
         setLoading(false)
@@ -251,7 +230,6 @@ export function useInvoiceDetailData(id) {
         setLinkedProject(null)
         setRelatedCsrs([])
         setRelatedWaybills([])
-        setRelatedAdvanceInvoices([])
         setCreatorProfile(null)
         setSession(null)
         setError(null)
@@ -290,10 +268,9 @@ export function useInvoiceDetailData(id) {
     invoice,
     items,
     payments,
-    advanceMetadata,
+    advanceInvoiceProjection,
     relatedCsrs,
     relatedWaybills,
-    relatedAdvanceInvoices,
     invoiceFinancials,
     client,
     settings,

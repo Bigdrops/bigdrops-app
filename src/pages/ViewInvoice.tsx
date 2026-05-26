@@ -33,8 +33,8 @@ export default function ViewInvoice() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
-    invoice, items, payments, advanceMetadata, relatedCsrs, relatedWaybills,
-    relatedAdvanceInvoices, invoiceFinancials, client, settings, bankAccounts,
+    invoice, items, payments, advanceInvoiceProjection, relatedCsrs, relatedWaybills,
+    invoiceFinancials, client, settings, bankAccounts,
     signatories, linkedProject, loading, refresh, setInvoice
   } = useInvoiceDetailData(id) as any;
 
@@ -92,7 +92,7 @@ export default function ViewInvoice() {
 
   const actions = useInvoiceActions({
     invoice, items, payments, client, settings, bankAccounts,
-    signatories, advanceMetadata, viewModel, ui, refresh, setInvoice,
+    signatories, advanceInvoiceProjection, viewModel, ui, refresh, setInvoice,
     pdfOutput, setPdfOutput, pdfTemplateId, settingsData: settings
   });
 
@@ -109,7 +109,7 @@ export default function ViewInvoice() {
       items={items || []}
       payments={payments || []}
       bankAccounts={bankAccounts || []}
-      advanceInvoices={relatedAdvanceInvoices || []}
+      advanceInvoice={advanceInvoiceProjection}
       relatedCsrs={relatedCsrs || []}
       relatedWaybills={relatedWaybills || []}
       sourceDocument={sourceDocument}

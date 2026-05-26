@@ -1,7 +1,5 @@
 import * as React from 'react'
 
-import { applyParentInvoiceFilter } from '@/domain/invoice/isParentInvoiceFilter'
-import { shouldIncludeInvoiceInList } from '@/domain/invoice/advanceList'
 import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -353,9 +351,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setHours(23, 59, 59, 999)
 
         const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialsRes, projectsRes] = await Promise.all([
-          applyParentInvoiceFilter(supabase
+          supabase
             .from('invoices')
-            .select('id, invoice_number, client_name, status, created_at, total, custom_fields'))
+            .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
+            .is('archived_at', null)
             .order('created_at', { ascending: false })
             .limit(8),
           supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
@@ -366,7 +365,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
 
-        const invoices = (invoiceRes.data || []).filter((invoice) => shouldIncludeInvoiceInList(invoice))
+        const invoices = (invoiceRes.data || [])
         const quotations = quotationRes.data || []
         const csrs = csrRes.data || []
         const waybills = waybillRes.data || []
@@ -467,9 +466,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes] = await Promise.all([
-        applyParentInvoiceFilter(supabase
+        supabase
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields'))
+          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
+          .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
@@ -484,7 +484,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
-      const invoices = (invoiceRes.data || []).filter((invoice) => shouldIncludeInvoiceInList(invoice))
+      const invoices = (invoiceRes.data || [])
       const quotations = quotationRes.data || []
       const csrs = csrRes.data || []
       const waybills = waybillRes.data || []
