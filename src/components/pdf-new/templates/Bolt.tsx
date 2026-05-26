@@ -19,7 +19,6 @@ export default function Bolt({ data }: { data: IndustryTemplateData }) {
   const accentRule = lightenHex(accent, 78)
   const accentLink = darkenHex(accent, 12)
 
-  const isAdvance = Boolean(data.advanceSummary)
   const documentLabel = data.customTitle || data.title || 'Invoice'
   const documentTitle = data.title || 'INVOICE'
   const displayColumns = (data.table.columns || []).filter((column) => column.key !== 'num')
