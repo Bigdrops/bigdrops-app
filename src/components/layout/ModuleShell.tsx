@@ -73,6 +73,7 @@ interface ModuleShellProps<T = any> {
   onResetFilters?: () => void
   onFilterClick?: () => void // Custom filter trigger (e.g. opens a sheet)
   filterPanel?: ReactNode // Custom inline filter panel
+  filterOverlay?: ReactNode // Inline filter dropdown rendered under header (search-dropdown parity)
   
   // Actions
   onPrimaryAction?: () => void
@@ -114,6 +115,7 @@ export default function ModuleShell<T>({
   onResetFilters,
   onFilterClick,
   filterPanel,
+  filterOverlay,
   onPrimaryAction,
   primaryActionLabel = 'New',
   segmentedControl,
@@ -268,7 +270,7 @@ export default function ModuleShell<T>({
   return (
     <div className={cn('flex flex-col min-h-full w-full', toneStyle.glow, className)}>
       {/* Mobile Header (Integrated) */}
-      <div className="md:hidden">
+      <div className="md:hidden relative">
         <MobilePageHeader
           eyebrow={eyebrow}
           title={title}
@@ -339,9 +341,12 @@ export default function ModuleShell<T>({
 
         {/* Mobile Filter Tray (Revealed) */}
         <FilterTray isMobile />
+
+        {/* Inline Filter Overlay (search-dropdown parity) */}
+        {filterOverlay}
       </div>
 
-      <div className="hidden md:flex flex-col mb-4">
+      <div className="hidden md:flex flex-col mb-4 relative">
         <div className="flex items-center justify-between gap-4 py-2">
           <div className="flex flex-col">
             <div className={cn("text-[10px] font-black uppercase tracking-wider", toneStyle.foreground)}>
@@ -386,6 +391,9 @@ export default function ModuleShell<T>({
 
         {/* Desktop Filter Tray (Revealed) */}
         <FilterTray />
+
+        {/* Inline Filter Overlay (search-dropdown parity) */}
+        {filterOverlay}
       </div>
 
 

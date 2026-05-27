@@ -400,6 +400,9 @@ export default function QuotationList() {
         onFilterClick={() => setShowFilterOverlay(true)}
         onPrimaryAction={() => navigate('/quotations/new')}
         primaryActionLabel="New Quotation"
+        filterOverlay={
+          <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="quotations" />
+        }
         records={mappedQuotations}
         renderRow={renderQuotationRow}
         beforeListContent={syncRecoveryBanner}
@@ -416,7 +419,6 @@ export default function QuotationList() {
         loadingMore={false}
         onLoadMore={() => {}}
       />
-      <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="quotations" />
       <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation" />
       <ConfirmActionDialog
         open={archiveId !== null}

@@ -203,6 +203,9 @@ function WaybillsContent() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        filterOverlay={
+          <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="waybills" />
+        }
         beforeListContent={
           showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
             <div className="mb-4 rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4 shadow-sm">
@@ -273,9 +276,6 @@ function WaybillsContent() {
           </div>
         }
       />
-
-      {/* Query Platform Filter Overlay */}
-      <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="waybills" />
 
       <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill" />
       <InvoiceListActionSheet

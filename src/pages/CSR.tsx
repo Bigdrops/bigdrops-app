@@ -227,6 +227,9 @@ function CsrContent() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        filterOverlay={
+          <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="csr" />
+        }
         renderRow={(csr) => {
           const tone = getStatusTone(csr.status || 'draft')
           const statusClasses = getStatusClasses(tone)
@@ -296,9 +299,6 @@ function CsrContent() {
         ) : null}
         {loading && <div className="grid gap-3">{Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}</div>}
       </ModuleShell>
-
-      {/* Query Platform Filter Overlay */}
-      <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="csr" />
 
       <MobileFab onClick={() => navigate("/csr/new")} ariaLabel="Create CSR" />
       <ConfirmActionDialog open={archiveId !== null} onOpenChange={(open) => !open && setArchiveId(null)} title="Archive this CSR?" description="This will move the CSR to the archive. You can restore it later from Settings." confirmLabel="Archive" loading={isArchiving} onConfirm={handleArchive} />

@@ -271,6 +271,9 @@ function InvoicesContent() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
+        filterOverlay={
+          <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
+        }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]"><Receipt className="h-6 w-6" /></div>
@@ -279,13 +282,6 @@ function InvoicesContent() {
           </div>
         )}
         onPrimaryAction={() => navigate("/invoices/new")} primaryActionLabel="New Invoice"
-      />
-
-      {/* Query Platform Filter Overlay */}
-      <QueryFilterOverlay
-        open={showFilterOverlay}
-        onClose={() => setShowFilterOverlay(false)}
-        module="invoices"
       />
 
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />

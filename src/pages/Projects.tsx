@@ -108,6 +108,9 @@ function ProjectsContent() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         records={loading ? [] : projects}
+        filterOverlay={
+          <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="projects" />
+        }
         renderRow={(project) => {
           const formattedValue = formatProjectValue(project.project_value)
           const startedText = project.start_date
@@ -163,9 +166,6 @@ function ProjectsContent() {
            </div>
         )}
       </ModuleShell>
-
-      {/* Query Platform Filter Overlay */}
-      <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="projects" />
 
       <MobileFab onClick={() => navigate('/projects/new')} ariaLabel="Create project" />
       <ConfirmActionDialog

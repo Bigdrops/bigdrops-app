@@ -84,6 +84,9 @@ export function BoqList() {
       onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
       records={loading ? [] : boqs}
+      filterOverlay={
+        <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="boqs" />
+      }
       renderRow={(boq) => (
         <ModuleRowCard
           key={boq.id}
@@ -104,7 +107,6 @@ export function BoqList() {
       )}
 
     </ModuleShell>
-    <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="boqs" />
     <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
  
     <InvoiceListActionSheet

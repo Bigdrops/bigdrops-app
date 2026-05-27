@@ -134,6 +134,9 @@ export const RfqList: React.FC = () => {
       onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
       records={loading ? [] : rfqs}
+      filterOverlay={
+        <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="rfqs" />
+      }
       renderRow={(rfq: Rfq) => {
         const statusMeta = getRfqStatusMeta(rfq.expiry_date)
         const expiryDate = formatCompactDate(rfq.expiry_date)
@@ -160,7 +163,6 @@ export const RfqList: React.FC = () => {
       )}
 
     </ModuleShell>
-    <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="rfqs" />
     <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
 
     <InvoiceListActionSheet
