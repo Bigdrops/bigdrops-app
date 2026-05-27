@@ -30,6 +30,38 @@ function applySortOrder(query: any, sortBy: string, sortDirection: "asc" | "desc
   return query.order(sortBy, { ascending: sortDirection === "asc" });
 }
 
+// --- Cache Bypass Detection ---
+// If any filter/sort is non-default, skip the cache and go network-direct.
+
+function hasActiveFilters(query: DocumentQueryState): boolean {
+  if (query.search.trim()) return true;
+  if (query.dateRange.from || query.dateRange.to) return true;
+  if (query.client) return true;
+  if (query.sortDirection !== "desc") return true;
+  if (query.sortBy !== "created_at") return true;
+
+  // Check type-specific fields
+  if ("statuses" in query && (query as any).statuses?.length > 0) return true;
+  if ("amountRange" in query) {
+    const ar = (query as any).amountRange;
+    if (ar?.min !== null || ar?.max !== null) return true;
+  }
+  return false;
+}
+
+// --- Invoice Status Mapping (DB values → UI canonical) ---
+
+const INVOICE_STATUS_DB_MAP: Record<string, string> = {
+  paid: "paid",
+  "fully_paid": "paid",
+  "fully paid": "paid",
+  "partially_paid": "partially paid",
+  partial: "partially paid",
+  "partially paid": "partially paid",
+  unpaid: "unpaid",
+  overdue: "overdue",
+};
+
 // --- Local Filter Helpers (applied to cached rows) ---
 
 function applyDateRangeLocally(rows: any[], dateRange: DocumentQueryState["dateRange"]): any[] {
@@ -86,10 +118,10 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
   cacheTtlMs: 5 * 60 * 1000,
 
   async fetcher(query) {
-    // Check cache first
+    // Bypass cache when any filter/sort is active — go network-direct
     const cached = readListCache<any>(invoicesAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, invoicesAdapter.cacheTtlMs)) {
-      return filterInvoicesLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, invoicesAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -102,6 +134,41 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
       q = q.or(`invoice_number.ilike.%${term}%,client_name.ilike.%${term}%`);
     }
 
+    // Server-side status filtering
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      const hasOverdue = query.statuses.map((s) => s.toUpperCase()).includes("OVERDUE");
+      const dbStatuses = query.statuses
+        .filter((s) => s.toUpperCase() !== "OVERDUE")
+        .map((s) => {
+          const key = s.toLowerCase();
+          return INVOICE_STATUS_DB_MAP[key] || key;
+        });
+
+      if (hasOverdue && dbStatuses.length > 0) {
+        // Include rows matching statuses OR overdue (unpaid + past due)
+        const statusList = dbStatuses.map((s) => `status.eq.${s}`).join(",");
+        q = q.or(`${statusList},and(status.eq.unpaid,due_date.lt.${new Date().toISOString().split("T")[0]})`);
+      } else if (hasOverdue) {
+        // Only OVERDUE selected
+        q = q.eq("status", "unpaid").lt("due_date", new Date().toISOString().split("T")[0]);
+      } else if (dbStatuses.length > 0) {
+        q = q.in("status", dbStatuses);
+      }
+    }
+
+    // Server-side amount filtering
+    if (query.amountRange.min !== null) {
+      q = q.gte("total", query.amountRange.min);
+    }
+    if (query.amountRange.max !== null) {
+      q = q.lte("total", query.amountRange.max);
+    }
+
+    // Server-side client filtering
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -109,8 +176,11 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(invoicesAdapter.cacheKey, rows);
-    return filterInvoicesLocally(rows, query);
+    // Only write to cache on unfiltered fetches
+    if (!hasActiveFilters(query)) {
+      writeListCache(invoicesAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -174,8 +244,8 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(quotationsAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, quotationsAdapter.cacheTtlMs)) {
-      return filterFinancialLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, quotationsAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -188,15 +258,56 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
       q = q.or(`quotation_number.ilike.%${term}%,client_name.ilike.%${term}%`);
     }
 
+    // Server-side status filtering (excluding OVERDUE which needs client-side date check)
+    const hasOverdue = query.statuses.length > 0 && query.statuses.map((s) => s.toUpperCase()).includes("OVERDUE");
+    const nonOverdueStatuses = query.statuses.filter((s) => s.toUpperCase() !== "OVERDUE").map((s) => s.toLowerCase());
+
+    if (nonOverdueStatuses.length > 0 && !query.statuses.includes("All")) {
+      if (!hasOverdue) {
+        q = q.in("status", nonOverdueStatuses);
+      }
+      // If OVERDUE is also selected, we fetch broader and filter client-side for the date check
+    }
+
+    if (query.amountRange.min !== null) {
+      q = q.gte("total", query.amountRange.min);
+    }
+    if (query.amountRange.max !== null) {
+      q = q.lte("total", query.amountRange.max);
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
     const { data, error } = await q;
     if (error) throw error;
 
-    const rows = (data as any[]) || [];
-    writeListCache(quotationsAdapter.cacheKey, rows);
-    return filterFinancialLocally(rows, query);
+    let rows = (data as any[]) || [];
+
+    // Client-side OVERDUE check for quotations (valid_until expiration)
+    if (query.statuses.length > 0 && !query.statuses.includes("All") && hasOverdue) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
+      rows = rows.filter((row) => {
+        const canonical = (row.status || "").toUpperCase();
+        if (normalizedStatuses.includes(canonical)) return true;
+        if (row.valid_until) {
+          const validUntil = new Date(row.valid_until);
+          if (!isNaN(validUntil.getTime()) && validUntil < today) return true;
+        }
+        return false;
+      });
+    }
+
+    if (!hasActiveFilters(query)) {
+      writeListCache(quotationsAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -210,8 +321,8 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(waybillsAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, waybillsAdapter.cacheTtlMs)) {
-      return filterWaybillsLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, waybillsAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -224,6 +335,14 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
       q = q.or(`waybill_number.ilike.%${term}%,client_name.ilike.%${term}%`);
     }
 
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -231,8 +350,10 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(waybillsAdapter.cacheKey, rows);
-    return filterWaybillsLocally(rows, query);
+    if (!hasActiveFilters(query)) {
+      writeListCache(waybillsAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -261,8 +382,8 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(projectsAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, projectsAdapter.cacheTtlMs)) {
-      return filterProjectLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, projectsAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -275,6 +396,14 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
       q = q.or(`name.ilike.%${term}%,client_name.ilike.%${term}%`);
     }
 
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -282,8 +411,10 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(projectsAdapter.cacheKey, rows);
-    return filterProjectLocally(rows, query);
+    if (!hasActiveFilters(query)) {
+      writeListCache(projectsAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -297,8 +428,8 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(csrAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, csrAdapter.cacheTtlMs)) {
-      return filterProjectLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, csrAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -311,6 +442,14 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
       q = q.or(`csr_number.ilike.%${term}%,client_name.ilike.%${term}%,equipment_type.ilike.%${term}%`);
     }
 
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -318,8 +457,10 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(csrAdapter.cacheKey, rows);
-    return filterProjectLocally(rows, query);
+    if (!hasActiveFilters(query)) {
+      writeListCache(csrAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -333,8 +474,8 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(rfqsAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, rfqsAdapter.cacheTtlMs)) {
-      return filterProjectLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, rfqsAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -347,6 +488,14 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
       q = q.or(`rfq_number.ilike.%${term}%,client_name.ilike.%${term}%,title.ilike.%${term}%`);
     }
 
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -354,8 +503,10 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(rfqsAdapter.cacheKey, rows);
-    return filterProjectLocally(rows, query);
+    if (!hasActiveFilters(query)) {
+      writeListCache(rfqsAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
@@ -369,8 +520,8 @@ const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
   async fetcher(query) {
     const cached = readListCache<any>(boqsAdapter.cacheKey);
-    if (cached && isListCacheFresh(cached, boqsAdapter.cacheTtlMs)) {
-      return filterProjectLocally(cached.rows, query);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, boqsAdapter.cacheTtlMs)) {
+      return cached.rows;
     }
 
     let q = supabase
@@ -383,6 +534,14 @@ const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
       q = q.or(`boq_number.ilike.%${term}%,client_name.ilike.%${term}%,title.ilike.%${term}%`);
     }
 
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
 
@@ -390,8 +549,10 @@ const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
     if (error) throw error;
 
     const rows = (data as any[]) || [];
-    writeListCache(boqsAdapter.cacheKey, rows);
-    return filterProjectLocally(rows, query);
+    if (!hasActiveFilters(query)) {
+      writeListCache(boqsAdapter.cacheKey, rows);
+    }
+    return rows;
   },
 };
 
