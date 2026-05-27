@@ -10,6 +10,7 @@ export type BaseQueryState = {
   dateRange: { from: string | null; to: string | null };
   sortBy: string;
   sortDirection: "asc" | "desc";
+  client: string | null;
 };
 
 // --- Module-Specific Variants (discriminated by `type`) ---

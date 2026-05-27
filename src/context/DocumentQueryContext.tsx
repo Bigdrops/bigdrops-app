@@ -46,6 +46,7 @@ function getInitialState(module: ModuleScope): DocumentQueryState {
     dateRange: { from: null, to: null } as { from: string | null; to: string | null },
     sortBy: adapter.initialSortBy,
     sortDirection: "desc" as const,
+    client: null as string | null,
   };
 
   switch (type) {
@@ -140,8 +141,6 @@ export function DocumentQueryProvider({ module, children }: DocumentQueryProvide
       try {
         const data = await adapter.fetcher(state);
         if (cancelled || id !== fetchIdRef.current) return;
-
-        console.log(`[Data Audit] Module: ${module} | Raw Response Count:`, data?.length ?? 0);
 
         // Referential stability: only update if data actually changed
         const prev = prevResultsRef.current;

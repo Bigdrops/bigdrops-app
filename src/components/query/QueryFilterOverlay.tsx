@@ -5,28 +5,29 @@
 //   • DateRangeFilter   → temporal only (date_from / date_to)
 //   • AmountRangeFilter → financial only (min_amount / max_amount), gated by caps.amountRange
 //   • ClientFilter      → identity only, gated by caps.client
-//   • Status / Sort     → enumerated, capability-driven
+//   • SortMatrix        → dual-axis (Time + Value), capability-driven
+//   • Status            → enumerated, capability-driven
 // No modal, no backdrop, no Apply/Cancel global workflow.
 // ============================================================================
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Calendar, ChevronDown, DollarSign, SlidersHorizontal, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentQuery } from "@/context/DocumentQueryContext";
 import { FILTER_CAPABILITIES, STATUS_FILTERS, type ModuleFilterCapabilities } from "@/config/filterCapabilities";
+import { feedback } from "@/lib/feedback";
 import type { ModuleScope } from "@/types/queryPlatform";
 
-// ─── SORT OPTIONS — derived strictly from capabilities ───────────────────
-// Non-financial modules MUST NOT receive value-based sort options.
+// ─── CURRENCY FORMATTING HELPERS ─────────────────────────────────────────
 
-type SortOption = "Newest" | "Oldest" | "Highest Value" | "Lowest Value";
+function formatWithCommas(value: string): string {
+  const cleaned = value.replace(/[^0-9]/g, "");
+  if (!cleaned) return "";
+  return Number(cleaned).toLocaleString("en-NG");
+}
 
-function buildSortOptions(caps: ModuleFilterCapabilities): SortOption[] {
-  const base: SortOption[] = ["Newest", "Oldest"];
-  if (caps.amountRange) {
-    base.push("Highest Value", "Lowest Value");
-  }
-  return base;
+function stripCommas(value: string): string {
+  return value.replace(/,/g, "");
 }
 
 // ─── POPOVER KEY DOMAIN — one open at a time ─────────────────────────────
@@ -52,7 +53,6 @@ export default function QueryFilterOverlay({
 
   if (!open || !caps) return null;
 
-  const sortOptions = buildSortOptions(caps);
   const statusOptions = STATUS_FILTERS[module];
   const currentStatuses: string[] = (state as any)?.statuses || [];
 
@@ -66,18 +66,11 @@ export default function QueryFilterOverlay({
   };
   const clearStatuses = () => patchUpdate({ statuses: [] } as any);
 
-  // ─── SORT (enumerated, capability-driven) ──────────────────────────────
+  // ─── SORT LABEL ────────────────────────────────────────────────────────
 
-  const applySort = (option: SortOption) => {
-    const direction = option === "Oldest" || option === "Lowest Value" ? "asc" : "desc";
-    const sortBy = option.includes("Value") ? "total" : "created_at";
-    patchUpdate({ sortBy, sortDirection: direction } as any);
-    closePopover();
-  };
-
-  const sortLabel: SortOption = (() => {
+  const sortLabel = (() => {
     if (caps.amountRange && state.sortBy === "total") {
-      return state.sortDirection === "asc" ? "Lowest Value" : "Highest Value";
+      return state.sortDirection === "asc" ? "Lowest" : "Highest";
     }
     return state.sortDirection === "asc" ? "Oldest" : "Newest";
   })();
@@ -134,7 +127,7 @@ export default function QueryFilterOverlay({
           />
         )}
 
-        {/* Sort — capability-driven option set */}
+        {/* Sort — dual-axis matrix */}
         {caps.sort && (
           <ChipTrigger
             label="Sort"
@@ -159,8 +152,9 @@ export default function QueryFilterOverlay({
         </button>
       </div>
 
-      {/* ─── INLINE POPOVERS — Status & Sort (enumerated) ─── */}
+      {/* ─── INLINE POPOVERS ─── */}
 
+      {/* Status */}
       {activePopover === "status" && caps.status && statusOptions && (
         <PopoverPanel>
           <div className="flex items-center justify-between mb-2">
@@ -197,42 +191,103 @@ export default function QueryFilterOverlay({
         </PopoverPanel>
       )}
 
+      {/* Sort — Dual-Axis Matrix */}
       {activePopover === "sort" && caps.sort && (
-        <PopoverPanel>
-          <div className="flex flex-col gap-1">
-            {sortOptions.map((option) => {
-              const isActive =
-                (option === "Newest" && state.sortBy === "created_at" && state.sortDirection === "desc") ||
-                (option === "Oldest" && state.sortBy === "created_at" && state.sortDirection === "asc") ||
-                (option === "Highest Value" && state.sortBy === "total" && state.sortDirection === "desc") ||
-                (option === "Lowest Value" && state.sortBy === "total" && state.sortDirection === "asc");
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => applySort(option)}
-                  className={cn(
-                    "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
-                  )}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </PopoverPanel>
+        <SortMatrix hasValueAxis={caps.amountRange} onClose={closePopover} />
       )}
     </div>
   );
 }
 
 // ============================================================================
+// SORT MATRIX — Dual-axis (Time + Value) selection grid
+// Time axis: Newest | Oldest
+// Value axis: Highest | Lowest (only if caps.amountRange)
+// ============================================================================
+
+function SortMatrix({
+  hasValueAxis,
+  onClose,
+}: {
+  hasValueAxis: boolean;
+  onClose: () => void;
+}) {
+  const { state, patchUpdate } = useDocumentQuery();
+
+  const applyTimeSort = (direction: "desc" | "asc") => {
+    patchUpdate({ sortBy: "created_at", sortDirection: direction } as any);
+    onClose();
+  };
+
+  const applyValueSort = (direction: "desc" | "asc") => {
+    patchUpdate({ sortBy: "total", sortDirection: direction } as any);
+    onClose();
+  };
+
+  const isTimeNewest = state.sortBy === "created_at" && state.sortDirection === "desc";
+  const isTimeOldest = state.sortBy === "created_at" && state.sortDirection === "asc";
+  const isValueHighest = state.sortBy === "total" && state.sortDirection === "desc";
+  const isValueLowest = state.sortBy === "total" && state.sortDirection === "asc";
+
+  return (
+    <PopoverPanel>
+      <div className={cn("grid gap-4", hasValueAxis ? "grid-cols-2" : "grid-cols-1")}>
+        {/* Time Axis */}
+        <div className="space-y-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+            Time
+          </span>
+          <div className="flex flex-col gap-1">
+            <SortButton label="Newest" active={isTimeNewest} onClick={() => applyTimeSort("desc")} />
+            <SortButton label="Oldest" active={isTimeOldest} onClick={() => applyTimeSort("asc")} />
+          </div>
+        </div>
+
+        {/* Value Axis — only for financial modules */}
+        {hasValueAxis && (
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+              Value
+            </span>
+            <div className="flex flex-col gap-1">
+              <SortButton label="Highest" active={isValueHighest} onClick={() => applyValueSort("desc")} />
+              <SortButton label="Lowest" active={isValueLowest} onClick={() => applyValueSort("asc")} />
+            </div>
+          </div>
+        )}
+      </div>
+    </PopoverPanel>
+  );
+}
+
+function SortButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ============================================================================
 // CHIP A — DateRangeFilter (TEMPORAL ONLY)
 // Binds exclusively to state.dateRange.{from,to}.
-// Never reads or writes amount, client, or status fields.
 // ============================================================================
 
 interface FilterChipProps {
@@ -245,17 +300,25 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const { state, patchUpdate } = useDocumentQuery();
   const [dateFrom, setDateFrom] = useState<string>(state.dateRange.from || "");
   const [dateTo, setDateTo] = useState<string>(state.dateRange.to || "");
+  const [hasError, setHasError] = useState(false);
 
-  // Sync local drafts on open
   const handleToggle = () => {
     if (!isOpen) {
       setDateFrom(state.dateRange.from || "");
       setDateTo(state.dateRange.to || "");
+      setHasError(false);
     }
     onToggle();
   };
 
   const apply = () => {
+    // Boundary validation: from must not exceed to
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      setHasError(true);
+      feedback.error("Minimum boundary cannot exceed Maximum boundary");
+      return;
+    }
+    setHasError(false);
     patchUpdate({
       dateRange: { from: dateFrom || null, to: dateTo || null },
     } as any);
@@ -265,6 +328,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const clear = () => {
     setDateFrom("");
     setDateTo("");
+    setHasError(false);
     patchUpdate({ dateRange: { from: null, to: null } } as any);
     onClose();
   };
@@ -276,6 +340,8 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
     if (state.dateRange.to) return `Until ${state.dateRange.to}`;
     return "Anytime";
   })();
+
+  const isInvalid = hasError || (dateFrom && dateTo && dateFrom > dateTo);
 
   return (
     <>
@@ -299,8 +365,11 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                 <input
                   type="date"
                   value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
+                  onChange={(e) => { setDateFrom(e.target.value); setHasError(false); }}
+                  className={cn(
+                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                  )}
                 />
               </div>
               <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
@@ -309,8 +378,11 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                 <input
                   type="date"
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
+                  onChange={(e) => { setDateTo(e.target.value); setHasError(false); }}
+                  className={cn(
+                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                  )}
                 />
               </div>
             </div>
@@ -325,7 +397,13 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
               <button
                 type="button"
                 onClick={apply}
-                className="flex-1 h-8 rounded-md bg-primary text-[10px] font-bold text-primary-foreground hover:bg-primary/90"
+                disabled={!!isInvalid}
+                className={cn(
+                  "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
+                  isInvalid
+                    ? "bg-primary/40 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90"
+                )}
               >
                 Apply
               </button>
@@ -339,35 +417,79 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
 
 // ============================================================================
 // CHIP B — AmountRangeFilter (FINANCIAL ONLY)
-// Binds exclusively to state.amountRange.{min,max}.
-// Caller MUST guard with caps.amountRange — this component does not self-gate.
+// Dual-state controlled input: display commas, dispatch raw numeric.
+// Boundary validation: min > max → red border + toast + disabled Apply.
+// Mobile viewport: bounded width, responsive positioning.
 // ============================================================================
 
 function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const { state, patchUpdate } = useDocumentQuery();
-  const initialMin = String((state as any)?.amountRange?.min ?? "");
-  const initialMax = String((state as any)?.amountRange?.max ?? "");
-  const [rangeMin, setRangeMin] = useState<string>(initialMin);
-  const [rangeMax, setRangeMax] = useState<string>(initialMax);
+  const [displayMin, setDisplayMin] = useState<string>("");
+  const [displayMax, setDisplayMax] = useState<string>("");
+  const [hasError, setHasError] = useState(false);
+  const minRef = useRef<HTMLInputElement>(null);
+  const maxRef = useRef<HTMLInputElement>(null);
 
   const handleToggle = () => {
     if (!isOpen) {
-      setRangeMin(String((state as any)?.amountRange?.min ?? ""));
-      setRangeMax(String((state as any)?.amountRange?.max ?? ""));
+      const min = (state as any)?.amountRange?.min;
+      const max = (state as any)?.amountRange?.max;
+      setDisplayMin(min != null ? formatWithCommas(String(min)) : "");
+      setDisplayMax(max != null ? formatWithCommas(String(max)) : "");
+      setHasError(false);
     }
     onToggle();
   };
 
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setDisplayMin(formatWithCommas(raw));
+    setHasError(false);
+  };
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setDisplayMax(formatWithCommas(raw));
+    setHasError(false);
+  };
+
+  const getRawMin = (): number | null => {
+    const stripped = stripCommas(displayMin);
+    return stripped ? Number(stripped) : null;
+  };
+
+  const getRawMax = (): number | null => {
+    const stripped = stripCommas(displayMax);
+    return stripped ? Number(stripped) : null;
+  };
+
+  const isInvalid = (() => {
+    const min = getRawMin();
+    const max = getRawMax();
+    if (min !== null && max !== null && min > max) return true;
+    return hasError;
+  })();
+
   const apply = () => {
-    const min = rangeMin ? Number(rangeMin) : null;
-    const max = rangeMax ? Number(rangeMax) : null;
+    const min = getRawMin();
+    const max = getRawMax();
+
+    if (min !== null && max !== null && min > max) {
+      setHasError(true);
+      feedback.error("Minimum boundary cannot exceed Maximum boundary");
+      return;
+    }
+
+    setHasError(false);
+    // Open-ended: null max means unlimited (>= min)
     patchUpdate({ amountRange: { min, max } } as any);
     onClose();
   };
 
   const clear = () => {
-    setRangeMin("");
-    setRangeMax("");
+    setDisplayMin("");
+    setDisplayMax("");
+    setHasError(false);
     patchUpdate({ amountRange: { min: null, max: null } } as any);
     onClose();
   };
@@ -375,9 +497,9 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const label = (() => {
     const ar = (state as any)?.amountRange;
     if (!ar) return "Any";
-    if (ar.min && ar.max) return `₦${ar.min} – ₦${ar.max}`;
-    if (ar.min) return `Min ₦${ar.min}`;
-    if (ar.max) return `Max ₦${ar.max}`;
+    if (ar.min != null && ar.max != null) return `₦${Number(ar.min).toLocaleString()} – ₦${Number(ar.max).toLocaleString()}`;
+    if (ar.min != null) return `Min ₦${Number(ar.min).toLocaleString()}`;
+    if (ar.max != null) return `Max ₦${Number(ar.max).toLocaleString()}`;
     return "Any";
   })();
 
@@ -395,27 +517,43 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
         icon={<DollarSign className="h-3 w-3" />}
       />
       {isOpen && (
-        <PopoverPanel>
+        <AmountPopoverPanel>
           <div className="space-y-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
               Amount Range
             </span>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={rangeMin}
-                onChange={(e) => setRangeMin(e.target.value)}
-                className="flex-1 h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
-              />
-              <span className="text-[hsl(var(--bd-text-muted))] text-xs">–</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={rangeMax}
-                onChange={(e) => setRangeMax(e.target.value)}
-                className="flex-1 h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
-              />
+              <div className="flex-1 space-y-1">
+                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Min</label>
+                <input
+                  ref={minRef}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={displayMin}
+                  onChange={handleMinChange}
+                  className={cn(
+                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                  )}
+                />
+              </div>
+              <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
+              <div className="flex-1 space-y-1">
+                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Max</label>
+                <input
+                  ref={maxRef}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Unlimited"
+                  value={displayMax}
+                  onChange={handleMaxChange}
+                  className={cn(
+                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                  )}
+                />
+              </div>
             </div>
             <div className="flex gap-2">
               <button
@@ -428,13 +566,19 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
               <button
                 type="button"
                 onClick={apply}
-                className="flex-1 h-8 rounded-md bg-primary text-[10px] font-bold text-primary-foreground hover:bg-primary/90"
+                disabled={!!isInvalid}
+                className={cn(
+                  "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
+                  isInvalid
+                    ? "bg-primary/40 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90"
+                )}
               >
                 Apply
               </button>
             </div>
           </div>
-        </PopoverPanel>
+        </AmountPopoverPanel>
       )}
     </>
   );
@@ -442,18 +586,17 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
 
 // ============================================================================
 // CHIP C — ClientFilter (IDENTITY ONLY)
-// Binds exclusively to state.client (existing query context, written via patch).
-// Caller MUST guard with caps.client — this component does not self-gate.
+// Binds exclusively to state.client.
 // ============================================================================
 
 function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const { state, patchUpdate } = useDocumentQuery();
-  const currentClient: string = (state as any)?.client || "";
+  const currentClient: string = state.client || "";
   const [draft, setDraft] = useState<string>(currentClient);
 
   const handleToggle = () => {
     if (!isOpen) {
-      setDraft((state as any)?.client || "");
+      setDraft(state.client || "");
     }
     onToggle();
   };
@@ -562,6 +705,16 @@ function ChipTrigger({
 function PopoverPanel({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute left-4 right-4 top-full mt-1 z-50 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3 shadow-lg">
+      {children}
+    </div>
+  );
+}
+
+// ─── AMOUNT POPOVER PANEL (mobile-safe, bounded viewport) ────────────────
+
+function AmountPopoverPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="absolute right-0 origin-top-right md:left-0 md:right-auto top-full mt-1 z-50 w-[92vw] sm:w-80 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3 shadow-lg">
       {children}
     </div>
   );
