@@ -41,7 +41,6 @@ function WaybillsContent() {
   const { state, patchUpdate, reset, results } = useDocumentQuery("waybills")
 
   // ─── NON-FILTER STATE (page-specific) ───
-  const [tab, setTab] = useState<FilterTab>('all')
   const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
   const [activeWaybillInvoice, setActiveWaybillInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const [activeWaybillProject, setActiveWaybillProject] = useState<{ id: string; name?: string | null } | null>(null)
@@ -59,12 +58,8 @@ function WaybillsContent() {
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
   const showWaybillSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
-  // ─── Typed results with local tab filter ───
+  // ─── Typed results ───
   const waybills = results as Waybill[]
-  const filtered = useMemo(() => {
-    if (tab === 'all') return waybills
-    return waybills.filter((w) => w.type === tab)
-  }, [waybills, tab])
 
   const loadWaybillSyncQueue = async () => {
     if (!showWaybillSyncRecovery) return
@@ -102,13 +97,11 @@ function WaybillsContent() {
     return () => { cancelled = true }
   }, [activeWaybill?.id, activeWaybill?.invoice_id, activeWaybill?.project_id])
 
-  const hasActiveFilters = tab !== 'all' || state.statuses.length > 0
-
-  const tabs: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'internal', label: 'Internal' },
-    { key: 'external', label: 'External' },
-  ]
+  const hasActiveFilters = Boolean(
+    state.statuses.length > 0 ||
+    state.dateRange.from ||
+    state.dateRange.to
+  )
 
   const handleArchiveWaybill = async () => {
     if (!archiveId) return
@@ -208,9 +201,8 @@ function WaybillsContent() {
         onSearchChange={(value) => patchUpdate({ search: value } as any)}
         searchPlaceholder="Search waybills..."
         hasActiveFilters={hasActiveFilters}
-        onResetFilters={() => { reset(); setTab('all') }}
+        onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
-        segmentedControl={<MobileSegmentedControl options={tabs} value={tab} onChange={(value) => setTab(value as FilterTab)} />}
         beforeListContent={
           showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
             <div className="mb-4 rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4 shadow-sm">
@@ -250,7 +242,7 @@ function WaybillsContent() {
             </div>
           ) : null
         }
-        records={filtered}
+        records={waybills}
         renderRow={(w) => {
           const tone = getStatusTone(w.status)
           const statusClasses = getStatusClasses(tone)

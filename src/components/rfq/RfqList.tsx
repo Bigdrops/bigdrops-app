@@ -14,6 +14,7 @@ import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { useDocumentQuery } from '@/context/DocumentQueryContext'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -76,9 +77,8 @@ const RFQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export const RfqList: React.FC = () => {
   const navigate = useNavigate();
-  const [rfqs, setRfqs] = useState<Rfq[]>([]);
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const { state, patchUpdate, reset, results, loading } = useDocumentQuery("rfqs");
+  const rfqs = results as Rfq[];
   const [activeRfq, setActiveRfq] = useState<Rfq | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -86,58 +86,15 @@ export const RfqList: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showFilterOverlay, setShowFilterOverlay] = useState(false);
 
-  const loadRfqs = async () => {
-    setLoading(true)
-
-    const cached = readListCache<Rfq>(RFQ_CACHE_KEY)
-    const fresh = isListCacheFresh(cached, RFQ_CACHE_TTL)
-
-    if (fresh && cached.rows.length > 0) {
-      setRfqs(cached.rows.map(row => normalizeDbRfq(row)))
-      setLoading(false)
-      return
-    }
-
-    if (cached && !fresh) {
-      setRfqs(cached.rows.map(row => normalizeDbRfq(row)))
-      setLoading(true)
-      setTimeout(async () => {
-        await supabaseFetchAndCache()
-      }, 0)
-      return
-    }
-
-    await supabaseFetchAndCache()
-  }
-
-  const supabaseFetchAndCache = async () => {
-    try {
-      const data = await loadRfqsFromSupabase();
-      const rows = data || [];
-      setRfqs(rows.map(row => normalizeDbRfq(row)))
-      if (rows.length > 0) {
-        writeListCache(RFQ_CACHE_KEY, rows)
-      }
-    } catch (error: any) {
-      feedback.error('Error loading RFQs', { description: error.message })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadRfqs();
-  }, []);
-
   const handleArchive = async (id: string) => {
     setIsArchiving(true);
     try {
       await archiveRfq(id);
       feedback.success('RFQ archived');
-      setRfqs(prev => prev.filter(r => r.id !== id));
       invalidateListCache(RFQ_CACHE_KEY);
       setArchiveId(null);
       setActiveRfq(null);
+      patchUpdate({ search: state.search } as any);
     } catch (error: any) {
       feedback.error('Archive failed', { description: error.message });
     } finally {
@@ -145,16 +102,15 @@ export const RfqList: React.FC = () => {
     }
   };
 
-
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
     try {
       await deleteRfq(id);
       feedback.success('RFQ deleted');
-      setRfqs(prev => prev.filter(r => r.id !== id))
       invalidateListCache(RFQ_CACHE_KEY);
       setDeleteId(null);
       setActiveRfq(null);
+      patchUpdate({ search: state.search } as any);
     } catch (error: any) {
       feedback.error('Delete failed', { description: error.message });
     } finally {
@@ -162,15 +118,6 @@ export const RfqList: React.FC = () => {
     }
   };
 
-  const filteredRfqs = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    if (!query) return rfqs;
-    return rfqs.filter(r => 
-      r.rfq_number.toLowerCase().includes(query) || 
-      r.vendor_name.toLowerCase().includes(query) ||
-      r.title.toLowerCase().includes(query)
-    );
-  }, [rfqs, search]);
 
   return (
     <>
@@ -180,12 +127,14 @@ export const RfqList: React.FC = () => {
       summary={`${rfqs.length} documents`}
       tone="blue"
       onPrimaryAction={() => navigate('/rfqs/new')}
-      searchValue={search}
-      onSearchChange={setSearch}
+      searchValue={state.search}
+      onSearchChange={(value) => patchUpdate({ search: value } as any)}
       searchPlaceholder="Search RFQs..."
+      hasActiveFilters={Boolean(state.statuses.length > 0 || state.dateRange.from || state.dateRange.to)}
+      onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
-      records={loading ? [] : filteredRfqs}
-      renderRow={(rfq) => {
+      records={loading ? [] : rfqs}
+      renderRow={(rfq: Rfq) => {
         const statusMeta = getRfqStatusMeta(rfq.expiry_date)
         const expiryDate = formatCompactDate(rfq.expiry_date)
         

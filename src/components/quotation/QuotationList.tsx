@@ -42,16 +42,16 @@ import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import ModuleShell from '@/components/layout/ModuleShell'
+import { useDocumentQuery } from '@/context/DocumentQueryContext'
+import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
 export default function QuotationList() {
   const navigate = useNavigate()
-  const [quotations, setQuotations] = useState<DbQuotation[]>([])
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [sortBy, setSortBy] = useState('Newest')
+  const { state, patchUpdate, reset, results: quotations, loading } = useDocumentQuery()
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -64,23 +64,6 @@ export default function QuotationList() {
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
   const showQuotationSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
-  const loadQuotations = async (options?: { forceFetch?: boolean }) => {
-    if (!options?.forceFetch) {
-      const cached = readListCache<DbQuotation>(QUOTATION_CACHE_KEY)
-      if (cached) {
-        setQuotations(cached.rows)
-        if (isListCacheFresh(cached, QUOTATION_CACHE_TTL)) {
-          return
-        }
-      }
-    }
-
-    const data = await fetchQuotationsFromService()
-    const rows = (data || []) as DbQuotation[]
-    setQuotations(rows)
-    writeListCache(QUOTATION_CACHE_KEY, rows)
-  }
-
   const loadQuotationSyncQueue = async () => {
     if (!showQuotationSyncRecovery) return
 
@@ -91,12 +74,7 @@ export default function QuotationList() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void loadQuotations()
-      void loadQuotationSyncQueue()
-    }, 0)
-
-    return () => clearTimeout(timer)
+    void loadQuotationSyncQueue()
   }, [])
 
   useEffect(() => {
@@ -131,7 +109,7 @@ export default function QuotationList() {
     }
     setBusyAction(null)
     invalidateListCache(QUOTATION_CACHE_KEY)
-    await loadQuotations()
+    patchUpdate({ search: state.search } as any)
   }
 
   const handleDelete = async (id: string) => {
@@ -145,7 +123,7 @@ export default function QuotationList() {
     }
     setBusyAction(null)
     invalidateListCache(QUOTATION_CACHE_KEY)
-    await loadQuotations()
+    patchUpdate({ search: state.search } as any)
   }
 
   const handleClone = async (id: string) => {
@@ -155,7 +133,7 @@ export default function QuotationList() {
       setBusyAction(null)
       setActiveQuotation(null)
       invalidateListCache(QUOTATION_CACHE_KEY)
-      await loadQuotations()
+      patchUpdate({ search: state.search } as any)
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (error: any) {
       setBusyAction(null)
@@ -175,7 +153,8 @@ export default function QuotationList() {
         description: 'The offline quotation was uploaded successfully.',
       })
       invalidateListCache(QUOTATION_CACHE_KEY)
-      await Promise.all([loadQuotations(), loadQuotationSyncQueue()])
+      patchUpdate({ search: state.search } as any)
+      await loadQuotationSyncQueue()
     } else if (result.status === 'failed') {
       feedback.error('Retry failed', {
         description: result.error || 'Unable to sync this quotation right now.',
@@ -190,47 +169,25 @@ export default function QuotationList() {
     setRetryingQueueItemId(null)
   }
 
-  const filteredQuotations = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    const next = quotations.filter((row) => {
-      const quotation = mapDbQuotation(row)
-      const number = String(quotation.quotation_number || '').toLowerCase()
-      const clientName = String(quotation.client_name || '').toLowerCase()
-      const poNumber = String(quotation.po_number || '').toLowerCase()
-      const status = String(quotation.status || 'open').toLowerCase()
-      const matchesSearch =
-        !query || number.includes(query) || clientName.includes(query) || poNumber.includes(query)
-      const matchesStatus = statusFilter === 'All' || status === statusFilter.toLowerCase()
-      return matchesSearch && matchesStatus
-    })
-
-    next.sort((a, b) => {
-      if (sortBy === 'Oldest') {
-        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-      }
-      if (sortBy === 'Highest Value') return Number(b.total || 0) - Number(a.total || 0)
-      if (sortBy === 'Lowest Value') return Number(a.total || 0) - Number(b.total || 0)
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-    })
-
-    return next
-  }, [quotations, search, sortBy, statusFilter])
-
   const mappedQuotations = useMemo(
     () =>
-      filteredQuotations
+      (quotations || [])
         .map((row) => mapDbQuotation(row))
         .filter((quotation) => Boolean(quotation.id))
         .map((quotation) => ({
           ...quotation,
           id: quotation.id,
         })),
-    [filteredQuotations],
+    [quotations],
   )
 
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
-  const hasActiveFilters = statusFilter !== 'All' || sortBy !== 'Newest'
+  const hasActiveFilters = Boolean(
+    state.statuses.length > 0 ||
+    state.dateRange.from ||
+    state.dateRange.to
+  )
   const activeQuotationRelations = activeQuotation ? getQuotationDocumentRelations(activeQuotation) : { source: null, derived: [] }
   const quotationProjectState = getProjectActionState({ projectId: activeQuotation?.project_id, project: activeQuotationProject })
   const quotationDocumentState = getDocumentActionState({
@@ -284,21 +241,6 @@ export default function QuotationList() {
         : [],
     },
   ] : []
-
-  const filterOptions = [
-    {
-      label: 'Status',
-      value: statusFilter,
-      options: ['All', 'Open', 'Converted', 'Archived'],
-      onChange: setStatusFilter,
-    },
-    {
-      label: 'Sort',
-      value: sortBy,
-      options: ['Newest', 'Oldest', 'Highest Value', 'Lowest Value'],
-      onChange: setSortBy,
-    },
-  ]
 
   const renderQuotationRowMeta = (quotation: ReturnType<typeof mapDbQuotation>) => {
     return quotation.quotation_number || 'Quotation'
@@ -450,16 +392,12 @@ export default function QuotationList() {
         title="Quotations"
         summary={`${quotations.length} quotations total`}
         tone="blue"
-        searchValue={search}
-        onSearchChange={setSearch}
+        searchValue={state.search}
+        onSearchChange={(value) => patchUpdate({ search: value } as any)}
         searchPlaceholder="Search quotations..."
-        filters={filterOptions}
         hasActiveFilters={hasActiveFilters}
-        onResetFilters={() => {
-          setStatusFilter('All')
-          setSortBy('Newest')
-          setSearch('')
-        }}
+        onResetFilters={reset}
+        onFilterClick={() => setShowFilterOverlay(true)}
         onPrimaryAction={() => navigate('/quotations/new')}
         primaryActionLabel="New Quotation"
         records={mappedQuotations}
@@ -478,6 +416,7 @@ export default function QuotationList() {
         loadingMore={false}
         onLoadMore={() => {}}
       />
+      <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="quotations" />
       <MobileFab onClick={() => navigate('/quotations/new')} ariaLabel="Create quotation" />
       <ConfirmActionDialog
         open={archiveId !== null}
@@ -581,7 +520,7 @@ export default function QuotationList() {
         recordId={activeQuotation?.id || null}
         documentLabel="Quotation"
         onLinked={async () => {
-          await loadQuotations()
+          patchUpdate({ search: state.search } as any)
           setActiveQuotation(null)
         }}
       />

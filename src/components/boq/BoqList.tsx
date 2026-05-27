@@ -13,54 +13,20 @@ import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { getNextBoqNumber } from '@/domain/boq/storage'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { useDocumentQuery } from '@/context/DocumentQueryContext'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
 const BOQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export function BoqList() {
   const navigate = useNavigate()
-  const [boqs, setBoqs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const { state, patchUpdate, reset, results: boqs, loading } = useDocumentQuery("boqs")
   const [activeBoq, setActiveBoq] = useState<any | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [search, setSearch] = useState('')
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
-
-  const loadBoqs = async (options?: { background?: boolean }) => {
-    if (!options?.background) {
-      setLoading(true)
-      const cached = readListCache<any>(BOQ_CACHE_KEY)
-      if (cached) {
-        setBoqs(cached.rows)
-        if (isListCacheFresh(cached, BOQ_CACHE_TTL)) {
-          setLoading(false)
-          return
-        }
-      }
-    }
-
-    const { data, error } = await supabase
-      .from('boqs')
-      .select('*')
-      .is('archived_at', null)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      feedback.error('Failed to load BOQs', { description: error.message })
-    } else {
-      const rows = data || []
-      setBoqs(rows)
-      writeListCache(BOQ_CACHE_KEY, rows)
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    void loadBoqs()
-  }, [])
 
   const handleArchive = async () => {
     if (!archiveId) return
@@ -75,7 +41,7 @@ export function BoqList() {
     setArchiveId(null)
     setActiveBoq(null)
     invalidateListCache(BOQ_CACHE_KEY)
-    await loadBoqs({ background: true })
+    patchUpdate({ search: state.search } as any)
   }
 
   const handleDelete = async () => {
@@ -100,15 +66,8 @@ export function BoqList() {
     setDeleteId(null)
     setActiveBoq(null)
     invalidateListCache(BOQ_CACHE_KEY)
-    await loadBoqs({ background: true })
+    patchUpdate({ search: state.search } as any)
   }
-
-
-  const filtered = boqs.filter(b => 
-    (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
-    (b.boq_number || '').toLowerCase().includes(search.toLowerCase()) ||
-    (b.client_name || '').toLowerCase().includes(search.toLowerCase())
-  )
 
   return (
     <>
@@ -118,11 +77,13 @@ export function BoqList() {
       summary={`${boqs.length} documents total`}
       tone="blue"
       onPrimaryAction={() => navigate('/boqs/new')}
-      searchValue={search}
-      onSearchChange={setSearch}
+      searchValue={state.search}
+      onSearchChange={(value) => patchUpdate({ search: value } as any)}
       searchPlaceholder="Search BOQs..."
+      hasActiveFilters={Boolean(state.statuses.length > 0 || state.dateRange.from || state.dateRange.to)}
+      onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
-      records={loading ? [] : filtered}
+      records={loading ? [] : boqs}
       renderRow={(boq) => (
         <ModuleRowCard
           key={boq.id}
