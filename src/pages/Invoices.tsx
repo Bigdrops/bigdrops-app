@@ -240,6 +240,21 @@ function InvoicesContent() {
       payments: invoice.payments,
     })
     const statusClasses = getStatusClasses(statusTone)
+
+    // Composite status pills: base status + OVERDUE if applicable
+    const labels: string[] = [displayStatus]
+    const classes: string[] = [statusClasses]
+
+    const isOverdue =
+      (invoice as any).due_date &&
+      new Date() > new Date((invoice as any).due_date) &&
+      statusTone !== "success" // not paid
+
+    if (isOverdue) {
+      labels.push("OVERDUE")
+      classes.push("bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]")
+    }
+
     return (
       <ModuleRowCard
         key={invoice.id}
@@ -247,8 +262,8 @@ function InvoicesContent() {
         subtitle={invoice.invoice_number || "Invoice"}
         tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
         amount={formatNaira(invoice.total)}
-        statusLabel={displayStatus}
-        statusClassName={statusClasses}
+        statusLabel={labels}
+        statusClassName={classes}
         onClick={() => navigate(`/invoices/${invoice.id}`)}
         onActionClick={() => setActiveInvoice(invoice)}
       />

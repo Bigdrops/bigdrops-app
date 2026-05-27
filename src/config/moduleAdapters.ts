@@ -34,7 +34,7 @@ function applySortOrder(query: any, sortBy: string, sortDirection: "asc" | "desc
 
 const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "Sent", "Paid", "Overdue", "Archived"],
+  statusOptions: [],
   cacheKey: "bd:list:invoices:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -47,7 +47,7 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
     let q = supabase
       .from("invoices")
-      .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
+      .select("id, invoice_number, client_name, issue_date, due_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
       .is("archived_at", null);
 
     if (query.search.trim()) {
@@ -88,7 +88,7 @@ function filterInvoicesLocally(rows: any[], query: FinancialQueryState): any[] {
 
 const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "Sent", "Accepted", "Rejected", "Expired"],
+  statusOptions: [],
   cacheKey: "bd:list:quotations:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -100,7 +100,7 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
     let q = supabase
       .from("quotations")
-      .select("id, quotation_number, client_name, issue_date, created_at, total, status, project_id")
+      .select("id, quotation_number, client_name, issue_date, valid_until, created_at, total, status, project_id")
       .is("archived_at", null);
 
     if (query.search.trim()) {
@@ -124,7 +124,7 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
 const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "In Transit", "Delivered", "Cancelled"],
+  statusOptions: [],
   cacheKey: "bd:list:waybills:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -178,7 +178,7 @@ function filterWaybillsLocally(rows: any[], query: LogisticsQueryState): any[] {
 
 const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Active", "Completed", "On Hold", "Cancelled"],
+  statusOptions: [],
   cacheKey: "bd:list:projects:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -214,7 +214,7 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
 const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "Submitted", "Approved", "Rejected"],
+  statusOptions: [],
   cacheKey: "bd:list:csr:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -250,7 +250,7 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
 const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "Sent", "Received", "Closed"],
+  statusOptions: [],
   cacheKey: "bd:list:rfqs:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
@@ -286,7 +286,7 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
 const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
-  statusOptions: ["All", "Draft", "Submitted", "Approved", "Revised"],
+  statusOptions: [],
   cacheKey: "bd:list:boqs:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 

@@ -319,7 +319,22 @@ export default function QuotationList() {
   const renderQuotationRow = (quotation: any) => {
     const tone = getStatusTone(quotation.status)
     const statusClasses = getStatusClasses(tone)
-    
+
+    // Composite status pills: base status + OVERDUE if applicable
+    const baseLabel = formatQuotationStatus(quotation.status)
+    const labels: string[] = [baseLabel]
+    const classes: string[] = [statusClasses]
+
+    const isOverdue =
+      quotation.valid_until &&
+      new Date() > new Date(quotation.valid_until) &&
+      String(quotation.status || '').toLowerCase() !== 'converted'
+
+    if (isOverdue) {
+      labels.push("OVERDUE")
+      classes.push("bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]")
+    }
+
     return (
       <ModuleRowCard
         key={quotation.id}
@@ -330,8 +345,8 @@ export default function QuotationList() {
           dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
         })}
         amount={formatNaira(quotation.total)}
-        statusLabel={formatQuotationStatus(quotation.status)}
-        statusClassName={statusClasses}
+        statusLabel={labels}
+        statusClassName={classes}
         onClick={() => navigate(`/quotations/${quotation.id}`)}
         onActionClick={() => setActiveQuotation(quotation)}
       />

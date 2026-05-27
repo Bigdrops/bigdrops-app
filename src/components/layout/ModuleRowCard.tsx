@@ -6,8 +6,8 @@ interface ModuleRowCardProps {
   subtitle?: string | React.ReactNode
   tertiary?: string | React.ReactNode
   amount?: string | React.ReactNode
-  statusLabel?: string
-  statusClassName?: string
+  statusLabel?: string | string[]
+  statusClassName?: string | string[]
   onClick?: () => void
   onActionClick?: () => void
   actionAriaLabel?: string
@@ -95,15 +95,21 @@ export default function ModuleRowCard({
             </div>
           )}
           {statusLabel && (
-            <div className="mt-0.5">
-              <span
-                className={cn(
-                  "inline-flex h-5 items-center rounded-full px-2 text-[9px] font-black uppercase tracking-wider shadow-sm ring-1 ring-[hsl(var(--bd-border)/0.1)]",
-                  statusClassName
-                )}
-              >
-                {statusLabel}
-              </span>
+            <div className="mt-0.5 flex flex-wrap gap-1">
+              {(Array.isArray(statusLabel) ? statusLabel : [statusLabel]).map((label, i) => {
+                const cls = Array.isArray(statusClassName) ? statusClassName[i] || statusClassName[0] : statusClassName
+                return (
+                  <span
+                    key={label}
+                    className={cn(
+                      "inline-flex h-5 items-center rounded-full px-2 text-[9px] font-black uppercase tracking-wider shadow-sm ring-1 ring-[hsl(var(--bd-border)/0.1)]",
+                      cls
+                    )}
+                  >
+                    {label}
+                  </span>
+                )
+              })}
             </div>
           )}
         </div>
