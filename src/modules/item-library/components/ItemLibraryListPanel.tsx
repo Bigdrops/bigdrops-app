@@ -18,6 +18,7 @@ type ItemLibraryListPanelProps = {
   loading: boolean
   searchText: string
   activeFilter: ItemLibraryFilterType
+  serverFilterCounts?: { all: number; invoice: number; quotation: number } | null
   onViewModeChange: (value: ItemLibraryViewMode) => void
   onSearchTextChange: (value: string) => void
   onFilterChange: (value: ItemLibraryFilterType) => void
@@ -72,6 +73,7 @@ export function ItemLibraryListPanel({
   loading,
   searchText,
   activeFilter,
+  serverFilterCounts,
   onViewModeChange,
   onSearchTextChange,
   onFilterChange,
@@ -95,7 +97,9 @@ export function ItemLibraryListPanel({
             <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))]/70">
               {loading ? '...' : (
                 <>
-                  {items.length} items
+                  {serverFilterCounts
+                    ? `${items.length} shown · ${(activeFilter === 'invoice' ? serverFilterCounts.invoice : activeFilter === 'quotation' ? serverFilterCounts.quotation : serverFilterCounts.all).toLocaleString()} total`
+                    : `${items.length} items`}
                   {totalUnresolvedIssues > 0 && (
                     <>
                       <span className="mx-1">·</span>
@@ -115,15 +119,15 @@ export function ItemLibraryListPanel({
 
       {isLibrary ? (
         <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[hsl(var(--bd-border))] px-4 pb-[10px] pt-[10px]">
-          <FilterChip label="All" active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
+          <FilterChip label={serverFilterCounts ? `All (${serverFilterCounts.all.toLocaleString()})` : 'All'} active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
           <FilterChip
             label="Flagged"
             active={activeFilter === 'needs_cleanup'}
             onClick={() => onFilterChange('needs_cleanup')}
           />
-          <FilterChip label="Invoice" active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
+          <FilterChip label={serverFilterCounts ? `Invoice (${serverFilterCounts.invoice.toLocaleString()})` : 'Invoice'} active={activeFilter === 'invoice'} onClick={() => onFilterChange('invoice')} />
           <FilterChip
-            label="Quotation"
+            label={serverFilterCounts ? `Quotation (${serverFilterCounts.quotation.toLocaleString()})` : 'Quotation'}
             active={activeFilter === 'quotation'}
             onClick={() => onFilterChange('quotation')}
           />

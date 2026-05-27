@@ -3,6 +3,12 @@ export type ItemSourceType = 'invoice' | 'quotation'
 export type ItemLibraryFilterType = 'all' | 'needs_cleanup' | ItemSourceType
 export type ItemLibraryViewMode = 'catalog' | 'duplicates' | 'duplicates_choice' | 'duplicates_outsourced' | 'advanced_cleanup' | 'merge_history'
 
+export interface ItemFilterCounts {
+  all: number
+  invoice: number
+  quotation: number
+}
+
 export interface ItemCatalogItem {
   item_id: string
   name: string

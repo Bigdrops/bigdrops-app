@@ -13,6 +13,7 @@ import {
   validateFlaggedCleanupImport,
   createCleanupApplyProposal,
 } from '../domain/itemCleanupExchange'
+import { isValidCatalogItemId } from '../repositories/itemLibraryRepository'
 import type {
   CatalogCleanupBatchExportPayload,
   CatalogCleanupBatchStatus,
@@ -251,6 +252,20 @@ export function ItemLibraryAdvancedCleanupPanel({
   const ignoredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.ignored_items || [] : []
   const reviewRequiredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.review_required_items || [] : []
   const rawIgnoredGroups = isDuplicates ? (preview as CleanupImportPreview)?.ignored_groups || [] : []
+
+  // Merge Guard: count how many proposals contain only valid catalog UUIDs
+  const syntheticMergeCount = useMemo(() => {
+    return safeArray(applyableMerges as any[]).filter((merge: any) => {
+      const winnerId = merge?.winner_item_id || merge?.winner?.item_id || ''
+      const mergedIds: string[] = safeArray(merge?.merged_item_ids || merge?.merged_items || []).map((item: any) =>
+        typeof item === 'string' ? item : item?.item_id || '',
+      )
+      const allIds = [winnerId, ...mergedIds].filter(Boolean)
+      return allIds.some((id: string) => !isValidCatalogItemId(id))
+    }).length
+  }, [applyableMerges])
+
+  const hasOnlyInvalidMerges = applyableMerges.length > 0 && syntheticMergeCount === applyableMerges.length
   const ignoredGroups = useMemo(() => {
     return safeArray(rawIgnoredGroups).map((g: any) => ({
       group_id: g?.group_id || 'unknown',
@@ -342,14 +357,30 @@ export function ItemLibraryAdvancedCleanupPanel({
               ),
             )
 
-      if (proposals.length === 0) {
-        setApplyError('No valid or supported merges to apply.')
+      // Ironclad Merge Guard: strip proposals containing non-UUID synthetic IDs
+      const validProposals = proposals.filter((proposal) => {
+        const allIds = [proposal.winner_item_id, ...proposal.merged_item_ids]
+        return allIds.every((id) => isValidCatalogItemId(id))
+      })
+
+      const blockedCount = proposals.length - validProposals.length
+
+      if (validProposals.length === 0) {
+        setApplyError(
+          blockedCount > 0
+            ? `All ${blockedCount} merge proposal(s) contain imported fallback items (non-UUID IDs). These items must be backfilled to the catalog before merging.`
+            : 'No valid or supported merges to apply.',
+        )
         return
+      }
+
+      if (blockedCount > 0) {
+        setApplyError(`${blockedCount} proposal(s) skipped: contain imported fallback items that are not saved catalog records yet.`)
       }
 
       const results = await onApplyProposals(
         currentExportPayload as CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
-        proposals,
+        validProposals,
       )
 
       setBatchStates((previous) => ({
@@ -632,12 +663,18 @@ export function ItemLibraryAdvancedCleanupPanel({
                         <button
                           type="button"
                           onClick={() => void handleApplySupportedDecisions()}
-                          disabled={applyLoading}
+                          disabled={applyLoading || hasOnlyInvalidMerges}
                           className="rounded-md border border-transparent bg-bd-button-primary-bg px-4 py-2 text-[11px] font-bold text-bd-button-primary-text transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {applyLoading ? 'Applying...' : 'Apply supported merges'}
+                          {applyLoading ? 'Applying...' : hasOnlyInvalidMerges ? 'Blocked: non-catalog IDs' : 'Apply supported merges'}
                         </button>
                       </div>
+
+                      {syntheticMergeCount > 0 && (
+                        <div className="mt-2 rounded-md border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-2 text-[11px] text-[hsl(var(--bd-status-warning-text))]">
+                          {syntheticMergeCount} merge proposal{syntheticMergeCount === 1 ? '' : 's'} contain imported fallback items (non-UUID IDs) and will be skipped. Backfill these items to the catalog before merging.
+                        </div>
+                      )}
 
                       <div className="mt-3 space-y-3">
                         {safeArray(applyableMerges as CleanupPreviewGroup[]).map((merge) => (
@@ -878,12 +915,18 @@ export function ItemLibraryAdvancedCleanupPanel({
                       <button
                         type="button"
                         onClick={() => void handleApplySupportedDecisions()}
-                        disabled={applyLoading}
+                        disabled={applyLoading || hasOnlyInvalidMerges}
                         className="rounded-md border border-transparent bg-bd-button-primary-bg px-4 py-2 text-[11px] font-bold text-bd-button-primary-text transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {applyLoading ? 'Applying...' : 'Apply supported merges'}
+                        {applyLoading ? 'Applying...' : hasOnlyInvalidMerges ? 'Blocked: non-catalog IDs' : 'Apply supported merges'}
                       </button>
                     </div>
+
+                    {syntheticMergeCount > 0 && (
+                      <div className="mt-2 rounded-md border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-2 text-[11px] text-[hsl(var(--bd-status-warning-text))]">
+                        {syntheticMergeCount} merge proposal{syntheticMergeCount === 1 ? '' : 's'} contain imported fallback items (non-UUID IDs) and will be skipped. Backfill these items to the catalog before merging.
+                      </div>
+                    )}
 
                     <div className="mt-3 space-y-3">
                       {asArray(applyableMerges as any[]).map((merge) => (

@@ -18,6 +18,7 @@ import {
   useItemHistoryList,
   useItemMerge,
   useItemMergeHistory,
+  useItemFilterCounts,
 } from '../hooks'
 import type {
   CatalogCleanupBatchExportPayload,
@@ -90,6 +91,8 @@ export default function ItemLibraryPage() {
     loading: mergeHistoryLoading,
     reload: reloadMergeHistory,
   } = useItemMergeHistory({ enabled: workflowMode === 'cleanup' })
+
+  const { counts: serverFilterCounts, loading: filterCountsLoading } = useItemFilterCounts()
 
   const allDuplicateGroups = useMemo(() => detectDuplicateGroups(summaryItems), [summaryItems])
   const allDuplicateItemIdsSet = useMemo(
@@ -405,11 +408,11 @@ export default function ItemLibraryPage() {
 
         {workflowMode === 'cleanup' && viewMode === 'catalog' && (
           <ItemLibraryStatusStrip
-            totalItems={summaryItems.length}
+            totalItems={filterCountsLoading ? summaryItems.length : serverFilterCounts.all}
             duplicateGroups={allDuplicateGroups}
             flaggedCleanupExport={flaggedCleanupExport}
             mergeHistoryCount={mergeHistoryCount}
-            loading={summaryLoading}
+            loading={summaryLoading || filterCountsLoading}
           />
         )}
 
@@ -432,6 +435,7 @@ export default function ItemLibraryPage() {
                 loading={summaryLoading}
                 searchText={searchText}
                 activeFilter={activeFilter}
+                serverFilterCounts={filterCountsLoading ? null : serverFilterCounts}
                 onViewModeChange={setViewMode}
                 onSearchTextChange={setSearchText}
                 onFilterChange={setActiveFilter}

@@ -395,12 +395,57 @@ export async function getItemAliases(itemIds: string[]): Promise<ItemAlias[]> {
   return (Array.isArray(data) ? data : []).map((row) => normalizeAliasRow(row as Record<string, unknown>))
 }
 
+export interface ItemFilterCounts {
+  all: number
+  invoice: number
+  quotation: number
+}
+
+/**
+ * Server-side aggregation of item counts per filter type.
+ * Queries the actual database tables to return true global totals
+ * instead of relying on a truncated client-side array snapshot.
+ */
+export async function getItemFilterCounts(): Promise<ItemFilterCounts> {
+  const [allResult, invoiceResult, quotationResult] = await Promise.all([
+    supabase.from('item_price_summary_v').select('item_id', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('invoice_items').select('item_id', { count: 'exact', head: true }),
+    supabase.from('quotation_items').select('item_id', { count: 'exact', head: true }),
+  ])
+
+  return {
+    all: allResult.count ?? 0,
+    invoice: invoiceResult.count ?? 0,
+    quotation: quotationResult.count ?? 0,
+  }
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Validates that a given item ID is a proper database UUID.
+ * Rejects synthetic fallback IDs (e.g. `imported-desc:*`) that would crash the RPC layer.
+ */
+export function isValidCatalogItemId(itemId: string): boolean {
+  return UUID_REGEX.test(itemId)
+}
+
 export async function mergeItems(request: ItemLibraryMergeRequest): Promise<ItemLibraryMergeResult> {
   const { winnerItemId, mergedItemIds } = request
   const stableMergedIds = [...new Set(mergedItemIds.filter((itemId) => itemId && itemId !== winnerItemId))]
 
   if (!winnerItemId || stableMergedIds.length === 0) {
     throw new Error('Choose a primary item and at least one duplicate to merge.')
+  }
+
+  // Ironclad UUID guard: block synthetic/fallback IDs from reaching the Postgres RPC layer
+  if (!isValidCatalogItemId(winnerItemId)) {
+    throw new Error(`Cannot merge: winner item ID "${winnerItemId}" is not a valid catalog UUID. Imported fallback items must be backfilled before merging.`)
+  }
+
+  const invalidMergedIds = stableMergedIds.filter((itemId) => !isValidCatalogItemId(itemId))
+  if (invalidMergedIds.length > 0) {
+    throw new Error(`Cannot merge: ${invalidMergedIds.length} merged item ID(s) are not valid catalog UUIDs. Imported fallback items must be backfilled before merging.`)
   }
 
   const { data, error } = await supabase.rpc('merge_item_catalog_entries', {
