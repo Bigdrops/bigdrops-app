@@ -119,7 +119,35 @@ function filterInvoicesLocally(rows: any[], query: FinancialQueryState): any[] {
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
     const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
-    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    filtered = filtered.filter((row) => {
+      const rawStatus = (row.status || "").toLowerCase().trim();
+
+      // Normalize variant database strings to canonical UI status
+      let canonical: string;
+      if (rawStatus === "fully_paid" || rawStatus === "fully paid") {
+        canonical = "PAID";
+      } else if (rawStatus === "partially_paid" || rawStatus === "partial") {
+        canonical = "PARTIALLY PAID";
+      } else {
+        canonical = rawStatus.toUpperCase();
+      }
+
+      // Check if row qualifies as OVERDUE (unpaid + past due_date)
+      const isOverdue = (() => {
+        if (canonical !== "UNPAID") return false;
+        if (!row.due_date) return false;
+        const due = new Date(row.due_date);
+        return !isNaN(due.getTime()) && due < today;
+      })();
+
+      // Match against selected statuses
+      if (normalizedStatuses.includes(canonical)) return true;
+      if (normalizedStatuses.includes("OVERDUE") && isOverdue) return true;
+      return false;
+    });
   }
 
   if (query.amountRange.min !== null) {
@@ -374,7 +402,41 @@ function filterFinancialLocally(rows: any[], query: FinancialQueryState): any[] 
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
     const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
-    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    filtered = filtered.filter((row) => {
+      const rawStatus = (row.status || "").toLowerCase().trim();
+
+      // Normalize variant database strings to canonical UI status
+      let canonical: string;
+      if (rawStatus === "fully_paid" || rawStatus === "fully paid") {
+        canonical = "PAID";
+      } else if (rawStatus === "partially_paid" || rawStatus === "partial") {
+        canonical = "PARTIALLY PAID";
+      } else {
+        canonical = rawStatus.toUpperCase();
+      }
+
+      // OVERDUE for quotations: check valid_until expiration
+      const isOverdue = (() => {
+        // For quotations: expired validity window
+        if (row.valid_until) {
+          const validUntil = new Date(row.valid_until);
+          if (!isNaN(validUntil.getTime()) && validUntil < today) return true;
+        }
+        // For invoices: unpaid + past due_date
+        if (canonical === "UNPAID" && row.due_date) {
+          const due = new Date(row.due_date);
+          if (!isNaN(due.getTime()) && due < today) return true;
+        }
+        return false;
+      })();
+
+      if (normalizedStatuses.includes(canonical)) return true;
+      if (normalizedStatuses.includes("OVERDUE") && isOverdue) return true;
+      return false;
+    });
   }
 
   if (query.amountRange.min !== null) {
