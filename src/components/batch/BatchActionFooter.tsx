@@ -123,6 +123,18 @@ export function createInvoiceBatchActions(
       },
     },
     {
+      key: "archive",
+      label: "Archive",
+      variant: "destructive",
+      mutation: async (ids) => {
+        const { error } = await supabase
+          .from("invoices")
+          .update({ archived_at: new Date().toISOString() })
+          .in("id", ids);
+        if (error) throw error;
+      },
+    },
+    {
       key: "delete",
       label: "Delete",
       variant: "destructive",

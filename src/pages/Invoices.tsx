@@ -294,7 +294,7 @@ function InvoicesContent() {
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
         }
         beforeListContent={
-          /* Selection mode toolbar */
+          /* Selection mode toolbar — only visible when active */
           multiSelect.isSelectionModeActive ? (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 mb-3">
               <span className="text-[11px] font-bold text-[hsl(var(--bd-text))]">
@@ -324,19 +324,7 @@ function InvoicesContent() {
                 </button>
               </div>
             </div>
-          ) : (
-            /* Select mode trigger button */
-            <div className="flex justify-end mb-2">
-              <button
-                type="button"
-                onClick={() => multiSelect.selectAll([])}
-                className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-                Select
-              </button>
-            </div>
-          )
+          ) : undefined
         }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">

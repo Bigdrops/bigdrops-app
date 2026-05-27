@@ -149,7 +149,7 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
         orConditions.push("status.eq.paid", "status.eq.fully_paid");
       }
       if (hasPartiallyPaid) {
-        orConditions.push("status.eq.partially_paid", "status.eq.partial", "status.eq.partially paid");
+        orConditions.push("status.eq.partially_paid", "status.eq.partial", "status.eq.partially paid", "and(status.eq.unpaid,amount_paid.gt.0)");
       }
       if (hasUnpaid) {
         orConditions.push("status.eq.unpaid");

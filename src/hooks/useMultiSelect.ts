@@ -38,8 +38,7 @@ export function useMultiSelect(): MultiSelectState {
   const selectAll = useCallback((ids: string[]) => {
     const next = new Set(ids);
     setSelectedIds(next);
-    // Always activate selection mode when explicitly called (even with 0 items)
-    setIsSelectionModeActive(true);
+    setIsSelectionModeActive(next.size > 0);
   }, []);
 
   const clear = useCallback(() => {
