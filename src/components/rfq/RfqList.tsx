@@ -13,6 +13,7 @@ import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -83,6 +84,7 @@ export const RfqList: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false);
 
   const loadRfqs = async () => {
     setLoading(true)
@@ -181,6 +183,7 @@ export const RfqList: React.FC = () => {
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search RFQs..."
+      onFilterClick={() => setShowFilterOverlay(true)}
       records={loading ? [] : filteredRfqs}
       renderRow={(rfq) => {
         const statusMeta = getRfqStatusMeta(rfq.expiry_date)
@@ -208,6 +211,7 @@ export const RfqList: React.FC = () => {
       )}
 
     </ModuleShell>
+    <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="rfqs" />
     <MobileFab onClick={() => navigate('/rfqs/new')} ariaLabel="Create RFQ" />
 
     <InvoiceListActionSheet

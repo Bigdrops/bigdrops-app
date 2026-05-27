@@ -12,6 +12,7 @@ import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { getNextBoqNumber } from '@/domain/boq/storage'
+import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
 const BOQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -26,6 +27,7 @@ export function BoqList() {
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [search, setSearch] = useState('')
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false)
 
   const loadBoqs = async (options?: { background?: boolean }) => {
     if (!options?.background) {
@@ -119,6 +121,7 @@ export function BoqList() {
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search BOQs..."
+      onFilterClick={() => setShowFilterOverlay(true)}
       records={loading ? [] : filtered}
       renderRow={(boq) => (
         <ModuleRowCard
@@ -140,6 +143,7 @@ export function BoqList() {
       )}
 
     </ModuleShell>
+    <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="boqs" />
     <MobileFab onClick={() => navigate('/boqs/new')} ariaLabel="Create BOQ" />
  
     <InvoiceListActionSheet
