@@ -121,6 +121,9 @@ export default function ModuleRowCard({
               e.stopPropagation()
               onActionClick()
             }}
+            onPointerDown={(e) => {
+              e.stopPropagation()
+            }}
             className="grid h-8 w-8 md:h-7 md:w-7 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition-colors hover:bg-[hsl(var(--bd-surface-action-hover))] hover:text-[hsl(var(--bd-text))]"
             aria-label={actionAriaLabel}
           >

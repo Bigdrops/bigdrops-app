@@ -37,7 +37,12 @@ export default function SelectableRowCard({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (isSelectionMode) return; // In selection mode, use click instead
+      // Guard: if user tapped an interactive action element, bail from long-press
+      const target = e.target as HTMLElement;
+      if (target.closest("button") || target.closest("[data-action-trigger]")) {
+        return;
+      }
+      if (isSelectionMode) return;
       didHold.current = false;
       startPos.current = { x: e.clientX, y: e.clientY };
       timerRef.current = setTimeout(() => {
