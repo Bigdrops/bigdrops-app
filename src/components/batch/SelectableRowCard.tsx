@@ -40,16 +40,15 @@ export default function SelectableRowCard({
     <div
       onClick={handleClick}
       className={cn(
-        "relative flex items-center gap-2 transition-all",
-        isSelectionMode && "cursor-pointer"
+        "relative flex items-center gap-2 cursor-pointer transition-all duration-200"
       )}
     >
-      {/* Single checkbox indicator on left margin */}
+      {/* Single checkbox indicator — 44px touch target */}
       {isSelectionMode && (
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center justify-center w-11 h-11">
           <div
             className={cn(
-              "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all",
+              "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors duration-200",
               isSelected
                 ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]"
                 : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]"

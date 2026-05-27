@@ -304,21 +304,21 @@ function InvoicesContent() {
                 <button
                   type="button"
                   onClick={() => multiSelect.selectAll(invoices.filter((i) => i.id).map((i) => i.id!))}
-                  className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+                  className="h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
                 >
                   Select All
                 </button>
                 <button
                   type="button"
                   onClick={() => multiSelect.selectAll([])}
-                  className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+                  className="h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
                 >
                   Deselect All
                 </button>
                 <button
                   type="button"
                   onClick={multiSelect.clear}
-                  className="h-7 px-2.5 rounded-md bg-destructive/10 text-[10px] font-bold text-destructive hover:bg-destructive/20 transition-colors"
+                  className="h-9 px-3 rounded-md bg-destructive/10 text-[10px] font-bold text-destructive hover:bg-destructive/20 transition-colors duration-200 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -330,9 +330,10 @@ function InvoicesContent() {
               <button
                 type="button"
                 onClick={() => multiSelect.selectAll([])}
-                className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+                className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
               >
-                ☑ Select
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                Select
               </button>
             </div>
           )

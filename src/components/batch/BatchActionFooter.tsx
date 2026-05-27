@@ -49,7 +49,7 @@ export default function BatchActionFooter({
           <button
             type="button"
             onClick={onClear}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-200"
             aria-label="Cancel selection"
           >
             <X className="h-4 w-4" />
@@ -71,7 +71,7 @@ export default function BatchActionFooter({
                 disabled={isDisabled}
                 onClick={() => handleAction(action)}
                 className={cn(
-                  "flex h-9 items-center gap-1.5 rounded-lg px-3 text-[11px] font-bold uppercase tracking-wider transition-all",
+                  "flex h-11 items-center gap-1.5 rounded-lg px-4 text-[11px] font-bold uppercase tracking-wider transition-colors duration-200",
                   action.variant === "destructive"
                     ? "bg-red-600 text-white hover:bg-red-500 disabled:bg-red-800"
                     : "bg-white text-slate-900 hover:bg-slate-100 disabled:bg-slate-600 disabled:text-slate-300"
