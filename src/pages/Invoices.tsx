@@ -31,6 +31,9 @@ import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 import { resolveInvoiceStatus } from "@/domain/invoice/resolveInvoiceStatus"
 import { DocumentQueryProvider, useDocumentQuery } from "@/context/DocumentQueryContext"
 import QueryFilterOverlay from "@/components/query/QueryFilterOverlay"
+import { useMultiSelect } from "@/hooks/useMultiSelect"
+import SelectableRowCard from "@/components/batch/SelectableRowCard"
+import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch/BatchActionFooter"
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
@@ -52,8 +55,16 @@ function InvoicesContent() {
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const navigate = useNavigate()
 
+  // ─── MULTI-SELECT BATCH STATE ───
+  const multiSelect = useMultiSelect()
+
   // ─── Typed results ───
   const invoices = results as InvoiceRow[]
+
+  // ─── Batch actions for invoices ───
+  const batchActions = useMemo(() => createInvoiceBatchActions(() => {
+    patchUpdate({ search: state.search } as any)
+  }), [patchUpdate, state.search])
 
   const closeSheet = () => {
     setActiveInvoice(null)
@@ -237,17 +248,26 @@ function InvoicesContent() {
     const resolved = resolveInvoiceStatus(invoice as any)
 
     return (
-      <ModuleRowCard
+      <SelectableRowCard
         key={invoice.id}
-        title={invoice.client_name || "No client"}
-        subtitle={invoice.invoice_number || "Invoice"}
-        tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
-        amount={formatNaira(invoice.total)}
-        statusLabel={resolved.display_labels}
-        statusClassName={resolved.display_classes}
-        onClick={() => navigate(`/invoices/${invoice.id}`)}
-        onActionClick={() => setActiveInvoice(invoice)}
-      />
+        id={invoice.id!}
+        isSelectionMode={multiSelect.isSelectionModeActive}
+        isSelected={multiSelect.isSelected(invoice.id!)}
+        onSelect={multiSelect.toggle}
+        onNavigate={() => navigate(`/invoices/${invoice.id}`)}
+      >
+        <ModuleRowCard
+          title={invoice.client_name || "No client"}
+          subtitle={invoice.invoice_number || "Invoice"}
+          tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
+          amount={formatNaira(invoice.total)}
+          statusLabel={resolved.display_labels}
+          statusClassName={resolved.display_classes}
+          onClick={undefined}
+          onActionClick={multiSelect.isSelectionModeActive ? undefined : () => setActiveInvoice(invoice)}
+          isSelected={multiSelect.isSelected(invoice.id!)}
+        />
+      </SelectableRowCard>
     )
   }
 
@@ -285,6 +305,19 @@ function InvoicesContent() {
       />
 
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
+
+      {/* Batch action footer — slides up when items are selected */}
+      <BatchActionFooter
+        selectedIds={multiSelect.selectedIds}
+        onClear={multiSelect.clear}
+        onSuccess={() => {
+          multiSelect.clear()
+          invalidateListCache(INVOICE_CACHE_KEY)
+          patchUpdate({ search: state.search } as any)
+        }}
+        actions={batchActions}
+      />
+
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
         onOpenChange={(open) => { if (!open) setActiveInvoice(null) }}
