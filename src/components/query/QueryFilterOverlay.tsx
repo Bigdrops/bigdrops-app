@@ -301,14 +301,22 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const [dateFrom, setDateFrom] = useState<string>(state.dateRange.from || "");
   const [dateTo, setDateTo] = useState<string>(state.dateRange.to || "");
   const [hasError, setHasError] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
 
   const handleToggle = () => {
     if (!isOpen) {
       setDateFrom(state.dateRange.from || "");
       setDateTo(state.dateRange.to || "");
       setHasError(false);
+      // Show custom inputs if a date range is already active
+      setShowCustom(!!(state.dateRange.from || state.dateRange.to));
     }
     onToggle();
+  };
+
+  const applyTimeSort = (direction: "desc" | "asc") => {
+    patchUpdate({ sortBy: "created_at", sortDirection: direction } as any);
+    onClose();
   };
 
   const apply = () => {
@@ -357,57 +365,102 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
         <PopoverPanel>
           <div className="space-y-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-              Date Range
+              Time
             </span>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-1">
-                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Start</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => { setDateFrom(e.target.value); setHasError(false); }}
-                  className={cn(
-                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
-                  )}
-                />
-              </div>
-              <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
-              <div className="flex-1 space-y-1">
-                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">End</label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => { setDateTo(e.target.value); setHasError(false); }}
-                  className={cn(
-                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
-                  )}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
+            {/* 3-option quick menu */}
+            <div className="flex flex-col gap-1">
               <button
                 type="button"
-                onClick={clear}
-                className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                onClick={apply}
-                disabled={!!isInvalid}
+                onClick={() => applyTimeSort("desc")}
                 className={cn(
-                  "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
-                  isInvalid
-                    ? "bg-primary/40 cursor-not-allowed"
-                    : "bg-primary hover:bg-primary/90"
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  state.sortBy === "created_at" && state.sortDirection === "desc"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
                 )}
               >
-                Apply
+                Newest
+              </button>
+              <button
+                type="button"
+                onClick={() => applyTimeSort("asc")}
+                className={cn(
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  state.sortBy === "created_at" && state.sortDirection === "asc"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                )}
+              >
+                Oldest
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCustom(true)}
+                className={cn(
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  showCustom
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                )}
+              >
+                Custom Range
               </button>
             </div>
+
+            {/* Custom date inputs — revealed on "Custom" */}
+            {showCustom && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Start</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => { setDateFrom(e.target.value); setHasError(false); }}
+                      className={cn(
+                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                      )}
+                    />
+                  </div>
+                  <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">End</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => { setDateTo(e.target.value); setHasError(false); }}
+                      className={cn(
+                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                      )}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={apply}
+                    disabled={!!isInvalid}
+                    className={cn(
+                      "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
+                      isInvalid
+                        ? "bg-primary/40 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90"
+                    )}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </PopoverPanel>
       )}
@@ -427,6 +480,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   const [displayMin, setDisplayMin] = useState<string>("");
   const [displayMax, setDisplayMax] = useState<string>("");
   const [hasError, setHasError] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
   const minRef = useRef<HTMLInputElement>(null);
   const maxRef = useRef<HTMLInputElement>(null);
 
@@ -437,8 +491,15 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
       setDisplayMin(min != null ? formatWithCommas(String(min)) : "");
       setDisplayMax(max != null ? formatWithCommas(String(max)) : "");
       setHasError(false);
+      // Show custom if amount range is already active
+      setShowCustom(min != null || max != null);
     }
     onToggle();
+  };
+
+  const applyValueSort = (direction: "desc" | "asc") => {
+    patchUpdate({ sortBy: "total", sortDirection: direction } as any);
+    onClose();
   };
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -520,63 +581,108 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
         <AmountPopoverPanel>
           <div className="space-y-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-              Amount Range
+              Value
             </span>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 space-y-1">
-                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Min</label>
-                <input
-                  ref={minRef}
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={displayMin}
-                  onChange={handleMinChange}
-                  className={cn(
-                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
-                  )}
-                />
-              </div>
-              <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
-              <div className="flex-1 space-y-1">
-                <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Max</label>
-                <input
-                  ref={maxRef}
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Unlimited"
-                  value={displayMax}
-                  onChange={handleMaxChange}
-                  className={cn(
-                    "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                    isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
-                  )}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
+            {/* 3-option quick menu */}
+            <div className="flex flex-col gap-1">
               <button
                 type="button"
-                onClick={clear}
-                className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                onClick={apply}
-                disabled={!!isInvalid}
+                onClick={() => applyValueSort("desc")}
                 className={cn(
-                  "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
-                  isInvalid
-                    ? "bg-primary/40 cursor-not-allowed"
-                    : "bg-primary hover:bg-primary/90"
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  state.sortBy === "total" && state.sortDirection === "desc"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
                 )}
               >
-                Apply
+                Highest Value
+              </button>
+              <button
+                type="button"
+                onClick={() => applyValueSort("asc")}
+                className={cn(
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  state.sortBy === "total" && state.sortDirection === "asc"
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                )}
+              >
+                Lowest Value
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCustom(true)}
+                className={cn(
+                  "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
+                  showCustom
+                    ? "bg-primary/10 text-primary"
+                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                )}
+              >
+                Custom Range
               </button>
             </div>
+
+            {/* Custom amount inputs — revealed on "Custom" */}
+            {showCustom && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Min</label>
+                    <input
+                      ref={minRef}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={displayMin}
+                      onChange={handleMinChange}
+                      className={cn(
+                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                      )}
+                    />
+                  </div>
+                  <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
+                  <div className="flex-1 space-y-1">
+                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Max</label>
+                    <input
+                      ref={maxRef}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Unlimited"
+                      value={displayMax}
+                      onChange={handleMaxChange}
+                      className={cn(
+                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                      )}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={clear}
+                    className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={apply}
+                    disabled={!!isInvalid}
+                    className={cn(
+                      "flex-1 h-8 rounded-md text-[10px] font-bold text-primary-foreground",
+                      isInvalid
+                        ? "bg-primary/40 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90"
+                    )}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </AmountPopoverPanel>
       )}
@@ -590,15 +696,47 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
 // ============================================================================
 
 function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
-  const { state, patchUpdate } = useDocumentQuery();
+  const { state, patchUpdate, results } = useDocumentQuery();
   const currentClient: string = state.client || "";
   const [draft, setDraft] = useState<string>(currentClient);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Derive unique client names from current results
+  const uniqueClients = (() => {
+    const names = new Set<string>();
+    for (const row of results) {
+      const name = (row as any)?.client_name || (row as any)?.vendor_name;
+      if (name && typeof name === "string" && name.trim()) {
+        names.add(name.trim());
+      }
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // Filter suggestions based on draft input (max 3)
+  const suggestions = (() => {
+    if (!draft.trim()) {
+      return uniqueClients.slice(0, 3);
+    }
+    const lower = draft.toLowerCase();
+    return uniqueClients
+      .filter((name) => name.toLowerCase().includes(lower))
+      .slice(0, 3);
+  })();
 
   const handleToggle = () => {
     if (!isOpen) {
       setDraft(state.client || "");
+      setShowSuggestions(false);
     }
     onToggle();
+  };
+
+  const selectClient = (name: string) => {
+    setDraft(name);
+    setShowSuggestions(false);
+    patchUpdate({ client: name } as any);
+    onClose();
   };
 
   const apply = () => {
@@ -608,6 +746,7 @@ function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
 
   const clear = () => {
     setDraft("");
+    setShowSuggestions(false);
     patchUpdate({ client: null } as any);
     onClose();
   };
@@ -630,16 +769,34 @@ function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
             <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
               Client
             </span>
-            <input
-              type="text"
-              placeholder="Filter by client name"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") apply();
-              }}
-              className="w-full h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter by client name"
+                value={draft}
+                onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { setShowSuggestions(false); apply(); }
+                }}
+                className="w-full h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
+              />
+              {/* Inline autocomplete suggestions (max 3) */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="mt-1 rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm overflow-hidden">
+                  {suggestions.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => selectClient(name)}
+                      className="w-full px-3 py-2 text-left text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))] transition-colors truncate"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"
