@@ -27,27 +27,16 @@ import { formatNaira } from "@/lib/formatters/money"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
 import { getStatusClasses } from "@/lib/statusTheme"
-import { useInvoiceList, INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
+import { INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
+import { DocumentQueryProvider, useDocumentQuery } from "@/context/DocumentQueryContext"
+import QueryFilterOverlay from "@/components/query/QueryFilterOverlay"
 
-export default function Invoices() {
-  const {
-    invoices,
-    totalCount,
-    hasMore,
-    loadingMore,
-    page,
-    clientOptions,
-    search, setSearch,
-    clientFilter, setClientFilter,
-    statusFilter, setStatusFilter,
-    dateFilter, setDateFilter,
-    sortBy, setSortBy,
-    fetchInvoices,
-    fetchClientOptions,
-    resetFilters,
-  } = useInvoiceList()
+function InvoicesContent() {
+  // ─── QUERY PLATFORM BINDING (single source of truth) ───
+  const { state, patchUpdate, reset, results, loading } = useDocumentQuery("invoices")
 
+  // ─── NON-FILTER STATE (page-specific, not query-related) ───
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
   const [showArchiveWarn, setShowArchiveWarn] = useState(false)
   const [showDeleteWarn,  setShowDeleteWarn]  = useState(false)
@@ -60,7 +49,11 @@ export default function Invoices() {
   const [activeInvoiceCustomFields, setActiveInvoiceCustomFields] = useState<any>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const navigate = useNavigate()
+
+  // ─── Typed results ───
+  const invoices = results as InvoiceRow[]
 
   const closeSheet = () => {
     setActiveInvoice(null)
@@ -133,7 +126,8 @@ export default function Invoices() {
       invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice archived')
       closeSheet()
-      await fetchInvoices(0, true)
+      // Trigger re-fetch by resetting search (forces adapter re-run)
+      patchUpdate({ search: state.search })
     } catch (err: any) {
       feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
     } finally {
@@ -153,7 +147,7 @@ export default function Invoices() {
       invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice deleted permanentely')
       closeSheet()
-      await fetchInvoices(0, true)
+      patchUpdate({ search: state.search })
     } catch (err: any) {
       feedback.error(getUserFacingMutationMessage(err, { action: 'save' }))
     } finally {
@@ -261,23 +255,25 @@ export default function Invoices() {
     )
   }
 
-  const filterOptions = useMemo(() => ([
-    { label: "Client", value: clientFilter, options: ["All", ...clientOptions], onChange: setClientFilter },
-    { label: "Status", value: statusFilter, options: ["All", "Unpaid", "Partially Paid", "Paid"], onChange: setStatusFilter },
-    { label: "Date", value: dateFilter, options: ["All Time", "This Month", "Last Month", "This Year"], onChange: setDateFilter },
-    { label: "Sort", value: sortBy, options: ["Newest", "Oldest", "Highest Value", "Lowest Value"], onChange: setSortBy },
-  ]), [clientFilter, clientOptions, dateFilter, sortBy, statusFilter])
-
+  // ─── PLATFORM-BOUND FILTER OPTIONS (derived from state) ───
   const hasActiveFilters = (
-    clientFilter !== "All" || statusFilter !== "All" || dateFilter !== "All Time" || sortBy !== "Newest"
+    state.statuses.length > 0 ||
+    state.dateRange.from !== null ||
+    state.dateRange.to !== null ||
+    state.amountRange.min !== null ||
+    state.amountRange.max !== null
   )
 
   return (
-    <Layout title="Invoices" hidePageHeader>
+    <>
       <ModuleShell
-        eyebrow="Sales" title="Invoices" summary={`${totalCount} invoices total`} tone="blue"
-        searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search by invoice number or client..."
-        filters={filterOptions} hasActiveFilters={hasActiveFilters} onResetFilters={resetFilters}
+        eyebrow="Sales" title="Invoices" summary={`${invoices.length} invoices`} tone="blue"
+        searchValue={state.search}
+        onSearchChange={(value) => patchUpdate({ search: value } as any)}
+        searchPlaceholder="Search by invoice number or client..."
+        hasActiveFilters={hasActiveFilters}
+        onResetFilters={reset}
+        onFilterClick={() => setShowFilterOverlay(true)}
         records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
@@ -287,8 +283,15 @@ export default function Invoices() {
           </div>
         )}
         onPrimaryAction={() => navigate("/invoices/new")} primaryActionLabel="New Invoice"
-        hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => fetchInvoices(page + 1, false)}
       />
+
+      {/* Query Platform Filter Overlay */}
+      <QueryFilterOverlay
+        open={showFilterOverlay}
+        onClose={() => setShowFilterOverlay(false)}
+        module="invoices"
+      />
+
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}
@@ -296,17 +299,11 @@ export default function Invoices() {
         eyebrow="Invoice"
         title={activeInvoice ? `${activeInvoice.client_name || "No client"} · ${activeInvoice.invoice_number || "Invoice"}` : "Invoice"}
         subtitle={activeInvoice ? (() => {
-          const { displayStatus } = (() => {
-            const { calculateInvoiceFinancialState } = require("@/domain/invoice/financialState") as any
-            return calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments }) || {}
-          })()
+          const { displayStatus } = calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments })
           return `${formatNaira(activeInvoice.total)} · ${displayStatus} · Fast access actions from list context`
         })() : undefined}
         actions={activeInvoice ? (() => {
-          const { paymentState } = (() => {
-            const { calculateInvoiceFinancialState } = require("@/domain/invoice/financialState") as any
-            return calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments }) || {}
-          })()
+          const { paymentState } = calculateInvoiceFinancialState({ invoiceTotal: Number(activeInvoice.total || 0), status: activeInvoice.status, payments: activeInvoice.payments })
           const actionDefs = getInvoiceListActionDefs({
             projectActionLabel: invoiceProjectState.label, hasProject: invoiceProjectState.hasProject,
             documentActionLabel: invoiceDocumentState.label, hasLinkedDocuments: invoiceDocumentState.hasLinkedDocuments,
@@ -339,7 +336,18 @@ export default function Invoices() {
       <ConfirmActionDialog open={showDeleteWarn} onOpenChange={setShowDeleteWarn} title="Delete invoice?" description="Deleting is permanent and cannot be undone." confirmLabel="Delete Forever" onConfirm={() => { void handleDelete() }} loading={isDeleting} />
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeInvoice?.invoice_number || "Invoice"} sections={activeInvoiceLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachSheet} onOpenChange={setShowAttachSheet} title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"} description={activeInvoice?.invoice_number || "Invoice"} table={attachKind === "csr" ? "csrs" : "waybills"} numberField={attachKind === "csr" ? "csr_number" : "waybill_number"} clientField="client_name" poField="po_number" linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"} currentInvoiceId={activeInvoice?.id} currentClientName={activeInvoice?.client_name || undefined} searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"} onAttach={handleAttachExisting} />
-      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { await Promise.all([fetchInvoices(0, true), fetchClientOptions()]); setActiveInvoice(null) }} />
+      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveInvoice(null) }} />
+    </>
+  )
+}
+
+// ─── EXPORTED PAGE (wrapped with DocumentQueryProvider) ───
+export default function Invoices() {
+  return (
+    <Layout title="Invoices" hidePageHeader>
+      <DocumentQueryProvider module="invoices">
+        <InvoicesContent />
+      </DocumentQueryProvider>
     </Layout>
   )
 }
