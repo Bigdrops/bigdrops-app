@@ -11,10 +11,10 @@
 // ============================================================================
 
 import { useRef, useState } from "react";
-import { Calendar, ChevronDown, DollarSign, SlidersHorizontal, User, X } from "lucide-react";
+import { Calendar, ChevronDown, DollarSign, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentQuery } from "@/context/DocumentQueryContext";
-import { FILTER_CAPABILITIES, STATUS_FILTERS, type ModuleFilterCapabilities } from "@/config/filterCapabilities";
+import { FILTER_CAPABILITIES, STATUS_FILTERS } from "@/config/filterCapabilities";
 import { feedback } from "@/lib/feedback";
 import type { ModuleScope } from "@/types/queryPlatform";
 
@@ -65,15 +65,6 @@ export default function QueryFilterOverlay({
     patchUpdate({ statuses: next } as any);
   };
   const clearStatuses = () => patchUpdate({ statuses: [] } as any);
-
-  // ─── SORT LABEL ────────────────────────────────────────────────────────
-
-  const sortLabel = (() => {
-    if (caps.amountRange && state.sortBy === "total") {
-      return state.sortDirection === "asc" ? "Lowest" : "Highest";
-    }
-    return state.sortDirection === "asc" ? "Oldest" : "Newest";
-  })();
 
   return (
     <div className="relative border-b border-[hsl(var(--bd-border))]/30 bg-[hsl(var(--bd-surface))] px-4 py-3">
@@ -127,20 +118,6 @@ export default function QueryFilterOverlay({
           />
         )}
 
-        {/* Sort — dual-axis matrix */}
-        {caps.sort && (
-          <ChipTrigger
-            label="Sort"
-            value={sortLabel}
-            active={state.sortDirection === "asc" || state.sortBy !== "created_at"}
-            isOpen={activePopover === "sort"}
-            onClick={() =>
-              setActivePopover((prev) => (prev === "sort" ? null : "sort"))
-            }
-            icon={<SlidersHorizontal className="h-3 w-3" />}
-          />
-        )}
-
         {/* Close toolbar */}
         <button
           type="button"
@@ -191,97 +168,8 @@ export default function QueryFilterOverlay({
         </PopoverPanel>
       )}
 
-      {/* Sort — Dual-Axis Matrix */}
-      {activePopover === "sort" && caps.sort && (
-        <SortMatrix hasValueAxis={caps.amountRange} onClose={closePopover} />
-      )}
+      {/* Sort — Dual-Axis Matrix (now merged into Date/Amount chips) */}
     </div>
-  );
-}
-
-// ============================================================================
-// SORT MATRIX — Dual-axis (Time + Value) selection grid
-// Time axis: Newest | Oldest
-// Value axis: Highest | Lowest (only if caps.amountRange)
-// ============================================================================
-
-function SortMatrix({
-  hasValueAxis,
-  onClose,
-}: {
-  hasValueAxis: boolean;
-  onClose: () => void;
-}) {
-  const { state, patchUpdate } = useDocumentQuery();
-
-  const applyTimeSort = (direction: "desc" | "asc") => {
-    patchUpdate({ sortBy: "created_at", sortDirection: direction } as any);
-    onClose();
-  };
-
-  const applyValueSort = (direction: "desc" | "asc") => {
-    patchUpdate({ sortBy: "total", sortDirection: direction } as any);
-    onClose();
-  };
-
-  const isTimeNewest = state.sortBy === "created_at" && state.sortDirection === "desc";
-  const isTimeOldest = state.sortBy === "created_at" && state.sortDirection === "asc";
-  const isValueHighest = state.sortBy === "total" && state.sortDirection === "desc";
-  const isValueLowest = state.sortBy === "total" && state.sortDirection === "asc";
-
-  return (
-    <PopoverPanel>
-      <div className={cn("grid gap-4", hasValueAxis ? "grid-cols-2" : "grid-cols-1")}>
-        {/* Time Axis */}
-        <div className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-            Time
-          </span>
-          <div className="flex flex-col gap-1">
-            <SortButton label="Newest" active={isTimeNewest} onClick={() => applyTimeSort("desc")} />
-            <SortButton label="Oldest" active={isTimeOldest} onClick={() => applyTimeSort("asc")} />
-          </div>
-        </div>
-
-        {/* Value Axis — only for financial modules */}
-        {hasValueAxis && (
-          <div className="space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-              Value
-            </span>
-            <div className="flex flex-col gap-1">
-              <SortButton label="Highest" active={isValueHighest} onClick={() => applyValueSort("desc")} />
-              <SortButton label="Lowest" active={isValueLowest} onClick={() => applyValueSort("asc")} />
-            </div>
-          </div>
-        )}
-      </div>
-    </PopoverPanel>
-  );
-}
-
-function SortButton({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
-        active
-          ? "bg-primary/10 text-primary"
-          : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
-      )}
-    >
-      {label}
-    </button>
   );
 }
 
