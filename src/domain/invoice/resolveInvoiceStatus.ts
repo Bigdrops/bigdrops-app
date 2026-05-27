@@ -25,21 +25,36 @@ export function resolveInvoiceStatus(invoice: {
     payments: invoice.payments,
   })
 
-  const labels: string[] = [displayStatus]
-  const classes: string[] = [toneToClassName(statusTone)]
+  const primary = displayStatus
 
-  const isOverdue =
-    invoice.due_date &&
-    new Date() > new Date(invoice.due_date) &&
-    displayStatus !== "Paid"
-
-  if (isOverdue) {
-    labels.push("OVERDUE")
-    classes.push("bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]")
+  // Guard clause: If there is no due date, it can never be overdue
+  if (!invoice.due_date) {
+    return {
+      primary,
+      statusTone,
+      display_labels: [primary],
+      display_classes: [toneToClassName(statusTone)],
+    }
   }
 
+  const normalizedNow = new Date()
+  const normalizedDueDate = new Date(invoice.due_date)
+
+  // Normalize hours to ensure clean calendar day comparisons
+  normalizedNow.setHours(0, 0, 0, 0)
+  normalizedDueDate.setHours(0, 0, 0, 0)
+
+  // Safe case-insensitive validation guard
+  const isPaid = primary.toUpperCase() === "PAID"
+  const isOverdue = normalizedNow > normalizedDueDate && !isPaid
+
+  const labels: string[] = isOverdue ? [primary, "OVERDUE"] : [primary]
+  const classes: string[] = isOverdue
+    ? [toneToClassName(statusTone), "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"]
+    : [toneToClassName(statusTone)]
+
   return {
-    primary: displayStatus,
+    primary,
     statusTone,
     display_labels: labels,
     display_classes: classes,

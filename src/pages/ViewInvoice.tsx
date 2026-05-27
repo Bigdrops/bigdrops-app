@@ -7,11 +7,13 @@ import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/inv
 import { buildBankAccountsProjection } from "@/domain/invoice/projections/partyProjection";
 import { 
   parseCustomFields, 
+  BUILTIN_COLUMNS,
   DEFAULT_INVOICE_PDF_OUTPUT, 
   getInvoicePdfOutput,
   normalizeInvoicePdfTemplateId 
 } from "@/domain/invoice";
 import { isAdvanceInvoiceChild } from "@/domain/invoice/advanceMetadata";
+import { computeDocument } from "@/lib/Calculations";
 import { formatNaira } from "@/lib/formatters/money";
 import { getInvoiceSourceDocument } from "@/domain/documentRelationships";
 import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
@@ -60,16 +62,35 @@ export default function ViewInvoice() {
     (customFields as any)?.signatoryId, signatories || []
   ), [customFields, signatories]);
 
+  const documentTotals = useMemo(() => {
+    const savedColumns = Array.isArray((customFields as any)?.columnConfig)
+      ? (customFields as any).columnConfig
+      : BUILTIN_COLUMNS;
+    return computeDocument({
+      items: Array.isArray(items) ? items : [],
+      document: invoice || {},
+      cf: (customFields as any) || {},
+      columns: savedColumns as any,
+    });
+  }, [invoice, items, customFields]);
+
   const previewModel = useMemo(() => buildInvoicePreviewModel({
     invoice: invoice || {}, items: items || [], client: client || undefined,
     settings: settings || undefined, bankAccounts: bankAccounts || [],
     customFieldObject: customFields as any, pdfOutput, signatory: resolvedSignatory,
     poNumber: String(invoice?.po_number || ""),
-    invoiceTotal: invoice?.total || 0,
+    invoiceTotal: documentTotals.totalPayable || invoice?.total || 0,
     cashReceived: viewModel.cashReceived || 0,
     balanceDue: viewModel.balanceDue || 0,
+    totals: {
+      rawSubtotal: documentTotals.subtotal,
+      vatAmount: documentTotals.vat,
+      discountAmount: documentTotals.discount,
+      whtAmount: documentTotals.wht,
+      installRateTotal: documentTotals.installRateTotal,
+    },
     formatMoney: (v) => formatNaira(v, { preserveFraction: true })
-  }), [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, resolvedSignatory, viewModel]);
+  }), [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, resolvedSignatory, viewModel, documentTotals]);
 
   // Quarantine: Prevent direct access to advance child invoices (legacy or canonical)
   // They should only be viewed in the context of their parent invoice.

@@ -1,8 +1,7 @@
 import React from "react";
-import { Hash, Calendar, FileText } from "lucide-react";
+import { Hash, Calendar, Clock, FileText } from "lucide-react";
 import styles from "../shared/DocumentPreview.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
-import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
 import DocumentBrandBlock from "../shared/DocumentBrandBlock";
 import DocumentMetaChips from "../shared/DocumentMetaChips";
@@ -11,7 +10,7 @@ interface InvoiceDocumentCardProps {
   invoice: any;
   items: any[];
   previewModel: any;
-  viewModel: any;
+  viewModel?: any;
   logoUrl?: string | null;
   companyName?: string;
   companySub?: string;
@@ -21,7 +20,6 @@ interface InvoiceDocumentCardProps {
 export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   invoice,
   previewModel,
-  viewModel,
   logoUrl,
   companyName,
   companySub,
@@ -68,6 +66,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
           items={[
             ...(invoice?.invoice_number ? [{ icon: Hash, label: "Invoice Number", value: invoice.invoice_number }] : []),
             ...(invoice?.issue_date ? [{ icon: Calendar, label: "Issue Date", value: `Issued ${formatDisplayDate(invoice.issue_date)}` }] : []),
+            ...(invoice?.due_date ? [{ icon: Clock, label: "Due Date", value: `Due ${formatDisplayDate(invoice.due_date)}` }] : []),
             ...(poRow?.value ? [{ icon: FileText, label: "PO Number", value: `PO: ${poRow.value}` }] : []),
           ]}
         />
@@ -82,10 +81,6 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
               {clientLines.map((line, i) => <div key={i}>{line}</div>)}
             </div>
           )}
-        </div>
-        <div className={styles.infoCell}>
-          <div className={styles.infoLabel}>Amount Due</div>
-          <div className={styles.infoValue}>{previewModel?.previewBalanceDue?.value || formatNaira(viewModel?.balanceDue || 0)}</div>
         </div>
         {detailRows.filter((row: any) => row?.label !== 'PO Number').length > 0 && (
           <div className={styles.infoCell}>
