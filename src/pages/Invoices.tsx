@@ -26,9 +26,9 @@ import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
-import { getStatusClasses } from "@/lib/statusTheme"
 import { INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
+import { resolveInvoiceStatus } from "@/domain/invoice/resolveInvoiceStatus"
 import { DocumentQueryProvider, useDocumentQuery } from "@/context/DocumentQueryContext"
 import QueryFilterOverlay from "@/components/query/QueryFilterOverlay"
 
@@ -234,26 +234,7 @@ function InvoicesContent() {
   })
 
   const renderInvoiceRow = (invoice: InvoiceRow) => {
-    const { displayStatus, statusTone } = calculateInvoiceFinancialState({
-      invoiceTotal: Number(invoice.total || 0),
-      status: invoice.status,
-      payments: invoice.payments,
-    })
-    const statusClasses = getStatusClasses(statusTone)
-
-    // Composite status pills: base status + OVERDUE if applicable
-    const labels: string[] = [displayStatus]
-    const classes: string[] = [statusClasses]
-
-    const isOverdue =
-      (invoice as any).due_date &&
-      new Date() > new Date((invoice as any).due_date) &&
-      statusTone !== "success" // not paid
-
-    if (isOverdue) {
-      labels.push("OVERDUE")
-      classes.push("bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]")
-    }
+    const resolved = resolveInvoiceStatus(invoice as any)
 
     return (
       <ModuleRowCard
@@ -262,8 +243,8 @@ function InvoicesContent() {
         subtitle={invoice.invoice_number || "Invoice"}
         tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
         amount={formatNaira(invoice.total)}
-        statusLabel={labels}
-        statusClassName={classes}
+        statusLabel={resolved.display_labels}
+        statusClassName={resolved.display_classes}
         onClick={() => navigate(`/invoices/${invoice.id}`)}
         onActionClick={() => setActiveInvoice(invoice)}
       />

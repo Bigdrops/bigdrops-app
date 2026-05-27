@@ -1,11 +1,11 @@
 // ============================================================================
 // QUERY FILTER OVERLAY — Portal-mounted, draft/commit pattern
 // Bottom drawer on mobile, dialog on desktop
+// Status options are LOCAL UI contracts — not sourced from adapters.
 // ============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDocumentQuery } from "@/context/DocumentQueryContext";
-import { getAdapter } from "@/config/moduleAdapters";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,6 +15,14 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import type { DocumentQueryState, ModuleScope } from "@/types/queryPlatform";
+
+// ─── LOCAL UI CONTRACT: Safe static filter options per module ───
+// These are presentation-only. NOT business logic. NOT persisted.
+const STATUS_FILTERS: Partial<Record<ModuleScope, string[]>> = {
+  invoices: ["UNPAID", "PARTIALLY PAID", "PAID"],
+  quotations: ["OPEN", "CONVERTED"],
+  projects: ["ACTIVE", "COMPLETED", "ON HOLD", "CANCELLED"],
+};
 
 interface QueryFilterOverlayProps {
   open: boolean;
@@ -28,7 +36,9 @@ export default function QueryFilterOverlay({
   module,
 }: QueryFilterOverlayProps) {
   const { state, patchUpdate } = useDocumentQuery();
-  const adapter = getAdapter(module);
+
+  // Resolve filter options for this module (undefined = don't render status UI)
+  const statusOptions = STATUS_FILTERS[module];
 
   // Draft state — local clone, mutations don't touch the store
   const [draft, setDraft] = useState<Partial<DocumentQueryState>>({});
@@ -60,14 +70,14 @@ export default function QueryFilterOverlay({
   const currentStatuses = (draft as any)?.statuses || [];
 
   const toggleStatus = (status: string) => {
-    if (status === "All") {
-      updateDraft({ statuses: [] } as any);
-      return;
-    }
     const next = currentStatuses.includes(status)
       ? currentStatuses.filter((s: string) => s !== status)
       : [...currentStatuses, status];
     updateDraft({ statuses: next } as any);
+  };
+
+  const clearStatuses = () => {
+    updateDraft({ statuses: [] } as any);
   };
 
   return (
@@ -83,30 +93,41 @@ export default function QueryFilterOverlay({
         </SheetHeader>
 
         <div className="py-4 space-y-5 overflow-y-auto max-h-[50vh]">
-          {/* Status Filter */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
-              Status
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {adapter.statusOptions.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => toggleStatus(status)}
-                  className={`h-8 px-3 rounded-lg border text-[11px] font-bold transition-all ${
-                    status === "All" && currentStatuses.length === 0
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : currentStatuses.includes(status)
+          {/* Status Filter — only rendered if module has defined options */}
+          {statusOptions && statusOptions.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+                  Status
+                </label>
+                {currentStatuses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearStatuses}
+                    className="text-[9px] font-bold text-primary hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {statusOptions.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => toggleStatus(status)}
+                    className={`h-8 px-3 rounded-lg border text-[11px] font-bold transition-all ${
+                      currentStatuses.includes(status)
                         ? "border-primary/40 bg-primary/10 text-primary"
                         : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Amount Range (financial modules only) */}
           {state.type === "financial" && (
