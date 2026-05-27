@@ -118,6 +118,28 @@ export default function QueryFilterOverlay({
           />
         )}
 
+        {/* Clear All — visible when any filter is non-default */}
+        {(currentStatuses.length > 0 || state.dateRange.from || state.dateRange.to || state.client || state.sortBy !== "created_at" || state.sortDirection !== "desc" || (state as any)?.amountRange?.min != null || (state as any)?.amountRange?.max != null) && (
+          <button
+            type="button"
+            onClick={() => {
+              patchUpdate({
+                statuses: [],
+                client: null,
+                dateRange: { from: null, to: null },
+                amountRange: { min: null, max: null },
+                sortBy: "created_at",
+                sortDirection: "desc",
+              } as any);
+              closePopover();
+            }}
+            className="flex items-center gap-1 h-7 px-2.5 rounded-md border border-destructive/30 bg-destructive/5 text-[10px] font-bold text-destructive hover:bg-destructive/10 transition-all"
+          >
+            <X className="h-3 w-3" />
+            Clear All
+          </button>
+        )}
+
         {/* Close toolbar */}
         <button
           type="button"

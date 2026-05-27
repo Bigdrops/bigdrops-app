@@ -122,6 +122,18 @@ export function createInvoiceBatchActions(
         if (error) throw error;
       },
     },
+    {
+      key: "delete",
+      label: "Delete",
+      variant: "destructive",
+      mutation: async (ids) => {
+        const { error } = await supabase
+          .from("invoices")
+          .delete()
+          .in("id", ids);
+        if (error) throw error;
+      },
+    },
   ];
 }
 

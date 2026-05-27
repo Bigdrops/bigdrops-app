@@ -265,7 +265,6 @@ function InvoicesContent() {
           statusClassName={resolved.display_classes}
           onClick={undefined}
           onActionClick={multiSelect.isSelectionModeActive ? undefined : () => setActiveInvoice(invoice)}
-          isSelected={multiSelect.isSelected(invoice.id!)}
         />
       </SelectableRowCard>
     )
@@ -293,6 +292,50 @@ function InvoicesContent() {
         records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
+        }
+        beforeListContent={
+          /* Selection mode toolbar */
+          multiSelect.isSelectionModeActive ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 mb-3">
+              <span className="text-[11px] font-bold text-[hsl(var(--bd-text))]">
+                {multiSelect.selectedIds.size} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => multiSelect.selectAll(invoices.filter((i) => i.id).map((i) => i.id!))}
+                  className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => multiSelect.selectAll([])}
+                  className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+                >
+                  Deselect All
+                </button>
+                <button
+                  type="button"
+                  onClick={multiSelect.clear}
+                  className="h-7 px-2.5 rounded-md bg-destructive/10 text-[10px] font-bold text-destructive hover:bg-destructive/20 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Select mode trigger button */
+            <div className="flex justify-end mb-2">
+              <button
+                type="button"
+                onClick={() => multiSelect.selectAll([])}
+                className="h-7 px-2.5 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+              >
+                ☑ Select
+              </button>
+            </div>
+          )
         }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">

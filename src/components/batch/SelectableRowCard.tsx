@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/useLongPress";
 
 interface SelectableRowCardProps {
   id: string;
@@ -12,9 +11,10 @@ interface SelectableRowCardProps {
 }
 
 /**
- * Wraps any row card with long-press-to-select and tap-to-toggle behavior.
- * In selection mode: tap toggles selection.
- * Outside selection mode: tap navigates, long-press activates selection.
+ * Wraps any row card with instant tap-to-select behavior.
+ * In selection mode: single tap toggles selection.
+ * Outside selection mode: single tap navigates.
+ * No gesture hooks, no long-press — clean single-tap only.
  */
 export default function SelectableRowCard({
   id,
@@ -24,38 +24,32 @@ export default function SelectableRowCard({
   onNavigate,
   children,
 }: SelectableRowCardProps) {
-  const handleLongPress = useCallback(() => {
-    onSelect(id);
-  }, [id, onSelect]);
-
-  const handleClick = useCallback(() => {
-    if (isSelectionMode) {
-      onSelect(id);
-    } else {
-      onNavigate();
-    }
-  }, [id, isSelectionMode, onSelect, onNavigate]);
-
-  const longPressHandlers = useLongPress({
-    onLongPress: handleLongPress,
-    onClick: handleClick,
-    delay: 500,
-  });
+  const handleClick = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      if (isSelectionMode) {
+        onSelect(id);
+      } else {
+        onNavigate();
+      }
+    },
+    [id, isSelectionMode, onSelect, onNavigate]
+  );
 
   return (
     <div
-      {...longPressHandlers}
+      onClick={handleClick}
       className={cn(
-        "relative transition-all select-none",
-        isSelectionMode && "pl-8"
+        "relative flex items-center gap-2 transition-all",
+        isSelectionMode && "cursor-pointer"
       )}
     >
-      {/* Selection checkbox indicator */}
+      {/* Single checkbox indicator on left margin */}
       {isSelectionMode && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
+        <div className="flex-shrink-0">
           <div
             className={cn(
-              "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all",
+              "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all",
               isSelected
                 ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]"
                 : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]"
@@ -64,8 +58,8 @@ export default function SelectableRowCard({
             {isSelected && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
+                width="10"
+                height="10"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -79,7 +73,7 @@ export default function SelectableRowCard({
           </div>
         </div>
       )}
-      {children}
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }

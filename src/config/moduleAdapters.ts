@@ -136,23 +136,30 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
     // Server-side status filtering
     if (query.statuses.length > 0 && !query.statuses.includes("All")) {
-      const hasOverdue = query.statuses.map((s) => s.toUpperCase()).includes("OVERDUE");
-      const dbStatuses = query.statuses
-        .filter((s) => s.toUpperCase() !== "OVERDUE")
-        .map((s) => {
-          const key = s.toLowerCase();
-          return INVOICE_STATUS_DB_MAP[key] || key;
-        });
+      const upperStatuses = query.statuses.map((s) => s.toUpperCase());
+      const hasOverdue = upperStatuses.includes("OVERDUE");
+      const hasPaid = upperStatuses.includes("PAID");
+      const hasPartiallyPaid = upperStatuses.includes("PARTIALLY PAID");
+      const hasUnpaid = upperStatuses.includes("UNPAID");
 
-      if (hasOverdue && dbStatuses.length > 0) {
-        // Include rows matching statuses OR overdue (unpaid + past due)
-        const statusList = dbStatuses.map((s) => `status.eq.${s}`).join(",");
-        q = q.or(`${statusList},and(status.eq.unpaid,due_date.lt.${new Date().toISOString().split("T")[0]})`);
-      } else if (hasOverdue) {
-        // Only OVERDUE selected
-        q = q.eq("status", "unpaid").lt("due_date", new Date().toISOString().split("T")[0]);
-      } else if (dbStatuses.length > 0) {
-        q = q.in("status", dbStatuses);
+      // Build OR conditions for each selected status
+      const orConditions: string[] = [];
+
+      if (hasPaid) {
+        orConditions.push("status.eq.paid", "status.eq.fully_paid");
+      }
+      if (hasPartiallyPaid) {
+        orConditions.push("status.eq.partially_paid", "status.eq.partial", "status.eq.partially paid");
+      }
+      if (hasUnpaid) {
+        orConditions.push("status.eq.unpaid");
+      }
+      if (hasOverdue) {
+        orConditions.push(`and(status.eq.unpaid,due_date.lt.${new Date().toISOString().split("T")[0]})`);
+      }
+
+      if (orConditions.length > 0) {
+        q = q.or(orConditions.join(","));
       }
     }
 
