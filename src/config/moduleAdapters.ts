@@ -136,16 +136,12 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
 
     let q = supabase
       .from("waybills")
-      .select("id, waybill_number, client_name, created_at, status, carrier_id, origin, destination")
+      .select("id, waybill_number, type, client_name, date, created_at, status, project_id, invoice_id, vehicle_plate, delivery_location")
       .is("archived_at", null);
 
     if (query.search.trim()) {
       const term = query.search.trim().replace(/,/g, " ");
       q = q.or(`waybill_number.ilike.%${term}%,client_name.ilike.%${term}%`);
-    }
-
-    if (query.carrierId) {
-      q = q.eq("carrier_id", query.carrierId);
     }
 
     q = applyDateFilter(q, query.dateRange);
@@ -167,10 +163,6 @@ function filterWaybillsLocally(rows: any[], query: LogisticsQueryState): any[] {
     filtered = filtered.filter((row) => query.statuses.includes(row.status || ""));
   }
 
-  if (query.carrierId) {
-    filtered = filtered.filter((row) => row.carrier_id === query.carrierId);
-  }
-
   return filtered;
 }
 
@@ -190,7 +182,7 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
     let q = supabase
       .from("projects")
-      .select("id, name, client_name, status, created_at, budget, description")
+      .select("id, name, project_code, client_name, status, project_value, start_date, created_at")
       .is("archived_at", null);
 
     if (query.search.trim()) {
@@ -225,13 +217,13 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
     }
 
     let q = supabase
-      .from("csr_reports")
-      .select("id, report_number, client_name, created_at, status, project_id, title")
+      .from("csrs")
+      .select("id, csr_number, client_name, equipment_type, make, date, created_at, status, linked_invoice_id, project_id")
       .is("archived_at", null);
 
     if (query.search.trim()) {
       const term = query.search.trim().replace(/,/g, " ");
-      q = q.or(`report_number.ilike.%${term}%,client_name.ilike.%${term}%,title.ilike.%${term}%`);
+      q = q.or(`csr_number.ilike.%${term}%,client_name.ilike.%${term}%,equipment_type.ilike.%${term}%`);
     }
 
     q = applyDateFilter(q, query.dateRange);

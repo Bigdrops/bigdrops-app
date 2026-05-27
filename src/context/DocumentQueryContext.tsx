@@ -141,6 +141,8 @@ export function DocumentQueryProvider({ module, children }: DocumentQueryProvide
         const data = await adapter.fetcher(state);
         if (cancelled || id !== fetchIdRef.current) return;
 
+        console.log(`[Data Audit] Module: ${module} | Raw Response Count:`, data?.length ?? 0);
+
         // Referential stability: only update if data actually changed
         const prev = prevResultsRef.current;
         if (
