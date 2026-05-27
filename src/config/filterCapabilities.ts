@@ -67,7 +67,7 @@ export const FILTER_CAPABILITIES: Record<string, ModuleFilterCapabilities> = {
 
 // ─── STATUS OPTIONS PER MODULE (UI-only, not business logic) ───
 export const STATUS_FILTERS: Partial<Record<string, string[]>> = {
-  invoices: ["UNPAID", "PARTIALLY PAID", "PAID"],
+  invoices: ["UNPAID", "PARTIALLY PAID", "PAID", "OVERDUE"],
   quotations: ["OPEN", "CONVERTED"],
   projects: ["ACTIVE", "COMPLETED", "ON HOLD", "CANCELLED"],
 };

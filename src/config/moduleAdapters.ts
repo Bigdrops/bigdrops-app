@@ -118,7 +118,8 @@ function filterInvoicesLocally(rows: any[], query: FinancialQueryState): any[] {
   let filtered = rows;
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
-    filtered = filtered.filter((row) => query.statuses.includes(row.status || ""));
+    const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
+    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
   }
 
   if (query.amountRange.min !== null) {
@@ -211,7 +212,8 @@ function filterWaybillsLocally(rows: any[], query: LogisticsQueryState): any[] {
   let filtered = rows;
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
-    filtered = filtered.filter((row) => query.statuses.includes(row.status || ""));
+    const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
+    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
   }
 
   filtered = applyDateRangeLocally(filtered, query.dateRange);
@@ -371,7 +373,8 @@ function filterFinancialLocally(rows: any[], query: FinancialQueryState): any[] 
   let filtered = rows;
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
-    filtered = filtered.filter((row) => query.statuses.includes(row.status || ""));
+    const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
+    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
   }
 
   if (query.amountRange.min !== null) {
@@ -392,7 +395,8 @@ function filterProjectLocally(rows: any[], query: ProjectQueryState): any[] {
   let filtered = rows;
 
   if (query.statuses.length > 0 && !query.statuses.includes("All")) {
-    filtered = filtered.filter((row) => query.statuses.includes(row.status || ""));
+    const normalizedStatuses = query.statuses.map((s) => s.toUpperCase());
+    filtered = filtered.filter((row) => normalizedStatuses.includes((row.status || "").toUpperCase()));
   }
 
   filtered = applyDateRangeLocally(filtered, query.dateRange);

@@ -230,10 +230,10 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   };
 
   const label = (() => {
-    if (state.dateRange.from && state.dateRange.to)
-      return `${state.dateRange.from} – ${state.dateRange.to}`;
-    if (state.dateRange.from) return `From ${state.dateRange.from}`;
-    if (state.dateRange.to) return `Until ${state.dateRange.to}`;
+    // Dynamic shorthand: reflect active sort or custom range
+    if (state.dateRange.from || state.dateRange.to) return "Custom";
+    if (state.sortBy === "created_at" && state.sortDirection === "asc") return "Oldest";
+    if (state.sortBy === "created_at" && state.sortDirection === "desc") return "Newest";
     return "Anytime";
   })();
 
@@ -244,7 +244,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
       <ChipTrigger
         label="Date"
         value={label}
-        active={!!(state.dateRange.from || state.dateRange.to)}
+        active={!!(state.dateRange.from || state.dateRange.to) || state.sortBy === "created_at" && state.sortDirection === "asc"}
         isOpen={isOpen}
         onClick={handleToggle}
         icon={<Calendar className="h-3 w-3" />}
@@ -444,16 +444,17 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
   };
 
   const label = (() => {
+    // Dynamic shorthand: reflect active sort or custom range
     const ar = (state as any)?.amountRange;
-    if (!ar) return "Any";
-    if (ar.min != null && ar.max != null) return `₦${Number(ar.min).toLocaleString()} – ₦${Number(ar.max).toLocaleString()}`;
-    if (ar.min != null) return `Min ₦${Number(ar.min).toLocaleString()}`;
-    if (ar.max != null) return `Max ₦${Number(ar.max).toLocaleString()}`;
+    if (ar?.min != null || ar?.max != null) return "Custom";
+    if (state.sortBy === "total" && state.sortDirection === "desc") return "Highest";
+    if (state.sortBy === "total" && state.sortDirection === "asc") return "Lowest";
     return "Any";
   })();
 
   const isActive =
-    !!(state as any)?.amountRange?.min || !!(state as any)?.amountRange?.max;
+    !!(state as any)?.amountRange?.min || !!(state as any)?.amountRange?.max ||
+    state.sortBy === "total";
 
   return (
     <>
