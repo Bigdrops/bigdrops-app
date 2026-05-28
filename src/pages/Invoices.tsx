@@ -56,11 +56,11 @@ function InvoicesContent() {
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const navigate = useNavigate()
 
-  // ─── MULTI-SELECT BATCH STATE ───
-  const multiSelect = useMultiSelect()
-
   // ─── Typed results ───
   const invoices = results as InvoiceRow[]
+
+  // ─── MULTI-SELECT BATCH STATE ───
+  const multiSelect = useMultiSelect()
 
   // ─── Batch actions for invoices ───
   const batchActions = useMemo(() => createInvoiceBatchActions(() => {
@@ -249,25 +249,17 @@ function InvoicesContent() {
     const resolved = resolveInvoiceStatus(invoice as any)
 
     return (
-      <SelectableRowCard
+      <ModuleRowCard
         key={invoice.id}
-        id={invoice.id!}
-        isSelectionMode={multiSelect.isSelectionModeActive}
-        isSelected={multiSelect.isSelected(invoice.id!)}
-        onSelect={multiSelect.toggle}
-        onNavigate={() => navigate(`/invoices/${invoice.id}`)}
-      >
-        <ModuleRowCard
-          title={invoice.client_name || "No client"}
-          subtitle={invoice.invoice_number || "Invoice"}
-          tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
-          amount={formatNaira(invoice.total)}
-          statusLabel={resolved.display_labels}
-          statusClassName={resolved.display_classes}
-          onClick={undefined}
-          onActionClick={multiSelect.isSelectionModeActive ? undefined : () => setActiveInvoice(invoice)}
-        />
-      </SelectableRowCard>
+        title={invoice.client_name || "No client"}
+        subtitle={invoice.invoice_number || "Invoice"}
+        tertiary={formatInvoiceDate(invoice.issue_date) || "No date"}
+        amount={formatNaira(invoice.total)}
+        statusLabel={resolved.display_labels}
+        statusClassName={resolved.display_classes}
+        onClick={() => navigate(`/invoices/${invoice.id}`)}
+        onActionClick={() => setActiveInvoice(invoice)}
+      />
     )
   }
 
@@ -302,38 +294,6 @@ function InvoicesContent() {
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
         }
-        beforeListContent={
-          multiSelect.isSelectionModeActive ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 mb-3">
-              <span className="text-[11px] font-bold text-[hsl(var(--bd-text))]">
-                {multiSelect.selectedIds.size} selected
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => multiSelect.selectAll(invoices.filter((i) => i.id).map((i) => i.id!))}
-                  className="h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
-                >
-                  Select All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => multiSelect.selectAll([])}
-                  className="h-9 px-3 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] transition-colors duration-200 cursor-pointer"
-                >
-                  Deselect All
-                </button>
-                <button
-                  type="button"
-                  onClick={multiSelect.clear}
-                  className="h-9 px-3 rounded-md bg-destructive/10 text-[10px] font-bold text-destructive hover:bg-destructive/20 transition-colors duration-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : undefined
-        }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]"><Receipt className="h-6 w-6" /></div>
@@ -345,18 +305,6 @@ function InvoicesContent() {
       />
 
       <MobileFab onClick={() => navigate("/invoices/new")} ariaLabel="Create invoice" />
-
-      {/* Batch action footer — slides up when items are selected */}
-      <BatchActionFooter
-        selectedIds={multiSelect.selectedIds}
-        onClear={multiSelect.clear}
-        onSuccess={() => {
-          multiSelect.clear()
-          invalidateListCache(INVOICE_CACHE_KEY)
-          patchUpdate({ search: state.search } as any)
-        }}
-        actions={batchActions}
-      />
 
       <InvoiceListActionSheet
         open={Boolean(activeInvoice) && !showArchiveWarn && !showDeleteWarn}

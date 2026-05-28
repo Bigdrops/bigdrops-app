@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Table, FileJson, Loader2 } from 'lucide-react';
 import type { ExportModuleDomain, ExportFormat } from '../../types/exportHub';
-import { compileToCSV, flattenLineItems, triggerFileDownload } from '../../utils/exportCompilers';
+import { compileToCSV, flattenLineItems, triggerFileDownload, hasLineItems } from '../../utils/exportCompilers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
   recordCount,
 }) => {
   const [isCompiling, setIsCompiling] = useState(false);
+  const showLineItemsOption = supportedFormats.includes('CSV_FLATTENED_LINE_ITEMS') && hasLineItems(data);
 
   const handleExportExecution = async (format: ExportFormat) => {
     if (isCompiling) return;
@@ -105,7 +106,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
             <span>CSV Summary</span>
           </DropdownMenuItem>
         )}
-        {supportedFormats.includes('CSV_FLATTENED_LINE_ITEMS') && (
+        {showLineItemsOption && (
           <DropdownMenuItem
             onClick={() => void handleExportExecution('CSV_FLATTENED_LINE_ITEMS')}
             className="gap-2 text-xs font-semibold cursor-pointer"

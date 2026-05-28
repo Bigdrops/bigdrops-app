@@ -115,6 +115,37 @@ function arrayToCSV(data: Record<string, unknown>[]): string {
 }
 
 /**
+ * Checks whether any record in the data array contains nested line items.
+ * Used to conditionally show/hide the "CSV with Line Items" export option.
+ */
+export function hasLineItems(data: Record<string, unknown>[]): boolean {
+  if (!data || data.length === 0) return false;
+
+  // Check first few records for common line-item property names
+  const sample = data.slice(0, 5);
+  const possibleItemProps = ['items', 'line_items', 'invoice_items', 'quotation_items', 'boq_items', 'lineItems'];
+
+  for (const record of sample) {
+    for (const prop of possibleItemProps) {
+      const items = record[prop];
+      if (Array.isArray(items) && items.length > 0) return true;
+    }
+
+    // Also check inside custom_fields JSON string
+    const customFields = record.custom_fields;
+    if (customFields && typeof customFields === 'string') {
+      try {
+        const parsed = JSON.parse(customFields) as Record<string, unknown>;
+        const nestedItems = parsed.items || parsed.lineItems || parsed.invoice_items;
+        if (Array.isArray(nestedItems) && nestedItems.length > 0) return true;
+      } catch { /* ignore malformed JSON */ }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Flattens nested transaction rows into a single row ledger grid.
  * Uses domain schema for parent fields and lineItemSchema for item fields.
  * Parents with zero line items are omitted entirely (no placeholder rows).
