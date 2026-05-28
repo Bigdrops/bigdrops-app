@@ -135,32 +135,24 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
     }
 
     // Server-side status filtering
+    // DB only stores "unpaid" and "paid". PARTIALLY PAID and OVERDUE are computed
+    // from payments array and due_date respectively — resolved client-side after fetch.
     if (query.statuses.length > 0 && !query.statuses.includes("All")) {
       const upperStatuses = query.statuses.map((s) => s.toUpperCase());
-      const hasOverdue = upperStatuses.includes("OVERDUE");
       const hasPaid = upperStatuses.includes("PAID");
-      const hasPartiallyPaid = upperStatuses.includes("PARTIALLY PAID");
       const hasUnpaid = upperStatuses.includes("UNPAID");
+      const hasPartiallyPaid = upperStatuses.includes("PARTIALLY PAID");
+      const hasOverdue = upperStatuses.includes("OVERDUE");
 
-      // Build OR conditions for each selected status
-      const orConditions: string[] = [];
+      // Determine which raw DB statuses we need to fetch
+      const dbStatuses: string[] = [];
+      if (hasPaid) dbStatuses.push("paid");
+      if (hasUnpaid || hasPartiallyPaid || hasOverdue) dbStatuses.push("unpaid");
 
-      if (hasPaid) {
-        orConditions.push("status.eq.paid", "status.eq.fully_paid");
+      if (dbStatuses.length > 0 && dbStatuses.length < 2) {
+        q = q.eq("status", dbStatuses[0]);
       }
-      if (hasPartiallyPaid) {
-        orConditions.push("status.eq.partially_paid", "status.eq.partial", "status.eq.partially paid", "and(status.eq.unpaid,amount_paid.gt.0)");
-      }
-      if (hasUnpaid) {
-        orConditions.push("status.eq.unpaid");
-      }
-      if (hasOverdue) {
-        orConditions.push(`and(status.eq.unpaid,due_date.lt.${new Date().toISOString().split("T")[0]})`);
-      }
-
-      if (orConditions.length > 0) {
-        q = q.or(orConditions.join(","));
-      }
+      // If both "paid" and "unpaid" needed, no server filter (fetch all)
     }
 
     // Server-side amount filtering
@@ -187,9 +179,68 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
     if (!hasActiveFilters(query)) {
       writeListCache(invoicesAdapter.cacheKey, rows);
     }
+
+    // Client-side status resolution for computed states
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      return resolveInvoiceStatusFilter(rows, query.statuses);
+    }
+
     return rows;
   },
 };
+
+/**
+ * Resolves computed invoice statuses client-side.
+ * DB only stores "unpaid" | "paid". Derived states:
+ *   PARTIALLY PAID = status "unpaid" + has non-voided payments + paid < total
+ *   OVERDUE = status "unpaid" + due_date < today
+ *   UNPAID (pure) = status "unpaid" + no payments (or paid === 0)
+ */
+function resolveInvoiceStatusFilter(rows: any[], statuses: string[]): any[] {
+  const upper = statuses.map((s) => s.toUpperCase());
+  const wantPaid = upper.includes("PAID");
+  const wantUnpaid = upper.includes("UNPAID");
+  const wantPartial = upper.includes("PARTIALLY PAID");
+  const wantOverdue = upper.includes("OVERDUE");
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return rows.filter((row) => {
+    const rawStatus = (row.status || "").toLowerCase();
+
+    // PAID — straightforward
+    if (rawStatus === "paid") {
+      return wantPaid;
+    }
+
+    // Everything below is for "unpaid" rows — compute derived state
+    if (rawStatus !== "unpaid") return false;
+
+    // Calculate paid amount from payments array
+    const payments: any[] = Array.isArray(row.payments) ? row.payments : [];
+    const activePaidAmount = payments
+      .filter((p: any) => !p.voided_at)
+      .reduce((sum: number, p: any) => sum + Number(p.amount || p.cash_amount || 0), 0);
+
+    const totalAmount = Number(row.total || 0);
+    const isPartiallyPaid = activePaidAmount > 0 && activePaidAmount < totalAmount;
+
+    // Check overdue
+    const isOverdue = (() => {
+      if (!row.due_date) return false;
+      const due = new Date(row.due_date);
+      return !isNaN(due.getTime()) && due < today;
+    })();
+
+    // Match against requested filters
+    if (wantPartial && isPartiallyPaid) return true;
+    if (wantOverdue && isOverdue && !isPartiallyPaid) return true;
+    if (wantUnpaid && !isPartiallyPaid) return true;
+
+    return false;
+  });
+}
 
 function filterInvoicesLocally(rows: any[], query: FinancialQueryState): any[] {
   let filtered = rows;
