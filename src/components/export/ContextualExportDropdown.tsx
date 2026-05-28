@@ -48,7 +48,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
           break;
         case 'CSV_SUMMARY':
           triggerFileDownload(
-            compileToCSV(data),
+            compileToCSV(data, domain),
             `${baseFilename}_summary.csv`,
             'text/csv',
           );

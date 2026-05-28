@@ -15,6 +15,8 @@
  */
 
 import type { ExportModuleDomain } from '../types/exportHub';
+import { domainSchemas, lineItemSchema, formatDate, combineAddress, DATE_FIELDS } from './exportSchemas';
+import type { Domain } from './exportSchemas';
 
 /**
  * Safely escapes and formats a single CSV cell value.
@@ -58,46 +60,67 @@ function formatCsvCell(value: unknown): string {
 
 /**
  * Converts a flat array of objects into a standard, secure CSV string format.
- *
- * Features:
- * - Automatic header extraction from first row
- * - Consistent column ordering
- * - Proper escaping for all cell values
- * - Handles empty datasets gracefully
- * - Preserves data types (numbers, dates, booleans)
+ * When a domain is provided, applies schema-based field whitelisting and
+ * human-readable column header renaming. Strips internal IDs and formats dates.
  *
  * @param data - Array of objects to serialize
+ * @param domain - Optional domain for schema-based field mapping
  * @returns CSV string with headers and data rows
  */
-export function compileToCSV(data: Record<string, unknown>[]): string {
+export function compileToCSV(data: Record<string, unknown>[], domain?: ExportModuleDomain): string {
   if (!data || data.length === 0) {
     return '';
   }
 
-  // Extract headers from first row
+  const schemaDomain = domain as Domain | undefined;
+  const schema = schemaDomain ? domainSchemas[schemaDomain] : null;
+
+  // If we have a schema, apply field whitelisting and renaming
+  if (schema) {
+    const allowedFields = Object.keys(schema);
+    const sanitized = data.map((row) => {
+      const newRow: Record<string, unknown> = {};
+      for (const field of allowedFields) {
+        let value = row[field];
+        if (DATE_FIELDS.has(field)) {
+          value = formatDate(value);
+        }
+        newRow[schema[field]] = value ?? '';
+      }
+      // Add combined address for CLIENTS
+      if (schemaDomain === 'CLIENTS') {
+        newRow['Address'] = combineAddress(row);
+      }
+      return newRow;
+    });
+    return arrayToCSV(sanitized);
+  }
+
+  // Fallback: raw data without schema mapping
+  return arrayToCSV(data);
+}
+
+/**
+ * Serializes an array of objects to CSV without schema transformation.
+ */
+function arrayToCSV(data: Record<string, unknown>[]): string {
+  if (data.length === 0) return '';
   const headers = Object.keys(data[0]);
-
-  // Build header row
   const csvRows: string[] = [headers.map((h) => formatCsvCell(h)).join(',')];
-
-  // Build data rows
   for (const row of data) {
     const values = headers.map((header) => formatCsvCell(row[header]));
     csvRows.push(values.join(','));
   }
-
   return csvRows.join('\n');
 }
 
 /**
  * Flattens nested transaction rows into a single row ledger grid.
- * Maps parent invoice/quotation attributes down to individual line items.
- *
- * This is essential for business analysis tools that expect flat, denormalized data.
- * Each line item row includes all parent document metadata for context.
+ * Uses domain schema for parent fields and lineItemSchema for item fields.
+ * Parents with zero line items are omitted entirely (no placeholder rows).
  *
  * @param records - Array of parent documents with nested line items
- * @param domain - Export domain (INVOICES or QUOTATIONS)
+ * @param domain - Export domain (INVOICES, QUOTATIONS, BOQS)
  * @returns Flattened array where each row represents one line item
  */
 export function flattenLineItems(
@@ -109,6 +132,8 @@ export function flattenLineItems(
   }
 
   const flattened: Record<string, unknown>[] = [];
+  const schemaDomain = domain as Domain;
+  const parentSchema = domainSchemas[schemaDomain] || {};
 
   // Map domain to the correct nested items key
   const itemsKey =
@@ -121,50 +146,35 @@ export function flattenLineItems(
           : 'items';
 
   for (const record of records) {
-    // Extract line items array from the parent record
     const items = (record[itemsKey] as Record<string, unknown>[]) || [];
 
-    // Build parent metadata to attach to each line
-    const parentMeta: Record<string, unknown> = {
-      parent_id: record.id || '',
-      document_number:
-        (record.invoice_number as string) ||
-        (record.quotation_number as string) ||
-        (record.boq_number as string) ||
-        '',
-      client_name: (record.client_name as string) || '',
-      created_at: record.created_at || '',
-      status: record.status || '',
-      grand_total: record.total || record.grand_total || 0,
-    };
-
-    // If no items, still include parent metadata with placeholder
+    // Skip parents with no line items entirely
     if (items.length === 0) {
-      flattened.push({
-        ...parentMeta,
-        item_description: 'No items recorded',
-        quantity: 0,
-        unit_price: 0,
-        item_subtotal: 0,
-        tax_rate: 0,
-      });
-    } else {
-      // Flatten each line item with parent context
-      for (const item of items) {
-        const quantity = Number(item.quantity) || 0;
-        const unitPrice = Number(item.unit_price) || 0;
+      continue;
+    }
 
-        flattened.push({
-          ...parentMeta,
-          item_id: (item.id as string) || '',
-          item_description: (item.description as string) || '',
-          quantity,
-          unit_price: unitPrice,
-          item_subtotal: quantity * unitPrice,
-          tax_rate: Number(item.tax_rate) || 0,
-          tax_amount: (quantity * unitPrice * (Number(item.tax_rate) || 0)) / 100,
-        });
+    for (const item of items) {
+      const flatRow: Record<string, unknown> = {};
+
+      // Copy parent fields using domain schema (human-readable headers)
+      for (const [dbField, header] of Object.entries(parentSchema)) {
+        let value = record[dbField];
+        if (DATE_FIELDS.has(dbField)) {
+          value = formatDate(value);
+        }
+        flatRow[header] = value ?? '';
       }
+
+      // Copy line-item fields using lineItemSchema
+      const quantity = Number(item.quantity) || 0;
+      const unitPrice = Number(item.unit_price) || 0;
+
+      flatRow[lineItemSchema.item_description] = (item.description as string) || '';
+      flatRow[lineItemSchema.quantity] = quantity;
+      flatRow[lineItemSchema.unit_price] = unitPrice;
+      flatRow[lineItemSchema.item_subtotal] = quantity * unitPrice;
+
+      flattened.push(flatRow);
     }
   }
 
