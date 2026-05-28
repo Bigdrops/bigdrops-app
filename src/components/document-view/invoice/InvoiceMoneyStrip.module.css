@@ -40,7 +40,7 @@
 }
 
 .amber {
-  color: var(--dv-amber);
+  color: hsl(var(--bd-brand));
 }
 
 .green {

@@ -100,21 +100,21 @@
 }
 
 .partial {
-  background: hsl(var(--bd-amber-bg));
-  color: hsl(var(--bd-amber-dark));
-  border-color: hsl(var(--bd-amber-border));
+  background: hsl(var(--bd-status-warning-bg));
+  color: hsl(var(--bd-status-warning-text));
+  border-color: hsl(var(--bd-status-warning-border));
 }
 
 .paid {
-  background: hsl(var(--bd-success-bg));
-  color: hsl(var(--bd-success));
-  border-color: hsl(var(--bd-success-border));
+  background: hsl(var(--bd-status-success-bg));
+  color: hsl(var(--bd-status-success-text));
+  border-color: hsl(var(--bd-status-success-border));
 }
 
 .unpaid {
-  background: hsl(var(--bd-error-bg));
-  color: hsl(var(--bd-error));
-  border-color: hsl(var(--bd-error-border));
+  background: hsl(var(--bd-status-danger-bg));
+  color: hsl(var(--bd-status-danger-text));
+  border-color: hsl(var(--bd-status-danger-border));
 }
 
 .draft {
@@ -124,9 +124,9 @@
 }
 
 .default {
-  background: hsl(var(--bd-primary-bg));
-  color: hsl(var(--bd-primary));
-  border-color: hsl(var(--bd-primary-border));
+  background: hsl(var(--bd-status-info-bg));
+  color: hsl(var(--bd-status-info-text));
+  border-color: hsl(var(--bd-status-info-border));
 }
 
 @media (max-width: 639px) {

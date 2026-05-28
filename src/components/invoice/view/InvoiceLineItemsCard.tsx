@@ -25,7 +25,7 @@ export default function InvoiceLineItemsCard({ items, formatMoney }: InvoiceLine
 
   return (
     <div className="space-y-3">
-      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">Line Items</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-bd-text-muted">Line Items</div>
       <Card className="rounded-[24px] border-border shadow-sm">
         <CardContent className="space-y-3 p-4">
           {items.map((item, index) => {
@@ -33,7 +33,7 @@ export default function InvoiceLineItemsCard({ items, formatMoney }: InvoiceLine
               return (
                 <div
                   key={item._uiKey || item.id || index}
-                  className="rounded-2xl bg-slate-950 px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-slate-300"
+                  className="rounded-2xl bg-bd-text px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-bd-surface"
                 >
                   {item.group_name || `Group ${index + 1}`}
                 </div>
@@ -47,9 +47,9 @@ export default function InvoiceLineItemsCard({ items, formatMoney }: InvoiceLine
             return (
               <div
                 key={item._uiKey || item.id || index}
-                className="flex gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+                className="flex gap-3 border-b border-bd-border pb-3 last:border-b-0 last:pb-0"
               >
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500">
+                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-bd-surface-muted text-[10px] font-extrabold text-bd-text-muted">
                   {itemNumber}
                 </div>
                 <div className="min-w-0 flex-1">
