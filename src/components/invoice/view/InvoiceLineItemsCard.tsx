@@ -49,7 +49,21 @@ export default function InvoiceLineItemsCard({ items, formatMoney }: InvoiceLine
                 key={item._uiKey || item.id || index}
                 className="flex gap-3 border-b border-bd-border pb-3 last:border-b-0 last:pb-0"
               >
-                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-bd-surface-muted text-[10px] font-extrabold text-bd-text-muted">
+                <div
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-bd-surface-muted text-[10px] font-extrabold text-bd-text-muted cursor-pointer"
+                  // DIAGNOSTIC LOGGING
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const el = e.currentTarget;
+                    console.group('🔍 Badge clicked');
+                    console.log('Classes:', el.className);
+                    console.log('Computed bg:', getComputedStyle(el).backgroundColor);
+                    console.log('--bd-surface-muted:', getComputedStyle(el).getPropertyValue('--bd-surface-muted'));
+                    console.log('--bd-text-muted:', getComputedStyle(el).getPropertyValue('--bd-text-muted'));
+                    console.log('data-theme:', document.documentElement.getAttribute('data-theme'));
+                    console.groupEnd();
+                  }}
+                >
                   {itemNumber}
                 </div>
                 <div className="min-w-0 flex-1">
