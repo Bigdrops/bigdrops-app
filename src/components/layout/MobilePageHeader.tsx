@@ -31,7 +31,7 @@ export default function MobilePageHeader({
   return (
     <div
       className={cn(
-        'h-14 flex items-center rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] shadow-sm',
+        'min-h-14 flex items-center rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] shadow-sm',
         className,
       )}
     >
@@ -39,7 +39,7 @@ export default function MobilePageHeader({
         <button
           type="button"
           onClick={onMenuClick}
-          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950 outline-none"
+          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950 outline-none"
           aria-label="Open navigation menu"
         >
           <SidebarToggleIcon
