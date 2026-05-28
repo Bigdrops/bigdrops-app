@@ -114,7 +114,7 @@ export function GlobalSearch() {
       {/* Global Search Backdrop for mobile focus */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[60] bg-background/60 backdrop-blur-sm transition-all duration-300 md:hidden" 
+          className="fixed inset-0 z-[60] bg-black/50 dark:bg-black/70 transition-opacity duration-200 md:hidden" 
           onClick={() => setIsOpen(false)}
         />
       )}

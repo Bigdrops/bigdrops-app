@@ -42,7 +42,7 @@ export default function MobilePageHeader({
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]"
+          className="mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950"
           aria-label="Open navigation menu"
         >
           <SidebarToggleIcon

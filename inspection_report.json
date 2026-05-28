@@ -1,0 +1,195 @@
+{
+  "summary": {
+    "total_files_scanned": 42,
+    "issues_found": 21,
+    "files_with_issues": [
+      "src/components/layout/MobilePageHeader.tsx",
+      "src/components/layout/MobileSidebar.tsx",
+      "src/components/layout/MobileFab.tsx",
+      "src/components/ui/switch.tsx",
+      "src/components/ui/dialog.tsx",
+      "src/components/ui/sheet.tsx",
+      "src/components/ui/alert-dialog.tsx",
+      "src/components/ui/card.tsx",
+      "src/components/ui/button.tsx",
+      "src/components/layout/ModuleRowCard.tsx",
+      "src/components/layout/MobileBottomNav.tsx",
+      "src/components/layout/GlobalSearch.tsx",
+      "src/components/export/ContextualExportDropdown.tsx",
+      "src/components/quotation/QuotationList.tsx",
+      "src/components/notifications/settings/NotificationChannelToggles.tsx",
+      "src/components/list/StatusChip.tsx",
+      "src/components/invoice/MobileItemCard.tsx"
+    ]
+  },
+  "findings": [
+    {
+      "file_path": "src/components/layout/MobilePageHeader.tsx",
+      "element_type": "hamburger_button",
+      "line_range": [42, 52],
+      "current_code": "<Button type=\"button\" variant=\"ghost\" size=\"icon\" onClick={onMenuClick} className=\"mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-focus-ring))]\" ...>",
+      "violation": "Background uses semi-transparent surface-muted (bg-[hsl(var(--bd-surface-muted))/0.45]) instead of bg-transparent. Missing explicit border (border border-slate-200 dark:border-slate-700). Uses rounded-[var(--bd-radius-md)] instead of rounded-lg. Hover state uses bg-[hsl(var(--bd-surface-muted))] instead of hover:bg-slate-100 dark:hover:bg-slate-800. Missing transition-colors class. Icon uses custom SidebarToggleIcon (size-5) with strokeWidth={2} instead of a standard hamburger icon at w-5 h-5.",
+      "severity": "high"
+    },
+    {
+      "file_path": "src/components/layout/MobileSidebar.tsx",
+      "element_type": "hamburger_button",
+      "line_range": [51, 58],
+      "current_code": "<button type=\"button\" onClick={() => onOpenChange(false)} className=\"absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground\" aria-label=\"Close navigation menu\">",
+      "violation": "Close button in sidebar uses rounded-full and bg-muted instead of bg-transparent with border. Missing border, hover state, and transition-colors. This is a close button but follows the same trigger pattern.",
+      "severity": "low"
+    },
+    {
+      "file_path": "src/components/ui/switch.tsx",
+      "element_type": "switch",
+      "line_range": [14, 27],
+      "current_code": "data-[size=default]:h-[16.6px] data-[size=default]:w-[28px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] ... data-[state=checked]:bg-[hsl(var(--bd-brand))] data-[state=unchecked]:bg-[hsl(var(--bd-surface-muted))]",
+      "violation": "Dimensions do not match target. Default size is w-[28px] h-[16.6px] instead of target w-11 (44px) h-6 (24px). Track off-state uses bg-[hsl(var(--bd-surface-muted))] (custom token) instead of bg-slate-200 dark:bg-slate-700. On-state uses bg-[hsl(var(--bd-brand))] instead of bg-primary-600 dark:bg-primary-500. Thumb size is 3.5 (14px) instead of target w-5 h-5 (20px). Thumb uses bg-[hsl(var(--bd-card-bg))] instead of bg-white. Translate on checked is translate-x-[calc(100%-2px)] instead of translate-x-5.",
+      "severity": "high"
+    },
+    {
+      "file_path": "src/components/layout/MobileFab.tsx",
+      "element_type": "fab",
+      "line_range": [16, 22],
+      "current_code": "className=\"fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-2xl border border-transparent bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 md:hidden\"",
+      "violation": "Shape uses rounded-2xl instead of target rounded-full. Background uses custom token bg-[hsl(var(--bd-fab-bg))] instead of bg-primary-600 dark:bg-primary-500. Missing dark mode shadow variant (shadow-lg shadow-black/20). Icon size is h-7 w-7 instead of target h-5 h-5 or h-6 w-6. Icon stroke-width is stroke-[2.4] instead of default Lucide stroke. No responsive size difference (always h-14 w-14 on mobile, target says w-12 h-12 mobile / w-14 h-14 desktop).",
+      "severity": "high"
+    },
+    {
+      "file_path": "src/components/export/ContextualExportDropdown.tsx",
+      "element_type": "header_utility_icon",
+      "line_range": [79, 91],
+      "current_code": "<button ... className=\"flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150 disabled:opacity-50\" style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}>",
+      "violation": "Container uses rounded-xl instead of target rounded-md. Uses inline style for dimensions (36x36) instead of Tailwind classes. Background uses bg-[hsl(var(--bd-card-bg))] instead of transparent (target has no explicit bg, only hover). Hover uses custom tokens instead of hover:bg-slate-100 dark:hover:bg-slate-800. Missing p-2 padding class. Icon is w-4 h-4 (correct) but missing explicit strokeWidth={1.75}.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/layout/GlobalSearch.tsx",
+      "element_type": "header_utility_icon",
+      "line_range": [102, 112],
+      "current_code": "<Button variant=\"ghost\" size=\"icon\" onClick={toggle} className=\"h-10 w-10 shrink-0 rounded-xl bg-muted/50 text-foreground/80 hover:bg-muted active:scale-95\" ...><Search className=\"h-5 w-5\" />",
+      "violation": "Container is h-10 w-10 (oversized for a utility icon). Uses rounded-xl instead of target rounded-md. Background uses bg-muted/50 instead of transparent. Icon is h-5 w-5 instead of target h-4 w-4. Text color uses text-foreground/80 instead of text-slate-500 dark:text-slate-400. Hover uses bg-muted instead of hover:bg-slate-100 dark:hover:bg-slate-800.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/card.tsx",
+      "element_type": "card_border",
+      "line_range": [10, 16],
+      "current_code": "ring-1 ring-[hsl(var(--bd-card-border))]",
+      "violation": "Card uses ring-1 ring-[hsl(var(--bd-card-border))] instead of target border border-slate-200 dark:border-slate-800. Missing shadow-sm for light mode and shadow-sm shadow-black/10 for dark mode. Uses custom CSS variable token instead of standard Tailwind color classes.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/layout/ModuleRowCard.tsx",
+      "element_type": "card_border",
+      "line_range": [44, 48],
+      "current_code": "border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] ... shadow-sm md:shadow-none md:rounded-[var(--bd-radius-md)] md:border-x-0 md:border-t-0",
+      "violation": "Mobile uses border border-[hsl(var(--bd-border))] (custom token, not slate-200/slate-800). Desktop removes horizontal and top borders (md:border-x-0 md:border-t-0) creating inconsistency. Shadow is shadow-sm on mobile but md:shadow-none on desktop. Missing dark mode shadow variant (shadow-sm shadow-black/10).",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/dialog.tsx",
+      "element_type": "modal_overlay",
+      "line_range": [38, 46],
+      "current_code": "className=\"fixed inset-0 isolate z-[250] bg-[hsl(var(--bd-overlay-scrim))] duration-100 supports-backdrop-filter:backdrop-blur-xs ...\"",
+      "violation": "Backdrop uses bg-[hsl(var(--bd-overlay-scrim))] which resolves to hsl(222 47% 11% / 0.4) — a dark blue at 40% opacity instead of target bg-black/50 dark:bg-black/70. Uses duration-100 instead of target transition-opacity duration-200. No separate dark mode opacity value defined (single token for both modes).",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/sheet.tsx",
+      "element_type": "modal_overlay",
+      "line_range": [36, 44],
+      "current_code": "className=\"fixed inset-0 z-[250] bg-[hsl(var(--bd-overlay-scrim))] duration-100 ...\"",
+      "violation": "Same as dialog: backdrop uses bg-[hsl(var(--bd-overlay-scrim))] (hsl(222 47% 11% / 0.4)) instead of target bg-black/50 dark:bg-black/70. Uses duration-100 instead of target transition-opacity duration-200. No dark mode differentiation.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/alert-dialog.tsx",
+      "element_type": "modal_overlay",
+      "line_range": [38, 45],
+      "current_code": "className=\"surface-overlay-strong fixed inset-0 z-50 duration-100 supports-backdrop-filter:backdrop-blur-xs ...\"",
+      "violation": "Uses a custom CSS class 'surface-overlay-strong' instead of explicit bg-black/50 dark:bg-black/70. Duration is 100ms instead of target 200ms. Missing transition-opacity class. Z-index is z-50 while dialog/sheet use z-[250] (inconsistency).",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/button.tsx",
+      "element_type": "focus_ring",
+      "line_range": [10, 10],
+      "current_code": "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
+      "violation": "Focus ring uses focus-visible:ring-ring/30 (30% opacity of generic ring color) instead of target focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950. Missing ring-offset entirely. Uses focus-visible: prefix (acceptable) but ring color is generic 'ring' token at 30% opacity instead of primary-500.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/ui/switch.tsx",
+      "element_type": "focus_ring",
+      "line_range": [18, 18],
+      "current_code": "focus-visible:border-[hsl(var(--bd-brand))] focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-brand))/15]",
+      "violation": "Focus ring uses brand color at 15% opacity instead of target focus:ring-primary-500. Missing focus:ring-offset-2 and focus:ring-offset-white dark:focus:ring-offset-slate-950.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/layout/MobilePageHeader.tsx",
+      "element_type": "header_height",
+      "line_range": [35, 40],
+      "current_code": "className=\"rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm\"",
+      "violation": "No fixed height defined. Header uses padding-based sizing (py-[var(--bd-space-sm)]) instead of a fixed h-14. Height varies based on content rather than being consistent at 56px (h-14) across all pages.",
+      "severity": "high"
+    },
+    {
+      "file_path": "src/components/layout/MobileBottomNav.tsx",
+      "element_type": "header_height",
+      "line_range": [19, 22],
+      "current_code": "className=\"fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl\" ... <div className=\"grid h-[64px] w-full grid-cols-5 ...\">",
+      "violation": "Bottom nav uses h-[64px] which is not h-14 (56px). While this is a bottom nav not a top header, it creates inconsistency with the target h-14 standard for navigation bars.",
+      "severity": "low"
+    },
+    {
+      "file_path": "src/components/layout/GlobalSearch.tsx",
+      "element_type": "modal_overlay",
+      "line_range": [117, 119],
+      "current_code": "className=\"fixed inset-0 z-[60] bg-background/60 backdrop-blur-sm transition-all duration-300 md:hidden\"",
+      "violation": "Search overlay uses bg-background/60 (60% of background color) instead of target bg-black/50 dark:bg-black/70. Duration is 300ms instead of target 200ms. Uses transition-all instead of transition-opacity.",
+      "severity": "low"
+    },
+    {
+      "file_path": "src/components/quotation/QuotationList.tsx",
+      "element_type": "card_border",
+      "line_range": [300, 302],
+      "current_code": "className=\"mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm\"",
+      "violation": "Sync recovery banner uses hardcoded Tailwind color classes (border-amber-200, bg-amber-50/60) instead of design token variables. Does not follow the card border target of border border-slate-200 dark:border-slate-800. No dark mode variant defined — will appear as light amber in dark mode.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/list/StatusChip.tsx",
+      "element_type": "card_border",
+      "line_range": [22, 22],
+      "current_code": "active: 'bg-[rgba(34,197,94,.13)] text-[#16a34a]'",
+      "violation": "Uses hardcoded hex color text-[#16a34a] and rgba value instead of design token variables. No dark mode variant.",
+      "severity": "low"
+    },
+    {
+      "file_path": "src/components/invoice/MobileItemCard.tsx",
+      "element_type": "card_border",
+      "line_range": [212, 212],
+      "current_code": "className=\"relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-[#fdfcfb]\"",
+      "violation": "Hover state uses hardcoded hex color hover:bg-[#fdfcfb] instead of a design token. No dark mode variant for hover — will show a near-white background in dark mode.",
+      "severity": "medium"
+    },
+    {
+      "file_path": "src/components/notifications/settings/NotificationChannelToggles.tsx",
+      "element_type": "switch",
+      "line_range": [28, 30],
+      "current_code": "<Switch ... className=\"mt-1 border border-[var(--notification-border)] bg-[var(--notification-bg)] data-[state=checked]:border-[var(--notification-active-bg)] data-[state=checked]:bg-[var(--notification-active-bg)] [&>span]:bg-[var(--notification-bg)]\" />",
+      "violation": "Switch overrides use notification-specific CSS variables (--notification-border, --notification-bg, --notification-active-bg) instead of the unified switch token system. Thumb color is overridden to notification-bg instead of white. These custom tokens may not align with the target switch colors.",
+      "severity": "low"
+    },
+    {
+      "file_path": "src/components/layout/MobileFab.tsx",
+      "element_type": "focus_ring",
+      "line_range": [16, 22],
+      "current_code": "className=\"fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-2xl ...\"",
+      "violation": "FAB button has no focus ring defined at all. Missing focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950. This is an interactive element without visible focus indication.",
+      "severity": "high"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ export default function MobileFab({ onClick, icon: Icon = Plus, ariaLabel, disab
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled}
-      className="fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-2xl border border-transparent bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 md:hidden"
+      className="fixed bottom-[94px] right-4 z-50 grid h-14 w-14 place-items-center rounded-2xl border border-transparent bg-[hsl(var(--bd-fab-bg))] text-[hsl(var(--bd-fab-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 md:hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950 outline-none"
     >
       <Icon aria-hidden="true" className="h-7 w-7 stroke-[2.4]" />
     </button>
