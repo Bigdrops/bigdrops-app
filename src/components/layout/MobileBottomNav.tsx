@@ -19,7 +19,7 @@ export default function MobileBottomNav({
   return (
     <nav
       data-bd-layout="bottom-nav"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-bd-border bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 transform-gpu will-change-transform border-t border-bd-border bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid h-[64px] w-full grid-cols-5 gap-1 px-2 pt-1.5">

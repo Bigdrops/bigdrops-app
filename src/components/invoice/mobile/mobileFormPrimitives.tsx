@@ -1,9 +1,13 @@
-import type {
-  ButtonHTMLAttributes,
-  ChangeEventHandler,
-  ComponentType,
-  InputHTMLAttributes,
-  ReactNode,
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+  type ChangeEventHandler,
+  type ComponentType,
+  type InputHTMLAttributes,
+  type ReactNode,
 } from 'react'
 
 import { ChevronRight, ChevronUp } from 'lucide-react'
@@ -255,12 +259,61 @@ export function MobileField({ label, children }: MobileFieldProps) {
 interface MobileTextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
   onChange?: ChangeEventHandler<HTMLInputElement>
+  debounceMs?: number
 }
 
-export function MobileTextField({ label, className = '', ...props }: MobileTextFieldProps) {
+export function MobileTextField({ label, className = '', value, onChange, onBlur, debounceMs = 300, ...props }: MobileTextFieldProps) {
+  const [localValue, setLocalValue] = useState(value ?? '')
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+
+  // Sync external value changes (e.g., form reset)
+  useEffect(() => {
+    setLocalValue(value ?? '')
+  }, [value])
+
+  const flush = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    onChangeRef.current?.(e)
+  }, [])
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    setLocalValue(e.target.value)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    // Debounce propagation to parent state
+    const syntheticEvent = { ...e, target: { ...e.target, value: e.target.value } } as React.ChangeEvent<HTMLInputElement>
+    timerRef.current = setTimeout(() => {
+      onChangeRef.current?.(syntheticEvent)
+    }, debounceMs)
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Flush any pending debounced value immediately on blur
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+      onChangeRef.current?.(e as unknown as React.ChangeEvent<HTMLInputElement>)
+    }
+    onBlur?.(e)
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
   return (
     <MobileField label={label}>
-      <Input {...props} className={`${fieldCls}${className ? ` ${className}` : ''}`} />
+      <Input
+        {...props}
+        value={localValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`${fieldCls}${className ? ` ${className}` : ''}`}
+      />
     </MobileField>
   )
 }
