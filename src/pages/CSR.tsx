@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, ClipboardList, Download, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
+import { Archive, ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import Layout from '../components/Layout'
 import { invalidateListCache } from '@/lib/cache/listCache'
@@ -34,7 +34,7 @@ import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 import { archiveCsr, deleteCsr, attachInvoiceToCsr } from "@/domain/csr/csrService"
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
-import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import type { InheritedExportContext } from '@/types/exportHub'
 
 export type CsrRow = {
@@ -83,7 +83,6 @@ function CsrContent() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const [syncQueueItems, setSyncQueueItems] = useState<CsrCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
@@ -241,15 +240,12 @@ function CsrContent() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         headerActions={
-          <button
-            type="button"
-            onClick={() => setIsExportSheetOpen(true)}
-            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-            aria-label="Export dataset"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <ContextualExportDropdown
+            domain="CSR"
+            activeContext={csrExportContext}
+            supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
+            recordCount={csrs.length}
+          />
         }
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="csr" />
@@ -345,7 +341,7 @@ function CsrContent() {
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeCsr?.csr_number || 'CSR'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" currentClientName={activeCsr?.client_name || undefined} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked CSR?" description="This CSR is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); void attachInvoice(invoice) }} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="csrs" recordId={activeCsr?.id || null} documentLabel="CSR" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveCsr(null) }} />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CSR" activeContext={csrExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={csrs.length} />
+
     </>
   )
 }

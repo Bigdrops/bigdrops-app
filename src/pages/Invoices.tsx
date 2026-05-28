@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Download, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
@@ -34,7 +34,7 @@ import QueryFilterOverlay from "@/components/query/QueryFilterOverlay"
 import { useMultiSelect } from "@/hooks/useMultiSelect"
 import SelectableRowCard from "@/components/batch/SelectableRowCard"
 import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch/BatchActionFooter"
-import { ContextualExportSheet } from "@/components/export/ContextualExportSheet"
+import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
 import type { InheritedExportContext } from "@/types/exportHub"
 
 function InvoicesContent() {
@@ -55,7 +55,6 @@ function InvoicesContent() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const navigate = useNavigate()
 
   // ─── MULTI-SELECT BATCH STATE ───
@@ -303,15 +302,12 @@ function InvoicesContent() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         headerActions={
-          <button
-            type="button"
-            onClick={() => setIsExportSheetOpen(true)}
-            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-            aria-label="Export dataset"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <ContextualExportDropdown
+            domain="INVOICES"
+            activeContext={invoiceExportContext}
+            supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
+            recordCount={invoices.length}
+          />
         }
         records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         filterOverlay={
@@ -417,7 +413,6 @@ function InvoicesContent() {
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeInvoice?.invoice_number || "Invoice"} sections={activeInvoiceLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachSheet} onOpenChange={setShowAttachSheet} title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"} description={activeInvoice?.invoice_number || "Invoice"} table={attachKind === "csr" ? "csrs" : "waybills"} numberField={attachKind === "csr" ? "csr_number" : "waybill_number"} clientField="client_name" poField="po_number" linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"} currentInvoiceId={activeInvoice?.id} currentClientName={activeInvoice?.client_name || undefined} searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"} onAttach={handleAttachExisting} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveInvoice(null) }} />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="INVOICES" activeContext={invoiceExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} recordCount={invoices.length} />
     </>
   )
 }

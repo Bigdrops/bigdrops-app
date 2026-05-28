@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Archive, Download, Eye, Pencil, Trash2, Loader2, FileText } from 'lucide-react'
+import { Archive, Eye, Pencil, Trash2, Loader2, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -14,7 +14,7 @@ import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } 
 import { getNextBoqNumber } from '@/domain/boq/storage'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
-import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import type { InheritedExportContext } from '@/types/exportHub'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
@@ -29,7 +29,6 @@ export function BoqList() {
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
 
   const handleArchive = async () => {
     if (!archiveId) return
@@ -97,15 +96,12 @@ export function BoqList() {
       onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
       headerActions={
-        <button
-          type="button"
-          onClick={() => setIsExportSheetOpen(true)}
-          className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-          style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-          aria-label="Export dataset"
-        >
-          <Download className="w-4 h-4" />
-        </button>
+        <ContextualExportDropdown
+          domain="BOQS"
+          activeContext={boqExportContext}
+          supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
+          recordCount={boqs.length}
+        />
       }
       records={loading ? [] : boqs}
       filterOverlay={
@@ -179,7 +175,7 @@ export function BoqList() {
       loading={isDeleting}
       onConfirm={handleDelete}
     />
-    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="BOQS" activeContext={boqExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} recordCount={boqs.length} />
+
   </>
 )
 }

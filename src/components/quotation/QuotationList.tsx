@@ -4,7 +4,6 @@ import {
   Archive,
   ClipboardList,
   Copy,
-  Download,
   FolderOpen,
   FolderPlus,
   GitBranchPlus,
@@ -45,7 +44,7 @@ import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import ModuleShell from '@/components/layout/ModuleShell'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
-import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import type { InheritedExportContext } from '@/types/exportHub'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
@@ -61,7 +60,6 @@ export default function QuotationList() {
   const [activeQuotation, setActiveQuotation] = useState<ReturnType<typeof mapDbQuotation> | null>(null)
   const [activeQuotationProject, setActiveQuotationProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [syncQueueItems, setSyncQueueItems] = useState<QuotationCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
@@ -413,15 +411,12 @@ export default function QuotationList() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         headerActions={
-          <button
-            type="button"
-            onClick={() => setIsExportSheetOpen(true)}
-            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-            aria-label="Export dataset"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <ContextualExportDropdown
+            domain="QUOTATIONS"
+            activeContext={quotationExportContext}
+            supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
+            recordCount={quotations.length}
+          />
         }
         onPrimaryAction={() => navigate('/quotations/new')}
         primaryActionLabel="New Quotation"
@@ -551,7 +546,7 @@ export default function QuotationList() {
           setActiveQuotation(null)
         }}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="QUOTATIONS" activeContext={quotationExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} recordCount={quotations.length} />
+
     </>
   )
 }

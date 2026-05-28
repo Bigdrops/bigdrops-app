@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Archive, Download, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { normalizeDbRfq, denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { loadRfqsFromSupabase, archiveRfq, deleteRfq } from '@/domain/rfq/rfqService'
@@ -15,7 +15,7 @@ import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } 
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
-import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import type { InheritedExportContext } from '@/types/exportHub'
 
 const formatCompactDate = (value?: string) => {
@@ -87,7 +87,6 @@ export const RfqList: React.FC = () => {
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showFilterOverlay, setShowFilterOverlay] = useState(false);
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
 
   const handleArchive = async (id: string) => {
     setIsArchiving(true);
@@ -147,15 +146,12 @@ export const RfqList: React.FC = () => {
       onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
       headerActions={
-        <button
-          type="button"
-          onClick={() => setIsExportSheetOpen(true)}
-          className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-          style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-          aria-label="Export dataset"
-        >
-          <Download className="w-4 h-4" />
-        </button>
+        <ContextualExportDropdown
+          domain="RFQS"
+          activeContext={rfqExportContext}
+          supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
+          recordCount={rfqs.length}
+        />
       }
       records={loading ? [] : rfqs}
       filterOverlay={
@@ -249,7 +245,7 @@ export const RfqList: React.FC = () => {
       loading={isDeleting}
       onConfirm={() => deleteId && handleDelete(deleteId)}
     />
-    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="RFQS" activeContext={rfqExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={rfqs.length} />
+
   </>
   );
 }

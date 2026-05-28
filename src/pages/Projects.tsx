@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, Download, Eye, FolderOpen, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Eye, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
@@ -17,7 +17,7 @@ import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
-import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import type { InheritedExportContext } from '@/types/exportHub'
 
 type ProjectRow = ProjectRecord & {
@@ -47,7 +47,6 @@ function ProjectsContent() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
 
   // ─── Typed results ───
   const projects = results as ProjectRow[]
@@ -121,15 +120,12 @@ function ProjectsContent() {
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
         headerActions={
-          <button
-            type="button"
-            onClick={() => setIsExportSheetOpen(true)}
-            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-            aria-label="Export dataset"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <ContextualExportDropdown
+            domain="PROJECTS"
+            activeContext={projectExportContext}
+            supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
+            recordCount={projects.length}
+          />
         }
         records={loading ? [] : projects}
         filterOverlay={
@@ -244,7 +240,7 @@ function ProjectsContent() {
           onClick: () => setProjectToDelete(activeProject),
         } : undefined}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="PROJECTS" activeContext={projectExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={projects.length} />
+
     </>
   )
 }

@@ -13,8 +13,8 @@ import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import { SkeletonRow } from "@/components/loading/AppLoadingStates"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
-import { Archive, Download, Eye, Pencil, Trash2, Users } from "lucide-react"
-import { ContextualExportSheet } from "@/components/export/ContextualExportSheet"
+import { Archive, Eye, Pencil, Trash2, Users } from "lucide-react"
+import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
 import type { InheritedExportContext } from "@/types/exportHub"
 
 type Client = {
@@ -60,7 +60,7 @@ export default function Clients() {
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
   const [activeClient, setActiveClient] = useState<Client | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
+
 
   const navigate = useNavigate()
 
@@ -180,15 +180,12 @@ export default function Clients() {
         hasActiveFilters={category !== "All"}
         onResetFilters={() => setCategory("All")}
         headerActions={
-          <button
-            type="button"
-            onClick={() => setIsExportSheetOpen(true)}
-            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
-            aria-label="Export dataset"
-          >
-            <Download className="w-4 h-4" />
-          </button>
+          <ContextualExportDropdown
+            domain="CLIENTS"
+            activeContext={clientExportContext}
+            supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
+            recordCount={filtered.length}
+          />
         }
         records={loading ? [] : filtered}
         renderRow={(client) => (
@@ -284,7 +281,7 @@ export default function Clients() {
           onClick: () => setClientToDelete(activeClient.id),
         } : undefined}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CLIENTS" activeContext={clientExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={filtered.length} />
+
     </Layout>
   )
 }
