@@ -379,7 +379,7 @@ function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogPro
           <DialogHeader className="mb-3">
             <DialogTitle>Reset table to default?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-[hsl(var(--bd-overlay-muted))]">
+          <p className="text-sm text-bd-overlay-muted">
             This restores columns, labels, and layout. Items are not removed.
           </p>
           <div className="mt-5 flex gap-2">

@@ -147,7 +147,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
         <Button
           size="sm"
           onClick={openNew}
-          className="h-8 rounded-full px-4 text-xs font-bold bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] border border-[hsl(var(--bd-overlay-border))] shadow-sm hover:opacity-90"
+          className="h-8 rounded-full px-4 text-xs font-bold bg-bd-overlay-bg text-bd-overlay-text border border-bd-overlay-border shadow-sm hover:opacity-90"
         >
           <PlusCircle className="h-3 w-3 mr-2" />
           New Deadline
@@ -164,7 +164,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-[hsl(var(--bd-border))]">
+          <div className="divide-y divide-bd-border">
             {reminders.map(reminder => (
               <div
                 key={reminder.id}

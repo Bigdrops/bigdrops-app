@@ -85,6 +85,63 @@ export default {
         "bd-action-icon-text": "hsl(var(--bd-action-icon-text))",
         "bd-fab-bg": "hsl(var(--bd-fab-bg))",
         "bd-fab-text": "hsl(var(--bd-fab-text))",
+
+        // Overlay Tokens
+        "bd-overlay-bg": "hsl(var(--bd-overlay-bg))",
+        "bd-overlay-text": "hsl(var(--bd-overlay-text))",
+        "bd-overlay-muted": "hsl(var(--bd-overlay-muted))",
+        "bd-overlay-border": "hsl(var(--bd-overlay-border))",
+        "bd-overlay-close-bg": "hsl(var(--bd-overlay-close-bg))",
+        "bd-overlay-close-text": "hsl(var(--bd-overlay-close-text))",
+        "bd-overlay-section-bg": "hsl(var(--bd-overlay-section-bg))",
+        "bd-overlay-section-border": "hsl(var(--bd-overlay-section-border))",
+        "bd-overlay-input-bg": "hsl(var(--bd-overlay-input-bg))",
+        "bd-overlay-handle-bg": "hsl(var(--bd-overlay-handle-bg))",
+
+        // Brand & Accent
+        "bd-brand": "hsl(var(--bd-brand))",
+        "bd-accent": "hsl(var(--bd-accent))",
+        "bd-accent-foreground": "hsl(var(--bd-accent-foreground))",
+
+        // Button Hover
+        "bd-button-primary-hover-bg": "hsl(var(--bd-button-primary-hover-bg))",
+
+        // Layout
+        "bd-layout-sidebar": "hsl(var(--bd-layout-sidebar))",
+
+        // Input
+        "bd-input-error": "hsl(var(--bd-input-error))",
+
+        // Focus
+        "bd-focus-ring": "hsl(var(--bd-focus-ring))",
+
+        // Surface Action Text
+        "bd-surface-action-text": "hsl(var(--bd-surface-action-text))",
+
+        // Status Hover
+        "bd-status-success-hover-bg": "hsl(var(--bd-status-success-hover-bg, var(--bd-status-success-bg)))",
+
+        // Legacy BG shorthand
+        "bd-bg": "var(--bd-bg)",
+
+        // Palette Helpers
+        "bd-amber": "var(--bd-amber)",
+        "bd-amber-bg": "var(--bd-amber-bg)",
+        "bd-amber-dark": "var(--bd-amber-dark)",
+        "bd-indigo": "var(--bd-indigo)",
+        "bd-indigo-bg": "var(--bd-indigo-bg)",
+        "bd-emerald": "var(--bd-emerald)",
+        "bd-emerald-bg": "var(--bd-emerald-bg)",
+        "bd-rose": "var(--bd-rose)",
+        "bd-violet": "var(--bd-violet)",
+        "bd-violet-bg": "var(--bd-violet-bg)",
+
+        // Feedback Tokens
+        "bd-feedback-success": "hsl(var(--bd-feedback-success))",
+        "bd-feedback-success-bg": "hsl(var(--bd-feedback-success-bg))",
+        "bd-feedback-error-bg": "hsl(var(--bd-feedback-error-bg))",
+        "bd-feedback-error-text": "hsl(var(--bd-feedback-error-text))",
+        "bd-feedback-error-border": "hsl(var(--bd-feedback-error-border))",
       },
 
       keyframes: {

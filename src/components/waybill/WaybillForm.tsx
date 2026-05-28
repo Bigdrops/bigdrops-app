@@ -282,7 +282,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
         <div>
           <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
             {mode === 'new' ? 'Create Waybill' : 'Edit Waybill'}
-            <span className="text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full bg-[hsl(var(--bd-accent))]/10 text-[hsl(var(--bd-accent))]">
+            <span className="text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full bg-bd-accent/10 text-bd-accent">
               {waybill.waybill_number || 'Pending'}
             </span>
           </h1>
@@ -328,7 +328,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
 
             <div className="sm:col-span-2 flex flex-wrap gap-2">
               <Button type="button" variant="outline" className="rounded-xl h-10 px-4 font-bold border-2 border-slate-200 hover:bg-slate-50 transition-colors" onClick={() => setImportOpen(true)}>
-                <Wand2 className="mr-2 h-4 w-4 text-[hsl(var(--bd-accent))]" />
+                <Wand2 className="mr-2 h-4 w-4 text-bd-accent" />
                 Import extraction
               </Button>
             </div>

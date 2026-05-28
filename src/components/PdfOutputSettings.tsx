@@ -110,7 +110,7 @@ function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () =>
       type="button"
       onClick={onToggle}
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-        checked ? 'bg-[hsl(var(--bd-feedback-success))]' : 'bg-bd-border'
+        checked ? 'bg-bd-feedback-success' : 'bg-bd-border'
       }`}
     >
       <span

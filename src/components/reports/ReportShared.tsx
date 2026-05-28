@@ -92,7 +92,7 @@ export function Filters({
                 onClick={() => setActiveDate(chip.value)}
                 className={
                   active
-                    ? 'h-8 rounded-full border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] px-3 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-text))] shadow-sm'
+                    ? 'h-8 rounded-full border border-bd-overlay-border bg-bd-overlay-bg px-3 text-[10px] font-black uppercase tracking-widest text-bd-overlay-text shadow-sm'
                     : 'h-8 rounded-full border border-bd-border bg-bd-surface-muted px-3 text-[10px] font-bold uppercase tracking-widest text-bd-text-muted hover:bg-bd-border transition-colors'
                 }
               >

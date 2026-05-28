@@ -42,7 +42,7 @@ export type UnifiedActionSheetProps = {
 const TONE_CLASSES = {
   default: {
     iconBg: "bg-bd-action-icon-bg text-bd-action-icon-text",
-    text: "text-[hsl(var(--bd-surface-action-text))]",
+    text: "text-bd-surface-action-text",
     row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   success: {
@@ -160,7 +160,7 @@ export function UnifiedActionSheet({
             {action.isLoading ? "Processing..." : action.label}
           </div>
           {showDescriptions && action.description && !action.isLoading && (
-            <div className="truncate text-[10px] text-[hsl(var(--bd-overlay-muted))] font-medium mt-0.5 opacity-70">
+            <div className="truncate text-[10px] text-bd-overlay-muted font-medium mt-0.5 opacity-70">
               {action.description}
             </div>
           )}
@@ -188,7 +188,7 @@ export function UnifiedActionSheet({
         side="bottom"
         showCloseButton={false}
         className={cn(
-          "overflow-hidden border-x-0 border-b-0 border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-0 shadow-2xl transition-all duration-300",
+          "overflow-hidden border-x-0 border-b-0 border-t border-bd-overlay-border bg-bd-overlay-bg p-0 shadow-2xl transition-all duration-300",
           "rounded-t-[var(--bd-overlay-radius)]",
           "h-auto max-h-[75vh]",
           className
@@ -197,24 +197,24 @@ export function UnifiedActionSheet({
         <div className="flex h-full flex-col">
           {/* Header */}
           {(showHandle || title || eyebrow || description) && (
-            <div className="shrink-0 border-b border-[hsl(var(--bd-overlay-border))] px-4 pb-3 pt-3">
+            <div className="shrink-0 border-b border-bd-overlay-border px-4 pb-3 pt-3">
               {showHandle && (
-                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[hsl(var(--bd-overlay-handle-bg))]" />
+                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-bd-overlay-handle-bg" />
               )}
               {eyebrow && (
-                <div className="text-[9px] font-black uppercase tracking-wider text-[hsl(var(--bd-overlay-muted))]">
+                <div className="text-[9px] font-black uppercase tracking-wider text-bd-overlay-muted">
                   {eyebrow}
                 </div>
               )}
               {(title || description) && (
                 <SheetHeader className="mt-1 space-y-0.5 p-0 text-left">
                   {title && (
-                    <SheetTitle className="text-[17px] font-black tracking-tight text-[hsl(var(--bd-overlay-text))]">
+                    <SheetTitle className="text-[17px] font-black tracking-tight text-bd-overlay-text">
                       {title}
                     </SheetTitle>
                   )}
                   {description && (
-                    <SheetDescription className="text-[11px] font-medium leading-normal text-[hsl(var(--bd-overlay-muted))]">
+                    <SheetDescription className="text-[11px] font-medium leading-normal text-bd-overlay-muted">
                       {description}
                     </SheetDescription>
                   )}
@@ -230,7 +230,7 @@ export function UnifiedActionSheet({
                 {groups.map((group, gIdx) => (
                   <div key={group.label || gIdx}>
                     {group.label && (
-                      <div className="mb-2 px-1 text-[9px] font-black uppercase tracking-wider text-[hsl(var(--bd-overlay-muted))]">
+                      <div className="mb-2 px-1 text-[9px] font-black uppercase tracking-wider text-bd-overlay-muted">
                         {group.label}
                       </div>
                     )}

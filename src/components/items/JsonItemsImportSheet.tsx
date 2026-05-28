@@ -178,8 +178,8 @@ export default function JsonItemsImportSheet({
       previewContent={
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-overlay-muted))]">Import Strategy</span>
-            <div className="flex gap-1 rounded-[var(--bd-radius-xl)] bg-[hsl(var(--bd-overlay-section-bg))] border border-[hsl(var(--bd-overlay-border))] p-1.5 shadow-sm">
+            <span className="text-[10px] font-black uppercase tracking-widest text-bd-overlay-muted">Import Strategy</span>
+            <div className="flex gap-1 rounded-[var(--bd-radius-xl)] bg-bd-overlay-section-bg border border-bd-overlay-border p-1.5 shadow-sm">
               {(['Add', 'Update'] as ImportMode[]).map((entry) => {
                 const selected = mode === entry
                 const unavailable = entry === 'Update' && !updateEnabled
@@ -196,8 +196,8 @@ export default function JsonItemsImportSheet({
                     className={cn(
                       'flex-1 rounded-[var(--bd-radius-md)] py-2 text-[13px] font-bold transition-all',
                       selected
-                        ? 'bg-[hsl(var(--bd-bg))] text-[hsl(var(--bd-overlay-text))] shadow-sm border border-[hsl(var(--bd-overlay-border))]'
-                        : 'text-[hsl(var(--bd-overlay-muted))] hover:text-[hsl(var(--bd-overlay-text))]',
+                        ? 'bg-bd-bg text-bd-overlay-text shadow-sm border border-bd-overlay-border'
+                        : 'text-bd-overlay-muted hover:text-bd-overlay-text',
                       unavailable && 'opacity-30 cursor-not-allowed',
                     )}
                   >
@@ -208,9 +208,9 @@ export default function JsonItemsImportSheet({
             </div>
           </div>
 
-          <div className="rounded-xl border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-4">
+          <div className="rounded-xl border border-bd-overlay-border bg-bd-overlay-section-bg p-4">
              <div className="text-[10px] font-extrabold uppercase tracking-widest text-bd-status-info-text opacity-80 mb-1">Mode Details</div>
-             <p className="text-[12px] font-medium leading-relaxed text-[hsl(var(--bd-overlay-text))]">{activeMode.description}</p>
+             <p className="text-[12px] font-medium leading-relaxed text-bd-overlay-text">{activeMode.description}</p>
           </div>
         </div>
       }

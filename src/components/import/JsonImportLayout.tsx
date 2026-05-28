@@ -99,15 +99,15 @@ export function JsonImportUI({
   const footerSecondaryAction = isParsed ? (onEditJson || onPreview) : null
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bd-overlay-bg))] select-none">
-      <div className="sticky top-0 z-30 border-b border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-sm shrink-0">
+    <div className="flex flex-col h-full bg-bd-overlay-bg select-none">
+      <div className="sticky top-0 z-30 border-b border-bd-overlay-border bg-bd-overlay-section-bg shadow-sm shrink-0">
         <div className="flex flex-row items-center justify-between p-[var(--bd-sheet-padding)] text-left">
           <div className="space-y-0.5">
-            <h3 className="flex items-center gap-1.5 text-base font-black tracking-tight text-[hsl(var(--bd-overlay-text))]">
-              <Wand2 className="h-4 w-4 text-[hsl(var(--bd-feedback-success))]" />
+            <h3 className="flex items-center gap-1.5 text-base font-black tracking-tight text-bd-overlay-text">
+              <Wand2 className="h-4 w-4 text-bd-feedback-success" />
               {title}
             </h3>
-            <p className="text-xs leading-tight text-[hsl(var(--bd-overlay-muted))]">
+            <p className="text-xs leading-tight text-bd-overlay-muted">
               {description}
             </p>
           </div>
@@ -125,20 +125,20 @@ export function JsonImportUI({
           </div>
         </div>
         {isParsed ? (
-          <div className="border-t border-[hsl(var(--bd-overlay-border))] px-[var(--bd-sheet-padding)] py-[var(--bd-space-sm)]">
+          <div className="border-t border-bd-overlay-border px-[var(--bd-sheet-padding)] py-[var(--bd-space-sm)]">
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Review Extraction</span>
+                <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-overlay-muted">Review Extraction</span>
                 <div className="mt-0.5 flex items-center gap-1.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--bd-feedback-success))] animate-pulse" />
-                  <span className="text-[10px] font-bold text-[hsl(var(--bd-feedback-success))]">Validated JSON</span>
+                  <div className="h-1.5 w-1.5 rounded-full bg-bd-feedback-success animate-pulse" />
+                  <span className="text-[10px] font-bold text-bd-feedback-success">Validated JSON</span>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onEditJson || onPreview}
-                className="h-8 rounded-lg px-0 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))] hover:bg-transparent hover:text-[hsl(var(--bd-overlay-text))]"
+                className="h-8 rounded-lg px-0 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-overlay-muted hover:bg-transparent hover:text-bd-overlay-text"
               >
                 Edit JSON
               </Button>
@@ -167,9 +167,9 @@ export function JsonImportUI({
           </button>
 
           {showTutorial && (
-            <div className="space-y-[var(--bd-space-md)] rounded-2xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-[var(--bd-space-md)] shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="space-y-[var(--bd-space-md)] rounded-2xl border border-bd-overlay-section-border bg-bd-overlay-section-bg p-[var(--bd-space-md)] shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="space-y-1">
-                <p className="text-xs font-medium text-[hsl(var(--bd-overlay-text))] leading-relaxed">
+                <p className="text-xs font-medium text-bd-overlay-text leading-relaxed">
                   {activeTutorial.description}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function JsonImportUI({
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bd-action-icon-bg text-[9px] font-black text-bd-action-icon-text">
                         {idx + 1}
                       </div>
-                      <p className="text-[11px] font-medium text-[hsl(var(--bd-overlay-muted))] leading-snug pt-0.5">
+                      <p className="text-[11px] font-medium text-bd-overlay-muted leading-snug pt-0.5">
                         {step}
                       </p>
                     </div>
@@ -190,7 +190,7 @@ export function JsonImportUI({
               )}
 
               {activeTutorial.videoUrl && (
-                <div className="aspect-video overflow-hidden rounded-xl border border-[hsl(var(--bd-overlay-section-border))] bg-[hsl(var(--bd-overlay-section-bg))] shadow-inner">
+                <div className="aspect-video overflow-hidden rounded-xl border border-bd-overlay-section-border bg-bd-overlay-section-bg shadow-inner">
                   <iframe
                     src={activeTutorial.videoUrl}
                     className="h-full w-full"
@@ -207,14 +207,14 @@ export function JsonImportUI({
         {!isParsed ? (
           <div className="space-y-[var(--bd-space-sm)]">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Step 1: Paste JSON</span>
-              <span className="text-[9px] text-[hsl(var(--bd-overlay-muted))] italic">one object only</span>
+              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-overlay-muted">Step 1: Paste JSON</span>
+              <span className="text-[9px] text-bd-overlay-muted italic">one object only</span>
             </div>
             <Textarea
               value={rawInput}
               onChange={(e) => onRawInputChange(e.target.value)}
               placeholder='{ "key": "value" }'
-              className="min-h-[160px] rounded-xl border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-input-bg))] font-mono text-[hsl(var(--bd-overlay-text))] text-xs p-[var(--bd-space-sm)] focus-visible:ring-[hsl(var(--bd-focus-ring))] shadow-inner"
+              className="min-h-[160px] rounded-xl border-bd-overlay-border bg-bd-overlay-input-bg font-mono text-bd-overlay-text text-xs p-[var(--bd-space-sm)] focus-visible:ring-bd-focus-ring shadow-inner"
             />
             {error && (
               <div className="p-2.5 rounded-lg bg-bd-status-danger-bg border border-bd-status-danger-border text-[11px] text-bd-status-danger-text font-bold">
@@ -225,7 +225,7 @@ export function JsonImportUI({
         ) : (
           <div className="space-y-[var(--bd-space-md)] pb-[var(--bd-space-lg)]">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-overlay-muted))]">Step 2: Verify Data</span>
+              <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-overlay-muted">Step 2: Verify Data</span>
             </div>
 
             {whtNotice && (
@@ -253,7 +253,7 @@ export function JsonImportUI({
         )}
       </div>
 
-      <div className="border-t border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-bg))] p-[var(--bd-sheet-padding)] pb-[calc(var(--bd-sheet-padding)+env(safe-area-inset-bottom))]">
+      <div className="border-t border-bd-overlay-border bg-bd-overlay-bg p-[var(--bd-sheet-padding)] pb-[calc(var(--bd-sheet-padding)+env(safe-area-inset-bottom))]">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           {footerSecondaryLabel && footerSecondaryAction ? (
             <Button
@@ -310,8 +310,8 @@ export function JsonImportLayout({
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
           isMobile
-            ? "max-h-[94vh] rounded-t-[var(--bd-overlay-radius)] bg-[hsl(var(--bd-overlay-bg))] p-0 border-none select-none overflow-y-auto"
-            : "w-full max-w-2xl rounded-none bg-[hsl(var(--bd-overlay-bg))] p-0 select-none overflow-y-auto",
+            ? "max-h-[94vh] rounded-t-[var(--bd-overlay-radius)] bg-bd-overlay-bg p-0 border-none select-none overflow-y-auto"
+            : "w-full max-w-2xl rounded-none bg-bd-overlay-bg p-0 select-none overflow-y-auto",
           className
         )}
       >

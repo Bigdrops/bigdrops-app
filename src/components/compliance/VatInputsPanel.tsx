@@ -140,7 +140,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-[hsl(var(--bd-border))]">
+          <div className="divide-y divide-bd-border">
             {taxInputs.map((entry) => (
               <div
                 key={entry.id}

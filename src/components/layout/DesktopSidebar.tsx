@@ -33,7 +33,7 @@ export function DesktopSidebar({
 }: DesktopSidebarProps) {
   return (
     <aside 
-      className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-[hsl(var(--bd-layout-sidebar))] md:flex"
+      className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex"
     >
       <div className="flex flex-col h-full overflow-y-auto bd-custom-scrollbar">
         <div className="px-5 py-6">

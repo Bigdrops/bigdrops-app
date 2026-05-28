@@ -38,7 +38,7 @@ export function ItemLibraryRow({ item, isSelected, isFlagged, onSelect, onNeedsC
         'w-full border-b border-bd-border px-4 py-[12px] text-left transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-bd-button-primary-bg',
         isSelected
-          ? 'border-l-[3px] border-l-[hsl(var(--bd-button-primary-bg))] bg-bd-status-info-bg pl-[13px] shadow-sm'
+          ? 'border-l-[3px] border-l-bd-button-primary-bg bg-bd-status-info-bg pl-[13px] shadow-sm'
           : 'border-l-[3px] border-l-transparent bg-bd-card-bg hover:bg-bd-surface-muted',
       ].join(' ')}
     >

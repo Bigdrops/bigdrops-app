@@ -16,7 +16,7 @@ export default function CsrPrimaryActions({
       <button
         type="button"
         onClick={onComplete}
-        className="flex flex-1 items-center justify-center gap-1.5 border-0 rounded-[var(--bd-radius-lg)] text-sm font-semibold cursor-pointer py-3.5 px-[18px] transition-all duration-150 ease-in-out whitespace-nowrap tracking-[-0.28px] font-[var(--bd-font-family)] bg-bd-button-primary-bg text-bd-button-primary-text shadow-[var(--bd-shadow-lg)] hover:bg-[hsl(var(--bd-button-primary-hover-bg))] hover:-translate-y-px active:scale-[0.98]"
+        className="flex flex-1 items-center justify-center gap-1.5 border-0 rounded-[var(--bd-radius-lg)] text-sm font-semibold cursor-pointer py-3.5 px-[18px] transition-all duration-150 ease-in-out whitespace-nowrap tracking-[-0.28px] font-[var(--bd-font-family)] bg-bd-button-primary-bg text-bd-button-primary-text shadow-[var(--bd-shadow-lg)] hover:bg-bd-button-primary-hover-bg hover:-translate-y-px active:scale-[0.98]"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
@@ -27,7 +27,7 @@ export default function CsrPrimaryActions({
       <button
         type="button"
         onClick={onEdit}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--bd-radius-lg)] text-sm font-semibold cursor-pointer py-3.5 px-[18px] transition-all duration-150 ease-in-out whitespace-nowrap tracking-[-0.28px] font-[var(--bd-font-family)] bg-bd-surface text-[hsl(var(--bd-brand))] border border-[hsl(var(--bd-brand))] hover:bg-bd-surface-muted active:scale-[0.98]"
+        className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--bd-radius-lg)] text-sm font-semibold cursor-pointer py-3.5 px-[18px] transition-all duration-150 ease-in-out whitespace-nowrap tracking-[-0.28px] font-[var(--bd-font-family)] bg-bd-surface text-bd-brand border border-bd-brand hover:bg-bd-surface-muted active:scale-[0.98]"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

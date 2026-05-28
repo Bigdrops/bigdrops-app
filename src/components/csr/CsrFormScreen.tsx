@@ -352,7 +352,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Main Details" dotClassName="bg-[hsl(var(--bd-violet))]">
+        <Section title="Main Details" dotClassName="bg-bd-violet">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>Call Type</FieldLabel>
@@ -428,7 +428,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Problem & Service" dotClassName="bg-[hsl(var(--bd-rose))]">
+        <Section title="Problem & Service" dotClassName="bg-bd-rose">
           <div className="space-y-3">
             <div>
               <FieldLabel>Problem Reported</FieldLabel>
@@ -568,7 +568,7 @@ export default function CsrFormScreen({
               className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted outline-none"
             />
           }
-          dotClassName="bg-[hsl(var(--bd-emerald))]"
+          dotClassName="bg-bd-emerald"
           action={
             <span className="inline-flex h-8 items-center rounded-full border border-bd-status-success-border bg-bd-status-success-bg px-3 text-[12px] font-bold text-bd-status-success-text">
               {materialCount} item{materialCount === 1 ? '' : 's'}

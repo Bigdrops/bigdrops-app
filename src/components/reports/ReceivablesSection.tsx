@@ -175,7 +175,7 @@ export function ReceivablesSection({
               <div className="px-4 py-3 border-b border-bd-border bg-bd-surface-muted">
                 <h3 className="text-sm font-bold text-bd-text">Outstanding Invoices</h3>
               </div>
-              <div className="divide-y divide-[hsl(var(--bd-border))]">
+              <div className="divide-y divide-bd-border">
                 {filtered.map((row) => {
                   const aging = getAgingBucket(row.due_date)
                   const isPastDueRow = isPastDue(row.due_date, row.balance_due)

@@ -18,7 +18,7 @@ export default function ProjectLinkDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-[hsl(var(--bd-overlay-bg))] p-5"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-bd-overlay-bg p-5"
       onClick={() => {
         setShowLink(false)
         setLinkDocId('')
@@ -64,7 +64,7 @@ export default function ProjectLinkDialog({
                     onClick={() => setLinkType(type)}
                     className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                       active
-                        ? 'bg-[hsl(var(--bd-accent))] text-[hsl(var(--bd-accent-foreground))]'
+                        ? 'bg-bd-accent text-bd-accent-foreground'
                         : 'border border-bd-border bg-bd-surface text-bd-text hover:bg-bd-surface-muted'
                     }`}
                   >
@@ -122,7 +122,7 @@ export default function ProjectLinkDialog({
               type="button"
               onClick={handleLink}
               disabled={linking}
-              className="rounded-lg bg-bd-status-success-bg px-4 py-2.5 text-sm font-semibold text-bd-status-success-text transition hover:bg-[hsl(var(--bd-status-success-hover-bg))] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-bd-status-success-bg px-4 py-2.5 text-sm font-semibold text-bd-status-success-text transition hover:bg-bd-status-success-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
             >
               {linking ? 'Linking...' : 'Link Document'}
             </button>

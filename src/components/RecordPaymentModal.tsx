@@ -223,7 +223,7 @@ export default function RecordPaymentModal({
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cash Received (₦)</div>
             <NumericInput
               min={0}
-              className={amountFieldHasError ? "border-[hsl(var(--bd-feedback-error-border))] ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
+              className={amountFieldHasError ? "border-bd-feedback-error-border ring-2 ring-[hsl(var(--bd-feedback-error-border)/0.15)]" : undefined}
               value={form.cashReceived}
               onChange={(val) => setField("cashReceived", val)}
               placeholder="Enter amount"
@@ -236,12 +236,12 @@ export default function RecordPaymentModal({
               Pay Full Balance ({formatMoney(currentBalance)})
             </button>
             {submitAttempted && validation.cashError ? (
-              <div className="text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+              <div className="text-xs font-semibold text-bd-feedback-error-text">
                 {validation.cashError}
               </div>
             ) : null}
             {amountError ? (
-              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+              <div className="rounded-[var(--bd-radius-lg)] border border-bd-feedback-error-border bg-bd-feedback-error-bg px-3 py-2 text-xs font-semibold text-bd-feedback-error-text">
                 {amountError}
               </div>
             ) : null}
@@ -325,7 +325,7 @@ export default function RecordPaymentModal({
 
         <div className="shrink-0 space-y-3 border-t border-border bg-card px-5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-3">
           {error ? (
-            <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-feedback-error-border))] bg-[hsl(var(--bd-feedback-error-bg))] px-3 py-2 text-xs font-semibold text-[hsl(var(--bd-feedback-error-text))]">
+            <div className="rounded-[var(--bd-radius-lg)] border border-bd-feedback-error-border bg-bd-feedback-error-bg px-3 py-2 text-xs font-semibold text-bd-feedback-error-text">
               {error}
             </div>
           ) : null}
@@ -338,7 +338,7 @@ export default function RecordPaymentModal({
               type="button"
               onClick={handleSave}
               disabled={saving || loadingBalance}
-              className="flex-1 bg-bd-button-primary-bg text-bd-button-primary-text hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
+              className="flex-1 bg-bd-button-primary-bg text-bd-button-primary-text hover:bg-bd-button-primary-hover-bg"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {saving ? "Saving..." : "Record Payment"}

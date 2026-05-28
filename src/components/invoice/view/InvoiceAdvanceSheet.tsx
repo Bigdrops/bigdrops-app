@@ -261,7 +261,7 @@ export default function InvoiceAdvanceSheet({
                     type="button"
                     onClick={onEdit}
                     disabled={advanceSaving || advancePdfGenerating}
-                    className="h-10 rounded-[var(--bd-radius-lg)] bg-bd-button-primary-bg text-[10px] font-black uppercase tracking-[0.14em] text-bd-button-primary-text hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
+                    className="h-10 rounded-[var(--bd-radius-lg)] bg-bd-button-primary-bg text-[10px] font-black uppercase tracking-[0.14em] text-bd-button-primary-text hover:bg-bd-button-primary-hover-bg"
                   >
                     Edit
                   </Button>
@@ -290,7 +290,7 @@ export default function InvoiceAdvanceSheet({
                     type="button"
                     onClick={onSave}
                     disabled={advanceSaving}
-                    className="h-10 rounded-[var(--bd-radius-lg)] bg-bd-button-primary-bg text-[10px] font-black uppercase tracking-[0.14em] text-bd-button-primary-text hover:bg-[hsl(var(--bd-button-primary-hover-bg))] sm:min-w-36"
+                    className="h-10 rounded-[var(--bd-radius-lg)] bg-bd-button-primary-bg text-[10px] font-black uppercase tracking-[0.14em] text-bd-button-primary-text hover:bg-bd-button-primary-hover-bg sm:min-w-36"
                   >
                     {advanceSaving ? 'Saving...' : advanceSheetMode === 'edit' ? 'Save' : 'Create'}
                   </Button>

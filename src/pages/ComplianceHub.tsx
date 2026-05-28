@@ -276,13 +276,13 @@ export default function ComplianceHub() {
                           onClick={() => setSection(key)}
                           className={`flex w-full items-start gap-3 rounded-[var(--bd-radius-lg)] px-3 py-3 text-left transition-colors ${
                             isActive
-                              ? 'bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] shadow-sm'
+                              ? 'bg-bd-overlay-bg text-bd-overlay-text shadow-sm'
                               : 'text-bd-text hover:bg-bd-surface-muted'
                           }`}
                         >
                           <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                             isActive
-                              ? 'bg-[hsl(var(--bd-overlay-text))]/12 text-[hsl(var(--bd-overlay-text))]'
+                              ? 'bg-bd-overlay-text/12 text-bd-overlay-text'
                               : 'bg-bd-surface-muted text-bd-text-muted'
                           }`}>
                             <Icon className="h-4 w-4" />
