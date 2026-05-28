@@ -209,7 +209,7 @@ export default function MobileItemCard({
   }
 
   return (
-    <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-[#fdfcfb]">
+    <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50">
       <div className="grid grid-cols-[16px_minmax(0,1fr)_30px] items-start gap-2">
         {/* Row Number & Enumeration */}
         <div className="flex w-4 flex-col items-center gap-0.5 pt-2">

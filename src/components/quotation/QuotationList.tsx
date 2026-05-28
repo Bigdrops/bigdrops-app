@@ -297,13 +297,13 @@ export default function QuotationList() {
   }
 
   const syncRecoveryBanner = showQuotationSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-    <div className="mb-4 rounded-[22px] border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+    <div className="mb-4 rounded-[22px] border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/50 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">
+          <div className="text-xs font-black uppercase tracking-[0.16em] text-amber-800 dark:text-amber-200">
             Offline sync recovery
           </div>
-          <div className="mt-1 text-sm text-slate-700">
+          <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
             Retry pending or failed quotation uploads from this device.
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function QuotationList() {
           size="icon-lg"
           onClick={loadQuotationSyncQueue}
           disabled={syncQueueLoading || retryingQueueItemId != null}
-          className="h-10 w-10 rounded-2xl border-amber-200 bg-white text-amber-700 hover:bg-amber-100"
+          className="h-10 w-10 rounded-2xl border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
           aria-label="Refresh quotation sync queue"
         >
           {syncQueueLoading ? (
@@ -332,19 +332,19 @@ export default function QuotationList() {
             return (
               <div
                 key={item.id}
-                className="rounded-2xl border border-amber-200 bg-white p-3"
+                className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950/50 p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="truncate text-sm font-bold text-slate-900">
+                      <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
                         {item.quotationNumber || item.localQuotationId || `Queue #${item.id}`}
                       </div>
                       <span
                         className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${
                           item.status === 'failed'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
+                            ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400'
+                            : 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
                         }`}
                       >
                         {item.status}
@@ -356,7 +356,7 @@ export default function QuotationList() {
                     </div>
 
                     {item.error ? (
-                      <div className="mt-2 text-xs leading-5 text-red-600">
+                      <div className="mt-2 text-xs leading-5 text-red-600 dark:text-red-400">
                         {item.error}
                       </div>
                     ) : null}
@@ -368,7 +368,7 @@ export default function QuotationList() {
                     size="sm"
                     onClick={() => handleRetryQueueItem(item.id)}
                     disabled={retryingQueueItemId != null}
-                    className="h-9 rounded-xl border-amber-200 bg-white px-3 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                    className="h-9 rounded-xl border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950 px-3 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900"
                   >
                     {isRetrying ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

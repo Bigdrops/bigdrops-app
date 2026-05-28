@@ -14,17 +14,17 @@ export type StatusChipTone =
   | 'scope'
 
 const toneClass: Record<StatusChipTone, string> = {
-  open: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
-  unpaid: 'bg-[hsl(35,30%,93%)] text-[hsl(30,35%,32%)]',
-  paid: 'bg-[hsl(142,55%,93%)] text-[hsl(142,65%,30%)]',
-  partially_paid: 'bg-[hsl(45,60%,91%)] text-[hsl(35,76%,34%)]',
-  converted: 'bg-[hsl(142,55%,93%)] text-[hsl(142,65%,30%)]',
-  active: 'bg-[rgba(34,197,94,.13)] text-[#16a34a]',
-  completed: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
-  dispatched: 'bg-[hsl(206,70%,94%)] text-[hsl(211,72%,38%)]',
-  delivered: 'bg-[hsl(142,55%,93%)] text-[hsl(142,65%,30%)]',
-  tag: 'bg-slate-100 text-slate-600',
-  scope: 'bg-violet-50 text-violet-700',
+  open: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400',
+  unpaid: 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400',
+  paid: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400',
+  partially_paid: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400',
+  converted: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400',
+  active: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400',
+  completed: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400',
+  dispatched: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400',
+  delivered: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400',
+  tag: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
+  scope: 'bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400',
 }
 
 export default function StatusChip({ label, tone }: { label: string; tone: StatusChipTone }) {

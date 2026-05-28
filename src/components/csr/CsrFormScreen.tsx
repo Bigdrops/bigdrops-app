@@ -514,7 +514,7 @@ export default function CsrFormScreen({
 
         <Section
           title="Operational Readings"
-          dotClassName="bg-[#f59e0b]"
+          dotClassName="bg-amber-500"
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}>
               {csrMeta.showOperationalReadings ? 'Hide section' : 'Show section'}
@@ -645,7 +645,7 @@ export default function CsrFormScreen({
 
         <Section
           title="Technician"
-          dotClassName="bg-[#0ea5e9]"
+          dotClassName="bg-sky-500"
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}>
               {csrMeta.showTechnicianSignLine ? 'Included' : 'Include'}
@@ -689,7 +689,7 @@ export default function CsrFormScreen({
 
         <Section
           title="Acknowledgement"
-          dotClassName="bg-[#0f172a]"
+          dotClassName="bg-slate-900 dark:bg-slate-100"
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}>
               {csrMeta.showAcknowledgement ? 'Included' : 'Include'}
