@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, Download, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
@@ -34,6 +34,8 @@ import QueryFilterOverlay from "@/components/query/QueryFilterOverlay"
 import { useMultiSelect } from "@/hooks/useMultiSelect"
 import SelectableRowCard from "@/components/batch/SelectableRowCard"
 import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch/BatchActionFooter"
+import { ContextualExportSheet } from "@/components/export/ContextualExportSheet"
+import type { InheritedExportContext } from "@/types/exportHub"
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
@@ -53,6 +55,7 @@ function InvoicesContent() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const navigate = useNavigate()
 
   // ─── MULTI-SELECT BATCH STATE ───
@@ -279,6 +282,16 @@ function InvoicesContent() {
     state.amountRange.max !== null
   )
 
+  const invoiceExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: { min: state.amountRange.min, max: state.amountRange.max },
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
+  }
+
   return (
     <>
       <ModuleShell
@@ -294,7 +307,6 @@ function InvoicesContent() {
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
         }
         beforeListContent={
-          /* Selection mode toolbar — only visible when active */
           multiSelect.isSelectionModeActive ? (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-2 mb-3">
               <span className="text-[11px] font-bold text-[hsl(var(--bd-text))]">
@@ -324,7 +336,19 @@ function InvoicesContent() {
                 </button>
               </div>
             </div>
-          ) : undefined
+          ) : (
+            <div className="flex justify-end px-1 mb-2">
+              <button
+                type="button"
+                onClick={() => setIsExportSheetOpen(true)}
+                className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+                style={{ minWidth: '44px', minHeight: '44px', width: '44px', height: '44px' }}
+                aria-label="Export dataset"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
+          )
         }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
@@ -394,6 +418,7 @@ function InvoicesContent() {
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeInvoice?.invoice_number || "Invoice"} sections={activeInvoiceLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachSheet} onOpenChange={setShowAttachSheet} title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"} description={activeInvoice?.invoice_number || "Invoice"} table={attachKind === "csr" ? "csrs" : "waybills"} numberField={attachKind === "csr" ? "csr_number" : "waybill_number"} clientField="client_name" poField="po_number" linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"} currentInvoiceId={activeInvoice?.id} currentClientName={activeInvoice?.client_name || undefined} searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"} onAttach={handleAttachExisting} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveInvoice(null) }} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="INVOICES" activeContext={invoiceExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} />
     </>
   )
 }

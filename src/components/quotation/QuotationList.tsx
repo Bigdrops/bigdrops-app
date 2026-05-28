@@ -4,6 +4,7 @@ import {
   Archive,
   ClipboardList,
   Copy,
+  Download,
   FolderOpen,
   FolderPlus,
   GitBranchPlus,
@@ -44,6 +45,8 @@ import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
 import ModuleShell from '@/components/layout/ModuleShell'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
@@ -58,6 +61,7 @@ export default function QuotationList() {
   const [activeQuotation, setActiveQuotation] = useState<ReturnType<typeof mapDbQuotation> | null>(null)
   const [activeQuotationProject, setActiveQuotationProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [syncQueueItems, setSyncQueueItems] = useState<QuotationCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
@@ -385,6 +389,16 @@ export default function QuotationList() {
     </div>
   ) : null
 
+  const quotationExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: 'amountRange' in state ? { min: state.amountRange.min, max: state.amountRange.max } : null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
+  }
+
   return (
     <>
       <ModuleShell
@@ -526,6 +540,7 @@ export default function QuotationList() {
           setActiveQuotation(null)
         }}
       />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="QUOTATIONS" activeContext={quotationExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} />
     </>
   )
 }

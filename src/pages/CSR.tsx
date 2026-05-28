@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, ClipboardList, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
+import { Archive, ClipboardList, Download, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Workflow } from "lucide-react"
 
 import Layout from '../components/Layout'
 import { invalidateListCache } from '@/lib/cache/listCache'
@@ -34,6 +34,8 @@ import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 import { archiveCsr, deleteCsr, attachInvoiceToCsr } from "@/domain/csr/csrService"
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 
 export type CsrRow = {
   id: string
@@ -81,6 +83,7 @@ function CsrContent() {
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const [syncQueueItems, setSyncQueueItems] = useState<CsrCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
   const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
@@ -215,6 +218,16 @@ function CsrContent() {
 
   const hasActiveFilters = state.statuses.length > 0 || state.dateRange.from !== null || state.dateRange.to !== null
 
+  const csrExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
+  }
+
   return (
     <>
       <ModuleShell
@@ -321,6 +334,7 @@ function CsrContent() {
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeCsr?.csr_number || 'CSR'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" currentClientName={activeCsr?.client_name || undefined} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked CSR?" description="This CSR is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); void attachInvoice(invoice) }} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="csrs" recordId={activeCsr?.id || null} documentLabel="CSR" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveCsr(null) }} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CSR" activeContext={csrExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
     </>
   )
 }

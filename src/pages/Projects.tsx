@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, Eye, FolderOpen, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Download, Eye, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
@@ -17,6 +17,8 @@ import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 
 type ProjectRow = ProjectRecord & {
   client_name?: string | null
@@ -45,11 +47,22 @@ function ProjectsContent() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
 
   // ─── Typed results ───
   const projects = results as ProjectRow[]
 
   const hasActiveFilters = state.statuses.length > 0 || state.dateRange.from !== null || state.dateRange.to !== null
+
+  const projectExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
+  }
 
   const handleDelete = async (project: ProjectRow): Promise<void> => {
     try {
@@ -220,6 +233,7 @@ function ProjectsContent() {
           onClick: () => setProjectToDelete(activeProject),
         } : undefined}
       />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="PROJECTS" activeContext={projectExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
     </>
   )
 }

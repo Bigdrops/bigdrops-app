@@ -91,7 +91,7 @@ export const ContextualExportSheet: React.FC<ContextualExportSheetProps> = ({
               disabled={isCompiling}
               onClick={() => handleDownloadTrigger(format)}
               className="w-full h-12 px-4 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-left transition-colors duration-150 text-xs font-semibold text-slate-700 dark:text-slate-300 disabled:opacity-40"
-              style={{ minHeight: '44px' }}
+              style={{ minHeight: '48px' }}
             >
               <div className="flex items-center gap-3">
                 {format === 'JSON_RAW' && <FileJson className="w-5 h-5 text-amber-500" />}

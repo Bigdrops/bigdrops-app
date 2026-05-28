@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Archive, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Download, Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { normalizeDbRfq, denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { loadRfqsFromSupabase, archiveRfq, deleteRfq } from '@/domain/rfq/rfqService'
@@ -15,6 +15,8 @@ import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } 
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -85,6 +87,7 @@ export const RfqList: React.FC = () => {
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showFilterOverlay, setShowFilterOverlay] = useState(false);
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
 
   const handleArchive = async (id: string) => {
     setIsArchiving(true);
@@ -116,6 +119,16 @@ export const RfqList: React.FC = () => {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const rfqExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
   };
 
 
@@ -225,6 +238,7 @@ export const RfqList: React.FC = () => {
       loading={isDeleting}
       onConfirm={() => deleteId && handleDelete(deleteId)}
     />
+    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="RFQS" activeContext={rfqExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
   </>
   );
 }

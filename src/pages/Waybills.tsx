@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
+import { Download, Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -29,6 +29,8 @@ import {
 } from '@/lib/native/waybillSync'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -52,6 +54,7 @@ function WaybillsContent() {
   const [showLinkedDocuments, setShowLinkedDocuments] = useState(false)
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const [syncQueueItems, setSyncQueueItems] = useState<WaybillCreateQueueItem[]>([])
   const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
@@ -190,6 +193,16 @@ function WaybillsContent() {
     void attachInvoice(invoice)
   }
 
+  const waybillExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
+  }
+
   return (
     <>
       <ModuleShell
@@ -298,6 +311,7 @@ function WaybillsContent() {
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeWaybill?.waybill_number || 'Waybill'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" linkedInvoiceField={null} currentInvoiceId={null} currentClientName={activeWaybill?.client_name} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked waybill?" description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); if (invoice) void attachInvoice(invoice) }} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="WAYBILLS" activeContext={waybillExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
     </>
   )
 }

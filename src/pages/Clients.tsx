@@ -13,7 +13,9 @@ import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import { SkeletonRow } from "@/components/loading/AppLoadingStates"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
-import { Archive, Eye, Pencil, Trash2, Users } from "lucide-react"
+import { Archive, Download, Eye, Pencil, Trash2, Users } from "lucide-react"
+import { ContextualExportSheet } from "@/components/export/ContextualExportSheet"
+import type { InheritedExportContext } from "@/types/exportHub"
 
 type Client = {
   id: string | number
@@ -58,6 +60,7 @@ export default function Clients() {
   const [clientToDelete, setClientToDelete] = useState<string | number | null>(null)
   const [activeClient, setActiveClient] = useState<Client | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
 
   const navigate = useNavigate()
 
@@ -152,6 +155,16 @@ export default function Clients() {
     },
   ]
 
+  const clientExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: category !== 'All' ? [category] : [],
+    dateRange: null,
+    amountRange: null,
+    searchTokens: query ? query.split(' ') : [],
+    sortBy: 'name',
+    sortDirection: 'asc',
+  }
+
   return (
     <Layout title="Clients" session={null} hidePageHeader>
       <ModuleShell
@@ -166,6 +179,19 @@ export default function Clients() {
         filters={filterOptions}
         hasActiveFilters={category !== "All"}
         onResetFilters={() => setCategory("All")}
+        beforeListContent={
+          <div className="flex justify-end px-1 mb-2">
+            <button
+              type="button"
+              onClick={() => setIsExportSheetOpen(true)}
+              className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+              style={{ minWidth: '44px', minHeight: '44px', width: '44px', height: '44px' }}
+              aria-label="Export dataset"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          </div>
+        }
         records={loading ? [] : filtered}
         renderRow={(client) => (
           <ModuleRowCard
@@ -260,6 +286,7 @@ export default function Clients() {
           onClick: () => setClientToDelete(activeClient.id),
         } : undefined}
       />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CLIENTS" activeContext={clientExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
     </Layout>
   )
 }

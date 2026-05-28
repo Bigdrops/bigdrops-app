@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Archive, Eye, Pencil, Trash2, Loader2, FileText } from 'lucide-react'
+import { Archive, Download, Eye, Pencil, Trash2, Loader2, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
@@ -14,6 +14,8 @@ import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } 
 import { getNextBoqNumber } from '@/domain/boq/storage'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
+import { ContextualExportSheet } from '@/components/export/ContextualExportSheet'
+import type { InheritedExportContext } from '@/types/exportHub'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
 const BOQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -27,6 +29,7 @@ export function BoqList() {
   const [isArchiving, setIsArchiving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false)
 
   const handleArchive = async () => {
     if (!archiveId) return
@@ -67,6 +70,16 @@ export function BoqList() {
     setActiveBoq(null)
     invalidateListCache(BOQ_CACHE_KEY)
     patchUpdate({ search: state.search } as any)
+  }
+
+  const boqExportContext: InheritedExportContext = {
+    clientId: null,
+    statuses: state.statuses,
+    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
+    amountRange: null,
+    searchTokens: state.search ? state.search.split(' ') : [],
+    sortBy: 'created_at',
+    sortDirection: 'desc',
   }
 
   return (
@@ -155,6 +168,7 @@ export function BoqList() {
       loading={isDeleting}
       onConfirm={handleDelete}
     />
+    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="BOQS" activeContext={boqExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} />
   </>
 )
 }
