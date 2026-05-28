@@ -34,12 +34,13 @@ export default function MobilePageHeader({
         'min-h-14 flex items-center rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] shadow-sm',
         className,
       )}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <div className="flex items-center gap-[var(--bd-row-gap)] w-full">
         <button
           type="button"
           onClick={onMenuClick}
-          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950 outline-none"
+          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
           aria-label="Open navigation menu"
         >
           <SidebarToggleIcon

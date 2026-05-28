@@ -203,7 +203,7 @@ function WaybillsContent() {
         searchPlaceholder="Search waybills..."
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
-        onFilterClick={() => setShowFilterOverlay(true)}
+        onFilterClick={() => setShowFilterOverlay(prev => !prev)}
         headerActions={
           <ContextualExportDropdown
             domain="WAYBILLS"

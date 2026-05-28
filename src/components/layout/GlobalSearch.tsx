@@ -103,7 +103,7 @@ export function GlobalSearch() {
         size="icon"
         onClick={toggle}
         className={cn(
-          "h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950",
+          "h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950",
           isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100"
         )}
         aria-label="Search"

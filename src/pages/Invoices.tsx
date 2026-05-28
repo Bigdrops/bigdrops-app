@@ -281,7 +281,7 @@ function InvoicesContent() {
         searchPlaceholder="Search by invoice number or client..."
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
-        onFilterClick={() => setShowFilterOverlay(true)}
+        onFilterClick={() => setShowFilterOverlay(prev => !prev)}
         headerActions={
           <ContextualExportDropdown
             domain="INVOICES"

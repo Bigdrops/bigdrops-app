@@ -227,7 +227,7 @@ function CsrContent() {
         records={loading ? [] : csrs}
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
-        onFilterClick={() => setShowFilterOverlay(true)}
+        onFilterClick={() => setShowFilterOverlay(prev => !prev)}
         headerActions={
           <ContextualExportDropdown
             domain="CSR"

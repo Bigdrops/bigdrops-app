@@ -398,7 +398,7 @@ export default function QuotationList() {
         searchPlaceholder="Search quotations..."
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
-        onFilterClick={() => setShowFilterOverlay(true)}
+        onFilterClick={() => setShowFilterOverlay(prev => !prev)}
         headerActions={
           <ContextualExportDropdown
             domain="QUOTATIONS"

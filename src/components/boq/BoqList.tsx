@@ -83,7 +83,7 @@ export function BoqList() {
       searchPlaceholder="Search BOQs..."
       hasActiveFilters={Boolean(state.statuses.length > 0 || state.dateRange.from || state.dateRange.to)}
       onResetFilters={reset}
-      onFilterClick={() => setShowFilterOverlay(true)}
+      onFilterClick={() => setShowFilterOverlay(prev => !prev)}
       headerActions={
         <ContextualExportDropdown
           domain="BOQS"

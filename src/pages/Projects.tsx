@@ -107,7 +107,7 @@ function ProjectsContent() {
         searchPlaceholder="Search projects..."
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
-        onFilterClick={() => setShowFilterOverlay(true)}
+        onFilterClick={() => setShowFilterOverlay(prev => !prev)}
         headerActions={
           <ContextualExportDropdown
             domain="PROJECTS"
