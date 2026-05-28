@@ -103,12 +103,12 @@ export function GlobalSearch() {
         size="icon"
         onClick={toggle}
         className={cn(
-          "h-10 w-10 shrink-0 rounded-xl bg-muted/50 text-foreground/80 hover:bg-muted active:scale-95",
-          isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100 transition-all duration-300"
+          "h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950",
+          isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100"
         )}
         aria-label="Search"
       >
-        <Search className="h-5 w-5" />
+        <Search className="h-4 w-4" />
       </Button>
 
       {/* Global Search Backdrop for mobile focus */}

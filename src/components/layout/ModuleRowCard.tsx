@@ -43,7 +43,7 @@ export default function ModuleRowCard({
       tabIndex={0}
       aria-selected={isSelected}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3 md:p-2 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm md:shadow-none md:rounded-[var(--bd-radius-md)] md:border-x-0 md:border-t-0",
+        "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-slate-200 dark:border-slate-800 bg-[hsl(var(--bd-surface))] p-3 md:p-2 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm dark:shadow-black/10 md:shadow-none md:rounded-[var(--bd-radius-md)] md:border-x-0 md:border-t-0",
         isSelected && "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))]/5 shadow-[0_0_12px_-4px_hsl(var(--bd-button-primary-bg)/0.2)] md:border-l-4 md:border-l-[hsl(var(--bd-button-primary-bg))]",
         className
       )}

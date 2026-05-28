@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
@@ -32,25 +31,23 @@ export default function MobilePageHeader({
   return (
     <div
       className={cn(
-        'rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] py-[var(--bd-space-sm)] shadow-sm',
+        'h-14 flex items-center rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] shadow-sm',
         className,
       )}
     >
-      <div className="flex items-start gap-[var(--bd-row-gap)]">
-        <Button
+      <div className="flex items-center gap-[var(--bd-row-gap)] w-full">
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
           onClick={onMenuClick}
-          className="mt-[var(--bd-space-xs)] h-9 w-9 shrink-0 rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))/0.45] text-[hsl(var(--bd-text))/0.8] hover:bg-[hsl(var(--bd-surface-muted))] active:scale-95 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950"
+          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-950 outline-none"
           aria-label="Open navigation menu"
         >
           <SidebarToggleIcon
             isOpen={isOpen}
             strokeWidth={2}
-            className="size-5 text-[hsl(var(--bd-text))]"
+            className="w-4 h-4 text-[hsl(var(--bd-text))]"
           />
-        </Button>
+        </button>
 
         <div className="min-w-0 flex-1">
           {eyebrow ? (
