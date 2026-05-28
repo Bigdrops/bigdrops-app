@@ -240,6 +240,17 @@ function CsrContent() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        headerActions={
+          <button
+            type="button"
+            onClick={() => setIsExportSheetOpen(true)}
+            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+            aria-label="Export dataset"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        }
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="csr" />
         }
@@ -334,7 +345,7 @@ function CsrContent() {
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeCsr?.csr_number || 'CSR'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" currentClientName={activeCsr?.client_name || undefined} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked CSR?" description="This CSR is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); void attachInvoice(invoice) }} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="csrs" recordId={activeCsr?.id || null} documentLabel="CSR" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveCsr(null) }} />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CSR" activeContext={csrExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CSR" activeContext={csrExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={csrs.length} />
     </>
   )
 }

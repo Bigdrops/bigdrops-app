@@ -412,6 +412,17 @@ export default function QuotationList() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        headerActions={
+          <button
+            type="button"
+            onClick={() => setIsExportSheetOpen(true)}
+            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+            aria-label="Export dataset"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        }
         onPrimaryAction={() => navigate('/quotations/new')}
         primaryActionLabel="New Quotation"
         filterOverlay={
@@ -540,7 +551,7 @@ export default function QuotationList() {
           setActiveQuotation(null)
         }}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="QUOTATIONS" activeContext={quotationExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="QUOTATIONS" activeContext={quotationExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} recordCount={quotations.length} />
     </>
   )
 }

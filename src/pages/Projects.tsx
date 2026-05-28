@@ -120,6 +120,17 @@ function ProjectsContent() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        headerActions={
+          <button
+            type="button"
+            onClick={() => setIsExportSheetOpen(true)}
+            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+            aria-label="Export dataset"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        }
         records={loading ? [] : projects}
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="projects" />
@@ -233,7 +244,7 @@ function ProjectsContent() {
           onClick: () => setProjectToDelete(activeProject),
         } : undefined}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="PROJECTS" activeContext={projectExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="PROJECTS" activeContext={projectExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={projects.length} />
     </>
   )
 }

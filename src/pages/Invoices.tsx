@@ -302,6 +302,17 @@ function InvoicesContent() {
         hasActiveFilters={hasActiveFilters}
         onResetFilters={reset}
         onFilterClick={() => setShowFilterOverlay(true)}
+        headerActions={
+          <button
+            type="button"
+            onClick={() => setIsExportSheetOpen(true)}
+            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+            aria-label="Export dataset"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        }
         records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
@@ -336,19 +347,7 @@ function InvoicesContent() {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="flex justify-end px-1 mb-2">
-              <button
-                type="button"
-                onClick={() => setIsExportSheetOpen(true)}
-                className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-                style={{ minWidth: '44px', minHeight: '44px', width: '44px', height: '44px' }}
-                aria-label="Export dataset"
-              >
-                <Download className="w-5 h-5" />
-              </button>
-            </div>
-          )
+          ) : undefined
         }
         emptyState={(
           <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
@@ -418,7 +417,7 @@ function InvoicesContent() {
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeInvoice?.invoice_number || "Invoice"} sections={activeInvoiceLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachSheet} onOpenChange={setShowAttachSheet} title={attachKind === "csr" ? "Attach Existing CSR" : "Attach Existing Waybill"} description={activeInvoice?.invoice_number || "Invoice"} table={attachKind === "csr" ? "csrs" : "waybills"} numberField={attachKind === "csr" ? "csr_number" : "waybill_number"} clientField="client_name" poField="po_number" linkedInvoiceField={attachKind === "csr" ? "linked_invoice_id" : "invoice_id"} currentInvoiceId={activeInvoice?.id} currentClientName={activeInvoice?.client_name || undefined} searchPlaceholder={attachKind === "csr" ? "Search CSR number, client, or PO" : "Search waybill number, client, or PO"} onAttach={handleAttachExisting} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="invoices" recordId={activeInvoice?.id || null} documentLabel="Invoice" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveInvoice(null) }} />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="INVOICES" activeContext={invoiceExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="INVOICES" activeContext={invoiceExportContext} supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']} recordCount={invoices.length} />
     </>
   )
 }

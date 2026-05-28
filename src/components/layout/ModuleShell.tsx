@@ -78,6 +78,7 @@ interface ModuleShellProps<T = any> {
   // Actions
   onPrimaryAction?: () => void
   primaryActionLabel?: string
+  headerActions?: ReactNode
   
   // Navigation
   segmentedControl?: ReactNode
@@ -118,6 +119,7 @@ export default function ModuleShell<T>({
   filterOverlay,
   onPrimaryAction,
   primaryActionLabel = 'New',
+  headerActions,
   segmentedControl,
   beforeListContent,
   afterListContent,
@@ -312,6 +314,7 @@ export default function ModuleShell<T>({
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               )}
+              {headerActions}
             </div>
           }
         />
@@ -381,6 +384,7 @@ export default function ModuleShell<T>({
                   <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
                 </Button>
              )}
+             {headerActions}
              {onPrimaryAction && (
                  <Button onClick={onPrimaryAction} className="h-9 px-6 rounded-xl shadow-none font-black uppercase tracking-wider text-[10px]">
                    {primaryActionLabel}

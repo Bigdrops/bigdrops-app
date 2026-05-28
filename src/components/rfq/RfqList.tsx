@@ -146,6 +146,17 @@ export const RfqList: React.FC = () => {
       hasActiveFilters={Boolean(state.statuses.length > 0 || state.dateRange.from || state.dateRange.to)}
       onResetFilters={reset}
       onFilterClick={() => setShowFilterOverlay(true)}
+      headerActions={
+        <button
+          type="button"
+          onClick={() => setIsExportSheetOpen(true)}
+          className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+          style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+          aria-label="Export dataset"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      }
       records={loading ? [] : rfqs}
       filterOverlay={
         <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="rfqs" />
@@ -238,7 +249,7 @@ export const RfqList: React.FC = () => {
       loading={isDeleting}
       onConfirm={() => deleteId && handleDelete(deleteId)}
     />
-    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="RFQS" activeContext={rfqExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
+    <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="RFQS" activeContext={rfqExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={rfqs.length} />
   </>
   );
 }

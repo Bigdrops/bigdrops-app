@@ -179,18 +179,16 @@ export default function Clients() {
         filters={filterOptions}
         hasActiveFilters={category !== "All"}
         onResetFilters={() => setCategory("All")}
-        beforeListContent={
-          <div className="flex justify-end px-1 mb-2">
-            <button
-              type="button"
-              onClick={() => setIsExportSheetOpen(true)}
-              className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-sm text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
-              style={{ minWidth: '44px', minHeight: '44px', width: '44px', height: '44px' }}
-              aria-label="Export dataset"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-          </div>
+        headerActions={
+          <button
+            type="button"
+            onClick={() => setIsExportSheetOpen(true)}
+            className="flex items-center justify-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] transition-colors duration-150"
+            style={{ minWidth: '44px', minHeight: '44px', width: '36px', height: '36px' }}
+            aria-label="Export dataset"
+          >
+            <Download className="w-4 h-4" />
+          </button>
         }
         records={loading ? [] : filtered}
         renderRow={(client) => (
@@ -286,7 +284,7 @@ export default function Clients() {
           onClick: () => setClientToDelete(activeClient.id),
         } : undefined}
       />
-      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CLIENTS" activeContext={clientExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} />
+      <ContextualExportSheet isOpen={isExportSheetOpen} onClose={() => setIsExportSheetOpen(false)} domain="CLIENTS" activeContext={clientExportContext} supportedFormats={['CSV_SUMMARY', 'JSON_RAW']} recordCount={filtered.length} />
     </Layout>
   )
 }
