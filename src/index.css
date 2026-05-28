@@ -4,6 +4,14 @@
 
 /* Core theme tokens */
 :root {
+  /* BigDrops bridge fallbacks (safety net — overridden by formTheme.css and theme presets) */
+  --bd-surface-muted: var(--muted, 210 32% 95.5%);
+  --bd-text-muted: var(--muted-foreground, 215 16% 47%);
+  --bd-text: var(--foreground, 222 47% 11%);
+  --bd-surface: var(--card, 0 0% 100%);
+  --bd-border: var(--border, 214 30% 88%);
+  --bd-brand: 225 75% 48%;
+
   --background: 210 40% 98%;
   --foreground: 222 47% 11%;
 
