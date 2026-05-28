@@ -18,7 +18,6 @@ import { supabase } from '../supabase'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 
 type ProjectRow = ProjectRecord & {
   client_name?: string | null
@@ -52,16 +51,6 @@ function ProjectsContent() {
   const projects = results as ProjectRow[]
 
   const hasActiveFilters = state.statuses.length > 0 || state.dateRange.from !== null || state.dateRange.to !== null
-
-  const projectExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
 
   const handleDelete = async (project: ProjectRow): Promise<void> => {
     try {
@@ -122,7 +111,7 @@ function ProjectsContent() {
         headerActions={
           <ContextualExportDropdown
             domain="PROJECTS"
-            activeContext={projectExportContext}
+            data={projects as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
             recordCount={projects.length}
           />

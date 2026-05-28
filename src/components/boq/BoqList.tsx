@@ -15,7 +15,6 @@ import { getNextBoqNumber } from '@/domain/boq/storage'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 
 const BOQ_CACHE_KEY = 'bd:list:boqs:v1:all'
 const BOQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -71,16 +70,6 @@ export function BoqList() {
     patchUpdate({ search: state.search } as any)
   }
 
-  const boqExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
-
   return (
     <>
       <ModuleShell
@@ -98,7 +87,7 @@ export function BoqList() {
       headerActions={
         <ContextualExportDropdown
           domain="BOQS"
-          activeContext={boqExportContext}
+          data={boqs as unknown as Record<string, unknown>[]}
           supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
           recordCount={boqs.length}
         />

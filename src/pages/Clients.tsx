@@ -15,7 +15,6 @@ import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 
 import { Archive, Eye, Pencil, Trash2, Users } from "lucide-react"
 import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
-import type { InheritedExportContext } from "@/types/exportHub"
 
 type Client = {
   id: string | number
@@ -155,16 +154,6 @@ export default function Clients() {
     },
   ]
 
-  const clientExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: category !== 'All' ? [category] : [],
-    dateRange: null,
-    amountRange: null,
-    searchTokens: query ? query.split(' ') : [],
-    sortBy: 'name',
-    sortDirection: 'asc',
-  }
-
   return (
     <Layout title="Clients" session={null} hidePageHeader>
       <ModuleShell
@@ -182,7 +171,7 @@ export default function Clients() {
         headerActions={
           <ContextualExportDropdown
             domain="CLIENTS"
-            activeContext={clientExportContext}
+            data={filtered as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
             recordCount={filtered.length}
           />

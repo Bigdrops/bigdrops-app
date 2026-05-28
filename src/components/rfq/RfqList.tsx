@@ -16,7 +16,6 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -120,16 +119,6 @@ export const RfqList: React.FC = () => {
     }
   };
 
-  const rfqExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  };
-
 
   return (
     <>
@@ -148,7 +137,7 @@ export const RfqList: React.FC = () => {
       headerActions={
         <ContextualExportDropdown
           domain="RFQS"
-          activeContext={rfqExportContext}
+          data={rfqs as unknown as Record<string, unknown>[]}
           supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
           recordCount={rfqs.length}
         />

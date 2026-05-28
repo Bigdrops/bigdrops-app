@@ -30,7 +30,6 @@ import {
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
@@ -192,16 +191,6 @@ function WaybillsContent() {
     void attachInvoice(invoice)
   }
 
-  const waybillExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
-
   return (
     <>
       <ModuleShell
@@ -218,7 +207,7 @@ function WaybillsContent() {
         headerActions={
           <ContextualExportDropdown
             domain="WAYBILLS"
-            activeContext={waybillExportContext}
+            data={waybills as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
             recordCount={waybills.length}
           />

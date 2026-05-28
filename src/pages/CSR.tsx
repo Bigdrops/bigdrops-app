@@ -35,7 +35,6 @@ import { archiveCsr, deleteCsr, attachInvoiceToCsr } from "@/domain/csr/csrServi
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 
 export type CsrRow = {
   id: string
@@ -217,16 +216,6 @@ function CsrContent() {
 
   const hasActiveFilters = state.statuses.length > 0 || state.dateRange.from !== null || state.dateRange.to !== null
 
-  const csrExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
-
   return (
     <>
       <ModuleShell
@@ -242,7 +231,7 @@ function CsrContent() {
         headerActions={
           <ContextualExportDropdown
             domain="CSR"
-            activeContext={csrExportContext}
+            data={csrs as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'JSON_RAW']}
             recordCount={csrs.length}
           />

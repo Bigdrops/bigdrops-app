@@ -45,7 +45,6 @@ import ModuleShell from '@/components/layout/ModuleShell'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
-import type { InheritedExportContext } from '@/types/exportHub'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
@@ -387,16 +386,6 @@ export default function QuotationList() {
     </div>
   ) : null
 
-  const quotationExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: 'amountRange' in state ? { min: state.amountRange.min, max: state.amountRange.max } : null,
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
-
   return (
     <>
       <ModuleShell
@@ -413,7 +402,7 @@ export default function QuotationList() {
         headerActions={
           <ContextualExportDropdown
             domain="QUOTATIONS"
-            activeContext={quotationExportContext}
+            data={quotations as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
             recordCount={quotations.length}
           />

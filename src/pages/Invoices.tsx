@@ -35,7 +35,6 @@ import { useMultiSelect } from "@/hooks/useMultiSelect"
 import SelectableRowCard from "@/components/batch/SelectableRowCard"
 import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch/BatchActionFooter"
 import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
-import type { InheritedExportContext } from "@/types/exportHub"
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
@@ -281,16 +280,6 @@ function InvoicesContent() {
     state.amountRange.max !== null
   )
 
-  const invoiceExportContext: InheritedExportContext = {
-    clientId: null,
-    statuses: state.statuses,
-    dateRange: { start: state.dateRange.from, end: state.dateRange.to },
-    amountRange: { min: state.amountRange.min, max: state.amountRange.max },
-    searchTokens: state.search ? state.search.split(' ') : [],
-    sortBy: 'created_at',
-    sortDirection: 'desc',
-  }
-
   return (
     <>
       <ModuleShell
@@ -304,7 +293,7 @@ function InvoicesContent() {
         headerActions={
           <ContextualExportDropdown
             domain="INVOICES"
-            activeContext={invoiceExportContext}
+            data={invoices as unknown as Record<string, unknown>[]}
             supportedFormats={['CSV_SUMMARY', 'CSV_FLATTENED_LINE_ITEMS', 'JSON_RAW']}
             recordCount={invoices.length}
           />

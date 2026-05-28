@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Table, FileJson, Loader2 } from 'lucide-react';
-import type { ExportModuleDomain, ExportFormat, InheritedExportContext } from '../../types/exportHub';
-import { fetchExportDataset } from '../../services/exportFetchers';
+import type { ExportModuleDomain, ExportFormat } from '../../types/exportHub';
 import { compileToCSV, flattenLineItems, triggerFileDownload } from '../../utils/exportCompilers';
 import {
   DropdownMenu,
@@ -14,14 +13,14 @@ import {
 
 interface ContextualExportDropdownProps {
   domain: ExportModuleDomain;
-  activeContext: InheritedExportContext;
+  data: Record<string, unknown>[];
   supportedFormats: ExportFormat[];
   recordCount: number;
 }
 
 export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> = ({
   domain,
-  activeContext,
+  data,
   supportedFormats,
   recordCount,
 }) => {
@@ -31,9 +30,8 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
     if (isCompiling) return;
     setIsCompiling(true);
     try {
-      const data = await fetchExportDataset(domain, activeContext);
       if (!data || data.length === 0) {
-        alert('No matching dataset records found for your active filters.');
+        alert('No matching records found for your current filters.');
         return;
       }
 
@@ -42,20 +40,34 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
 
       switch (format) {
         case 'JSON_RAW':
-          triggerFileDownload(JSON.stringify(data, null, 2), `${baseFilename}_all_data.json`, 'application/json');
+          triggerFileDownload(
+            JSON.stringify(data, null, 2),
+            `${baseFilename}_all_data.json`,
+            'application/json',
+          );
           break;
         case 'CSV_SUMMARY':
-          triggerFileDownload(compileToCSV(data), `${baseFilename}_summary.csv`, 'text/csv');
+          triggerFileDownload(
+            compileToCSV(data),
+            `${baseFilename}_summary.csv`,
+            'text/csv',
+          );
           break;
         case 'CSV_FLATTENED_LINE_ITEMS': {
           const flatRows = flattenLineItems(data, domain);
-          triggerFileDownload(compileToCSV(flatRows), `${baseFilename}_line_items.csv`, 'text/csv');
+          triggerFileDownload(
+            compileToCSV(flatRows),
+            `${baseFilename}_line_items.csv`,
+            'text/csv',
+          );
           break;
         }
+        default:
+          console.warn('Unsupported format:', format);
       }
     } catch (error) {
-      console.error('Data compilation pipeline error:', error);
-      alert('Background compilation failed. Verify your network dataset parameters.');
+      console.error('Export compilation error:', error);
+      alert('Failed to compile export data. Check console for details.');
     } finally {
       setIsCompiling(false);
     }
@@ -78,7 +90,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-xs">
           Export Scope ({recordCount} items)
         </DropdownMenuLabel>
@@ -110,7 +122,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
             style={{ minHeight: '44px' }}
           >
             <FileJson className="w-4 h-4 text-amber-500" />
-            <span>JSON (Full Data)</span>
+            <span>JSON (raw)</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
