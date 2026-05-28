@@ -173,7 +173,7 @@ export default function ModuleShell<T>({
               variant="outline"
               size="sm"
               className={cn(
-                "w-full justify-between rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors",
+                "w-full justify-between rounded-[var(--bd-radius-md)] border-bd-border bg-bd-surface-muted px-3 text-[11px] font-bold text-bd-text hover:bg-bd-surface transition-colors",
                 isMobile ? "h-10" : "h-8"
               )}
             >
@@ -196,8 +196,8 @@ export default function ModuleShell<T>({
                 "rounded-[var(--bd-radius-md)] border px-3 text-[10px] font-bold transition-all",
                 isMobile ? "h-10 px-4 text-[11px]" : "h-8 px-3",
                 f.value === opt
-                  ? "border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]"
-                  : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
+                  ? "border-bd-status-info-border bg-bd-status-info-bg text-bd-status-info-text"
+                  : "border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface"
               )}
             >
               {opt}
@@ -210,7 +210,7 @@ export default function ModuleShell<T>({
     return (
       <Select value={f.value} onValueChange={f.onChange}>
         <SelectTrigger className={cn(
-          "w-full rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors",
+          "w-full rounded-[var(--bd-radius-md)] border-bd-border bg-bd-surface-muted px-3 text-[11px] font-bold text-bd-text hover:bg-bd-surface transition-colors",
           isMobile ? "h-10" : "h-8"
         )}>
           <SelectValue placeholder={f.label} />
@@ -226,14 +226,14 @@ export default function ModuleShell<T>({
 
   const FilterTray = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className={cn(
-      "overflow-hidden transition-all duration-300 ease-in-out border-b border-[hsl(var(--bd-border))]/40 bg-[hsl(var(--bd-card-bg))]",
+      "overflow-hidden transition-all duration-300 ease-in-out border-b border-bd-border/40 bg-bd-card-bg",
       filtersOpen ? "max-h-[800px] opacity-100 py-4" : "max-h-0 opacity-0 py-0 border-b-0"
     )}>
       <div className={cn("grid gap-4", isMobile ? "px-4 grid-cols-1" : "px-0 grid-cols-2 lg:grid-cols-3")}>
         {filters?.map(f => (
           <div key={f.label} className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+              <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
                 {f.label}
               </span>
               {f.value && f.value !== 'All' && (
@@ -249,7 +249,7 @@ export default function ModuleShell<T>({
           </div>
         ))}
         {filterPanel && (
-          <div className="col-span-full pt-2 border-t border-[hsl(var(--bd-border))]/20">
+          <div className="col-span-full pt-2 border-t border-bd-border/20">
             {filterPanel}
           </div>
         )}
@@ -260,7 +260,7 @@ export default function ModuleShell<T>({
             variant="ghost" 
             size="sm"
             onClick={onResetFilters}
-            className="h-8 rounded-md text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-status-danger-text))] hover:bg-[hsl(var(--bd-status-danger-bg))]"
+            className="h-8 rounded-md text-[10px] font-black uppercase tracking-widest text-bd-status-danger-text hover:bg-bd-status-danger-bg"
           >
             Reset All Filters
           </Button>
@@ -292,7 +292,7 @@ export default function ModuleShell<T>({
                 onClick={toggleSearch}
                 className={cn(
                   "h-9 w-9 rounded-xl transition-all",
-                  (searchOpen || searchValue) ? "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]" : "border-transparent"
+                  (searchOpen || searchValue) ? "border-bd-border bg-bd-surface-muted" : "border-transparent"
                 )}
                 aria-label={searchOpen ? 'Hide search' : 'Show search'}
               >
@@ -306,7 +306,7 @@ export default function ModuleShell<T>({
                   onClick={toggleFilters}
                   className={cn(
                     "h-9 w-9 rounded-xl transition-all",
-                    (filtersOpen || hasActiveFilters) ? "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]" : "border-transparent",
+                    (filtersOpen || hasActiveFilters) ? "border-bd-border bg-bd-surface-muted" : "border-transparent",
                     hasActiveFilters && "text-primary"
                   )}
                   aria-label="Toggle filters"
@@ -321,21 +321,21 @@ export default function ModuleShell<T>({
 
         {/* Mobile Search Input (Revealed) */}
         <div className={cn(
-          "overflow-hidden transition-all duration-200 ease-in-out border-b border-[hsl(var(--bd-border))]/30 bg-[hsl(var(--bd-surface))]",
+          "overflow-hidden transition-all duration-200 ease-in-out border-b border-bd-border/30 bg-bd-surface",
           searchOpen ? "max-h-16 py-3" : "max-h-0 py-0 border-b-0"
         )}>
           <div className="px-4">
-            <div className="relative flex items-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] h-10 px-3">
-              <Search className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+            <div className="relative flex items-center rounded-xl border border-bd-border bg-bd-surface-muted h-10 px-3">
+              <Search className="h-4 w-4 text-bd-text-muted" />
               <Input
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-full border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0 text-[hsl(var(--bd-text))]"
+                className="h-full border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0 text-bd-text"
               />
               {searchValue && (
                  <button onClick={() => onSearchChange('')} className="p-1">
-                   <X className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+                   <X className="h-4 w-4 text-bd-text-muted" />
                  </button>
               )}
             </div>
@@ -355,18 +355,18 @@ export default function ModuleShell<T>({
             <div className={cn("text-[10px] font-black uppercase tracking-wider", toneStyle.foreground)}>
               {eyebrow}
             </div>
-            <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">
+            <h1 className="text-xl font-black tracking-tight text-bd-text">
               {title}
             </h1>
           </div>
           <div className="flex items-center gap-2">
              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[hsl(var(--bd-text-muted))]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-bd-text-muted" />
                 <Input
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="h-9 pl-9 pr-3 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-none text-[11px] font-bold text-[hsl(var(--bd-text))]"
+                  className="h-9 pl-9 pr-3 rounded-xl border-bd-border bg-bd-surface-muted shadow-none text-[11px] font-bold text-bd-text"
                 />
              </div>
              {(filters || onFilterClick || filterPanel) && (
@@ -376,8 +376,8 @@ export default function ModuleShell<T>({
                   size="sm"
                   onClick={toggleFilters}
                   className={cn(
-                    "h-9 gap-2 rounded-xl border-[hsl(var(--bd-border))] text-[hsl(var(--bd-text-muted))] px-4 hover:text-[hsl(var(--bd-text))]",
-                    (filtersOpen || hasActiveFilters) && "bg-[hsl(var(--bd-surface-muted))]"
+                    "h-9 gap-2 rounded-xl border-bd-border text-bd-text-muted px-4 hover:text-bd-text",
+                    (filtersOpen || hasActiveFilters) && "bg-bd-surface-muted"
                   )}
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -418,12 +418,12 @@ export default function ModuleShell<T>({
               records.map(renderRow)
             ) : (
               emptyState || (
-                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-10 text-center shadow-inner">
-                  <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-bd-border bg-bd-surface/50 py-10 text-center shadow-inner">
+                  <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-bd-surface-muted text-bd-text-muted">
                     <Search className="h-4 w-4" />
                   </div>
-                  <div className="mt-3 text-sm font-bold text-[hsl(var(--bd-text))]">No {title.toLowerCase()} found</div>
-                  <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">Try adjusting your search or create a new one to get started.</div>
+                  <div className="mt-3 text-sm font-bold text-bd-text">No {title.toLowerCase()} found</div>
+                  <div className="mt-1 text-[11px] text-bd-text-muted">Try adjusting your search or create a new one to get started.</div>
                 </div>
               )
             )
@@ -436,7 +436,7 @@ export default function ModuleShell<T>({
                 variant="outline"
                 disabled={loadingMore}
                 onClick={onLoadMore}
-                className="h-11 rounded-[var(--bd-radius-lg)] px-8 font-bold border-[hsl(var(--bd-border))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                className="h-11 rounded-[var(--bd-radius-lg)] px-8 font-bold border-bd-border text-bd-text-muted hover:bg-bd-surface-muted"
               >
                 {loadingMore ? (
                   <>

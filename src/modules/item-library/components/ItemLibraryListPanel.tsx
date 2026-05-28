@@ -32,9 +32,9 @@ type ItemLibraryListPanelProps = {
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
   return (
-    <div className="border-b border-[hsl(var(--bd-border))] px-4 py-[10px]">
-      <div className="mb-2 h-[13px] animate-pulse rounded bg-[hsl(var(--bd-border))]/50" style={{ width: wide ? '72%' : '58%' }} />
-      <div className="h-[10px] w-[48%] animate-pulse rounded bg-[hsl(var(--bd-border))]/30" />
+    <div className="border-b border-bd-border px-4 py-[10px]">
+      <div className="mb-2 h-[13px] animate-pulse rounded bg-bd-border/50" style={{ width: wide ? '72%' : '58%' }} />
+      <div className="h-[10px] w-[48%] animate-pulse rounded bg-bd-border/30" />
     </div>
   )
 }
@@ -52,10 +52,10 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
       onClick={onClick}
       className={[
         'inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-[10px] py-1 text-[11px] font-semibold transition-all duration-150',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--bd-button-primary-bg))]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-button-primary-bg',
         active
-          ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-sm'
-          : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))]',
+          ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm'
+          : 'border-bd-border bg-bd-card-bg text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text',
       ].join(' ')}
     >
       {label}
@@ -87,14 +87,14 @@ export function ItemLibraryListPanel({
   const isLibrary = workflowMode === 'library'
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] shadow-none">
-      <div className="flex-shrink-0 border-b border-[hsl(var(--bd-border))] px-4 pb-3 pt-4">
+    <div className="flex h-full flex-col overflow-hidden border-r border-bd-border bg-bd-surface-muted shadow-none">
+      <div className="flex-shrink-0 border-b border-bd-border px-4 pb-3 pt-4">
         <div className="mb-[10px] flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[hsl(var(--bd-text-muted))]">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-bd-text-muted">
               {isLibrary ? 'Library' : 'Cleanup Hub'}
             </span>
-            <span className="text-[10px] font-medium text-[hsl(var(--bd-text-muted))]/70">
+            <span className="text-[10px] font-medium text-bd-text-muted/70">
               {loading ? '...' : (
                 <>
                   {serverFilterCounts
@@ -103,7 +103,7 @@ export function ItemLibraryListPanel({
                   {totalUnresolvedIssues > 0 && (
                     <>
                       <span className="mx-1">·</span>
-                      <span className="text-[hsl(var(--bd-status-warning-text))]">{totalUnresolvedIssues} issues</span>
+                      <span className="text-bd-status-warning-text">{totalUnresolvedIssues} issues</span>
                     </>
                   )}
                 </>
@@ -118,7 +118,7 @@ export function ItemLibraryListPanel({
       </div>
 
       {isLibrary ? (
-        <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-[hsl(var(--bd-border))] px-4 pb-[10px] pt-[10px]">
+        <div className="flex flex-shrink-0 gap-[6px] overflow-x-auto border-b border-bd-border px-4 pb-[10px] pt-[10px]">
           <FilterChip label={serverFilterCounts ? `All (${serverFilterCounts.all.toLocaleString()})` : 'All'} active={activeFilter === 'all'} onClick={() => onFilterChange('all')} />
           <FilterChip
             label="Flagged"
@@ -147,8 +147,8 @@ export function ItemLibraryListPanel({
         ) : !isLibrary && viewMode === 'duplicates' ? (
           duplicateGroups.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-[13px] font-semibold text-[hsl(var(--bd-text))]">No duplicate candidates found</p>
-              <p className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
+              <p className="text-[13px] font-semibold text-bd-text">No duplicate candidates found</p>
+              <p className="mt-1 text-[11px] text-bd-text-muted">
                 Review similar item names will appear here when the current list has close matches.
               </p>
             </div>
@@ -168,11 +168,11 @@ export function ItemLibraryListPanel({
           )
         ) : items.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <p className="text-[13px] font-semibold text-[hsl(var(--bd-text))]">
+            <p className="text-[13px] font-semibold text-bd-text">
               {searchText ? 'No matching items' : 'No items yet'}
             </p>
             {!searchText ? (
-              <p className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
+              <p className="mt-1 text-[11px] text-bd-text-muted">
                 Items appear here as invoices and quotations are created.
               </p>
             ) : null}

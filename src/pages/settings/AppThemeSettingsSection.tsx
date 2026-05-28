@@ -53,20 +53,20 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
         className={cn(
           'h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all',
           selected
-            ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]'
-            : 'border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]'
+            ? 'border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]'
+            : 'border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg hover:border-bd-border hover:bg-[hsl(var(--bd-surface-muted)/0.3)]'
         )}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">{title}</h4>
-            <p className="text-[11px] leading-relaxed text-[hsl(var(--bd-text-muted))]">
+            <h4 className="text-sm font-bold text-bd-text">{title}</h4>
+            <p className="text-[11px] leading-relaxed text-bd-text-muted">
               {description}
             </p>
           </div>
           <div className={cn(
             "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-            selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+            selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
           )}>
             <Check size={12} strokeWidth={3} />
           </div>
@@ -197,7 +197,7 @@ export function AppThemeSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Aesthetics
           </p>
         </div>
@@ -205,7 +205,7 @@ export function AppThemeSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={() => setIsEditorOpen(true)}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Pencil className="mr-2 h-3.5 w-3.5" />
           Configure Theme
@@ -237,7 +237,7 @@ export function AppThemeSettingsSection() {
                 <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(background) || BASE_BACKGROUND) : (activePreset?.preview.background || BASE_BACKGROUND) }} />
                 <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(card) || BASE_CARD) : (activePreset?.preview.card || BASE_CARD) }} />
              </div>
-             <p className="text-[11px] text-[hsl(var(--bd-text-muted))] leading-relaxed max-w-[200px]">
+             <p className="text-[11px] text-bd-text-muted leading-relaxed max-w-[200px]">
                Selected theme applies to all pages and surfaces across the application.
              </p>
           </div>
@@ -258,7 +258,7 @@ export function AppThemeSettingsSection() {
               {/* Presets Grid */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h5 className="text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Semantic Presets</h5>
+                  <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Semantic Presets</h5>
                   <Badge variant="outline" className="gap-1 border-emerald-100 bg-emerald-50 text-emerald-700 font-bold text-[9px] uppercase">
                     <Sparkles className="h-2.5 w-2.5" />
                     Recommended
@@ -285,19 +285,19 @@ export function AppThemeSettingsSection() {
                     <div className={cn(
                       "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
                       selectedMode === BASE_THEME_MODE
-                        ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
-                        : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
+                        ? "border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                        : "border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg hover:border-bd-border hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
                     )}>
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h4 className="text-sm font-bold">Standard UI</h4>
                         <div className={cn(
                           "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-                          selectedMode === BASE_THEME_MODE ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+                          selectedMode === BASE_THEME_MODE ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
                         )}>
                           <Check size={12} strokeWidth={3} />
                         </div>
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--bd-text-muted))]">Default Bigdrops experience.</p>
+                      <p className="text-[11px] text-bd-text-muted">Default Bigdrops experience.</p>
                     </div>
                   </button>
 
@@ -310,19 +310,19 @@ export function AppThemeSettingsSection() {
                     <div className={cn(
                       "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
                       selectedMode === 'custom'
-                        ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
-                        : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
+                        ? "border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                        : "border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg hover:border-bd-border hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
                     )}>
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <h4 className="text-sm font-bold">Custom Build</h4>
                         <div className={cn(
                           "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-                          selectedMode === 'custom' ? "border-emerald-500 bg-emerald-500 text-white" : "border-[hsl(var(--bd-border))] bg-transparent text-transparent"
+                          selectedMode === 'custom' ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
                         )}>
                           <Check size={12} strokeWidth={3} />
                         </div>
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--bd-text-muted))]">Manual surface overrides.</p>
+                      <p className="text-[11px] text-bd-text-muted">Manual surface overrides.</p>
                     </div>
                   </button>
                 </div>
@@ -332,7 +332,7 @@ export function AppThemeSettingsSection() {
               {selectedMode === 'custom' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                    <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-                   <h5 className="text-[11px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Manual Color Overrides</h5>
+                   <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Manual Color Overrides</h5>
                    
                    <div className="grid gap-4">
                       <SettingsField label="Page Background">
@@ -346,7 +346,7 @@ export function AppThemeSettingsSection() {
                             type="color"
                             value={normalizeHexColor(background) || DEFAULT_BACKGROUND}
                             onChange={(e) => setBackground(e.target.value.toUpperCase())}
-                            className="h-10 w-12 cursor-pointer rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-1"
+                            className="h-10 w-12 cursor-pointer rounded-lg border border-bd-border bg-bd-card-bg p-1"
                           />
                         </div>
                       </SettingsField>
@@ -362,7 +362,7 @@ export function AppThemeSettingsSection() {
                             type="color"
                             value={normalizeHexColor(card) || DEFAULT_CARD}
                             onChange={(e) => setCard(e.target.value.toUpperCase())}
-                            className="h-10 w-12 cursor-pointer rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-1"
+                            className="h-10 w-12 cursor-pointer rounded-lg border border-bd-border bg-bd-card-bg p-1"
                           />
                         </div>
                       </SettingsField>
@@ -376,7 +376,7 @@ export function AppThemeSettingsSection() {
                   variant="outline"
                   size="lg"
                   onClick={handleReset}
-                  className="w-full h-12 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-black uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+                  className="w-full h-12 rounded-xl border-bd-border bg-bd-card-bg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
                 >
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Restore Factory Defaults

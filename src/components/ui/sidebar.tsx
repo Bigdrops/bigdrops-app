@@ -170,7 +170,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "flex h-full w-(--sidebar-width) flex-col bg-[hsl(var(--bd-layout-sidebar))] text-[hsl(var(--bd-text))]",
+          "flex h-full w-(--sidebar-width) flex-col bg-[hsl(var(--bd-layout-sidebar))] text-bd-text",
           className
         )}
         {...props}
@@ -188,7 +188,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-[hsl(var(--bd-layout-sidebar))] p-0 text-[hsl(var(--bd-text))] [&>button]:hidden"
+          className="w-(--sidebar-width) bg-[hsl(var(--bd-layout-sidebar))] p-0 text-bd-text [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -208,7 +208,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer hidden text-[hsl(var(--bd-text))] md:block"
+      className="group peer hidden text-bd-text md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -235,7 +235,7 @@ function Sidebar({
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l border-[hsl(var(--bd-border))]",
+            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l border-bd-border",
           className
         )}
         {...props}
@@ -243,7 +243,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full flex-col bg-[hsl(var(--bd-layout-sidebar))] group-data-[variant=floating]:rounded-[var(--bd-radius-lg)] group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-[hsl(var(--bd-border))]"
+          className="flex size-full flex-col bg-[hsl(var(--bd-layout-sidebar))] group-data-[variant=floating]:rounded-[var(--bd-radius-lg)] group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-bd-border"
         >
           {children}
         </div>
@@ -276,7 +276,7 @@ function SidebarTrigger({
       <SidebarToggleIcon
         isOpen={isOpen}
         strokeWidth={2}
-        className="size-5 text-[hsl(var(--bd-text))]"
+        className="size-5 text-bd-text"
       />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
@@ -479,13 +479,13 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-[var(--bd-radius-md)] p-2 text-left text-xs ring-[hsl(var(--bd-focus-ring))] outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] focus-visible:ring-2 active:bg-[hsl(var(--bd-surface-muted))] active:text-[hsl(var(--bd-text))] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-[hsl(var(--bd-surface-muted))] data-open:hover:text-[hsl(var(--bd-text))] data-active:bg-[hsl(var(--bd-surface-muted))] data-active:font-medium data-active:text-[hsl(var(--bd-text))] [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-[var(--bd-radius-md)] p-2 text-left text-xs ring-[hsl(var(--bd-focus-ring))] outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-bd-surface-muted hover:text-bd-text focus-visible:ring-2 active:bg-bd-surface-muted active:text-bd-text disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-bd-surface-muted data-open:hover:text-bd-text data-active:bg-bd-surface-muted data-active:font-medium data-active:text-bd-text [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
-        default: "hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))]",
+        default: "hover:bg-bd-surface-muted hover:text-bd-text",
         outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted))] hover:text-[hsl(var(--bd-text))] hover:shadow-[0_0_0_1px_hsl(var(--bd-border))]",
+          "bg-background shadow-[0_0_0_1px_hsl(var(--bd-border))] hover:bg-bd-surface-muted hover:text-bd-text hover:shadow-[0_0_0_1px_hsl(var(--bd-border))]",
       },
       size: {
         default: "h-8 text-xs",

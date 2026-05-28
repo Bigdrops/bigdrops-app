@@ -194,8 +194,8 @@ export default function Layout({
         <div className="hidden md:block">
           {!isHome && !hidePageHeader ? (
             <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-[var(--bd-space-md)]">
-              <div className="rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-border))] border-l-4 border-l-[hsl(var(--bd-status-info-text))] bg-[hsl(var(--bd-surface))] px-5 py-3 shadow-none">
-                <h1 className="text-lg font-bold text-[hsl(var(--bd-text))]">{title}</h1>
+              <div className="rounded-[var(--bd-radius-md)] border border-bd-border border-l-4 border-l-[hsl(var(--bd-status-info-text))] bg-bd-surface px-5 py-3 shadow-none">
+                <h1 className="text-lg font-bold text-bd-text">{title}</h1>
               </div>
             </header>
           ) : null}

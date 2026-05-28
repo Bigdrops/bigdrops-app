@@ -154,7 +154,7 @@ export function NotificationSettingsPanel({
 
   if (!userId) {
     return (
-      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4 text-sm text-[hsl(var(--bd-text-muted))]">
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4 text-sm text-bd-text-muted">
         Sign in to manage notification preferences.
       </div>
     )
@@ -170,7 +170,7 @@ export function NotificationSettingsPanel({
           title="Delivery Channels"
           description="Control how you receive alerts and reports."
           action={
-            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('channels')} className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]">
+            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('channels')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
               Edit Channels
             </Button>
           }
@@ -197,7 +197,7 @@ export function NotificationSettingsPanel({
           title="Reminder Schedules"
           description="Automated alerts for pending and overdue invoices."
           action={
-            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('schedules')} className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]">
+            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('schedules')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
               Edit Schedules
             </Button>
           }
@@ -226,10 +226,10 @@ export function NotificationSettingsPanel({
         >
           <div className="flex items-center justify-between gap-4 px-5 py-4">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[hsl(var(--bd-text-muted))] opacity-70">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
                 Push Token Validity
               </p>
-              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+              <p className="mt-1 text-xs text-bd-text-muted">
                 Send a test push to ensure your device is correctly registered.
               </p>
             </div>
@@ -238,7 +238,7 @@ export function NotificationSettingsPanel({
               size="sm"
               onClick={handleTestPush}
               disabled={testingPush || !preferences.channels.push}
-              className="rounded-full border-[hsl(var(--bd-border))] text-xs font-bold"
+              className="rounded-full border-bd-border text-xs font-bold"
             >
               {testingPush ? (
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />

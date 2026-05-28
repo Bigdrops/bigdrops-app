@@ -394,12 +394,12 @@ export default function ComplianceOverview({
         <ComplianceRecentActivity items={recentActivityItems} />
       </div>
 
-      <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-xs text-[hsl(var(--bd-text-muted))]">
+      <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-4 py-3 text-xs text-bd-text-muted">
         Expected WHT is configured on invoices. Receipt tracking starts only when WHT is actually deducted on a payment.
       </div>
 
       {queueItems.length > 0 ? (
-        <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-xs text-[hsl(var(--bd-text-muted))]">
+        <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-4 py-3 text-xs text-bd-text-muted">
           Action items route into the existing VAT, WHT Receipts, Filings, and Obligations workflows without creating any fake in-place actions.
         </div>
       ) : null}

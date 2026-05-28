@@ -68,7 +68,7 @@ export default function WhtReceiptQueueRow({
           onOpen(entry)
         }
       }}
-      className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm transition-colors hover:bg-[hsl(var(--bd-surface-muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg))]"
+      className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm transition-colors hover:bg-bd-surface-muted focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg"
     >
       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] xl:items-center">
         <div className="min-w-0 space-y-2">
@@ -79,7 +79,7 @@ export default function WhtReceiptQueueRow({
             {hasNotes ? (
               <Badge
                 variant="outline"
-                className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]"
+                className="rounded-full border-bd-border bg-bd-surface px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-bd-text-muted"
               >
                 Notes
               </Badge>
@@ -87,13 +87,13 @@ export default function WhtReceiptQueueRow({
           </div>
 
           <div className="space-y-1">
-            <p className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">{entry.payment.client_name || entry.receipt?.client_name || 'Unknown client'}</p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[hsl(var(--bd-text-muted))]">
+            <p className="truncate text-sm font-bold text-bd-text">{entry.payment.client_name || entry.receipt?.client_name || 'Unknown client'}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-bd-text-muted">
               {entry.payment.invoice_id ? (
                 <Link
                   to={`/invoices/${entry.payment.invoice_id}`}
                   onClick={(event) => event.stopPropagation()}
-                  className="font-semibold text-[hsl(var(--bd-text))] transition-colors hover:text-[hsl(var(--bd-button-primary-bg))] hover:underline"
+                  className="font-semibold text-bd-text transition-colors hover:text-bd-button-primary-bg hover:underline"
                 >
                   {entry.payment.invoice_number || 'Invoice record'}
                 </Link>
@@ -106,18 +106,18 @@ export default function WhtReceiptQueueRow({
           </div>
         </div>
 
-        <div className="grid gap-2 text-xs text-[hsl(var(--bd-text-muted))] sm:grid-cols-3 xl:grid-cols-2">
+        <div className="grid gap-2 text-xs text-bd-text-muted sm:grid-cols-3 xl:grid-cols-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">WHT Amount</p>
-            <p className="mt-1 text-sm font-black text-[hsl(var(--bd-status-danger-text))]">{formatNaira(entry.payment.wht_amount)}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-bd-text-muted">WHT Amount</p>
+            <p className="mt-1 text-sm font-black text-bd-status-danger-text">{formatNaira(entry.payment.wht_amount)}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">Current State</p>
-            <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">{meta.label}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-bd-text-muted">Current State</p>
+            <p className="mt-1 text-sm font-semibold text-bd-text">{meta.label}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">Evidence Ref</p>
-            <p className="mt-1 truncate text-sm font-semibold text-[hsl(var(--bd-text))]">{receiptNumber || 'Not recorded'}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-bd-text-muted">Evidence Ref</p>
+            <p className="mt-1 truncate text-sm font-semibold text-bd-text">{receiptNumber || 'Not recorded'}</p>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export default function WhtReceiptQueueRow({
               event.stopPropagation()
               onOpen(entry)
             }}
-            className="h-10 min-w-[148px] rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
+            className="h-10 min-w-[148px] rounded-[var(--bd-radius-lg)] border-bd-border bg-bd-surface px-4 text-[10px] font-black uppercase tracking-[0.18em] text-bd-text hover:bg-bd-surface-muted"
           >
             {processing ? 'Working...' : entry.actionLabel}
           </Button>

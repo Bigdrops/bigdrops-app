@@ -22,8 +22,8 @@ export function BoqEditor({
   const [showPreview, setShowPreview] = useState(false)
 
   return (
-    <div className="flex flex-col min-h-screen bg-[hsl(var(--bd-surface-muted))]">
-      <header className="sticky top-0 z-20 bg-[hsl(var(--bd-surface))]/80 backdrop-blur-md border-b border-[hsl(var(--bd-border))]/50 px-4 h-16 flex items-center justify-between">
+    <div className="flex flex-col min-h-screen bg-bd-surface-muted">
+      <header className="sticky top-0 z-20 bg-bd-surface/80 backdrop-blur-md border-b border-bd-border/50 px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {onCancel && (
             <Button variant="ghost" size="icon" onClick={onCancel} className="h-9 w-9 rounded-xl">
@@ -36,7 +36,7 @@ export function BoqEditor({
             {showPreview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>
-          <Button onClick={() => onSave(boq)} disabled={saving} size="sm" className="h-9 gap-1.5 bg-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-button-primary-bg))]/90 text-[hsl(var(--bd-button-primary-text))] font-bold uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]">
+          <Button onClick={() => onSave(boq)} disabled={saving} size="sm" className="h-9 gap-1.5 bg-bd-button-primary-bg hover:bg-bd-button-primary-bg/90 text-bd-button-primary-text font-bold uppercase tracking-wider shadow-sm transition-all active:scale-[0.98]">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             Save BOQ
           </Button>
@@ -49,7 +49,7 @@ export function BoqEditor({
             <BoqForm boq={boq} onChange={(patch) => setBoq((current) => ({ ...current, ...patch }))} />
           </div>
         </div>
-        <div className={cn('flex-1 overflow-y-auto bg-[hsl(var(--bd-surface-muted))] p-4 md:p-8 flex items-start justify-center', showPreview ? 'block md:w-1/2' : 'hidden')}>
+        <div className={cn('flex-1 overflow-y-auto bg-bd-surface-muted p-4 md:p-8 flex items-start justify-center', showPreview ? 'block md:w-1/2' : 'hidden')}>
           <div className="w-full max-w-sm sticky top-0 animate-in fade-in zoom-in-95 duration-300">
             <BoqPreview boq={boq} />
           </div>

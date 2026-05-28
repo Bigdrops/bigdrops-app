@@ -121,7 +121,7 @@ export default function ProjectDocumentView() {
   if (!documentRecord) {
     return (
       <Layout title="Document" session={null}>
-        <div className="px-4 py-10 text-sm text-[hsl(var(--bd-status-danger-text))]">Document not found.</div>
+        <div className="px-4 py-10 text-sm text-bd-status-danger-text">Document not found.</div>
       </Layout>
     )
   }
@@ -129,11 +129,11 @@ export default function ProjectDocumentView() {
   return (
     <Layout title={mainLabel} session={null} hidePageHeader>
       <div className="mx-auto w-full max-w-5xl space-y-4 px-3 pb-20 pt-4 sm:px-4 sm:pt-6">
-        <div className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
+        <div className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex rounded-full bg-[hsl(var(--bd-text))] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--bd-app-bg))]">
+                <span className="inline-flex rounded-full bg-bd-text px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-bd-app-bg">
                   {meta.label}
                 </span>
                 {documentDate ? <span className="text-sm text-muted-foreground">{documentDate}</span> : null}
@@ -147,7 +147,7 @@ export default function ProjectDocumentView() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Project
               </Button>
-              <Button type="button" className="w-full bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90" onClick={handleExportPdf} disabled={pdfLoading}>
+              <Button type="button" className="w-full bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90" onClick={handleExportPdf} disabled={pdfLoading}>
                 {!pdfLoading ? <Download className="mr-2 h-4 w-4" /> : null}
                 <ButtonLoading loading={pdfLoading} loadingLabel="Generating PDF" idleLabel="Export PDF" />
               </Button>
@@ -156,11 +156,11 @@ export default function ProjectDocumentView() {
         </div>
 
         {keyFields.length > 0 ? (
-          <section className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
-            <div className="mb-4 text-sm font-semibold text-[hsl(var(--bd-text))]">Key Fields</div>
+          <section className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
+            <div className="mb-4 text-sm font-semibold text-bd-text">Key Fields</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {keyFields.map((field) => (
-                <div key={`${field.label}-${field.value}`} className="rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/50 px-4 py-3">
+                <div key={`${field.label}-${field.value}`} className="rounded-2xl border border-bd-border bg-bd-surface-muted/50 px-4 py-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{field.label}</div>
                   <div className="mt-1 break-words text-sm font-medium text-foreground">{field.value}</div>
                 </div>
@@ -170,12 +170,12 @@ export default function ProjectDocumentView() {
         ) : null}
 
         {itemsTable ? (
-          <section className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
-            <div className="mb-4 text-sm font-semibold text-[hsl(var(--bd-text))]">Items</div>
+          <section className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
+            <div className="mb-4 text-sm font-semibold text-bd-text">Items</div>
             <div className="overflow-x-auto rounded-2xl border border-border">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-text))] text-left text-xs uppercase tracking-wide text-[hsl(var(--bd-app-bg))]">
+                  <tr className="border-b border-bd-border bg-bd-text text-left text-xs uppercase tracking-wide text-bd-app-bg">
                     {itemsTable.columns.map((column) => (
                       <th key={column} className="px-3 py-2 font-semibold">
                         {column.replace(/_/g, ' ')}
@@ -185,7 +185,7 @@ export default function ProjectDocumentView() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {itemsTable.rows.map((row, index) => (
-                    <tr key={`item-row-${index}`} className={index % 2 === 0 ? 'bg-[hsl(var(--bd-surface))]' : 'bg-[hsl(var(--bd-surface-muted))]/30'}>
+                    <tr key={`item-row-${index}`} className={index % 2 === 0 ? 'bg-bd-surface' : 'bg-bd-surface-muted/30'}>
                       {itemsTable.columns.map((column) => (
                         <td key={`${index}-${column}`} className="px-3 py-2.5 text-sm text-foreground">
                           {row[column] || ''}
@@ -200,22 +200,22 @@ export default function ProjectDocumentView() {
         ) : null}
 
         {notes ? (
-          <section className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
-            <div className="mb-3 text-sm font-semibold text-[hsl(var(--bd-text))]">Notes</div>
-            <div className="rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/50 px-4 py-3 text-sm leading-6 text-foreground">
+          <section className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
+            <div className="mb-3 text-sm font-semibold text-bd-text">Notes</div>
+            <div className="rounded-2xl border border-bd-border bg-bd-surface-muted/50 px-4 py-3 text-sm leading-6 text-foreground">
               {notes}
             </div>
           </section>
         ) : null}
 
         {images.length > 0 ? (
-          <section className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
-            <div className="mb-4 text-sm font-semibold text-[hsl(var(--bd-text))]">Images</div>
+          <section className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
+            <div className="mb-4 text-sm font-semibold text-bd-text">Images</div>
             <div className="space-y-3">
               {images.slice(0, 4).map((image, index) => (
                 <div
                   key={`img-${index}`}
-                  className="overflow-hidden rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/50"
+                  className="overflow-hidden rounded-2xl border border-bd-border bg-bd-surface-muted/50"
                 >
                   <img
                     src={image.url}
@@ -240,10 +240,10 @@ export default function ProjectDocumentView() {
           </section>
         ) : null}
 
-        <section className="rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-sm sm:p-6">
+        <section className="rounded-3xl border border-bd-border bg-bd-surface p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-semibold text-[hsl(var(--bd-text))]">Raw JSON</div>
+              <div className="text-sm font-semibold text-bd-text">Raw JSON</div>
               <div className="mt-1 text-sm text-muted-foreground">Stored for traceability, but kept secondary to the readable view.</div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -259,7 +259,7 @@ export default function ProjectDocumentView() {
           </div>
 
           {jsonOpen ? (
-            <pre className="mt-4 overflow-x-auto rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-4 text-xs leading-6 text-[hsl(var(--bd-text))]">
+            <pre className="mt-4 overflow-x-auto rounded-2xl border border-bd-border bg-bd-surface-muted p-4 text-xs leading-6 text-bd-text">
               {rawJson}
             </pre>
           ) : null}

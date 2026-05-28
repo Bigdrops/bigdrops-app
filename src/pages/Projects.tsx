@@ -157,13 +157,13 @@ function ProjectsContent() {
         }}
         emptyState={
           <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-border bg-card p-16 text-center shadow-inner">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--bd-radius-lg)] bg-bd-surface-muted text-bd-text-muted">
               <FolderOpen className="h-7 w-7" />
             </div>
-            <div className="text-base font-bold text-[hsl(var(--bd-text))]">
+            <div className="text-base font-bold text-bd-text">
               {hasActiveFilters ? 'No projects found' : 'No projects yet'}
             </div>
-            <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+            <div className="mt-1 text-sm text-bd-text-muted">
               {hasActiveFilters ? 'Try a different search or filter.' : 'Create your first project to start organizing activity.'}
             </div>
           </div>

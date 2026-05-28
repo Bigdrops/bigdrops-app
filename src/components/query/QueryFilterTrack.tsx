@@ -88,7 +88,7 @@ export default function QueryFilterTrack({
   return (
     <div
       className={cn(
-        "h-12 flex-shrink-0 flex items-center gap-2 px-4 overflow-x-auto overflow-y-hidden border-b border-[hsl(var(--bd-border))]/20",
+        "h-12 flex-shrink-0 flex items-center gap-2 px-4 overflow-x-auto overflow-y-hidden border-b border-bd-border/20",
         className
       )}
     >
@@ -100,7 +100,7 @@ export default function QueryFilterTrack({
           "flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors",
           chips.length > 0
             ? "border-primary/30 bg-primary/5 text-primary"
-            : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
+            : "border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface"
         )}
       >
         <SlidersHorizontal className="h-3 w-3" />
@@ -116,16 +116,16 @@ export default function QueryFilterTrack({
       {chips.map((chip) => (
         <div
           key={`${chip.category}-${chip.value}`}
-          className="flex-shrink-0 flex items-center gap-1 h-7 pl-2.5 pr-1.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[10px] font-bold text-[hsl(var(--bd-text))]"
+          className="flex-shrink-0 flex items-center gap-1 h-7 pl-2.5 pr-1.5 rounded-md border border-bd-border bg-bd-surface-muted text-[10px] font-bold text-bd-text"
         >
           <span className="whitespace-nowrap">{chip.label}</span>
           <button
             type="button"
             onClick={chip.onRemove}
-            className="flex-shrink-0 p-0.5 rounded hover:bg-[hsl(var(--bd-surface))] transition-colors"
+            className="flex-shrink-0 p-0.5 rounded hover:bg-bd-surface transition-colors"
             aria-label={`Remove ${chip.label} filter`}
           >
-            <X className="h-3 w-3 text-[hsl(var(--bd-text-muted))]" />
+            <X className="h-3 w-3 text-bd-text-muted" />
           </button>
         </div>
       ))}

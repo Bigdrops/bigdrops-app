@@ -250,13 +250,13 @@ export default function ViewWaybill() {
               subtitle="These controls update the saved waybill PDF design preset used by download."
             >
               <div className="space-y-4">
-                <div className="rounded-[24px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
-                  <div className="mb-3 text-sm font-semibold text-[hsl(var(--bd-text))]">PDF Design</div>
+                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 text-sm font-semibold text-bd-text">PDF Design</div>
                   <DocumentTemplateDesignOverrides value={designPreset} onChange={setDesignPreset} />
                 </div>
                 <button
                   type="button"
-                  className="h-11 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] transition hover:bg-[hsl(var(--bd-button-primary-bg))]/90"
+                  className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90"
                   onClick={() => {
                     setPdfDesignPreset('waybill', designPreset)
                     ui.closeSheet()

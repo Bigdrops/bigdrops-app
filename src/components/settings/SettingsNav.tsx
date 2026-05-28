@@ -20,7 +20,7 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
       {groups.map((group) => (
         <div key={group.id} className={cn(isSidebar ? "space-y-2" : "mb-6")}>
           <div className="px-3 mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[hsl(var(--bd-text-muted))] opacity-50">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-bd-text-muted opacity-50">
               {group.label}
             </p>
           </div>
@@ -43,22 +43,22 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                       ? "w-full rounded-[var(--bd-radius-md)] px-3 py-2" 
                       : "w-full px-4 py-3 hover:bg-[hsl(var(--bd-surface-muted)/0.4)]",
                     isSidebar && isActive 
-                      ? "bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))]" 
-                      : isSidebar ? "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]/50 hover:text-[hsl(var(--bd-text))]"
+                      ? "bg-bd-surface-muted text-bd-text" 
+                      : isSidebar ? "text-bd-text-muted hover:bg-bd-surface-muted/50 hover:text-bd-text"
                       : ""
                   )}
                 >
                   {/* Active Indicator Line for Sidebar */}
                   {isSidebar && isActive && (
-                    <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-[hsl(var(--bd-button-primary-bg))]" />
+                    <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-bd-button-primary-bg" />
                   )}
 
                   <div className={cn(
                     "flex shrink-0 items-center justify-center rounded-[var(--bd-radius-sm)] transition-all",
                     isSidebar ? "h-8 w-8" : "h-9 w-9",
                     isActive 
-                      ? "bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]" 
-                      : "bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] group-hover:text-[hsl(var(--bd-text))]"
+                      ? "bg-bd-button-primary-bg text-bd-button-primary-text" 
+                      : "bg-bd-surface-muted text-bd-text-muted group-hover:text-bd-text"
                   )}>
                     <Icon size={isSidebar ? 16 : 18} />
                   </div>
@@ -66,12 +66,12 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                   <div className="flex-1 min-w-0">
                     <p className={cn(
                       "text-sm font-semibold truncate",
-                      isActive || !isSidebar ? "text-[hsl(var(--bd-text))]" : "text-[hsl(var(--bd-text-muted))]"
+                      isActive || !isSidebar ? "text-bd-text" : "text-bd-text-muted"
                     )}>
                       {item.label}
                     </p>
                     <p className={cn(
-                      "text-[11px] leading-tight text-[hsl(var(--bd-text-muted))] truncate opacity-70",
+                      "text-[11px] leading-tight text-bd-text-muted truncate opacity-70",
                       isSidebar && isTablet && "hidden"
                     )}>
                       {item.desc}
@@ -79,7 +79,7 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                   </div>
 
                   {!isSidebar && (
-                    <ChevronRight size={14} className="text-[hsl(var(--bd-text-muted))] opacity-30 group-hover:opacity-100 transition-all" />
+                    <ChevronRight size={14} className="text-bd-text-muted opacity-30 group-hover:opacity-100 transition-all" />
                   )}
                 </button>
               )

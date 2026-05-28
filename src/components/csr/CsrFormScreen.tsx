@@ -79,14 +79,14 @@ function Section({
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
           <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
           <span className="truncate">{title}</span>
         </div>
         {action}
       </div>
 
-      <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
         {children}
       </div>
     </section>
@@ -94,14 +94,14 @@ function Section({
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-[hsl(var(--bd-text-muted))]">{children}</label>
+  return <label className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">{children}</label>
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`h-11 w-full rounded-[12px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[14px] text-[hsl(var(--bd-text))] outline-none ${props.className || ''}`}
+      className={`h-11 w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] text-bd-text outline-none ${props.className || ''}`}
     />
   )
 }
@@ -110,7 +110,7 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`min-h-[84px] w-full rounded-[12px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 py-3 text-[14px] text-[hsl(var(--bd-text))] outline-none ${props.className || ''}`}
+      className={`min-h-[84px] w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 py-3 text-[14px] text-bd-text outline-none ${props.className || ''}`}
     />
   )
 }
@@ -130,7 +130,7 @@ function SelectField({
 
   return (
     <Select value={safeValue} onValueChange={(next) => onChange(next === '__placeholder__' ? '' : next)}>
-      <SelectTrigger className="h-11 w-full rounded-[12px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-3 text-[14px] text-[hsl(var(--bd-text))] shadow-none focus:ring-0 focus:ring-offset-0">
+      <SelectTrigger className="h-11 w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] text-bd-text shadow-none focus:ring-0 focus:ring-offset-0">
         <SelectValue placeholder={placeholder || 'Select'} />
       </SelectTrigger>
       <SelectContent>
@@ -159,7 +159,7 @@ function HeaderActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))] disabled:opacity-60"
+      className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text disabled:opacity-60"
     >
       {children}
     </button>
@@ -246,27 +246,27 @@ export default function CsrFormScreen({
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-[hsl(var(--bd-app-bg))] px-3 pb-[200px] pt-4 sm:px-4">
+    <div className="mx-auto min-h-screen max-w-md bg-bd-app-bg px-3 pb-[200px] pt-4 sm:px-4">
       <div className="space-y-5">
         <Section title="Document Details" dotClassName="bg-slate-900">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[hsl(var(--bd-text-muted))]">
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">
                 {mode === 'new' ? 'New CSR' : 'Edit CSR'}
               </div>
-              <h1 className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-[hsl(var(--bd-text))]">
+              <h1 className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-bd-text">
                 {mode === 'new' ? 'Create CSR' : 'Update CSR'}
               </h1>
             </div>
             <button
               type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-bd-border bg-bd-surface text-bd-text-muted"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="mt-4 rounded-[16px] border-2 border-dashed border-[hsl(var(--bd-border-strong))] bg-[hsl(var(--bd-surface-muted))] p-3">
+          <div className="mt-4 rounded-[16px] border-2 border-dashed border-bd-border-strong bg-bd-surface-muted p-3">
             <ClientSelector
               clientId={String(csr.client_id || '')}
               clientName={String(csr.client_name || '')}
@@ -291,12 +291,12 @@ export default function CsrFormScreen({
             <div>
               <FieldLabel>CSR Number</FieldLabel>
               <div className="relative">
-                <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(var(--bd-text-muted))]" />
+                <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
                 <TextInput
                   value={String(csr.csr_number || '')}
                   onChange={(event) => onUpdate('csr_number', event.target.value)}
                   onBlur={handleCsrNumberBlur}
-                  className="bg-[hsl(var(--bd-surface-muted))] pl-9 font-mono font-bold"
+                  className="bg-bd-surface-muted pl-9 font-mono font-bold"
                 />
               </div>
             </div>
@@ -338,14 +338,14 @@ export default function CsrFormScreen({
             <button
               type="button"
               onClick={() => setImportSheetOpen(true)}
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))]"
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text"
             >
               Import
             </button>
             <button
               type="button"
               disabled
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))] opacity-70"
+              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text opacity-70"
             >
               Settings
             </button>
@@ -565,23 +565,23 @@ export default function CsrFormScreen({
             <input
               value={materialsTitle}
               onChange={(event) => setMaterialsTitle(event.target.value)}
-              className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))] outline-none"
+              className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted outline-none"
             />
           }
           dotClassName="bg-[hsl(var(--bd-emerald))]"
           action={
-            <span className="inline-flex h-8 items-center rounded-full border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-3 text-[12px] font-bold text-[hsl(var(--bd-status-success-text))]">
+            <span className="inline-flex h-8 items-center rounded-full border border-bd-status-success-border bg-bd-status-success-bg px-3 text-[12px] font-bold text-bd-status-success-text">
               {materialCount} item{materialCount === 1 ? '' : 's'}
             </span>
           }
         >
           <div className="space-y-3">
-            <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-[3px]">
+            <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted p-[3px]">
               <button
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'comma')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
+                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted'
                 }`}
               >
                 Comma
@@ -590,7 +590,7 @@ export default function CsrFormScreen({
                 type="button"
                 onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
                 className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]'
+                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted'
                 }`}
               >
                 Tabulate
@@ -599,23 +599,23 @@ export default function CsrFormScreen({
 
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
+                <div key={index} className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
                   <div className="grid grid-cols-[minmax(0,1.4fr)_88px_86px] gap-3">
                     <TextInput
                       value={row.item}
                       onChange={(event) => onUpdateMaterialRow(index, 'item', event.target.value)}
                       placeholder="Material"
-                      className="bg-[hsl(var(--bd-surface))]"
+                      className="bg-bd-surface"
                     />
 
                     <NumericInput
                       value={row.quantity}
                       onChange={(val) => onUpdateMaterialRow(index, 'quantity', String(val))}
                       placeholder="Qty"
-                      className="bg-[hsl(var(--bd-surface))] text-center"
+                      className="bg-bd-surface text-center"
                     />
 
-                    <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-[hsl(var(--bd-border))] [&>div>input]:bg-[hsl(var(--bd-surface))] [&>div>input]:px-3 [&>div>input]:text-[14px]">
+                    <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-bd-border [&>div>input]:bg-bd-surface [&>div>input]:px-3 [&>div>input]:text-[14px]">
                       <UnitInput value={row.unit || ''} onChange={(value) => onUpdateMaterialRow(index, 'unit', value)} />
                     </div>
                   </div>
@@ -624,7 +624,7 @@ export default function CsrFormScreen({
                     <button
                       type="button"
                       onClick={() => onRemoveMaterialRow(index)}
-                      className="mt-3 text-[12px] font-bold text-[hsl(var(--bd-status-danger-text))]"
+                      className="mt-3 text-[12px] font-bold text-bd-status-danger-text"
                     >
                       Remove
                     </button>
@@ -636,7 +636,7 @@ export default function CsrFormScreen({
             <button
               type="button"
               onClick={onAddMaterialRow}
-              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[hsl(var(--bd-border))] px-3 text-[13px] font-bold text-[hsl(var(--bd-text))]"
+              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border px-3 text-[13px] font-bold text-bd-text"
             >
               Add material
             </button>
@@ -661,23 +661,23 @@ export default function CsrFormScreen({
                   onChange={(event) => onUpdateMeta('technicianName', event.target.value)}
                 />
               </div>
-              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
-                <div className="text-[13px] font-bold text-[hsl(var(--bd-text))]">Technician Signature</div>
-                <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
+              <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
+                <div className="text-[13px] font-bold text-bd-text">Technician Signature</div>
+                <div className="mt-1 text-[11px] text-bd-text-muted">
                   {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
                 </div>
                 <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
                   <button
                     type="button"
                     onClick={() => setSignatorySheetOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-button-primary-text))]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
                   >
                     {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
                   </button>
                   <button
                     type="button"
                     onClick={() => onUpdate('technician_signatory_id', null)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
                   >
                     Leave blank
                   </button>
@@ -713,9 +713,9 @@ export default function CsrFormScreen({
                 />
               </div>
 
-              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
-                <div className="text-[13px] font-bold text-[hsl(var(--bd-text))]">Recipient Signature</div>
-                <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
+              <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
+                <div className="text-[13px] font-bold text-bd-text">Recipient Signature</div>
+                <div className="mt-1 text-[11px] text-bd-text-muted">
                   {recipientSignatureName || 'Leave blank for offline sign.'}
                 </div>
                 <input
@@ -739,7 +739,7 @@ export default function CsrFormScreen({
                   <button
                     type="button"
                     onClick={() => recipientSignatureInputRef.current?.click()}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-button-primary-text))]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
                   >
                     Upload signature
                   </button>
@@ -752,7 +752,7 @@ export default function CsrFormScreen({
                         recipientSignatureInputRef.current.value = ''
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-[13px] text-[12px] font-bold text-[hsl(var(--bd-text))]"
+                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
                   >
                     Leave blank
                   </button>
@@ -776,7 +776,7 @@ export default function CsrFormScreen({
         <button
           onClick={onSave}
           disabled={saveDisabled}
-          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
         >
           <Save className="h-6 w-6" />
         </button>
@@ -798,7 +798,7 @@ export default function CsrFormScreen({
           </SheetHeader>
           <div className="mt-4 space-y-2 pb-4">
             {signatories.length === 0 ? (
-              <div className="rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-6 text-center text-[13px] text-[hsl(var(--bd-text-muted))]">
+              <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted px-4 py-6 text-center text-[13px] text-bd-text-muted">
                 No signatories found.
               </div>
             ) : (
@@ -813,12 +813,12 @@ export default function CsrFormScreen({
                       setSignatorySheetOpen(false)
                     }}
                     className={`w-full rounded-[16px] border p-4 text-left ${
-                      active ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))]'
+                      active ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text' : 'border-bd-border bg-bd-surface text-bd-text'
                     }`}
                   >
                     <div className="text-[14px] font-bold">{signatory.name}</div>
                     {signatory.role ? (
-                      <div className={`mt-1 text-[12px] ${active ? 'text-[hsl(var(--bd-text-muted))]' : 'text-[hsl(var(--bd-text-muted))]'}`}>
+                      <div className={`mt-1 text-[12px] ${active ? 'text-bd-text-muted' : 'text-bd-text-muted'}`}>
                         {signatory.role}
                       </div>
                     ) : null}

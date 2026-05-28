@@ -91,7 +91,7 @@ export default function ProjectActionRail({
         <button
           type="button"
           onClick={() => setActionsOpen(!actionsOpen)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-2xl transition hover:scale-110 active:scale-95"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-bd-button-primary-bg text-bd-button-primary-text shadow-2xl transition hover:scale-110 active:scale-95"
         >
           {actionsOpen ? <X size={24} /> : <FileText size={24} />}
         </button>

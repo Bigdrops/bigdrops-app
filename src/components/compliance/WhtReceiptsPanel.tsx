@@ -284,8 +284,8 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
   if (loading) {
     return (
-      <Card className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
-        <CardContent className="flex items-center gap-2 p-6 text-sm text-[hsl(var(--bd-text-muted))]">
+      <Card className="border-bd-border bg-bd-surface-muted">
+        <CardContent className="flex items-center gap-2 p-6 text-sm text-bd-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading WHT records...
         </CardContent>
@@ -297,11 +297,11 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--bd-text))]">
-            <ReceiptIcon className="h-4 w-4 text-[hsl(var(--bd-status-danger-text))]" />
+          <h3 className="flex items-center gap-2 text-sm font-bold text-bd-text">
+            <ReceiptIcon className="h-4 w-4 text-bd-status-danger-text" />
             WHT Receipts
           </h3>
-          <p className="text-sm text-[hsl(var(--bd-text-muted))]">
+          <p className="text-sm text-bd-text-muted">
             Track missing, requested, received, and verified withholding tax evidence.
           </p>
         </div>
@@ -321,13 +321,13 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">Attention Queue</h4>
-          <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+          <h4 className="text-sm font-bold text-bd-text">Attention Queue</h4>
+          <p className="mt-1 text-xs text-bd-text-muted">
             Untracked payments and follow-up receipts are ordered ahead of cleared evidence.
           </p>
         </div>
         {counts.pending > 0 ? (
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">
             {counts.pending} pending in follow-up
           </p>
         ) : null}
@@ -335,18 +335,18 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
       <div className="space-y-3">
         {whtPayments.length === 0 && localReceipts.length === 0 ? (
-          <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-10 text-center">
-            <p className="text-sm font-bold text-[hsl(var(--bd-text))]">No WHT receipt tracking yet.</p>
-            <p className="mt-2 text-sm text-[hsl(var(--bd-text-muted))]">
+          <div className="rounded-[var(--bd-radius-lg)] border border-dashed border-bd-border bg-bd-card-bg px-4 py-10 text-center">
+            <p className="text-sm font-bold text-bd-text">No WHT receipt tracking yet.</p>
+            <p className="mt-2 text-sm text-bd-text-muted">
               WHT receipt actions will appear here when payments include WHT deductions.
             </p>
           </div>
         ) : (
           <>
             {showTrackedSuccessState ? (
-              <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-4">
-                <p className="text-sm font-bold text-[hsl(var(--bd-status-success-text))]">All WHT receipts are tracked.</p>
-                <p className="mt-1 text-sm text-[hsl(var(--bd-status-success-text))]">
+              <div className="rounded-[var(--bd-radius-lg)] border border-bd-status-success-border bg-bd-status-success-bg px-4 py-4">
+                <p className="text-sm font-bold text-bd-status-success-text">All WHT receipts are tracked.</p>
+                <p className="mt-1 text-sm text-bd-status-success-text">
                   No missing or requested receipts need attention.
                 </p>
               </div>
@@ -375,10 +375,10 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
             {verifiedEntries.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between pt-2">
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">
                     Verified receipts
                   </h5>
-                  <span className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))]">{verifiedEntries.length} cleared</span>
+                  <span className="text-[10px] font-bold text-bd-text-muted">{verifiedEntries.length} cleared</span>
                 </div>
                 {verifiedEntries.map((entry) => (
                   <WhtReceiptQueueRow
@@ -397,11 +397,11 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
       <Sheet open={!!selectedEntry} onOpenChange={(open) => !open && closeSheet()}>
         <SheetContent
           side={isMobile ? 'bottom' : 'right'}
-          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl"
+          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl"
         >
           {selectedEntry ? (
             <>
-              <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
+              <SheetHeader className="border-b border-bd-border">
                 <SheetTitle>WHT Receipt Detail</SheetTitle>
                 <SheetDescription>
                   Review payment context, update receipt status, and manage evidence notes.
@@ -410,21 +410,21 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
 
               <div className="flex-1 overflow-y-auto px-5 py-5">
                 <div className="space-y-5">
-                  <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+                  <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface p-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Client</p>
-                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">Client</p>
+                        <p className="mt-1 text-sm font-semibold text-bd-text">
                           {selectedEntry.payment.client_name || selectedEntry.receipt?.client_name || 'Unknown client'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Invoice</p>
-                        <div className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">Invoice</p>
+                        <div className="mt-1 text-sm font-semibold text-bd-text">
                           {selectedEntry.payment.invoice_id ? (
                             <Link
                               to={`/invoices/${selectedEntry.payment.invoice_id}`}
-                              className="transition-colors hover:text-[hsl(var(--bd-button-primary-bg))] hover:underline"
+                              className="transition-colors hover:text-bd-button-primary-bg hover:underline"
                             >
                               {selectedEntry.payment.invoice_number || 'Invoice record'}
                             </Link>
@@ -434,23 +434,23 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">Payment date</p>
-                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">Payment date</p>
+                        <p className="mt-1 text-sm font-semibold text-bd-text">
                           {selectedEntry.payment.date ? formatDisplayDate(selectedEntry.payment.date) : 'No payment date'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">WHT amount</p>
-                        <p className="mt-1 text-sm font-black text-[hsl(var(--bd-status-danger-text))]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">WHT amount</p>
+                        <p className="mt-1 text-sm font-black text-bd-status-danger-text">
                           {formatNaira(selectedEntry.payment.wht_amount)}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                  <div className="space-y-4 rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4">
                     <div className="space-y-2">
-                      <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Current receipt status</Label>
+                      <Label className="text-[11px] font-bold text-bd-text-muted">Current receipt status</Label>
                       {selectedEntry.receipt ? (
                         <div className="flex flex-wrap gap-2">
                           {(['pending', 'requested', 'received', 'verified'] as WhtReceiptStatus[]).map((status) => (
@@ -467,14 +467,14 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-3 text-sm text-[hsl(var(--bd-status-warning-text))]">
+                        <div className="rounded-[var(--bd-radius-lg)] border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-3 text-sm text-bd-status-warning-text">
                           Initializing tracking will create a pending receipt record for this payment.
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="wht-receipt-number" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                      <Label htmlFor="wht-receipt-number" className="text-[11px] font-bold text-bd-text-muted">
                         Receipt reference / number
                       </Label>
                       <Input
@@ -488,7 +488,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="wht-receipt-notes" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                      <Label htmlFor="wht-receipt-notes" className="text-[11px] font-bold text-bd-text-muted">
                         Notes
                       </Label>
                       <Textarea
@@ -503,7 +503,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
                 </div>
               </div>
 
-              <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+              <SheetFooter className="border-t border-bd-border bg-bd-card-bg pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
                 <SheetClose asChild>
                   <Button variant="outline" className="h-10 sm:min-w-28">
                     Cancel

@@ -73,7 +73,7 @@ export default function Settings() {
       title="Settings" 
       session={session} 
       hidePageHeader 
-      contentClassName="bg-[hsl(var(--bd-surface))]"
+      contentClassName="bg-bd-surface"
     >
       <SettingsShell
         groups={groups}

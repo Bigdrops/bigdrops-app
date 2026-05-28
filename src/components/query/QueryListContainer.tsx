@@ -44,12 +44,12 @@ function QueryListContainerInner<T>({
           results.map(renderRow)
         ) : (
           emptyState || (
-            <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-10 text-center shadow-inner">
-              <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+            <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-bd-border bg-bd-surface/50 py-10 text-center shadow-inner">
+              <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-bd-surface-muted text-bd-text-muted">
                 <Search className="h-4 w-4" />
               </div>
-              <div className="mt-3 text-sm font-bold text-[hsl(var(--bd-text))]">No results found</div>
-              <div className="mt-1 text-[11px] text-[hsl(var(--bd-text-muted))]">
+              <div className="mt-3 text-sm font-bold text-bd-text">No results found</div>
+              <div className="mt-1 text-[11px] text-bd-text-muted">
                 Try adjusting your search or filters.
               </div>
             </div>
@@ -63,7 +63,7 @@ function QueryListContainerInner<T>({
             variant="outline"
             disabled={loadingMore}
             onClick={onLoadMore}
-            className="h-11 rounded-[var(--bd-radius-lg)] px-8 font-bold border-[hsl(var(--bd-border))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+            className="h-11 rounded-[var(--bd-radius-lg)] px-8 font-bold border-bd-border text-bd-text-muted hover:bg-bd-surface-muted"
           >
             {loadingMore ? (
               <>

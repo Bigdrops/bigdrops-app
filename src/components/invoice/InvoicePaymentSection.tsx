@@ -69,7 +69,7 @@ export default function InvoicePaymentSection({
             </div>
             <div className="rounded-xl border border-border bg-muted/50 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Balance Due</div>
-              <div className={`mt-1 text-sm font-bold ${balanceDue > 0 ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-status-success-text))]'}`}>{formatMoney(balanceDue)}</div>
+              <div className={`mt-1 text-sm font-bold ${balanceDue > 0 ? 'text-bd-status-danger-text' : 'text-bd-status-success-text'}`}>{formatMoney(balanceDue)}</div>
             </div>
             <div className="rounded-xl border border-border bg-muted/50 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Status</div>
@@ -85,7 +85,7 @@ export default function InvoicePaymentSection({
               <div className="text-xs text-muted-foreground">Running balance reflects non-voided settlements in date order.</div>
             </div>
             {showRecordPaymentButton && onRecordPayment ? (
-              <Button type="button" size="sm" className="bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:brightness-110" onClick={onRecordPayment}>
+              <Button type="button" size="sm" className="bg-bd-button-primary-bg text-bd-button-primary-text hover:brightness-110" onClick={onRecordPayment}>
                 Record Payment
               </Button>
             ) : null}
@@ -124,7 +124,7 @@ export default function InvoicePaymentSection({
                         <TableCell className={rowClassName}>{payment.reference || '-'}</TableCell>
                         <TableCell className={`text-right ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
                         <TableCell className={`text-right font-semibold ${rowClassName}`}>{formatMoney(payment.total)}</TableCell>
-                        <TableCell className={`text-right font-semibold ${payment.runningBalance > 0 ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-status-success-text))]'} ${rowClassName}`}>
+                        <TableCell className={`text-right font-semibold ${payment.runningBalance > 0 ? 'text-bd-status-danger-text' : 'text-bd-status-success-text'} ${rowClassName}`}>
                           {formatMoney(payment.runningBalance)}
                         </TableCell>
                         <TableCell className="text-right">
@@ -171,7 +171,7 @@ export default function InvoicePaymentSection({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`text-xs font-bold ${payment.runningBalance > 0 ? 'text-[hsl(var(--bd-status-danger-text))]' : 'text-[hsl(var(--bd-status-success-text))]'} ${payment.voided_at ? 'line-through opacity-40' : ''}`}>
+                  <div className={`text-xs font-bold ${payment.runningBalance > 0 ? 'text-bd-status-danger-text' : 'text-bd-status-success-text'} ${payment.voided_at ? 'line-through opacity-40' : ''}`}>
                     {formatMoney(payment.runningBalance)}
                   </div>
                   {isAdmin && !payment.voided_at ? (

@@ -19,11 +19,11 @@ export function ReportsShell({
   return (
     <div className={cn("flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500", className)}>
       {header}
-      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-1.5 shadow-sm overflow-x-auto no-scrollbar">
+      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-1.5 shadow-sm overflow-x-auto no-scrollbar">
         {navigation}
       </div>
       {filterBar ? (
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm">
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-4 shadow-sm">
           {filterBar}
         </div>
       ) : null}

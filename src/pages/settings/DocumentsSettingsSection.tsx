@@ -104,7 +104,7 @@ export function DocumentsSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Output Controls
           </p>
         </div>
@@ -112,7 +112,7 @@ export function DocumentsSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={() => setIsEditorOpen(true)}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Pencil className="mr-2 h-3.5 w-3.5" />
           Edit Controls
@@ -125,7 +125,7 @@ export function DocumentsSettingsSection() {
       >
         <div className="px-5 py-4">
           {enabledCount === 0 ? (
-            <div className="flex items-center gap-3 text-[hsl(var(--bd-text-muted))]">
+            <div className="flex items-center gap-3 text-bd-text-muted">
               <FileEdit size={16} className="opacity-40" />
               <span className="text-sm font-medium italic">All document types disabled</span>
             </div>
@@ -157,11 +157,11 @@ export function DocumentsSettingsSection() {
                 <div
                   key={row.key}
                   onClick={() => toggleDraft(row.key)}
-                  className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] px-4 py-4 transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
+                  className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg px-4 py-4 transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{row.label}</div>
-                    <div className="mt-0.5 text-xs text-[hsl(var(--bd-text-muted))] leading-relaxed">
+                    <div className="text-sm font-bold text-bd-text">{row.label}</div>
+                    <div className="mt-0.5 text-xs text-bd-text-muted leading-relaxed">
                       {row.description}
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export function DocumentsSettingsSection() {
                     checked={draftSettings[row.key]?.enabled}
                     onCheckedChange={() => toggleDraft(row.key)}
                     onClick={(e) => e.stopPropagation()}
-                    className="data-[state=checked]:bg-[hsl(var(--bd-button-primary-bg))]"
+                    className="data-[state=checked]:bg-bd-button-primary-bg"
                   />
                 </div>
               ))}

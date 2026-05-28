@@ -84,7 +84,7 @@ export function FormCommercialTerms({
     <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <div>
         <SectionLabel color="amber">Commercial Terms</SectionLabel>
-        <div className="grid grid-cols-2 gap-4 border-b border-[hsl(var(--bd-border))] pb-4">
+        <div className="grid grid-cols-2 gap-4 border-b border-bd-border pb-4">
             <div>
               <label className={labelCls}>Payment Terms</label>
               <Select 
@@ -237,7 +237,7 @@ export function FormCommercialTerms({
                     className={`${fieldCls} ${charge.withTax !== false ? 'pr-9' : ''}`}
                   />
                   {charge.withTax !== false ? (
-                    <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-[hsl(var(--bd-text-muted))]">
+                    <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-bd-text-muted">
                       <Percent className="h-3.5 w-3.5" />
                     </span>
                   ) : null}
@@ -253,7 +253,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveExtraCharge(charge.id)}
-                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text transition hover:brightness-95"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -263,14 +263,14 @@ export function FormCommercialTerms({
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(true)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-bd-border bg-bd-surface py-2 text-[12px] font-bold text-bd-text transition hover:border-bd-button-primary-bg hover:bg-bd-surface-muted"
                >
                  + Charge (with Tax)
                </button>
                <button
                  type="button"
                  onClick={() => onAddExtraCharge(false)}
-                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                 className="flex-1 rounded-[var(--bd-radius)] border border-dashed border-bd-border bg-bd-surface py-2 text-[12px] font-bold text-bd-text transition hover:border-bd-border hover:bg-bd-surface-muted"
                >
                  + Charge (No Tax)
                </button>
@@ -305,7 +305,7 @@ export function FormCommercialTerms({
                 <button
                   type="button"
                   onClick={() => onRemoveAdditionalField(field.id)}
-                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition hover:bg-[hsl(var(--bd-status-danger-bg))] hover:text-[hsl(var(--bd-status-danger-text))]"
+                  className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-bd-border bg-bd-surface-muted text-bd-text-muted transition hover:bg-bd-status-danger-bg hover:text-bd-status-danger-text"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -314,7 +314,7 @@ export function FormCommercialTerms({
             <button
               type="button"
               onClick={onAddAdditionalField}
-              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] py-2 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:border-[hsl(var(--bd-button-primary-bg))] hover:bg-[hsl(var(--bd-surface-muted))]"
+              className="mt-2 w-full rounded-[var(--bd-radius)] border border-dashed border-bd-border bg-bd-surface py-2 text-[12px] font-bold text-bd-text transition hover:border-bd-button-primary-bg hover:bg-bd-surface-muted"
             >
               Add Additional Field
             </button>

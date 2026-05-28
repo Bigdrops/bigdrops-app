@@ -41,29 +41,29 @@ export type UnifiedActionSheetProps = {
 
 const TONE_CLASSES = {
   default: {
-    iconBg: "bg-[hsl(var(--bd-action-icon-bg))] text-[hsl(var(--bd-action-icon-text))]",
+    iconBg: "bg-bd-action-icon-bg text-bd-action-icon-text",
     text: "text-[hsl(var(--bd-surface-action-text))]",
-    row: "border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] hover:bg-[hsl(var(--bd-surface-action-hover))]",
+    row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   success: {
-    iconBg: "bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
-    text: "text-[hsl(var(--bd-status-success-text))]",
-    row: "border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] hover:brightness-95",
+    iconBg: "bg-bd-status-success-bg text-bd-status-success-text",
+    text: "text-bd-status-success-text",
+    row: "border-bd-status-success-border bg-bd-status-success-bg hover:brightness-95",
   },
   warning: {
-    iconBg: "bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]",
-    text: "text-[hsl(var(--bd-status-warning-text))]",
-    row: "border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] hover:brightness-95",
+    iconBg: "bg-bd-status-warning-bg text-bd-status-warning-text",
+    text: "text-bd-status-warning-text",
+    row: "border-bd-status-warning-border bg-bd-status-warning-bg hover:brightness-95",
   },
   danger: {
-    iconBg: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]",
-    text: "text-[hsl(var(--bd-status-danger-text))]",
-    row: "border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] hover:brightness-95",
+    iconBg: "bg-bd-status-danger-bg text-bd-status-danger-text",
+    text: "text-bd-status-danger-text",
+    row: "border-bd-status-danger-border bg-bd-status-danger-bg hover:brightness-95",
   },
   info: {
-    iconBg: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]",
-    text: "text-[hsl(var(--bd-status-info-text))]",
-    row: "border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] hover:brightness-95",
+    iconBg: "bg-bd-status-info-bg text-bd-status-info-text",
+    text: "text-bd-status-info-text",
+    row: "border-bd-status-info-border bg-bd-status-info-bg hover:brightness-95",
   },
 }
 
@@ -102,7 +102,7 @@ export function UnifiedActionSheet({
           disabled={action.isLoading}
           onClick={() => handleActionClick(action)}
           className={cn(
-            "flex flex-col items-center justify-center rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-surface-action-border))] bg-[hsl(var(--bd-surface-action))] transition hover:bg-[hsl(var(--bd-surface-action-hover))] active:scale-[0.97]",
+            "flex flex-col items-center justify-center rounded-[var(--bd-overlay-radius)] border border-bd-surface-action-border bg-bd-surface-action transition hover:bg-bd-surface-action-hover active:scale-[0.97]",
             "min-h-[84px] gap-1.5 px-2 py-2",
             action.isLoading && "opacity-70 cursor-not-allowed"
           )}
@@ -138,7 +138,7 @@ export function UnifiedActionSheet({
             ? "grid-cols-[28px,minmax(0,1fr),auto] px-3 py-2" 
             : "grid-cols-[36px,minmax(0,1fr),auto] px-4 py-2.5",
           action.isSwitch && action.isActive
-            ? "border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] ring-1 ring-[hsl(var(--bd-status-success-border))]"
+            ? "border-bd-status-success-border bg-bd-status-success-bg ring-1 ring-bd-status-success-border"
             : tone.row,
           action.isLoading && "opacity-70 cursor-not-allowed"
         )}
@@ -147,7 +147,7 @@ export function UnifiedActionSheet({
           <div className={cn(
             "grid place-items-center shadow-sm ring-1 ring-[hsl(var(--bd-border)/0.2)]", 
             action.isSwitch && action.isActive
-              ? "bg-[hsl(var(--bd-status-success-text))] text-[hsl(var(--bd-surface))]"
+              ? "bg-bd-status-success-text text-bd-surface"
               : tone.iconBg,
             isCompact ? "h-7 w-7 rounded-[8px] [&_svg]:h-3.5 [&_svg]:w-3.5" : "h-9 w-9 rounded-[10px] [&_svg]:h-4.5 [&_svg]:w-4.5"
           )}>
@@ -156,7 +156,7 @@ export function UnifiedActionSheet({
         )}
         {hideIcons && <div />}
         <div className="min-w-0">
-          <div className={cn("font-bold tracking-tight", isCompact ? "text-[12px]" : "text-[13px]", action.isSwitch && action.isActive ? "text-[hsl(var(--bd-status-success-text))]" : tone.text)}>
+          <div className={cn("font-bold tracking-tight", isCompact ? "text-[12px]" : "text-[13px]", action.isSwitch && action.isActive ? "text-bd-status-success-text" : tone.text)}>
             {action.isLoading ? "Processing..." : action.label}
           </div>
           {showDescriptions && action.description && !action.isLoading && (
@@ -168,10 +168,10 @@ export function UnifiedActionSheet({
         {action.isSwitch ? (
            <div className={cn(
              "h-5 w-9 rounded-full border-2 transition-colors relative",
-             action.isActive ? "bg-[hsl(var(--bd-status-success-text))] border-transparent" : "bg-[hsl(var(--bd-surface-muted))] border-[hsl(var(--bd-border))]"
+             action.isActive ? "bg-bd-status-success-text border-transparent" : "bg-bd-surface-muted border-bd-border"
            )}>
               <div className={cn(
-                "absolute top-0.5 h-3 w-3 rounded-full bg-[hsl(var(--bd-card-bg))] transition-all shadow-sm",
+                "absolute top-0.5 h-3 w-3 rounded-full bg-bd-card-bg transition-all shadow-sm",
                 action.isActive ? "left-[1.125rem]" : "left-0.5"
               )} />
            </div>
@@ -253,7 +253,7 @@ export function UnifiedActionSheet({
               <button
                 type="button"
                 onClick={() => handleActionClick(deleteAction)}
-                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-overlay-radius)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-[13px] font-black text-[hsl(var(--bd-status-danger-text))] transition hover:brightness-95 active:scale-[0.99]"
+                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[var(--bd-overlay-radius)] border border-bd-status-danger-border bg-bd-status-danger-bg px-4 text-[13px] font-black text-bd-status-danger-text transition hover:brightness-95 active:scale-[0.99]"
               >
                 <div className="shrink-0 [&_svg]:h-4 [&_svg]:w-4">
                   {deleteAction.icon}

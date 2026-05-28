@@ -327,14 +327,14 @@ export default function ViewCSR() {
             >
               <div className="space-y-6">
                 {/* Template Selection */}
-                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
-                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Template</div>
+                <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
+                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Template</div>
                   <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
 
                 {/* ROW 1: Template Accent Color Switch (PulseFrame EXCLUSIVE) */}
                 {template === '1' ? (
-                  <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                  <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
                     <div
                       className="flex cursor-pointer items-center justify-between select-none"
                       onClick={() => {
@@ -342,11 +342,11 @@ export default function ViewCSR() {
                       }}
                     >
                       <div className="min-w-0 space-y-0.5">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                          <Palette className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                        <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+                          <Palette className="h-4 w-4 text-bd-button-primary-bg" />
                           Template Accent
                         </div>
-                        <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override PulseFrame structural accent with a custom palette.</p>
+                        <p className="text-xs text-bd-text-muted">Override PulseFrame structural accent with a custom palette.</p>
                       </div>
                       <Switch
                         checked={templateAccentColor !== 'auto'}
@@ -358,12 +358,12 @@ export default function ViewCSR() {
                     </div>
 
                     {templateAccentColor !== 'auto' ? (
-                      <div className="mt-4 space-y-3 rounded-[16px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">PulseFrame Palette</div>
+                      <div className="mt-4 space-y-3 rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">PulseFrame Palette</div>
                         <div className="grid grid-cols-6 gap-2">
                           <button
                             type="button"
-                            className="h-9 w-9 rounded-lg border-2 border-[hsl(var(--bd-text))] scale-110 shadow-sm transition"
+                            className="h-9 w-9 rounded-lg border-2 border-bd-text scale-110 shadow-sm transition"
                             style={{ backgroundColor: templateAccentColor }}
                             aria-label="Live color"
                           />
@@ -376,7 +376,7 @@ export default function ViewCSR() {
                                 onClick={() => setTemplateAccentColor(swatch.hex)}
                                 className={cn(
                                   'h-9 w-9 rounded-lg border-2 shadow-sm transition',
-                                  active ? 'border-[hsl(var(--bd-text))] scale-110' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
+                                  active ? 'border-bd-text scale-110' : 'border-transparent hover:border-bd-text-muted/40',
                                 )}
                                 style={{ backgroundColor: swatch.hex }}
                                 aria-label={swatch.label}
@@ -386,14 +386,14 @@ export default function ViewCSR() {
                           })}
                         </div>
                         <div className="relative">
-                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[hsl(var(--bd-text-muted))]">#</span>
+                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-bd-text-muted">#</span>
                           <Input
                             value={templateAccentColor.startsWith('#') ? templateAccentColor.slice(1) : templateAccentColor}
                             onChange={(e) => {
                               const raw = e.target.value.replace(/^#/, '')
                               setTemplateAccentColor(`#${raw}`)
                             }}
-                            className="h-10 rounded-[12px] bg-[hsl(var(--bd-surface))] pl-7 font-mono text-xs"
+                            className="h-10 rounded-[12px] bg-bd-surface pl-7 font-mono text-xs"
                             placeholder="0046C7"
                           />
                         </div>
@@ -403,7 +403,7 @@ export default function ViewCSR() {
                 ) : null}
 
                 {/* ROW 2: Ink Color Switch (Global) */}
-                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
                   <div
                     className="flex cursor-pointer items-center justify-between select-none"
                     onClick={() => {
@@ -416,11 +416,11 @@ export default function ViewCSR() {
                     }}
                   >
                     <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                        <PenLine className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+                        <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
                         Ink Color
                       </div>
-                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Override the fillable text color with a custom hex value.</p>
+                      <p className="text-xs text-bd-text-muted">Override the fillable text color with a custom hex value.</p>
                     </div>
                     <Switch
                       checked={customColor !== 'auto'}
@@ -448,7 +448,7 @@ export default function ViewCSR() {
                               onClick={() => setCustomColor(swatch)}
                               className={cn(
                                 'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-[hsl(var(--bd-text))] scale-110 ring-2 ring-[hsl(var(--bd-text))]/20' : 'border-transparent hover:border-[hsl(var(--bd-text-muted))]/40',
+                                active ? 'border-bd-text scale-110 ring-2 ring-bd-text/20' : 'border-transparent hover:border-bd-text-muted/40',
                               )}
                               style={{ backgroundColor: swatch }}
                               aria-label={`Color ${swatch}`}
@@ -467,7 +467,7 @@ export default function ViewCSR() {
                 </div>
 
                 {/* ROW 3: Handwriting Font Switch (Global) */}
-                <div className="rounded-[20px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-4">
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
                   <div
                     className="flex cursor-pointer items-center justify-between select-none"
                     onClick={() => {
@@ -475,11 +475,11 @@ export default function ViewCSR() {
                     }}
                   >
                     <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--bd-text))]">
-                        <Type className="h-4 w-4 text-[hsl(var(--bd-button-primary-bg))]" />
+                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+                        <Type className="h-4 w-4 text-bd-button-primary-bg" />
                         Handwriting Font
                       </div>
-                      <p className="text-xs text-[hsl(var(--bd-text-muted))]">Swap the handwriting script used for fillable data entries.</p>
+                      <p className="text-xs text-bd-text-muted">Swap the handwriting script used for fillable data entries.</p>
                     </div>
                     <Switch
                       checked={customFont !== 'auto'}
@@ -500,8 +500,8 @@ export default function ViewCSR() {
                           className={cn(
                             'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
                             customFont === font.value
-                              ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] border-[hsl(var(--bd-button-primary-bg))] shadow-sm ring-2 ring-[hsl(var(--bd-button-primary-bg))]/20'
-                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))] border-[hsl(var(--bd-border))] hover:border-[hsl(var(--bd-text-muted))]',
+                              ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
+                              : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
                           )}
                         >
                           {font.label}
@@ -514,7 +514,7 @@ export default function ViewCSR() {
                 {/* Save Button */}
                 <button
                   type="button"
-                  className="h-12 w-full rounded-[18px] bg-[hsl(var(--bd-button-primary-bg))] text-sm font-bold text-[hsl(var(--bd-button-primary-text))] transition hover:opacity-90"
+                  className="h-12 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-bold text-bd-button-primary-text transition hover:opacity-90"
                   onClick={() => {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)

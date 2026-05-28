@@ -202,7 +202,7 @@ export function BankingSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Payment Destinantions
           </p>
         </div>
@@ -210,7 +210,7 @@ export function BankingSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={openAdd}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Plus className="mr-2 h-3.5 w-3.5" />
           Add Account
@@ -219,12 +219,12 @@ export function BankingSettingsSection() {
 
       <div className="grid gap-6">
         {accounts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center px-6 rounded-[var(--bd-radius-xl)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))/0.3]">
-            <div className="rounded-full bg-[hsl(var(--bd-surface-muted))] p-4 mb-4">
-              <Landmark size={28} className="text-[hsl(var(--bd-text-muted))] opacity-30" />
+          <div className="flex flex-col items-center justify-center py-16 text-center px-6 rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-card-bg))/0.3]">
+            <div className="rounded-full bg-bd-surface-muted p-4 mb-4">
+              <Landmark size={28} className="text-bd-text-muted opacity-30" />
             </div>
-            <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">No bank accounts</h4>
-            <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Add accounts to receive payments on your documents.</p>
+            <h4 className="text-sm font-bold text-bd-text">No bank accounts</h4>
+            <p className="mt-1 text-xs text-bd-text-muted">Add accounts to receive payments on your documents.</p>
           </div>
         ) : (
           accounts.map((account) => (
@@ -240,7 +240,7 @@ export function BankingSettingsSection() {
                       size="sm"
                       onClick={() => setDefault(account.id)}
                       disabled={actionId === `default:${account.id}`}
-                      className="h-8 rounded-full text-[10px] font-black uppercase tracking-wider text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
+                      className="h-8 rounded-full text-[10px] font-black uppercase tracking-wider text-bd-text-muted hover:text-bd-text"
                     >
                       Set Default
                     </Button>
@@ -249,7 +249,7 @@ export function BankingSettingsSection() {
                     variant="ghost"
                     size="icon"
                     onClick={() => openEdit(account)}
-                    className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
+                    className="h-8 w-8 text-bd-text-muted hover:text-bd-text"
                   >
                     <Pencil size={14} />
                   </Button>
@@ -337,8 +337,8 @@ export function BankingSettingsSection() {
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-[hsl(var(--bd-text))]">Set as default</div>
-                  <div className="mt-0.5 text-xs text-[hsl(var(--bd-text-muted))]">
+                  <div className="text-sm font-bold text-bd-text">Set as default</div>
+                  <div className="mt-0.5 text-xs text-bd-text-muted">
                     Primary destination for new documents.
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export function BankingSettingsSection() {
                 <Switch
                   checked={!!form.is_default}
                   onCheckedChange={(value) => updateForm('is_default', value)}
-                  className="data-[state=checked]:bg-[hsl(var(--bd-button-primary-bg))]"
+                  className="data-[state=checked]:bg-bd-button-primary-bg"
                 />
               </div>
             </div>

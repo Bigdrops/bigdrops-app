@@ -57,29 +57,29 @@ export function SettingsShell({
   // Mobile View: Drill-down logic
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-[100dvh] w-full bg-[hsl(var(--bd-surface))]">
+      <div className="flex flex-col min-h-[100dvh] w-full bg-bd-surface">
         {/* Compact Mobile Header */}
         {!activeSection && (
-          <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[hsl(var(--bd-surface))] border-b border-[hsl(var(--bd-border)/0.5)]">
+          <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-bd-surface border-b border-[hsl(var(--bd-border)/0.5)]">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={openSidebar}
-                className="h-9 w-9 rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-[hsl(var(--bd-text))]"
+                className="h-9 w-9 rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-bd-text"
               >
                 <SidebarToggleIcon
                   isOpen={sidebarOpen}
                   strokeWidth={2}
-                  className="size-5 text-[hsl(var(--bd-text))]"
+                  className="size-5 text-bd-text"
                 />
               </Button>
-              <h1 className="text-lg font-bold tracking-tight text-[hsl(var(--bd-text))]">Settings</h1>
+              <h1 className="text-lg font-bold tracking-tight text-bd-text">Settings</h1>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full text-[hsl(var(--bd-text-muted))]"
+              className="h-9 w-9 rounded-full text-bd-text-muted"
             >
               <Search size={18} />
             </Button>
@@ -139,8 +139,8 @@ export function SettingsShell({
             {renderContent()}
           </SettingsSectionFrame>
         ) : (
-          <div className="flex h-[400px] items-center justify-center rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 shadow-sm">
-            <p className="text-sm font-medium text-[hsl(var(--bd-text-muted))]">Select a setting to manage</p>
+          <div className="flex h-[400px] items-center justify-center rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface-muted/30 shadow-sm">
+            <p className="text-sm font-medium text-bd-text-muted">Select a setting to manage</p>
           </div>
         )}
         <Footer />
@@ -151,7 +151,7 @@ export function SettingsShell({
 
 function Footer() {
   return (
-    <p className="text-center text-[10px] text-[hsl(var(--bd-text-muted))] font-black uppercase tracking-[0.3em] mt-12 pb-6 opacity-40">
+    <p className="text-center text-[10px] text-bd-text-muted font-black uppercase tracking-[0.3em] mt-12 pb-6 opacity-40">
       BIGDROPS ERP
     </p>
   )

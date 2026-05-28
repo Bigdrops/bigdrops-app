@@ -80,7 +80,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
         <button
           type="button"
           disabled={isCompiling}
-          className="p-2 bg-transparent border-0 rounded-md text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] transition-colors disabled:opacity-50 outline-none active:outline-none focus:outline-none"
+          className="p-2 bg-transparent border-0 rounded-md text-bd-text-muted hover:text-bd-text transition-colors disabled:opacity-50 outline-none active:outline-none focus:outline-none"
           style={{ minWidth: '44px', minHeight: '44px' }}
           aria-label="Export data"
         >

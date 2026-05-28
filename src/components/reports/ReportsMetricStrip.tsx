@@ -23,23 +23,23 @@ interface SimpleMetricItem {
 }
 
 const iconTones = {
-  green: "bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
-  red: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]",
-  amber: "bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]",
-  blue: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]",
+  green: "bg-bd-status-success-bg text-bd-status-success-text",
+  red: "bg-bd-status-danger-bg text-bd-status-danger-text",
+  amber: "bg-bd-status-warning-bg text-bd-status-warning-text",
+  blue: "bg-bd-status-info-bg text-bd-status-info-text",
 }
 
 const iconBgTones = {
-  green: "bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]",
-  red: "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]",
-  amber: "bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]",
-  blue: "bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]",
+  green: "bg-bd-status-success-bg text-bd-status-success-text",
+  red: "bg-bd-status-danger-bg text-bd-status-danger-text",
+  amber: "bg-bd-status-warning-bg text-bd-status-warning-text",
+  blue: "bg-bd-status-info-bg text-bd-status-info-text",
 }
 
 function SimpleMetricItemCard({ label, value, description, icon, tone = 'blue' }: SimpleMetricItem) {
   return (
     <div className={cn(
-      "flex flex-col gap-3 p-5 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] transition-all hover:shadow-md hover:-translate-y-0.5",
+      "flex flex-col gap-3 p-5 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg transition-all hover:shadow-md hover:-translate-y-0.5",
     )}>
       <div className="flex items-center justify-between gap-4">
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", iconBgTones[tone])}>
@@ -47,11 +47,11 @@ function SimpleMetricItemCard({ label, value, description, icon, tone = 'blue' }
         </div>
         <div className="text-right">
           <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1.5">{label}</p>
-          <p className="text-xl lg:text-2xl font-black tracking-tight leading-none text-[hsl(var(--bd-text))]">{value}</p>
+          <p className="text-xl lg:text-2xl font-black tracking-tight leading-none text-bd-text">{value}</p>
         </div>
       </div>
       {description && (
-        <p className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))] opacity-60 border-t border-[hsl(var(--bd-border)/0.3)] pt-2">
+        <p className="text-[10px] font-bold text-bd-text-muted opacity-60 border-t border-[hsl(var(--bd-border)/0.3)] pt-2">
           {description}
         </p>
       )}
@@ -63,16 +63,16 @@ function SimpleMetricItemCard({ label, value, description, icon, tone = 'blue' }
 function CompactMetricCard({ label, value, description, tone = 'blue', trend, subValue }: MetricItemProps) {
   return (
     <div className={cn(
-      "flex flex-col gap-2 p-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.3)] bg-[hsl(var(--bd-card-bg))] transition-all",
+      "flex flex-col gap-2 p-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.3)] bg-bd-card-bg transition-all",
     )}>
-      <p className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-50">{label}</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-50">{label}</p>
       <div className="flex items-baseline gap-2">
         <p className={cn(
           "text-lg font-black tracking-tight leading-none",
-          tone === 'green' && "text-[hsl(var(--bd-status-success-text))]",
-          tone === 'red' && "text-[hsl(var(--bd-status-danger-text))]",
-          tone === 'amber' && "text-[hsl(var(--bd-status-warning-text))]",
-          tone === 'blue' && "text-[hsl(var(--bd-text))]",
+          tone === 'green' && "text-bd-status-success-text",
+          tone === 'red' && "text-bd-status-danger-text",
+          tone === 'amber' && "text-bd-status-warning-text",
+          tone === 'blue' && "text-bd-text",
         )}>
           {value}
         </p>
@@ -80,18 +80,18 @@ function CompactMetricCard({ label, value, description, tone = 'blue', trend, su
           <span className={cn(
             "text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full",
             trend.startsWith('+') 
-              ? "border border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]"
-              : "border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"
+              ? "border border-bd-status-success-border bg-bd-status-success-bg text-bd-status-success-text"
+              : "border border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text"
           )}>
             {trend}
           </span>
         )}
       </div>
       {description && (
-        <p className="text-[10px] text-[hsl(var(--bd-text-muted))] opacity-50">{description}</p>
+        <p className="text-[10px] text-bd-text-muted opacity-50">{description}</p>
       )}
       {subValue && (
-        <p className="text-[10px] font-bold text-[hsl(var(--bd-text-muted))] opacity-40 border-t border-[hsl(var(--bd-border)/0.2)] pt-1.5 mt-1">
+        <p className="text-[10px] font-bold text-bd-text-muted opacity-40 border-t border-[hsl(var(--bd-border)/0.2)] pt-1.5 mt-1">
           {subValue}
         </p>
       )}

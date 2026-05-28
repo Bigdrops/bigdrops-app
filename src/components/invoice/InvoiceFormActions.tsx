@@ -39,7 +39,7 @@ export default function InvoiceFormActions({
           type="button"
           onClick={onCancel}
           variant="ghost"
-          className="h-11 border border-[hsl(var(--bd-border))] px-6 text-[14px] font-medium text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="h-11 border border-bd-border px-6 text-[14px] font-medium text-bd-text-muted hover:bg-bd-surface-muted"
         >
           Cancel
         </Button>

@@ -192,7 +192,7 @@ export default function RecordPaymentModal({
     <Dialog open={controlledOpen} onOpenChange={(next) => (next ? onOpenChange?.(next) : close())}>
       <DialogContent className="flex max-h-[90vh] max-w-[440px] flex-col overflow-hidden rounded-[var(--bd-radius-xl)] bg-card p-0 sm:max-w-[440px]">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
-          <DialogTitle className="border-l-4 border-[hsl(var(--bd-status-success-border))] pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
+          <DialogTitle className="border-l-4 border-bd-status-success-border pl-3 text-[17px] text-foreground">Record Payment</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Save a payment for {invoice.invoice_number}.
           </DialogDescription>
@@ -200,13 +200,13 @@ export default function RecordPaymentModal({
 
         <div className="max-h-[calc(100vh-12rem)] flex-1 space-y-4 overflow-y-auto px-5 py-4 pr-1">
           <div
-            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-[hsl(var(--bd-status-success-border))] bg-[hsl(var(--bd-status-success-bg))] px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[var(--bd-radius-md)] border-l-4 border-bd-status-success-border bg-bd-status-success-bg px-4 py-3"
           >
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invoice Total</div>
               <div className="mt-1 text-sm font-semibold text-foreground">{invoice.client_name || "No client name"}</div>
             </div>
-            <div className="text-right text-base font-bold text-[hsl(var(--bd-status-success-text))]">{formatMoney(invoice.total)}</div>
+            <div className="text-right text-base font-bold text-bd-status-success-text">{formatMoney(invoice.total)}</div>
           </div>
 
           <div
@@ -231,7 +231,7 @@ export default function RecordPaymentModal({
             <button
               type="button"
               onClick={applyMax}
-              className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-button-primary-bg)/0.3)] bg-[hsl(var(--bd-button-primary-bg)/0.1)] px-4 py-3 text-sm font-bold text-[hsl(var(--bd-button-primary-bg))] transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.18)]"
+              className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-button-primary-bg)/0.3)] bg-[hsl(var(--bd-button-primary-bg)/0.1)] px-4 py-3 text-sm font-bold text-bd-button-primary-bg transition-colors hover:bg-[hsl(var(--bd-button-primary-bg)/0.18)]"
             >
               Pay Full Balance ({formatMoney(currentBalance)})
             </button>
@@ -270,7 +270,7 @@ export default function RecordPaymentModal({
           </div>
 
           {form.method === "Transfer" ? (
-            <div className="space-y-1.5 rounded-[var(--bd-radius-lg)] border border-border bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+            <div className="space-y-1.5 rounded-[var(--bd-radius-lg)] border border-border bg-bd-surface-muted px-4 py-3">
               <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Received Into Account</label>
               <Select value={selectedBankId} onValueChange={setSelectedBankId}>
                 <SelectTrigger className="w-full border-border bg-background">
@@ -309,14 +309,14 @@ export default function RecordPaymentModal({
             </div>
             <div className="mt-2 flex items-center justify-between gap-2 text-sm">
               <span className="font-medium text-muted-foreground">Remaining Balance</span>
-              <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-[hsl(var(--destructive))]" : "font-bold text-[hsl(var(--bd-status-success-text))]"}>
+              <span className={settlementSummary.remainingBalance > 0 ? "font-bold text-[hsl(var(--destructive))]" : "font-bold text-bd-status-success-text"}>
                 {formatMoney(settlementSummary.remainingBalance)}
               </span>
             </div>
           </div>
 
           {invoiceHasWht ? (
-            <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3 text-xs text-[hsl(var(--bd-status-warning-text))]">
+            <div className="rounded-[var(--bd-radius-lg)] border border-bd-status-warning-border bg-bd-status-warning-bg px-4 py-3 text-xs text-bd-status-warning-text">
               <span className="font-bold">💡 WHT Tracking Enabled:</span>{" "}
               This invoice contains configured WHT. Verify and track the tax credit receipt within the Compliance Hub once this settlement is completed.
             </div>
@@ -338,7 +338,7 @@ export default function RecordPaymentModal({
               type="button"
               onClick={handleSave}
               disabled={saving || loadingBalance}
-              className="flex-1 bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
+              className="flex-1 bg-bd-button-primary-bg text-bd-button-primary-text hover:bg-[hsl(var(--bd-button-primary-hover-bg))]"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {saving ? "Saving..." : "Record Payment"}

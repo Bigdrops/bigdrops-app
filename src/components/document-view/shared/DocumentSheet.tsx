@@ -57,16 +57,16 @@ export default function DocumentSheet({
         showCloseButton={false}
         className={
           isMobile
-            ? 'flex h-auto max-h-[88vh] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0'
-            : 'flex h-full w-full max-w-full flex-col overflow-hidden border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl'
+            ? 'flex h-auto max-h-[88vh] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-bd-border bg-bd-card-bg p-0'
+            : 'flex h-full w-full max-w-full flex-col overflow-hidden border-bd-border bg-bd-card-bg p-0 sm:max-w-xl'
         }
       >
-        <SheetHeader className="border-b border-[hsl(var(--bd-border))] px-5 py-4 pr-14 sm:px-6">
-          <SheetTitle className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">
+        <SheetHeader className="border-b border-bd-border px-5 py-4 pr-14 sm:px-6">
+          <SheetTitle className="text-base font-black tracking-tight text-bd-text">
             {title}
           </SheetTitle>
           {subtitle ? (
-            <SheetDescription className="pt-1 text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
+            <SheetDescription className="pt-1 text-sm leading-relaxed text-bd-text-muted">
               {subtitle}
             </SheetDescription>
           ) : null}
@@ -77,7 +77,7 @@ export default function DocumentSheet({
           variant="ghost"
           size="icon-sm"
           onClick={onClose}
-          className="absolute right-4 top-4 bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))] hover:text-[hsl(var(--bd-text))]"
+          className="absolute right-4 top-4 bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface hover:text-bd-text"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>

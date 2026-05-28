@@ -25,7 +25,7 @@ export function SettingsSectionFrame({
           {showBackButton && onBack && (
             <button
               onClick={onBack}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-[hsl(var(--bd-text))] transition-all active:scale-95"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-bd-text transition-all active:scale-95"
               aria-label="Back"
             >
               <ChevronLeft size={18} />
@@ -34,13 +34,13 @@ export function SettingsSectionFrame({
 
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={cn(
-              "flex items-center justify-center rounded-[var(--bd-radius-sm)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-button-primary-bg))]",
+              "flex items-center justify-center rounded-[var(--bd-radius-sm)] bg-bd-surface-muted text-bd-button-primary-bg",
               showBackButton ? "h-7 w-7" : "h-9 w-9"
             )}>
               <Icon size={showBackButton ? 14 : 18} />
             </div>
             <h2 className={cn(
-              "font-bold tracking-tight text-[hsl(var(--bd-text))] truncate",
+              "font-bold tracking-tight text-bd-text truncate",
               showBackButton ? "text-lg" : "text-xl"
             )}>
               {section.label}
@@ -53,7 +53,7 @@ export function SettingsSectionFrame({
           showBackButton ? "ml-12" : "ml-11.5",
           "max-md:ml-0"
         )}>
-          <p className="text-[12px] font-medium text-[hsl(var(--bd-text-muted))] max-w-2xl leading-relaxed">
+          <p className="text-[12px] font-medium text-bd-text-muted max-w-2xl leading-relaxed">
             {section.desc}
           </p>
         </div>
@@ -61,7 +61,7 @@ export function SettingsSectionFrame({
 
       {/* Content Surface */}
       <div className={cn(
-        "bg-[hsl(var(--bd-card-bg))] md:rounded-[var(--bd-radius-xl)] border-y md:border border-[hsl(var(--bd-border)/0.5)] shadow-none overflow-hidden",
+        "bg-bd-card-bg md:rounded-[var(--bd-radius-xl)] border-y md:border border-[hsl(var(--bd-border)/0.5)] shadow-none overflow-hidden",
         "p-[var(--bd-card-padding,1.5rem)]",
         "max-md:border-x-0"
       )}>

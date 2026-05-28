@@ -36,17 +36,17 @@ export default function ConfirmActionDialog({
 }: ConfirmActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-[400px] rounded-3xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-6 shadow-2xl">
+      <AlertDialogContent className="max-w-[400px] rounded-3xl border border-bd-border bg-bd-surface p-6 shadow-2xl">
         <AlertDialogHeader className="sm:text-left">
-          <AlertDialogTitle className="text-xl font-bold tracking-tight text-[hsl(var(--bd-text))]">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-sm leading-relaxed text-[hsl(var(--bd-text-muted))]">
+          <AlertDialogTitle className="text-xl font-bold tracking-tight text-bd-text">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm leading-relaxed text-bd-text-muted">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-6 flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
           <AlertDialogCancel 
             disabled={loading}
-            className="h-12 rounded-2xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-6 text-sm font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface))] transition-colors"
+            className="h-12 rounded-2xl border-bd-border bg-bd-surface-muted px-6 text-sm font-bold text-bd-text hover:bg-bd-surface transition-colors"
           >
             {cancelLabel}
           </AlertDialogCancel>
@@ -57,8 +57,8 @@ export default function ConfirmActionDialog({
             className={cn(
               "h-12 rounded-2xl px-8 text-sm font-bold transition-all shadow-sm",
               variant === 'destructive' 
-                ? "bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] hover:opacity-90 border border-[hsl(var(--bd-status-danger-border))]" 
-                : "bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90"
+                ? "bg-bd-status-danger-bg text-bd-status-danger-text hover:opacity-90 border border-bd-status-danger-border" 
+                : "bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
             )}
           >
             {confirmLabel}

@@ -275,7 +275,7 @@ export default function QuotationList() {
 
     if (isOverdue) {
       labels.push("OVERDUE")
-      classes.push("bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]")
+      classes.push("bg-bd-status-danger-bg text-bd-status-danger-text")
     }
 
     return (
@@ -416,12 +416,12 @@ export default function QuotationList() {
         renderRow={renderQuotationRow}
         beforeListContent={syncRecoveryBanner}
         emptyState={(
-          <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+          <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
                <ClipboardList className="h-6 w-6" />
             </div>
-            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No quotations yet</div>
-            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Create the first one when you are ready to send a quote.</div>
+            <div className="mt-4 text-sm font-bold text-bd-text">No quotations yet</div>
+            <div className="mt-1 text-xs text-bd-text-muted">Create the first one when you are ready to send a quote.</div>
           </div>
         )}
         hasMore={false}

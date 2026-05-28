@@ -51,7 +51,7 @@ export function ItemSearchBar({
 }: ItemSearchBarProps) {
   return (
     <div className={`relative ${className}`.trim()}>
-      <span className="pointer-events-none absolute left-[11px] top-1/2 -translate-y-1/2 text-[hsl(var(--bd-text-muted))]">
+      <span className="pointer-events-none absolute left-[11px] top-1/2 -translate-y-1/2 text-bd-text-muted">
         <SearchIcon />
       </span>
 
@@ -61,7 +61,7 @@ export function ItemSearchBar({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label="Search items"
-        className="w-full rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] py-[8px] pl-8 pr-8 text-[13px] text-[hsl(var(--bd-text))] shadow-sm outline-none transition-all duration-150 placeholder:text-[hsl(var(--bd-text-muted))]/60 focus:border-[hsl(var(--bd-button-primary-bg))] focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg))]/10"
+        className="w-full rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg py-[8px] pl-8 pr-8 text-[13px] text-bd-text shadow-sm outline-none transition-all duration-150 placeholder:text-bd-text-muted/60 focus:border-bd-button-primary-bg focus:ring-2 focus:ring-bd-button-primary-bg/10"
       />
 
       {value ? (
@@ -69,7 +69,7 @@ export function ItemSearchBar({
           type="button"
           onClick={() => onChange('')}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition-colors duration-150 hover:text-[hsl(var(--bd-text))]"
+          className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-bd-border bg-bd-surface-muted text-bd-text-muted transition-colors duration-150 hover:text-bd-text"
         >
           <ClearIcon />
         </button>

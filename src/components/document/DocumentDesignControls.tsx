@@ -86,8 +86,8 @@ export function DocumentTemplatePicker({ value, onChange, templates }: DocumentT
             className={cn(
               'relative flex w-[220px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
               active
-                ? 'border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] shadow-xl ring-2 ring-[hsl(var(--bd-button-primary-bg))] ring-offset-2'
-                : 'border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text))] hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-surface-muted))]/50',
+                ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-xl ring-2 ring-bd-button-primary-bg ring-offset-2'
+                : 'border-bd-border bg-bd-card-bg text-bd-text hover:border-bd-border hover:bg-bd-surface-muted/50',
             )}
           >
             <div className={cn('mb-3 flex h-[100px] flex-col justify-between rounded-[18px] p-3 shadow-inner', preview.shell)}>
@@ -109,14 +109,14 @@ export function DocumentTemplatePicker({ value, onChange, templates }: DocumentT
                   {template.label || template.name}
                 </span>
                 {active && (
-                  <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-button-primary-bg))]">
-                    <CheckCircle2 className="size-3 text-[hsl(var(--bd-button-primary-text))]" />
+                  <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-bd-button-primary-bg">
+                    <CheckCircle2 className="size-3 text-bd-button-primary-text" />
                   </div>
                 )}
               </div>
               <div className={cn(
                 'mt-0.5 line-clamp-1 text-[11px] leading-tight',
-                active ? 'text-[hsl(var(--bd-text-muted))]' : 'text-[hsl(var(--bd-text-muted))]'
+                active ? 'text-bd-text-muted' : 'text-bd-text-muted'
               )}>
                 {template.description}
               </div>
@@ -153,15 +153,15 @@ export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent 
   )
 
   return (
-    <Card className="overflow-hidden rounded-[26px] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm">
+    <Card className="overflow-hidden rounded-[26px] border-bd-border bg-bd-surface shadow-sm">
       <CardContent className="p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[hsl(var(--bd-text-muted))]">
-              <Palette className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+            <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
+              <Palette className="h-4 w-4 text-bd-text-muted" />
               {title}
             </div>
-            {subtitle ? <div className="mt-2 max-w-2xl text-sm leading-6 text-[hsl(var(--bd-text-muted))]">{subtitle}</div> : null}
+            {subtitle ? <div className="mt-2 max-w-2xl text-sm leading-6 text-bd-text-muted">{subtitle}</div> : null}
           </div>
           {badge ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
@@ -177,21 +177,21 @@ export function DocumentDesignPanel({ title, subtitle = '', badge = 'Persistent 
             const open = openSections[sectionKey] !== false
 
             return (
-              <div key={sectionKey} className="overflow-hidden rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+              <div key={sectionKey} className="overflow-hidden rounded-[22px] border border-bd-border bg-bd-card-bg shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
                 <button
                   type="button"
                   onClick={() => setOpenSections((current) => ({ ...current, [sectionKey]: !open }))}
                   className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
                 >
                   <div className="min-w-0">
-                    <div className="text-base font-extrabold tracking-[-0.03em] text-[hsl(var(--bd-text))]">{section.title}</div>
-                    {section.description ? <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">{section.description}</div> : null}
+                    <div className="text-base font-extrabold tracking-[-0.03em] text-bd-text">{section.title}</div>
+                    {section.description ? <div className="mt-1 text-sm text-bd-text-muted">{section.description}</div> : null}
                   </div>
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text-muted))]">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-bd-border bg-bd-surface text-bd-text-muted">
                     {open ? <ChevronDown className="h-4 w-4 rotate-180" /> : <ChevronDown className="h-4 w-4" />}
                   </div>
                 </button>
-                {open ? <div className="border-t border-[hsl(var(--bd-border))] px-4 py-4">{section.content}</div> : null}
+                {open ? <div className="border-t border-bd-border px-4 py-4">{section.content}</div> : null}
               </div>
             )
           })}
@@ -218,22 +218,22 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }: Fil
   }
 
   return (
-    <div className="rounded-[18px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4">
+    <div className="rounded-[18px] border border-bd-border bg-bd-surface-muted/30 p-4">
       {showModeToggle ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Fillable Font</div>
-            <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Fillable Font</div>
+            <div className="mt-1 text-sm text-bd-text-muted">
               Auto uses the current body font until you switch to a manual fillable font.
             </div>
           </div>
-          <div className="inline-flex rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-1">
+          <div className="inline-flex rounded-full border border-bd-border bg-bd-surface p-1">
             <button
               type="button"
               onClick={() => update({ fillableFontMode: 'auto' })}
               className={cn(
                 'rounded-full px-3 py-1.5 text-xs font-bold transition',
-                value.fillableFontMode === 'auto' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]',
+                value.fillableFontMode === 'auto' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted',
               )}
             >
               Auto
@@ -243,7 +243,7 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }: Fil
               onClick={() => update({ fillableFontMode: 'custom' })}
               className={cn(
                 'rounded-full px-3 py-1.5 text-xs font-bold transition',
-                value.fillableFontMode === 'custom' ? 'bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]' : 'text-[hsl(var(--bd-text-muted))]',
+                value.fillableFontMode === 'custom' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted',
               )}
             >
               Custom
@@ -252,8 +252,8 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }: Fil
         </div>
       ) : (
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Fillable Writing</div>
-          <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Fillable Writing</div>
+          <div className="mt-1 text-sm text-bd-text-muted">
             Control the handwriting-style font and color used for dynamic document values.
           </div>
         </div>
@@ -261,13 +261,13 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }: Fil
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Fillable Font Choice</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Fillable Font Choice</div>
           <Select
             value={value.fillableFontMode === 'custom' ? value.fillableFont : effectiveFillableFont}
             onValueChange={(next) => update({ fillableFont: next as any, fillableFontMode: 'custom' })}
             disabled={showModeToggle && value.fillableFontMode !== 'custom'}
           >
-            <SelectTrigger className="h-11 rounded-[14px] bg-[hsl(var(--bd-surface))] disabled:opacity-70">
+            <SelectTrigger className="h-11 rounded-[14px] bg-bd-surface disabled:opacity-70">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -278,17 +278,17 @@ function FillableWritingControls({ value, onChange, showModeToggle = true }: Fil
               ))}
             </SelectContent>
           </Select>
-          <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+          <div className="text-xs text-bd-text-muted">
             Effective fillable font: {PDF_FONT_OPTIONS.find((option) => option.value === effectiveFillableFont)?.label}
           </div>
         </div>
 
         <div className="space-y-2">
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Fillable Color</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Fillable Color</div>
           <Input
             value={value.fillableColor}
             onChange={(event) => update({ fillableColor: event.target.value })}
-            className="h-11 rounded-[14px] bg-[hsl(var(--bd-surface))] font-mono"
+            className="h-11 rounded-[14px] bg-bd-surface font-mono"
             placeholder="#0f172a"
           />
         </div>
@@ -325,7 +325,7 @@ export function DocumentDesignStyleEditor({
     <div className="space-y-5">
       {showAccentControls ? (
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">{accentLabel}</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">{accentLabel}</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {PDF_ACCENT_SWATCHES.map((swatch) => {
               const active = value.accentColor.toLowerCase() === swatch.toLowerCase()
@@ -336,7 +336,7 @@ export function DocumentDesignStyleEditor({
                   onClick={() => update({ accentColor: swatch })}
                   className={cn(
                     'h-9 w-9 rounded-xl border-2 shadow-sm transition',
-                    active ? 'border-[hsl(var(--bd-button-primary-bg))] scale-[1.03]' : 'border-white/80',
+                    active ? 'border-bd-button-primary-bg scale-[1.03]' : 'border-white/80',
                   )}
                   style={{ backgroundColor: swatch }}
                   aria-label={`Use accent color ${swatch}`}
@@ -348,7 +348,7 @@ export function DocumentDesignStyleEditor({
             <Input
               value={value.accentColor}
               onChange={(event) => update({ accentColor: event.target.value })}
-              className="h-11 rounded-[14px] bg-[hsl(var(--bd-surface))] font-mono"
+              className="h-11 rounded-[14px] bg-bd-surface font-mono"
               placeholder="#14b8a6"
             />
           </div>
@@ -358,9 +358,9 @@ export function DocumentDesignStyleEditor({
       {showFontControls ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Header Font</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Header Font</div>
             <Select value={value.headerFont} onValueChange={(next) => update({ headerFont: next as any })}>
-              <SelectTrigger className="h-11 rounded-[14px] bg-[hsl(var(--bd-surface))]">
+              <SelectTrigger className="h-11 rounded-[14px] bg-bd-surface">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -371,15 +371,15 @@ export function DocumentDesignStyleEditor({
                 ))}
               </SelectContent>
             </Select>
-            <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+            <div className="text-xs text-bd-text-muted">
               {PDF_FONT_OPTIONS.find((option) => option.value === value.headerFont)?.description}
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Body Font</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Body Font</div>
             <Select value={value.bodyFont} onValueChange={(next) => update({ bodyFont: next as any })}>
-              <SelectTrigger className="h-11 rounded-[14px] bg-[hsl(var(--bd-surface))]">
+              <SelectTrigger className="h-11 rounded-[14px] bg-bd-surface">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -390,7 +390,7 @@ export function DocumentDesignStyleEditor({
                 ))}
               </SelectContent>
             </Select>
-            <div className="text-xs text-[hsl(var(--bd-text-muted))]">
+            <div className="text-xs text-bd-text-muted">
               {PDF_FONT_OPTIONS.find((option) => option.value === value.bodyFont)?.description}
             </div>
           </div>

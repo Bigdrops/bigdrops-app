@@ -67,7 +67,7 @@ export default function QueryFilterOverlay({
   const clearStatuses = () => patchUpdate({ statuses: [] } as any);
 
   return (
-    <div className="relative border-b border-[hsl(var(--bd-border))]/30 bg-[hsl(var(--bd-surface))] px-4 py-3">
+    <div className="relative border-b border-bd-border/30 bg-bd-surface px-4 py-3">
       {/* Chip row */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Status — enumerated, inline */}
@@ -144,7 +144,7 @@ export default function QueryFilterOverlay({
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto flex-shrink-0 p-1.5 rounded-lg text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))] transition-colors"
+          className="ml-auto flex-shrink-0 p-1.5 rounded-lg text-bd-text-muted hover:bg-bd-surface-muted transition-colors"
           aria-label="Close filters"
         >
           <X className="h-4 w-4" />
@@ -157,7 +157,7 @@ export default function QueryFilterOverlay({
       {activePopover === "status" && caps.status && statusOptions && (
         <PopoverPanel>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+            <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
               Status
             </span>
             {currentStatuses.length > 0 && (
@@ -180,7 +180,7 @@ export default function QueryFilterOverlay({
                   "h-7 px-2.5 rounded-md border text-[10px] font-bold transition-all",
                   currentStatuses.includes(status)
                     ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
+                    : "border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface"
                 )}
               >
                 {status}
@@ -274,7 +274,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
       {isOpen && (
         <PopoverPanel>
           <div className="space-y-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+            <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
               Time
             </span>
             {/* 3-option quick menu */}
@@ -286,7 +286,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   state.sortBy === "created_at" && state.sortDirection === "desc"
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Newest
@@ -298,7 +298,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   state.sortBy === "created_at" && state.sortDirection === "asc"
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Oldest
@@ -310,7 +310,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   showCustom
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Custom Range
@@ -322,27 +322,27 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
               <>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 space-y-1">
-                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Start</label>
+                    <label className="text-[9px] font-bold text-bd-text-muted">Start</label>
                     <input
                       type="date"
                       value={dateFrom}
                       onChange={(e) => { setDateFrom(e.target.value); setHasError(false); }}
                       className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-bd-border"
                       )}
                     />
                   </div>
-                  <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
+                  <span className="text-bd-text-muted text-xs mt-4">–</span>
                   <div className="flex-1 space-y-1">
-                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">End</label>
+                    <label className="text-[9px] font-bold text-bd-text-muted">End</label>
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => { setDateTo(e.target.value); setHasError(false); }}
                       className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-bd-border"
                       )}
                     />
                   </div>
@@ -351,7 +351,7 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   <button
                     type="button"
                     onClick={clear}
-                    className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    className="flex-1 h-8 rounded-md border border-bd-border text-[10px] font-bold text-bd-text-muted hover:bg-bd-surface-muted"
                   >
                     Clear
                   </button>
@@ -491,7 +491,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
       {isOpen && (
         <AmountPopoverPanel>
           <div className="space-y-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+            <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
               Value
             </span>
             {/* 3-option quick menu */}
@@ -503,7 +503,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   state.sortBy === "total" && state.sortDirection === "desc"
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Highest Value
@@ -515,7 +515,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   state.sortBy === "total" && state.sortDirection === "asc"
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Lowest Value
@@ -527,7 +527,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   "h-8 px-3 rounded-md text-left text-[11px] font-bold transition-all",
                   showCustom
                     ? "bg-primary/10 text-primary"
-                    : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
                 )}
               >
                 Custom Range
@@ -539,7 +539,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
               <>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 space-y-1">
-                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Min</label>
+                    <label className="text-[9px] font-bold text-bd-text-muted">Min</label>
                     <input
                       ref={minRef}
                       type="text"
@@ -548,14 +548,14 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                       value={displayMin}
                       onChange={handleMinChange}
                       className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-bd-border"
                       )}
                     />
                   </div>
-                  <span className="text-[hsl(var(--bd-text-muted))] text-xs mt-4">–</span>
+                  <span className="text-bd-text-muted text-xs mt-4">–</span>
                   <div className="flex-1 space-y-1">
-                    <label className="text-[9px] font-bold text-[hsl(var(--bd-text-muted))]">Max</label>
+                    <label className="text-[9px] font-bold text-bd-text-muted">Max</label>
                     <input
                       ref={maxRef}
                       type="text"
@@ -564,8 +564,8 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                       value={displayMax}
                       onChange={handleMaxChange}
                       className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-[hsl(var(--bd-border))]"
+                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
+                        isInvalid ? "border-red-400" : "border-bd-border"
                       )}
                     />
                   </div>
@@ -574,7 +574,7 @@ function AmountRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                   <button
                     type="button"
                     onClick={clear}
-                    className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                    className="flex-1 h-8 rounded-md border border-bd-border text-[10px] font-bold text-bd-text-muted hover:bg-bd-surface-muted"
                   >
                     Clear
                   </button>
@@ -677,7 +677,7 @@ function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
       {isOpen && (
         <PopoverPanel>
           <div className="space-y-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+            <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
               Client
             </span>
             <div className="relative">
@@ -690,17 +690,17 @@ function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") { setShowSuggestions(false); apply(); }
                 }}
-                className="w-full h-9 px-2.5 rounded-md border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-sm text-[hsl(var(--bd-text))] outline-none focus:border-primary"
+                className="w-full h-9 px-2.5 rounded-md border border-bd-border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary"
               />
               {/* Inline autocomplete suggestions (max 3) */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="mt-1 rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] shadow-sm overflow-hidden">
+                <div className="mt-1 rounded-lg border border-bd-border bg-bd-surface shadow-sm overflow-hidden">
                   {suggestions.map((name) => (
                     <button
                       key={name}
                       type="button"
                       onClick={() => selectClient(name)}
-                      className="w-full px-3 py-2 text-left text-[11px] font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))] transition-colors truncate"
+                      className="w-full px-3 py-2 text-left text-[11px] font-bold text-bd-text hover:bg-bd-surface-muted transition-colors truncate"
                     >
                       {name}
                     </button>
@@ -712,7 +712,7 @@ function ClientFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
               <button
                 type="button"
                 onClick={clear}
-                className="flex-1 h-8 rounded-md border border-[hsl(var(--bd-border))] text-[10px] font-bold text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                className="flex-1 h-8 rounded-md border border-bd-border text-[10px] font-bold text-bd-text-muted hover:bg-bd-surface-muted"
               >
                 Clear
               </button>
@@ -756,7 +756,7 @@ function ChipTrigger({
         "flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-md border text-[10px] font-bold transition-all",
         active || isOpen
           ? "border-primary/30 bg-primary/5 text-primary"
-          : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface))]"
+          : "border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface"
       )}
     >
       {icon}
@@ -772,7 +772,7 @@ function ChipTrigger({
 
 function PopoverPanel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute left-4 right-4 top-full mt-1 z-50 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3 shadow-lg">
+    <div className="absolute left-4 right-4 top-full mt-1 z-50 rounded-xl border border-bd-border bg-bd-surface p-3 shadow-lg">
       {children}
     </div>
   );
@@ -782,7 +782,7 @@ function PopoverPanel({ children }: { children: React.ReactNode }) {
 
 function AmountPopoverPanel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute right-0 origin-top-right md:left-0 md:right-auto top-full mt-1 z-50 w-[92vw] sm:w-80 rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3 shadow-lg">
+    <div className="absolute right-0 origin-top-right md:left-0 md:right-auto top-full mt-1 z-50 w-[92vw] sm:w-80 rounded-xl border border-bd-border bg-bd-surface p-3 shadow-lg">
       {children}
     </div>
   );

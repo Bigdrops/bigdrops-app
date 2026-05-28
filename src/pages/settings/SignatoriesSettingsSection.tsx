@@ -175,7 +175,7 @@ export function SignatoriesSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Authorized Signers
           </p>
         </div>
@@ -183,7 +183,7 @@ export function SignatoriesSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={openAdd}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Plus className="mr-2 h-3.5 w-3.5" />
           Add Signatory
@@ -192,9 +192,9 @@ export function SignatoriesSettingsSection() {
 
       <div className="grid gap-6">
         {items.length === 0 ? (
-          <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.2] py-12 text-center">
-            <UserCheck className="mx-auto h-8 w-8 text-[hsl(var(--bd-text-muted))] opacity-20" />
-            <p className="mt-3 text-sm text-[hsl(var(--bd-text-muted))]">No signatories added yet.</p>
+          <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] py-12 text-center">
+            <UserCheck className="mx-auto h-8 w-8 text-bd-text-muted opacity-20" />
+            <p className="mt-3 text-sm text-bd-text-muted">No signatories added yet.</p>
           </div>
         ) : (
           items.map((item) => (
@@ -208,7 +208,7 @@ export function SignatoriesSettingsSection() {
                     variant="ghost"
                     size="sm"
                     onClick={() => openEdit(item)}
-                    className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]"
+                    className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg"
                   >
                     Edit
                   </Button>
@@ -225,7 +225,7 @@ export function SignatoriesSettingsSection() {
               }
             >
               <div className="flex items-center gap-4 px-5 py-4">
-                <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[hsl(var(--bd-border))] bg-white">
+                <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-white">
                   {item.signature_url ? (
                     <img
                       src={item.signature_url}
@@ -233,14 +233,14 @@ export function SignatoriesSettingsSection() {
                       className="h-full w-full object-contain p-1"
                     />
                   ) : (
-                    <ShieldCheck className="h-6 w-6 text-[hsl(var(--bd-text-muted))] opacity-30" />
+                    <ShieldCheck className="h-6 w-6 text-bd-text-muted opacity-30" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[hsl(var(--bd-text-muted))] opacity-70">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
                     Active Signature
                   </p>
-                  <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                  <p className="mt-1 text-xs text-bd-text-muted">
                     {item.signature_url ? 'Digital signature uploaded' : 'Missing signature image'}
                   </p>
                 </div>
@@ -292,8 +292,8 @@ export function SignatoriesSettingsSection() {
 
                 {form.signature_url ? (
                   <div className="space-y-4">
-                    <div className="flex flex-col items-center rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
-                      <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-[hsl(var(--bd-border))] bg-white shadow-sm">
+                    <div className="flex flex-col items-center rounded-xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
+                      <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-white shadow-sm">
                         <img
                           src={form.signature_url}
                           alt="Signature preview"
@@ -326,21 +326,21 @@ export function SignatoriesSettingsSection() {
                 ) : (
                   <div
                     onClick={() => fileRef.current?.click()}
-                    className="group cursor-pointer rounded-xl border-2 border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)]"
+                    className="group cursor-pointer rounded-xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)]"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
                         {uploading ? (
-                          <Loader2 size={18} className="animate-spin text-[hsl(var(--bd-text-muted))]" />
+                          <Loader2 size={18} className="animate-spin text-bd-text-muted" />
                         ) : (
-                          <Upload size={18} className="text-[hsl(var(--bd-button-primary-bg))]" />
+                          <Upload size={18} className="text-bd-button-primary-bg" />
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-[hsl(var(--bd-text))]">
+                        <p className="text-sm font-bold text-bd-text">
                           {uploading ? 'Uploading...' : 'Upload Signature'}
                         </p>
-                        <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                        <p className="mt-1 text-xs text-bd-text-muted">
                           Transparent PNG recommended
                         </p>
                       </div>

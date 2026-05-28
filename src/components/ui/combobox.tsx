@@ -95,7 +95,7 @@ function ComboboxPanel({
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder={searchPlaceholder}
-          className="h-10 w-full rounded-[var(--bd-radius-md)] border border-[hsl(var(--bd-input-border))] bg-[hsl(var(--bd-input-bg))] pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-[hsl(var(--bd-input-focus))] focus-visible:ring-2 focus-visible:ring-ring/30"
+          className="h-10 w-full rounded-[var(--bd-radius-md)] border border-bd-input-border bg-bd-input-bg pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-bd-input-focus focus-visible:ring-2 focus-visible:ring-ring/30"
         />
       </div>
 
@@ -222,7 +222,7 @@ export function Combobox({
       variant="outline"
       disabled={disabled}
       className={cn(
-        "h-10 w-full justify-between rounded-[var(--bd-radius-md)] border-[hsl(var(--bd-input-border))] bg-[hsl(var(--bd-input-bg))] px-3 text-sm font-medium text-foreground shadow-none",
+        "h-10 w-full justify-between rounded-[var(--bd-radius-md)] border-bd-input-border bg-bd-input-bg px-3 text-sm font-medium text-foreground shadow-none",
         !selectedOption && "text-muted-foreground",
       )}
     >

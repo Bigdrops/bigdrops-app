@@ -46,7 +46,7 @@ export default function MobilePageHeader({
           <SidebarToggleIcon
             isOpen={isOpen}
             strokeWidth={2}
-            className="w-4 h-4 text-[hsl(var(--bd-text))]"
+            className="w-4 h-4 text-bd-text"
           />
         </button>
 
@@ -54,7 +54,7 @@ export default function MobilePageHeader({
           {eyebrow ? (
             <div className={cn(
               "mb-[var(--bd-space-xs)] flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[var(--bd-label-letter-spacing)]",
-              eyebrowClassName || "text-[hsl(var(--bd-text-muted))]"
+              eyebrowClassName || "text-bd-text-muted"
             )}>
               <span className={cn('h-1.5 w-1.5 rounded-full', accentClassName)} aria-hidden="true" />
               <span className="truncate">{eyebrow}</span>
@@ -63,11 +63,11 @@ export default function MobilePageHeader({
 
           <div className="flex items-start justify-between gap-[var(--bd-row-gap)]">
             <div className="min-w-0">
-              <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-[hsl(var(--bd-text))]">
+              <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-bd-text">
                 {title}
               </div>
               {subtitle ? (
-                <div className="mt-px truncate text-[11px] text-[hsl(var(--bd-text-muted))]">{subtitle}</div>
+                <div className="mt-px truncate text-[11px] text-bd-text-muted">{subtitle}</div>
               ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-1">

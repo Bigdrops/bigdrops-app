@@ -447,7 +447,7 @@ export default function Reports() {
   const activeMetadata = TAB_METADATA[tab]
 
   return (
-    <Layout title="Reports" session={null} contentClassName="bg-[hsl(var(--bd-surface))]" hidePageHeader>
+    <Layout title="Reports" session={null} contentClassName="bg-bd-surface" hidePageHeader>
       <ReportsShell
         header={
           <ReportsHeader 

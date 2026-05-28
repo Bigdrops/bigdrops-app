@@ -256,27 +256,27 @@ function CsrContent() {
           )
         }}
         emptyState={
-          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 p-5 text-center shadow-inner">
-            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius-lg)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+          <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-bd-border bg-bd-surface/50 p-5 text-center shadow-inner">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-[var(--bd-radius-lg)] bg-bd-surface-muted text-bd-text-muted">
               <ClipboardList className="h-5 w-5" />
             </div>
-            <div className="text-base font-semibold text-[hsl(var(--bd-text))]">
+            <div className="text-base font-semibold text-bd-text">
               {hasActiveFilters ? "No service reports found" : "No service reports yet"}
             </div>
-            <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">
+            <div className="mt-1 text-sm text-bd-text-muted">
               {hasActiveFilters ? "Try a different search or filter." : "Create your first CSR to start tracking service activity."}
             </div>
           </div>
         }
       >
         {showCsrSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-          <div className="mb-4 rounded-[22px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]/30 p-4 shadow-sm">
+          <div className="mb-4 rounded-[22px] border border-bd-border bg-bd-surface-muted/30 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[hsl(var(--bd-text-muted))]">Offline sync recovery</div>
-                <div className="mt-1 text-sm text-[hsl(var(--bd-text-muted))]">Retry pending or failed CSR uploads from this device.</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-bd-text-muted">Offline sync recovery</div>
+                <div className="mt-1 text-sm text-bd-text-muted">Retry pending or failed CSR uploads from this device.</div>
               </div>
-              <Button type="button" variant="outline" size="icon-lg" onClick={loadCsrSyncQueue} disabled={syncQueueLoading || retryingQueueItemId != null} className="h-10 w-10 rounded-2xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]" aria-label="Refresh CSR sync queue">
+              <Button type="button" variant="outline" size="icon-lg" onClick={loadCsrSyncQueue} disabled={syncQueueLoading || retryingQueueItemId != null} className="h-10 w-10 rounded-2xl border-bd-border bg-bd-surface text-bd-text hover:bg-bd-surface-muted" aria-label="Refresh CSR sync queue">
                 {syncQueueLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               </Button>
             </div>
@@ -285,17 +285,17 @@ function CsrContent() {
                 {syncQueueItems.map((item) => {
                   const isRetrying = retryingQueueItemId === item.id
                   return (
-                    <div key={item.id} className="rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-3">
+                    <div key={item.id} className="rounded-2xl border border-bd-border bg-bd-surface p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <div className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">{item.csrNumber || item.localCsrId || `Queue #${item.id}`}</div>
+                            <div className="truncate text-sm font-bold text-bd-text">{item.csrNumber || item.localCsrId || `Queue #${item.id}`}</div>
                             <span className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${item.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-accent/15 text-accent-foreground"}`}>{item.status}</span>
                           </div>
-                          <div className="mt-1 truncate text-xs text-[hsl(var(--bd-text-muted))]">{item.clientName || "No client"} · Attempts {item.attempts}</div>
+                          <div className="mt-1 truncate text-xs text-bd-text-muted">{item.clientName || "No client"} · Attempts {item.attempts}</div>
                           {item.error ? <div className="mt-2 text-xs leading-5 text-destructive">{item.error}</div> : null}
                         </div>
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleRetryQueueItem(item.id)} disabled={retryingQueueItemId != null} className="h-9 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-xs font-bold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]">
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleRetryQueueItem(item.id)} disabled={retryingQueueItemId != null} className="h-9 rounded-xl border-bd-border bg-bd-surface px-3 text-xs font-bold text-bd-text hover:bg-bd-surface-muted">
                           {isRetrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Retry
                         </Button>
                       </div>

@@ -295,10 +295,10 @@ function InvoicesContent() {
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
         }
         emptyState={(
-          <div className="rounded-[24px] border border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/50 py-16 text-center shadow-inner">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]"><Receipt className="h-6 w-6" /></div>
-            <div className="mt-4 text-sm font-bold text-[hsl(var(--bd-text))]">No Invoices Found</div>
-            <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))] max-w-[280px] mx-auto">Create your first invoice to start tracking sales, or adjust your filters to find existing records.</div>
+          <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted"><Receipt className="h-6 w-6" /></div>
+            <div className="mt-4 text-sm font-bold text-bd-text">No Invoices Found</div>
+            <div className="mt-1 text-xs text-bd-text-muted max-w-[280px] mx-auto">Create your first invoice to start tracking sales, or adjust your filters to find existing records.</div>
           </div>
         )}
         onPrimaryAction={() => navigate("/invoices/new")} primaryActionLabel="New Invoice"

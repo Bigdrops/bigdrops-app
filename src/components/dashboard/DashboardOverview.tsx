@@ -204,7 +204,7 @@ export function DashboardOverview({
               <SidebarToggleIcon
                 isOpen={mobileChrome.sidebarOpen}
                 strokeWidth={2}
-                className="size-5 text-[hsl(var(--bd-text))]"
+                className="size-5 text-bd-text"
               />
             </button>
 
@@ -289,7 +289,7 @@ export function DashboardOverview({
                 type="button"
                 onClick={() => onPrioritySelect(item)}
                 className={cn(
-                  "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-2.5 text-left transition-all hover:bg-[hsl(var(--bd-surface-muted))] active:scale-[0.99] shadow-sm",
+                  "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface p-2.5 text-left transition-all hover:bg-bd-surface-muted active:scale-[0.99] shadow-sm",
                 )}
               >
                 <span
@@ -356,7 +356,7 @@ export function DashboardOverview({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-bold tracking-tight text-[hsl(var(--bd-text))]">
+                      <div className="truncate text-[13px] font-bold tracking-tight text-bd-text">
                         {doc.number}
                       </div>
                       <div className="truncate text-[10px] text-muted-foreground">

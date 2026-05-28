@@ -65,7 +65,7 @@ export function DashboardSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Interface Layout
           </p>
         </div>
@@ -73,7 +73,7 @@ export function DashboardSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={() => setIsEditorOpen(true)}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Pencil className="mr-2 h-3.5 w-3.5" />
           Configure Layout
@@ -95,7 +95,7 @@ export function DashboardSettingsSection() {
                   <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm", tile.iconBg)}>
                     <Icon size={18} />
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--bd-text))]">{tile.label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-bd-text">{tile.label}</span>
                 </div>
               )
             })}
@@ -128,7 +128,7 @@ export function DashboardSettingsSection() {
           <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-8 border-t border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg)/0.95)] px-6 py-4 backdrop-blur-sm flex items-center justify-end">
              <Button 
                 onClick={() => setIsEditorOpen(false)}
-                className="min-w-[120px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90 rounded-xl font-bold"
+                className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90 rounded-xl font-bold"
              >
                <Check className="mr-2 h-4 w-4" />
                Finish

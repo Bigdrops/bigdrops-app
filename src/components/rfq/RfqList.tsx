@@ -35,7 +35,7 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (!expiryDate) {
     return {
       label: 'Open',
-      className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      className: 'bg-bd-status-info-bg text-bd-status-info-text',
     }
   }
 
@@ -43,7 +43,7 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (Number.isNaN(expiry.getTime())) {
     return {
       label: 'Open',
-      className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+      className: 'bg-bd-status-info-bg text-bd-status-info-text',
     }
   }
 
@@ -63,13 +63,13 @@ const getRfqStatusMeta = (expiryDate?: string) => {
   if (diffInDays <= 7) {
     return {
       label: 'Due soon',
-      className: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]',
+      className: 'bg-bd-status-warning-bg text-bd-status-warning-text',
     }
   }
 
   return {
     label: 'Open',
-    className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]',
+    className: 'bg-bd-status-info-bg text-bd-status-info-text',
   }
 }
 

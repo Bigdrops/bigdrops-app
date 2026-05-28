@@ -35,11 +35,11 @@ interface TaxRemindersPanelProps {
 }
 
 const STATUS_TONES: Record<TaxReminderStatus, string> = {
-  upcoming:  'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] border-[hsl(var(--bd-status-info-border))]',
-  due:       'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))] border-[hsl(var(--bd-status-warning-border))]',
-  overdue:   'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] border-[hsl(var(--bd-status-danger-border))]',
-  resolved:  'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] border-[hsl(var(--bd-status-success-border))]',
-  cancelled: 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] border-[hsl(var(--bd-border))]',
+  upcoming:  'bg-bd-status-info-bg text-bd-status-info-text border-bd-status-info-border',
+  due:       'bg-bd-status-warning-bg text-bd-status-warning-text border-bd-status-warning-border',
+  overdue:   'bg-bd-status-danger-bg text-bd-status-danger-text border-bd-status-danger-border',
+  resolved:  'bg-bd-status-success-bg text-bd-status-success-text border-bd-status-success-border',
+  cancelled: 'bg-bd-surface-muted text-bd-text-muted border-bd-border',
 }
 
 const TAX_TYPE_LABELS: Record<TaxFilingTaxType, string> = {
@@ -140,8 +140,8 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
   return (
     <div className="space-y-4 pb-20">
       <div className="flex flex-row items-center justify-between">
-        <h3 className="text-sm font-bold flex items-center gap-2 text-[hsl(var(--bd-text))]">
-          <Bell className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
+        <h3 className="text-sm font-bold flex items-center gap-2 text-bd-text">
+          <Bell className="h-4 w-4 text-bd-status-info-text" />
           Tax Obligations & Deadlines
         </h3>
         <Button
@@ -154,12 +154,12 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
         </Button>
       </div>
 
-      <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden">
+      <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg overflow-hidden">
         {reminders.length === 0 ? (
-          <div className="text-center py-20 px-4 bg-[hsl(var(--bd-surface-muted))]">
-            <Calendar className="h-10 w-10 text-[hsl(var(--bd-text-muted))] opacity-20 mx-auto mb-3" />
-            <div className="text-sm font-bold text-[hsl(var(--bd-text))]">No Tracked Obligations</div>
-            <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-1 max-w-[280px] mx-auto">
+          <div className="text-center py-20 px-4 bg-bd-surface-muted">
+            <Calendar className="h-10 w-10 text-bd-text-muted opacity-20 mx-auto mb-3" />
+            <div className="text-sm font-bold text-bd-text">No Tracked Obligations</div>
+            <div className="text-xs text-bd-text-muted mt-1 max-w-[280px] mx-auto">
               Keep track of upcoming VAT deliveries, WHT remittances and tax filing dates.
             </div>
           </div>
@@ -168,11 +168,11 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             {reminders.map(reminder => (
               <div
                 key={reminder.id}
-                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-[hsl(var(--bd-surface-muted))]'}`}
+                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${reminder.status === 'resolved' ? 'opacity-60 grayscale-[0.5]' : 'hover:bg-bd-surface-muted'}`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
                       {TAX_TYPE_LABELS[reminder.tax_type]}
                     </span>
                     <Badge
@@ -182,11 +182,11 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                       {reminder.status}
                     </Badge>
                   </div>
-                  <div className="text-sm font-bold text-[hsl(var(--bd-text))] flex items-center gap-2">
+                  <div className="text-sm font-bold text-bd-text flex items-center gap-2">
                      Due: {formatDisplayDate(reminder.due_date)}
-                     {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-[hsl(var(--bd-status-danger-text))]" />}
+                     {reminder.status === 'overdue' && <AlertCircle className="h-3 w-3 text-bd-status-danger-text" />}
                   </div>
-                  <div className="text-xs text-[hsl(var(--bd-text-muted))] mt-0.5">
+                  <div className="text-xs text-bd-text-muted mt-0.5">
                     {reminder.period_start && reminder.period_end ? (
                       <span>Period: {formatDisplayDate(reminder.period_start)} — {formatDisplayDate(reminder.period_end)}</span>
                     ) : (
@@ -202,7 +202,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                       <Button
                         variant="ghost" 
                         size="sm"
-                        className="h-8 text-[10px] uppercase font-black tracking-widest text-[hsl(var(--bd-status-success-text))] hover:bg-[hsl(var(--bd-status-success-bg))] px-3"
+                        className="h-8 text-[10px] uppercase font-black tracking-widest text-bd-status-success-text hover:bg-bd-status-success-bg px-3"
                         onClick={() => resolveReminder(reminder.id)}
                       >
                         <CheckCircle2 className="h-3 w-3 mr-1.5" />
@@ -212,7 +212,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]"
+                      className="h-8 w-8 text-bd-text-muted hover:text-bd-text hover:bg-bd-surface-muted"
                       onClick={() => setEditingReminder(reminder)}
                     >
                       <Edit className="h-4 w-4" />
@@ -220,7 +220,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-[hsl(var(--bd-status-danger-text))] opacity-30 hover:opacity-100 hover:bg-[hsl(var(--bd-status-danger-bg))]"
+                      className="h-8 w-8 text-bd-status-danger-text opacity-30 hover:opacity-100 hover:bg-bd-status-danger-bg"
                       onClick={() => handleDelete(reminder.id)}
                       loading={isDeleting === reminder.id}
                     >
@@ -235,8 +235,8 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       </div>
 
       <Sheet open={!!editingReminder} onOpenChange={open => !open && setEditingReminder(null)}>
-        <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl">
-          <SheetHeader className="border-b border-[hsl(var(--bd-border))]">
+        <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl">
+          <SheetHeader className="border-b border-bd-border">
             <SheetTitle>{editingReminder?.id ? 'Edit Obligation' : 'New Obligation'}</SheetTitle>
             <SheetDescription>
               Maintain one tax deadline, linked filing, and status record from a single operational sheet.
@@ -245,7 +245,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
           <div className="flex-1 overflow-y-auto px-6 py-6">
             <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Obligation Type</Label>
+              <Label className="text-[11px] font-bold text-bd-text-muted">Obligation Type</Label>
               <Select
                 value={editingReminder?.tax_type ?? 'vat'}
                 onValueChange={v => setEditingReminder({ ...editingReminder, tax_type: v as TaxFilingTaxType })}
@@ -262,7 +262,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Due Date</Label>
+              <Label className="text-[11px] font-bold text-bd-text-muted">Due Date</Label>
               <Input
                 type="date"
                 value={editingReminder?.due_date ?? ''}
@@ -273,7 +273,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Filing Start</Label>
+                <Label className="text-[11px] font-bold text-bd-text-muted">Filing Start</Label>
                 <Input
                   type="date"
                   value={editingReminder?.period_start ?? ''}
@@ -282,7 +282,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Filing End</Label>
+                <Label className="text-[11px] font-bold text-bd-text-muted">Filing End</Label>
                 <Input
                   type="date"
                   value={editingReminder?.period_end ?? ''}
@@ -293,7 +293,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Status</Label>
+              <Label className="text-[11px] font-bold text-bd-text-muted">Status</Label>
               <Select
                 value={editingReminder?.status ?? 'upcoming'}
                 onValueChange={v => setEditingReminder({ ...editingReminder, status: v as TaxReminderStatus })}
@@ -312,7 +312,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Link to Filing Record</Label>
+              <Label className="text-[11px] font-bold text-bd-text-muted">Link to Filing Record</Label>
               <Combobox
                 options={[
                   { value: 'none', label: 'No linked filing' },
@@ -329,7 +329,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Notes</Label>
+              <Label className="text-[11px] font-bold text-bd-text-muted">Notes</Label>
               <Textarea
                 placeholder="Optional notes..."
                 value={editingReminder?.notes ?? ''}
@@ -338,7 +338,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             </div>
             </div>
           </div>
-          <SheetFooter className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+          <SheetFooter className="border-t border-bd-border bg-bd-card-bg pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setEditingReminder(null)} className="h-10 sm:min-w-28">
               Cancel
             </Button>

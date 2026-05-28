@@ -84,14 +84,14 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
 
   if (isReceived && entry.receipt) {
     return (
-      <div className="mt-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-4">
+      <div className="mt-3 rounded-[var(--bd-radius-lg)] border border-bd-status-info-border bg-bd-status-info-bg p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[hsl(var(--bd-text))]">
+            <p className="text-xs font-bold text-bd-text">
               Receipt received — ready for verification
             </p>
             {entry.receipt.receipt_number ? (
-              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+              <p className="mt-1 text-xs text-bd-text-muted">
                 Ref: {entry.receipt.receipt_number}
               </p>
             ) : null}
@@ -118,8 +118,8 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
   if (!isUntracked) return null
 
   return (
-    <div className="mt-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
-      <p className="mb-3 text-xs font-bold text-[hsl(var(--bd-text))]">
+    <div className="mt-3 rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface p-4">
+      <p className="mb-3 text-xs font-bold text-bd-text">
         Submit WHT Certificate
       </p>
 
@@ -127,7 +127,7 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
         <div className="space-y-1.5">
           <Label
             htmlFor={`receipt-num-${entry.id}`}
-            className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]"
+            className="text-[10px] font-black uppercase tracking-[0.14em] text-bd-text-muted"
           >
             Receipt Number
           </Label>
@@ -142,7 +142,7 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-[10px] font-black uppercase tracking-[0.14em] text-[hsl(var(--bd-text-muted))]">
+          <Label className="text-[10px] font-black uppercase tracking-[0.14em] text-bd-text-muted">
             Attachment (optional)
           </Label>
           <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
               {selectedFile ? 'Change file' : 'Attach file'}
             </Button>
             {selectedFile ? (
-              <span className="truncate text-xs text-[hsl(var(--bd-text-muted))]">
+              <span className="truncate text-xs text-bd-text-muted">
                 {selectedFile.name}
               </span>
             ) : null}

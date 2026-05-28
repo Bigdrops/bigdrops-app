@@ -69,7 +69,7 @@ export default function ComplianceSettingsPanel() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center text-[hsl(var(--bd-text-muted))]">
+      <div className="flex min-h-[320px] items-center justify-center text-bd-text-muted">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
         Loading tax profile...
       </div>
@@ -77,17 +77,17 @@ export default function ComplianceSettingsPanel() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[hsl(var(--bd-card-bg))] text-[hsl(var(--bd-text))]">
+    <div className="flex h-full min-h-0 flex-col bg-bd-card-bg text-bd-text">
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         <div className="space-y-6">
-          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+          <section className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-bd-text-muted">
                 <Building className="h-4 w-4" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Tax identity</h3>
-                <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                <h3 className="text-sm font-bold text-bd-text">Tax identity</h3>
+                <p className="text-xs text-bd-text-muted">
                   Keep the entity tax details used across Compliance workflows.
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function ComplianceSettingsPanel() {
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="tax-profile-tin" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                <Label htmlFor="tax-profile-tin" className="text-[11px] font-bold text-bd-text-muted">
                   TIN
                 </Label>
                 <Input
@@ -108,7 +108,7 @@ export default function ComplianceSettingsPanel() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tax-profile-year-end" className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+                <Label htmlFor="tax-profile-year-end" className="text-[11px] font-bold text-bd-text-muted">
                   Year-end month
                 </Label>
                 <Input
@@ -122,20 +122,20 @@ export default function ComplianceSettingsPanel() {
             </div>
           </section>
 
-          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+          <section className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface p-4">
             <div className="space-y-1">
-              <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Registration state</h3>
-              <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+              <h3 className="text-sm font-bold text-bd-text">Registration state</h3>
+              <p className="text-xs text-bd-text-muted">
                 Control whether VAT-related features and filings apply to this entity.
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-4 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] px-4 py-3">
+            <div className="mt-5 flex items-center justify-between gap-4 rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface-muted px-4 py-3">
               <div className="space-y-1">
-                <Label htmlFor="tax-profile-vat" className="text-sm font-semibold text-[hsl(var(--bd-text))]">
+                <Label htmlFor="tax-profile-vat" className="text-sm font-semibold text-bd-text">
                   VAT registration
                 </Label>
-                <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+                <p className="text-xs text-bd-text-muted">
                   {settings.vat_enabled ? 'VAT registered and active' : 'Not VAT registered'}
                 </p>
               </div>
@@ -147,21 +147,21 @@ export default function ComplianceSettingsPanel() {
             </div>
           </section>
 
-          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
+          <section className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface p-4">
             <div className="space-y-1">
-              <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Read-only tax metadata</h3>
-              <p className="text-xs text-[hsl(var(--bd-text-muted))]">
+              <h3 className="text-sm font-bold text-bd-text">Read-only tax metadata</h3>
+              <p className="text-xs text-bd-text-muted">
                 Reference values already attached to the current tax profile.
               </p>
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">CIT category</Label>
+                <Label className="text-[11px] font-bold text-bd-text-muted">CIT category</Label>
                 <div className="flex h-10 items-center">
                   <Badge
                     variant="outline"
-                    className="border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text))]"
+                    className="border-bd-border bg-bd-surface-muted text-bd-text"
                   >
                     {settings.cit_category || 'small'}
                   </Badge>
@@ -169,7 +169,7 @@ export default function ComplianceSettingsPanel() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">Year-end day</Label>
+                <Label className="text-[11px] font-bold text-bd-text-muted">Year-end day</Label>
                 <Input
                   value={settings.year_end_day ? String(settings.year_end_day) : ''}
                   placeholder="Not set"
@@ -181,10 +181,10 @@ export default function ComplianceSettingsPanel() {
           </section>
 
           {!settings.tin ? (
-            <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-4 py-3">
+            <section className="rounded-[var(--bd-radius-xl)] border border-bd-status-warning-border bg-bd-status-warning-bg px-4 py-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-4 w-4 text-[hsl(var(--bd-status-warning-text))]" />
-                <p className="text-xs leading-relaxed text-[hsl(var(--bd-status-warning-text))]">
+                <AlertCircle className="mt-0.5 h-4 w-4 text-bd-status-warning-text" />
+                <p className="text-xs leading-relaxed text-bd-status-warning-text">
                   Add a TIN to keep generated tax recovery records and compliance exports complete.
                 </p>
               </div>
@@ -193,7 +193,7 @@ export default function ComplianceSettingsPanel() {
         </div>
       </div>
 
-      <div className="border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="border-t border-bd-border bg-bd-card-bg px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button
             onClick={handleSave}

@@ -18,7 +18,7 @@ export function SettingsSummaryCard({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] shadow-sm transition-all",
+        "overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg shadow-sm transition-all",
         className
       )}
       {...props}
@@ -27,12 +27,12 @@ export function SettingsSummaryCard({
         <div className="flex items-start justify-between gap-4 border-b border-[hsl(var(--bd-border)/0.4)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-5 py-4">
           <div className="min-w-0 flex-1">
             {title && (
-              <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">
+              <h3 className="text-sm font-bold text-bd-text">
                 {title}
               </h3>
             )}
             {description && (
-              <p className="mt-0.5 text-[12px] leading-relaxed text-[hsl(var(--bd-text-muted))]">
+              <p className="mt-0.5 text-[12px] leading-relaxed text-bd-text-muted">
                 {description}
               </p>
             )}
@@ -68,15 +68,15 @@ export function SettingsSummaryRow({
       )}
     >
       {icon && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--bd-radius-md)] bg-bd-surface-muted text-bd-text-muted">
           {icon}
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[hsl(var(--bd-text-muted))] opacity-70">
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
           {label}
         </p>
-        <div className="mt-0.5 text-sm font-medium text-[hsl(var(--bd-text))] truncate">
+        <div className="mt-0.5 text-sm font-medium text-bd-text truncate">
           {value || <span className="opacity-30 italic">Not set</span>}
         </div>
       </div>

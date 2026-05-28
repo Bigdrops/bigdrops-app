@@ -19,7 +19,7 @@ export default function MobileBottomNav({
   return (
     <nav
       data-bd-layout="bottom-nav"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-bd-border bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid h-[64px] w-full grid-cols-5 gap-1 px-2 pt-1.5">
@@ -35,8 +35,8 @@ export default function MobileBottomNav({
               className={cn(
                 "flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-all outline-none",
                 isActive 
-                  ? "bg-[hsl(var(--bd-text))] text-[hsl(var(--bd-surface))] shadow-sm" 
-                  : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted))/0.5]"
+                  ? "bg-bd-text text-bd-surface shadow-sm" 
+                  : "text-bd-text-muted hover:bg-[hsl(var(--bd-surface-muted))/0.5]"
               )}
             >
               <Icon className={cn("h-[18px] w-[18px]", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />

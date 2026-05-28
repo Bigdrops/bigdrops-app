@@ -105,8 +105,8 @@ export default function SelectableRowCard({
             className={cn(
               "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors duration-200",
               isSelected
-                ? "border-[hsl(var(--bd-button-primary-bg))] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))]"
-                : "border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]"
+                ? "border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text"
+                : "border-bd-border bg-bd-surface"
             )}
           >
             {isSelected && (

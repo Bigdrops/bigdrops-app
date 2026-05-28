@@ -278,7 +278,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-24">
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))]/80 px-4 py-4 backdrop-blur shadow-sm rounded-b-3xl -mx-4">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-bd-border bg-bd-surface/80 px-4 py-4 backdrop-blur shadow-sm rounded-b-3xl -mx-4">
         <div>
           <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
             {mode === 'new' ? 'Create Waybill' : 'Edit Waybill'}
@@ -292,14 +292,14 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
           <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => onCancel ? onCancel() : navigate(-1)}>
             <X className="h-4 w-4" />
           </Button>
-          <Button className="rounded-xl bg-[hsl(var(--bd-button-primary-bg))] font-bold text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-bg))]/90 shadow-md transition-all active:scale-95" onClick={onSave} disabled={saving}>
+          <Button className="rounded-xl bg-bd-button-primary-bg font-bold text-bd-button-primary-text hover:bg-bd-button-primary-bg/90 shadow-md transition-all active:scale-95" onClick={onSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
           </Button>
         </div>
       </div>
 
       <div className="space-y-6 px-1">
-        <SectionCard title="Basic Information" accent="bg-[hsl(var(--bd-surface-muted))]">
+        <SectionCard title="Basic Information" accent="bg-bd-surface-muted">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Waybill Type" required help="Internal: transfers within company. External: client deliveries.">
               <Select value={waybill.type} onValueChange={(value: WaybillType) => updateWaybill('type', value)}>
@@ -335,7 +335,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
           </div>
         </SectionCard>
 
-        <SectionCard title="People and Movement" accent="bg-[hsl(var(--bd-surface-muted))]">
+        <SectionCard title="People and Movement" accent="bg-bd-surface-muted">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={typeContent.senderLabel} required>
               <Input value={waybill.sender_name || ''} onChange={(event) => updateWaybill('sender_name', event.target.value)} placeholder={typeContent.senderPlaceholder} />
@@ -374,7 +374,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
           </div>
         </SectionCard>
 
-        <SectionCard title="Items and Custom Columns" accent="bg-[hsl(var(--bd-surface-muted))]" subtitle="Keep the item list practical for mobile and print.">
+        <SectionCard title="Items and Custom Columns" accent="bg-bd-surface-muted" subtitle="Keep the item list practical for mobile and print.">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-xs text-muted-foreground">{customColumns.length} / {WAYBILL_COLUMN_LIMIT} custom columns</div>
@@ -451,7 +451,7 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
             </div>
           </SectionCard>
 
-        <SectionCard title={typeContent.signatureSectionTitle} accent="bg-[hsl(var(--bd-surface-muted))]" subtitle={typeContent.ackPendingText}>
+        <SectionCard title={typeContent.signatureSectionTitle} accent="bg-bd-surface-muted" subtitle={typeContent.ackPendingText}>
           <div className="space-y-6">
             <WaybillSignatureField role="sender" label={typeContent.senderSignatureLabel} value={getWaybillSignature(waybill, 'sender')} onChange={(next) => updateCustomFields({ signatures: { ...customFields.signatures, sender: next } })} />
             <WaybillSignatureField role="receiver" label={typeContent.receiverSignatureLabel} value={getWaybillSignature(waybill, 'receiver')} onChange={(next) => updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })} />

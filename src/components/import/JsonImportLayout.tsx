@@ -153,15 +153,15 @@ export function JsonImportUI({
           <button
             type="button"
             onClick={() => setShowTutorial(!showTutorial)}
-            className="flex w-full items-center justify-between rounded-xl border border-[hsl(var(--bd-status-info-border))] bg-[hsl(var(--bd-status-info-bg))] p-[var(--bd-space-sm)] text-left transition-colors hover:brightness-95"
+            className="flex w-full items-center justify-between rounded-xl border border-bd-status-info-border bg-bd-status-info-bg p-[var(--bd-space-sm)] text-left transition-colors hover:brightness-95"
           >
             <div className="flex items-center gap-[var(--bd-space-sm)]">
-              <Info className="h-4 w-4 text-[hsl(var(--bd-status-info-text))]" />
-              <span className="text-xs font-bold text-[hsl(var(--bd-status-info-text))]">
+              <Info className="h-4 w-4 text-bd-status-info-text" />
+              <span className="text-xs font-bold text-bd-status-info-text">
                 {activeTutorial.title}
               </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(var(--bd-status-info-text))] opacity-60">
+            <span className="text-[10px] font-bold uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-status-info-text opacity-60">
               {showTutorial ? 'Hide Guide' : 'How it works'}
             </span>
           </button>
@@ -178,7 +178,7 @@ export function JsonImportUI({
                 <div className="space-y-[var(--bd-space-sm)]">
                   {activeTutorial.steps.map((step, idx) => (
                     <div key={idx} className="flex gap-3">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-action-icon-bg))] text-[9px] font-black text-[hsl(var(--bd-action-icon-text))]">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bd-action-icon-bg text-[9px] font-black text-bd-action-icon-text">
                         {idx + 1}
                       </div>
                       <p className="text-[11px] font-medium text-[hsl(var(--bd-overlay-muted))] leading-snug pt-0.5">
@@ -217,7 +217,7 @@ export function JsonImportUI({
               className="min-h-[160px] rounded-xl border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-input-bg))] font-mono text-[hsl(var(--bd-overlay-text))] text-xs p-[var(--bd-space-sm)] focus-visible:ring-[hsl(var(--bd-focus-ring))] shadow-inner"
             />
             {error && (
-              <div className="p-2.5 rounded-lg bg-[hsl(var(--bd-status-danger-bg))] border border-[hsl(var(--bd-status-danger-border))] text-[11px] text-[hsl(var(--bd-status-danger-text))] font-bold">
+              <div className="p-2.5 rounded-lg bg-bd-status-danger-bg border border-bd-status-danger-border text-[11px] text-bd-status-danger-text font-bold">
                 {error}
               </div>
             )}
@@ -232,8 +232,8 @@ export function JsonImportUI({
               <div className={cn(
                 "rounded-xl border p-3 text-[11px] font-medium",
                 whtHasPayments
-                  ? "border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]"
-                  : "border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"
+                  ? "border-bd-status-warning-border bg-bd-status-warning-bg text-bd-status-warning-text"
+                  : "border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text"
               )}>
                 {whtHasPayments 
                   ? "Before saving, choose the payment this receipt belongs to."

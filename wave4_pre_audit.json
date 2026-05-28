@@ -1,0 +1,216 @@
+{
+  "css_variables": {
+    "custom_bd_vars": {
+      "note": "~80 unique --bd-* variables defined in src/styles/formTheme.css. Key ones listed below.",
+      "color_tokens": {
+        "--bd-app-bg": "var(--background)",
+        "--bd-surface": "var(--card)",
+        "--bd-surface-muted": "var(--muted)",
+        "--bd-border": "var(--border)",
+        "--bd-border-strong": "var(--border)",
+        "--bd-text": "var(--foreground)",
+        "--bd-text-muted": "var(--muted-foreground)",
+        "--bd-text-soft": "var(--muted-foreground)",
+        "--bd-input-bg": "var(--background)",
+        "--bd-input-border": "var(--input)",
+        "--bd-input-focus": "var(--ring)",
+        "--bd-input-error": "var(--destructive)",
+        "--bd-card-bg": "var(--card)",
+        "--bd-card-border": "var(--border)",
+        "--bd-button-primary-bg": "var(--primary)",
+        "--bd-button-primary-text": "var(--primary-foreground)",
+        "--bd-button-primary-hover-bg": "var(--primary)",
+        "--bd-fab-bg": "var(--primary)",
+        "--bd-fab-text": "var(--primary-foreground)",
+        "--bd-focus-ring": "var(--ring)",
+        "--bd-layout-nav": "var(--bd-surface)",
+        "--bd-layout-sidebar": "var(--bd-surface)",
+        "--bd-overlay-scrim": "222 47% 11% / 0.4",
+        "--bd-brand": "240 56% 18%",
+        "--bd-brand-foreground": "0 0% 100%",
+        "--bd-accent": "20 83% 48%"
+      },
+      "status_tokens": {
+        "--bd-status-success-bg": "142 71% 45% / 0.1",
+        "--bd-status-success-text": "142 71% 45%",
+        "--bd-status-warning-bg": "38 92% 50% / 0.1",
+        "--bd-status-warning-text": "38 92% 50%",
+        "--bd-status-danger-bg": "0 84% 60% / 0.1",
+        "--bd-status-danger-text": "0 84% 60%",
+        "--bd-status-info-bg": "217 91% 60% / 0.1",
+        "--bd-status-info-text": "217 91% 60%"
+      },
+      "spacing_tokens": {
+        "--bd-space-xs": "4px",
+        "--bd-space-sm": "8px",
+        "--bd-space-md": "16px",
+        "--bd-space-lg": "32px",
+        "--bd-space-xl": "48px",
+        "--bd-card-padding": "var(--bd-space-md)",
+        "--bd-section-gap": "var(--bd-space-lg)",
+        "--bd-row-gap": "var(--bd-space-sm)"
+      },
+      "typography_tokens": {
+        "--bd-font-family": "'Inter', ui-sans-serif, system-ui, sans-serif",
+        "--bd-font-body-size": "0.875rem",
+        "--bd-label-letter-spacing": "0.05em"
+      },
+      "radius_tokens": {
+        "--bd-radius": "var(--radius)",
+        "--bd-radius-sm": "calc(var(--radius) - 4px)",
+        "--bd-radius-md": "calc(var(--radius) - 2px)",
+        "--bd-radius-lg": "var(--radius)",
+        "--bd-overlay-radius": "28px"
+      },
+      "hardcoded_color_tokens": {
+        "--bd-amber": "#d97706",
+        "--bd-indigo": "#4338ca",
+        "--bd-emerald": "#059669",
+        "--bd-rose": "#be185d",
+        "--bd-violet": "#7c3aed"
+      }
+    },
+    "native_shadcn_vars": {
+      "light_mode": {
+        "--background": "210 40% 98%",
+        "--foreground": "222 47% 11%",
+        "--card": "210 20% 99%",
+        "--card-foreground": "222 47% 11%",
+        "--popover": "210 20% 99%",
+        "--popover-foreground": "222 47% 11%",
+        "--primary": "225 75% 48%",
+        "--primary-foreground": "0 0% 98%",
+        "--secondary": "210 44% 98%",
+        "--secondary-foreground": "222 47% 11%",
+        "--muted": "210 32% 95.5%",
+        "--muted-foreground": "215 16% 47%",
+        "--accent": "210 34% 96%",
+        "--accent-foreground": "222 47% 11%",
+        "--destructive": "0 70% 48%",
+        "--destructive-foreground": "0 0% 98%",
+        "--border": "214 30% 88%",
+        "--input": "214 30% 88%",
+        "--ring": "225 75% 48%",
+        "--radius": "0.75rem"
+      },
+      "dark_mode": {
+        "--background": "222 25% 8%",
+        "--foreground": "210 35% 96%",
+        "--card": "222 25% 10%",
+        "--card-foreground": "210 35% 96%",
+        "--popover": "222 25% 10%",
+        "--popover-foreground": "210 35% 96%",
+        "--primary": "235 70% 60%",
+        "--primary-foreground": "222 25% 10%",
+        "--secondary": "220 18% 16%",
+        "--secondary-foreground": "210 35% 96%",
+        "--muted": "220 18% 16%",
+        "--muted-foreground": "215 15% 70%",
+        "--accent": "220 18% 16%",
+        "--accent-foreground": "210 35% 96%",
+        "--destructive": "0 62% 35%",
+        "--destructive-foreground": "0 0% 98%",
+        "--border": "220 18% 18%",
+        "--input": "220 18% 18%",
+        "--ring": "235 70% 60%"
+      }
+    },
+    "theme_attribute_usage": "dark class + named theme presets via CSS variable overrides on :root"
+  },
+  "tailwind_config": {
+    "has_hsl_variable_mapping": true,
+    "custom_color_overrides": [
+      "bd-app-bg", "bd-surface", "bd-surface-muted", "bd-border", "bd-border-strong",
+      "bd-text", "bd-text-muted", "bd-text-soft", "bd-input-bg", "bd-input-border",
+      "bd-input-focus", "bd-card-bg", "bd-card-border", "bd-button-primary-bg",
+      "bd-button-primary-text", "bd-status-success-bg", "bd-status-success-text",
+      "bd-status-success-border", "bd-status-warning-bg", "bd-status-warning-text",
+      "bd-status-warning-border", "bd-status-danger-bg", "bd-status-danger-text",
+      "bd-status-danger-border", "bd-status-info-bg", "bd-status-info-text",
+      "bd-status-info-border", "bd-nav-active-bg", "bd-nav-active-text",
+      "bd-nav-active-icon", "bd-surface-action", "bd-surface-action-hover",
+      "bd-surface-action-border", "bd-action-icon-bg", "bd-action-icon-text",
+      "bd-fab-bg", "bd-fab-text"
+    ],
+    "missing_tokens": [
+      "primary-500 (no numeric scale defined — only primary.DEFAULT and primary.foreground)",
+      "primary-600 (same — does not exist)",
+      "No slate/gray/zinc numeric scales mapped to CSS variables",
+      "No explicit dark mode color overrides in Tailwind config (handled by .dark class on CSS vars)"
+    ]
+  },
+  "usage_counts": {
+    "bg_hsl_bd_pattern": 735,
+    "text_hsl_bd_pattern": 988,
+    "border_hsl_bd_pattern": 499,
+    "ring_hsl_bd_pattern": 29,
+    "bg_primary_600": 0,
+    "bg_primary_500": 0,
+    "focus_ring_primary_500": 0
+  },
+  "theme_switcher": {
+    "file_path": "src/pages/settings/AppThemeSettingsSection.tsx",
+    "applier_file": "src/components/app/AppShell.tsx",
+    "mechanism": "CSS variable override on :root via applyThemeTokenBundle() + .dark class for dark mode",
+    "supported_themes": [
+      "base (default)",
+      "ivory-ledger",
+      "industrial-fog",
+      "brutalist-concrete",
+      "sage-retreat",
+      "deep-onyx",
+      "nordic-abyss",
+      "obsidian",
+      "emerald-vault",
+      "ruby-ledger",
+      "midnight-indigo",
+      "scandi-pine",
+      "swiss-grid",
+      "notion-beige",
+      "science-journal",
+      "oss-terminal",
+      "blackrock",
+      "ramp",
+      "binance",
+      "uber",
+      "bmw",
+      "glassline",
+      "clinical",
+      "atelier-noir",
+      "law-chambers",
+      "weather-stratus",
+      "modern-minimalist",
+      "custom (user-defined hex overrides)"
+    ]
+  },
+  "shadcn_components": {
+    "button": "overridden with --bd-* (default variant uses bg-[hsl(var(--bd-button-primary-bg))])",
+    "card": "partially overridden (uses --bd-card-bg, --bd-radius-lg, border replaced with slate-200 in Wave 2)",
+    "dialog": "overridden with --bd-* (overlay-bg, overlay-text, overlay-border, overlay-radius)",
+    "sheet": "overridden with --bd-* (same pattern as dialog)",
+    "switch": "overridden with --bd-* (uses --bd-brand for checked state, --bd-border for unchecked, --bd-card-bg for thumb)",
+    "input": "overridden with --bd-* (uses --bd-input-focus, --bd-input-error)",
+    "select": "overridden with --bd-* (uses --bd-button-primary-bg for focus)",
+    "alert-dialog": "partially standard (uses bg-background, ring-foreground/10) but overlay was custom"
+  },
+  "dark_mode": {
+    "implementation": "dark class",
+    "root_element": "html (inferred from .dark selector in index.css)",
+    "details": "The .dark class changes the native shadcn CSS variables (--primary, --background, etc.) which cascade into --bd-* variables automatically. Named theme presets override both native and --bd-* variables via JS at runtime (applyThemeTokenBundle). Some presets include explicit --bd-* overrides (e.g., scandi-pine, swiss-grid) while simpler presets only override native vars and let --bd-* inherit."
+  },
+  "risk_assessment": {
+    "files_to_change_estimate": 120,
+    "high_risk_components": [
+      "src/components/layout/ModuleShell.tsx (heavy use of --bd-* in inline classes)",
+      "src/components/layout/DesktopSidebar.tsx (custom token-heavy navigation)",
+      "src/components/layout/MobileBottomNav.tsx (custom layout tokens)",
+      "src/components/invoice/MobileItemCard.tsx (legacy --bd-* CSS vars in inline styles)",
+      "src/components/csr/CsrFormScreen.tsx (complex form with many token references)",
+      "src/lib/themePresets.ts (26 named presets that override --bd-* tokens — must be preserved or migrated)",
+      "src/components/app/AppShell.tsx (theme application logic)",
+      "src/styles/formTheme.css (the bridge layer itself)"
+    ],
+    "is_simple_rename_possible": false,
+    "reasoning": "The --bd-* system is NOT a simple rename of shadcn vars. It is a BRIDGE LAYER that: (1) maps to shadcn vars by default, (2) gets overridden by 26+ named theme presets at runtime via JS, (3) includes tokens that have NO shadcn equivalent (spacing, typography, radius, status colors, overlay tokens, icon tokens). The --bd-* layer IS the theme system — removing it would break all named theme presets. Migration would require either: (A) keeping the bridge but using Tailwind utility classes that reference the same vars (e.g., bg-bd-button-primary-bg instead of bg-[hsl(var(--bd-button-primary-bg))]), or (B) a complete redesign of the theme preset system to use CSS layers or Tailwind's built-in theming."
+  }
+}

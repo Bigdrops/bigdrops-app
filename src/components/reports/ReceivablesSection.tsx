@@ -151,13 +151,13 @@ export function ReceivablesSection({
         showStatus
       />
       {datePreset === 'custom' ? (
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-3 shadow-sm grid gap-3 md:grid-cols-2">
+        <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-3 shadow-sm grid gap-3 md:grid-cols-2">
           <div>
-            <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Start</div>
+            <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-bd-text-muted">Start</div>
             <Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} className="h-9 rounded-lg" />
           </div>
           <div>
-            <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">End</div>
+            <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-bd-text-muted">End</div>
             <Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} className="h-9 rounded-lg" />
           </div>
         </div>
@@ -171,9 +171,9 @@ export function ReceivablesSection({
           {filtered.length === 0 ? (
             <EmptyState title="No receivables found" description="Try another date range, status, client, or search term." tone="red" />
           ) : (
-            <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] overflow-hidden shadow-sm">
-              <div className="px-4 py-3 border-b border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))]">
-                <h3 className="text-sm font-bold text-[hsl(var(--bd-text))]">Outstanding Invoices</h3>
+            <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg overflow-hidden shadow-sm">
+              <div className="px-4 py-3 border-b border-bd-border bg-bd-surface-muted">
+                <h3 className="text-sm font-bold text-bd-text">Outstanding Invoices</h3>
               </div>
               <div className="divide-y divide-[hsl(var(--bd-border))]">
                 {filtered.map((row) => {
@@ -184,16 +184,16 @@ export function ReceivablesSection({
                   return (
                     <div
                       key={row.id}
-                      className={`p-4 flex flex-col gap-4 hover:bg-[hsl(var(--bd-surface-muted))] transition-colors ${getLeftBorderClass(status)}`}
+                      className={`p-4 flex flex-col gap-4 hover:bg-bd-surface-muted transition-colors ${getLeftBorderClass(status)}`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <div className="text-sm font-bold text-[hsl(var(--bd-text))]">
-                            <Link to={`/invoices/${row.id}`} className="hover:text-[hsl(var(--bd-status-info-text))] hover:underline">
+                          <div className="text-sm font-bold text-bd-text">
+                            <Link to={`/invoices/${row.id}`} className="hover:text-bd-status-info-text hover:underline">
                               {row.invoice_number || '—'}
                             </Link>
                           </div>
-                          <div className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">{row.client_name || '—'}</div>
+                          <div className="mt-1 text-xs text-bd-text-muted">{row.client_name || '—'}</div>
                         </div>
                         <Badge
                           className={`rounded-full px-2.5 py-1 text-[9px] font-bold uppercase border ${getStatusClass(status)}`}
@@ -203,23 +203,23 @@ export function ReceivablesSection({
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">Total</div>
-                          <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{formatMoney(row.total)}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">Total</div>
+                          <div className="text-sm font-bold text-bd-text">{formatMoney(row.total)}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">Received</div>
-                          <div className="text-sm font-bold text-[hsl(var(--bd-status-success-text))]">{formatMoney(row.cash_received)}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">Received</div>
+                          <div className="text-sm font-bold text-bd-status-success-text">{formatMoney(row.cash_received)}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">Balance Due</div>
-                          <div className="text-lg font-black text-[hsl(var(--bd-status-danger-text))]">{formatMoney(row.balance_due)}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">Balance Due</div>
+                          <div className="text-lg font-black text-bd-status-danger-text">{formatMoney(row.balance_due)}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">Due Date</div>
-                          <div className="text-sm font-bold text-[hsl(var(--bd-text))]">{formatDate(row.due_date)}</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">Due Date</div>
+                          <div className="text-sm font-bold text-bd-text">{formatDate(row.due_date)}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--bd-text-muted))] opacity-60">Aging</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">Aging</div>
                           <Badge className={`mt-1 rounded-full px-2.5 py-1 text-[9px] font-bold border ${getAgingBadgeClass(aging)}`}>{aging}</Badge>
                         </div>
                       </div>

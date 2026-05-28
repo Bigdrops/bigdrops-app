@@ -224,7 +224,7 @@ export function ArchivesSettingsSection() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="px-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
           Data Lifecycle
         </p>
       </div>
@@ -235,19 +235,19 @@ export function ArchivesSettingsSection() {
         action={
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 rounded-xl border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-3 text-xs font-bold shadow-sm">
+              <Button variant="outline" size="sm" className="h-9 rounded-xl border-bd-border bg-bd-card-bg px-3 text-xs font-bold shadow-sm">
                 {currentDocType?.label || 'Invoices'}
                 <ChevronDown className="ml-2 h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] shadow-xl">
+            <DropdownMenuContent align="end" className="w-48 rounded-[var(--bd-radius-lg)] border-bd-border bg-bd-card-bg shadow-xl">
               {documentTypes.map((doc) => (
                 <DropdownMenuItem 
                   key={doc.id} 
                   onClick={() => setTab(doc.id)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-[hsl(var(--bd-text))] transition-colors hover:bg-[hsl(var(--bd-surface-muted))]"
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-bd-text transition-colors hover:bg-bd-surface-muted"
                 >
-                  <doc.icon size={14} className="text-[hsl(var(--bd-text-muted))]" />
+                  <doc.icon size={14} className="text-bd-text-muted" />
                   {doc.label}
                 </DropdownMenuItem>
               ))}
@@ -257,16 +257,16 @@ export function ArchivesSettingsSection() {
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 size={24} className="animate-spin text-[hsl(var(--bd-button-primary-bg))]" />
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">Fetching Archives...</p>
+            <Loader2 size={24} className="animate-spin text-bd-button-primary-bg" />
+            <p className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted">Fetching Archives...</p>
           </div>
         ) : activeItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-            <div className="rounded-full bg-[hsl(var(--bd-surface-muted))] p-4 mb-4">
-              <ArchiveRestore size={28} className="text-[hsl(var(--bd-text-muted))] opacity-30" />
+            <div className="rounded-full bg-bd-surface-muted p-4 mb-4">
+              <ArchiveRestore size={28} className="text-bd-text-muted opacity-30" />
             </div>
-            <h4 className="text-sm font-bold text-[hsl(var(--bd-text))]">No archived {tab}</h4>
-            <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">Records moved to archive will appear here for recovery.</p>
+            <h4 className="text-sm font-bold text-bd-text">No archived {tab}</h4>
+            <p className="mt-1 text-xs text-bd-text-muted">Records moved to archive will appear here for recovery.</p>
           </div>
         ) : (
           <div className="divide-y divide-[hsl(var(--bd-border)/0.3)]">
@@ -311,10 +311,10 @@ export function ArchivesSettingsSection() {
                 <div key={item.id} className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)]">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">{title}</span>
+                      <span className="truncate text-sm font-bold text-bd-text">{title}</span>
                     </div>
-                    <p className="truncate text-[12px] text-[hsl(var(--bd-text-muted))]">{subline}</p>
-                    <p className="mt-1 text-[11px] font-medium text-[hsl(var(--bd-text-muted))] opacity-60">
+                    <p className="truncate text-[12px] text-bd-text-muted">{subline}</p>
+                    <p className="mt-1 text-[11px] font-medium text-bd-text-muted opacity-60">
                       {details} • Archived {formatDate(item.archived_at)}
                     </p>
                   </div>
@@ -324,7 +324,7 @@ export function ArchivesSettingsSection() {
                     size="sm"
                     onClick={() => restoreRecord(tab, item.id)}
                     disabled={restoring}
-                    className="h-8 rounded-full border border-transparent px-3 text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--bd-button-primary-bg))] transition-all hover:border-[hsl(var(--bd-border))] hover:bg-[hsl(var(--bd-card-bg))] disabled:opacity-50"
+                    className="h-8 rounded-full border border-transparent px-3 text-[11px] font-bold uppercase tracking-wider text-bd-button-primary-bg transition-all hover:border-bd-border hover:bg-bd-card-bg disabled:opacity-50"
                   >
                     {restoring ? (
                       <Loader2 size={12} className="mr-1.5 animate-spin" />

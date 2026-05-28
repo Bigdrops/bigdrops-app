@@ -42,13 +42,13 @@ function AccordionCard({
   last?: boolean
 }) {
   return (
-    <div className={`${last ? '' : 'border-b border-[hsl(var(--bd-border))]'}`}>
+    <div className={`${last ? '' : 'border-b border-bd-border'}`}>
       <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
         <div>
-          <div className="text-[14px] font-bold text-[hsl(var(--bd-text))]">{title}</div>
-          <div className="text-[12px] text-[hsl(var(--bd-text-muted))]">{summary}</div>
+          <div className="text-[14px] font-bold text-bd-text">{title}</div>
+          <div className="text-[12px] text-bd-text-muted">{summary}</div>
         </div>
-        <ChevronDown className={`h-4 w-4 text-[hsl(var(--bd-text-muted))] transition ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 text-bd-text-muted transition ${open ? 'rotate-180' : ''}`} />
       </button>
       {open ? <div className="px-4 pb-4">{children}</div> : null}
     </div>
@@ -188,7 +188,7 @@ export default function CommercialTermsSection({
             </div>
             <div>
               <label className={labelCls}>Apply On</label>
-              <Input value="Subtotal" readOnly className={`${fieldCls} text-[hsl(var(--bd-text-muted))]`} />
+              <Input value="Subtotal" readOnly className={`${fieldCls} text-bd-text-muted`} />
             </div>
           </div>
         </AccordionCard>
@@ -225,7 +225,7 @@ export default function CommercialTermsSection({
           open={openSections.charges}
           onToggle={() => toggleSection('charges')}
         >
-          <div className="text-[12px] text-[hsl(var(--bd-text-muted))]">Add surcharges: transport, workmanship, installation.</div>
+          <div className="text-[12px] text-bd-text-muted">Add surcharges: transport, workmanship, installation.</div>
           {chargeChoiceOpen ? (
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
@@ -234,7 +234,7 @@ export default function CommercialTermsSection({
                   onAddExtraCharge(true)
                   setChargeChoiceOpen(false)
                 }}
-                className="h-10 rounded-[12px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[12.5px] font-bold text-[hsl(var(--bd-text))]"
+                className="h-10 rounded-[12px] border border-bd-border bg-bd-surface text-[12.5px] font-bold text-bd-text"
               >
                 Tax applies
               </button>
@@ -244,7 +244,7 @@ export default function CommercialTermsSection({
                   onAddExtraCharge(false)
                   setChargeChoiceOpen(false)
                 }}
-                className="h-10 rounded-[12px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] text-[12.5px] font-bold text-[hsl(var(--bd-text))]"
+                className="h-10 rounded-[12px] border border-bd-border bg-bd-surface text-[12.5px] font-bold text-bd-text"
               >
                 No tax
               </button>
@@ -263,7 +263,7 @@ export default function CommercialTermsSection({
                   />
                   {charge.withTax !== false ? (
                     <span
-                      className="pointer-events-none absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-[hsl(var(--bd-text-muted))]"
+                      className="pointer-events-none absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center text-bd-text-muted"
                       title="Tax applies"
                     >
                       <Percent className="h-3.5 w-3.5" />
@@ -279,7 +279,7 @@ export default function CommercialTermsSection({
                 <button
                   type="button"
                   onClick={() => onRemoveExtraCharge(charge.id)}
-                  className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))]"
+                  className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -291,7 +291,7 @@ export default function CommercialTermsSection({
             <button
               type="button"
               onClick={() => setChargeChoiceOpen((current) => !current)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:bg-[hsl(var(--bd-surface-muted))]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-bd-border bg-bd-surface px-3 text-[12px] font-bold text-bd-text transition hover:bg-bd-surface-muted"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Charge
@@ -308,7 +308,7 @@ export default function CommercialTermsSection({
         >
           <div className="space-y-2">
             {additionalFields.length === 0 ? (
-              <div className="text-[12px] text-[hsl(var(--bd-text-muted))]">No additional fields.</div>
+              <div className="text-[12px] text-bd-text-muted">No additional fields.</div>
             ) : null}
             {additionalFields.map((field) => (
               <div key={field.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_34px] gap-2">
@@ -327,7 +327,7 @@ export default function CommercialTermsSection({
                 <button
                   type="button"
                   onClick={() => onRemoveAdditionalField(field.id)}
-                  className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))] transition hover:bg-[hsl(var(--bd-status-danger-bg))] hover:text-[hsl(var(--bd-status-danger-text))]"
+                  className="flex h-11 w-[34px] items-center justify-center rounded-[12px] border border-bd-border bg-bd-surface-muted text-bd-text-muted transition hover:bg-bd-status-danger-bg hover:text-bd-status-danger-text"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -338,7 +338,7 @@ export default function CommercialTermsSection({
             <button
               type="button"
               onClick={onAddAdditionalField}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 text-[12px] font-bold text-[hsl(var(--bd-text))] transition hover:bg-[hsl(var(--bd-surface-muted))]"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-bd-border bg-bd-surface px-3 text-[12px] font-bold text-bd-text transition hover:bg-bd-surface-muted"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Field

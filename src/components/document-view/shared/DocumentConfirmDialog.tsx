@@ -25,11 +25,11 @@ export default function DocumentConfirmDialog({
   onCancel,
 }: DocumentConfirmDialogProps) {
   const cancelButtonClass =
-    'h-10 min-w-28 rounded-[var(--bd-radius-lg)] border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 text-sm font-semibold text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))] disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+    'h-10 min-w-28 rounded-[var(--bd-radius-lg)] border-bd-border bg-bd-surface px-4 text-sm font-semibold text-bd-text hover:bg-bd-surface-muted disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100'
 
   const confirmButtonClass = destructive
-    ? 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-status-danger-text))] hover:brightness-95 disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
-    : 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-transparent bg-[hsl(var(--bd-button-primary-bg))] px-4 text-sm font-semibold text-[hsl(var(--bd-button-primary-text))] hover:bg-[hsl(var(--bd-button-primary-hover-bg))] disabled:border-[hsl(var(--bd-border))] disabled:bg-[hsl(var(--bd-surface-muted))] disabled:text-[hsl(var(--bd-text-muted))] disabled:opacity-100'
+    ? 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-bd-status-danger-border bg-bd-status-danger-bg px-4 text-sm font-semibold text-bd-status-danger-text hover:brightness-95 disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100'
+    : 'h-10 min-w-32 rounded-[var(--bd-radius-lg)] border border-transparent bg-bd-button-primary-bg px-4 text-sm font-semibold text-bd-button-primary-text hover:bg-[hsl(var(--bd-button-primary-hover-bg))] disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100'
 
   return (
     <DocumentModal

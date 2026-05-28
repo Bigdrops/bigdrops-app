@@ -671,7 +671,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                       </div>
 
                       {syntheticMergeCount > 0 && (
-                        <div className="mt-2 rounded-md border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-2 text-[11px] text-[hsl(var(--bd-status-warning-text))]">
+                        <div className="mt-2 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] text-bd-status-warning-text">
                           {syntheticMergeCount} merge proposal{syntheticMergeCount === 1 ? '' : 's'} contain imported fallback items (non-UUID IDs) and will be skipped. Backfill these items to the catalog before merging.
                         </div>
                       )}
@@ -923,7 +923,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                     </div>
 
                     {syntheticMergeCount > 0 && (
-                      <div className="mt-2 rounded-md border border-[hsl(var(--bd-status-warning-border))] bg-[hsl(var(--bd-status-warning-bg))] px-3 py-2 text-[11px] text-[hsl(var(--bd-status-warning-text))]">
+                      <div className="mt-2 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] text-bd-status-warning-text">
                         {syntheticMergeCount} merge proposal{syntheticMergeCount === 1 ? '' : 's'} contain imported fallback items (non-UUID IDs) and will be skipped. Backfill these items to the catalog before merging.
                       </div>
                     )}

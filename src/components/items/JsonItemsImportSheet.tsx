@@ -209,7 +209,7 @@ export default function JsonItemsImportSheet({
           </div>
 
           <div className="rounded-xl border border-[hsl(var(--bd-overlay-border))] bg-[hsl(var(--bd-overlay-section-bg))] p-4">
-             <div className="text-[10px] font-extrabold uppercase tracking-widest text-[hsl(var(--bd-status-info-text))] opacity-80 mb-1">Mode Details</div>
+             <div className="text-[10px] font-extrabold uppercase tracking-widest text-bd-status-info-text opacity-80 mb-1">Mode Details</div>
              <p className="text-[12px] font-medium leading-relaxed text-[hsl(var(--bd-overlay-text))]">{activeMode.description}</p>
           </div>
         </div>

@@ -227,15 +227,15 @@ export default function ComplianceHub() {
       title="Compliance Hub"
       session={null}
       hidePageHeader
-      contentClassName="bg-[hsl(var(--bd-surface))]"
+      contentClassName="bg-bd-surface"
     >
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <div className="w-full min-w-0 space-y-4 overflow-x-hidden px-4 pt-4 md:px-0 md:pt-0">
-          <section className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] px-4 py-4 shadow-sm">
+          <section className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 space-y-1">
-                <h1 className="text-xl font-black tracking-tight text-[hsl(var(--bd-text))]">Compliance Hub</h1>
-                <p className="text-sm text-[hsl(var(--bd-text-muted))]">Tax actions, filings, and evidence tracking.</p>
+                <h1 className="text-xl font-black tracking-tight text-bd-text">Compliance Hub</h1>
+                <p className="text-sm text-bd-text-muted">Tax actions, filings, and evidence tracking.</p>
               </div>
 
               <Button
@@ -251,7 +251,7 @@ export default function ComplianceHub() {
           </section>
 
           {error ? (
-            <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">
+            <div className="flex items-center gap-3 rounded-[var(--bd-radius-xl)] border border-bd-status-danger-border bg-bd-status-danger-bg p-4 text-sm text-bd-status-danger-text">
               <AlertCircle className="h-5 w-5" />
               {error}
             </div>
@@ -260,7 +260,7 @@ export default function ComplianceHub() {
           <section className="grid min-w-0 gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
               <div className="hidden xl:block">
-                <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
+                <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-2 shadow-sm">
                   <nav className="space-y-1" aria-label="Compliance workflows">
                     {(
                       Object.entries(sectionMeta) as Array<
@@ -277,13 +277,13 @@ export default function ComplianceHub() {
                           className={`flex w-full items-start gap-3 rounded-[var(--bd-radius-lg)] px-3 py-3 text-left transition-colors ${
                             isActive
                               ? 'bg-[hsl(var(--bd-overlay-bg))] text-[hsl(var(--bd-overlay-text))] shadow-sm'
-                              : 'text-[hsl(var(--bd-text))] hover:bg-[hsl(var(--bd-surface-muted))]'
+                              : 'text-bd-text hover:bg-bd-surface-muted'
                           }`}
                         >
                           <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                             isActive
                               ? 'bg-[hsl(var(--bd-overlay-text))]/12 text-[hsl(var(--bd-overlay-text))]'
-                              : 'bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]'
+                              : 'bg-bd-surface-muted text-bd-text-muted'
                           }`}>
                             <Icon className="h-4 w-4" />
                           </div>
@@ -300,7 +300,7 @@ export default function ComplianceHub() {
 
             <div className="min-w-0 space-y-3">
               <div className="max-w-full overflow-x-auto xl:hidden">
-                <div className="flex w-max min-w-full gap-2 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] p-2 shadow-sm">
+                <div className="flex w-max min-w-full gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-2 shadow-sm">
                   {(
                     Object.entries(sectionMeta) as Array<
                       [ComplianceSection, (typeof sectionMeta)[ComplianceSection]]
@@ -324,10 +324,10 @@ export default function ComplianceHub() {
 
               <section className="min-w-0">
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))] text-[hsl(var(--bd-text-muted))]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-bd-text-muted">
                     <ActiveSectionIcon className="h-4 w-4" />
                   </div>
-                  <h2 className="text-base font-black tracking-tight text-[hsl(var(--bd-text))]">{activeSection.label}</h2>
+                  <h2 className="text-base font-black tracking-tight text-bd-text">{activeSection.label}</h2>
                 </div>
 
                 <div className="min-w-0">
@@ -340,7 +340,7 @@ export default function ComplianceHub() {
 
         <SheetContent
           side="right"
-          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-[hsl(var(--bd-card-bg))] p-0 sm:max-w-xl"
+          className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl"
         >
           <SheetHeader>
             <SheetTitle>Tax Profile</SheetTitle>

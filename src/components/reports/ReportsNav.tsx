@@ -69,20 +69,20 @@ export function ReportsNav({ activeTab, onTabChange }: ReportsNavProps) {
             className={cn(
               "group relative flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3 rounded-[var(--bd-radius-lg)] transition-all outline-none text-left whitespace-nowrap lg:whitespace-normal",
               isActive 
-                ? "bg-[hsl(var(--bd-button-primary-bg)/0.04)] text-[hsl(var(--bd-button-primary-bg))]" 
-                : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-surface-muted)/0.5)] hover:text-[hsl(var(--bd-text))]"
+                ? "bg-[hsl(var(--bd-button-primary-bg)/0.04)] text-bd-button-primary-bg" 
+                : "text-bd-text-muted hover:bg-[hsl(var(--bd-surface-muted)/0.5)] hover:text-bd-text"
             )}
           >
             {/* Active Indicator (Desktop Only) */}
             {isActive && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[hsl(var(--bd-button-primary-bg))] rounded-r-full hidden lg:block" />
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-bd-button-primary-bg rounded-r-full hidden lg:block" />
             )}
             
             <div className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all",
               isActive 
                 ? "border-[hsl(var(--bd-button-primary-bg)/0.2)] bg-white shadow-sm" 
-                : "border-transparent bg-[hsl(var(--bd-surface-muted)/0.3)] group-hover:bg-[hsl(var(--bd-surface-muted))]"
+                : "border-transparent bg-[hsl(var(--bd-surface-muted)/0.3)] group-hover:bg-bd-surface-muted"
             )}>
               <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
             </div>

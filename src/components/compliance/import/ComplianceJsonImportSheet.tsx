@@ -157,8 +157,8 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
   }
 
   const whtPaymentsSection = type === 'wht_receipt' && (
-    <div className="space-y-3 rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] p-4">
-       <div className="flex items-center gap-2 text-[11px] font-bold text-[hsl(var(--bd-text-muted))]">
+    <div className="space-y-3 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface p-4">
+       <div className="flex items-center gap-2 text-[11px] font-bold text-bd-text-muted">
          Link to Payment
        </div>
        {whtEligiblePayments.length > 0 ? (
@@ -171,14 +171,14 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
                 <SelectItem key={p.id} value={p.id}>
                   <div className="flex flex-col text-left">
                     <span className="font-bold">{p.client_name}</span>
-                    <span className="text-[10px] text-[hsl(var(--bd-text-muted))]">{formatDisplayDate(p.date)} • {formatNaira(p.wht_amount)} WHT</span>
+                    <span className="text-[10px] text-bd-text-muted">{formatDisplayDate(p.date)} • {formatNaira(p.wht_amount)} WHT</span>
                   </div>
                 </SelectItem>
               ))}
            </SelectContent>
          </Select>
        ) : (
-         <div className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-3 text-[11px] font-medium text-[hsl(var(--bd-status-danger-text))]">
+         <div className="rounded-[var(--bd-radius-lg)] border border-bd-status-danger-border bg-bd-status-danger-bg p-3 text-[11px] font-medium text-bd-status-danger-text">
            No WHT payments are available to link this receipt to yet.
          </div>
        )}
@@ -215,7 +215,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
         <Button 
           variant="ghost" 
           onClick={() => setParsedData(null)}
-          className="h-10 w-full text-xs font-bold text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
+          className="h-10 w-full text-xs font-bold text-bd-text-muted hover:text-bd-text"
         >
           Clear and Start Over
         </Button>

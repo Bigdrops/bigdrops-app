@@ -58,28 +58,28 @@ export default function QuerySearchBar({
   return (
     <div
       className={cn(
-        "h-12 flex-shrink-0 flex items-center gap-2 px-4 border-b border-[hsl(var(--bd-border))]/40 bg-[hsl(var(--bd-surface))]",
+        "h-12 flex-shrink-0 flex items-center gap-2 px-4 border-b border-bd-border/40 bg-bd-surface",
         className
       )}
     >
-      <Search className="h-4 w-4 flex-shrink-0 text-[hsl(var(--bd-text-muted))]" />
+      <Search className="h-4 w-4 flex-shrink-0 text-bd-text-muted" />
       <input
         type="text"
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
         maxLength={200}
-        className="flex-1 h-full bg-transparent border-0 outline-none text-sm text-[hsl(var(--bd-text))] placeholder:text-[hsl(var(--bd-text-muted))] whitespace-nowrap overflow-hidden"
+        className="flex-1 h-full bg-transparent border-0 outline-none text-sm text-bd-text placeholder:text-bd-text-muted whitespace-nowrap overflow-hidden"
         style={{ textOverflow: "ellipsis" }}
       />
       {localValue && (
         <button
           type="button"
           onClick={handleClear}
-          className="flex-shrink-0 p-1 rounded-md hover:bg-[hsl(var(--bd-surface-muted))] transition-colors"
+          className="flex-shrink-0 p-1 rounded-md hover:bg-bd-surface-muted transition-colors"
           aria-label="Clear search"
         >
-          <X className="h-4 w-4 text-[hsl(var(--bd-text-muted))]" />
+          <X className="h-4 w-4 text-bd-text-muted" />
         </button>
       )}
     </div>

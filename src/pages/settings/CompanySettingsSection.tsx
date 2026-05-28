@@ -112,7 +112,7 @@ export function CompanySettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Business Identity
           </p>
         </div>
@@ -120,7 +120,7 @@ export function CompanySettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={() => setIsEditorOpen(true)}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Pencil className="mr-2 h-3.5 w-3.5" />
           Edit Identity
@@ -271,14 +271,14 @@ export function CompanySettingsSection() {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[hsl(var(--bd-text-muted))]">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted">
                     Custom Fields
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setCustomInfo((current) => [...current, { title: '', content: '' }])}
-                    className="h-8 rounded-full text-xs font-bold text-[hsl(var(--bd-button-primary-bg))]"
+                    className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg"
                   >
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     Add Field
@@ -286,7 +286,7 @@ export function CompanySettingsSection() {
                 </div>
 
                 {customInfo.length === 0 ? (
-                  <p className="text-center text-[11px] italic text-[hsl(var(--bd-text-muted))] opacity-50 py-4">
+                  <p className="text-center text-[11px] italic text-bd-text-muted opacity-50 py-4">
                     No custom registration fields added.
                   </p>
                 ) : (
@@ -295,7 +295,7 @@ export function CompanySettingsSection() {
                       <div key={index} className="flex items-start gap-2">
                         <div className="grid flex-1 gap-2">
                           <input
-                            className="w-full rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                            className="w-full rounded-lg border border-bd-border bg-bd-surface px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
                             value={item.title || ''}
                             onChange={(e) =>
                               setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, title: e.target.value } : c))
@@ -303,7 +303,7 @@ export function CompanySettingsSection() {
                             placeholder="Field Title (e.g. TIN)"
                           />
                           <input
-                            className="w-full rounded-lg border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                            className="w-full rounded-lg border border-bd-border bg-bd-surface px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
                             value={item.content || ''}
                             onChange={(e) =>
                               setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, content: e.target.value } : c))

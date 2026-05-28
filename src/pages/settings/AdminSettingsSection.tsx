@@ -175,7 +175,7 @@ function ConfirmModal({
         if (event.target === event.currentTarget) onCancel()
       }}
     >
-      <div className="w-full max-w-sm overflow-hidden rounded-[var(--bd-radius-xl)] bg-[hsl(var(--bd-card-bg))] shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-sm overflow-hidden rounded-[var(--bd-radius-xl)] bg-bd-card-bg shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="flex items-center gap-3 px-5 pb-4 pt-5">
           <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${currentConfig.iconBg}`}>
             {currentConfig.icon}
@@ -190,7 +190,7 @@ function ConfirmModal({
             ref={cancelRef}
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 rounded-xl border border-[hsl(var(--bd-border))] py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted/50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-bd-border py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted/50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -322,7 +322,7 @@ export function AdminSettingsSection({
       ) : null}
 
       <div className="px-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
           System Administration
         </p>
       </div>
@@ -336,7 +336,7 @@ export function AdminSettingsSection({
               variant="outline" 
               size="sm" 
               onClick={() => setIsUsersOpen(true)}
-              className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+              className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
             >
               <Users className="mr-2 h-3.5 w-3.5" />
               Manage Users
@@ -370,7 +370,7 @@ export function AdminSettingsSection({
               variant="outline" 
               size="sm" 
               onClick={() => setIsDevicesOpen(true)}
-              className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+              className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
             >
               <Smartphone className="mr-2 h-3.5 w-3.5" />
               Manage Devices
@@ -411,23 +411,23 @@ export function AdminSettingsSection({
                     key={user.id}
                     className={cn(
                       "rounded-[var(--bd-radius-lg)] border p-4 transition-all",
-                      isSelf ? "border-blue-200 bg-blue-50/20" : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))]"
+                      isSelf ? "border-blue-200 bg-blue-50/20" : "border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg"
                     )}
                   >
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-[hsl(var(--bd-text))]">{user.email}</p>
+                          <p className="truncate text-sm font-bold text-bd-text">{user.email}</p>
                           {isSelf && (
                             <span className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-black text-blue-600 uppercase tracking-widest">
                               You
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 text-[11px] text-[hsl(var(--bd-text-muted))]">
+                        <p className="mt-0.5 text-[11px] text-bd-text-muted">
                           Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
                           {user.assigned_device_code && (
-                            <span className="ml-2 font-bold text-[hsl(var(--bd-text-muted))] opacity-60">· {String(user.assigned_device_code).toUpperCase()}</span>
+                            <span className="ml-2 font-bold text-bd-text-muted opacity-60">· {String(user.assigned_device_code).toUpperCase()}</span>
                           )}
                         </p>
                       </div>
@@ -497,7 +497,7 @@ export function AdminSettingsSection({
           <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-8 border-t border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg)/0.95)] px-6 py-4 backdrop-blur-sm flex items-center justify-end">
              <Button 
                 onClick={() => setIsUsersOpen(false)}
-                className="min-w-[120px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90 rounded-xl font-bold"
+                className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90 rounded-xl font-bold"
              >
                <Check className="mr-2 h-4 w-4" />
                Done
@@ -522,14 +522,14 @@ export function AdminSettingsSection({
                 const codeValue = deviceCodeDrafts[device.id] ?? device.device_code ?? ''
                 const hasChanged = codeValue !== device.device_code
                 return (
-                  <div key={device.id} className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-4 shadow-sm">
+                  <div key={device.id} className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-4 shadow-sm">
                     <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--bd-surface-muted))]">
-                        <Smartphone size={18} className="text-[hsl(var(--bd-text-muted))]" />
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-bd-surface-muted">
+                        <Smartphone size={18} className="text-bd-text-muted" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-black text-[hsl(var(--bd-text))]">{device.device_name || 'Android Device'}</p>
-                        <p className="truncate text-[11px] text-[hsl(var(--bd-text-muted))]">{device.profiles?.email || 'Unassigned'}</p>
+                        <p className="text-sm font-black text-bd-text">{device.device_name || 'Android Device'}</p>
+                        <p className="truncate text-[11px] text-bd-text-muted">{device.profiles?.email || 'Unassigned'}</p>
                       </div>
                       <span
                         className={cn(
@@ -541,10 +541,10 @@ export function AdminSettingsSection({
                       </span>
                     </div>
 
-                    <div className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-[hsl(var(--bd-surface-muted)/0.3)] p-3 text-[10px] text-[hsl(var(--bd-text-muted))]">
-                      <div>Current: <span className="font-bold text-[hsl(var(--bd-text))]">{device.device_code || '—'}</span></div>
-                      <div>Platform: <span className="font-bold text-[hsl(var(--bd-text))] uppercase">{device.platform || 'android'}</span></div>
-                      <div className="col-span-2 truncate">ID: <span className="font-mono text-[hsl(var(--bd-text))]">{device.installation_id || 'legacy'}</span></div>
+                    <div className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-[hsl(var(--bd-surface-muted)/0.3)] p-3 text-[10px] text-bd-text-muted">
+                      <div>Current: <span className="font-bold text-bd-text">{device.device_code || '—'}</span></div>
+                      <div>Platform: <span className="font-bold text-bd-text uppercase">{device.platform || 'android'}</span></div>
+                      <div className="col-span-2 truncate">ID: <span className="font-mono text-bd-text">{device.installation_id || 'legacy'}</span></div>
                     </div>
 
                     <div className="flex gap-2 pt-4 border-t border-[hsl(var(--bd-border)/0.3)]">
@@ -565,7 +565,7 @@ export function AdminSettingsSection({
                       <Button
                         onClick={() => updateDeviceCode(device)}
                         disabled={actionId === device.id || !hasChanged}
-                        className="rounded-xl px-6 h-10 text-[11px] font-bold uppercase tracking-wider bg-[hsl(var(--bd-button-primary-bg))] text-white disabled:opacity-50"
+                        className="rounded-xl px-6 h-10 text-[11px] font-bold uppercase tracking-wider bg-bd-button-primary-bg text-white disabled:opacity-50"
                       >
                         {actionId === device.id ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -583,7 +583,7 @@ export function AdminSettingsSection({
           <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-8 border-t border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg)/0.95)] px-6 py-4 backdrop-blur-sm flex items-center justify-end">
              <Button 
                 onClick={() => setIsDevicesOpen(false)}
-                className="min-w-[120px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90 rounded-xl font-bold"
+                className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90 rounded-xl font-bold"
              >
                <Check className="mr-2 h-4 w-4" />
                Finish

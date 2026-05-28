@@ -160,7 +160,7 @@ export function BrandingSettingsSection() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center justify-between gap-4 px-1">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--bd-text-muted))] opacity-60">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
             Visual Identity
           </p>
         </div>
@@ -168,7 +168,7 @@ export function BrandingSettingsSection() {
           variant="outline" 
           size="sm" 
           onClick={() => setIsEditorOpen(true)}
-          className="rounded-full border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-card-bg))] text-xs font-bold shadow-sm hover:bg-[hsl(var(--bd-surface-muted))]"
+          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
         >
           <Pencil className="mr-2 h-3.5 w-3.5" />
           Edit Branding
@@ -181,7 +181,7 @@ export function BrandingSettingsSection() {
           description="Visual elements used on document headers and PDF exports."
         >
           <div className="flex items-start gap-4 px-5 py-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.3]">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.3]">
               {form.company_logo_url ? (
                 <img
                   src={form.company_logo_url}
@@ -189,17 +189,17 @@ export function BrandingSettingsSection() {
                   className="h-full w-full object-contain p-2"
                 />
               ) : (
-                <ImageIcon className="h-8 w-8 text-[hsl(var(--bd-text-muted))] opacity-40" />
+                <ImageIcon className="h-8 w-8 text-bd-text-muted opacity-40" />
               )}
             </div>
             <div className="min-w-0 flex-1 py-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[hsl(var(--bd-text-muted))] opacity-70">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
                 Primary Logo
               </p>
-              <p className="mt-1 text-sm font-semibold text-[hsl(var(--bd-text))]">
+              <p className="mt-1 text-sm font-semibold text-bd-text">
                 {form.company_logo_url ? 'Company Logo Uploaded' : 'No Logo Set'}
               </p>
-              <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+              <p className="mt-1 text-xs text-bd-text-muted">
                 Used in the top header of all generated PDF documents.
               </p>
             </div>
@@ -235,8 +235,8 @@ export function BrandingSettingsSection() {
 
                 {previewSrc ? (
                   <div className="space-y-4">
-                    <div className="flex flex-col items-center rounded-2xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
-                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-[hsl(var(--bd-border))] bg-white shadow-sm">
+                    <div className="flex flex-col items-center rounded-2xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
+                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-bd-border bg-white shadow-sm">
                         <img
                           src={previewSrc}
                           alt="Company logo preview"
@@ -271,21 +271,21 @@ export function BrandingSettingsSection() {
                 ) : (
                   <div
                     onClick={() => logoInputRef.current?.click()}
-                    className="group cursor-pointer rounded-2xl border-2 border-dashed border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)] hover:bg-[hsl(var(--bd-surface-muted))/0.4]"
+                    className="group cursor-pointer rounded-2xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)] hover:bg-[hsl(var(--bd-surface-muted))/0.4]"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
                         {uploadingLogo ? (
-                          <Loader2 size={20} className="animate-spin text-[hsl(var(--bd-text-muted))]" />
+                          <Loader2 size={20} className="animate-spin text-bd-text-muted" />
                         ) : (
-                          <Upload size={20} className="text-[hsl(var(--bd-button-primary-bg))]" />
+                          <Upload size={20} className="text-bd-button-primary-bg" />
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-[hsl(var(--bd-text))]">
+                        <p className="text-sm font-bold text-bd-text">
                           {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
                         </p>
-                        <p className="mt-1 text-xs text-[hsl(var(--bd-text-muted))]">
+                        <p className="mt-1 text-xs text-bd-text-muted">
                           PNG, JPG or SVG (Max 5MB)
                         </p>
                       </div>
@@ -306,9 +306,9 @@ export function BrandingSettingsSection() {
                   onChange={(event) => updateForm('footer_text', event.target.value)}
                   placeholder="Bank details, payment terms, or legal disclaimers..."
                   rows={6}
-                  className="w-full resize-none rounded-xl border border-[hsl(var(--bd-border))] bg-[hsl(var(--bd-surface))] px-4 py-3 text-sm text-[hsl(var(--bd-text))] transition-all placeholder:text-[hsl(var(--bd-text-muted))/0.5] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
+                  className="w-full resize-none rounded-xl border border-bd-border bg-bd-surface px-4 py-3 text-sm text-bd-text transition-all placeholder:text-[hsl(var(--bd-text-muted))/0.5] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
                 />
-                <p className="mt-2 text-[10px] text-[hsl(var(--bd-text-muted))]">
+                <p className="mt-2 text-[10px] text-bd-text-muted">
                   This text appears at the bottom of every generated PDF document.
                 </p>
               </SettingsField>

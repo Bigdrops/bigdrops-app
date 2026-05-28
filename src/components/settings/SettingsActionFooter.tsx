@@ -35,14 +35,14 @@ export function SettingsActionFooter({
         variant="ghost"
         onClick={onCancel}
         disabled={saving}
-        className="text-[hsl(var(--bd-text-muted))] hover:text-[hsl(var(--bd-text))]"
+        className="text-bd-text-muted hover:text-bd-text"
       >
         {cancelLabel}
       </Button>
       <Button
         onClick={onSave}
         disabled={saving || disabled}
-        className="min-w-[120px] bg-[hsl(var(--bd-button-primary-bg))] text-[hsl(var(--bd-button-primary-text))] hover:opacity-90"
+        className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
       >
         {saving ? (
           <>
