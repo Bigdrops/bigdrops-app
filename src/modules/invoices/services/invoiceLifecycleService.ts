@@ -153,9 +153,34 @@ export async function duplicateInvoice({
     nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
   }
 
+  const clonedInvoice = JSON.parse(JSON.stringify(invoice))
+
+  let parsedCustomFields: any = {}
+  try {
+    parsedCustomFields = typeof clonedInvoice.custom_fields === 'string'
+      ? JSON.parse(clonedInvoice.custom_fields || '{}')
+      : (clonedInvoice.custom_fields || {})
+  } catch (e) {
+    // Keep empty object if parse fails
+  }
+
+  const vatRate = parsedCustomFields?.calculationInputs?.vatPercent 
+    ?? parsedCustomFields?.calculationInputs?.vatRate
+    ?? parsedCustomFields?.vatPercent
+    ?? parsedCustomFields?.vatRate
+    ?? 7.5
+
+  const discountRate = parsedCustomFields?.calculationInputs?.discountValue 
+    ?? parsedCustomFields?.discountValue 
+    ?? 0
+    
+  const whtRate = parsedCustomFields?.calculationInputs?.whtValue 
+    ?? parsedCustomFields?.whtValue 
+    ?? 0
+
   return {
     prefill: {
-      ...invoice,
+      ...clonedInvoice,
       invoice_number: `SASINV-B${String(nextNum).padStart(3, "0")}`,
       client_id: null,
       client_name: "",
@@ -163,7 +188,17 @@ export async function duplicateInvoice({
       status: "unpaid",
       issue_date: new Date().toISOString().split("T")[0],
       due_date: null,
+      vat: vatRate,
+      discount: discountRate,
+      wht: whtRate,
+      subtotal: 0,
+      total: 0,
+      install_rate_total: 0,
+      amount_in_words: "",
     },
-    prefillItems: items.map((item) => ({ ...item, id: null })),
+    prefillItems: items.map((item) => {
+      const clonedItem = JSON.parse(JSON.stringify(item))
+      return { ...clonedItem, id: null }
+    }),
   }
 }
