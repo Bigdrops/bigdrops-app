@@ -93,7 +93,7 @@ export function toDbItem(
   invoiceId: string | null | undefined,
   sortOrder: number,
 ) {
-  const { install_rate_override, _uiKey, id: _id, created_at: _ca, ...rest } = item
+  const { install_rate_override, _uiKey, id: _id, created_at: _ca, updated_at: _ua, ...rest } = item
   return {
     ...rest,
     invoice_id: invoiceId,
