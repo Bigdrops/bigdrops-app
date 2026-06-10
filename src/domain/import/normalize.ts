@@ -118,6 +118,12 @@ export function normalizeImportData(
         return
       }
 
+      if (key === 'temp_ref' || key === 'group_id') {
+        const value = normalizeText(rawValue)
+        if (value !== undefined) baseFields[key] = value
+        return
+      }
+
       if (key === 'custom_fields' && typeof rawValue === 'object' && rawValue !== null) {
         Object.entries(rawValue as Record<string, unknown>).forEach(([subKey, subValue]) => {
           processEntry(subKey, subValue)

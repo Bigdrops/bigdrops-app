@@ -44,6 +44,8 @@ export function resolveImportColumns({
       unit: item.baseFields.unit,
       unit_price: item.baseFields.unit_price,
       make: item.baseFields.make,
+      temp_ref: item.baseFields.temp_ref,
+      group_id: item.baseFields.group_id,
     },
     customFields: {},
   }))
