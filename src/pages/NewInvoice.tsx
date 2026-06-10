@@ -185,6 +185,30 @@ export default function NewInvoice() {
   }, [initialCustomFields])
 
   useEffect(() => {
+    if (initialCustomFields?.discountType) setDiscountType(initialCustomFields.discountType as DiscountType)
+    if (initialCustomFields?.discountTiming) setDiscountTiming(initialCustomFields.discountTiming as DiscountTiming)
+    if (initialCustomFields?.whtType) setWhtType(initialCustomFields.whtType as WhtType)
+  }, [initialCustomFields])
+
+  useEffect(() => {
+    if (!prefillItems || prefillItems.length === 0) return
+    const seen = new Set<string>()
+    const recovered: InvoiceGroup[] = []
+    prefillItems.forEach((item: any) => {
+      if (item.row_type === 'group_header' && item.group_id && !seen.has(item.group_id)) {
+        seen.add(item.group_id)
+        const meta = initialCustomFields?.groupMeta?.[item.group_id]
+        recovered.push({
+          id: item.group_id,
+          name: meta?.name || item.group_name || `Group ${recovered.length + 1}`,
+          showSubtotal: meta?.showSubtotal ?? false,
+        })
+      }
+    })
+    if (recovered.length > 0) setGroups(recovered)
+  }, [prefillItems, initialCustomFields])
+
+  useEffect(() => {
     if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return
     setInvoice((current) => ({
       ...current,

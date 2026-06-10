@@ -170,9 +170,8 @@
     min-width: 320px;
     min-height: 100dvh;
     background-color: hsl(var(--background));
-    background-image: 
-      radial-gradient(circle at top, color-mix(in oklab, hsl(var(--primary)) 3%, transparent), transparent 40%);
-    background-attachment: fixed;
+      background-image: 
+        radial-gradient(circle at top, color-mix(in oklab, hsl(var(--primary)) 3%, transparent), transparent 40%);
     overflow-x: hidden;
   }
 
