@@ -179,30 +179,28 @@ export function FormLineItems({
       </div>
 
       <div className="space-y-0">
-        {groupEntries.map(({ group, items: groupItems }) =>
-          groupItems.length > 0 ? (
-            <MobileGroupCard
-              key={group.id}
-              group={group}
-              items={groupItems}
-              invoice={invoice}
-              enableItemSuggestions={true}
-              customColumns={customColumns}
-              groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
-              onUpdateGroupName={onUpdateGroupName}
-              onToggleGroupSubtotal={onToggleGroupSubtotal}
-              onDeleteGroup={onDeleteGroup}
-              onAddItemToGroup={onAddItemToGroup}
-              onUpdateItem={onUpdateItem}
-              onRemoveItem={onRemoveItem}
-              onMoveItem={onMoveItem}
-              onInsertItemAfter={onInsertItemAfter}
-              isVisible={isVisible}
-              getColumn={getColumn}
-              getComputedAmount={getComputedAmount}
-            />
-          ) : null,
-        )}
+        {groupEntries.map(({ group, items: groupItems }) => (
+          <MobileGroupCard
+            key={group.id}
+            group={group}
+            items={groupItems}
+            invoice={invoice}
+            enableItemSuggestions={true}
+            customColumns={customColumns}
+            groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
+            onUpdateGroupName={onUpdateGroupName}
+            onToggleGroupSubtotal={onToggleGroupSubtotal}
+            onDeleteGroup={onDeleteGroup}
+            onAddItemToGroup={onAddItemToGroup}
+            onUpdateItem={onUpdateItem}
+            onRemoveItem={onRemoveItem}
+            onMoveItem={onMoveItem}
+            onInsertItemAfter={onInsertItemAfter}
+            isVisible={isVisible}
+            getColumn={getColumn}
+            getComputedAmount={getComputedAmount}
+          />
+        ))}
         {lineItemRows
           .filter((row: any) => row.type !== 'group' && !groupedItemIndices.has(row.index))
           .map((row: any) => (
