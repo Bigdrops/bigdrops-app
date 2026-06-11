@@ -1,6 +1,6 @@
 import { supabase } from '@/supabase'
-import { createOfflineWaybillDraft } from '@/lib/native/waybillOffline'
-import { Waybill, WaybillItem, normalizeWaybillStatus } from '@/components/waybill/waybillUtils'
+import { createOfflineWaybillDraft, type OfflineWaybillStatus } from '@/lib/native/waybillOffline'
+import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill } from '@/components/waybill/waybillUtils'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -12,9 +12,15 @@ export async function saveWaybill(params: {
 }) {
   const { waybill, items, custom_fields, mode, waybillId, isOffline } = params;
 
+  const errors = validateWaybill({ ...waybill, items })
+  if (errors.length > 0) {
+    throw new Error(`Validation failed: ${errors.join('; ')}`)
+  }
+
   if (isOffline) {
     await createOfflineWaybillDraft({
       ...waybill,
+      status: normalizeWaybillStatus(waybill.status) as OfflineWaybillStatus,
       items,
       custom_fields,
     })

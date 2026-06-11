@@ -1,5 +1,5 @@
 import styles from './WaybillSummaryStrip.module.css'
-import type { WaybillMetric } from './waybillViewMockData'
+import type { WaybillMetric } from '@/components/waybill/waybillUtils'
 
 interface WaybillSummaryStripProps {
   items: WaybillMetric[]

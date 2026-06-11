@@ -2,7 +2,16 @@ import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 
 export type WaybillType = 'internal' | 'external'
-export type WaybillStatus = 'draft' | 'dispatched' | 'delivered'
+
+export interface WaybillMetric {
+  label: string
+  value: string
+  tone?: 'default' | 'amber' | 'green' | 'blue' | 'purple'
+  hint?: string
+}
+export type WaybillStatus = 'dispatched' | 'pending_confirmation' | 'delivered' | 'returned'
+export type TransportMode = 'By Vehicle' | 'By Hand' | 'Courier' | 'Self Pick-Up'
+export type WaybillPurpose = 'Supply' | 'Return' | 'Third-Party Custody'
 export type ItemCondition = 'good' | 'damaged' | 'partial'
 export type SignatureRole = 'sender' | 'receiver'
 
@@ -69,12 +78,16 @@ export interface Waybill {
   invoice_id: string
   po_number: string
   vehicle_plate: string
+  driver_name: string
+  transport_mode: TransportMode
+  purpose: WaybillPurpose | ''
   delivery_location: string
   items: WaybillItem[]
   notes: string
   status: WaybillStatus
   created_by: string
   created_at?: string
+  archived_at?: string
   custom_fields?: string | WaybillCustomFields | null
 }
 
@@ -89,9 +102,10 @@ type WaybillImportResult = {
 export const WAYBILL_COLUMN_LIMIT = 4
 
 export const STATUS_META: Record<string, { label: string; className: string }> = {
-  draft: { label: 'Draft', className: 'bg-slate-500 text-white' },
   dispatched: { label: 'Dispatched', className: 'bg-blue-500 text-white' },
+  pending_confirmation: { label: 'Pending Confirmation', className: 'bg-amber-500 text-white' },
   delivered: { label: 'Delivered', className: 'bg-emerald-500 text-white' },
+  returned: { label: 'Returned', className: 'bg-rose-500 text-white' },
 }
 
 export const TYPE_META: Record<string, { label: string; className: string }> = {
@@ -99,10 +113,23 @@ export const TYPE_META: Record<string, { label: string; className: string }> = {
   external: { label: 'External', className: 'bg-blue-600 text-white' },
 }
 
-export const CONDITION_OPTIONS = [
+export const CONDITION_OPTIONS: { value: ItemCondition; label: string }[] = [
   { value: 'good', label: 'Good' },
   { value: 'damaged', label: 'Damaged' },
   { value: 'partial', label: 'Partial' },
+]
+
+export const TRANSPORT_MODE_OPTIONS: { value: TransportMode; label: string }[] = [
+  { value: 'By Vehicle', label: 'By Vehicle' },
+  { value: 'By Hand', label: 'By Hand' },
+  { value: 'Courier', label: 'Courier' },
+  { value: 'Self Pick-Up', label: 'Self Pick-Up' },
+]
+
+export const PURPOSE_OPTIONS: { value: WaybillPurpose; label: string }[] = [
+  { value: 'Supply', label: 'Supply' },
+  { value: 'Return', label: 'Return' },
+  { value: 'Third-Party Custody', label: 'Third-Party Custody' },
 ]
 
 export const WAYBILL_TYPE_CONTENT: Record<
@@ -276,6 +303,9 @@ export function mapDbWaybill(row: Partial<Waybill> | Record<string, unknown>): W
     invoice_id: String((row as Waybill).invoice_id || ''),
     po_number: String((row as Waybill).po_number || ''),
     vehicle_plate: String((row as Waybill).vehicle_plate || ''),
+    driver_name: String((row as Waybill).driver_name || ''),
+    transport_mode: normalizeTransportMode((row as Waybill).transport_mode),
+    purpose: normalizeWaybillPurpose((row as Waybill).purpose),
     delivery_location: String((row as Waybill).delivery_location || ''),
     items,
     notes: String((row as Waybill).notes || ''),
@@ -303,10 +333,13 @@ export function createDefaultWaybill(): Omit<Waybill, 'id' | 'created_at'> {
     invoice_id: '',
     po_number: '',
     vehicle_plate: '',
+    driver_name: '',
+    transport_mode: 'By Vehicle',
+    purpose: '',
     delivery_location: '',
     items: [createDefaultItem()],
     notes: '',
-    status: 'draft',
+    status: 'dispatched',
     created_by: '',
     custom_fields: buildWaybillCustomFields({}, {
       customColumns: [],
@@ -337,8 +370,11 @@ export function normalizeWaybillType(value: unknown): WaybillType {
 
 export function normalizeWaybillStatus(value: unknown): WaybillStatus {
   const status = String(value || '').toLowerCase()
-  if (status === 'dispatched' || status === 'delivered') return status
-  return 'draft'
+  if (status === 'dispatched' || status === 'pending_confirmation' || status === 'delivered' || status === 'returned') {
+    return status as WaybillStatus
+  }
+  if (status === 'draft') return 'dispatched'
+  return 'dispatched'
 }
 
 export function normalizeCondition(value: unknown): ItemCondition {
@@ -384,18 +420,56 @@ export function normalizeWaybillItems(items: unknown, customColumns: WaybillCust
   return items.map((item) => normalizeWaybillItem(item, customColumns))
 }
 
-export function getNextWaybillNumber(type: WaybillType, existingNumbers: string[]): string {
-  const prefix = type === 'internal' ? 'SASWB-I' : 'SASWB-E'
+export function normalizeTransportMode(value: unknown): TransportMode {
+  const mode = String(value || '').trim()
+  if (mode === 'By Vehicle' || mode === 'By Hand' || mode === 'Courier' || mode === 'Self Pick-Up') {
+    return mode
+  }
+  return 'By Vehicle'
+}
+
+export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | '' {
+  const purpose = String(value || '').trim()
+  if (purpose === 'Supply' || purpose === 'Return' || purpose === 'Third-Party Custody') {
+    return purpose
+  }
+  return ''
+}
+
+export function validateWaybill(waybill: Partial<Waybill>): string[] {
+  const errors: string[] = []
+  if (!waybill.sender_name?.trim()) errors.push('Sender name is required')
+  if (!waybill.receiver_name?.trim()) errors.push('Receiver name is required')
+  if (!waybill.transport_mode) errors.push('Transport mode is required')
+  if (waybill.type === 'external' && !waybill.purpose) errors.push('Purpose is required for external waybills')
+  if (!Array.isArray(waybill.items) || waybill.items.length === 0) {
+    errors.push('At least one item is required')
+  }
+  return errors
+}
+
+export function generateWaybillSequenceNumber(type: WaybillType, existingNumbers: string[]): string {
+  const prefix = type === 'internal' ? 'AWB-I-' : 'AWB-E-'
   const nums = existingNumbers
     .filter((n) => n.startsWith(prefix))
     .map((n) => parseInt(n.slice(prefix.length), 10))
     .filter((n) => !isNaN(n))
   const highest = nums.length > 0 ? Math.max(...nums) : 0
-  return `${prefix}${String(highest + 1).padStart(3, '0')}`
+  return `${prefix}${String(highest + 1).padStart(4, '0')}`
+}
+
+export function getNextWaybillNumber(type: WaybillType, existingNumbers: string[]): string {
+  const prefix = type === 'internal' ? 'AWB-I-' : 'AWB-E-'
+  const nums = existingNumbers
+    .filter((n) => n.startsWith(prefix))
+    .map((n) => parseInt(n.slice(prefix.length), 10))
+    .filter((n) => !isNaN(n))
+  const highest = nums.length > 0 ? Math.max(...nums) : 0
+  return `${prefix}${String(highest + 1).padStart(4, '0')}`
 }
 
 export function getStatusMeta(status: string) {
-  return STATUS_META[status?.toLowerCase()] ?? STATUS_META.draft
+  return STATUS_META[status?.toLowerCase()] ?? STATUS_META.dispatched
 }
 
 export function getTypeMeta(type: string) {

@@ -20,6 +20,8 @@ import {
 } from '@/lib/native/waybillOffline'
 import {
   CONDITION_OPTIONS,
+  TRANSPORT_MODE_OPTIONS,
+  PURPOSE_OPTIONS,
   WAYBILL_COLUMN_LIMIT,
   buildWaybillCustomFields,
   collectWaybillCustomColumns,
@@ -41,6 +43,8 @@ import {
   type WaybillItem,
   type WaybillStatus,
   type WaybillType,
+  type TransportMode,
+  type WaybillPurpose,
 } from './waybillUtils'
 
 import { WaybillImportSheet } from './WaybillImportSheet'
@@ -358,12 +362,46 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
               />
             </div>
 
-            <Field label="Vehicle Plate">
-              <Input value={waybill.vehicle_plate || ''} onChange={(event) => updateWaybill('vehicle_plate', event.target.value)} placeholder="ABC 1234" />
+            <Field label="Transport Mode" required>
+              <Select value={waybill.transport_mode || ''} onValueChange={(value: TransportMode) => { updateWaybill('transport_mode', value); if (value === 'By Hand') { updateWaybill('vehicle_plate', ''); updateWaybill('driver_name', '') } }}>
+                <SelectTrigger className="rounded-xl border-border bg-background">
+                  <SelectValue placeholder="Select transport mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSPORT_MODE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
+            <Field label="Driver Name">
+              <Input value={waybill.driver_name || ''} onChange={(event) => updateWaybill('driver_name', event.target.value)} placeholder="Driver name" />
+            </Field>
+
+            {waybill.transport_mode !== 'By Hand' ? (
+              <Field label="Vehicle Plate">
+                <Input value={waybill.vehicle_plate || ''} onChange={(event) => updateWaybill('vehicle_plate', event.target.value)} placeholder="ABC 1234" />
+              </Field>
+            ) : null}
+
             <Field label="P.O. Number">
               <Input value={waybill.po_number || ''} onChange={(event) => updateWaybill('po_number', event.target.value)} placeholder="Optional" />
             </Field>
+
+            {waybill.type === 'external' ? (
+              <Field label="Purpose" required help="Only for external waybills">
+                <Select value={waybill.purpose || ''} onValueChange={(value: WaybillPurpose) => updateWaybill('purpose', value)}>
+                  <SelectTrigger className="rounded-xl border-border bg-background">
+                    <SelectValue placeholder="Select purpose" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PURPOSE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
 
             <Field label={typeContent.senderNoteLabel}>
               <Textarea value={customFields.partyNotes?.sender || ''} onChange={(event) => updateCustomFields({ partyNotes: { ...customFields.partyNotes, sender: event.target.value } })} rows={3} />

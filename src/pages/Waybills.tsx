@@ -33,8 +33,6 @@ import { ContextualExportDropdown } from '@/components/export/ContextualExportDr
 
 type FilterTab = 'all' | 'internal' | 'external'
 
-
-
 function WaybillsContent() {
   const navigate = useNavigate()
 
@@ -42,6 +40,7 @@ function WaybillsContent() {
   const { state, patchUpdate, reset, results } = useDocumentQuery("waybills")
 
   // ─── NON-FILTER STATE (page-specific) ───
+  const [filterTab, setFilterTab] = useState<FilterTab>('all')
   const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
   const [activeWaybillInvoice, setActiveWaybillInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
   const [activeWaybillProject, setActiveWaybillProject] = useState<{ id: string; name?: string | null } | null>(null)
@@ -61,6 +60,10 @@ function WaybillsContent() {
 
   // ─── Typed results ───
   const waybills = results as Waybill[]
+
+  const filteredWaybills = useMemo(() => {
+    return filterTab === 'all' ? waybills : waybills.filter(w => w.type === filterTab)
+  }, [waybills, filterTab])
 
   const loadWaybillSyncQueue = async () => {
     if (!showWaybillSyncRecovery) return
@@ -195,7 +198,7 @@ function WaybillsContent() {
     <>
       <ModuleShell
         eyebrow="Logistics" title="Waybills"
-        summary={`${waybills.length} waybill${waybills.length === 1 ? '' : 's'}`}
+        summary={`${filteredWaybills.length} waybill${filteredWaybills.length === 1 ? '' : 's'}`}
         tone="cyan"
         onPrimaryAction={() => navigate('/waybills/new')} primaryActionLabel="New Waybill"
         searchValue={state.search}
@@ -216,7 +219,17 @@ function WaybillsContent() {
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="waybills" />
         }
         beforeListContent={
-          showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
+          <>
+          <MobileSegmentedControl
+            value={filterTab}
+            onChange={setFilterTab as (v: string) => void}
+            options={[
+              { key: 'all', label: 'All' },
+              { key: 'external', label: 'External' },
+              { key: 'internal', label: 'Internal' },
+            ]}
+          />
+          {showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
             <div className="mb-4 rounded-[22px] border border-bd-border bg-bd-surface-muted/30 p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -252,9 +265,10 @@ function WaybillsContent() {
                 </div>
               ) : null}
             </div>
-          ) : null
+          ) : null}
+          </>
         }
-        records={waybills}
+        records={filteredWaybills}
         renderRow={(w) => {
           const tone = getStatusTone(w.status)
           const statusClasses = getStatusClasses(tone)

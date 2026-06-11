@@ -5,7 +5,7 @@ import type { BaseDocument } from '../types/documentView'
 import WaybillSummaryStrip from './WaybillSummaryStrip'
 import WaybillPrimaryActions from './WaybillPrimaryActions'
 import styles from './WaybillViewPage.module.css'
-import type { WaybillMetric } from './waybillViewMockData'
+import type { WaybillMetric } from '@/components/waybill/waybillUtils'
 
 interface WaybillViewPageProps {
   document: BaseDocument

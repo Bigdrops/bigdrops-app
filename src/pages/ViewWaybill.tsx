@@ -327,7 +327,7 @@ export default function ViewWaybill() {
         <WaybillViewPage
           document={docProps}
           metrics={metrics}
-          preview={<WaybillDocumentPreview preview={{ documentNumber: waybill.waybill_number || '', dispatchDate: waybill.dispatch_date || '', companyName: waybill.company_name || '', companyLines: waybill.company_address?.split('\n') || [], consigneeName: waybill.consignee_name || '', consigneeLines: waybill.consignee_address?.split('\n') || [], vehicleReg: waybill.vehicle_reg || '', deliveryReference: waybill.delivery_ref || '', driverName: waybill.driver_name || '', driverPhone: waybill.driver_phone || '', notes: waybill.notes || '', items: waybill.items || [] }} />}
+          preview={<WaybillDocumentPreview preview={preview} />}
           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
           onEdit={() => navigate(`/waybills/${id}/edit`)}
           onDuplicate={() => void handleDuplicate()}
