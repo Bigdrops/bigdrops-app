@@ -1,23 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { Copy, Plus, Trash2, X, Wand2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Copy, Download, Eye, EyeOff, FileUp, Plus, Trash2 } from 'lucide-react'
 
-import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { feedback } from '@/lib/feedback'
-import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
-import {
-  createOfflineWaybillDraft,
-  peekNextOfflineWaybillNumber,
-} from '@/lib/native/waybillOffline'
 import {
   CONDITION_OPTIONS,
   TRANSPORT_MODE_OPTIONS,
@@ -28,162 +16,111 @@ import {
   createCustomColumnKey,
   createDefaultItem,
   createDefaultWaybill,
-  getNextWaybillNumber,
   getWaybillSignature,
   getWaybillTypeContent,
-  mapDbWaybill,
   parseWaybillCustomFields,
   normalizeSignatureEvidence,
-  normalizeWaybillImport,
-  normalizeWaybillItems,
-  normalizeWaybillStatus,
   type Waybill,
   type WaybillCustomColumn,
   type WaybillCustomFields,
   type WaybillItem,
-  type WaybillStatus,
   type WaybillType,
   type TransportMode,
   type WaybillPurpose,
 } from './waybillUtils'
-
-import { WaybillImportSheet } from './WaybillImportSheet'
 import { WaybillSignatureField } from './WaybillSignatureField'
+import {
+  ChipButton,
+  CollapseCard,
+  CompactSelectField,
+  MobileField,
+  MobileTextField,
+  pageCardCls,
+} from '@/components/invoice/mobile/mobileFormPrimitives'
+
+export type WaybillFormData = {
+  waybill: Waybill
+  items: WaybillItem[]
+  customColumns: WaybillCustomColumn[]
+  customFields: WaybillCustomFields
+}
 
 type WaybillFormProps = {
-  mode: 'new' | 'edit'
-  waybillId?: string
-  onCancel?: () => void
-  onSaved?: () => void
+  type: WaybillType
+  onSave: (data: WaybillFormData) => Promise<void>
+  onClose: () => void
+  initialData?: Partial<WaybillFormData>
 }
 
-type ProjectPrefillState = {
-  projectId?: string
-  projectName?: string
-  clientId?: string
-  clientName?: string
-  sourceInvoice?: {
-    invoiceId?: string
-    invoiceNumber?: string
-    clientId?: string
-    clientName?: string
-    poNumber?: string
-  }
+const SECTION_COLORS = {
+  details: 'indigo',
+  routing: 'violet',
+  transport: 'amber',
+  items: 'emerald',
+  remarks: 'muted',
+} as const
+
+function createInitialState(type: WaybillType, initial?: Partial<WaybillFormData>): WaybillFormData {
+  const defaultWb = createDefaultWaybill()
+  const wb: Waybill = initial?.waybill
+    ? { ...defaultWb, ...initial.waybill, type }
+    : { ...defaultWb, type }
+  const items = initial?.items?.length ? initial.items : [createDefaultItem()]
+  const customColumns = initial?.customColumns ?? []
+  const customFields = initial?.customFields ?? parseWaybillCustomFields(wb.custom_fields)
+  return { waybill: wb, items, customColumns, customFields }
 }
 
-const hasInvoicePrefillDetails = (invoice?: ProjectPrefillState['sourceInvoice']) =>
-  Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
-
-function canUseOfflineWaybillDrafts() {
-  return canUseAndroidNativeSqlite() && typeof navigator !== 'undefined' && navigator.onLine === false
-}
-
-function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-semibold text-foreground">
-        {label}
-        {required ? <span className="ml-0.5 text-red-500">*</span> : null}
-      </Label>
-      {children}
-      {help ? <div className="text-xs text-muted-foreground">{help}</div> : null}
-    </div>
-  )
-}
-
-function SectionCard({ title, accent, subtitle, children }: { title: string; accent: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <Card className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <CardHeader className={`border-b border-border px-4 py-3 ${accent}`}>
-        <CardTitle className="text-sm font-bold text-foreground">{title}</CardTitle>
-        {subtitle ? <div className="text-xs text-muted-foreground">{subtitle}</div> : null}
-      </CardHeader>
-      <CardContent className="space-y-4 p-4">{children}</CardContent>
-    </Card>
-  )
-}
-
-export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: WaybillFormProps) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const prefill = location.state as ProjectPrefillState | undefined
-
-  const [waybill, setWaybill] = useState<Waybill>(() => createDefaultWaybill())
-  const [items, setItems] = useState<WaybillItem[]>([createDefaultItem()])
-  const [customColumns, setCustomColumns] = useState<WaybillCustomColumn[]>([])
-  const [customFields, setCustomFields] = useState<WaybillCustomFields>({})
-  const [loading, setLoading] = useState(mode === 'edit')
+export default function WaybillForm({ type, onSave, onClose, initialData }: WaybillFormProps) {
+  const [state, setState] = useState<WaybillFormData>(() => createInitialState(type, initialData))
   const [saving, setSaving] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [sections, setSections] = useState({
+    details: true,
+    routing: true,
+    transport: true,
+    items: true,
+    remarks: true,
+    terms: false,
+  })
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
-  const [invoiceSearch, setInvoiceSearch] = useState('')
-  const [invoiceSuggestions, setInvoiceSuggestions] = useState<{ id: string; invoice_number: string }[]>([])
-  const [projectName, setProjectName] = useState(prefill?.projectName || '')
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [showPoNumber, setShowPoNumber] = useState(false)
+  const warnedRef = useRef(false)
 
-  useEffect(() => {
-    async function load() {
-      if (mode === 'edit' && waybillId) {
-        const { data, error } = await supabase.from('waybills').select(`*, project:projects(name)`).eq('id', waybillId).single()
-        if (error) {
-          feedback.error('Fetch failed', { description: error.message })
-          navigate('/waybills')
-          return
-        }
-
-        const mapped = mapDbWaybill(data)
-        setWaybill(mapped)
-        setItems(mapped.items || [createDefaultItem()])
-        setProjectName((data.project as any)?.name || '')
-
-        const fields = parseWaybillCustomFields(data.custom_fields)
-        setCustomFields(fields)
-        setCustomColumns(collectWaybillCustomColumns(mapped.items, fields.customColumns || []))
-
-        if (fields.references?.linkedInvoiceNumber) {
-          setInvoiceSearch(fields.references.linkedInvoiceNumber)
-        }
-      } else {
-        const defaultWaybill = createDefaultWaybill()
-        if (prefill?.projectId) {
-          defaultWaybill.project_id = prefill.projectId
-          defaultWaybill.client_id = prefill.clientId || ''
-          defaultWaybill.client_name = prefill.clientName || ''
-        }
-        if (hasInvoicePrefillDetails(prefill?.sourceInvoice)) {
-          defaultWaybill.invoice_id = prefill?.sourceInvoice?.invoiceId || ''
-          defaultWaybill.po_number = prefill?.sourceInvoice?.poNumber || ''
-          setInvoiceSearch(prefill?.sourceInvoice?.invoiceNumber || '')
-          const initialFields = parseWaybillCustomFields({})
-          setCustomFields({ ...initialFields, references: { ...initialFields.references, linkedInvoiceNumber: prefill?.sourceInvoice?.invoiceNumber || '' } })
-        }
-
-        const nextNum = canUseOfflineWaybillDrafts() 
-          ? await peekNextOfflineWaybillNumber()
-          : await getNextWaybillNumber(defaultWaybill.type as WaybillType, []) // Simplified
-          
-        setWaybill({ ...defaultWaybill, waybill_number: nextNum })
-      }
-      setLoading(false)
-    }
-    load()
-  }, [mode, waybillId, navigate, prefill])
-
+  const { waybill, items, customColumns, customFields } = state
   const typeContent = getWaybillTypeContent(waybill.type)
 
+  const markDirty = useCallback(() => {
+    if (!dirty) setDirty(true)
+  }, [dirty])
+
   const updateWaybill = <K extends keyof Waybill>(key: K, value: Waybill[K]) => {
-    setWaybill((current) => ({ ...current, [key]: value }))
+    setState((prev) => ({ ...prev, waybill: { ...prev.waybill, [key]: value } }))
+    markDirty()
   }
 
   const updateItem = <K extends keyof WaybillItem>(index: number, key: K, value: WaybillItem[K]) => {
-    setItems((current) => current.map((item, i) => (i === index ? { ...item, [key]: value } : item)))
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.map((item, i) => (i === index ? { ...item, [key]: value } : item)),
+    }))
+    markDirty()
   }
 
   const updateCustomItemField = (index: number, key: string, value: string) => {
-    setItems((current) =>
-      current.map((item, i) =>
-        i === index ? { ...item, custom_data: { ...item.custom_data, [key]: value } } : item
-      )
-    )
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.map((item, i) =>
+        i === index ? { ...item, custom_data: { ...item.custom_data, [key]: value } } : item,
+      ),
+    }))
+    markDirty()
+  }
+
+  const updateCustomFields = (patch: Partial<WaybillCustomFields>) => {
+    setState((prev) => ({ ...prev, customFields: { ...prev.customFields, ...patch } }))
+    markDirty()
   }
 
   const addCustomColumn = () => {
@@ -193,311 +130,590 @@ export default function WaybillForm({ mode, waybillId, onCancel, onSaved }: Wayb
       })
       return
     }
-    setCustomColumns((current) => [...current, { key: createCustomColumnKey(`custom_${Date.now()}`), label: '' }])
+    setState((prev) => ({
+      ...prev,
+      customColumns: [...prev.customColumns, { key: createCustomColumnKey(`custom_${Date.now()}`), label: '' }],
+    }))
+    markDirty()
   }
 
   const removeCustomColumn = (key: string) => {
-    setCustomColumns((current) => current.filter((c) => c.key !== key))
-    setItems((current) => current.map((item) => {
-      const next = { ...item.custom_data }
-      delete next[key]
-      return { ...item, custom_data: next }
+    setState((prev) => ({
+      ...prev,
+      customColumns: prev.customColumns.filter((c) => c.key !== key),
+      items: prev.items.map((item) => {
+        const next = { ...item.custom_data }
+        delete next[key]
+        return { ...item, custom_data: next }
+      }),
     }))
+    markDirty()
   }
 
-  const updateCustomFields = (patch: Partial<WaybillCustomFields>) => {
-    setCustomFields((current) => ({ ...current, ...patch }))
+  const toggleSection = (key: keyof typeof sections) => {
+    setSections((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleApplyImport = (jsonStr: string) => {
-    try {
-      const parsed = JSON.parse(jsonStr)
-      const normalized = normalizeWaybillImport(parsed, waybill.type)
-      setWaybill((current) => ({
-        ...current,
-        ...normalized.fields,
-        type: normalized.type,
-      }))
-      setItems(normalized.items)
-      setCustomColumns(normalized.customColumns)
-      setCustomFields(normalized.customFields)
-      setImportOpen(false)
-      feedback.success('Import successful', { description: 'Waybill draft updated.' })
-    } catch (error) {
-      feedback.error('Parse failed', {
-        description: error instanceof Error ? error.message : 'Invalid JSON',
-      })
-    }
+  const addItem = () => {
+    setState((prev) => ({ ...prev, items: [...prev.items, createDefaultItem()] }))
+    markDirty()
   }
 
-  const searchInvoices = async (query: string) => {
-    setInvoiceSearch(query)
-    if (query.length < 3) {
-      setInvoiceSuggestions([])
-      return
-    }
-    const { data } = await supabase.from('invoices').select('id, invoice_number').ilike('invoice_number', `%${query}%`).limit(5)
-    setInvoiceSuggestions(data || [])
+  const removeItem = (index: number) => {
+    setState((prev) => ({
+      ...prev,
+      items: prev.items.length === 1 ? [createDefaultItem()] : prev.items.filter((_, i) => i !== index),
+    }))
+    markDirty()
   }
 
-  const onSave = async () => {
+  const duplicateItem = (index: number) => {
+    setState((prev) => {
+      const item = prev.items[index]
+      return { ...prev, items: [...prev.items, { ...item }] }
+    })
+    markDirty()
+  }
+
+  const handleBlankTemplate = () => {
+    const header = ['Description', 'Quantity', 'Unit', 'Condition', ...customColumns.map((c) => c.label || 'Custom')]
+    const row = ['', '1', '', 'good', ...customColumns.map(() => '')]
+    const csv = [header.join(','), row.join(',')].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `waybill-template-${type}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleSave = async () => {
     if (!waybill.sender_name) {
       feedback.error('Sender required', { description: 'Please add a sender name.' })
       return
     }
-
     setSaving(true)
     try {
       const finalFields = buildWaybillCustomFields(customFields, { customColumns })
-      
-      const { saveWaybill } = await import('@/domain/waybill/waybillMutations')
-      
-      const result = await saveWaybill({
-        waybill,
+      const collectedColumns = collectWaybillCustomColumns(items, customColumns)
+      const data: WaybillFormData = {
+        waybill: { ...waybill, status: 'dispatched' },
         items,
-        custom_fields: finalFields,
-        mode,
-        waybillId,
-        isOffline: canUseOfflineWaybillDrafts()
-      });
-
-      if (result.status === 'offline') {
-        feedback.success('Saved offline', { description: 'Draft preserved locally.' })
-      } else {
-        feedback.success('Waybill saved', { description: 'Database updated successfully.' })
+        customColumns: collectedColumns,
+        customFields: finalFields,
       }
-      
-      if (onSaved) onSaved()
-      else navigate('/waybills')
-    } catch (error) {
-      feedback.error('Save failed', {
-        description: getUserFacingMutationMessage(error, { action: 'save' }),
-      })
+      await onSave(data)
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground animate-pulse font-black uppercase tracking-widest text-[10px]">Loading Waybill…</div>
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (dirty && !warnedRef.current) {
+        warnedRef.current = true
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-24">
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-bd-border bg-bd-surface/80 px-4 py-4 backdrop-blur shadow-sm rounded-b-3xl -mx-4">
-        <div>
-          <h1 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
-            {mode === 'new' ? 'Create Waybill' : 'Edit Waybill'}
-            <span className="text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full bg-bd-accent/10 text-bd-accent">
-              {waybill.waybill_number || 'Pending'}
+    <div className="space-y-0">
+      <div className="flex items-center justify-between border-b border-bd-border px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-black tracking-tight text-bd-text">
+            {type === 'internal' ? 'Internal' : 'External'} Waybill
+          </div>
+          {waybill.waybill_number ? (
+            <span className="rounded-full bg-bd-violet-bg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter text-bd-violet">
+              {waybill.waybill_number}
             </span>
-          </h1>
-          <p className="text-xs font-medium text-muted-foreground">{typeContent.intro.slice(0, 50)}...</p>
+          ) : null}
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => onCancel ? onCancel() : navigate(-1)}>
-            <X className="h-4 w-4" />
-          </Button>
-          <Button className="rounded-xl bg-bd-button-primary-bg font-bold text-bd-button-primary-text hover:bg-bd-button-primary-bg/90 shadow-md transition-all active:scale-95" onClick={onSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </Button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex h-9 items-center gap-1.5 rounded-[var(--bd-radius-md)] bg-bd-button-primary-bg px-4 text-[12px] font-bold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 active:scale-[0.97]"
+          >
+            <FileUp className="h-4 w-4" />
+            {saving ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </div>
 
-      <div className="space-y-6 px-1">
-        <SectionCard title="Basic Information" accent="bg-bd-surface-muted">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Waybill Type" required help="Internal: transfers within company. External: client deliveries.">
-              <Select value={waybill.type} onValueChange={(value: WaybillType) => updateWaybill('type', value)}>
-                <SelectTrigger className="rounded-xl border-border bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal">Internal Waybill</SelectItem>
-                  <SelectItem value="external">External Waybill</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field label="Status" required>
-              <Select value={waybill.status} onValueChange={(value: WaybillStatus) => updateWaybill('status', value)}>
-                <SelectTrigger className="rounded-xl border-border bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="dispatched">Dispatched</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <div className="sm:col-span-2 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="rounded-xl h-10 px-4 font-bold border-2 border-slate-200 hover:bg-slate-50 transition-colors" onClick={() => setImportOpen(true)}>
-                <Wand2 className="mr-2 h-4 w-4 text-bd-accent" />
-                Import extraction
-              </Button>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="People and Movement" accent="bg-bd-surface-muted">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={typeContent.senderLabel} required>
-              <Input value={waybill.sender_name || ''} onChange={(event) => updateWaybill('sender_name', event.target.value)} placeholder={typeContent.senderPlaceholder} />
-            </Field>
-            <Field label={typeContent.receiverLabel}>
-              <Input value={waybill.receiver_name || ''} onChange={(event) => updateWaybill('receiver_name', event.target.value)} placeholder={typeContent.receiverPlaceholder} />
-            </Field>
-
-            <div className="sm:col-span-2">
-              <ClientSelector
-                clientId={waybill.client_id}
-                clientName={waybill.client_name}
-                open={clientPickerOpen}
-                onOpenChange={setClientPickerOpen}
-                onClientChange={(clientId, clientName) => {
-                  updateWaybill('client_id', clientId || '')
-                  updateWaybill('client_name', clientName || '')
-                }}
-                compact
+      <div className="px-5 pb-8 pt-4">
+        <div className={`${pageCardCls} overflow-hidden`}>
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'indigo' }}
+            title="Document Details"
+            subtitle="Waybill number, date, and type"
+            open={sections.details}
+            onToggle={() => toggleSection('details')}
+            sectionColor={SECTION_COLORS.details}
+          >
+            <div className="space-y-3 px-4">
+              <MobileTextField
+                label="Waybill Number"
+                value={waybill.waybill_number}
+                onChange={(e) => updateWaybill('waybill_number', e.target.value)}
+                placeholder="Auto-generated"
+                disabled
               />
+              <MobileTextField
+                label="Date"
+                type="date"
+                value={waybill.date}
+                onChange={(e) => updateWaybill('date', e.target.value)}
+              />
+              <MobileTextField
+                label="Time"
+                type="time"
+                value={waybill.time}
+                onChange={(e) => updateWaybill('time', e.target.value)}
+              />
+              <MobileField label="Type">
+                <div className="flex gap-2">
+                  <span className="rounded-full bg-bd-surface-muted px-3 py-1 text-[11px] font-bold text-bd-text-muted">
+                    {type === 'internal' ? 'Internal' : 'External'}
+                  </span>
+                </div>
+              </MobileField>
             </div>
+          </CollapseCard>
 
-            <Field label="Transport Mode" required>
-              <Select value={waybill.transport_mode || ''} onValueChange={(value: TransportMode) => { updateWaybill('transport_mode', value); if (value === 'By Hand') { updateWaybill('vehicle_plate', ''); updateWaybill('driver_name', '') } }}>
-                <SelectTrigger className="rounded-xl border-border bg-background">
-                  <SelectValue placeholder="Select transport mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TRANSPORT_MODE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Driver Name">
-              <Input value={waybill.driver_name || ''} onChange={(event) => updateWaybill('driver_name', event.target.value)} placeholder="Driver name" />
-            </Field>
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'violet' }}
+            title="Routing"
+            subtitle={typeContent.senderLabel}
+            open={sections.routing}
+            onToggle={() => toggleSection('routing')}
+            sectionColor={SECTION_COLORS.routing}
+          >
+            <div className="space-y-3 px-4">
+              <MobileTextField
+                label={typeContent.senderLabel}
+                value={waybill.sender_name}
+                onChange={(e) => updateWaybill('sender_name', e.target.value)}
+                placeholder={typeContent.senderPlaceholder}
+              />
+              <MobileTextField
+                label={typeContent.receiverLabel}
+                value={waybill.receiver_name}
+                onChange={(e) => updateWaybill('receiver_name', e.target.value)}
+                placeholder={typeContent.receiverPlaceholder}
+              />
 
-            {waybill.transport_mode !== 'By Hand' ? (
-              <Field label="Vehicle Plate">
-                <Input value={waybill.vehicle_plate || ''} onChange={(event) => updateWaybill('vehicle_plate', event.target.value)} placeholder="ABC 1234" />
-              </Field>
-            ) : null}
+              {waybill.type === 'external' ? (
+                <>
+                  <MobileField label={typeContent.clientLabel}>
+                    <ClientSelector
+                      clientId={waybill.client_id}
+                      clientName={waybill.client_name}
+                      open={clientPickerOpen}
+                      onOpenChange={setClientPickerOpen}
+                      onClientChange={(clientId, clientName) => {
+                        updateWaybill('client_id', clientId || '')
+                        updateWaybill('client_name', clientName || '')
+                      }}
+                      compact
+                    />
+                  </MobileField>
+                  <MobileTextField
+                    label={typeContent.locationLabel}
+                    value={waybill.delivery_location}
+                    onChange={(e) => updateWaybill('delivery_location', e.target.value)}
+                    placeholder={typeContent.locationPlaceholder}
+                  />
+                </>
+              ) : (
+                <>
+                  <MobileTextField
+                    label="Transfer From"
+                    value={waybill.sender_name}
+                    onChange={(e) => updateWaybill('sender_name', e.target.value)}
+                    placeholder="Store, workshop, or releasing staff"
+                  />
+                  <MobileTextField
+                    label="Transfer To"
+                    value={waybill.receiver_name}
+                    onChange={(e) => updateWaybill('receiver_name', e.target.value)}
+                    placeholder="Receiving team, site, or custodian"
+                  />
+                </>
+              )}
+            </div>
+          </CollapseCard>
 
-            <Field label="P.O. Number">
-              <Input value={waybill.po_number || ''} onChange={(event) => updateWaybill('po_number', event.target.value)} placeholder="Optional" />
-            </Field>
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'amber' }}
+            title="Transport Details"
+            subtitle="Mode, vehicle, and driver"
+            open={sections.transport}
+            onToggle={() => toggleSection('transport')}
+            sectionColor={SECTION_COLORS.transport}
+          >
+            <div className="space-y-3 px-4">
+              <MobileField label="Transport Mode">
+                <CompactSelectField
+                  value={waybill.transport_mode}
+                  onChange={(value) => {
+                    updateWaybill('transport_mode', value as TransportMode)
+                    if (value === 'By Hand') {
+                      updateWaybill('vehicle_plate', '')
+                      updateWaybill('driver_name', '')
+                    }
+                  }}
+                  options={TRANSPORT_MODE_OPTIONS}
+                />
+              </MobileField>
 
-            {waybill.type === 'external' ? (
-              <Field label="Purpose" required help="Only for external waybills">
-                <Select value={waybill.purpose || ''} onValueChange={(value: WaybillPurpose) => updateWaybill('purpose', value)}>
-                  <SelectTrigger className="rounded-xl border-border bg-background">
-                    <SelectValue placeholder="Select purpose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PURPOSE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            ) : null}
+              <MobileField label="Purpose">
+                <CompactSelectField
+                  value={waybill.purpose || ''}
+                  onChange={(value) => updateWaybill('purpose', value as WaybillPurpose | '')}
+                  options={PURPOSE_OPTIONS}
+                />
+              </MobileField>
 
-            <Field label={typeContent.senderNoteLabel}>
-              <Textarea value={customFields.partyNotes?.sender || ''} onChange={(event) => updateCustomFields({ partyNotes: { ...customFields.partyNotes, sender: event.target.value } })} rows={3} />
-            </Field>
-            <Field label={typeContent.receiverNoteLabel}>
-              <Textarea value={customFields.partyNotes?.receiver || ''} onChange={(event) => updateCustomFields({ partyNotes: { ...customFields.partyNotes, receiver: event.target.value } })} rows={3} />
-            </Field>
-          </div>
-        </SectionCard>
+              {waybill.transport_mode !== 'By Hand' ? (
+                <>
+                  <MobileTextField
+                    label="Driver Name"
+                    value={waybill.driver_name}
+                    onChange={(e) => updateWaybill('driver_name', e.target.value)}
+                    placeholder="Driver name"
+                  />
+                  <MobileTextField
+                    label="Vehicle Plate"
+                    value={waybill.vehicle_plate}
+                    onChange={(e) => updateWaybill('vehicle_plate', e.target.value)}
+                    placeholder="ABC 1234"
+                  />
+                </>
+              ) : null}
 
-        <SectionCard title="Items and Custom Columns" accent="bg-bd-surface-muted" subtitle="Keep the item list practical for mobile and print.">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">{customColumns.length} / {WAYBILL_COLUMN_LIMIT} custom columns</div>
-                <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={addCustomColumn}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Column
-                </Button>
+              <MobileField label="Linked Invoice">
+                <div className="relative">
+                  <Input
+                    value={customFields.references?.linkedInvoiceNumber || ''}
+                    onChange={(e) =>
+                      updateCustomFields({
+                        references: { ...customFields.references, linkedInvoiceNumber: e.target.value },
+                      })
+                    }
+                    placeholder="Invoice #"
+                    type={showInvoice ? 'text' : 'password'}
+                    className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface pr-10 text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowInvoice((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text"
+                  >
+                    {showInvoice ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </MobileField>
+
+              <MobileField label="P.O. Number">
+                <div className="relative">
+                  <Input
+                    value={waybill.po_number || ''}
+                    onChange={(e) => updateWaybill('po_number', e.target.value)}
+                    placeholder="PO #"
+                    type={showPoNumber ? 'text' : 'password'}
+                    className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface pr-10 text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPoNumber((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text"
+                  >
+                    {showPoNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </MobileField>
+            </div>
+          </CollapseCard>
+
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'emerald' }}
+            title="Item List"
+            subtitle={`${items.length} item${items.length !== 1 ? 's' : ''}`}
+            open={sections.items}
+            onToggle={() => toggleSection('items')}
+            sectionColor={SECTION_COLORS.items}
+          >
+            <div className="space-y-3 px-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-bd-text-muted">
+                  {customColumns.length} / {WAYBILL_COLUMN_LIMIT} columns
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleBlankTemplate}
+                    className="flex h-7 items-center gap-1 rounded-full border border-bd-border bg-bd-surface px-3 text-[10px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
+                  >
+                    <Download className="h-3 w-3" />
+                    Template
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addCustomColumn}
+                    className="flex h-7 items-center gap-1 rounded-full border border-bd-border bg-bd-surface px-3 text-[10px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Column
+                  </button>
+                </div>
               </div>
 
-              {customColumns.length > 0 && (
-                <div className="grid gap-3 sm:grid-cols-2">
+              {customColumns.length > 0 ? (
+                <div className="space-y-1.5">
                   {customColumns.map((column) => (
-                    <div key={column.key} className="flex items-center gap-2 rounded-xl border border-border bg-muted/20 p-2">
-                      <Input value={column.label} onChange={(event) => setCustomColumns((current) => current.map((entry) => (entry.key === column.key ? { ...entry, label: event.target.value } : entry)))} placeholder="Label" className="h-8 text-xs" />
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => removeCustomColumn(column.key)}>
-                        <X className="h-4 w-4 text-red-600" />
-                      </Button>
+                    <div key={column.key} className="flex items-center gap-2">
+                      <Input
+                        value={column.label}
+                        onChange={(e) =>
+                          setState((prev) => ({
+                            ...prev,
+                            customColumns: prev.customColumns.map((entry) =>
+                              entry.key === column.key ? { ...entry, label: e.target.value } : entry,
+                            ),
+                          }))
+                        }
+                        placeholder="Column label"
+                        className="h-8 flex-1 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-2.5 text-[12px] text-bd-text placeholder:text-bd-text-muted"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeCustomColumn(column.key)}
+                        className="flex h-8 w-8 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
 
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {items.map((item, index) => (
-                  <div key={`waybill-item-${index}`} className="rounded-2xl border border-border bg-card p-4">
-                    <div className="mb-3 flex items-center justify-between border-b pb-2">
-                      <div className="text-sm font-bold text-foreground">Item {index + 1}</div>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => setItems((current) => (current.length === 1 ? [createDefaultItem()] : current.filter((_, itemIndex) => itemIndex !== index)))}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  <div
+                    key={`item-${index}`}
+                    className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-3"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="text-[11px] font-bold text-bd-text">Item {index + 1}</div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => duplicateItem(index)}
+                          className="flex h-7 w-7 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-bd-text"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="flex h-7 w-7 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-red-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <Field label="Description" required>
-                          <Textarea value={item.description} onChange={(event) => updateItem(index, 'description', event.target.value)} rows={2} placeholder="Item details" className="rounded-xl" />
-                        </Field>
+                    <div className="space-y-2">
+                      <MobileTextField
+                        label="Description"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                        placeholder="Item details"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <MobileField label="Qty">
+                          <NumericInput
+                            value={item.quantity}
+                            onChange={(val) => updateItem(index, 'quantity', val)}
+                            className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-3 text-[14px] text-bd-text"
+                          />
+                        </MobileField>
+                        <MobileTextField
+                          label="Unit"
+                          value={item.unit}
+                          onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                          placeholder="pcs"
+                        />
                       </div>
 
-                      <Field label="Qty">
-                        <NumericInput value={item.quantity} onChange={(val) => updateItem(index, 'quantity', val)} className="rounded-xl" />
-                      </Field>
-                      <Field label="Unit">
-                        <Input value={item.unit} onChange={(event) => updateItem(index, 'unit', event.target.value)} placeholder="pcs" className="rounded-xl" />
-                      </Field>
-                      
-                      <Field label="Condition">
-                        <Select value={item.condition} onValueChange={(value: any) => updateItem(index, 'condition', value)}>
-                          <SelectTrigger className="rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CONDITION_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      <div className="grid grid-cols-2 gap-2">
+                        <MobileField label="Part No.">
+                          <NumericInput
+                            value={String(item.custom_data?.['part_no'] || '')}
+                            onChange={(val) => updateCustomItemField(index, 'part_no', String(val))}
+                            className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-3 text-[14px] text-bd-text"
+                          />
+                        </MobileField>
+                        <MobileField label="Condition">
+                          <div className="flex gap-1.5">
+                            {CONDITION_OPTIONS.map((opt) => (
+                              <ChipButton
+                                key={opt.value}
+                                active={item.condition === opt.value}
+                                onClick={() => updateItem(index, 'condition', opt.value)}
+                              >
+                                {opt.label}
+                              </ChipButton>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </Field>
+                          </div>
+                        </MobileField>
+                      </div>
 
                       {customColumns.map((column) => (
-                        <Field key={column.key} label={column.label || 'Unnamed Column'}>
-                          <Input value={String(item.custom_data?.[column.key] || '')} onChange={(event) => updateCustomItemField(index, column.key, event.target.value)} placeholder={column.label} className="rounded-xl" />
-                        </Field>
+                        <MobileTextField
+                          key={column.key}
+                          label={column.label || 'Custom'}
+                          value={String(item.custom_data?.[column.key] || '')}
+                          onChange={(e) => updateCustomItemField(index, column.key, e.target.value)}
+                          placeholder={column.label}
+                        />
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <Button type="button" variant="outline" className="w-full rounded-2xl border-dashed h-12 text-slate-500 font-bold" onClick={() => setItems((current) => [...current, createDefaultItem()])}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Another Item
-              </Button>
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border-2 border-dashed border-bd-border py-3 text-[12px] font-bold text-bd-text-muted transition hover:border-bd-button-primary-bg hover:text-bd-button-primary-bg"
+              >
+                <Plus className="h-4 w-4" />
+                Add Item
+              </button>
             </div>
-          </SectionCard>
+          </CollapseCard>
 
-        <SectionCard title={typeContent.signatureSectionTitle} accent="bg-bd-surface-muted" subtitle={typeContent.ackPendingText}>
-          <div className="space-y-6">
-            <WaybillSignatureField role="sender" label={typeContent.senderSignatureLabel} value={getWaybillSignature(waybill, 'sender')} onChange={(next) => updateCustomFields({ signatures: { ...customFields.signatures, sender: next } })} />
-            <WaybillSignatureField role="receiver" label={typeContent.receiverSignatureLabel} value={getWaybillSignature(waybill, 'receiver')} onChange={(next) => updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })} />
-          </div>
-        </SectionCard>
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'muted' }}
+            title="Remarks & Signature"
+            subtitle="Notes and acknowledgement"
+            open={sections.remarks}
+            onToggle={() => toggleSection('remarks')}
+            sectionColor={SECTION_COLORS.remarks}
+          >
+            <div className="space-y-3 px-4">
+              <MobileField label="General Notes">
+                <Textarea
+                  value={waybill.notes || ''}
+                  onChange={(e) => updateWaybill('notes', e.target.value)}
+                  placeholder="Additional instructions or remarks"
+                  rows={3}
+                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                />
+              </MobileField>
+
+              <MobileField label={typeContent.senderNoteLabel}>
+                <Textarea
+                  value={customFields.partyNotes?.sender || ''}
+                  onChange={(e) =>
+                    updateCustomFields({ partyNotes: { ...customFields.partyNotes, sender: e.target.value } })
+                  }
+                  placeholder="Notes from sender"
+                  rows={2}
+                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                />
+              </MobileField>
+
+              <MobileField label={typeContent.receiverNoteLabel}>
+                <Textarea
+                  value={customFields.partyNotes?.receiver || ''}
+                  onChange={(e) =>
+                    updateCustomFields({ partyNotes: { ...customFields.partyNotes, receiver: e.target.value } })
+                  }
+                  placeholder="Notes from receiver"
+                  rows={2}
+                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                />
+              </MobileField>
+
+              <div className="pt-2">
+                <WaybillSignatureField
+                  role="sender"
+                  label={typeContent.senderSignatureLabel}
+                  value={getWaybillSignature(waybill, 'sender')}
+                  onChange={(next) =>
+                    updateCustomFields({ signatures: { ...customFields.signatures, sender: next } })
+                  }
+                />
+              </div>
+              <div className="pt-2">
+                <WaybillSignatureField
+                  role="receiver"
+                  label={typeContent.receiverSignatureLabel}
+                  value={getWaybillSignature(waybill, 'receiver')}
+                  onChange={(next) =>
+                    updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })
+                  }
+                />
+              </div>
+            </div>
+          </CollapseCard>
+
+          <CollapseCard
+            icon={Copy}
+            iconTone={{ bg: 'muted' }}
+            title="Terms & Acknowledgement"
+            subtitle="Conditions of this waybill"
+            open={sections.terms}
+            onToggle={() => toggleSection('terms')}
+            sectionColor="muted"
+          >
+            <div className="space-y-2 px-4">
+              <p className="text-[12px] leading-relaxed text-bd-text-muted">
+                The items listed above are released on consignment basis and remain the property of the company until
+                full settlement or return. The receiver acknowledges receipt in good condition unless otherwise noted.
+                Any damage or shortage must be reported within 24 hours.
+              </p>
+              <p className="text-[12px] leading-relaxed text-bd-text-muted">
+                {typeContent.signatureSectionTitle}: signatures above confirm acknowledgement of receipt and
+                responsibility.
+              </p>
+            </div>
+          </CollapseCard>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 items-center rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-5 text-[13px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex h-10 items-center gap-2 rounded-[var(--bd-radius-md)] bg-bd-button-primary-bg px-5 text-[13px] font-bold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 active:scale-[0.97]"
+          >
+            <FileUp className="h-4 w-4" />
+            {saving ? 'Saving...' : `Save ${type === 'internal' ? 'Internal' : 'External'} Waybill`}
+          </button>
+        </div>
       </div>
-
-      <WaybillImportSheet open={importOpen} onOpenChange={setImportOpen} onImport={handleApplyImport} />
     </div>
   )
 }
