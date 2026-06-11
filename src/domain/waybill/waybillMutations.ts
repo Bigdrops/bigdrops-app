@@ -55,16 +55,6 @@ export async function saveWaybill(params: {
       console.error('Waybill save error:', error)
       throw new Error(`Failed to save waybill: ${error.message}`)
     }
-
-    if (data?.id) {
-      const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
-        waybill_id: data.id,
-        template_type: waybill.type || 'external',
-      }])
-      if (logError) {
-        console.warn('Failed to log blank waybill:', logError)
-      }
-    }
   } else {
     if (!waybillId) throw new Error("waybillId is required in edit mode");
     const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
