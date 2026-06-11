@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface WaybillFormOverlayProps {
@@ -27,7 +28,7 @@ export default function WaybillFormOverlay({ open, title, children, onClose }: W
 
   if (!mounted) return null
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-50 flex items-end justify-center transition-all duration-200 ${
         visible ? 'bg-black/60' : 'bg-transparent'
@@ -59,6 +60,7 @@ export default function WaybillFormOverlay({ open, title, children, onClose }: W
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

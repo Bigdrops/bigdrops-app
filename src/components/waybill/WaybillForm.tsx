@@ -16,10 +16,8 @@ import {
   createCustomColumnKey,
   createDefaultItem,
   createDefaultWaybill,
-  getWaybillSignature,
   getWaybillTypeContent,
   parseWaybillCustomFields,
-  normalizeSignatureEvidence,
   type Waybill,
   type WaybillCustomColumn,
   type WaybillCustomFields,
@@ -28,7 +26,6 @@ import {
   type TransportMode,
   type WaybillPurpose,
 } from './waybillUtils'
-import { WaybillSignatureField } from './WaybillSignatureField'
 import {
   ChipButton,
   CollapseCard,
@@ -277,13 +274,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                 value={waybill.time}
                 onChange={(e) => updateWaybill('time', e.target.value)}
               />
-              <MobileField label="Type">
-                <div className="flex gap-2">
-                  <span className="rounded-full bg-bd-surface-muted px-3 py-1 text-[11px] font-bold text-bd-text-muted">
-                    {type === 'internal' ? 'Internal' : 'External'}
-                  </span>
-                </div>
-              </MobileField>
             </div>
           </CollapseCard>
 
@@ -608,21 +598,82 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
           <CollapseCard
             icon={Copy}
             iconTone={{ bg: 'muted' }}
-            title="Remarks & Signature"
-            subtitle="Notes and acknowledgement"
+            title="Notes"
+            subtitle="Additional remarks"
             open={sections.remarks}
             onToggle={() => toggleSection('remarks')}
             sectionColor={SECTION_COLORS.remarks}
           >
             <div className="space-y-3 px-4">
-              <MobileField label="General Notes">
-                <Textarea
-                  value={waybill.notes || ''}
-                  onChange={(e) => updateWaybill('notes', e.target.value)}
-                  placeholder="Additional instructions or remarks"
-                  rows={3}
-                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
-                />
+              <MobileField label="Notes">
+                <div className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface">
+                  <div className="flex items-center gap-1 border-b border-bd-border px-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
+                        if (textarea) {
+                          const start = textarea.selectionStart
+                          const end = textarea.selectionEnd
+                          const text = textarea.value
+                          const before = text.substring(0, start)
+                          const selected = text.substring(start, end)
+                          const after = text.substring(end)
+                          updateWaybill('notes', `${before}**${selected || 'bold'}**${after}`)
+                        }
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
+                      title="Bold"
+                    >
+                      B
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
+                        if (textarea) {
+                          const start = textarea.selectionStart
+                          const end = textarea.selectionEnd
+                          const text = textarea.value
+                          const before = text.substring(0, start)
+                          const selected = text.substring(start, end)
+                          const after = text.substring(end)
+                          updateWaybill('notes', `${before}_${selected || 'italic'}_${after}`)
+                        }
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] italic text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
+                      title="Italic"
+                    >
+                      I
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
+                        if (textarea) {
+                          const start = textarea.selectionStart
+                          const text = textarea.value
+                          const before = text.substring(0, start)
+                          const after = text.substring(start)
+                          const needsNewline = before.length > 0 && !before.endsWith('\n')
+                          updateWaybill('notes', `${before}${needsNewline ? '\n' : ''}• ${after}`)
+                        }
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
+                      title="Bullet List"
+                    >
+                      •
+                    </button>
+                  </div>
+                  <Textarea
+                    data-notes-field
+                    value={waybill.notes || ''}
+                    onChange={(e) => updateWaybill('notes', e.target.value)}
+                    placeholder="Additional instructions or remarks"
+                    rows={4}
+                    className="rounded-none border-0 bg-transparent text-[14px] text-bd-text placeholder:text-bd-text-muted focus-visible:ring-0"
+                  />
+                </div>
               </MobileField>
 
               <MobileField label={typeContent.senderNoteLabel}>
@@ -648,27 +699,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                   className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
                 />
               </MobileField>
-
-              <div className="pt-2">
-                <WaybillSignatureField
-                  role="sender"
-                  label={typeContent.senderSignatureLabel}
-                  value={getWaybillSignature(waybill, 'sender')}
-                  onChange={(next) =>
-                    updateCustomFields({ signatures: { ...customFields.signatures, sender: next } })
-                  }
-                />
-              </div>
-              <div className="pt-2">
-                <WaybillSignatureField
-                  role="receiver"
-                  label={typeContent.receiverSignatureLabel}
-                  value={getWaybillSignature(waybill, 'receiver')}
-                  onChange={(next) =>
-                    updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })
-                  }
-                />
-              </div>
             </div>
           </CollapseCard>
 
