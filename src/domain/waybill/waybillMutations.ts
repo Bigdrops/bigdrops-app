@@ -12,9 +12,22 @@ export async function saveWaybill(params: {
 }) {
   const { waybill, items, custom_fields, mode, waybillId, isOffline } = params;
 
-  const warnings = validateWaybill({ ...waybill, items })
-  if (warnings.length > 0) {
-    console.warn('Waybill validation warnings:', warnings)
+  // 4 save blockers only — no other fields block save
+  const errors: string[] = []
+  if (waybill.type === 'external' && !waybill.client_id) {
+    errors.push('Client must be selected for external waybills')
+  }
+  if (!waybill.waybill_number && mode === 'new') {
+    // Will be auto-generated — this is fine
+  }
+  if (!items || items.length === 0) {
+    errors.push('At least one line item is required')
+  }
+  if (items?.some((item) => !item.description || (item.quantity ?? 0) <= 0)) {
+    errors.push('Every item must have a description and quantity greater than 0')
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join('; '))
   }
 
   if (isOffline) {
@@ -38,7 +51,7 @@ export async function saveWaybill(params: {
     waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers)
   }
 
-  const purpose = waybill.purpose || 'Supply'
+  const purpose = waybill.type === 'internal' ? null : (waybill.purpose || 'Supply')
 
   const payload = {
     ...waybill,
