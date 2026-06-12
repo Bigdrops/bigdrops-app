@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import WaybillForm from '../components/waybill/WaybillForm'
 import WaybillGatewayOverlay from '../components/waybill/WaybillGatewayOverlay'
 import { saveWaybill } from '../domain/waybill/waybillMutations'
-import { getNextWaybillNumber } from '../components/waybill/waybillUtils'
-import type { WaybillType } from '../components/waybill/waybillUtils'
+import { generateWaybillSequenceNumber, getNextWaybillNumber } from '../components/waybill/waybillUtils'
+import type { Waybill, WaybillType } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
 import { supabase } from '../supabase'
@@ -13,6 +13,30 @@ import { supabase } from '../supabase'
 export default function NewWaybill() {
   const navigate = useNavigate()
   const [type, setType] = useState<WaybillType | null>(null)
+  const [waybillNumber, setWaybillNumber] = useState<string>('')
+  const [loadingNumber, setLoadingNumber] = useState(false)
+
+  useEffect(() => {
+    if (!type) return
+    let cancelled = false
+    const generate = async () => {
+      setLoadingNumber(true)
+      try {
+        const { data: existingWaybills } = await supabase
+          .from('waybills')
+          .select('waybill_number')
+          .order('created_at', { ascending: false })
+          .limit(1000)
+        const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
+        const number = generateWaybillSequenceNumber(type, existingNumbers)
+        if (!cancelled) setWaybillNumber(number)
+      } finally {
+        if (!cancelled) setLoadingNumber(false)
+      }
+    }
+    generate()
+    return () => { cancelled = true }
+  }, [type])
 
   const handleBlankDownload = async (blankType: WaybillType) => {
     try {
@@ -72,6 +96,7 @@ export default function NewWaybill() {
       type={type}
       onSave={handleSave}
       onClose={() => navigate('/waybills')}
+      initialData={waybillNumber ? { waybill: { waybill_number: waybillNumber } as Waybill } : undefined}
     />
   )
 }

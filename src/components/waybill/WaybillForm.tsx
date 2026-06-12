@@ -313,7 +313,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                   label="WAYBILL NO"
                   value={waybill.waybill_number}
                   onChange={(e) => updateWaybill('waybill_number', e.target.value)}
-                  placeholder="Auto-generated"
+                  placeholder="AWB-—"
                   className="font-mono"
                 />
                 {type === 'external' && (

@@ -53,11 +53,19 @@ export async function saveWaybill(params: {
 
   const purpose = waybill.type === 'internal' ? null : (waybill.purpose || 'Supply')
 
+  const dbItems = items.map(item => ({
+    description: item.description,
+    qty: item.quantity,
+    unit: item.unit,
+    condition: item.condition,
+    ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
+  }))
+
   const payload = {
     ...waybill,
     waybill_number: waybillNumber,
     purpose,
-    items,
+    items: dbItems,
     custom_fields,
     status: normalizeWaybillStatus(waybill.status)
   }
