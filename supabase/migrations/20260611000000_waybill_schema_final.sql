@@ -68,19 +68,45 @@ ALTER TABLE waybills ADD CONSTRAINT check_waybill_purpose_conditional CHECK (
 );
 
 -- Waterproof structural check: forces array presence, blocks blank rows, ensures numeric quantities > 0
+-- Drop the constraint if it exists
 ALTER TABLE waybills DROP CONSTRAINT IF EXISTS check_items_json_structure;
-ALTER TABLE waybills ADD CONSTRAINT check_items_json_structure CHECK (
-    jsonb_typeof(items) = 'array' AND
-    jsonb_array_length(items) > 0 AND
-    NOT EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements(items) AS elem
-        WHERE NOT (elem ? 'description')
-           OR NOT (elem ? 'qty')
-           OR jsonb_typeof(elem->'qty') != 'number'
-           OR (elem->>'qty')::numeric <= 0
-    )
-);
+
+-- Helper function: PostgreSQL doesn't allow subqueries in CHECK constraints,
+-- so we wrap the validation logic in an IMMUTABLE function
+CREATE OR REPLACE FUNCTION validate_waybill_items(items jsonb)
+RETURNS boolean AS $$
+BEGIN
+    IF jsonb_typeof(items) <> 'array' THEN
+        RETURN false;
+    END IF;
+    
+    IF jsonb_array_length(items) = 0 THEN
+        RETURN false;
+    END IF;
+    
+    FOR i IN 0..jsonb_array_length(items) - 1 LOOP
+        IF NOT (items->i ? 'description') THEN
+            RETURN false;
+        END IF;
+        IF NOT (items->i ? 'qty') THEN
+            RETURN false;
+        END IF;
+        IF jsonb_typeof(items->i->'qty') <> 'number' THEN
+            RETURN false;
+        END IF;
+        IF (items->i->>'qty')::numeric <= 0 THEN
+            RETURN false;
+        END IF;
+    END LOOP;
+    
+    RETURN true;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Add the CHECK constraint using the function
+ALTER TABLE waybills 
+ADD CONSTRAINT check_items_json_structure 
+CHECK (validate_waybill_items(items));
 
 -- ============================================================
 -- 5. REPLACE UNIQUE CONSTRAINT
