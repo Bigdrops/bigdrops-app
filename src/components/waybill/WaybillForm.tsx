@@ -23,6 +23,7 @@ import {
 
 import ClientSelector from '@/components/ClientSelector'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
+import UnitInput from '@/components/UnitInput'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { feedback } from '@/lib/feedback'
@@ -72,6 +73,8 @@ type WaybillFormProps = {
   onSave: (data: WaybillFormData) => Promise<void>
   onClose: () => void
   initialData?: Partial<WaybillFormData>
+  waybillNumber?: string
+  loadingNumber?: boolean
 }
 
 const SECTION_COLORS = {
@@ -82,21 +85,27 @@ const SECTION_COLORS = {
   remarks: 'muted',
 } as const
 
-function createInitialState(type: WaybillType, initial?: Partial<WaybillFormData>): WaybillFormData {
+function createInitialState(type: WaybillType, initial?: Partial<WaybillFormData>, waybillNumber?: string): WaybillFormData {
   const defaultWb = createDefaultWaybill()
   const wb: Waybill = initial?.waybill
     ? { ...defaultWb, ...initial.waybill, type }
-    : { ...defaultWb, type }
+    : { ...defaultWb, type, waybill_number: waybillNumber || '' }
   const items = initial?.items?.length ? initial.items : [createDefaultItem()]
   const customColumns = initial?.customColumns ?? []
   const customFields = initial?.customFields ?? parseWaybillCustomFields(wb.custom_fields)
   return { waybill: wb, items, customColumns, customFields }
 }
 
-export default function WaybillForm({ type, onSave, onClose, initialData }: WaybillFormProps) {
-  const [state, setState] = useState<WaybillFormData>(() => createInitialState(type, initialData))
+export default function WaybillForm({ type, onSave, onClose, initialData, waybillNumber, loadingNumber }: WaybillFormProps) {
+  const [state, setState] = useState<WaybillFormData>(() => createInitialState(type, initialData, waybillNumber))
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
+
+  useEffect(() => {
+    if (waybillNumber && !state.waybill.waybill_number) {
+      setState(prev => ({ ...prev, waybill: { ...prev.waybill, waybill_number: waybillNumber } }))
+    }
+  }, [waybillNumber, state.waybill.waybill_number])
 
   // Top level fields specific to external vs internal
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
@@ -313,7 +322,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                   label="WAYBILL NO"
                   value={waybill.waybill_number}
                   onChange={(e) => updateWaybill('waybill_number', e.target.value)}
-                  placeholder="AWB-—"
+                  disabled={loadingNumber}
                   className="font-mono"
                 />
                 {type === 'external' && (
@@ -368,8 +377,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
               ) : (
                 <button
                   type="button"
-                  onClick={() => setInvoiceSheetOpen(true)}
-                  className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+                  onClick={waybill.client_id ? () => setInvoiceSheetOpen(true) : undefined}
+                  className={`flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed px-4 py-3 text-left transition ${waybill.client_id ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]' : 'cursor-not-allowed border-[var(--bd-border)]/60 bg-[var(--bd-surface)]/60 opacity-50'}`}
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
                     <FileText className="h-4.5 w-4.5" />
@@ -377,7 +386,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
                     <div className="mt-0.5 text-[14px] font-bold text-[var(--bd-text-muted)]">
-                      Tap to link an invoice
+                      {waybill.client_id ? 'Tap to link an invoice' : 'Select a client first'}
                     </div>
                   </div>
                   <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
@@ -477,7 +486,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                       </td>
                       {isColumnVisible('unit') && (
                         <td className="py-2 px-2">
-                          <Input value={item.unit} onChange={(e) => updateItem(idx, 'unit', e.target.value)} className={fieldCls} />
+                          <UnitInput value={item.unit} onChange={(value) => updateItem(idx, 'unit', value)} />
                         </td>
                       )}
                       {isColumnVisible('make') && (
@@ -645,7 +654,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
         {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
       </button>
 
-      {/* Client Selector */}
+      {/* Client Selector (hidden trigger — opened via top button) */}
       <ClientSelector
         clientId={waybill.client_id}
         clientName={waybill.client_name}
@@ -656,6 +665,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
           updateWaybill('client_name', name)
         }}
         compact
+        hideTrigger
       />
 
       {/* Linked Invoice Search Sheet */}

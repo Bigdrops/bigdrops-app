@@ -96,7 +96,8 @@ export default function NewWaybill() {
       type={type}
       onSave={handleSave}
       onClose={() => navigate('/waybills')}
-      initialData={waybillNumber ? { waybill: { waybill_number: waybillNumber } as Waybill } : undefined}
+      waybillNumber={waybillNumber}
+      loadingNumber={loadingNumber}
     />
   )
 }

@@ -31,10 +31,17 @@ export async function saveWaybill(params: {
   }
 
   if (isOffline) {
+    const normalizedItems = items.map(item => ({
+      description: item.description,
+      qty: item.quantity,
+      unit: item.unit,
+      condition: item.condition,
+      ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
+    }))
     await createOfflineWaybillDraft({
       ...waybill,
       status: normalizeWaybillStatus(waybill.status) as OfflineWaybillStatus,
-      items,
+      items: normalizedItems,
       custom_fields,
     })
     return { status: 'offline' };
