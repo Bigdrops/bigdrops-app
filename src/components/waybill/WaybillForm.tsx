@@ -1,5 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Copy, Download, Eye, EyeOff, FileUp, Plus, Trash2 } from 'lucide-react'
+import {
+  BriefcaseBusiness,
+  ChevronRight,
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  FileText,
+  Import,
+  List,
+  Loader2,
+  PenTool,
+  Plus,
+  Save,
+  ScrollText,
+  SlidersHorizontal,
+  Trash2,
+  Truck,
+  Users,
+  X,
+} from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
 import { Input } from '@/components/ui/input'
@@ -32,6 +52,9 @@ import {
   CompactSelectField,
   MobileField,
   MobileTextField,
+  SectionLabel,
+  fieldCls,
+  labelCls,
   pageCardCls,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 
@@ -72,17 +95,39 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
   const [state, setState] = useState<WaybillFormData>(() => createInitialState(type, initialData))
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
-  const [sections, setSections] = useState({
-    details: true,
-    routing: true,
-    transport: true,
-    items: true,
-    remarks: true,
-    terms: false,
-  })
+
+  // Top level fields specific to external vs internal
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
-  const [showInvoice, setShowInvoice] = useState(false)
-  const [showPoNumber, setShowPoNumber] = useState(false)
+  const [showInvoice, setShowInvoice] = useState(true)
+  const [showPoNumber, setShowPoNumber] = useState(true)
+
+  // Signature Toggles
+  const [showSignatures, setShowSignatures] = useState(true)
+  const [showSenderSignature, setShowSenderSignature] = useState(true)
+  const [showReceiverSignature, setShowReceiverSignature] = useState(true)
+
+  // Signature Sources
+  const [senderSource, setSenderSource] = useState<'saved' | 'upload' | 'draw'>('saved')
+  const [receiverSource, setReceiverSource] = useState<'saved' | 'upload' | 'draw'>(type === 'internal' ? 'saved' : 'upload')
+
+  // Table Settings
+  const [showTableSettings, setShowTableSettings] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
+  const [notesTitle, setNotesTitle] = useState('Notes')
+  
+  // Column visibility overrides and titles
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
+    unit: true,
+  })
+  const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
+    description: 'Description',
+    qty: 'Qty',
+    unit: 'Unit',
+    make: 'Make',
+    partNo: 'Part No.',
+    condition: 'Condition',
+  })
+
   const warnedRef = useRef(false)
 
   const { waybill, items, customColumns, customFields } = state
@@ -120,17 +165,30 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
     markDirty()
   }
 
-  const addCustomColumn = () => {
-    if (customColumns.length >= WAYBILL_COLUMN_LIMIT) {
-      feedback.warning('Limit reached', {
-        description: `Maximum ${WAYBILL_COLUMN_LIMIT} columns allowed.`,
-      })
-      return
-    }
+  const addItem = () => {
+    setState((prev) => ({ ...prev, items: [...prev.items, createDefaultItem()] }))
+    markDirty()
+  }
+
+  const removeItem = (index: number) => {
     setState((prev) => ({
       ...prev,
-      customColumns: [...prev.customColumns, { key: createCustomColumnKey(`custom_${Date.now()}`), label: '' }],
+      items: prev.items.length === 1 ? [createDefaultItem()] : prev.items.filter((_, i) => i !== index),
     }))
+    markDirty()
+  }
+
+  const addCustomColumn = () => {
+    if (customColumns.length >= WAYBILL_COLUMN_LIMIT) {
+      feedback.warning('Limit reached', { description: `Maximum ${WAYBILL_COLUMN_LIMIT} columns allowed.` })
+      return
+    }
+    const key = createCustomColumnKey(`custom_${Date.now()}`)
+    setState((prev) => ({
+      ...prev,
+      customColumns: [...prev.customColumns, { key, label: 'Custom Column' }],
+    }))
+    setColumnVisibility(prev => ({ ...prev, [key]: true }))
     markDirty()
   }
 
@@ -147,49 +205,40 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
     markDirty()
   }
 
-  const toggleSection = (key: keyof typeof sections) => {
-    setSections((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  const addItem = () => {
-    setState((prev) => ({ ...prev, items: [...prev.items, createDefaultItem()] }))
-    markDirty()
-  }
-
-  const removeItem = (index: number) => {
-    setState((prev) => ({
-      ...prev,
-      items: prev.items.length === 1 ? [createDefaultItem()] : prev.items.filter((_, i) => i !== index),
-    }))
-    markDirty()
-  }
-
-  const duplicateItem = (index: number) => {
-    setState((prev) => {
-      const item = prev.items[index]
-      return { ...prev, items: [...prev.items, { ...item }] }
-    })
-    markDirty()
-  }
-
-  const handleBlankTemplate = () => {
-    const header = ['Description', 'Quantity', 'Unit', 'Condition', ...customColumns.map((c) => c.label || 'Custom')]
-    const row = ['', '1', '', 'good', ...customColumns.map(() => '')]
-    const csv = [header.join(','), row.join(',')].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `waybill-template-${type}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  // Auto-hide logic
+  const isColumnVisible = (key: string) => {
+    if (columnVisibility[key] !== undefined) return columnVisibility[key]
+    
+    // Auto-hide: check if any row has data
+    if (key === 'make') return items.some(item => item.custom_data?.['make'])
+    if (key === 'partNo') return items.some(item => item.custom_data?.['part_no'])
+    if (key === 'condition') return items.some(item => item.condition && item.condition !== 'good')
+    
+    // For custom columns
+    return items.some(item => item.custom_data?.[key])
   }
 
   const handleSave = async () => {
-    if (!waybill.sender_name) {
-      feedback.error('Sender required', { description: 'Please add a sender name.' })
+    // 4 Save Blockers
+    if (type === 'external' && !waybill.client_id) {
+      feedback.error('Validation Error', { description: 'Client account must be selected for external waybills.' })
       return
     }
+    if (!waybill.waybill_number) {
+      feedback.error('Validation Error', { description: 'Waybill number is missing or invalid.' })
+      return
+    }
+    if (items.length === 0) {
+      feedback.error('Validation Error', { description: 'Line items list cannot be empty.' })
+      return
+    }
+    for (let i = 0; i < items.length; i++) {
+      if (!items[i].description || items[i].quantity <= 0) {
+        feedback.error('Validation Error', { description: `Item ${i + 1} is missing a description or has quantity ≤ 0.` })
+        return
+      }
+    }
+
     setSaving(true)
     try {
       const finalFields = buildWaybillCustomFields(customFields, { customColumns })
@@ -218,532 +267,415 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
   }, [dirty])
 
   return (
-    <div className="space-y-0">
-      <div className="flex items-center justify-between border-b border-bd-border px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="text-sm font-black tracking-tight text-bd-text">
-            {type === 'internal' ? 'Internal' : 'External'} Waybill
-          </div>
-          {waybill.waybill_number ? (
-            <span className="rounded-full bg-bd-violet-bg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter text-bd-violet">
-              {waybill.waybill_number}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex h-9 items-center gap-1.5 rounded-[var(--bd-radius-md)] bg-bd-button-primary-bg px-4 text-[12px] font-bold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 active:scale-[0.97]"
-          >
-            <FileUp className="h-4 w-4" />
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </div>
+    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-2">
+      <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
+        <div className="space-y-6 pb-24">
+          
+          {/* STEP 2: Form Header Block */}
+          <div className="border-b border-[var(--bd-border-soft)] pb-6 pt-2">
+            <div className="space-y-5">
+              <div className="flex items-center gap-2">
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] ${type === 'external' ? 'border-[var(--bd-primary)]/20 bg-[var(--bd-primary)]/10 text-[var(--bd-primary)]' : 'border-[var(--bd-warning)]/20 bg-[var(--bd-warning)]/10 text-[var(--bd-warning)]'}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${type === 'external' ? 'bg-[var(--bd-primary)]' : 'bg-[var(--bd-warning)]'}`} />
+                  {type === 'external' ? 'EXTERNAL DELIVERY NOTE' : 'INTERNAL TRANSFER NOTE'}
+                </div>
+              </div>
 
-      <div className="px-5 pb-8 pt-4">
-        <div className={`${pageCardCls} overflow-hidden`}>
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'indigo' }}
-            title="Document Details"
-            subtitle="Waybill number, date, and type"
-            open={sections.details}
-            onToggle={() => toggleSection('details')}
-            sectionColor={SECTION_COLORS.details}
-          >
-            <div className="space-y-3 px-4">
-              <MobileTextField
-                label="Waybill Number"
-                value={waybill.waybill_number}
-                onChange={(e) => updateWaybill('waybill_number', e.target.value)}
-                placeholder="Auto-generated"
-                disabled
-              />
-              <MobileTextField
-                label="Date"
-                type="date"
-                value={waybill.date}
-                onChange={(e) => updateWaybill('date', e.target.value)}
-              />
-              <MobileTextField
-                label="Time"
-                type="time"
-                value={waybill.time}
-                onChange={(e) => updateWaybill('time', e.target.value)}
-              />
-            </div>
-          </CollapseCard>
+              <div>
+                <h1 className="text-[25px] font-black leading-tight tracking-tight text-[var(--bd-text)] font-mono">
+                  {waybill.waybill_number || 'Auto-generated'}
+                </h1>
+              </div>
 
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'violet' }}
-            title="Routing"
-            subtitle={typeContent.senderLabel}
-            open={sections.routing}
-            onToggle={() => toggleSection('routing')}
-            sectionColor={SECTION_COLORS.routing}
-          >
-            <div className="space-y-3 px-4">
-              <MobileTextField
-                label={typeContent.senderLabel}
-                value={waybill.sender_name}
-                onChange={(e) => updateWaybill('sender_name', e.target.value)}
-                placeholder={typeContent.senderPlaceholder}
-              />
-              <MobileTextField
-                label={typeContent.receiverLabel}
-                value={waybill.receiver_name}
-                onChange={(e) => updateWaybill('receiver_name', e.target.value)}
-                placeholder={typeContent.receiverPlaceholder}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <MobileTextField
+                  label="Date"
+                  type="date"
+                  value={waybill.date}
+                  onChange={(e) => updateWaybill('date', e.target.value)}
+                />
+                <MobileTextField
+                  label="Time"
+                  type="time"
+                  value={waybill.time}
+                  onChange={(e) => updateWaybill('time', e.target.value)}
+                />
+              </div>
 
-              {waybill.type === 'external' ? (
-                <>
-                  <MobileField label={typeContent.clientLabel}>
-                    <ClientSelector
-                      clientId={waybill.client_id}
-                      clientName={waybill.client_name}
-                      open={clientPickerOpen}
-                      onOpenChange={setClientPickerOpen}
-                      onClientChange={(clientId, clientName) => {
-                        updateWaybill('client_id', clientId || '')
-                        updateWaybill('client_name', clientName || '')
-                      }}
-                      compact
-                    />
+              {type === 'external' && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setClientPickerOpen(true)}
+                    className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
+                      <BriefcaseBusiness className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
+                      <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)]">
+                        {waybill.client_name || 'Select a client'}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+                  </button>
+                </div>
+              )}
+
+              {type === 'external' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <MobileField label="LINKED INVOICE">
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => setShowInvoice(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]">
+                        {showInvoice ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                      <Input
+                        value={customFields.references?.linkedInvoiceNumber || ''}
+                        onChange={(e) => updateCustomFields({ references: { ...customFields.references, linkedInvoiceNumber: e.target.value } })}
+                        placeholder="Invoice #"
+                        className={`${fieldCls} ${!showInvoice ? 'opacity-50' : ''}`}
+                      />
+                    </div>
                   </MobileField>
-                  <MobileTextField
-                    label={typeContent.locationLabel}
-                    value={waybill.delivery_location}
-                    onChange={(e) => updateWaybill('delivery_location', e.target.value)}
-                    placeholder={typeContent.locationPlaceholder}
-                  />
-                </>
-              ) : (
-                <>
-                  <MobileTextField
-                    label="Transfer From"
-                    value={waybill.sender_name}
-                    onChange={(e) => updateWaybill('sender_name', e.target.value)}
-                    placeholder="Store, workshop, or releasing staff"
-                  />
-                  <MobileTextField
-                    label="Transfer To"
-                    value={waybill.receiver_name}
-                    onChange={(e) => updateWaybill('receiver_name', e.target.value)}
-                    placeholder="Receiving team, site, or custodian"
-                  />
-                </>
+                  <MobileField label="P.O. NUMBER">
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => setShowPoNumber(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]">
+                        {showPoNumber ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                      <Input
+                        value={waybill.po_number || ''}
+                        onChange={(e) => updateWaybill('po_number', e.target.value)}
+                        placeholder="PO #"
+                        className={`${fieldCls} ${!showPoNumber ? 'opacity-50' : ''}`}
+                      />
+                    </div>
+                  </MobileField>
+                </div>
               )}
             </div>
-          </CollapseCard>
+          </div>
 
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'amber' }}
-            title="Transport Details"
-            subtitle="Mode, vehicle, and driver"
-            open={sections.transport}
-            onToggle={() => toggleSection('transport')}
-            sectionColor={SECTION_COLORS.transport}
-          >
-            <div className="space-y-3 px-4">
+          {/* STEP 3: Transport Details */}
+          <div>
+            <SectionLabel color="amber">
+              <span className="flex items-center gap-1.5"><Truck className="h-3.5 w-3.5" /> Transport Details</span>
+            </SectionLabel>
+            <div className="space-y-4">
               <MobileField label="Transport Mode">
                 <CompactSelectField
-                  value={waybill.transport_mode}
+                  value={waybill.transport_mode || 'Blank'}
                   onChange={(value) => {
-                    updateWaybill('transport_mode', value as TransportMode)
-                    if (value === 'By Hand') {
+                    const val = value === 'Blank' ? '' : value as TransportMode
+                    updateWaybill('transport_mode', val as TransportMode)
+                    if (val === 'By Hand' || val === 'Courier') {
                       updateWaybill('vehicle_plate', '')
-                      updateWaybill('driver_name', '')
                     }
                   }}
-                  options={TRANSPORT_MODE_OPTIONS}
+                  options={[
+                    { value: 'By Vehicle', label: 'By Vehicle' },
+                    { value: 'By Hand', label: 'By Hand' },
+                    { value: 'Courier', label: 'Courier' },
+                    { value: 'Blank', label: 'Blank' }
+                  ]}
                 />
               </MobileField>
-
-              <MobileField label="Purpose">
-                <CompactSelectField
-                  value={waybill.purpose || ''}
-                  onChange={(value) => updateWaybill('purpose', value as WaybillPurpose | '')}
-                  options={PURPOSE_OPTIONS}
-                />
-              </MobileField>
-
-              {waybill.transport_mode !== 'By Hand' ? (
-                <>
-                  <MobileTextField
-                    label="Driver Name"
-                    value={waybill.driver_name}
-                    onChange={(e) => updateWaybill('driver_name', e.target.value)}
-                    placeholder="Driver name"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                {waybill.transport_mode !== 'By Hand' && waybill.transport_mode !== 'Courier' && (
                   <MobileTextField
                     label="Vehicle Plate"
                     value={waybill.vehicle_plate}
                     onChange={(e) => updateWaybill('vehicle_plate', e.target.value)}
-                    placeholder="ABC 1234"
+                    className="font-mono uppercase"
                   />
-                </>
-              ) : null}
-
-              <MobileField label="Linked Invoice">
-                <div className="relative">
-                  <Input
-                    value={customFields.references?.linkedInvoiceNumber || ''}
-                    onChange={(e) =>
-                      updateCustomFields({
-                        references: { ...customFields.references, linkedInvoiceNumber: e.target.value },
-                      })
-                    }
-                    placeholder="Invoice #"
-                    type={showInvoice ? 'text' : 'password'}
-                    className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface pr-10 text-[14px] text-bd-text placeholder:text-bd-text-muted"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowInvoice((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text"
-                  >
-                    {showInvoice ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </MobileField>
-
-              <MobileField label="P.O. Number">
-                <div className="relative">
-                  <Input
-                    value={waybill.po_number || ''}
-                    onChange={(e) => updateWaybill('po_number', e.target.value)}
-                    placeholder="PO #"
-                    type={showPoNumber ? 'text' : 'password'}
-                    className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface pr-10 text-[14px] text-bd-text placeholder:text-bd-text-muted"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPoNumber((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text"
-                  >
-                    {showPoNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </MobileField>
-            </div>
-          </CollapseCard>
-
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'emerald' }}
-            title="Item List"
-            subtitle={`${items.length} item${items.length !== 1 ? 's' : ''}`}
-            open={sections.items}
-            onToggle={() => toggleSection('items')}
-            sectionColor={SECTION_COLORS.items}
-          >
-            <div className="space-y-3 px-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-bd-text-muted">
-                  {customColumns.length} / {WAYBILL_COLUMN_LIMIT} columns
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handleBlankTemplate}
-                    className="flex h-7 items-center gap-1 rounded-full border border-bd-border bg-bd-surface px-3 text-[10px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
-                  >
-                    <Download className="h-3 w-3" />
-                    Template
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addCustomColumn}
-                    className="flex h-7 items-center gap-1 rounded-full border border-bd-border bg-bd-surface px-3 text-[10px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Column
-                  </button>
-                </div>
+                )}
+                <MobileTextField
+                  label="Driver Name"
+                  value={waybill.driver_name}
+                  onChange={(e) => updateWaybill('driver_name', e.target.value)}
+                />
               </div>
+            </div>
+          </div>
 
-              {customColumns.length > 0 ? (
-                <div className="space-y-1.5">
-                  {customColumns.map((column) => (
-                    <div key={column.key} className="flex items-center gap-2">
-                      <Input
-                        value={column.label}
-                        onChange={(e) =>
-                          setState((prev) => ({
-                            ...prev,
-                            customColumns: prev.customColumns.map((entry) =>
-                              entry.key === column.key ? { ...entry, label: e.target.value } : entry,
-                            ),
-                          }))
-                        }
-                        placeholder="Column label"
-                        className="h-8 flex-1 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-2.5 text-[12px] text-bd-text placeholder:text-bd-text-muted"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeCustomColumn(column.key)}
-                        className="flex h-8 w-8 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-red-500"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+          {/* STEP 4: Line Items */}
+          <div>
+            <SectionLabel color="emerald">
+              <span className="flex items-center gap-1.5"><List className="h-3.5 w-3.5" /> Line Items <span className="ml-2 rounded-full bg-[var(--bd-emerald-bg)] px-2 py-0.5 text-[10px] text-[var(--bd-emerald)]">{items.length}</span></span>
+            </SectionLabel>
+            
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex gap-2">
+                <button type="button" className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                  <Import className="h-3.5 w-3.5" /> Import Items
+                </button>
+                <button type="button" onClick={() => setShowTableSettings(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                  <SlidersHorizontal className="h-3.5 w-3.5" /> Table Settings
+                </button>
+              </div>
+              <div className="text-[11px] font-extrabold text-[var(--bd-text-muted)] uppercase tracking-wider">
+                Rows: {items.length}
+              </div>
+            </div>
+
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left text-[13px]">
+                <thead>
+                  <tr className="border-b border-[var(--bd-border)] text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]">
+                    <th className="pb-2 pr-2 font-medium w-8">S/N</th>
+                    <th className="pb-2 px-2 font-medium min-w-[200px]">{columnTitles.description}</th>
+                    <th className="pb-2 px-2 font-medium w-24">{columnTitles.qty}</th>
+                    {isColumnVisible('unit') && <th className="pb-2 px-2 font-medium w-24">{columnTitles.unit}</th>}
+                    {isColumnVisible('make') && <th className="pb-2 px-2 font-medium w-32">{columnTitles.make}</th>}
+                    {isColumnVisible('partNo') && <th className="pb-2 px-2 font-medium w-32">{columnTitles.partNo}</th>}
+                    {isColumnVisible('condition') && <th className="pb-2 px-2 font-medium w-32">{columnTitles.condition}</th>}
+                    {customColumns.map(col => isColumnVisible(col.key) && (
+                      <th key={col.key} className="pb-2 px-2 font-medium w-32">{col.label}</th>
+                    ))}
+                    <th className="pb-2 pl-2 w-8"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--bd-border-soft)]">
+                  {items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-2 pr-2 font-mono text-[11px] text-[var(--bd-text-muted)]">{idx + 1}</td>
+                      <td className="py-2 px-2">
+                        <Input value={item.description} onChange={(e) => updateItem(idx, 'description', e.target.value)} className={fieldCls} />
+                      </td>
+                      <td className="py-2 px-2">
+                        <NumericInput value={item.quantity} onChange={(v) => updateItem(idx, 'quantity', v)} className={fieldCls} />
+                      </td>
+                      {isColumnVisible('unit') && (
+                        <td className="py-2 px-2">
+                          <Input value={item.unit} onChange={(e) => updateItem(idx, 'unit', e.target.value)} className={fieldCls} />
+                        </td>
+                      )}
+                      {isColumnVisible('make') && (
+                        <td className="py-2 px-2">
+                          <Input value={String(item.custom_data?.['make'] || '')} onChange={(e) => updateCustomItemField(idx, 'make', e.target.value)} className={fieldCls} />
+                        </td>
+                      )}
+                      {isColumnVisible('partNo') && (
+                        <td className="py-2 px-2">
+                          <Input value={String(item.custom_data?.['part_no'] || '')} onChange={(e) => updateCustomItemField(idx, 'part_no', e.target.value)} className={fieldCls} />
+                        </td>
+                      )}
+                      {isColumnVisible('condition') && (
+                        <td className="py-2 px-2">
+                          <Input value={item.condition} onChange={(e) => updateItem(idx, 'condition', e.target.value as any)} className={fieldCls} />
+                        </td>
+                      )}
+                      {customColumns.map(col => isColumnVisible(col.key) && (
+                        <td key={col.key} className="py-2 px-2">
+                          <Input value={String(item.custom_data?.[col.key] || '')} onChange={(e) => updateCustomItemField(idx, col.key, e.target.value)} className={fieldCls} />
+                        </td>
+                      ))}
+                      <td className="py-2 pl-2 text-right">
+                        <button type="button" onClick={() => removeItem(idx)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-rose)] transition">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
                   ))}
-                </div>
-              ) : null}
+                </tbody>
+              </table>
+              <div className="mt-3">
+                <button type="button" onClick={addItem} className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] py-3 text-[12px] font-bold text-[var(--bd-text-muted)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)] transition">
+                  <Plus className="h-4 w-4" /> Add Row
+                </button>
+              </div>
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                {items.map((item, index) => (
-                  <div
-                    key={`item-${index}`}
-                    className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-3"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <div className="text-[11px] font-bold text-bd-text">Item {index + 1}</div>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => duplicateItem(index)}
-                          className="flex h-7 w-7 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-bd-text"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
+          {/* STEP 5: Custody Details */}
+          <div>
+            <SectionLabel color="indigo">
+              <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Custody Details</span>
+            </SectionLabel>
+            <div className="grid grid-cols-2 gap-4">
+              <MobileTextField label="DELIVERED BY" value={waybill.sender_name} onChange={(e) => updateWaybill('sender_name', e.target.value)} />
+              <MobileTextField label="RECEIVED BY" value={waybill.receiver_name} onChange={(e) => updateWaybill('receiver_name', e.target.value)} />
+            </div>
+          </div>
+
+          {/* STEP 6: Signatures */}
+          <div>
+            <SectionLabel color="violet" trailing={
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setShowSenderSignature(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition" title="Toggle Sender Signature">
+                  {showSenderSignature ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </button>
+                <button type="button" onClick={() => setShowReceiverSignature(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition" title="Toggle Receiver Signature">
+                  {showReceiverSignature ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </button>
+                <div className="w-px h-4 bg-[var(--bd-border)]" />
+                <button type="button" onClick={() => setShowSignatures(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition" title="Toggle Signatures Section">
+                  {showSignatures ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </button>
+              </div>
+            }>
+              <span className="flex items-center gap-1.5"><PenTool className="h-3.5 w-3.5" /> Signatures</span>
+            </SectionLabel>
+            
+            {showSignatures && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {showSenderSignature && (
+                  <div className={`p-4 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] ${pageCardCls}`}>
+                    <label className={labelCls}>Sender / Delivered By</label>
+                    <div className="mt-2 flex gap-2">
+                      {['saved', 'upload', 'draw'].map(src => (
+                        <button key={src} type="button" onClick={() => setSenderSource(src as any)} className={`flex-1 rounded-[var(--bd-radius-sm)] py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${senderSource === src ? 'bg-[var(--bd-button-primary-bg)] text-[var(--bd-button-primary-text)]' : 'bg-[var(--bd-surface-muted)] text-[var(--bd-text-muted)]'}`}>
+                          {src}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="flex h-7 w-7 items-center justify-center rounded-[var(--bd-radius-md)] text-bd-text-muted hover:text-red-500"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <MobileTextField
-                        label="Description"
-                        value={item.description}
-                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                        placeholder="Item details"
-                      />
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <MobileField label="Qty">
-                          <NumericInput
-                            value={item.quantity}
-                            onChange={(val) => updateItem(index, 'quantity', val)}
-                            className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-3 text-[14px] text-bd-text"
-                          />
-                        </MobileField>
-                        <MobileTextField
-                          label="Unit"
-                          value={item.unit}
-                          onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                          placeholder="pcs"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <MobileField label="Part No.">
-                          <NumericInput
-                            value={String(item.custom_data?.['part_no'] || '')}
-                            onChange={(val) => updateCustomItemField(index, 'part_no', String(val))}
-                            className="h-11 rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-3 text-[14px] text-bd-text"
-                          />
-                        </MobileField>
-                        <MobileField label="Condition">
-                          <div className="flex gap-1.5">
-                            {CONDITION_OPTIONS.map((opt) => (
-                              <ChipButton
-                                key={opt.value}
-                                active={item.condition === opt.value}
-                                onClick={() => updateItem(index, 'condition', opt.value)}
-                              >
-                                {opt.label}
-                              </ChipButton>
-                            ))}
-                          </div>
-                        </MobileField>
-                      </div>
-
-                      {customColumns.map((column) => (
-                        <MobileTextField
-                          key={column.key}
-                          label={column.label || 'Custom'}
-                          value={String(item.custom_data?.[column.key] || '')}
-                          onChange={(e) => updateCustomItemField(index, column.key, e.target.value)}
-                          placeholder={column.label}
-                        />
                       ))}
                     </div>
+                    <div className="mt-4 flex h-24 items-center justify-center rounded-[var(--bd-radius-md)] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] text-[12px] text-[var(--bd-text-muted)]">
+                      {senderSource === 'saved' ? 'Saved signature selected' : senderSource === 'upload' ? 'Upload component here' : 'Draw canvas here'}
+                    </div>
                   </div>
-                ))}
+                )}
+                {showReceiverSignature && (
+                  <div className={`p-4 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] ${pageCardCls}`}>
+                    <label className={labelCls}>Receiver / Collected By</label>
+                    <div className="mt-2 flex gap-2">
+                      {type === 'internal' && (
+                        <button type="button" onClick={() => setReceiverSource('saved')} className={`flex-1 rounded-[var(--bd-radius-sm)] py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${receiverSource === 'saved' ? 'bg-[var(--bd-button-primary-bg)] text-[var(--bd-button-primary-text)]' : 'bg-[var(--bd-surface-muted)] text-[var(--bd-text-muted)]'}`}>
+                          Saved
+                        </button>
+                      )}
+                      {['upload', 'draw'].map(src => (
+                        <button key={src} type="button" onClick={() => setReceiverSource(src as any)} className={`flex-1 rounded-[var(--bd-radius-sm)] py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${receiverSource === src ? 'bg-[var(--bd-button-primary-bg)] text-[var(--bd-button-primary-text)]' : 'bg-[var(--bd-surface-muted)] text-[var(--bd-text-muted)]'}`}>
+                          {src}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex h-24 items-center justify-center rounded-[var(--bd-radius-md)] border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] text-[12px] text-[var(--bd-text-muted)]">
+                       {receiverSource === 'saved' ? 'Saved signature selected' : receiverSource === 'upload' ? 'Upload component here' : 'Draw canvas here'}
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
+          </div>
 
-              <button
-                type="button"
-                onClick={addItem}
-                className="flex w-full items-center justify-center gap-2 rounded-[var(--bd-radius-lg)] border-2 border-dashed border-bd-border py-3 text-[12px] font-bold text-bd-text-muted transition hover:border-bd-button-primary-bg hover:text-bd-button-primary-bg"
-              >
-                <Plus className="h-4 w-4" />
-                Add Item
-              </button>
+          {/* STEP 7: Notes */}
+          <div>
+            <SectionLabel color="muted">
+              <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> <input type="text" value={notesTitle} onChange={e => setNotesTitle(e.target.value)} className="bg-transparent font-extrabold uppercase outline-none focus:border-b focus:border-[var(--bd-text-muted)]" /></span>
+            </SectionLabel>
+            <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)]">
+              <div className="flex items-center gap-1 border-b border-[var(--bd-border)] px-2 py-1.5">
+                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">B</button>
+                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] italic text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">I</button>
+                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] underline text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">U</button>
+                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">•</button>
+                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">1.</button>
+              </div>
+              <Textarea
+                value={waybill.notes || ''}
+                onChange={(e) => updateWaybill('notes', e.target.value)}
+                rows={4}
+                className="rounded-none border-0 bg-transparent text-[14px] text-[var(--bd-text)] placeholder:text-[var(--bd-text-muted)] focus-visible:ring-0"
+              />
             </div>
-          </CollapseCard>
+          </div>
 
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'muted' }}
-            title="Notes"
-            subtitle="Additional remarks"
-            open={sections.remarks}
-            onToggle={() => toggleSection('remarks')}
-            sectionColor={SECTION_COLORS.remarks}
-          >
-            <div className="space-y-3 px-4">
-              <MobileField label="Notes">
-                <div className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface">
-                  <div className="flex items-center gap-1 border-b border-bd-border px-2 py-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
-                        if (textarea) {
-                          const start = textarea.selectionStart
-                          const end = textarea.selectionEnd
-                          const text = textarea.value
-                          const before = text.substring(0, start)
-                          const selected = text.substring(start, end)
-                          const after = text.substring(end)
-                          updateWaybill('notes', `${before}**${selected || 'bold'}**${after}`)
-                        }
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
-                      title="Bold"
-                    >
-                      B
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
-                        if (textarea) {
-                          const start = textarea.selectionStart
-                          const end = textarea.selectionEnd
-                          const text = textarea.value
-                          const before = text.substring(0, start)
-                          const selected = text.substring(start, end)
-                          const after = text.substring(end)
-                          updateWaybill('notes', `${before}_${selected || 'italic'}_${after}`)
-                        }
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] italic text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
-                      title="Italic"
-                    >
-                      I
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const textarea = document.querySelector('[data-notes-field]') as HTMLTextAreaElement
-                        if (textarea) {
-                          const start = textarea.selectionStart
-                          const text = textarea.value
-                          const before = text.substring(0, start)
-                          const after = text.substring(start)
-                          const needsNewline = before.length > 0 && !before.endsWith('\n')
-                          updateWaybill('notes', `${before}${needsNewline ? '\n' : ''}• ${after}`)
-                        }
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text"
-                      title="Bullet List"
-                    >
-                      •
-                    </button>
-                  </div>
-                  <Textarea
-                    data-notes-field
-                    value={waybill.notes || ''}
-                    onChange={(e) => updateWaybill('notes', e.target.value)}
-                    placeholder="Additional instructions or remarks"
-                    rows={4}
-                    className="rounded-none border-0 bg-transparent text-[14px] text-bd-text placeholder:text-bd-text-muted focus-visible:ring-0"
-                  />
-                </div>
-              </MobileField>
-
-              <MobileField label={typeContent.senderNoteLabel}>
+          {/* STEP 8: Terms & Conditions */}
+          {showTerms && (
+            <CollapseCard
+              icon={Copy}
+              iconTone={{ bg: 'muted' }}
+              title="Terms & Conditions"
+              subtitle="Conditions of this waybill"
+              open={true}
+              onToggle={() => {}}
+              sectionColor="muted"
+            >
+              <div className="px-4 pb-2">
                 <Textarea
-                  value={customFields.partyNotes?.sender || ''}
-                  onChange={(e) =>
-                    updateCustomFields({ partyNotes: { ...customFields.partyNotes, sender: e.target.value } })
-                  }
-                  placeholder="Notes from sender"
-                  rows={2}
-                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
+                  value={waybill.custom_fields && typeof waybill.custom_fields === 'object' && !Array.isArray(waybill.custom_fields) && 'terms' in waybill.custom_fields ? String(waybill.custom_fields.terms || '') : ''}
+                  onChange={(e) => updateWaybill('custom_fields', { ...(typeof waybill.custom_fields === 'object' ? waybill.custom_fields : {}), terms: e.target.value } as any)}
+                  placeholder="Enter terms and conditions here..."
+                  rows={4}
+                  className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[14px] text-[var(--bd-text)] placeholder:text-[var(--bd-text-muted)]"
                 />
-              </MobileField>
+              </div>
+            </CollapseCard>
+          )}
 
-              <MobileField label={typeContent.receiverNoteLabel}>
-                <Textarea
-                  value={customFields.partyNotes?.receiver || ''}
-                  onChange={(e) =>
-                    updateCustomFields({ partyNotes: { ...customFields.partyNotes, receiver: e.target.value } })
-                  }
-                  placeholder="Notes from receiver"
-                  rows={2}
-                  className="rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface text-[14px] text-bd-text placeholder:text-bd-text-muted"
-                />
-              </MobileField>
-            </div>
-          </CollapseCard>
-
-          <CollapseCard
-            icon={Copy}
-            iconTone={{ bg: 'muted' }}
-            title="Terms & Acknowledgement"
-            subtitle="Conditions of this waybill"
-            open={sections.terms}
-            onToggle={() => toggleSection('terms')}
-            sectionColor="muted"
-          >
-            <div className="space-y-2 px-4">
-              <p className="text-[12px] leading-relaxed text-bd-text-muted">
-                The items listed above are released on consignment basis and remain the property of the company until
-                full settlement or return. The receiver acknowledges receipt in good condition unless otherwise noted.
-                Any damage or shortage must be reported within 24 hours.
-              </p>
-              <p className="text-[12px] leading-relaxed text-bd-text-muted">
-                {typeContent.signatureSectionTitle}: signatures above confirm acknowledgement of receipt and
-                responsibility.
-              </p>
-            </div>
-          </CollapseCard>
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 items-center rounded-[var(--bd-radius-md)] border border-bd-border bg-bd-surface px-5 text-[13px] font-bold text-bd-text-muted transition hover:bg-bd-surface-muted hover:text-bd-text"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex h-10 items-center gap-2 rounded-[var(--bd-radius-md)] bg-bd-button-primary-bg px-5 text-[13px] font-bold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 active:scale-[0.97]"
-          >
-            <FileUp className="h-4 w-4" />
-            {saving ? 'Saving...' : `Save ${type === 'internal' ? 'Internal' : 'External'} Waybill`}
-          </button>
         </div>
       </div>
+
+      {/* STEP 9: Floating Save Button */}
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bd-primary)] text-[var(--bd-primary-foreground)] shadow-lg transition hover:scale-105 active:scale-95 disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+      </button>
+
+      {/* Client Selector */}
+      <ClientSelector
+        clientId={waybill.client_id}
+        clientName={waybill.client_name}
+        open={clientPickerOpen}
+        onOpenChange={setClientPickerOpen}
+        onClientChange={(id: string, name: string) => {
+          updateWaybill('client_id', id)
+          updateWaybill('client_name', name)
+        }}
+        compact
+      />
+
+      {/* Table Settings Modal */}
+      {showTableSettings && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-[var(--bd-radius-lg)] bg-[var(--bd-bg-card)] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[16px] font-bold text-[var(--bd-text)]">Table Settings</h3>
+              <button onClick={() => setShowTableSettings(false)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]"><X className="h-5 w-5" /></button>
+            </div>
+            
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-3">
+                <label className={labelCls}>Column Visibility & Titles</label>
+                {Object.entries(columnTitles).map(([key, title]) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <input type="checkbox" checked={isColumnVisible(key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" disabled={key === 'description' || key === 'qty'} />
+                    <Input value={title} onChange={e => setColumnTitles(prev => ({ ...prev, [key]: e.target.value }))} disabled={key === 'description' || key === 'qty'} className="h-8 flex-1 text-[13px]" />
+                  </div>
+                ))}
+                {customColumns.map(col => (
+                  <div key={col.key} className="flex items-center gap-3">
+                    <input type="checkbox" checked={isColumnVisible(col.key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [col.key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" />
+                    <Input value={col.label} onChange={e => {
+                      setState((prev) => ({
+                        ...prev,
+                        customColumns: prev.customColumns.map((entry) => entry.key === col.key ? { ...entry, label: e.target.value } : entry),
+                      }))
+                      markDirty()
+                    }} className="h-8 flex-1 text-[13px]" />
+                    <button type="button" onClick={() => removeCustomColumn(col.key)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-rose)]"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                ))}
+                <button type="button" onClick={addCustomColumn} className="text-[12px] font-bold text-[var(--bd-primary)]">+ Add Custom Column</button>
+              </div>
+
+              <div className="border-t border-[var(--bd-border-soft)] pt-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] font-bold text-[var(--bd-text)]">Show Terms & Conditions</label>
+                  <input type="checkbox" checked={showTerms} onChange={e => setShowTerms(e.target.checked)} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6">
+              <button onClick={() => setShowTableSettings(false)} className="w-full rounded-[var(--bd-radius-md)] bg-[var(--bd-button-primary-bg)] py-2 text-[14px] font-bold text-[var(--bd-button-primary-text)]">Done</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
