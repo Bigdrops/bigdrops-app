@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import {
   BriefcaseBusiness,
   ChevronRight,
@@ -22,9 +22,9 @@ import {
 } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
+import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
-import { Textarea } from '@/components/ui/textarea'
 import { feedback } from '@/lib/feedback'
 import {
   CONDITION_OPTIONS,
@@ -57,6 +57,8 @@ import {
   labelCls,
   pageCardCls,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
+
+const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
 export type WaybillFormData = {
   waybill: Waybill
@@ -98,8 +100,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
 
   // Top level fields specific to external vs internal
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
-  const [showInvoice, setShowInvoice] = useState(true)
-  const [showPoNumber, setShowPoNumber] = useState(true)
+  const [invoiceSheetOpen, setInvoiceSheetOpen] = useState(false)
 
   // Signature Toggles
   const [showSignatures, setShowSignatures] = useState(true)
@@ -114,6 +115,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [notesTitle, setNotesTitle] = useState('Notes')
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
   
   // Column visibility overrides and titles
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
@@ -271,9 +274,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
       <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
         <div className="space-y-6 pb-24">
           
-          {/* STEP 2: Form Header Block */}
+          {/* Form Header Block */}
           <div className="border-b border-[var(--bd-border-soft)] pb-6 pt-2">
             <div className="space-y-5">
+              {/* Type Badge */}
               <div className="flex items-center gap-2">
                 <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] ${type === 'external' ? 'border-[var(--bd-primary)]/20 bg-[var(--bd-primary)]/10 text-[var(--bd-primary)]' : 'border-[var(--bd-warning)]/20 bg-[var(--bd-warning)]/10 text-[var(--bd-warning)]'}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${type === 'external' ? 'bg-[var(--bd-primary)]' : 'bg-[var(--bd-warning)]'}`} />
@@ -281,27 +285,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                 </div>
               </div>
 
-              <div>
-                <h1 className="text-[25px] font-black leading-tight tracking-tight text-[var(--bd-text)] font-mono">
-                  {waybill.waybill_number || 'Auto-generated'}
-                </h1>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <MobileTextField
-                  label="Date"
-                  type="date"
-                  value={waybill.date}
-                  onChange={(e) => updateWaybill('date', e.target.value)}
-                />
-                <MobileTextField
-                  label="Time"
-                  type="time"
-                  value={waybill.time}
-                  onChange={(e) => updateWaybill('time', e.target.value)}
-                />
-              </div>
-
+              {/* Client Picker (External only) — directly below badge */}
               {type === 'external' && (
                 <div>
                   <button
@@ -323,38 +307,84 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                 </div>
               )}
 
-              {type === 'external' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <MobileField label="LINKED INVOICE">
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => setShowInvoice(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]">
-                        {showInvoice ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </button>
-                      <Input
-                        value={customFields.references?.linkedInvoiceNumber || ''}
-                        onChange={(e) => updateCustomFields({ references: { ...customFields.references, linkedInvoiceNumber: e.target.value } })}
-                        placeholder="Invoice #"
-                        className={`${fieldCls} ${!showInvoice ? 'opacity-50' : ''}`}
-                      />
-                    </div>
-                  </MobileField>
-                  <MobileField label="P.O. NUMBER">
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => setShowPoNumber(v => !v)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]">
-                        {showPoNumber ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </button>
-                      <Input
-                        value={waybill.po_number || ''}
-                        onChange={(e) => updateWaybill('po_number', e.target.value)}
-                        placeholder="PO #"
-                        className={`${fieldCls} ${!showPoNumber ? 'opacity-50' : ''}`}
-                      />
-                    </div>
-                  </MobileField>
-                </div>
-              )}
+              {/* WAYBILL NO + P.O. NUMBER row */}
+              <div className="grid grid-cols-2 gap-4">
+                <MobileTextField
+                  label="WAYBILL NO"
+                  value={waybill.waybill_number}
+                  onChange={(e) => updateWaybill('waybill_number', e.target.value)}
+                  placeholder="Auto-generated"
+                  className="font-mono"
+                />
+                {type === 'external' && (
+                  <MobileTextField
+                    label="P.O. NUMBER"
+                    value={waybill.po_number || ''}
+                    onChange={(e) => updateWaybill('po_number', e.target.value)}
+                    placeholder="PO #"
+                  />
+                )}
+              </div>
+
+              {/* DATE / TIME row */}
+              <div className="grid grid-cols-2 gap-4">
+                <MobileTextField
+                  label="DATE"
+                  type="date"
+                  value={waybill.date}
+                  onChange={(e) => updateWaybill('date', e.target.value)}
+                />
+                <MobileTextField
+                  label="TIME"
+                  type="time"
+                  value={waybill.time}
+                  onChange={(e) => updateWaybill('time', e.target.value)}
+                />
+              </div>
             </div>
           </div>
+
+          {/* Linked Invoice (External only) */}
+          {type === 'external' && (
+            <div>
+              {customFields.references?.linkedInvoiceNumber ? (
+                <div className="flex items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3">
+                  <FileText className="h-4 w-4 text-[var(--bd-text-muted)]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
+                    <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)] font-mono">
+                      {customFields.references.linkedInvoiceNumber}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateCustomFields({ references: { ...customFields.references, linkedInvoiceNumber: '' } })}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--bd-text-muted)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)] transition"
+                    title="Unlink invoice"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setInvoiceSheetOpen(true)}
+                  className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
+                    <FileText className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
+                    <div className="mt-0.5 text-[14px] font-bold text-[var(--bd-text-muted)]">
+                      Tap to link an invoice
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* STEP 3: Transport Details */}
           <div>
@@ -559,26 +589,25 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
           </div>
 
           {/* STEP 7: Notes */}
-          <div>
-            <SectionLabel color="muted">
-              <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> <input type="text" value={notesTitle} onChange={e => setNotesTitle(e.target.value)} className="bg-transparent font-extrabold uppercase outline-none focus:border-b focus:border-[var(--bd-text-muted)]" /></span>
-            </SectionLabel>
-            <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)]">
-              <div className="flex items-center gap-1 border-b border-[var(--bd-border)] px-2 py-1.5">
-                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">B</button>
-                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] italic text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">I</button>
-                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] underline text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">U</button>
-                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">•</button>
-                <button type="button" className="flex h-6 w-6 items-center justify-center rounded text-[11px] text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">1.</button>
-              </div>
-              <Textarea
-                value={waybill.notes || ''}
-                onChange={(e) => updateWaybill('notes', e.target.value)}
-                rows={4}
-                className="rounded-none border-0 bg-transparent text-[14px] text-[var(--bd-text)] placeholder:text-[var(--bd-text-muted)] focus-visible:ring-0"
-              />
+          <CollapseCard
+            icon={FileText}
+            iconTone={{ bg: 'muted' }}
+            title={notesTitle}
+            subtitle="Additional notes"
+            open={notesOpen}
+            onToggle={() => setNotesOpen(v => !v)}
+            sectionColor="muted"
+          >
+            <div className="px-4 pb-2">
+              <Suspense fallback={<div className="rounded-2xl border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-10 text-center text-[13px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
+                <RichTextEditor
+                  value={waybill.notes || ''}
+                  onChange={(value: string) => updateWaybill('notes', value)}
+                  placeholder="Notes..."
+                />
+              </Suspense>
             </div>
-          </div>
+          </CollapseCard>
 
           {/* STEP 8: Terms & Conditions */}
           {showTerms && (
@@ -587,18 +616,18 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
               iconTone={{ bg: 'muted' }}
               title="Terms & Conditions"
               subtitle="Conditions of this waybill"
-              open={true}
-              onToggle={() => {}}
+              open={termsOpen}
+              onToggle={() => setTermsOpen(v => !v)}
               sectionColor="muted"
             >
               <div className="px-4 pb-2">
-                <Textarea
-                  value={waybill.custom_fields && typeof waybill.custom_fields === 'object' && !Array.isArray(waybill.custom_fields) && 'terms' in waybill.custom_fields ? String(waybill.custom_fields.terms || '') : ''}
-                  onChange={(e) => updateWaybill('custom_fields', { ...(typeof waybill.custom_fields === 'object' ? waybill.custom_fields : {}), terms: e.target.value } as any)}
-                  placeholder="Enter terms and conditions here..."
-                  rows={4}
-                  className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[14px] text-[var(--bd-text)] placeholder:text-[var(--bd-text-muted)]"
-                />
+                <Suspense fallback={<div className="rounded-2xl border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-10 text-center text-[13px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
+                  <RichTextEditor
+                    value={waybill.custom_fields && typeof waybill.custom_fields === 'object' && !Array.isArray(waybill.custom_fields) && 'terms' in waybill.custom_fields ? String(waybill.custom_fields.terms || '') : ''}
+                    onChange={(value: string) => updateWaybill('custom_fields', { ...(typeof waybill.custom_fields === 'object' ? waybill.custom_fields : {}), terms: value } as any)}
+                    placeholder="Enter terms and conditions here..."
+                  />
+                </Suspense>
               </div>
             </CollapseCard>
           )}
@@ -629,6 +658,28 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
         compact
       />
 
+      {/* Linked Invoice Search Sheet */}
+      {type === 'external' && (
+        <AttachExistingDocumentSheet
+          open={invoiceSheetOpen}
+          onOpenChange={setInvoiceSheetOpen}
+          title="Link Invoice"
+          description="Search for an invoice to link to this waybill"
+          table="invoices"
+          numberField="invoice_number"
+          clientField="client_name"
+          poField="po_number"
+          currentClientName={waybill.client_name}
+          searchPlaceholder="Search invoices by number, client, or PO..."
+          onAttach={(item: any) => {
+            const invoiceNumber = item.invoice_number || item.id
+            updateCustomFields({ references: { ...customFields.references, linkedInvoiceNumber: invoiceNumber } })
+            setInvoiceSheetOpen(false)
+            feedback.success('Invoice linked', { description: `Linked ${invoiceNumber}` })
+          }}
+        />
+      )}
+
       {/* Table Settings Modal */}
       {showTableSettings && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -643,8 +694,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData }: Wayb
                 <label className={labelCls}>Column Visibility & Titles</label>
                 {Object.entries(columnTitles).map(([key, title]) => (
                   <div key={key} className="flex items-center gap-3">
-                    <input type="checkbox" checked={isColumnVisible(key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" disabled={key === 'description' || key === 'qty'} />
-                    <Input value={title} onChange={e => setColumnTitles(prev => ({ ...prev, [key]: e.target.value }))} disabled={key === 'description' || key === 'qty'} className="h-8 flex-1 text-[13px]" />
+                    <input type="checkbox" checked={isColumnVisible(key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" disabled={key === 'description' || key === 'qty' || key === 'unit'} />
+                    <Input value={title} onChange={e => setColumnTitles(prev => ({ ...prev, [key]: e.target.value }))} disabled={key === 'description' || key === 'qty' || key === 'unit'} className="h-8 flex-1 text-[13px]" />
                   </div>
                 ))}
                 {customColumns.map(col => (

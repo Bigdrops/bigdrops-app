@@ -178,7 +178,7 @@ export const WAYBILL_TYPE_CONTENT: Record<
     receiverPdfLabel: 'Received By / To',
   },
   external: {
-    title: 'External Waybill',
+    title: 'Waybill/Delivery note',
     intro: 'Use this for delivery to a client or outside recipient where sender, receiver, and delivery destination must be clear.',
     senderLabel: 'Sender',
     senderPlaceholder: 'Dispatch officer or sending representative',
