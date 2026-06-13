@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, RefreshCw, Trash2, Truck, Workflow } from 'lucide-react'
+import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Trash2, Truck, Workflow } from 'lucide-react'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
@@ -11,7 +11,7 @@ import MobileSegmentedControl from '@/components/layout/MobileSegmentedControl'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
-import ConfirmActionDialog from '@/components/ConfirmActionDialog'
+import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import InvoiceListActionSheet from '@/components/invoice/InvoiceListActionSheet'
@@ -21,12 +21,6 @@ import { fetchInvoiceSummary, fetchProjectSummary } from '@/domain/documentRelat
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { getStatusTone, getStatusClasses } from '@/lib/statusTheme'
 import { feedback } from '@/lib/feedback'
-import { canUseNativeSqlite } from '@/lib/native/capacitor'
-import {
-  listPendingOrFailedWaybillCreateQueueItems,
-  processWaybillCreateQueueItem,
-  type WaybillCreateQueueItem,
-} from '@/lib/native/waybillSync'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
@@ -36,10 +30,8 @@ type FilterTab = 'all' | 'internal' | 'external'
 function WaybillsContent() {
   const navigate = useNavigate()
 
-  // ─── QUERY PLATFORM BINDING ───
   const { state, patchUpdate, reset, results } = useDocumentQuery("waybills")
 
-  // ─── NON-FILTER STATE (page-specific) ───
   const [filterTab, setFilterTab] = useState<FilterTab>('all')
   const [activeWaybill, setActiveWaybill] = useState<Waybill | null>(null)
   const [activeWaybillInvoice, setActiveWaybillInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
@@ -53,29 +45,12 @@ function WaybillsContent() {
   const [showAttachInvoice, setShowAttachInvoice] = useState(false)
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const [pendingAttachInvoice, setPendingAttachInvoice] = useState<{ id: string; invoice_number?: string | null } | null>(null)
-  const [syncQueueItems, setSyncQueueItems] = useState<WaybillCreateQueueItem[]>([])
-  const [syncQueueLoading, setSyncQueueLoading] = useState(() => canUseNativeSqlite())
-  const [retryingQueueItemId, setRetryingQueueItemId] = useState<string | null>(null)
-  const showWaybillSyncRecovery = useMemo(() => canUseNativeSqlite(), [])
 
-  // ─── Typed results ───
   const waybills = results as Waybill[]
 
   const filteredWaybills = useMemo(() => {
     return filterTab === 'all' ? waybills : waybills.filter(w => w.type === filterTab)
   }, [waybills, filterTab])
-
-  const loadWaybillSyncQueue = async () => {
-    if (!showWaybillSyncRecovery) return
-    setSyncQueueLoading(true)
-    const items = await listPendingOrFailedWaybillCreateQueueItems()
-    setSyncQueueItems(items)
-    setSyncQueueLoading(false)
-  }
-
-  useEffect(() => {
-    void loadWaybillSyncQueue()
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -103,8 +78,8 @@ function WaybillsContent() {
 
   const hasActiveFilters = Boolean(
     state.statuses.length > 0 ||
-    state.dateRange.from ||
-    state.dateRange.to
+      state.dateRange.from ||
+      state.dateRange.to
   )
 
   const handleArchiveWaybill = async () => {
@@ -119,7 +94,6 @@ function WaybillsContent() {
     feedback.success('Waybill archived')
     setArchiveId(null)
     setActiveWaybill(null)
-    // Trigger re-fetch
     patchUpdate({ search: state.search } as any)
   }
 
@@ -136,22 +110,6 @@ function WaybillsContent() {
     setDeleteId(null)
     setActiveWaybill(null)
     patchUpdate({ search: state.search } as any)
-  }
-
-  const handleRetryQueueItem = async (queueItemId: string) => {
-    setRetryingQueueItemId(queueItemId)
-    const result = await processWaybillCreateQueueItem(queueItemId)
-    if (result.status === 'synced') {
-      feedback.success('Waybill synced', { description: 'The offline waybill was uploaded successfully.' })
-      patchUpdate({ search: state.search } as any)
-      await loadWaybillSyncQueue()
-    } else if (result.status === 'failed') {
-      feedback.error('Retry failed', { description: result.error || 'Unable to sync this waybill right now.' })
-      await loadWaybillSyncQueue()
-    } else {
-      feedback.warning('Retry skipped', { description: 'Connect to the internet before retrying this waybill sync.' })
-    }
-    setRetryingQueueItemId(null)
   }
 
   const waybillProjectState = getProjectActionState({ projectId: activeWaybill?.project_id, project: activeWaybillProject })
@@ -219,7 +177,6 @@ function WaybillsContent() {
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="waybills" />
         }
         beforeListContent={
-          <>
           <MobileSegmentedControl
             value={filterTab}
             onChange={setFilterTab as (v: string) => void}
@@ -229,44 +186,6 @@ function WaybillsContent() {
               { key: 'internal', label: 'Internal' },
             ]}
           />
-          {showWaybillSyncRecovery && (syncQueueLoading || syncQueueItems.length > 0) ? (
-            <div className="mb-4 rounded-[22px] border border-bd-border bg-bd-surface-muted/30 p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-[0.16em] text-bd-text-muted">Offline sync recovery</div>
-                  <div className="mt-1 text-[13px] text-bd-text-muted">Retry pending or failed waybill uploads from this device.</div>
-                </div>
-                <Button type="button" variant="outline" size="icon-lg" onClick={loadWaybillSyncQueue} disabled={syncQueueLoading || retryingQueueItemId != null} className="h-10 w-10 rounded-2xl border-bd-border bg-bd-surface text-bd-text hover:bg-bd-surface-muted" aria-label="Refresh waybill sync queue">
-                  {syncQueueLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                </Button>
-              </div>
-              {syncQueueItems.length > 0 ? (
-                <div className="mt-4 space-y-2">
-                  {syncQueueItems.map((item) => {
-                    const isRetrying = retryingQueueItemId === item.id
-                    return (
-                      <div key={item.id} className="rounded-2xl border border-bd-border bg-bd-surface p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="truncate text-sm font-bold text-bd-text">{item.waybillNumber || item.localWaybillId || `Queue #${item.id}`}</div>
-                              <span className={`inline-flex h-6 items-center rounded-full px-2 text-[10px] font-black uppercase tracking-[0.12em] ${item.status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>{item.status}</span>
-                            </div>
-                            <div className="mt-1 truncate text-xs text-bd-text-muted">{item.clientName || 'No client / internal movement'} · Attempts {item.attempts}</div>
-                            {item.error ? <div className="mt-2 text-xs leading-5 text-destructive">{item.error}</div> : null}
-                          </div>
-                          <Button type="button" variant="outline" size="sm" onClick={() => handleRetryQueueItem(item.id)} disabled={retryingQueueItemId != null} className="h-9 rounded-xl border-bd-border bg-bd-surface px-3 text-xs font-bold text-bd-text hover:bg-bd-surface-muted">
-                            {isRetrying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Retry
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          </>
         }
         records={filteredWaybills}
         renderRow={(w) => {
@@ -321,12 +240,10 @@ function WaybillsContent() {
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeWaybill?.waybill_number || 'Waybill'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" linkedInvoiceField={null} currentInvoiceId={null} currentClientName={activeWaybill?.client_name} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked waybill?" description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); if (invoice) void attachInvoice(invoice) }} />
       <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
-
     </>
   )
 }
 
-// ─── EXPORTED PAGE (wrapped with DocumentQueryProvider) ───
 export default function Waybills() {
   return (
     <Layout title="Waybills" hidePageHeader session={null}>

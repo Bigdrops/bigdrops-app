@@ -82,7 +82,6 @@ export default function NewWaybill() {
         items: data.items,
         custom_fields: data.customFields,
         mode: 'new',
-        isOffline: false,
       })
       feedback.success('Waybill created')
       navigate('/waybills')

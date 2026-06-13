@@ -23,16 +23,8 @@ type SyncBootstrapApi = {
   runSyncBootstrap: (reason: string) => Promise<void>
 }
 
-let waybillSyncModulePromise: Promise<typeof import('@/lib/native/waybillSync')> | null = null
 let csrSyncModulePromise: Promise<typeof import('@/lib/native/csrSync')> | null = null
 let quotationSyncModulePromise: Promise<typeof import('@/lib/native/quotationSync')> | null = null
-
-const loadWaybillSyncModule = () => {
-  if (!waybillSyncModulePromise) {
-    waybillSyncModulePromise = import('@/lib/native/waybillSync')
-  }
-  return waybillSyncModulePromise
-}
 
 const loadCsrSyncModule = () => {
   if (!csrSyncModulePromise) {
@@ -57,7 +49,6 @@ export function useSyncBootstrap({
   const recoverAppStateRef = useRef(recoverAppState)
   const debugRef = useRef<DebugLog | undefined>(debug)
   const hiddenAtRef = useRef<number | null>(null)
-  const waybillSyncingRef = useRef(false)
   const csrSyncingRef = useRef(false)
   const quotationSyncingRef = useRef(false)
 
@@ -72,41 +63,6 @@ export function useSyncBootstrap({
   useEffect(() => {
     debugRef.current = debug
   }, [debug])
-
-  const processOnePendingWaybillCreateSync = async (reason: string) => {
-    if (!canUseAndroidNativeSqlite()) return
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
-    if (waybillSyncingRef.current) return
-
-    waybillSyncingRef.current = true
-
-    try {
-      const { processNextPendingWaybillCreate } = await loadWaybillSyncModule()
-      const result = await processNextPendingWaybillCreate()
-
-      if (result.status === 'synced') {
-        debugRef.current?.('waybillSync:oneShotSynced', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localWaybillId: result.localWaybillId || null,
-          remoteWaybillId: result.remoteWaybillId || null,
-        })
-      }
-
-      if (result.status === 'failed') {
-        console.warn('One-shot waybill sync failed:', {
-          reason,
-          queueItemId: result.queueItemId || null,
-          localWaybillId: result.localWaybillId || null,
-          error: result.error || null,
-        })
-      }
-    } catch (error) {
-      console.warn(`One-shot waybill sync crashed during ${reason}:`, error)
-    } finally {
-      waybillSyncingRef.current = false
-    }
-  }
 
   const processOnePendingCsrCreateSync = async (reason: string) => {
     if (!canUseAndroidNativeSqlite()) return
@@ -179,7 +135,6 @@ export function useSyncBootstrap({
   }
 
   const runSyncBootstrap = async (reason: string) => {
-    await processOnePendingWaybillCreateSync(reason)
     await processOnePendingCsrCreateSync(reason)
     await processOnePendingQuotationCreateSync(reason)
   }

@@ -57,7 +57,6 @@ export default function EditWaybill() {
       custom_fields: data.customFields,
       mode: 'edit',
       waybillId: id,
-      isOffline: false,
     })
     feedback.success('Waybill updated')
     navigate('/waybills')

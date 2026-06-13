@@ -1,5 +1,4 @@
 import { supabase } from '@/supabase'
-import { createOfflineWaybillDraft, type OfflineWaybillStatus } from '@/lib/native/waybillOffline'
 import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
 
 export async function saveWaybill(params: {
@@ -8,17 +7,15 @@ export async function saveWaybill(params: {
   custom_fields: any;
   mode: 'new' | 'edit';
   waybillId?: string;
-  isOffline: boolean;
 }) {
-  const { waybill, items, custom_fields, mode, waybillId, isOffline } = params;
+  const { waybill, items, custom_fields, mode, waybillId } = params;
 
-  // 4 save blockers only — no other fields block save
   const errors: string[] = []
   if (waybill.type === 'external' && !waybill.client_id) {
     errors.push('Client must be selected for external waybills')
   }
   if (!waybill.waybill_number && mode === 'new') {
-    // Will be auto-generated — this is fine
+    errors.push('Waybill number is required')
   }
   if (!items || items.length === 0) {
     errors.push('At least one line item is required')
@@ -28,23 +25,6 @@ export async function saveWaybill(params: {
   }
   if (errors.length > 0) {
     throw new Error(errors.join('; '))
-  }
-
-  if (isOffline) {
-    const normalizedItems = items.map(item => ({
-      description: item.description,
-      qty: item.quantity,
-      unit: item.unit,
-      condition: item.condition,
-      ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
-    }))
-    await createOfflineWaybillDraft({
-      ...waybill,
-      status: normalizeWaybillStatus(waybill.status) as OfflineWaybillStatus,
-      items: normalizedItems,
-      custom_fields,
-    })
-    return { status: 'offline' };
   }
 
   let waybillNumber = waybill.waybill_number || ''
