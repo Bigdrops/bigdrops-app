@@ -6,7 +6,6 @@ import {
   EyeOff,
   FileText,
   Import,
-  List,
   PenTool,
   ScrollText,
   Truck,
@@ -93,7 +92,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showImportSheet, setShowImportSheet] = useState(false)
   const [invoiceSheetOpen, setInvoiceSheetOpen] = useState(false)
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, quantity: true, unit: false, make: false, partNo: false, condition: false })
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, quantity: true, unit: true, make: false, partNo: false, condition: false })
   const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
     description: 'Description',
     quantity: 'Qty',
@@ -211,13 +210,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
   const isColumnVisible = (key: string) => {
     if (columnVisibility[key] !== undefined) return columnVisibility[key]
+    if (key.startsWith('custom_')) return true
     return false
   }
 
   const DEFAULT_WAYBILL_COLUMNS: ColumnConfig[] = [
     { key: 'description', label: 'Description', type: 'text', visible: true },
     { key: 'quantity', label: 'Qty', type: 'text', visible: true },
-    { key: 'unit', label: 'Unit', type: 'text', visible: false },
+    { key: 'unit', label: 'Unit', type: 'text', visible: true },
     { key: 'make', label: 'Make', type: 'text', visible: false },
     { key: 'partNo', label: 'Part No.', type: 'text', visible: false },
     { key: 'condition', label: 'Condition', type: 'text', visible: false },
@@ -285,7 +285,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
         partNo: 'Part No.',
         condition: 'Condition',
       })
-      setColumnVisibility({ description: true, quantity: true, unit: false, make: false, partNo: false, condition: false })
+      setColumnVisibility({ description: true, quantity: true, unit: true, make: false, partNo: false, condition: false })
       setColumnOrder(['description', 'quantity', 'unit', 'make', 'partNo', 'condition'])
       setState((prev) => ({
         ...prev,
@@ -547,35 +547,28 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
           </div>
 
-          {/* Line Items */}
-          <div>
-            <SectionLabel color="emerald">
-              <span className="flex items-center gap-1.5"><List className="h-3.5 w-3.5" /> Line Items <span className="ml-2 rounded-full bg-[var(--bd-emerald-bg)] px-2 py-0.5 text-[10px] text-[var(--bd-emerald)]">{items.length}</span></span>
-            </SectionLabel>
-
-            <FormLineItems
-              items={items}
-              groups={[]}
-              invoice={waybill}
-              isQuotation={false}
-              customColumns={customColumns}
-              computedItems={items}
-              computedGroups={[]}
-              isVisible={isColumnVisible}
-              getColumn={(key: string) => ({ label: columnTitles[key] || key, visible: isColumnVisible(key) })}
-              onAddItem={addItem}
-              onAddItemToGroup={() => {}}
-              onUpdateItem={updateItem}
-              onRemoveItem={removeItem}
-              onMoveItem={() => {}}
-              onInsertItemAfter={() => {}}
-              onUpdateGroupName={() => {}}
-              onToggleGroupSubtotal={() => {}}
-              onDeleteGroup={() => {}}
-              onOpenImport={() => setShowImportSheet(true)}
-              onOpenTableSettings={() => setShowTableSettings(true)}
-            />
-          </div>
+          <FormLineItems
+            items={items}
+            groups={[]}
+            invoice={waybill}
+            isQuotation={false}
+            customColumns={customColumns}
+            computedItems={items}
+            computedGroups={[]}
+            isVisible={isColumnVisible}
+            getColumn={(key: string) => ({ label: columnTitles[key] || key, visible: isColumnVisible(key) })}
+            onAddItem={addItem}
+            onAddItemToGroup={() => {}}
+            onUpdateItem={updateItem}
+            onRemoveItem={removeItem}
+            onMoveItem={() => {}}
+            onInsertItemAfter={() => {}}
+            onUpdateGroupName={() => {}}
+            onToggleGroupSubtotal={() => {}}
+            onDeleteGroup={() => {}}
+            onOpenImport={() => setShowImportSheet(true)}
+            onOpenTableSettings={() => setShowTableSettings(true)}
+          />
 
           {/* Custody Details */}
           <div>
