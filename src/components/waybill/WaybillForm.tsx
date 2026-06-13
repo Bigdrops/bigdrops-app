@@ -38,6 +38,7 @@ import {
   createDefaultItem,
   createDefaultWaybill,
   getWaybillTypeContent,
+  normalizeWaybillImport,
   parseWaybillCustomFields,
   type Waybill,
   type WaybillCustomColumn,
@@ -60,6 +61,7 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
+const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
 
 export type WaybillFormData = {
   waybill: Waybill
@@ -126,6 +128,9 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [notesOpen, setNotesOpen] = useState(false)
   const [termsOpen, setTermsOpen] = useState(false)
+
+  // Import Items
+  const [showImportSheet, setShowImportSheet] = useState(false)
   
   // Column visibility overrides and titles
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({
@@ -228,6 +233,23 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     
     // For custom columns
     return items.some(item => item.custom_data?.[key])
+  }
+
+  const handleApplyImport = (text: string) => {
+    const parsed = JSON.parse(text)
+    const result = normalizeWaybillImport(parsed, type)
+    setState((prev) => ({
+      ...prev,
+      waybill: { ...prev.waybill, ...result.fields } as Waybill,
+      items: result.items,
+      customColumns: result.customColumns,
+      customFields: {
+        ...prev.customFields,
+        ...result.customFields,
+      },
+    }))
+    markDirty()
+    setShowImportSheet(false)
   }
 
   const handleSave = async () => {
@@ -445,9 +467,9 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             
             <div className="mb-4 flex items-center justify-between">
               <div className="flex gap-2">
-                <button type="button" className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
-                  <Import className="h-3.5 w-3.5" /> Import Items
-                </button>
+                 <button type="button" onClick={() => setShowImportSheet(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                   <Import className="h-3.5 w-3.5" /> Import Items
+                 </button>
                 <button type="button" onClick={() => setShowTableSettings(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
                   <SlidersHorizontal className="h-3.5 w-3.5" /> Table Settings
                 </button>
@@ -620,10 +642,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
           {/* STEP 8: Terms & Conditions */}
           {showTerms && (
-            <CollapseCard
-              icon={Copy}
-              iconTone={{ bg: 'muted' }}
-              title="Terms & Conditions"
+          <CollapseCard
+            icon={ScrollText}
+            iconTone={{ bg: 'muted' }}
+            title="Terms & Conditions"
               subtitle="Conditions of this waybill"
               open={termsOpen}
               onToggle={() => setTermsOpen(v => !v)}
@@ -736,6 +758,15 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
           </div>
         </div>
+      )}
+      {showImportSheet && (
+        <Suspense fallback={<div className="rounded-2xl border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-10 text-center text-[13px] text-[var(--bd-text-muted)]">Loading importer...</div>}>
+          <WaybillImportSheet
+            open={showImportSheet}
+            onOpenChange={setShowImportSheet}
+            onImport={handleApplyImport}
+          />
+        </Suspense>
       )}
     </div>
   )
