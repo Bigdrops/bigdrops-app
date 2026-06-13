@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Layout from '../components/Layout'
 import WaybillForm from '../components/waybill/WaybillForm'
 import { supabase } from '../supabase'
 import {
@@ -64,16 +63,14 @@ export default function EditWaybill() {
 
   if (loading) return null
 
+  if (!initialData || !type) return null
+
   return (
-    <Layout title="Edit Waybill" session={null}>
-      {initialData && type ? (
-        <WaybillForm
-          type={type as WaybillType}
-          onSave={handleSave}
-          onClose={() => navigate('/waybills')}
-          initialData={initialData}
-        />
-      ) : null}
-    </Layout>
+    <WaybillForm
+      type={type as WaybillType}
+      onSave={handleSave}
+      onClose={() => navigate('/waybills')}
+      initialData={initialData}
+    />
   )
 }
