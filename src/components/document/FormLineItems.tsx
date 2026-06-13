@@ -19,7 +19,7 @@ interface FormLineItemsProps {
   isVisible: (key: string) => boolean
   getColumn: (key: string) => any
   onAddItem: () => void
-  onAddGroup: () => void
+  onAddGroup?: () => void
   onAddItemToGroup: (groupId: string) => void
   onUpdateItem: (index: number, field: string, value: any) => void
   onRemoveItem: (index: number) => void
@@ -235,14 +235,16 @@ export function FormLineItems({
           <Plus className="h-4.5 w-4.5" />
           Add item
         </button>
-        <button
-          type="button"
-          onClick={onAddGroup}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
-        >
-          <FolderPlus className="h-4.5 w-4.5" />
-          Add group
-        </button>
+        {onAddGroup && (
+          <button
+            type="button"
+            onClick={onAddGroup}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
+          >
+            <FolderPlus className="h-4.5 w-4.5" />
+            Add group
+          </button>
+        )}
       </div>
     </div>
   )

@@ -554,7 +554,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
               isVisible={isColumnVisible}
               getColumn={(key: string) => ({ label: columnTitles[key] || key, visible: isColumnVisible(key) })}
               onAddItem={addItem}
-              onAddGroup={() => {}}
               onAddItemToGroup={() => {}}
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
