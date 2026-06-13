@@ -9,12 +9,12 @@ type FeedbackOptions = Omit<GoeyToastOptions, 'fillColor' | 'borderColor'>
 type FeedbackPromiseMessages<T> = GoeyPromiseData<T>
 
 const baseClassNames = {
-  wrapper: 'bd-goey-toast',
-  content: 'bd-goey-toast__content',
+  wrapper: 'bd-goey-toast max-w-[90vw]',
+  content: 'bd-goey-toast__content break-words',
   header: 'bd-goey-toast__header',
-  title: 'bd-goey-toast__title',
+  title: 'bd-goey-toast__title break-words',
   icon: 'bd-goey-toast__icon',
-  description: 'bd-goey-toast__description',
+  description: 'bd-goey-toast__description break-words',
   actionWrapper: 'bd-goey-toast__action-wrapper',
   actionButton: 'bd-goey-toast__action-button',
 } as const
