@@ -304,10 +304,14 @@ h1, .bd-h1 {
   --bd-goey-toast-fill: var(--bd-card-bg);
   --bd-goey-toast-border: var(--bd-border);
   color: hsl(var(--bd-text));
+  max-width: 85vw;
+  overflow: hidden;
 }
 
 .bd-goey-toast__content {
-  min-width: 280px;
+  max-width: 85vw;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .bd-goey-toast-host {
@@ -324,6 +328,8 @@ h1, .bd-h1 {
 .bd-goey-toast__description,
 .bd-goey-toast .gooey-description {
   color: inherit;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .bd-goey-toast__title,
