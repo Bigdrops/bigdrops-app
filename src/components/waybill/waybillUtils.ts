@@ -412,6 +412,7 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
     quantity: toNumber(record.qty),
     unit: String(record.unit || ''),
     condition: normalizeCondition(record.condition),
+    row_type: 'standard' as const,
     custom_data,
   }
 }
