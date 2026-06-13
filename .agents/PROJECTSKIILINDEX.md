@@ -8,9 +8,10 @@
 
 | Location | Count | Purpose |
 |---|---|---|
-| `.agents/skills/` | 14 skills | General-purpose dev, UI, and infra skills |
-| `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
-| **Total** | **20 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| `.agents/skills/` | 16 skills | General-purpose dev, UI, and infra skills |
+| `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
+| `skills/` | 1 skill | Agency role library adaptation for Codex execution plans |
+| **Total** | **24 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 
@@ -34,6 +35,8 @@ General engineering and frontend skills used by Claude agents during development
 | 12 | `vercel-composition-patterns` | React composition — compound components, avoiding boolean prop proliferation, context providers, React 19 APIs |
 | 13 | `vercel-react-best-practices` | React/Next.js performance — eliminating waterfalls, bundle optimization, server-side perf, re-render optimization (70 rules, 8 categories) |
 | 14 | `vite` | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
+| 15 | [redesign-existing-projects](C:\Users\DELL\.agents\skills\redesign-existing-projects\SKILL.md) | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS. |
+| 16 | [react-pdf](C:\Users\DELL\.agents\skills\react-pdf\SKILL.md) | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation, document creation, or react-pdf. Prefer this skill over the standard 'pdf' skill, since it is more accurate |
 
 ---
 
@@ -49,6 +52,17 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | 4 | `ui-ux-pro-max` | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
 | 5 | `webapp-testing` | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
 | 6 | `using-superpowers` | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
+| 7 | [impeccable](C:\Users\DELL\.claude\skills\impeccable\SKILL.md) | Use when the user wants to design, redesign, shape, critique, audit, polish, clarify, distill, harden, optimize, adapt, animate, colorize, extract, or otherwise improve a frontend interface. Covers websites, landing pages, dashboards, product UI, app shells, components, forms, settings, onboarding, and empty states. Handles UX review, visual hierarchy, information architecture, cognitive load, accessibility, performance, responsive behavior, theming, anti-patterns, typography, fonts, spacing, layout, alignment, color, motion, micro-interactions, UX copy, error states, edge cases, i18n, and reusable design systems or tokens. Also use for bland designs that need to become bolder or more delightful, loud designs that should become quieter, live browser iteration on UI elements, or ambitious visual effects that should feel technically extraordinary. Not for backend-only or non-UI tasks. |
+
+---
+
+## Root `skills/`
+
+Agency role library adaptation for Codex execution plans.
+
+| # | Skill | Niche |
+|---|---|---|
+| 1 | [agency-agents](C:\Users\DELL\Desktop\bigdrops-app\skills\agency-agents\SKILL.md) | Adapt the specialist role library from the msitarzewski/agency-agents repository into Codex-ready execution plans. Use when the user references agency-agents, shares that repository, asks for a specialist agent or virtual team for product, design, engineering, marketing, analytics, or content work, or wants help selecting and combining upstream agent roles without copying the whole repo into context. |
 
 ---
 
@@ -63,6 +77,8 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 │       ├── frontend-design/
 │       ├── impeccable/
 │       ├── pdf-rendering-correctness/
+│       ├── react-pdf/
+│       ├── redesign-existing-projects/
 │       ├── seo/
 │       ├── shadcn/
 │       ├── supabase-postgres-best-practices/
@@ -72,14 +88,17 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 │       ├── vercel-composition-patterns/
 │       ├── vercel-react-best-practices/
 │       └── vite/
-└── .claude/
-    └── skills/
-        ├── awesome-claude-skills/   ← ~30 bundled sub-skills
-        ├── Karpathy/
-        ├── skill-creator/
-        ├── ui-ux-pro-max/
-        ├── using-superpowers/
-        └── webapp-testing/
+├── .claude/
+│   └── skills/
+│       ├── awesome-claude-skills/   ← ~30 bundled sub-skills
+│       ├── impeccable/
+│       ├── Karpathy/
+│       ├── skill-creator/
+│       ├── ui-ux-pro-max/
+│       ├── using-superpowers/
+│       └── webapp-testing/
+└── skills/
+    └── agency-agents/
 ```
 
 ---
