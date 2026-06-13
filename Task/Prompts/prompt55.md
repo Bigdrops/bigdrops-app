@@ -1,192 +1,200 @@
-``
-You are fixing a CRITICAL regression in the BIGDROPS Waybill module: Edit Waybill page hydration + layout mismatch. DO NOT TOUCH PDF. DO NOT TOUCH VIEW PAGE. ONLY EDIT FLOW + EDIT UI SHELL.
+Project root: C:\Users\DELL\desktop\bigdrops-app
+
+You are a surgical frontend + domain fix agent for the BIGDROPS Waybill module.
+
+You operate with extreme scope control:
+- no speculation
+- no runtime verification
+- no UI testing
+- no “it works” claims
+- no expansion beyond listed files/fixes
 
 ---
 
-## MANDATORY SKILLS — LOAD BEFORE WRITING ANY CODE
+## 1. SKILL SYSTEM (MANDATORY FIRST STEP)
 
-Read the skills index first, then load and apply these skills in order:
+Step 1:
+Read:
+docs/PROJECTSKIILINDEX.md
 
-| Priority | Skill | Path | Application |
-|----------|-------|------|-------------|
-| 1 | `using-superpowers` | `C:\Users\DELL\.claude\skills\using-superpowers\SKILL.md` | Meta-skill — establishes how to find and use skills. Load this FIRST. |
-| 2 | `Karpathy` | `C:\Users\DELL\.claude\skills\Karpathy\SKILL.md` | Coding discipline — think before coding, surgical changes only, goal-driven execution. |
-| 3 | `typescript-advanced-types` | `C:\Users\DELL\.agents\skills\typescript-advanced-types\SKILL.md` | Type-safe data mapping — ensure `qty` → `quantity` conversion uses strict types, no `any` leaks. |
-| 4 | `vercel-composition-patterns` | `C:\Users\DELL\.agents\skills\vercel-composition-patterns\SKILL.md` | React composition — compound components, avoid prop proliferation when matching Edit layout to New layout. |
-| 5 | `frontend-design` | `C:\Users\DELL\.agents\skills\frontend-design\SKILL.md` | Production-grade UI — ensure edit form visually matches New Waybill clean overlay, no "AI slop" leftovers. |
+Step 2:
+Load ONLY these skills:
+- Karpathy
+- typescript-advanced-types
 
-**FAIL-SAFE:** If the skill-loading tool fails, go directly to the paths listed above using your file-reading tools, read the `SKILL.md` manually, and apply its logic. Do not skip skills. Do not quit.
+Step 3 — SKILL FAILURE RULE (STRICT):
+If ANY skill cannot be loaded:
+1. Open docs/PROJECTSKIILINDEX.md
+2. Locate the exact filesystem path of the missing skill
+3. Open its SKILL.md directly from disk
+4. Apply its logic conceptually
+5. Continue execution without stopping
 
----
-
-## CONTEXT
-
-View page and form are now correct:
-- qty displays correctly (e.g. 199 instead of 1)
-
-BUT Edit Waybill is broken in two ways:
+Never say a skill is missing. Never skip it.
 
 ---
 
-## BUG 1 — ITEMS DO NOT RENDER (CRITICAL)
+## 2. EXECUTION DISCIPLINE (KARPATHY MODE)
 
-### Symptom
-- Edit page shows correct row count
-- BUT item rows are visually missing or empty
-- Data exists in DB (confirmed by count)
-
-### Likely Cause
-- Items are fetched correctly
-- BUT NOT properly mapped into form state
-- OR EditWaybill bypasses `mapDbWaybill()`
-- OR items are shaped as `{ qty }` but form expects `{ quantity }`
-
-### Required Investigation Path
-Inspect:
-1. `src/pages/EditWaybill.tsx` — how data is fetched, how items are passed into form
-2. `src/components/waybill/waybillUtils.ts` — ensure `mapDbWaybill()` is used OR replicated correctly. MUST normalize: `qty` → `quantity`
-3. `src/components/waybill/WaybillForm.tsx` — ensure initial values hydrate items correctly, ensure `FormLineItems` receives normalized items
-
-### Rule
-Edit page MUST behave like:
-```
-
-DB → mapDbWaybill() → WaybillForm(initialValues)
-
-```
-NOT:
-```
-
-DB → raw response → form
-
-```
+- Think in minimal diffs only
+- Prefer deletion over addition
+- Do not introduce new systems
+- Do not refactor unrelated modules
+- Preserve existing architecture unless explicitly broken
+- One bug cluster → one fix path
 
 ---
 
-## BUG 2 — LAYOUT INCONSISTENCY (UI SHELL REGRESSION)
+## 3. DATA RULE (NON-NEGOTIABLE)
 
-### Symptom
-Edit Waybill shows:
-- dashboard top nav
-- hamburger menu
-- search bar
+Waybill item schema mismatch:
 
-BUT New Waybill uses:
-- clean overlay layout (`WaybillFormOverlay` / gateway style UI)
+- Database stores: `qty`
+- Frontend uses: `quantity`
 
-### Expected Behavior
-Edit Waybill MUST use SAME shell as New Waybill:
-- no dashboard chrome
-- same overlay / form container pattern
-- consistent UX between create and edit flows
+Rules:
+- DB → UI mapping MUST happen ONLY in normalization layer
+- UI → DB mapping MUST happen ONLY in mutation layer
+- NEVER scatter mapping across components
+- NEVER fallback silently (no default 1 behavior)
 
 ---
 
-## REQUIRED FILES
-- `src/pages/EditWaybill.tsx`
-- `src/pages/NewWaybill.tsx` (reference correct layout)
-- `src/components/waybill/WaybillFormOverlay.tsx`
-- `src/components/waybill/WaybillForm.tsx`
-- `src/components/waybill/waybillUtils.ts`
+## 4. CURRENT SCOPE (ONLY THESE BUGS)
+
+You are ONLY allowed to work on Waybill Form layer issues.
 
 ---
 
-## FIX REQUIREMENTS
+### FIX 1 — Duplicate Line Items UI + Missing Rendering
 
-### FIX A — DATA HYDRATION
+File: `src/components/waybill/WaybillForm.tsx`
+
+Problem:
+- Multiple "LINE ITEMS" headers exist
+- Duplicate toolbar/buttons exist
+- Row counter shows correct count but no rows render correctly
+
+Root cause:
+- Legacy table UI still exists alongside `FormLineItems`
+- Two rendering paths exist and conflict
+
+Fix rules:
+- Search and remove ALL of the following duplicates:
+  - "LINE ITEMS"
+  - "Import Items"
+  - "Table Settings"
+  - "Add item"
+  - any `<table>` based rendering of items
+- KEEP ONLY:
+  - `<FormLineItems />`
+- Ensure ONLY ONE data source is passed into FormLineItems
+- Counter and renderer must use the SAME `items[]` reference
+
+Result:
+Exactly one Line Items system:
+- one header
+- one toolbar
+- one renderer
+
+---
+
+### FIX 2 — Default Column Visibility
+
+File: `src/components/waybill/WaybillForm.tsx`
+
+Default visible columns on load:
+- description = true
+- quantity = true
+- unit = true
+
+All other columns:
+- false by default
+
 Ensure:
-- fetched waybill → normalized via `mapDbWaybill()`
-- items passed to form MUST use: `quantity` (NOT `qty`)
-- no raw DB objects passed into UI
-
-If mapping is duplicated, REMOVE duplication and centralize.
-
-### FIX B — UI SHELL CONSISTENCY
-Edit Waybill must:
-- use same layout wrapper as New Waybill
-- NOT render dashboard chrome
-- NOT include global navigation elements
-
-If `EditWaybill.tsx` is wrapped in `AppLayout` or `DashboardLayout`:
-→ replace with `WaybillFormOverlay` pattern used in `NewWaybill`
+- initial state is correct
+- reset restores correct defaults
+- no hidden override elsewhere
 
 ---
 
-## HARD RULES
-- DO NOT modify PDF
-- DO NOT modify View page
-- DO NOT introduce fallback values like `|| 1`
-- DO NOT duplicate mapping logic across files
-- DO NOT break Invoice module
-- Apply `vercel-composition-patterns` — prefer composition over prop proliferation when matching layouts
-- Apply `frontend-design` — ensure edit form has clean, production-grade appearance matching New Waybill
+### FIX 3 — Column Toggle Sync Issue
+
+File: `src/components/waybill/WaybillForm.tsx`
+
+Problem:
+Toggling columns (Part No, Condition, custom columns) does not reflect in UI.
+
+Fix rules:
+- Column visibility MUST be single source of truth
+- FormLineItems must receive visibility map directly
+- No internal duplicated visibility state inside table component
+- Rendering must depend ONLY on passed visibility map
 
 ---
 
-## SUCCESS CRITERIA
-After fix:
-1. Edit Waybill shows ALL saved items correctly
-2. Quantity values are correct (no 1 fallback)
-3. Edit layout matches New Waybill UX (clean overlay)
-4. No dashboard navigation chrome appears
-5. Invoice module unaffected
+## 5. HARD CONSTRAINTS
+
+DO NOT:
+- touch PDF logic
+- touch View page
+- touch EditWaybill page
+- touch Invoice module
+- add new components
+- add new abstraction layers
+
+ONLY modify WaybillForm.tsx unless strictly required for column sync wiring.
 
 ---
 
-## VALIDATION
+## 6. VALIDATION (LIMITED)
 
-Run:
-```bash
-bun run typecheck
-```
+Allowed commands:
+- bun run typecheck
+- bun run build
 
-Manual test (operator will verify):
-
-1. Create waybill with items (qty = 199)
-2. Save
-3. Open Edit Waybill
-4. Items must render correctly
-5. Qty must show 199
-6. Confirm UI matches New Waybill layout (no dashboard header)
+DO NOT RUN:
+- bun run dev
+- UI inspection
+- runtime verification
+- browser testing
 
 ---
 
-COMMIT
+## 7. REPORTING (MANDATORY)
 
-```bash
-git add -A && git commit -m "fix: edit waybill hydration and layout consistency" && git push origin main
-```
+Create report at:
 
----
+Task/reports/waybill-form-fix-report.md
 
-AFTER PUSH — REPORT
+Report must include ONLY:
+- Files changed
+- Exact functions modified
+- What was deleted vs added
+- Data flow fixes (if any)
+- Commands run (typecheck/build only)
+- Commit message
 
-Create Task/reports/waybill-edit-hydration-report.md documenting:
-
-· Why items were missing (was mapping bypassed or duplicated?)
-· How the mapping was fixed (centralized via mapDbWaybill() or equivalent)
-· Layout root cause (what wrapper was wrong)
-· How consistency with New Waybill was restored
-· Skills applied and how they influenced the fix
-
-Commit and push the report:
-
-```bash
-git add Task/reports/ && git commit -m "docs: edit waybill hydration and layout fix report" && git push origin main
-```
+STRICT FORBIDDEN:
+- “works correctly”
+- UI claims
+- runtime verification
+- subjective statements
 
 ---
 
-FOCUS
+## 8. GIT COMMIT
 
-· hydration correctness
-· layout consistency
-· no new features
-· no PDF changes
-· no View page changes
+git add -A && git commit -m "fix(waybill): remove duplicate line items UI, sync column visibility, fix rendering source" && git push origin main
 
-END
+---
 
-```
+## SUCCESS DEFINITION
 
-Target: Claude Code / Codex | Strategy: Two-bug fix with 5 mandatory skills (using-superpowers, Karpathy, typescript-advanced-types, vercel-composition-patterns, frontend-design), fail-safe for skill loading, data hydration via centralized mapDbWaybill, layout consistency via WaybillFormOverlay pattern matching NewWaybill, report creation and push required.
+Success =
+
+- exactly one Line Items UI exists
+- items render correctly from single source
+- column visibility is consistent and deterministic
+- no duplicate UI paths remain
+- no fallback rendering paths exist
