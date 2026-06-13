@@ -40,6 +40,11 @@ export async function saveWaybill(params: {
 
   const purpose = waybill.type === 'internal' ? null : (waybill.purpose || 'Supply')
 
+  const nullIfEmpty = (value: string | null | undefined): string | null =>
+    value === '' || value === undefined ? null : value
+
+  const dbTime = nullIfEmpty(waybill.time)
+
   const dbItems = items.map(item => ({
     description: item.description,
     qty: item.quantity,
@@ -48,11 +53,9 @@ export async function saveWaybill(params: {
     ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
   }))
 
-  const nullIfEmpty = (value: string | null | undefined): string | null =>
-    value === '' || value === undefined ? null : value
-
   const payload = {
     ...waybill,
+    time: dbTime,
     waybill_number: waybillNumber,
     purpose,
     items: dbItems,

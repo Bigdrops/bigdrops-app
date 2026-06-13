@@ -9,8 +9,8 @@
 | Location | Count | Purpose |
 |---|---|---|
 | `.agents/skills/` | 15 skills | General-purpose dev, UI, and infra skills |
-| `.claude/skills/` | 5 skills | Meta, design, testing, and discipline skills |
-| **Total** | **20 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
+| **Total** | **21 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 
@@ -49,6 +49,7 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | 3 | `skill-creator` | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), progressive disclosure, packaging & validation |
 | 4 | `ui-ux-pro-max` | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
 | 5 | `webapp-testing` | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
+| 6 | `using-superpowers` | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
 
 ---
 
@@ -79,6 +80,7 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
         ├── Karpathy/
         ├── skill-creator/
         ├── ui-ux-pro-max/
+        ├── using-superpowers/
         └── webapp-testing/
 ```
 

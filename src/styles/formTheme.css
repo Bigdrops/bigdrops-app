@@ -305,7 +305,8 @@ h1, .bd-h1 {
   --bd-goey-toast-border: var(--bd-border);
   color: hsl(var(--bd-text));
   max-width: 85vw;
-  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .bd-goey-toast__content {
