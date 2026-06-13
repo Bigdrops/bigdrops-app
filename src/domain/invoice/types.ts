@@ -196,6 +196,8 @@ export interface InvoiceItem {
   description?: string
   sub_description?: string
   make?: string
+  partNo?: string
+  condition?: string
   quantity?: number
   unit?: string
   unit_price?: number

@@ -332,6 +332,18 @@ export default function MobileItemCard({
               <NumericInput value={(item.unit_price as number) ?? 0} onChange={(val) => onUpdate(index, 'unit_price', val)} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
             </div>
             )}
+            {isVisible('partNo') && (
+              <div className="min-w-0">
+                <label className={labelCls}>Part No.</label>
+                <Input value={(item.partNo as string) || ''} onChange={(e) => onUpdate(index, 'partNo', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
+              </div>
+            )}
+            {isVisible('condition') && (
+              <div className="min-w-0">
+                <label className={labelCls}>Condition</label>
+                <Input value={(item.condition as string) || ''} onChange={(e) => onUpdate(index, 'condition', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
+              </div>
+            )}
 
             {isVisible('install_rate') && (
               <div className="min-w-0">
