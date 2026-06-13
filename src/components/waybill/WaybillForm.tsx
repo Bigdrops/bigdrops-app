@@ -7,9 +7,7 @@ import {
   FileText,
   Import,
   List,
-  Loader2,
   PenTool,
-  Save,
   ScrollText,
   SlidersHorizontal,
   Trash2,
@@ -47,7 +45,7 @@ import {
   labelCls,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { FormLineItems } from '@/components/document/FormLineItems'
-import ColumnManager from '@/components/ColumnManager'
+import { FormFooter } from '@/components/document/FormFooter'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
@@ -477,46 +475,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
           </div>
 
-          {/* Table Settings */}
-          <div>
-            <SectionLabel color="violet">
-              <span className="flex items-center gap-1.5"><SlidersHorizontal className="h-3.5 w-3.5" /> Table Settings</span>
-            </SectionLabel>
-            <div className="mt-4 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-6">
-              <ColumnManager
-                columns={Object.entries(columnTitles).map(([key, label]) => ({
-                  key,
-                  label,
-                  visible: isColumnVisible(key),
-                  visibilityMode: isColumnVisible(key) ? 'show' : 'hide_full',
-                }))}
-                onUpdate={(key, field, value) => {
-                  if (field === 'label') {
-                    setColumnTitles(prev => ({ ...prev, [key]: String(value) }))
-                    markDirty()
-                  }
-                }}
-                onToggle={(key) => {
-                  setColumnVisibility(prev => {
-                    const next = { ...prev }
-                    if (next[key] !== undefined) {
-                      next[key] = !next[key]
-                    }
-                    return next
-                  })
-                  markDirty()
-                }}
-                onToggleFull={() => {}}
-                onAddCustom={addCustomColumn}
-                onRemoveCustom={removeCustomColumn}
-                onReset={() => {}}
-                onMove={(key, dir) => {}}
-                onClose={() => setShowTableSettings(false)}
-                onResetItemOverrides={() => {}}
-              />
-            </div>
-          </div>
-
           {/* Custody Details */}
           <div>
             <SectionLabel color="indigo">
@@ -700,26 +658,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
         </div>
       </div>
 
-      {/* Sticky FAB Save Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--bd-border)] bg-white/95 backdrop-blur-sm" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="mx-auto flex h-20 max-w-[780px] items-start justify-between px-4 pt-3 sm:px-6">
-          <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[var(--bd-text3)]">Waybill</div>
-            <div className="mt-0.5 truncate font-mono text-[14px] font-bold text-[var(--bd-text)]">
-              {waybill.waybill_number || '—'}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex h-11 items-center gap-2 rounded-[var(--bd-radius)] bg-[var(--bd-primary)] px-5 text-[13px] font-bold text-[var(--bd-primary-foreground)] shadow-md transition hover:bg-[var(--bd-primary)]/90 active:scale-[0.98] disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
-          </button>
-        </div>
-      </div>
+      <FormFooter
+        onCancel={onClose}
+        onSaveDraft={handleSave}
+        onSaveSent={handleSave}
+        onFloatingSave={handleSave}
+        saving={saving}
+        primaryLabel="Save Waybill"
+      />
 
       {/* Client Selector */}
       <ClientSelector
