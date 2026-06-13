@@ -409,7 +409,7 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
 
   return {
     description: String(record.description || ''),
-    quantity: toNumber(record.quantity, 1),
+    quantity: toNumber(record.qty),
     unit: String(record.unit || ''),
     condition: normalizeCondition(record.condition),
     custom_data,
