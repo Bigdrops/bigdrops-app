@@ -48,13 +48,20 @@ export async function saveWaybill(params: {
     ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
   }))
 
+  const nullIfEmpty = (value: string | null | undefined): string | null =>
+    value === '' || value === undefined ? null : value
+
   const payload = {
     ...waybill,
     waybill_number: waybillNumber,
     purpose,
     items: dbItems,
     custom_fields,
-    status: normalizeWaybillStatus(waybill.status)
+    status: normalizeWaybillStatus(waybill.status),
+    client_id: nullIfEmpty(waybill.client_id),
+    project_id: nullIfEmpty(waybill.project_id),
+    invoice_id: nullIfEmpty(waybill.invoice_id),
+    created_by: nullIfEmpty(waybill.created_by),
   }
 
   if (mode === 'new') {
