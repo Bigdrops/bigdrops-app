@@ -30,6 +30,7 @@ export interface WaybillItem {
   unit: string
   condition: ItemCondition
   custom_data?: WaybillItemCustomData
+  row_type?: 'standard' | 'group_header'
 }
 
 export interface WaybillSignatureEvidence {
@@ -361,7 +362,7 @@ export function createDefaultWaybill(): Omit<Waybill, 'id' | 'created_at'> {
 }
 
 export function createDefaultItem(): WaybillItem {
-  return { description: '', quantity: 1, unit: '', condition: 'good', custom_data: {} }
+  return { description: '', quantity: 1, unit: '', condition: 'good', custom_data: {}, row_type: 'standard' } as WaybillItem
 }
 
 export function normalizeWaybillType(value: unknown): WaybillType {
@@ -542,6 +543,7 @@ export function normalizeWaybillImport(input: unknown, currentType: WaybillType)
       unit: String(item.unit || ''),
       condition: normalizeCondition(item.condition),
       custom_data,
+      row_type: 'standard' as const,
     }
   })
 

@@ -9,16 +9,23 @@ import {
   List,
   PenTool,
   ScrollText,
-  SlidersHorizontal,
-  Trash2,
   Truck,
+  UserSquare2,
   Users,
   X,
 } from 'lucide-react'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import ColumnManager from '@/components/ColumnManager'
+import type { ColumnConfig, ColumnVisibilityMode } from '@/domain/invoice/types'
 
 import ClientSelector from '@/components/ClientSelector'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
-import { Input } from '@/components/ui/input'
 import { feedback } from '@/lib/feedback'
 import {
   WAYBILL_COLUMN_LIMIT,
@@ -42,7 +49,6 @@ import {
   MobileField,
   MobileTextField,
   SectionLabel,
-  labelCls,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { FormLineItems } from '@/components/document/FormLineItems'
 import { FormFooter } from '@/components/document/FormFooter'
@@ -87,7 +93,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showImportSheet, setShowImportSheet] = useState(false)
   const [invoiceSheetOpen, setInvoiceSheetOpen] = useState(false)
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ unit: true })
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, qty: true, unit: false, make: false, partNo: false, condition: false })
   const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
     description: 'Description',
     qty: 'Qty',
@@ -96,6 +102,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     partNo: 'Part No.',
     condition: 'Condition',
   })
+  const [columnOrder, setColumnOrder] = useState<string[]>(['description', 'qty', 'unit', 'make', 'partNo', 'condition'])
 
   const [showSignatures, setShowSignatures] = useState(true)
   const [showSenderSig, setShowSenderSig] = useState(true)
@@ -108,12 +115,25 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTermsInTableSettings, setShowTermsInTableSettings] = useState(false)
 
   const warnedRef = useRef(false)
+  const [savedSignatorySheetOpen, setSavedSignatorySheetOpen] = useState(false)
+  const [savedSignatories, setSavedSignatories] = useState<{ id: string; name: string | null; role: string | null; signature_url: string | null }[]>([])
 
   useEffect(() => {
     if (waybillNumber && !state.waybill.waybill_number) {
       setState((prev) => ({ ...prev, waybill: { ...prev.waybill, waybill_number: waybillNumber } }))
     }
   }, [waybillNumber, state.waybill.waybill_number])
+
+  useEffect(() => {
+    if (!showSignatures || !showSenderSig) return
+    let cancelled = false
+    ;(async () => {
+      const { supabase } = await import('@/supabase')
+      const { data } = await supabase.from('signatories').select('id, name, role, signature_url').order('name')
+      if (!cancelled && data) setSavedSignatories(data)
+    })()
+    return () => { cancelled = true }
+  }, [showSignatures, showSenderSig])
 
   const { waybill, items, customColumns, customFields } = state
 
@@ -191,10 +211,97 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
   const isColumnVisible = (key: string) => {
     if (columnVisibility[key] !== undefined) return columnVisibility[key]
-    if (key === 'make') return items.some(item => item.custom_data?.['make'])
-    if (key === 'partNo') return items.some(item => item.custom_data?.['part_no'])
-    if (key === 'condition') return items.some(item => item.condition && item.condition !== 'good')
-    return items.some(item => item.custom_data?.[key])
+    return false
+  }
+
+  const DEFAULT_WAYBILL_COLUMNS: ColumnConfig[] = [
+    { key: 'description', label: 'Description', type: 'text', visible: true },
+    { key: 'qty', label: 'Qty', type: 'text', visible: true },
+    { key: 'unit', label: 'Unit', type: 'text', visible: false },
+    { key: 'make', label: 'Make', type: 'text', visible: false },
+    { key: 'partNo', label: 'Part No.', type: 'text', visible: false },
+    { key: 'condition', label: 'Condition', type: 'text', visible: false },
+  ]
+
+  const columns: ColumnConfig[] = columnOrder
+    .filter(key => !key.startsWith('custom_'))
+    .map((key) => {
+      const def = DEFAULT_WAYBILL_COLUMNS.find(d => d.key === key)
+      const vis = columnVisibility[key]
+      return {
+        key,
+        label: columnTitles[key] || def?.label || key,
+        type: 'text' as const,
+        visibilityMode: (vis === true ? 'show' : vis === false ? 'hide_display' : def?.visible ? 'show' : 'hide_display') as ColumnVisibilityMode,
+      }
+    })
+    .concat(
+      customColumns.map(col => ({
+        key: col.key,
+        label: col.label,
+        type: 'text' as const,
+        visibilityMode: (columnVisibility[col.key] !== false ? 'show' : 'hide_display') as 'show' | 'hide_display',
+      })),
+    )
+
+  const columnManagerProps = {
+    columns,
+    onUpdate: (key: string, field: string, value: string | boolean) => {
+      if (field === 'label' && typeof value === 'string') {
+        if (key.startsWith('custom_')) {
+          setState((prev) => ({
+            ...prev,
+            customColumns: prev.customColumns.map(c => c.key === key ? { ...c, label: value } : c),
+          }))
+        } else {
+          setColumnTitles(prev => ({ ...prev, [key]: value }))
+        }
+        markDirty()
+      }
+    },
+    onToggle: (key: string) => {
+      setColumnVisibility(prev => ({ ...prev, [key]: prev[key] === true ? false : true }))
+      markDirty()
+    },
+    onToggleFull: (_key: string) => {},
+    onAddCustom: addCustomColumn,
+    onRemoveCustom: removeCustomColumn,
+    onReset: () => {
+      setColumnTitles({
+        description: 'Description',
+        qty: 'Qty',
+        unit: 'Unit',
+        make: 'Make',
+        partNo: 'Part No.',
+        condition: 'Condition',
+      })
+      setColumnVisibility({ description: true, qty: true, unit: false, make: false, partNo: false, condition: false })
+      setColumnOrder(['description', 'qty', 'unit', 'make', 'partNo', 'condition'])
+      setState((prev) => ({
+        ...prev,
+        customColumns: [],
+        items: prev.items.map(item => {
+          const next = { ...item.custom_data }
+          for (const key of Object.keys(next)) {
+            if (key.startsWith('custom_')) delete next[key]
+          }
+          return { ...item, custom_data: next }
+        }),
+      }))
+    },
+    onMove: (key: string, dir: number) => {
+      setColumnOrder(prev => {
+        const idx = prev.indexOf(key)
+        if (idx < 0) return prev
+        const nextIdx = typeof dir === 'number' ? dir : idx + dir
+        if (nextIdx < 0 || nextIdx >= prev.length) return prev
+        const next = [...prev]
+        next.splice(idx, 1)
+        next.splice(nextIdx, 0, key)
+        return next
+      })
+    },
+    onClose: () => setShowTableSettings(false),
   }
 
   const handleApplyImport = (text: string) => {
@@ -459,20 +566,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
               onOpenImport={() => setShowImportSheet(true)}
               onOpenTableSettings={() => setShowTableSettings(true)}
             />
-
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setShowImportSheet(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
-                  <Import className="h-3.5 w-3.5" /> Import Items
-                </button>
-                <button type="button" onClick={() => setShowTableSettings(true)} className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
-                  <SlidersHorizontal className="h-3.5 w-3.5" /> Table Settings
-                </button>
-              </div>
-              <div className="text-[11px] font-extrabold text-[var(--bd-text-muted)] uppercase tracking-wider">
-                Rows: {items.length}
-              </div>
-            </div>
           </div>
 
           {/* Custody Details */}
@@ -550,6 +643,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                             const win = window.open(); if (win) { win.document.body.appendChild(canvas); win.document.title = 'Draw Signature' }
                           }} />
                         </label>
+                        <button
+                          type="button"
+                          onClick={() => setSavedSignatorySheetOpen(true)}
+                          className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]"
+                        >
+                          <UserSquare2 className="h-3 w-3" />
+                          Saved
+                        </button>
                         {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
                           <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, sender: { image_url: '', drawn_data_url: '', present: false } } })} className="text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
                         )}
@@ -705,39 +806,15 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
       {/* Table Settings Modal */}
       {showTableSettings && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-[var(--bd-radius-lg)] bg-[var(--bd-bg-card)] p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[16px] font-bold text-[var(--bd-text)]">Table Settings</h3>
-              <button onClick={() => setShowTableSettings(false)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]"><X className="h-5 w-5" /></button>
-            </div>
-            
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              <div className="space-y-3">
-                <label className={labelCls}>Column Visibility & Titles</label>
-                {Object.entries(columnTitles).map(([key, title]) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <input type="checkbox" checked={isColumnVisible(key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" disabled={key === 'description' || key === 'qty' || key === 'unit'} />
-                    <Input value={title} onChange={e => setColumnTitles(prev => ({ ...prev, [key]: e.target.value }))} disabled={key === 'description' || key === 'qty' || key === 'unit'} className="h-8 flex-1 text-[13px]" />
-                  </div>
-                ))}
-                {customColumns.map(col => (
-                  <div key={col.key} className="flex items-center gap-3">
-                    <input type="checkbox" checked={isColumnVisible(col.key)} onChange={e => setColumnVisibility(prev => ({ ...prev, [col.key]: e.target.checked }))} className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]" />
-                    <Input value={col.label} onChange={e => {
-                      setState((prev) => ({
-                        ...prev,
-                        customColumns: prev.customColumns.map((entry) => entry.key === col.key ? { ...entry, label: e.target.value } : entry),
-                      }))
-                      markDirty()
-                    }} className="h-8 flex-1 text-[13px]" />
-                    <button type="button" onClick={() => removeCustomColumn(col.key)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-rose)]"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                ))}
-                <button type="button" onClick={addCustomColumn} className="text-[12px] font-bold text-[var(--bd-primary)]">+ Add Custom Column</button>
+        <>
+          <ColumnManager {...columnManagerProps} />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-sm rounded-[var(--bd-radius-lg)] bg-[var(--bd-bg-card)] p-6 shadow-2xl">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-[16px] font-bold text-[var(--bd-text)]">More Settings</h3>
+                <button onClick={() => setShowTableSettings(false)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]"><X className="h-5 w-5" /></button>
               </div>
-
-              <div className="border-t border-[var(--bd-border)] pt-4">
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -748,13 +825,61 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   <span className="text-[13px] font-bold text-[var(--bd-text)]">Show Terms & Conditions</span>
                 </div>
               </div>
-            </div>
-            <div className="mt-6">
-              <button onClick={() => setShowTableSettings(false)} className="w-full rounded-[var(--bd-radius-md)] bg-[var(--bd-button-primary-bg)] py-2 text-[14px] font-bold text-[var(--bd-button-primary-text)]">Done</button>
+              <div className="mt-6">
+                <button onClick={() => setShowTableSettings(false)} className="w-full rounded-[var(--bd-radius-md)] bg-[var(--bd-button-primary-bg)] py-2 text-[14px] font-bold text-[var(--bd-button-primary-text)]">Done</button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
+
+      {/* Saved Signatory Picker */}
+      <Sheet open={savedSignatorySheetOpen} onOpenChange={setSavedSignatorySheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader className="text-left">
+            <SheetTitle>Saved Signature</SheetTitle>
+            <SheetDescription>
+              Pick a saved signatory for the sender signature.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-4 space-y-2 pb-4">
+            {savedSignatories.length === 0 && (
+              <p className="text-[13px] text-[var(--bd-text-muted)] text-center py-4">No saved signatories found.</p>
+            )}
+            {savedSignatories.map((sig) => (
+              <button
+                key={sig.id}
+                type="button"
+                onClick={() => {
+                  updateCustomFields({
+                    signatures: {
+                      ...customFields.signatures,
+                      sender: { ...customFields.signatures?.sender, image_url: sig.signature_url || '', drawn_data_url: '', present: true },
+                    },
+                  })
+                  setSavedSignatorySheetOpen(false)
+                }}
+                className="w-full rounded-xl border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 text-left transition hover:bg-[var(--bd-surface-muted)]"
+              >
+                <div className="flex items-center gap-3">
+                  {sig.signature_url ? (
+                    <img src={sig.signature_url} alt={sig.name || 'Signatory'} className="h-10 w-16 rounded-lg border border-[var(--bd-border)] object-contain" />
+                  ) : (
+                    <div className="flex h-10 w-16 items-center justify-center rounded-lg border border-[var(--bd-border)] bg-[var(--bd-bg2)]">
+                      <UserSquare2 className="h-5 w-5 text-[var(--bd-text3)]" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-bold text-[var(--bd-text)]">{sig.name || 'Unnamed'}</p>
+                    <p className="text-[11px] text-[var(--bd-text-muted)]">{sig.role || 'No role'}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Import Sheet */}
       {showImportSheet && (
