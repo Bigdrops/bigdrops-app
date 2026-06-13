@@ -2,11 +2,15 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import {
   BriefcaseBusiness,
   ChevronRight,
+  Eye,
+  EyeOff,
   FileText,
   Import,
   List,
   Loader2,
+  PenTool,
   Save,
+  ScrollText,
   SlidersHorizontal,
   Trash2,
   Truck,
@@ -35,6 +39,7 @@ import {
   type TransportMode,
 } from './waybillUtils'
 import {
+  CollapseCard,
   CompactSelectField,
   MobileField,
   MobileTextField,
@@ -43,6 +48,8 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { FormLineItems } from '@/components/document/FormLineItems'
 import ColumnManager from '@/components/ColumnManager'
+
+const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
 
@@ -91,6 +98,16 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     partNo: 'Part No.',
     condition: 'Condition',
   })
+
+  const [showSignatures, setShowSignatures] = useState(true)
+  const [showSenderSig, setShowSenderSig] = useState(true)
+  const [showReceiverSig, setShowReceiverSig] = useState(true)
+  const [showNotes, setShowNotes] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
+  const [notes, setNotes] = useState('')
+  const [terms, setTerms] = useState('')
+  const [notesTitle, setNotesTitle] = useState('Notes')
+  const [showTermsInTableSettings, setShowTermsInTableSettings] = useState(false)
 
   const warnedRef = useRef(false)
 
@@ -204,8 +221,16 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
       feedback.error('Validation Error', { description: 'Client account must be selected for external waybills.' })
       return
     }
+    if (type === 'internal' && !waybill.receiver_name?.trim()) {
+      feedback.error('Validation Error', { description: 'Recipient name is required for internal waybills.' })
+      return
+    }
     if (!waybill.waybill_number) {
       feedback.error('Validation Error', { description: 'Waybill number is missing or invalid.' })
+      return
+    }
+    if (!waybill.date) {
+      feedback.error('Validation Error', { description: 'Date is required.' })
       return
     }
     if (items.length === 0) {
@@ -503,18 +528,198 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
           </div>
 
+          {/* Signatures */}
+          <div>
+            <SectionLabel color="emerald">
+              <span className="flex items-center gap-1.5"><PenTool className="h-3.5 w-3.5" /> Signatures</span>
+              <button
+                type="button"
+                onClick={() => setShowSignatures(!showSignatures)}
+                className="ml-auto text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
+                title={showSignatures ? 'Hide all signatures' : 'Show all signatures'}
+              >
+                {showSignatures ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </button>
+            </SectionLabel>
+            {showSignatures && (
+              <div className="mt-4 space-y-4">
+                <div className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-[13px] font-bold text-[var(--bd-text)]">Delivered By</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowSenderSig(!showSenderSig)}
+                      className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
+                      title={showSenderSig ? 'Hide sender signature' : 'Show sender signature'}
+                    >
+                      {showSenderSig ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  {showSenderSig && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
+                          <img src={customFields.signatures.sender.image_url || customFields.signatures.sender.drawn_data_url} alt="sender signature" className="h-20 rounded-xl border border-[var(--bd-border)] bg-white object-contain" />
+                        )}
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0]; if (!file) return
+                            const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
+                            const { supabase } = await import('@/supabase')
+                            const processedDataURI = await processSignature(file)
+                            const processedFile = dataURItoFile(processedDataURI, `sender_sig_${Date.now()}.png`)
+                            const ext = processedFile.name.split('.').pop()
+                            const path = `sender_sig_${Date.now()}.${ext}`
+                            const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
+                            if (error) { feedback.error('Upload failed', { description: error.message }); return }
+                            const { data } = supabase.storage.from('signatures').getPublicUrl(path)
+                            updateCustomFields({ signatures: { ...customFields.signatures, sender: { ...customFields.signatures?.sender, image_url: data.publicUrl, present: true } } })
+                          }} />
+                          Upload
+                        </label>
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                          Draw
+                          <input type="checkbox" className="hidden" onChange={(e) => {
+                            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
+                            const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
+                            ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
+                            let drawing = false
+                            const draw = (x: number, y: number) => { if (!drawing) return; ctx.lineTo(x, y); ctx.stroke() }
+                            const stop = () => { drawing = false; const url = canvas.toDataURL('image/png'); updateCustomFields({ signatures: { ...customFields.signatures, sender: { ...customFields.signatures?.sender, drawn_data_url: url, present: true } } }) }
+                            canvas.onmousedown = () => { drawing = true; ctx.beginPath() }
+                            canvas.onmousemove = (ev) => draw(ev.offsetX, ev.offsetY)
+                            canvas.onmouseup = stop; canvas.onmouseleave = stop
+                            const win = window.open(); if (win) { win.document.body.appendChild(canvas); win.document.title = 'Draw Signature' }
+                          }} />
+                        </label>
+                        {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
+                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, sender: { image_url: '', drawn_data_url: '', present: false } } })} className="text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-[13px] font-bold text-[var(--bd-text)]">Collected By</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowReceiverSig(!showReceiverSig)}
+                      className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
+                      title={showReceiverSig ? 'Hide receiver signature' : 'Show receiver signature'}
+                    >
+                      {showReceiverSig ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  {showReceiverSig && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
+                          <img src={customFields.signatures.receiver.image_url || customFields.signatures.receiver.drawn_data_url} alt="receiver signature" className="h-20 rounded-xl border border-[var(--bd-border)] bg-white object-contain" />
+                        )}
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0]; if (!file) return
+                            const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
+                            const { supabase } = await import('@/supabase')
+                            const processedDataURI = await processSignature(file)
+                            const processedFile = dataURItoFile(processedDataURI, `receiver_sig_${Date.now()}.png`)
+                            const ext = processedFile.name.split('.').pop()
+                            const path = `receiver_sig_${Date.now()}.${ext}`
+                            const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
+                            if (error) { feedback.error('Upload failed', { description: error.message }); return }
+                            const { data } = supabase.storage.from('signatures').getPublicUrl(path)
+                            updateCustomFields({ signatures: { ...customFields.signatures, receiver: { ...customFields.signatures?.receiver, image_url: data.publicUrl, present: true } } })
+                          }} />
+                          Upload
+                        </label>
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                          Draw
+                          <input type="checkbox" className="hidden" onChange={(e) => {
+                            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
+                            const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
+                            ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
+                            let drawing = false
+                            const draw = (x: number, y: number) => { if (!drawing) return; ctx.lineTo(x, y); ctx.stroke() }
+                            const stop = () => { drawing = false; const url = canvas.toDataURL('image/png'); updateCustomFields({ signatures: { ...customFields.signatures, receiver: { ...customFields.signatures?.receiver, drawn_data_url: url, present: true } } }) }
+                            canvas.onmousedown = () => { drawing = true; ctx.beginPath() }
+                            canvas.onmousemove = (ev) => draw(ev.offsetX, ev.offsetY)
+                            canvas.onmouseup = stop; canvas.onmouseleave = stop
+                            const win = window.open(); if (win) { win.document.body.appendChild(canvas); win.document.title = 'Draw Signature' }
+                          }} />
+                        </label>
+                        {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
+                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, receiver: { image_url: '', drawn_data_url: '', present: false } } })} className="text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notes */}
+          <CollapseCard
+            icon={ScrollText}
+            title={notesTitle}
+            open={showNotes}
+            onToggle={() => setShowNotes(!showNotes)}
+            sectionColor="#6366f1"
+          >
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={notesTitle}
+                onChange={(e) => setNotesTitle(e.target.value)}
+                className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-2 text-[13px] font-bold text-[var(--bd-text)] outline-none focus:border-[var(--bd-primary)]"
+                placeholder="Notes title"
+              />
+              <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
+                <RichTextEditor value={notes} onChange={setNotes} placeholder="Add notes..." />
+              </Suspense>
+            </div>
+          </CollapseCard>
+
+          {/* Terms & Conditions */}
+          {showTermsInTableSettings && (
+            <CollapseCard
+              icon={ScrollText}
+              title="Terms & Conditions"
+              open={showTerms}
+              onToggle={() => setShowTerms(!showTerms)}
+              sectionColor="#8b5cf6"
+            >
+              <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
+                <RichTextEditor value={terms} onChange={setTerms} placeholder="Add terms and conditions..." />
+              </Suspense>
+            </CollapseCard>
+          )}
+
         </div>
       </div>
 
-      {/* Floating Save Button */}
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--bd-primary)] text-[var(--bd-primary-foreground)] shadow-lg transition hover:scale-105 active:scale-95 disabled:opacity-50"
-      >
-        {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-      </button>
+      {/* Sticky FAB Save Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--bd-border)] bg-white/95 backdrop-blur-sm" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="mx-auto flex h-20 max-w-[780px] items-start justify-between px-4 pt-3 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[var(--bd-text3)]">Waybill</div>
+            <div className="mt-0.5 truncate font-mono text-[14px] font-bold text-[var(--bd-text)]">
+              {waybill.waybill_number || '—'}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex h-11 items-center gap-2 rounded-[var(--bd-radius)] bg-[var(--bd-primary)] px-5 text-[13px] font-bold text-[var(--bd-primary-foreground)] shadow-md transition hover:bg-[var(--bd-primary)]/90 active:scale-[0.98] disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+          </button>
+        </div>
+      </div>
 
       {/* Client Selector */}
       <ClientSelector
@@ -584,6 +789,18 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   </div>
                 ))}
                 <button type="button" onClick={addCustomColumn} className="text-[12px] font-bold text-[var(--bd-primary)]">+ Add Custom Column</button>
+              </div>
+
+              <div className="border-t border-[var(--bd-border)] pt-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={showTermsInTableSettings}
+                    onChange={(e) => setShowTermsInTableSettings(e.target.checked)}
+                    className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]"
+                  />
+                  <span className="text-[13px] font-bold text-[var(--bd-text)]">Show Terms & Conditions</span>
+                </div>
               </div>
             </div>
             <div className="mt-6">

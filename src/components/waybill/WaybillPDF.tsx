@@ -111,18 +111,18 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
 
         <View style={S.metaGrid}>
           {[
-            { label: 'Date', value: formatWaybillDate(mapped.date) },
-            { label: 'Time', value: formatWaybillTime(mapped.time) },
-            { label: 'Vehicle Plate', value: mapped.vehicle_plate || '—' },
-            { label: typeContent.locationLabel, value: mapped.delivery_location || '—' },
-            { label: typeContent.clientLabel, value: mapped.client_name || '—' },
-            { label: 'P.O. Number', value: mapped.po_number || '—' },
-            { label: 'Invoice Ref', value: customFields.references?.linkedInvoiceNumber || '—' },
-            { label: 'Project Ref', value: customFields.references?.linkedProjectName || '—' },
-          ].map((entry) => (
-            <View key={entry.label} style={S.metaCard}>
-              <Text style={S.metaLabel}>{entry.label}</Text>
-              <Text style={S.metaValue}>{entry.value}</Text>
+            mapped.date ? { label: 'Date', value: formatWaybillDate(mapped.date) } : null,
+            mapped.time ? { label: 'Time', value: formatWaybillTime(mapped.time) } : null,
+            mapped.vehicle_plate ? { label: 'Vehicle Plate', value: mapped.vehicle_plate } : null,
+            mapped.delivery_location ? { label: typeContent.locationLabel, value: mapped.delivery_location } : null,
+            mapped.client_name ? { label: typeContent.clientLabel, value: mapped.client_name } : null,
+            mapped.po_number ? { label: 'P.O. Number', value: mapped.po_number } : null,
+            customFields.references?.linkedInvoiceNumber ? { label: 'Invoice Ref', value: customFields.references.linkedInvoiceNumber } : null,
+            customFields.references?.linkedProjectName ? { label: 'Project Ref', value: customFields.references.linkedProjectName } : null,
+          ].filter(Boolean).map((entry) => (
+            <View key={entry!.label} style={S.metaCard}>
+              <Text style={S.metaLabel}>{entry!.label}</Text>
+              <Text style={S.metaValue}>{entry!.value}</Text>
             </View>
           ))}
         </View>
@@ -130,12 +130,12 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
         <View style={S.partyRow}>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>{typeContent.senderPdfLabel}</Text>
-            <Text style={S.partyValue}>{mapped.sender_name || '—'}</Text>
+            <Text style={S.partyValue}>{mapped.sender_name || ''}</Text>
             {customFields.partyNotes?.sender ? <Text style={S.partyNote}>{customFields.partyNotes.sender}</Text> : null}
           </View>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>{typeContent.receiverPdfLabel}</Text>
-            <Text style={S.partyValue}>{mapped.receiver_name || '—'}</Text>
+            <Text style={S.partyValue}>{mapped.receiver_name || ''}</Text>
             {customFields.partyNotes?.receiver ? <Text style={S.partyNote}>{customFields.partyNotes.receiver}</Text> : null}
           </View>
         </View>
@@ -155,12 +155,12 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
         {mapped.items.map((item, index) => (
           <View key={`${item.description}-${index}`} style={index % 2 === 0 ? S.tableRow : S.tableRowAlt}>
             <Text style={[S.cell, S.numberCol]}>{index + 1}</Text>
-            <Text style={[S.cell, S.descCol]}>{item.description || '—'}</Text>
-            <Text style={[S.cell, S.qtyCol]}>{String(item.quantity ?? '—')}</Text>
-            <Text style={[S.cell, S.unitCol]}>{item.unit || '—'}</Text>
-            <Text style={[S.cell, S.conditionCol]}>{item.condition || '—'}</Text>
+            <Text style={[S.cell, S.descCol]}>{item.description || ''}</Text>
+            <Text style={[S.cell, S.qtyCol]}>{item.quantity != null ? String(item.quantity) : ''}</Text>
+            <Text style={[S.cell, S.unitCol]}>{item.unit || ''}</Text>
+            <Text style={[S.cell, S.conditionCol]}>{item.condition || ''}</Text>
             {customColumns.map((column) => (
-              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data?.[column.key] || '—')}</Text>
+              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data?.[column.key] || '')}</Text>
             ))}
           </View>
         ))}
@@ -173,13 +173,14 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
         ) : null}
 
         <View style={S.signatureRow}>
-          {[{ title: typeContent.senderSignatureLabel, signature: senderSignature, fallback: mapped.sender_name || '—' }, { title: typeContent.receiverSignatureLabel, signature: receiverSignature, fallback: mapped.receiver_name || 'Acknowledgement pending' }].map((entry) => (
+          {[{ title: typeContent.senderSignatureLabel, signature: senderSignature }, { title: typeContent.receiverSignatureLabel, signature: receiverSignature }].map((entry) => (
             <View key={entry.title} style={S.signatureBox}>
               <Text style={S.signatureTitle}>{entry.title}</Text>
-              {entry.signature.image_url || entry.signature.drawn_data_url ? <Image src={entry.signature.image_url || entry.signature.drawn_data_url || ''} style={S.signatureImage} /> : null}
-              <Text style={S.signatureText}>{entry.signature.present === false ? 'Pending acknowledgement' : entry.fallback}</Text>
-              {entry.signature.description ? <Text style={S.signatureText}>{entry.signature.description}</Text> : null}
-              {entry.signature.confidence ? <Text style={S.signatureText}>Confidence: {entry.signature.confidence}</Text> : null}
+              {entry.signature.image_url || entry.signature.drawn_data_url ? (
+                <Image src={entry.signature.image_url || entry.signature.drawn_data_url || ''} style={S.signatureImage} />
+              ) : (
+                <View style={[S.signatureImage, { borderBottom: '0.5pt solid #cbd5e1' }]} />
+              )}
             </View>
           ))}
         </View>

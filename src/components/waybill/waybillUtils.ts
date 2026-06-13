@@ -194,7 +194,7 @@ export const WAYBILL_TYPE_CONTENT: Record<
     senderSignatureLabel: 'Sender Signature',
     receiverSignatureLabel: 'Receiver Signature',
     ackPendingText: 'Receiver signature can be completed later if delivery acknowledgement happens offline.',
-    pdfTitle: 'EXTERNAL WAYBILL',
+    pdfTitle: 'Waybill/Delivery note',
     senderPdfLabel: 'Sender',
     receiverPdfLabel: 'Receiver',
   },
