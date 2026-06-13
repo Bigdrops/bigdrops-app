@@ -1,5 +1,6 @@
 import { supabase } from '@/supabase'
 import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
+import { invalidateListCache } from '@/lib/cache/listCache'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -73,6 +74,8 @@ export async function saveWaybill(params: {
       console.error('Waybill save error:', error)
       throw new Error(`Failed to save waybill: ${error.message}`)
     }
+    invalidateListCache('waybill-list')
+    return { status: 'online', waybillId: data?.id }
   } else {
     if (!waybillId) throw new Error("waybillId is required in edit mode");
     const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
@@ -80,7 +83,7 @@ export async function saveWaybill(params: {
       console.error('Waybill update error:', error)
       throw new Error(`Failed to update waybill: ${error.message}`)
     }
+    invalidateListCache('waybill-list')
+    return { status: 'online', waybillId }
   }
-
-  return { status: 'online' };
 }

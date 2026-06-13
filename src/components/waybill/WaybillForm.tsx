@@ -93,16 +93,16 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showImportSheet, setShowImportSheet] = useState(false)
   const [invoiceSheetOpen, setInvoiceSheetOpen] = useState(false)
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, qty: true, unit: false, make: false, partNo: false, condition: false })
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, quantity: true, unit: false, make: false, partNo: false, condition: false })
   const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
     description: 'Description',
-    qty: 'Qty',
+    quantity: 'Qty',
     unit: 'Unit',
     make: 'Make',
     partNo: 'Part No.',
     condition: 'Condition',
   })
-  const [columnOrder, setColumnOrder] = useState<string[]>(['description', 'qty', 'unit', 'make', 'partNo', 'condition'])
+  const [columnOrder, setColumnOrder] = useState<string[]>(['description', 'quantity', 'unit', 'make', 'partNo', 'condition'])
 
   const [showSignatures, setShowSignatures] = useState(true)
   const [showSenderSig, setShowSenderSig] = useState(true)
@@ -216,7 +216,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
   const DEFAULT_WAYBILL_COLUMNS: ColumnConfig[] = [
     { key: 'description', label: 'Description', type: 'text', visible: true },
-    { key: 'qty', label: 'Qty', type: 'text', visible: true },
+    { key: 'quantity', label: 'Qty', type: 'text', visible: true },
     { key: 'unit', label: 'Unit', type: 'text', visible: false },
     { key: 'make', label: 'Make', type: 'text', visible: false },
     { key: 'partNo', label: 'Part No.', type: 'text', visible: false },
@@ -248,13 +248,23 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     columns,
     onUpdate: (key: string, field: string, value: string | boolean) => {
       if (field === 'label' && typeof value === 'string') {
+        const trimmedValue = value.trim()
+        if (!trimmedValue) return
+
+        const allColumns = [
+          ...Object.entries(columnTitles).map(([k, label]) => ({ key: k, label })),
+          ...customColumns.map(c => ({ key: c.key, label: c.label })),
+        ]
+        const isDuplicate = allColumns.some(col => col.key !== key && col.label.toLowerCase() === trimmedValue.toLowerCase())
+        if (isDuplicate) return
+
         if (key.startsWith('custom_')) {
           setState((prev) => ({
             ...prev,
-            customColumns: prev.customColumns.map(c => c.key === key ? { ...c, label: value } : c),
+            customColumns: prev.customColumns.map(c => c.key === key ? { ...c, label: trimmedValue } : c),
           }))
         } else {
-          setColumnTitles(prev => ({ ...prev, [key]: value }))
+          setColumnTitles(prev => ({ ...prev, [key]: trimmedValue }))
         }
         markDirty()
       }
@@ -269,14 +279,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     onReset: () => {
       setColumnTitles({
         description: 'Description',
-        qty: 'Qty',
+        quantity: 'Qty',
         unit: 'Unit',
         make: 'Make',
         partNo: 'Part No.',
         condition: 'Condition',
       })
-      setColumnVisibility({ description: true, qty: true, unit: false, make: false, partNo: false, condition: false })
-      setColumnOrder(['description', 'qty', 'unit', 'make', 'partNo', 'condition'])
+      setColumnVisibility({ description: true, quantity: true, unit: false, make: false, partNo: false, condition: false })
+      setColumnOrder(['description', 'quantity', 'unit', 'make', 'partNo', 'condition'])
       setState((prev) => ({
         ...prev,
         customColumns: [],

@@ -28,6 +28,8 @@ interface WaybillPDFProps {
   waybill: Waybill
   settings: Settings
   designPreset?: PdfDesignPreset
+  columnVisibility?: Record<string, boolean>
+  columnTitles?: Record<string, string>
 }
 
 registerPdfFillableFonts()
@@ -80,7 +82,7 @@ function createStyles(designPreset?: PdfDesignPreset) {
 })
 }
 
-export default function WaybillPDF({ waybill, settings, designPreset }: WaybillPDFProps) {
+export default function WaybillPDF({ waybill, settings, designPreset, columnVisibility, columnTitles }: WaybillPDFProps) {
   const S = createStyles(designPreset)
   const mapped = mapDbWaybill(waybill)
   const customFields = mapped.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
@@ -89,6 +91,17 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
   const receiverSignature = getWaybillSignature(mapped, 'receiver')
   const typeContent = getWaybillTypeContent(mapped.type)
   const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
+
+  const isColumnVisible = (key: string) => {
+    if (!columnVisibility) return true
+    return columnVisibility[key] !== false
+  }
+
+  const getColumnLabel = (key: string) => {
+    if (columnTitles && columnTitles[key]) return columnTitles[key]
+    const labels: Record<string, string> = { description: 'Description', quantity: 'Qty', unit: 'Unit', condition: 'Condition' }
+    return labels[key] || key
+  }
 
   return (
     <Document>
@@ -143,10 +156,10 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
         <Text style={S.sectionTitle}>Items</Text>
         <View style={S.tableHeader}>
           <Text style={[S.cell, S.numberCol]}>#</Text>
-          <Text style={[S.cell, S.descCol]}>Description</Text>
-          <Text style={[S.cell, S.qtyCol]}>Qty</Text>
-          <Text style={[S.cell, S.unitCol]}>Unit</Text>
-          <Text style={[S.cell, S.conditionCol]}>Condition</Text>
+          {isColumnVisible('description') && <Text style={[S.cell, S.descCol]}>{getColumnLabel('description')}</Text>}
+          {isColumnVisible('quantity') && <Text style={[S.cell, S.qtyCol]}>{getColumnLabel('quantity')}</Text>}
+          {isColumnVisible('unit') && <Text style={[S.cell, S.unitCol]}>{getColumnLabel('unit')}</Text>}
+          {isColumnVisible('condition') && <Text style={[S.cell, S.conditionCol]}>{getColumnLabel('condition')}</Text>}
           {customColumns.map((column) => (
             <Text key={column.key} style={[S.cell, S.customCol]}>{column.label}</Text>
           ))}
@@ -155,10 +168,10 @@ export default function WaybillPDF({ waybill, settings, designPreset }: WaybillP
         {mapped.items.map((item, index) => (
           <View key={`${item.description}-${index}`} style={index % 2 === 0 ? S.tableRow : S.tableRowAlt}>
             <Text style={[S.cell, S.numberCol]}>{index + 1}</Text>
-            <Text style={[S.cell, S.descCol]}>{item.description || ''}</Text>
-            <Text style={[S.cell, S.qtyCol]}>{item.quantity != null ? String(item.quantity) : ''}</Text>
-            <Text style={[S.cell, S.unitCol]}>{item.unit || ''}</Text>
-            <Text style={[S.cell, S.conditionCol]}>{item.condition || ''}</Text>
+            {isColumnVisible('description') && <Text style={[S.cell, S.descCol]}>{item.description || ''}</Text>}
+            {isColumnVisible('quantity') && <Text style={[S.cell, S.qtyCol]}>{item.quantity != null ? String(item.quantity) : ''}</Text>}
+            {isColumnVisible('unit') && <Text style={[S.cell, S.unitCol]}>{item.unit || ''}</Text>}
+            {isColumnVisible('condition') && <Text style={[S.cell, S.conditionCol]}>{item.condition || ''}</Text>}
             {customColumns.map((column) => (
               <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data?.[column.key] || '')}</Text>
             ))}

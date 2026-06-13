@@ -108,7 +108,7 @@ export default function ViewWaybill() {
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} />,
+        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} columnVisibility={{ description: true, quantity: true, unit: true, condition: true }} columnTitles={{ description: 'Description', quantity: 'Qty', unit: 'Unit', condition: 'Condition' }} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {
