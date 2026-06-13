@@ -138,6 +138,10 @@ export async function bootstrapWaybillOffline(): Promise<void> {
               notes TEXT,
               status TEXT NOT NULL,
               created_by TEXT,
+              archived_at TEXT,
+              purpose TEXT,
+              transport_mode TEXT,
+              driver_name TEXT,
               custom_fields TEXT,
               created_offline INTEGER NOT NULL DEFAULT 1,
               sync_status TEXT NOT NULL DEFAULT 'pending',
@@ -221,12 +225,16 @@ export async function createOfflineWaybillDraft(
         status,
         created_by,
         custom_fields,
+        archived_at,
+        purpose,
+        transport_mode,
+        driver_name,
         created_offline,
         sync_status,
         created_at,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', ?, ?);
     `,
     [
       id,
@@ -250,6 +258,10 @@ export async function createOfflineWaybillDraft(
       input.status,
       input.created_by ?? null,
       serializeJsonValue(input.custom_fields ?? null),
+      null,
+      null,
+      null,
+      null,
       now,
       now,
     ],
