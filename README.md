@@ -1,6 +1,6 @@
 # BIGDROPS
 
-**B2B business management suite for Nigerian SMEs — invoicing, quotations, waybills, CSRs, payments, and project tracking.**
+Internal business operations tool used by company staff to create, manage, and export documents across invoicing, logistics, and project tracking.
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org)
@@ -16,25 +16,39 @@
 
 ## What is BIGDROPS
 
-BIGDROPS is a full-stack B2B business management platform built for Nigerian SMEs. It replaces paper-based operations with digital workflows across invoicing, quotations, customer service reports (CSR), waybills (external and internal), payments, and project tracking. The platform runs as a Progressive Web App with native Android deployment via Capacitor, backed by Supabase for real-time data, auth, and storage.
+BIGDROPS is a private internal operations tool used exclusively by company staff. It manages document creation, financial calculations, logistics tracking, and project aggregation. The only customer-facing output is generated PDFs.
 
 ## Core Modules
 
 | Module | Description |
 |---|---|
-| **Invoices** | Create, edit, view, and manage invoices with JSONB line items, tax, extra charges, and PDF generation |
-| **Quotations** | Quote generation reusing the invoice domain layer — consistent pricing, items, and PDF output |
-| **CSR** | Customer Service Reports — service date tracking, problem/service logs, technician remarks, and PDF export |
-| **Waybills** | External (client delivery notes) and internal (transfer notes) with prefix engine, dual-action custody sign-off, and field-masked PDFs |
-| **Payments** | Payment recording against invoices with amount, method, date, and automatic outstanding balance computation |
+| **Invoices** | Create, edit, and view invoices with JSONB line items, tax, extra charges, and PDF generation (`INV-000001`) |
+| **Quotations** | Quote generation reusing the invoice domain layer for consistent pricing, items, and PDF output |
+| **CSR** | Customer Service Reports with service date tracking, problem/service logs, technician remarks, and PDF export |
+| **Waybills (External)** | Client delivery notes with prefix engine numbering (`WBL-E-000001`), custody sign-off, and field-masked PDFs |
+| **Waybills (Internal)** | Internal transfer notes (`WBL-ME-000001`) with `purpose` field enforced as NULL by database constraint |
+| **Payments** | Record payments against invoices with amount, method, date, and automatic outstanding balance computation |
 | **Projects** | Project-centric aggregation of invoices, payments, quotations, and CSRs under a single client engagement |
-| **Client Management** | Full client lifecycle — add, edit, view, and link to projects and documents |
+| **Client Management** | Add, edit, view, and link clients to projects and documents |
+| **Reports** | Aggregated reporting views across documents and financials |
+| **Compliance Hub** | Compliance tracking and regulatory document management |
+| **Item Library** | Centralized catalog of reusable line items across documents |
+| **BOQ** | Bill of Quantities creation and management |
+| **RFQ** | Request for Quotation creation and management |
+| **Notifications** | In-app notification system for document events and updates |
+| **Audit** | Blank waybill token audit log and document change tracking |
+| **Dashboard** | Overview of operations with summary widgets and quick-access tiles |
+| **Settings** | Company profile, branding, banking, signatories, document defaults, user management, theme, archives, and notifications |
+| **Lifetime Data Hub** | Historical data aggregation and lifetime metrics view |
+| **Document Import/Export** | Bulk import and export of document data |
+| **Batch Operations** | Batch actions across multiple documents |
 
 ## Tech Stack
 
 | Category | Technology |
 |---|---|
-| Frontend | React 19 with TypeScript |
+| Frontend | React 19 |
+| Language | TypeScript 5.9 |
 | Styling | Tailwind CSS 3.4 + Radix UI primitives |
 | Database | Supabase (Postgres) with JSONB validation constraints |
 | Auth | Supabase Auth (Row Level Security) |
@@ -42,46 +56,39 @@ BIGDROPS is a full-stack B2B business management platform built for Nigerian SME
 | Build Tool | Vite 7 |
 | Runtime | Bun |
 | Deployment | Vercel |
-| Mobile | Capacitor 8 (Android APK) |
+| Mobile | Capacitor 8 (Android) |
 
 ## Project Structure
 
 ```
 src/
-├── app/              App bootstrap and sync
-├── auth/             Auth session management
-├── components/       Shared UI, document components, module-specific components
-├── config/           Module adapters, filter capabilities
-├── context/          React contexts (DocumentQueryContext)
-├── domain/           Domain logic per module (invoice, quotation, waybill, csr, boq, rfq, audit)
-├── hooks/            Custom React hooks (invoice, dashboard, notifications, layout)
-├── lib/              Calculations.ts (single source of truth), fonts, icons, PDF, themes
-├── modules/          Module-specific logic (invoices, quotations, compliance, item-library)
-├── pages/            Route-level page components (NewInvoice, ViewWaybill, Projects, etc.)
-├── services/         External service integrations
-├── styles/           Global CSS
-├── supabase/         Supabase client config
-├── tests/            Critical path tests
-└── types/            Shared type definitions
+├── app/           App bootstrap (useSyncBootstrap)
+├── assets/        Static assets
+├── auth/          Session error handling
+├── components/    Shared UI, document components, module-specific components
+├── config/        Module adapters, filter configs, quick tiles
+├── context/       React contexts (DocumentQueryContext)
+├── domain/        Domain logic per module (invoice, quotation, waybill, csr, boq, rfq, audit, compliance)
+├── hooks/         Custom React hooks
+├── lib/           Calculations.ts (single source of truth), fonts, icons, PDF, themes, utilities
+├── modules/       Module-specific logic (invoices, quotations, compliance, item-library)
+├── pages/         Route-level page components
+├── services/      External service integrations
+├── styles/        Global CSS
+├── supabase/      Supabase client config
+├── tests/         Critical path tests
+├── types/         Shared type definitions
+└── utils/         Utility functions (export compilers, number formatting)
 ```
 
 ## Getting Started
 
 ```bash
-# Clone
 git clone https://github.com/Bigdrops/bigdrops-app.git
-
-# Install
 bun install
-
-# Dev server
 bun run dev
-
-# Build
 bun run build
 ```
-
-**Note:** Bun is the only supported package manager. Never use npm or yarn.
 
 ## Scripts
 
@@ -89,21 +96,21 @@ bun run build
 |---|---|---|
 | dev | `bun run dev` | Start Vite dev server |
 | build | `bun run build` | Production build |
-| typecheck | `bun run typecheck` | TypeScript type checking |
+| test | `bun run test` | Run critical path tests (`node --test`) |
+| typecheck | `bun run typecheck` | TypeScript type checking (`tsc --noEmit`) |
 | lint | `bun run lint` | ESLint across the project |
-| test | `bun run test` | Run critical path Node tests |
-| preview | `bun run preview` | Preview production build |
-| audit:load | `bun run audit:load` | Check load risk on queries |
+| preview | `bun run preview` | Preview production build locally |
+| audit:load | `bun run audit:load` | Check load risk on Supabase queries |
 | audit:supabase-queries | `bun run audit:supabase-queries` | Audit Supabase query patterns |
 
 ## Architecture Highlights
 
-- **Single source of truth for calculations** — `src/lib/Calculations.ts` owns all pricing, tax, and total computations. No duplicate logic anywhere.
-- **Field masking rules** — Waybill PDFs render blank pen-and-ink lines for empty fields, while the on-screen view hides them. Inline eye toggles let operators hide fields from PDF without deleting data.
-- **Waybill prefix engine** — Dynamic number generation (`AWB-E-000001`, `AWB-ME-000001`) with a permanent blank token audit log that prevents number reuse.
-- **JSONB validation** — Postgres CHECK constraints enforce structural integrity on `items` arrays (non-empty, description + qty required, qty > 0) at the database level.
-- **Invoice-to-waybill spawning** — Transform pipeline extracts item descriptions, quantities, and units from invoices, strips monetary values, and binds the new waybill to the parent document.
+- **Single source of truth for calculations.** `src/lib/Calculations.ts` owns all pricing, tax, and total computations. `calcTotals()` and `resolveRowVat()` are the core pipelines. No duplicate logic exists elsewhere.
+- **Field masking rules.** Waybill PDFs render blank pen-and-ink lines for empty fields while the on-screen view hides them. Inline eye toggles let operators hide fields from PDF output without deleting data.
+- **Prefix engine with `MAX(suffix)` sequence logic.** Document numbers are generated dynamically (`WBL-E-000001`, `WBL-ME-000001`, `INV-000001`) with a permanent blank token audit log that prevents number reuse.
+- **JSONB structural validation at DB level.** Postgres CHECK constraints enforce structural integrity on `items` arrays: non-empty, each item must have `description` + `qty`, and `qty > 0`.
+- **Invoice-to-waybill spawning pipeline.** A transform pipeline extracts item descriptions, quantities, and units from invoices, strips all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`), and binds the new waybill to the parent document.
 
-## Contributing / Agent Workflow
+## Agent Workflow
 
-This repository is designed for AI-assisted development. All coding agents must read `AGENTS.md` at the project root before modifying any file, and must consult the relevant skill files in `.agents/skills/` before writing code. The skill registry at `.agents/PROJECTSKIILINDEX.md` catalogs all available skills.
+All coding agents must read `AGENTS.md` at the project root before modifying any file and consult the relevant skill files in `.agents/skills/` before writing code. The full skills registry is cataloged at `.agents/PROJECTSKIILINDEX.md`.
