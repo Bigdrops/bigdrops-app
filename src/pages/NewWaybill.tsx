@@ -77,14 +77,14 @@ export default function NewWaybill() {
 
   const handleSave = async (data: WaybillFormData) => {
     try {
-      await saveWaybill({
+      const result = await saveWaybill({
         waybill: data.waybill,
         items: data.items,
         custom_fields: data.customFields,
         mode: 'new',
       })
       feedback.success('Waybill created')
-      navigate('/waybills')
+      navigate(`/waybills/${result.waybillId}`)
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Save failed')
     }

@@ -50,7 +50,7 @@ export default function EditWaybill() {
 
   const handleSave = async (data: WaybillFormData) => {
     if (!id) return
-    await saveWaybill({
+    const result = await saveWaybill({
       waybill: data.waybill,
       items: data.items,
       custom_fields: data.customFields,
@@ -58,7 +58,7 @@ export default function EditWaybill() {
       waybillId: id,
     })
     feedback.success('Waybill updated')
-    navigate('/waybills')
+    navigate(`/waybills/${result.waybillId}`)
   }
 
   if (loading) return null

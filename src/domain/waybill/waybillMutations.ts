@@ -74,7 +74,7 @@ export async function saveWaybill(params: {
       console.error('Waybill save error:', error)
       throw new Error(`Failed to save waybill: ${error.message}`)
     }
-    invalidateListCache('waybill-list')
+    invalidateListCache('bd:list:waybills:v1:all')
     return { status: 'online', waybillId: data?.id }
   } else {
     if (!waybillId) throw new Error("waybillId is required in edit mode");
@@ -83,7 +83,7 @@ export async function saveWaybill(params: {
       console.error('Waybill update error:', error)
       throw new Error(`Failed to update waybill: ${error.message}`)
     }
-    invalidateListCache('waybill-list')
+    invalidateListCache('bd:list:waybills:v1:all')
     return { status: 'online', waybillId }
   }
 }
