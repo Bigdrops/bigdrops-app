@@ -23,6 +23,7 @@ interface JsonImportUIProps {
   helpText?: string
   previewContent?: React.ReactNode
   additionalActions?: React.ReactNode
+  alwaysVisibleContent?: React.ReactNode
   whtNotice?: boolean
   whtHasPayments?: boolean
   onEditJson?: () => void
@@ -74,6 +75,7 @@ export function JsonImportUI({
   whtHasPayments = true,
   onEditJson,
   saveLabel = 'Save Record',
+  alwaysVisibleContent,
 }: JsonImportUIProps) {
   const [copied, setCopied] = React.useState(false)
   const [showTutorial, setShowTutorial] = React.useState(false)
@@ -148,6 +150,8 @@ export function JsonImportUI({
       </div>
 
       <div className="p-[var(--bd-sheet-padding)] space-y-[var(--bd-section-gap)] overflow-y-auto">
+        {alwaysVisibleContent}
+
         {/* Tutorial / Help Section */}
         <div className="space-y-[var(--bd-space-sm)]">
           <button

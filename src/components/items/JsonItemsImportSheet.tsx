@@ -175,7 +175,7 @@ export default function JsonItemsImportSheet({
         ],
         videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
       }}
-      previewContent={
+      alwaysVisibleContent={
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-black uppercase tracking-widest text-bd-overlay-muted">Import Strategy</span>
