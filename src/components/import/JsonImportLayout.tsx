@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Wand2, Copy, Check, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { feedback } from '@/lib/feedback'
 import { OpenInAIDropdown } from '@/components/ui/OpenInAIDropdown'
 
 interface JsonImportUIProps {
@@ -123,7 +124,12 @@ export function JsonImportUI({
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
               {copied ? 'Copied' : 'AI Prompt'}
             </Button>
-            <OpenInAIDropdown prompt={promptText} />
+            <OpenInAIDropdown
+              prompt={promptText}
+              onProviderSelect={(_name, label) => {
+                feedback.info(`Opening ${label} — prompt ready to paste if needed`)
+              }}
+            />
           </div>
         </div>
         {isParsed ? (
