@@ -1,310 +1,240 @@
-# 📘 JSON Import Improvement Roadmap
-
-**Project:** BIGDROPS Business Platform  
-**Scope:** All JSON import modules + Open in AI feature  
-**Status:** Planning → In Progress → Done  
-**Last Updated:** 2026-06-14  
-
----
-
-# 🧭 North Star
-
-Every AI-assisted import across the platform must:
-
-- Return only what exists in the source document — no inference, no guessing  
-- Groups are valid output, but only when explicitly present in the source or explicitly requested  
-- Never auto-infer structure from spacing, indentation, or visual layout  
-- Return `null` for absent fields — never placeholders or guesses  
-- Never assign identifier values unless explicitly labeled as that identifier type  
-- Each document type is semantically isolated (no cross-document reasoning reuse)  
-- Produce JSON that passes validation on first paste, every time  
-
----
-
-# 📊 Current State Summary (from audit)
-
-| Module | Prompt Type | Parser | Validation | Status |
-|---|---|---|---|---|
-| Invoice | Shared dynamic | Shared | Zod (shared) | Needs discipline rules |
-| Quotation | Shared dynamic | Shared | Zod (shared) | Needs discipline rules |
-| Waybill | Hardcoded inline | Shared | Zod (shared) | **FULL REWRITE REQUIRED** |
-| RFQ | Hardcoded inline | Inline | Manual | Needs tightening |
-| CSR | Hardcoded constant | Inline | Manual | Needs tightening |
-| Compliance Hub | 3 hardcoded prompts | Custom | Zod (custom) | Needs discipline rules |
-| Project Document | 4 hardcoded prompts | Inline JSON.parse() | Manual | Needs full rewrite |
-| Item Library | None | Inline | Manual | No UI — skip |
-| BOQ | — | — | — | No import — skip |
-| Reports | — | — | — | No import — skip |
-
----
-
-# 🔐 Open in AI — Current State
-
-- `openInAI.ts` supports Gemini, ChatGPT, Claude (UI only exposes Gemini)
-- Deep link flow via `?q=ENCODED_PROMPT`
-- Android OS intercept opens native apps with prompt pre-filled
-- No silent clipboard fallback
-- No unified multi-provider UX
-
----
-
-# 🚀 Phase 0 — Open in AI (All Modules)
-
-## Goal
-
-Enable all AI providers + ensure fail-safe prompt access.
-
-## Tasks
-
-- [ ] Replace Gemini-only button with `OpenInAIDropdown`
-- [ ] Expose: Gemini / ChatGPT / Claude
-- [ ] On click: `navigator.clipboard.writeText(prompt)` BEFORE opening link (silent fallback)
-- [ ] Show toast: “Opened in {AI_PROVIDER}”
-- [ ] Ensure all modules use shared `JsonImportLayout.tsx`
-
-## Applies to
-
-Invoice, Quotation, Waybill, RFQ, CSR, Compliance Hub
-
-## Completion Signal
-
-- Native AI apps open correctly on Android  
-- If deep link fails → clipboard already contains prompt  
-- No extra user interaction required  
-
----
-
-# 🧱 Phase 1 — Waybill (CRITICAL REWRITE)
-
-## 🚨 Core Architectural Constraint — External/Internal Isolation Rule
-
-External Waybill and Internal Waybill are fully isolated systems.
-
-They must NOT:
-- Share prompts
-- Share adapters
-- Share schemas
-- Share interpretation logic
-- Share entity-role inference rules
-- Share numbering assumptions
-
----
-
-## 🧠 Required Separation Architecture
-
-### Prompts
-- `externalWaybillPrompt.ts`
-- `internalWaybillPrompt.ts`
-
-### Adapters
-- `externalWaybillImportAdapter.ts`
-- `internalWaybillImportAdapter.ts`
-
-### Schemas
-- `externalWaybillSchema.ts`
-- `internalWaybillSchema.ts`
-
----
-
-## ⚠️ Mandatory Prompt Isolation Statement
-
-Each prompt must include:
-
-> “This document type is isolated. Do not reuse interpretation logic from other document types, including internal or external variants.”
-
----
-
-## Current Problems
-
-- External/Internal share parser logic
-- Missing fields in prompt vs UI schema mismatch
-- Dead fields still referenced (signature, notes variants)
-- No strict schema alignment with UI
-
----
-
-## Tasks
-
-- [ ] Audit all Waybill fields (header + items)
-- [ ] Fully separate External vs Internal logic
-- [ ] Rewrite both prompts independently
-- [ ] Add zero-inference rules
-- [ ] Remove dead fields
-- [ ] Extract adapters into domain layer
-- [ ] Create separate Zod schemas per variant
-- [ ] Test real-world documents for both flows
-
-## Completion Signal
-
-- External and Internal Waybills produce different outputs when semantics differ  
-- No field leakage between systems  
-- No shared inference behavior  
-
----
-
-# 📄 Phase 2 — Invoice
-
-## Current Issues
-
-- AI infers groups from indentation
-- Weak group control logic
-- Missing strict null enforcement
-
-## Tasks
-
-- [ ] Add controlled group rule (only explicit headers)
-- [ ] Add null enforcement rule
-- [ ] Ensure shared pipeline applies correctly
-- [ ] Test structured invoices
-
-## Completion Signal
-
-No auto-generated groups unless explicitly defined in source.
-
----
-
-# 📄 Phase 3 — Quotation
-
-## Tasks
-
-- [ ] Confirm shared fix applies
-- [ ] Add independent test cases
-
-## Completion Signal
-
-Flat structure unless explicit grouping exists.
-
----
-
-# 🧾 Phase 4 — Compliance Hub
-
-## Tasks
-
-- [ ] Add zero-inference rules to all 3 contracts
-- [ ] Ensure WHT linking unaffected
-- [ ] Test all contract types
-
-## Completion Signal
-
-Only real fields populated, no inference.
-
----
-
-# 📦 Phase 5 — RFQ
-
-## Tasks
-
-- [ ] Rewrite prompt with strict rules
-- [ ] Decide on Zod migration
-- [ ] Optional adapter refactor
-- [ ] Test 3-field schema compliance
-
----
-
-# 🧾 Phase 6 — CSR
-
-## Tasks
-
-- [ ] Rewrite CSR prompt
-- [ ] Rename parsing function
-- [ ] Add Zod validation (recommended)
-- [ ] Test single-record correctness
-
----
-
-# 🏗 Phase 7 — Project Documents (CRITICAL)
-
-## Core Problems
-
-- Role confusion (`from_party` vs `to_party`)
-- Identifier collision (`po_number` incorrectly filled)
-- Redundant financial fields (`subtotal`, `total`)
-- Weak schema validation
-
----
-
-## 🔐 PO Identifier Lock Rule
-
-`po_number` must ONLY be filled when explicitly labeled:
-
-Valid sources:
-- PO Number
-- Purchase Order Number
-- P.O No
-- Voucher Number (treated as PO-equivalent ONLY in Project context)
-
-Invalid sources:
-- Document Number
-- Reference Number
-- Invoice Number
-- Serial Number
-- Unlabeled numeric identifiers
-
-Otherwise:
-- `po_number = null`
-
----
-
-## Tasks (7a — Import)
-
-- [ ] Inject company identity into all prompts
-- [ ] Add PO identifier lock rule
-- [ ] Remove subtotal/total extraction
-- [ ] Add zero-inference rules
-- [ ] Create Zod schemas per sub-type
-- [ ] Test party correctness + identifier blocking
-
----
-
-## Tasks (7b — PDF)
-
-- [ ] Audit PDF rendering separately
-- [ ] Fix layout + formatting issues
-- [ ] Improve field presentation
-
----
-
-## Completion Signal
-
-- Correct party role assignment always  
-- No document-number pollution into PO fields  
-- Clean schema outputs  
-
----
-
-# 📜 Global Prompt Discipline Rules
-
-```text
-1. Only extract data explicitly present in source document
-2. Missing fields → null (never infer)
-3. Groups allowed only if explicitly present in source
-4. No structural reordering or renaming
-5. Output must be valid JSON only
-6. Uncertain values → null
-7. No cross-document inference allowed
-
-
----
-
-📌 System-Wide Constraint Summary
-
-Waybill External/Internal = fully isolated systems
-
-Project Documents = strict identifier locking
-
-Invoice/Quotation = controlled grouping only
-
-All modules = zero inference by default
-
-AI must never fill gaps
-
-
-
----
-
-📅 Execution Order
-
-Phase 0 → Phase 1 → Phase 2+3 → Phase 4 → Phase 5 → Phase 6 → Phase 7a → Phase 7b
-
-
----
+# Coding agent-Production-Grade Spec: JSON Import System
+ * **Project:** BIGDROPS Business Platform
+ * **Scope:** All JSON import modules + Open in AI feature
+ * **Status:** In Progress
+ * **Last Updated:** 2026-06-14
+## 0. Global Prompt Discipline Layer (Hard Gate)
+### JSON Import Discipline Spec (SYSTEM-WIDE ENFORCEMENT)
+This layer applies to **ALL** AI-generated import prompts across **ALL** modules.
+#### Non-Negotiable Rules
+ * Return **ONLY** data explicitly present in the source document.
+ * Never infer, guess, or fabricate values.
+ * Missing values **MUST** be null.
+ * Do not rename or reorder fields.
+ * Output **MUST** be valid JSON only.
+ * JSON **MUST** be wrapped in a code block.
+ * MUST end with: "Copy the JSON above and paste it back into the app."
+ * No explanations outside the JSON block.
+ * No markdown outside the JSON block.
+ * Groups are allowed **ONLY** if explicitly present in the source document.
+ * Never create groups from layout, indentation, or spacing.
+ * Each document type is independent (no cross-domain inference).
+ * Identifier rule (po_number) is strict:
+   * Only set if explicitly labeled PO/Voucher.
+   * Otherwise, it **MUST** be null.
+## 1. System Overview (Current State)
+### Import Architecture Map
+
+| Module | State | Notes |
+| :--- | :--- | :--- |
+| **Invoice / Quotation** | Shared dynamic pipeline | Stable core system |
+| **Waybill** | Mixed (inline + shared parser) | Needs full separation |
+| **RFQ** | Hardcoded prompt + inline parser | Non-standard |
+| **CSR** | Hardcoded + manual parser | Needs Zod migration |
+| **Compliance Hub** | Multi-schema (Zod per type) | Semi-standard |
+| **Project Document** | Inline JSON.parse + multi-type | High-risk |
+| **Item Library** | Utility only | No UI |
+| **BOQ / Reports** | No import system | Out of scope | <br> ## 2. Open in AI System (Cross-Module Feature) <br> ### Current Issues <br> * Only Gemini is exposed in the UI. <br> * ChatGPT + Claude remain unused despite backend support. <br> * DeepSeek / Qwen / Kimi are not implemented. <br> * Missing silent clipboard copy functionality. <br> * Missing toast feedback. <br> * Missing cross-platform deep-link validation. <br> * Prompts currently lack the global discipline wrapper enforcement. <br> ### Required Implementation <br> #### Providers <br> * Gemini <br> * ChatGPT <br> * Claude <br> * DeepSeek <br> * Qwen <br> * Kimi <br> #### UI Behavior <br> * Replace the single button with an OpenInAIDropdown. <br> * Execute a silent clipboard copy before launching the provider interface. <br> * Trigger a toast confirmation tailored per provider. <br> * Extract and use the designated module prompt from JsonImportLayout.tsx. <br> #### Prompt Enforcement <br> Must include: <br> * JSON Discipline Spec <br> * Code block requirement <br> * Paste-back instruction <br> ## 3. Waybill (Full Rewrite Required) <br> ### Goal <br> External and Internal Waybills must become fully isolated systems. <br> ### Architecture Requirement
+| Type | Prompt | Adapter | Schema |
+| :--- | :--- | :--- | :--- |
+| **External** | externalWaybillPrompt.ts | externalWaybillImportAdapter.ts | externalWaybillSchema.ts |
+| **Internal** | internalWaybillPrompt.ts | internalWaybillImportAdapter.ts | internalWaybillSchema.ts |
+
+### Constraints
+ * Zero shared logic between External and Internal architectures.
+ * No shared schema assumptions.
+ * No inline UI import logic allowed.
+ * No reused prompt fragments.
+### Required Work
+ 1. Audit External/Internal fields.
+ 2. Remove all dead or deprecated fields.
+ 3. Build dedicated, isolated prompts per type.
+ 4. Create dedicated data adapters.
+ 5. Implement strict validation using Zod schemas.
+ 6. Strip all inline parsing logic directly out of the UI components.
+## 4. Invoice — Add Mode (Anti-Inference Layer)
+### Goal
+Prevent the AI from generating structural elements or groups that do not exist in the source document.
+### Required Changes
+ * Inject the Global Discipline Spec directly into the prompt generator.
+ * Enforce:
+   * Strict prohibition of inferred grouping.
+   * null-only representation for missing values.
+ * **Explicit Rule:** Groups are created *only* if explicit visual headers are present in the source.
+### Validation Tests
+ * **Visual indentation only:** Must result in **NO** groups.
+ * **Explicit headers present:** Groups are **allowed**.
+## 5. Invoice / Quotation — Update Mode (Critical System)
+### Goal
+A safe, bounded, row-based mutation system.
+### Required Improvements
+#### Row Safety
+ * Inject the valid row_number range (1 \rightarrow N) into the prompt.
+ * Block any incoming invalid row_number values.
+ * Prevent silent row skips.
+#### Group Support
+ * Restore appropriate group handling within the Update pipeline.
+ * Ensure data persistence across sequential updates.
+#### Overwrite Protection
+ * Wire the detectOverwriteTargets() utility directly into the UI layer.
+ * Force a hard user confirmation dialog before completing any overwrites.
+#### UI Constraint Warning
+ * Empty values do **NOT** clear fields (must remain explicitly displayed in UI).
+### Validation Scenarios
+ * **Overflow rows:** Triggers a warning message and auto-truncation.
+ * **Valid rows:** Executes targeted, correct patch updates.
+ * **Overwrites:** Halts execution until explicit user confirmation is given.
+## 6. Quotation
+ * Fully inherits the core Invoice pipeline.
+ * Must remain behaviorally identical to the Invoice module.
+ * Zero architectural divergence is allowed.
+## 7. Compliance Hub
+### Required Fixes
+ * Inject the Global Discipline Spec into all 3 document prompts:
+   * vat_input
+   * tax_filing
+   * wht_receipt
+### Enforcement
+ * null-only values for missing data.
+ * Strict anti-inference rules.
+ * Zero schema drift tolerated.
+## 8. RFQ
+### Goal
+Strict structured 3-field extraction.
+### Required Fields
+ 1. item_name
+ 2. quantity
+ 3. specification
+### Improvements
+ * Inject the Global Discipline Spec.
+ * Recommended optimization: Migrate the parser to a strict Zod schema paired with the shared system parser.
+## 9. CSR
+### Required Fixes
+ * Rename the legacy utility function from parseCsvImport() to parseCsrJson().
+ * Replace the current manual code validation steps with a comprehensive Zod schema.
+ * Append the Global Discipline Spec to the prompt configuration.
+ * Enforce null-only formats for missing fields.
+## 10. Project Documents (High Risk System)
+### Critical Issues
+ * Frequent po_number misclassification.
+ * AI party-role inference errors.
+ * Financial calculation duplication (subtotal vs total).
+ * Lack of runtime schema enforcement.
+### Required Fixes
+#### Identity Rules
+ * Inject target company identities explicitly into the AI context.
+ * Enforce the strict PO/Voucher-only identification rule for the po_number property. (Otherwise, default to null).
+#### Schema Cleanup
+Remove the following calculated fields from the AI prompt scope:
+ * subtotal
+ * total
+#### Validation Upgrade
+Replace all legacy native JSON.parse implementations with target Zod schemas mapped to the respective document types:
+ * purchase_order
+ * receipt
+ * receiving_waybill
+ * other
+## 11. System Architecture Rules
+>  1. External and Internal Waybills are completely isolated domains.
+>  2. No semantic reuse is allowed across different document types.
+>  3. The po_number acts as a global structural identifier lock.
+>  4. All platform ingestion modules must converge toward a unified Zod validation pipeline.
+>  5. The prompt layer is designed to enforce structural discipline, not execution logic.
+>  6. UI presentation files must never contain core data-import or parsing logic.
+> 
+## 12. Open AI Prompt Standard
+Every module prompt **MUST** explicitly bundle:
+ 1. The Core JSON Discipline Spec.
+ 2. The specific system code block wrapper requirements.
+ 3. The designated app paste-back instructions.
+## 13. Phase Execution Plan (Codex Tracking Layer)
+### Phase 0 — Open in AI System
+ * [ ] Replace Gemini-only UI with the provider dropdown component.
+ * [ ] Integrate all 6 AI platform providers.
+ * [ ] Add clipboard copy operation before launching windows.
+ * [ ] Implement localized UI toast feedback.
+ * [ ] Apply prompt discipline injection wrappers.
+ * [ ] Validate functional deep links across all external platforms.
+### Phase 1 — Waybill Rewrite
+ * [ ] Audit both External and Internal field structural definitions.
+ * [ ] Generate distinct, isolated prompt text files.
+ * [ ] Build isolated code data adapters.
+ * [ ] Create discrete, isolated runtime Zod schemas.
+ * [ ] Excise all inline parsing code fragments from UI files.
+ * [ ] Run individual, isolated end-to-end integration tests.
+### Phase 2 — Invoice Add Mode
+ * [ ] Inject the Discipline Spec into the main prompt generation utility.
+ * [ ] Implement hard blocks against AI-inferred grouping layouts.
+ * [ ] Enforce strict null conversions for all missing fields.
+ * [ ] Test parser outputs against flat documents vs heavily sectioned documents.
+### Phase 2b — Invoice/Quotation Update Mode
+ * [ ] Dynamically pass structural row ranges (1 \rightarrow N) to the prompt.
+ * [ ] Build the UI overflow warning system components.
+ * [ ] Construct and wire up the overwrite confirmation modal UI.
+ * [ ] Re-integrate structural group handling into the system update stream.
+ * [ ] Code and display UI warnings regarding empty-field retention limitations.
+ * [ ] Run validation testing on row overflows and explicit confirmation scenarios.
+### Phase 3 — Quotation
+ * [ ] Perform parity testing against the core Invoice system pipeline to ensure absolute conformity.
+### Phase 4 — Compliance Hub
+ * [ ] Update all 3 core compliance prompts with the standard discipline rules.
+ * [ ] Force absolute enforcement of the missing data discipline rules.
+ * [ ] Run structured contract-type validation suites across the hub.
+### Phase 5 — RFQ
+ * [ ] Restructure the prompt format to lock down formatting.
+ * [ ] Execute the optional migration path to a strict Zod schema.
+ * [ ] Verify the parser accepts only the defined 3-field output footprint.
+### Phase 6 — CSR
+ * [ ] Complete the parser function rename task.
+ * [ ] Build and map the new Zod schema structure.
+ * [ ] Merge prompt discipline logic into the module configurations.
+### Phase 7a — Project Documents
+ * [ ] Fix the current po_number identifier resolution bug.
+ * [ ] Dynamically inject corporate identity values.
+ * [ ] Strip out structural subtotal and total properties from AI instructions.
+ * [ ] Construct independent, production-grade Zod schemas.
+ * [ ] Upgrade unsafe native JSON.parse operations to safe schema validations.
+### Phase 7b — Project PDF
+ * [ ] Review and audit file structural layouts.
+ * [ ] Align overall data extraction quality to match Invoice/Quotation standards.
+### Phase 8 — Clipboard Detector
+ * [ ] Develop window focus handlers that check for structural JSON configurations.
+ * [ ] Build the inline paste-suggestion notification interface element.
+ * [ ] Program error-handling fallback routes for when permission scopes are denied.
+ * [ ] Validate cross-platform behavior (MacOS, Windows, iOS, Android).
+## 14. New Module Standard (MANDATORY)
+Every new import module built moving forward **MUST** adhere to this lifecycle structural loop:
+### 1. Scope Definition
+ * Outline explicit fields only.
+ * Classify as bulk execution vs single execution.
+ * Maintain clean structural variant separation.
+### 2. Prompt Design
+ * Bundle the Discipline Spec.
+ * Include code block wrapper + paste-back instruction structures.
+ * Apply system-wide global identifier rules.
+### 3. Schema Design
+ * Use Zod schemas exclusively.
+ * Manual string checking or custom validation functions are prohibited.
+### 4. Adapter Layer
+ * Create an isolated, dedicated importAdapter.ts handler file.
+ * Keep data handling completely clear of UI components.
+### 5. UI Integration
+ * Connect modules using the central JsonImportLayout container.
+ * No ad-hoc, custom formatting or import logic is permitted in view layers.
+### 6. Testing Validation
+ * Verify first-paste success criteria.
+ * Check for proper missing value null enforcement.
+ * Ensure zero grouping leakages occur on visually formatted documents.
+ * Pass all integration tests through runtime Zod validations.
+## 15. Success Definition
+The implementation is complete when:
+ * **Zero AI data inference** occurs anywhere across the application platform.
+ * All document text parsing imports operate deterministically.
+ * Unpopulated data fields uniformly resolve to null.
+ * No phantom grouping logic is introduced from visual layout indentation patterns.
+ * Update operations are structurally bounded and safe across all targeted row indices.
+ * Every intake module passes verification using a Zod schema or unified parser pipeline.
+ * Project Documents correctly apply corporate identities and structural po_number rules.
+ * The "Open in AI" dropdown functions reliably across all 6 vendor integrations.
+ * Clipboard capture sequences work consistently across all runtime platforms.
+ * Future platform modules are built explicitly following these standardization laws before engineering work starts.
