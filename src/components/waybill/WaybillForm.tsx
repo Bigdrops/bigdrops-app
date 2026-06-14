@@ -287,7 +287,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
           ...customColumns.map(c => ({ key: c.key, label: c.label })),
         ]
         const isDuplicate = allColumns.some(col => col.key !== key && col.label.toLowerCase() === trimmedValue.toLowerCase())
-        if (isDuplicate) return
+        if (isDuplicate) { feedback.error(`A column named "${trimmedValue}" already exists`); return }
 
         if (key.startsWith('custom_')) {
           setState((prev) => ({

@@ -221,7 +221,7 @@ function WaybillsContent() {
 
       <MobileFab onClick={() => navigate('/waybills/new')} ariaLabel="Create waybill" />
       <InvoiceListActionSheet
-        open={Boolean(activeWaybill)} onOpenChange={(open) => { if (!open) setActiveWaybill(null) }}
+        open={Boolean(activeWaybill) && !archiveId && !deleteId} onOpenChange={(open) => { if (!open) setActiveWaybill(null) }}
         eyebrow={activeWaybill ? (activeWaybill.type === 'internal' ? 'Internal Waybill' : 'External Waybill') : 'Waybill'}
         title={activeWaybill?.waybill_number || ''}
         subtitle={activeWaybill ? `${activeWaybill.client_name || 'No client / internal movement'}${activeWaybill.delivery_location ? ` · ${activeWaybill.delivery_location}` : ''}` : undefined}
