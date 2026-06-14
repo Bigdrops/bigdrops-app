@@ -165,7 +165,43 @@ All modules route through a common pipeline in `src/domain/import/`:
 
 ---
 
-## 8. Item Library
+## 8. Project Document (Purchase Order / Receipt / Receiving Waybill / Other)
+
+| File | Path |
+|---|---|
+| Prompts | `src/domain/projectDocumentPrompts.ts` |
+| Import sheet | `src/components/project/ProjectDocumentSheet.tsx` |
+| Type selector | `src/components/project/ProjectDocumentTypeSelector.tsx` |
+| Review form | `src/components/project/ProjectDocumentStep3Review.tsx` |
+| Domain layer | `src/domain/projectDocuments.ts` |
+
+### How it works
+
+- **4 sub-types**, each with its own hardcoded AI prompt in `projectDocumentPrompts.ts`:
+  1. **purchase_order** — expects `{ title, ref_number, voucher_number, date, from_party, to_party, notes, vat, wht, amount, payment_method, received_by, purchaseOrderItems[] }`
+  2. **receipt** — expects `{ title, ref_number, voucher_number, date, from_party, to_party, notes, vat, wht, amount, waybillItems[] }`
+  3. **receiving_waybill** — expects `{ title, ref_number, voucher_number, date, from_party, to_party, notes, amount, waybillItems[] }`
+  4. **other** — expects `{ title, ref_number, voucher_number, date, from_party, to_party, notes, amount }`
+- **Input format**: A single JSON object (one document), **not** an array.
+- **Validation**: Inline `JSON.parse()` with try/catch, then checks `typeof result === 'object' && result !== null && !Array.isArray(result)` — no Zod schema, no shared parser.
+- **Sheet architecture**: `ProjectDocumentSheet.tsx` wraps its own `Sheet` component directly (step 1 type selector, step 2 import, step 3 review). Step 2 uses the `JsonImportUI` inner component but does **not** wrap it in the shared `JsonImportLayout` (which itself is a Sheet-based wrapper).
+- **from_party / to_party**: The AI prompt instructs extraction from source text — `from_party` = supplier/vendor name, `to_party` = purchaser/company name. The logged-in company identity is **not** injected into the prompt.
+- **Prompt scope**: Prompts extract all form fields including financial values (`unit_price`, `amount`, `vat`, `wht`, `subtotal`, `total`). The review form recalculates subtotal/total from item data anyway, creating overlap between AI-computed and app-computed values.
+- **Items with monetary values**: Unlike Invoice→Waybill spawn transforms (which strip all monetary values), Project Document item arrays preserve `unit_price`, `amount`, `vat`, `wht`, `subtotal`, `total` in the extracted JSON.
+
+### Key observations
+
+- **Only module with single-object (not array) import** — all others import bulk items/records.
+- **No Zod validation** — raw `JSON.parse()` + manual type checks, unlike Invoice/Quotation/Waybill which use shared Zod schemas.
+- **Own Sheet wrapper** — does not use shared `JsonImportLayout`; `ProjectDocumentSheet.tsx` has its own `Sheet` + steps. This is unique — every other module either uses `JsonImportLayout` or has its own simpler sheet, but Project Document combines a bespoke Sheet with `JsonImportUI` as a child.
+- **4 sub-types, 1 module** — the only module where a single import mechanism handles 4 distinct document types with different prompt schemas and item structures.
+- **from_party/to_party extraction** — prompt-driven from source text, no company identity baked in.
+- **Financial field overlap** — prompt extracts calculated fields (subtotal, total) that the app recalculates, unlike Invoice/Quotation where only raw item fields are imported and totals are always calculated.
+- **Invoice items → Waybill spawn strips monetary values** (hard rule in the codebase). Project Document items preserve them, meaning the same data flowing through a different domain retains vs. discards financial fields.
+
+---
+
+## 9. Item Library
 
 | File | Path |
 |---|---|
@@ -185,18 +221,17 @@ All modules route through a common pipeline in `src/domain/import/`:
 
 ---
 
-## 9. Modules with NO JSON Import
+## 10. Modules with NO JSON Import
 
 | Module | Evidence |
 |---|---|
 | **BOQ** | Zero import-related files found. No import adapter, no import sheet. The only BOQ JSON interaction is via Compliance Hub's `wht_receipt` contract which references BOQ fields. |
 | **Reports** | Zero import-related files found. No grep matches for "import" combining with "report". |
-| **Project / Document** | Zero import files. Grep for "import" in `src/domain/project/` and `src/domain/document/` returned zero matches. |
 | **Payments** | No import adapter or import sheet. `RecordPaymentModal.tsx` exists but is a manual entry form, not an import mechanism. |
 
 ---
 
-## 10. Summary Matrix
+## 11. Summary Matrix
 
 | Module | Prompt Source | Parser | Validation | Bulk/ Single | Uses Shared Pipeline? |
 |---|---|---|---|---|---|
@@ -207,17 +242,17 @@ All modules route through a common pipeline in `src/domain/import/`:
 | Waybill | Hardcoded inline | Shared `parser.ts` | Shared Zod `schema.ts` | Bulk | Partial (parser only) |
 | Compliance Hub | Hardcoded per contract (3 prompts) | Per-contract custom | Per-contract Zod | Bulk | **No** |
 | Item Library | N/A (no prompt) | Inline function | Inline checks | Bulk | **No** |
+| Project Document | Hardcoded per sub-type (4 prompts) | Inline `JSON.parse()` | Inline type checks | Single | **No** |
 | BOQ | — | — | — | — | N/A (no import) |
 | Reports | — | — | — | — | N/A (no import) |
-| Project | — | — | — | — | N/A (no import) |
 
 ---
 
-## 11. Cross-Cutting Observations
+## 12. Cross-Cutting Observations
 
-1. **3 out of 7 import-capable modules** (Invoice, Quotation, partial Waybill) use the shared `parser.ts` and `schema.ts`. The other 4 (RFQ, CSR, Compliance Hub, Item Library) have bespoke implementations.
+1. **3 out of 8 import-capable modules** (Invoice, Quotation, partial Waybill) use the shared `parser.ts` and `schema.ts`. The other 5 (RFQ, CSR, Compliance Hub, Item Library, Project Document) have bespoke implementations.
 2. **Only 2 modules** (Invoice, Quotation) use the shared `promptGenerator.ts`. All others hardcode prompts inline.
 3. The shared pipeline (`promptGenerator.ts`) is designed for dynamic `columns` → schema prompts, but no module besides Invoice/Quotation actually has a dynamic column set to pass.
-4. **Validation inconsistency**: Invoice/Quotation/Waybill use Zod through shared schema. RFQ/CSR/Item Library use manual checks. Compliance Hub uses its own Zod schemas per contract.
+4. **Validation inconsistency**: Invoice/Quotation/Waybill use Zod through shared schema. RFQ/CSR/Item Library/Project Document use manual checks. Compliance Hub uses its own Zod schemas per contract.
 5. The **"Open in AI"** feature exclusively opens Gemini, despite the underlying `openInAI.ts` supporting ChatGPT and Claude.
 6. CSV support exists alongside JSON in the **CSR** module (file upload + paste). All other modules are JSON-paste-only.
