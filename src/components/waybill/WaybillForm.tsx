@@ -181,15 +181,46 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     markDirty()
   }
 
+  const moveItem = (index: number, direction: 1 | -1) => {
+    const target = index + direction
+    setState((prev) => {
+      const next = [...prev.items]
+      const tmp = next[target]
+      next[target] = next[index]
+      next[index] = tmp
+      return { ...prev, items: next }
+    })
+    markDirty()
+  }
+
+  const insertItemAfter = (index: number) => {
+    setState((prev) => {
+      const next = [...prev.items]
+      next.splice(index + 1, 0, createDefaultItem())
+      return { ...prev, items: next }
+    })
+    markDirty()
+  }
+
+  const normalizeTitle = (title: string) => title.trim().toLowerCase().replace(/\s+/g, ' ')
+
   const addCustomColumn = () => {
     if (customColumns.length >= WAYBILL_COLUMN_LIMIT) {
       feedback.warning('Limit reached', { description: `Maximum ${WAYBILL_COLUMN_LIMIT} columns allowed.` })
       return
     }
+    const existingLabels = customColumns.map((c) => normalizeTitle(c.label))
+    const base = 'Custom Column'
+    let label = base
+    let counter = 2
+    while (existingLabels.includes(normalizeTitle(label))) {
+      label = `${base} ${counter}`
+      counter++
+    }
     const key = createCustomColumnKey(`custom_${Date.now()}`)
     setState((prev) => ({
       ...prev,
-      customColumns: [...prev.customColumns, { key, label: 'Custom Column' }],
+      customColumns: [...prev.customColumns, { key, label }],
     }))
     setColumnVisibility(prev => ({ ...prev, [key]: true }))
     markDirty()
@@ -561,8 +592,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             onAddItemToGroup={() => {}}
             onUpdateItem={updateItem}
             onRemoveItem={removeItem}
-            onMoveItem={() => {}}
-            onInsertItemAfter={() => {}}
+            onMoveItem={(index, direction) => moveItem(index, direction as 1 | -1)}
+            onInsertItemAfter={insertItemAfter}
             onUpdateGroupName={() => {}}
             onToggleGroupSubtotal={() => {}}
             onDeleteGroup={() => {}}
