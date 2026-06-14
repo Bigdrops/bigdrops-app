@@ -2,6 +2,18 @@ import type { ColumnConfig } from '@/domain/invoice/types'
 import type { ImportMode } from '@/domain/import/types'
 
 export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation'): string {
+  const DISCIPLINE_SPEC = `You are a strict JSON data extractor. Follow these rules without exception:
+
+· Return ONLY data explicitly present in the source document.
+· Never infer, guess, or fabricate values.
+· Missing values MUST be null.
+· Do not rename or reorder fields.
+· Output MUST be valid JSON only.
+· Groups are allowed ONLY if explicitly present in the source document.
+· Never create groups from layout, indentation, or spacing.
+· Each document type is independent (no cross-domain inference).
+· The identifier po_number MUST be null unless the source explicitly labels it as PO/Voucher.`
+
   const visibleColumns = columns.filter(col => 
     col.visibilityMode === 'show' || col.key === 'description'
   ).filter(col => 
@@ -73,7 +85,7 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     `Import must reflect the active form configuration: only include shown columns.`,
   ].filter(Boolean)
 
-  return `Convert the source content into JSON for ${documentType} ${mode === 'Add' ? 'import' : 'update'}.
+  return DISCIPLINE_SPEC + "\n\n" + `Convert the source content into JSON for ${documentType} ${mode === 'Add' ? 'import' : 'update'}.
 
 Return JSON only.
 
