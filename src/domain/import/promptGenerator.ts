@@ -84,5 +84,8 @@ ${rules.map(r => `- ${r}`).join('\n')}
 - Use exactly these keys for item fields: ${mode === 'Add' ? 'temp_ref, group_id, ' : ''}${Object.keys(itemSchema).join(', ')}
 ${Object.keys(customSchema).length > 0 ? `- Use these keys inside "custom_fields": ${Object.keys(customSchema).join(', ')}` : ''}
 - Do not guess missing values
-- Do not add top-level fields outside this structure`
+- Do not add top-level fields outside this structure
+
+Wrap the JSON output in a code block.
+Copy the JSON above and paste it back into the app.`
 }
