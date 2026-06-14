@@ -198,10 +198,13 @@ Every module prompt **MUST** explicitly bundle:
  * [ ] Review and audit file structural layouts.
  * [ ] Align overall data extraction quality to match Invoice/Quotation standards.
 ### Phase 8 — Clipboard Detector
- * [ ] Develop window focus handlers that check for structural JSON configurations.
- * [ ] Build the inline paste-suggestion notification interface element.
- * [ ] Program error-handling fallback routes for when permission scopes are denied.
- * [ ] Validate cross-platform behavior (MacOS, Windows, iOS, Android).
+  * [ ] Add an explicit "Paste from clipboard" button near the JSON textarea — do not auto-read on focus
+  * [ ] On button tap: call `navigator.clipboard.readText()` inside try/catch
+  * [ ] If result is valid JSON (passes `JSON.parse()`): fill textarea with clipboard content
+  * [ ] Validate cross-platform behavior (MacOS, Windows, iOS, Android).
+#### Phase 8 Notes
+  * Auto-read on focus is forbidden — Android 12+ fires a system toast on every programmatic clipboard read, causing repeated alerts every time the import modal opens
+  * Clipboard read must only happen on explicit user tap
 ## 14. New Module Standard (MANDATORY)
 Every new import module built moving forward **MUST** adhere to this lifecycle structural loop:
 ### 1. Scope Definition
