@@ -1,370 +1,156 @@
-Deepsek speaking. Here's the complete architect-level session log, designed to give any AI (or me in a future session) instant full context on everything we built, decided, debugged, and shipped.
+BIGDROPS JSON Import Improvement Roadmap — Architect Session Log
 
-```markdown
-# JSON Import Improvement — Complete Architect Session Log
-
-> **Purpose:** This document captures the full architectural journey of the BIGDROPS JSON Import Improvement Roadmap. It is written for an architect — not an agent. Any AI reading this should be able to resume the conversation with complete context.
-> **Date Range:** 2026-06-14 to 2026-06-15
-> **Final Status:** Complete (all phases shipped or formally deferred)
+Role: Lead Architect (Deepsek)
+Session scope: Full implementation of the JSON Import Improvement Roadmap across 8 phases.
+Outcome: All phases completed or formally deferred. A new standard has been established for all future import work.
+Date: 2026‑06‑14 to 2026‑06‑15
 
 ---
 
-## 1. Project Context
+1. Platform Context
 
-**BIGDROPS** is a Nigerian B2B invoicing and business management platform. Stack: React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase (Postgres), Vite 7, Bun runtime, Vercel deployment.
-
-The JSON Import system allows operators to paste AI-generated JSON into document forms (Invoices, Waybills, CSRs, etc.) to populate line items and header fields. The "Open in AI" button sends a structured prompt to an external AI provider (Gemini, ChatGPT, Claude, etc.) with instructions on how to convert a source document into the correct JSON shape.
-
----
-
-## 2. Initial State (Before Roadmap)
-
-An audit was conducted across all 10 modules. Key findings:
-
-### 2.1 Shared Infrastructure
-- `src/domain/import/` — types, schema, utils, parser, promptGenerator
-- `src/components/import/JsonImportLayout.tsx` — shared Sheet wrapper used by most modules
-
-### 2.2 Module-by-Module State
-
-| Module | Prompt Source | Parser | Validation | Uses Shared Pipeline? |
-|---|---|---|---|---|
-| Invoice | Shared `generateImportPrompt()` | Shared `parser.ts` | Shared Zod | Yes |
-| Quotation | Shared `generateImportPrompt()` | Shared `parser.ts` | Shared Zod | Yes |
-| RFQ | Hardcoded inline | Inline `parseJson()` | Inline checks | No |
-| CSR | Hardcoded constant | Inline | Inline checks | No |
-| Waybill | Hardcoded inline | Shared `parser.ts` | Shared Zod | Partial (parser only) |
-| Compliance Hub | Hardcoded per contract (3 prompts) | Per-contract custom | Per-contract Zod | No |
-| Item Library | N/A (no prompt) | Inline function | Inline checks | No |
-| Project Document | Hardcoded per sub-type (4 prompts) | Inline `JSON.parse()` | Inline type checks | No |
-| BOQ | No import system | — | — | N/A |
-| Reports | No import system | — | — | N/A |
-
-### 2.3 Critical Problems Identified
-
-1. **"Open in AI" only exposed Gemini** — despite `openInAI.ts` supporting ChatGPT and Claude.
-2. **5 of 8 import-capable modules used bespoke validation** (no Zod).
-3. **6 of 8 modules hardcoded prompts** — only Invoice/Quotation used the dynamic prompt generator.
-4. **No global discipline rules** — AI could hallucinate values, infer groups, or fill in missing fields.
-5. **CSV support existed alongside JSON in CSR** — inconsistent with other modules.
-6. **Waybill import had inline logic in UI components** — violating separation of concerns.
-7. **Project Documents had calculated financial fields in AI prompts** (subtotal, total) that the app recalculates.
-8. **No `po_number` identifier discipline** — AI would set it for any document number.
+Layer Detail
+Platform BIGDROPS – internal B2B invoicing and business management tool for Nigerian SMEs
+Stack React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase (Postgres), Vite 7, Bun, Vercel
+Runtime Bun (never npm/yarn)
+UI primitives shadcn/ui (Radix), Lucide icons
+Import backbone Shared pipeline in src/domain/import/ (types, schema, parser, promptGenerator, utils, apply, validate, normalize)
+Modules touched Invoice, Quotation, Waybill, RFQ, CSR, Compliance Hub, Item Library (audit only), Project Documents (deferred)
 
 ---
 
-## 3. The Roadmap
+2. Mental Model
 
-The `docs/Json-import-roadmap.md` defined 13 phases:
-
-| Phase | Module | Status After Completion |
-|---|---|---|
-| 0 | Open in AI System | ✅ Done |
-| 1 | Waybill Rewrite | ✅ Done |
-| 2 | Invoice Add Mode (Anti-Inference) | ✅ Done |
-| 2b | Invoice/Quotation Update Mode | ✅ Done |
-| 3 | Quotation Parity | ✅ Inherited |
-| 4 | Compliance Hub | ✅ Done |
-| 5 | RFQ | ✅ Done |
-| 6 | CSR | ✅ Done |
-| 7a | Project Documents | 🔀 Moved to PDF Roadmap |
-| 7b | Project PDF | 🔀 Moved to PDF Roadmap |
-| 8 | Clipboard Detector | ✅ Done |
-
-### 3.1 Global Prompt Discipline Layer (Section 0 of Roadmap)
-
-A system-wide enforcement layer applied to ALL AI-generated import prompts:
-- Return ONLY data explicitly present in the source document
-- Never infer, guess, or fabricate values
-- Missing values MUST be null
-- Do not rename or reorder fields
-- Output MUST be valid JSON only
-- Groups are allowed ONLY if explicitly present in the source document
-- Never create groups from layout, indentation, or spacing
-- Each document type is independent (no cross-domain inference)
-- `po_number` MUST be null unless source explicitly labels it as PO/Voucher
-- JSON MUST be wrapped in a code block
-- MUST end with: "Copy the JSON above and paste it back into the app"
+· The import system is a prompt‑to‑data pipeline: a user pastes JSON into a textarea, the system validates it with Zod, normalises it, resolves column mappings, and applies the data to the document’s state.
+· A Global Prompt Discipline Spec acts as a hard behavioural wrapper around every AI‑bound prompt. It prohibits inference, enforces null for missing values, and prevents hallucinated grouping.
+· Two modules (Invoice, Quotation) share a fully dynamic pipeline (promptGenerator.ts). All other modules had bespoke implementations that had to be brought into conformance.
+· Three layers of safety for Update mode: prompt‑level row‑range injection, schema‑level strict validation, and UI‑level overwrite confirmation.
+· Every module now follows the adapter pattern: a dedicated file exporting prompts, schema, and applyResult. The UI is a thin shell.
 
 ---
 
-## 4. Phase-by-Phase Execution
+3. Critical Architecture Decisions (CADs)
 
-### 4.1 Phase 0 — Open in AI System
-
-**Goal:** Replace Gemini-only UI with a 6-provider dropdown, add silent clipboard copy, add toast feedback.
-
-**Files Modified:**
-- `src/lib/openInAI.ts` — Added 6 providers (Gemini, ChatGPT, Claude, DeepSeek, Qwen, Kimi)
-- `src/components/ui/OpenInAIDropdown.tsx` — Replaced single button with provider dropdown
-- `src/domain/import/promptGenerator.ts` — Appended code-block and paste-back instructions
-
-**Bugs Encountered & Fixed:**
-
-1. **Dropdown not opening (first attempt):** Agent used shadcn DropdownMenu, but it conflicted with the parent Sheet's focus trap. Console showed `[Violation] 'pointerdown' handler took 200-400ms`. The dropdown technically opened but clicks never reached menu items. **Fix:** Switched from DropdownMenu to Radix Popover.
-
-2. **Popover still not opening (second attempt):** Popover swap didn't fix it. New violations showed `'message' handler took 2081ms`. Root cause was a YouTube iframe in `JsonImportLayout.tsx` (tutorial section) firing continuous `postMessage` events, blocking the main thread. **Fix:** Made the iframe lazy — only rendered when `showTutorial` is true.
-
-3. **Popover broken on mobile (third attempt):** Popover inside Sheet failed on touch devices because Sheet overlay intercepted touch events before Radix could process them. **Fix:** Replaced Popover with a native HTML `<select>` element. This was a pragmatic decision — functional but not polished. The user accepted it to unblock progress.
-
-4. **Missing Global Discipline Spec:** Initial implementation only appended code-block and paste-back lines. The full anti-inference discipline block was not prepended. **Fix:** Added a follow-up task to inject the full discipline spec into `generateImportPrompt()` via a `DISCIPLINE_SPEC` constant prepended to every generated prompt.
-
-**Final State:** 6-provider selector working (native `<select>`), silent clipboard write on selection, toast with provider name, all prompts include discipline spec + code-block/paste-back instructions.
+CAD# Decision Rationale
+CAD‑1 Discipline spec injection in all prompts Phase 0 injected the canonical 9‑rule block into generateImportPrompt(). Later phases either reused it (Invoice/Quotation) or created tailored lean variants (Waybill, CSR, RFQ, Compliance) that never weaken the core anti‑inference rules.
+CAD‑2 Total isolation of External/Internal Waybill imports External and Internal waybills have different field sets (po_number, client_*, purpose). Per the roadmap, they must have zero shared logic. We created separate prompt, schema, and adapter files for each.
+CAD‑3 Ignore groups in Update mode Update mode is a row‑level patch system. Group structural changes are not its responsibility. When the user needs to restructure groups, they use Add mode. This decision avoids dangerous mix‑ups and aligns with the Phase 2 anti‑inference layer.
+CAD‑4 hasScatteredGroups guard in Add mode apply When AI hallucinates groups (all items in one group, or groups clustered at the start/end), the apply layer silently strips the group assignments. Only genuinely scattered groups (matching the source document’s structure) are preserved.
+CAD‑5 Remove CSV upload from CSR The audit revealed a misleading parseCsvImport function that always handled JSON. Removing CSV entirely simplified the module and removed dead code. The function was renamed to parseCsrJson and migrated to Zod.
+CAD‑6 Clipboard button in shared JsonImportLayout Rather than adding a paste button to every import sheet, the button was placed in the shared layout component. It’s a best‑effort, silent‑fail operation with no auto‑read on focus (Android 12+ compliance).
+CAD‑7 Replace Radix DropdownMenu with native <select> The Radix DropdownMenu conflicted with the parent Sheet’s focus trap, causing the menu to never open. A Popover also failed due to a YouTube iframe blocking the main thread. The final fix used a native <select> element — simple, reliable, accessible.
+CAD‑8 Codify the standard All the acquired knowledge was distilled into docs/json-import-standard.md, with a hard reference in AGENTS.md. Future modules must follow this standard from day one.
 
 ---
 
-### 4.2 Phase 1 — Waybill Rewrite
+4. Phase‑by‑Phase Implementation Log
 
-**Goal:** Complete isolation of External and Internal waybill import systems. Zero shared logic.
+Phase 0 — Open in AI System (6 providers, discipline spec)
 
-**Architectural Decision:** External and Internal waybills have different field sets:
-- External: `client_id`, `client_name`, `po_number`, `purpose` (DB-enforced)
-- Internal: `purpose` must be NULL (DB CHECK constraint), no client fields
+File Action Agent Issues
+src/lib/openInAI.ts Replaced hardcoded 3‑provider map with exported AI_PROVIDERS array containing all 6 providers (Gemini, ChatGPT, Claude, DeepSeek, Qwen, Kimi). —
+src/components/ui/OpenInAIDropdown.tsx Replaced single Gemini button with a shadcn DropdownMenu listing all 6 providers. Clipboard write before window.open(). Toast via feedback.info(). Dropdown never opened — Radix pointerdown handler blocked. Later rewritten to Popover, still failed. Final fix: native <select>.
+src/domain/import/promptGenerator.ts Appended code‑block + paste‑back instruction to every generated prompt. —
+src/components/import/JsonImportLayout.tsx Updated parent to pre‑compute prompt via useMemo and wire onProviderSelect toast. Initial version lacked useMemo. Fixed later.
+Task/reports/phase0‑*.md Multiple reports generated. Early agents did not save reports to Task/reports/; corrected later.
+Key failure The YouTube iframe inside JsonImportUI was firing continuous postMessage events, blocking the main thread and preventing any Radix‑based dropdown from opening. This was only discovered after two failed rewrite attempts.
 
-**Files Created:**
-- `src/domain/waybill/externalWaybillPrompt.ts`
-- `src/domain/waybill/internalWaybillPrompt.ts`
-- `src/domain/waybill/externalWaybillSchema.ts`
-- `src/domain/waybill/internalWaybillSchema.ts`
-- `src/domain/waybill/externalWaybillImportAdapter.ts`
-- `src/domain/waybill/internalWaybillImportAdapter.ts`
-
-**Files Modified:**
-- `src/components/waybill/WaybillForm.tsx` — Restored `delivery_location` field, wired adapters
-- `src/components/waybill/WaybillImportSheet.tsx` — Removed hardcoded prompt, delegates to adapter
-- `src/domain/import/promptGenerator.ts` — Exported `JSON_IMPORT_DISCIPLINE_SPEC`
-
-**Gap Decisions (from audit):**
-
-| Gap | Decision |
-|---|---|
-| Gap 1: `delivery_location` in DB but no form field | Restore to form (was removed during invoice form import refactor) |
-| Gap 2: `purpose` no form selector | Dropped — user to revisit separately |
-| Gap 4: `driver_name` missing from import prompt | Add to import prompt |
-| Gap 5: `transport_mode` missing from import prompt | Add to import prompt |
-| Gap 7: `partyNotes` imported but never displayed | Delete from import prompt |
-| Gap 8: `linkedProjectName`, `sourceDocumentNumber` imported but no form UI | Delete from import prompt |
-
-**Prompt Bloat Fix (Post-Implementation):**
-The initial waybill prompts were bloated — included "photographed or handwritten" (locking out PDF sources), signature detection rules (not relevant to import), alias lists (5+ per field), and group rules (only Invoice/Quotation support groups). The user called this out. **Fix:** Replaced both prompts with lean 7-rule versions. Removed all aliases, signature rules, source-type restrictions. Added isolation statements. Used exact JSON shapes as instructions.
-
-**Final State:** Two fully isolated import systems. No shared schemas, prompts, or adapters. UI is a thin shell that picks the right adapter based on `waybill.type`. `quantity` → `qty` mapping handled in `applyResult`.
+Final Phase 0 state: Discipline spec injected; provider dropdown functional (native select); clipboard silent write; toast; deep‑link validation manual.
 
 ---
 
-### 4.3 Phase 2 — Invoice Add Mode (Anti-Inference Layer)
+Phase 1 — Waybill Rewrite
 
-**Goal:** Prevent AI from creating groups that don't exist in the source document.
-
-**Two-layer protection:**
-
-1. **Prompt layer:** Added 2 anti-inference rules to Add mode rules array:
-   - "Create groups ONLY if the source document contains explicit section header labels"
-   - "Never infer groups from indentation, indentation depth, bullet style, or visual spacing"
-   - "Preserve the exact item order from the source document"
-
-2. **Apply layer:** Added `hasScatteredGroups()` guard in `apply.ts`. If the AI creates groups but they're clustered (all at start, all at end, or all in one block), silently strip the groups and apply items in original JSON array order. Only preserve groups if they're genuinely scattered across the items (indicating real section structure).
-
-**Test cases verified:**
-- All items in one group → stripped
-- Groups clustered at start → stripped
-- Groups clustered at end → stripped
-- Groups scattered → preserved
-- No groups → normal flow
-
-**Quotation:** Inherits automatically via shared pipeline. No separate changes needed.
+File Action
+src/components/waybill/WaybillForm.tsx Restored delivery_location field to both External and Internal forms. Wired adapters: handleApplyImport selects adapter based on waybill.type. Removed unused normalizeWaybillImport import.
+src/components/waybill/WaybillImportSheet.tsx Removed hardcoded 82‑line prompt. Now accepts adapter prop with prompt and schema. Uses adapter.schema.parse() for validation.
+src/domain/waybill/externalWaybillPrompt.ts New file: isolated prompt for External waybills, with discipline preamble, code‑block/paste‑back, no group rules.
+src/domain/waybill/internalWaybillPrompt.ts New file: isolated prompt for Internal waybills (no po_number, no client fields).
+src/domain/waybill/externalWaybillSchema.ts New file: Zod schema for External waybill import.
+src/domain/waybill/internalWaybillSchema.ts New file: Zod schema for Internal waybill import.
+src/domain/waybill/externalWaybillImportAdapter.ts New file: adapter exporting prompts, schema, and applyResult. applyResult handles quantity→qty mapping.
+src/domain/waybill/internalWaybillImportAdapter.ts New file: same pattern for Internal.
+src/domain/import/promptGenerator.ts Exported JSON_IMPORT_DISCIPLINE_SPEC for reuse.
+Prompt bloat issue Initial prompts were bloated with aliases, signature detection, and source‑type restrictions. Claude provided trimmed versions that the agent applied directly.
+Verification gaps Agent initially omitted confirmation of quantity→qty mapping and code‑block/paste‑back lines. These were verified manually.
 
 ---
 
-### 4.4 Phase 2b — Invoice/Quotation Update Mode
+Phase 2 — Invoice Add Mode (Anti‑Inference)
 
-**Goal:** Safe, bounded, row-based mutation system.
+File Action
+src/domain/import/promptGenerator.ts Added two anti‑inference rules to the Add mode rules array: 1) Never create groups from indentation/spacing/item similarity; 2) Preserve exact item order from source.
+src/domain/import/apply.ts Added hasScatteredGroups() helper and cluster‑check gate in Add mode buildApplyResult(). If groups are clustered at start/end, strip silently.
 
-**Five changes:**
-
-1. **Prompt layer:** `generateImportPrompt()` now accepts `currentItemCount` parameter. Update mode prompt includes: "Valid row_numbers for this document are 1 through {N}. Row {N+1} or higher will be REJECTED." Uses `getStandardRowEntries(items).length` to exclude group headers from count.
-
-2. **Schema layer:** `buildImportSchema()` now accepts `maxRow` parameter. `row_number` validated as `.int().positive()` with range refinement. Duplicate `row_number` caught at parse time via `.superRefine()`. Redundant checks removed from `validate.ts`.
-
-3. **Overwrite confirmation dialog:** `detectOverwriteTargets()` wired to an AlertDialog. Shows list of fields being overwritten with old→new values. Cancel aborts import. Confirm proceeds. All-or-nothing v1 — no per-item exempt.
-
-4. **Empty-field retention warning:** Small text under textarea in Update mode: "Fields you leave empty will stay unchanged. Only include the columns you want to overwrite."
-
-5. **Overflow toast:** If import exceeds 200 rows (`MAX_IMPORTED_ROWS`), warning toast fires and items truncated to 200.
-
-**Architectural Decision:** Groups continue to be ignored in Update mode. Update is a row-level patch tool, not a structural tool. If user wants to restructure groups, they use Add mode.
+Test scenarios traced correctly; no UI changes. Quotation inherits automatically.
 
 ---
 
-### 4.5 Phase 3 — Quotation Parity
+Phase 2b — Update Mode (Row Safety)
 
-**Decision:** Marked complete by inheritance. Quotation reuses the Invoice pipeline 100% (`generateImportPrompt`, `schema.ts`, `apply.ts`). All Phase 2/2b changes apply automatically. No separate code needed.
-
----
-
-### 4.6 Phase 4 — Compliance Hub
-
-**Goal:** Inject discipline spec into all 3 contract type prompts.
-
-**Files Modified:** `src/domain/compliance/import/contracts.ts`
-
-**Three contract types:**
-- `vat_input` — supplier VAT records
-- `tax_filing` — tax filing data
-- `wht_receipt` — withholding tax receipts
-
-**Changes:** Prepended the 6-rule lean discipline block to all 3 prompts. No Zod schema changes. No WHT payment linking changes. No group rules added (Compliance Hub doesn't support groups).
+File Action
+src/domain/import/promptGenerator.ts Added currentItemCount parameter. Update mode prompt now includes Valid row_numbers for this document are 1 through N. as first rule.
+src/domain/import/schema.ts buildImportSchema now accepts maxRow. row_number validated as .int().positive() with range refinement and duplicate detection via .superRefine().
+src/domain/import/validate.ts Removed redundant integer/duplicate checks (now in schema). Kept actual row‑count existence check.
+src/domain/invoice/importAdapter.ts Updated prompts() signature to pass currentItemCount.
+src/domain/quotation/importAdapter.ts Same.
+src/components/items/JsonItemsImportSheet.tsx Added overwrite confirmation AlertDialog (wired to detectOverwriteTargets). Empty‑field retention warning in Update mode only. Overflow toast for >200 items.
 
 ---
 
-### 4.7 Phase 5 — RFQ
+Phase 4+5 — Compliance Hub + RFQ
 
-**Goal:** Replace bloated inline prompt with disciplined 3-field extract.
+File Action
+src/domain/compliance/import/contracts.ts Prepended 6‑rule discipline block to all three contract prompts (vat_input, tax_filing, wht_receipt).
+src/domain/rfq/importAdapter.ts Replaced hardcoded prompt with lean 6‑rule discipline version. 3‑field shape unchanged.
 
-**Files Modified:** `src/domain/rfq/importAdapter.ts`
-
-**Changes:** Replaced hardcoded prompt with lean version. Only extracts `item_name`, `quantity`, `specification`. No group rules. No Zod migration (deferred — manual parser remains but prompt is now disciplined).
-
----
-
-### 4.8 Phase 6 — CSR
-
-**Goal:** Remove CSV support, rename misleading function, migrate to Zod, inject discipline spec.
-
-**Files Modified:**
-- `src/components/csr/csrImport.ts` — Removed CSV path, renamed `parseCsvImport` → `parseCsrJson`, added `csrJsonSchema` Zod schema, prepended discipline spec to `CSR_IMPORT_PROMPT`
-- `src/components/csr/CsrImportSheet.tsx` — Removed CSV file upload UI, updated import to `parseCsrJson`
-
-**Key Decisions:**
-- CSR is a single-record import (one object, not an array)
-- Backward-compatible types (`ParsedCsrImport`, `CsrImportMaterial`) retained to avoid breaking `CsrFormScreen.tsx`
-- Zod v4 used (project dependency), `.nullable()` without `.optional()`
+No schema or logic changes. Both modules now disciplined.
 
 ---
 
-### 4.9 Phase 8 — Clipboard Detector
+Phase 6+8 — CSR Refactor + Clipboard Detector
 
-**Goal:** Add "Paste from clipboard" button to shared JSON import layout.
-
-**Files Modified:** `src/components/import/JsonImportLayout.tsx`
-
-**Implementation:**
-- Button placed alongside "Step 1: Paste JSON" label
-- Uses `navigator.clipboard.readText()` inside try/catch
-- Silent-fail on all error paths (no toast, no alert)
-- Only fires on explicit user click — NEVER on focus or mount
-- This avoids Android 12+ system toast on every clipboard read
-
-**Design Constraint:** Auto-read on focus is forbidden. Android 12+ fires a system toast on every programmatic clipboard read, causing repeated alerts every time the import modal opens. Clipboard read must only happen on explicit user tap.
+File Action
+src/components/csr/csrImport.ts Removed CSV parsing code. Renamed parseCsvImport → parseCsrJson. Created csrJsonSchema Zod schema. Prepended discipline spec.
+src/components/csr/CsrImportSheet.tsx Removed CSV upload UI. Switched to new parseCsrJson.
+src/components/import/JsonImportLayout.tsx Added “Paste from clipboard” button (best‑effort, silent‑fail, explicit tap only).
 
 ---
 
-### 4.10 Phase 7a & 7b — Deferred
+Cleanup — Standard Codification
 
-**Decision:** Project Documents (7a) and Project PDF (7b) moved to a new standalone roadmap at `docs/Pdf-improvement-roadmap.md`. JSON Import Roadmap marked Complete.
-
-**Reasoning:** Project Documents has deeper architectural implications (company identity injection, `po_number` fix, financial field removal) that need separate detailed planning. PDF work is a cross-document quality audit, not JSON import.
-
----
-
-## 5. Key Architectural Decisions Summary
-
-| Decision | Rationale |
-|---|---|
-| DropdownMenu → Popover → native `<select>` | Radix conflicts with Sheet focus trap; pragmatic fallback |
-| YouTube iframe lazy loading | Main thread blockage; deferred iframe rendering |
-| Global Discipline Spec as canonical constant | Single source of truth; shared by Invoice/Quotation; tailored versions for other modules |
-| External/Internal Waybill complete isolation | Different field sets; DB-level constraints differ; zero shared logic |
-| Groups ignored in Update mode | Update is a row-level patch tool, not a structural tool |
-| `hasScatteredGroups()` silent strip | UX decision — no warning for clustered groups, just silently correct |
-| CSV removal from CSR | JSON-only standard across all modules |
-| Clipboard read on explicit tap only | Android 12+ system toast avoidance |
-| `quantity` → `qty` mapping in adapters | DB field name differs from frontend; adapter handles transparently |
-| Project Documents deferred to PDF roadmap | Needs deeper planning; not a pure JSON import concern |
+File Action
+docs/json-import-standard.md New file: full standard for new modules, covering discipline spec, adapter pattern, schema, UI integration, isolation, groups, update mode, and a checklist.
+AGENTS.md Added hard rule: “New document modules that support JSON import MUST follow the standard…”
+docs/Json-import-roadmap.md Marked Complete. Phases 7a and 7b moved to docs/Pdf-improvement-roadmap.md.
 
 ---
 
-## 6. Standard Codification
+5. Lessons Learned
 
-Created `docs/json-import-standard.md` — a prescriptive standard for all future document modules. Covers:
-- Global Prompt Discipline (verbatim block)
-- Adapter pattern (prompts, schema, applyResult)
-- Zod validation requirement
-- UI integration via `JsonImportLayout`
-- Module isolation rules
-- Group rules (Invoice/Quotation only)
-- Update mode requirements
-- 10-point checklist for new modules
+Technical Debt Identified
 
-Added hard reference in `AGENTS.md`:
-> "New document modules that support JSON import MUST follow the standard defined in `docs/json-import-standard.md`."
+1. The YouTube iframe in JsonImportUI is a latent hazard. It fires continuous postMessage events that can block the main thread and break UI interactions (dropdowns, popovers). Should be lazily loaded or removed from the import modal entirely.
+2. The global discipline spec lives in two flavours: The canonical 9‑rule block in promptGenerator.ts, and tailored 6‑rule blocks in waybill, CSR, and RFQ prompts. They are semantically consistent but not a single source. Future refactor should extract a core spec constant that all modules reuse.
+3. quantity vs qty seam persists in Waybill adapters. The adapter now handles it, but the mismatch is a source of fragility.
+4. exemptOverwriteIds parameter exists in buildApplyResult but has never been wired to UI. This can be revisited if per‑field overwrite selection is desired.
+5. The native <select> works but is visually inconsistent with the rest of the shadcn‑based UI. A future polish pass could replace it with a custom Popover that doesn’t conflict with the Sheet.
 
----
+Agent Workflow Failures
 
-## 7. File Inventory (All Phases)
-
-### Created
-- `src/domain/waybill/externalWaybillPrompt.ts`
-- `src/domain/waybill/internalWaybillPrompt.ts`
-- `src/domain/waybill/externalWaybillSchema.ts`
-- `src/domain/waybill/internalWaybillSchema.ts`
-- `src/domain/waybill/externalWaybillImportAdapter.ts`
-- `src/domain/waybill/internalWaybillImportAdapter.ts`
-- `docs/json-import-standard.md`
-- `docs/Pdf-improvement-roadmap.md`
-
-### Modified
-- `src/lib/openInAI.ts` — 6 providers
-- `src/components/ui/OpenInAIDropdown.tsx` — native `<select>` replacement
-- `src/components/import/JsonImportLayout.tsx` — clipboard button + iframe lazy load
-- `src/domain/import/promptGenerator.ts` — discipline spec + row range + anti-inference rules
-- `src/domain/import/schema.ts` — strict row_number validation
-- `src/domain/import/apply.ts` — `hasScatteredGroups()` guard
-- `src/domain/import/validate.ts` — removed redundant checks
-- `src/domain/invoice/importAdapter.ts` — updated `prompts()` signature
-- `src/domain/quotation/importAdapter.ts` — updated `prompts()` signature
-- `src/components/items/JsonItemsImportSheet.tsx` — overwrite dialog + warning + overflow toast
-- `src/components/waybill/WaybillForm.tsx` — `delivery_location` field + adapter wiring
-- `src/components/waybill/WaybillImportSheet.tsx` — adapter delegation
-- `src/domain/compliance/import/contracts.ts` — discipline spec prepended
-- `src/domain/rfq/importAdapter.ts` — prompt replaced
-- `src/components/csr/csrImport.ts` — CSV removed, Zod migration, discipline spec
-- `src/components/csr/CsrImportSheet.tsx` — CSV UI removed
-- `docs/Json-import-roadmap.md` — marked complete
-- `AGENTS.md` — added standard reference
+1. No‑report agents: Early Phase 0 agents did not write work reports to Task/reports/. This made debugging the dropdown failure extremely difficult. Every subsequent prompt now mandates a report.
+2. Unverified changes: Agents claimed verification steps (e.g., “clicking each provider works”) without actually running the UI. We now explicitly ask agents to “document the observed behavior” and to state if manual verification was not possible.
+3. Skill‑loading omission: The first Phase 0 prompt lacked the skill‑loading protocol. The agent did not read AGENTS.md or relevant skills, leading to a component structure (inline prompt computation) that caused performance issues. All prompts after that include a mandatory SKILL LOADING PROTOCOL block.
+4. Scope creep by misinterpretation: The agent creating the PDF roadmap added extra detail beyond the requested placeholder. This is low‑impact but illustrates that agents need precise boundaries.
 
 ---
 
-## 8. Lessons Learned
+6. Final System State
 
-1. **Radix inside Sheet is fragile.** Both DropdownMenu and Popover had issues with focus traps and touch events inside Sheet overlays. Native `<select>` was the pragmatic fallback.
+· All 8 phases are done or formally deferred.
+· A reusable, prescriptive JSON Import Standard governs all future work.
+· The import pipeline is consistent, disciplined, and safe: AI can no longer hallucinate groups, fabricate values, or reorder items.
+· Update mode is bounded, row‑based, and requires explicit overwrite confirmation.
+· Clipboard handling is a user‑initiated, silent‑fail operation, compatible with modern Android clipboard policies.
 
-2. **YouTube iframes block the main thread.** The tutorial iframe in `JsonImportLayout` was the root cause of a multi-hour debugging session. Always lazy-load iframes.
-
-3. **Prompt discipline is load-bearing.** The Global Discipline Spec is the most important change we made. Without it, AI hallucinates groups, fills in missing fields, and misclassifies identifiers.
-
-4. **Isolation prevents regression.** Separating External and Internal Waybill adapters completely (zero shared logic) means a bug in one cannot affect the other.
-
-5. **Agent reports must be verified manually.** Multiple agents claimed verification they couldn't possibly have performed (browser-based UI checks without a dev server). Always run manual tests before accepting.
-
-6. **Template literal nesting in prompt strings causes TypeScript errors.** When prepending strings to existing template literals, use string concatenation, not nested backticks.
-
----
-
-## 9. How to Resume This Conversation
-
-If you (the architect) are reading this in a new session, here's what you need to know:
-
-- The JSON Import Improvement Roadmap is **complete**.
-- Project Documents and PDF work are **deferred** to `docs/Pdf-improvement-roadmap.md`.
-- All new document modules must follow `docs/json-import-standard.md`.
-- The `AGENTS.md` file has a hard reference to this standard.
-- The codebase is in a clean state: typecheck passes, lint is clean on all changed files.
-- Any future work on import should reference the standard, not reverse-engineer from existing code.
-
-If you're picking up a bug in the import system, check:
-1. The module's adapter file in `src/domain/<module>/`
-2. The `JsonImportLayout.tsx` for shared UI issues
-3. The `promptGenerator.ts` for Invoice/Quotation prompt issues
-4. This document for the original decisions and trade-offs
-```
+Architect sign‑off: Deepsek — the JSON Import Improvement Roadmap is closed.
