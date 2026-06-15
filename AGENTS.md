@@ -26,6 +26,7 @@
 - Invoice numbering format: extract from migration `20260520090003_invoices.sql`.
 - Waybill type field: `'external'` or `'internal'` — validated by DB CHECK constraint.
 - Lint excludes: `android/` and `dist/` must be in `.eslintignore` (or ESLint config ignores).
+- New document modules that support JSON import MUST follow the standard defined in `docs/json-import-standard.md`. This standard is prescriptive — all prompts, schemas, adapters, and UI integration must conform.
 
 ---
 
