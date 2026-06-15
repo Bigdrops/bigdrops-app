@@ -1,62 +1,58 @@
 import * as React from 'react'
-import { ExternalLink, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { AI_PROVIDERS } from '@/lib/openInAI'
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/components/ui/popover'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-interface Props {
+interface OpenInAIDropdownProps {
   prompt: string
   onProviderSelect?: (providerName: string, providerLabel: string) => void
+  onCloseAfterSelect?: () => void
   className?: string
+  disabled?: boolean
 }
 
-export function OpenInAIDropdown({ prompt, onProviderSelect, className }: Props) {
-  const [open, setOpen] = React.useState(false)
+export function OpenInAIDropdown({
+  prompt,
+  onProviderSelect,
+  onCloseAfterSelect,
+  className,
+  disabled = false,
+}: OpenInAIDropdownProps) {
+  const [value, setValue] = React.useState("")
 
-  const handleSelect = (provider: (typeof AI_PROVIDERS)[number]) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === "") return
+
+    const provider = AI_PROVIDERS.find(p => p.name === e.target.value)
+    if (!provider) return
+
     void navigator.clipboard.writeText(prompt).catch(() => {})
     window.open(provider.buildUrl(prompt), '_blank', 'noopener,noreferrer')
     onProviderSelect?.(provider.name, provider.label)
-    setOpen(false)
+    onCloseAfterSelect?.()
+
+    setTimeout(() => setValue(""), 0)
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          aria-label="Open in AI provider picker"
-          aria-haspopup="menu"
-          className={cn(
-            "h-8 rounded-lg px-2 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(217_91%_35%)] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors",
-            className
-          )}
-        >
-          <ExternalLink className="h-3 w-3 mr-1" />
-          Open in AI
-          <ChevronDown className="h-3 w-3 ml-1 opacity-60" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-56 p-1 z-50 rounded-md shadow-md border bg-popover">
+    <div className={cn("relative inline-flex items-center", className)}>
+      <select
+        value={value}
+        onChange={handleChange}
+        disabled={disabled}
+        aria-label="Open in AI provider picker"
+        className="h-8 min-h-[44px] min-w-[44px] appearance-none rounded-lg pl-2 pr-7 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(217_91%_35%)] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <option value="" disabled hidden>
+          Open in AI ↗
+        </option>
         {AI_PROVIDERS.map((provider) => (
-          <button
-            key={provider.name}
-            type="button"
-            role="menuitem"
-            onClick={() => handleSelect(provider)}
-            className="flex w-full items-center px-2 py-1.5 text-xs text-left rounded-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border-b border-border last:border-b-0"
-          >
+          <option key={provider.name} value={provider.name}>
             {provider.label}
-          </button>
+          </option>
         ))}
-      </PopoverContent>
-    </Popover>
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 opacity-60" />
+    </div>
   )
 }
