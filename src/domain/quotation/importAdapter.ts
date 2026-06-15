@@ -4,8 +4,8 @@ import type { ApplyImportResult, ImportMode } from '@/domain/import/types'
 
 export const quotationImportAdapter = {
   documentType: 'quotation' as const,
-  prompts: (columns: ColumnConfig[], mode: ImportMode) => 
-    generateImportPrompt(columns, mode, 'quotation'),
+  prompts: (columns: ColumnConfig[], mode: ImportMode, currentItemCount: number) => 
+    generateImportPrompt(columns, mode, 'quotation', currentItemCount),
   createItem: () => makeEmptyItem(),
   applyResult({
     result,

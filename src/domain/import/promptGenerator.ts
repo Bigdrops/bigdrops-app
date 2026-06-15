@@ -13,7 +13,7 @@ export const JSON_IMPORT_DISCIPLINE_SPEC = `You are a strict JSON data extractor
 · Each document type is independent (no cross-domain inference).
 · The identifier po_number MUST be null unless the source explicitly labels it as PO/Voucher.`
 
-export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation'): string {
+export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation', currentItemCount: number): string {
   const DISCIPLINE_SPEC = JSON_IMPORT_DISCIPLINE_SPEC
 
   const visibleColumns = columns.filter(col => 
@@ -66,6 +66,7 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
   }
 
   const rules = [
+    mode === 'Update' ? `Valid row_numbers for this document are 1 through ${currentItemCount}. Any row_number outside this range will be rejected.` : ``,
     `Extract document title into "title" (Maps to ${documentType === 'invoice' ? 'Invoice' : 'Quotation'} Title field)`,
     `Extract PO reference into "po_number"`,
     `Put remarks into "notes"`,

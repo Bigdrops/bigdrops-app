@@ -64,20 +64,6 @@ export function validateImportData(
   for (const item of normalized.items) {
     const rowNumber = item.row_number
 
-    if (!Number.isInteger(rowNumber) || Number(rowNumber) < 1) {
-      return {
-        ok: false,
-        message: `Row ${item.sourceIndex + 1} must include a valid 1-based row_number.`,
-      }
-    }
-
-    if (usedRowNumbers.has(rowNumber)) {
-      return {
-        ok: false,
-        message: `Duplicate row_number ${rowNumber} is not allowed in Update mode.`,
-      }
-    }
-
     if (rowNumber > standardRows.length) {
       return {
         ok: false,

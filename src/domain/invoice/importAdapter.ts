@@ -4,8 +4,8 @@ import type { ApplyImportResult, ImportMode } from '@/domain/import/types'
 
 export const invoiceImportAdapter = {
   documentType: 'invoice' as const,
-  prompts: (columns: ColumnConfig[], mode: ImportMode) => 
-    generateImportPrompt(columns, mode, 'invoice'),
+  prompts: (columns: ColumnConfig[], mode: ImportMode, currentItemCount: number) => 
+    generateImportPrompt(columns, mode, 'invoice', currentItemCount),
   createItem: () => makeEmptyItem(),
   applyResult({
     result,
