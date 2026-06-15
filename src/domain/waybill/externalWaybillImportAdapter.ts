@@ -1,4 +1,4 @@
-import { EXTERNAL_WAYBILL_PROMPT } from './externalWaybillPrompt'
+import { externalWaybillPrompt } from './externalWaybillPrompt'
 import { externalWaybillSchema } from './externalWaybillSchema'
 import type { WaybillItem, WaybillCustomColumn } from '@/components/waybill/waybillUtils'
 
@@ -20,7 +20,7 @@ export type ExternalWaybillImportResult = {
 }
 
 export const externalWaybillImportAdapter = {
-  prompt: EXTERNAL_WAYBILL_PROMPT,
+  prompt: externalWaybillPrompt,
   schema: externalWaybillSchema,
   applyResult(parsedData: Record<string, unknown>): ExternalWaybillImportResult {
     const monetaryKeys = ['unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total']

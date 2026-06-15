@@ -19,6 +19,7 @@ This layer applies to **ALL** AI-generated import prompts across **ALL** modules
  * Groups are allowed **ONLY** if explicitly present in the source document.
  * Never create groups from layout, indentation, or spacing.
  * Each document type is independent (no cross-domain inference).
+ * Groups are an Invoice and Quotation concern only. Do not include group rules in Waybill, RFQ, CSR, Compliance Hub, or Project Document prompts.
  * Identifier rule (po_number) is strict:
    * Only set if explicitly labeled PO/Voucher.
    * Otherwise, it **MUST** be null.
@@ -162,6 +163,7 @@ Every module prompt **MUST** explicitly bundle:
  * [ ] Create discrete, isolated runtime Zod schemas.
  * [ ] Excise all inline parsing code fragments from UI files.
  * [ ] Run individual, isolated end-to-end integration tests.
+ * Prompt discipline: source is never locked to a specific input type (photo, PDF, text, etc.). A source is a source.
 ### Phase 2 — Invoice Add Mode
  * [ ] Inject the Discipline Spec into the main prompt generation utility.
  * [ ] Implement hard blocks against AI-inferred grouping layouts.

@@ -1,4 +1,4 @@
-import { INTERNAL_WAYBILL_PROMPT } from './internalWaybillPrompt'
+import { internalWaybillPrompt } from './internalWaybillPrompt'
 import { internalWaybillSchema } from './internalWaybillSchema'
 import type { WaybillItem, WaybillCustomColumn } from '@/components/waybill/waybillUtils'
 
@@ -20,7 +20,7 @@ export type InternalWaybillImportResult = {
 }
 
 export const internalWaybillImportAdapter = {
-  prompt: INTERNAL_WAYBILL_PROMPT,
+  prompt: internalWaybillPrompt,
   schema: internalWaybillSchema,
   applyResult(parsedData: Record<string, unknown>): InternalWaybillImportResult {
     const monetaryKeys = ['unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total']
