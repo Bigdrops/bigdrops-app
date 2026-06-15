@@ -26,12 +26,18 @@ Manual override of individual document numbers on creation forms remains permitt
 
 ## 3. Storage & Migration
 
-### 3.1 JSONB Column
+### 3.1 Storage
+- `document_prefixes` JSONB column is added to the existing `settings` table — NOT a new `organizations` table.
+- The `settings` table is a singleton row (`id = 1`) used for all workspace-wide configuration.
+- No `organizations` table exists or needs to be created.
 
-Add `document_prefixes` to the `organizations` table:
+### 3.2 Migration
+- `blank_waybill_logs` table already exists in production — no migration needed.
+- `blank_csr_logs` table does not exist — migration required.
+- Add `document_prefixes` JSONB column to the `settings` table:
 
 ```sql
-ALTER TABLE organizations
+ALTER TABLE settings
 ADD COLUMN IF NOT EXISTS document_prefixes jsonb DEFAULT '{
   "waybill": "WBL",
   "invoice": "INV",
@@ -43,7 +49,7 @@ ADD COLUMN IF NOT EXISTS document_prefixes jsonb DEFAULT '{
 }'::jsonb;
 ```
 
-### 3.2 DB Validation Constraint
+With the same CHECK constraint from the original spec:
 
 ```sql
 CONSTRAINT check_document_prefixes_format CHECK (
@@ -60,11 +66,9 @@ CONSTRAINT check_document_prefixes_format CHECK (
 )
 ```
 
-Mirrors UI validation at the database level. Both layers enforce the same rule.
-
 ### 3.3 Fallback
 
-If no organization context exists, fall back to the defaults above as constants in application code:
+Same defaults as constants in application code:
 
 ```typescript
 export const DEFAULT_PREFIXES = {
@@ -77,6 +81,11 @@ export const DEFAULT_PREFIXES = {
   csr:       'CSR',
 } as const;
 ```
+
+### 3.4 Settings Access
+- `document_prefixes` is read via the existing `useSettings()` hook in `src/hooks/useSettings.js`.
+- No new org context or provider is needed — all document creation screens already have access to settings.
+- Prefix values are accessed as: `settings?.document_prefixes?.invoice ?? DEFAULT_PREFIXES.invoice`.
 
 ---
 
@@ -144,17 +153,8 @@ WHERE csr_number ~ '^[A-Z0-9]+-M-[0-9]{6}$' AND org_id = $orgId
 ### 5.3 Call Chain
 
 ```
-Settings (DB) → Organization Context → Sequence Generator → Form Default
+useSettings() → settings.document_prefixes → prefix value → existing generator
 ```
-
-```typescript
-const org = await getCurrentOrganization(orgId);
-const prefixes = org?.document_prefixes ?? DEFAULT_PREFIXES;
-const prefix = prefixes.waybill;
-const number = generateSequenceNumber(nextSeq, prefix, options, orgId);
-```
-
-`orgId` is in every generator signature from day one, even in single-tenant mode.
 
 ### 5.4 Manual Override Safety
 
@@ -178,6 +178,22 @@ On UNIQUE constraint violation (Postgres error `23505`):
 7. If all 3 fail — show single generic message: *"Something went wrong. Please try again."* No technical details
 
 **SQLite sync layer (Waybills):** On collision during Supabase sync, the auto-retry must update the local SQLite record with the winning number before confirming success. Both stores must reflect the same number.
+
+### 5.6 Generator Status
+
+Current state of each sequence generator in the codebase:
+
+| Generator | File | Prefix Source | Dynamic Today? | Action Required |
+|---|---|---|---|---|
+| `getNextInvoiceNumber` | `documentConversion.ts` | Default param `'SASINV-B'` | Yes | Pass prefix from settings. Also consolidate inline duplicates in `NewInvoice.tsx` and `Invoices.tsx` |
+| `getNextQuotationNumber` | `quotation/normalize.ts` | Default param `'SASIQUO'` | Yes | Pass prefix from settings at all 5 call sites |
+| `getNextRfqNumber` | `rfq/normalize.ts` | Default param `'RFQ'` | Yes | Pass prefix from settings at 1 call site |
+| `getNextCsrNumber` | `csrUtils.ts` | Hardcoded fallback `'CSR-001'` | No | Add prefix parameter, update call site in `NewCSR.tsx` |
+| `generateWaybillSequenceNumber` | `waybillUtils.ts` | Hardcoded `'AWB-E-'`/`'AWB-I-'` | No | Delete this function — duplicate of `getNextWaybillNumber` |
+| `getNextWaybillNumber` | `waybillUtils.ts` | Hardcoded `'AWB-E-'`/`'AWB-I-'` | No | Add prefix parameter, update 2 call sites |
+| `generateNextProjectCode` | `projects.ts` | Hardcoded `PRJ-{year}-` | Partial | Modify `getProjectCodePrefix()` to accept prefix param |
+| `formatCsrNumber` (offline) | `csrOffline.ts` | Hardcoded `'SASCSR-'` | No | NOT IN SCOPE — offline module is live, deletion deferred |
+| `formatQuotationNumber` (offline) | `quotationOffline.ts` | Hardcoded `'SASQUO-'` | No | NOT IN SCOPE — offline module is live, deletion deferred |
 
 ---
 
@@ -306,11 +322,23 @@ CREATE INDEX IF NOT EXISTS idx_blank_csr_logs_linked_id
 
 ## 9. Implementation Order
 
-1. Migration — add `document_prefixes` JSONB column to `organizations`
-2. Settings UI — build Document Prefixes card with live preview, solo reset, full reset
-3. CSR blank log table — `blank_csr_logs` migration
-4. Waybill integration — wire `generateWaybillSequenceNumber()` to org prefix
-5. CSR integration — wire CSR sequence generator to org prefix
-6. Invoice, BOQ, RFQ, Quotation, Project — wire one at a time
-7. Collision handler — implement silent auto-retry across all document types
-8. SQLite sync layer — ensure collision resolution updates local record
+1. Migration — add `document_prefixes` JSONB column to `settings` table
+2. Migration — create `blank_csr_logs` table
+3. `DEFAULT_PREFIXES` constants + prefix resolution pattern via `useSettings()`
+4. Settings UI — Document Prefixes card with live preview, dirty state, solo reset, full reset
+5. Consolidate inline invoice number logic — replace duplicates in `NewInvoice.tsx` and `Invoices.tsx` with calls to `getNextInvoiceNumber()`
+6. Delete `generateWaybillSequenceNumber` — consolidate to `getNextWaybillNumber()`
+7. Add prefix parameter to `getNextWaybillNumber()` and `getNextCsrNumber()`
+8. Wire all generators to settings prefix — Waybill, Invoice, Quotation, RFQ, CSR
+9. Build Project document sequence generation from scratch
+10. Wire Project generator to settings prefix
+11. Collision handler — silent auto-retry (max 3 attempts) across all document types
+12. Blank waybill number assignment — wire blank download to use org prefix + log to `blank_waybill_logs`
+13. Blank CSR number assignment — build blank CSR download, log to `blank_csr_logs` (number engine only, no PDF)
+
+## 10. Out of Scope — This Build
+
+- Offline CSR module (`src/lib/native/csrOffline.ts`) — live in production, called by `NewCSR.tsx` and `csrSync.ts`. Deletion requires a dedicated offline feature deprecation plan. Deferred.
+- Offline Quotation module (`src/lib/native/quotationOffline.ts`) — live in production, called by `QuotationForm.tsx` and `quotationSync.ts`. Same as above. Deferred.
+- Blank waybill template download — PDF concern, moved to `docs/pdf-rendering-roadmap.md`.
+- Blank CSR template download — PDF concern, moved to `docs/pdf-rendering-roadmap.md`. The `blank_csr_logs` table migration IS in scope (number engine), but the download UI is not.
