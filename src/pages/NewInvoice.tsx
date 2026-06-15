@@ -43,6 +43,7 @@ import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
 import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { getNextInvoiceNumber } from '@/domain/documentConversion'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -225,17 +226,9 @@ export default function NewInvoice() {
       .from('invoices')
       .select('invoice_number')
       .order('created_at', { ascending: false })
-      .limit(1)
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          const number = parseInt(String(data[0].invoice_number || '').replace('SASINV-B', ''), 10) + 1
-          setInvoice((current) => ({
-            ...current,
-            invoice_number: 'SASINV-B' + String(number).padStart(3, '0'),
-          }))
-        } else {
-          setInvoice((current) => ({ ...current, invoice_number: 'SASINV-B001' }))
-        }
+        const newNumber = getNextInvoiceNumber(data || [])
+        setInvoice((current) => ({ ...current, invoice_number: newNumber }))
       })
   }, [prefill])
 

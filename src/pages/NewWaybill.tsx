@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import WaybillForm from '../components/waybill/WaybillForm'
 import WaybillGatewayOverlay from '../components/waybill/WaybillGatewayOverlay'
 import { saveWaybill } from '../domain/waybill/waybillMutations'
-import { generateWaybillSequenceNumber, getNextWaybillNumber } from '../components/waybill/waybillUtils'
+import { getNextWaybillNumber } from '../components/waybill/waybillUtils'
 import type { Waybill, WaybillType } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
@@ -28,7 +28,7 @@ export default function NewWaybill() {
           .order('created_at', { ascending: false })
           .limit(1000)
         const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-        const number = generateWaybillSequenceNumber(type, existingNumbers)
+        const number = getNextWaybillNumber(type, existingNumbers)
         if (!cancelled) setWaybillNumber(number)
       } finally {
         if (!cancelled) setLoadingNumber(false)

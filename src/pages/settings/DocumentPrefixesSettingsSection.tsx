@@ -7,6 +7,16 @@ import { SettingsSummaryCard } from '@/components/settings/SettingsSummaryCard'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   DEFAULT_PREFIXES,
   type DocumentPrefixKey,
   type DocumentPrefixes,
@@ -33,7 +43,7 @@ const LABELS: Record<DocumentPrefixKey, string> = {
 }
 
 const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
-  waybill: (p) => [`${p}-E-000001`, `${p}-I-000001`],
+  waybill: (p) => [`${p}-E-000001`, `${p}-I-000001`, `${p}-ME-000001`, `${p}-MI-000001`],
   invoice: (p) => [`${p}-000001`],
   quotation: (p) => [`${p}-000001`],
   rfq: (p) => [`${p}-000001`],
@@ -63,10 +73,16 @@ function buildChangeSummary(draft: DocumentPrefixes, saved: DocumentPrefixes): s
     .map((k) => `${LABELS[k]}: ${saved[k]} → ${draft[k]}`)
 }
 
+type PendingAction =
+  | { kind: 'soloReset'; key: DocumentPrefixKey }
+  | { kind: 'fullReset' }
+  | { kind: 'save' }
+
 export function DocumentPrefixesSettingsSection() {
   const { settings, loading } = useSettings()
   const [draft, setDraft] = useState<DocumentPrefixes>({ ...DEFAULT_PREFIXES })
   const [saving, setSaving] = useState(false)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const savedPrefixes = useMemo<DocumentPrefixes>(() => {
     const raw = settings?.document_prefixes
@@ -94,26 +110,14 @@ export function DocumentPrefixesSettingsSection() {
     setDraft((prev) => ({ ...prev, [key]: sanitizePrefixInput(raw) }))
   }, [])
 
-  const handleSoloReset = useCallback(
+  const executeSoloReset = useCallback(
     (key: DocumentPrefixKey) => {
       const defaultVal = DEFAULT_PREFIXES[key]
-      const current = draft[key]
-      if (current === defaultVal) return
-
-      const label = LABELS[key]
-      if (
-        !confirm(
-          `Reset ${label} to ${defaultVal}? A new sequence starting at ${defaultVal}-000001 will begin. Your existing documents are not affected.`,
-        )
-      ) {
-        return
-      }
-
       const updated = { ...draft, [key]: defaultVal }
       setDraft(updated)
       setSaving(true)
       saveSettings({ document_prefixes: updated })
-        .then(() => feedback.success(`${label} prefix reset to ${defaultVal}`))
+        .then(() => feedback.success(`${LABELS[key]} prefix reset to ${defaultVal}`))
         .catch((err) =>
           feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
         )
@@ -122,15 +126,7 @@ export function DocumentPrefixesSettingsSection() {
     [draft],
   )
 
-  const handleFullReset = useCallback(() => {
-    if (
-      !confirm(
-        'Reset all prefixes to defaults? New sequences will begin for any changed prefixes. Existing documents are not affected.',
-      )
-    ) {
-      return
-    }
-
+  const executeFullReset = useCallback(() => {
     const defaults = { ...DEFAULT_PREFIXES }
     setDraft(defaults)
     setSaving(true)
@@ -142,18 +138,7 @@ export function DocumentPrefixesSettingsSection() {
       .finally(() => setSaving(false))
   }, [])
 
-  const handleSave = useCallback(() => {
-    const changes = buildChangeSummary(draft, savedPrefixes)
-    if (changes.length === 0) return
-
-    if (
-      !confirm(
-        `Changing prefix will start a new sequence. Your existing documents are not affected.\n\n${changes.join('\n')}`,
-      )
-    ) {
-      return
-    }
-
+  const executeSave = useCallback(() => {
     setSaving(true)
     saveSettings({ document_prefixes: draft })
       .then(() => feedback.success('Prefixes updated'))
@@ -161,9 +146,56 @@ export function DocumentPrefixesSettingsSection() {
         feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
       )
       .finally(() => setSaving(false))
-  }, [draft, savedPrefixes])
+  }, [draft])
+
+  const handleConfirm = useCallback(() => {
+    if (!pendingAction) return
+    switch (pendingAction.kind) {
+      case 'soloReset':
+        executeSoloReset(pendingAction.key)
+        break
+      case 'fullReset':
+        executeFullReset()
+        break
+      case 'save':
+        executeSave()
+        break
+    }
+    setPendingAction(null)
+  }, [pendingAction, executeSoloReset, executeFullReset, executeSave])
+
+  const getDialogMeta = () => {
+    if (!pendingAction) return { title: '', description: '', confirmLabel: '' }
+    switch (pendingAction.kind) {
+      case 'soloReset': {
+        const key = pendingAction.key
+        const defaultVal = DEFAULT_PREFIXES[key]
+        return {
+          title: `Reset ${LABELS[key]} prefix?`,
+          description: `Reset to ${defaultVal}? A new sequence starting at ${defaultVal}-000001 will begin. Your existing documents are not affected.`,
+          confirmLabel: 'Reset',
+        }
+      }
+      case 'fullReset':
+        return {
+          title: 'Reset all prefixes?',
+          description: 'Reset all prefixes to defaults? New sequences will begin for any changed prefixes. Existing documents are not affected.',
+          confirmLabel: 'Reset All',
+        }
+      case 'save': {
+        const changes = buildChangeSummary(draft, savedPrefixes)
+        return {
+          title: 'Save prefix changes?',
+          description: `Changing prefix will start a new sequence. Your existing documents are not affected.\n\n${changes.join('\n')}`,
+          confirmLabel: 'Save',
+        }
+      }
+    }
+  }
 
   if (loading) return <SettingsLoadingState />
+
+  const dialogMeta = getDialogMeta()
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -173,6 +205,11 @@ export function DocumentPrefixesSettingsSection() {
             Document Prefixes
           </p>
         </div>
+        {isDirty && (
+          <span className="shrink-0 text-[11px] font-semibold text-amber-600 animate-in fade-in duration-300">
+            Unsaved changes
+          </span>
+        )}
       </div>
 
       <SettingsSummaryCard
@@ -185,6 +222,7 @@ export function DocumentPrefixesSettingsSection() {
             const previews = PREVIEW_TEMPLATES[key](prefix)
             const conflict = findConflicts(draft, key)
             const isDefault = prefix === DEFAULT_PREFIXES[key]
+            const isModified = prefix !== savedPrefixes[key]
 
             return (
               <div key={key} className="px-5 py-4">
@@ -197,7 +235,11 @@ export function DocumentPrefixesSettingsSection() {
                       type="text"
                       value={prefix}
                       onChange={(e) => handleFieldChange(key, e.target.value.toUpperCase())}
-                      className="mt-1.5 w-full max-w-[120px] rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono font-bold text-foreground transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 uppercase"
+                      className={`mt-1.5 w-full max-w-[120px] rounded-lg border bg-background px-3 py-2 text-sm font-mono font-bold text-foreground transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 uppercase ${
+                        isModified
+                          ? 'border-amber-400 ring-1 ring-amber-300'
+                          : 'border-input'
+                      }`}
                       maxLength={6}
                     />
                   </div>
@@ -222,7 +264,7 @@ export function DocumentPrefixesSettingsSection() {
                     {!isDefault && (
                       <button
                         type="button"
-                        onClick={() => handleSoloReset(key)}
+                        onClick={() => setPendingAction({ kind: 'soloReset', key })}
                         disabled={saving}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-bd-text-muted transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)] hover:text-bd-text disabled:opacity-50"
                         title={`Reset ${LABELS[key]} to default`}
@@ -251,7 +293,7 @@ export function DocumentPrefixesSettingsSection() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleFullReset}
+            onClick={() => setPendingAction({ kind: 'fullReset' })}
             disabled={saving}
             className="text-bd-text-muted hover:text-bd-text"
           >
@@ -260,7 +302,7 @@ export function DocumentPrefixesSettingsSection() {
           </Button>
 
           <Button
-            onClick={handleSave}
+            onClick={() => setPendingAction({ kind: 'save' })}
             disabled={!isDirty || saving}
             className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
           >
@@ -268,6 +310,25 @@ export function DocumentPrefixesSettingsSection() {
           </Button>
         </div>
       </SettingsSummaryCard>
+
+      <AlertDialog open={pendingAction !== null} onOpenChange={(open) => { if (!open) setPendingAction(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialogMeta.title}</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {dialogMeta.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingAction(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              {dialogMeta.confirmLabel}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

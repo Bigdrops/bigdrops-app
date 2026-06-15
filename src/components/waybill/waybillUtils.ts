@@ -450,16 +450,6 @@ export function validateWaybill(waybill: Partial<Waybill>): string[] {
   return errors
 }
 
-export function generateWaybillSequenceNumber(type: WaybillType, existingNumbers: string[]): string {
-  const prefix = type === 'internal' ? 'AWB-I-' : 'AWB-E-'
-  const nums = existingNumbers
-    .filter((n) => n.startsWith(prefix))
-    .map((n) => parseInt(n.slice(prefix.length), 10))
-    .filter((n) => !isNaN(n))
-  const highest = nums.length > 0 ? Math.max(...nums) : 0
-  return `${prefix}${String(highest + 1).padStart(4, '0')}`
-}
-
 export function getNextWaybillNumber(type: WaybillType, existingNumbers: string[]): string {
   const prefix = type === 'internal' ? 'AWB-I-' : 'AWB-E-'
   const nums = existingNumbers

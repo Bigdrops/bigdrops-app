@@ -27,6 +27,7 @@ import { formatNaira } from "@/lib/formatters/money"
 import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
 import { INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
+import { getNextInvoiceNumber } from "@/domain/documentConversion"
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 import { resolveInvoiceStatus } from "@/domain/invoice/resolveInvoiceStatus"
 import { DocumentQueryProvider, useDocumentQuery } from "@/context/DocumentQueryContext"
@@ -98,13 +99,8 @@ function InvoicesContent() {
       const invoiceDetail = await loadInvoiceById(inv.id)
       if (!invoiceDetail) throw new Error("Invoice not found")
       const { data: all } = await supabase
-        .from("invoices").select("invoice_number").like("invoice_number", "SASINV-B%").order("created_at", { ascending: false })
-      let nextNum = 1
-      if (all && all.length > 0) {
-        const nums = all.map(i => parseInt(i.invoice_number.replace("SASINV-B", ""))).filter(n => !isNaN(n))
-        nextNum = Math.max(...nums) + 1
-      }
-      const newNumber = "SASINV-B" + String(nextNum).padStart(3, "0")
+        .from("invoices").select("invoice_number").order("created_at", { ascending: false })
+      const newNumber = getNextInvoiceNumber(all || [])
       const srcItems = await loadInvoiceItems(inv.id)
       invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {
