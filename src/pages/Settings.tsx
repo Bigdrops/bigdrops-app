@@ -9,6 +9,7 @@ import {
   BrandingSettingsSection,
   CompanySettingsSection,
   DashboardSettingsSection,
+  DocumentPrefixesSettingsSection,
   DocumentsSettingsSection,
   NotificationSettingsPage,
   SignatoriesSettingsSection,
@@ -59,6 +60,8 @@ export default function Settings() {
         return <DashboardSettingsSection />
       case 'documents':
         return <DocumentsSettingsSection />
+      case 'prefixes':
+        return <DocumentPrefixesSettingsSection />
       case 'archives':
         return <ArchivesSettingsSection />
       case 'admin':

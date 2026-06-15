@@ -4,6 +4,7 @@ import {
   CreditCard,
   FileText,
   FolderKanban,
+  Hash,
   ImageIcon,
   LayoutDashboard,
   Palette,
@@ -22,6 +23,7 @@ export type ActiveSectionId =
   | 'banking'
   | 'signatories'
   | 'documents'
+  | 'prefixes'
   | 'dashboard'
   | 'archives'
   | 'admin'
@@ -113,6 +115,12 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         label: 'Document Controls',
         icon: FolderKanban,
         desc: 'Set invoice, quotation, and PDF defaults',
+      },
+      {
+        id: 'prefixes',
+        label: 'Document Prefixes',
+        icon: Hash,
+        desc: 'Configure prefixes for auto-generated numbers',
       },
     ],
   },
