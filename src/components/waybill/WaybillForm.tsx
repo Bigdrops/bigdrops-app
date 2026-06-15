@@ -33,7 +33,6 @@ import {
   createCustomColumnKey,
   createDefaultItem,
   createDefaultWaybill,
-  normalizeWaybillImport,
   parseWaybillCustomFields,
   type Waybill,
   type WaybillCustomColumn,
@@ -55,6 +54,8 @@ import { FormFooter } from '@/components/document/FormFooter'
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
+import { externalWaybillImportAdapter } from '@/domain/waybill/externalWaybillImportAdapter'
+import { internalWaybillImportAdapter } from '@/domain/waybill/internalWaybillImportAdapter'
 
 export type WaybillFormData = {
   waybill: Waybill
@@ -347,7 +348,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
   const handleApplyImport = (text: string) => {
     const parsed = JSON.parse(text)
-    const result = normalizeWaybillImport(parsed, type)
+    const adapter = type === 'external' ? externalWaybillImportAdapter : internalWaybillImportAdapter
+    const result = adapter.applyResult(parsed)
     setState((prev) => ({
       ...prev,
       waybill: { ...prev.waybill, ...result.fields } as Waybill,
@@ -609,6 +611,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             <div className="grid grid-cols-2 gap-4">
               <MobileTextField label="DELIVERED BY" value={waybill.sender_name} onChange={(e) => updateWaybill('sender_name', e.target.value)} />
               <MobileTextField label="RECEIVED BY" value={waybill.receiver_name} onChange={(e) => updateWaybill('receiver_name', e.target.value)} />
+              <div className="col-span-2">
+                <MobileTextField
+                  label={type === 'external' ? 'DELIVERY LOCATION' : 'MOVEMENT ROUTE / DESTINATION'}
+                  value={waybill.delivery_location}
+                  onChange={(e) => updateWaybill('delivery_location', e.target.value)}
+                  placeholder={type === 'external' ? 'Client address, site, or drop-off location' : 'Where the items are moving within operations'}
+                />
+              </div>
             </div>
           </div>
 
@@ -917,11 +927,12 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
       {/* Import Sheet */}
       {showImportSheet && (
         <Suspense fallback={<div className="rounded-2xl border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-10 text-center text-[13px] text-[var(--bd-text-muted)]">Loading importer...</div>}>
-          <WaybillImportSheet
-            open={showImportSheet}
-            onOpenChange={setShowImportSheet}
-            onImport={handleApplyImport}
-          />
+           <WaybillImportSheet
+             open={showImportSheet}
+             onOpenChange={setShowImportSheet}
+             onImport={handleApplyImport}
+             adapter={type === 'external' ? externalWaybillImportAdapter : internalWaybillImportAdapter}
+           />
         </Suspense>
       )}
     </div>

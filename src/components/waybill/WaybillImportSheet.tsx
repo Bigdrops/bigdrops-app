@@ -1,17 +1,23 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
+import { feedback } from '@/lib/feedback'
 
 type ImportSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onImport: (text: string) => void
+  adapter: {
+    prompt: string
+    schema: { parse: (data: unknown) => unknown }
+  }
 }
 
 export function WaybillImportSheet({
   open,
   onOpenChange,
   onImport,
+  adapter,
 }: ImportSheetProps) {
   const [text, setText] = useState('')
 
@@ -19,50 +25,17 @@ export function WaybillImportSheet({
     if (!open) setText('')
   }, [open])
 
-  const prompt = `Convert a photographed or handwritten waybill into JSON only.
-Do not include markdown or explanations.
-Never invent monetary values.
-
-Return this shape:
-{
-  "type": "internal or external",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM",
-  "sender_name": "",
-  "receiver_name": "",
-  "client_name": "",
-  "delivery_location": "",
-  "vehicle_plate": "",
-  "po_number": "",
-  "notes": "",
-  "sender_note": "",
-  "receiver_note": "",
-  "linked_invoice_number": "",
-  "linked_project_name": "",
-  "source_document_number": "",
-  "sender_signature_present": true,
-  "sender_signature_description": "",
-  "sender_signature_confidence": "low, medium, or high",
-  "receiver_signature_present": true,
-  "receiver_signature_description": "",
-  "receiver_signature_confidence": "low, medium, or high",
-  "items": [
-    {
-      "description": "",
-      "quantity": 1,
-      "unit": "",
-      "condition": "good",
-      "extra fields from the source": ""
+  const handleImport = () => {
+    try {
+      const parsed = JSON.parse(text)
+      adapter.schema.parse(parsed)
+      onImport(text)
+    } catch (err) {
+      feedback.error('Import Failed', {
+        description: err instanceof Error ? err.message : 'Invalid JSON or schema validation failed.',
+      })
     }
-  ]
-}
-
-Rules:
-- Internal waybills are custody transfers within the company.
-- External waybills are deliveries to clients or outside recipients.
-- Detect whether signature-like marks are present and describe them.
-- Never fabricate exact signature text.
-- Unknown item-level fields must still be returned at item level.`
+  }
 
   return (
     <JsonImportLayout
@@ -70,11 +43,11 @@ Rules:
       onOpenChange={onOpenChange}
       title="Import Waybill"
       description="Capture a paper waybill by pasting its JSON extraction."
-      promptText={prompt}
+      promptText={adapter.prompt}
       rawInput={text}
       onRawInputChange={setText}
-      onPreview={() => onImport(text)}
-      onSave={() => onImport(text)}
+      onPreview={handleImport}
+      onSave={handleImport}
       tutorial={{
         title: 'How Waybill JSON import works',
         description: 'Update Waybill details by pasting extracted JSON from dispatch or delivery documents.',

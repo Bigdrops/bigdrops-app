@@ -1,8 +1,7 @@
 import type { ColumnConfig } from '@/domain/invoice/types'
 import type { ImportMode } from '@/domain/import/types'
 
-export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation'): string {
-  const DISCIPLINE_SPEC = `You are a strict JSON data extractor. Follow these rules without exception:
+export const JSON_IMPORT_DISCIPLINE_SPEC = `You are a strict JSON data extractor. Follow these rules without exception:
 
 · Return ONLY data explicitly present in the source document.
 · Never infer, guess, or fabricate values.
@@ -13,6 +12,9 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
 · Never create groups from layout, indentation, or spacing.
 · Each document type is independent (no cross-domain inference).
 · The identifier po_number MUST be null unless the source explicitly labels it as PO/Voucher.`
+
+export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation'): string {
+  const DISCIPLINE_SPEC = JSON_IMPORT_DISCIPLINE_SPEC
 
   const visibleColumns = columns.filter(col => 
     col.visibilityMode === 'show' || col.key === 'description'
