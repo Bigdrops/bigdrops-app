@@ -14,7 +14,17 @@ export const COMPLIANCE_IMPORT_CONTRACTS: Record<ComplianceRecordType, Complianc
   vat_input: {
     type: 'vat_input',
     label: 'VAT Input',
-    prompt: `Act as a tax data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
+    prompt: `Extract only what is explicitly present in the source document.
+
+RULES:
+1. Return null for any missing field — never guess or infer.
+2. Return valid JSON only. No markdown, no explanation.
+3. Wrap the JSON in a code block.
+4. After the code block write: "Copy the JSON above and paste it back into the app."
+5. Each document type is independent. Do not transfer meaning between document types.
+6. This document type is isolated. Do not reuse logic from any other contract type.
+
+Act as a tax data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
 Fields:
 - date: YYYY-MM-DD
 - vendor_name: string
@@ -39,7 +49,17 @@ Fields:
   tax_filing: {
     type: 'tax_filing',
     label: 'Tax Filing',
-    prompt: `Act as a tax filing data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
+    prompt: `Extract only what is explicitly present in the source document.
+
+RULES:
+1. Return null for any missing field — never guess or infer.
+2. Return valid JSON only. No markdown, no explanation.
+3. Wrap the JSON in a code block.
+4. After the code block write: "Copy the JSON above and paste it back into the app."
+5. Each document type is independent. Do not transfer meaning between document types.
+6. This document type is isolated. Do not reuse logic from any other contract type.
+
+Act as a tax filing data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
 Fields:
 - tax_type: "vat" | "wht" | "cit"
 - period_start: YYYY-MM-DD
@@ -68,7 +88,17 @@ Fields:
   wht_receipt: {
     type: 'wht_receipt',
     label: 'WHT Receipt',
-    prompt: `Act as a WHT receipt data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
+    prompt: `Extract only what is explicitly present in the source document.
+
+RULES:
+1. Return null for any missing field — never guess or infer.
+2. Return valid JSON only. No markdown, no explanation.
+3. Wrap the JSON in a code block.
+4. After the code block write: "Copy the JSON above and paste it back into the app."
+5. Each document type is independent. Do not transfer meaning between document types.
+6. This document type is isolated. Do not reuse logic from any other contract type.
+
+Act as a WHT receipt data extractor. Return a SINGLE JSON object only. No markdown fences. No prose.
 Fields:
 - client_name: string
 - receipt_number: string

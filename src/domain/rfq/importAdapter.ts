@@ -33,29 +33,28 @@ export const rfqImportAdapter = {
   },
 
   getPrompt: () => {
-    return `Extract the Request for Quote (RFQ) details into this JSON format:
-{
-  "title": "Short descriptive title",
-  "vendor_name": "Vendor name",
-  "issue_date": "YYYY-MM-DD",
-  "show_brand_name": false,
-  "show_vendor_identity": false,
-  "brand_name_override": "",
-  "background_color": "#FFFFFF",
-  "text_color": "#1F2937",
-  "border_color": "#D1D5DB",
-  "accent_color": "#1D4ED8",
-  "preset_name": "Clean Slate",
-  "notes": "General conditions or notes",
-  "items": [
-    {
-      "description": "Item name/desc",
-      "quantity": 10,
-      "unit": "PCS",
-      "specification": "Technical specs",
-      "notes": "Item specific notes"
-    }
-  ]
-}`;
+    return `Extract RFQ line items from the source document.
+
+RULES:
+1. Return null for any missing field — never guess or infer.
+2. Return valid JSON only. No markdown, no explanation.
+3. Wrap the JSON in a code block.
+4. After the code block write: "Copy the JSON above and paste it back into the app."
+5. This document type is isolated. Do not reuse logic from any other document type.
+6. Do not create groups. RFQ is a flat item list only.
+
+Return a JSON array of objects with this exact shape:
+[
+  {
+    "item_name": "",
+    "quantity": 1,
+    "specification": null
+  }
+]
+
+Fields:
+- item_name (string, required) — name or description of the requested item
+- quantity (number, required, must be > 0)
+- specification (string or null) — technical details, model, standard, or requirements`;
   }
 };
