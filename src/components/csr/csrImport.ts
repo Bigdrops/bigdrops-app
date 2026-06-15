@@ -1,6 +1,13 @@
-import { DEFAULT_MATERIAL_ROW } from '@/components/csr/csrUtils'
+import { z } from 'zod'
 
-export const CSR_IMPORT_PROMPT = `Extract only the CSR technical/service fields from the text below and return valid JSON only.
+export const CSR_IMPORT_PROMPT = `You are a strict JSON data extractor. Follow these rules without exception:
+
+· Return ONLY data explicitly present in the source document.
+· Never infer, guess, or fabricate values.
+· Missing values MUST be null.
+· Output MUST be valid JSON only.
+
+Extract only the CSR technical/service fields from the text below and return valid JSON only.
 
 Ignore customer/admin/header/signature information.
 
@@ -16,42 +23,51 @@ Requirements:
 - materials must be an array of { "item": "", "quantity": "", "unit": "" }
 - Missing values should be empty strings, except system_down can be null`
 
-const ALLOWED_SCALAR_KEYS = [
-  'system_down',
-  'problem_reported',
-  'equipment_type',
-  'equipment_location',
-  'make',
-  'model',
-  'serial_no',
-  'capacity',
-  'voltage',
-  'frequency',
-  'battery',
-  'temperature',
-  'pressure',
-  'hours',
-  'service_rendered',
-  'defects_found',
-  'engineer_remarks',
-  'start_date',
-  'end_date',
-] as const
+const csrJsonSchema = z.object({
+  customer_name: z.string(),
+  report_type: z.string().nullable(),
+  description: z.string(),
+  amount_due: z.number().nullable(),
+  amount_paid: z.number().nullable(),
+  product_serial_number: z.string().nullable(),
+  status: z.enum(['pending', 'resolved']).nullable(),
+})
 
-const READING_KEYS = ['voltage', 'frequency', 'battery', 'temperature', 'pressure', 'hours'] as const
+export type CsrJson = z.infer<typeof csrJsonSchema>
 
-const KEY_ALIASES: Record<string, AllowedImportKey> = {
-  equipment: 'equipment_type',
-  location: 'equipment_location',
-  serial: 'serial_no',
-  remarks: 'engineer_remarks',
-  materials_used: 'materials',
-  items: 'materials',
+export type ParseCsrJsonResult =
+  | { ok: true; data: CsrJson }
+  | { ok: false; error: { stage: string; message: string } }
+
+export function parseCsrJson(
+  text: string,
+): ParseCsrJsonResult {
+  if (!text.trim()) {
+    return { ok: false, error: { stage: 'parse', message: 'Paste JSON before importing.' } }
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return { ok: false, error: { stage: 'parse', message: 'Invalid JSON.' } }
+  }
+
+  const result = csrJsonSchema.safeParse(parsed)
+  if (!result.success) {
+    return {
+      ok: false,
+      error: {
+        stage: 'validation',
+        message: result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+      },
+    }
+  }
+
+  return { ok: true, data: result.data }
 }
 
-type AllowedScalarKey = (typeof ALLOWED_SCALAR_KEYS)[number]
-type AllowedImportKey = AllowedScalarKey | 'materials'
-
+// Backward-compat types for parent components
 export type CsrImportMaterial = {
   item: string
   quantity: string
@@ -59,121 +75,8 @@ export type CsrImportMaterial = {
 }
 
 export type ParsedCsrImport = {
-  fields: Partial<Record<AllowedScalarKey, string | boolean | null>>
+  fields: Partial<Record<string, string | boolean | null>>
   materials: CsrImportMaterial[]
   hasMaterials: boolean
   hasOperationalReadings: boolean
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function normalizeImportKey(key: string): AllowedImportKey | null {
-  if (key === 'materials') return 'materials'
-  if ((ALLOWED_SCALAR_KEYS as readonly string[]).includes(key)) return key as AllowedScalarKey
-  return KEY_ALIASES[key] || null
-}
-
-function normalizeString(value: unknown): string {
-  if (value === null || value === undefined) return ''
-  return String(value).trim()
-}
-
-function normalizeSystemDown(value: unknown): boolean | null {
-  if (value === null || value === undefined || value === '') return null
-  if (typeof value === 'boolean') return value
-
-  const normalized = normalizeString(value).toLowerCase()
-  if (normalized === 'true' || normalized === 'yes' || normalized === 'y') return true
-  if (normalized === 'false' || normalized === 'no' || normalized === 'n') return false
-
-  throw new Error('system_down must be true, false, or null.')
-}
-
-function normalizeDateValue(value: unknown, key: 'start_date' | 'end_date'): string {
-  const normalized = normalizeString(value)
-  if (!normalized) return ''
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    throw new Error(`${key} must use YYYY-MM-DD.`)
-  }
-  return normalized
-}
-
-function normalizeMaterialRow(value: unknown): CsrImportMaterial {
-  if (typeof value === 'string') {
-    return { ...DEFAULT_MATERIAL_ROW, item: normalizeString(value) }
-  }
-
-  if (!isRecord(value)) {
-    throw new Error('materials entries must be objects.')
-  }
-
-  return {
-    item: normalizeString(value.item),
-    quantity: normalizeString(value.quantity),
-    unit: normalizeString(value.unit),
-  }
-}
-
-function normalizeMaterials(value: unknown): CsrImportMaterial[] {
-  if (!Array.isArray(value)) {
-    throw new Error('materials must be an array.')
-  }
-
-  return value.map(normalizeMaterialRow)
-}
-
-function normalizeScalarValue(key: AllowedScalarKey, value: unknown): string | boolean | null {
-  if (key === 'system_down') return normalizeSystemDown(value)
-  if (key === 'start_date' || key === 'end_date') return normalizeDateValue(value, key)
-  return normalizeString(value)
-}
-
-function hasRealReadingValue(fields: Partial<Record<AllowedScalarKey, string | boolean | null>>): boolean {
-  return READING_KEYS.some((key) => {
-    const value = fields[key]
-    return typeof value === 'string' && value.trim() !== ''
-  })
-}
-
-export function parseCsrImportText(text: string): ParsedCsrImport {
-  if (!text.trim()) {
-    throw new Error('Paste JSON before importing.')
-  }
-
-  let parsedValue: unknown
-  try {
-    parsedValue = JSON.parse(text)
-  } catch {
-    throw new Error('Invalid JSON.')
-  }
-
-  if (!isRecord(parsedValue)) {
-    throw new Error('Import payload must be a JSON object.')
-  }
-
-  const fields: Partial<Record<AllowedScalarKey, string | boolean | null>> = {}
-  let materials: CsrImportMaterial[] = []
-  let hasMaterials = false
-
-  for (const [rawKey, rawValue] of Object.entries(parsedValue)) {
-    const normalizedKey = normalizeImportKey(rawKey)
-    if (!normalizedKey) continue
-
-    if (normalizedKey === 'materials') {
-      materials = normalizeMaterials(rawValue)
-      hasMaterials = true
-      continue
-    }
-
-    fields[normalizedKey] = normalizeScalarValue(normalizedKey, rawValue)
-  }
-
-  return {
-    fields,
-    materials,
-    hasMaterials,
-    hasOperationalReadings: hasRealReadingValue(fields),
-  }
 }

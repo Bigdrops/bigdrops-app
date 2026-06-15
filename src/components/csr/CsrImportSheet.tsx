@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Wand2, ClipboardCheck } from 'lucide-react'
 import { feedback } from '@/lib/feedback'
-import { CSR_IMPORT_PROMPT, parseCsrImportText, type ParsedCsrImport } from '@/components/csr/csrImport'
+import { CSR_IMPORT_PROMPT, parseCsrJson, type ParsedCsrImport } from '@/components/csr/csrImport'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 
 type CsrImportSheetProps = {
@@ -27,16 +27,35 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
       return
     }
 
-    try {
-      const result = parseCsrImportText(pastedText)
-      onApplyImport(result)
-      feedback.success('Import applied', { description: 'CSR fields were updated successfully.' })
-      onOpenChange(false)
-    } catch (error) {
+    const parseResult = parseCsrJson(pastedText)
+
+    if (parseResult.ok === false) {
       feedback.error('Import failed', {
-        description: error instanceof Error ? error.message : 'Invalid extraction format.',
+        description: parseResult.error.message,
       })
+      return
     }
+
+    const { data } = parseResult
+
+    const adaptedResult: ParsedCsrImport = {
+      fields: {
+        problem_reported: data.description,
+        serial_no: data.product_serial_number,
+        customer_name: data.customer_name,
+        report_type: data.report_type,
+        amount_due: data.amount_due?.toString() ?? null,
+        amount_paid: data.amount_paid?.toString() ?? null,
+        status: data.status,
+      },
+      materials: [],
+      hasMaterials: false,
+      hasOperationalReadings: false,
+    }
+
+    onApplyImport(adaptedResult)
+    feedback.success('Import applied', { description: 'CSR fields were updated successfully.' })
+    onOpenChange(false)
   }
 
   return (

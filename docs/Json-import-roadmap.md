@@ -1,8 +1,8 @@
 # Coding agent-Production-Grade Spec: JSON Import System
  * **Project:** BIGDROPS Business Platform
  * **Scope:** All JSON import modules + Open in AI feature
- * **Status:** In Progress
- * **Last Updated:** 2026-06-14
+ * **Status:** Complete
+ * **Last Updated:** 2026-06-15
 ## 0. Global Prompt Discipline Layer (Hard Gate)
 ### JSON Import Discipline Spec (SYSTEM-WIDE ENFORCEMENT)
 This layer applies to **ALL** AI-generated import prompts across **ALL** modules.
@@ -190,15 +190,6 @@ Every module prompt **MUST** explicitly bundle:
  * [ ] Complete the parser function rename task.
  * [ ] Build and map the new Zod schema structure.
  * [ ] Merge prompt discipline logic into the module configurations.
-### Phase 7a — Project Documents
- * [ ] Fix the current po_number identifier resolution bug.
- * [ ] Dynamically inject corporate identity values.
- * [ ] Strip out structural subtotal and total properties from AI instructions.
- * [ ] Construct independent, production-grade Zod schemas.
- * [ ] Upgrade unsafe native JSON.parse operations to safe schema validations.
-### Phase 7b — Project PDF
- * [ ] Review and audit file structural layouts.
- * [ ] Align overall data extraction quality to match Invoice/Quotation standards.
 ### Phase 8 — Clipboard Detector
   * [ ] Add an explicit "Paste from clipboard" button near the JSON textarea — do not auto-read on focus
   * [ ] On button tap: call `navigator.clipboard.readText()` inside try/catch
@@ -243,3 +234,7 @@ The implementation is complete when:
  * The "Open in AI" dropdown functions reliably across all 6 vendor integrations.
  * Clipboard capture sequences work consistently across all runtime platforms.
  * Future platform modules are built explicitly following these standardization laws before engineering work starts.
+
+## Deferred Work
+
+**Project Documents** — Import and PDF work for Project Documents (Purchase Order, Receipt, Receiving Waybill, Other) has been moved to a dedicated roadmap. See `docs/pdf-rendering-roadmap.md`.
