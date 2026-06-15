@@ -197,6 +197,41 @@ export type Database = {
           },
         ]
       }
+      blank_csr_logs: {
+        Row: {
+          assigned_csr_number: string
+          downloaded_at: string | null
+          downloaded_by: string | null
+          id: string
+          linked_csr_id: string | null
+          reconciled_at: string | null
+        }
+        Insert: {
+          assigned_csr_number: string
+          downloaded_at?: string | null
+          downloaded_by?: string | null
+          id?: string
+          linked_csr_id?: string | null
+          reconciled_at?: string | null
+        }
+        Update: {
+          assigned_csr_number?: string
+          downloaded_at?: string | null
+          downloaded_by?: string | null
+          id?: string
+          linked_csr_id?: string | null
+          reconciled_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blank_csr_logs_linked_csr_id_fkey"
+            columns: ["linked_csr_id"]
+            isOneToOne: false
+            referencedRelation: "csrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boq_rows: {
         Row: {
           boq_id: string
@@ -1901,6 +1936,15 @@ export type Database = {
           company_tagline: string | null
           company_website: string | null
           custom_info: string | null
+          document_prefixes?: {
+            waybill: string
+            invoice: string
+            boq: string
+            rfq: string
+            quotation: string
+            project: string
+            csr: string
+          } | null
           footer_text: string | null
           id: number
           signature_url: string | null
@@ -1923,6 +1967,15 @@ export type Database = {
           company_tagline?: string | null
           company_website?: string | null
           custom_info?: string | null
+          document_prefixes?: {
+            waybill: string
+            invoice: string
+            boq: string
+            rfq: string
+            quotation: string
+            project: string
+            csr: string
+          } | null
           footer_text?: string | null
           id?: number
           signature_url?: string | null
@@ -1945,6 +1998,15 @@ export type Database = {
           company_tagline?: string | null
           company_website?: string | null
           custom_info?: string | null
+          document_prefixes?: {
+            waybill: string
+            invoice: string
+            boq: string
+            rfq: string
+            quotation: string
+            project: string
+            csr: string
+          } | null
           footer_text?: string | null
           id?: number
           signature_url?: string | null
