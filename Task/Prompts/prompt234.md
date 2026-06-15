@@ -1,200 +1,43 @@
-Project root: C:\Users\DELL\desktop\bigdrops-app
+You are working on the BIGDROPS business platform.
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
+Runtime: Bun. Never use npm or yarn.
 
-You are a surgical frontend + domain fix agent for the BIGDROPS Waybill module.
+Read AGENTS.md and docs/PROJECTSKIILINDEX.md before anything else.
 
-You operate with extreme scope control:
-- no speculation
-- no runtime verification
-- no UI testing
-- no “it works” claims
-- no expansion beyond listed files/fixes
+==================================================
+TASK: Settings Table Audit — Read Only
+==================================================
 
----
+READ FIRST:
+- Every migration file in `supabase/migrations/` — read all of them
+- `src/lib/database.types.ts` — read fully
+- Any file that queries or mutates the `settings` table — find them all
 
-## 1. SKILL SYSTEM (MANDATORY FIRST STEP)
+==================================================
+REPORT THESE QUESTIONS
+==================================================
 
-Step 1:
-Read:
-docs/PROJECTSKIILINDEX.md
+1. **`settings` table structure**
+   - What columns does it have?
+   - Is there a `user_id` or `profile_id` column? (per-user)
+   - Is there an `org_id` or similar? (workspace-wide)
+   - What data does it currently store? List every column and its type.
+   - Is there a UNIQUE constraint — if so, on what column(s)?
 
-Step 2:
-Load ONLY these skills:
-- Karpathy
-- typescript-advanced-types
+2. **What uses the `settings` table**
+   - List every file that reads from or writes to `settings`
+   - What data does each file read/write?
+   - Is it used for user preferences, workspace config, or both?
 
-Step 3 — SKILL FAILURE RULE (STRICT):
-If ANY skill cannot be loaded:
-1. Open docs/PROJECTSKIILINDEX.md
-2. Locate the exact filesystem path of the missing skill
-3. Open its SKILL.md directly from disk
-4. Apply its logic conceptually
-5. Continue execution without stopping
+3. **RLS policies on `settings`**
+   - What RLS policies exist on the `settings` table?
+   - Who can read? Who can write?
 
-Never say a skill is missing. Never skip it.
+4. **Can `document_prefixes` live in `settings`?**
+   - Based on what you find — is `settings` scoped to a workspace (one row per workspace) or per user (one row per user)?
+   - If workspace-scoped: `document_prefixes` JSONB could be added as a column here instead of creating a new `organizations` table
+   - If user-scoped: a new `organizations` table is required
 
----
+**Save report to `Task/reports/settings-table-audit.md` and push to main.**
 
-## 2. EXECUTION DISCIPLINE (KARPATHY MODE)
-
-- Think in minimal diffs only
-- Prefer deletion over addition
-- Do not introduce new systems
-- Do not refactor unrelated modules
-- Preserve existing architecture unless explicitly broken
-- One bug cluster → one fix path
-
----
-
-## 3. DATA RULE (NON-NEGOTIABLE)
-
-Waybill item schema mismatch:
-
-- Database stores: `qty`
-- Frontend uses: `quantity`
-
-Rules:
-- DB → UI mapping MUST happen ONLY in normalization layer
-- UI → DB mapping MUST happen ONLY in mutation layer
-- NEVER scatter mapping across components
-- NEVER fallback silently (no default 1 behavior)
-
----
-
-## 4. CURRENT SCOPE (ONLY THESE BUGS)
-
-You are ONLY allowed to work on Waybill Form layer issues.
-
----
-
-### FIX 1 — Duplicate Line Items UI + Missing Rendering
-
-File: `src/components/waybill/WaybillForm.tsx`
-
-Problem:
-- Multiple "LINE ITEMS" headers exist
-- Duplicate toolbar/buttons exist
-- Row counter shows correct count but no rows render correctly
-
-Root cause:
-- Legacy table UI still exists alongside `FormLineItems`
-- Two rendering paths exist and conflict
-
-Fix rules:
-- Search and remove ALL of the following duplicates:
-  - "LINE ITEMS"
-  - "Import Items"
-  - "Table Settings"
-  - "Add item"
-  - any `<table>` based rendering of items
-- KEEP ONLY:
-  - `<FormLineItems />`
-- Ensure ONLY ONE data source is passed into FormLineItems
-- Counter and renderer must use the SAME `items[]` reference
-
-Result:
-Exactly one Line Items system:
-- one header
-- one toolbar
-- one renderer
-
----
-
-### FIX 2 — Default Column Visibility
-
-File: `src/components/waybill/WaybillForm.tsx`
-
-Default visible columns on load:
-- description = true
-- quantity = true
-- unit = true
-
-All other columns:
-- false by default
-
-Ensure:
-- initial state is correct
-- reset restores correct defaults
-- no hidden override elsewhere
-
----
-
-### FIX 3 — Column Toggle Sync Issue
-
-File: `src/components/waybill/WaybillForm.tsx`
-
-Problem:
-Toggling columns (Part No, Condition, custom columns) does not reflect in UI.
-
-Fix rules:
-- Column visibility MUST be single source of truth
-- FormLineItems must receive visibility map directly
-- No internal duplicated visibility state inside table component
-- Rendering must depend ONLY on passed visibility map
-
----
-
-## 5. HARD CONSTRAINTS
-
-DO NOT:
-- touch PDF logic
-- touch View page
-- touch EditWaybill page
-- touch Invoice module
-- add new components
-- add new abstraction layers
-
-ONLY modify WaybillForm.tsx unless strictly required for column sync wiring.
-
----
-
-## 6. VALIDATION (LIMITED)
-
-Allowed commands:
-- bun run typecheck
-- bun run build
-
-DO NOT RUN:
-- bun run dev
-- UI inspection
-- runtime verification
-- browser testing
-
----
-
-## 7. REPORTING (MANDATORY)
-
-Create report at:
-
-Task/reports/waybill-form-fix-report.md
-
-Report must include ONLY:
-- Files changed
-- Exact functions modified
-- What was deleted vs added
-- Data flow fixes (if any)
-- Commands run (typecheck/build only)
-- Commit message
-
-STRICT FORBIDDEN:
-- “works correctly”
-- UI claims
-- runtime verification
-- subjective statements
-
----
-
-## 8. GIT COMMIT
-
-git add -A && git commit -m "fix(waybill): remove duplicate line items UI, sync column visibility, fix rendering source" && git push origin main
-
----
-
-## SUCCESS DEFINITION
-
-Success =
-
-- exactly one Line Items UI exists
-- items render correctly from single source
-- column visibility is consistent and deterministic
-- no duplicate UI paths remain
-- no fallback rendering paths exist
+**Read only. Zero code changes. No assumptions — report only what exists.**
