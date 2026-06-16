@@ -263,6 +263,116 @@ Editorial, Bolt, and Obsidian do not use the shared `industryAdapter` and HTML p
 
 ---
 
+## Phase 3D — BOQ & RFQ Overhaul
+
+**Goal:** Fix the BOQ storage split bug, align both forms visually with the Invoice design system, replace both broken templates, fix image output readability, add missing JSON import to whichever module is missing it, and overhaul the palette/color system.
+
+**Audit Report:** `docs/Task/reports/boq-rfq-audit.md`
+
+---
+
+### Critical Bug — BOQ Storage Split (BLOCKING)
+
+BOQ creation saves to `localStorage` (`domain/boq/storage.ts`) but the view page, list page, and all actions read from Supabase. BOQs created via the New flow are invisible on the view page and list.
+
+**Fix required before any other BOQ work:**
+- Migrate `NewBoq.tsx` save flow to Supabase (insert into `boqs` + `boq_items` tables)
+- Migrate `EditBoq.tsx` to read from and write to Supabase
+- Remove or deprecate `domain/boq/storage.ts`
+- Wire prefix engine: replace hardcoded `BOQ-001` with `resolvePrefix(prefixes, 'boq')` + proper 6-digit sequence generator matching the RFQ pattern
+
+---
+
+### Confirmed Issues
+
+| Issue | Module | Severity | Details |
+|---|---|---|---|
+| Storage split — save to localStorage, view reads Supabase | BOQ | CRITICAL | BOQs disappear after creation |
+| Hardcoded `BOQ-001` prefix — no prefix engine | BOQ | HIGH | Not using `resolvePrefix()` like RFQ does |
+| Both templates too small — must zoom to read | BOQ + RFQ | HIGH | `modern` and `bordered_schedule` unreadable on mobile and in PDF |
+| No page breaks — long tables overflow single page | BOQ + RFQ | HIGH | Single hardcoded `<Page>` — no multi-page support |
+| Image output unreadable on mobile — requires zoom | BOQ + RFQ | HIGH | Picture output not optimized for mobile viewport |
+| Palette/color system produces bad outputs | BOQ + RFQ | HIGH | Color picker allows combinations that result in unreadable documents |
+| Form visual disconnect from Invoice design system | BOQ + RFQ | MEDIUM | Forms use different visual styling — inputs, cards, spacing not aligned |
+| JSON import missing from one module | BOQ or RFQ | MEDIUM | Confirm which module is missing JSON import and add it |
+| No totals/subtotals row in PDF | BOQ + RFQ | LOW | No footer row for cost or quantity sums |
+| No logo/branding in PDF | BOQ + RFQ | LOW | Brand name is text-only, no company logo support |
+
+---
+
+### Strategy (LOCKED)
+
+1. **Fix BOQ storage split first** — nothing else in BOQ can be tested until save works
+2. **Wire BOQ prefix engine** — match RFQ pattern exactly
+3. **Scrap both templates** — `modern` and `bordered_schedule` are both too small and produce unreadable output. Replace with new templates designed for table-heavy documents with readable typography and proper A4 proportions
+4. **Fix image output** — mobile picture output must be readable without zooming. Content must be sized for mobile viewport
+5. **Replace palette system** — remove or constrain the free color picker. Replace with a curated set of preset themes that are guaranteed to produce readable output. No more freeform color combinations
+6. **Align forms to Invoice design system** — visual parity only, not structural rewrite. Same tokens, card style, input components, spacing
+7. **Add missing JSON import** — identify which module is missing it and add it following the JSON Import Standard (`docs/json-import-standard.md`)
+
+---
+
+### Tasks
+
+#### 3D-1 — Fix BOQ Storage Split (BLOCKING — do first)
+- [ ] Read `src/pages/NewBoq.tsx` and `src/domain/boq/storage.ts` fully
+- [ ] Migrate `NewBoq.tsx` to insert into Supabase `boqs` + `boq_items` tables — match `NewRfq.tsx` pattern exactly
+- [ ] Migrate `EditBoq.tsx` to read from and write to Supabase
+- [ ] Replace `saveBoq()` with a Supabase mutation — follow `rfqService.ts` as the reference
+- [ ] Wire `withUniqueRetry` collision handler on BOQ save
+- [ ] Replace hardcoded `BOQ-001` number format with `resolvePrefix(prefixes, 'boq')` + 6-digit sequence generator
+- [ ] Deprecate `domain/boq/storage.ts` — mark as unused or delete
+- [ ] Verify: create a BOQ → navigate to list → BOQ appears → click view → loads correctly
+
+#### 3D-2 — Add Missing JSON Import
+- [ ] Confirm which module (BOQ or RFQ) is missing JSON import
+- [ ] Follow `docs/json-import-standard.md` to add JSON import following the platform standard
+- [ ] Wire to `JsonImportLayout.tsx` shared UI component
+- [ ] Add prompt, Zod schema, and adapter per the standard
+
+#### 3D-3 — Align Forms to Invoice Design System
+- [ ] Read `src/components/boq/BoqForm.tsx` and `src/components/rfq/RfqForm.tsx`
+- [ ] Read `src/pages/NewInvoice.tsx` and relevant Invoice form components as the reference
+- [ ] Identify all visual differences: background tokens, input component variants, card borders, label styles, section spacing
+- [ ] Update BOQ and RFQ forms to use the same design tokens, input components, and card structure as Invoice
+- [ ] No structural changes to the form fields — visual alignment only
+
+#### 3D-4 — Replace Both Templates
+- [ ] Scrap `modern` and `bordered_schedule` templates in `src/components/table-document/TableDocumentPdfDocument.tsx`
+- [ ] Design two new templates optimized for table-heavy documents:
+  - Readable typography — minimum 10pt body text in PDF
+  - Proper A4 proportions — no content that requires zooming
+  - Multi-page support — chunk rows across pages with repeated header row on each page
+  - Clear column headers on every page
+  - Totals row at bottom of last page
+- [ ] New templates must use the same adapter pattern as Invoice (`industryAdapter` + `PdfRenderer`) — not a standalone `<Document>`
+
+#### 3D-5 — Fix Image/Picture Output
+- [ ] Identify the component responsible for image/picture output for BOQ and RFQ
+- [ ] Current output requires zooming to read on mobile — fix sizing and typography
+- [ ] Content must be readable at native mobile viewport width without zoom
+- [ ] Test on mobile viewport (375px width)
+
+#### 3D-6 — Replace Palette System
+- [ ] Remove or disable the free color picker for BOQ and RFQ
+- [ ] Replace with a curated set of preset themes — each preset must be guaranteed to produce readable output
+- [ ] Minimum 4 presets, each with a name and preview
+- [ ] No freeform hex input — presets only
+- [ ] Apply to both BOQ and RFQ template customization
+
+---
+
+### Completion Signal
+- BOQ save works — created BOQs appear in list and view page
+- BOQ uses prefix engine — numbers follow `[PREFIX]-000001` format
+- Both modules have JSON import wired
+- BOQ and RFQ forms are visually aligned with Invoice
+- Both templates are replaced — readable at A4 size without zooming
+- Image output is readable on mobile without zooming
+- Palette system replaced with curated presets — no bad color combinations possible
+
+---
+
 ## Phase 4 — Blank Template PDF Rendering
 
 **Goal:** Build or update blank/manual PDF templates for Waybill and CSR so downloaded blanks use the correct org prefix from the Prefix Engine.
@@ -392,7 +502,7 @@ The `reconciled_at` and `linked_*_id` columns are set when a blank is later clai
 ## Execution Order
 
 ```
-Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3A (Invoice/Quotation Templates) → Phase 3B (Waybill PDF & UI) → Phase 3C (PDF Audit — Remaining Types) → Phase 4 (Blank Templates) → Phase 5 (CSR Landscape) → Phase 6+ (Per findings)
+Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3A (Invoice/Quotation Templates) → Phase 3B (Waybill PDF & UI) → Phase 3C (PDF Audit — Remaining Types) → Phase 3D (BOQ & RFQ) → Phase 4 (Blank Templates) → Phase 5 (CSR Landscape) → Phase 6+ (Per findings)
 ```
 
 ---
