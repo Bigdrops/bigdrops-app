@@ -123,13 +123,67 @@ This roadmap depends on the Prefix Engine (`docs/PRD/PREFIX_ENGINE_SETTINGS.md`)
 
 ---
 
-## Phase 3 — PDF Quality Audit (All Document Types)
+## Phase 3A — Invoice/Quotation Template Audit & Repair
 
-**Goal:** Audit PDF output quality across all document types. Identify gaps.
+**Goal:** Audit all 5 Invoice/Quotation PDF templates. Repair Editorial to match the Industry standard. Destroy broken templates for later rebuild.
+
+### Audit Results (2026-06-16)
+
+| Template | Status | Issues |
+|----------|--------|--------|
+| **Industry** | ✅ Functional | Minor currency formatting inconsistency (mixes blank spaces and # symbol). |
+| **Editorial** | ❌ Broken | Raw HTML tags in Terms & Conditions. Pagination failure — blank page 2. Random "HS" text block near logo. |
+| **Apex** | ❌ Placeholder | Displays hardcoded placeholder message only. Never connected to data model. |
+| **Bolt** | ❌ Broken | Raw HTML tags in Terms. Pagination failure — subtotal/VAT/total orphaned to page 2. Header injects "OUR REFERENCE" text. Missing spaces in company name. |
+| **Obsidian** | ❌ Broken | Raw HTML tags in Terms. Duplicated company header (name, phone, email printed twice). Rigid row heights — text wrap breaks table alignment. |
+
+### Root Cause
+
+Editorial, Bolt, and Obsidian do not use the shared `industryAdapter` and HTML parsing pipeline that Industry uses correctly. Each template has its own inline, broken implementation. Apex was never built.
+
+### Strategy (LOCKED)
+
+1. **Repair Editorial** — Wire it to the Industry adapter pattern (`industryAdapter` + `PdfRenderer`). Fix HTML parsing, pagination, and the stray "HS" text block. Keep the Editorial visual design, but rebuild the data layer.
+2. **Destroy Apex, Bolt, and Obsidian** — Delete their current template implementations entirely. They will be replaced by new templates built AFTER a template standard is established (Phase 3C).
+3. **Standardise** — Before building replacement templates, establish an Invoice/Quotation Template Standard defining: adapter contract, HTML parsing utility, currency formatter, pagination rules, page layout props. The Industry template is the reference implementation.
+
+### Tasks
+
+#### 3A-1 — Repair Editorial Template
+- [ ] Read `src/components/pdf-new/templates/Industry.tsx` — understand the adapter + HTML parser integration
+- [ ] Read `src/components/pdf-new/templates/Editorial.tsx` — identify all broken inline logic
+- [ ] Rewire Editorial to consume `industryAdapter.adaptIndustryData()` output (same data contract as Industry)
+- [ ] Replace Editorial's broken HTML parser with the shared parser used by Industry
+- [ ] Fix pagination: ensure Terms & Conditions flow correctly across pages
+- [ ] Remove the stray "HS" text block
+- [ ] Fix currency formatting
+- [ ] Verify Editorial renders identically to Industry in structure, preserving its unique visual styling
+
+#### 3A-2 — Destroy Broken Templates
+- [ ] Delete `src/components/pdf-new/templates/Apex.tsx` — replace with a placeholder that renders nothing and logs a warning
+- [ ] Delete `src/components/pdf-new/templates/Bolt.tsx` — same
+- [ ] Delete `src/components/pdf-new/templates/Obsidian.tsx` — same
+- [ ] Remove any Apex/Bolt/Obsidian references from the template dispatcher/index file
+- [ ] Keep the template names reserved in config only — no UI change for template selector
+
+#### 3A-3 — Establish Template Standard
+- [ ] Create `docs/STANDARD/invoice-quotation-template-standard.md`
+- [ ] Document: adapter contract (`adaptIndustryData` input/output), HTML parsing utility location, currency formatter signature, pagination rules (page-break, keepTogether, fixed headers), page layout props (`PdfPageLayout`)
+- [ ] Use Industry.tsx as the reference implementation
+- [ ] Define the minimum requirements any new template must meet before being wired into the dispatcher
+
+### Completion Signal
+- Editorial renders correctly with no HTML bleed, correct pagination, and clean layout
+- Apex, Bolt, and Obsidian are removed from the codebase
+- Template standard document exists and is referenced by the roadmap
+
+---
+
+## Phase 3B — PDF Quality Audit (Remaining Types)
+
+**Goal:** Audit PDF output quality across all remaining document types. Identify gaps.
 
 ### Document types to audit
-- Invoice
-- Quotation
 - Waybill (External and Internal)
 - Blank Waybill PDF (External and Internal)
 - RFQ
@@ -143,9 +197,9 @@ This roadmap depends on the Prefix Engine (`docs/PRD/PREFIX_ENGINE_SETTINGS.md`)
 - [ ] For each document type: generate a real PDF and review output
 - [ ] Document all quality issues found (layout, typography, field display, financial formatting, signatures, branding)
 - [ ] Prioritize fixes by impact
-- [ ] Create Phase 5+ tasks based on audit findings
+- [ ] Create Phase 6+ tasks based on audit findings
 
-**Completion Signal:** All document types audited. Issues documented. Phase 5+ tasks defined.
+**Completion Signal:** All document types audited. Issues documented. Phase 6+ tasks defined.
 
 ---
 
@@ -278,7 +332,7 @@ The `reconciled_at` and `linked_*_id` columns are set when a blank is later clai
 ## Execution Order
 
 ```
-Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3 (PDF Audit) → Phase 4 (Blank Template PDFs) → Phase 5 (CSR Landscape & Critical Fixes) → Phase 6+ (Per findings)
+Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3A (Invoice/Quotation Templates) → Phase 3B (PDF Audit — Remaining Types) → Phase 4 (Blank Templates) → Phase 5 (CSR Landscape) → Phase 6+ (Per findings)
 ```
 
 ---
