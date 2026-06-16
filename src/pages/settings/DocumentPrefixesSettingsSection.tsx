@@ -43,14 +43,35 @@ const LABELS: Record<DocumentPrefixKey, string> = {
   csr: 'CSR',
 }
 
-const PREFIX_INFO: Record<DocumentPrefixKey, string> = {
-  waybill: 'Waybill numbers format: PREFIX-000001. Example: WBL-000001',
-  invoice: 'Invoice numbers format: PREFIX-000001. Example: SASINV-B-000001',
-  quotation: 'Quotation numbers format: PREFIX-000001. Example: SASIQUO-000001',
-  rfq: 'RFQ numbers format: PREFIX-000001. Example: RFQ-000001',
-  boq: 'BOQ numbers format: PREFIX-000001. Example: BOQ-000001',
-  project: 'Project numbers format: PREFIX-000001. Example: PRJ-000001',
-  csr: 'CSR numbers format: PREFIX-000001. Example: CSR-000001',
+const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: string }> = {
+  waybill: {
+    title: 'Waybill Numbers',
+    description: 'For generating: External Delivery Notes (-E-), Internal Transfer Notes (-I-), Blank External Waybills (-ME-), Blank Internal Waybills (-MI-).',
+  },
+  invoice: {
+    title: 'Invoice Numbers',
+    description: 'For generating invoices.',
+  },
+  quotation: {
+    title: 'Quotation Numbers',
+    description: 'For generating quotations.',
+  },
+  rfq: {
+    title: 'RFQ Numbers',
+    description: 'For generating Request for Quotation documents.',
+  },
+  boq: {
+    title: 'BOQ Numbers',
+    description: 'For generating Bill of Quantities documents.',
+  },
+  project: {
+    title: 'Project Codes',
+    description: 'For generating project codes.',
+  },
+  csr: {
+    title: 'CSR Numbers',
+    description: 'For generating: Service Reports (base prefix), Blank CSR Forms (-M-).',
+  },
 }
 
 const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
@@ -276,7 +297,7 @@ export function DocumentPrefixesSettingsSection() {
                       </button>
                     </PopoverTrigger>
                     <PopoverContent align="start" side="top" className="w-72 text-xs">
-                      {PREFIX_INFO[key]}
+                      {PREFIX_INFO[key].description}
                     </PopoverContent>
                   </Popover>
                   {!isDefault && (

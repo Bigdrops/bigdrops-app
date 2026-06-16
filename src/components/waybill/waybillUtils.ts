@@ -453,7 +453,7 @@ export function validateWaybill(waybill: Partial<Waybill>): string[] {
 export function getNextWaybillNumber(
   type: WaybillType,
   existingNumbers: string[],
-  prefix: string = 'AWB',
+  prefix: string = 'WBL',
 ): string {
   const routingPrefix = type === 'internal' ? `${prefix}-I-` : `${prefix}-E-`
   const nums = existingNumbers
