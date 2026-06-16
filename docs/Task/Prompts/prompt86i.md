@@ -8,298 +8,192 @@ Runtime: Bun. Never use npm or yarn.
 ==================================================
 SKILL LOADING PROTOCOL (MANDATORY)
 ==================================================
-Before writing any code, you MUST:
-
 1. Read `docs/PROJECTSKIILINDEX.md`
-2. Load these skills:
-   - `Karpathy` — coding discipline, surgical changes, no scope creep
-   - `frontend-design` — visual design standards
-   - `tailwind-css-patterns` — Tailwind v3 patterns
-   - `shadcn` — shadcn/ui components
-3. Fallback to direct file read if skill tool fails. Stop if unreadable.
-4. Read `AGENTS.md` before editing anything.
+2. Load: `Karpathy` (coding discipline)
+3. Fallback to direct file read on failure. Stop if unreadable.
+4. Read `AGENTS.md` before editing.
 
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save work report to `docs/Task/reports/prefix-engine-steps7-8-info.md`
+Save work report to `docs/Task/reports/pdf-roadmap-update.md`
 
 ==================================================
-TASK: Info Popovers + Steps 7 & 8 — Wire Prefix Engine to Generators
+TASK: Update PDF Rendering Roadmap with Blank Document Integration
 ==================================================
 
 READ FIRST (mandatory, before editing):
-- `src/pages/settings/DocumentPrefixesSettingsSection.tsx` (read fully)
-- `src/domain/prefixConstants.ts` (read fully)
-- `src/hooks/useSettings.js` (read fully)
-- `src/components/waybill/waybillUtils.ts` (find getNextWaybillNumber — read signature)
-- `src/components/csr/csrUtils.ts` (find getNextCsrNumber — read signature)
-- `src/domain/documentConversion.ts` (find getNextInvoiceNumber — read signature)
-- `src/domain/quotation/normalize.ts` (find getNextQuotationNumber — read signature + all call sites)
-- `src/domain/rfq/normalize.ts` (find getNextRfqNumber — read signature + all call sites)
-- `src/domain/projects.ts` (find generateNextProjectCode and getProjectCodePrefix — read both)
-- `src/pages/NewInvoice.tsx` (find getNextInvoiceNumber call site)
-- `src/pages/Invoices.tsx` (find getNextInvoiceNumber call site)
-- `src/pages/NewWaybill.tsx` (find getNextWaybillNumber call site)
-- `src/pages/NewCSR.tsx` (find getNextCsrNumber call site)
-- `src/pages/NewRfq.tsx` (find getNextRfqNumber call site)
-- `src/pages/viewQuotationActions.ts` (find getNextQuotationNumber call site)
-- `src/pages/viewRFQActions.ts` (find getNextQuotationNumber call site)
-- `src/pages/viewBOQActions.ts` (find getNextQuotationNumber call site)
-- `src/modules/invoices/services/invoiceConversionService.ts` (find getNextQuotationNumber call site)
-- `src/modules/quotations/services/quotationService.ts` (find getNextQuotationNumber call site)
-- `AGENTS.md`
-- `docs/PROJECTSKIILINDEX.md`
+- `docs/PRD/pdf-rendering-roadmap.md` (read fully)
+- `docs/PRD/PREFIX_ENGINE_SETTINGS.md` (Sections 7, 9, 10 — blank logs, implementation order)
+- `docs/EXECUTION/prefix-engine.md` (Steps 12-13 — blank waybill/CSR wiring)
+- `docs/STANDARD/prefix-engine-settings-standard.md` (Pillar 4 — blank template logging)
+- `src/lib/withUniqueRetry.ts` (collision handler — blank numbers use this too)
+- `src/components/waybill/blankWaybillTemplate.tsx` (existing blank PDF template)
 
 ==================================================
-CHANGE 1 — Info Popovers on Prefix Rows
+CONTEXT — What changed since this roadmap was created
 ==================================================
 
-SCOPE: `src/pages/settings/DocumentPrefixesSettingsSection.tsx` ONLY
+The Prefix Engine is now complete. This means:
+1. `blank_waybill_logs` table already exists and is wired to org prefix via `resolvePrefix()`.
+2. `blank_csr_logs` table was created (Step 2 migration) and is wired to org prefix (Step 13).
+3. Blank waybill download in `NewWaybill.tsx` already generates numbers with the org prefix and inserts into `blank_waybill_logs`.
+4. Blank CSR download in `NewCSR.tsx` now generates numbers with the org prefix and inserts into `blank_csr_logs` — but the actual PDF template does NOT exist yet.
+5. The `withUniqueRetry` collision handler protects blank number generation the same way it protects regular document saves.
+6. Both blank log tables have reconciliation columns (`linked_waybill_id` / `linked_csr_id`, `reconciled_at`) ready for when a blank is later linked to a real document.
 
-Add a small `i` icon button next to the label of each prefix row. Tapping it opens a small popover explaining what documents that prefix affects.
+==================================================
+CHANGE 1 — Add Phase 4: Blank Template PDF Rendering
+==================================================
 
-### Popover behavior
-- Opens on tap/click only — no hover
-- Closes when user clicks/taps anywhere outside the popover
-- Has an X button in the top-right corner to close explicitly
-- Small and compact — not a modal, not full-screen
-- Only one popover open at a time
+Insert a new phase AFTER Phase 3. Renumber old Phase 4+ to Phase 5+.
 
-### Implementation
-Use shadcn `Popover` and `PopoverContent` from `@/components/ui/popover`.
-- Trigger: a small ghost `Button` with `Info` icon from lucide-react, size `xs` or `icon`
-- PopoverContent: `w-64 p-3` — compact
-- Inside: short title (bold, small) + 1-2 sentence description
-- X button: top-right corner, `absolute top-1.5 right-1.5`, closes the popover
+### Phase 4 — Blank Template PDF Rendering
 
-### Info content per field
+Content to add:
 
-Define these as a constant object at the top of the component:
+```markdown
+## Phase 4 — Blank Template PDF Rendering
 
-```typescript
-const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: string }> = {
-  waybill: {
-    title: 'Waybill Numbers',
-    description: 'Used for External Delivery Notes, Internal Transfer Notes, and their blank manual variants. Changing this prefix starts a new sequence for all four formats.',
-  },
-  invoice: {
-    title: 'Invoice Numbers',
-    description: 'Used for all invoices generated in this workspace.',
-  },
-  quotation: {
-    title: 'Quotation Numbers',
-    description: 'Used for all quotations and price proposals.',
-  },
-  rfq: {
-    title: 'RFQ Numbers',
-    description: 'Used for all Request for Quotation documents.',
-  },
-  boq: {
-    title: 'BOQ Numbers',
-    description: 'Used for all Bill of Quantities documents.',
-  },
-  project: {
-    title: 'Project Codes',
-    description: 'Used for all project codes generated in this workspace.',
-  },
-  csr: {
-    title: 'CSR Numbers',
-    description: 'Used for Customer Service Reports and blank manual CSR forms.',
-  },
-}
+**Goal:** Build or update blank/manual PDF templates for Waybill and CSR so downloaded blanks use the correct org prefix from the Prefix Engine.
+
+### Current State (Post-Prefix-Engine)
+
+| Template | Number Assignment | PDF Template | Logging |
+|----------|------------------|--------------|---------|
+| Blank External Waybill | ✅ Wired to org prefix via `resolvePrefix('waybill', ...)` | ✅ Exists in `src/components/waybill/blankWaybillTemplate.tsx` | ✅ Inserts into `blank_waybill_logs` |
+| Blank Internal Waybill | ✅ Wired to org prefix | ✅ Exists (same file, Internal variant) | ✅ Inserts into `blank_waybill_logs` |
+| Blank CSR | ✅ Wired to org prefix via `resolvePrefix('csr', ...)` | ❌ Does NOT exist — needs to be built | ✅ Inserts into `blank_csr_logs` |
+
+### Number Format Reference
+
+Blank document numbers follow these formats (from `docs/PRD/PREFIX_ENGINE_SETTINGS.md` Section 4):
+
+| Document | Blank Format |
+|----------|-------------|
+| Waybill (External) | `[PREFIX]-ME-[SERIAL]` |
+| Waybill (Internal) | `[PREFIX]-MI-[SERIAL]` |
+| CSR | `[PREFIX]-M-[SERIAL]` |
+
+Serial is always 6-digit zero-padded: `000001`.
+
+### Log Table Reference
+
+Both tables already exist in production with reconciliation support:
+
+- `blank_waybill_logs` — columns: `id`, `assigned_waybill_number`, `type`, `downloaded_by`, `downloaded_at`, `linked_waybill_id`, `reconciled_at`
+- `blank_csr_logs` — columns: `id`, `assigned_csr_number`, `downloaded_by`, `downloaded_at`, `linked_csr_id`, `reconciled_at`
+
+The `reconciled_at` and `linked_*_id` columns are set when a blank is later claimed by a real document. This reconciliation logic is NOT yet built — it belongs in this phase.
+
+### Tasks
+
+#### 4A — Verify Existing Blank Waybill Templates Use Org Prefix
+
+- [ ] Read `src/components/waybill/blankWaybillTemplate.tsx`
+- [ ] Confirm the rendered PDF displays the correct org prefix (not a hardcoded `AWB-`)
+- [ ] Confirm External template shows `[PREFIX]-ME-[SERIAL]` format
+- [ ] Confirm Internal template shows `[PREFIX]-MI-[SERIAL]` format
+- [ ] If hardcoded: update to use the prefix passed from `NewWaybill.tsx`
+
+#### 4B — Build Blank CSR PDF Template
+
+- [ ] Create a blank CSR PDF template (mirroring the waybill pattern in `blankWaybillTemplate.tsx`)
+- [ ] The template must render:
+  - Company branding (logo, name, tagline from settings)
+  - The assigned blank CSR number in `[PREFIX]-M-[SERIAL]` format
+  - Empty fields for: customer name, report type, description, amount due, amount paid, product serial number
+  - A status placeholder ("pending" / "resolved")
+  - Signature line for receiver
+- [ ] Wire the download button in `NewCSR.tsx` → `handleDownloadBlankCsr` to generate and download the PDF
+- [ ] Use `@react-pdf/renderer` (already in the project — same as waybill blanks)
+
+#### 4C — Build Reconciliation Logic
+
+- [ ] When a real Waybill is saved with a `waybill_number` that matches a `blank_waybill_logs.assigned_waybill_number`, update the log row: set `linked_waybill_id` and `reconciled_at`
+- [ ] Same for CSR: when a real CSR is saved, check `blank_csr_logs` and reconcile if matched
+- [ ] Reconciliation is a background operation — no user feedback needed
+
+### Completion Signal
+
+- Blank External and Internal Waybill PDFs display the org prefix from settings
+- Blank CSR PDF downloads and displays the org prefix
+- Blank log tables reconcile correctly when a blank number is claimed by a real document
 ```
 
 ==================================================
-CHANGE 2 — Step 7: Add Prefix Parameter to Waybill and CSR Generators
+CHANGE 2 — Update Phase 3 (PDF Quality Audit) to Include Blank Templates
 ==================================================
 
-2a — getNextWaybillNumber in src/components/waybill/waybillUtils.ts
+In Phase 3's "Document types to audit" list, add:
 
-Current signature:
-
-```ts
-function getNextWaybillNumber(type: WaybillType, existingNumbers: string[]): string
+```markdown
+- Blank Waybill PDF (External and Internal)
+- Blank CSR PDF
 ```
-
-New signature:
-
-```ts
-function getNextWaybillNumber(
-  type: WaybillType,
-  existingNumbers: string[],
-  prefix: string = 'WBL',
-): string
-```
-
-Inside the function, replace the hardcoded 'AWB-I-' and 'AWB-E-' strings with:
-
-· External:  `${prefix}-E-` 
-· Internal:  `${prefix}-I-` 
-
-The serial padding stays at 4 digits (padStart(4, '0')). Keep all other logic identical.
-
-2b — getNextCsrNumber in src/components/csr/csrUtils.ts
-
-Current signature:
-
-```ts
-function getNextCsrNumber(lastValue: string | null | undefined): string
-```
-
-New signature:
-
-```ts
-function getNextCsrNumber(
-  lastValue: string | null | undefined,
-  prefix: string = 'CSR',
-): string
-```
-
-Inside the function, replace the hardcoded 'CSR-001' fallback with  `${prefix}-000001` .
-
-The function already preserves whatever prefix exists in lastValue by incrementing in-place — this change only affects the fallback when lastValue is empty or null.
 
 ==================================================
-CHANGE 3 — Step 8: Wire All Generators to Settings Prefix
+CHANGE 3 — Update Execution Order
 ==================================================
 
-Every call site must now read the prefix from useSettings() via resolvePrefix() from src/domain/prefixConstants.ts and pass it to the generator.
+Replace the execution order section with:
 
-Pattern for every call site:
+```markdown
+## Execution Order
 
-```ts
-import { resolvePrefix } from '@/domain/prefixConstants'
-// settings comes from useSettings() already present in the component/file
-
-const prefix = resolvePrefix('invoice', settings?.document_prefixes)
-const nextNumber = getNextInvoiceNumber(rows, prefix)
 ```
 
-Wire each generator:
+Phase 1 (Project Document Import) → Phase 2 (Project Document PDF) → Phase 3 (PDF Audit) → Phase 4 (Blank Template PDFs) → Phase 5+ (PDF Fixes per findings)
 
-Invoice — getNextInvoiceNumber
-
-· src/pages/NewInvoice.tsx — pass resolvePrefix('invoice', settings?.document_prefixes) as second argument
-· src/pages/Invoices.tsx — same
-
-Quotation — getNextQuotationNumber
-
-· src/pages/viewQuotationActions.ts — pass resolvePrefix('quotation', settings?.document_prefixes) as second argument
-· src/pages/viewRFQActions.ts — same
-· src/pages/viewBOQActions.ts — same
-· src/modules/invoices/services/invoiceConversionService.ts — same
-· src/modules/quotations/services/quotationService.ts — same
-
-RFQ — getNextRfqNumber
-
-· src/pages/NewRfq.tsx — pass resolvePrefix('rfq', settings?.document_prefixes) as second argument
-
-Waybill — getNextWaybillNumber
-
-· src/pages/NewWaybill.tsx — pass resolvePrefix('waybill', settings?.document_prefixes) as third argument
-· src/domain/waybill/waybillMutations.ts — same
-
-CSR — getNextCsrNumber
-
-· src/pages/NewCSR.tsx — pass resolvePrefix('csr', settings?.document_prefixes) as second argument
-
-Settings access in non-component files
-
-Some call sites are in service files or action files that don't use React hooks. For these files:
-
-· If settings is already passed as a parameter or available in scope, use it directly
-· If not, add settings as a parameter to the function and update its callers to pass it through
-· Do NOT call useSettings() inside non-React files — hooks are React-only
-
-Document in the report which files needed settings passed through as a parameter vs which already had access.
+```
+```
 
 ==================================================
-CHANGE 4 — Step 9: Project Document Sequence Generation
+CHANGE 4 — Add Prefix Engine Dependency Note
 ==================================================
 
-SCOPE: src/domain/projects.ts
+Add this note at the top of the roadmap, after the "Deferred from JSON Import Roadmap" section:
 
-Current state: getProjectCodePrefix(date) returns PRJ-{year}- hardcoded. generateNextProjectCode() uses this internally.
+```markdown
+## Prefix Engine Dependency
 
-Fix:
+This roadmap depends on the Prefix Engine (`docs/PRD/PREFIX_ENGINE_SETTINGS.md`), which is now fully implemented. Key integrations:
 
-· Modify getProjectCodePrefix to accept an optional prefix parameter:
-
-```ts
-function getProjectCodePrefix(date = new Date(), prefix: string = 'PRJ'): string {
-  return `${prefix}-${date.getFullYear()}-`
-}
+- All document number prefixes are configurable via Settings → Document Prefixes
+- Blank document numbers use the org prefix from `resolvePrefix()`
+- `blank_waybill_logs` and `blank_csr_logs` tables are live and tracking all blank downloads
+- The `withUniqueRetry` collision handler (3-attempt retry on Postgres error 23505) protects all document saves including blank number assignments
+- See `docs/STANDARD/prefix-engine-settings-standard.md` for the integration standard
 ```
-
-· Modify generateNextProjectCode to accept an optional prefix parameter:
-
-```ts
-async function generateNextProjectCode(
-  supabaseClient: ...,
-  date: Date = new Date(),
-  prefix: string = 'PRJ',
-): Promise<string>
-```
-
-Pass prefix through to getProjectCodePrefix(date, prefix) inside the function.
-
-· At the call site in src/domain/projects.ts (inside createProjectWithGeneratedCode):
-  · Add settings parameter to createProjectWithGeneratedCode or fetch prefix from wherever settings are available in that context
-  · Pass resolvePrefix('project', settings?.document_prefixes) as the prefix argument
 
 ==================================================
 VERIFICATION
 ==================================================
 
-1. bun run audit:load
-2. bun run typecheck — must pass with zero errors
-3. bun run lint — focused on changed files
-
-Manual verification (document in report):
-
-· Info popover opens on tap, closes on outside click and X button
-· Only one popover open at a time
-· Waybill generator uses WBL-E- and WBL-I- format (not AWB-E- / AWB-I-)
-· CSR fallback produces CSR-000001 not CSR-001
-· Every generator call site passes the resolved prefix from settings
-· Non-hook files pass settings as a parameter — document which ones
+1. Read the updated docs/PRD/pdf-rendering-roadmap.md and confirm all 4 changes are present
+2. Confirm no source code files were modified
+3. Push to main
 
 ==================================================
 DONE WHEN
 ==================================================
 
-· Info popover on every prefix row label
-· Popover closes on outside click and X button
-· One popover open at a time
-· PREFIX_INFO constant defined with content for all 7 keys
-· getNextWaybillNumber accepts prefix parameter, uses it internally
-· getNextCsrNumber accepts prefix parameter, uses it for fallback
-· All Invoice call sites pass resolved prefix
-· All Quotation call sites pass resolved prefix
-· All RFQ call sites pass resolved prefix
-· All Waybill call sites pass resolved prefix
-· All CSR call sites pass resolved prefix
-· Project generator accepts prefix parameter and is wired to settings
-· No hardcoded AWB-, SASINV-B, SASIQUO, CSR-001, PRJ-{year} strings remain at call sites
-· bun run audit:load passes
-· bun run typecheck passes with zero errors
-· Work report saved to docs/Task/reports/prefix-engine-steps7-8-info.md
-· All changes pushed to main
+· Phase 4 (Blank Template PDF Rendering) added to the roadmap
+· Phase 3 audit list includes blank waybill and blank CSR
+· Execution order updated to include Phase 4
+· Prefix Engine dependency note added at top
+· Work report saved to docs/Task/reports/pdf-roadmap-update.md
+· Changes pushed to main
 
 ==================================================
 DO NOT
 ==================================================
 
+· Do NOT modify any source code files
 · Do NOT run bun run dev
-· Do NOT call useSettings() inside non-React service or action files
-· Do NOT change serial padding or number format logic inside generators
-· Do NOT touch offline generators (csrOffline.ts, quotationOffline.ts)
-· Do NOT modify the AlertDialog pattern in the settings card
-· Do NOT add new dependencies
-· Do NOT use Tailwind v4 syntax
+· Do NOT change Phase 1, Phase 2, or Phase 3 content beyond the specified additions
 · Do NOT skip the work report
 
 ```
 
-Target: Any agent | Strategy: Three concerns in one pass — UI popover (one file), generator signature updates (two files), and call site wiring (11 files). Non-hook files identified upfront so agent handles settings pass-through correctly instead of guessing.
+Target: Any agent | Strategy: Documentation-only update — adds blank template PDF rendering as Phase 4, links it to the now-complete Prefix Engine, documents the existing blank log tables and number formats, adds reconciliation tasks, and marks the dependency on `resolvePrefix()` and `withUniqueRetry`.
