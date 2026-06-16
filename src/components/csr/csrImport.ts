@@ -24,13 +24,30 @@ Requirements:
 - Missing values should be empty strings, except system_down can be null`
 
 const csrJsonSchema = z.object({
-  customer_name: z.string(),
-  report_type: z.string().nullable(),
-  description: z.string(),
-  amount_due: z.number().nullable(),
-  amount_paid: z.number().nullable(),
-  product_serial_number: z.string().nullable(),
-  status: z.enum(['pending', 'resolved']).nullable(),
+  system_down: z.boolean().nullable().optional(),
+  problem_reported: z.string().optional(),
+  equipment_type: z.string().optional(),
+  equipment_location: z.string().optional(),
+  make: z.string().optional(),
+  model: z.string().optional(),
+  serial_no: z.string().optional(),
+  capacity: z.string().optional(),
+  voltage: z.string().optional(),
+  frequency: z.string().optional(),
+  battery: z.string().optional(),
+  temperature: z.string().optional(),
+  pressure: z.string().optional(),
+  hours: z.string().optional(),
+  service_rendered: z.string().optional(),
+  defects_found: z.string().optional(),
+  engineer_remarks: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  materials: z.array(z.object({
+    item: z.string(),
+    quantity: z.string(),
+    unit: z.string(),
+  })).optional(),
 })
 
 export type CsrJson = z.infer<typeof csrJsonSchema>

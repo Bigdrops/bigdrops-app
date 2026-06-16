@@ -38,19 +38,36 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
 
     const { data } = parseResult
 
+    const hasOperationalReadings = Boolean(
+      data.voltage || data.frequency || data.battery || data.temperature || data.pressure || data.hours,
+    )
+    const materials = data.materials ?? []
+
     const adaptedResult: ParsedCsrImport = {
       fields: {
-        problem_reported: data.description,
-        serial_no: data.product_serial_number,
-        customer_name: data.customer_name,
-        report_type: data.report_type,
-        amount_due: data.amount_due?.toString() ?? null,
-        amount_paid: data.amount_paid?.toString() ?? null,
-        status: data.status,
+        system_down: data.system_down ?? null,
+        problem_reported: data.problem_reported ?? null,
+        equipment_type: data.equipment_type ?? null,
+        equipment_location: data.equipment_location ?? null,
+        make: data.make ?? null,
+        model: data.model ?? null,
+        serial_no: data.serial_no ?? null,
+        capacity: data.capacity ?? null,
+        voltage: data.voltage ?? null,
+        frequency: data.frequency ?? null,
+        battery: data.battery ?? null,
+        temperature: data.temperature ?? null,
+        pressure: data.pressure ?? null,
+        hours: data.hours ?? null,
+        service_rendered: data.service_rendered ?? null,
+        defects_found: data.defects_found ?? null,
+        engineer_remarks: data.engineer_remarks ?? null,
+        start_date: data.start_date ?? null,
+        end_date: data.end_date ?? null,
       },
-      materials: [],
-      hasMaterials: false,
-      hasOperationalReadings: false,
+      materials: materials.map((m) => ({ item: m.item, quantity: m.quantity, unit: m.unit })),
+      hasMaterials: materials.length > 0,
+      hasOperationalReadings,
     }
 
     onApplyImport(adaptedResult)
