@@ -22,6 +22,7 @@ import { validateProjectAssignment } from '@/domain/projects'
 import { createCsr } from '@/domain/csr/csrService'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -203,6 +204,40 @@ export default function NewCSR() {
     }
   }
 
+  const handleDownloadBlankCsr = async () => {
+    try {
+      const { data: existingRows } = await supabase
+        .from('csrs')
+        .select('csr_number')
+        .order('created_at', { ascending: false })
+        .limit(1000)
+      const latestNumber = existingRows?.[existingRows.length - 1]?.csr_number || null
+      const blankNumber = getNextCsrNumber(latestNumber, resolvePrefix(settings?.document_prefixes, 'csr'))
+
+      const { error: logError } = await supabase.from('blank_csr_logs').insert([{
+        assigned_csr_number: blankNumber,
+      }])
+      if (logError) {
+        console.warn('[NewCSR] Failed to log blank CSR:', logError)
+      }
+
+      const previewData = buildCsrPreviewData(
+        { ...createDefaultCsr(isField), csr_number: blankNumber },
+        { technicianSignatory: null },
+      )
+      const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${blankNumber}.pdf`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      feedback.success(`Blank CSR ${blankNumber} downloaded`)
+    } catch (err) {
+      feedback.error(err instanceof Error ? err.message : 'Download failed')
+    }
+  }
+
   const handleSave = async () => {
     if (!csrNumberPopulated.current || !String(csr.csr_number || '').trim()) {
       feedback.error('CSR number not ready', {
@@ -255,18 +290,22 @@ export default function NewCSR() {
       return
     }
 
-    const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
-
-    if (existing && existing.length > 0) {
-      feedback.error('Duplicate CSR number', {
-        description: 'CSR number already exists. Please use a different number.',
-      })
-      return
-    }
-
     setSaving(true)
     try {
-      const savedCsr = await createCsr(csrData)
+      const { data: savedCsr, error: saveError } = await withUniqueRetry(
+        async (candidateNumber: string) => {
+          csrData.csr_number = candidateNumber
+          return supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
+        },
+        async () => {
+          const { data: rows } = await supabase.from('csrs').select('csr_number')
+          return getNextCsrNumber(rows?.[rows.length - 1]?.csr_number || null, resolvePrefix(settings?.document_prefixes, 'csr'))
+        },
+      )
+
+      if (saveError || !savedCsr) {
+        throw saveError || new Error('CSR save returned no data')
+      }
 
       setSaving(false)
 
@@ -319,6 +358,7 @@ export default function NewCSR() {
         onRemoveMaterialRow={removeMaterialRow}
         onApplyImport={handleApplyImport}
         onSave={handleSave}
+        onDownloadBlank={handleDownloadBlankCsr}
       />
     </Layout>
   )

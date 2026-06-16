@@ -2,6 +2,7 @@ import { supabase } from '@/supabase'
 import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
 import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -72,7 +73,22 @@ export async function saveWaybill(params: {
   }
 
   if (mode === 'new') {
-    const { data, error } = await supabase.from('waybills').insert([payload]).select('id').single()
+    const prefix = resolvePrefix(prefixes, 'waybill')
+    const { data, error } = await withUniqueRetry(
+      async (candidateNumber: string) => {
+        payload.waybill_number = candidateNumber
+        return supabase.from('waybills').insert([payload]).select('id').single()
+      },
+      async () => {
+        const { data: rows } = await supabase
+          .from('waybills')
+          .select('waybill_number')
+          .order('created_at', { ascending: false })
+          .limit(1000)
+        const existingNumbers = (rows || []).map((w) => w.waybill_number || '').filter(Boolean)
+        return getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix)
+      },
+    )
     if (error) {
       console.error('Waybill save error:', error)
       throw new Error(`Failed to save waybill: ${error.message}`)

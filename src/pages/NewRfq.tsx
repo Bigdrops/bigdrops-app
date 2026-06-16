@@ -9,6 +9,7 @@ import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 export default function NewRfq() {
   const navigate = useNavigate();
@@ -20,14 +21,19 @@ export default function NewRfq() {
     
     // Get next RFQ number
     const { data: existingRfqs } = await supabase.from('rfqs').select('rfq_number');
-    const rfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || [], resolvePrefix(settings?.document_prefixes, 'rfq'));
+    const rfqPrefix = resolvePrefix(settings?.document_prefixes, 'rfq');
+    const initialRfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || [], rfqPrefix);
 
-    const dbRfq = denormalizeToDbRfq({ ...rfq, rfq_number: rfqNumber });
-    const { data: createdRfq, error: rfqError } = await supabase
-      .from('rfqs')
-      .insert([dbRfq])
-      .select()
-      .single();
+    const { data: createdRfq, error: rfqError } = await withUniqueRetry(
+      async (candidateNumber: string) => {
+        const dbRfq = denormalizeToDbRfq({ ...rfq, rfq_number: candidateNumber });
+        return supabase.from('rfqs').insert([dbRfq]).select().single();
+      },
+      async () => {
+        const { data: rows } = await supabase.from('rfqs').select('rfq_number');
+        return getNextRfqNumber(rows || [], rfqPrefix);
+      },
+    );
 
     if (rfqError || !createdRfq) {
       feedback.error('Save failed', {

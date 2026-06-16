@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Hash, MoreHorizontal, Save } from 'lucide-react'
+import { Download, Hash, MoreHorizontal, Save } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
@@ -52,6 +52,7 @@ type Props = {
   onRemoveMaterialRow: (index: number) => void
   onApplyImport: (result: ParsedCsrImport) => void
   onSave: () => void
+  onDownloadBlank?: () => void
 }
 
 const STATUS_OPTIONS = [
@@ -180,6 +181,7 @@ export default function CsrFormScreen({
   onRemoveMaterialRow,
   onApplyImport,
   onSave,
+  onDownloadBlank,
 }: Props) {
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
@@ -772,7 +774,16 @@ export default function CsrFormScreen({
       )}
 
       {/* Floating Save Button */}
-      <div className="hidden sm:block fixed bottom-6 right-6 z-30">
+      <div className="hidden sm:block fixed bottom-6 right-6 z-30 flex items-center gap-3">
+        {onDownloadBlank && (
+          <button
+            onClick={onDownloadBlank}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-separator"
+            title="Download blank CSR"
+          >
+            <Download className="h-6 w-6" />
+          </button>
+        )}
         <button
           onClick={onSave}
           disabled={saveDisabled}

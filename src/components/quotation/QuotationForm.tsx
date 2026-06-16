@@ -27,6 +27,7 @@ import {
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { type ProjectLookupClient, type ProjectPrefillState, validateProjectAssignment } from '@/domain/projects'
@@ -37,6 +38,8 @@ import {
 } from '@/lib/native/quotationOffline'
 import { feedback } from '@/lib/feedback'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
+import { useSettings } from '@/hooks/useSettings'
+import { resolvePrefix } from '@/domain/prefixConstants'
 import { formatQuotationStatus } from './quotationStatus'
 import type {
   BankAccountRow,
@@ -64,6 +67,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const location = useLocation()
   const prefill = (location.state || {}) as RfqConversionPrefillState
   const { isMobile } = useLayoutMode()
+  const { settings } = useSettings()
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
@@ -280,7 +284,8 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
         return match ? parseInt(match[1], 10) : 0
       })
       const next = Math.max(0, ...nums) + 1
-      const nextQuotationNumber = `SASQ-${String(next).padStart(4, '0')}`
+      const quotationPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
+      const nextQuotationNumber = `${quotationPrefix}-${String(next).padStart(4, '0')}`
       setQuotation((current) => ({
         ...current,
         quotation_number: nextQuotationNumber,
@@ -294,7 +299,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
     }
 
     void load()
-  }, [isEdit, navigate, quotationId, setColumns])
+  }, [isEdit, navigate, quotationId, setColumns, settings?.document_prefixes])
 
   const lineItemsHandlers = useQuotationLineItems({ items, setItems, groups, setGroups })
   const {
@@ -547,9 +552,10 @@ timer.phaseEnd('build-payload', buildPayloadStart, {
         supabaseCalls: 1,
       })
       if (existing) {
+        const collisionPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
         const match = candidateNumber.match(/(\d+)$/)
         const num = match ? parseInt(match[1], 10) : 0
-        candidateNumber = `SASQ-${String(num + 1).padStart(4, '0')}`
+        candidateNumber = `${collisionPrefix}-${String(num + 1).padStart(4, '0')}`
         payload.quotation_number = candidateNumber
         setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
       }
@@ -562,13 +568,31 @@ timer.phaseEnd('build-payload', buildPayloadStart, {
       })
     }
 
-    const quoteQuery =
-      isEdit && quotationId
-        ? supabase.from('quotations').update(payload).eq('id', quotationId).select().single()
-        : supabase.from('quotations').insert([payload]).select().single()
-
     const saveDocumentRowStart = timer.phaseStart('save-document-row')
-    const { data: savedQuotation, error } = await quoteQuery
+    let savedQuotation: any = null
+    let error: any = null
+
+    if (isEdit && quotationId) {
+      const result = await supabase.from('quotations').update(payload).eq('id', quotationId).select().single()
+      savedQuotation = result.data
+      error = result.error
+    } else {
+      const result = await withUniqueRetry(
+        async (candidateNumber: string) => {
+          payload.quotation_number = candidateNumber
+          setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
+          return supabase.from('quotations').insert([payload]).select().single()
+        },
+        async () => {
+          const { data: rows } = await supabase.from('quotations').select('quotation_number')
+          const prefix = resolvePrefix(settings?.document_prefixes, 'quotation')
+          return `${prefix}-${String(((rows || []).length + 1)).padStart(4, '0')}`
+        },
+      )
+      savedQuotation = result.data
+      error = result.error
+    }
+
     timer.phaseEnd('save-document-row', saveDocumentRowStart, {
       table: 'quotations',
       operation: isEdit ? 'update-select-single' : 'insert-select-single',

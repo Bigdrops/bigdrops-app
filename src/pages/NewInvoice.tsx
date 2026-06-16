@@ -46,6 +46,7 @@ import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { useSettings } from '@/hooks/useSettings'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -592,11 +593,16 @@ export default function NewInvoice() {
     })
 
     const saveDocumentRowStart = timer.phaseStart('save-document-row')
-    const { data: invoiceRow, error } = await (supabase
-      .from('invoices') as any)
-      .insert([insertPayload])
-      .select()
-      .single()
+    const { data: invoiceRow, error } = await withUniqueRetry(
+      async (candidateNumber: string) => {
+        insertPayload.invoice_number = candidateNumber
+        return (supabase.from('invoices') as any).insert([insertPayload]).select().single() as Promise<{ data: any; error: any }>
+      },
+      async () => {
+        const { data: rows } = await supabase.from('invoices').select('invoice_number')
+        return getNextInvoiceNumber(rows || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
+      },
+    )
     timer.phaseEnd('save-document-row', saveDocumentRowStart, {
       table: 'invoices',
       operation: 'insert-select-single',
