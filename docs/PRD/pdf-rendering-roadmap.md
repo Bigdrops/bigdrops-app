@@ -179,13 +179,73 @@ Editorial, Bolt, and Obsidian do not use the shared `industryAdapter` and HTML p
 
 ---
 
-## Phase 3B — PDF Quality Audit (Remaining Types)
+## Phase 3B — Waybill PDF & UI Fixes (Internal & External)
+
+**Goal:** Fix broken PDF table layout, quantity data bug, signature layout, blank PDF rendering, and type selector modal theme mismatch.
+
+### Confirmed Issues
+
+#### PDF Issues (Both Internal and External variants)
+
+| Issue | Severity | Details |
+|---|---|---|
+| Missing table headers | HIGH | No column labels rendered for #, Item Description, Qty, Unit, Condition |
+| Description column width unconstrained | HIGH | Description expands to ~90% of table, crushes all other columns to right margin |
+| Quantity defaults to 0 | HIGH | Item quantity values return hardcoded 0 — actual data not mapped |
+| Column proportions broken | HIGH | Qty, Unit, Condition unreadable — no width allocation |
+| Signature/footer layout unstable | MEDIUM | Signature blocks lack sizing constraints — misaligned and compressed |
+| Blank PDF non-functional | HIGH | Blank template download fails for both Internal and External |
+
+#### UI Issue
+
+| Issue | Severity | Details |
+|---|---|---|
+| Type selector modal theme mismatch | MEDIUM | "New Waybill" modal uses bespoke cream background, display font, and custom card borders. Does not match app design token system. Affects modal only — form, list, and view pages are fine. |
+
+### Strategy
+
+1. **Fix PDF table geometry** — add explicit column headers, enforce proportional widths: `#` (5%), `Description` (55%), `Qty` (10%), `Unit` (15%), `Condition` (15%)
+2. **Fix quantity mapping** — trace the item array mapping and fix the data binding returning 0
+3. **Fix signature layout** — add explicit sizing and vertical rhythm to signature blocks
+4. **Fix blank PDF** — restore blank template rendering for both Internal and External
+5. **Fix type selector modal** — replace bespoke styling with app design tokens (shadcn card system, correct background tokens, correct typography)
+
+### Tasks
+
+#### 3B-1 — Fix PDF Table Layout
+- [ ] Read waybill PDF template files for Internal and External
+- [ ] Add explicit table header row with column labels: #, Item Description, Qty, Unit, Condition
+- [ ] Apply proportional column widths: # (5%), Description (55%), Qty (10%), Unit (15%), Condition (15%)
+- [ ] Fix row mapping to read actual quantity values — remove hardcoded 0 fallback
+- [ ] Add sizing constraints to signature/footer blocks — fix vertical alignment
+
+#### 3B-2 — Fix Blank PDF
+- [ ] Read blank waybill template files (`src/components/waybill/blankWaybillTemplate.tsx`)
+- [ ] Identify why blank rendering fails for Internal and External
+- [ ] Fix blank template to render clean empty grid for both variants
+- [ ] Verify blank PDF downloads correctly from the New Waybill modal
+
+#### 3B-3 — Fix Type Selector Modal Theme
+- [ ] Find the New Waybill type selector modal component
+- [ ] Replace cream background with app design token (`bg-bd-overlay-bg` or equivalent)
+- [ ] Replace display/serif font with app font system
+- [ ] Replace custom card borders with shadcn card component
+- [ ] Verify modal matches the app's visual design system
+
+### Completion Signal
+- Both Internal and External PDFs show correct table headers and proportional column widths
+- Quantity values display actual data, not 0
+- Signature blocks are cleanly aligned
+- Blank PDF downloads work for both variants
+- New Waybill modal uses app design tokens and matches the visual design system
+
+---
+
+## Phase 3C — PDF Quality Audit (Remaining Types)
 
 **Goal:** Audit PDF output quality across all remaining document types. Identify gaps.
 
 ### Document types to audit
-- Waybill (External and Internal)
-- Blank Waybill PDF (External and Internal)
 - RFQ
 - CSR
 - Blank CSR PDF
@@ -332,7 +392,7 @@ The `reconciled_at` and `linked_*_id` columns are set when a blank is later clai
 ## Execution Order
 
 ```
-Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3A (Invoice/Quotation Templates) → Phase 3B (PDF Audit — Remaining Types) → Phase 4 (Blank Templates) → Phase 5 (CSR Landscape) → Phase 6+ (Per findings)
+Phase 1 (Project Document Import) → Phase 2A (Project Document PDF) → Phase 2B (CSR Audit & Fixes) → Phase 3A (Invoice/Quotation Templates) → Phase 3B (Waybill PDF & UI) → Phase 3C (PDF Audit — Remaining Types) → Phase 4 (Blank Templates) → Phase 5 (CSR Landscape) → Phase 6+ (Per findings)
 ```
 
 ---
