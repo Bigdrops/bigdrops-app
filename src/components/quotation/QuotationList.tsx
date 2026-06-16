@@ -16,6 +16,7 @@ import {
 import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { loadQuotations as fetchQuotationsFromService, loadQuotationById, loadQuotationNumbers, loadQuotationItems, archiveQuotation, deleteQuotation, cloneQuotation } from '@/modules/quotations/services/quotationService'
+import { useSettings } from '@/hooks/useSettings'
 
 const QUOTATION_CACHE_KEY = 'bd:list:quotations:v1:all'
 const QUOTATION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -51,6 +52,7 @@ const formatMoney = (value: number | string | null | undefined) => formatNaira(v
 
 export default function QuotationList() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const { state, patchUpdate, reset, results: quotations, loading } = useDocumentQuery()
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
   const [busyAction, setBusyAction] = useState<string | null>(null)
@@ -130,7 +132,7 @@ export default function QuotationList() {
   const handleClone = async (id: string) => {
     setBusyAction(`clone:${id}`)
     try {
-      const createdQuotation = await cloneQuotation(id)
+      const createdQuotation = await cloneQuotation(id, settings?.document_prefixes)
       setBusyAction(null)
       setActiveQuotation(null)
       invalidateListCache(QUOTATION_CACHE_KEY)

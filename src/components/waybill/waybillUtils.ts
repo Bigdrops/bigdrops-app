@@ -450,14 +450,18 @@ export function validateWaybill(waybill: Partial<Waybill>): string[] {
   return errors
 }
 
-export function getNextWaybillNumber(type: WaybillType, existingNumbers: string[]): string {
-  const prefix = type === 'internal' ? 'AWB-I-' : 'AWB-E-'
+export function getNextWaybillNumber(
+  type: WaybillType,
+  existingNumbers: string[],
+  prefix: string = 'AWB',
+): string {
+  const routingPrefix = type === 'internal' ? `${prefix}-I-` : `${prefix}-E-`
   const nums = existingNumbers
-    .filter((n) => n.startsWith(prefix))
-    .map((n) => parseInt(n.slice(prefix.length), 10))
+    .filter((n) => n.startsWith(routingPrefix))
+    .map((n) => parseInt(n.slice(routingPrefix.length), 10))
     .filter((n) => !isNaN(n))
   const highest = nums.length > 0 ? Math.max(...nums) : 0
-  return `${prefix}${String(highest + 1).padStart(4, '0')}`
+  return `${routingPrefix}${String(highest + 1).padStart(6, '0')}`
 }
 
 export function getStatusMeta(status: string) {

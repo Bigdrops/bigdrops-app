@@ -63,8 +63,8 @@ export function getClientMismatchMessage({
   return `Client mismatch: document is for ${docClient} while the selected project belongs to ${projectClient}.`
 }
 
-export function getProjectCodePrefix(date = new Date()) {
-  return `PRJ-${date.getFullYear()}-`
+export function getProjectCodePrefix(date = new Date(), prefix = 'PRJ') {
+  return `${prefix}-${date.getFullYear()}-`
 }
 
 export function extractProjectCodeSequence(code: unknown, prefix: string) {
@@ -189,21 +189,22 @@ export async function generateNextProjectCode(
     }
   },
   date = new Date(),
+  prefix?: string,
 ) {
-  const prefix = getProjectCodePrefix(date)
+  const projectPrefix = getProjectCodePrefix(date, prefix)
   const { data, error } = await supabaseClient
     .from('projects')
     .select('project_code')
-    .ilike('project_code', `${prefix}%`)
+    .ilike('project_code', `${projectPrefix}%`)
 
   if (error) {
     throw new Error(error.message || 'Could not generate a project code.')
   }
 
   const nextSequence =
-    (data || []).reduce((max, project) => Math.max(max, extractProjectCodeSequence(project.project_code, prefix)), 0) + 1
+    (data || []).reduce((max, project) => Math.max(max, extractProjectCodeSequence(project.project_code, projectPrefix)), 0) + 1
 
-  return `${prefix}${String(nextSequence).padStart(3, '0')}`
+  return `${projectPrefix}${String(nextSequence).padStart(3, '0')}`
 }
 
 export async function createProjectWithGeneratedCode(
@@ -221,12 +222,13 @@ export async function createProjectWithGeneratedCode(
   },
   payload: CreateProjectPayload,
   maxRetries = 2,
+  prefix?: string,
 ) {
   let lastError: ProjectCodeError | Error | null = null
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
-      const projectCode = await generateNextProjectCode(supabaseClient)
+      const projectCode = await generateNextProjectCode(supabaseClient, new Date(), prefix)
       const result = await supabaseClient
         .from('projects')
         .insert({

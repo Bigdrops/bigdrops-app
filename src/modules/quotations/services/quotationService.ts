@@ -1,5 +1,6 @@
 import { supabase } from "@/supabase"
 import { getNextQuotationNumber } from "@/domain/quotation"
+import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function loadQuotations() {
   const { data, error } = await supabase
@@ -55,7 +56,7 @@ export async function deleteQuotation(id: string) {
   if (error) throw error
 }
 
-export async function cloneQuotation(id: string) {
+export async function cloneQuotation(id: string, prefixes?: DocumentPrefixes | null) {
   const quotationRow = await loadQuotationById(id)
   if (!quotationRow) throw new Error('Quotation not found')
 
@@ -72,10 +73,11 @@ export async function cloneQuotation(id: string) {
     if (projectError || !project) safeProjectId = null
   }
 
+  const prefix = resolvePrefix(prefixes, 'quotation')
   const payload = {
     ...quotationRow,
     project_id: safeProjectId,
-    quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>),
+    quotation_number: getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>, prefix),
     status: 'open',
     issue_date: new Date().toISOString().split('T')[0],
     archived_at: null,

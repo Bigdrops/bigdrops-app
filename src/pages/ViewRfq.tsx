@@ -24,6 +24,7 @@ import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './viewRFQActions'
+import { useSettings } from '@/hooks/useSettings'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -33,6 +34,7 @@ const MODAL_ARCHIVE = 'archive'
 
 export default function ViewRfq() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
 
@@ -196,7 +198,7 @@ export default function ViewRfq() {
   const handleConvertToQuotation = async () => {
     if (!rfq) return
     try {
-      const created = await convertRFQToQuotation({ rfq, items: rfq.table_rows })
+      const created = await convertRFQToQuotation({ rfq, items: rfq.table_rows, prefixes: settings?.document_prefixes })
       navigate(`/quotations/${created.id}`)
       showToast('Quotation Created', 'Linked quotation is ready.', 'success')
     } catch (error) {

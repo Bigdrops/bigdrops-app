@@ -162,22 +162,25 @@ export function incrementTrailingLetters(value: string): string {
   return chars.join('')
 }
 
-export function getNextCsrNumber(lastValue: string | null | undefined): string {
-  if (!lastValue) return 'CSR-001'
+export function getNextCsrNumber(
+  lastValue: string | null | undefined,
+  prefix: string = 'CSR',
+): string {
+  if (!lastValue) return `${prefix}-000001`
 
   const digitMatch = lastValue.match(/(\d+)$/)
   if (digitMatch) {
     const digits = digitMatch[1]
-    const prefix = lastValue.slice(0, -digits.length)
+    const basePrefix = lastValue.slice(0, -digits.length)
     const nextDigits = String(Number.parseInt(digits, 10) + 1).padStart(digits.length, '0')
-    return `${prefix}${nextDigits}`
+    return `${basePrefix}${nextDigits}`
   }
 
   const letterMatch = lastValue.match(/([A-Za-z]+)$/)
   if (letterMatch) {
     const letters = letterMatch[1]
-    const prefix = lastValue.slice(0, -letters.length)
-    return `${prefix}${incrementTrailingLetters(letters)}`
+    const basePrefix = lastValue.slice(0, -letters.length)
+    return `${basePrefix}${incrementTrailingLetters(letters)}`
   }
 
   return `${lastValue}-1`

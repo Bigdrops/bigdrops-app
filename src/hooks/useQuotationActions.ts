@@ -14,6 +14,7 @@ import {
   duplicateQuotationRecord,
   updateQuotationStatus,
 } from "../pages/viewQuotationActions";
+import { useSettings } from "@/hooks/useSettings";
 
 export function useQuotationActions(input: {
   quotation: any;
@@ -34,6 +35,7 @@ export function useQuotationActions(input: {
   } = input;
 
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [downloading, setDownloading] = useState(false);
   const [converting, setConverting] = useState(false);
 
@@ -112,7 +114,7 @@ export function useQuotationActions(input: {
   const handleDuplicate = async () => {
     if (!quotation) return;
     try {
-      const createdQuotation = await duplicateQuotationRecord({ quotation, items });
+      const createdQuotation = await duplicateQuotationRecord({ quotation, items, prefixes: settings?.document_prefixes });
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error) {
       showToast("Clone failed", error instanceof Error ? error.message : "Could not duplicate this quotation.");
@@ -123,7 +125,7 @@ export function useQuotationActions(input: {
     if (!quotation || converting || !id) return;
     setConverting(true);
     try {
-      const createdInvoice = await convertQuotationToInvoice({ id, quotation, items });
+      const createdInvoice = await convertQuotationToInvoice({ id, quotation, items, prefixes: settings?.document_prefixes });
       navigate(`/invoices/${createdInvoice.id}`);
     } catch (error) {
       showToast("Conversion failed", error instanceof Error ? error.message : "Could not convert this quotation.");

@@ -9,9 +9,12 @@ import type { Waybill, WaybillType } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
 import { supabase } from '../supabase'
+import { useSettings } from '@/hooks/useSettings'
+import { resolvePrefix } from '@/domain/prefixConstants'
 
 export default function NewWaybill() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const [type, setType] = useState<WaybillType | null>(null)
   const [waybillNumber, setWaybillNumber] = useState<string>('')
   const [loadingNumber, setLoadingNumber] = useState(false)
@@ -28,7 +31,7 @@ export default function NewWaybill() {
           .order('created_at', { ascending: false })
           .limit(1000)
         const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-        const number = getNextWaybillNumber(type, existingNumbers)
+        const number = getNextWaybillNumber(type, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'))
         if (!cancelled) setWaybillNumber(number)
       } finally {
         if (!cancelled) setLoadingNumber(false)
@@ -36,7 +39,7 @@ export default function NewWaybill() {
     }
     generate()
     return () => { cancelled = true }
-  }, [type])
+  }, [type, settings?.document_prefixes])
 
   const handleBlankDownload = async (blankType: WaybillType) => {
     try {
@@ -46,7 +49,7 @@ export default function NewWaybill() {
         .order('created_at', { ascending: false })
         .limit(1000)
       const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-      const waybillNumber = getNextWaybillNumber(blankType, existingNumbers)
+      const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'))
 
       const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
         assigned_waybill_number: waybillNumber,
@@ -82,6 +85,7 @@ export default function NewWaybill() {
         items: data.items,
         custom_fields: data.customFields,
         mode: 'new',
+        prefixes: settings?.document_prefixes,
       })
       feedback.success('Waybill created')
       navigate(`/waybills/${result.waybillId}`)

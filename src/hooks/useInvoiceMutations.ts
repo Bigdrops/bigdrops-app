@@ -10,6 +10,7 @@ import {
   duplicateInvoice,
 } from '@/modules/invoices/services/invoiceLifecycleService'
 import { revertInvoiceToQuotationService } from '@/modules/invoices/services/invoiceConversionService'
+import { useSettings } from '@/hooks/useSettings'
 
 type NavigateFn = (to: string, options?: unknown) => void
 
@@ -116,6 +117,7 @@ export function useInvoiceMutations({
   setAttachKind,
   setShowAttachSheet,
 }: UseInvoiceMutationsArgs) {
+  const { settings } = useSettings()
   const handleAttachExisting = async (item: { id?: string }) => {
     if (!item?.id || !attachKind) return
     await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind })
@@ -184,6 +186,7 @@ export function useInvoiceMutations({
         invoice,
         items,
         customFields: customFieldObject,
+        prefixes: settings?.document_prefixes,
       })
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err: any) {

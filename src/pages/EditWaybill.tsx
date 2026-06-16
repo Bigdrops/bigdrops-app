@@ -12,9 +12,11 @@ import type { Waybill, WaybillItem, WaybillCustomFields, WaybillCustomColumn, Wa
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { saveWaybill } from '../domain/waybill/waybillMutations'
 import { feedback } from '../lib/feedback'
+import { useSettings } from '@/hooks/useSettings'
 
 export default function EditWaybill() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const { id } = useParams<{ id: string }>()
 
   const [loading, setLoading] = useState(true)
@@ -56,6 +58,7 @@ export default function EditWaybill() {
       custom_fields: data.customFields,
       mode: 'edit',
       waybillId: id,
+      prefixes: settings?.document_prefixes,
     })
     feedback.success('Waybill updated')
     navigate(`/waybills/${result.waybillId}`)

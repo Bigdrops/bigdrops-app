@@ -7,6 +7,7 @@ import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '
 import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
+import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function loadQuotationViewData(id: string) {
   const [quoRes, itemsRes, settingsRes, bankAccountsRes, signatoriesRes] = await Promise.all([
@@ -78,12 +79,17 @@ export function downloadQuotationCsvFile({
 export async function duplicateQuotationRecord({
   quotation,
   items,
+  prefixes,
 }: {
   quotation: any
   items: any[]
+  prefixes?: DocumentPrefixes | null
 }) {
   const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
-  const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>)
+  const nextQuotationNumber = getNextQuotationNumber(
+    (quotationRows || []) as Array<{ quotation_number?: string | null }>,
+    resolvePrefix(prefixes, 'quotation'),
+  )
   const cleanCustomFields = parseDocumentCustomFields(quotation.custom_fields || {})
   const { conversionTrail: _ignoredTrail, ...restCustomFields } = cleanCustomFields
   const payload = {
@@ -149,16 +155,21 @@ export async function convertQuotationToInvoice({
   id,
   quotation,
   items,
+  prefixes,
 }: {
   id: string
   quotation: any
   items: any[]
+  prefixes?: DocumentPrefixes | null
 }) {
   const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
     supabase.from('invoices').select('invoice_number'),
     supabase.from('quotations').select('custom_fields').eq('id', id).single(),
   ])
-  const nextInvoiceNumber = getNextInvoiceNumber((invoiceRows || []) as Array<{ invoice_number?: string | null }>)
+  const nextInvoiceNumber = getNextInvoiceNumber(
+    (invoiceRows || []) as Array<{ invoice_number?: string | null }>,
+    resolvePrefix(prefixes, 'invoice'),
+  )
   const quotationCustomFields = parseDocumentCustomFields(latestQuotation?.custom_fields || quotation.custom_fields)
   const sourceLink = buildTrailLink({
     id: quotation.id,

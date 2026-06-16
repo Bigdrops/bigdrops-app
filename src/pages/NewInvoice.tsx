@@ -44,6 +44,8 @@ import { validateProjectAssignment } from '@/domain/projects'
 import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
+import { resolvePrefix } from '@/domain/prefixConstants'
+import { useSettings } from '@/hooks/useSettings'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -87,6 +89,7 @@ interface LocationState {
 export default function NewInvoice() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { settings } = useSettings()
   const routeState = (location.state as LocationState) || {}
   const prefill = routeState.prefill
   const prefillItems = routeState.prefillItems
@@ -227,10 +230,10 @@ export default function NewInvoice() {
       .select('invoice_number')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        const newNumber = getNextInvoiceNumber(data || [])
+        const newNumber = getNextInvoiceNumber(data || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
         setInvoice((current) => ({ ...current, invoice_number: newNumber }))
       })
-  }, [prefill])
+  }, [prefill, settings?.document_prefixes])
 
   useEffect(() => {
     const loadSignatories = async () => {

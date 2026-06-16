@@ -14,6 +14,7 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
+import { useSettings } from '@/hooks/useSettings'
 
 interface ProjectFormState {
   name: string
@@ -30,6 +31,7 @@ interface ProjectFormState {
 export default function NewProject() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { settings } = useSettings()
   const prefill = (location.state as { clientId?: string; clientName?: string }) || {}
 
   const [saving, setSaving] = useState(false)
@@ -64,7 +66,7 @@ export default function NewProject() {
       po_number: form.po_number.trim() || null,
       notes: form.notes.trim() || null,
       location: form.location.trim() || null,
-    })
+    }, 2, settings?.document_prefixes?.project)
 
     setSaving(false)
     if (error) {

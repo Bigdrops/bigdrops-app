@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RotateCcw, AlertTriangle } from 'lucide-react'
+import { Info, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSettings, saveSettings } from '@/hooks/useSettings'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsLoadingState } from './SettingsLoadingState'
@@ -40,6 +41,16 @@ const LABELS: Record<DocumentPrefixKey, string> = {
   boq: 'BOQ',
   project: 'Project',
   csr: 'CSR',
+}
+
+const PREFIX_INFO: Record<DocumentPrefixKey, string> = {
+  waybill: 'Waybill numbers format: PREFIX-000001. Example: WBL-000001',
+  invoice: 'Invoice numbers format: PREFIX-000001. Example: SASINV-B-000001',
+  quotation: 'Quotation numbers format: PREFIX-000001. Example: SASIQUO-000001',
+  rfq: 'RFQ numbers format: PREFIX-000001. Example: RFQ-000001',
+  boq: 'BOQ numbers format: PREFIX-000001. Example: BOQ-000001',
+  project: 'Project numbers format: PREFIX-000001. Example: PRJ-000001',
+  csr: 'CSR numbers format: PREFIX-000001. Example: CSR-000001',
 }
 
 const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
@@ -254,6 +265,20 @@ export function DocumentPrefixesSettingsSection() {
                   <label className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     {LABELS[key]} Prefix
                   </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-bd-text-muted transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)] hover:text-bd-text"
+                        aria-label={`Info about ${LABELS[key]} prefix`}
+                      >
+                        <Info size={13} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" side="top" className="w-72 text-xs">
+                      {PREFIX_INFO[key]}
+                    </PopoverContent>
+                  </Popover>
                   {!isDefault && (
                     <button
                       type="button"

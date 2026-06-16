@@ -2,24 +2,28 @@ import { supabase } from '@/supabase'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow } from '@/domain/documentConversion'
 import { buildInvoiceTrailLink, withInvoiceSourceTrail } from '../domain/invoiceConversionTrail'
+import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export interface RevertToQuotationInput {
   invoice: any
   items: any[]
   customFields: any
+  prefixes?: DocumentPrefixes | null
 }
 
 export async function revertInvoiceToQuotationService({
   invoice,
   items,
   customFields,
+  prefixes,
 }: RevertToQuotationInput) {
   const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
     supabase.from('quotations').select('quotation_number'),
     supabase.from('invoices').select('custom_fields').eq('id', invoice.id).single(),
   ])
 
-  const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>)
+  const prefix = resolvePrefix(prefixes, 'quotation')
+  const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>, prefix)
   const sourceInvoiceFields = parseDocumentCustomFields(latestInvoice?.custom_fields || customFields)
   
   const quotationPayload = {

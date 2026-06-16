@@ -20,6 +20,8 @@ import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/c
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { validateProjectAssignment } from '@/domain/projects'
 import { createCsr } from '@/domain/csr/csrService'
+import { useSettings } from '@/hooks/useSettings'
+import { resolvePrefix } from '@/domain/prefixConstants'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -36,6 +38,7 @@ const canUseOfflineCsrDrafts = () =>
 
 export default function NewCSR() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type')
@@ -83,7 +86,7 @@ export default function NewCSR() {
         .limit(1)
 
       const latestNumber = latestRows?.[0]?.csr_number || ''
-      const nextNumber = getNextCsrNumber(latestNumber)
+      const nextNumber = getNextCsrNumber(latestNumber, resolvePrefix(settings?.document_prefixes, 'csr'))
 
       if (mounted) {
         csrNumberPopulated.current = true
@@ -99,7 +102,7 @@ export default function NewCSR() {
     return () => {
       mounted = false
     }
-  }, [isField])
+  }, [isField, settings?.document_prefixes])
 
   useEffect(() => {
     if (!projectPrefill.projectId && !projectPrefill.clientId && !projectPrefill.clientName) return

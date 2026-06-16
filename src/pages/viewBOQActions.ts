@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function archiveBOQRecord(id: string) {
   const { error } = await supabase.from('boqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
@@ -47,9 +48,11 @@ export async function duplicateBOQRecord(id: string) {
 export async function convertBOQToQuotation({
   boq,
   items,
+  prefixes,
 }: {
   boq: any
   items: any[]
+  prefixes?: DocumentPrefixes | null
 }) {
   const [{ data: quotationRows }] = await Promise.all([
     supabase.from('quotations').select('quotation_number'),
@@ -58,7 +61,10 @@ export async function convertBOQToQuotation({
   const { getNextQuotationNumber } = await import('@/domain/quotation')
   const { buildTrailLink, withSourceTrail, toQuotationItemRow } = await import('@/domain/documentConversion')
   
-  const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>)
+  const nextQuotationNumber = getNextQuotationNumber(
+    (quotationRows || []) as Array<{ quotation_number?: string | null }>,
+    resolvePrefix(prefixes, 'quotation'),
+  )
   
   const payload = {
     quotation_number: nextQuotationNumber,

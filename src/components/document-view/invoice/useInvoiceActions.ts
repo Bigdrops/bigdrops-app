@@ -116,7 +116,7 @@ export function useInvoiceActions({
     if (!invoice?.id || reverting) return;
     setReverting(true);
     try {
-      const createdQuotation = await revertInvoiceToQuotationService({ invoice, items, customFields });
+      const createdQuotation = await revertInvoiceToQuotationService({ invoice, items, customFields, prefixes: settings?.document_prefixes });
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error: any) {
       showToast("Revert failed", error?.message || "Could not revert.");

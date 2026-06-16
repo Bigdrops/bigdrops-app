@@ -7,9 +7,12 @@ import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/
 import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import { useSettings } from '@/hooks/useSettings'
+import { resolvePrefix } from '@/domain/prefixConstants'
 
 export default function NewRfq() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [saving, setSaving] = useState(false);
 
   const handleSave = async (rfq: Rfq, items: RfqItem[]) => {
@@ -17,7 +20,7 @@ export default function NewRfq() {
     
     // Get next RFQ number
     const { data: existingRfqs } = await supabase.from('rfqs').select('rfq_number');
-    const rfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || []);
+    const rfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || [], resolvePrefix(settings?.document_prefixes, 'rfq'));
 
     const dbRfq = denormalizeToDbRfq({ ...rfq, rfq_number: rfqNumber });
     const { data: createdRfq, error: rfqError } = await supabase

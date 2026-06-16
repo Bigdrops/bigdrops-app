@@ -28,6 +28,8 @@ import InvoiceListActionSheet from "@/components/invoice/InvoiceListActionSheet"
 import { Receipt } from "lucide-react"
 import { INVOICE_CACHE_KEY, type InvoiceRow } from "@/hooks/useInvoiceList"
 import { getNextInvoiceNumber } from "@/domain/documentConversion"
+import { useSettings } from '@/hooks/useSettings'
+import { resolvePrefix } from '@/domain/prefixConstants'
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState"
 import { resolveInvoiceStatus } from "@/domain/invoice/resolveInvoiceStatus"
 import { DocumentQueryProvider, useDocumentQuery } from "@/context/DocumentQueryContext"
@@ -40,6 +42,7 @@ import { ContextualExportDropdown } from "@/components/export/ContextualExportDr
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("invoices")
+  const { settings } = useSettings()
 
   // ─── NON-FILTER STATE (page-specific, not query-related) ───
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
@@ -100,7 +103,7 @@ function InvoicesContent() {
       if (!invoiceDetail) throw new Error("Invoice not found")
       const { data: all } = await supabase
         .from("invoices").select("invoice_number").order("created_at", { ascending: false })
-      const newNumber = getNextInvoiceNumber(all || [])
+      const newNumber = getNextInvoiceNumber(all || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
       const srcItems = await loadInvoiceItems(inv.id)
       invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {

@@ -1,6 +1,7 @@
 import { supabase } from '@/supabase'
 import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
 import { invalidateListCache } from '@/lib/cache/listCache'
+import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -8,8 +9,9 @@ export async function saveWaybill(params: {
   custom_fields: any;
   mode: 'new' | 'edit';
   waybillId?: string;
+  prefixes?: DocumentPrefixes | null;
 }) {
-  const { waybill, items, custom_fields, mode, waybillId } = params;
+  const { waybill, items, custom_fields, mode, waybillId, prefixes } = params;
 
   const errors: string[] = []
   if (waybill.type === 'external' && !waybill.client_id) {
@@ -36,7 +38,8 @@ export async function saveWaybill(params: {
       .order('created_at', { ascending: false })
       .limit(1000)
     const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-    waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers)
+    const prefix = resolvePrefix(prefixes, 'waybill')
+    waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix)
   }
 
   const purpose = waybill.type === 'internal' ? null : (waybill.purpose || 'Supply')

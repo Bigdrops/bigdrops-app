@@ -22,6 +22,7 @@ import { supabase } from '@/supabase'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
+import { useSettings } from '@/hooks/useSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 
@@ -33,6 +34,7 @@ const MODAL_ARCHIVE = 'archive'
 
 export default function ViewBoq() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
 
@@ -167,7 +169,7 @@ export default function ViewBoq() {
   const handleConvertToQuotation = async () => {
     if (!boq) return
     try {
-      const created = await convertBOQToQuotation({ boq, items: boq.table_rows })
+      const created = await convertBOQToQuotation({ boq, items: boq.table_rows, prefixes: settings?.document_prefixes })
       navigate(`/quotations/${created.id}`)
       showToast('Quotation Created', 'Linked quotation is ready.', 'success')
     } catch (error) {
