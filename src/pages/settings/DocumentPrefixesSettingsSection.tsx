@@ -110,6 +110,10 @@ export function DocumentPrefixesSettingsSection() {
     setDraft((prev) => ({ ...prev, [key]: sanitizePrefixInput(raw) }))
   }, [])
 
+  const handleDismissChanges = useCallback(() => {
+    setDraft({ ...savedPrefixes })
+  }, [savedPrefixes])
+
   const executeSoloReset = useCallback(
     (key: DocumentPrefixKey) => {
       const defaultVal = DEFAULT_PREFIXES[key]
@@ -199,18 +203,38 @@ export function DocumentPrefixesSettingsSection() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between gap-4 px-1">
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
-            Document Prefixes
-          </p>
-        </div>
-        {isDirty && (
-          <span className="shrink-0 text-[11px] font-semibold text-amber-600 animate-in fade-in duration-300">
+      <div className="px-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">
+          Document Prefixes
+        </p>
+      </div>
+
+      {isDirty && (
+        <div className="sticky top-0 z-10 -mx-6 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-5 py-3 animate-in slide-in-from-top-2 fade-in duration-200 dark:border-amber-900/50 dark:bg-amber-950/30">
+          <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
             Unsaved changes
           </span>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDismissChanges}
+              disabled={saving}
+              className="text-amber-700 hover:bg-amber-100 hover:text-amber-800 dark:text-amber-300 dark:hover:bg-amber-900/50 dark:hover:text-amber-200"
+            >
+              Dismiss
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setPendingAction({ kind: 'save' })}
+              disabled={saving}
+              className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <SettingsSummaryCard
         title="Document Prefixes"
@@ -225,58 +249,51 @@ export function DocumentPrefixesSettingsSection() {
             const isModified = prefix !== savedPrefixes[key]
 
             return (
-              <div key={key} className="px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {LABELS[key]} Prefix
-                    </label>
-                    <input
-                      type="text"
-                      value={prefix}
-                      onChange={(e) => handleFieldChange(key, e.target.value.toUpperCase())}
-                      className={`mt-1.5 w-full max-w-[120px] rounded-lg border bg-background px-3 py-2 text-sm font-mono font-bold text-foreground transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 uppercase ${
-                        isModified
-                          ? 'border-amber-400 ring-1 ring-amber-300'
-                          : 'border-input'
-                      }`}
-                      maxLength={6}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted opacity-70">
-                        Preview
-                      </p>
-                      <div className="mt-1 flex flex-wrap justify-end gap-1.5">
-                        {previews.map((p) => (
-                          <span
-                            key={p}
-                            className="inline-block rounded-md border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-2 py-1 font-mono text-xs font-bold text-bd-text"
-                          >
-                            {p}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {!isDefault && (
-                      <button
-                        type="button"
-                        onClick={() => setPendingAction({ kind: 'soloReset', key })}
-                        disabled={saving}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-bd-text-muted transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)] hover:text-bd-text disabled:opacity-50"
-                        title={`Reset ${LABELS[key]} to default`}
+              <div key={key} className="px-5 py-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {LABELS[key]} Prefix
+                  </label>
+                  {!isDefault && (
+                    <button
+                      type="button"
+                      onClick={() => setPendingAction({ kind: 'soloReset', key })}
+                      disabled={saving}
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-bd-text-muted transition-colors hover:bg-[hsl(var(--bd-surface-muted)/0.3)] hover:text-bd-text disabled:opacity-50"
+                      title={`Reset ${LABELS[key]} to default`}
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={prefix}
+                  onChange={(e) => handleFieldChange(key, e.target.value.toUpperCase())}
+                  className={`w-full max-w-[120px] rounded-lg border bg-background px-3 py-2 text-sm font-mono font-bold text-foreground transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 uppercase ${
+                    isModified
+                      ? 'border-amber-400 ring-1 ring-amber-300'
+                      : 'border-input'
+                  }`}
+                  maxLength={6}
+                />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted opacity-70">
+                    Preview
+                  </p>
+                  <div className="mt-1 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-2">
+                    {previews.map((p) => (
+                      <span
+                        key={p}
+                        className="inline-block rounded-md border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-2 py-1 font-mono text-xs font-bold text-bd-text"
                       >
-                        <RotateCcw size={14} />
-                      </button>
-                    )}
+                        {p}
+                      </span>
+                    ))}
                   </div>
                 </div>
-
                 {conflict && (
-                  <div className="mt-2 flex items-center gap-1.5 text-amber-600">
+                  <div className="flex items-center gap-1.5 text-amber-600">
                     <AlertTriangle size={12} />
                     <p className="text-[11px] font-medium">
                       This prefix is already used by {conflict}s. Using the same prefix across
@@ -289,7 +306,7 @@ export function DocumentPrefixesSettingsSection() {
           })}
         </div>
 
-        <div className="flex items-center justify-between border-t border-[hsl(var(--bd-border)/0.4)] px-5 py-4">
+        <div className="border-t border-[hsl(var(--bd-border)/0.4)] px-5 py-4">
           <Button
             variant="ghost"
             size="sm"
@@ -299,14 +316,6 @@ export function DocumentPrefixesSettingsSection() {
           >
             <RotateCcw className="mr-2 h-3.5 w-3.5" />
             Reset All to Defaults
-          </Button>
-
-          <Button
-            onClick={() => setPendingAction({ kind: 'save' })}
-            disabled={!isDirty || saving}
-            className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
-          >
-            {saving ? 'Saving...' : 'Save Prefixes'}
           </Button>
         </div>
       </SettingsSummaryCard>
