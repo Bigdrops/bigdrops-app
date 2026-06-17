@@ -15,6 +15,9 @@ import {
   mapDbWaybill,
 } from './waybillUtils'
 import type { Waybill } from './waybillUtils'
+import { WaybillMinimalContent } from './blankWaybillTemplate'
+import type { MinimalContentData } from './blankWaybillTemplate'
+import { minimalStyles } from './waybillMinimalStyles'
 
 interface Settings {
   company_name?: string
@@ -22,6 +25,7 @@ interface Settings {
   company_phone?: string
   company_email?: string
   company_logo_url?: string
+  company_tagline?: string
 }
 
 interface WaybillPDFProps {
@@ -30,6 +34,7 @@ interface WaybillPDFProps {
   designPreset?: PdfDesignPreset
   columnVisibility?: Record<string, boolean>
   columnTitles?: Record<string, string>
+  template?: 'default' | 'minimal'
 }
 
 registerPdfFillableFonts()
@@ -83,7 +88,7 @@ function createStyles(designPreset?: PdfDesignPreset) {
 })
 }
 
-export default function WaybillPDF({ waybill, settings, designPreset, columnVisibility, columnTitles }: WaybillPDFProps) {
+export default function WaybillPDF({ waybill, settings, designPreset, columnVisibility, columnTitles, template }: WaybillPDFProps) {
   const S = createStyles(designPreset)
   const mapped = mapDbWaybill(waybill)
   const customFields = mapped.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
@@ -92,6 +97,33 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
   const receiverSignature = getWaybillSignature(mapped, 'receiver')
   const typeContent = getWaybillTypeContent(mapped.type)
   const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
+
+  if (template === 'minimal') {
+    const minimalData: MinimalContentData = {
+      type: mapped.type,
+      waybillNumber: mapped.waybill_number || undefined,
+      date: formatWaybillDate(mapped.date),
+      companyName: settings.company_name,
+      companyAddress: settings.company_address,
+      companyLogoUrl: settings.company_logo_url,
+      tagline: settings.company_tagline,
+      clientName: mapped.client_name,
+      destinationAddress: mapped.delivery_location,
+      vehiclePlate: mapped.vehicle_plate,
+      driverName: mapped.driver_name,
+      transportMode: mapped.transport_mode,
+      purpose: mapped.purpose,
+      items: mapped.items,
+      notes: mapped.notes,
+    }
+    return (
+      <Document>
+        <Page size="A4" style={minimalStyles.page}>
+          <WaybillMinimalContent data={minimalData} />
+        </Page>
+      </Document>
+    )
+  }
 
   const isColumnVisible = (key: string) => {
     if (!columnVisibility) return true

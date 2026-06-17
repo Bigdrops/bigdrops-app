@@ -60,7 +60,14 @@ export default function NewWaybill() {
       }
 
       const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
-      await downloadBlankWaybillTemplate(blankType, waybillNumber, settings?.company_name || 'Company Name')
+      await downloadBlankWaybillTemplate({
+        type: blankType,
+        waybillNumber,
+        companyName: settings?.company_name || 'Company Name',
+        companyAddress: settings?.company_address || undefined,
+        companyLogoUrl: settings?.company_logo_url || undefined,
+        tagline: settings?.company_tagline || undefined,
+      })
       feedback.success(`Blank template ${waybillNumber} downloaded`)
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Download failed')

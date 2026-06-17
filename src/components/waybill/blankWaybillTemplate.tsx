@@ -1,226 +1,240 @@
-import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer'
-import type { WaybillType } from './waybillUtils'
+/* eslint-disable react-refresh/only-export-components */
 
-const S = StyleSheet.create({
-  page: {
-    padding: 40,
-    fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: '#1a1a1a',
-    backgroundColor: '#ffffff',
-  },
+import { Document, Image, Page, Text, View, pdf } from '@react-pdf/renderer'
+import type { WaybillItem, WaybillType } from './waybillUtils'
+import { minimalStyles } from './waybillMinimalStyles'
 
-  header: {
-    textAlign: 'center',
-    marginBottom: 20,
-    borderBottom: '2pt solid #000',
-    paddingBottom: 10,
-  },
-  companyName: { fontSize: 18, fontWeight: 'bold', marginBottom: 4, textAlign: 'center' },
-  docTitle: { fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
-  docNumber: { fontSize: 9, color: '#666666', marginTop: 4, textAlign: 'center' },
+export interface MinimalContentData {
+  type: WaybillType
+  waybillNumber?: string
+  date?: string
+  companyName?: string
+  companyAddress?: string
+  companyLogoUrl?: string
+  tagline?: string
+  clientName?: string
+  destinationAddress?: string
+  vehiclePlate?: string
+  driverName?: string
+  transportMode?: string
+  purpose?: string
+  items?: WaybillItem[]
+  notes?: string
+}
 
-  partyRow: { flexDirection: 'row', gap: 20, marginBottom: 20 },
-  partyBox: { flex: 1, border: '1pt solid #000', padding: 10 },
-  partyLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
-  partyLine: { marginBottom: 8 },
-  partyLineLast: {},
+export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
+  const {
+    type, waybillNumber, date, companyName, companyAddress, companyLogoUrl, tagline,
+    clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose, items, notes,
+  } = data
 
-  sectionTitle: {
-    fontWeight: 'bold',
-    borderBottom: '1pt solid #000',
-    padding: 8,
-    backgroundColor: '#f0f0f0',
-    fontSize: 9,
-  },
+  const blankMode = !items || items.length === 0
+  const rowCount = blankMode ? 10 : items.length
 
-  tableHeader: { flexDirection: 'row', borderBottom: '1pt solid #000' },
-  tableHeaderCell: { padding: 6, fontWeight: 'bold' },
-  tableHeaderCellBordered: { padding: 6, fontWeight: 'bold', borderRight: '1pt solid #000' },
+  const c = (checked: boolean) => (checked ? '☑' : '☐')
 
-  tableRow: { flexDirection: 'row', borderBottom: '1pt solid #000' },
-  tableCell: { padding: 6 },
-  tableCellBordered: { padding: 6, borderRight: '1pt solid #000' },
+  const isHand = transportMode === 'By Hand'
+  const isVehicle = transportMode === 'By Vehicle'
+  const isModeOther = !!transportMode && !['By Hand', 'By Vehicle'].includes(transportMode)
+  const isTransfer = purpose === 'Supply'
+  const isMaint = purpose === 'Return'
+  const isReasonOther = purpose === 'Third-Party Custody'
 
-  colNum: { width: 30 },
-  colDesc: { flex: 6 },
-  colQty: { flex: 1 },
-  colUnit: { flex: 2 },
-  colNotes: { flex: 3 },
+  return (
+    <View>
+      <View style={minimalStyles.header}>
+        <View style={minimalStyles.brand}>
+          <View style={minimalStyles.logoBox}>
+            {companyLogoUrl ? (
+              <Image src={companyLogoUrl} style={{ width: 48, height: 48 }} />
+            ) : (
+              <Text style={minimalStyles.logoText}>LOGO</Text>
+            )}
+          </View>
+          <View>
+            <Text style={minimalStyles.brandName}>{companyName || 'Company Name'}</Text>
+            {companyAddress ? <Text style={minimalStyles.brandAddress}>{companyAddress}</Text> : null}
+          </View>
+        </View>
+        <View>
+          <Text style={minimalStyles.docTitle}>WAYBILL</Text>
+          <View style={minimalStyles.metaPillRow}>
+            <View style={minimalStyles.metaPill}>
+              <Text style={minimalStyles.metaPillLabel}>No: </Text>
+              <Text style={minimalStyles.metaPillValue}>{waybillNumber || ''}</Text>
+            </View>
+            <View style={minimalStyles.metaPill}>
+              <Text style={minimalStyles.metaPillLabel}>Date: </Text>
+              <Text style={minimalStyles.metaPillValue}>{date || ''}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
 
-  infoRow: { flexDirection: 'row', gap: 20, marginBottom: 20 },
-  infoBox: { flex: 1, border: '1pt solid #000', padding: 10 },
-  infoLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
-  infoLine: { marginBottom: 8 },
-  infoLineLast: {},
+      <View style={minimalStyles.topGrid}>
+        <View style={minimalStyles.topBox}>
+          <Text style={minimalStyles.boxLabel}>{type === 'internal' ? 'Origin' : 'Client / Consignee'}</Text>
+          <Text>{clientName || ''}</Text>
+        </View>
+        <View style={minimalStyles.topBox}>
+          <Text style={minimalStyles.boxLabel}>Destination{type === 'internal' ? '' : ' Address'}</Text>
+          <Text>{destinationAddress || ''}</Text>
+        </View>
+      </View>
 
-  signatureRow: { flexDirection: 'row', gap: 20 },
-  signatureBox: { flex: 1, border: '1pt solid #000', padding: 10 },
-  signatureLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
-  signatureSpace: { height: 60 },
-  signatureDate: { borderTop: '1pt solid #000', paddingTop: 4, fontSize: 8 },
-})
+      <View style={minimalStyles.secondGrid}>
+        <View style={minimalStyles.secondBox}>
+          <Text style={minimalStyles.boxLabel}>Vehicle Plate</Text>
+          <Text>{vehiclePlate || ''}</Text>
+        </View>
+        <View style={minimalStyles.secondBox}>
+          <Text style={minimalStyles.boxLabel}>Driver Name</Text>
+          <Text>{driverName || ''}</Text>
+        </View>
+      </View>
 
-function BlankExternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
+      <View style={minimalStyles.modeRow}>
+        <View style={minimalStyles.modeBox}>
+          <Text style={minimalStyles.boxLabel}>Delivery Mode</Text>
+          <View style={minimalStyles.checkboxRow}>
+            <View style={minimalStyles.checkboxLabel}>
+              <Text style={minimalStyles.checkboxChar}>{c(isHand)}</Text>
+              <Text> Hand</Text>
+            </View>
+            <View style={minimalStyles.checkboxLabel}>
+              <Text style={minimalStyles.checkboxChar}>{c(isVehicle)}</Text>
+              <Text> Vehicle</Text>
+            </View>
+            <View style={minimalStyles.checkboxLabel}>
+              <Text style={minimalStyles.checkboxChar}>{c(isModeOther)}</Text>
+              <Text> Other</Text>
+            </View>
+          </View>
+        </View>
+        {type === 'external' ? (
+          <View style={minimalStyles.modeBox}>
+            <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
+            <View style={minimalStyles.checkboxRow}>
+              <View style={minimalStyles.checkboxLabel}>
+                <Text style={minimalStyles.checkboxChar}>{c(isTransfer)}</Text>
+                <Text> Transfer</Text>
+              </View>
+              <View style={minimalStyles.checkboxLabel}>
+                <Text style={minimalStyles.checkboxChar}>{c(isMaint)}</Text>
+                <Text> Maint.</Text>
+              </View>
+              <View style={minimalStyles.checkboxLabel}>
+                <Text style={minimalStyles.checkboxChar}>{c(isReasonOther)}</Text>
+                <Text> Other</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={minimalStyles.table}>
+        <View style={minimalStyles.tableHeaderRow}>
+          <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colNum]}>#</Text>
+          <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colDesc]}>Description</Text>
+          <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colQty]}>Qty</Text>
+          <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colUnit]}>Unit</Text>
+        </View>
+        {Array.from({ length: rowCount }, (_, i) => {
+          const item = blankMode ? null : items[i]
+          return (
+            <View key={i} style={minimalStyles.tableRow}>
+              <Text style={[minimalStyles.tableCell, minimalStyles.colNum]}>{i + 1}</Text>
+              <Text style={[minimalStyles.tableCell, minimalStyles.colDesc]}>{item?.description || ''}</Text>
+              <Text style={[minimalStyles.tableCell, minimalStyles.colQty]}>{item?.quantity != null ? String(item.quantity) : ''}</Text>
+              <Text style={[minimalStyles.tableCell, minimalStyles.colUnit]}>{item?.unit || ''}</Text>
+            </View>
+          )
+        })}
+      </View>
+
+      <View style={minimalStyles.notesBox}>
+        <Text style={minimalStyles.boxLabel}>Delivery Remarks / Notes</Text>
+        <Text>{notes || ''}</Text>
+      </View>
+
+      <View style={minimalStyles.sigsRow}>
+        <View style={minimalStyles.sigCard}>
+          <Text style={minimalStyles.sigHeader}>Delivered By / Driver</Text>
+          <View style={minimalStyles.sigMetaRow}>
+            <Text style={minimalStyles.sigMetaCellBorder}>Name:</Text>
+            <Text style={minimalStyles.sigMetaCell}>Time:</Text>
+          </View>
+          <View style={minimalStyles.sigArea}>
+            <Text>Signature:</Text>
+          </View>
+        </View>
+        <View style={minimalStyles.sigCard}>
+          <Text style={minimalStyles.sigHeader}>Received By</Text>
+          <View style={minimalStyles.sigMetaRow}>
+            <Text style={minimalStyles.sigMetaCellBorder}>Name:</Text>
+            <Text style={minimalStyles.sigMetaCell}>Time:</Text>
+          </View>
+          <View style={minimalStyles.sigArea}>
+            <Text>Signature:</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={minimalStyles.footer}>
+        <Text>{companyName || ''}{tagline ? ` — ${tagline}` : ''}</Text>
+      </View>
+    </View>
+  )
+}
+
+function BlankExternalTemplate(options: MinimalContentData) {
   return (
     <Document>
-      <Page size="A4" style={S.page}>
-        <View style={S.header}>
-          <Text style={S.companyName}>{companyName}</Text>
-          <Text style={S.docTitle}>EXTERNAL DELIVERY NOTE</Text>
-          <Text style={S.docNumber}>Waybill No: {waybillNumber || '____________________'}</Text>
-        </View>
-
-        <View style={S.partyRow}>
-          <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Sender</Text>
-            <Text style={S.partyLine}>Name: _________________________</Text>
-            <Text style={S.partyLine}>Phone: ________________________</Text>
-            <Text style={S.partyLineLast}>Address: _____________________</Text>
-          </View>
-          <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Receiver</Text>
-            <Text style={S.partyLine}>Name: _________________________</Text>
-            <Text style={S.partyLine}>Phone: ________________________</Text>
-            <Text style={S.partyLineLast}>Address: _____________________</Text>
-          </View>
-        </View>
-
-        <View style={{ border: '1pt solid #000', marginBottom: 20 }}>
-          <Text style={S.sectionTitle}>Items</Text>
-          <View style={S.tableHeader}>
-            <Text style={[S.tableHeaderCellBordered, S.colNum]}>#</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colDesc]}>Description</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colQty]}>Qty</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colUnit]}>Unit</Text>
-            <Text style={[S.tableHeaderCell, S.colNotes]}>Notes</Text>
-          </View>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} style={S.tableRow}>
-              <Text style={[S.tableCellBordered, S.colNum]}>{i}</Text>
-              <Text style={[S.tableCellBordered, S.colDesc]}>_________________________</Text>
-              <Text style={[S.tableCellBordered, S.colQty]}>__________</Text>
-              <Text style={[S.tableCellBordered, S.colUnit]}>__________</Text>
-              <Text style={[S.tableCell, S.colNotes]}>_________________________</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={S.infoRow}>
-          <View style={S.infoBox}>
-            <Text style={S.infoLabel}>Invoice Reference</Text>
-            <Text style={S.infoLine}>Invoice No: ___________________</Text>
-            <Text style={S.infoLineLast}>Invoice Date: _________________</Text>
-          </View>
-          <View style={S.infoBox}>
-            <Text style={S.infoLabel}>Vehicle Info</Text>
-            <Text style={S.infoLine}>Plate: ________________________</Text>
-            <Text style={S.infoLineLast}>Driver: ______________________</Text>
-          </View>
-        </View>
-
-        <View style={S.signatureRow}>
-          <View style={S.signatureBox}>
-            <Text style={S.signatureLabel}>Sender Signature</Text>
-            <View style={S.signatureSpace} />
-            <Text style={S.signatureDate}>Date: _________________</Text>
-          </View>
-          <View style={S.signatureBox}>
-            <Text style={S.signatureLabel}>Receiver Signature</Text>
-            <View style={S.signatureSpace} />
-            <Text style={S.signatureDate}>Date: _________________</Text>
-          </View>
-        </View>
+      <Page size="A4" style={minimalStyles.page}>
+        <WaybillMinimalContent data={options} />
       </Page>
     </Document>
   )
 }
 
-function BlankInternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
+function BlankInternalTemplate(options: MinimalContentData) {
   return (
     <Document>
-      <Page size="A4" style={S.page}>
-        <View style={S.header}>
-          <Text style={S.companyName}>{companyName}</Text>
-          <Text style={S.docTitle}>INTERNAL TRANSFER NOTE</Text>
-          <Text style={S.docNumber}>Waybill No: {waybillNumber || '____________________'}</Text>
-        </View>
-
-        <View style={S.partyRow}>
-          <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Origin</Text>
-            <Text style={S.partyLine}>Depot: ________________________</Text>
-            <Text style={S.partyLine}>Contact: ______________________</Text>
-            <Text style={S.partyLineLast}>Date: _______________________</Text>
-          </View>
-          <View style={S.partyBox}>
-            <Text style={S.partyLabel}>Destination</Text>
-            <Text style={S.partyLine}>Depot: ________________________</Text>
-            <Text style={S.partyLine}>Contact: ______________________</Text>
-            <Text style={S.partyLineLast}>Date: _______________________</Text>
-          </View>
-        </View>
-
-        <View style={{ border: '1pt solid #000', marginBottom: 20 }}>
-          <Text style={S.sectionTitle}>Items</Text>
-          <View style={S.tableHeader}>
-            <Text style={[S.tableHeaderCellBordered, S.colNum]}>#</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colDesc]}>Description</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colQty]}>Qty</Text>
-            <Text style={[S.tableHeaderCellBordered, S.colUnit]}>Unit</Text>
-            <Text style={[S.tableHeaderCell, S.colNotes]}>Notes</Text>
-          </View>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} style={S.tableRow}>
-              <Text style={[S.tableCellBordered, S.colNum]}>{i}</Text>
-              <Text style={[S.tableCellBordered, S.colDesc]}>_________________________</Text>
-              <Text style={[S.tableCellBordered, S.colQty]}>__________</Text>
-              <Text style={[S.tableCellBordered, S.colUnit]}>__________</Text>
-              <Text style={[S.tableCell, S.colNotes]}>_________________________</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={S.infoRow}>
-          <View style={S.infoBox}>
-            <Text style={S.infoLabel}>Purpose</Text>
-            <Text style={S.infoLine}>☐ Transfer  ☐ Maintenance  ☐ Other</Text>
-            <Text style={S.infoLineLast}>Notes: ______________________</Text>
-          </View>
-          <View style={S.infoBox}>
-            <Text style={S.infoLabel}>Vehicle Info</Text>
-            <Text style={S.infoLine}>Plate: ________________________</Text>
-            <Text style={S.infoLineLast}>Driver: ______________________</Text>
-          </View>
-        </View>
-
-        <View style={S.signatureRow}>
-          <View style={S.signatureBox}>
-            <Text style={S.signatureLabel}>Sender Signature</Text>
-            <View style={S.signatureSpace} />
-            <Text style={S.signatureDate}>Date: _________________</Text>
-          </View>
-          <View style={S.signatureBox}>
-            <Text style={S.signatureLabel}>Receiver Signature</Text>
-            <View style={S.signatureSpace} />
-            <Text style={S.signatureDate}>Date: _________________</Text>
-          </View>
-        </View>
+      <Page size="A4" style={minimalStyles.page}>
+        <WaybillMinimalContent data={options} />
       </Page>
     </Document>
   )
 }
 
-export async function downloadBlankWaybillTemplate(type: WaybillType, waybillNumber: string, companyName: string): Promise<void> {
-  const element = type === 'internal'
-    ? <BlankInternalTemplate waybillNumber={waybillNumber} companyName={companyName} />
-    : <BlankExternalTemplate waybillNumber={waybillNumber} companyName={companyName} />
+export interface BlankTemplateOptions {
+  type: WaybillType
+  waybillNumber: string
+  companyName: string
+  companyAddress?: string
+  companyLogoUrl?: string
+  tagline?: string
+}
+
+export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions): Promise<void> {
+  const contentData: MinimalContentData = {
+    type: options.type,
+    waybillNumber: options.waybillNumber,
+    companyName: options.companyName,
+    companyAddress: options.companyAddress,
+    companyLogoUrl: options.companyLogoUrl,
+    tagline: options.tagline,
+  }
+
+  const element = options.type === 'internal'
+    ? <BlankInternalTemplate {...contentData} />
+    : <BlankExternalTemplate {...contentData} />
 
   const blob = await pdf(element).toBlob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `blank-${type}-waybill.pdf`
+  a.download = `blank-${options.type}-waybill.pdf`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
