@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; font-size: 12px; color: #000; max-width: 210mm; margin: 0 auto; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+    .logo-box { width: 70px; height: 70px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; background: #f9f9f9; }
+    .brand-info { flex: 1; margin-left: 15px; }
+    .doc-meta { text-align: right; }
+
+    /* Box Containers */
+    .section-box { border: 1px solid #000; padding: 6px; display: flex; flex-direction: column; }
+    .field-label { font-weight: bold; font-size: 10px; margin-bottom: 6px; text-transform: uppercase; color: #333; }
+    
+    /* Layout Rows */
+    .client-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .client-box { height: 75px; } /* Huge space for Client & Destination */
+    
+    .meta-row { display: flex; gap: 10px; margin-bottom: 15px; min-height: 45px; }
+    .checkbox-group { display: flex; gap: 10px; font-size: 10px; margin-top: auto; padding-bottom: 2px; }
+    .checkbox-group label { display: flex; align-items: center; gap: 4px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th, td { border: 1px solid #000; padding: 6px; }
+    th { background: #f4f4f4; font-size: 11px; text-align: left; text-transform: uppercase; }
+    td { height: 32px; } /* 9 Rows */
+
+    /* Signatures (Dash-free grid system) */
+    .sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+    .sig-card { border: 1px solid #000; display: flex; flex-direction: column; }
+    .sig-header { background: #f4f4f4; padding: 6px 8px; font-weight: bold; font-size: 10px; border-bottom: 1px solid #000; text-transform: uppercase; }
+    .sig-row { display: flex; border-bottom: 1px solid #000; min-height: 28px; }
+    .sig-cell { padding: 4px 8px; font-size: 10px; display: flex; align-items: flex-start; color: #555; }
+    .sig-cell:first-child { border-right: 1px solid #000; }
+    .sig-sign { padding: 4px 8px; height: 55px; font-size: 10px; color: #555; }
+</style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="display: flex; align-items: center;">
+            <div class="logo-box">LOGO</div>
+            <div class="brand-info">
+                <h2 style="margin: 0; font-size: 16px;">SUN & SHIELD POWER SOLUTIONS</h2>
+                <p style="margin: 3px 0 0 0; color: #444;">43 Oshola Street, Ifako-Ijaiye, Lagos</p>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <h1 style="margin: 0; font-size: 22px;">WAYBILL</h1>
+        </div>
+    </div>
+
+    <div class="client-row">
+        <div class="section-box client-box">
+            <div class="field-label">Client / Consignee</div>
+        </div>
+        <div class="section-box client-box">
+            <div class="field-label">Destination Address</div>
+        </div>
+    </div>
+
+    <div class="meta-row">
+        <div class="section-box" style="flex: 1.2;">
+            <div class="field-label">Vehicle Plate</div>
+        </div>
+        <div class="section-box" style="flex: 2;">
+            <div class="field-label">Driver Name</div>
+        </div>
+        <div class="section-box" style="flex: 1.5;">
+            <div class="field-label">Delivery Mode</div>
+            <div class="checkbox-group">
+                <label><input type="checkbox"> Delivery</label>
+                <label><input type="checkbox"> Pickup</label>
+            </div>
+        </div>
+        <div class="section-box" style="flex: 2;">
+            <div class="field-label">Delivery Reason</div>
+            <div class="checkbox-group">
+                <label><input type="checkbox"> Transfer</label>
+                <label><input type="checkbox"> Maint.</label>
+                <label><input type="checkbox"> Other</label>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 6%; text-align: center;">#</th>
+                <th style="width: 74%;">Description</th>
+                <th style="width: 20%; text-align: center;">Qty</th>
+            </tr>
+        </thead>
+        <tbody>
+            <script>for(let i=1; i<=9; i++) document.write(`<tr><td style="text-align: center; color: #666;">${i}</td><td></td><td></td></tr>`);</script>
+        </tbody>
+    </table>
+
+    <div class="section-box" style="height: 50px;">
+        <div class="field-label">Delivery Remarks / Notes</div>
+    </div>
+
+    <div class="sigs">
+        <div class="sig-card">
+            <div class="sig-header">Delivered By / Driver</div>
+            <div class="sig-row">
+                <div class="sig-cell" style="flex: 2;">Name:</div>
+                <div class="sig-cell" style="flex: 1;">Time:</div>
+            </div>
+            <div class="sig-sign">Signature:</div>
+        </div>
+        <div class="sig-card">
+            <div class="sig-header">Received By</div>
+            <div class="sig-row">
+                <div class="sig-cell" style="flex: 2;">Name:</div>
+                <div class="sig-cell" style="flex: 1;">Time:</div>
+            </div>
+            <div class="sig-sign">Signature:</div>
+        </div>
+    </div>
+
+</body>
+</html>
