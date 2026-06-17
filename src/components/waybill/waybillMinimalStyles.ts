@@ -4,7 +4,7 @@ const s = { gap: 0, xs: 4, sm: 8, md: 12, lg: 16, xl: 24 }
 
 export const minimalStyles = StyleSheet.create({
   page: {
-    padding: s.xl,
+    padding: 20,
     fontFamily: 'Helvetica',
     fontSize: 10,
     color: '#000000',
@@ -61,9 +61,15 @@ export const minimalStyles = StyleSheet.create({
   },
 
   metaPillRow: {
-    flexDirection: 'row',
-    gap: s.sm,
-    justifyContent: 'flex-end',
+    flexDirection: 'column',
+    gap: s.xs,
+    alignItems: 'flex-end',
+    marginBottom: s.sm,
+  },
+  metaPillCol: {
+    flexDirection: 'column',
+    gap: s.xs,
+    alignItems: 'flex-end',
     marginBottom: s.sm,
   },
   metaPill: {
@@ -71,9 +77,18 @@ export const minimalStyles = StyleSheet.create({
     padding: '4pt 8pt',
     fontSize: 9,
     flexDirection: 'row',
+    minWidth: 120,
   },
   metaPillValue: {},
-  datePill: { minWidth: 80 },
+  datePill: { minHeight: 24 },
+  dateLabel: {
+    fontSize: 8,
+    color: '#555555',
+    marginBottom: 1,
+  },
+  dateValue: {
+    minWidth: 100,
+  },
 
   topGrid: {
     flexDirection: 'row',
@@ -84,7 +99,7 @@ export const minimalStyles = StyleSheet.create({
     flex: 1,
     border: '1pt solid #000',
     padding: s.sm,
-    minHeight: 70,
+    minHeight: 56,
   },
   boxLabel: {
     fontSize: 9,
@@ -104,7 +119,7 @@ export const minimalStyles = StyleSheet.create({
     flex: 1,
     border: '1pt solid #000',
     padding: s.sm,
-    minHeight: 35,
+    minHeight: 28,
   },
 
   modeRow: {
@@ -116,7 +131,7 @@ export const minimalStyles = StyleSheet.create({
     flex: 1,
     border: '1pt solid #000',
     padding: s.sm,
-    minHeight: 50,
+    minHeight: 40,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -174,7 +189,7 @@ export const minimalStyles = StyleSheet.create({
   notesBox: {
     border: '1pt solid #000',
     padding: s.sm,
-    minHeight: 50,
+    minHeight: 40,
     marginBottom: s.sm,
   },
 
@@ -186,7 +201,7 @@ export const minimalStyles = StyleSheet.create({
   sigCard: {
     flex: 1,
     border: '1pt solid #000',
-    minHeight: 140,
+    minHeight: 100,
   },
   sigHeader: {
     backgroundColor: '#f4f4f4',
@@ -205,18 +220,18 @@ export const minimalStyles = StyleSheet.create({
     flex: 1,
     padding: '4pt 12pt',
     fontSize: 9,
-    minHeight: 32,
+    minHeight: 24,
   },
   sigMetaCellBorder: {
     flex: 1,
     padding: '4pt 12pt',
     fontSize: 9,
-    minHeight: 32,
+    minHeight: 24,
     borderRight: '1pt solid #000',
   },
   sigArea: {
     padding: s.sm,
-    minHeight: 64,
+    minHeight: 48,
     fontSize: 9,
     color: '#555555',
   },
@@ -224,7 +239,8 @@ export const minimalStyles = StyleSheet.create({
   footer: {
     paddingTop: s.xs,
     borderTop: '1pt solid #000',
-    textAlign: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     fontSize: 8,
     color: '#555555',
   },

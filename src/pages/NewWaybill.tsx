@@ -43,34 +43,52 @@ export default function NewWaybill() {
 
   const handleBlankDownload = async (blankType: WaybillType) => {
     try {
-      const { data: existingWaybills } = await supabase
-        .from('waybills')
-        .select('waybill_number')
-        .order('created_at', { ascending: false })
-        .limit(1000)
-      const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-      const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'), 'blank')
+      const prefix = resolvePrefix(settings?.document_prefixes, 'waybill')
 
-      const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
-        assigned_waybill_number: waybillNumber,
-        type: blankType,
-      }])
-      if (logError) {
-        console.warn('Failed to log blank waybill:', logError)
+      for (let attempt = 0; attempt <= 3; attempt++) {
+        const [existingWaybills, existingBlanks] = await Promise.all([
+          supabase
+            .from('waybills')
+            .select('waybill_number')
+            .order('created_at', { ascending: false })
+            .limit(1000),
+          supabase
+            .from('blank_waybill_logs')
+            .select('assigned_waybill_number')
+            .order('downloaded_at', { ascending: false })
+            .limit(1000),
+        ])
+        const existingNumbers = [
+          ...(existingWaybills.data || []).map((w) => w.waybill_number || ''),
+          ...(existingBlanks.data || []).map((b) => b.assigned_waybill_number || ''),
+        ].filter(Boolean)
+        const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, prefix, 'blank')
+
+        const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
+          assigned_waybill_number: waybillNumber,
+          type: blankType,
+        }])
+
+        if (!logError) {
+          const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
+          await downloadBlankWaybillTemplate({
+            type: blankType,
+            waybillNumber,
+            date: new Date().toLocaleDateString(),
+            companyName: settings?.company_name || 'Company Name',
+            companyAddress: settings?.company_address || undefined,
+            companyLogoUrl: settings?.company_logo_url || undefined,
+            tagline: settings?.company_tagline || undefined,
+            companyPhone: settings?.company_phone || undefined,
+            companyEmail: settings?.company_email || undefined,
+          })
+          feedback.success(`Blank template ${waybillNumber} downloaded`)
+          return
+        }
+
+        if (logError.code === '23505' && attempt < 3) continue
+        throw new Error(logError.message || 'Failed to reserve waybill number')
       }
-
-      const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
-      await downloadBlankWaybillTemplate({
-        type: blankType,
-        waybillNumber,
-        companyName: settings?.company_name || 'Company Name',
-        companyAddress: settings?.company_address || undefined,
-        companyLogoUrl: settings?.company_logo_url || undefined,
-        tagline: settings?.company_tagline || undefined,
-        companyPhone: settings?.company_phone || undefined,
-        companyEmail: settings?.company_email || undefined,
-      })
-      feedback.success(`Blank template ${waybillNumber} downloaded`)
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Download failed')
     }

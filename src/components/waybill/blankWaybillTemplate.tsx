@@ -1,5 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 
+// CONTRACT: The Minimal blank waybill must fit on a single portrait A4 page.
+// Any change that causes signatures or footer to spill to a second page
+// is an automatic contract violation.
+
 import { Document, Image, Page, Text, View, pdf } from '@react-pdf/renderer'
 import type { WaybillItem, WaybillType } from './waybillUtils'
 import { minimalStyles } from './waybillMinimalStyles'
@@ -59,6 +63,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
 
   return (
     <View style={minimalStyles.root}>
+      {/* This template is designed to render on a single A4 page. */}
       {/* ZONE 1 — TITLE */}
       <View style={minimalStyles.titleZone}>
         <Text style={minimalStyles.docTitle}>WAYBILL / DELIVERY NOTE</Text>
@@ -71,20 +76,20 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
         ) : null}
         <View style={minimalStyles.brandInfo}>
           <Text style={minimalStyles.brandName}>{companyName || 'Company Name'}</Text>
-          {tagline ? <Text style={minimalStyles.brandTagline}>{tagline}</Text> : null}
           {companyAddress ? <Text style={minimalStyles.brandAddress}>{companyAddress}</Text> : null}
           {contactLine ? <Text style={minimalStyles.brandContact}>{contactLine}</Text> : null}
+          {tagline ? <Text style={minimalStyles.brandTagline}>{tagline}</Text> : null}
         </View>
       </View>
 
       {/* ZONE 3 — METADATA */}
       <View>
-        <View style={minimalStyles.metaPillRow}>
+        <View style={minimalStyles.metaPillCol}>
           <View style={minimalStyles.metaPill}>
             <Text style={minimalStyles.metaPillValue}>{waybillNumber || ''}</Text>
           </View>
           <View style={[minimalStyles.metaPill, minimalStyles.datePill]}>
-            <Text style={minimalStyles.metaPillValue}>{date || ''}</Text>
+            <Text style={minimalStyles.metaPillValue}>Date{'  '}{date || ''}</Text>
           </View>
         </View>
 
@@ -213,6 +218,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
 
         <View style={minimalStyles.footer}>
           <Text>{companyName || ''}</Text>
+          <Text>{waybillNumber || ''}</Text>
         </View>
       </View>
     </View>
@@ -242,6 +248,7 @@ function BlankInternalTemplate(options: MinimalContentData) {
 export interface BlankTemplateOptions {
   type: WaybillType
   waybillNumber: string
+  date?: string
   companyName: string
   companyAddress?: string
   companyLogoUrl?: string
@@ -254,6 +261,7 @@ export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions
   const contentData: MinimalContentData = {
     type: options.type,
     waybillNumber: options.waybillNumber,
+    date: options.date || new Date().toLocaleDateString(),
     companyName: options.companyName,
     companyAddress: options.companyAddress,
     companyLogoUrl: options.companyLogoUrl,
