@@ -1,161 +1,213 @@
-import { pdf } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer'
 import type { WaybillType } from './waybillUtils'
+
+const S = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontFamily: 'Helvetica',
+    fontSize: 10,
+    color: '#1a1a1a',
+    backgroundColor: '#ffffff',
+  },
+
+  header: {
+    textAlign: 'center',
+    marginBottom: 20,
+    borderBottom: '2pt solid #000',
+    paddingBottom: 10,
+  },
+  companyName: { fontSize: 18, fontWeight: 'bold', marginBottom: 4, textAlign: 'center' },
+  docTitle: { fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
+  docNumber: { fontSize: 9, color: '#666666', marginTop: 4, textAlign: 'center' },
+
+  partyRow: { flexDirection: 'row', gap: 20, marginBottom: 20 },
+  partyBox: { flex: 1, border: '1pt solid #000', padding: 10 },
+  partyLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
+  partyLine: { marginBottom: 8 },
+  partyLineLast: {},
+
+  sectionTitle: {
+    fontWeight: 'bold',
+    borderBottom: '1pt solid #000',
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    fontSize: 9,
+  },
+
+  tableHeader: { flexDirection: 'row', borderBottom: '1pt solid #000' },
+  tableHeaderCell: { padding: 6, fontWeight: 'bold' },
+  tableHeaderCellBordered: { padding: 6, fontWeight: 'bold', borderRight: '1pt solid #000' },
+
+  tableRow: { flexDirection: 'row', borderBottom: '1pt solid #000' },
+  tableCell: { padding: 6 },
+  tableCellBordered: { padding: 6, borderRight: '1pt solid #000' },
+
+  colNum: { width: 30 },
+  colDesc: { flex: 6 },
+  colQty: { flex: 1 },
+  colUnit: { flex: 2 },
+  colNotes: { flex: 3 },
+
+  infoRow: { flexDirection: 'row', gap: 20, marginBottom: 20 },
+  infoBox: { flex: 1, border: '1pt solid #000', padding: 10 },
+  infoLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
+  infoLine: { marginBottom: 8 },
+  infoLineLast: {},
+
+  signatureRow: { flexDirection: 'row', gap: 20 },
+  signatureBox: { flex: 1, border: '1pt solid #000', padding: 10 },
+  signatureLabel: { fontWeight: 'bold', marginBottom: 6, borderBottom: '1pt solid #000', paddingBottom: 4 },
+  signatureSpace: { height: 60 },
+  signatureDate: { borderTop: '1pt solid #000', paddingTop: 4, fontSize: 8 },
+})
 
 function BlankExternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
   return (
-    <div style={{ padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, borderBottom: '2px solid #000', paddingBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>{companyName}</div>
-        <div style={{ fontSize: 12, fontWeight: 'bold' }}>EXTERNAL DELIVERY NOTE</div>
-        <div style={{ fontSize: 9, color: '#666', marginTop: 4 }}>Waybill No: {waybillNumber || '____________________'}</div>
-      </div>
+    <Document>
+      <Page size="A4" style={S.page}>
+        <View style={S.header}>
+          <Text style={S.companyName}>{companyName}</Text>
+          <Text style={S.docTitle}>EXTERNAL DELIVERY NOTE</Text>
+          <Text style={S.docNumber}>Waybill No: {waybillNumber || '____________________'}</Text>
+        </View>
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Sender</div>
-          <div style={{ marginBottom: 8 }}>Name: _________________________</div>
-          <div style={{ marginBottom: 8 }}>Phone: ________________________</div>
-          <div>Address: _____________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Receiver</div>
-          <div style={{ marginBottom: 8 }}>Name: _________________________</div>
-          <div style={{ marginBottom: 8 }}>Phone: ________________________</div>
-          <div>Address: _____________________</div>
-        </div>
-      </div>
+        <View style={S.partyRow}>
+          <View style={S.partyBox}>
+            <Text style={S.partyLabel}>Sender</Text>
+            <Text style={S.partyLine}>Name: _________________________</Text>
+            <Text style={S.partyLine}>Phone: ________________________</Text>
+            <Text style={S.partyLineLast}>Address: _____________________</Text>
+          </View>
+          <View style={S.partyBox}>
+            <Text style={S.partyLabel}>Receiver</Text>
+            <Text style={S.partyLine}>Name: _________________________</Text>
+            <Text style={S.partyLine}>Phone: ________________________</Text>
+            <Text style={S.partyLineLast}>Address: _____________________</Text>
+          </View>
+        </View>
 
-      <div style={{ border: '1px solid #000', marginBottom: 20 }}>
-        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #000', padding: 8, backgroundColor: '#f0f0f0' }}>Items</div>
-        <table style={{ width: '100%', fontSize: 9 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #000' }}>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>#</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Description</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Quantity</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Unit</th>
-              <th style={{ padding: 6, textAlign: 'left' }}>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #000' }}>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>{i}</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>_________________________</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>__________</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>__________</td>
-                <td style={{ padding: 6 }}>_________________________</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <View style={{ border: '1pt solid #000', marginBottom: 20 }}>
+          <Text style={S.sectionTitle}>Items</Text>
+          <View style={S.tableHeader}>
+            <Text style={[S.tableHeaderCellBordered, S.colNum]}>#</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colDesc]}>Description</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colQty]}>Qty</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colUnit]}>Unit</Text>
+            <Text style={[S.tableHeaderCell, S.colNotes]}>Notes</Text>
+          </View>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={S.tableRow}>
+              <Text style={[S.tableCellBordered, S.colNum]}>{i}</Text>
+              <Text style={[S.tableCellBordered, S.colDesc]}>_________________________</Text>
+              <Text style={[S.tableCellBordered, S.colQty]}>__________</Text>
+              <Text style={[S.tableCellBordered, S.colUnit]}>__________</Text>
+              <Text style={[S.tableCell, S.colNotes]}>_________________________</Text>
+            </View>
+          ))}
+        </View>
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Invoice Reference</div>
-          <div style={{ marginBottom: 8 }}>Invoice No: ___________________</div>
-          <div>Invoice Date: _________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Vehicle Info</div>
-          <div style={{ marginBottom: 8 }}>Plate: ________________________</div>
-          <div>Driver: ______________________</div>
-        </div>
-      </div>
+        <View style={S.infoRow}>
+          <View style={S.infoBox}>
+            <Text style={S.infoLabel}>Invoice Reference</Text>
+            <Text style={S.infoLine}>Invoice No: ___________________</Text>
+            <Text style={S.infoLineLast}>Invoice Date: _________________</Text>
+          </View>
+          <View style={S.infoBox}>
+            <Text style={S.infoLabel}>Vehicle Info</Text>
+            <Text style={S.infoLine}>Plate: ________________________</Text>
+            <Text style={S.infoLineLast}>Driver: ______________________</Text>
+          </View>
+        </View>
 
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Sender Signature</div>
-          <div style={{ height: 60 }} />
-          <div style={{ borderTop: '1px solid #000', paddingTop: 4, fontSize: 8 }}>Date: _________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Receiver Signature</div>
-          <div style={{ height: 60 }} />
-          <div style={{ borderTop: '1px solid #000', paddingTop: 4, fontSize: 8 }}>Date: _________________</div>
-        </div>
-      </div>
-    </div>
+        <View style={S.signatureRow}>
+          <View style={S.signatureBox}>
+            <Text style={S.signatureLabel}>Sender Signature</Text>
+            <View style={S.signatureSpace} />
+            <Text style={S.signatureDate}>Date: _________________</Text>
+          </View>
+          <View style={S.signatureBox}>
+            <Text style={S.signatureLabel}>Receiver Signature</Text>
+            <View style={S.signatureSpace} />
+            <Text style={S.signatureDate}>Date: _________________</Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
   )
 }
 
 function BlankInternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
   return (
-    <div style={{ padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, borderBottom: '2px solid #000', paddingBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>{companyName}</div>
-        <div style={{ fontSize: 12, fontWeight: 'bold' }}>INTERNAL TRANSFER NOTE</div>
-        <div style={{ fontSize: 9, color: '#666', marginTop: 4 }}>Waybill No: {waybillNumber || '____________________'}</div>
-      </div>
+    <Document>
+      <Page size="A4" style={S.page}>
+        <View style={S.header}>
+          <Text style={S.companyName}>{companyName}</Text>
+          <Text style={S.docTitle}>INTERNAL TRANSFER NOTE</Text>
+          <Text style={S.docNumber}>Waybill No: {waybillNumber || '____________________'}</Text>
+        </View>
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Origin</div>
-          <div style={{ marginBottom: 8 }}>Depot: ________________________</div>
-          <div style={{ marginBottom: 8 }}>Contact: ______________________</div>
-          <div>Date: _______________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Destination</div>
-          <div style={{ marginBottom: 8 }}>Depot: ________________________</div>
-          <div style={{ marginBottom: 8 }}>Contact: ______________________</div>
-          <div>Date: _______________________</div>
-        </div>
-      </div>
+        <View style={S.partyRow}>
+          <View style={S.partyBox}>
+            <Text style={S.partyLabel}>Origin</Text>
+            <Text style={S.partyLine}>Depot: ________________________</Text>
+            <Text style={S.partyLine}>Contact: ______________________</Text>
+            <Text style={S.partyLineLast}>Date: _______________________</Text>
+          </View>
+          <View style={S.partyBox}>
+            <Text style={S.partyLabel}>Destination</Text>
+            <Text style={S.partyLine}>Depot: ________________________</Text>
+            <Text style={S.partyLine}>Contact: ______________________</Text>
+            <Text style={S.partyLineLast}>Date: _______________________</Text>
+          </View>
+        </View>
 
-      <div style={{ border: '1px solid #000', marginBottom: 20 }}>
-        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #000', padding: 8, backgroundColor: '#f0f0f0' }}>Items</div>
-        <table style={{ width: '100%', fontSize: 9 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #000' }}>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>#</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Description</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Quantity</th>
-              <th style={{ padding: 6, textAlign: 'left', borderRight: '1px solid #000' }}>Unit</th>
-              <th style={{ padding: 6, textAlign: 'left' }}>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #000' }}>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>{i}</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>_________________________</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>__________</td>
-                <td style={{ padding: 6, borderRight: '1px solid #000' }}>__________</td>
-                <td style={{ padding: 6 }}>_________________________</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <View style={{ border: '1pt solid #000', marginBottom: 20 }}>
+          <Text style={S.sectionTitle}>Items</Text>
+          <View style={S.tableHeader}>
+            <Text style={[S.tableHeaderCellBordered, S.colNum]}>#</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colDesc]}>Description</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colQty]}>Qty</Text>
+            <Text style={[S.tableHeaderCellBordered, S.colUnit]}>Unit</Text>
+            <Text style={[S.tableHeaderCell, S.colNotes]}>Notes</Text>
+          </View>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={S.tableRow}>
+              <Text style={[S.tableCellBordered, S.colNum]}>{i}</Text>
+              <Text style={[S.tableCellBordered, S.colDesc]}>_________________________</Text>
+              <Text style={[S.tableCellBordered, S.colQty]}>__________</Text>
+              <Text style={[S.tableCellBordered, S.colUnit]}>__________</Text>
+              <Text style={[S.tableCell, S.colNotes]}>_________________________</Text>
+            </View>
+          ))}
+        </View>
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Purpose</div>
-          <div style={{ marginBottom: 8 }}>☐ Transfer  ☐ Maintenance  ☐ Other</div>
-          <div>Notes: ______________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Vehicle Info</div>
-          <div style={{ marginBottom: 8 }}>Plate: ________________________</div>
-          <div>Driver: ______________________</div>
-        </div>
-      </div>
+        <View style={S.infoRow}>
+          <View style={S.infoBox}>
+            <Text style={S.infoLabel}>Purpose</Text>
+            <Text style={S.infoLine}>☐ Transfer  ☐ Maintenance  ☐ Other</Text>
+            <Text style={S.infoLineLast}>Notes: ______________________</Text>
+          </View>
+          <View style={S.infoBox}>
+            <Text style={S.infoLabel}>Vehicle Info</Text>
+            <Text style={S.infoLine}>Plate: ________________________</Text>
+            <Text style={S.infoLineLast}>Driver: ______________________</Text>
+          </View>
+        </View>
 
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Sender Signature</div>
-          <div style={{ height: 60 }} />
-          <div style={{ borderTop: '1px solid #000', paddingTop: 4, fontSize: 8 }}>Date: _________________</div>
-        </div>
-        <div style={{ flex: 1, border: '1px solid #000', padding: 10 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 6, borderBottom: '1px solid #000', paddingBottom: 4 }}>Receiver Signature</div>
-          <div style={{ height: 60 }} />
-          <div style={{ borderTop: '1px solid #000', paddingTop: 4, fontSize: 8 }}>Date: _________________</div>
-        </div>
-      </div>
-    </div>
+        <View style={S.signatureRow}>
+          <View style={S.signatureBox}>
+            <Text style={S.signatureLabel}>Sender Signature</Text>
+            <View style={S.signatureSpace} />
+            <Text style={S.signatureDate}>Date: _________________</Text>
+          </View>
+          <View style={S.signatureBox}>
+            <Text style={S.signatureLabel}>Receiver Signature</Text>
+            <View style={S.signatureSpace} />
+            <Text style={S.signatureDate}>Date: _________________</Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
   )
 }
 
