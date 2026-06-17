@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Waybill — Portrait (Corrected)</title>
+<style>
+    @page { size: A4 portrait; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: sans-serif;
+        font-size: 11px;
+        color: #000;
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 14px 18px;
+        background: #fff;
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo-box {
+        width: 52px; height: 52px;
+        border: 1px solid #000;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px; font-weight: bold;
+        background: #f9f9f9;
+    }
+    .brand-name { margin: 0; font-size: 16px; font-weight: 700; }
+    .brand-address { margin: 2px 0 0; font-size: 10px; color: #444; }
+    .doc-meta { text-align: right; }
+    .doc-meta h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+    .meta-fields { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+    .meta-pill {
+        border: 1px solid #000; padding: 3px 8px;
+        font-size: 9px;
+    }
+    .meta-pill .label { font-weight: 600; }
+
+    /* Top grid — Client / Destination */
+    .top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Second grid — Vehicle / Driver / Driver Phone */
+    .top-grid-2 {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Mode row — Delivery Mode / Delivery Reason */
+    .mode-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    /* Box system */
+    .box {
+        border: 1px solid #000;
+        padding: 6px 10px;
+        display: flex; flex-direction: column;
+    }
+    .box-label {
+        font-size: 9px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    /* Checkboxes — plain style */
+    .checkboxes {
+        display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+        margin-top: auto; padding-bottom: 4px;
+    }
+    .checkboxes label {
+        display: flex; align-items: center; gap: 4px;
+        padding: 3px 8px; border: 1px solid #000;
+        font-size: 10px;
+        background: #fff; cursor: pointer;
+    }
+    .checkboxes input { margin: 0; }
+
+    /* Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+        table-layout: fixed;
+        margin-bottom: 12px;
+    }
+    thead th {
+        background: #f4f4f4;
+        border: 1px solid #000;
+        padding: 6px 8px; text-align: left;
+        font-size: 9px; text-transform: uppercase;
+        letter-spacing: 0.8px; font-weight: 700;
+    }
+    tbody td {
+        border: 1px solid #000;
+        padding: 4px 8px;
+        height: 24px;
+        vertical-align: top;
+    }
+    .col-num { width: 5%; text-align: center; color: #666; }
+    .col-desc { width: 55%; }
+    .col-qty { width: 10%; text-align: center; }
+    .col-unit { width: 12%; text-align: center; }
+    .col-remark { width: 18%; }
+
+    /* Notes */
+    .notes-box { min-height: 50px; margin-bottom: 10px; }
+
+    /* Signatures */
+    .sigs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .sig-card {
+        border: 1px solid #000;
+        display: flex; flex-direction: column;
+    }
+    .sig-header {
+        background: #f4f4f4;
+        padding: 6px 10px;
+        font-size: 9px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        border-bottom: 1px solid #000;
+    }
+    .sig-meta-row {
+        display: flex;
+        border-bottom: 1px solid #000;
+    }
+    .sig-meta-cell {
+        flex: 1; padding: 4px 10px;
+        font-size: 9px;
+        display: flex; align-items: center;
+        min-height: 24px;
+    }
+    .sig-meta-cell:first-child { border-right: 1px solid #000; }
+    .sig-area {
+        padding: 5px 10px;
+        height: 48px;
+        font-size: 9px; color: #555;
+    }
+
+    /* Footer */
+    .footer {
+        margin-top: 10px; padding-top: 6px;
+        border-top: 1px solid #000;
+        text-align: center;
+        font-size: 9px; color: #555;
+    }
+</style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="brand">
+            <div class="logo-box">LOGO</div>
+            <div>
+                <h1 class="brand-name">[Company Name]</h1>
+                <p class="brand-address">[Company Address]</p>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <h1>WAYBILL</h1>
+            <div class="meta-fields">
+                <span class="meta-pill"><span class="label">No:</span> ________</span>
+                <span class="meta-pill"><span class="label">Date:</span> ________</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT / DESTINATION -->
+    <div class="top-grid">
+        <div class="box" style="height: 55px;">
+            <div class="box-label">Client / Consignee</div>
+        </div>
+        <div class="box" style="height: 55px;">
+            <div class="box-label">Destination Address</div>
+        </div>
+    </div>
+
+    <!-- VEHICLE / DRIVER / DRIVER PHONE -->
+    <div class="top-grid-2">
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Vehicle Plate</div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Driver Name</div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Driver Phone</div>
+        </div>
+    </div>
+
+    <!-- DELIVERY MODE / DELIVERY REASON -->
+    <div class="mode-row">
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Delivery Mode</div>
+            <div class="checkboxes">
+                <label><input type="checkbox"> Hand</label>
+                <label><input type="checkbox"> Vehicle</label>
+                <label><input type="checkbox"> Other</label>
+            </div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Delivery Reason</div>
+            <div class="checkboxes">
+                <label><input type="checkbox"> Transfer</label>
+                <label><input type="checkbox"> Maint.</label>
+                <label><input type="checkbox"> Other</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ITEMS TABLE -->
+    <table>
+        <thead>
+            <tr>
+                <th class="col-num">#</th>
+                <th class="col-desc">Description</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-unit">Unit</th>
+                <th class="col-remark">Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="col-num">1</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">2</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">3</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">4</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">5</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">6</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">7</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">8</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">9</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">10</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+    </table>
+
+    <!-- DELIVERY REMARKS / NOTES -->
+    <div class="box notes-box">
+        <div class="box-label">Delivery Remarks / Notes</div>
+        <div style="flex: 1;"></div>
+    </div>
+
+    <!-- SIGNATURES -->
+    <div class="sigs">
+        <div class="sig-card">
+            <div class="sig-header">Delivered By / Driver</div>
+            <div class="sig-meta-row">
+                <div class="sig-meta-cell">Name:</div>
+                <div class="sig-meta-cell">Time:</div>
+            </div>
+            <div class="sig-area">Signature:</div>
+        </div>
+        <div class="sig-card">
+            <div class="sig-header">Received By</div>
+            <div class="sig-meta-row">
+                <div class="sig-meta-cell">Name:</div>
+                <div class="sig-meta-cell">Time:</div>
+            </div>
+            <div class="sig-area">Signature:</div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        [Company Name] — [Tagline]
+    </div>
+
+</body>
+</html>
