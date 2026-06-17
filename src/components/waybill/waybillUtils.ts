@@ -454,8 +454,15 @@ export function getNextWaybillNumber(
   type: WaybillType,
   existingNumbers: string[],
   prefix: string = 'WBL',
+  mode: 'normal' | 'blank' = 'normal',
 ): string {
-  const routingPrefix = type === 'internal' ? `${prefix}-I-` : `${prefix}-E-`
+  let routingSuffix: string
+  if (mode === 'blank') {
+    routingSuffix = type === 'internal' ? '-MI-' : '-ME-'
+  } else {
+    routingSuffix = type === 'internal' ? '-I-' : '-E-'
+  }
+  const routingPrefix = `${prefix}${routingSuffix}`
   const nums = existingNumbers
     .filter((n) => n.startsWith(routingPrefix))
     .map((n) => parseInt(n.slice(routingPrefix.length), 10))

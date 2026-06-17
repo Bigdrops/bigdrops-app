@@ -49,7 +49,7 @@ export default function NewWaybill() {
         .order('created_at', { ascending: false })
         .limit(1000)
       const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-      const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'))
+      const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'), 'blank')
 
       const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
         assigned_waybill_number: waybillNumber,
