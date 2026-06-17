@@ -67,6 +67,8 @@ export default function NewWaybill() {
         companyAddress: settings?.company_address || undefined,
         companyLogoUrl: settings?.company_logo_url || undefined,
         tagline: settings?.company_tagline || undefined,
+        companyPhone: settings?.company_phone || undefined,
+        companyEmail: settings?.company_email || undefined,
       })
       feedback.success(`Blank template ${waybillNumber} downloaded`)
     } catch (err) {

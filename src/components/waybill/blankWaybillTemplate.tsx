@@ -12,6 +12,8 @@ export interface MinimalContentData {
   companyAddress?: string
   companyLogoUrl?: string
   tagline?: string
+  companyPhone?: string
+  companyEmail?: string
   clientName?: string
   destinationAddress?: string
   vehiclePlate?: string
@@ -22,16 +24,21 @@ export interface MinimalContentData {
   notes?: string
 }
 
+function Checkbox({ checked }: { checked: boolean }) {
+  return (
+    <View style={[minimalStyles.checkboxBox, checked && { backgroundColor: '#000' }]} />
+  )
+}
+
 export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
   const {
     type, waybillNumber, date, companyName, companyAddress, companyLogoUrl, tagline,
+    companyPhone, companyEmail,
     clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose, items, notes,
   } = data
 
   const blankMode = !items || items.length === 0
   const rowCount = blankMode ? 10 : items.length
-
-  const c = (checked: boolean) => (checked ? '☑' : '☐')
 
   const isHand = transportMode === 'By Hand'
   const isVehicle = transportMode === 'By Vehicle'
@@ -40,20 +47,23 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
   const isMaint = purpose === 'Return'
   const isReasonOther = purpose === 'Third-Party Custody'
 
+  const contactParts: string[] = []
+  if (companyPhone) contactParts.push(`Phone: ${companyPhone}`)
+  if (companyEmail) contactParts.push(`Email: ${companyEmail}`)
+  const contactLine = contactParts.length > 0 ? contactParts.join('  |  ') : ''
+
   return (
     <View>
       <View style={minimalStyles.header}>
         <View style={minimalStyles.brand}>
-          <View style={minimalStyles.logoBox}>
-            {companyLogoUrl ? (
-              <Image src={companyLogoUrl} style={{ width: 48, height: 48 }} />
-            ) : (
-              <Text style={minimalStyles.logoText}>LOGO</Text>
-            )}
-          </View>
+          {companyLogoUrl ? (
+            <Image src={companyLogoUrl} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+          ) : null}
           <View>
             <Text style={minimalStyles.brandName}>{companyName || 'Company Name'}</Text>
+            {tagline ? <Text style={minimalStyles.brandTagline}>{tagline}</Text> : null}
             {companyAddress ? <Text style={minimalStyles.brandAddress}>{companyAddress}</Text> : null}
+            {contactLine ? <Text style={minimalStyles.brandContact}>{contactLine}</Text> : null}
           </View>
         </View>
         <View>
@@ -63,7 +73,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
               <Text style={minimalStyles.metaPillLabel}>No: </Text>
               <Text style={minimalStyles.metaPillValue}>{waybillNumber || ''}</Text>
             </View>
-            <View style={minimalStyles.metaPill}>
+            <View style={[minimalStyles.metaPill, minimalStyles.datePill]}>
               <Text style={minimalStyles.metaPillLabel}>Date: </Text>
               <Text style={minimalStyles.metaPillValue}>{date || ''}</Text>
             </View>
@@ -98,15 +108,15 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
           <Text style={minimalStyles.boxLabel}>Delivery Mode</Text>
           <View style={minimalStyles.checkboxRow}>
             <View style={minimalStyles.checkboxLabel}>
-              <Text style={minimalStyles.checkboxChar}>{c(isHand)}</Text>
+              <Checkbox checked={isHand} />
               <Text> Hand</Text>
             </View>
             <View style={minimalStyles.checkboxLabel}>
-              <Text style={minimalStyles.checkboxChar}>{c(isVehicle)}</Text>
+              <Checkbox checked={isVehicle} />
               <Text> Vehicle</Text>
             </View>
             <View style={minimalStyles.checkboxLabel}>
-              <Text style={minimalStyles.checkboxChar}>{c(isModeOther)}</Text>
+              <Checkbox checked={isModeOther} />
               <Text> Other</Text>
             </View>
           </View>
@@ -116,15 +126,15 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
             <View style={minimalStyles.checkboxRow}>
               <View style={minimalStyles.checkboxLabel}>
-                <Text style={minimalStyles.checkboxChar}>{c(isTransfer)}</Text>
+                <Checkbox checked={isTransfer} />
                 <Text> Transfer</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
-                <Text style={minimalStyles.checkboxChar}>{c(isMaint)}</Text>
+                <Checkbox checked={isMaint} />
                 <Text> Maint.</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
-                <Text style={minimalStyles.checkboxChar}>{c(isReasonOther)}</Text>
+                <Checkbox checked={isReasonOther} />
                 <Text> Other</Text>
               </View>
             </View>
@@ -181,7 +191,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
       </View>
 
       <View style={minimalStyles.footer}>
-        <Text>{companyName || ''}{tagline ? ` — ${tagline}` : ''}</Text>
+        <Text>{companyName || ''}</Text>
       </View>
     </View>
   )
@@ -214,6 +224,8 @@ export interface BlankTemplateOptions {
   companyAddress?: string
   companyLogoUrl?: string
   tagline?: string
+  companyPhone?: string
+  companyEmail?: string
 }
 
 export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions): Promise<void> {
@@ -224,6 +236,8 @@ export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions
     companyAddress: options.companyAddress,
     companyLogoUrl: options.companyLogoUrl,
     tagline: options.tagline,
+    companyPhone: options.companyPhone,
+    companyEmail: options.companyEmail,
   }
 
   const element = options.type === 'internal'

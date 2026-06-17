@@ -107,6 +107,8 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
       companyAddress: settings.company_address,
       companyLogoUrl: settings.company_logo_url,
       tagline: settings.company_tagline,
+      companyPhone: settings.company_phone,
+      companyEmail: settings.company_email,
       clientName: mapped.client_name,
       destinationAddress: mapped.delivery_location,
       vehiclePlate: mapped.vehicle_plate,
