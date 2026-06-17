@@ -65,12 +65,13 @@ function createStyles(designPreset?: PdfDesignPreset) {
   tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e2e8f0' },
   tableRowAlt: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottom: '0.5pt solid #e2e8f0', backgroundColor: '#f8fafc' },
   cell: { fontSize: 8, color: fillableColor, fontFamily: fillableRegular },
-  numberCol: { width: 20 },
-  descCol: { flex: 1.8, paddingRight: 6 },
-  qtyCol: { width: 32, textAlign: 'right' },
-  unitCol: { width: 40, paddingLeft: 6 },
-  conditionCol: { width: 48, paddingLeft: 6 },
-  customCol: { width: 54, paddingLeft: 6 },
+  headerCell: { fontSize: 8, color: '#ffffff', fontFamily: fillableBold },
+  numberCol: { flex: 1 },
+  descCol: { flex: 11, paddingRight: 6 },
+  qtyCol: { flex: 2, textAlign: 'right' },
+  unitCol: { flex: 2, paddingLeft: 6 },
+  conditionCol: { flex: 2, paddingLeft: 6 },
+  customCol: { flex: 2, paddingLeft: 6 },
   notesBox: { marginTop: 10, border: '1pt solid #e2e8f0', borderRadius: 4, padding: 8, backgroundColor: '#f8fafc' },
   signatureRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
   signatureBox: { flex: 1, border: '1pt solid #cbd5e1', borderRadius: 4, padding: 8 },
@@ -155,13 +156,13 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
 
         <Text style={S.sectionTitle}>Items</Text>
         <View style={S.tableHeader}>
-          <Text style={[S.cell, S.numberCol]}>#</Text>
-          {isColumnVisible('description') && <Text style={[S.cell, S.descCol]}>{getColumnLabel('description')}</Text>}
-          {isColumnVisible('quantity') && <Text style={[S.cell, S.qtyCol]}>{getColumnLabel('quantity')}</Text>}
-          {isColumnVisible('unit') && <Text style={[S.cell, S.unitCol]}>{getColumnLabel('unit')}</Text>}
-          {isColumnVisible('condition') && <Text style={[S.cell, S.conditionCol]}>{getColumnLabel('condition')}</Text>}
+          <Text style={[S.headerCell, S.numberCol]}>#</Text>
+          {isColumnVisible('description') && <Text style={[S.headerCell, S.descCol]}>{getColumnLabel('description')}</Text>}
+          {isColumnVisible('quantity') && <Text style={[S.headerCell, S.qtyCol]}>{getColumnLabel('quantity')}</Text>}
+          {isColumnVisible('unit') && <Text style={[S.headerCell, S.unitCol]}>{getColumnLabel('unit')}</Text>}
+          {isColumnVisible('condition') && <Text style={[S.headerCell, S.conditionCol]}>{getColumnLabel('condition')}</Text>}
           {customColumns.map((column) => (
-            <Text key={column.key} style={[S.cell, S.customCol]}>{column.label}</Text>
+            <Text key={column.key} style={[S.headerCell, S.customCol]}>{column.label}</Text>
           ))}
         </View>
 

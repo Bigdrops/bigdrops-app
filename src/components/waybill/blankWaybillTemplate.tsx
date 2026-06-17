@@ -1,11 +1,11 @@
 import { pdf } from '@react-pdf/renderer'
 import type { WaybillType } from './waybillUtils'
 
-function BlankExternalTemplate({ waybillNumber }: { waybillNumber: string }) {
+function BlankExternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
   return (
     <div style={{ padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' }}>
       <div style={{ textAlign: 'center', marginBottom: 20, borderBottom: '2px solid #000', paddingBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>BIGDROPS</div>
+        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>{companyName}</div>
         <div style={{ fontSize: 12, fontWeight: 'bold' }}>EXTERNAL DELIVERY NOTE</div>
         <div style={{ fontSize: 9, color: '#666', marginTop: 4 }}>Waybill No: {waybillNumber || '____________________'}</div>
       </div>
@@ -80,11 +80,11 @@ function BlankExternalTemplate({ waybillNumber }: { waybillNumber: string }) {
   )
 }
 
-function BlankInternalTemplate({ waybillNumber }: { waybillNumber: string }) {
+function BlankInternalTemplate({ waybillNumber, companyName }: { waybillNumber: string; companyName: string }) {
   return (
     <div style={{ padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' }}>
       <div style={{ textAlign: 'center', marginBottom: 20, borderBottom: '2px solid #000', paddingBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>BIGDROPS</div>
+        <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>{companyName}</div>
         <div style={{ fontSize: 12, fontWeight: 'bold' }}>INTERNAL TRANSFER NOTE</div>
         <div style={{ fontSize: 9, color: '#666', marginTop: 4 }}>Waybill No: {waybillNumber || '____________________'}</div>
       </div>
@@ -159,10 +159,10 @@ function BlankInternalTemplate({ waybillNumber }: { waybillNumber: string }) {
   )
 }
 
-export async function downloadBlankWaybillTemplate(type: WaybillType, waybillNumber: string): Promise<void> {
+export async function downloadBlankWaybillTemplate(type: WaybillType, waybillNumber: string, companyName: string): Promise<void> {
   const element = type === 'internal'
-    ? <BlankInternalTemplate waybillNumber={waybillNumber} />
-    : <BlankExternalTemplate waybillNumber={waybillNumber} />
+    ? <BlankInternalTemplate waybillNumber={waybillNumber} companyName={companyName} />
+    : <BlankExternalTemplate waybillNumber={waybillNumber} companyName={companyName} />
 
   const blob = await pdf(element).toBlob()
   const url = URL.createObjectURL(blob)
