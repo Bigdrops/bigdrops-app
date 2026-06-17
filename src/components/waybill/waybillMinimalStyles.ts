@@ -1,6 +1,6 @@
 import { StyleSheet } from '@react-pdf/renderer'
 
-const s = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 }
+const s = { gap: 0, xs: 4, sm: 8, md: 12, lg: 16, xl: 24 }
 
 export const minimalStyles = StyleSheet.create({
   page: {
@@ -42,23 +42,22 @@ export const minimalStyles = StyleSheet.create({
     flex: 1,
   },
   brandName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: s.xs,
   },
   brandTagline: {
-    fontSize: 10,
-    color: '#444444',
+    fontSize: 9,
     marginBottom: s.xs,
   },
   brandAddress: {
-    fontSize: 10,
-    color: '#444444',
+    fontSize: 9,
     marginBottom: s.xs,
   },
   brandContact: {
     fontSize: 9,
     color: '#444444',
+    marginBottom: s.xs,
   },
 
   metaPillRow: {
@@ -73,7 +72,6 @@ export const minimalStyles = StyleSheet.create({
     fontSize: 9,
     flexDirection: 'row',
   },
-  metaPillLabel: { fontWeight: 'bold' },
   metaPillValue: {},
   datePill: { minWidth: 80 },
 
@@ -85,7 +83,7 @@ export const minimalStyles = StyleSheet.create({
   topBox: {
     flex: 1,
     border: '1pt solid #000',
-    padding: '8pt 12pt',
+    padding: s.sm,
     minHeight: 70,
   },
   boxLabel: {
@@ -94,6 +92,7 @@ export const minimalStyles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: s.xs,
+    color: '#000000',
   },
 
   secondGrid: {
@@ -104,7 +103,7 @@ export const minimalStyles = StyleSheet.create({
   secondBox: {
     flex: 1,
     border: '1pt solid #000',
-    padding: '8pt 12pt',
+    padding: s.sm,
     minHeight: 35,
   },
 
@@ -116,7 +115,7 @@ export const minimalStyles = StyleSheet.create({
   modeBox: {
     flex: 1,
     border: '1pt solid #000',
-    padding: '8pt 12pt',
+    padding: s.sm,
     minHeight: 50,
   },
   checkboxRow: {
@@ -154,7 +153,7 @@ export const minimalStyles = StyleSheet.create({
   },
   tableHeaderCell: {
     border: '1pt solid #000',
-    padding: '8pt 8pt',
+    padding: '4pt 8pt',
     fontSize: 9,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -167,14 +166,14 @@ export const minimalStyles = StyleSheet.create({
     fontSize: 10,
     minHeight: 24,
   },
-  colNum: { flex: 1, textAlign: 'center' },
+  colNum: { flex: 1 },
   colDesc: { flex: 14 },
   colQty: { flex: 2.4, textAlign: 'center' },
   colUnit: { flex: 2.6, textAlign: 'center' },
 
   notesBox: {
     border: '1pt solid #000',
-    padding: '8pt 12pt',
+    padding: s.sm,
     minHeight: 50,
     marginBottom: s.sm,
   },
@@ -191,7 +190,7 @@ export const minimalStyles = StyleSheet.create({
   },
   sigHeader: {
     backgroundColor: '#f4f4f4',
-    padding: '8pt 12pt',
+    padding: s.sm,
     fontSize: 9,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -216,7 +215,7 @@ export const minimalStyles = StyleSheet.create({
     borderRight: '1pt solid #000',
   },
   sigArea: {
-    padding: '8pt 12pt',
+    padding: s.sm,
     minHeight: 64,
     fontSize: 9,
     color: '#555555',

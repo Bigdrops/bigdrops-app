@@ -20,6 +20,10 @@ export interface MinimalContentData {
   driverName?: string
   transportMode?: string
   purpose?: string
+  senderName?: string
+  receiverName?: string
+  senderSignatureUrl?: string
+  receiverSignatureUrl?: string
   items?: WaybillItem[]
   notes?: string
 }
@@ -34,7 +38,8 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
   const {
     type, waybillNumber, date, companyName, companyAddress, companyLogoUrl, tagline,
     companyPhone, companyEmail,
-    clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose, items, notes,
+    clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose,
+    senderName, receiverName, senderSignatureUrl, receiverSignatureUrl, items, notes,
   } = data
 
   const blankMode = !items || items.length === 0
@@ -54,12 +59,12 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
 
   return (
     <View style={minimalStyles.root}>
-      {/* Zone 1: Title */}
+      {/* ZONE 1 — TITLE */}
       <View style={minimalStyles.titleZone}>
-        <Text style={minimalStyles.docTitle}>WAYBILL</Text>
+        <Text style={minimalStyles.docTitle}>WAYBILL / DELIVERY NOTE</Text>
       </View>
 
-      {/* Zone 2: Brand */}
+      {/* ZONE 2 — BRAND */}
       <View style={minimalStyles.brandZone}>
         {companyLogoUrl ? (
           <Image src={companyLogoUrl} style={minimalStyles.brandLogo} />
@@ -72,15 +77,13 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
         </View>
       </View>
 
-      {/* Zone 3: Metadata */}
+      {/* ZONE 3 — METADATA */}
       <View>
         <View style={minimalStyles.metaPillRow}>
           <View style={minimalStyles.metaPill}>
-            <Text style={minimalStyles.metaPillLabel}>No: </Text>
             <Text style={minimalStyles.metaPillValue}>{waybillNumber || ''}</Text>
           </View>
           <View style={[minimalStyles.metaPill, minimalStyles.datePill]}>
-            <Text style={minimalStyles.metaPillLabel}>Date: </Text>
             <Text style={minimalStyles.metaPillValue}>{date || ''}</Text>
           </View>
         </View>
@@ -91,7 +94,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <Text>{clientName || ''}</Text>
           </View>
           <View style={minimalStyles.topBox}>
-            <Text style={minimalStyles.boxLabel}>Destination{type === 'internal' ? '' : ' Address'}</Text>
+            <Text style={minimalStyles.boxLabel}>{type === 'internal' ? 'Destination' : 'Destination Address'}</Text>
             <Text>{destinationAddress || ''}</Text>
           </View>
         </View>
@@ -113,15 +116,15 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <View style={minimalStyles.checkboxRow}>
               <View style={minimalStyles.checkboxLabel}>
                 <Checkbox checked={isHand} />
-                <Text> Hand</Text>
+                <Text>Hand</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
                 <Checkbox checked={isVehicle} />
-                <Text> Vehicle</Text>
+                <Text>Vehicle</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
                 <Checkbox checked={isModeOther} />
-                <Text> Other</Text>
+                <Text>Other</Text>
               </View>
             </View>
           </View>
@@ -131,15 +134,15 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
               <View style={minimalStyles.checkboxRow}>
                 <View style={minimalStyles.checkboxLabel}>
                   <Checkbox checked={isTransfer} />
-                  <Text> Transfer</Text>
+                  <Text>Transfer</Text>
                 </View>
                 <View style={minimalStyles.checkboxLabel}>
                   <Checkbox checked={isMaint} />
-                  <Text> Maint.</Text>
+                  <Text>Maint.</Text>
                 </View>
                 <View style={minimalStyles.checkboxLabel}>
                   <Checkbox checked={isReasonOther} />
-                  <Text> Other</Text>
+                  <Text>Other</Text>
                 </View>
               </View>
             </View>
@@ -147,7 +150,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
         </View>
       </View>
 
-      {/* Zone 4: Content */}
+      {/* ZONE 4 — CONTENT */}
       <View style={minimalStyles.contentZone}>
         <View style={minimalStyles.table}>
           <View style={minimalStyles.tableHeaderRow}>
@@ -175,27 +178,35 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
         </View>
       </View>
 
-      {/* Zone 5: Signature + Footer */}
+      {/* ZONE 5 — SIGNATURE + FOOTER */}
       <View>
         <View style={minimalStyles.sigsRow}>
           <View style={minimalStyles.sigCard}>
             <Text style={minimalStyles.sigHeader}>Delivered By / Driver</Text>
             <View style={minimalStyles.sigMetaRow}>
-              <Text style={minimalStyles.sigMetaCellBorder}>Name:</Text>
-              <Text style={minimalStyles.sigMetaCell}>Time:</Text>
+              <Text style={minimalStyles.sigMetaCellBorder}>{senderName || 'Name'}</Text>
+              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
             </View>
             <View style={minimalStyles.sigArea}>
-              <Text>Signature:</Text>
+              {senderSignatureUrl ? (
+                <Image src={senderSignatureUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <Text>Signature</Text>
+              )}
             </View>
           </View>
           <View style={minimalStyles.sigCard}>
             <Text style={minimalStyles.sigHeader}>Received By</Text>
             <View style={minimalStyles.sigMetaRow}>
-              <Text style={minimalStyles.sigMetaCellBorder}>Name:</Text>
-              <Text style={minimalStyles.sigMetaCell}>Time:</Text>
+              <Text style={minimalStyles.sigMetaCellBorder}>{receiverName || 'Name'}</Text>
+              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
             </View>
             <View style={minimalStyles.sigArea}>
-              <Text>Signature:</Text>
+              {receiverSignatureUrl ? (
+                <Image src={receiverSignatureUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <Text>Signature</Text>
+              )}
             </View>
           </View>
         </View>

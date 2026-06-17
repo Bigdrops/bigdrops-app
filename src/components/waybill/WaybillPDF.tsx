@@ -83,7 +83,13 @@ function createStyles(designPreset?: PdfDesignPreset) {
   signatureImage: { width: 110, height: 42, objectFit: 'contain', marginBottom: 6 },
   signatureTitle: { fontSize: 7, textTransform: 'uppercase', color: '#475569', marginBottom: 4 },
   signatureText: { fontSize: 8, color: fillableColor, fontFamily: fillableRegular, marginBottom: 2 },
-  footer: { position: 'absolute', bottom: 18, left: 34, right: 34, borderTop: '0.5pt solid #cbd5e1', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
+  footer: {
+    paddingTop: 4,
+    borderTop: '1pt solid #000',
+    textAlign: 'center',
+    fontSize: 8,
+    color: '#555555',
+  },
   footerText: { fontSize: 7, color: '#94a3b8' },
 })
 }
@@ -93,10 +99,9 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
   const mapped = mapDbWaybill(waybill)
   const customFields = mapped.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
   const customColumns = customFields.customColumns || []
-  const senderSignature = getWaybillSignature(mapped, 'sender')
-  const receiverSignature = getWaybillSignature(mapped, 'receiver')
-  const typeContent = getWaybillTypeContent(mapped.type)
-  const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
+  const signatureMap = customFields.signatures || {}
+  const senderSig = signatureMap.sender || {}
+  const receiverSig = signatureMap.receiver || {}
 
   if (template === 'minimal') {
     const minimalData: MinimalContentData = {
@@ -115,6 +120,10 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
       driverName: mapped.driver_name,
       transportMode: mapped.transport_mode,
       purpose: mapped.purpose,
+      senderName: mapped.sender_name,
+      receiverName: mapped.receiver_name,
+      senderSignatureUrl: senderSig.image_url || senderSig.drawn_data_url,
+      receiverSignatureUrl: receiverSig.image_url || receiverSig.drawn_data_url,
       items: mapped.items,
       notes: mapped.notes,
     }
@@ -126,6 +135,11 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
       </Document>
     )
   }
+
+  const senderSignature = getWaybillSignature(mapped, 'sender')
+  const receiverSignature = getWaybillSignature(mapped, 'receiver')
+  const typeContent = getWaybillTypeContent(mapped.type)
+  const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
 
   const isColumnVisible = (key: string) => {
     if (!columnVisibility) return true
