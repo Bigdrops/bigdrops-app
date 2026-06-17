@@ -1,43 +1,109 @@
 You are working on the BIGDROPS business platform.
-Runtime: Bun. Never use npm or yarn.
-
-Read AGENTS.md and docs/PROJECTSKIILINDEX.md before anything else.
+Runtime: Bun ONLY. Never use npm or yarn.
 
 ==================================================
-TASK: Waybill PDF Template Audit — Read Only
+MANDATORY BOOTSTRAP
+==================================================
+Before doing anything:
+1. Read AGENTS.md
+2. Read docs/PROJECTSKIILINDEX.md
+3. Load all required skills from docs/ index
+
+If ANY skill fails to load:
+- Re-read docs/PROJECTSKIILINDEX.md
+- Locate the skill via filesystem path
+- Attempt direct SKILL.md read
+- If still failing → STOP IMMEDIATELY and mark task FAILED
+
+==================================================
+TASK: Waybill PDF Template Audit (READ ONLY)
 ==================================================
 
-READ FIRST:
-- `docs/PRD/pdf-rendering-roadmap.md` Phase 3B section
-- Find all waybill PDF template files in `src/components/waybill/`
-- Find the New Waybill type selector modal component
+REFERENCE:
+- docs/PRD/pdf-rendering-roadmap.md → Phase 3B
 
 ==================================================
-REPORT THESE QUESTIONS
+REQUIRED FILE DISCOVERY
 ==================================================
 
-1. **PDF template files**
-   - What file(s) render the Waybill PDF? List all file paths.
-   - Is there one shared template for Internal and External, or separate files?
-   - Paste the exact item row rendering code — the part that maps items to table rows
-   - Paste the exact column width definitions
-   - Paste the signature/footer section code
+Locate and inspect ALL Waybill-related PDF files in:
+- src/components/waybill/
 
-2. **Quantity bug**
-   - In the item row mapping, what field is used for quantity?
-   - Is there any hardcoded `0` or fallback to `0` visible in the code?
+Locate:
+- Internal Waybill PDF template
+- External Waybill PDF template
+- Any shared/base PDF renderer used by Waybill
+- blankWaybillTemplate.tsx
+- New Waybill modal (type selector)
 
-3. **Blank waybill template**
-   - Read `src/components/waybill/blankWaybillTemplate.tsx` fully
-   - Why is it failing? What is broken?
-   - Does it receive the waybill number as a prop or hardcode it?
+If files are split or dynamically resolved, trace the resolver logic.
 
-4. **Type selector modal**
-   - Find the component that renders the "New Waybill / Select document type" modal (Image shows cream background, display font, custom card borders)
-   - What file is it?
-   - What background color / class is applied to the modal container?
-   - What font or typography class is applied to the "New Waybill" heading?
+==================================================
+ANALYSIS TASKS (READ ONLY — NO CODE CHANGES)
+==================================================
 
-**Save report to `docs/Task/reports/waybill-pdf-template-audit.md` and push to main.**
+1. PDF TEMPLATE ARCHITECTURE
+   - List exact file paths for all Waybill PDF templates
+   - Confirm whether Internal/External share a template or are separate
+   - Identify rendering pipeline (direct JSX vs PdfRenderer abstraction)
 
-**Read only. Zero code changes.**
+2. TABLE STRUCTURE ANALYSIS
+   - Extract item row mapping logic
+   - Identify fields used for:
+     - description
+     - quantity
+     - unit
+     - condition
+   - Detect any fallback values (especially hardcoded 0)
+
+3. COLUMN LAYOUT
+   - Extract column width definitions (percentages or styles)
+   - Identify layout collapse issues (if any)
+
+4. SIGNATURE + FOOTER
+   - Extract signature block code
+   - Identify alignment, sizing, or flex issues
+
+5. QUANTITY BUG ROOT CAUSE
+   - Trace why quantity resolves to 0
+   - Identify mapping mismatch between DB → domain → PDF
+
+6. BLANK WAYBILL TEMPLATE
+   - Fully analyze blankWaybillTemplate.tsx
+   - Determine:
+     - Whether number is passed via props or hardcoded
+     - Why rendering fails (if applicable)
+     - Whether Internal/External both supported correctly
+
+7. TYPE SELECTOR MODAL
+   - Identify file rendering "New Waybill" modal
+   - Extract:
+     - background styling (color/token/class)
+     - typography system (font mismatch vs app system)
+     - component system used (shadcn or custom)
+
+==================================================
+OUTPUT REQUIREMENTS
+==================================================
+
+Generate a report with:
+
+- File map (all relevant paths)
+- Key code excerpts (only critical sections)
+- Root cause analysis per issue
+- Dependency graph (if shared renderer exists)
+- Risk notes for fixing Phase 3B
+
+Save to:
+Task/reports/waybill-pdf-template-audit.md
+
+==================================================
+CONSTRAINTS
+==================================================
+
+- READ ONLY MODE
+- NO CODE MODIFICATIONS
+- NO REFACTORING
+- NO FIXES
+- NO ASSUMPTIONS (if missing info → explicitly state UNKNOWN)
+- Be precise, cite file paths and exact code locations where possible
