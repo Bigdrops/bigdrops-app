@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sun & Shield — Waybill (Portrait)</title>
+<style>
+    @page { size: A4 portrait; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        font-size: 11px;
+        color: #1a1a1a;
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 14px 18px;
+        background: #fff;
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #0b3d2e;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+        width: 52px; height: 52px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0b3d2e 0%, #1f7a4d 100%);
+        display: flex; align-items: center; justify-content: center;
+        color: #f5c518; font-weight: 800; font-size: 20px;
+    }
+    .brand h1 { margin: 0; font-size: 16px; color: #0b3d2e; }
+    .brand p { margin: 2px 0 0; font-size: 10px; color: #555; }
+    .doc-meta { text-align: right; }
+    .doc-meta h2 { margin: 0; font-size: 20px; color: #0b3d2e; letter-spacing: 2px; }
+    .doc-meta .meta-fields { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+    .meta-pill {
+        border: 1px solid #0b3d2e; padding: 3px 8px;
+        border-radius: 4px; font-size: 9px; color: #0b3d2e;
+    }
+    .meta-pill .label { color: #6b7568; font-weight: 600; }
+
+    /* Top grid */
+    .top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .top-grid-2 {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    /* Mode row */
+    .mode-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .checkboxes {
+        display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+        margin-top: auto; padding-bottom: 4px;
+    }
+    .checkboxes label {
+        display: flex; align-items: center; gap: 4px;
+        padding: 3px 8px; border: 1px solid #cfd4cf;
+        border-radius: 14px; font-size: 10px;
+        background: #fff; cursor: pointer;
+    }
+    .checkboxes input { accent-color: #0b3d2e; margin: 0; }
+
+    /* Box system */
+    .box {
+        border: 1px solid #0b3d2e;
+        border-radius: 5px;
+        padding: 6px 10px;
+        background: #fafbfa;
+        display: flex; flex-direction: column;
+    }
+    .box-label {
+        font-size: 9px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1.1px;
+        color: #0b3d2e; margin-bottom: 4px;
+    }
+
+    /* Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+        table-layout: fixed;
+        margin-bottom: 10px;
+    }
+    thead th {
+        background: #0b3d2e; color: #fff;
+        padding: 6px 8px; text-align: left;
+        font-size: 9px; text-transform: uppercase;
+        letter-spacing: 0.8px; font-weight: 600;
+    }
+    tbody td {
+        border: 1px solid #cfd4cf;
+        padding: 4px 8px;
+        height: 22px;
+        vertical-align: top;
+    }
+    tbody tr:nth-child(even) td { background: #fafbfa; }
+    .col-num { width: 5%; text-align: center; color: #666; }
+    .col-desc { width: 60%; }
+    .col-qty { width: 12%; text-align: center; }
+    .col-unit { width: 11%; text-align: center; }
+    .col-remark { width: 12%; }
+
+    /* Notes */
+    .notes-box { min-height: 50px; margin-bottom: 8px; }
+
+    /* Signatures */
+    .sigs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .sig-card {
+        border: 1px solid #0b3d2e;
+        border-radius: 5px;
+        background: #fafbfa;
+        overflow: hidden;
+    }
+    .sig-header {
+        background: #0b3d2e; color: #fff;
+        padding: 5px 10px;
+        font-size: 9px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1.1px;
+    }
+    .sig-meta-row {
+        display: flex;
+        border-bottom: 1px solid #cfd4cf;
+    }
+    .sig-meta-cell {
+        flex: 1; padding: 4px 10px;
+        font-size: 9px; color: #555;
+        display: flex; align-items: center;
+        min-height: 24px;
+    }
+    .sig-meta-cell:first-child { border-right: 1px solid #cfd4cf; }
+    .sig-area {
+        padding: 5px 10px;
+        height: 48px;
+        font-size: 9px; color: #555;
+    }
+
+    .footer {
+        margin-top: 8px; padding-top: 6px;
+        border-top: 1px solid #e2e6e2;
+        text-align: center;
+        font-size: 9px; color: #6b7568;
+    }
+</style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="brand">
+            <div class="logo">S&amp;S</div>
+            <div>
+                <h1>SUN &amp; SHIELD POWER SOLUTIONS</h1>
+                <p>43 Oshola Street, Ifako-Ijaiye, Lagos</p>
+            </div>
+        </div>
+        <div class="doc-meta">
+            <h2>WAYBILL</h2>
+            <div class="meta-fields">
+                <span class="meta-pill"><span class="label">No:</span> ________</span>
+                <span class="meta-pill"><span class="label">Date:</span> ________</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-grid">
+        <div class="box" style="height: 55px;">
+            <div class="box-label">Client / Consignee</div>
+        </div>
+        <div class="box" style="height: 55px;">
+            <div class="box-label">Destination Address</div>
+        </div>
+    </div>
+
+    <div class="top-grid-2">
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Vehicle Plate</div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Driver Name</div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Driver Phone</div>
+        </div>
+    </div>
+
+    <div class="mode-row">
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Delivery Mode</div>
+            <div class="checkboxes">
+                <label><input type="checkbox"> Hand</label>
+                <label><input type="checkbox"> Vehicle</label>
+                <label><input type="checkbox"> Other</label>
+            </div>
+        </div>
+        <div class="box" style="height: 50px;">
+            <div class="box-label">Delivery Reason</div>
+            <div class="checkboxes">
+                <label><input type="checkbox"> Transfer</label>
+                <label><input type="checkbox"> Maint.</label>
+                <label><input type="checkbox"> Other</label>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="col-num">#</th>
+                <th class="col-desc">Description</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-unit">Unit</th>
+                <th class="col-remark">Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="col-num">1</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">2</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">3</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">4</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">5</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">6</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">7</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">8</td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">9</td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="col-num">10</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+    </table>
+
+    <div class="box notes-box">
+        <div class="box-label">Delivery Remarks / Notes</div>
+        <div style="flex: 1;"></div>
+    </div>
+
+    <div class="sigs">
+        <div class="sig-card">
+            <div class="sig-header">Delivered By / Driver</div>
+            <div class="sig-meta-row">
+                <div class="sig-meta-cell">Name:</div>
+                <div class="sig-meta-cell">Time:</div>
+            </div>
+            <div class="sig-area">Signature:</div>
+        </div>
+        <div class="sig-card">
+            <div class="sig-header">Received By</div>
+            <div class="sig-meta-row">
+                <div class="sig-meta-cell">Name:</div>
+                <div class="sig-meta-cell">Time:</div>
+            </div>
+            <div class="sig-area">Signature:</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Sun &amp; Shield Power Solutions — Powering Reliability
+    </div>
+
+</body>
+</html>
