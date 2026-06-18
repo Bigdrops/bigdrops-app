@@ -93,7 +93,11 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showImportSheet, setShowImportSheet] = useState(false)
   const [invoiceSheetOpen, setInvoiceSheetOpen] = useState(false)
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ description: true, quantity: true, unit: true, make: false, partNo: false, condition: false })
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
+    const stored = initialData?.customFields?.columnVisibility
+    if (stored && typeof stored === 'object') return stored
+    return { description: true, quantity: true, unit: true, make: false, partNo: false, condition: false }
+  })
   const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
     description: 'Description',
     quantity: 'Qty',
@@ -109,7 +113,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showReceiverSig, setShowReceiverSig] = useState(true)
   const [showNotes, setShowNotes] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
-  const [notes, setNotes] = useState('')
+  const [notes, setNotes] = useState(() => initialData?.waybill?.notes ?? '')
   const [terms, setTerms] = useState('')
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [showTermsInTableSettings, setShowTermsInTableSettings] = useState(false)
@@ -394,10 +398,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
     setSaving(true)
     try {
-      const finalFields = buildWaybillCustomFields(customFields, { customColumns })
+      const finalFields = buildWaybillCustomFields(customFields, { customColumns, columnVisibility })
       const collectedColumns = collectWaybillCustomColumns(items, customColumns)
       const data: WaybillFormData = {
-        waybill: { ...waybill, status: 'dispatched' },
+        waybill: { ...waybill, notes, status: 'dispatched' },
         items,
         customColumns: collectedColumns,
         customFields: finalFields,
@@ -449,7 +453,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                         <BriefcaseBusiness className="h-4.5 w-4.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
+                        <div className="overflow-hidden text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
                         <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)]">
                           {waybill.client_name || 'Select a client'}
                         </div>
@@ -500,7 +504,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   <div className="flex items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3">
                     <FileText className="h-4 w-4 text-[var(--bd-text-muted)]" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
+                      <div className="overflow-hidden text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
                       <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)] font-mono">
                         {customFields.references.linkedInvoiceNumber}
                       </div>
@@ -524,7 +528,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                       <FileText className="h-4.5 w-4.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
+                      <div className="overflow-hidden text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
                       <div className="mt-0.5 text-[14px] font-bold text-[var(--bd-text-muted)]">
                         {waybill.client_id ? 'Tap to link an invoice' : 'Select a client first'}
                       </div>

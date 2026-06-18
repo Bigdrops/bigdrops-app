@@ -43,6 +43,7 @@ export interface WaybillSignatureEvidence {
 
 export interface WaybillCustomFields {
   customColumns?: WaybillCustomColumn[]
+  columnVisibility?: Record<string, boolean>
   signatures?: {
     sender?: WaybillSignatureEvidence
     receiver?: WaybillSignatureEvidence
@@ -219,6 +220,9 @@ export function parseWaybillCustomFields(value: unknown): WaybillCustomFields {
           .map((column) => makeWaybillCustomColumn(column?.label || column?.key || 'Custom Field', column?.key))
           .slice(0, WAYBILL_COLUMN_LIMIT)
       : [],
+    columnVisibility: parsed.columnVisibility && typeof parsed.columnVisibility === 'object' && !Array.isArray(parsed.columnVisibility)
+      ? parsed.columnVisibility as Record<string, boolean>
+      : undefined,
     signatures: {
       sender: normalizeSignatureEvidence(parsed.signatures?.sender),
       receiver: normalizeSignatureEvidence(parsed.signatures?.receiver),
@@ -268,6 +272,7 @@ export function buildWaybillCustomFields(
     ...base,
     ...patch,
     customColumns: patch.customColumns || base.customColumns || [],
+    columnVisibility: patch.columnVisibility ?? base.columnVisibility,
     signatures: {
       sender: patch.signatures?.sender ? normalizeSignatureEvidence(patch.signatures.sender) : base.signatures?.sender || {},
       receiver: patch.signatures?.receiver ? normalizeSignatureEvidence(patch.signatures.receiver) : base.signatures?.receiver || {},
