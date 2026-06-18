@@ -11,10 +11,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 16 skills | General-purpose dev, UI, and infra skills |
+| `.agents/skills/` | 17 skills | General-purpose dev, UI, and infra skills |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `skills/` | 1 skill | Agency role library adaptation for Codex execution plans |
-| **Total** | **24 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
+| `.mimocode/commands/` | 1 command | Type checking verification |
+| **Total** | **26 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
@@ -26,7 +28,7 @@ General engineering and frontend skills used by Claude agents during development
 | 2 | deploy-to-vercel | .agents/skills/deploy-to-vercel/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\deploy-to-vercel\SKILL.md | Deploying apps to Vercel — CLI auth, git push deploys, preview URLs, team selection, no-auth fallbacks |
 | 3 | frontend-design | .agents/skills/frontend-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\frontend-design\SKILL.md | Distinctive, production-grade UI — anti-"AI slop" aesthetics, creative typography, color, motion, spatial composition |
 | 4 | impeccable | .agents/skills/impeccable/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\impeccable\SKILL.md | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
-| 5 | pdf-rendering-correctness | .agents/skills/pdf-rendering-correctness/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\pdf-rendering-correctness\SKILL.md | Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules |
+| 5 | pdf-rendering-correctness | .agents/skills/pdf-rendering-correctness/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\pdf-rendering-correctness\SKILL.md | Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules, waybill template rules |
 | 6 | seo | .agents/skills/seo/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\seo\SKILL.md | Technical SEO — meta tags, structured data (JSON-LD), sitemaps, URL structure, mobile SEO, hreflang |
 | 7 | shadcn | .agents/skills/shadcn/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\shadcn\SKILL.md | shadcn/ui — CLI usage, component composition, form patterns, icon handling, styling rules, registry management |
 | 8 | supabase-postgres-best-practices | .agents/skills/supabase-postgres-best-practices/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\supabase-postgres-best-practices\SKILL.md | Postgres performance — indexing, connection pooling, RLS, schema design, locking, monitoring, query optimization |
@@ -38,6 +40,7 @@ General engineering and frontend skills used by Claude agents during development
 | 14 | vite | .agents/skills/vite/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vite\SKILL.md | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
 | 15 | redesign-existing-projects | .agents/skills/redesign-existing-projects/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\redesign-existing-projects\SKILL.md | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS. |
 | 16 | react-pdf | .agents/skills/react-pdf/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-pdf\SKILL.md | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation, document creation, or react-pdf. Prefer this skill over the standard 'pdf' skill, since it is more accurate |
+| 17 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Investigate and fix defects in waybill PDF templates — signature overflow, date labels, tagline placement, footer architecture, sequence consumption bugs |
 
 ---
 ## `.claude/skills/`
@@ -92,10 +95,15 @@ Agency role library adaptation for Codex execution plans.
 │       ├── ui-ux-pro-max/
 │       ├── using-superpowers/
 │       └── webapp-testing/
+├── .mimocode/
+│   ├── commands/
+│   │   └── typecheck.md
+│   └── skills/
+│       └── waybill-template-debug/
 └── skills/
-└── agency-agents/
+    └── agency-agents/
 ```
 ---
-*Last updated: June 13, 2026, 9:58 PM*
+*Last updated: June 17, 2026, 11:25 PM*
 ```
 ?

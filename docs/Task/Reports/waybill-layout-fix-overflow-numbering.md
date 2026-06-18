@@ -2,41 +2,52 @@
 
 ## Defects Fixed
 
-### P1 — Blank number duplication on repeated downloads
-- **Root cause:** `handleBlankDownload` in `NewWaybill.tsx` queried both `waybills` and `blank_waybill_logs` and generated the next number correctly, but when the `blank_waybill_logs` insert failed (unique constraint violation `23505`), it only `console.warn`ed and proceeded to download with the duplicate number.
-- **Fix:** Wrapped the insert in a retry loop (up to 3 additional attempts). On `23505` with remaining attempts, re-queries both tables and regenerates the number. On other errors, throws and aborts the download.
+### P1 — Blank number duplication on repeated downloads (DEFECT 1)
+- **Root cause:** `handleBlankDownload` in `NewWaybill.tsx` only queried the `waybills` table for existing numbers. It never queried `blank_waybill_logs`. So repeated blank downloads always saw the same highest number and produced the same sequence (e.g., always 000001).
+- **Fix:** Added a parallel query to `blank_waybill_logs` via `Promise.all`. The `existingNumbers` array now includes numbers from both tables, ensuring sequence consumption is accounted for.
 
-### P1 — Signature overflow past single A4 page
-- **Root cause:** Total content min-heights exceeded the available A4 content area (~794pt with 24pt padding).
-- **Fix:** Reduced padding (24 → 20) and all min-heights:
-  - `sigCard`: 140 → 100pt
-  - `sigMetaCell` / `sigMetaCellBorder`: 32 → 24pt
-  - `sigArea`: 64 → 48pt
-  - `topBox`: 70 → 56pt
-  - `secondBox`: 35 → 28pt
-  - `modeBox`: 50 → 40pt
-  - `notesBox`: 50 → 35pt
+### P1 — Signature overflow past single A4 page (DEFECT 2)
+- **Root cause:** Signature card `minHeight: 140` and `sigArea` `minHeight: 64` contributed to content exceeding A4 height.
+- **Fix:** Reduced `sigCard` minHeight from 140 → 100, `sigArea` minHeight from 64 → 48, `notesBox` minHeight from 50 → 40, `modeBox` minHeight from 50 → 40.
+- Added single-page contract comment at top of `blankWaybillTemplate.tsx`.
 
-### P2 — Waybill number and date now stacked vertically
-- Changed `metaPillRow` to `flexDirection: 'column'` (pills stack instead of side-by-side).
+### P2 — Waybill number and date stacked vertically (DEFECT 3)
+- **Root cause:** `metaPillRow` used `flexDirection: 'row'`, placing waybill number and date on the same horizontal line.
+- **Fix:** Renamed to `metaPillCol`, changed to `flexDirection: 'column'` with `alignItems: 'flex-end'`. Waybill number is now Row 1, Date is Row 2.
 
-### P2 — Date label restored
-- Added `"Date"` label above the date entry area in the metadata pill, with handwriting-suitable entry space.
+### P2 — Date label restored (DEFECT 4)
+- **Root cause:** Previous task removed the "Date" label (applied a blanket label ban).
+- **Fix:** Restored visible "Date" text in the date pill: `Date{'  '}{date || ''}`.
 
-### P2 — Tagline placement corrected
-- Moved tagline to display *after* address and contact info.
+### P2 — Tagline placement corrected (DEFECT 5)
+- **Root cause:** Tagline rendered between company name and address, interrupting operational identity.
+- **Fix:** Reordered brand zone: Company Name → Address → Contact → Tagline.
 
-### P2 — Footer layout fixed
-- Changed footer from centered single-line to `flexDirection: 'row'` with `justifyContent: 'space-between'`. Left: company name. Right: waybill number.
+### P2 — Footer architecture fixed (DEFECT 6)
+- **Root cause:** Footer was centered single-line company name only.
+- **Fix:** Changed to `flexDirection: 'row'` with `justifyContent: 'space-between'`. Left: company name. Right: waybill number. Center: empty.
+- Applied same footer layout to Minimal path in `WaybillPDF.tsx` (propagates via shared `WaybillMinimalContent`).
 
 ## Files Changed
 
 | File | Changes |
 |------|---------|
-| `src/pages/NewWaybill.tsx` | Retry loop for blank log insert; pass `date` to download |
-| `src/components/waybill/waybillMinimalStyles.ts` | Reduced min-heights, column metaPillRow, row footer, new `dateLabel`/`dateValue` styles |
-| `src/components/waybill/blankWaybillTemplate.tsx` | Reordered tagline, added Date label, stacked metadata pills, left/right footer, single-page contract comment |
+| `src/pages/NewWaybill.tsx` | Added parallel query to `blank_waybill_logs` in `handleBlankDownload` |
+| `src/components/waybill/waybillMinimalStyles.ts` | Column meta layout, reduced min-heights (sigCard, sigArea, notesBox, modeBox), row footer |
+| `src/components/waybill/blankWaybillTemplate.tsx` | Contract comment, reordered tagline, stacked metadata, Date label, left/right footer |
+| `src/components/waybill/WaybillPDF.tsx` | No changes needed — Minimal path uses shared `WaybillMinimalContent` |
 
 ## Verification
+
 - `bun run audit:load` — passes (no new warnings)
-- `bunx eslint` on all changed files — no errors
+- `bun run typecheck` — passes with zero errors
+- `bun run lint` (changed files only) — passes with zero errors
+
+### Manual checks (document):
+- Three consecutive blank downloads should produce incrementing numbers (001, 002, 003)
+- Single portrait A4 page — no overflow
+- Date label visible and field is handwriting-sized
+- Waybill number above Date field (separate rows)
+- Tagline after address and contact line
+- Footer: company name left, waybill number right, centre empty
+- Same footer on blank template and Minimal WaybillPDF path

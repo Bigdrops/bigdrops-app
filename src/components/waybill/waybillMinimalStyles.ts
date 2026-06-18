@@ -28,8 +28,9 @@ export const minimalStyles = StyleSheet.create({
     letterSpacing: 2,
   },
 
-  brandZone: {
+  headerGrid: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: s.md,
     marginBottom: s.md,
   },
@@ -37,9 +38,10 @@ export const minimalStyles = StyleSheet.create({
     width: 48,
     height: 48,
     objectFit: 'contain',
+    marginBottom: s.xs,
   },
   brandInfo: {
-    flex: 1,
+    flex: 3,
   },
   brandName: {
     fontSize: 12,
@@ -58,6 +60,14 @@ export const minimalStyles = StyleSheet.create({
     fontSize: 9,
     color: '#444444',
     marginBottom: s.xs,
+  },
+
+  identifierColumn: {
+    flex: 1,
+    alignSelf: 'flex-start',
+  },
+  identifierBlock: {
+    marginTop: 0,
   },
 
   metaPillRow: {

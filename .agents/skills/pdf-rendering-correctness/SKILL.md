@@ -146,3 +146,42 @@ DO NOT EVER INTRODUCE:
 - No recalculation outside parent invoice
 - No divergence between UI and PDF output
 - No secondary invoice models exist
+
+## 11. Waybill PDF Template Rules
+
+### Single Page Contract (Non-Negotiable)
+
+Blank waybill templates MUST fit on a single portrait A4 page. Any change that causes signatures or footer to spill to a second page is an automatic contract violation.
+
+### Layout Constraints
+
+- **No Absolute Positioning**: Avoid `position: absolute` or fixed heights that could cause overflow
+- **Flex Allocation**: Use flex for dynamic content zones (signature cards, footer)
+- **Zone Structure**: Maintain existing table proportions and zone structure
+
+### Brand Identity Order
+
+Waybill brand identity sections must follow this exact order:
+1. Company Name
+2. Address
+3. Contact Information
+4. Tagline (subordinate brand statement)
+
+### Footer Architecture
+
+Waybill footer must use this layout:
+- Left: Company name
+- Right: Waybill number
+- Center: Intentionally empty (no tagline, contact, or address)
+
+Style: `flexDirection: 'row'`, `justifyContent: 'space-between'`
+
+### Date Field Requirements
+
+- "Date" label is required (unlike Phone/Email/Address which are redundant metadata prefixes)
+- Date is a document control field requiring visible label
+- Provide handwriting-sized entry area
+
+### Sequence Consumption
+
+Blank waybill downloads MUST consume a sequence number from `blank_waybill_logs`. Each download must produce an incrementing number (001, 002, 003).
