@@ -27,9 +27,9 @@ export interface WaybillItemCustomData {
 export interface WaybillItem {
   description: string
   quantity: number
-  unit: string
-  condition: ItemCondition
-  custom_data?: WaybillItemCustomData
+  unit: string | null
+  condition?: ItemCondition
+  custom_data: WaybillItemCustomData
   row_type?: 'standard' | 'group_header'
 }
 
@@ -408,9 +408,17 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
     ? (record.custom_data as WaybillItemCustomData)
     : {}
 
-  const custom_data = Object.fromEntries(
-    customColumns.map((column) => [column.key, normalizePrimitiveValue(baseCustomData[column.key])]),
-  )
+    // Preserve ALL existing custom_data keys (custom_data is the sole extension mechanism)
+    const custom_data: Record<string, string | number | null> = {}
+    for (const [key, value] of Object.entries(baseCustomData)) {
+      custom_data[key] = normalizePrimitiveValue(value)
+    }
+    // Ensure every customColumn key is present (even if missing from source)
+    for (const column of customColumns) {
+      if (!(column.key in custom_data)) {
+        custom_data[column.key] = ''
+      }
+    }
 
   return {
     description: String(record.description || ''),

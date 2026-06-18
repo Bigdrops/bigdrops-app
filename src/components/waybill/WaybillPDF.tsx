@@ -215,8 +215,10 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
           {isColumnVisible('description') && <Text style={[S.headerCell, S.descCol]}>{getColumnLabel('description')}</Text>}
           {isColumnVisible('quantity') && <Text style={[S.headerCell, S.qtyCol]}>{getColumnLabel('quantity')}</Text>}
           {isColumnVisible('unit') && <Text style={[S.headerCell, S.unitCol]}>{getColumnLabel('unit')}</Text>}
+          {isColumnVisible('make') && <Text style={[S.headerCell, S.customCol]}>{getColumnLabel('make')}</Text>}
+          {isColumnVisible('partNo') && <Text style={[S.headerCell, S.customCol]}>{getColumnLabel('partNo')}</Text>}
           {isColumnVisible('condition') && <Text style={[S.headerCell, S.conditionCol]}>{getColumnLabel('condition')}</Text>}
-          {customColumns.map((column) => (
+          {customColumns.filter((column) => column.key !== 'make' && column.key !== 'partNo').map((column) => (
             <Text key={column.key} style={[S.headerCell, S.customCol]}>{column.label}</Text>
           ))}
         </View>
@@ -227,9 +229,11 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
             {isColumnVisible('description') && <Text style={[S.cell, S.descCol]}>{item.description || ''}</Text>}
             {isColumnVisible('quantity') && <Text style={[S.cell, S.qtyCol]}>{item.quantity != null ? String(item.quantity) : ''}</Text>}
             {isColumnVisible('unit') && <Text style={[S.cell, S.unitCol]}>{item.unit || ''}</Text>}
+            {isColumnVisible('make') && <Text style={[S.cell, S.customCol]}>{String(item.custom_data.make || '')}</Text>}
+            {isColumnVisible('partNo') && <Text style={[S.cell, S.customCol]}>{String(item.custom_data.partNo || '')}</Text>}
             {isColumnVisible('condition') && <Text style={[S.cell, S.conditionCol]}>{item.condition || ''}</Text>}
-            {customColumns.map((column) => (
-              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data?.[column.key] || '')}</Text>
+            {customColumns.filter((column) => column.key !== 'make' && column.key !== 'partNo').map((column) => (
+              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data[column.key] || '')}</Text>
             ))}
           </View>
         ))}

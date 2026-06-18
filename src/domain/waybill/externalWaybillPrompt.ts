@@ -8,6 +8,7 @@ RULES:
 5. po_number must be null unless the source explicitly labels it as PO Number, Purchase Order Number, or Voucher Number.
 6. Do not extract signatures, party notes, purpose, or client identity.
 7. This document type is isolated. Do not reuse logic from any other document type including internal waybill.
+8. If items have fields beyond description, quantity, unit, and condition (e.g. make, part number, serial, location), include them as additional key/value pairs in each item object. Do not discard unknown fields.
 
 Return this exact shape:
 {

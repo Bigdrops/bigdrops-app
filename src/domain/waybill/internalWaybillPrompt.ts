@@ -7,6 +7,7 @@ RULES:
 4. After the code block write: "Copy the JSON above and paste it back into the app."
 5. Do not extract signatures, party notes, purpose, or client identity.
 6. This document type is isolated. Do not reuse logic from any other document type including external waybill.
+7. If items have fields beyond description, quantity, unit, and condition (e.g. make, part number, serial, location), include them as additional key/value pairs in each item object. Do not discard unknown fields.
 
 Return this exact shape:
 {

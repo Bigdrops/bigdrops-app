@@ -55,7 +55,7 @@ export async function saveWaybill(params: {
     qty: item.quantity,
     unit: item.unit,
     condition: item.condition,
-    ...(item.custom_data && Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {})
+    ...(Object.keys(item.custom_data).length > 0 ? { custom_data: item.custom_data } : {}),
   }))
 
   const payload = {
