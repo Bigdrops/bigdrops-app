@@ -61,6 +61,17 @@ export const externalWaybillImportAdapter = {
       for (const [key, value] of Object.entries(clean)) {
         const normalizedKey = normalizeDataKey(key)
         if (!normalizedKey || STANDARD_KEYS.includes(normalizedKey)) continue
+        if (key === 'custom_fields' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          for (const [subKey, subValue] of Object.entries(value as Record<string, unknown>)) {
+            const subNormalizedKey = normalizeDataKey(subKey)
+            if (!subNormalizedKey || STANDARD_KEYS.includes(subNormalizedKey)) continue
+            custom_data[subNormalizedKey] = normalizePrimitiveValue(subValue)
+            if (!customColumnsMap.has(subNormalizedKey)) {
+              customColumnsMap.set(subNormalizedKey, { key: subNormalizedKey, label: labelFromKey(subNormalizedKey) })
+            }
+          }
+          continue
+        }
         custom_data[normalizedKey] = normalizePrimitiveValue(value)
         if (!customColumnsMap.has(normalizedKey)) {
           customColumnsMap.set(normalizedKey, { key: normalizedKey, label: labelFromKey(normalizedKey) })

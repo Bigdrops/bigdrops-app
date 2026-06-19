@@ -31,6 +31,14 @@ After the discipline block, each prompt must define:
 - If the module supports groups (Invoice/Quotation only), explicit anti-inference group rules must be included.
 - If the module does NOT support groups, a rule must state: "Do not create groups."
 
+### custom_fields Handling
+
+If the module supports custom columns:
+
+- The AI MUST place any item-level fields beyond the canonical schema inside a `"custom_fields": { key: value }` sub-object.
+- These fields represent EXTRA attributes only — never rename or reorder canonical fields.
+- The presence of `custom_fields` does NOT itself create columns.
+- Columns are created ONLY by the import pipeline after parsing AI output.
 ---
 
 ## 2. Adapter Pattern
@@ -113,7 +121,17 @@ Update mode is a row-level patch system. It must:
 
 ---
 
-## 8. Checklist for New Modules
+## 8. Schema Freeze Rule (System Invariant)
+
+After import completes:
+
+- Column schema is fully frozen.
+- No runtime process (render, edit, PDF, UI) may infer or modify schema.
+- Only user-driven actions (Table Settings or a subsequent Import) may modify columns.
+
+---
+
+## 9. Checklist for New Modules
 
 Before a new document module ships with JSON import, verify:
 
@@ -127,3 +145,57 @@ Before a new document module ships with JSON import, verify:
 - [ ] Prompt is pre-computed and passed as a prop.
 - [ ] Update mode (if applicable) includes row range, overwrite confirmation, and empty-field warning.
 - [ ] Clipboard paste and "Open in AI" work automatically via `JsonImportLayout`.
+- [ ] Import pipeline (NOT prompt) is the only mechanism that creates columns.
+- [ ] `normalize.ts` correctly extracts unknown keys into column candidates.
+- [ ] `resolve.ts` enforces 10-column limit deterministically.
+- [ ] `apply.ts` writes final columns via `setColumns()` only.
+- [ ] Schema remains frozen after import completion.
+
+---
+
+## 10. Custom Column Auto-Creation
+
+The system supports deterministic creation of custom columns during JSON import.
+
+### Trigger Conditions
+
+Custom columns are created ONLY when:
+- JSON contains item-level keys not present in the module's canonical field set (`BASE_FIELDS`).
+- OR keys appear inside a `custom_fields` sub-object.
+
+These keys become **column candidates** during normalization.
+
+### Pipeline Behavior (Mandatory Sequence)
+
+1. **`normalize.ts`**
+   - Extracts unknown keys (root-level or inside `custom_fields`).
+   - Builds a candidate map with labels, sample values, and inferred types.
+
+2. **`resolve.ts`**
+   - Converts candidates into `ColumnConfig` objects.
+   - Calls `makeCustomColumn(label, type)`.
+   - Assigns deterministic key: `custom_<snake_case_label>`.
+   - Handles duplicate labels with suffixed keys (`_2`, `_3`, etc.).
+   - Enforces maximum 10 new columns per import — excess candidates are ignored deterministically.
+
+3. **`apply.ts`**
+   - Returns final column array in `ApplyImportResult.columns`.
+   - Applies via `setColumns(result.columns)`.
+
+### Column Defaults
+
+All created columns default to:
+- `visible: true`
+- `removable: true`
+- `includeInTotal: false`
+
+### Constraints
+
+- Column creation is allowed ONLY during import pipeline execution.
+- Column schema MUST NOT change during render, edit, or PDF generation.
+- Duplicate labels result in suffixed keys (`_2`, `_3`, etc.).
+- Maximum 10 new columns per import.
+
+### Determinism Rule
+
+Given identical input JSON, column output MUST always be identical. No randomness or user-dependent branching in column creation.
