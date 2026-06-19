@@ -5,11 +5,15 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Import,
-  PenTool,
+  ImageOff,
+  PenLine,
   ScrollText,
+  Search,
+  Signature as SignatureIcon,
+  Trash2,
   Truck,
-  UserSquare2,
+  Upload,
+  UserSearch,
   Users,
   X,
 } from 'lucide-react'
@@ -26,6 +30,8 @@ import type { ColumnConfig, ColumnVisibilityMode } from '@/domain/invoice/types'
 import ClientSelector from '@/components/ClientSelector'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import { feedback } from '@/lib/feedback'
+import { processSignature, dataURItoFile } from '@/lib/processSignature'
+import { supabase } from '@/supabase'
 import {
   WAYBILL_COLUMN_LIMIT,
   buildWaybillCustomFields,
@@ -53,7 +59,6 @@ import { FormLineItems } from '@/components/document/FormLineItems'
 import { FormFooter } from '@/components/document/FormFooter'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
-
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
 import { externalWaybillImportAdapter } from '@/domain/waybill/externalWaybillImportAdapter'
 import { internalWaybillImportAdapter } from '@/domain/waybill/internalWaybillImportAdapter'
@@ -85,6 +90,503 @@ function createInitialState(type: WaybillType, initial?: Partial<WaybillFormData
   return { waybill: wb, items, customColumns, customFields }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Signature data shape (matches waybillUtils.normalizeSignatureEvidence)    */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+type SignatureEvidence = {
+  image_url?: string
+  drawn_data_url?: string
+  present?: boolean | null
+  confidence?: '' | 'low' | 'medium' | 'high'
+  description?: string
+}
+
+type SignatureRole = 'sender' | 'receiver'
+
+const emptySignature: SignatureEvidence = {
+  image_url: '',
+  drawn_data_url: '',
+  present: null,
+  confidence: '',
+  description: '',
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Pick signatory sheet (SENDER ONLY — DB lookup of saved people)            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function PickSignatorySheet({
+  open,
+  onOpenChange,
+  onPick,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  onPick: (sig: { name: string | null; role: string | null; signature_url: string | null }) => void
+}) {
+  const [rows, setRows] = useState<
+    { id: string; name: string | null; role: string | null; signature_url: string | null }[]
+  >([])
+  const [loading, setLoading] = useState(false)
+  const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setLoading(true)
+    ;(async () => {
+      const { data } = await supabase
+        .from('signatories')
+        .select('id, name, role, signature_url')
+        .order('name')
+      if (!cancelled) {
+        setRows(data ?? [])
+        setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [open])
+
+  const filtered = rows.filter((r) => {
+    if (!query.trim()) return true
+    const q = query.toLowerCase()
+    return (r.name || '').toLowerCase().includes(q) || (r.role || '').toLowerCase().includes(q)
+  })
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetHeader className="text-left">
+          <SheetTitle>Pick a signatory</SheetTitle>
+          <SheetDescription>
+            People who signed for you before. Tap to attach.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 px-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or role…"
+              className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-2 pb-4 max-h-[55vh] overflow-y-auto">
+          {loading && (
+            <p className="text-[13px] text-muted-foreground text-center py-6">Loading…</p>
+          )}
+          {!loading && filtered.length === 0 && (
+            <p className="text-[13px] text-muted-foreground text-center py-6">
+              {rows.length === 0 ? 'No saved signatories yet.' : 'No matches.'}
+            </p>
+          )}
+          {filtered.map((sig) => (
+            <button
+              key={sig.id}
+              type="button"
+              onClick={() => {
+                onPick(sig)
+                onOpenChange(false)
+              }}
+              className="w-full rounded-xl border border-border bg-card p-3 text-left transition hover:bg-muted/40"
+            >
+              <div className="flex items-center gap-3">
+                {sig.signature_url ? (
+                  <img
+                    src={sig.signature_url}
+                    alt={sig.name ?? 'Signatory'}
+                    className="h-10 w-16 rounded-lg border border-border object-contain bg-white"
+                  />
+                ) : (
+                  <div className="flex h-10 w-16 items-center justify-center rounded-lg border border-border bg-muted">
+                    <UserSearch className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-bold truncate">{sig.name || 'Unnamed'}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{sig.role || 'No role'}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Inline draw pad (mouse + touch)                                           */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function DrawPad({
+  onSave,
+  onCancel,
+}: {
+  onSave: (dataUrl: string) => void
+  onCancel: () => void
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const drawingRef = useRef(false)
+  const lastRef = useRef<{ x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const fit = () => {
+      const r = canvas.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = r.width * dpr
+      canvas.height = r.height * dpr
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.scale(dpr, dpr)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, r.width, r.height)
+      ctx.lineWidth = 2
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctx.strokeStyle = '#0F172A'
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [])
+
+  const pos = (clientX: number, clientY: number) => {
+    const r = canvasRef.current!.getBoundingClientRect()
+    return { x: clientX - r.left, y: clientY - r.top }
+  }
+  const start = (x: number, y: number) => {
+    drawingRef.current = true
+    lastRef.current = { x, y }
+  }
+  const move = (x: number, y: number) => {
+    if (!drawingRef.current) return
+    const ctx = canvasRef.current?.getContext('2d')
+    const last = lastRef.current
+    if (!ctx || !last) return
+    ctx.beginPath()
+    ctx.moveTo(last.x, last.y)
+    ctx.lineTo(x, y)
+    ctx.stroke()
+    lastRef.current = { x, y }
+  }
+  const stop = () => {
+    drawingRef.current = false
+    lastRef.current = null
+  }
+  const reset = () => {
+    const c = canvasRef.current
+    if (!c) return
+    const ctx = c.getContext('2d')
+    if (!ctx) return
+    const r = c.getBoundingClientRect()
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, r.width, r.height)
+  }
+
+  return (
+    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 space-y-2">
+      <canvas
+        ref={canvasRef}
+        className="block w-full h-[140px] rounded-lg border border-slate-200 bg-white touch-none"
+        onMouseDown={(e) => start(e.nativeEvent.offsetX, e.nativeEvent.offsetY)}
+        onMouseMove={(e) => move(e.nativeEvent.offsetX, e.nativeEvent.offsetY)}
+        onMouseUp={stop}
+        onMouseLeave={stop}
+        onTouchStart={(e) => {
+          e.preventDefault()
+          const t = e.touches[0]
+          start(t.clientX, t.clientY)
+        }}
+        onTouchMove={(e) => {
+          e.preventDefault()
+          const t = e.touches[0]
+          move(t.clientX, t.clientY)
+        }}
+        onTouchEnd={stop}
+      />
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>Draw with mouse or finger</span>
+        <div className="flex gap-1.5">
+          <button type="button" onClick={reset} className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-200">
+            Reset
+          </button>
+          <button type="button" onClick={onCancel} className="h-7 px-2.5 rounded-md text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const c = canvasRef.current
+              if (!c) return
+              onSave(c.toDataURL('image/png'))
+            }}
+            className="h-7 px-3 rounded-md text-xs font-semibold bg-slate-900 text-white hover:bg-black"
+          >
+            Save drawing
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Signature card (used for both sender and receiver)                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function SignatureCard({
+  title,
+  role,
+  value,
+  onChange,
+  showPickButton,
+}: {
+  title: string
+  role: SignatureRole
+  value: SignatureEvidence
+  onChange: (next: SignatureEvidence) => void
+  showPickButton?: boolean
+}) {
+  const [showDraw, setShowDraw] = useState(false)
+  const [pickOpen, setPickOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [shown, setShown] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const previewUrl = value?.image_url || value?.drawn_data_url || ''
+  const hasEvidence = !!(value?.image_url || value?.drawn_data_url)
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const processedDataURI = await processSignature(file)
+      const processedFile = dataURItoFile(processedDataURI, `${role}_sig_${Date.now()}.png`)
+      const ext = processedFile.name.split('.').pop()
+      const path = `${role}_sig_${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
+      if (error) {
+        feedback.error('Upload failed', { description: error.message })
+        return
+      }
+      const { data } = supabase.storage.from('signatures').getPublicUrl(path)
+      onChange({ ...value, image_url: data.publicUrl, drawn_data_url: '', present: true })
+    } finally {
+      setUploading(false)
+      event.target.value = ''
+    }
+  }
+
+  const clear = () => onChange({ ...value, image_url: '', drawn_data_url: '', present: false })
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[13px] font-semibold text-slate-900">{title}</span>
+          {hasEvidence ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Captured
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              Empty
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShown((v) => !v)}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition ${
+            shown
+              ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+              : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+          }`}
+          title={shown ? 'Hide' : 'Show'}
+        >
+          {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          {shown ? 'Shown' : 'Hidden'}
+        </button>
+      </div>
+
+      {shown && (
+        <div className="p-4 space-y-3">
+          {hasEvidence ? (
+            <div className="relative rounded-xl border border-slate-200 bg-white p-1.5">
+              <img
+                src={previewUrl}
+                alt={`${title} signature`}
+                className="h-24 w-full object-contain rounded-md"
+              />
+              <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/70 text-white text-[10px] font-medium">
+                <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                Stored
+              </span>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+              <ImageOff className="h-5 w-5 mx-auto text-slate-400 mb-1" />
+              <p className="text-xs text-slate-500">No signature captured yet</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? 'Uploading…' : 'Upload'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+
+            <button
+              type="button"
+              onClick={() => setShowDraw((v) => !v)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-slate-300 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              {showDraw ? 'Hide pad' : 'Draw'}
+            </button>
+
+            {showPickButton && (
+              <button
+                type="button"
+                onClick={() => setPickOpen(true)}
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-indigo-200 bg-indigo-50 text-[13px] font-semibold text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition"
+              >
+                <UserSearch className="h-3.5 w-3.5" />
+                Pick
+              </button>
+            )}
+
+            {hasEvidence && (
+              <button
+                type="button"
+                onClick={clear}
+                className="ml-auto inline-flex items-center justify-center h-9 w-9 rounded-lg text-rose-600 hover:bg-rose-50 transition"
+                title="Clear"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {showDraw && (
+            <DrawPad
+              onCancel={() => setShowDraw(false)}
+              onSave={(url) => {
+                onChange({ ...value, drawn_data_url: url, image_url: '', present: true })
+                setShowDraw(false)
+              }}
+            />
+          )}
+
+          {showPickButton && (
+            <PickSignatorySheet
+              open={pickOpen}
+              onOpenChange={setPickOpen}
+              onPick={(sig) => {
+                if (!sig.signature_url) {
+                  feedback.warning('No signature image', {
+                    description: `${sig.name || 'This signatory'} has no signature on file.`,
+                  })
+                  return
+                }
+                onChange({
+                  ...value,
+                  image_url: sig.signature_url,
+                  drawn_data_url: '',
+                  present: true,
+                  description: sig.name ? `Picked: ${sig.name}${sig.role ? ` · ${sig.role}` : ''}` : value.description,
+                })
+              }}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Signatures section                                                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function SignaturesSection({
+  customFields,
+  updateCustomFields,
+}: {
+  customFields: WaybillCustomFields
+  updateCustomFields: (patch: Partial<WaybillCustomFields>) => void
+}) {
+  const sender: SignatureEvidence = customFields.signatures?.sender ?? emptySignature
+  const receiver: SignatureEvidence = customFields.signatures?.receiver ?? emptySignature
+
+  const setSender = (next: SignatureEvidence) =>
+    updateCustomFields({ signatures: { ...customFields.signatures, sender: next } })
+  const setReceiver = (next: SignatureEvidence) =>
+    updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })
+
+  const senderFilled = !!(sender.image_url || sender.drawn_data_url)
+  const receiverFilled = !!(receiver.image_url || receiver.drawn_data_url)
+  const totalCaptured = (senderFilled ? 1 : 0) + (receiverFilled ? 1 : 0)
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-gradient-to-b from-slate-50/60 to-white">
+        <div className="flex items-center gap-2.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold uppercase tracking-wider">
+            <SignatureIcon className="h-3.5 w-3.5" />
+            Signatures
+          </div>
+          <span className="text-xs text-slate-500">
+            {totalCaptured} of 2 captured
+          </span>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-3">
+        <SignatureCard
+          title="Delivered By"
+          role="sender"
+          value={sender}
+          onChange={setSender}
+          showPickButton
+        />
+        <SignatureCard
+          title="Collected By"
+          role="receiver"
+          value={receiver}
+          onChange={setReceiver}
+        />
+      </div>
+    </section>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Main form                                                                 */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 export default function WaybillForm({ type, onSave, onClose, initialData, waybillNumber, loadingNumber }: WaybillFormProps) {
   const [state, setState] = useState<WaybillFormData>(() => createInitialState(type, initialData, waybillNumber))
   const [saving, setSaving] = useState(false)
@@ -104,9 +606,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   )
   const [columnOrder, setColumnOrder] = useState<string[]>(STANDARD_ITEM_COLUMNS.map(c => c.key))
 
-  const [showSignatures, setShowSignatures] = useState(true)
-  const [showSenderSig, setShowSenderSig] = useState(true)
-  const [showReceiverSig, setShowReceiverSig] = useState(true)
   const [showNotes, setShowNotes] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [notes, setNotes] = useState(() => initialData?.waybill?.notes ?? '')
@@ -115,25 +614,12 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [showTermsInTableSettings, setShowTermsInTableSettings] = useState(false)
 
   const warnedRef = useRef(false)
-  const [savedSignatorySheetOpen, setSavedSignatorySheetOpen] = useState(false)
-  const [savedSignatories, setSavedSignatories] = useState<{ id: string; name: string | null; role: string | null; signature_url: string | null }[]>([])
 
   useEffect(() => {
     if (waybillNumber && !state.waybill.waybill_number) {
       setState((prev) => ({ ...prev, waybill: { ...prev.waybill, waybill_number: waybillNumber } }))
     }
   }, [waybillNumber, state.waybill.waybill_number])
-
-  useEffect(() => {
-    if (!showSignatures || !showSenderSig) return
-    let cancelled = false
-    ;(async () => {
-      const { supabase } = await import('@/supabase')
-      const { data } = await supabase.from('signatories').select('id, name, role, signature_url').order('name')
-      if (!cancelled && data) setSavedSignatories(data)
-    })()
-    return () => { cancelled = true }
-  }, [showSignatures, showSenderSig])
 
   const { waybill, items, customColumns, customFields } = state
 
@@ -614,167 +1100,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
           </div>
 
           {/* Signatures */}
-          <div>
-            <SectionLabel color="emerald" trailing={
-              <button
-                type="button"
-                onClick={() => setShowSignatures(!showSignatures)}
-                className="flex items-center justify-center min-w-[40px] min-h-[40px] -mr-2 rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
-                title={showSignatures ? 'Hide all signatures' : 'Show all signatures'}
-              >
-                {showSignatures
-                  ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
-                  : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
-                }
-              </button>
-            }>
-              <span className="flex items-center gap-1.5"><PenTool className="h-3.5 w-3.5" /> Signatures</span>
-            </SectionLabel>
-            {showSignatures && (
-              <div className="mt-4 space-y-5">
-
-                {/* Delivered By */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]">
-                      Delivered By
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowSenderSig(!showSenderSig)}
-                      className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
-                      title={showSenderSig ? 'Hide' : 'Show'}
-                    >
-                      {showSenderSig
-                        ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
-                        : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
-                      }
-                    </button>
-                  </div>
-                  {showSenderSig && (
-                    <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 space-y-3">
-                      {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
-                        <div className="w-full">
-                          <img src={customFields.signatures.sender.image_url || customFields.signatures.sender.drawn_data_url} alt="sender signature" className="h-20 w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-white object-contain" />
-                        </div>
-                      )}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0]; if (!file) return
-                            const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
-                            const { supabase } = await import('@/supabase')
-                            const processedDataURI = await processSignature(file)
-                            const processedFile = dataURItoFile(processedDataURI, `sender_sig_${Date.now()}.png`)
-                            const ext = processedFile.name.split('.').pop()
-                            const path = `sender_sig_${Date.now()}.${ext}`
-                            const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
-                            if (error) { feedback.error('Upload failed', { description: error.message }); return }
-                            const { data } = supabase.storage.from('signatures').getPublicUrl(path)
-                            updateCustomFields({ signatures: { ...customFields.signatures, sender: { ...customFields.signatures?.sender, image_url: data.publicUrl, present: true } } })
-                          }} />
-                          Upload
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
-                          Draw
-                          <input type="checkbox" className="hidden" onChange={(_e) => {
-                            void _e
-                            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
-                            const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
-                            ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
-                            let drawing = false
-                            const draw = (x: number, y: number) => { if (!drawing) return; ctx.lineTo(x, y); ctx.stroke() }
-                            const stop = () => { drawing = false; const url = canvas.toDataURL('image/png'); updateCustomFields({ signatures: { ...customFields.signatures, sender: { ...customFields.signatures?.sender, drawn_data_url: url, present: true } } }) }
-                            canvas.onmousedown = () => { drawing = true; ctx.beginPath() }
-                            canvas.onmousemove = (ev) => draw(ev.offsetX, ev.offsetY)
-                            canvas.onmouseup = stop; canvas.onmouseleave = stop
-                            const win = window.open(); if (win) { win.document.body.appendChild(canvas); win.document.title = 'Draw Signature' }
-                          }} />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setSavedSignatorySheetOpen(true)}
-                          className="flex items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition"
-                        >
-                          <UserSquare2 className="h-3 w-3" />
-                          Saved
-                        </button>
-                        {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
-                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, sender: { image_url: '', drawn_data_url: '', present: false } } })} className="ml-auto text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Collected By */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]">
-                      Collected By
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowReceiverSig(!showReceiverSig)}
-                      className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
-                      title={showReceiverSig ? 'Hide' : 'Show'}
-                    >
-                      {showReceiverSig
-                        ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
-                        : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
-                      }
-                    </button>
-                  </div>
-                  {showReceiverSig && (
-                    <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 space-y-3">
-                      {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
-                        <div className="w-full">
-                          <img src={customFields.signatures.receiver.image_url || customFields.signatures.receiver.drawn_data_url} alt="receiver signature" className="h-20 w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-white object-contain" />
-                        </div>
-                      )}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0]; if (!file) return
-                            const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
-                            const { supabase } = await import('@/supabase')
-                            const processedDataURI = await processSignature(file)
-                            const processedFile = dataURItoFile(processedDataURI, `receiver_sig_${Date.now()}.png`)
-                            const ext = processedFile.name.split('.').pop()
-                            const path = `receiver_sig_${Date.now()}.${ext}`
-                            const { error } = await supabase.storage.from('signatures').upload(path, processedFile, { upsert: true })
-                            if (error) { feedback.error('Upload failed', { description: error.message }); return }
-                            const { data } = supabase.storage.from('signatures').getPublicUrl(path)
-                            updateCustomFields({ signatures: { ...customFields.signatures, receiver: { ...customFields.signatures?.receiver, image_url: data.publicUrl, present: true } } })
-                          }} />
-                          Upload
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
-                          Draw
-                          <input type="checkbox" className="hidden" onChange={(_e) => { void _e
-                            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
-                            const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
-                            ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
-                            let drawing = false
-                            const draw = (x: number, y: number) => { if (!drawing) return; ctx.lineTo(x, y); ctx.stroke() }
-                            const stop = () => { drawing = false; const url = canvas.toDataURL('image/png'); updateCustomFields({ signatures: { ...customFields.signatures, receiver: { ...customFields.signatures?.receiver, drawn_data_url: url, present: true } } }) }
-                            canvas.onmousedown = () => { drawing = true; ctx.beginPath() }
-                            canvas.onmousemove = (ev) => draw(ev.offsetX, ev.offsetY)
-                            canvas.onmouseup = stop; canvas.onmouseleave = stop
-                            const win = window.open(); if (win) { win.document.body.appendChild(canvas); win.document.title = 'Draw Signature' }
-                          }} />
-                        </label>
-                        {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
-                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, receiver: { image_url: '', drawn_data_url: '', present: false } } })} className="ml-auto text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            )}
-          </div>
+          <SignaturesSection
+            customFields={customFields}
+            updateCustomFields={updateCustomFields}
+          />
 
           {/* Notes */}
           <CollapseCard
@@ -879,7 +1208,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                     onChange={(e) => setShowTermsInTableSettings(e.target.checked)}
                     className="h-4 w-4 rounded border-[var(--bd-border)] text-[var(--bd-primary)]"
                   />
-                  <span className="text-[13px] font-bold text-[var(--bd-text)]">Show Terms & Conditions</span>
+                  <span className="text-[13px] font-bold text-[var(--bd-text)]">Show Terms &amp; Conditions</span>
                 </div>
               </div>
               <div className="mt-6">
@@ -889,54 +1218,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
           </div>
         </>
       )}
-
-      {/* Saved Signatory Picker */}
-      <Sheet open={savedSignatorySheetOpen} onOpenChange={setSavedSignatorySheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader className="text-left">
-            <SheetTitle>Saved Signature</SheetTitle>
-            <SheetDescription>
-              Pick a saved signatory for the sender signature.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-4 space-y-2 pb-4">
-            {savedSignatories.length === 0 && (
-              <p className="text-[13px] text-[var(--bd-text-muted)] text-center py-4">No saved signatories found.</p>
-            )}
-            {savedSignatories.map((sig) => (
-              <button
-                key={sig.id}
-                type="button"
-                onClick={() => {
-                  updateCustomFields({
-                    signatures: {
-                      ...customFields.signatures,
-                      sender: { ...customFields.signatures?.sender, image_url: sig.signature_url || '', drawn_data_url: '', present: true },
-                    },
-                  })
-                  setSavedSignatorySheetOpen(false)
-                }}
-                className="w-full rounded-xl border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 text-left transition hover:bg-[var(--bd-surface-muted)]"
-              >
-                <div className="flex items-center gap-3">
-                  {sig.signature_url ? (
-                    <img src={sig.signature_url} alt={sig.name || 'Signatory'} className="h-10 w-16 rounded-lg border border-[var(--bd-border)] object-contain" />
-                  ) : (
-                    <div className="flex h-10 w-16 items-center justify-center rounded-lg border border-[var(--bd-border)] bg-[var(--bd-bg2)]">
-                      <UserSquare2 className="h-5 w-5 text-[var(--bd-text3)]" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-bold text-[var(--bd-text)]">{sig.name || 'Unnamed'}</p>
-                    <p className="text-[11px] text-[var(--bd-text-muted)]">{sig.role || 'No role'}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {/* Import Sheet */}
       {showImportSheet && (
