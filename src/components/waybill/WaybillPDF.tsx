@@ -18,6 +18,7 @@ import type { Waybill } from './waybillUtils'
 import { WaybillMinimalContent } from './blankWaybillTemplate'
 import type { MinimalContentData } from './blankWaybillTemplate'
 import { minimalStyles } from './waybillMinimalStyles'
+import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 
 interface Settings {
   company_name?: string
@@ -148,15 +149,8 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
 
   const getColumnLabel = (key: string) => {
     if (columnTitles && columnTitles[key]) return columnTitles[key]
-    const labels: Record<string, string> = {
-      description: 'Description',
-      quantity: 'Qty',
-      unit: 'Unit',
-      condition: 'Condition',
-      make: 'Make',
-      partNo: 'Part No.',
-    }
-    return labels[key] || key
+    const canonical = STANDARD_ITEM_COLUMNS.find(c => c.key === key)
+    return canonical?.label || key
   }
 
   return (

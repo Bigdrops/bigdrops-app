@@ -49,6 +49,7 @@ export const STANDARD_ITEM_COLUMNS: StandardColumn[] = [
   { key: 'unit',        label: 'Unit',        defaultVisible: true },
   { key: 'make',        label: 'Make',        defaultVisible: false },
   { key: 'partNo',      label: 'Part No',     defaultVisible: false },
+  { key: 'condition',   label: 'Condition',   defaultVisible: false },
 ]
 
 // ── Contract predicates ──────────────────────────────────────────────

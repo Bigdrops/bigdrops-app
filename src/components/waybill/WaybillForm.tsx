@@ -41,6 +41,7 @@ import {
   type WaybillType,
   type TransportMode,
 } from './waybillUtils'
+import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import {
   CollapseCard,
   CompactSelectField,
@@ -96,17 +97,12 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
     const stored = initialData?.customFields?.columnVisibility
     if (stored && typeof stored === 'object') return stored
-    return { description: true, quantity: true, unit: true, make: false, partNo: false, condition: false }
+    return Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
   })
-  const [columnTitles, setColumnTitles] = useState<Record<string, string>>({
-    description: 'Description',
-    quantity: 'Qty',
-    unit: 'Unit',
-    make: 'Make',
-    partNo: 'Part No.',
-    condition: 'Condition',
-  })
-  const [columnOrder, setColumnOrder] = useState<string[]>(['description', 'quantity', 'unit', 'make', 'partNo', 'condition'])
+  const [columnTitles, setColumnTitles] = useState<Record<string, string>>(
+    Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
+  )
+  const [columnOrder, setColumnOrder] = useState<string[]>(STANDARD_ITEM_COLUMNS.map(c => c.key))
 
   const [showSignatures, setShowSignatures] = useState(true)
   const [showSenderSig, setShowSenderSig] = useState(true)
@@ -250,14 +246,12 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     return false
   }
 
-  const DEFAULT_WAYBILL_COLUMNS: ColumnConfig[] = [
-    { key: 'description', label: 'Description', type: 'text', visible: true },
-    { key: 'quantity', label: 'Qty', type: 'text', visible: true },
-    { key: 'unit', label: 'Unit', type: 'text', visible: true },
-    { key: 'make', label: 'Make', type: 'text', visible: false },
-    { key: 'partNo', label: 'Part No.', type: 'text', visible: false },
-    { key: 'condition', label: 'Condition', type: 'text', visible: false },
-  ]
+  const DEFAULT_WAYBILL_COLUMNS: ColumnConfig[] = STANDARD_ITEM_COLUMNS.map(c => ({
+    key: c.key,
+    label: c.label,
+    type: 'text' as const,
+    visible: c.defaultVisible,
+  }))
 
   const columns: ColumnConfig[] = columnOrder
     .filter(key => !key.startsWith('custom_'))
@@ -313,16 +307,9 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     onAddCustom: addCustomColumn,
     onRemoveCustom: removeCustomColumn,
     onReset: () => {
-      setColumnTitles({
-        description: 'Description',
-        quantity: 'Qty',
-        unit: 'Unit',
-        make: 'Make',
-        partNo: 'Part No.',
-        condition: 'Condition',
-      })
-      setColumnVisibility({ description: true, quantity: true, unit: true, make: false, partNo: false, condition: false })
-      setColumnOrder(['description', 'quantity', 'unit', 'make', 'partNo', 'condition'])
+      setColumnTitles(Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label])))
+      setColumnVisibility(Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible])))
+      setColumnOrder(STANDARD_ITEM_COLUMNS.map(c => c.key))
       setState((prev) => ({
         ...prev,
         customColumns: [],

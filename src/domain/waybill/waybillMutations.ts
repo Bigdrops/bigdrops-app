@@ -3,6 +3,7 @@ import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextW
 import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -29,6 +30,11 @@ export async function saveWaybill(params: {
   }
   if (errors.length > 0) {
     throw new Error(errors.join('; '))
+  }
+
+  // Runtime contract enforcement: every item must conform to canonical shape
+  for (const item of items) {
+    assertNoExtensionFieldsOutsideCustomData(item, 'saveWaybill:pre-persist')
   }
 
   let waybillNumber = waybill.waybill_number || ''

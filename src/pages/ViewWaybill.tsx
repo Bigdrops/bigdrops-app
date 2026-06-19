@@ -26,6 +26,7 @@ import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
+import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -108,7 +109,7 @@ export default function ViewWaybill() {
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} columnVisibility={customFields.columnVisibility || { description: true, quantity: true, unit: true, condition: true }} columnTitles={{ description: 'Description', quantity: 'Qty', unit: 'Unit', condition: 'Condition', make: 'Make', partNo: 'Part No.' }} />,
+        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} columnVisibility={customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))} columnTitles={Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {

@@ -1,5 +1,6 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
+import { assertCustomDataExists, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
 export type WaybillType = 'internal' | 'external'
 
@@ -409,7 +410,7 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
     : {}
 
     // Preserve ALL existing custom_data keys (custom_data is the sole extension mechanism)
-    const custom_data: Record<string, string | number | null> = {}
+    const custom_data: WaybillItemCustomData = {}
     for (const [key, value] of Object.entries(baseCustomData)) {
       custom_data[key] = normalizePrimitiveValue(value)
     }
@@ -420,7 +421,7 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
       }
     }
 
-  return {
+  const result: WaybillItem = {
     description: String(record.description || ''),
     quantity: toNumber(record.qty ?? record.quantity),
     unit: String(record.unit || ''),
@@ -428,6 +429,11 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
     row_type: 'standard' as const,
     custom_data,
   }
+
+  // Runtime contract enforcement: ensure no extension fields leaked onto item root
+  assertNoExtensionFieldsOutsideCustomData(result, 'normalizeWaybillItem')
+
+  return result
 }
 
 export function normalizeWaybillItems(items: unknown, customColumns: WaybillCustomColumn[] = []): WaybillItem[] {
@@ -636,10 +642,10 @@ function toNullableBoolean(value: unknown): boolean | null | undefined {
   return undefined
 }
 
-function normalizePrimitiveValue(value: unknown): string | number | null {
+function normalizePrimitiveValue(value: unknown): string | number | boolean | null {
   if (value === null || value === undefined || value === '') return ''
   if (typeof value === 'number') return Number.isFinite(value) ? value : ''
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'boolean') return value
   return String(value)
 }
 

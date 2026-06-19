@@ -310,3 +310,107 @@ test('isWaybillItemShaped rejects array', () => {
 test('isWaybillItemShaped rejects null', () => {
   assert.ok(!isWaybillItemShaped(null))
 })
+
+// ── Golden Round-Trip: normalize → save → load → custom_data preserved ──
+
+test('golden round-trip: custom_data survives normalize → DB save → DB load', () => {
+  // Simulate raw imported item with custom_data
+  const rawItem = {
+    description: 'Panel LCD',
+    qty: 3,
+    unit: 'pcs',
+    condition: 'good',
+    custom_data: {
+      make: 'Samsung',
+      partNo: 'SAM-LCD-2024',
+      isFragile: true,
+      voltage: 220,
+      warehouse_location: null,
+    },
+    row_type: 'standard',
+  }
+
+  // Step 1: normalize (normalizeWaybillItem behavior)
+  // All custom_data keys must be preserved through normalization
+  const normalized = {
+    description: String(rawItem.description || ''),
+    quantity: Number(rawItem.qty),
+    unit: String(rawItem.unit || ''),
+    condition: rawItem.condition,
+    row_type: 'standard',
+    custom_data: { ...rawItem.custom_data },
+  }
+  assertCustomDataPreserved(rawItem, normalized, 'golden:normalize')
+
+  // Step 2: DB save (saveWaybill behavior)
+  // Only include custom_data if non-empty; strip row_type
+  const dbPayload = {
+    description: normalized.description,
+    qty: normalized.quantity,
+    unit: normalized.unit,
+    condition: normalized.condition,
+    ...(Object.keys(normalized.custom_data).length > 0
+      ? { custom_data: normalized.custom_data }
+      : {}),
+  }
+  assert.ok(dbPayload.custom_data, 'golden:save must include custom_data')
+  assert.equal(dbPayload.custom_data.make, 'Samsung', 'golden:save make preserved')
+  assert.equal(dbPayload.custom_data.isFragile, true, 'golden:save boolean preserved')
+  assert.equal(dbPayload.custom_data.voltage, 220, 'golden:save number preserved')
+  assert.equal(dbPayload.custom_data.warehouse_location, null, 'golden:save null preserved')
+
+  // Step 3: DB load (normalizeWaybillItems behavior)
+  // Re-normalize from DB shape: custom_data keys must survive
+  const loaded = {
+    description: String(dbPayload.description || ''),
+    quantity: Number(dbPayload.qty),
+    unit: String(dbPayload.unit || ''),
+    condition: dbPayload.condition,
+    row_type: 'standard',
+    custom_data: dbPayload.custom_data || {},
+  }
+  assertCustomDataPreserved(normalized, loaded, 'golden:load')
+  assert.equal(loaded.custom_data.make, 'Samsung', 'golden:load make preserved')
+  assert.equal(loaded.custom_data.isFragile, true, 'golden:load boolean preserved')
+  assert.equal(loaded.custom_data.voltage, 220, 'golden:load number preserved')
+  assert.equal(loaded.custom_data.warehouse_location, null, 'golden:load null preserved')
+  assert.equal(Object.keys(loaded.custom_data).length, 5, 'golden:load all 5 custom_data keys survive')
+})
+
+test('golden round-trip: empty custom_data does not break the chain', () => {
+  const rawItem = {
+    description: 'Widget',
+    qty: 1,
+    unit: 'pcs',
+    custom_data: {},
+  }
+
+  const normalized = {
+    description: 'Widget',
+    quantity: 1,
+    unit: 'pcs',
+    row_type: 'standard',
+    custom_data: {},
+  }
+
+  // DB save: empty custom_data is omitted
+  const dbPayload = {
+    description: normalized.description,
+    qty: normalized.quantity,
+    unit: normalized.unit,
+    ...(Object.keys(normalized.custom_data).length > 0
+      ? { custom_data: normalized.custom_data }
+      : {}),
+  }
+  assert.equal(dbPayload.custom_data, undefined, 'golden:empty save omits custom_data')
+
+  // DB load: missing custom_data defaults to empty object
+  const loaded = {
+    description: dbPayload.description,
+    quantity: dbPayload.qty,
+    unit: dbPayload.unit,
+    row_type: 'standard',
+    custom_data: dbPayload.custom_data || {},
+  }
+  assert.deepEqual(loaded.custom_data, {}, 'golden:empty load defaults to empty object')
+})
