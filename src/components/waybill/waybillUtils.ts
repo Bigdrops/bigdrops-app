@@ -21,7 +21,7 @@ export interface WaybillCustomColumn {
 }
 
 export interface WaybillItemCustomData {
-  [key: string]: string | number | null | undefined
+  [key: string]: string | number | boolean | null
 }
 
 export interface WaybillItem {
