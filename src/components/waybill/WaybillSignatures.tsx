@@ -101,13 +101,13 @@ function PickSignatorySheet({
 
         <div className="mt-4 px-1">
           <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--bd-text-muted)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--bd-text-muted)]" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or role…"
-               className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] pl-9 pr-3 py-2 text-sm outline-none focus:border-[var(--bd-indigo-border)] focus:ring-2 focus:ring-[var(--bd-indigo-bg)]"
+              className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] pl-9 pr-3 py-2 text-sm outline-none focus:border-[var(--bd-indigo-border)] focus:ring-2 focus:ring-[var(--bd-indigo-bg)]"
             />
           </div>
         </div>
@@ -136,7 +136,7 @@ function PickSignatorySheet({
                   <img
                     src={sig.signature_url}
                     alt={sig.name ?? 'Signatory'}
-                    className="h-10 w-16 rounded-[var(--bd-radius-md)] border border-border object-contain bg-[var(--bd-surface)]"
+                    className="h-10 w-16 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] object-contain bg-[var(--bd-surface)]"
                   />
                 ) : (
                   <div className="flex h-10 w-16 items-center justify-center rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-bg2)]">
@@ -158,7 +158,7 @@ function PickSignatorySheet({
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  Inline draw pad (mouse + touch)                                           */
+/*  Inline draw pad — Pointer Events (mouse, touch, pen unified)              */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 function DrawPad({
@@ -229,36 +229,44 @@ function DrawPad({
     ctx.fillRect(0, 0, r.width, r.height)
   }
 
+  // Pointer Events unify mouse + touch + pen into a single, reliable gesture
+  // model. setPointerCapture keeps delivering move/up events to this canvas
+  // even if the finger drifts slightly outside its bounds mid-stroke.
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    canvasRef.current?.setPointerCapture(e.pointerId)
+    const p = pos(e.clientX, e.clientY)
+    start(p.x, p.y)
+  }
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return
+    e.preventDefault()
+    const p = pos(e.clientX, e.clientY)
+    move(p.x, p.y)
+  }
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    try {
+      canvasRef.current?.releasePointerCapture(e.pointerId)
+    } catch {
+      // pointer may already be released — safe to ignore
+    }
+    stop()
+  }
+
   return (
     <div className="rounded-[var(--bd-radius-md)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 space-y-2">
       <canvas
         ref={canvasRef}
-        className="block w-full h-[140px] rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] touch-none"
-        onMouseDown={(e) => start(e.nativeEvent.offsetX, e.nativeEvent.offsetY)}
-        onMouseMove={(e) => move(e.nativeEvent.offsetX, e.nativeEvent.offsetY)}
-        onMouseUp={stop}
-        onMouseLeave={stop}
-        onTouchStart={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          const t = e.touches[0]
-          const p = pos(t.clientX, t.clientY)
-          start(p.x, p.y)
-        }}
-        onTouchMove={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          const t = e.touches[0]
-          const p = pos(t.clientX, t.clientY)
-          move(p.x, p.y)
-        }}
-        onTouchEnd={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          stop()
-        }}
+        className="block w-full h-[140px] rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] touch-none select-none"
+        style={{ touchAction: 'none' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
       />
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-between text-[11px] text-[var(--bd-text-muted)]">
         <span>Draw with mouse or finger</span>
         <div className="flex gap-1.5">
           <button type="button" onClick={reset} className="h-7 px-2.5 rounded-[var(--bd-radius-md)] text-xs font-medium text-[var(--bd-text-muted)] hover:bg-[var(--bd-bg2)]">
