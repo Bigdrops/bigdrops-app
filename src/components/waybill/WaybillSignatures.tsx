@@ -240,15 +240,23 @@ function DrawPad({
         onMouseLeave={stop}
         onTouchStart={(e) => {
           e.preventDefault()
+          e.stopPropagation()
           const t = e.touches[0]
-          start(t.clientX, t.clientY)
+          const p = pos(t.clientX, t.clientY)
+          start(p.x, p.y)
         }}
         onTouchMove={(e) => {
           e.preventDefault()
+          e.stopPropagation()
           const t = e.touches[0]
-          move(t.clientX, t.clientY)
+          const p = pos(t.clientX, t.clientY)
+          move(p.x, p.y)
         }}
-        onTouchEnd={stop}
+        onTouchEnd={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          stop()
+        }}
       />
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <span>Draw with mouse or finger</span>
@@ -367,7 +375,7 @@ function SignatureCard({
                 alt={`${title} signature`}
                 className="h-24 w-full object-contain rounded-[var(--bd-radius-md)]"
               />
-              <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bd-text)]/70 text-white text-[10px] font-medium">
+              <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bd-text)]/70 text-[var(--bd-button-primary-text)] text-[10px] font-medium">
                 <span className="w-1 h-1 rounded-full bg-[var(--bd-emerald)]" />
                 Stored
               </span>

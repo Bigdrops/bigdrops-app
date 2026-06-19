@@ -75,6 +75,31 @@ Canvas programmatic colors (`#ffffff`, `#0F172A`) preserved as-is — not replac
 - **`bun run lint`** — only pre-existing errors in other files (7 errors in WaybillForm.tsx and 2 in WaybillSignatures.tsx are all pre-existing patterns moved from original code)
 - **File size:** WaybillForm.tsx reduced from 1235 to 725 lines (~41% reduction)
 
+## Post-Extraction Fixes (2026-06-19)
+
+### Fix 1: DrawPad canvas touch handlers — coordinate conversion & preventDefault
+
+**Problem:** Touch handlers passed raw `clientX/clientY` (viewport-relative) to `start()`/`move()`, which expects canvas-relative coordinates. This caused touch drawing to offset from the finger position. Also, `onTouchEnd` omitted `e.preventDefault()`.
+
+**Changes at WaybillSignatures.tsx lines 245–254:**
+- `onTouchStart` — already had `e.preventDefault()`. Added `e.stopPropagation()` and coordinate conversion via the existing `pos()` helper.
+- `onTouchMove` — already had `e.preventDefault()`. Added `e.stopPropagation()` and coordinate conversion via `pos()`.
+- `onTouchEnd` — added `e.preventDefault()` and `e.stopPropagation()` (was just calling `stop()` directly, which allowed default browser touch behavior and could trigger scroll/zoom on long press).
+
+### Fix 2: `text-white` on "Stored" badge → `text-[var(--bd-button-primary-text)]`
+
+**Problem:** The "Stored" badge overlaid on signature images used hardcoded `text-white` (line 378).
+**Fix:** Replaced with `text-[var(--bd-button-primary-text)]`, the token already used for primary button text.
+
+### Note: "Signatures", "Pick", "Shown" buttons already tokenized
+
+These three buttons already use `--bd-*` tokens (e.g., `border-[var(--bd-indigo-border)]`, `bg-[var(--bd-indigo-bg)]`, `text-[var(--bd-indigo)]`) — no changes needed.
+
+## Verification
+
+- **`bun run lint`** — 0 new errors (1 pre-existing `react-hooks/set-state-in-effect` at line 70 is inherited from original code)
+- All token changes reuse only `var(--bd-*)` variables already defined in `formTheme.css` and already used elsewhere in the file.
+
 ## Rollback
 
 If needed, revert WaybillForm.tsx to its previous state and delete WaybillSignatures.tsx using git:
