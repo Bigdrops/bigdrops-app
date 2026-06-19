@@ -1,6 +1,6 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
-import { assertCustomDataExists, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
+import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
 export type WaybillType = 'internal' | 'external'
 
@@ -405,9 +405,19 @@ export function makeWaybillCustomColumn(label: string, key?: string): WaybillCus
 
 export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustomColumn[] = []): WaybillItem {
   const record = item && typeof item === 'object' && !Array.isArray(item) ? (item as Record<string, unknown>) : {}
-  const baseCustomData = record.custom_data && typeof record.custom_data === 'object' && !Array.isArray(record.custom_data)
-    ? (record.custom_data as WaybillItemCustomData)
+  const baseCustomData: WaybillItemCustomData = record.custom_data && typeof record.custom_data === 'object' && !Array.isArray(record.custom_data)
+    ? { ...(record.custom_data as WaybillItemCustomData) }
     : {}
+
+  // Auto-repair: move legacy root-level extension fields into custom_data
+  // Legacy waybills (pre-Canonical Contract v2) may have keys like "make", "partNo"
+  // sitting at item root instead of inside custom_data. This migrates them silently.
+  for (const key of Object.keys(record)) {
+    if (WAYBILL_ITEM_KEYS.has(key as keyof WaybillItem)) continue
+    if (key === 'qty') continue // qty is a known alias for quantity, not an extension field
+    if (key in baseCustomData) continue // already in custom_data, don't overwrite
+    baseCustomData[key] = normalizePrimitiveValue(record[key])
+  }
 
     // Preserve ALL existing custom_data keys (custom_data is the sole extension mechanism)
     const custom_data: WaybillItemCustomData = {}

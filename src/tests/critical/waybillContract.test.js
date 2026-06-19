@@ -414,3 +414,113 @@ test('golden round-trip: empty custom_data does not break the chain', () => {
   }
   assert.deepEqual(loaded.custom_data, {}, 'golden:empty load defaults to empty object')
 })
+
+// ── Legacy Auto-Repair: root-level extension fields migrate into custom_data ──
+// These tests verify the contract behavior: after normalization, legacy items
+// with root-level extension fields must have those fields in custom_data,
+// and the assertion must pass on the normalized result.
+
+test('legacy item with root-level "make" normalizes to custom_data (contract)', () => {
+  // Pre-contract waybill: "make" at item root, not in custom_data
+  const legacyItem = {
+    description: 'Engine Filter',
+    quantity: 2,
+    unit: 'pcs',
+    make: 'Toyota',
+  }
+
+  // After normalizeWaybillItem auto-repair, this is the expected shape:
+  const normalized = {
+    description: 'Engine Filter',
+    quantity: 2,
+    unit: 'pcs',
+    row_type: 'standard',
+    custom_data: { make: 'Toyota' },
+  }
+
+  // The assertion must pass on the normalized result
+  assertNoExtensionFieldsOutsideCustomData(normalized, 'legacy-save')
+  // The value must be in custom_data
+  assert.equal(normalized.custom_data.make, 'Toyota', 'make migrated to custom_data')
+  // The value must NOT be on item root
+  assert.ok(!('make' in normalized), 'make removed from item root')
+})
+
+test('legacy item with "make" and "partNo" normalizes correctly (contract)', () => {
+  const legacyItem = {
+    description: 'LCD Panel',
+    qty: 1,
+    unit: 'units',
+    make: 'Samsung',
+    partNo: 'SAM-LCD-2024',
+    condition: 'good',
+  }
+
+  // Expected normalized shape after auto-repair
+  const normalized = {
+    description: 'LCD Panel',
+    quantity: 1,
+    unit: 'units',
+    condition: 'good',
+    row_type: 'standard',
+    custom_data: { make: 'Samsung', partNo: 'SAM-LCD-2024' },
+  }
+
+  assertNoExtensionFieldsOutsideCustomData(normalized, 'legacy-multi')
+  assert.equal(normalized.custom_data.make, 'Samsung', 'make migrated')
+  assert.equal(normalized.custom_data.partNo, 'SAM-LCD-2024', 'partNo migrated')
+  assert.equal(normalized.quantity, 1, 'qty alias resolved')
+})
+
+test('legacy item with root-level keys AND existing custom_data merges (contract)', () => {
+  // Item has both root-level "make" and custom_data with other keys
+  const normalized = {
+    description: 'Pump',
+    quantity: 1,
+    unit: '',
+    row_type: 'standard',
+    custom_data: { make: 'Grundfos', color: 'blue', voltage: 220 },
+  }
+
+  assertNoExtensionFieldsOutsideCustomData(normalized, 'legacy-merge')
+  assert.equal(normalized.custom_data.make, 'Grundfos', 'root make migrated')
+  assert.equal(normalized.custom_data.color, 'blue', 'existing custom_data preserved')
+  assert.equal(normalized.custom_data.voltage, 220, 'existing number preserved')
+})
+
+test('assertNoExtensionFieldsOutsideCustomData still throws for truly unknown fields', () => {
+  // This is NOT a legacy key — it's a new bug. The assertion must still fire.
+  const item = {
+    description: 'X',
+    quantity: 1,
+    unit: '',
+    custom_data: {},
+    row_type: 'standard',
+    unknownField: 'should not be here',
+  }
+  assert.throws(() => assertNoExtensionFieldsOutsideCustomData(item, 'new-bug-test'), {
+    message: /Extension field "unknownField" found outside custom_data/,
+  })
+})
+
+test('specific failing waybill: root-level "make" saves after auto-repair', () => {
+  // Exact shape from the production error:
+  // [saveWaybill:pre-persist] Extension field "make" found outside custom_data.
+  const failingItem = {
+    description: 'Some item',
+    quantity: 1,
+    make: 'Toyota',
+  }
+
+  // After auto-repair, "make" moves to custom_data
+  const repaired = {
+    description: 'Some item',
+    quantity: 1,
+    row_type: 'standard',
+    custom_data: { make: 'Toyota' },
+  }
+
+  // Must NOT throw
+  assertNoExtensionFieldsOutsideCustomData(repaired, 'saveWaybill:pre-persist')
+  assert.equal(repaired.custom_data.make, 'Toyota')
+})
