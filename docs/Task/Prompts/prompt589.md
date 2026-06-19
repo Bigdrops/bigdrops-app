@@ -1,109 +1,120 @@
 You are working on the BIGDROPS business platform.
-Runtime: Bun ONLY. Never use npm or yarn.
 
 ==================================================
-MANDATORY BOOTSTRAP
-==================================================
-Before doing anything:
-1. Read AGENTS.md
-2. Read docs/PROJECTSKIILINDEX.md
-3. Load all required skills from docs/ index
-
-If ANY skill fails to load:
-- Re-read docs/PROJECTSKIILINDEX.md
-- Locate the skill via filesystem path
-- Attempt direct SKILL.md read
-- If still failing → STOP IMMEDIATELY and mark task FAILED
-
-==================================================
-TASK: Waybill PDF Template Audit (READ ONLY)
+TASK: Implement Waybill Canonical Contract v2 Enforcement
 ==================================================
 
-REFERENCE:
-- docs/PRD/pdf-rendering-roadmap.md → Phase 3B
+The contract already exists and is authoritative.
+
+Read:
+- docs/contracts/waybill-canonical-contract-v2.md
+- AGENTS.md
+- docs/PROJECTSKIILINDEX.md
+
+Goal:
+Create enforcement mechanisms that prevent future violations of the contract.
 
 ==================================================
-REQUIRED FILE DISCOVERY
+REQUIRED OUTCOME
 ==================================================
 
-Locate and inspect ALL Waybill-related PDF files in:
-- src/components/waybill/
+Implement enforcement, not feature changes.
 
-Locate:
-- Internal Waybill PDF template
-- External Waybill PDF template
-- Any shared/base PDF renderer used by Waybill
-- blankWaybillTemplate.tsx
-- New Waybill modal (type selector)
+The enforcement layer must verify:
 
-If files are split or dynamically resolved, trace the resolver logic.
-
-==================================================
-ANALYSIS TASKS (READ ONLY — NO CODE CHANGES)
-==================================================
-
-1. PDF TEMPLATE ARCHITECTURE
-   - List exact file paths for all Waybill PDF templates
-   - Confirm whether Internal/External share a template or are separate
-   - Identify rendering pipeline (direct JSX vs PdfRenderer abstraction)
-
-2. TABLE STRUCTURE ANALYSIS
-   - Extract item row mapping logic
-   - Identify fields used for:
-     - description
-     - quantity
-     - unit
-     - condition
-   - Detect any fallback values (especially hardcoded 0)
-
-3. COLUMN LAYOUT
-   - Extract column width definitions (percentages or styles)
-   - Identify layout collapse issues (if any)
-
-4. SIGNATURE + FOOTER
-   - Extract signature block code
-   - Identify alignment, sizing, or flex issues
-
-5. QUANTITY BUG ROOT CAUSE
-   - Trace why quantity resolves to 0
-   - Identify mapping mismatch between DB → domain → PDF
-
-6. BLANK WAYBILL TEMPLATE
-   - Fully analyze blankWaybillTemplate.tsx
-   - Determine:
-     - Whether number is passed via props or hardcoded
-     - Why rendering fails (if applicable)
-     - Whether Internal/External both supported correctly
-
-7. TYPE SELECTOR MODAL
-   - Identify file rendering "New Waybill" modal
-   - Extract:
-     - background styling (color/token/class)
-     - typography system (font mismatch vs app system)
-     - component system used (shadcn or custom)
+1. custom_data is always present on every WaybillItem
+2. No item-level extension fields exist outside custom_data
+3. Normalization never drops custom_data keys
+4. Visibility never alters persistence data
+5. Form and PDF use identical visibility behavior
+6. Import preserves unknown item fields
+7. Templates cannot alter item schema
 
 ==================================================
-OUTPUT REQUIREMENTS
+IMPLEMENTATION
 ==================================================
 
-Generate a report with:
+Create:
 
-- File map (all relevant paths)
-- Key code excerpts (only critical sections)
-- Root cause analysis per issue
-- Dependency graph (if shared renderer exists)
-- Risk notes for fixing Phase 3B
+src/domain/waybill/contracts/
 
-Save to:
-Task/reports/waybill-pdf-template-audit.md
+Files:
+
+- waybillContract.ts
+- waybillContractAssertions.ts
+
+Add reusable assertions such as:
+
+- assertCustomDataExists()
+- assertCustomDataPreserved()
+- assertNoExtensionFieldsOutsideCustomData()
+- assertVisibilityDoesNotMutateData()
+
+Integrate only where appropriate.
+
+Do NOT rewrite existing features.
 
 ==================================================
-CONSTRAINTS
+TESTS
 ==================================================
 
-- READ ONLY MODE
-- NO CODE MODIFICATIONS
-- NO REFACTORING
-- NO FIXES
-- NO ASSUMPTIONS (if missing info → explicitly state UNKNOWN)
-- Be precise, cite file paths and exact code locations where possible
+Create contract tests covering:
+
+A. Import Preservation
+
+Input:
+custom_data.make
+custom_data.partNo
+custom_data.serial
+
+Expectation:
+all keys survive import → normalize → save → load
+
+B. Visibility Isolation
+
+Toggle column visibility on/off
+
+Expectation:
+stored item data remains unchanged
+
+C. PDF/Form Consistency
+
+Any column visible in Form must be visible in PDF.
+Any column hidden in Form must be hidden in PDF.
+
+D. Unknown Field Preservation
+
+Input:
+custom_data.storageLocation
+
+Expectation:
+field survives entire round trip.
+
+==================================================
+REPORT
+==================================================
+
+Save report to:
+
+docs/Task/reports/waybill-canonical-contract-v2-enforcement.md
+
+Include:
+
+- violations discovered
+- enforcement added
+- tests added
+- files modified
+
+==================================================
+DO NOT
+==================================================
+
+- Do not redesign UI
+- Do not change numbering
+- Do not change templates
+- Do not modify PDF layout
+- Do not alter import behavior except where required for enforcement
+- Do not introduce new business logic
+
+Success means:
+Future developers cannot accidentally reintroduce custom_data loss, visibility drift, or import field loss without failing enforcement.
