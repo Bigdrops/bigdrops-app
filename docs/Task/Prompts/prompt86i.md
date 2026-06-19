@@ -1,199 +1,277 @@
-
-
-```
 You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+
+Stack:
+- React 19
+- Vite 7
+- TypeScript 5.9
+- Tailwind CSS 3.4
+- Supabase
+- Vercel
+- Runtime: Bun
+
+Never use npm or yarn.
 
 ==================================================
 SKILL LOADING PROTOCOL (MANDATORY)
 ==================================================
+
 1. Read `docs/PROJECTSKIILINDEX.md`
-2. Load: `Karpathy` (coding discipline)
-3. Fallback to direct file read on failure. Stop if unreadable.
-4. Read `AGENTS.md` before editing.
+2. Load:
+   - Karpathy
+   - react-pdf
+   - pdf-rendering-correctness
+3. Fallback to direct file read if skill loading fails.
+4. Stop if unreadable.
+5. Read `AGENTS.md` before editing.
 
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save work report to `docs/Task/reports/pdf-roadmap-update.md`
+
+Save report to:
+
+docs/Task/reports/waybill-canonical-contract-v2-runtime-enforcement.md
 
 ==================================================
-TASK: Update PDF Rendering Roadmap with Blank Document Integration
+TASK
 ==================================================
 
-READ FIRST (mandatory, before editing):
-- `docs/PRD/pdf-rendering-roadmap.md` (read fully)
-- `docs/PRD/PREFIX_ENGINE_SETTINGS.md` (Sections 7, 9, 10 — blank logs, implementation order)
-- `docs/EXECUTION/prefix-engine.md` (Steps 12-13 — blank waybill/CSR wiring)
-- `docs/STANDARD/prefix-engine-settings-standard.md` (Pillar 4 — blank template logging)
-- `src/lib/withUniqueRetry.ts` (collision handler — blank numbers use this too)
-- `src/components/waybill/blankWaybillTemplate.tsx` (existing blank PDF template)
+Implement the final runtime enforcement layer for:
+
+docs/contracts/waybill-canonical-contract-v2.md
+
+The contract, assertions, and tests already exist.
+
+This task is NOT a feature task.
+
+This task is to wire the contract into the actual Waybill runtime boundaries so future violations fail immediately instead of relying only on tests.
 
 ==================================================
-CONTEXT — What changed since this roadmap was created
+READ FIRST (MANDATORY)
 ==================================================
 
-The Prefix Engine is now complete. This means:
-1. `blank_waybill_logs` table already exists and is wired to org prefix via `resolvePrefix()`.
-2. `blank_csr_logs` table was created (Step 2 migration) and is wired to org prefix (Step 13).
-3. Blank waybill download in `NewWaybill.tsx` already generates numbers with the org prefix and inserts into `blank_waybill_logs`.
-4. Blank CSR download in `NewCSR.tsx` now generates numbers with the org prefix and inserts into `blank_csr_logs` — but the actual PDF template does NOT exist yet.
-5. The `withUniqueRetry` collision handler protects blank number generation the same way it protects regular document saves.
-6. Both blank log tables have reconciliation columns (`linked_waybill_id` / `linked_csr_id`, `reconciled_at`) ready for when a blank is later linked to a real document.
+- docs/contracts/waybill-canonical-contract-v2.md
+- src/domain/waybill/contracts/waybillContract.ts
+- src/components/waybill/waybillUtils.ts
+- src/domain/waybill/waybillMutations.ts
+- src/components/waybill/WaybillPDF.tsx
+- src/components/waybill/WaybillForm.tsx
+- src/tests/critical/waybillContract.test.js
+- AGENTS.md
 
 ==================================================
-CHANGE 1 — Add Phase 4: Blank Template PDF Rendering
+OBJECTIVE 1
+Runtime Enforcement Integration
 ==================================================
 
-Insert a new phase AFTER Phase 3. Renumber old Phase 4+ to Phase 5+.
+The assertion functions already exist.
 
-### Phase 4 — Blank Template PDF Rendering
+Wire them into the actual runtime boundaries.
 
-Content to add:
+Required integration points:
 
-```markdown
-## Phase 4 — Blank Template PDF Rendering
+--------------------------------------------------
+A. Normalization Boundary
+--------------------------------------------------
 
-**Goal:** Build or update blank/manual PDF templates for Waybill and CSR so downloaded blanks use the correct org prefix from the Prefix Engine.
+File:
+- src/components/waybill/waybillUtils.ts
 
-### Current State (Post-Prefix-Engine)
+After item normalization:
 
-| Template | Number Assignment | PDF Template | Logging |
-|----------|------------------|--------------|---------|
-| Blank External Waybill | ✅ Wired to org prefix via `resolvePrefix('waybill', ...)` | ✅ Exists in `src/components/waybill/blankWaybillTemplate.tsx` | ✅ Inserts into `blank_waybill_logs` |
-| Blank Internal Waybill | ✅ Wired to org prefix | ✅ Exists (same file, Internal variant) | ✅ Inserts into `blank_waybill_logs` |
-| Blank CSR | ✅ Wired to org prefix via `resolvePrefix('csr', ...)` | ❌ Does NOT exist — needs to be built | ✅ Inserts into `blank_csr_logs` |
+Use:
+- assertCustomDataExists(...)
+- assertCustomDataPreserved(...)
 
-### Number Format Reference
+Goal:
 
-Blank document numbers follow these formats (from `docs/PRD/PREFIX_ENGINE_SETTINGS.md` Section 4):
+Normalization must fail loudly if:
 
-| Document | Blank Format |
-|----------|-------------|
-| Waybill (External) | `[PREFIX]-ME-[SERIAL]` |
-| Waybill (Internal) | `[PREFIX]-MI-[SERIAL]` |
-| CSR | `[PREFIX]-M-[SERIAL]` |
+- custom_data disappears
+- custom_data keys are dropped
+- custom_data becomes invalid
 
-Serial is always 6-digit zero-padded: `000001`.
+--------------------------------------------------
+B. Import Boundary
+--------------------------------------------------
 
-### Log Table Reference
+Locate import application flow.
 
-Both tables already exist in production with reconciliation support:
+Examples:
+- handleApplyImport
+- import adapters
+- normalization pipeline
 
-- `blank_waybill_logs` — columns: `id`, `assigned_waybill_number`, `type`, `downloaded_by`, `downloaded_at`, `linked_waybill_id`, `reconciled_at`
-- `blank_csr_logs` — columns: `id`, `assigned_csr_number`, `downloaded_by`, `downloaded_at`, `linked_csr_id`, `reconciled_at`
+After import conversion:
 
-The `reconciled_at` and `linked_*_id` columns are set when a blank is later claimed by a real document. This reconciliation logic is NOT yet built — it belongs in this phase.
+Use:
+- assertUnknownFieldsPreserved(...)
+- assertCustomDataPreserved(...)
 
-### Tasks
+Goal:
 
-#### 4A — Verify Existing Blank Waybill Templates Use Org Prefix
+Unknown imported fields must be verified as preserved.
 
-- [ ] Read `src/components/waybill/blankWaybillTemplate.tsx`
-- [ ] Confirm the rendered PDF displays the correct org prefix (not a hardcoded `AWB-`)
-- [ ] Confirm External template shows `[PREFIX]-ME-[SERIAL]` format
-- [ ] Confirm Internal template shows `[PREFIX]-MI-[SERIAL]` format
-- [ ] If hardcoded: update to use the prefix passed from `NewWaybill.tsx`
+--------------------------------------------------
+C. Persistence Boundary
+--------------------------------------------------
 
-#### 4B — Build Blank CSR PDF Template
+File:
+- src/domain/waybill/waybillMutations.ts
 
-- [ ] Create a blank CSR PDF template (mirroring the waybill pattern in `blankWaybillTemplate.tsx`)
-- [ ] The template must render:
-  - Company branding (logo, name, tagline from settings)
-  - The assigned blank CSR number in `[PREFIX]-M-[SERIAL]` format
-  - Empty fields for: customer name, report type, description, amount due, amount paid, product serial number
-  - A status placeholder ("pending" / "resolved")
-  - Signature line for receiver
-- [ ] Wire the download button in `NewCSR.tsx` → `handleDownloadBlankCsr` to generate and download the PDF
-- [ ] Use `@react-pdf/renderer` (already in the project — same as waybill blanks)
+Before DB save:
 
-#### 4C — Build Reconciliation Logic
+Use:
+- assertNoExtensionFieldsOutsideCustomData(...)
+- assertCustomDataExists(...)
 
-- [ ] When a real Waybill is saved with a `waybill_number` that matches a `blank_waybill_logs.assigned_waybill_number`, update the log row: set `linked_waybill_id` and `reconciled_at`
-- [ ] Same for CSR: when a real CSR is saved, check `blank_csr_logs` and reconcile if matched
-- [ ] Reconciliation is a background operation — no user feedback needed
+Goal:
 
-### Completion Signal
+Reject invalid item shapes before persistence.
 
-- Blank External and Internal Waybill PDFs display the org prefix from settings
-- Blank CSR PDF downloads and displays the org prefix
-- Blank log tables reconcile correctly when a blank number is claimed by a real document
-```
+No item-level extension fields may exist outside custom_data.
 
-==================================================
-CHANGE 2 — Update Phase 3 (PDF Quality Audit) to Include Blank Templates
-==================================================
+--------------------------------------------------
+D. PDF Render Boundary
+--------------------------------------------------
 
-In Phase 3's "Document types to audit" list, add:
+File:
+- src/components/waybill/WaybillPDF.tsx
 
-```markdown
-- Blank Waybill PDF (External and Internal)
-- Blank CSR PDF
-```
+Before rendering rows:
+
+Validate item integrity using:
+
+- assertCustomDataExists(...)
+
+Goal:
+
+PDF rendering must never silently consume malformed items.
 
 ==================================================
-CHANGE 3 — Update Execution Order
+OBJECTIVE 2
+Single Column Authority
 ==================================================
 
-Replace the execution order section with:
+The contract defines:
 
-```markdown
-## Execution Order
+STANDARD_ITEM_COLUMNS
 
-```
+This must become the only source of truth.
 
-Phase 1 (Project Document Import) → Phase 2 (Project Document PDF) → Phase 3 (PDF Audit) → Phase 4 (Blank Template PDFs) → Phase 5+ (PDF Fixes per findings)
+Inspect:
 
-```
-```
+- WaybillForm.tsx
+- WaybillPDF.tsx
+- ViewWaybill.tsx
+- Any related table configuration code
+
+If any file defines its own copy of:
+
+- make
+- partNo
+- description
+- quantity
+- unit
+- condition
+
+Replace local definitions with imports from:
+
+src/domain/waybill/contracts/waybillContract.ts
+
+Goal:
+
+Form and PDF derive column definitions from exactly one shared constant.
+
+No duplicated column definitions may remain.
 
 ==================================================
-CHANGE 4 — Add Prefix Engine Dependency Note
+OBJECTIVE 3
+Golden Round-Trip Test
 ==================================================
 
-Add this note at the top of the roadmap, after the "Deferred from JSON Import Roadmap" section:
+Add one critical contract test.
 
-```markdown
-## Prefix Engine Dependency
+Scenario:
 
-This roadmap depends on the Prefix Engine (`docs/PRD/PREFIX_ENGINE_SETTINGS.md`), which is now fully implemented. Key integrations:
+Input:
 
-- All document number prefixes are configurable via Settings → Document Prefixes
-- Blank document numbers use the org prefix from `resolvePrefix()`
-- `blank_waybill_logs` and `blank_csr_logs` tables are live and tracking all blank downloads
-- The `withUniqueRetry` collision handler (3-attempt retry on Postgres error 23505) protects all document saves including blank number assignments
-- See `docs/STANDARD/prefix-engine-settings-standard.md` for the integration standard
-```
+{
+  "description": "Motor",
+  "quantity": 1,
+  "custom_data": {
+    "make": "Toyota",
+    "partNo": "ABC123",
+    "serial": "SN001",
+    "storageLocation": "WH-A"
+  }
+}
+
+Pipeline:
+
+Import
+→ Normalize
+→ Save serialization
+→ Load normalization
+→ PDF projection
+
+Assertions:
+
+- make survives
+- partNo survives
+- serial survives
+- storageLocation survives
+
+No key may be lost.
+
+This becomes the canonical regression test.
 
 ==================================================
 VERIFICATION
 ==================================================
 
-1. Read the updated docs/PRD/pdf-rendering-roadmap.md and confirm all 4 changes are present
-2. Confirm no source code files were modified
-3. Push to main
+Run:
+
+1. bun run audit:load
+2. bun run typecheck
+3. bun test src/tests/critical/waybillContract.test.js
+
+All must pass.
 
 ==================================================
 DONE WHEN
 ==================================================
 
-· Phase 4 (Blank Template PDF Rendering) added to the roadmap
-· Phase 3 audit list includes blank waybill and blank CSR
-· Execution order updated to include Phase 4
-· Prefix Engine dependency note added at top
-· Work report saved to docs/Task/reports/pdf-roadmap-update.md
-· Changes pushed to main
+[ ] Assertions are wired into runtime boundaries
+[ ] Normalization enforces custom_data preservation
+[ ] Import path enforces unknown-field preservation
+[ ] Persistence path rejects extension fields outside custom_data
+[ ] PDF validates item integrity before rendering
+[ ] Form and PDF consume STANDARD_ITEM_COLUMNS as the single source of truth
+[ ] No duplicate standard column definitions remain
+[ ] Golden round-trip test added and passing
+[ ] Typecheck passes
+[ ] Contract tests pass
+[ ] Report saved to docs/Task/reports/waybill-canonical-contract-v2-runtime-enforcement.md
 
 ==================================================
 DO NOT
 ==================================================
 
-· Do NOT modify any source code files
-· Do NOT run bun run dev
-· Do NOT change Phase 1, Phase 2, or Phase 3 content beyond the specified additions
-· Do NOT skip the work report
+- Do not redesign the UI
+- Do not change PDF layout
+- Do not modify numbering logic
+- Do not change import prompts
+- Do not alter business rules
+- Do not introduce new dependencies
+- Do not skip the report
 
-```
+Success criterion:
 
-Target: Any agent | Strategy: Documentation-only update — adds blank template PDF rendering as Phase 4, links it to the now-complete Prefix Engine, documents the existing blank log tables and number formats, adds reconciliation tasks, and marks the dependency on `resolvePrefix()` and `withUniqueRetry`.
+A future developer cannot accidentally reintroduce:
+- custom_data loss
+- unknown-field loss
+- PDF/Form column drift
+- extension fields outside custom_data
+
+without triggering a contract failure.
