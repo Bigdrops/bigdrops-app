@@ -101,23 +101,23 @@ function PickSignatorySheet({
 
         <div className="mt-4 px-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--bd-text-muted)]" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or role…"
-              className="w-full rounded-[var(--bd-radius-md)] border border-border bg-card pl-9 pr-3 py-2 text-sm outline-none focus:border-[var(--bd-indigo-border)] focus:ring-2 focus:ring-[var(--bd-indigo-bg)]"
+               className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] pl-9 pr-3 py-2 text-sm outline-none focus:border-[var(--bd-indigo-border)] focus:ring-2 focus:ring-[var(--bd-indigo-bg)]"
             />
           </div>
         </div>
 
         <div className="mt-3 space-y-2 pb-4 max-h-[55vh] overflow-y-auto">
           {loading && (
-            <p className="text-[13px] text-muted-foreground text-center py-6">Loading…</p>
+            <p className="text-[13px] text-[var(--bd-text-muted)] text-center py-6">Loading…</p>
           )}
           {!loading && filtered.length === 0 && (
-            <p className="text-[13px] text-muted-foreground text-center py-6">
+            <p className="text-[13px] text-[var(--bd-text-muted)] text-center py-6">
               {rows.length === 0 ? 'No saved signatories yet.' : 'No matches.'}
             </p>
           )}
@@ -129,7 +129,7 @@ function PickSignatorySheet({
                 onPick(sig)
                 onOpenChange(false)
               }}
-              className="w-full rounded-[var(--bd-radius-md)] border border-border bg-card p-3 text-left transition hover:bg-muted/40"
+              className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 text-left transition hover:bg-[var(--bd-bg2)]"
             >
               <div className="flex items-center gap-3">
                 {sig.signature_url ? (
@@ -139,15 +139,15 @@ function PickSignatorySheet({
                     className="h-10 w-16 rounded-[var(--bd-radius-md)] border border-border object-contain bg-[var(--bd-surface)]"
                   />
                 ) : (
-                  <div className="flex h-10 w-16 items-center justify-center rounded-[var(--bd-radius-md)] border border-border bg-muted">
-                    <UserSearch className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-10 w-16 items-center justify-center rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-bg2)]">
+                    <UserSearch className="h-4 w-4 text-[var(--bd-text-muted)]" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-bold truncate">{sig.name || 'Unnamed'}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{sig.role || 'No role'}</p>
+                  <p className="text-[11px] text-[var(--bd-text-muted)] truncate">{sig.role || 'No role'}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[var(--bd-text-muted)]/60 shrink-0" />
               </div>
             </button>
           ))}

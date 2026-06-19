@@ -95,6 +95,25 @@ Canvas programmatic colors (`#ffffff`, `#0F172A`) preserved as-is — not replac
 
 These three buttons already use `--bd-*` tokens (e.g., `border-[var(--bd-indigo-border)]`, `bg-[var(--bd-indigo-bg)]`, `text-[var(--bd-indigo)]`) — no changes needed.
 
+### Fix 3: PickSignatorySheet — replace shadcn default tokens with `--bd-*` tokens
+
+**Problem:** PickSignatorySheet used shadcn's default utility classes (`border-border`, `bg-card`, `text-muted-foreground`, `bg-muted`) instead of the project's `--bd-*` design tokens.
+
+**Changes (all within PickSignatorySheet function):**
+
+| # | Location (line) | Old | New |
+|---|---|---|---|
+| 1 | 104 — Search icon | `text-muted-foreground` | `text-[var(--bd-text-muted)]` |
+| 2 | 110 — Search input | `border border-border bg-card` | `border border-[var(--bd-border)] bg-[var(--bd-surface)]` |
+| 3 | 117, 120 — Loading/empty text (×2) | `text-muted-foreground` | `text-[var(--bd-text-muted)]` |
+| 4 | 132 — Result row button | `border border-border bg-card hover:bg-muted/40` | `border border-[var(--bd-border)] bg-[var(--bd-surface)] hover:bg-[var(--bd-bg2)]` |
+| 5 | 142 — Fallback avatar box | `border border-border bg-muted` | `border border-[var(--bd-border)] bg-[var(--bd-bg2)]` |
+| 6 | 143 — UserSearch icon | `text-muted-foreground` | `text-[var(--bd-text-muted)]` |
+| 7 | 148 — Role subtitle | `text-muted-foreground` | `text-[var(--bd-text-muted)]` |
+| 8 | 150 — ChevronRight | `text-muted-foreground/60` | `text-[var(--bd-text-muted)]/60` |
+
+**Note:** Line 139 (`border border-border` on image element) was intentionally left unchanged — not listed in the task requirements.
+
 ## Verification
 
 - **`bun run lint`** — 0 new errors (1 pre-existing `react-hooks/set-state-in-effect` at line 70 is inherited from original code)
