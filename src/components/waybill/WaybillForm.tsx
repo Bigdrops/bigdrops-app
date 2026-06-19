@@ -615,38 +615,51 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
           {/* Signatures */}
           <div>
-            <SectionLabel color="emerald">
-              <span className="flex items-center gap-1.5"><PenTool className="h-3.5 w-3.5" /> Signatures</span>
+            <SectionLabel color="emerald" trailing={
               <button
                 type="button"
                 onClick={() => setShowSignatures(!showSignatures)}
-                className="ml-auto text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
+                className="flex items-center justify-center min-w-[40px] min-h-[40px] -mr-2 rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
                 title={showSignatures ? 'Hide all signatures' : 'Show all signatures'}
               >
-                {showSignatures ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showSignatures
+                  ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
+                  : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
+                }
               </button>
+            }>
+              <span className="flex items-center gap-1.5"><PenTool className="h-3.5 w-3.5" /> Signatures</span>
             </SectionLabel>
             {showSignatures && (
-              <div className="mt-4 space-y-4">
-                <div className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-bold text-[var(--bd-text)]">Delivered By</span>
+              <div className="mt-4 space-y-5">
+
+                {/* Delivered By */}
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]">
+                      Delivered By
+                    </span>
                     <button
                       type="button"
                       onClick={() => setShowSenderSig(!showSenderSig)}
-                      className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
-                      title={showSenderSig ? 'Hide sender signature' : 'Show sender signature'}
+                      className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
+                      title={showSenderSig ? 'Hide' : 'Show'}
                     >
-                      {showSenderSig ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      {showSenderSig
+                        ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
+                        : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
+                      }
                     </button>
                   </div>
                   {showSenderSig && (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
-                          <img src={customFields.signatures.sender.image_url || customFields.signatures.sender.drawn_data_url} alt="sender signature" className="h-20 rounded-xl border border-[var(--bd-border)] bg-white object-contain" />
-                        )}
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                    <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 space-y-3">
+                      {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
+                        <div className="w-full">
+                          <img src={customFields.signatures.sender.image_url || customFields.signatures.sender.drawn_data_url} alt="sender signature" className="h-20 w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-white object-contain" />
+                        </div>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0]; if (!file) return
                             const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
@@ -662,9 +675,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                           }} />
                           Upload
                         </label>
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
                           Draw
-                          <input type="checkbox" className="hidden" onChange={(e) => {
+                          <input type="checkbox" className="hidden" onChange={(_e) => {
+                            void _e
                             const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
                             const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
                             ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
@@ -680,38 +694,46 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                         <button
                           type="button"
                           onClick={() => setSavedSignatorySheetOpen(true)}
-                          className="flex items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]"
+                          className="flex items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition"
                         >
                           <UserSquare2 className="h-3 w-3" />
                           Saved
                         </button>
                         {(customFields.signatures?.sender?.image_url || customFields.signatures?.sender?.drawn_data_url) && (
-                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, sender: { image_url: '', drawn_data_url: '', present: false } } })} className="text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
+                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, sender: { image_url: '', drawn_data_url: '', present: false } } })} className="ml-auto text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[13px] font-bold text-[var(--bd-text)]">Collected By</span>
+                {/* Collected By */}
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text-muted)]">
+                      Collected By
+                    </span>
                     <button
                       type="button"
                       onClick={() => setShowReceiverSig(!showReceiverSig)}
-                      className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)] transition"
-                      title={showReceiverSig ? 'Hide receiver signature' : 'Show receiver signature'}
+                      className="flex items-center justify-center min-w-[40px] min-h-[40px] rounded-md transition-colors hover:bg-[var(--bd-surface-muted)]"
+                      title={showReceiverSig ? 'Hide' : 'Show'}
                     >
-                      {showReceiverSig ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      {showReceiverSig
+                        ? <Eye className="h-4 w-4 text-[var(--bd-primary)]" />
+                        : <EyeOff className="h-4 w-4 text-[var(--bd-text-muted)]" />
+                      }
                     </button>
                   </div>
                   {showReceiverSig && (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
-                          <img src={customFields.signatures.receiver.image_url || customFields.signatures.receiver.drawn_data_url} alt="receiver signature" className="h-20 rounded-xl border border-[var(--bd-border)] bg-white object-contain" />
-                        )}
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                    <div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-3 space-y-3">
+                      {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
+                        <div className="w-full">
+                          <img src={customFields.signatures.receiver.image_url || customFields.signatures.receiver.drawn_data_url} alt="receiver signature" className="h-20 w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-white object-contain" />
+                        </div>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
                           <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                             const file = e.target.files?.[0]; if (!file) return
                             const { processSignature, dataURItoFile } = await import('@/lib/processSignature')
@@ -727,9 +749,9 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                           }} />
                           Upload
                         </label>
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)]">
+                        <label className="flex cursor-pointer items-center gap-1.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--bd-text-muted)] hover:bg-[var(--bd-surface-muted)] hover:text-[var(--bd-text)] transition">
                           Draw
-                          <input type="checkbox" className="hidden" onChange={(e) => {
+                          <input type="checkbox" className="hidden" onChange={(_e) => { void _e
                             const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 180
                             const ctx = canvas.getContext('2d')!; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 180)
                             ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'
@@ -743,12 +765,13 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                           }} />
                         </label>
                         {(customFields.signatures?.receiver?.image_url || customFields.signatures?.receiver?.drawn_data_url) && (
-                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, receiver: { image_url: '', drawn_data_url: '', present: false } } })} className="text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
+                          <button type="button" onClick={() => updateCustomFields({ signatures: { ...customFields.signatures, receiver: { image_url: '', drawn_data_url: '', present: false } } })} className="ml-auto text-[11px] font-bold text-[var(--bd-rose)] hover:underline">Clear</button>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
+
               </div>
             )}
           </div>
