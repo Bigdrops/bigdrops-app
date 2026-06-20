@@ -189,14 +189,25 @@ export default function NewCSR() {
   }
 
   const handleApplyImport = (result: any) => {
-    setCsr((current: any) => ({ ...current, ...result.fields }))
+    console.log('[CSR Import handleApplyImport] Result received:', JSON.stringify(result, null, 2))
+    console.log('[CSR Import handleApplyImport] csr BEFORE:', JSON.stringify(csr, null, 2))
+    console.log('[CSR Import handleApplyImport] materialsRows BEFORE:', JSON.stringify(materialsRows, null, 2))
+
+    setCsr((current: any) => {
+      const next = { ...current, ...result.fields }
+      console.log('[CSR Import handleApplyImport] csr AFTER (from updater):', JSON.stringify(next, null, 2))
+      return next
+    })
 
     if (result.hasMaterials) {
-      setMaterialsRows(
-        result.materials.length > 0
-          ? result.materials.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
-          : [{ ...DEFAULT_MATERIAL_ROW }],
-      )
+      setMaterialsRows((current: any) => {
+        const next =
+          result.materials.length > 0
+            ? result.materials.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
+            : [{ ...DEFAULT_MATERIAL_ROW }]
+        console.log('[CSR Import handleApplyImport] materialsRows AFTER:', JSON.stringify(next, null, 2))
+        return next
+      })
     }
 
     if (result.hasOperationalReadings) {

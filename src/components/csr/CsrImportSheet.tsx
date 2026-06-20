@@ -37,6 +37,7 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
     }
 
     const { data } = parseResult
+    console.log('[CSR Import] Parsed data from Zod:', JSON.stringify(data, null, 2))
 
     const hasOperationalReadings = Boolean(
       data.voltage || data.frequency || data.battery || data.temperature || data.pressure || data.hours,
@@ -70,8 +71,10 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
       hasMaterials: materials.length > 0,
       hasOperationalReadings,
     }
+    console.log('[CSR Import] Adapted result:', JSON.stringify(adaptedResult, null, 2))
 
     onApplyImport(adaptedResult)
+    console.log('[CSR Import] onApplyImport called, about to show toast & close sheet')
     feedback.success('Import applied', { description: 'CSR fields were updated successfully.' })
     onOpenChange(false)
   }
