@@ -101,7 +101,6 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
   const [showNotes, setShowNotes] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
-  const [notes, setNotes] = useState(() => initialData?.waybill?.notes ?? '')
   const [terms, setTerms] = useState('')
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [showTermsInTableSettings, setShowTermsInTableSettings] = useState(false)
@@ -367,7 +366,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
       const finalFields = buildWaybillCustomFields(customFields, { customColumns, columnVisibility })
       const collectedColumns = collectWaybillCustomColumns(items, customColumns)
       const data: WaybillFormData = {
-        waybill: { ...waybill, notes, status: 'dispatched' },
+        waybill: { ...waybill, status: 'dispatched' },
         items,
         customColumns: collectedColumns,
         customFields: finalFields,
@@ -629,7 +628,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 placeholder="Notes title"
               />
               <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
-                <RichTextEditor value={notes} onChange={setNotes} placeholder="Add notes..." />
+                <RichTextEditor value={waybill.notes ?? ''} onChange={(v) => updateWaybill('notes', v)} placeholder="Add notes..." />
               </Suspense>
             </div>
           </CollapseCard>
