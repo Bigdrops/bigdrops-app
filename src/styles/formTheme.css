@@ -447,3 +447,63 @@ h1, .bd-h1 {
     transform: rotate(360deg);
   }
 }
+
+/* Error Details (Expandable) */
+.bd-error-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.bd-error-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: inherit;
+  opacity: 0.7;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.bd-error-details-toggle:hover {
+  opacity: 1;
+}
+
+.bd-error-details-diagnostic {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+  border-radius: 6px;
+  background: color-mix(in oklab, currentColor 8%, transparent);
+  color: inherit;
+}
+
+.bd-error-toast-description-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Override Goey Toast content width for expandable content at mobile */
+@media (max-width: 480px) {
+  .bd-goey-toast .gooey-contentExpanded,
+  .bd-goey-toast [class*="contentExpanded"] {
+    max-width: 85vw !important;
+  }
+}

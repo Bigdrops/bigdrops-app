@@ -1,6 +1,9 @@
 import { goeyToast, type GoeyPromiseData, type GoeyToastOptions } from 'goey-toast'
 import { LoaderCircle } from 'lucide-react'
 import { createElement, type ReactNode } from 'react'
+import { errorRegistry } from './errorRegistry'
+import { normalizeError } from './errorMessages'
+import { ExpandableErrorDetails } from '../components/ui/toast/ExpandableErrorDetails'
 
 type FeedbackTone = 'default' | 'success' | 'error' | 'warning' | 'info'
 
@@ -123,16 +126,34 @@ export const feedback = {
   },
 
   error(message: string | Error, options?: FeedbackOptions) {
-    const errorMessage = toMessageString(message, 'Something went wrong')
+    const normalized = normalizeError(message)
+    const registryId = errorRegistry.add(normalized.userSafe, normalized.diagnostic)
+
+    const details = createElement(ExpandableErrorDetails, {
+      diagnostic: normalized.diagnostic,
+      registryId,
+    })
+
+    const { description: callerDescription, ...restOptions } = options ?? {}
+
+    const description: ReactNode = callerDescription
+      ? createElement(
+          'div',
+          { className: 'bd-error-toast-description-stack' },
+          callerDescription as ReactNode,
+          details,
+        )
+      : details
 
     return goeyToast.error(
-      errorMessage,
+      normalized.userSafe,
       createOptions('error', {
         duration: 5600,
-        id: toToastId('error', errorMessage),
+        id: toToastId('error', normalized.userSafe),
         preset: 'smooth',
         bounce: 0.14,
-        ...options,
+        description,
+        ...restOptions,
       }),
     )
   },
