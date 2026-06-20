@@ -23,6 +23,7 @@ export type CreateOfflineCsrInput = {
   make?: string | null;
   model?: string | null;
   serial_no?: string | null;
+  engine_no?: string | null;
   capacity?: string | null;
   voltage?: string | null;
   frequency?: string | null;
@@ -139,6 +140,7 @@ export async function bootstrapCsrOffline(): Promise<void> {
               make TEXT,
               model TEXT,
               serial_no TEXT,
+              engine_no TEXT,
               capacity TEXT,
               voltage TEXT,
               frequency TEXT,
@@ -236,6 +238,7 @@ export async function createOfflineCsrDraft(
         make,
         model,
         serial_no,
+        engine_no,
         capacity,
         voltage,
         frequency,
@@ -280,6 +283,7 @@ export async function createOfflineCsrDraft(
       input.make ?? null,
       input.model ?? null,
       input.serial_no ?? null,
+      input.engine_no ?? null,
       input.capacity ?? null,
       input.voltage ?? null,
       input.frequency ?? null,

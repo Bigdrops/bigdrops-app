@@ -19,7 +19,7 @@ import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { validateProjectAssignment } from '@/domain/projects'
-import { createCsr } from '@/domain/csr/csrService'
+import { createCsr, sanitizeCsrInsertPayload } from '@/domain/csr/csrService'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
@@ -262,14 +262,14 @@ export default function NewCSR() {
       return
     }
 
-    const csrData = {
+    const csrData = sanitizeCsrInsertPayload({
       ...csr,
       project_id: validatedProject?.id || null,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),
       materials_used: serializeCsrMaterials(materialsRows, csrMeta as any),
-    }
+    })
 
     if (canUseOfflineCsrDrafts()) {
       setSaving(true)

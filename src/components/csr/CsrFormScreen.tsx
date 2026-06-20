@@ -427,6 +427,16 @@ export default function CsrFormScreen({
                 />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Engine No</FieldLabel>
+                <TextInput
+                  value={String(csr.engine_no || '')}
+                  onChange={(event) => onUpdate('engine_no', event.target.value)}
+                />
+              </div>
+              <div />
+            </div>
           </div>
         </Section>
 

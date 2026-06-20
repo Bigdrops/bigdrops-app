@@ -3,7 +3,7 @@ import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextW
 import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
-import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
+import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -32,21 +32,8 @@ export async function saveWaybill(params: {
     throw new Error(errors.join('; '))
   }
 
-  // Strip non-standard fields from items before contract enforcement.
-  // Shared MobileItemCard (used by invoices + waybills) sets item_id at root,
-  // which violates the WaybillItem canonical contract. We must remove it.
-  const cleanItems = items.map(item => {
-    const clean: Record<string, unknown> = {}
-    for (const key of Object.keys(item)) {
-      if (WAYBILL_ITEM_KEYS.has(key as keyof WaybillItem)) {
-        clean[key] = (item as unknown as Record<string, unknown>)[key]
-      }
-    }
-    return clean as unknown as WaybillItem
-  })
-
   // Runtime contract enforcement: every item must conform to canonical shape
-  for (const item of cleanItems) {
+  for (const item of items) {
     assertNoExtensionFieldsOutsideCustomData(item, 'saveWaybill:pre-persist')
   }
 
@@ -69,7 +56,7 @@ export async function saveWaybill(params: {
 
   const dbTime = nullIfEmpty(waybill.time)
 
-  const dbItems = cleanItems.map(item => ({
+  const dbItems = items.map(item => ({
     description: item.description,
     qty: item.quantity,
     unit: item.unit,

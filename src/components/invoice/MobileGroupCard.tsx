@@ -3,6 +3,7 @@ import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import MobileItemCard from './MobileItemCard'
 import type { Invoice, InvoiceItem, InvoiceGroup, ColumnConfig } from '../../domain/invoice/types'
+import type { ItemContext } from '@/components/shared/itemFieldPolicy'
 
 interface MobileGroupCardProps {
   group: InvoiceGroup
@@ -14,6 +15,7 @@ interface MobileGroupCardProps {
     isLast: boolean
   }[]
   invoice: Invoice
+  context?: ItemContext
   enableItemSuggestions?: boolean
   customColumns: ColumnConfig[]
   groupSubtotal: number | string
@@ -34,6 +36,7 @@ export default function MobileGroupCard({
   group,
   items,
   invoice,
+  context: ctx,
   enableItemSuggestions = false,
   customColumns,
   groupSubtotal,
@@ -96,6 +99,7 @@ export default function MobileGroupCard({
                 index={index}
                 number={number}
                 invoice={invoice}
+                context={ctx}
                 enableItemSuggestions={enableItemSuggestions}
                 customColumns={customColumns}
                 computedAmount={getComputedAmount(item)}

@@ -12,7 +12,7 @@ Extract only the CSR technical/service fields from the text below and return val
 Ignore customer/admin/header/signature information.
 
 Allowed keys:
-system_down, problem_reported, equipment_type, equipment_location, make, model, serial_no, capacity, voltage, frequency, battery, temperature, pressure, hours, service_rendered, defects_found, engineer_remarks, start_date, end_date, materials
+system_down, problem_reported, equipment_type, equipment_location, make, model, serial_no, engine_no, capacity, voltage, frequency, battery, temperature, pressure, hours, service_rendered, defects_found, engineer_remarks, start_date, end_date, materials
 
 Requirements:
 - No markdown
@@ -31,6 +31,7 @@ const csrJsonSchema = z.object({
   make: z.string().optional(),
   model: z.string().optional(),
   serial_no: z.string().optional(),
+  engine_no: z.string().optional(),
   capacity: z.string().optional(),
   voltage: z.string().optional(),
   frequency: z.string().optional(),

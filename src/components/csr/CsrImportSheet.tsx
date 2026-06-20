@@ -52,6 +52,7 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
         make: data.make ?? null,
         model: data.model ?? null,
         serial_no: data.serial_no ?? null,
+        engine_no: data.engine_no ?? null,
         capacity: data.capacity ?? null,
         voltage: data.voltage ?? null,
         frequency: data.frequency ?? null,

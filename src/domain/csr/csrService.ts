@@ -60,14 +60,44 @@ async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
   throw lastError
 }
 
+// ── Schema-safe columns ────────────────────────────────────
+const CSR_TABLE_COLUMNS = new Set([
+  'id', 'csr_number', 'date', 'client_id', 'client_name', 'address',
+  'problem_reported', 'equipment_type', 'equipment_location', 'make',
+  'model', 'serial_no', 'engine_no', 'capacity', 'voltage', 'frequency',
+  'battery', 'temperature', 'pressure', 'hours', 'materials_used',
+  'service_rendered', 'engineer_remarks', 'status', 'start_date', 'end_date',
+  'customer_feedback', 'acknowledgement_name', 'linked_invoice_id',
+  'created_at', 'start_time', 'end_time', 'po_number', 'show_po',
+  'archived_at', 'project_id', 'defects_found', 'system_down',
+  'technician_signatory_id', 'call_type',
+])
+
+/**
+ * Strip any fields that are not valid csrs table columns.
+ * Prevents "column not found" errors from Supabase when
+ * orphan form fields (e.g. recipient_signature_uri) leak
+ * into the insert/update payload.
+ */
+export function sanitizeCsrInsertPayload<T extends Record<string, unknown>>(payload: T): T {
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(payload)) {
+    if (CSR_TABLE_COLUMNS.has(key) && value !== undefined) {
+      sanitized[key] = value
+    }
+  }
+  return sanitized as T
+}
+
 // ── Create / Update ────────────────────────────────────────
 
 export async function createCsr(csrData: Record<string, unknown>): Promise<CreatedCsr> {
+  const safeData = sanitizeCsrInsertPayload(csrData)
   const { data, error } = await withRetry(
     async () =>
       supabase
         .from('csrs')
-        .insert([csrData])
+        .insert([safeData])
         .select('id, csr_number')
         .single(),
     'createCsr',
@@ -88,11 +118,12 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
 }
 
 export async function updateCsr(id: string, csrData: Record<string, unknown>): Promise<void> {
+  const safeData = sanitizeCsrInsertPayload(csrData)
   const { error } = await withRetry(
     async () =>
       supabase
         .from('csrs')
-        .update(csrData)
+        .update(safeData)
         .eq('id', id),
     'updateCsr',
   )

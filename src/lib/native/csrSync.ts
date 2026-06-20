@@ -41,6 +41,7 @@ type LocalCsrRow = {
   make: string | null;
   model: string | null;
   serial_no: string | null;
+  engine_no: string | null;
   capacity: string | null;
   voltage: string | null;
   frequency: string | null;
@@ -199,6 +200,7 @@ async function processCsrCreateQueueRow(
           make: localCsr.make,
           model: localCsr.model,
           serial_no: localCsr.serial_no,
+          engine_no: localCsr.engine_no,
           capacity: localCsr.capacity,
           voltage: localCsr.voltage,
           frequency: localCsr.frequency,

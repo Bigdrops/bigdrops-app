@@ -71,6 +71,7 @@ export interface CsrObject {
   make: string
   model: string
   serial_no: string
+  engine_no: string
   capacity: string
   voltage: string
   frequency: string
@@ -112,6 +113,7 @@ export function createDefaultCsr(isField = false): CsrObject {
     make: '',
     model: '',
     serial_no: '',
+    engine_no: '',
     capacity: '',
     voltage: '',
     frequency: '',

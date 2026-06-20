@@ -567,6 +567,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             items={items}
             groups={[]}
             invoice={waybill}
+            context="waybill"
             isQuotation={false}
             customColumns={customColumns}
             computedItems={items}

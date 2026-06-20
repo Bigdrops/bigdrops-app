@@ -7,11 +7,13 @@ import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
 import { useMemo } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
+import type { ItemContext } from '@/components/shared/itemFieldPolicy'
 
 interface FormLineItemsProps {
   items: any[]
   groups: any[]
   invoice: any
+  context?: ItemContext
   isQuotation: boolean
   customColumns: any[]
   computedItems: any[]
@@ -36,6 +38,7 @@ export function FormLineItems({
   items,
   groups,
   invoice,
+  context: ctx,
   isQuotation,
   customColumns,
   computedItems,
@@ -185,6 +188,7 @@ export function FormLineItems({
             group={group}
             items={groupItems}
             invoice={invoice}
+            context={ctx}
             enableItemSuggestions={true}
             customColumns={customColumns}
             groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
@@ -210,6 +214,7 @@ export function FormLineItems({
               index={row.index}
               number={row.number}
               invoice={invoice}
+              context={ctx}
               enableItemSuggestions={true}
               customColumns={customColumns}
               computedAmount={getComputedAmount(row.item)}

@@ -13,7 +13,7 @@ import {
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { updateCsr } from '@/domain/csr/csrService'
+import { updateCsr, sanitizeCsrInsertPayload } from '@/domain/csr/csrService'
 
 export default function EditCSR() {
   const navigate = useNavigate()
@@ -98,13 +98,13 @@ export default function EditCSR() {
       return
     }
 
-    const csrData = {
+    const csrData = sanitizeCsrInsertPayload({
       ...csr,
       client_id: csr.client_id || null,
       linked_invoice_id: csr.linked_invoice_id || null,
       show_po: Boolean(String(csr.po_number || '').trim()),
       materials_used: serializeCsrMaterials(materialsRows, csrMeta),
-    }
+    })
 
     const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
 

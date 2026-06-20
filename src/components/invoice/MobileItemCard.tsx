@@ -22,6 +22,7 @@ import { loadItemPriceContext, resolveExactItemMatch } from '@/modules/item-libr
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
 import { formatNaira } from '@/lib/formatters/money'
+import { ITEM_FIELD_POLICY, type ItemContext } from '@/components/shared/itemFieldPolicy'
 import type { InvoiceItem } from '@/domain/invoice/types'
 import type { ItemSuggestion } from '@/modules/item-library/types'
 
@@ -49,6 +50,7 @@ interface MobileItemCardProps {
   index: number
   number: number | string
   invoice?: any
+  context?: ItemContext
   enableItemSuggestions?: boolean
   customColumns?: any
   computedAmount: number | string
@@ -70,6 +72,7 @@ export default function MobileItemCard({
   index,
   number,
   invoice,
+  context: ctx = 'invoice',
   enableItemSuggestions = false,
   customColumns,
   computedAmount,
@@ -92,6 +95,29 @@ export default function MobileItemCard({
   const [selectedSuggestionContextText, setSelectedSuggestionContextText] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const updateField = (key: string, value: any) => {
+    const policy = ITEM_FIELD_POLICY[ctx]
+    if (policy.root.includes(key)) {
+      onUpdate(index, key, value)
+      return
+    }
+    if (policy.custom.includes(key)) {
+      onUpdate(index, 'custom_data', {
+        ...(item.custom_data || {}),
+        [key]: value,
+      })
+      return
+    }
+    console.warn(`[MobileItemCard] blocked unknown field: ${key}`)
+  }
+
+  const getItemId = () => {
+    if (ctx === 'waybill') return (item.custom_data as any)?.item_id ?? null
+    return (item as any).item_id ?? null
+  }
+
+  const resolvedItemId = getItemId()
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setDebouncedDescription(item.description || '')
@@ -101,15 +127,15 @@ export default function MobileItemCard({
   }, [item.description])
 
   useEffect(() => {
-    if (!item.item_id) {
+    if (!resolvedItemId) {
       setSelectedSuggestionContextText(null)
     }
-  }, [item.item_id])
+  }, [resolvedItemId])
 
   useEffect(() => {
     if (!enableItemSuggestions) return undefined
     if (item.row_type && item.row_type !== 'standard') return undefined
-    if (item.item_id) return undefined
+    if (resolvedItemId) return undefined
 
     const trimmedDescription = String(debouncedDescription || '').trim()
     if (trimmedDescription.length < 2) return undefined
@@ -120,24 +146,24 @@ export default function MobileItemCard({
     const run = async () => {
       const exactMatch = await resolveExactItemMatch(trimmedDescription, invoice?.client_id)
       if (cancelled || !exactMatch?.item_id) return
-      if (item.item_id) return
+      if (resolvedItemId) return
       if (trimmedDescription !== String(item.description || '').trim()) return
-      onUpdate(index, 'item_id', exactMatch.item_id)
+      updateField('item_id', exactMatch.item_id)
     }
 
     void run()
     return () => {
       cancelled = true
     }
-  }, [debouncedDescription, enableItemSuggestions, index, invoice?.client_id, item.description, item.item_id, item.row_type, onUpdate])
+  }, [debouncedDescription, enableItemSuggestions, index, invoice?.client_id, item.description, resolvedItemId, item.row_type, onUpdate])
 
   useEffect(() => {
-    if (!item.item_id) return undefined
+    if (!resolvedItemId) return undefined
 
     let cancelled = false
 
     const run = async () => {
-      const priceContext = await loadItemPriceContext(item.item_id || '', invoice?.client_id)
+      const priceContext = await loadItemPriceContext(resolvedItemId || '', invoice?.client_id)
       if (cancelled) return
       setSelectedSuggestionContextText(getInvoiceSuggestionPriceContextText(priceContext))
     }
@@ -146,7 +172,7 @@ export default function MobileItemCard({
     return () => {
       cancelled = true
     }
-  }, [item.item_id, invoice?.client_id])
+  }, [resolvedItemId, invoice?.client_id])
 
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -193,7 +219,7 @@ export default function MobileItemCard({
   const handleSuggestionSelect = (suggestion: ItemSuggestion) => {
     const selection = getInvoiceSuggestionSelection(suggestion)
     onUpdate(index, 'description', selection.description)
-    onUpdate(index, 'item_id', selection.item_id)
+    updateField('item_id', selection.item_id)
     onUpdate(index, 'unit_price', selection.unit_price)
     setSelectedSuggestionContextText(selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null)
     setDescriptionFocused(false)
@@ -202,8 +228,8 @@ export default function MobileItemCard({
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextDescription = event.target.value
     onUpdate(index, 'description', nextDescription)
-    if (item.item_id) {
-      onUpdate(index, 'item_id', null)
+    if (resolvedItemId) {
+      updateField('item_id', null)
       setSelectedSuggestionContextText(null)
     }
   }
@@ -254,7 +280,7 @@ export default function MobileItemCard({
                 )}
               </div>
             )}
-            {item.item_id && selectedSuggestionContextText ? (
+            {resolvedItemId && selectedSuggestionContextText ? (
               <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)] whitespace-pre-line">
                 {selectedSuggestionContextText}
               </div>
