@@ -49,7 +49,7 @@ export async function saveWaybill(params: {
     waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix)
   }
 
-  const purpose = waybill.type === 'internal' ? null : (waybill.purpose || 'Supply')
+  const purpose = waybill.purpose ?? null
 
   const nullIfEmpty = (value: string | null | undefined): string | null =>
     value === '' || value === undefined ? null : value

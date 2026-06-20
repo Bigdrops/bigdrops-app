@@ -14,7 +14,7 @@ export interface WaybillMetric {
 }
 export type WaybillStatus = 'dispatched' | 'pending_confirmation' | 'delivered' | 'returned'
 export type TransportMode = 'By Vehicle' | 'By Hand' | 'Courier' | 'Self Pick-Up'
-export type WaybillPurpose = 'Supply' | 'Return' | 'Third-Party Custody'
+export type WaybillPurpose = 'Supply' | 'Return' | 'Repair' | 'Other' | 'Transfer'
 export type ItemCondition = 'good' | 'damaged' | 'partial'
 export type SignatureRole = 'sender' | 'receiver'
 
@@ -86,7 +86,7 @@ export interface Waybill {
   vehicle_plate: string
   driver_name: string
   transport_mode: TransportMode
-  purpose: WaybillPurpose | ''
+  purpose: WaybillPurpose | null
   delivery_location: string
   items: WaybillItem[]
   notes: string
@@ -132,10 +132,17 @@ export const TRANSPORT_MODE_OPTIONS: { value: TransportMode; label: string }[] =
   { value: 'Self Pick-Up', label: 'Self Pick-Up' },
 ]
 
-export const PURPOSE_OPTIONS: { value: WaybillPurpose; label: string }[] = [
+export const EXTERNAL_PURPOSE_OPTIONS: { value: WaybillPurpose; label: string }[] = [
   { value: 'Supply', label: 'Supply' },
   { value: 'Return', label: 'Return' },
-  { value: 'Third-Party Custody', label: 'Third-Party Custody' },
+  { value: 'Repair', label: 'Repair' },
+  { value: 'Other', label: 'Other' },
+]
+
+export const INTERNAL_PURPOSE_OPTIONS: { value: WaybillPurpose; label: string }[] = [
+  { value: 'Transfer', label: 'Transfer' },
+  { value: 'Repair', label: 'Repair' },
+  { value: 'Other', label: 'Other' },
 ]
 
 export const WAYBILL_TYPE_CONTENT: Record<
@@ -347,7 +354,7 @@ export function createDefaultWaybill(): Omit<Waybill, 'id' | 'created_at'> {
     vehicle_plate: '',
     driver_name: '',
     transport_mode: 'By Vehicle',
-    purpose: '',
+    purpose: null,
     delivery_location: '',
     items: [createDefaultItem()],
     notes: '',
@@ -464,12 +471,12 @@ export function normalizeTransportMode(value: unknown): TransportMode {
   return 'By Vehicle'
 }
 
-export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | '' {
+export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | null {
   const purpose = String(value || '').trim()
-  if (purpose === 'Supply' || purpose === 'Return' || purpose === 'Third-Party Custody') {
+  if (purpose === 'Supply' || purpose === 'Return' || purpose === 'Repair' || purpose === 'Other' || purpose === 'Transfer') {
     return purpose
   }
-  return ''
+  return null
 }
 
 export function normalizeWaybillPdfTemplateId(value: unknown): WaybillPdfTemplateId {

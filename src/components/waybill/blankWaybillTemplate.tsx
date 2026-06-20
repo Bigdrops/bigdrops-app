@@ -55,9 +55,11 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
   const isHand = transportMode === 'By Hand'
   const isVehicle = transportMode === 'By Vehicle'
   const isModeOther = !!transportMode && !['By Hand', 'By Vehicle'].includes(transportMode)
-  const isTransfer = purpose === 'Supply'
-  const isMaint = purpose === 'Return'
-  const isReasonOther = purpose === 'Third-Party Custody'
+  const isSupply = purpose === 'Supply'
+  const isReturn = purpose === 'Return'
+  const isRepair = purpose === 'Repair'
+  const isTransfer = purpose === 'Transfer'
+  const isReasonOther = purpose === 'Other'
 
   const contactParts: string[] = []
   if (companyPhone) contactParts.push(companyPhone)
@@ -142,12 +144,35 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
             <View style={minimalStyles.checkboxRow}>
               <View style={minimalStyles.checkboxLabel}>
+                <Checkbox checked={isSupply} />
+                <Text>Supply</Text>
+              </View>
+              <View style={minimalStyles.checkboxLabel}>
+                <Checkbox checked={isReturn} />
+                <Text>Return</Text>
+              </View>
+              <View style={minimalStyles.checkboxLabel}>
+                <Checkbox checked={isRepair} />
+                <Text>Repair</Text>
+              </View>
+              <View style={minimalStyles.checkboxLabel}>
+                <Checkbox checked={isReasonOther} />
+                <Text>Other</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+        {type === 'internal' ? (
+          <View style={minimalStyles.modeBox}>
+            <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
+            <View style={minimalStyles.checkboxRow}>
+              <View style={minimalStyles.checkboxLabel}>
                 <Checkbox checked={isTransfer} />
                 <Text>Transfer</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isMaint} />
-                <Text>Maint.</Text>
+                <Checkbox checked={isRepair} />
+                <Text>Repair</Text>
               </View>
               <View style={minimalStyles.checkboxLabel}>
                 <Checkbox checked={isReasonOther} />
@@ -199,7 +224,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
               {senderSignatureUrl ? (
                 <Image src={senderSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
               ) : (
-                <Text>Signature</Text>
+                <View style={{ width: 110, height: 42 }} />
               )}
             </View>
           </View>
@@ -213,7 +238,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
               {receiverSignatureUrl ? (
                 <Image src={receiverSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
               ) : (
-                <Text>Signature</Text>
+                <View style={{ width: 110, height: 42 }} />
               )}
             </View>
           </View>

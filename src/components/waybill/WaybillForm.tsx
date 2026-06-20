@@ -23,11 +23,14 @@ import {
   createDefaultItem,
   createDefaultWaybill,
   parseWaybillCustomFields,
+  EXTERNAL_PURPOSE_OPTIONS,
+  INTERNAL_PURPOSE_OPTIONS,
   type Waybill,
   type WaybillCustomColumn,
   type WaybillCustomFields,
   type WaybillItem,
   type WaybillType,
+  type WaybillPurpose,
   type TransportMode,
 } from './waybillUtils'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
@@ -525,6 +528,19 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                       { value: 'By Hand', label: 'By Hand' },
                       { value: 'Courier', label: 'Courier' },
                       { value: 'Blank', label: 'Blank' }
+                    ]}
+                  />
+                </MobileField>
+                <MobileField label="Purpose">
+                  <CompactSelectField
+                    value={waybill.purpose || '__NULL__'}
+                    onChange={(value) => {
+                      const purpose = value === '__NULL__' ? null : (value as WaybillPurpose)
+                      updateWaybill('purpose', purpose)
+                    }}
+                    options={[
+                      ...(type === 'external' ? EXTERNAL_PURPOSE_OPTIONS : INTERNAL_PURPOSE_OPTIONS),
+                      { value: '__NULL__', label: 'Blank' },
                     ]}
                   />
                 </MobileField>
