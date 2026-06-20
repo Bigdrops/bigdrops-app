@@ -7,6 +7,7 @@
 import { Document, Image, Page, Text, View, pdf } from '@react-pdf/renderer'
 import type { WaybillItem, WaybillType } from './waybillUtils'
 import { minimalStyles } from './waybillMinimalStyles'
+import { richTextToPlainText } from '@/components/pdf-new/core/richText'
 
 export interface MinimalContentData {
   type: WaybillType
@@ -45,6 +46,8 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
     clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose,
     senderName, receiverName, senderSignatureUrl, receiverSignatureUrl, items, notes,
   } = data
+
+  const sanitizedNotes = richTextToPlainText(notes || '')
 
   const blankMode = !items || items.length === 0
   const rowCount = blankMode ? 10 : items.length
@@ -179,7 +182,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
 
         <View style={minimalStyles.notesBox}>
           <Text style={minimalStyles.boxLabel}>Delivery Remarks / Notes</Text>
-          <Text>{notes || ''}</Text>
+          <Text>{sanitizedNotes}</Text>
         </View>
       </View>
 
@@ -194,7 +197,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             </View>
             <View style={minimalStyles.sigArea}>
               {senderSignatureUrl ? (
-                <Image src={senderSignatureUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <Image src={senderSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
               ) : (
                 <Text>Signature</Text>
               )}
@@ -208,7 +211,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             </View>
             <View style={minimalStyles.sigArea}>
               {receiverSignatureUrl ? (
-                <Image src={receiverSignatureUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <Image src={receiverSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
               ) : (
                 <Text>Signature</Text>
               )}

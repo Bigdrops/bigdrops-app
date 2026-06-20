@@ -211,7 +211,7 @@ export const minimalStyles = StyleSheet.create({
   sigCard: {
     flex: 1,
     border: '1pt solid #000',
-    minHeight: 100,
+    height: 100,
   },
   sigHeader: {
     backgroundColor: '#f4f4f4',
@@ -241,9 +241,11 @@ export const minimalStyles = StyleSheet.create({
   },
   sigArea: {
     padding: s.sm,
-    minHeight: 48,
+    height: 48,
     fontSize: 9,
     color: '#555555',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   footer: {

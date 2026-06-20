@@ -291,6 +291,7 @@ export function buildWaybillCustomFields(
       linkedProjectName: patch.references?.linkedProjectName ?? base.references?.linkedProjectName ?? '',
       sourceDocumentNumber: patch.references?.sourceDocumentNumber ?? base.references?.sourceDocumentNumber ?? '',
     },
+    pdfTemplateId: patch.pdfTemplateId ?? base.pdfTemplateId,
   }
 }
 
