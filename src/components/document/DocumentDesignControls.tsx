@@ -23,6 +23,10 @@ interface TemplatePreview {
 }
 
 const templatePreviewById: Record<string, TemplatePreview> = {
+  default: {
+    shell: 'bg-white border border-slate-200',
+    nodes: ['h-1.5 w-full rounded-full bg-slate-800', 'h-0.5 w-3/5 rounded-full bg-slate-200', 'h-0.5 w-2/5 rounded-full bg-slate-300'],
+  },
   industry: {
     shell: 'bg-white border border-slate-200',
     nodes: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],

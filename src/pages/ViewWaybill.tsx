@@ -16,7 +16,7 @@ import FloatingDownloadButton from '@/components/document-view/shared/FloatingDo
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
-import { mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
+import { buildWaybillCustomFields, mapDbWaybill, normalizeWaybillPdfTemplateId, parseWaybillCustomFields, type WaybillPdfTemplateId } from '@/components/waybill/waybillUtils'
 import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset, setPdfDesignPreset, resolvePdfWebFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
@@ -24,12 +24,18 @@ import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
+import { DocumentTemplatePicker } from '@/components/document/DocumentDesignControls'
 import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
+
+const WAYBILL_PDF_TEMPLATE_OPTIONS = [
+  { id: 'default', label: 'Classic', description: 'Full waybill with header, items, signatures, and footer' },
+  { id: 'minimal', label: 'Minimal', description: 'Blank template with checkboxes for on-site completion' },
+]
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
@@ -44,6 +50,8 @@ export default function ViewWaybill() {
   const [waybill, setWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
+  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('default')
+  const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
@@ -68,6 +76,12 @@ export default function ViewWaybill() {
 
     void loadWaybill()
   }, [id, navigate])
+
+  useEffect(() => {
+    if (!waybill) return
+    const cf = parseWaybillCustomFields(waybill.custom_fields)
+    setTemplateId(normalizeWaybillPdfTemplateId(cf.pdfTemplateId))
+  }, [id])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     const options = { description }
@@ -109,7 +123,7 @@ export default function ViewWaybill() {
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} columnVisibility={customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))} columnTitles={Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))} />,
+        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} template={templateId} columnVisibility={customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))} columnTitles={Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {
@@ -252,19 +266,47 @@ export default function ViewWaybill() {
             >
               <div className="space-y-4">
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 text-sm font-semibold text-bd-text">PDF Template</div>
+                  <div className="mb-3 text-xs text-bd-text-muted">Choose the layout style for your waybill PDF export.</div>
+                  <DocumentTemplatePicker
+                    value={templateId}
+                    onChange={(v: string) => setTemplateId(v as WaybillPdfTemplateId)}
+                    templates={WAYBILL_PDF_TEMPLATE_OPTIONS}
+                  />
+                </div>
+
+                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
                   <div className="mb-3 text-sm font-semibold text-bd-text">PDF Design</div>
                   <DocumentTemplateDesignOverrides value={designPreset} onChange={setDesignPreset} />
                 </div>
                 <button
                   type="button"
-                  className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90"
-                  onClick={() => {
-                    setPdfDesignPreset('waybill', designPreset)
-                    ui.closeSheet()
-                    showToast('Customization saved', 'Waybill PDF design updated.', 'success')
+                  className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={saving}
+                  onClick={async () => {
+                    setSaving(true)
+                    try {
+                      setPdfDesignPreset('waybill', designPreset)
+
+                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: templateId })
+                      const { error } = await supabase.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
+
+                      if (error) {
+                        showToast('Save failed', 'Could not save template selection.')
+                        return
+                      }
+
+                      setWaybill((curr: any) => ({ ...curr, custom_fields: nextCustomFields }))
+                      ui.closeSheet()
+                      showToast('Customization saved', 'Waybill PDF design updated.', 'success')
+                    } catch {
+                      showToast('Save failed', 'Could not save customization.')
+                    } finally {
+                      setSaving(false)
+                    }
                   }}
                 >
-                  Save Settings
+                  {saving ? 'Saving...' : 'Save Settings'}
                 </button>
               </div>
             </DocumentSheet>

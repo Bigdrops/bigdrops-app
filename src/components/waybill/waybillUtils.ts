@@ -2,6 +2,8 @@ import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
+export type WaybillPdfTemplateId = 'default' | 'minimal'
+
 export type WaybillType = 'internal' | 'external'
 
 export interface WaybillMetric {
@@ -63,6 +65,7 @@ export interface WaybillCustomFields {
     importedAt?: string
     instructionsAccepted?: boolean
   }
+  pdfTemplateId?: WaybillPdfTemplateId
 }
 
 export interface Waybill {
@@ -238,6 +241,7 @@ export function parseWaybillCustomFields(value: unknown): WaybillCustomFields {
       sourceDocumentNumber: String(parsed.references?.sourceDocumentNumber || ''),
     },
     importMeta: parsed.importMeta && typeof parsed.importMeta === 'object' ? parsed.importMeta : undefined,
+  pdfTemplateId: normalizeWaybillPdfTemplateId(parsed.pdfTemplateId),
   }
 }
 
@@ -465,6 +469,12 @@ export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | '' {
     return purpose
   }
   return ''
+}
+
+export function normalizeWaybillPdfTemplateId(value: unknown): WaybillPdfTemplateId {
+  const id = String(value || '').toLowerCase().trim()
+  if (id === 'minimal') return 'minimal'
+  return 'default'
 }
 
 export function validateWaybill(waybill: Partial<Waybill>): string[] {
