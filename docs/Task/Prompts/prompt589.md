@@ -1,120 +1,63 @@
 You are working on the BIGDROPS business platform.
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
+Runtime: Bun. Never use npm or yarn.
+
+THIS IS A READ-ONLY AUDIT. DO NOT MODIFY ANY FILES.
 
 ==================================================
-TASK: Implement Waybill Canonical Contract v2 Enforcement
+REPORTING PROTOCOL (MANDATORY)
 ==================================================
+Save report to: docs/Task/reports/waybill-transport-delivery-mode-audit.md
 
-The contract already exists and is authoritative.
+==================================================
+TASK: Trace Transport Mode vs Delivery Mode confusion
 
-Read:
-- docs/contracts/waybill-canonical-contract-v2.md
+Two separate names appear in the system for what may or may not be the
+same underlying data. This audit must determine the actual mapping.
+
+READ FIRST:
+- src/components/waybill/WaybillForm.tsx (find Transport Mode dropdown)
+- src/components/waybill/WaybillPDF.tsx (Classic template)
+- src/components/waybill/blankWaybillTemplate.tsx (Minimal template)
+- src/components/waybill/waybillUtils.ts (types, normalization)
 - AGENTS.md
-- docs/PROJECTSKIILINDEX.md
-
-Goal:
-Create enforcement mechanisms that prevent future violations of the contract.
 
 ==================================================
-REQUIRED OUTCOME
-==================================================
+QUESTION 1 — What field does the form actually store?
 
-Implement enforcement, not feature changes.
-
-The enforcement layer must verify:
-
-1. custom_data is always present on every WaybillItem
-2. No item-level extension fields exist outside custom_data
-3. Normalization never drops custom_data keys
-4. Visibility never alters persistence data
-5. Form and PDF use identical visibility behavior
-6. Import preserves unknown item fields
-7. Templates cannot alter item schema
+In WaybillForm.tsx, find the "Transport Mode" dropdown. Report:
+- The exact state field it binds to (e.g. waybill.transport_mode)
+- The exact option values used (By Vehicle, By Hand, etc.)
+- The default/initial value
 
 ==================================================
-IMPLEMENTATION
-==================================================
+QUESTION 2 — What does the Minimal PDF "Delivery Mode" row read from?
 
-Create:
-
-src/domain/waybill/contracts/
-
-Files:
-
-- waybillContract.ts
-- waybillContractAssertions.ts
-
-Add reusable assertions such as:
-
-- assertCustomDataExists()
-- assertCustomDataPreserved()
-- assertNoExtensionFieldsOutsideCustomData()
-- assertVisibilityDoesNotMutateData()
-
-Integrate only where appropriate.
-
-Do NOT rewrite existing features.
+In blankWaybillTemplate.tsx, find the "Delivery Mode" checkbox row.
+Report:
+- The exact field/variable it reads from (prop name, waybill field, etc.)
+- The exact mapping from stored value → checkbox ticked
+  (e.g. 'By Vehicle' → Vehicle checkbox, or something else)
+- Whether there is any label translation happening
+  (e.g. 'By Vehicle' displayed as 'Vehicle')
 
 ==================================================
-TESTS
-==================================================
+QUESTION 3 — Are Transport Mode and Delivery Mode the same field?
 
-Create contract tests covering:
-
-A. Import Preservation
-
-Input:
-custom_data.make
-custom_data.partNo
-custom_data.serial
-
-Expectation:
-all keys survive import → normalize → save → load
-
-B. Visibility Isolation
-
-Toggle column visibility on/off
-
-Expectation:
-stored item data remains unchanged
-
-C. PDF/Form Consistency
-
-Any column visible in Form must be visible in PDF.
-Any column hidden in Form must be hidden in PDF.
-
-D. Unknown Field Preservation
-
-Input:
-custom_data.storageLocation
-
-Expectation:
-field survives entire round trip.
+Based on Q1 and Q2, answer definitively:
+- Do they read from the same underlying data field? (yes/no)
+- If yes: where does the label/option mismatch happen? Is it a display
+  mapping in the PDF, or different option lists entirely?
+- If no: what is the separate source for Delivery Mode in the PDF?
 
 ==================================================
-REPORT
-==================================================
+QUESTION 4 — Does Classic render either field?
 
-Save report to:
-
-docs/Task/reports/waybill-canonical-contract-v2-enforcement.md
-
-Include:
-
-- violations discovered
-- enforcement added
-- tests added
-- files modified
+In WaybillPDF.tsx (Classic path), check whether transport_mode or any
+delivery mode/purpose field is rendered at all. Report:
+- Exactly which fields from the data appear in Classic
+- Whether any are missing compared to Minimal
 
 ==================================================
-DO NOT
-==================================================
-
-- Do not redesign UI
-- Do not change numbering
-- Do not change templates
-- Do not modify PDF layout
-- Do not alter import behavior except where required for enforcement
-- Do not introduce new business logic
-
-Success means:
-Future developers cannot accidentally reintroduce custom_data loss, visibility drift, or import field loss without failing enforcement.
+OUTPUT: Facts only. File paths, line numbers, exact variable names.
+No recommendations. No engine design. No fixes.
