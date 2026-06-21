@@ -78,6 +78,7 @@ interface BrandingBlock {
 ### 4.2 Header
 ```typescript
 interface HeaderBlock {
+  type: 'internal' | 'external';
   waybillNumber: string;
   date: string;
   time: string | null;
@@ -85,6 +86,7 @@ interface HeaderBlock {
 }
 
 ```
+ * *Note*: `type` discriminator allows the renderer to differentiate waybill variants without inspecting table data.
 ### 4.3 Parties
 ```typescript
 interface PartiesBlock {
@@ -105,6 +107,7 @@ interface LogisticsBlock {
 }
 
 ```
+ * *Note*: `purpose` is accepted for both internal and external waybills by the engine. The database CHECK constraint enforces `NULL` for internal waybills — the engine does not replicate this logic.
 ### 4.5 Table
 ```typescript
 interface TableBlock {
@@ -184,9 +187,14 @@ Branding → Header → Parties → Logistics → Table → Notes → Signatures
  * **Blank handling**: LOCKED
  * **Signature model**: LOCKED
  * **Pagination policy**: PARTIALLY LOCKED
-## 11. Open Decisions
- * Continuation page header style (post-MVP).
+## 11. Open Decisions (RESOLVED)
+ * ~~Continuation page header style (post-MVP).~~ **RESOLVED**: Repeat column headers only (no condensed document header). Matches Industry.tsx precedent — table header row uses \`fixed\`, document header (title, logo, parties) is NOT fixed.
  * Future custom branding fields expansion (safe extension point only).
+
+### Audit Reference: Industry.tsx (pdf-new Invoice Template)
+- **Footer (lines 609–625)**: \`<View fixed>\` containing \`extraText\`, optional \`tagline\`, and \`documentFooter\` row with page number, document number, and company name.
+- **Continuation page header**: Only the table header row (line 212, \`<View fixed>\`) repeats on continuation pages. Document header is page-1-only.
+- **Page numbering**: Uses React-PDF's \`render\` prop at line 618: \`<Text render={({pageNumber, totalPages}) => \`Page \${pageNumber} of \${totalPages}\`} fixed />\`.
 ```
 
 ```

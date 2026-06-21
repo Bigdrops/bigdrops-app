@@ -30,6 +30,11 @@ interface WaybillRenderInput {
 ```
 ## 🧩 OUTPUT CONTRACT
 Must strictly produce: WaybillRenderModel (as defined in spec v1.0)
+## 📦 DEPENDENCIES (pdf-new Core)
+The engine builds on existing pdf-new utilities — do not duplicate them:
+- **\`renderPdfRichText\`** (\`src/components/pdf-new/core/pdfRichText\`): Renders rich text blocks (paragraphs, bullet lists, ordered lists) in React-PDF. Replaces \`engHtmlToPdf\`/ \`docx\` approach.
+- **\`PdfCurrencyText\`** (\`src/components/pdf-new/pdfCurrency\`): Formats and displays currency values with consistent number formatting.
+- **\`richTextToPlainText\`** (\`src/components/pdf-new/core/richText.ts\`): Parses HTML → plain text. Use this instead of regex-based HTML stripping.
 ## 🪜 PHASE 0 — CORE INFRASTRUCTURE (Foundation Layer)
 **Objective**: Set up pure transformation utilities and guarantees before any business logic.
 ### 0.1 Create Engine Folder Structure
@@ -53,14 +58,14 @@ export function normalizeBlank(value: unknown): string {
 
 ```
  * **RULE:** This function is used everywhere. No exceptions.
-### 0.3 HTML Sanitizer
-**File:** sanitizers/sanitizeText.ts
-```typescript
-export function sanitizeText(input: string): string {
-  return input.replace(/<[^>]*>/g, "").trim();
-}
-
-```
+### 0.3 HTML Sanitizer (use existing)
+**No new sanitizer needed.** Use `richTextToPlainText()` from `src/components/pdf-new/core/richText.ts` for HTML stripping. The pdf-new core already provides this — it parses structured HTML and extracts plain text (more robust than regex).
+### 0.5 Industry.tsx Audit (Precedent Reference)
+Before implementing footer/pagination, audit the existing pdf-new Invoice \`Industry.tsx\` template:
+- **Footer**: \`<View fixed>\` (lines 609–625) with \`extraText\`, optional \`tagline\`, and \`documentFooter\` row (page number + doc number + company name).
+- **Continuation page header**: Only table header row uses \`fixed\` (line 212). Document header (title, meta, logo, parties) is page-1-only.
+- **Page numbering**: React-PDF \`render\` prop at line 618: \`<Text render={({pageNumber, totalPages}) => ...} fixed />\`.
+- **Conclusion**: \`repeatTableHeader: true\` confirmed. No condensed document header needed — matches Industry pattern.
 ### 0.4 Deterministic Clone Utility
 ```typescript
 export function deepFreeze<T>(obj: T): T {
@@ -104,7 +109,7 @@ buildRows(items, columns)
  * **Step C**: enforce blank preservation (missing values → "").
  * **Step D**: strip ALL forbidden fields (item_id, custom_data, created_at, updated_at).
 ### 2.3 Quantity + Unit Rule (ENGINE SIDE)
- * If needed upstream: qtyLabel = ${quantity} ${unit}``.
+ * Always format: qtyLabel = \`\${quantity} \${unit}\` (engine always merges).
  * Never in template.
 ## 🪜 PHASE 3 — FINAL ASSEMBLY ENGINE
 **Objective**: Compose final immutable render model.
