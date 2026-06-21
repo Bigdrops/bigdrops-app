@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -16,17 +16,17 @@ import FloatingDownloadButton from '@/components/document-view/shared/FloatingDo
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
-import { buildWaybillCustomFields, mapDbWaybill, normalizeWaybillPdfTemplateId, parseWaybillCustomFields, type WaybillPdfTemplateId } from '@/components/waybill/waybillUtils'
+import { buildWaybillCustomFields, mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, resolvePdfWebFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
-import { DocumentTemplatePicker } from '@/components/document/DocumentDesignControls'
+
 import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
@@ -34,11 +34,7 @@ import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContrac
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
-const WAYBILL_PDF_TEMPLATE_OPTIONS = [
-  { id: 'classic', label: 'Classic', description: 'Full waybill with header, items, tick boxes, and signature blocks' },
-  { id: 'minimal', label: 'Minimal', description: 'Compact checkbox-style template with sender/receiver cards' },
-  { id: 'thermal', label: 'Thermal', description: 'Receipt-width layout with Courier font for thermal printers' },
-]
+
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
@@ -54,7 +50,7 @@ export default function ViewWaybill() {
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
-  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('classic')
+
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
@@ -82,11 +78,7 @@ export default function ViewWaybill() {
     void loadWaybill()
   }, [id, navigate])
 
-  useEffect(() => {
-    if (!waybill) return
-    const cf = parseWaybillCustomFields(waybill.custom_fields)
-    setTemplateId(normalizeWaybillPdfTemplateId(cf.pdfTemplateId))
-  }, [id])
+
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     const options = { description }
@@ -150,7 +142,7 @@ export default function ViewWaybill() {
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF model={model} waybill={waybill} settings={settings || {}} designPreset={designPreset} template={templateId} />,
+        element: <WaybillPDF model={model} designPreset={designPreset} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {
@@ -292,15 +284,7 @@ export default function ViewWaybill() {
               subtitle="These controls update the saved waybill PDF design preset used by download."
             >
               <div className="space-y-4">
-                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 text-sm font-semibold text-bd-text">PDF Template</div>
-                  <div className="mb-3 text-xs text-bd-text-muted">Choose the layout style for your waybill PDF export.</div>
-                  <DocumentTemplatePicker
-                    value={templateId}
-                    onChange={(v: string) => setTemplateId(v as WaybillPdfTemplateId)}
-                    templates={WAYBILL_PDF_TEMPLATE_OPTIONS}
-                  />
-                </div>
+
 
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
                   <div className="mb-3 text-sm font-semibold text-bd-text">PDF Design</div>
@@ -315,7 +299,7 @@ export default function ViewWaybill() {
                     try {
                       setPdfDesignPreset('waybill', designPreset)
 
-                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: templateId })
+                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: 'green' })
                       const { error } = await supabase.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
 
                       if (error) {
