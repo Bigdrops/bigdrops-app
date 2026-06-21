@@ -2,7 +2,7 @@ import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
-export type WaybillPdfTemplateId = 'classic' | 'minimal' | 'thermal'
+export type WaybillPdfTemplateId = 'default' | 'minimal'
 
 export type WaybillType = 'internal' | 'external'
 
@@ -482,8 +482,7 @@ export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | null {
 export function normalizeWaybillPdfTemplateId(value: unknown): WaybillPdfTemplateId {
   const id = String(value || '').toLowerCase().trim()
   if (id === 'minimal') return 'minimal'
-  if (id === 'thermal') return 'thermal'
-  return 'classic'
+  return 'default'
 }
 
 export function validateWaybill(waybill: Partial<Waybill>): string[] {
