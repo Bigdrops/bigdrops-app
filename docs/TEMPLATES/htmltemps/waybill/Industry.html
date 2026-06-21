@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Waybill — Bold Signature</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html,
+        body {
+            width: 210mm;
+            min-height: 297mm;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #eef1f0;
+            display: flex;
+            justify-content: center;
+            padding: 16px 0;
+            color: #1a2624;
+        }
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #ffffff;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #cbd5d1;
+            position: relative;
+        }
+
+        /* ----- DARK HEADER (full width) ----- */
+        .dark-header {
+            background: #7d8a88;
+            /* your color, used boldly */
+            padding: 14px 22px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            border-bottom: 4px solid #4a5a57;
+        }
+        .dark-header .brand {
+            color: #fff;
+        }
+        .dark-header .brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+        .dark-header .brand .addr {
+            font-size: 7.5px;
+            font-weight: 300;
+            color: #dbe4e1;
+            letter-spacing: 0.2px;
+        }
+        .dark-header .wb {
+            text-align: right;
+            color: #fff;
+        }
+        .dark-header .wb .label {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #dbe4e1;
+            letter-spacing: 0.5px;
+        }
+        .dark-header .wb .number {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+
+        /* ----- CONTENT (padded) ----- */
+        .content {
+            padding: 14px 20px 12px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        /* ----- title (large, subtle) ----- */
+        .doc-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            text-align: center;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #e0e8e4;
+            padding-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        /* ----- two‑column info (left = client/dest, right = meta) ----- */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 14px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+        .left-col .block {
+            margin-bottom: 8px;
+        }
+        .left-col .block .tag {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.4px;
+            font-weight: 600;
+            border-bottom: 1px solid #e0e8e4;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+        }
+        .left-col .block .main {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1a2624;
+            line-height: 1.25;
+        }
+        .left-col .block .sub {
+            font-size: 8px;
+            color: #5f6e6b;
+        }
+        .tick-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            margin-top: 2px;
+        }
+        .tick {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 8px;
+            font-weight: 500;
+            color: #1a2624;
+        }
+        .tick .sq {
+            width: 10px;
+            height: 10px;
+            border: 1.5px solid #7d8a88;
+            display: inline-block;
+            flex-shrink: 0;
+            border-radius: 2px;
+            background: #fff;
+        }
+        .tick .sq.fill {
+            background: #7d8a88;
+            border-color: #7d8a88;
+        }
+
+        .right-col .meta-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 4px;
+        }
+        .right-col .meta-item .label {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.4px;
+        }
+        .right-col .meta-item .value {
+            font-size: 10px;
+            font-weight: 600;
+            color: #1a2624;
+            border-bottom: 0.5px solid #e0e8e4;
+            padding-bottom: 1px;
+        }
+
+        /* ----- table (full width) ----- */
+        .section-title {
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #7d8a88;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .table-wrap {
+            border: 1px solid #e0e8e4;
+            border-radius: 0;
+            overflow: hidden;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.5px;
+        }
+        th {
+            background: #f0f4f2;
+            color: #1a2624;
+            font-weight: 700;
+            padding: 4px 6px;
+            text-align: left;
+            border-bottom: 2px solid #7d8a88;
+            font-size: 7px;
+            letter-spacing: 0.3px;
+        }
+        td {
+            padding: 4px 6px;
+            border-bottom: 0.5px solid #ecf0ee;
+            color: #1a2624;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .col-n {
+            width: 4%;
+            text-align: center;
+        }
+        .col-d {
+            width: 42%;
+        }
+        .col-q {
+            width: 16%;
+            text-align: center;
+        }
+        .col-c {
+            width: 12%;
+            text-align: center;
+        }
+        .col-p {
+            width: 14%;
+            text-align: center;
+        }
+        .col-m {
+            width: 12%;
+            text-align: center;
+        }
+
+        /* ----- driver row (inline) ----- */
+        .driver-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f6f9f7;
+            border: 1px solid #e0e8e4;
+            padding: 4px 12px;
+            border-radius: 0;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .driver-row .label {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.3px;
+        }
+        .driver-row .value {
+            font-size: 9px;
+            font-weight: 600;
+            color: #1a2624;
+        }
+
+        /* ----- notes + checklist (side by side) ----- */
+        .notes-checklist {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .notes-checklist .box {
+            flex: 1;
+            border: 1px solid #e0e8e4;
+            padding: 6px 10px 8px;
+            background: #fafcfb;
+        }
+        .notes-checklist .box .tag {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.3px;
+            font-weight: 600;
+        }
+        .notes-text {
+            font-size: 8px;
+            color: #1a2624;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+        .chk-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 7.5px;
+            color: #1a2624;
+            margin-top: 1px;
+        }
+        .chk-item .sq {
+            width: 9px;
+            height: 9px;
+            border: 1.5px solid #7d8a88;
+            border-radius: 2px;
+            display: inline-block;
+            flex-shrink: 0;
+            background: #fff;
+        }
+
+        /* ----- SIGNATURE SECTION - COMPLETELY REDESIGNED ----- */
+        .signature-block {
+            border: 2px solid #7d8a88;
+            padding: 10px 14px 12px;
+            background: #f9fbfa;
+            flex-shrink: 0;
+            margin-bottom: 6px;
+            position: relative;
+        }
+        .signature-block .sig-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #7d8a88;
+            padding-bottom: 4px;
+        }
+        .sig-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .sig-col .sig-label {
+            font-size: 6.5px;
+            text-transform: uppercase;
+            color: #7d8a88;
+            letter-spacing: 0.4px;
+            font-weight: 600;
+        }
+        .sig-col .sig-name-line {
+            border-bottom: 1px solid #cbd5d1;
+            min-height: 18px;
+            padding: 2px 0 4px;
+            font-size: 9px;
+            font-weight: 600;
+            color: #1a2624;
+            margin-bottom: 2px;
+        }
+        .sig-col .sig-name-line.empty {
+            color: #bcc9c4;
+        }
+        /* signature box: large, with dashed border and background */
+        .sig-col .sig-draw-area {
+            border: 2px dashed #7d8a88;
+            border-radius: 4px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #bcc9c4;
+            background: #ffffff;
+            margin: 4px 0 6px;
+            transition: none;
+        }
+        .sig-col .sig-dt-row {
+            display: flex;
+            gap: 12px;
+        }
+        .sig-col .sig-dt-row>div {
+            flex: 1;
+        }
+        .sig-col .sig-dt-row .dt-line {
+            border-bottom: 0.5px solid #cbd5d1;
+            min-height: 14px;
+            font-size: 8px;
+            font-weight: 500;
+            color: #1a2624;
+            padding: 1px 0;
+        }
+        .sig-col .sig-dt-row .dt-line.empty {
+            color: #bcc9c4;
+        }
+
+        /* ----- footer ----- */
+        .footer {
+            border-top: 1px solid #e0e8e4;
+            padding-top: 5px;
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            font-size: 6.5px;
+            color: #7d8a88;
+            flex-shrink: 0;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .page {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- dark header -->
+        <div class="dark-header">
+            <div class="brand">
+                <h1>Sun &amp; Shield Power Solutions</h1>
+                <div class="addr">43 Oshola Street, Ifako-Ijaiye, Lagos · +234 800 123 4567</div>
+            </div>
+            <div class="wb">
+                <div class="label">Waybill No.</div>
+                <div class="number">WBL-E-000042</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="doc-title">Waybill / Delivery Note</div>
+
+            <!-- top grid: client/dest left, meta right -->
+            <div class="top-grid">
+                <div class="left-col">
+                    <div class="block">
+                        <div class="tag">Client / Consignee</div>
+                        <div class="main">Global Industrial Logistics</div>
+                        <div class="sub">Plot 42, Ikoyi Crescent, Lagos</div>
+                    </div>
+                    <div class="block">
+                        <div class="tag">Destination Address</div>
+                        <div class="main">Ikoyi Depot, Lagos</div>
+                    </div>
+                    <div class="block" style="margin-bottom:0;">
+                        <div class="tag">Method</div>
+                        <div class="tick-group">
+                            <span class="tick"><span class="sq"></span> Hand</span>
+                            <span class="tick"><span class="sq fill"></span> Vehicle</span>
+                            <span class="tick"><span class="sq"></span> Courier</span>
+                        </div>
+                    </div>
+                    <div class="block" style="margin-bottom:0; margin-top:4px;">
+                        <div class="tag">Purpose</div>
+                        <div class="tick-group">
+                            <span class="tick"><span class="sq fill"></span> Supply</span>
+                            <span class="tick"><span class="sq"></span> Return</span>
+                            <span class="tick"><span class="sq"></span> Repair</span>
+                            <span class="tick"><span class="sq"></span> Transfer</span>
+                            <span class="tick"><span class="sq"></span> Other</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-col">
+                    <div class="meta-item"><span class="label">Date</span><span class="value">2026-06-20</span></div>
+                    <div class="meta-item"><span class="label">Time</span><span class="value">10:30 AM</span></div>
+                    <div class="meta-item"><span class="label">P.O. Number</span><span class="value">PO-2026-0842</span></div>
+                    <div class="meta-item"><span class="label">Vehicle Plate</span><span class="value">AKD-421-XY</span></div>
+                    <div class="meta-item"><span class="label">Driver Name</span><span class="value">Emeka Nwosu</span></div>
+                </div>
+            </div>
+
+            <!-- table -->
+            <div class="section-title">Goods Description</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-n">#</th>
+                            <th class="col-d">Description</th>
+                            <th class="col-q">Qty / Unit</th>
+                            <th class="col-c">Condition</th>
+                            <th class="col-p">Part No</th>
+                            <th class="col-m">Make</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="col-n">1</td><td>12KVA Inverter Unit — Hybrid</td><td class="col-q">2 Unit</td><td class="col-c">Good</td><td class="col-p">INV-001</td><td class="col-m">SunPower</td></tr>
+                        <tr><td class="col-n">2</td><td>200AH Deep Cycle Battery</td><td class="col-q">8 Unit</td><td class="col-c">Good</td><td class="col-p">BAT-200</td><td class="col-m">MaxCell</td></tr>
+                        <tr><td class="col-n">3</td><td>Solar Panel 550W Mono</td><td class="col-q">12 Panel</td><td class="col-c">Good</td><td class="col-p">SP-550</td><td class="col-m">GreenVolt</td></tr>
+                        <tr><td class="col-n">4</td><td>MC4 Connectors (Pair)</td><td class="col-q">20 Pair</td><td class="col-c">Good</td><td class="col-p">MC4-02</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">5</td><td>6mm² Solar Cable (per meter)</td><td class="col-q">100 Meter</td><td class="col-c">Good</td><td class="col-p">CBL-06</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">6</td><td>Charge Controller 60A MPPT</td><td class="col-q">2 Unit</td><td class="col-c">Good</td><td class="col-p">CC-60</td><td class="col-m">SunTracer</td></tr>
+                        <tr><td class="col-n">7</td><td>Distribution Panel 12-Way</td><td class="col-q">3 Unit</td><td class="col-c">Good</td><td class="col-p">DP-12</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">8</td><td>Surge Protector SPD 40kA</td><td class="col-q">5 Unit</td><td class="col-c">Good</td><td class="col-p">SPD-40</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">9</td><td>Changeover Switch 63A 4-Pole</td><td class="col-q">2 Unit</td><td class="col-c">Good</td><td class="col-p">CS-63</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">10</td><td>PVC Conduit 20mm (3m)</td><td class="col-q">30 Length</td><td class="col-c">Good</td><td class="col-p">PVC-20</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">11</td><td>Cable Tray 300mm x 3m</td><td class="col-q">6 Length</td><td class="col-c">Good</td><td class="col-p">CT-300</td><td class="col-m">—</td></tr>
+                        <tr><td class="col-n">12</td><td>Earthing Rod Copper 1.8m</td><td class="col-q">4 Unit</td><td class="col-c">Good</td><td class="col-p">ER-18</td><td class="col-m">—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- notes + checklist -->
+            <div class="notes-checklist">
+                <div class="box">
+                    <div class="tag">Operational Notes</div>
+                    <div class="notes-text">All items must be inspected before signing delivery confirmation.</div>
+                </div>
+                <div class="box">
+                    <div class="tag">Receiving Checklist</div>
+                    <div class="chk-item"><span class="sq"></span> Quantity Checked</div>
+                    <div class="chk-item"><span class="sq"></span> Condition Confirmed</div>
+                    <div class="chk-item"><span class="sq"></span> Shortage Reported</div>
+                    <div class="chk-item"><span class="sq"></span> Goods Accepted</div>
+                </div>
+            </div>
+
+            <!-- SIGNATURE BLOCK – redesigned with bold border, large signature areas -->
+            <div class="signature-block">
+                <div class="sig-title">Delivery Confirmation</div>
+                <div class="sig-grid">
+                    <!-- Delivered By -->
+                    <div class="sig-col">
+                        <div class="sig-label">Delivered By (Sender)</div>
+                        <div class="sig-name-line">Sun &amp; Shield Power Solutions</div>
+                        <div class="sig-draw-area">✍️ Signature</div>
+                        <div class="sig-dt-row">
+                            <div>
+                                <div class="sig-label" style="font-size:6px;">Date</div>
+                                <div class="dt-line empty">&nbsp;</div>
+                            </div>
+                            <div>
+                                <div class="sig-label" style="font-size:6px;">Time</div>
+                                <div class="dt-line empty">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Received By -->
+                    <div class="sig-col">
+                        <div class="sig-label">Received By (Receiver)</div>
+                        <div class="sig-name-line empty">&nbsp;</div>
+                        <div class="sig-draw-area">✍️ Signature</div>
+                        <div class="sig-dt-row">
+                            <div>
+                                <div class="sig-label" style="font-size:6px;">Date</div>
+                                <div class="dt-line empty">&nbsp;</div>
+                            </div>
+                            <div>
+                                <div class="sig-label" style="font-size:6px;">Time</div>
+                                <div class="dt-line empty">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- footer -->
+            <div class="footer">
+                <span>Sun &amp; Shield Power Solutions</span>
+                <span>WBL-E-000042</span>
+                <span>Page 1 of 1</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
