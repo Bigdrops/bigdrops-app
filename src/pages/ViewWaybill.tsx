@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -20,7 +20,7 @@ import { buildWaybillCustomFields, mapDbWaybill, normalizeWaybillPdfTemplateId, 
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, resolvePdfWebFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -35,8 +35,9 @@ const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
 const WAYBILL_PDF_TEMPLATE_OPTIONS = [
-  { id: 'default', label: 'Classic', description: 'Full waybill with header, items, signatures, and footer' },
+  { id: 'classic', label: 'Classic', description: 'Full waybill with header, items, signatures, and footer' },
   { id: 'minimal', label: 'Minimal', description: 'Blank template with checkboxes for on-site completion' },
+  { id: 'thermal', label: 'Thermal', description: 'Compact waybill optimized for thermal printers' },
 ]
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
@@ -53,7 +54,7 @@ export default function ViewWaybill() {
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
-  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('default')
+  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('classic')
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
@@ -149,7 +150,7 @@ export default function ViewWaybill() {
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF model={model} waybill={waybill} settings={settings || {}} designPreset={designPreset} template={templateId} />,
+        element: <WaybillPDF model={model} designPreset={designPreset} template={templateId} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {
