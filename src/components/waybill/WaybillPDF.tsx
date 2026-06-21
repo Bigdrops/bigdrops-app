@@ -7,15 +7,10 @@ import {
 } from '@/lib/pdfDesignPreset'
 import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 
-import {
-  formatWaybillDate,
-  getWaybillTypeContent,
-  mapDbWaybill,
-} from './waybillUtils'
+import { getWaybillTypeContent } from './waybillUtils'
 import type { Waybill } from './waybillUtils'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 import { WaybillMinimalContent } from './blankWaybillTemplate'
-import type { MinimalContentData } from './blankWaybillTemplate'
 import { minimalStyles } from './waybillMinimalStyles'
 
 
@@ -92,40 +87,13 @@ function createStyles(designPreset?: PdfDesignPreset) {
 export default function WaybillPDF({ model, waybill, settings, designPreset, template }: WaybillPDFProps) {
   const S = createStyles(designPreset)
   const isMinimal = template === 'minimal'
-  const mapped = isMinimal ? mapDbWaybill(waybill) : null
-  const customFields = isMinimal && mapped?.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
-  const signatureMap = isMinimal ? (customFields.signatures || {}) : {}
-  const senderSig = isMinimal ? (signatureMap.sender || {}) : {}
-  const receiverSig = isMinimal ? (signatureMap.receiver || {}) : {}
 
   if (template === 'minimal') {
-    const minimalData: MinimalContentData = {
-      type: mapped.type,
-      waybillNumber: mapped.waybill_number || undefined,
-      date: formatWaybillDate(mapped.date),
-      companyName: settings.company_name,
-      companyAddress: settings.company_address,
-      companyLogoUrl: settings.company_logo_url,
-      tagline: settings.company_tagline,
-      companyPhone: settings.company_phone,
-      companyEmail: settings.company_email,
-      clientName: mapped.client_name,
-      destinationAddress: mapped.delivery_location,
-      vehiclePlate: mapped.vehicle_plate,
-      driverName: mapped.driver_name,
-      transportMode: mapped.transport_mode,
-      purpose: mapped.purpose,
-      senderName: mapped.sender_name,
-      receiverName: mapped.receiver_name,
-      senderSignatureUrl: senderSig.image_url || senderSig.drawn_data_url,
-      receiverSignatureUrl: receiverSig.image_url || receiverSig.drawn_data_url,
-      items: mapped.items,
-      notes: mapped.notes,
-    }
+    if (!model) return null
     return (
       <Document>
         <Page size="A4" style={minimalStyles.page}>
-          <WaybillMinimalContent data={minimalData} />
+          <WaybillMinimalContent model={model} />
         </Page>
       </Document>
     )

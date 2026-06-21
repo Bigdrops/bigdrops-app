@@ -1,314 +1,298 @@
-/* eslint-disable react-refresh/only-export-components */
-
-// CONTRACT: The Minimal blank waybill must fit on a single portrait A4 page.
-// Any change that causes signatures or footer to spill to a second page
-// is an automatic contract violation.
-
-import { Document, Image, Page, Text, View, pdf } from '@react-pdf/renderer'
-import type { WaybillItem, WaybillType } from './waybillUtils'
-import { minimalStyles } from './waybillMinimalStyles'
-import { richTextToPlainText } from '@/components/pdf-new/core/richText'
-
-export interface MinimalContentData {
-  type: WaybillType
-  waybillNumber?: string
-  date?: string
-  companyName?: string
-  companyAddress?: string
-  companyLogoUrl?: string
-  tagline?: string
-  companyPhone?: string
-  companyEmail?: string
-  clientName?: string
-  destinationAddress?: string
-  vehiclePlate?: string
-  driverName?: string
-  transportMode?: string
-  purpose?: string
-  senderName?: string
-  receiverName?: string
-  senderSignatureUrl?: string
-  receiverSignatureUrl?: string
-  items?: WaybillItem[]
-  notes?: string
-}
+import React, { useEffect, useState } from 'react'
+import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer'
+import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { minimalStyles as styles } from './waybillMinimalStyles'
 
 function Checkbox({ checked }: { checked: boolean }) {
   return (
-    <View style={[minimalStyles.checkboxBox, checked && { backgroundColor: '#000' }]} />
+    <View style={styles.checkboxBox}>
+      {checked ? <Text style={{ fontSize: 8, lineHeight: 1 }}>✓</Text> : null}
+    </View>
   )
 }
 
-export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
-  const {
-    type, waybillNumber, date, companyName, companyAddress, companyLogoUrl, tagline,
-    companyPhone, companyEmail,
-    clientName, destinationAddress, vehiclePlate, driverName, transportMode, purpose,
-    senderName, receiverName, senderSignatureUrl, receiverSignatureUrl, items, notes,
-  } = data
+const deliveryModes = ['By Hand', 'By Vehicle'] as const
+const deliveryReasons = ['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const
 
-  const sanitizedNotes = richTextToPlainText(notes || '')
+export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) {
+  const [mounted, setMounted] = useState(false)
 
-  const blankMode = !items || items.length === 0
-  const rowCount = blankMode ? 10 : items.length
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(timer)
+  }, [])
 
-  const isHand = transportMode === 'By Hand'
-  const isVehicle = transportMode === 'By Vehicle'
-  const isModeOther = !!transportMode && !['By Hand', 'By Vehicle'].includes(transportMode)
-  const isSupply = purpose === 'Supply'
-  const isReturn = purpose === 'Return'
-  const isRepair = purpose === 'Repair'
-  const isTransfer = purpose === 'Transfer'
-  const isReasonOther = purpose === 'Other'
+  // Derive checkbox state from model strings
+  const isHand = model.logistics.deliveryMode === 'By Hand'
+  const isVehicle = model.logistics.deliveryMode === 'By Vehicle'
+  const isModeOther = !!model.logistics.deliveryMode && !['By Hand', 'By Vehicle'].includes(model.logistics.deliveryMode)
 
-  const contactParts: string[] = []
-  if (companyPhone) contactParts.push(companyPhone)
-  if (companyEmail) contactParts.push(companyEmail)
-  const contactLine = contactParts.length > 0 ? contactParts.join('  |  ') : ''
+  const isSupply = model.logistics.purpose === 'Supply'
+  const isReturn = model.logistics.purpose === 'Return'
+  const isRepair = model.logistics.purpose === 'Repair'
+  const isTransfer = model.logistics.purpose === 'Transfer'
+  const isReasonOther = model.logistics.purpose === 'Other'
+
+  const blankMode = model.table.rows.length === 0
+  const rowCount = blankMode ? 10 : model.table.rows.length
 
   return (
-    <View style={minimalStyles.root}>
-      {/* This template is designed to render on a single A4 page. */}
-      {/* ZONE 1 — TITLE */}
-      <View style={minimalStyles.titleZone}>
-        <Text style={minimalStyles.docTitle}>WAYBILL / DELIVERY NOTE</Text>
+    <View style={styles.page}>
+      {/* ──────── TITLE ZONE ──────── */}
+      <View style={[styles.titleZone, { opacity: mounted ? 1 : 0 }]} {...(model.pagination?.repeatTableHeader ? { fixed: true } : {})}>
+        <Text style={styles.docTitle}>WAYBILL / DELIVERY NOTE</Text>
       </View>
 
-      {/* ZONE 2 — HEADER GRID */}
-      <View style={minimalStyles.headerGrid}>
-        <View style={minimalStyles.brandInfo}>
-          {companyLogoUrl ? (
-            <Image src={companyLogoUrl} style={minimalStyles.brandLogo} />
+      {/* ──────── HEADER GRID ──────── */}
+      <View style={[styles.headerGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        {/* Left — Company Info */}
+        <View style={styles.brandInfo}>
+          {model.branding.logo ? (
+            <Image src={model.branding.logo} style={styles.brandLogo} />
           ) : null}
-          <Text style={minimalStyles.brandName}>{companyName || 'Company Name'}</Text>
-          {companyAddress ? <Text style={minimalStyles.brandAddress}>{companyAddress}</Text> : null}
-          {contactLine ? <Text style={minimalStyles.brandContact}>{contactLine}</Text> : null}
-          {tagline ? <Text style={minimalStyles.brandTagline}>{tagline}</Text> : null}
-        </View>
-        <View style={minimalStyles.identifierColumn}>
-          <View style={minimalStyles.identifierBlock}>
-            <View style={{ alignItems: 'flex-end', gap: 4 }}>
-              <View style={minimalStyles.metaPill}>
-                <Text style={minimalStyles.metaPillValue}>{waybillNumber || ''}</Text>
-              </View>
-              <View style={[minimalStyles.metaPill, minimalStyles.datePill]}>
-                <Text style={minimalStyles.metaPillValue}>Date{'  '}{date || ''}</Text>
-              </View>
-            </View>
+          <Text style={styles.brandName}>{model.branding.name}</Text>
+          {model.branding.address ? (
+            <Text style={styles.brandAddress}>{model.branding.address}</Text>
+          ) : null}
+          <View style={styles.brandContact}>
+            {model.branding.phone ? <Text style={styles.brandContact}>📞 {model.branding.phone}</Text> : null}
+            {model.branding.email ? <Text style={styles.brandContact}>✉ {model.branding.email}</Text> : null}
           </View>
+          {model.branding.tagline ? <Text style={styles.brandTagline}>{model.branding.tagline}</Text> : null}
         </View>
-      </View>
 
-      <View style={minimalStyles.topGrid}>
-        <View style={minimalStyles.topBox}>
-          <Text style={minimalStyles.boxLabel}>{type === 'internal' ? 'Origin' : 'Client / Consignee'}</Text>
-          <Text>{clientName || ''}</Text>
-        </View>
-        <View style={minimalStyles.topBox}>
-          <Text style={minimalStyles.boxLabel}>{type === 'internal' ? 'Destination' : 'Destination Address'}</Text>
-          <Text>{destinationAddress || ''}</Text>
-        </View>
-      </View>
-
-      <View style={minimalStyles.secondGrid}>
-        <View style={minimalStyles.secondBox}>
-          <Text style={minimalStyles.boxLabel}>Vehicle Plate</Text>
-          <Text>{vehiclePlate || ''}</Text>
-        </View>
-        <View style={minimalStyles.secondBox}>
-          <Text style={minimalStyles.boxLabel}>Driver Name</Text>
-          <Text>{driverName || ''}</Text>
-        </View>
-      </View>
-
-      <View style={minimalStyles.modeRow}>
-        <View style={minimalStyles.modeBox}>
-          <Text style={minimalStyles.boxLabel}>Delivery Mode</Text>
-          <View style={minimalStyles.checkboxRow}>
-            <View style={minimalStyles.checkboxLabel}>
-              <Checkbox checked={isHand} />
-              <Text>Hand</Text>
-            </View>
-            <View style={minimalStyles.checkboxLabel}>
-              <Checkbox checked={isVehicle} />
-              <Text>Vehicle</Text>
-            </View>
-            <View style={minimalStyles.checkboxLabel}>
-              <Checkbox checked={isModeOther} />
-              <Text>Other</Text>
-            </View>
+        {/* Right — Identifier Column */}
+        <View style={styles.identifierColumn}>
+          <View style={styles.metaPill}>
+            <Text style={styles.metaPillValue}>{model.header.waybillNumber}</Text>
           </View>
+          {model.header.date ? (
+            <View style={[styles.metaPill, styles.datePill]}>
+              <Text style={styles.metaPillValue}>{model.header.date}</Text>
+            </View>
+          ) : null}
         </View>
-        {type === 'external' ? (
-          <View style={minimalStyles.modeBox}>
-            <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
-            <View style={minimalStyles.checkboxRow}>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isSupply} />
-                <Text>Supply</Text>
-              </View>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isReturn} />
-                <Text>Return</Text>
-              </View>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isRepair} />
-                <Text>Repair</Text>
-              </View>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isReasonOther} />
+      </View>
+
+      {/* ──────── TOP GRID: Client / Destination ──────── */}
+      <View style={[styles.topGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        <View style={styles.topBox}>
+          <Text style={styles.boxLabel}>
+            {model.header.type === 'internal' ? 'ORIGIN' : 'CLIENT / CONSIGNEE'}
+          </Text>
+          <Text>
+            {model.header.type === 'internal'
+              ? (model.logistics.deliveryLocation || '—')
+              : (model.parties.clientName || '—')}
+          </Text>
+        </View>
+        <View style={styles.topBox}>
+          <Text style={styles.boxLabel}>DESTINATION</Text>
+          <Text>{model.logistics.deliveryLocation || '—'}</Text>
+        </View>
+      </View>
+
+      {/* ──────── SECOND GRID ──────── */}
+      <View style={[styles.secondGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        <View style={styles.secondBox}>
+          <Text style={styles.boxLabel}>VEHICLE PLATE NO.</Text>
+          <Text>{model.logistics.vehiclePlate || '—'}</Text>
+        </View>
+        <View style={styles.secondBox}>
+          <Text style={styles.boxLabel}>DRIVER NAME</Text>
+          <Text>{model.logistics.driverName || '—'}</Text>
+        </View>
+      </View>
+
+      {/* ──────── MODE ROW ──────── */}
+      <View style={[styles.modeRow, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        <View style={styles.modeBox}>
+          <Text style={styles.boxLabel}>DELIVERY MODE</Text>
+          <View style={styles.checkboxRow}>
+            {deliveryModes.map((mode) => {
+              const checked =
+                mode === 'By Hand' ? isHand :
+                mode === 'By Vehicle' ? isVehicle : false
+              return (
+                <View key={mode} style={styles.checkboxLabel}>
+                  <Checkbox checked={checked} />
+                  <Text>{mode}</Text>
+                </View>
+              )
+            })}
+            {isModeOther ? (
+              <View style={styles.checkboxLabel}>
+                <Checkbox checked />
                 <Text>Other</Text>
               </View>
-            </View>
+            ) : null}
           </View>
-        ) : null}
-        {type === 'internal' ? (
-          <View style={minimalStyles.modeBox}>
-            <Text style={minimalStyles.boxLabel}>Delivery Reason</Text>
-            <View style={minimalStyles.checkboxRow}>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isTransfer} />
-                <Text>Transfer</Text>
-              </View>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isRepair} />
-                <Text>Repair</Text>
-              </View>
-              <View style={minimalStyles.checkboxLabel}>
-                <Checkbox checked={isReasonOther} />
-                <Text>Other</Text>
-              </View>
-            </View>
-          </View>
-        ) : null}
-      </View>
-
-      {/* ZONE 4 — CONTENT */}
-      <View style={minimalStyles.contentZone}>
-        <View style={minimalStyles.table}>
-          <View style={minimalStyles.tableHeaderRow}>
-            <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colNum]}>#</Text>
-            <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colDesc]}>Description</Text>
-            <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colQty]}>Qty</Text>
-            <Text style={[minimalStyles.tableHeaderCell, minimalStyles.colUnit]}>Unit</Text>
-          </View>
-          {Array.from({ length: rowCount }, (_, i) => {
-            const item = blankMode ? null : items[i]
-            return (
-              <View key={i} style={minimalStyles.tableRow}>
-                <Text style={[minimalStyles.tableCell, minimalStyles.colNum]}>{i + 1}</Text>
-                <Text style={[minimalStyles.tableCell, minimalStyles.colDesc]}>{item?.description || ''}</Text>
-                <Text style={[minimalStyles.tableCell, minimalStyles.colQty]}>{item?.quantity != null ? String(item.quantity) : ''}</Text>
-                <Text style={[minimalStyles.tableCell, minimalStyles.colUnit]}>{item?.unit || ''}</Text>
-              </View>
-            )
-          })}
         </View>
-
-        <View style={minimalStyles.notesBox}>
-          <Text style={minimalStyles.boxLabel}>Delivery Remarks / Notes</Text>
-          <Text>{sanitizedNotes}</Text>
+        <View style={styles.modeBox}>
+          <Text style={styles.boxLabel}>REASON FOR DELIVERY</Text>
+          <View style={styles.checkboxRow}>
+            {deliveryReasons.map((reason) => {
+              const checked =
+                reason === 'Supply' ? isSupply :
+                reason === 'Return' ? isReturn :
+                reason === 'Repair' ? isRepair :
+                reason === 'Transfer' ? isTransfer :
+                reason === 'Other' ? isReasonOther : false
+              return (
+                <View key={reason} style={styles.checkboxLabel}>
+                  <Checkbox checked={checked} />
+                  <Text>{reason}</Text>
+                </View>
+              )
+            })}
+          </View>
         </View>
       </View>
 
-      {/* ZONE 5 — SIGNATURE + FOOTER */}
-      <View>
-        <View style={minimalStyles.sigsRow}>
-          <View style={minimalStyles.sigCard}>
-            <Text style={minimalStyles.sigHeader}>Delivered By / Driver</Text>
-            <View style={minimalStyles.sigMetaRow}>
-              <Text style={minimalStyles.sigMetaCellBorder}>{senderName || 'Name'}</Text>
-              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
+      {/* ──────── TABLE ──────── */}
+      <View style={[styles.table, { opacity: mounted ? 1 : 0 }]}>
+        <View style={[styles.tableRow, styles.tableHeaderRow]} {...(model.pagination?.repeatTableHeader ? { fixed: true } : {})}>
+          {model.table.columns.map((col, i) => (
+            <Text
+              key={`hdr-${col.key}`}
+              style={[
+                styles.tableHeaderCell,
+                i === 0 ? styles.colNum :
+                i === model.table.columns.length - 1 ? styles.colUnit :
+                col.key === 'description' ? styles.colDesc :
+                col.key === 'qtyLabel' ? styles.colQty :
+                undefined,
+              ]}
+            >
+              {i === 0 ? '#' : col.label}
+            </Text>
+          ))}
+        </View>
+        {Array.from({ length: rowCount }).map((_, idx) => {
+          const row = blankMode ? null : model.table.rows[idx]
+          const cells = row?.cells ?? {}
+          return (
+            <View key={idx} style={styles.tableRow}>
+              {model.table.columns.map((col, i) => (
+                <Text
+                  key={`cell-${idx}-${col.key}`}
+                  style={[
+                    styles.tableCell,
+                    i === 0 ? styles.colNum :
+                    i === model.table.columns.length - 1 ? styles.colUnit :
+                    col.key === 'description' ? styles.colDesc :
+                    col.key === 'qtyLabel' ? styles.colQty :
+                    undefined,
+                  ]}
+                >
+                  {i === 0 ? (idx + 1).toString() : (cells[col.key] ?? '')}
+                </Text>
+              ))}
             </View>
-            <View style={minimalStyles.sigArea}>
-              {senderSignatureUrl ? (
-                <Image src={senderSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
-              ) : (
-                <View style={{ width: 110, height: 42 }} />
-              )}
+          )
+        })}
+      </View>
+
+      {/* ──────── NOTES BOX ──────── */}
+      {model.notes ? (
+        <View style={[styles.notesBox, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+          <Text style={styles.boxLabel}>NOTES / INSTRUCTIONS</Text>
+          <Text>{model.notes}</Text>
+        </View>
+      ) : null}
+
+      {/* ──────── SIGNATURE CARDS ──────── */}
+      <View style={[styles.sigsRow, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        {/* Sender Signature */}
+        <View style={styles.sigCard}>
+          <View style={styles.sigHeader}>
+            <Text>SENDER'S SIGNATURE</Text>
+          </View>
+          <View style={styles.sigMetaRow}>
+            <View style={styles.sigMetaCellBorder}>
+              <Text style={styles.dateLabel}>Name</Text>
+              <Text>{model.parties.senderName || '—'}</Text>
+            </View>
+            <View style={styles.sigMetaCell}>
+              <Text style={styles.dateLabel}>Date</Text>
+              <Text>{model.header.date || '—'}</Text>
             </View>
           </View>
-          <View style={minimalStyles.sigCard}>
-            <Text style={minimalStyles.sigHeader}>Received By</Text>
-            <View style={minimalStyles.sigMetaRow}>
-              <Text style={minimalStyles.sigMetaCellBorder}>{receiverName || 'Name'}</Text>
-              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
-            </View>
-            <View style={minimalStyles.sigArea}>
-              {receiverSignatureUrl ? (
-                <Image src={receiverSignatureUrl} style={{ width: 110, height: 42, objectFit: 'contain' }} />
-              ) : (
-                <View style={{ width: 110, height: 42 }} />
-              )}
-            </View>
+          <View style={styles.sigArea}>
+            {model.signatures.sender ? (
+              <Image src={model.signatures.sender.url} style={{ width: 110, height: 42 }} />
+            ) : null}
           </View>
         </View>
 
-        <View style={minimalStyles.footer}>
-          <Text>{companyName || ''}</Text>
-          <Text>{waybillNumber || ''}</Text>
+        {/* Receiver Signature */}
+        <View style={styles.sigCard}>
+          <View style={styles.sigHeader}>
+            <Text>RECEIVER'S SIGNATURE</Text>
+          </View>
+          <View style={styles.sigMetaRow}>
+            <View style={styles.sigMetaCellBorder}>
+              <Text style={styles.dateLabel}>Name</Text>
+              <Text>{model.parties.receiverName || '—'}</Text>
+            </View>
+            <View style={styles.sigMetaCell}>
+              <Text style={styles.dateLabel}>Date</Text>
+              <Text>{model.header.date || '—'}</Text>
+            </View>
+          </View>
+          <View style={styles.sigArea}>
+            {model.signatures.receiver ? (
+              <Image src={model.signatures.receiver.url} style={{ width: 110, height: 42 }} />
+            ) : null}
+          </View>
         </View>
+      </View>
+
+      {/* ──────── FOOTER ──────── */}
+      <View style={[styles.footer, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        <Text>{model.footer.waybillNumber}</Text>
+        <Text>{model.footer.companyName}</Text>
       </View>
     </View>
   )
 }
 
-function BlankExternalTemplate(options: MinimalContentData) {
-  return (
-    <Document>
-      <Page size="A4" style={minimalStyles.page}>
-        <WaybillMinimalContent data={options} />
+export function downloadBlankWaybillTemplate(options: {
+  model: WaybillRenderModel
+  type: 'internal' | 'external'
+  fileName?: string
+}) {
+  const { pdf } = require('@react-pdf/renderer') as typeof import('@react-pdf/renderer')
+  const fileName = options.fileName ?? `waybill-${options.model.header.waybillNumber || 'blank'}.pdf`
+
+  const doc = (
+    <Document
+      title={`Waybill - ${options.model.header.waybillNumber || 'Blank'}`}
+      author={options.model.branding.name || 'Company'}
+      creator="Bigdrops Waybill Minimal"
+    >
+      <Page
+        size="A4"
+        style={{
+          paddingVertical: 25,
+          paddingHorizontal: 20,
+          fontFamily: 'Helvetica',
+          fontSize: 9,
+          color: '#111827',
+          backgroundColor: 'white',
+        }}
+      >
+        <WaybillMinimalContent model={options.model} />
       </Page>
     </Document>
   )
-}
 
-function BlankInternalTemplate(options: MinimalContentData) {
-  return (
-    <Document>
-      <Page size="A4" style={minimalStyles.page}>
-        <WaybillMinimalContent data={options} />
-      </Page>
-    </Document>
-  )
-}
-
-export interface BlankTemplateOptions {
-  type: WaybillType
-  waybillNumber: string
-  date?: string
-  companyName: string
-  companyAddress?: string
-  companyLogoUrl?: string
-  tagline?: string
-  companyPhone?: string
-  companyEmail?: string
-}
-
-export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions): Promise<void> {
-  const contentData: MinimalContentData = {
-    type: options.type,
-    waybillNumber: options.waybillNumber,
-    date: options.date || new Date().toLocaleDateString(),
-    companyName: options.companyName,
-    companyAddress: options.companyAddress,
-    companyLogoUrl: options.companyLogoUrl,
-    tagline: options.tagline,
-    companyPhone: options.companyPhone,
-    companyEmail: options.companyEmail,
-  }
-
-  const element = options.type === 'internal'
-    ? <BlankInternalTemplate {...contentData} />
-    : <BlankExternalTemplate {...contentData} />
-
-  const blob = await pdf(element).toBlob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `blank-${options.type}-waybill.pdf`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  return pdf(doc).toBlob().then((blob: Blob) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+    URL.revokeObjectURL(url)
+  })
 }

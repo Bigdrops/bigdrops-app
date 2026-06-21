@@ -71,16 +71,30 @@ export default function NewWaybill() {
 
         if (!logError) {
           const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
+          const { buildWaybillRenderModel } = await import('../domain/waybill/engine/assembly')
+          const { STANDARD_ITEM_COLUMNS } = await import('../domain/waybill/contracts/waybillContract')
+
+          const model = buildWaybillRenderModel({
+            waybill: {
+              waybill_number: waybillNumber,
+              type: blankType,
+              date: new Date().toISOString(),
+              items: [],
+            },
+            columns: STANDARD_ITEM_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
+            company: {
+              name: settings?.company_name || 'Company Name',
+              tagline: settings?.company_tagline || null,
+              logo: settings?.company_logo_url || null,
+              address: settings?.company_address || null,
+              phone: settings?.company_phone || null,
+              email: settings?.company_email || null,
+            },
+          })
+
           await downloadBlankWaybillTemplate({
+            model,
             type: blankType,
-            waybillNumber,
-            date: new Date().toLocaleDateString(),
-            companyName: settings?.company_name || 'Company Name',
-            companyAddress: settings?.company_address || undefined,
-            companyLogoUrl: settings?.company_logo_url || undefined,
-            tagline: settings?.company_tagline || undefined,
-            companyPhone: settings?.company_phone || undefined,
-            companyEmail: settings?.company_email || undefined,
           })
           feedback.success(`Blank template ${waybillNumber} downloaded`)
           return
