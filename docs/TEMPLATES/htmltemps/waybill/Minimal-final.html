@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Waybill — Single A4</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; height: 297mm; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9px;
+    color: #000;
+    background: #e2e8f0;
+    padding: 20px 0;
+  }
+  .page {
+    width: 210mm;
+    height: 297mm;            /* hard-clamp to single A4 */
+    background: #fff;
+    padding: 10mm 12mm;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;          /* hard-cut anything that overflows */
+  }
+
+  /* ─── Title ─── */
+  .title-zone {
+    text-align: center; font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; padding-bottom: 4px;
+    border-bottom: 2px solid #000;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ─── Header ─── */
+  .header-grid { position: relative; margin-bottom: 6px; padding-right: 130px; flex-shrink: 0; }
+  .brand-logo { width: 38px; height: 38px; border: 1px dashed #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 7px; color: #94a3b8; background: #fafafa; margin-bottom: 3px; }
+  .brand-name { font-size: 12px; font-weight: 700; }
+  .brand-detail { font-size: 8px; color: #444; }
+  .brand-contact { font-size: 8px; color: #444; }
+  .brand-tagline { font-size: 8px; font-style: italic; color: #555; margin-top: 2px; }
+
+  .doc-ident { position: absolute; top: 0; right: 0; text-align: right; width: 125px; }
+  .doc-ident .pill {
+    border: 1px solid #000; padding: 2px 6px; font-size: 8px;
+    display: block; margin-bottom: 3px; min-width: 110px;
+  }
+
+  .field-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+
+  /* ─── Grids ─── */
+  .top-grid { display: flex; gap: 6px; margin-bottom: 5px; flex-shrink: 0; }
+  .top-box { flex: 1; border: 1px solid #000; padding: 4px 6px; min-height: 34px; }
+  .second-grid { display: flex; gap: 6px; margin-bottom: 5px; flex-shrink: 0; }
+  .second-box { flex: 1; border: 1px solid #000; padding: 3px 6px; min-height: 22px; }
+  .mode-row { display: flex; gap: 6px; margin-bottom: 6px; flex-shrink: 0; }
+  .mode-box { flex: 1; border: 1px solid #000; padding: 4px 6px; min-height: 26px; }
+  .checkbox-row { display: flex; gap: 4px; align-items: center; }
+  .checkbox-label { display: flex; align-items: center; gap: 4px; border: 1px solid #000; padding: 2px 6px; font-size: 9px; }
+  .checkbox-box { width: 9px; height: 9px; border: 1px solid #000; display: inline-block; flex-shrink: 0; }
+  .checkbox-box.checked { background: #000; }
+
+  /* ─── Table ─── */
+  .table-wrap { flex-shrink: 0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  th { background: #f4f4f4; border: 1px solid #000; padding: 2px 5px; font-size: 8px; font-weight: 700; text-transform: uppercase; text-align: left; line-height: 1.2; }
+  td { border: 1px solid #000; padding: 2px 5px; font-size: 9px; height: 16px; line-height: 1.2; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .col-num { width: 5%; text-align: center; }
+  .col-desc { width: 45%; }
+  .col-qtyunit { width: 15%; text-align: center; }
+  .col-condition { width: 12%; text-align: center; }
+  .col-partno { width: 12%; text-align: center; }
+  .col-make { width: 11%; text-align: center; }
+
+  /* ─── Notes ─── */
+  .notes-box { border: 1px solid #000; padding: 5px 7px; min-height: 34px; margin-bottom: 5px; flex-shrink: 0; font-size: 9px; line-height: 1.35; }
+
+  /* ─── Sigs ─── */
+  .sigs-row { display: flex; gap: 6px; margin-bottom: 5px; flex-shrink: 0; }
+  .sig-card { flex: 1; border: 1px solid #000; display: flex; flex-direction: column; height: 72px; }
+  .sig-header { background: #f4f4f4; padding: 4px 8px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #000; }
+  .sig-meta-row { display: flex; border-bottom: 1px solid #000; height: 20px; }
+  .sig-meta-cell { flex: 1; padding: 2px 8px; font-size: 8px; color: #555; display: flex; align-items: center; }
+  .sig-meta-cell.bordered { border-right: 1px solid #000; }
+  .sig-area { flex: 1; padding: 4px; display: flex; justify-content: center; align-items: center; font-size: 8px; color: #555; }
+  .sig-line { width: 100%; border-bottom: 0.5px solid #cbd5e1; }
+
+  /* ─── Footer ─── */
+  .footer {
+    display: flex; justify-content: space-between;
+    border-top: 1px solid #000; padding-top: 5px; margin-top: 4px;
+    font-size: 8px; color: #555;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="title-zone">WAYBILL / DELIVERY NOTE</div>
+
+  <div class="header-grid">
+    <div class="brand-info">
+      <div class="brand-logo">LOGO</div>
+      <div class="brand-name">Sun &amp; Shield Power Solutions</div>
+      <div class="brand-detail">43 Oshola Street, Ifako-Ijaiye, Lagos</div>
+      <div class="brand-contact">+234 800 123 4567  |  info@sunandshield.com</div>
+      <div class="brand-tagline">Reliable Energy Solutions</div>
+    </div>
+    <div class="doc-ident">
+      <div class="pill">WBL-E-000042</div>
+      <div class="pill">Date  2026-06-20</div>
+      <div class="pill">Time  14:35</div>
+    </div>
+  </div>
+
+  <div class="top-grid">
+    <div class="top-box"><div class="field-label">Client / Consignee</div><div>Global Industrial Logistics</div></div>
+    <div class="top-box"><div class="field-label">Destination Address</div><div>Ikoyi Depot, Lagos</div></div>
+  </div>
+
+  <div class="second-grid">
+    <div class="second-box"><div class="field-label">Vehicle Plate</div><div>AKD-421-XY</div></div>
+    <div class="second-box"><div class="field-label">Driver Name</div><div>Emeka Nwosu</div></div>
+  </div>
+
+  <div class="mode-row">
+    <div class="mode-box">
+      <div class="field-label">Delivery Mode</div>
+      <div class="checkbox-row">
+        <div class="checkbox-label"><span class="checkbox-box"></span> Hand</div>
+        <div class="checkbox-label"><span class="checkbox-box checked"></span> Vehicle</div>
+        <div class="checkbox-label"><span class="checkbox-box"></span> Other</div>
+      </div>
+    </div>
+    <div class="mode-box">
+      <div class="field-label">Delivery Reason</div>
+      <div class="checkbox-row">
+        <div class="checkbox-label"><span class="checkbox-box checked"></span> Supply</div>
+        <div class="checkbox-label"><span class="checkbox-box"></span> Return</div>
+        <div class="checkbox-label"><span class="checkbox-box"></span> Repair</div>
+        <div class="checkbox-label"><span class="checkbox-box"></span> Other</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th class="col-num">#</th>
+        <th class="col-desc">Description</th>
+        <th class="col-qtyunit">Qty / Unit</th>
+        <th class="col-condition">Condition</th>
+        <th class="col-partno">Part No</th>
+        <th class="col-make">Make</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>12KVA Inverter Unit — Hybrid</td><td class="col-qtyunit">2 Unit</td><td class="col-condition">good</td><td class="col-partno">INV-001</td><td class="col-make">SunPower</td></tr>
+        <tr><td class="col-num">2</td><td>200AH Deep Cycle Battery</td><td class="col-qtyunit">8 Unit</td><td class="col-condition">good</td><td class="col-partno">BAT-200</td><td class="col-make">MaxCell</td></tr>
+        <tr><td class="col-num">3</td><td>Solar Panel 550W Mono</td><td class="col-qtyunit">12 Panel</td><td class="col-condition">good</td><td class="col-partno">SP-550</td><td class="col-make">GreenVolt</td></tr>
+        <tr><td class="col-num">4</td><td>MC4 Connectors (Pair)</td><td class="col-qtyunit">20 Pair</td><td class="col-condition">good</td><td class="col-partno">MC4-02</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">5</td><td>6mm² Solar Cable (per meter)</td><td class="col-qtyunit">100 Meter</td><td class="col-condition">good</td><td class="col-partno">CBL-06</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">6</td><td>Charge Controller 60A MPPT</td><td class="col-qtyunit">2 Unit</td><td class="col-condition">good</td><td class="col-partno">CC-60</td><td class="col-make">SunTracer</td></tr>
+        <tr><td class="col-num">7</td><td>Distribution Panel 12-Way</td><td class="col-qtyunit">3 Unit</td><td class="col-condition">good</td><td class="col-partno">DP-12</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">8</td><td>Surge Protector SPD 40kA</td><td class="col-qtyunit">5 Unit</td><td class="col-condition">good</td><td class="col-partno">SPD-40</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">9</td><td>Changeover Switch 63A 4-Pole</td><td class="col-qtyunit">2 Unit</td><td class="col-condition">good</td><td class="col-partno">CS-63</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">10</td><td>PVC Conduit 20mm (3m)</td><td class="col-qtyunit">30 Length</td><td class="col-condition">good</td><td class="col-partno">PVC-20</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">11</td><td>Cable Tray 300mm x 3m</td><td class="col-qtyunit">6 Length</td><td class="col-condition">good</td><td class="col-partno">CT-300</td><td class="col-make">—</td></tr>
+        <tr><td class="col-num">12</td><td>Earthing Rod Copper 1.8m</td><td class="col-qtyunit">4 Unit</td><td class="col-condition">good</td><td class="col-partno">ER-18</td><td class="col-make">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="notes-box">
+    <div class="field-label">Delivery Remarks / Notes</div>
+    <div style="margin-top:3px;">All items must be inspected before signing delivery confirmation. Two units of the 12KVA inverter were strapped on a separate pallet; verify count at handover.</div>
+  </div>
+
+  <div class="sigs-row">
+    <div class="sig-card">
+      <div class="sig-header">Delivered By / Driver</div>
+      <div class="sig-meta-row">
+        <div class="sig-meta-cell bordered">Name: Sun &amp; Shield</div>
+        <div class="sig-meta-cell">Date / Time</div>
+      </div>
+      <div class="sig-area"><div class="sig-line"></div></div>
+    </div>
+    <div class="sig-card">
+      <div class="sig-header">Received By</div>
+      <div class="sig-meta-row">
+        <div class="sig-meta-cell bordered">Name: Site Manager</div>
+        <div class="sig-meta-cell">Date / Time</div>
+      </div>
+      <div class="sig-area"><div class="sig-line"></div></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>Sun &amp; Shield Power Solutions</div>
+    <div>WBL-E-000042</div>
+    <div>Page 1 of 1</div>
+  </div>
+
+</div>
+
+</body>
+</html>
