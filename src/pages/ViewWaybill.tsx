@@ -17,6 +17,8 @@ import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { supabase } from '@/supabase'
 import { buildWaybillCustomFields, mapDbWaybill, normalizeWaybillPdfTemplateId, parseWaybillCustomFields, type WaybillPdfTemplateId } from '@/components/waybill/waybillUtils'
+import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
+import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
 import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset, setPdfDesignPreset, resolvePdfWebFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
@@ -48,6 +50,7 @@ export default function ViewWaybill() {
 
   const [loading, setLoading] = useState(true)
   const [waybill, setWaybill] = useState<any>(null)
+  const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
   const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('default')
@@ -66,6 +69,7 @@ export default function ViewWaybill() {
           return
         }
 
+        setRawWaybill(data)
         setWaybill(mapDbWaybill(data))
       } catch (err) {
         console.error('Failed to load waybill', err)
@@ -120,10 +124,32 @@ export default function ViewWaybill() {
     if (!waybill || downloading) return
     setDownloading(true)
     try {
+      const columnVisibility = customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
+      const columnTitles = Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
+      const standardColumns = STANDARD_ITEM_COLUMNS
+        .filter(col => columnVisibility[col.key] !== false)
+        .map(col => ({ key: col.key, label: columnTitles[col.key] || col.label }))
+      const customColumns = (customFields.customColumns || [])
+        .filter(col => !STANDARD_ITEM_COLUMNS.some(sc => sc.key === col.key))
+        .map(col => ({ key: col.key, label: col.label }))
+      const columns = [...standardColumns, ...customColumns]
+      const companySettings: CompanySettings = {
+        name: settings?.company_name || '',
+        tagline: settings?.company_tagline || null,
+        logo: settings?.company_logo_url || null,
+        address: settings?.company_address || null,
+        phone: settings?.company_phone || null,
+        email: settings?.company_email || null,
+      }
+      const model = rawWaybill ? buildWaybillRenderModel({
+        waybill: rawWaybill,
+        columns,
+        company: companySettings,
+      }) : null
       await downloadPdfFromElement({
         fileName: waybill.waybill_number || 'waybill',
         subdirectory: 'waybill',
-        element: <WaybillPDF waybill={waybill} settings={settings || {}} designPreset={designPreset} template={templateId} columnVisibility={customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))} columnTitles={Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))} />,
+        element: <WaybillPDF model={model} waybill={waybill} settings={settings || {}} designPreset={designPreset} template={templateId} />,
       })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {

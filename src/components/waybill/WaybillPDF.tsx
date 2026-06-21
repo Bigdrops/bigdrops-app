@@ -9,16 +9,15 @@ import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 
 import {
   formatWaybillDate,
-  formatWaybillTime,
-  getWaybillSignature,
   getWaybillTypeContent,
   mapDbWaybill,
 } from './waybillUtils'
 import type { Waybill } from './waybillUtils'
+import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 import { WaybillMinimalContent } from './blankWaybillTemplate'
 import type { MinimalContentData } from './blankWaybillTemplate'
 import { minimalStyles } from './waybillMinimalStyles'
-import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
+
 
 interface Settings {
   company_name?: string
@@ -30,11 +29,10 @@ interface Settings {
 }
 
 interface WaybillPDFProps {
+  model?: WaybillRenderModel
   waybill: Waybill
   settings: Settings
   designPreset?: PdfDesignPreset
-  columnVisibility?: Record<string, boolean>
-  columnTitles?: Record<string, string>
   template?: 'default' | 'minimal'
 }
 
@@ -73,10 +71,6 @@ function createStyles(designPreset?: PdfDesignPreset) {
   cell: { fontSize: 8, color: fillableColor, fontFamily: fillableRegular },
   headerCell: { fontSize: 8, color: '#ffffff', fontFamily: fillableBold },
   numberCol: { flex: 1 },
-  descCol: { flex: 11, paddingRight: 6 },
-  qtyCol: { flex: 2, textAlign: 'right' },
-  unitCol: { flex: 2, paddingLeft: 6 },
-  conditionCol: { flex: 2, paddingLeft: 6 },
   customCol: { flex: 2, paddingLeft: 6 },
   notesBox: { marginTop: 10, border: '1pt solid #e2e8f0', borderRadius: 4, padding: 8, backgroundColor: '#f8fafc' },
   signatureRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
@@ -95,14 +89,14 @@ function createStyles(designPreset?: PdfDesignPreset) {
 })
 }
 
-export default function WaybillPDF({ waybill, settings, designPreset, columnVisibility, columnTitles, template }: WaybillPDFProps) {
+export default function WaybillPDF({ model, waybill, settings, designPreset, template }: WaybillPDFProps) {
   const S = createStyles(designPreset)
-  const mapped = mapDbWaybill(waybill)
-  const customFields = mapped.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
-  const customColumns = customFields.customColumns || []
-  const signatureMap = customFields.signatures || {}
-  const senderSig = signatureMap.sender || {}
-  const receiverSig = signatureMap.receiver || {}
+  const isMinimal = template === 'minimal'
+  const mapped = isMinimal ? mapDbWaybill(waybill) : null
+  const customFields = isMinimal && mapped?.custom_fields && typeof mapped.custom_fields === 'object' ? mapped.custom_fields : {}
+  const signatureMap = isMinimal ? (customFields.signatures || {}) : {}
+  const senderSig = isMinimal ? (signatureMap.sender || {}) : {}
+  const receiverSig = isMinimal ? (signatureMap.receiver || {}) : {}
 
   if (template === 'minimal') {
     const minimalData: MinimalContentData = {
@@ -137,36 +131,28 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
     )
   }
 
-  const senderSignature = getWaybillSignature(mapped, 'sender')
-  const receiverSignature = getWaybillSignature(mapped, 'receiver')
-  const typeContent = getWaybillTypeContent(mapped.type)
-  const footerContact = [settings.company_phone, settings.company_email].filter(Boolean).join('  |  ')
-
-  const isColumnVisible = (key: string) => {
-    if (!columnVisibility) return true
-    return columnVisibility[key] !== false
+  // Classic template using model
+  if (!model) {
+    // Should not happen, but guard to avoid crash
+    return null
   }
 
-  const getColumnLabel = (key: string) => {
-    if (columnTitles && columnTitles[key]) return columnTitles[key]
-    const canonical = STANDARD_ITEM_COLUMNS.find(c => c.key === key)
-    return canonical?.label || key
-  }
+  const typeContent = getWaybillTypeContent(model.header.type)
 
   return (
     <Document>
       <Page size="A4" style={S.page}>
         <View style={S.header}>
           <View style={S.companyBlock}>
-            {settings.company_logo_url ? <Image src={settings.company_logo_url} style={S.logo} /> : null}
-            <Text style={S.companyName}>{settings.company_name || 'Company Name'}</Text>
-            {settings.company_address ? <Text style={S.companyLine}>{settings.company_address}</Text> : null}
-            {settings.company_phone ? <Text style={S.companyLine}>{settings.company_phone}</Text> : null}
-            {settings.company_email ? <Text style={S.companyLine}>{settings.company_email}</Text> : null}
+            {model.branding.logo ? <Image src={model.branding.logo} style={S.logo} /> : null}
+            <Text style={S.companyName}>{model.branding.name || 'Company Name'}</Text>
+            {model.branding.address ? <Text style={S.companyLine}>{model.branding.address}</Text> : null}
+            {model.branding.phone ? <Text style={S.companyLine}>{model.branding.phone}</Text> : null}
+            {model.branding.email ? <Text style={S.companyLine}>{model.branding.email}</Text> : null}
           </View>
           <View>
             <Text style={S.docTitle}>{typeContent.pdfTitle}</Text>
-            <Text style={S.docNumber}>{mapped.waybill_number || '—'}</Text>
+            <Text style={S.docNumber}>{model.header.waybillNumber || '—'}</Text>
           </View>
         </View>
 
@@ -174,14 +160,15 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
 
         <View style={S.metaGrid}>
           {[
-            mapped.date ? { label: 'Date', value: formatWaybillDate(mapped.date) } : null,
-            mapped.time ? { label: 'Time', value: formatWaybillTime(mapped.time) } : null,
-            mapped.vehicle_plate ? { label: 'Vehicle Plate', value: mapped.vehicle_plate } : null,
-            mapped.delivery_location ? { label: typeContent.locationLabel, value: mapped.delivery_location } : null,
-            mapped.client_name ? { label: typeContent.clientLabel, value: mapped.client_name } : null,
-            mapped.po_number ? { label: 'P.O. Number', value: mapped.po_number } : null,
-            customFields.references?.linkedInvoiceNumber ? { label: 'Invoice Ref', value: customFields.references.linkedInvoiceNumber } : null,
-            customFields.references?.linkedProjectName ? { label: 'Project Ref', value: customFields.references.linkedProjectName } : null,
+            model.header.date ? { label: 'Date', value: model.header.date } : null,
+            model.header.time ? { label: 'Time', value: model.header.time } : null,
+            model.logistics.vehiclePlate ? { label: 'Vehicle Plate', value: model.logistics.vehiclePlate } : null,
+            model.logistics.deliveryLocation ? { label: typeContent.locationLabel, value: model.logistics.deliveryLocation } : null,
+            model.parties.clientName ? { label: typeContent.clientLabel, value: model.parties.clientName } : null,
+            model.header.poNumber ? { label: 'P.O. Number', value: model.header.poNumber } : null,
+            model.logistics.deliveryMode ? { label: 'Delivery Mode', value: model.logistics.deliveryMode } : null,
+            model.logistics.purpose ? { label: 'Purpose', value: model.logistics.purpose } : null,
+            model.logistics.driverName ? { label: 'Driver Name', value: model.logistics.driverName } : null,
           ].filter(Boolean).map((entry) => (
             <View key={entry!.label} style={S.metaCard}>
               <Text style={S.metaLabel}>{entry!.label}</Text>
@@ -193,58 +180,44 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
         <View style={S.partyRow}>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>{typeContent.senderPdfLabel}</Text>
-            <Text style={S.partyValue}>{mapped.sender_name || ''}</Text>
-            {customFields.partyNotes?.sender ? <Text style={S.partyNote}>{customFields.partyNotes.sender}</Text> : null}
+            <Text style={S.partyValue}>{model.parties.senderName || ''}</Text>
           </View>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>{typeContent.receiverPdfLabel}</Text>
-            <Text style={S.partyValue}>{mapped.receiver_name || ''}</Text>
-            {customFields.partyNotes?.receiver ? <Text style={S.partyNote}>{customFields.partyNotes.receiver}</Text> : null}
+            <Text style={S.partyValue}>{model.parties.receiverName || ''}</Text>
           </View>
         </View>
 
         <Text style={S.sectionTitle}>Items</Text>
-        <View style={S.tableHeader}>
+        <View style={S.tableHeader} fixed>
           <Text style={[S.headerCell, S.numberCol]}>#</Text>
-          {isColumnVisible('description') && <Text style={[S.headerCell, S.descCol]}>{getColumnLabel('description')}</Text>}
-          {isColumnVisible('quantity') && <Text style={[S.headerCell, S.qtyCol]}>{getColumnLabel('quantity')}</Text>}
-          {isColumnVisible('unit') && <Text style={[S.headerCell, S.unitCol]}>{getColumnLabel('unit')}</Text>}
-          {isColumnVisible('make') && <Text style={[S.headerCell, S.customCol]}>{getColumnLabel('make')}</Text>}
-          {isColumnVisible('partNo') && <Text style={[S.headerCell, S.customCol]}>{getColumnLabel('partNo')}</Text>}
-          {isColumnVisible('condition') && <Text style={[S.headerCell, S.conditionCol]}>{getColumnLabel('condition')}</Text>}
-          {customColumns.filter((column) => column.key !== 'make' && column.key !== 'partNo').map((column) => (
-            <Text key={column.key} style={[S.headerCell, S.customCol]}>{column.label}</Text>
+          {model.table.columns.map((col) => (
+            <Text key={col.key} style={[S.headerCell, S.customCol]}>{col.label}</Text>
           ))}
         </View>
 
-        {mapped.items.map((item, index) => (
-          <View key={`${item.description}-${index}`} style={index % 2 === 0 ? S.tableRow : S.tableRowAlt}>
+        {model.table.rows.map((row, index) => (
+          <View key={index} style={index % 2 === 0 ? S.tableRow : S.tableRowAlt}>
             <Text style={[S.cell, S.numberCol]}>{index + 1}</Text>
-            {isColumnVisible('description') && <Text style={[S.cell, S.descCol]}>{item.description || ''}</Text>}
-            {isColumnVisible('quantity') && <Text style={[S.cell, S.qtyCol]}>{item.quantity != null ? String(item.quantity) : ''}</Text>}
-            {isColumnVisible('unit') && <Text style={[S.cell, S.unitCol]}>{item.unit || ''}</Text>}
-            {isColumnVisible('make') && <Text style={[S.cell, S.customCol]}>{String(item.custom_data.make || '')}</Text>}
-            {isColumnVisible('partNo') && <Text style={[S.cell, S.customCol]}>{String(item.custom_data.partNo || '')}</Text>}
-            {isColumnVisible('condition') && <Text style={[S.cell, S.conditionCol]}>{item.condition || ''}</Text>}
-            {customColumns.filter((column) => column.key !== 'make' && column.key !== 'partNo').map((column) => (
-              <Text key={column.key} style={[S.cell, S.customCol]}>{String(item.custom_data[column.key] || '')}</Text>
+            {model.table.columns.map((col) => (
+              <Text key={col.key} style={[S.cell, S.customCol]}>{row.cells[col.key] || ''}</Text>
             ))}
           </View>
         ))}
 
-        {mapped.notes ? (
-          <View style={S.notesBox}>
+        {model.notes ? (
+          <View style={S.notesBox} wrap={false}>
             <Text style={S.sectionTitle}>Operational Notes</Text>
-            <Text style={S.cell}>{mapped.notes}</Text>
+            <Text style={S.cell}>{model.notes}</Text>
           </View>
         ) : null}
 
-        <View style={S.signatureRow}>
-          {[{ title: typeContent.senderSignatureLabel, signature: senderSignature }, { title: typeContent.receiverSignatureLabel, signature: receiverSignature }].map((entry) => (
+        <View style={S.signatureRow} wrap={false}>
+          {[{ title: typeContent.senderSignatureLabel, signature: model.signatures.sender }, { title: typeContent.receiverSignatureLabel, signature: model.signatures.receiver }].map((entry) => (
             <View key={entry.title} style={S.signatureBox}>
               <Text style={S.signatureTitle}>{entry.title}</Text>
-              {entry.signature.image_url || entry.signature.drawn_data_url ? (
-                <Image src={entry.signature.image_url || entry.signature.drawn_data_url || ''} style={S.signatureImage} />
+              {entry.signature ? (
+                <Image src={entry.signature.url} style={S.signatureImage} />
               ) : (
                 <View style={[S.signatureImage, { borderBottom: '0.5pt solid #cbd5e1' }]} />
               )}
@@ -253,9 +226,11 @@ export default function WaybillPDF({ waybill, settings, designPreset, columnVisi
         </View>
 
         <View style={S.footer}>
-          <Text style={S.footerText}>{settings.company_name || ''}</Text>
-          <Text style={S.footerText}>{footerContact}</Text>
-          <Text style={S.footerText}>Waybill: {mapped.waybill_number}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={S.footerText}>{model.footer.waybillNumber}</Text>
+            <Text style={S.footerText}>{model.footer.companyName}</Text>
+            <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} style={S.footerText} />
+          </View>
         </View>
       </Page>
     </Document>
