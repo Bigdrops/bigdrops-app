@@ -115,6 +115,27 @@ export interface RawWaybill {
       }
     }
   }
+  items: RawWaybillItem[]
+}
+
+export interface RawWaybillItem {
+  description: string
+  qty: number
+  unit: string | null
+  condition: string | null
+  custom_data: Record<string, string | number | boolean | null> | null
+
+  /** Forbidden — present in source data but must be stripped by buildRows */
+  item_id?: string
+  id?: string
+  created_at?: string
+  updated_at?: string
+  unit_price?: number
+  rate?: number
+  vat?: number
+  discount?: number
+  subtotal?: number
+  grand_total?: number
 }
 
 export interface CompanySettings {

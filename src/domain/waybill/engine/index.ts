@@ -1,5 +1,6 @@
 export type {
   RawWaybill,
+  RawWaybillItem,
   CompanySettings,
   WaybillRenderInput,
   ResolvedColumn,
@@ -24,4 +25,9 @@ export {
   resolveLogistics,
   resolveNotes,
   resolveSignatures,
+  resolveColumns,
+  buildRows,
 } from './resolvers'
+
+export { buildWaybillRenderModel } from './assembly'
+export { normalizeBlank } from './normalizeBlank'
