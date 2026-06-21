@@ -1,144 +1,210 @@
+.
+
+# WAYBILL ARCHITECTURE INVESTIGATION PROMPT (AUDIT MODE)
+
+## CONTEXT
+
+You are analyzing the current Waybill system implementation inside this repository:
+
+- Table Settings module (column system + resolution logic)
+- Waybill Render Engine (transform layer)
+- PDF Templates (Minimal, Classic, Industry, etc.)
+- Import pipeline (if present)
+- Supabase schema + DB types
+
+AND comparing it against the **Golden Architecture Spec v1.0** located at:
 
 
-```
-You are working on the BIGDROPS business platform.
-Runtime: Bun. Never use npm or yarn.
+docs/contracts/Waybill-System-Architecture-Spec.md
 
-Read AGENTS.md and docs/PROJECTSKIILINDEX.md before anything else.
+---
 
-==================================================
-TASK: Update PREFIX_ENGINE_SETTINGS PRD + Execution Doc
-==================================================
+## OBJECTIVE
 
-READ FIRST (mandatory):
-- `docs/PREFIX_ENGINE_SETTINGS.md` (read fully)
-- `docs/execution` (read fully — find the prefix engine section)
-- `Task/reports/prefix-engine-audit.md`
-- `Task/reports/settings-table-audit.md`
-- `Task/reports/sequence-generator-audit.md`
-- `Task/reports/offline-call-site-audit.md`
+You must perform a **full architecture divergence audit**.
 
-==================================================
-CHANGE 1 — Update `docs/PREFIX_ENGINE_SETTINGS.md`
-==================================================
+Determine:
 
-Make the following corrections to the PRD based on audit findings:
+1. How far the current implementation deviates from the Golden Architecture Spec
+2. Whether the system is already close to compliance or structurally misaligned
+3. Whether migration is:
+   - Low effort
+   - Medium effort
+   - High effort
+   - Requires rewrite-level refactor
+4. Whether the current architecture is already "good enough" and should NOT be changed
 
-### Section 3 — Storage & Migration
+---
 
-Replace the entire section with:
+## WHAT YOU MUST ANALYZE
 
-**3.1 Storage**
-- `document_prefixes` JSONB column is added to the existing `settings` table — NOT a new `organizations` table.
-- The `settings` table is a singleton row (`id = 1`) used for all workspace-wide configuration.
-- No `organizations` table exists or needs to be created.
+### 1. TABLE SETTINGS MODULE
+Check:
+- Does it fully own column schema definition?
+- Does it enforce deterministic column keys?
+- Does it resolve visibility + ordering correctly?
+- Does any business logic leak into it?
 
-**3.2 Migration**
-- `blank_waybill_logs` table already exists in production — no migration needed.
-- `blank_csr_logs` table does not exist — migration required.
-- `document_prefixes` JSONB column needs to be added to `settings` table with defaults and CHECK constraint (same constraint as original PRD Section 3.2).
+Compare against spec Section 2.
 
-**3.3 Fallback**
-- Keep as-is from original PRD.
+---
 
-**3.4 Settings Access**
-Add this new sub-section:
-- `document_prefixes` is read via the existing `useSettings()` hook in `src/hooks/useSettings.js`.
-- No new org context or provider is needed — all document creation screens already have access to settings.
-- Prefix values are accessed as: `settings?.document_prefixes?.invoice ?? DEFAULT_PREFIXES.invoice`
+### 2. WAYBILL RENDER ENGINE
+Check:
+- Is it a pure transformer (no schema logic)?
+- Does it fully respect ResolvedColumnConfig from Table Settings?
+- Does it implement blank preservation correctly?
+- Does it incorrectly generate or mutate schema?
 
-### Section 5 — Sequence Generation
+Compare against spec Section 3–5.
 
-Replace Section 5.3 Call Chain with:
+---
 
-```
+### 3. PDF TEMPLATES (Minimal / Classic / Industry)
+Check:
+- Do templates contain business logic?
+- Do they compute qty/unit or formatting?
+- Do they filter columns or decide visibility?
+- Do they violate "dumb renderer" rule?
 
-useSettings() → settings.document_prefixes → prefix value → existing generator
-```
+Compare against spec Section 6.
 
-Add a new sub-section **5.6 Generator Status** documenting the current state of each generator:
+---
 
-| Generator | File | Prefix Source | Dynamic Today? | Action Required |
-|---|---|---|---|---|
-| `getNextInvoiceNumber` | `documentConversion.ts` | Default param `'SASINV-B'` | Yes | Pass prefix from settings. Also consolidate inline duplicates in `NewInvoice.tsx` and `Invoices.tsx` |
-| `getNextQuotationNumber` | `quotation/normalize.ts` | Default param `'SASIQUO'` | Yes | Pass prefix from settings at all 5 call sites |
-| `getNextRfqNumber` | `rfq/normalize.ts` | Default param `'RFQ'` | Yes | Pass prefix from settings at 1 call site |
-| `getNextCsrNumber` | `csrUtils.ts` | Hardcoded fallback `'CSR-001'` | No | Add prefix parameter, update call site in `NewCSR.tsx` |
-| `generateWaybillSequenceNumber` | `waybillUtils.ts` | Hardcoded `'AWB-E-'`/`'AWB-I-'` | No | Delete this function — duplicate of `getNextWaybillNumber` |
-| `getNextWaybillNumber` | `waybillUtils.ts` | Hardcoded `'AWB-E-'`/`'AWB-I-'` | No | Add prefix parameter, update 2 call sites |
-| `generateNextProjectCode` | `projects.ts` | Hardcoded `PRJ-{year}-` | Partial | Modify `getProjectCodePrefix()` to accept prefix param |
-| `formatCsrNumber` (offline) | `csrOffline.ts` | Hardcoded `'SASCSR-'` | No | NOT IN SCOPE — offline module is live, deletion deferred |
-| `formatQuotationNumber` (offline) | `quotationOffline.ts` | Hardcoded `'SASQUO-'` | No | NOT IN SCOPE — offline module is live, deletion deferred |
+### 4. COLUMN SYSTEM CONSISTENCY
+Verify:
+- single source of truth for columns
+- no duplicate column systems
+- no legacy invoice coupling
+- no conflicting custom column strategies
 
-### Add Section 10 — Out of Scope (this build)
+Compare against spec Section 7.
 
-```
+---
 
-## 10. Out of Scope — This Build
+### 5. DATA FLOW INTEGRITY
 
-- Offline CSR module (`src/lib/native/csrOffline.ts`) — live in production, called by `NewCSR.tsx` and `csrSync.ts`. Deletion requires a dedicated offline feature deprecation plan. Deferred.
-- Offline Quotation module (`src/lib/native/quotationOffline.ts`) — live in production, called by `QuotationForm.tsx` and `quotationSync.ts`. Same as above. Deferred.
-- Blank waybill template download — PDF concern, moved to `docs/pdf-rendering-roadmap.md`.
-- Blank CSR template download — PDF concern, moved to `docs/pdf-rendering-roadmap.md`. The `blank_csr_logs` table migration IS in scope (number engine), but the download UI is not.
-```
+Validate full pipeline:
 
-### Update Section 9 — Implementation Order
 
-Replace with:
+DB → Table Settings → Render Engine → Render Model → Template → PDF
 
-```
-## 9. Implementation Order
+Check:
+- Any bypass paths?
+- Any direct DB → template access?
+- Any UI state leaking into rendering?
 
-1. Migration — add `document_prefixes` JSONB column to `settings` table
-2. Migration — create `blank_csr_logs` table
-3. `DEFAULT_PREFIXES` constants + prefix resolution pattern via `useSettings()`
-4. Settings UI — Document Prefixes card with live preview, dirty state, solo reset, full reset
-5. Consolidate inline invoice number logic — replace duplicates in `NewInvoice.tsx` and `Invoices.tsx` with calls to `getNextInvoiceNumber()`
-6. Delete `generateWaybillSequenceNumber` — consolidate to `getNextWaybillNumber()`
-7. Add prefix parameter to `getNextWaybillNumber()` and `getNextCsrNumber()`
-8. Wire all generators to settings prefix — Waybill, Invoice, Quotation, RFQ, CSR
-9. Build Project document sequence generation from scratch
-10. Wire Project generator to settings prefix
-11. Collision handler — silent auto-retry (max 3 attempts) across all document types
-12. Blank waybill number assignment — wire blank download to use org prefix + log to `blank_waybill_logs`
-13. Blank CSR number assignment — build blank CSR download, log to `blank_csr_logs` (number engine only, no PDF)
+---
 
-```
+### 6. INTERNAL vs EXTERNAL WAYBILL SUPPORT
 
-==================================================
-CHANGE 2 — Update `docs/execution`
-==================================================
+Check:
+- Is `type: internal | external` correctly supported?
+- Are both modes handled consistently in engine?
+- Are templates branching correctly OR incorrectly?
 
-Find the prefix engine section in the execution doc. Update it to reflect:
-- Storage is `settings` table not `organizations`
-- Implementation order matches the updated Section 9 above (13 steps)
-- Offline modules are explicitly out of scope
-- `blank_waybill_logs` already exists (no migration needed for it)
-- `blank_csr_logs` needs migration
+---
 
-If no prefix engine section exists in the execution doc, add one at the appropriate position.
+### 7. PAGINATION + FOOTER MODEL
 
-==================================================
-VERIFICATION
-==================================================
-- Read both files after editing and confirm the changes are present
-- No source code files modified
-- Push both files to main
+Check:
+- Who owns page numbers (should be templates only)
+- Does engine avoid layout decisions?
+- Is footer correctly data-only?
 
-==================================================
-DONE WHEN
-==================================================
-- [ ] `docs/PREFIX_ENGINE_SETTINGS.md` updated with all corrections above
-- [ ] `docs/execution` updated with prefix engine section
-- [ ] Both files pushed to main
-- [ ] Work report saved to `Task/reports/prd-update-prefix-engine.md`
+Compare against spec Section 5.8–5.9.
 
-==================================================
-DO NOT
-==================================================
-- Do NOT modify any source code
-- Do NOT run `bun run dev`
-- Do NOT change any other section of the PRD beyond what is specified above
-- Do NOT skip the work report
-```
+---
+
+## OUTPUT REQUIRED
+
+Generate a report saved to:
+
+
+docs/task/reports/waybill-architecture-audit-report.md
+
+---
+
+## REPORT STRUCTURE
+
+### 1. EXECUTIVE SUMMARY
+- Overall architecture health score (0–10)
+- Current state classification:
+  - Fully aligned
+  - Mostly aligned
+  - Partially aligned
+  - Misaligned
+  - Requires rewrite
+
+---
+
+### 2. DEVIATION MAP
+
+List:
+
+| System | Spec Compliance | Gap Severity | Notes |
+|-------|----------------|-------------|------|
+
+---
+
+### 3. CRITICAL GAPS
+
+Only include issues that:
+- break determinism
+- break separation of concerns
+- cause schema duplication
+- leak DB/UI into render layer
+
+---
+
+### 4. MIGRATION COMPLEXITY ASSESSMENT
+
+Answer:
+
+- Estimated effort (hours/days/weeks)
+- Risk level (low/medium/high)
+- Whether incremental migration is possible
+- Whether current system should be preserved
+
+---
+
+### 5. RECOMMENDATION
+
+One of:
+
+- DO NOT MIGRATE (system already stable)
+- GRADUAL ALIGNMENT (recommended)
+- REFACTOR CORE ENGINE ONLY
+- FULL ARCHITECTURAL MIGRATION
+
+Explain clearly WHY.
+
+---
+
+### 6. SAFE STATE IDENTIFICATION
+
+Identify:
+- What parts of system are already "golden compliant"
+- What parts must NEVER be changed (stable primitives)
+
+---
+
+## CONSTRAINTS
+
+- Do NOT modify code
+- Do NOT propose new architecture
+- Do NOT implement fixes
+- This is strictly an evaluation
+- Be precise, not speculative
+- Prefer structural truth over opinion
+
+---
+
+## SUCCESS CRITERIA
+
+The report must allow a senior engineer to decide:
+
+> "Do we keep this architecture, or migrate it to the golden spec?"
+
+
 
