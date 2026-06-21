@@ -1,124 +1,159 @@
-.
 
-# WAYBILL ARCHITECTURE INVESTIGATION PROMPT (AUDIT MODE)
+# WAYBILL ARCHITECTURE INVESTIGATION PROMPT (CLEAN AUDIT MODE v2.0)
 
 ## CONTEXT
 
-You are analyzing the current Waybill system implementation inside this repository:
+You are analyzing the current Waybill system implementation in this repository.
 
-- Table Settings module (column system + resolution logic)
-- Waybill Render Engine (transform layer)
-- PDF Templates (Minimal, Classic, Industry, etc.)
-- Import pipeline (if present)
-- Supabase schema + DB types
-
-AND comparing it against the **Golden Architecture Spec v1.0** located at:
+You must compare the implementation strictly against the canonical architecture contract:
 
 
-docs/contracts/Waybill-System-Architecture-Spec.md
+docs/contracts/Waybill-golden-contract.md
+
+This is the ONLY source of truth for architecture expectations.
+
+Do NOT assume, rename, reinterpret, or substitute this file.
 
 ---
 
 ## OBJECTIVE
 
-You must perform a **full architecture divergence audit**.
+Perform a **strict compliance and drift audit** of the current Waybill system.
 
-Determine:
+You must determine:
 
-1. How far the current implementation deviates from the Golden Architecture Spec
-2. Whether the system is already close to compliance or structurally misaligned
-3. Whether migration is:
-   - Low effort
-   - Medium effort
-   - High effort
-   - Requires rewrite-level refactor
-4. Whether the current architecture is already "good enough" and should NOT be changed
+1. How closely the implementation matches the Waybill Golden Contract
+2. Whether there are architectural violations or inconsistencies
+3. Whether the system is:
+   - Fully aligned
+   - Mostly aligned
+   - Partially aligned
+   - Misaligned
+   - Requires refactor or rewrite
 
----
+4. Whether migration effort is:
+   - Low
+   - Medium
+   - High
+   - Rewrite-level
 
-## WHAT YOU MUST ANALYZE
-
-### 1. TABLE SETTINGS MODULE
-Check:
-- Does it fully own column schema definition?
-- Does it enforce deterministic column keys?
-- Does it resolve visibility + ordering correctly?
-- Does any business logic leak into it?
-
-Compare against spec Section 2.
+5. Whether current architecture is already stable enough to retain without change
 
 ---
 
-### 2. WAYBILL RENDER ENGINE
-Check:
-- Is it a pure transformer (no schema logic)?
-- Does it fully respect ResolvedColumnConfig from Table Settings?
-- Does it implement blank preservation correctly?
-- Does it incorrectly generate or mutate schema?
+## SCOPE (WAYBILL ONLY)
 
-Compare against spec Section 3–5.
+Analyze ONLY Waybill domain modules:
 
----
+- Table Settings (column authority system)
+- Waybill Render Engine (transformation layer)
+- PDF Templates (Minimal / Classic / Industry)
+- Waybill Import pipeline (if present)
+- Supabase Waybill schema + DB types
 
-### 3. PDF TEMPLATES (Minimal / Classic / Industry)
-Check:
-- Do templates contain business logic?
-- Do they compute qty/unit or formatting?
-- Do they filter columns or decide visibility?
-- Do they violate "dumb renderer" rule?
-
-Compare against spec Section 6.
+DO NOT reference any external domains or assumptions.
 
 ---
 
-### 4. COLUMN SYSTEM CONSISTENCY
+## ANALYSIS REQUIREMENTS
+
+### 1. TABLE SETTINGS (COLUMN AUTHORITY LAYER)
+
 Verify:
-- single source of truth for columns
-- no duplicate column systems
-- no legacy invoice coupling
-- no conflicting custom column strategies
+- Is it the ONLY source of truth for column schema?
+- Does it resolve:
+  - visibility
+  - ordering
+  - custom column definitions
+- Does it enforce deterministic column keys?
+- Does it avoid business logic or rendering logic?
 
-Compare against spec Section 7.
+Compare strictly to golden contract Column System rules.
 
 ---
 
-### 5. DATA FLOW INTEGRITY
+### 2. WAYBILL RENDER ENGINE (TRANSFORMATION LAYER)
 
-Validate full pipeline:
+Verify:
+- Is it a pure deterministic transformer?
+- Does it ONLY consume resolved Table Settings output?
+- Does it avoid schema definition responsibilities?
+- Does it correctly enforce:
+  - blank preservation rules
+  - sanitization rules
+  - deterministic output
+- Does it avoid mutating input or inferring missing structure?
+
+Compare strictly to golden contract engine rules.
+
+---
+
+### 3. PDF TEMPLATE LAYER (PRESENTATION ONLY)
+
+Verify:
+- Are templates fully dumb renderers?
+- Do they avoid:
+  - business logic
+  - filtering columns
+  - computing values (qty/unit/etc.)
+  - schema decisions
+- Do they strictly render provided model only?
+
+Compare strictly to golden contract template rules.
+
+---
+
+### 4. COLUMN SYSTEM INTEGRITY
+
+Verify:
+- Single source of truth exists for columns
+- No duplicate column systems exist
+- No schema drift between:
+  - Table Settings
+  - Engine
+  - Templates
+- No conflicting custom column strategies
+
+---
+
+### 5. END-TO-END DATA FLOW
+
+Validate pipeline:
 
 
-DB → Table Settings → Render Engine → Render Model → Template → PDF
+Waybill DB → Table Settings → Render Engine → Render Model → PDF Templates → Final PDF
 
 Check:
-- Any bypass paths?
-- Any direct DB → template access?
-- Any UI state leaking into rendering?
+- No bypass paths
+- No direct DB → template access
+- No UI state leakage into engine
+- No template-side computation of business logic
 
 ---
 
-### 6. INTERNAL vs EXTERNAL WAYBILL SUPPORT
+### 6. WAYBILL TYPE SYSTEM
 
-Check:
-- Is `type: internal | external` correctly supported?
-- Are both modes handled consistently in engine?
-- Are templates branching correctly OR incorrectly?
-
----
-
-### 7. PAGINATION + FOOTER MODEL
-
-Check:
-- Who owns page numbers (should be templates only)
-- Does engine avoid layout decisions?
-- Is footer correctly data-only?
-
-Compare against spec Section 5.8–5.9.
+Verify:
+- `type: 'internal' | 'external'` exists in render model
+- Both modes are fully supported
+- Engine does NOT branch presentation logic
+- Templates handle conditional rendering only
 
 ---
 
-## OUTPUT REQUIRED
+### 7. FOOTER + PAGINATION MODEL
 
-Generate a report saved to:
+Verify:
+- Page numbers are NOT engine-owned
+- Footer is data-only (no layout logic)
+- Pagination is template-controlled (React-PDF runtime behavior)
+- Engine does NOT compute layout or page breaks
+
+---
+
+## OUTPUT REQUIREMENT
+
+Save the final report to:
 
 
 docs/task/reports/waybill-architecture-audit-report.md
@@ -128,22 +163,20 @@ docs/task/reports/waybill-architecture-audit-report.md
 ## REPORT STRUCTURE
 
 ### 1. EXECUTIVE SUMMARY
-- Overall architecture health score (0–10)
-- Current state classification:
+- Architecture health score (0–10)
+- Classification:
   - Fully aligned
   - Mostly aligned
   - Partially aligned
   - Misaligned
-  - Requires rewrite
+  - Requires refactor
 
 ---
 
-### 2. DEVIATION MAP
+### 2. DEVIATION MATRIX
 
-List:
-
-| System | Spec Compliance | Gap Severity | Notes |
-|-------|----------------|-------------|------|
+| System Area | Compliance Level | Severity | Notes |
+|-------------|------------------|----------|------|
 
 ---
 
@@ -151,52 +184,54 @@ List:
 
 Only include issues that:
 - break determinism
-- break separation of concerns
-- cause schema duplication
-- leak DB/UI into render layer
+- violate separation of concerns
+- introduce schema duplication
+- cause cross-layer leakage
+- violate blank preservation rules
 
 ---
 
-### 4. MIGRATION COMPLEXITY ASSESSMENT
+### 4. MIGRATION ANALYSIS
 
-Answer:
-
-- Estimated effort (hours/days/weeks)
-- Risk level (low/medium/high)
-- Whether incremental migration is possible
-- Whether current system should be preserved
+Provide:
+- Estimated effort (hours / days / weeks)
+- Risk level (low / medium / high)
+- Incremental migration feasibility
+- Whether system should remain unchanged
 
 ---
 
-### 5. RECOMMENDATION
+### 5. FINAL RECOMMENDATION
 
-One of:
+Choose ONE:
 
-- DO NOT MIGRATE (system already stable)
+- DO NOT MIGRATE (system is stable)
 - GRADUAL ALIGNMENT (recommended)
-- REFACTOR CORE ENGINE ONLY
+- REFACTOR ENGINE ONLY
 - FULL ARCHITECTURAL MIGRATION
 
-Explain clearly WHY.
+Justify strictly based on observed evidence.
 
 ---
 
-### 6. SAFE STATE IDENTIFICATION
+### 6. STABLE CORE IDENTIFICATION
 
 Identify:
-- What parts of system are already "golden compliant"
-- What parts must NEVER be changed (stable primitives)
+- Already-compliant modules
+- Safe-to-leave-untouched systems
+- Extension-safe boundaries
 
 ---
 
 ## CONSTRAINTS
 
-- Do NOT modify code
-- Do NOT propose new architecture
-- Do NOT implement fixes
-- This is strictly an evaluation
-- Be precise, not speculative
-- Prefer structural truth over opinion
+- DO NOT rename files or references
+- DO NOT assume external architectures
+- DO NOT introduce legacy or unrelated domains
+- DO NOT propose fixes or redesigns
+- DO NOT modify code
+- DO NOT implement changes
+- This is strictly an audit
 
 ---
 
@@ -204,7 +239,6 @@ Identify:
 
 The report must allow a senior engineer to decide:
 
-> "Do we keep this architecture, or migrate it to the golden spec?"
-
+> “Do we keep this architecture as-is, or migrate toward the golden contract?”
 
 
