@@ -3,8 +3,18 @@ import { normalizeBlank } from '../normalizeBlank'
 
 const BASE_KEYS = new Set(['description', 'quantity', 'unit', 'condition'])
 
+const FORBIDDEN_DB_KEYS = new Set([
+  'item_id', 'id', 'created_at', 'updated_at',
+  'unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total', 'custom_data',
+])
+
 export function resolveColumns(columns: ResolvedColumn[]): PrintColumn[] {
-  return columns.map((col) => ({ key: col.key, label: col.label }))
+  return columns
+    .filter((col) => {
+      if (FORBIDDEN_DB_KEYS.has(col.key)) return false
+      return true
+    })
+    .map((col) => ({ key: col.key, label: col.label }))
 }
 
 export function buildRows(items: RawWaybillItem[], columns: ResolvedColumn[]): PrintRow[] {

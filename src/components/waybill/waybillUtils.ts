@@ -424,9 +424,16 @@ export function normalizeWaybillItem(item: unknown, customColumns: WaybillCustom
   // Auto-repair: move legacy root-level extension fields into custom_data
   // Legacy waybills (pre-Canonical Contract v2) may have keys like "make", "partNo"
   // sitting at item root instead of inside custom_data. This migrates them silently.
+  // Forbidden DB-internal fields (item_id, id, created_at, etc.) are stripped — never
+  // moved to custom_data, as they must not appear as PDF columns.
+  const FORBIDDEN_DB_KEYS = new Set([
+    'item_id', 'id', 'created_at', 'updated_at',
+    'unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total',
+  ])
   for (const key of Object.keys(record)) {
     if (WAYBILL_ITEM_KEYS.has(key as keyof WaybillItem)) continue
     if (key === 'qty') continue // qty is a known alias for quantity, not an extension field
+    if (FORBIDDEN_DB_KEYS.has(key)) continue // strip DB-internal fields — never migrate to custom_data
     if (key in baseCustomData) continue // already in custom_data, don't overwrite
     baseCustomData[key] = normalizePrimitiveValue(record[key])
   }
@@ -540,11 +547,17 @@ export function getWaybillTypeContent(type: WaybillType) {
   return WAYBILL_TYPE_CONTENT[type]
 }
 
+const COLLECT_FORBIDDEN_DB_KEYS = new Set([
+  'item_id', 'id', 'created_at', 'updated_at',
+  'unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total',
+])
+
 export function collectWaybillCustomColumns(items: WaybillItem[], existingColumns: WaybillCustomColumn[] = []): WaybillCustomColumn[] {
   const map = new Map<string, WaybillCustomColumn>()
 
   existingColumns.forEach((column) => {
     const normalized = makeWaybillCustomColumn(column.label, column.key)
+    if (COLLECT_FORBIDDEN_DB_KEYS.has(normalized.key)) return
     map.set(normalized.key, normalized)
   })
 
@@ -552,6 +565,7 @@ export function collectWaybillCustomColumns(items: WaybillItem[], existingColumn
     Object.keys(item.custom_data || {}).forEach((key) => {
       const normalizedKey = normalizeDataKey(key)
       if (!normalizedKey || map.has(normalizedKey)) return
+      if (COLLECT_FORBIDDEN_DB_KEYS.has(normalizedKey)) return
       map.set(normalizedKey, makeWaybillCustomColumn(labelFromKey(normalizedKey), normalizedKey))
     })
   })
@@ -573,10 +587,15 @@ export function normalizeWaybillImport(input: unknown, currentType: WaybillType)
     const item = entry && typeof entry === 'object' && !Array.isArray(entry) ? (entry as Record<string, unknown>) : {}
     const custom_data: WaybillItemCustomData = {}
 
+    const FORBIDDEN_DB_KEYS = new Set([
+      'item_id', 'id', 'created_at', 'updated_at',
+      'unit_price', 'rate', 'vat', 'discount', 'subtotal', 'grand_total',
+    ])
     Object.entries(item).forEach(([key, value]) => {
       const normalizedKey = normalizeDataKey(key)
       if (!normalizedKey) return
       if (['description', 'quantity', 'unit', 'condition'].includes(normalizedKey)) return
+      if (FORBIDDEN_DB_KEYS.has(normalizedKey)) return
       const primitiveValue = normalizePrimitiveValue(value)
       custom_data[normalizedKey] = primitiveValue
       if (!customColumnsMap.has(normalizedKey)) {

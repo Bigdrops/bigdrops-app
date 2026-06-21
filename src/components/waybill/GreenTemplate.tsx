@@ -174,6 +174,37 @@ function createStyles(preset: PdfDesignPreset) {
       color: '#1a3a32',
       lineHeight: 1.3,
     },
+    tickGroup: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tick: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+    },
+    tickBox: {
+      width: 9,
+      height: 9,
+      borderWidth: 1.2,
+      borderColor: accent,
+      borderRadius: 2,
+      backgroundColor: '#ffffff',
+    },
+    tickBoxChecked: {
+      width: 9,
+      height: 9,
+      borderWidth: 1.2,
+      borderColor: accent,
+      borderRadius: 2,
+      backgroundColor: accent,
+    },
+    tickLabel: {
+      fontSize: 7.5,
+      fontWeight: 'bold',
+      color: '#1a3a32',
+    },
     clientDestRow: {
       flexDirection: 'row',
       gap: 8,
@@ -462,11 +493,31 @@ export const GreenTemplateDocument: React.FC<{
           <View style={S.twinCards}>
             <View style={S.card}>
               <Text style={S.cardTitle}>Method</Text>
-              <Text style={S.cardValue}>{deliveryMode}</Text>
+              <View style={S.tickGroup}>
+                {(['Hand', 'Vehicle', 'Courier'] as const).map((opt) => {
+                  const checked = deliveryMode === opt
+                  return (
+                    <View key={opt} style={S.tick}>
+                      <View style={checked ? S.tickBoxChecked : S.tickBox} />
+                      <Text style={S.tickLabel}>{opt}</Text>
+                    </View>
+                  )
+                })}
+              </View>
             </View>
             <View style={S.card}>
               <Text style={S.cardTitle}>Purpose</Text>
-              <Text style={S.cardValue}>{purpose}</Text>
+              <View style={S.tickGroup}>
+                {(['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const).map((opt) => {
+                  const checked = purpose === opt
+                  return (
+                    <View key={opt} style={S.tick}>
+                      <View style={checked ? S.tickBoxChecked : S.tickBox} />
+                      <Text style={S.tickLabel}>{opt}</Text>
+                    </View>
+                  )
+                })}
+              </View>
             </View>
           </View>
 
