@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Thermal Courier Waybill</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; height: 297mm; }
+  body {
+    background: #d6d6d1;
+    padding: 14px 0;
+    font-family: "Courier New", monospace;
+    color: #111;
+  }
+  .page {
+    width: 210mm; height: 297mm; margin: 0 auto;
+    background: #f7f3ea;
+    box-shadow: 0 4px 14px rgba(0,0,0,.14);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 12px 0;
+  }
+  .receipt {
+    width: 104mm;
+    min-height: 272mm;
+    background: #fffdf8;
+    border: 1px solid #2d2a26;
+    padding: 8px 8px 10px;
+    position: relative;
+  }
+  .receipt:before, .receipt:after {
+    content: "";
+    position: absolute; top: 0; bottom: 0; width: 4px;
+    background:
+      radial-gradient(circle at center, #d7cfbf 1.2px, transparent 1.4px) center top / 4px 10px repeat-y;
+    opacity: .8;
+  }
+  .receipt:before { left: -7px; }
+  .receipt:after { right: -7px; }
+
+  .center { text-align: center; }
+  .brand {
+    border-bottom: 1px dashed #333;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+  .brand .logo {
+    font-size: 8px; color: #666; margin-bottom: 4px;
+  }
+  .brand h1 {
+    font-size: 12px; line-height: 1.2; margin-bottom: 3px;
+  }
+  .brand p {
+    font-size: 8px; line-height: 1.35; color: #333;
+  }
+
+  .title {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 5px 0;
+    border-top: 1px dashed #333;
+    border-bottom: 1px dashed #333;
+    margin-bottom: 6px;
+  }
+
+  .barcode {
+    margin: 6px auto 8px;
+    width: 62mm; height: 12mm;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        #111 0, #111 1px,
+        transparent 1px, transparent 2px,
+        #111 2px, #111 4px,
+        transparent 4px, transparent 5px,
+        #111 5px, #111 6px,
+        transparent 6px, transparent 8px
+      );
+  }
+  .wbno {
+    text-align: center; font-size: 9px; font-weight: 700; margin-bottom: 8px;
+  }
+
+  .row {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 8px; padding: 2px 0;
+  }
+  .row .l { color: #444; }
+  .row .r { font-weight: 700; text-align: right; }
+
+  .block {
+    border-top: 1px dashed #333;
+    padding-top: 6px;
+    margin-top: 6px;
+  }
+  .block-title {
+    text-align: center;
+    font-size: 8px; font-weight: 700; letter-spacing: .7px;
+    margin-bottom: 5px;
+  }
+
+  .addr {
+    font-size: 8px; line-height: 1.4;
+    border: 1px dashed #666;
+    padding: 6px;
+    margin-bottom: 6px;
+  }
+  .addr strong { font-size: 9px; }
+
+  .choice-line {
+    font-size: 8px; line-height: 1.5;
+    margin-bottom: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7px;
+  }
+  th, td {
+    border-bottom: 1px dotted #777;
+    padding: 3px 2px;
+    vertical-align: top;
+  }
+  th { text-align: left; font-size: 7px; }
+  .i1 { width: 7%; }
+  .i2 { width: 45%; }
+  .i3 { width: 16%; text-align: center; }
+  .i4 { width: 14%; text-align: center; }
+  .i5 { width: 18%; text-align: center; }
+
+  .note {
+    font-size: 8px; line-height: 1.45;
+    border: 1px dashed #666;
+    padding: 6px;
+  }
+
+  .ack {
+    border: 1px dashed #666;
+    padding: 6px;
+    margin-top: 6px;
+  }
+  .line {
+    margin-top: 4px;
+    font-size: 8px;
+  }
+  .blank {
+    display: inline-block;
+    border-bottom: 1px solid #333;
+    min-width: 48mm;
+    height: 10px;
+    vertical-align: bottom;
+  }
+
+  .footer {
+    border-top: 1px dashed #333;
+    margin-top: 8px;
+    padding-top: 6px;
+    text-align: center;
+    font-size: 7px;
+    line-height: 1.4;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="receipt">
+    <div class="brand center">
+      <div class="logo">LOGO</div>
+      <h1>Sun &amp; Shield Power Solutions</h1>
+      <p>43 Oshola Street, Ifako-Ijaiye, Lagos<br>+234 800 123 4567<br>info@sunandshield.com</p>
+    </div>
+
+    <div class="title">WAYBILL / DELIVERY NOTE</div>
+    <div class="barcode"></div>
+    <div class="wbno">WBL-E-000042</div>
+
+    <div class="row"><span class="l">DATE</span><span class="r">2026-06-20</span></div>
+    <div class="row"><span class="l">TIME</span><span class="r">10:30 AM</span></div>
+    <div class="row"><span class="l">P.O. NO</span><span class="r">PO-2026-0842</span></div>
+    <div class="row"><span class="l">VEHICLE</span><span class="r">AKD-421-XY</span></div>
+    <div class="row"><span class="l">DRIVER</span><span class="r">Emeka Nwosu</span></div>
+
+    <div class="block">
+      <div class="block-title">DISPATCH FROM</div>
+      <div class="addr">
+        <strong>Sun &amp; Shield Power Solutions</strong><br>
+        43 Oshola Street, Ifako-Ijaiye, Lagos
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">DELIVER TO</div>
+      <div class="addr">
+        <strong>Global Industrial Logistics</strong><br>
+        Plot 42, Ikoyi Crescent, Lagos<br>
+        Delivery Point: Ikoyi Depot, Lagos
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">MOVEMENT DETAILS</div>
+      <div class="choice-line">METHOD : [ ] HAND   [X] VEHICLE   [ ] COURIER</div>
+      <div class="choice-line">PURPOSE: [X] SUPPLY [ ] RETURN [ ] REPAIR [ ] TRANSFER [ ] OTHER</div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">ITEMS</div>
+      <table>
+        <thead>
+          <tr>
+            <th class="i1">#</th>
+            <th class="i2">DESCRIPTION</th>
+            <th class="i3">QTY</th>
+            <th class="i4">COND</th>
+            <th class="i5">PART NO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="i1">1</td><td class="i2">12KVA Inverter Unit — Hybrid</td><td class="i3">2 Unit</td><td class="i4">Good</td><td class="i5">INV-001</td></tr>
+          <tr><td>2</td><td>200AH Deep Cycle Battery</td><td class="i3">8 Unit</td><td class="i4">Good</td><td class="i5">BAT-200</td></tr>
+          <tr><td>3</td><td>Solar Panel 550W Mono</td><td class="i3">12 Panel</td><td class="i4">Good</td><td class="i5">SP-550</td></tr>
+          <tr><td>4</td><td>MC4 Connectors (Pair)</td><td class="i3">20 Pair</td><td class="i4">Good</td><td class="i5">MC4-02</td></tr>
+          <tr><td>5</td><td>6mm² Solar Cable (per meter)</td><td class="i3">100 Mtr</td><td class="i4">Good</td><td class="i5">CBL-06</td></tr>
+          <tr><td>6</td><td>Charge Controller 60A MPPT</td><td class="i3">2 Unit</td><td class="i4">Good</td><td class="i5">CC-60</td></tr>
+          <tr><td>7</td><td>Distribution Panel 12-Way</td><td class="i3">3 Unit</td><td class="i4">Good</td><td class="i5">DP-12</td></tr>
+          <tr><td>8</td><td>Surge Protector SPD 40kA</td><td class="i3">5 Unit</td><td class="i4">Good</td><td class="i5">SPD-40</td></tr>
+          <tr><td>9</td><td>Changeover Switch 63A 4-Pole</td><td class="i3">2 Unit</td><td class="i4">Good</td><td class="i5">CS-63</td></tr>
+          <tr><td>10</td><td>PVC Conduit 20mm (3m)</td><td class="i3">30 Len</td><td class="i4">Good</td><td class="i5">PVC-20</td></tr>
+          <tr><td>11</td><td>Cable Tray 300mm x 3m</td><td class="i3">6 Len</td><td class="i4">Good</td><td class="i5">CT-300</td></tr>
+          <tr><td>12</td><td>Earthing Rod Copper 1.8m</td><td class="i3">4 Unit</td><td class="i4">Good</td><td class="i5">ER-18</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="block">
+      <div class="block-title">NOTE</div>
+      <div class="note">All items must be inspected before signing delivery confirmation.</div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">ACKNOWLEDGEMENT</div>
+      <div class="ack">
+        <div class="line">Delivered By: <span class="blank">Sun &amp; Shield Power Solutions</span></div>
+        <div class="line">Signature: <span class="blank"></span></div>
+        <div class="line">Date / Time: <span class="blank"></span></div>
+        <br>
+        <div class="line">Collected By: <span class="blank"></span></div>
+        <div class="line">Signature: <span class="blank"></span></div>
+        <div class="line">Date / Time: <span class="blank"></span></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Sun &amp; Shield Power Solutions<br>
+      WBL-E-000042 · Page 1 of 1
+    </div>
+  </div>
+</div>
+</body>
+</html>
