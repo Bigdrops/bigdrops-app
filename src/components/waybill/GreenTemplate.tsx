@@ -8,33 +8,11 @@ import {
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 
-const DELIVERY_MODES = ['By Hand', 'By Vehicle', 'Courier'] as const
-const PURPOSES = ['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const
-
-function Tick({ checked }: { checked: boolean }) {
-  return (
-    <View
-      style={{
-        width: 10,
-        height: 10,
-        border: '1.5pt solid #1f6e5c',
-        borderRadius: 2,
-        marginRight: 3,
-        flexShrink: 0,
-        backgroundColor: checked ? '#1f6e5c' : '#ffffff',
-      }}
-    />
-  )
-}
-
 function createStyles(preset: PdfDesignPreset) {
   const fillableChoice = getEffectiveFillableFont(preset)
   const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
   const accent = preset.templateAccentColor || '#1f6e5c'
   const txt = preset.textColor
-  const muted = preset.mutedColor
-  const border = preset.borderColor
-  const surface = preset.surfaceColor
 
   return StyleSheet.create({
     page: {
@@ -85,6 +63,12 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 12,
       fontWeight: 'bold',
       color: '#ffffff',
+    },
+    brandLogo: {
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      flexShrink: 0,
     },
     brandText: {
       flex: 1,
@@ -184,17 +168,11 @@ function createStyles(preset: PdfDesignPreset) {
       marginBottom: 3,
       fontFamily: fillableBold,
     },
-    tickGroup: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-    },
-    tick: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      fontSize: 7.5,
+    cardValue: {
+      fontSize: 8.5,
       fontFamily: fillableBold,
       color: '#1a3a32',
+      lineHeight: 1.3,
     },
     clientDestRow: {
       flexDirection: 'row',
@@ -244,7 +222,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     tableHeaderRow: {
       flexDirection: 'row',
-      backgroundColor: '#1f6e5c',
+      backgroundColor: accent,
       paddingVertical: 4,
       paddingHorizontal: 4,
     },
@@ -273,12 +251,6 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 7.5,
       color: '#1a2e2a',
     },
-    colNum: { width: '5%', textAlign: 'center' },
-    colDesc: { width: '39%' },
-    colQty: { width: '16%', textAlign: 'center' },
-    colCond: { width: '12%', textAlign: 'center' },
-    colPart: { width: '14%', textAlign: 'center' },
-    colMake: { width: '14%', textAlign: 'center' },
     driverRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -328,14 +300,6 @@ function createStyles(preset: PdfDesignPreset) {
       color: '#1a2e2a',
       lineHeight: 1.3,
     },
-    checklistItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      fontSize: 7.5,
-      color: '#1a2e2a',
-      marginTop: 1,
-    },
     sigRow: {
       flexDirection: 'row',
       gap: 8,
@@ -383,7 +347,7 @@ function createStyles(preset: PdfDesignPreset) {
       paddingBottom: 2,
     },
     sigImageArea: {
-      height: 36,
+      height: 42,
       borderWidth: 0.5,
       borderStyle: 'dashed',
       borderColor: '#c9d9cf',
@@ -394,8 +358,8 @@ function createStyles(preset: PdfDesignPreset) {
       backgroundColor: '#ffffff',
     },
     sigImage: {
-      width: '100%',
-      height: 36,
+      width: 110,
+      height: 42,
       objectFit: 'contain',
     },
     sigDateRow: {
@@ -427,6 +391,7 @@ export const GreenTemplateDocument: React.FC<{
 
   const deliveryMode = model.logistics.deliveryMode || ''
   const purpose = model.logistics.purpose || ''
+  const columns = model.table.columns
 
   return (
     <Document
@@ -443,7 +408,7 @@ export const GreenTemplateDocument: React.FC<{
           <View style={S.header}>
             <View style={S.brand}>
               {model.branding.logo ? (
-                <Image src={model.branding.logo} style={S.brandIcon} />
+                <Image src={model.branding.logo} style={S.brandLogo} />
               ) : (
                 <View style={S.brandIcon}>
                   <Text style={S.brandIconText}>⚡</Text>
@@ -464,7 +429,7 @@ export const GreenTemplateDocument: React.FC<{
             </View>
             <View style={S.waybillBadge}>
               <Text style={S.badgeLabel}>Waybill No.</Text>
-              <Text style={S.badgeNumber}>{model.header.waybillNumber || '—'}</Text>
+              <Text style={S.badgeNumber}>{model.header.waybillNumber || ''}</Text>
             </View>
           </View>
 
@@ -477,45 +442,31 @@ export const GreenTemplateDocument: React.FC<{
           <View style={S.infoGrid}>
             <View style={S.infoItem}>
               <Text style={S.infoLabel}>Date</Text>
-              <Text style={S.infoValue}>{model.header.date || '—'}</Text>
+              <Text style={S.infoValue}>{model.header.date || ''}</Text>
             </View>
             <View style={S.infoItem}>
               <Text style={S.infoLabel}>Time</Text>
-              <Text style={S.infoValue}>{model.header.time || '—'}</Text>
+              <Text style={S.infoValue}>{model.header.time || ''}</Text>
             </View>
             <View style={S.infoItem}>
               <Text style={S.infoLabel}>P.O. Number</Text>
-              <Text style={S.infoValue}>{model.header.poNumber || '—'}</Text>
+              <Text style={S.infoValue}>{model.header.poNumber || ''}</Text>
             </View>
             <View style={S.infoItem}>
               <Text style={S.infoLabel}>Vehicle Plate</Text>
-              <Text style={S.infoValue}>{model.logistics.vehiclePlate || '—'}</Text>
+              <Text style={S.infoValue}>{model.logistics.vehiclePlate || ''}</Text>
             </View>
           </View>
 
-          {/* Delivery Mode & Purpose cards */}
+          {/* Delivery Mode & Purpose */}
           <View style={S.twinCards}>
             <View style={S.card}>
               <Text style={S.cardTitle}>Method</Text>
-              <View style={S.tickGroup}>
-                {DELIVERY_MODES.map((mode) => (
-                  <View key={mode} style={S.tick}>
-                    <Tick checked={deliveryMode === mode} />
-                    <Text>{mode}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={S.cardValue}>{deliveryMode}</Text>
             </View>
             <View style={S.card}>
               <Text style={S.cardTitle}>Purpose</Text>
-              <View style={S.tickGroup}>
-                {PURPOSES.map((p) => (
-                  <View key={p} style={S.tick}>
-                    <Tick checked={purpose === p} />
-                    <Text>{p}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={S.cardValue}>{purpose}</Text>
             </View>
           </View>
 
@@ -523,37 +474,50 @@ export const GreenTemplateDocument: React.FC<{
           <View style={S.clientDestRow}>
             <View style={S.block}>
               <Text style={S.blockLabel}>Client / Consignee</Text>
-              <Text style={S.blockMain}>{model.parties.clientName || '—'}</Text>
-            </View>
-            <View style={S.block}>
-              <Text style={S.blockLabel}>Destination Address</Text>
-              <Text style={S.blockMain}>{model.logistics.deliveryLocation || '—'}</Text>
+              <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+              <Text style={S.blockSub}>{model.logistics.deliveryLocation || ''}</Text>
             </View>
           </View>
 
-          {/* Items table */}
+          {/* Items table — dynamic columns */}
           <Text style={S.sectionTitle}>Goods Description</Text>
           <View style={S.tableWrap}>
             <View style={S.tableHeaderRow}>
-              <Text style={[S.headerCell, S.colNum]}>#</Text>
-              <Text style={[S.headerCell, S.colDesc]}>Description</Text>
-              <Text style={[S.headerCell, S.colQty]}>Qty / Unit</Text>
-              <Text style={[S.headerCell, S.colCond]}>Condition</Text>
-              <Text style={[S.headerCell, S.colPart]}>Part No</Text>
-              <Text style={[S.headerCell, S.colMake]}>Make</Text>
+              <Text style={[S.headerCell, { width: '5%', textAlign: 'center' }]}>#</Text>
+              {columns.map((col) => (
+                <Text
+                  key={col.key}
+                  style={[
+                    S.headerCell,
+                    {
+                      width: `${Math.floor(95 / Math.max(columns.length, 1))}%`,
+                      textAlign: 'center',
+                    },
+                  ]}
+                >
+                  {col.label}
+                </Text>
+              ))}
             </View>
             {model.table.rows.map((row, i) => {
               const isAlt = i % 2 === 1
               return (
                 <View key={i} style={isAlt ? S.tableRowAlt : S.tableRow}>
-                  <Text style={[S.cell, S.colNum]}>{i + 1}</Text>
-                  <Text style={[S.cell, S.colDesc]}>{row.cells['description'] || '—'}</Text>
-                  <Text style={[S.cell, S.colQty]}>
-                    {row.cells['quantity'] || '—'} {row.cells['unit'] || ''}
-                  </Text>
-                  <Text style={[S.cell, S.colCond]}>{row.cells['condition'] || '—'}</Text>
-                  <Text style={[S.cell, S.colPart]}>{row.cells['partNo'] || '—'}</Text>
-                  <Text style={[S.cell, S.colMake]}>{row.cells['make'] || '—'}</Text>
+                  <Text style={[S.cell, { width: '5%', textAlign: 'center' }]}>{i + 1}</Text>
+                  {columns.map((col) => (
+                    <Text
+                      key={col.key}
+                      style={[
+                        S.cell,
+                        {
+                          width: `${Math.floor(95 / Math.max(columns.length, 1))}%`,
+                          textAlign: 'center',
+                        },
+                      ]}
+                    >
+                      {row.cells[col.key] || ''}
+                    </Text>
+                  ))}
                 </View>
               )
             })}
@@ -562,33 +526,14 @@ export const GreenTemplateDocument: React.FC<{
           {/* Driver row */}
           <View style={S.driverRow}>
             <Text style={S.driverLabel}>Driver</Text>
-            <Text style={S.driverValue}>{model.logistics.driverName || '—'}</Text>
+            <Text style={S.driverValue}>{model.logistics.driverName || ''}</Text>
           </View>
 
-          {/* Notes + Checklist */}
+          {/* Notes */}
           <View style={S.notesChecklist}>
             <View style={S.notesBox}>
               <Text style={S.notesLabel}>Operational Notes</Text>
-              <Text style={S.notesText}>{model.notes || '—'}</Text>
-            </View>
-            <View style={S.notesBox}>
-              <Text style={S.notesLabel}>Receiving Checklist</Text>
-              <View style={S.checklistItem}>
-                <Tick checked={false} />
-                <Text>Quantity Checked</Text>
-              </View>
-              <View style={S.checklistItem}>
-                <Tick checked={false} />
-                <Text>Condition Confirmed</Text>
-              </View>
-              <View style={S.checklistItem}>
-                <Tick checked={false} />
-                <Text>Shortage Reported</Text>
-              </View>
-              <View style={S.checklistItem}>
-                <Tick checked={false} />
-                <Text>Goods Accepted</Text>
-              </View>
+              <Text style={S.notesText}>{model.notes || ''}</Text>
             </View>
           </View>
 
@@ -599,16 +544,16 @@ export const GreenTemplateDocument: React.FC<{
               <Text style={S.sigTitle}>Delivered By (Sender)</Text>
               <View style={S.sigField}>
                 <Text style={S.sigFieldLabel}>Name</Text>
-                <Text style={S.sigFieldValue}>{model.parties.senderName || model.branding.name || '—'}</Text>
+                <Text style={S.sigFieldValue}>
+                  {model.parties.senderName || model.branding.name || ''}
+                </Text>
               </View>
               {model.signatures.sender?.url ? (
                 <View style={S.sigImageArea}>
                   <Image src={model.signatures.sender.url} style={S.sigImage} />
                 </View>
               ) : (
-                <View style={S.sigImageArea}>
-                  <Text style={{ fontSize: 6, color: '#b0c8bc' }}>Signature</Text>
-                </View>
+                <View style={S.sigImageArea} />
               )}
               <View style={S.sigDateRow}>
                 <View style={S.sigDateField}>
@@ -631,16 +576,14 @@ export const GreenTemplateDocument: React.FC<{
               <Text style={S.sigTitle}>Collected By (Receiver)</Text>
               <View style={S.sigField}>
                 <Text style={S.sigFieldLabel}>Name</Text>
-                <Text style={S.sigFieldValue}>{model.parties.receiverName || '—'}</Text>
+                <Text style={S.sigFieldValue}>{model.parties.receiverName || ''}</Text>
               </View>
               {model.signatures.receiver?.url ? (
                 <View style={S.sigImageArea}>
                   <Image src={model.signatures.receiver.url} style={S.sigImage} />
                 </View>
               ) : (
-                <View style={S.sigImageArea}>
-                  <Text style={{ fontSize: 6, color: '#b0c8bc' }}>Signature</Text>
-                </View>
+                <View style={S.sigImageArea} />
               )}
               <View style={S.sigDateRow}>
                 <View style={S.sigDateField}>
