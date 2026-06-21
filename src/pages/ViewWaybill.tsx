@@ -35,8 +35,9 @@ const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
 const WAYBILL_PDF_TEMPLATE_OPTIONS = [
-  { id: 'default', label: 'Classic', description: 'Full waybill with header, items, signatures, and footer' },
-  { id: 'minimal', label: 'Minimal', description: 'Blank template with checkboxes for on-site completion' },
+  { id: 'classic', label: 'Classic', description: 'Full waybill with header, items, tick boxes, and signature blocks' },
+  { id: 'minimal', label: 'Minimal', description: 'Compact checkbox-style template with sender/receiver cards' },
+  { id: 'thermal', label: 'Thermal', description: 'Receipt-width layout with Courier font for thermal printers' },
 ]
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
@@ -53,7 +54,7 @@ export default function ViewWaybill() {
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
-  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('default')
+  const [templateId, setTemplateId] = useState<WaybillPdfTemplateId>('classic')
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
