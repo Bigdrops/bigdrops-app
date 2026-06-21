@@ -86,3 +86,10 @@ DO NOT
 - Do NOT make assumptions about Industry.tsx — read it
 - Do NOT remove the "Open Decisions" section from the contract until
   the Industry audit actually resolves it
+
+==================================================
+REPORTING PROTOCOL (MANDATORY)
+==================================================
+Save report to `docs/Task/reports/waybill-render-engine-docs-update.md`
+Include: files changed, exact sections/lines modified per correction,
+any issues encountered, and confirmation that no source code was modified.
