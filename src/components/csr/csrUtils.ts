@@ -1,4 +1,6 @@
 import { getCsrPdfDocument } from './preview-templates'
+import { buildCsrRenderModel } from '@/domain/csr/csrRenderModel'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 
 export { getCsrPdfDocument }
 
@@ -285,7 +287,7 @@ export interface CsrPreviewOptions {
   client?: { address?: string | null; city?: string | null; state?: string | null }
 }
 
-export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions = {}): any {
+export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions = {}): CsrRenderModel {
   const parsed = options.meta || options.materialsRows
     ? {
         materialsRows:
@@ -337,12 +339,14 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
     .filter((part) => part && part.trim() !== '')
     .join(', ')
 
+  const renderModel = buildCsrRenderModel(csr)
+
   return {
     ...csr,
     address: fullAddress || csr.address || '',
     materialsRows: parsed.materialsRows,
     materialsText,
-    meta: parsed.meta,
+    meta: parsed.meta as unknown as Record<string, unknown>,
     modelLabel: parsed.meta.modelLabel || DEFAULT_CSR_META.modelLabel,
     serialLabel: parsed.meta.serialLabel || DEFAULT_CSR_META.serialLabel,
     showOperationalReadings: parsed.meta.showOperationalReadings !== false,
@@ -354,6 +358,13 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
     showTechnicianSignLine: !!parsed.meta.showTechnicianSignLine,
     technicianRemarks: csr.engineer_remarks || '',
     layoutDensity,
+    technicianRole: renderModel.technicianRole,
+    technicianSignatureUrl: renderModel.technicianSignatureUrl,
+    materialsOutputStyle: renderModel.materialsOutputStyle,
+    callTypeDisplay: renderModel.callTypeDisplay,
+    systemDownDisplay: renderModel.systemDownDisplay,
+    engineNo: renderModel.engineNo,
+    defectsFound: renderModel.defectsFound,
   }
 }
 

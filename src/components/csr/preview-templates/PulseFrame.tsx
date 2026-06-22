@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import {
   getLayoutDensity,
   getFillablePdfTheme,
@@ -202,7 +203,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps) {
-  csr = csr || {}
+  csr = csr || {} as CsrRenderModel
   const styles = createPulseFrameStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 

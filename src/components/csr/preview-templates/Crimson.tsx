@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import { CSR_STATUS_OPTIONS_PDF } from '../CSRPreviewContent'
 import {
   getLayoutDensity,
@@ -239,7 +240,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
-  csr = csr || {}
+  csr = csr || {} as CsrRenderModel
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
   const styles = createCrimsonStyles(layoutDensity, designPreset)

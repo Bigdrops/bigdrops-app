@@ -1,5 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import {
   getLayoutDensity,
   getFillablePdfTheme,
@@ -213,7 +214,7 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
 }
 
 export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps) {
-  csr = csr || {}
+  csr = csr || {} as CsrRenderModel
   const styles = createSignalBandsStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
 

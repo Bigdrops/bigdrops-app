@@ -12,7 +12,7 @@ export default function CsrDocumentPreview({
   previewModel,
   settingsData,
 }: CsrDocumentPreviewProps) {
-  const csrData = csr || {}
+  const csrData: CsrRenderModel = csr || ({} as CsrRenderModel)
   const model = previewModel || {}
   const settings = settingsData || {}
 

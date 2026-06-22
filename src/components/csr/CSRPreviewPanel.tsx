@@ -56,7 +56,7 @@ export type CSRPreviewPanelProps = {
 }
 
 type HeaderRenderProps = {
-  csr: CsrPreviewData
+  csr: CsrRenderModel
   branding: Branding
   theme: CsrTemplateTheme
   compact: boolean
@@ -74,7 +74,7 @@ const statusColor: Record<string, { bg: string; color: string }> = {
 const safe = (value: unknown) => String(value || '').trim()
 const hasText = (value: unknown) => safe(value).length > 0
 
-function hasOperationalReadings(csr: CsrPreviewData) {
+function hasOperationalReadings(csr: CsrRenderModel) {
   return Boolean(
     csr.showOperationalReadings &&
       (CSR_READING_FIELDS as CsrReadingField[]).some(({ key }) => hasText(csr[key])),
