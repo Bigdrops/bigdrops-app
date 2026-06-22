@@ -18,6 +18,7 @@ import {
   formatCommaMaterialsText,
   resolveMaterialColumnBlocks,
 } from './layoutModel'
+import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
 
 export function PdfSignatureCard({ styles, label, name = '', role = '', signatureUrl = '' }: any) {
   return (
@@ -128,8 +129,8 @@ export function StatusListChecks({ styles, status }: any) {
   )
 }
 
-export function ReadingsCardGrid({ styles, csr }: any) {
-  csr = csr || {}
+export function ReadingsCardGrid({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   const rows = getPopulatedReadingRows(csr)
   if (!hasOperationalReadings(csr)) return null
 
@@ -147,8 +148,8 @@ export function ReadingsCardGrid({ styles, csr }: any) {
   )
 }
 
-export function ReadingsStrip({ styles, csr }: any) {
-  csr = csr || {}
+export function ReadingsStrip({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   const rows = getPopulatedReadingRows(csr)
   if (!hasOperationalReadings(csr)) return null
 
@@ -169,8 +170,8 @@ export function ReadingsStrip({ styles, csr }: any) {
   )
 }
 
-export function MaterialsSection({ styles, csr, preferredStyle, noSection, templateId }: any) {
-  csr = csr || {}
+export function MaterialsSection({ styles, csr, preferredStyle, noSection, templateId }: { styles: any; csr: CsrRenderModel; preferredStyle?: string; noSection?: boolean; templateId?: string }) {
+  csr = csr || ({} as CsrRenderModel)
   if (!hasMaterials(csr)) return null
 
   const rows = getMaterialsRows(csr)
@@ -245,8 +246,8 @@ function renderTabulateMaterials(rows: any[], numBlocks: number) {
   )
 }
 
-export function AcknowledgementBlock({ styles, csr }: any) {
-  csr = csr || {}
+export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
@@ -288,8 +289,8 @@ export function AcknowledgementBlock({ styles, csr }: any) {
   )
 }
 
-export function PulseAcknowledgementBlock({ styles, csr }: any) {
-  csr = csr || {}
+export function PulseAcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
   const technicianRole = getTechnicianRole(csr)
@@ -321,8 +322,8 @@ export function PulseAcknowledgementBlock({ styles, csr }: any) {
   )
 }
 
-export function StructuredTopIdentity({ styles, csr, branding }: any) {
-  csr = csr || {}
+export function StructuredTopIdentity({ styles, csr, branding }: { styles: any; csr: CsrRenderModel; branding: any }) {
+  csr = csr || ({} as CsrRenderModel)
   return (
     <>
       <View style={styles.headerRow}>
@@ -349,6 +350,18 @@ export function StructuredTopIdentity({ styles, csr, branding }: any) {
                 <Text style={styles.metaValue}>{safe(csr.po_number)}</Text>
               </View>
             ) : null}
+            {hasText(csr.callTypeDisplay) ? (
+              <View style={styles.identityFull}>
+                <Text style={styles.metaLabel}>Call Type</Text>
+                <Text style={styles.metaValue}>{safe(csr.callTypeDisplay)}</Text>
+              </View>
+            ) : null}
+            {hasText(csr.systemDownDisplay) ? (
+              <View style={styles.identityFull}>
+                <Text style={styles.metaLabel}>System Status</Text>
+                <Text style={styles.metaValue}>{safe(csr.systemDownDisplay)}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
@@ -356,8 +369,8 @@ export function StructuredTopIdentity({ styles, csr, branding }: any) {
   )
 }
 
-export function ServiceTimeSection({ styles, csr }: any) {
-  csr = csr || {}
+export function ServiceTimeSection({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   const w = getServiceWindow(csr)
   return (
     <PdfSection styles={styles} title="Service Time">
@@ -371,8 +384,8 @@ export function ServiceTimeSection({ styles, csr }: any) {
   )
 }
 
-export function CustomerFeedbackSection({ styles, csr }: any) {
-  csr = csr || {}
+export function CustomerFeedbackSection({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   if (!shouldRender(true, csr.customer_feedback)) return null
   return (
     <PdfSection styles={styles} title="Customer Feedback">
@@ -383,8 +396,20 @@ export function CustomerFeedbackSection({ styles, csr }: any) {
   )
 }
 
-export function SharedProblemSection({ styles, csr, title = 'Problem Reported' }: any) {
-  csr = csr || {}
+export function DefectsFoundBlock({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
+  if (!shouldRender(true, csr.defects_found)) return null
+  return (
+    <PdfSection styles={styles} title="Defects Found">
+      <View style={styles.textAreaOnly}>
+        <Text style={styles.blockText}>{safe(csr.defectsFound)}</Text>
+      </View>
+    </PdfSection>
+  )
+}
+
+export function SharedProblemSection({ styles, csr, title = 'Problem Reported' }: { styles: any; csr: CsrRenderModel; title?: string }) {
+  csr = csr || ({} as CsrRenderModel)
   if (!shouldRender(true, csr.problem_reported)) return null
   return (
     <PdfSection styles={styles} title={title}>
@@ -395,8 +420,8 @@ export function SharedProblemSection({ styles, csr, title = 'Problem Reported' }
   )
 }
 
-export function SharedEquipmentSection({ styles, csr }: any) {
-  csr = csr || {}
+export function SharedEquipmentSection({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
+  csr = csr || ({} as CsrRenderModel)
   return (
     <PdfSection styles={styles} title="Equipment Information">
       <View style={styles.grid4}>
@@ -406,6 +431,7 @@ export function SharedEquipmentSection({ styles, csr }: any) {
         <PdfField styles={styles} label={csr.modelLabel || 'Model'} value={csr.model} />
         <PdfField styles={styles} label={csr.serialLabel || 'Serial Number'} value={csr.serial_no} span={2} />
         <PdfField styles={styles} label="Capacity" value={csr.capacity} />
+        <PdfField styles={styles} label="Engine No." value={csr.engine_no} />
         <PdfField styles={styles} label="Hours" value={csr.hours} />
       </View>
     </PdfSection>

@@ -1,7 +1,7 @@
 export const CSR_READING_FIELDS = [
   { key: 'voltage', label: 'Voltage (V)' },
   { key: 'frequency', label: 'Frequency (Hz)' },
-  { key: 'battery', label: 'Battery (V)' },
+  { key: 'battery', label: 'Charging Alternator Condition' },
   { key: 'temperature', label: 'Temperature (\u00B0C)' },
   { key: 'pressure', label: 'Pressure (bar)' },
   { key: 'hours', label: 'Hours' },

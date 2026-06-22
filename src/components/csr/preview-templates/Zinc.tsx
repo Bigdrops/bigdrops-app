@@ -228,6 +228,12 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               label="Service Window (End)"
               value={[csr.end_date, csr.end_time].filter(Boolean).join(' // ')}
             />
+            {hasText(csr.callTypeDisplay) ? (
+              <PdfField styles={styles} label="Call Type" value={csr.callTypeDisplay} />
+            ) : null}
+            {hasText(csr.systemDownDisplay) ? (
+              <PdfField styles={styles} label="System Status" value={csr.systemDownDisplay} />
+            ) : null}
           </View>
         </PdfSection>
 
@@ -236,8 +242,9 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
             <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
             <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Make/Model</Text><Text style={styles.fieldValue}>{[safe(csr.make), safe(csr.model)].filter(Boolean).join(' ')}</Text></View>
             <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Serial No.</Text><Text style={styles.fieldValue}>{safe(csr.serial_no)}</Text></View>
+            <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Engine No.</Text><Text style={styles.fieldValue}>{safe(csr.engine_no)}</Text></View>
             <View style={[styles.fieldCard, { width: '25%' }]}><Text style={styles.fieldLabel}>Capacity</Text><Text style={styles.fieldValue}>{safe(csr.capacity)}</Text></View>
-            <View style={[styles.fieldCard, { width: '100%' }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
+            <View style={[styles.fieldCard, { width: '75%' }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
           </View>
           {hasOperationalReadings(csr) ? <ReadingsStrip styles={styles} csr={csr} /> : null}
         </PdfSection>
@@ -251,6 +258,11 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               <PdfTextBlock styles={styles} label="Service Rendered" value={csr.service_rendered} />
             </View>
           </View>
+          {shouldRender(true, csr.defects_found) ? (
+            <View style={{ marginTop: 6 }}>
+              <PdfTextBlock styles={styles} label="Defects Found" value={csr.defectsFound} />
+            </View>
+          ) : null}
           {shouldRender(true, csr.technicianRemarks) ? (
             <View style={{ marginTop: 6 }}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>

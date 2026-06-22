@@ -5,6 +5,7 @@ import {
   resolvePdfFontFamily,
 } from '../../../lib/pdfDesignPreset'
 import { safeText } from './layoutModel'
+import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
 
 export const safe = (value: any) => safeText(value)
 export const hasText = (value: any) => !!safe(value)
@@ -25,11 +26,11 @@ export function getBranding(branding: any = {}) {
   }
 }
 
-export function getStatusValue(csr: any) {
+export function getStatusValue(csr: CsrRenderModel) {
   return safe(csr?.status)
 }
 
-export function getServiceWindow(csr: any) {
+export function getServiceWindow(csr: CsrRenderModel) {
   return {
     startDate: safe(csr?.start_date),
     startTime: safe(csr?.start_time),
@@ -38,7 +39,7 @@ export function getServiceWindow(csr: any) {
   }
 }
 
-export function buildReadingRows(csr: any) {
+export function buildReadingRows(csr: CsrRenderModel) {
   return CSR_READING_FIELDS.map(({ key, label }: any) => ({
     key,
     label,
@@ -46,15 +47,15 @@ export function buildReadingRows(csr: any) {
   }))
 }
 
-export function getPopulatedReadingRows(csr: any) {
+export function getPopulatedReadingRows(csr: CsrRenderModel) {
   return buildReadingRows(csr).filter((row: any) => hasText(row.value))
 }
 
-export function hasOperationalReadings(csr: any) {
+export function hasOperationalReadings(csr: CsrRenderModel) {
   return !!csr?.showOperationalReadings && getPopulatedReadingRows(csr).length > 0
 }
 
-export function getMaterialsRows(csr: any) {
+export function getMaterialsRows(csr: CsrRenderModel) {
   if (Array.isArray(csr?.materialsRows)) {
     const populated = csr.materialsRows.filter((row: any) => row?.item || row?.quantity || row?.unit)
     if (populated.length > 0) return populated
@@ -62,23 +63,23 @@ export function getMaterialsRows(csr: any) {
   return hasText(csr?.materialsText) ? [{ item: csr?.materialsText || ' ', quantity: '', unit: '' }] : []
 }
 
-export function hasMaterials(csr: any) {
+export function hasMaterials(csr: CsrRenderModel) {
   return getMaterialsRows(csr).length > 0
 }
 
-export function getTechnicianName(csr: any) {
+export function getTechnicianName(csr: CsrRenderModel) {
   return safe(csr?.technicianSignatory?.name || csr?.technicianName)
 }
 
-export function getTechnicianRole(csr: any) {
+export function getTechnicianRole(csr: CsrRenderModel) {
   return safe(csr?.technicianSignatory?.role)
 }
 
-export function getTechnicianSignatureUrl(csr: any) {
+export function getTechnicianSignatureUrl(csr: CsrRenderModel) {
   return safe(csr?.technicianSignatory?.signatureUrl)
 }
 
-export function getLayoutDensity(csr: any) {
+export function getLayoutDensity(csr: CsrRenderModel) {
   return csr?.layoutDensity || 'comfortable'
 }
 

@@ -6,10 +6,13 @@ export interface CsrPdfBranding {
   logoUrl?: string;
 }
 
+import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
+
 export interface CsrPdfProps {
-  csr: any;
+  csr: CsrRenderModel;
   branding?: any;
   designPreset?: any;
+  template?: string;
 }
 
 export interface CsrPdfStyles {

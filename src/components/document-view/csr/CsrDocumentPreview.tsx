@@ -1,8 +1,9 @@
 import './CsrDocumentPreview.css'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 
 type CsrDocumentPreviewProps = {
-  csr: any
-  previewModel: any
+  csr: CsrRenderModel
+  previewModel?: any
   settingsData: any
 }
 
@@ -29,12 +30,19 @@ export default function CsrDocumentPreview({
     csrData.model,
     csrData.serial_no,
     csrData.capacity,
+    csrData.engineNo,
   ].filter(Boolean)
 
-  const materialsRows = Array.isArray(model?.materialsRows) ? model.materialsRows : []
+  const materialsRows = Array.isArray(csrData.materialsRows)
+    ? csrData.materialsRows
+    : Array.isArray(model?.materialsRows)
+      ? model.materialsRows
+      : []
   const parsedMaterials = materialsRows.filter((row: any) => row.item || row.quantity || row.unit)
 
   const statusLabel = csrData.status ? String(csrData.status).toUpperCase() : ''
+  const callType = csrData.callTypeDisplay && csrData.callTypeDisplay !== 'NOT SPECIFIED' ? csrData.callTypeDisplay : null
+  const systemStatus = csrData.systemDownDisplay && csrData.systemDownDisplay !== 'NOT SPECIFIED' ? csrData.systemDownDisplay : null
 
   return (
     <div className="csrDocumentPreview">
@@ -86,6 +94,14 @@ export default function CsrDocumentPreview({
           <div className="doc-meta-cell" style={{ gridColumn: '1 / -1' }}>
             <div className="doc-meta-label">Client Details</div>
             <div className="doc-meta-sub">{clientLines.slice(1).join(' · ')}</div>
+          </div>
+        )}
+        {(callType || systemStatus) && (
+          <div className="doc-meta-cell" style={{ gridColumn: '1 / -1' }}>
+            <div className="doc-meta-label">Call Type</div>
+            <div className="doc-meta-value">
+              {[callType, systemStatus].filter(Boolean).join(' · ')}
+            </div>
           </div>
         )}
         {equipmentLines.length > 0 && (
@@ -151,8 +167,8 @@ export default function CsrDocumentPreview({
         <div className="doc-signature-box">
           <div className="doc-signature-line" />
           <div className="doc-signature-label">Technician Sign & Date</div>
-          {model.technicianName && (
-            <div className="doc-signature-name">{model.technicianName}</div>
+          {(csrData.technicianName || model.technicianName) && (
+            <div className="doc-signature-name">{csrData.technicianName || model.technicianName}</div>
           )}
         </div>
         <div className="doc-signature-box">

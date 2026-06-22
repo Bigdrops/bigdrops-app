@@ -14,6 +14,7 @@ import {
 import {
   StructuredTopIdentity,
   SharedProblemSection,
+  DefectsFoundBlock,
   SharedEquipmentSection,
   ReadingsCardGrid,
   PdfSection,
@@ -232,6 +233,7 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
         </View>
 
         <SharedProblemSection styles={styles} csr={csr} />
+        <DefectsFoundBlock styles={styles} csr={csr} />
         <SharedEquipmentSection styles={styles} csr={csr} />
         <ReadingsCardGrid styles={styles} csr={csr} />
 

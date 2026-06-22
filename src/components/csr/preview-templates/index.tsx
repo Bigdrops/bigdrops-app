@@ -27,7 +27,7 @@ export function Template4({ csr, branding = {}, designPreset }: CsrPdfProps) {
   return <CrimsonTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function getCsrPdfDocument({ csr, branding = {}, template = '4', designPreset }: any) {
+export function getCsrPdfDocument({ csr, branding = {}, template = '4', designPreset }: CsrPdfProps) {
   const variant = getCsrTemplateVariant(template)
 
   if (variant === 'pulseframe') return <Template1 csr={csr} branding={branding} designPreset={designPreset} />

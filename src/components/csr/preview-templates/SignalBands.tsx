@@ -15,6 +15,7 @@ import {
 } from './utils'
 import {
   StructuredTopIdentity,
+  DefectsFoundBlock,
   SharedEquipmentSection,
   ReadingsStrip,
   MaterialsSection,
@@ -254,6 +255,14 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
           <Band colorStyle={styles.bandKeyCharcoal} title="Problem" sub="Original complaint as reported by client.">
             <View style={styles.textAreaOnly}>
               <Text style={styles.blockText}>{safe(csr.problem_reported)}</Text>
+            </View>
+          </Band>
+        ) : null}
+
+        {shouldRender(true, csr.defects_found) ? (
+          <Band colorStyle={styles.bandKeyCharcoal} title="Defects Found" sub="Additional issues identified during inspection.">
+            <View style={styles.textAreaOnly}>
+              <Text style={styles.blockText}>{safe(csr.defectsFound)}</Text>
             </View>
           </Band>
         ) : null}

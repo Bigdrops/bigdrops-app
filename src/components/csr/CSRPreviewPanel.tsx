@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { getEffectiveFillableFont, resolvePdfWebFontFamily } from '@/lib/pdfDesignPreset'
+import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import {
   CSR_READING_FIELDS,
   CSR_STATUS_OPTIONS,
@@ -15,12 +16,6 @@ type Branding = {
   companyName?: string | null
   companyTagline?: string | null
   contactLine?: string | null
-}
-
-type TechnicianSignatory = {
-  name?: string | null
-  role?: string | null
-  signatureUrl?: string | null
 }
 
 type CsrReadingField = {
@@ -52,44 +47,8 @@ type CsrTemplateTheme = {
   previewSurface: string
 }
 
-type CsrPreviewData = {
-  status?: string | null
-  csr_number?: string | null
-  date?: string | null
-  client_name?: string | null
-  po_number?: string | null
-  show_po?: boolean | null
-  address?: string | null
-  problem_reported?: string | null
-  equipment_type?: string | null
-  capacity?: string | null
-  make?: string | null
-  model?: string | null
-  modelLabel?: string | null
-  serialLabel?: string | null
-  serial_no?: string | null
-  equipment_location?: string | null
-  showOperationalReadings?: boolean | null
-  materialsText?: string | null
-  service_rendered?: string | null
-  customer_feedback?: string | null
-  showTechnicianSignLine?: boolean | null
-  technicianRemarks?: string | null
-  start_date?: string | null
-  start_time?: string | null
-  end_date?: string | null
-  end_time?: string | null
-  showAcknowledgement?: boolean | null
-  recipientTitle?: string | null
-  acknowledgement_name?: string | null
-  recipientRole?: string | null
-  technicianName?: string | null
-  technicianSignatory?: TechnicianSignatory | null
-  [key: string]: unknown
-}
-
 export type CSRPreviewPanelProps = {
-  csr: CsrPreviewData
+  csr: CsrRenderModel
   template: string
   onTemplateChange: (template: string) => void
   branding?: Branding
@@ -412,6 +371,8 @@ export default function CSRPreviewPanel({
             <div><span style={lbl}>CSR No.</span><span style={{ ...val, color: theme.headerBg, fontWeight: '700' }}>{csr.csr_number}</span></div>
             <div><span style={lbl}>Date</span><span style={val}>{csr.date}</span></div>
             <div><span style={lbl}>Customer</span><span style={val}>{csr.client_name}</span></div>
+            {csr.callTypeDisplay && csr.callTypeDisplay !== 'NOT SPECIFIED' ? <div><span style={lbl}>Call Type</span><span style={val}>{csr.callTypeDisplay}</span></div> : null}
+            {csr.systemDownDisplay && csr.systemDownDisplay !== 'NOT SPECIFIED' ? <div><span style={lbl}>System Status</span><span style={val}>{csr.systemDownDisplay}</span></div> : null}
             {csr.show_po && String(csr.po_number || '').trim() ? <div><span style={lbl}>PO No.</span><span style={val}>{String(csr.po_number || '').trim()}</span></div> : null}
             <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div>
           </div>
@@ -434,6 +395,7 @@ export default function CSRPreviewPanel({
               <div><span style={lbl}>{csr.modelLabel}</span><span style={val}>{csr.model}</span></div>
               <div><span style={lbl}>{csr.serialLabel}</span><span style={val}>{csr.serial_no}</span></div>
               <div><span style={lbl}>Location</span><span style={val}>{csr.equipment_location}</span></div>
+              {csr.engineNo ? <div><span style={lbl}>Engine No.</span><span style={val}>{csr.engineNo}</span></div> : null}
             </div>
           </div>
         </div>

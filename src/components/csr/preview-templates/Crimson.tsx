@@ -294,6 +294,18 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
               <Text style={styles.fieldLabel}>Service End (Date/Time)</Text>
               <Text style={styles.fieldValue}>{serviceEnd || 'Not recorded'}</Text>
             </View>
+            {hasText(csr.callTypeDisplay) ? (
+              <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
+                <Text style={styles.fieldLabel}>Call Type</Text>
+                <Text style={styles.fieldValue}>{safe(csr.callTypeDisplay)}</Text>
+              </View>
+            ) : null}
+            {hasText(csr.systemDownDisplay) ? (
+              <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
+                <Text style={styles.fieldLabel}>System Status</Text>
+                <Text style={styles.fieldValue}>{safe(csr.systemDownDisplay)}</Text>
+              </View>
+            ) : null}
           </View>
         </PdfSection>
 
@@ -308,6 +320,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.modelLabel) || 'Model'}</Text><Text style={styles.fieldValue}>{safe(csr.model)}</Text></View>
+            <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Engine No.</Text><Text style={styles.fieldValue}>{safe(csr.engine_no)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Capacity</Text><Text style={styles.fieldValue}>{safe(csr.capacity)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.serialLabel) || 'Serial Number'}</Text><Text style={styles.fieldValue}>{safe(csr.serial_no)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Location</Text><Text style={styles.fieldValue}>{safe(csr.equipment_location)}</Text></View>
@@ -320,10 +333,18 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           ) : null}
         </PdfSection>
 
-        <PdfSection styles={styles} title="Service Rendered">
+      <PdfSection styles={styles} title="Service Rendered">
           <View style={styles.blockCard}>
             <Text style={styles.blockText}>{safe(csr.service_rendered) || ' '}</Text>
           </View>
+          {shouldRender(true, csr.defects_found) ? (
+            <View style={{ marginTop: 8 }}>
+              <Text style={styles.fieldLabel}>Defects Found</Text>
+              <View style={[styles.blockCard, styles.heroBlockCard]}>
+                <Text style={styles.blockText}>{safe(csr.defectsFound)}</Text>
+              </View>
+            </View>
+          ) : null}
           {shouldRender(true, csr.technicianRemarks) ? (
             <View style={{ marginTop: 8 }}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>
