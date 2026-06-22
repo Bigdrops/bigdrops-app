@@ -409,6 +409,10 @@ function createStyles(preset: PdfDesignPreset) {
       marginTop: 'auto',
       fontSize: 6.5,
       color: '#6a8a7c',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -532,6 +536,7 @@ export const GreenTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockLabel}>Client / Consignee</Text>
               <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
             </View>
             <View style={S.block}>
               <Text style={S.blockLabel}>Destination Address</Text>
@@ -664,7 +669,7 @@ export const GreenTemplateDocument: React.FC<{
         </View>
 
         {/* Footer */}
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text

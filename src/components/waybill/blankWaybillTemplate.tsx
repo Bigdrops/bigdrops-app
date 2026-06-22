@@ -85,6 +85,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
               ? (model.logistics.deliveryLocation || '—')
               : (model.parties.clientName || '—')}
           </Text>
+          {model.parties.clientAddress ? <Text style={{ fontSize: 7, marginTop: 1 }}>{model.parties.clientAddress}</Text> : null}
         </View>
         <View style={styles.topBox}>
           <Text style={styles.boxLabel}>DESTINATION</Text>

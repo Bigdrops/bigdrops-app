@@ -19,7 +19,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     banner: {
       backgroundColor: '#1e2b32',
-      padding: 8,
+      padding: 6,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -32,10 +32,10 @@ function createStyles(preset: PdfDesignPreset) {
       gap: 12,
     },
     bannerIcon: {
-      width: 40,
-      height: 40,
+      width: 36,
+      height: 36,
       backgroundColor: '#d97a4a',
-      borderRadius: 20,
+      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -45,16 +45,18 @@ function createStyles(preset: PdfDesignPreset) {
       color: '#1e2b32',
     },
     bannerLogo: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       overflow: 'hidden',
+      objectFit: 'contain',
+      backgroundColor: '#ffffff',
     },
     bannerText: {
       flex: 1,
     },
     bannerName: {
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: 'bold',
       color: '#ffffff',
       letterSpacing: -0.3,
@@ -387,6 +389,10 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 6.5,
       color: '#7a8e99',
       backgroundColor: '#f6f8f9',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -441,6 +447,7 @@ export const SplitTemplateDocument: React.FC<{
               <View style={S.block}>
                 <Text style={S.blockTag}>Client / Consignee</Text>
                 <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+                {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
               </View>
               <View style={S.block}>
                 <Text style={S.blockTag}>Destination Address</Text>
@@ -615,7 +622,7 @@ export const SplitTemplateDocument: React.FC<{
           </View>
         </View>
 
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />

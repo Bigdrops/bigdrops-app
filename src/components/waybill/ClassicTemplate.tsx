@@ -16,7 +16,6 @@ function createStyles(preset: PdfDesignPreset) {
     },
     content: {
       paddingHorizontal: 14,
-      paddingTop: 14,
       paddingBottom: 16,
       flex: 1,
     },
@@ -25,6 +24,7 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 16,
       fontWeight: 'bold',
       letterSpacing: 2,
+      paddingTop: 14,
       marginBottom: 10,
       paddingBottom: 6,
       borderBottomWidth: 2,
@@ -341,6 +341,10 @@ function createStyles(preset: PdfDesignPreset) {
       marginTop: 'auto',
       fontSize: 7,
       color: '#94a3b8',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -442,6 +446,7 @@ export const ClassicTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockLabel}>Client / Consignee</Text>
               <Text style={S.blockValue}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
             </View>
           </View>
 
@@ -556,7 +561,7 @@ export const ClassicTemplateDocument: React.FC<{
           </View>
         </View>
 
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />

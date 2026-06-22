@@ -30,8 +30,7 @@ import DocumentTemplateDesignOverrides from '@/components/document/DocumentTempl
 import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
-import { CheckCircle2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -71,6 +70,18 @@ export default function ViewWaybill() {
 
         setRawWaybill(data)
         setWaybill(mapDbWaybill(data))
+
+        if (data.client_id) {
+          const { data: clientData } = await supabase
+            .from('clients')
+            .select('address')
+            .eq('id', data.client_id)
+            .single()
+          if (clientData?.address) {
+            setRawWaybill((curr: any) => ({ ...curr, client_address: clientData.address }))
+          }
+        }
+
         const loadedCustomFields = parseWaybillCustomFields(data.custom_fields)
         if (loadedCustomFields.pdfTemplateId) {
           setTemplate(loadedCustomFields.pdfTemplateId)
@@ -297,48 +308,7 @@ export default function ViewWaybill() {
 
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
                   <div className="mb-3 text-sm font-semibold text-bd-text">Template Style</div>
-                  <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
-                    {([
-                      { id: 'green', label: 'Green', desc: 'Clean green header' },
-                      { id: 'minimal', label: 'Minimal', desc: 'Bare minimum layout' },
-                      { id: 'thermal', label: 'Thermal', desc: 'Receipt-style' },
-                      { id: 'classic', label: 'Classic', desc: 'Traditional layout' },
-                      { id: 'split', label: 'Split', desc: 'Split-panel design' },
-                      { id: 'premium', label: 'Premium', desc: 'Gold-accent premium' },
-                      { id: 'industry', label: 'Industry', desc: 'Industrial style' },
-                    ] as const).map((opt) => {
-                      const active = template === opt.id
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setTemplate(opt.id)}
-                          className={cn(
-                            'relative flex w-[150px] shrink-0 flex-col overflow-hidden rounded-[20px] border p-1.5 transition-all duration-300',
-                            active
-                              ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text ring-2 ring-bd-button-primary-bg ring-offset-2'
-                              : 'border-bd-border bg-bd-card-bg text-bd-text hover:border-bd-border hover:bg-bd-surface-muted/50',
-                          )}
-                        >
-                          <div className="mb-2 flex h-[80px] flex-col justify-end rounded-[16px] bg-white p-2 shadow-inner">
-                            <div className="space-y-1.5">
-                              <div className={cn('h-1.5 w-full rounded-full', active ? 'bg-slate-800' : 'bg-slate-300')} />
-                              <div className={cn('h-1 w-3/5 rounded-full', active ? 'bg-slate-400' : 'bg-slate-200')} />
-                              <div className={cn('h-1 w-4/5 rounded-full', active ? 'bg-slate-300' : 'bg-slate-100')} />
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 px-1">
-                            <span className="truncate text-xs font-bold tracking-tight">{opt.label}</span>
-                            {active && (
-                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-bd-button-primary-bg">
-                                <CheckCircle2 className="size-2.5 text-bd-button-primary-text" />
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                  <WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />
                 </div>
 
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">

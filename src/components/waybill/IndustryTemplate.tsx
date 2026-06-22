@@ -354,6 +354,10 @@ function createStyles(preset: PdfDesignPreset) {
       justifyContent: 'space-between',
       fontSize: 6.5,
       color: '#7d8a88',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -398,6 +402,7 @@ export const IndustryTemplateDocument: React.FC<{
                 <View style={S.leftBlock}>
                   <Text style={S.blockTag}>Client / Consignee</Text>
                   <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+                  {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
                 </View>
                 <View style={S.leftBlock}>
                   <Text style={S.blockTag}>Destination Address</Text>
@@ -561,7 +566,7 @@ export const IndustryTemplateDocument: React.FC<{
           </View>
         </View>
 
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />

@@ -19,7 +19,7 @@ function createStyles(preset: PdfDesignPreset) {
     pageRow: {
       flexDirection: 'row',
       justifyContent: 'center',
-      paddingVertical: 12,
+      paddingBottom: 12,
       flex: 1,
     },
     receipt: {
@@ -100,7 +100,8 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 12,
       fontWeight: 'bold',
       letterSpacing: 1,
-      paddingVertical: 5,
+      paddingTop: 12,
+      paddingBottom: 5,
       borderTopWidth: 0.5,
       borderTopStyle: 'dashed',
       borderTopColor: '#333333',
@@ -163,6 +164,9 @@ function createStyles(preset: PdfDesignPreset) {
       fontWeight: 'bold',
     },
     choiceLine: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'nowrap',
       fontSize: 8,
       lineHeight: 1.5,
       marginBottom: 4,
@@ -236,10 +240,10 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 8,
     },
     sigBlankLine: {
-      borderBottomWidth: 0.5,
-      borderBottomColor: '#333333',
-      minWidth: 140,
-      height: 10,
+      borderWidth: 1,
+      borderColor: '#333333',
+      minWidth: 110,
+      height: 42,
     },
     sigImageArea: {
       height: 42,
@@ -267,6 +271,10 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 7,
       lineHeight: 1.4,
       color: '#444444',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -374,6 +382,7 @@ export const ThermalTemplateDocument: React.FC<{
               <Text style={S.blockTitle}>DELIVER TO</Text>
               <View style={S.addrBox}>
                 <Text style={S.addrName}>{model.parties.clientName || ''}</Text>
+                {model.parties.clientAddress ? <Text style={{ fontSize: 7 }}>{model.parties.clientAddress}</Text> : null}
                 {model.logistics.deliveryLocation ? (
                   <Text>{model.logistics.deliveryLocation}</Text>
                 ) : null}
@@ -529,7 +538,7 @@ export const ThermalTemplateDocument: React.FC<{
             </View>
 
             {/* Footer */}
-            <View style={S.footer}>
+            <View style={S.footer} fixed>
               <Text>{model.footer.companyName || model.branding.name || ''}</Text>
               <Text>
                 {model.footer.waybillNumber || model.header.waybillNumber || ''}

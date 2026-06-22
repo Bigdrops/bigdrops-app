@@ -40,6 +40,7 @@ export interface HeaderBlock {
 
 export interface PartiesBlock {
   clientName: string | null
+  clientAddress: string | null
   senderName: string | null
   receiverName: string | null
 }
@@ -95,6 +96,7 @@ export interface RawWaybill {
   time?: string | null
   po_number?: string | null
   client_name?: string | null
+  client_address?: string | null
   sender_name?: string | null
   receiver_name?: string | null
   vehicle_plate?: string | null

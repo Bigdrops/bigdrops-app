@@ -19,7 +19,6 @@ function createStyles(preset: PdfDesignPreset) {
     },
     content: {
       paddingHorizontal: 16,
-      paddingTop: 10,
       paddingBottom: 12,
       flex: 1,
     },
@@ -28,6 +27,7 @@ function createStyles(preset: PdfDesignPreset) {
       fontSize: 14,
       fontWeight: 'bold',
       letterSpacing: 2,
+      paddingTop: 10,
       paddingBottom: 4,
       borderBottomWidth: 1.5,
       borderBottomColor: '#000000',
@@ -279,6 +279,10 @@ function createStyles(preset: PdfDesignPreset) {
       marginTop: 4,
       fontSize: 8,
       color: '#555555',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -342,6 +346,7 @@ export const MinimalTemplateDocument: React.FC<{
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Client / Consignee</Text>
               <Text>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress ? <Text style={{ fontSize: 7, marginTop: 1 }}>{model.parties.clientAddress}</Text> : null}
             </View>
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Destination Address</Text>
@@ -488,7 +493,7 @@ export const MinimalTemplateDocument: React.FC<{
         </View>
 
         {/* Footer */}
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text

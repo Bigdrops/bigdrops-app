@@ -16,7 +16,6 @@ function createStyles(preset: PdfDesignPreset) {
     },
     content: {
       paddingHorizontal: 16,
-      paddingTop: 14,
       paddingBottom: 16,
       flex: 1,
     },
@@ -24,6 +23,7 @@ function createStyles(preset: PdfDesignPreset) {
       flexDirection: 'row',
       borderWidth: 2,
       borderColor: '#2b2520',
+      paddingTop: 14,
       marginBottom: 8,
       minHeight: 56,
     },
@@ -381,6 +381,10 @@ function createStyles(preset: PdfDesignPreset) {
       marginTop: 'auto',
       fontSize: 7,
       color: '#6d5e51',
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
     },
   })
 }
@@ -441,6 +445,7 @@ export const PremiumTemplateDocument: React.FC<{
             <View style={S.panel}>
               <Text style={S.panelTitle}>Consignee / Client</Text>
               <Text style={S.panelBig}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress ? <Text style={[S.panelBig, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
             </View>
             <View style={S.panel}>
               <Text style={S.panelTitle}>Delivery Location</Text>
@@ -620,7 +625,7 @@ export const PremiumTemplateDocument: React.FC<{
           </View>
         </View>
 
-        <View style={S.footer}>
+        <View style={S.footer} fixed>
           <Text>{model.footer.companyName || model.branding.name || ''}</Text>
           <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
