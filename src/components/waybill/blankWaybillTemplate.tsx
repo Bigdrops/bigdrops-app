@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { Document, Page, View, Text, StyleSheet, Image } from '@react-pdf/renderer'
+/* eslint-disable react-refresh/only-export-components */
+
+import { Document, Page, View, Text, Image } from '@react-pdf/renderer'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 import { minimalStyles as styles } from './waybillMinimalStyles'
 
@@ -15,13 +16,6 @@ const deliveryModes = ['By Hand', 'By Vehicle'] as const
 const deliveryReasons = ['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const
 
 export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = requestAnimationFrame(() => setMounted(true))
-    return () => cancelAnimationFrame(timer)
-  }, [])
-
   // Derive checkbox state from model strings
   const isHand = model.logistics.deliveryMode === 'By Hand'
   const isVehicle = model.logistics.deliveryMode === 'By Vehicle'
@@ -39,12 +33,12 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
   return (
     <View style={styles.page}>
       {/* ──────── TITLE ZONE ──────── */}
-      <View style={[styles.titleZone, { opacity: mounted ? 1 : 0 }]} {...(model.pagination?.repeatTableHeader ? { fixed: true } : {})}>
+      <View style={styles.titleZone} {...(model.pagination?.repeatTableHeader ? { fixed: true } : {})}>
         <Text style={styles.docTitle}>WAYBILL / DELIVERY NOTE</Text>
       </View>
 
       {/* ──────── HEADER GRID ──────── */}
-      <View style={[styles.headerGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.headerGrid} wrap={false}>
         {/* Left — Company Info */}
         <View style={styles.brandInfo}>
           {model.branding.logo ? (
@@ -75,7 +69,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
       </View>
 
       {/* ──────── TOP GRID: Client / Destination ──────── */}
-      <View style={[styles.topGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.topGrid} wrap={false}>
         <View style={styles.topBox}>
           <Text style={styles.boxLabel}>
             {model.header.type === 'internal' ? 'ORIGIN' : 'CLIENT / CONSIGNEE'}
@@ -94,7 +88,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
       </View>
 
       {/* ──────── SECOND GRID ──────── */}
-      <View style={[styles.secondGrid, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.secondGrid} wrap={false}>
         <View style={styles.secondBox}>
           <Text style={styles.boxLabel}>VEHICLE PLATE NO.</Text>
           <Text>{model.logistics.vehiclePlate || '—'}</Text>
@@ -106,7 +100,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
       </View>
 
       {/* ──────── MODE ROW ──────── */}
-      <View style={[styles.modeRow, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.modeRow} wrap={false}>
         <View style={styles.modeBox}>
           <Text style={styles.boxLabel}>DELIVERY MODE</Text>
           <View style={styles.checkboxRow}>
@@ -151,7 +145,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
       </View>
 
       {/* ──────── TABLE ──────── */}
-      <View style={[styles.table, { opacity: mounted ? 1 : 0 }]}>
+      <View style={styles.table}>
         <View style={[styles.tableRow, styles.tableHeaderRow]} {...(model.pagination?.repeatTableHeader ? { fixed: true } : {})}>
           {model.table.columns.map((col, i) => (
             <Text
@@ -196,14 +190,14 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
 
       {/* ──────── NOTES BOX ──────── */}
       {model.notes ? (
-        <View style={[styles.notesBox, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+        <View style={styles.notesBox} wrap={false}>
           <Text style={styles.boxLabel}>NOTES / INSTRUCTIONS</Text>
           <Text>{model.notes}</Text>
         </View>
       ) : null}
 
       {/* ──────── SIGNATURE CARDS ──────── */}
-      <View style={[styles.sigsRow, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.sigsRow} wrap={false}>
         {/* Sender Signature */}
         <View style={styles.sigCard}>
           <View style={styles.sigHeader}>
@@ -250,7 +244,7 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
       </View>
 
       {/* ──────── FOOTER ──────── */}
-      <View style={[styles.footer, { opacity: mounted ? 1 : 0 }]} wrap={false}>
+      <View style={styles.footer} wrap={false}>
         <Text>{model.footer.waybillNumber}</Text>
         <Text>{model.footer.companyName}</Text>
       </View>
@@ -258,12 +252,12 @@ export function WaybillMinimalContent({ model }: { model: WaybillRenderModel }) 
   )
 }
 
-export function downloadBlankWaybillTemplate(options: {
+export async function downloadBlankWaybillTemplate(options: {
   model: WaybillRenderModel
   type: 'internal' | 'external'
   fileName?: string
-}) {
-  const { pdf } = require('@react-pdf/renderer') as typeof import('@react-pdf/renderer')
+}): Promise<void> {
+  const { pdf } = await import('@react-pdf/renderer')
   const fileName = options.fileName ?? `waybill-${options.model.header.waybillNumber || 'blank'}.pdf`
 
   const doc = (
@@ -288,12 +282,11 @@ export function downloadBlankWaybillTemplate(options: {
     </Document>
   )
 
-  return pdf(doc).toBlob().then((blob: Blob) => {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = fileName
-    a.click()
-    URL.revokeObjectURL(url)
-  })
+  const blob = await pdf(doc).toBlob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(url)
 }
