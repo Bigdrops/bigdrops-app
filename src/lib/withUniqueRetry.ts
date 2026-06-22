@@ -8,9 +8,10 @@ import type { PostgrestError } from '@supabase/supabase-js'
 export async function withUniqueRetry<T>(
   insertFn: (candidateValue: string) => Promise<{ data: T | null; error: PostgrestError | null }>,
   regenerateValue: () => Promise<string>,
+  initialValue?: string,
   maxRetries = 3,
 ): Promise<{ data: T | null; error: PostgrestError | null }> {
-  let candidate = await regenerateValue()
+  let candidate = initialValue ?? await regenerateValue()
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const result = await insertFn(candidate)

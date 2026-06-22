@@ -309,9 +309,14 @@ export default function NewCSR() {
           return supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
         },
         async () => {
-          const { data: rows } = await supabase.from('csrs').select('csr_number')
-          return getNextCsrNumber(rows?.[rows.length - 1]?.csr_number || null, resolvePrefix(settings?.document_prefixes, 'csr'))
+          const { data: rows } = await supabase
+            .from('csrs')
+            .select('csr_number')
+            .order('created_at', { ascending: false })
+            .limit(1)
+          return getNextCsrNumber(rows?.[0]?.csr_number || null, resolvePrefix(settings?.document_prefixes, 'csr'))
         },
+        csr.csr_number,
       )
 
       if (saveError || !savedCsr) {

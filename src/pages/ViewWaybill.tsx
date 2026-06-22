@@ -50,7 +50,7 @@ export default function ViewWaybill() {
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
-  const [template, setTemplate] = useState<'green' | 'minimal' | 'thermal'>('green')
+  const [template, setTemplate] = useState<'green' | 'minimal' | 'thermal' | 'classic' | 'split' | 'premium' | 'industry'>('green')
 
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
@@ -297,6 +297,10 @@ export default function ViewWaybill() {
                       { value: 'green', label: 'Green' },
                       { value: 'minimal', label: 'Minimal' },
                       { value: 'thermal', label: 'Thermal' },
+                      { value: 'classic', label: 'Classic' },
+                      { value: 'split', label: 'Split' },
+                      { value: 'premium', label: 'Premium' },
+                      { value: 'industry', label: 'Industry' },
                     ] as const).map((opt) => (
                       <button
                         key={opt.value}
