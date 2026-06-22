@@ -50,6 +50,7 @@ export default function ViewWaybill() {
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
   const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
+  const [template, setTemplate] = useState<'green' | 'minimal' | 'thermal'>('green')
 
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
@@ -68,6 +69,10 @@ export default function ViewWaybill() {
 
         setRawWaybill(data)
         setWaybill(mapDbWaybill(data))
+        const loadedCustomFields = parseWaybillCustomFields(data.custom_fields)
+        if (loadedCustomFields.pdfTemplateId) {
+          setTemplate(loadedCustomFields.pdfTemplateId)
+        }
       } catch (err) {
         console.error('Failed to load waybill', err)
       } finally {
@@ -139,11 +144,11 @@ export default function ViewWaybill() {
         columns,
         company: companySettings,
       }) : null
-      await downloadPdfFromElement({
-        fileName: waybill.waybill_number || 'waybill',
-        subdirectory: 'waybill',
-        element: <WaybillPDF model={model} designPreset={designPreset} />,
-      })
+        await downloadPdfFromElement({
+          fileName: waybill.waybill_number || 'waybill',
+          subdirectory: 'waybill',
+          element: <WaybillPDF model={model} designPreset={designPreset} template={template} />,
+        })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the waybill PDF.'
@@ -285,6 +290,29 @@ export default function ViewWaybill() {
             >
               <div className="space-y-4">
 
+                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 text-sm font-semibold text-bd-text">Template Style</div>
+                  <div className="flex gap-2">
+                    {([
+                      { value: 'green', label: 'Green' },
+                      { value: 'minimal', label: 'Minimal' },
+                      { value: 'thermal', label: 'Thermal' },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setTemplate(opt.value)}
+                        className={`flex-1 rounded-[12px] border px-3 py-2 text-xs font-semibold transition ${
+                          template === opt.value
+                            ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text'
+                            : 'border-bd-border bg-bd-card-bg text-bd-text hover:bg-bd-surface-hover'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
                   <div className="mb-3 text-sm font-semibold text-bd-text">PDF Design</div>
@@ -299,7 +327,7 @@ export default function ViewWaybill() {
                     try {
                       setPdfDesignPreset('waybill', designPreset)
 
-                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: 'green' })
+                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
                       const { error } = await supabase.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
 
                       if (error) {

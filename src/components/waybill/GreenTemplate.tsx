@@ -532,7 +532,6 @@ export const GreenTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockLabel}>Client / Consignee</Text>
               <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
-              <Text style={S.blockSub}>{model.parties.senderName || ''}</Text>
             </View>
             <View style={S.block}>
               <Text style={S.blockLabel}>Destination Address</Text>
