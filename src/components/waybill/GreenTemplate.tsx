@@ -494,12 +494,18 @@ export const GreenTemplateDocument: React.FC<{
             <View style={S.card}>
               <Text style={S.cardTitle}>Method</Text>
               <View style={S.tickGroup}>
-                {(['Hand', 'Vehicle', 'Courier'] as const).map((opt) => {
-                  const checked = deliveryMode === opt
+                {(
+                  [
+                    { value: 'By Hand', label: 'Hand' },
+                    { value: 'By Vehicle', label: 'Vehicle' },
+                    { value: 'By Courier', label: 'Courier' },
+                  ] as const
+                ).map((opt) => {
+                  const checked = deliveryMode === opt.value
                   return (
-                    <View key={opt} style={S.tick}>
+                    <View key={opt.value} style={S.tick}>
                       <View style={checked ? S.tickBoxChecked : S.tickBox} />
-                      <Text style={S.tickLabel}>{opt}</Text>
+                      <Text style={S.tickLabel}>{opt.label}</Text>
                     </View>
                   )
                 })}
@@ -526,7 +532,11 @@ export const GreenTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockLabel}>Client / Consignee</Text>
               <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
-              <Text style={S.blockSub}>{model.logistics.deliveryLocation || ''}</Text>
+              <Text style={S.blockSub}>{model.parties.senderName || ''}</Text>
+            </View>
+            <View style={S.block}>
+              <Text style={S.blockLabel}>Destination Address</Text>
+              <Text style={S.blockMain}>{model.logistics.deliveryLocation || ''}</Text>
             </View>
           </View>
 
