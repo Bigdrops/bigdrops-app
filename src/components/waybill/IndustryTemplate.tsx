@@ -449,7 +449,7 @@ export const IndustryTemplateDocument: React.FC<{
 
             <Text style={S.sectionTitle}>Goods Description</Text>
             <View style={S.tableWrap}>
-              <View style={S.tableHeaderRow}>
+              <View style={S.tableHeaderRow} fixed>
                 <Text style={[S.headerCell, { width: '4%', textAlign: 'center' }]}>#</Text>
                 {columns.map((col) => (
                   <Text
@@ -507,7 +507,7 @@ export const IndustryTemplateDocument: React.FC<{
               </View>
             </View>
 
-            <View style={S.sigBlock}>
+            <View style={S.sigBlock} wrap={false}>
               <Text style={S.sigTitle}>Delivery Confirmation</Text>
               <View style={S.sigGrid}>
                 <View style={[S.sigCol, { flex: 1 }]}>

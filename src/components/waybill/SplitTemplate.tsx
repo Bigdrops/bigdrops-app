@@ -19,7 +19,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     banner: {
       backgroundColor: '#1e2b32',
-      padding: 12,
+      padding: 8,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -48,6 +48,7 @@ function createStyles(preset: PdfDesignPreset) {
       width: 40,
       height: 40,
       borderRadius: 20,
+      overflow: 'hidden',
     },
     bannerText: {
       flex: 1,
@@ -492,7 +493,7 @@ export const SplitTemplateDocument: React.FC<{
           <View style={S.sectionWrap}>
             <Text style={S.sectionTitle}>Goods Description</Text>
             <View style={S.tableWrap}>
-              <View style={S.tableHeaderRow}>
+              <View style={S.tableHeaderRow} fixed>
                 <Text style={[S.headerCell, { width: '4%', textAlign: 'center' }]}>#</Text>
                 {columns.map((col) => (
                   <Text
@@ -551,7 +552,7 @@ export const SplitTemplateDocument: React.FC<{
             </View>
           </View>
 
-          <View style={S.sigRow}>
+          <View style={S.sigRow} wrap={false}>
             <View style={S.sigCard}>
               <Text style={S.sigTitle}>Delivered By (Sender)</Text>
               <View style={S.sigField}>

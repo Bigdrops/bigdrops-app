@@ -81,7 +81,10 @@ export default function NewWaybill() {
               date: new Date().toISOString(),
               items: [],
             },
-            columns: STANDARD_ITEM_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
+            columns: STANDARD_ITEM_COLUMNS
+              .filter((c) => c.key !== 'quantity' && c.key !== 'unit')
+              .map((c) => ({ key: c.key, label: c.label }))
+              .concat([{ key: 'qtyLabel', label: 'Qty/Unit' }]),
             company: {
               name: settings?.company_name || 'Company Name',
               tagline: settings?.company_tagline || null,

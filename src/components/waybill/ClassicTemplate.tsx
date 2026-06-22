@@ -447,7 +447,7 @@ export const ClassicTemplateDocument: React.FC<{
 
           <Text style={S.sectionTitle}>Items</Text>
           <View style={S.tableWrap}>
-            <View style={S.tableHeaderRow}>
+            <View style={S.tableHeaderRow} fixed>
               <Text style={[S.headerCell, { width: '4%', textAlign: 'center' }]}>#</Text>
               {columns.map((col) => (
                 <Text
@@ -493,7 +493,7 @@ export const ClassicTemplateDocument: React.FC<{
             ) : null}
           </View>
 
-          <View style={S.sigRow}>
+          <View style={S.sigRow} wrap={false}>
             <View style={S.sigCard}>
               <Text style={S.sigTitle}>Delivered By (Sender)</Text>
               <View style={S.sigField}>

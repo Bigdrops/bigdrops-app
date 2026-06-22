@@ -542,7 +542,7 @@ export const GreenTemplateDocument: React.FC<{
           {/* Items table — dynamic columns */}
           <Text style={S.sectionTitle}>Goods Description</Text>
           <View style={S.tableWrap}>
-            <View style={S.tableHeaderRow}>
+            <View style={S.tableHeaderRow} fixed>
               <Text style={[S.headerCell, { width: '5%', textAlign: 'center' }]}>#</Text>
               {columns.map((col) => (
                 <Text
@@ -598,7 +598,7 @@ export const GreenTemplateDocument: React.FC<{
           </View>
 
           {/* Signatures */}
-          <View style={S.sigRow}>
+          <View style={S.sigRow} wrap={false}>
             {/* Delivered By */}
             <View style={S.sigCard}>
               <Text style={S.sigTitle}>Delivered By (Sender)</Text>

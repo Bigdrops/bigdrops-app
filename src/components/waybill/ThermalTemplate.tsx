@@ -437,7 +437,7 @@ export const ThermalTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockTitle}>ITEMS</Text>
               <View style={S.tableWrap}>
-                <View style={S.tableHeaderRow}>
+                <View style={S.tableHeaderRow} fixed>
                   <Text style={[S.headerCell, { width: '7%', textAlign: 'center' }]}>#</Text>
                   {columns.map((col) => (
                     <Text
@@ -483,7 +483,7 @@ export const ThermalTemplateDocument: React.FC<{
             </View>
 
             {/* Acknowledgement */}
-            <View style={S.block}>
+            <View style={S.block} wrap={false}>
               <Text style={S.blockTitle}>ACKNOWLEDGEMENT</Text>
               <View style={S.ackBox}>
                 <View style={S.ackLine}>

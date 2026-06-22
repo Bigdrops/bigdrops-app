@@ -499,7 +499,7 @@ export const PremiumTemplateDocument: React.FC<{
 
           <Text style={S.sectionTitle}>Item Manifest</Text>
           <View style={S.tableWrap}>
-            <View style={S.tableHeaderRow}>
+            <View style={S.tableHeaderRow} fixed>
               <Text style={[S.headerCell, { width: '4%', textAlign: 'center' }]}>#</Text>
               {columns.map((col) => (
                 <Text
@@ -557,7 +557,7 @@ export const PremiumTemplateDocument: React.FC<{
             </View>
           </View>
 
-          <View style={S.sigRow}>
+          <View style={S.sigRow} wrap={false}>
             <View style={S.sigCard}>
               <Text style={S.sigTitle}>Delivered By</Text>
               <View style={S.sigField}>
