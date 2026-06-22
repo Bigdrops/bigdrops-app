@@ -218,7 +218,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <Text style={minimalStyles.sigHeader}>Delivered By / Driver</Text>
             <View style={minimalStyles.sigMetaRow}>
               <Text style={minimalStyles.sigMetaCellBorder}>{senderName || 'Name'}</Text>
-              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
+              <Text style={minimalStyles.sigMetaCell}></Text>
             </View>
             <View style={minimalStyles.sigArea}>
               {senderSignatureUrl ? (
@@ -232,7 +232,7 @@ export function WaybillMinimalContent({ data }: { data: MinimalContentData }) {
             <Text style={minimalStyles.sigHeader}>Received By</Text>
             <View style={minimalStyles.sigMetaRow}>
               <Text style={minimalStyles.sigMetaCellBorder}>{receiverName || 'Name'}</Text>
-              <Text style={minimalStyles.sigMetaCell}>{date || 'Time'}</Text>
+              <Text style={minimalStyles.sigMetaCell}></Text>
             </View>
             <View style={minimalStyles.sigArea}>
               {receiverSignatureUrl ? (
