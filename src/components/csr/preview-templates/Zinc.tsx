@@ -361,8 +361,9 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
                     <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4, marginBottom: 4 }} />
                   )}
                   <Text style={styles.signLabel}>Technician Signature</Text>
-                  {hasText(technicianName) ? <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{technicianName}</Text> : null}
-                  {hasText(technicianRole) ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
+                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
+                    {technicianRole ? technicianRole : ''}{technicianRole && technicianName ? ' - ' : ''}{technicianName ? technicianName : ''}
+                  </Text>
                 </View>
               ) : null}
             </View>

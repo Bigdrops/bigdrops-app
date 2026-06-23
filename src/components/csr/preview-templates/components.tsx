@@ -31,8 +31,11 @@ export function PdfSignatureCard({ styles, label, name = '', role = '', signatur
         <View style={{ height: 24, marginBottom: 4 }} />
       )}
       <Text style={styles.signLabel}>{label}</Text>
-      {hasText(name) ? <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{name}</Text> : null}
-      {hasText(role) ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{role}</Text> : null}
+      {hasText(name) || hasText(role) ? (
+        <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
+          {hasText(role) ? role : ''}{hasText(role) && hasText(name) ? ' - ' : ''}{hasText(name) ? name : ''}
+        </Text>
+      ) : null}
     </View>
   )
 }

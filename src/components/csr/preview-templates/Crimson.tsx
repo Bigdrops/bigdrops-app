@@ -409,8 +409,9 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
                     <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
                   )}
                   <Text style={styles.signLabel}>Technician Signature</Text>
-                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>{technicianName}</Text>
-                  {technicianRole ? <Text style={[styles.fieldLabel, { width: '100%', marginTop: 2, marginBottom: 0 }]}>{technicianRole}</Text> : null}
+                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
+                    {technicianRole ? technicianRole : ''}{technicianRole && technicianName ? ' - ' : ''}{technicianName ? technicianName : ''}
+                  </Text>
                 </View>
               ) : null}
             </View>
