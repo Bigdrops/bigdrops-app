@@ -102,6 +102,7 @@ export default function ViewCSR() {
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
   const [templateAccentColor, setTemplateAccentColor] = useState<'auto' | string>(getStoredTemplateAccentColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
+  const [comments, setComments] = useState('')
 
   // Compute effective preset based on auto/custom toggles
   const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string, accent: 'auto' | string) => {
@@ -199,7 +200,7 @@ export default function ViewCSR() {
       await downloadPdfFromElement({
         fileName: previewData.csr_number || 'csr',
         subdirectory: 'csr',
-        element: getCsrPdfDocument({ csr: previewData, branding, template, designPreset }) as any,
+        element: getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset }) as any,
       })
       showToast('Download ready', `${previewData.csr_number || 'CSR'} exported as PDF.`, 'success')
     } catch (error) {
@@ -595,6 +596,16 @@ export default function ViewCSR() {
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />
+        <div className="mt-6 rounded-[20px] border border-bd-border bg-bd-card-bg p-5">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-bd-text-muted">Client Notes</label>
+          <p className="mb-3 text-xs text-bd-text-muted">These notes appear on the PDF below the signature area.</p>
+          <textarea
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            className="min-h-[100px] w-full resize-y rounded-[12px] border border-bd-border bg-bd-surface p-3 text-sm text-bd-text placeholder:text-bd-text-muted/50 focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg/30"
+            placeholder="Type any notes to include on the PDF..."
+          />
+        </div>
       </DocumentPage>
 
     </>

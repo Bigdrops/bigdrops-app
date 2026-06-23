@@ -430,6 +430,9 @@ export const SplitTemplateDocument: React.FC<{
                 <Text style={S.bannerAddress}>
                   {[model.branding.address, model.branding.phone].filter(Boolean).join(' · ')}
                 </Text>
+                {model.branding.tagline ? (
+                  <Text style={S.bannerAddress}>{model.branding.tagline}</Text>
+                ) : null}
               </View>
             </View>
             <View style={S.bannerRight}>

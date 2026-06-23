@@ -11,27 +11,27 @@ import type { CsrPdfProps } from './types'
 // Ensure fonts are registered once
 registerPdfFillableFonts()
 
-export function Template1({ csr, branding = {}, designPreset }: CsrPdfProps) {
-  return <PulseFrameTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
+export function Template1({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <PulseFrameTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template2({ csr, branding = {}, designPreset }: CsrPdfProps) {
-  return <SignalBandsTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
+export function Template2({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <SignalBandsTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template3({ csr, branding = {}, designPreset }: CsrPdfProps) {
-  return <ZincTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
+export function Template3({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <ZincTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function Template4({ csr, branding = {}, designPreset }: CsrPdfProps) {
-  return <CrimsonTemplate csr={csr} branding={getBranding(branding)} designPreset={designPreset} />
+export function Template4({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <CrimsonTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function getCsrPdfDocument({ csr, branding = {}, template = '4', designPreset }: CsrPdfProps) {
+export function getCsrPdfDocument({ csr, comments, branding = {}, template = '4', designPreset }: CsrPdfProps) {
   const variant = getCsrTemplateVariant(template)
 
-  if (variant === 'pulseframe') return <Template1 csr={csr} branding={branding} designPreset={designPreset} />
-  if (variant === 'signalbands') return <Template2 csr={csr} branding={branding} designPreset={designPreset} />
-  if (variant === 'zinc') return <Template3 csr={csr} branding={branding} designPreset={designPreset} />
-  return <Template4 csr={csr} branding={branding} designPreset={designPreset} />
+  if (variant === 'pulseframe') return <Template1 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'signalbands') return <Template2 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'zinc') return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  return <Template4 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
 }

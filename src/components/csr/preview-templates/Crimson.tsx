@@ -22,6 +22,7 @@ import {
   ReadingsStrip,
   MaterialsSection,
 } from './components'
+import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
 
 function createCrimsonStyles(density = 'comfortable', designPreset: any) {
@@ -239,7 +240,7 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
   })
 }
 
-export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
@@ -416,6 +417,7 @@ export function CrimsonTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           </PdfSection>
         ) : null}
 
+        <ClientNotesBlock comments={comments} />
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
     </Document>

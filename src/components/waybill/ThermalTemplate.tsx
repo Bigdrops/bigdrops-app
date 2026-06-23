@@ -262,12 +262,13 @@ function createStyles(preset: PdfDesignPreset) {
       objectFit: 'contain',
     },
     footer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       borderTopWidth: 0.5,
       borderTopStyle: 'dashed',
       borderTopColor: '#333333',
       marginTop: 8,
       paddingTop: 6,
-      alignItems: 'center',
       fontSize: 7,
       lineHeight: 1.4,
       color: '#444444',
@@ -540,13 +541,8 @@ export const ThermalTemplateDocument: React.FC<{
             {/* Footer */}
             <View style={S.footer} fixed>
               <Text>{model.footer.companyName || model.branding.name || ''}</Text>
-              <Text>
-                {model.footer.waybillNumber || model.header.waybillNumber || ''}
-                {' · Page '}
-                <Text
-                  render={({ pageNumber, totalPages }) => `${pageNumber} of ${totalPages}`}
-                />
-              </Text>
+              <Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
+              <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
             </View>
           </View>
         </View>

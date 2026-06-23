@@ -56,6 +56,7 @@ export default function NewCSR() {
   const [csr, setCsr] = useState(() => createDefaultCsr(isField))
   const [csrMeta, setCsrMeta] = useState(() => ({ ...DEFAULT_CSR_META }))
   const [materialsRows, setMaterialsRows] = useState([{ ...DEFAULT_MATERIAL_ROW }])
+  const [comments] = useState('')
   const csrNumberPopulated = useRef(false)
 
   useEffect(() => {
@@ -236,7 +237,7 @@ export default function NewCSR() {
         { ...createDefaultCsr(isField), csr_number: blankNumber },
         { technicianSignatory: null },
       )
-      const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+      const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
@@ -337,7 +338,7 @@ export default function NewCSR() {
               ).data
             : null
           const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
-          const blob = await pdf(getCsrPdfDocument({ csr: previewData, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+      const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
           const url = URL.createObjectURL(blob)
           const anchor = document.createElement('a')
           anchor.href = url

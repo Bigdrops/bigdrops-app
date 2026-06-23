@@ -29,6 +29,34 @@ function createStyles(preset: PdfDesignPreset) {
     },
     brandBlock: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    brandLogo: {
+      width: 36,
+      height: 36,
+      borderRadius: 4,
+      flexShrink: 0,
+    },
+    brandLogoPlaceholder: {
+      width: 36,
+      height: 36,
+      borderWidth: 0.5,
+      borderStyle: 'dashed',
+      borderColor: '#94a3b8',
+      borderRadius: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#f8fafc',
+      flexShrink: 0,
+    },
+    brandLogoPlaceholderText: {
+      fontSize: 7,
+      color: '#94a3b8',
+    },
+    brandTextBlock: {
+      flex: 1,
     },
     brandName: {
       fontSize: 16,
@@ -383,10 +411,19 @@ export const IndustryTemplateDocument: React.FC<{
         <View style={S.content}>
           <View style={S.darkHeader}>
             <View style={S.brandBlock}>
-              <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
-              <Text style={S.brandAddress}>
-                {[model.branding.address, model.branding.phone].filter(Boolean).join(' · ')}
-              </Text>
+              {model.branding.logo ? (
+                <Image src={model.branding.logo} style={S.brandLogo} />
+              ) : (
+                <View style={S.brandLogoPlaceholder}>
+                  <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
+                </View>
+              )}
+              <View style={S.brandTextBlock}>
+                <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
+                <Text style={S.brandAddress}>
+                  {[model.branding.address, model.branding.phone].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
             </View>
             <View style={S.wbBlock}>
               <Text style={S.wbLabel}>Waybill No.</Text>

@@ -26,6 +26,7 @@ import {
   PdfSignatureCard,
   PdfSection,
 } from './components'
+import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
 
 function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
@@ -213,7 +214,7 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
   })
 }
 
-export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+export function SignalBandsTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const styles = createSignalBandsStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
@@ -344,6 +345,7 @@ export function SignalBandsTemplate({ csr, branding, designPreset }: CsrPdfProps
           </Band>
         ) : null}
 
+        <ClientNotesBlock comments={comments} />
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
     </Document>

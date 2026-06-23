@@ -10,6 +10,7 @@ import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
 
 export interface CsrPdfProps {
   csr: CsrRenderModel;
+  comments?: string;
   branding?: any;
   designPreset?: any;
   template?: string;

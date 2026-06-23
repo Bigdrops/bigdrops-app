@@ -24,6 +24,7 @@ import {
   ServiceTimeSection,
   CustomerFeedbackSection,
 } from './components'
+import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
 
 function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
@@ -202,7 +203,7 @@ function createPulseFrameStyles(density = 'comfortable', designPreset: any) {
   })
 }
 
-export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+export function PulseFrameTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const styles = createPulseFrameStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
@@ -302,6 +303,7 @@ export function PulseFrameTemplate({ csr, branding, designPreset }: CsrPdfProps)
           </PdfSection>
         ) : null}
 
+        <ClientNotesBlock comments={comments} />
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
     </Document>

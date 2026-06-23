@@ -23,6 +23,7 @@ import {
   MaterialsSection,
   PdfSignatureCard,
 } from './components'
+import { ClientNotesBlock } from './ClientNotesBlock'
 import { resolveZincLifecycleStages, safeText } from './layoutModel'
 import type { CsrPdfProps } from './types'
 
@@ -181,7 +182,7 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
   })
 }
 
-export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
+export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const styles = createZincStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
@@ -368,6 +369,7 @@ export function ZincTemplate({ csr, branding, designPreset }: CsrPdfProps) {
           </PdfSection>
         ) : null}
 
+        <ClientNotesBlock comments={comments} />
         {branding.footerText ? <Text style={styles.footer}>{branding.footerText}</Text> : null}
       </Page>
     </Document>
