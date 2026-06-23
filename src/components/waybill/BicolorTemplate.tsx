@@ -54,18 +54,21 @@ function createStyles(preset: PdfDesignPreset) {
     },
     bannerText: {
       flex: 1,
+      maxHeight: 42,
+      overflow: 'hidden',
     },
     bannerName: {
       fontSize: 13,
       fontWeight: 'bold',
       color: '#ffffff',
       letterSpacing: -0.3,
-      lineHeight: 1.2,
+      lineHeight: 15,
     },
     bannerAddress: {
       fontSize: 7.5,
       color: '#b0c4ce',
       letterSpacing: 0.2,
+      lineHeight: 9,
     },
     bannerRight: {
       alignItems: 'flex-end',
@@ -397,7 +400,7 @@ function createStyles(preset: PdfDesignPreset) {
   })
 }
 
-export const SplitTemplateDocument: React.FC<{
+export const BicolorTemplateDocument: React.FC<{
   model: WaybillRenderModel
   designPreset?: PdfDesignPreset
 }> = ({ model, designPreset }) => {
@@ -635,4 +638,4 @@ export const SplitTemplateDocument: React.FC<{
   )
 }
 
-export default SplitTemplateDocument
+export default BicolorTemplateDocument

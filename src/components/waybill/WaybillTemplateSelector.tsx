@@ -12,23 +12,23 @@ type TemplateTheme = {
 }
 
 const TEMPLATE_OPTIONS = [
-  { id: 'green', label: 'Green', desc: 'Clean green header' },
+  { id: 'evergreen', label: 'Evergreen', desc: 'Clean green header' },
   { id: 'minimal', label: 'Minimal', desc: 'Bare minimum layout' },
   { id: 'thermal', label: 'Thermal', desc: 'Receipt-style' },
   { id: 'classic', label: 'Classic', desc: 'Traditional layout' },
-  { id: 'split', label: 'Split', desc: 'Split-panel design' },
+  { id: 'bicolor', label: 'Bicolor', desc: 'Split-panel design' },
   { id: 'premium', label: 'Premium', desc: 'Gold-accent premium' },
-  { id: 'industry', label: 'Industry', desc: 'Industrial style' },
+  { id: 'slate', label: 'Slate', desc: 'Industrial style' },
 ] as const
 
 const THEMES: Record<string, TemplateTheme> = {
-  green:    { pageBg: '#ffffff', headerBg: '#1f6e5c', headerFg: '#ffffff', accent: '#c9d9cf', border: '#e0ece4', mutedBg: '#f0f6f2' },
+  evergreen:{ pageBg: '#ffffff', headerBg: '#1f6e5c', headerFg: '#ffffff', accent: '#c9d9cf', border: '#e0ece4', mutedBg: '#f0f6f2' },
   minimal:  { pageBg: '#ffffff', headerBg: '#f4f4f4', headerFg: '#000000', accent: '#94a3b8', border: '#e2e8f0', mutedBg: '#fafafa' },
   thermal:  { pageBg: '#f7f3ea', headerBg: '#2d2a26', headerFg: '#ffffff', accent: '#d7cfbf', border: '#e8e4db', mutedBg: '#fffdf8' },
   classic:  { pageBg: '#ffffff', headerBg: '#0f172a', headerFg: '#ffffff', accent: '#1e40af', border: '#e2e8f0', mutedBg: '#f8fafc' },
-  split:    { pageBg: '#ffffff', headerBg: '#1e2b32', headerFg: '#ffffff', accent: '#d97a4a', border: '#dce3e8', mutedBg: '#f6f8f9' },
+  bicolor:  { pageBg: '#ffffff', headerBg: '#1e2b32', headerFg: '#ffffff', accent: '#d97a4a', border: '#dce3e8', mutedBg: '#f6f8f9' },
   premium:  { pageBg: '#fffdf8', headerBg: '#2b2520', headerFg: '#fff8ec', accent: '#bda98f', border: '#eadfce', mutedBg: '#fcf8f1' },
-  industry: { pageBg: '#ffffff', headerBg: '#7d8a88', headerFg: '#ffffff', accent: '#4a5a57', border: '#ecf0ee', mutedBg: '#f9fbfa' },
+  slate:    { pageBg: '#ffffff', headerBg: '#7d8a88', headerFg: '#ffffff', accent: '#4a5a57', border: '#ecf0ee', mutedBg: '#f9fbfa' },
 }
 
 function MiniWaybillPreview({ theme }: { theme: TemplateTheme }) {

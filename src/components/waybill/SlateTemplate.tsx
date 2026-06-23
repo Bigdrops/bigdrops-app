@@ -390,7 +390,7 @@ function createStyles(preset: PdfDesignPreset) {
   })
 }
 
-export const IndustryTemplateDocument: React.FC<{
+export const SlateTemplateDocument: React.FC<{
   model: WaybillRenderModel
   designPreset?: PdfDesignPreset
 }> = ({ model, designPreset }) => {
@@ -613,4 +613,4 @@ export const IndustryTemplateDocument: React.FC<{
   )
 }
 
-export default IndustryTemplateDocument
+export default SlateTemplateDocument

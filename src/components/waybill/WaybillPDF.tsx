@@ -4,15 +4,15 @@ import {
 import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { GreenTemplateDocument } from './GreenTemplate'
+import { EvergreenTemplateDocument } from './EvergreenTemplate'
 import { MinimalTemplateDocument } from './MinimalTemplate'
 import { ThermalTemplateDocument } from './ThermalTemplate'
 import { ClassicTemplateDocument } from './ClassicTemplate'
-import { SplitTemplateDocument } from './SplitTemplate'
+import { BicolorTemplateDocument } from './BicolorTemplate'
 import { PremiumTemplateDocument } from './PremiumTemplate'
-import { IndustryTemplateDocument } from './IndustryTemplate'
+import { SlateTemplateDocument } from './SlateTemplate'
 
-type WaybillPdfTemplateId = 'green' | 'minimal' | 'thermal' | 'classic' | 'split' | 'premium' | 'industry'
+type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'bicolor' | 'premium' | 'slate'
 
 interface WaybillPDFProps {
   model?: WaybillRenderModel
@@ -22,7 +22,7 @@ interface WaybillPDFProps {
 
 registerPdfFillableFonts()
 
-export default function WaybillPDF({ model, designPreset, template = 'green' }: WaybillPDFProps) {
+export default function WaybillPDF({ model, designPreset, template = 'evergreen' }: WaybillPDFProps) {
   if (!model) return null
 
   if (template === 'minimal') {
@@ -37,17 +37,17 @@ export default function WaybillPDF({ model, designPreset, template = 'green' }: 
     return <ClassicTemplateDocument model={model} designPreset={designPreset} />
   }
 
-  if (template === 'split') {
-    return <SplitTemplateDocument model={model} designPreset={designPreset} />
+  if (template === 'bicolor') {
+    return <BicolorTemplateDocument model={model} designPreset={designPreset} />
   }
 
   if (template === 'premium') {
     return <PremiumTemplateDocument model={model} designPreset={designPreset} />
   }
 
-  if (template === 'industry') {
-    return <IndustryTemplateDocument model={model} designPreset={designPreset} />
+  if (template === 'slate') {
+    return <SlateTemplateDocument model={model} designPreset={designPreset} />
   }
 
-  return <GreenTemplateDocument model={model} designPreset={designPreset} />
+  return <EvergreenTemplateDocument model={model} designPreset={designPreset} />
 }

@@ -417,7 +417,7 @@ function createStyles(preset: PdfDesignPreset) {
   })
 }
 
-export const GreenTemplateDocument: React.FC<{
+export const EvergreenTemplateDocument: React.FC<{
   model: WaybillRenderModel
   designPreset?: PdfDesignPreset
 }> = ({ model, designPreset }) => {
@@ -681,4 +681,4 @@ export const GreenTemplateDocument: React.FC<{
   )
 }
 
-export default GreenTemplateDocument
+export default EvergreenTemplateDocument

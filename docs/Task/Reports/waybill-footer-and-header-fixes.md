@@ -1,76 +1,91 @@
-# Waybill Footer & Header Fixes Report
+# Waybill Footer, Header & Template Rename Report
 
-**Date:** 2025-06-22
+**Date:** 2025-06-23
 **Status:** Complete
 
 ---
 
 ## Summary
 
-Fixed footer positioning, header layout, and added logo rendering across 7 Waybill PDF templates. Used the Invoice Industry template's footer logic as the reference standard.
+Fixed footer positioning, header layout, template renaming, and logo rendering across 7 Waybill PDF templates. Used the Invoice Industry template's footer logic as the reference standard.
 
 ---
 
 ## Changes Made
 
-### 1. Thermal Template Footer Fix (Critical)
+### Session 1 (Previous)
+
+#### 1. Thermal Template Footer Fix (Critical)
 
 **File:** `src/components/waybill/ThermalTemplate.tsx`
 
-**Problem:** Footer was rendered as 3 vertical rows instead of a single horizontal row. The footer style lacked `flexDirection: 'row'` and had `alignItems: 'center'` causing vertical stacking. The footer content also concatenated text into a single element with `·` separator.
+**Problem:** Footer was rendered as 3 vertical rows instead of a single horizontal row.
 
 **Fix:**
-- Changed footer style from `alignItems: 'center'` to `flexDirection: 'row'` + `justifyContent: 'space-between'`
+- Changed footer style to `flexDirection: 'row'` + `justifyContent: 'space-between'`
 - Split footer content into 3 separate `<Text>` elements: Company Name | Waybill Number | Page X of Y
-- Removed concatenated text with `·` separator
+
+#### 2. Split Template Header Enhancement
+
+**File:** `src/components/waybill/SplitTemplate.tsx`
+
+**Problem:** Header did not account for tagline field.
+
+**Fix:** Added conditional tagline rendering in the banner text block.
+
+#### 3. Industry Template Logo Rendering
+
+**File:** `src/components/waybill/IndustryTemplate.tsx`
+
+**Problem:** Industry waybill template had no logo rendering.
+
+**Fix:** Added `brandLogo`, `brandLogoPlaceholder`, and `brandTextBlock` styles with logo rendering logic.
+
+---
+
+### Session 2 (Current)
+
+#### 4. Bicolor (was Split) Header 4-Line Max Fix
+
+**File:** `src/components/waybill/BicolorTemplate.tsx` (renamed from SplitTemplate.tsx)
+
+**Problem:** Header could overflow beyond 4 lines with long addresses. Previous attempt used `numberOfLines` prop which is invalid in `@react-pdf/renderer` Text component.
+
+**Fix:** Used `maxHeight` + `overflow: 'hidden'` on the `bannerText` container with explicit `lineHeight` values to cap content at 42pt (max 4 lines: name(15pt) + address×2(18pt) + tagline(9pt)).
 
 **Before:**
 ```tsx
-footer: {
-  alignItems: 'center',
-  // ... other styles
-}
-// ...
-<Text>{model.footer.companyName || model.branding.name || ''}</Text>
-<Text>
-  {model.footer.waybillNumber || model.header.waybillNumber || ''}
-  {' · Page '}
-  <Text render={({ pageNumber, totalPages }) => `${pageNumber} of ${totalPages}`} />
-</Text>
+bannerText: { flex: 1 },
+bannerName: { fontSize: 13, lineHeight: 1.2 },
+bannerAddress: { fontSize: 7.5 }
 ```
 
 **After:**
 ```tsx
-footer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  // ... other styles
-}
-// ...
-<Text>{model.footer.companyName || model.branding.name || ''}</Text>
-<Text>{model.footer.waybillNumber || model.header.waybillNumber || ''}</Text>
-<Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+bannerText: { flex: 1, maxHeight: 42, overflow: 'hidden' },
+bannerName: { fontSize: 13, lineHeight: 15 },
+bannerAddress: { fontSize: 7.5, lineHeight: 9 }
 ```
 
-### 2. Split Template Header Enhancement
+#### 5. Template Renames (3 Templates)
 
-**File:** `src/components/waybill/SplitTemplate.tsx`
+**Files:** All 7 template files + waybillUtils.ts + WaybillPDF.tsx + WaybillTemplateSelector.tsx + ViewWaybill.tsx
 
-**Problem:** Header did not account for tagline field, limiting branding display.
+**Problem:** Generic template names (`green`, `split`, `industry`) did not reflect visual style and conflicted with other systems.
 
-**Fix:** Added conditional tagline rendering in the banner text block (3 lines max: company name, address+phone, tagline if present).
+**Renames:**
+| Old ID | New ID | File | Component |
+|--------|--------|------|-----------|
+| `green` | `evergreen` | GreenTemplate.tsx → EvergreenTemplate.tsx | `EvergreenTemplateDocument` |
+| `split` | `bicolor` | SplitTemplate.tsx → BicolorTemplate.tsx | `BicolorTemplateDocument` |
+| `industry` | `slate` | IndustryTemplate.tsx → SlateTemplate.tsx | `SlateTemplateDocument` |
 
-### 3. Industry Template Logo Rendering
+**Backward Compatibility:** `normalizeWaybillPdfTemplateId()` in waybillUtils.ts maps old IDs to new:
+- `'green'` → `'evergreen'`
+- `'split'` → `'bicolor'`
+- `'industry'` → `'slate'`
 
-**File:** `src/components/waybill/IndustryTemplate.tsx`
-
-**Problem:** Industry waybill template had no logo rendering, unlike Green/Classic/Minimal/Premium templates.
-
-**Fix:**
-- Added `brandLogo`, `brandLogoPlaceholder`, and `brandLogoPlaceholderText` styles
-- Changed `brandBlock` to use `flexDirection: 'row'` + `alignItems: 'center'` to position logo beside text
-- Added logo rendering: shows `<Image>` if logo URL exists, otherwise shows dashed-border placeholder with "LOGO" text
-- Wrapped company name and address in new `brandTextBlock` container
+Existing waybills stored with old IDs in `custom_fields.pdfTemplateId` will continue to render correctly.
 
 ---
 
@@ -78,13 +93,13 @@ footer: {
 
 | Template | Footer | Header | Logo | Status |
 |----------|--------|--------|------|--------|
-| GreenTemplate | ✅ Already correct | ✅ N/A | ✅ Already present | No changes needed |
-| MinimalTemplate | ✅ Already correct | ✅ N/A | ✅ Already present | No changes needed |
-| ClassicTemplate | ✅ Already correct | ✅ N/A | ✅ Already present | No changes needed |
-| PremiumTemplate | ✅ Already correct | ✅ N/A | ✅ Already present | No changes needed |
-| SplitTemplate | ✅ Already correct | ✅ Enhanced | ✅ Already present | Header updated |
-| ThermalTemplate | ✅ Fixed (was broken) | ✅ N/A | ✅ Already present | Footer fixed |
-| IndustryTemplate | ✅ Already correct | ✅ N/A | ✅ Added | Logo added |
+| EvergreenTemplate | ✅ Correct | ✅ N/A | ✅ Present | No changes needed |
+| MinimalTemplate | ✅ Correct | ✅ N/A | ✅ Present | No changes needed |
+| ClassicTemplate | ✅ Correct | ✅ N/A | ✅ Present | No changes needed |
+| PremiumTemplate | ✅ Correct | ✅ N/A | ✅ Present | No changes needed |
+| BicolorTemplate | ✅ Correct | ✅ Fixed (4-line max) | ✅ Present | Header fixed |
+| ThermalTemplate | ✅ Fixed (was broken) | ✅ N/A | ✅ Present | Footer fixed |
+| SlateTemplate | ✅ Correct | ✅ N/A | ✅ Added | Logo added |
 
 ---
 
@@ -105,15 +120,25 @@ All 7 templates now use the same footer pattern matching Invoice Industry:
 
 ---
 
-## Verification
-
-- ✅ `bun run typecheck` — passes (0 errors)
-- ✅ `eslint` on changed files — passes (0 errors)
-
----
-
 ## Files Changed
 
+### Session 1
 1. `src/components/waybill/ThermalTemplate.tsx` — Footer style and content
 2. `src/components/waybill/SplitTemplate.tsx` — Header tagline support
 3. `src/components/waybill/IndustryTemplate.tsx` — Logo styles and rendering
+
+### Session 2
+4. `src/components/waybill/SplitTemplate.tsx` → `BicolorTemplate.tsx` — Renamed + header 4-line max fix
+5. `src/components/waybill/GreenTemplate.tsx` → `EvergreenTemplate.tsx` — Renamed
+6. `src/components/waybill/IndustryTemplate.tsx` → `SlateTemplate.tsx` — Renamed
+7. `src/components/waybill/WaybillPDF.tsx` — Updated imports, type, and routing
+8. `src/components/waybill/waybillUtils.ts` — Updated type and normalize function with backward compat
+9. `src/components/waybill/WaybillTemplateSelector.tsx` — Updated template options and themes
+10. `src/pages/ViewWaybill.tsx` — Updated template state type
+
+---
+
+## Verification
+
+- ✅ `bun run typecheck` — passes (0 errors)
+- ✅ `eslint` on changed files — passes (0 new errors, 7 pre-existing in ViewWaybill.tsx)
