@@ -1,436 +1,251 @@
-You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+# ROLE
 
-==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
-==================================================
+You are a **Senior React PDF + TypeScript Engineer** for the BIGDROPS project.
 
-Before writing any code, you MUST:
+Your task is to create a **brand-new CSR PDF template** inspired by the existing **Invoice Industry** template.
 
-1. Read `docs/PROJECTSKIILINDEX.md`
-2. Load the following skills:
-   - Karpathy
-   - react-pdf
-   - pdf-rendering-correctness
-   - frontend-design
-   - shadcn
-3. If skill loading fails, read the corresponding SKILL.md directly.
-4. If a required skill cannot be read, STOP and report task failure.
-5. Read `AGENTS.md` before modifying any file.
+This is a **new template**, **NOT a modification** of PulseFrame, Crimson, Zinc, or SignalBands.
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
+---
 
-Save report to:
+# REQUIRED SKILLS (MANDATORY)
 
-docs/Task/reports/waybill-backlog-fixes.md
+Before writing any code you MUST follow the project skill system.
 
-==================================================
-TASK
-==================================================
+## Step 1
 
-Resolve the confirmed Waybill backlog defects affecting:
+Read:
 
-- Form UI
-- PDF rendering
-- Import pipeline
-- Persistence
-- Mobile rendering
+docs/PROJECTSKIILINDEX.md
 
-This task is defect-focused.
+## Step 2
 
-Do NOT redesign anything.
-Do NOT introduce new architecture.
-Do NOT add new libraries.
+Load these skills:
 
-==================================================
-ROOT CAUSE RULE (MANDATORY)
-==================================================
+- using-superpowers
+- react-pdf
 
-For EACH issue:
+If the loader fails:
 
-1. Identify the actual source of failure.
-2. Document the root cause in the report.
-3. Fix the source, not the symptom.
-4. Avoid duplicate state.
-5. Avoid compatibility shims.
-6. Reuse existing mechanisms whenever possible.
+- manually locate the skill paths from PROJECTSKIILINDEX.md
+- open the corresponding SKILL.md files directly
+- continue only after reading them.
 
-==================================================
-READ FIRST (MANDATORY)
-==================================================
+If the skill files cannot be loaded manually, STOP and report failure.
 
-Read completely before editing:
+---
 
-- src/components/waybill/WaybillForm.tsx
-- src/components/waybill/WaybillPDF.tsx
-- src/components/waybill/waybillUtils.ts
-- src/domain/waybill/externalWaybillImportAdapter.ts
-- src/domain/waybill/internalWaybillImportAdapter.ts
-- src/components/waybill/WaybillImportSheet.tsx
-- AGENTS.md
-- docs/PROJECTSKIILINDEX.md
+# OBJECTIVE
 
-==================================================
-FILE SCOPE LOCK
-==================================================
+Create a new CSR template that visually follows the design language of the **Invoice Industry template**.
 
-Expected files:
+The goal is to reuse its:
 
-- WaybillForm.tsx
-- WaybillPDF.tsx
-- waybillUtils.ts
-- externalWaybillImportAdapter.ts
-- internalWaybillImportAdapter.ts
-- WaybillImportSheet.tsx
+- header proportions
+- spacing
+- typography
+- logo sizing
+- alignment
+- visual hierarchy
 
-If additional files are required:
+while still rendering CSR data.
 
-- document why
-- minimize scope
-- include justification in report
+This is **NOT** an invoice.
 
-Do NOT modify unrelated modules.
+It is a CSR document that borrows the Invoice Industry branding style.
 
-==================================================
-ISSUE 1 — CONDITION COLUMN VISIBILITY BYPASS
-==================================================
+---
 
-Problem:
+# IMPORTANT
 
-The Condition column ignores visibility settings.
+DO NOT modify:
 
-Users disable it in Table Settings, but it still appears:
+- PulseFrame
+- Crimson
+- Zinc
+- SignalBands
 
-- in preview
-- in generated PDF
+They are production templates.
 
-Diagnose:
+Create a completely new template.
 
-- Find where columnVisibility is managed.
-- Trace visibility state through preview rendering.
-- Trace visibility state into PDF rendering.
-- Determine where the Condition column bypasses visibility checks.
+---
 
-Fix:
+# TEMPLATE NAME
 
-Ensure Condition behaves exactly like the other configurable columns.
+Create:
 
-Expected result:
+IndustryCSR.tsx
 
-When Condition is disabled:
+under
 
-- hidden in preview
-- hidden in PDF
+src/components/csr/preview-templates/
 
-When enabled:
+Register it in the CSR template registry exactly the same way the other templates are registered.
 
-- visible in preview
-- visible in PDF
+---
 
-Manual verification:
+# DESIGN SOURCE
 
-1. Disable Condition.
-2. Confirm preview hides it.
-3. Generate PDF.
-4. Confirm PDF hides it.
-5. Re-enable.
-6. Confirm it returns everywhere.
+Locate the existing Invoice Industry template.
 
-==================================================
-ISSUE 2 — PART NO. / MAKE DATA LOSS
-==================================================
+Study it carefully.
 
-Problem:
+Reuse its:
 
-Part No. and Make appear editable but their data disappears after reload/navigation.
+- header layout
+- logo dimensions
+- company information placement
+- font sizes
+- section spacing
+- margins
+- border treatment
+- page rhythm
 
-Diagnose the FULL lifecycle:
+Do NOT guess.
 
-- column definition
-- UI state
-- serialization
-- persistence
-- reload
-- PDF mapping
+Copy the visual system.
 
-Determine exactly where data is lost.
+---
 
-Do NOT assume serialization is the cause.
+# HEADER REQUIREMENTS
 
-Fix:
+The header should visually match the Invoice Industry template.
 
-Ensure Part No. and Make:
+Specifically:
 
-- persist correctly
-- reload correctly
-- remain enabled
-- retain values
+- same logo size
+- same logo alignment
+- same company name size
+- same company information placement
+- same whitespace
+- same spacing after the header
 
-Expected result:
+The current PulseFrame header MUST NOT be copied.
 
-User can:
+Use the Invoice Industry header instead.
 
-1. Enable Part No.
-2. Enter data.
-3. Save.
-4. Reload.
+---
 
-And still see:
+# BODY
 
-- column active
-- values preserved
+Render the existing CSR Render Model.
 
-Manual verification:
+Do NOT invent fields.
 
-Create data for:
+Consume the existing
 
-- Part No.
-- Make
+CsrRenderModel
 
-Save.
+pipeline.
 
-Reload.
+Do NOT bypass it.
 
-Generate PDF.
+---
 
-Confirm:
+# SIGNATURE SECTION
 
-- columns visible
-- values present in form
-- values present in PDF
+Reuse the corrected shared signature component.
 
-==================================================
-ISSUE 3 — JSON IMPORT DOES NOT ACTIVATE COLUMNS
-==================================================
+Do NOT create another custom signature implementation.
 
-Problem:
+No inline signature JSX.
 
-Imported JSON may contain:
+No duplicated signature layout.
 
-custom_data
+---
 
-for columns that are not currently active.
+# COMMENTS
 
-Data imports correctly.
+Support the existing compact Client Notes implementation.
 
-Columns remain hidden.
+No large multiline notes area.
 
-User must manually enable them.
+---
 
-Diagnose:
+# NO BUSINESS LOGIC
 
-- Import adapters
-- Import application flow
-- Custom column activation mechanism
+Do NOT modify:
 
-Determine why imported data does not activate corresponding columns.
+- csrRenderModel
+- buildCsrRenderModel
+- calculations
+- services
+- database
+- forms
 
-Fix:
+Only create a presentation layer.
 
-Ensure imported custom_data keys activate the corresponding custom columns automatically.
+---
 
-Reuse existing activation mechanisms whenever possible.
+# NO DUPLICATION
 
-Do NOT create a parallel column activation system.
+If there are reusable helpers from the Invoice template:
 
-Expected result:
+extract or reuse them.
 
-If imported data contains a custom column key:
+Do NOT duplicate styles unnecessarily.
 
-- column becomes active automatically
-- values become visible immediately
-- PDF contains the imported values
+---
 
-Manual verification:
+# VALIDATION
 
-Import JSON:
+Verify:
 
-```json
-{
-  "custom_data": {
-    "part_no": "ABC123",
-    "make": "Toyota"
-  }
-}
-
-Confirm:
-
-Part No. visible
-
-Make visible
-
-values shown
-
-PDF shows values
-
-
-================================================== ISSUE 4 — NOTES EDITOR NOT BOUND
-
-Problem:
-
-The Notes editor renders.
-
-Typing does not update the waybill notes state.
-
-Notes only appear when imported.
-
-Diagnose:
-
-Editor component
-
-value binding
-
-onChange binding
-
-waybill state updates
-
-
-Fix:
-
-Make the editor a properly controlled component.
-
-Expected result:
-
-existing notes load into editor
-
-typing updates waybill state
-
-saved notes persist
-
-PDF receives current notes
-
-
-Manual verification:
-
-1. Type notes.
-
-
-2. Save.
-
-
-3. Reload.
-
-
-4. Generate PDF.
-
-
-
-Confirm notes appear everywhere.
-
-================================================== ISSUE 5 — MOBILE DOM BLEED ARTIFACT
-
-Problem:
-
-Mobile view displays stray text such as:
-
-CLIENT ent
-
-below the actions area.
-
-These are believed to be legacy Invoice remnants.
-
-Diagnose:
-
-Identify the exact DOM element producing the artifact.
-
-Fix:
-
-Remove the source element.
-
-Do NOT:
-
-hide it further
-
-move it off-screen
-
-use negative margins
-
-use transforms
-
-use opacity tricks
-
-use z-index tricks
-
-use clipping
-
-
-Delete the offending element if it is unused.
-
-Manual verification:
-
-Open mobile viewport.
-
-Confirm:
-
-no CLIENT artifact
-
-no ent artifact
-
-no visual bleed below action bar
-
-
-================================================== VERIFICATION
+- header matches Invoice Industry proportions
+- logo size matches Invoice Industry
+- single-page rendering remains intact
+- signatures render correctly
+- PDF generation succeeds
+- no TypeScript errors
 
 Run:
 
-1. bun run audit:load
+bun run typecheck
 
+and
 
-2. bun run typecheck
+bun run build
 
+Both must pass.
 
-3. bun run lint
+---
 
+# REPORT
 
+Write a report to:
 
-Typecheck must pass with zero errors.
+Task/reports/csr-industry-template.md
 
-================================================== REPORT REQUIREMENTS
+Include:
 
-For each issue include:
+- files created
+- files modified
+- Invoice template files referenced
+- reusable components reused
+- styling decisions
+- screenshots or rendering observations if available
+- validation results
+- confirmation that no existing CSR template was modified
 
-1. Root cause
+---
 
+# SUCCESS CRITERIA
 
-2. Files modified
+✔ New template added
 
+✔ Existing templates untouched
 
-3. Fix implemented
+✔ Uses Invoice Industry visual style
 
+✔ Uses existing CsrRenderModel
 
-4. Verification performed
+✔ Uses shared signature component
 
+✔ Logo size matches Invoice Industry
 
+✔ its obviously a different template from the others 
 
-Include screenshots or observations if available.
+✔ Builds successfully
 
-================================================== DONE WHEN
-
-[ ] Condition column respects visibility in preview and PDF [ ] Part No. persists correctly [ ] Make persists correctly [ ] Reload preserves custom columns [ ] JSON import activates matching columns automatically [ ] Imported custom column values appear in PDF [ ] Notes editor is fully bound to state [ ] Notes persist through save/reload [ ] Mobile bleed artifact removed at source [ ] bun run audit:load passes [ ] bun run typecheck passes with zero errors [ ] bun run lint passes on changed files [ ] Report saved to docs/Task/reports/waybill-backlog-fixes.md
-
-================================================== DO NOT
-
-Do NOT run bun run dev
-
-Do NOT redesign the UI
-
-Do NOT change table proportions
-
-Do NOT modify the numbering system
-
-Do NOT modify the prefix engine
-
-Do NOT modify the download pipeline
-
-Do NOT introduce new state management libraries
-
-Do NOT create duplicate state
-
-Do NOT create parallel column systems
-
-Do NOT skip the report
-
-Do NOT modify unrelated modules
+✔ Report written
