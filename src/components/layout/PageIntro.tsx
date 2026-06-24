@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 import { operationalPanelClassName } from '@/components/ui/operational-card-styles'
 
 const accentBarClasses = {
@@ -22,6 +22,8 @@ type PageIntroProps = {
   className?: string
   tone?: keyof typeof accentBarClasses
   compact?: boolean
+  isOpen?: boolean
+  onMenuClick?: () => void
 }
 
 export default function PageIntro({
@@ -33,6 +35,8 @@ export default function PageIntro({
   toolbar,
   className,
   tone = 'slate',
+  isOpen = false,
+  onMenuClick,
 }: PageIntroProps) {
   return (
     <div className={cn(operationalPanelClassName, 'overflow-hidden', className)}>
@@ -41,10 +45,15 @@ export default function PageIntro({
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            aria-label="Open navigation"
-            className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-border bg-card text-foreground shadow-sm"
+            onClick={onMenuClick}
+            aria-label={isOpen ? 'Close navigation' : 'Open navigation'}
+            className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-bd-border bg-bd-surface text-bd-text shadow-sm"
           >
-            <Menu size={18} />
+            <SidebarToggleIcon
+              isOpen={isOpen}
+              strokeWidth={2}
+              className="w-[18px] h-[18px] text-bd-text"
+            />
           </button>
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </div>

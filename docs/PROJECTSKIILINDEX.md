@@ -11,11 +11,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 16 skills | General-purpose dev, UI, and infra skills |
+| `.agents/skills/` | 14 skills | General-purpose dev, UI, and infra skills |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
+| `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
-| **Total** | **24 top-level** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| **Total** | **24 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
@@ -56,6 +57,33 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 
 ---
 ---
+## `.opencode/agents/`
+232 upstream [agency-agents](https://github.com/msitarzewski/agency-agents) personas installed for use as opencode subagents. Organized into 18 divisions:
+
+| Division | Example Agents | Count |
+| :--- | :--- | :--- |
+| academic | anthropologist, geographer, historian, narratologist, psychologist | 5 |
+| design | brand-guardian, ui-designer, ux-architect, ux-researcher, visual-storyteller | 7 |
+| engineering | backend-architect, frontend-developer, devops-automator, code-reviewer | 8 |
+| examples | codebase-onboarding-engineer, document-generator, report-distribution-agent | 3 |
+| finance | account-strategist, bookkeeper-controller, cfo, financial-analyst, tax-strategist | 12 |
+| game-development | 3d-scene-developer, game-designer, godot-*, roblox-*, unity-*, unreal-* | 23 |
+| gis | geographer, gis-analyst, cartography-designer, spatial-data-engineer, web-gis-developer | 12 |
+| marketing | seo-specialist, social-media-strategist, content-creator, email-marketing, tiktok-* | 19 |
+| paid-media | ad-creative-strategist, ppc-campaign-strategist, programmatic-display-buyer | 6 |
+| product | product-manager, sprint-prioritizer, proposal-strategist, discovery-coach | 7 |
+| project-management | project-shepherd, jira-workflow-steward, senior-project-manager | 4 |
+| sales | deal-strategist, sales-engineer, sales-coach, outbound-strategist | 9 |
+| security | application-security-engineer, penetration-tester, threat-detection-engineer | 10 |
+| spatial-computing | xr-immersive-developer, visionos-spatial-engineer, macos-spatial-engineer | 6 |
+| specialized | grant-writer, legal-*, medical-billing, compliance-auditor, data-privacy-officer | 28 |
+| strategy | business-strategist, m-a-integration-manager, change-management-consultant | 4 |
+| support | customer-service, support-responder, it-service-manager | 5 |
+| testing | api-tester, test-results-analyzer, performance-benchmarker | 5 |
+
+Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: subagent`, `color`). Used by opencode's `/agent` command.
+
+---
 ## Quick Reference
 ```
 .
@@ -89,8 +117,8 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 │   │   └── typecheck.md
 │   └── skills/
 │       └── waybill-template-debug/
+├── .opencode/
+│   └── agents/          ← 232 upstream agency-agents (18 divisions)
 ```
 ---
-*Last updated: June 17, 2026, 11:25 PM*
-```
-?
+*Last updated: June 23, 2026, 4:20 PM*

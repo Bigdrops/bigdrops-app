@@ -40,7 +40,7 @@ export default function MobilePageHeader({
         <button
           type="button"
           onClick={onMenuClick}
-          className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
+          className="h-9 w-9 shrink-0 border border-bd-border bg-transparent hover:bg-bd-surface-muted rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bd-app-bg"
           aria-label="Open navigation menu"
         >
           <SidebarToggleIcon
