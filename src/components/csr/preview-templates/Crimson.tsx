@@ -7,7 +7,6 @@ import {
   getFillablePdfTheme,
   getStatusValue,
   getTechnicianName,
-  getTechnicianRole,
   getTechnicianSignatureUrl,
   shouldRender,
   hasOperationalReadings,
@@ -249,7 +248,6 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
   const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
   const serviceEnd = [safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')
   const technicianName = getTechnicianName(csr)
-  const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
 
   return (
@@ -401,17 +399,21 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
 
               {csr.showTechnicianSignLine ? (
                 <View style={styles.signCard}>
-                  {technicianSignatureUrl ? (
-                    <View style={{ height: 28, marginBottom: 4, justifyContent: 'flex-end' }}>
-                      <Image src={technicianSignatureUrl} style={{ maxHeight: 28, maxWidth: 92, objectFit: 'contain' }} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flex: 0, alignItems: 'center' }}>
+                      {technicianSignatureUrl ? (
+                        <View style={{ height: 28, justifyContent: 'flex-end' }}>
+                          <Image src={technicianSignatureUrl} style={{ maxHeight: 28, maxWidth: 92, objectFit: 'contain' }} />
+                        </View>
+                      ) : (
+                        <View style={{ height: 28, backgroundColor: '#ffffff' }} />
+                      )}
+                      <Text style={styles.signLabel}>Technician Signature</Text>
                     </View>
-                  ) : (
-                    <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
-                  )}
-                  <Text style={styles.signLabel}>Technician Signature</Text>
-                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
-                    {technicianRole ? technicianRole : ''}{technicianRole && technicianName ? ' - ' : ''}{technicianName ? technicianName : ''}
-                  </Text>
+                    {hasText(technicianName) ? (
+                      <Text style={[styles.fieldValue, { flex: 1 }]}>{technicianName}</Text>
+                    ) : null}
+                  </View>
                 </View>
               ) : null}
             </View>

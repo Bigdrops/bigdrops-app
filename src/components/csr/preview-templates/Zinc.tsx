@@ -6,7 +6,6 @@ import {
   getFillablePdfTheme,
   getStatusValue,
   getTechnicianName,
-  getTechnicianRole,
   getTechnicianSignatureUrl,
   shouldRender,
   hasOperationalReadings,
@@ -187,7 +186,6 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
   const styles = createZincStyles(getLayoutDensity(csr), designPreset)
   const status = getStatusValue(csr)
   const technicianName = getTechnicianName(csr)
-  const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
   const stages = resolveZincLifecycleStages(status)
   const statusLabel = safeText(status) || 'Pending'
@@ -353,17 +351,21 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
 
               {csr.showTechnicianSignLine ? (
                 <View style={[styles.signCard, { padding: 8, backgroundColor: '#f4f4f5', borderRadius: 4, borderWidth: 1, borderColor: '#e4e4e7' }]}>
-                  {technicianSignatureUrl ? (
-                    <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
-                      <Image src={technicianSignatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flex: 0, alignItems: 'center' }}>
+                      {technicianSignatureUrl ? (
+                        <View style={{ height: 24, justifyContent: 'flex-end' }}>
+                          <Image src={technicianSignatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+                        </View>
+                      ) : (
+                        <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4 }} />
+                      )}
+                      <Text style={styles.signLabel}>Technician Signature</Text>
                     </View>
-                  ) : (
-                    <View style={{ height: 24, backgroundColor: '#ffffff', borderRadius: 4, marginBottom: 4 }} />
-                  )}
-                  <Text style={styles.signLabel}>Technician Signature</Text>
-                  <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
-                    {technicianRole ? technicianRole : ''}{technicianRole && technicianName ? ' - ' : ''}{technicianName ? technicianName : ''}
-                  </Text>
+                    {hasText(technicianName) ? (
+                      <Text style={[styles.fieldValue, { flex: 1 }]}>{technicianName}</Text>
+                    ) : null}
+                  </View>
                 </View>
               ) : null}
             </View>

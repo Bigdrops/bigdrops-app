@@ -11,7 +11,6 @@ import {
   hasMaterials,
   hasText,
   getTechnicianName,
-  getTechnicianRole,
   getTechnicianSignatureUrl,
 } from './utils'
 import {
@@ -336,7 +335,6 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
                     styles={styles}
                     label="Technician Signature"
                     name={getTechnicianName(csr)}
-                    role={getTechnicianRole(csr)}
                     signatureUrl={getTechnicianSignatureUrl(csr)}
                   />
                 ) : null}

@@ -7,7 +7,6 @@ import {
   getMaterialsRows,
   hasMaterials,
   getTechnicianName,
-  getTechnicianRole,
   getTechnicianSignatureUrl,
   getServiceWindow,
   hasText,
@@ -20,22 +19,24 @@ import {
 } from './layoutModel'
 import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
 
-export function PdfSignatureCard({ styles, label, name = '', role = '', signatureUrl = '' }: any) {
+export function PdfSignatureCard({ styles, label, name = '', signatureUrl = '' }: any) {
   return (
     <View style={styles.signCard}>
-      {signatureUrl ? (
-        <View style={{ height: 24, marginBottom: 4, justifyContent: 'flex-end' }}>
-          <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flex: 0, alignItems: 'center' }}>
+          {signatureUrl ? (
+            <View style={{ height: 24, justifyContent: 'flex-end' }}>
+              <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+            </View>
+          ) : (
+            <View style={{ height: 24 }} />
+          )}
+          <Text style={styles.signLabel}>{label}</Text>
         </View>
-      ) : (
-        <View style={{ height: 24, marginBottom: 4 }} />
-      )}
-      <Text style={styles.signLabel}>{label}</Text>
-      {hasText(name) || hasText(role) ? (
-        <Text style={[styles.fieldValue, { width: '100%', flex: 1 }]}>
-          {hasText(role) ? role : ''}{hasText(role) && hasText(name) ? ' - ' : ''}{hasText(name) ? name : ''}
-        </Text>
-      ) : null}
+        {hasText(name) ? (
+          <Text style={[styles.fieldValue, { flex: 1 }]}>{name}</Text>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -253,7 +254,6 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
   csr = csr || ({} as CsrRenderModel)
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
-  const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
 
   return (
@@ -273,7 +273,6 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
             styles={styles}
             label="Technician Signature"
             name={technicianName}
-            role={technicianRole}
             signatureUrl={technicianSignatureUrl}
           />
         ) : null}
@@ -283,7 +282,6 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
             styles={styles}
             label="Customer Sign Line"
             name={safe(csr.acknowledgement_name)}
-            role={safe(csr.recipientRole)}
             signatureUrl={csr.recipient_signature_uri}
           />
         ) : null}
@@ -296,7 +294,6 @@ export function PulseAcknowledgementBlock({ styles, csr }: { styles: any; csr: C
   csr = csr || ({} as CsrRenderModel)
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
-  const technicianRole = getTechnicianRole(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
 
   return (
@@ -307,7 +304,6 @@ export function PulseAcknowledgementBlock({ styles, csr }: { styles: any; csr: C
             styles={styles}
             label="Technician Signature"
             name={technicianName}
-            role={technicianRole}
             signatureUrl={technicianSignatureUrl}
           />
         ) : null}
