@@ -1,173 +1,250 @@
-# ROLE
+ROLE
 
-You are a Senior React + @react-pdf/renderer Engineer working on the BIGDROPS CSR module.
+You are a Senior React PDF Engineer working on the BIGDROPS project.
 
-Before doing ANY work:
-
-1. Read the skills index located at:
-   docs/PROJECTSKIILINDEX.md
-
-2. Load every skill relevant to PDF rendering, React layout, TypeScript and component editing.
-and using - superpowers 
-
-3. If a skill fails to load, go back to the index, locate the skill's file path, and read the skill file directly.
-
-4. If you cannot read a required skill, STOP IMMEDIATELY.
-The task is considered FAILED.
-
-After completion, write a detailed implementation report to:
-
-Task/reports/csr-signature-layout-fix.md
+Your task is to repair the CSR PDF signature section only.
 
 ---
 
-# TASK
+REQUIRED SKILL LOADING (MANDATORY)
 
-This is NOT a redesign.
+Before writing or modifying any code:
 
-This is a layout correction only.
+1. Read:
 
-The CSR signature section has become visually broken on multiple templates.
+"docs/PROJECTSKIILINDEX.md"
 
-Your job is to inspect the implementation and correct ONLY the signature layout.
+2. Load the following skills exactly as listed:
 
-Do NOT modify unrelated sections.
+- using-superpowers
+- react-pdf
 
-Do NOT redesign templates.
+3. If the skill loader cannot locate them, manually open the files using the paths provided inside "PROJECTSKIILINDEX.md".
 
-Do NOT change colours, spacing, typography, headers or page layout except where absolutely necessary to correct the signature section.
-
----
-
-# AFFECTED TEMPLATES
-
-Inspect all four CSR templates.
-
-Apply fixes ONLY where the issue exists.
-
-Current observation:
-
-• PulseFrame appears correct.
-• Crimson has the issue.
-• SignalBands has the issue.
-• Zinc has the issue.
-
-Verify this before making changes.
+4. If the required skills cannot be loaded, stop immediately and report the failure.
 
 ---
 
-# PROBLEM
+OBJECTIVE
 
-The current layout stacks the designation and technician name vertically.
+Repair the technician signature section across every CSR PDF template.
 
-Example of the current behaviour:
+Templates:
 
-(Signature Image)
+- PulseFrame
+- SignalBands
+- Crimson
+- Zinc
 
-Signature
+This is a layout repair only.
 
-Technical
-Director
+Do not redesign any other section.
 
-John Doe
+Do not modify business logic.
 
-or
+Do not modify calculations.
 
-(Signature Image)
-
-Signature
-
-Technical
-
-John Doe
-
-This causes text wrapping, overlapping and inconsistent vertical spacing.
-
-The role and technician name must NEVER become separate stacked blocks.
+Do not modify unrelated components.
 
 ---
 
-# REQUIRED RESULT
+CURRENT BUGS
 
-The signature section should render as:
+The previous implementation is incorrect.
 
-(Signature Image)
+Current behaviour:
 
-____________________
+- Signature image does not display correctly.
+- Technician name occupies the signature drawing area.
+- The vertical divider never appears.
+- The signature box layout is broken.
 
-Signature
-
-Technical Director - John Doe
-
-or
-
-Service Engineer - Jane Smith
-
-The designation and technician name must behave as ONE horizontal unit.
-
-They should not wrap independently.
-
-They should not overlap other text.
-
-They should not increase the height of the signature block.
+This implementation must be discarded.
 
 ---
 
-# REQUIREMENTS
+REQUIRED LAYOUT
 
-Inspect how technician names and roles are currently rendered.
+The signature card must be ONE bordered rectangle divided into TWO equal columns.
 
-Determine why they wrap vertically.
+Required visual layout:
 
-Fix the layout at the component level instead of adding template-specific hacks wherever possible.
+┌──────────────────────────────────────┐
+│                                      │
+│  Signature Image   │   John Doe      │
+│                    │                 │
+│   Signature        │                 │
+│                    │                 │
+└──────────────────────────────────────┘
 
-If a shared signature component exists, update it there.
+LEFT COLUMN
 
-If the templates have independent implementations, update each implementation consistently.
+Contains ONLY:
 
-Do NOT hardcode any designation.
+- Signature image
+- "Signature" label
 
-Continue using the existing role and technician data.
+Nothing else.
 
-Do NOT alter signature image sizing unless absolutely required to prevent overlap.
+RIGHT COLUMN
 
-Do NOT modify business logic or rendering contracts.
+Contains ONLY:
+
+- Technician name
+
+Nothing else.
+
+No role.
+
+No designation.
+
+No "Technical Director".
+
+No stacked labels.
+
+No additional text.
 
 ---
 
-# VALIDATION
+REQUIRED IMPLEMENTATION
 
-Verify:
+Implement the layout using a true two-column React PDF structure.
 
-• Short technician name
-• Long technician name
-• Long designation
-• Missing designation
-• Missing technician name
+Example:
 
-Ensure:
+<View style={styles.signatureCard}>
 
-• No overlapping text
-• No vertical stacking
-• No increase in signature section height
-• No new page breaks introduced
-• Existing signature images continue rendering correctly
+  <View style={styles.leftColumn}>
+    {signatureUrl ? (
+      <Image
+        src={signatureUrl}
+        style={styles.signatureImage}
+      />
+    ) : null}
+
+    <Text style={styles.signatureLabel}>
+      Signature
+    </Text>
+  </View>
+
+  <View style={styles.verticalDivider} />
+
+  <View style={styles.rightColumn}>
+    <Text style={styles.nameText}>
+      {technicianName}
+    </Text>
+  </View>
+
+</View>
+
+Required style characteristics:
+
+- "signatureCard"
+  
+  - "flexDirection: "row""
+
+- "leftColumn"
+  
+  - "flex: 1"
+  - centered vertically
+  - centered horizontally
+
+- "verticalDivider"
+  
+  - width: 1
+  - visible border color
+  - stretches full card height
+
+- "rightColumn"
+  
+  - "flex: 1"
+  - centered vertically
+  - centered horizontally
+
+The divider MUST be its own View.
+
+Do not fake the divider using margins, borders, or nested layouts.
 
 ---
 
-# REPORT
+STRICT REQUIREMENTS
 
-Create:
+The following MUST all be true.
 
-Task/reports/csr-signature-layout-fix.md
+✓ Signature image renders.
 
-Include:
+✓ Technician name renders.
 
-- Root cause
-- Files inspected
-- Files modified
-- Shared components updated (if any)
-- Templates affected
-- Before vs After behaviour
-- Validation performed
-- Confirmation that no unrelated layout changes were introduced
+✓ Technician name never enters the signature area.
+
+✓ Signature image never enters the name area.
+
+✓ Vertical divider is visible.
+
+✓ Both columns have equal width.
+
+✓ Layout is identical across:
+
+- PulseFrame
+- SignalBands
+- Crimson
+- Zinc
+
+---
+
+DO NOT
+
+Do NOT redesign the acknowledgement section.
+
+Do NOT change spacing outside the signature card.
+
+Do NOT remove borders.
+
+Do NOT change page flow.
+
+Do NOT modify any unrelated PDF component.
+
+Do NOT modify CsrRenderModel.
+
+Do NOT modify database logic.
+
+---
+
+VALIDATION
+
+Before completion:
+
+- Run "bun run typecheck"
+- Ensure zero TypeScript errors.
+- Generate and visually verify all four PDF templates.
+
+Confirm:
+
+- Signature image appears.
+- Name appears.
+- Divider is visible.
+- Name and signature never overlap.
+- All four templates render identically.
+
+If any template still places the name inside the signature area, the task is NOT complete.
+
+---
+
+DELIVERABLE
+
+After implementation, write a detailed implementation report.
+
+Save it to:
+
+"Task/reports/csr-signature-layout-repair.md"
+
+The report must include:
+
+- Root cause.
+- Files modified.
+- Components modified.
+- Exact layout changes.
+- Validation performed.
+- Typecheck results.
+- Visual verification results for all four templates.
+- Confirmation that no unrelated functionality was changed.
