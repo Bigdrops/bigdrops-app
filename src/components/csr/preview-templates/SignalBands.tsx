@@ -325,7 +325,7 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
                 {csr.showAcknowledgement ? (
                   <PdfSignatureCard
                     styles={styles}
-                    label="Recipient Signature"
+                    label="Signature"
                     name={safe(csr.acknowledgement_name)}
                   />
                 ) : null}
@@ -333,7 +333,7 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
                 {csr.showTechnicianSignLine ? (
                   <PdfSignatureCard
                     styles={styles}
-                    label="Technician Signature"
+                    label="Signature"
                     name={getTechnicianName(csr)}
                     signatureUrl={getTechnicianSignatureUrl(csr)}
                   />

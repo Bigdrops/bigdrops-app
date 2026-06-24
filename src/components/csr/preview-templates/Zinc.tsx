@@ -171,7 +171,7 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
     textAreaOnly: { paddingTop: compact ? 2 : 4 },
     ackGrid: { flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 6 : 8 },
     signRow: { flexDirection: 'row', gap: compact ? 6 : 8, marginTop: compact ? 6 : 8 },
-    signCard: { flex: 1 },
+    signCard: { flex: 1, borderWidth: 1, borderColor: '#e4e4e7', borderRadius: 4 },
     signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 4 },
     signLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: { marginTop: compact ? 6 : 8, paddingTop: 5, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6, color: '#71717a', textAlign: 'center' },
@@ -344,7 +344,7 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
               {csr.showAcknowledgement ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Recipient Signature"
+                  label="Signature"
                   name={csr.acknowledgement_name}
                 />
               ) : null}
@@ -352,7 +352,7 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
               {csr.showTechnicianSignLine ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Technician Signature"
+                  label="Signature"
                   name={technicianName}
                   signatureUrl={technicianSignatureUrl}
                 />

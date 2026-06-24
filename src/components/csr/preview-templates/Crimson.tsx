@@ -393,7 +393,7 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
               {csr.showAcknowledgement ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Recipient Signature"
+                  label="Signature"
                   name={csr.acknowledgement_name}
                 />
               ) : null}
@@ -401,7 +401,7 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
               {csr.showTechnicianSignLine ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Technician Signature"
+                  label="Signature"
                   name={technicianName}
                   signatureUrl={technicianSignatureUrl}
                 />

@@ -280,7 +280,7 @@ export function PulseFrameTemplate({ csr, comments, branding, designPreset }: Cs
               {csr.showAcknowledgement ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Recipient Signature"
+                  label="Signature"
                   name={csr.acknowledgement_name}
                 />
               ) : null}
@@ -288,7 +288,7 @@ export function PulseFrameTemplate({ csr, comments, branding, designPreset }: Cs
               {csr.showTechnicianSignLine ? (
                 <PdfSignatureCard
                   styles={styles}
-                  label="Technician Signature"
+                  label="Signature"
                   name={getTechnicianName(csr)}
                   signatureUrl={getTechnicianSignatureUrl(csr)}
                 />

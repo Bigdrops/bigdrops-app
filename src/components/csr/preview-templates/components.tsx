@@ -21,21 +21,20 @@ import type { CsrRenderModel } from '../../../domain/csr/csrRenderModel'
 
 export function PdfSignatureCard({ styles, label, name = '', signatureUrl = '' }: any) {
   return (
-    <View style={styles.signCard}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ flex: 0, alignItems: 'center' }}>
+    <View style={[{ padding: 0 }, styles.signCard]}>
+      <View style={{ flexDirection: 'row', alignItems: 'stretch', minHeight: 36 }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 4 }}>
           {signatureUrl ? (
-            <View style={{ height: 24, justifyContent: 'flex-end' }}>
-              <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
-            </View>
-          ) : (
-            <View style={{ height: 24 }} />
-          )}
+            <Image src={signatureUrl} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
+          ) : null}
           <Text style={styles.signLabel}>{label}</Text>
         </View>
-        {hasText(name) ? (
-          <Text style={[styles.fieldValue, { flex: 1 }]}>{name}</Text>
-        ) : null}
+        <View style={{ width: 1, backgroundColor: '#d0d0d0' }} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 4 }}>
+          {hasText(name) ? (
+            <Text style={styles.fieldValue}>{name}</Text>
+          ) : null}
+        </View>
       </View>
     </View>
   )
@@ -271,7 +270,7 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
         {csr.showTechnicianSignLine ? (
           <PdfSignatureCard
             styles={styles}
-            label="Technician Signature"
+            label="Signature"
             name={technicianName}
             signatureUrl={technicianSignatureUrl}
           />
@@ -280,7 +279,7 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
         {csr.showAcknowledgement ? (
           <PdfSignatureCard
             styles={styles}
-            label="Customer Sign Line"
+            label="Signature"
             name={safe(csr.acknowledgement_name)}
           />
         ) : null}
@@ -301,7 +300,7 @@ export function PulseAcknowledgementBlock({ styles, csr }: { styles: any; csr: C
         {csr.showTechnicianSignLine ? (
           <PdfSignatureCard
             styles={styles}
-            label="Technician Signature"
+            label="Signature"
             name={technicianName}
             signatureUrl={technicianSignatureUrl}
           />
