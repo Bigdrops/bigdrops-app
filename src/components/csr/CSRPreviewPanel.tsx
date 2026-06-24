@@ -371,8 +371,8 @@ export default function CSRPreviewPanel({
             <div><span style={lbl}>CSR No.</span><span style={{ ...val, color: theme.headerBg, fontWeight: '700' }}>{csr.csr_number}</span></div>
             <div><span style={lbl}>Date</span><span style={val}>{csr.date}</span></div>
             <div><span style={lbl}>Customer</span><span style={val}>{csr.client_name}</span></div>
-            {csr.callTypeDisplay && csr.callTypeDisplay !== 'NOT SPECIFIED' ? <div><span style={lbl}>Call Type</span><span style={val}>{csr.callTypeDisplay}</span></div> : null}
-            {csr.systemDownDisplay && csr.systemDownDisplay !== 'NOT SPECIFIED' ? <div><span style={lbl}>System Status</span><span style={val}>{csr.systemDownDisplay}</span></div> : null}
+            {csr.callTypeDisplay ? <div><span style={lbl}>Call Type</span><span style={val}>{csr.callTypeDisplay}</span></div> : null}
+            {csr.systemDownDisplay ? <div><span style={lbl}>System Status</span><span style={val}>{csr.systemDownDisplay}</span></div> : null}
             {csr.show_po && String(csr.po_number || '').trim() ? <div><span style={lbl}>PO No.</span><span style={val}>{String(csr.po_number || '').trim()}</span></div> : null}
             <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div>
           </div>

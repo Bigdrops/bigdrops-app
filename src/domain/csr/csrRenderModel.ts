@@ -1,8 +1,8 @@
 import type { CsrObject, MaterialRow } from '@/components/csr/csrUtils'
 
-export type CallTypeDisplay = 'BREAKDOWN' | 'MAINTENANCE' | 'INSTALLATION' | 'OTHER' | 'NOT SPECIFIED'
+export type CallTypeDisplay = string
 
-export type SystemDownDisplay = 'DOWN' | 'OPERATIONAL' | 'NOT SPECIFIED'
+export type SystemDownDisplay = string
 
 export type LayoutDensity = 'comfortable' | 'compact' | 'tight'
 
@@ -107,19 +107,21 @@ function safeString(value: unknown): string {
 }
 
 function resolveCallTypeDisplay(raw: string): CallTypeDisplay {
+  if (!raw) return ''
   const upper = raw.toUpperCase()
   if (upper === 'BREAKDOWN' || upper === 'BD') return 'BREAKDOWN'
   if (upper === 'MAINTENANCE' || upper === 'MNT') return 'MAINTENANCE'
   if (upper === 'INSTALLATION' || upper === 'INST') return 'INSTALLATION'
   if (upper === 'OTHER') return 'OTHER'
-  return 'NOT SPECIFIED'
+  return raw
 }
 
 function resolveSystemDownDisplay(raw: string): SystemDownDisplay {
+  if (!raw) return ''
   const normalized = raw.toLowerCase().trim()
   if (normalized === 'true' || normalized === 'yes' || normalized === '1' || normalized === 'down') return 'DOWN'
   if (normalized === 'false' || normalized === 'no' || normalized === '0' || normalized === 'operational') return 'OPERATIONAL'
-  return 'NOT SPECIFIED'
+  return raw
 }
 
 function computeLayoutDensity(csr: CsrObject): LayoutDensity {

@@ -49,7 +49,7 @@ function createMinimalCsr(overrides = {}) {
 
 test('buildCsrRenderModel handles null call_type', () => {
   const result = buildCsrRenderModel(createMinimalCsr({ call_type: null }))
-  assert.equal(result.callTypeDisplay, 'NOT SPECIFIED')
+  assert.equal(result.callTypeDisplay, '')
 })
 
 test('buildCsrRenderModel resolves BREAKDOWN call_type', () => {
@@ -67,9 +67,24 @@ test('buildCsrRenderModel resolves MAINTENANCE call_type', () => {
   assert.equal(result.callTypeDisplay, 'MAINTENANCE')
 })
 
-test('buildCsrRenderModel resolves null system_down to NOT SPECIFIED', () => {
+test('buildCsrRenderModel preserves Warranty call_type', () => {
+  const result = buildCsrRenderModel(createMinimalCsr({ call_type: 'Warranty' }))
+  assert.equal(result.callTypeDisplay, 'Warranty')
+})
+
+test('buildCsrRenderModel preserves Paid Service call_type', () => {
+  const result = buildCsrRenderModel(createMinimalCsr({ call_type: 'Paid Service' }))
+  assert.equal(result.callTypeDisplay, 'Paid Service')
+})
+
+test('buildCsrRenderModel preserves AMC call_type', () => {
+  const result = buildCsrRenderModel(createMinimalCsr({ call_type: 'AMC' }))
+  assert.equal(result.callTypeDisplay, 'AMC')
+})
+
+test('buildCsrRenderModel resolves null system_down to empty', () => {
   const result = buildCsrRenderModel(createMinimalCsr({ system_down: null }))
-  assert.equal(result.systemDownDisplay, 'NOT SPECIFIED')
+  assert.equal(result.systemDownDisplay, '')
 })
 
 test('buildCsrRenderModel resolves system_down true to DOWN', () => {

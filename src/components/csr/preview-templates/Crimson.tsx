@@ -20,6 +20,7 @@ import {
   PdfSection,
   ReadingsStrip,
   MaterialsSection,
+  PdfSignatureCard,
 } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
@@ -390,31 +391,20 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
 
             <View style={styles.ackGrid}>
               {csr.showAcknowledgement ? (
-                <View style={styles.signCard}>
-                  <View style={{ height: 28, backgroundColor: '#ffffff', marginBottom: 4 }} />
-                  <Text style={styles.signLabel}>Recipient Signature</Text>
-                  {hasText(csr.acknowledgement_name) ? <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text> : null}
-                </View>
+                <PdfSignatureCard
+                  styles={styles}
+                  label="Recipient Signature"
+                  name={csr.acknowledgement_name}
+                />
               ) : null}
 
               {csr.showTechnicianSignLine ? (
-                <View style={styles.signCard}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ flex: 0, alignItems: 'center' }}>
-                      {technicianSignatureUrl ? (
-                        <View style={{ height: 28, justifyContent: 'flex-end' }}>
-                          <Image src={technicianSignatureUrl} style={{ maxHeight: 28, maxWidth: 92, objectFit: 'contain' }} />
-                        </View>
-                      ) : (
-                        <View style={{ height: 28, backgroundColor: '#ffffff' }} />
-                      )}
-                      <Text style={styles.signLabel}>Technician Signature</Text>
-                    </View>
-                    {hasText(technicianName) ? (
-                      <Text style={[styles.fieldValue, { flex: 1 }]}>{technicianName}</Text>
-                    ) : null}
-                  </View>
-                </View>
+                <PdfSignatureCard
+                  styles={styles}
+                  label="Technician Signature"
+                  name={technicianName}
+                  signatureUrl={technicianSignatureUrl}
+                />
               ) : null}
             </View>
           </PdfSection>

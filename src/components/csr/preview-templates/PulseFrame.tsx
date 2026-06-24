@@ -22,6 +22,7 @@ import {
   StatusListDots,
   ServiceTimeSection,
   CustomerFeedbackSection,
+  PdfSignatureCard,
 } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
@@ -277,31 +278,20 @@ export function PulseFrameTemplate({ csr, comments, branding, designPreset }: Cs
 
             <View style={styles.signRow}>
               {csr.showAcknowledgement ? (
-                <View style={styles.signCard}>
-                  <View style={{ height: 24, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 6, marginBottom: 4 }} />
-                  <Text style={styles.signLabel}>Recipient Signature</Text>
-                  {hasText(csr.acknowledgement_name) ? <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text> : null}
-                </View>
+                <PdfSignatureCard
+                  styles={styles}
+                  label="Recipient Signature"
+                  name={csr.acknowledgement_name}
+                />
               ) : null}
 
               {csr.showTechnicianSignLine ? (
-                <View style={styles.signCard}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ flex: 0, alignItems: 'center' }}>
-                      {getTechnicianSignatureUrl(csr) ? (
-                        <View style={{ height: 24, justifyContent: 'flex-end' }}>
-                          <Image src={getTechnicianSignatureUrl(csr)} style={{ maxHeight: 24, maxWidth: 92, objectFit: 'contain' }} />
-                        </View>
-                      ) : (
-                        <View style={{ height: 24, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#dbeafe', borderRadius: 6 }} />
-                      )}
-                      <Text style={styles.signLabel}>Technician Signature</Text>
-                    </View>
-                    {hasText(getTechnicianName(csr)) ? (
-                      <Text style={[styles.fieldValue, { flex: 1 }]}>{getTechnicianName(csr)}</Text>
-                    ) : null}
-                  </View>
-                </View>
+                <PdfSignatureCard
+                  styles={styles}
+                  label="Technician Signature"
+                  name={getTechnicianName(csr)}
+                  signatureUrl={getTechnicianSignatureUrl(csr)}
+                />
               ) : null}
             </View>
           </PdfSection>

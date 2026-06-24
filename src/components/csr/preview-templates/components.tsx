@@ -282,7 +282,6 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
             styles={styles}
             label="Customer Sign Line"
             name={safe(csr.acknowledgement_name)}
-            signatureUrl={csr.recipient_signature_uri}
           />
         ) : null}
       </View>
