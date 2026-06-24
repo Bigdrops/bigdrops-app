@@ -38,6 +38,7 @@ function createStyles(preset: PdfDesignPreset) {
       height: 36,
       borderRadius: 4,
       flexShrink: 0,
+      backgroundColor: '#ffffff',
     },
     brandLogoPlaceholder: {
       width: 36,
