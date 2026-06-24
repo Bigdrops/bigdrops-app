@@ -51,7 +51,7 @@ export function SidebarToggleIcon({
       <motion.path
         d={isOpen ? PANEL_OPEN : PANEL_CLOSED}
         animate={{ d: isOpen ? PANEL_OPEN : PANEL_CLOSED }}
-        style={{ fill: "var(--background)" }}
+        style={{ fill: "hsl(var(--background))" }}
         transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       />
     </svg>
