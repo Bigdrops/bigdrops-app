@@ -5,6 +5,7 @@ import { PulseFrameTemplate } from './PulseFrame'
 import { SignalBandsTemplate } from './SignalBands'
 import { ZincTemplate } from './Zinc'
 import { CrimsonTemplate } from './Crimson'
+import { IndustryCSRTemplate } from './IndustryCSR'
 import { registerPdfFillableFonts } from '../../../lib/pdfFontRegistry'
 import type { CsrPdfProps } from './types'
 
@@ -27,11 +28,16 @@ export function Template4({ csr, comments, branding = {}, designPreset }: CsrPdf
   return <CrimsonTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
+export function Template5({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <IndustryCSRTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
+}
+
 export function getCsrPdfDocument({ csr, comments, branding = {}, template = '4', designPreset }: CsrPdfProps) {
   const variant = getCsrTemplateVariant(template)
 
   if (variant === 'pulseframe') return <Template1 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'signalbands') return <Template2 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'zinc') return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'industry') return <Template5 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   return <Template4 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
 }
