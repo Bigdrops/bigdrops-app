@@ -186,12 +186,12 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 28 },
     ackContainer: { borderWidth: 1, borderColor: '#e7d7c8', borderRadius: 12, overflow: 'hidden' },
     ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e7d7c8' },
-    ackTopHalf: { flex: 1, paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 1, borderRightColor: '#e7d7c8' },
-    ackTopHalfLast: { flex: 1, paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10 },
-    ackBottomRow: { flexDirection: 'row', minHeight: 150 },
-    ackRecipientSig: { width: '40%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 2, borderRightColor: '#9ca3af' },
-    ackTechSig: { width: '30%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 2, borderRightColor: '#9ca3af' },
-    ackTechName: { width: '30%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10 },
+    ackTopHalf: { flex: 1, paddingVertical: tight ? 4 : 5, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 1, borderRightColor: '#e7d7c8' },
+    ackTopHalfLast: { flex: 1, paddingVertical: tight ? 4 : 5, paddingHorizontal: tight ? 5 : 6 },
+    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 50 : compact ? 60 : 70 },
+    ackRecipientSig: { width: '40%', paddingVertical: tight ? 3 : 4, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#9ca3af' },
+    ackTechSig: { width: '30%', paddingVertical: tight ? 3 : 4, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#9ca3af' },
+    ackTechName: { width: '30%', paddingVertical: tight ? 3 : 4, paddingHorizontal: tight ? 5 : 6 },
     ackFieldLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
     footer: {
@@ -344,7 +344,7 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
 
         {csr.showAcknowledgement || csr.showTechnicianSignLine ? (
           <Band colorStyle={styles.bandKeyCharcoal} title="Acknowledgement" sub="Recipient identity, approval, and signature fields.">
-            <View style={{ padding: compact ? 6 : 8 }}>
+            <View style={{ padding: tight ? 3 : compact ? 4 : 5 }}>
               <View style={styles.ackContainer}>
                 {csr.showAcknowledgement ? (
                   <View style={styles.ackTopRow}>

@@ -113,6 +113,29 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
     previewShell: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%)',
   },
+  minimal: {
+    headerBg: '#111827',
+    headerFg: '#ffffff',
+    accent: '#111827',
+    border: '#111827',
+    mutedBg: '#f3f4f6',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#111827',
+    sectionTitleFg: '#ffffff',
+    pageBg: '#ffffff',
+    pageFg: '#111827',
+    pagePadding: 12,
+    fontSize: 7.8,
+    titleSize: 9,
+    headerNameSize: 14,
+    sectionTitleSize: 6.8,
+    valueSize: 7.4,
+    compact: true,
+    headerMode: 'minimal',
+    statusStyle: 'checks',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+    previewShell: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
+  },
 }
 
 export const CSR_TEMPLATE_OPTIONS = [
@@ -140,11 +163,18 @@ export const CSR_TEMPLATE_OPTIONS = [
     blurb: 'Clean professional report borrowing the Invoice Industry design language.',
     accent: '#7d8a88',
   },
+  {
+    key: '6',
+    label: 'Minimal',
+    blurb: 'Monochrome industrial report with dense table-driven layout and strong borders.',
+    accent: '#111827',
+  },
 ]
 
 export function getCsrTemplateVariant(template = '4') {
   if (template === '2') return 'signalbands'
   if (template === '3') return 'zinc'
   if (template === '5') return 'industry'
+  if (template === '6') return 'minimal'
   return 'crimson'
 }
