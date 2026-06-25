@@ -38,6 +38,7 @@ function createStyles(preset: PdfDesignPreset) {
     logoImg: {
       width: 40,
       height: 40,
+      backgroundColor: '#ffffff',
     },
     logoPlaceholder: {
       width: 40,

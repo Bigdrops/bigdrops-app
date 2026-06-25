@@ -69,6 +69,7 @@ function createStyles(preset: PdfDesignPreset) {
       height: 36,
       borderRadius: 8,
       flexShrink: 0,
+      backgroundColor: '#ffffff',
     },
     brandText: {
       flex: 1,

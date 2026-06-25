@@ -145,6 +145,7 @@ export default function ViewWaybill() {
       const qtyLabelCol = qtyLabelVisible ? [{ key: 'qtyLabel', label: 'Qty/Unit' }] : []
       const customColumns = (customFields.customColumns || [])
         .filter(col => !STANDARD_ITEM_COLUMNS.some(sc => sc.key === col.key))
+        .filter(col => columnVisibility[col.key] !== false)
         .map(col => ({ key: col.key, label: col.label }))
       const columns = [...standardColumns, ...qtyLabelCol, ...customColumns]
       const companySettings: CompanySettings = {

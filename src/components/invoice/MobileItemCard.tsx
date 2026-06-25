@@ -220,7 +220,9 @@ export default function MobileItemCard({
     const selection = getInvoiceSuggestionSelection(suggestion)
     onUpdate(index, 'description', selection.description)
     updateField('item_id', selection.item_id)
-    onUpdate(index, 'unit_price', selection.unit_price)
+    if (ctx !== 'waybill') {
+      onUpdate(index, 'unit_price', selection.unit_price)
+    }
     setSelectedSuggestionContextText(selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null)
     setDescriptionFocused(false)
   }
