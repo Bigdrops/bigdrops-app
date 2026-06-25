@@ -211,6 +211,7 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
   csr = csr || {} as CsrRenderModel
   const density = getLayoutDensity(csr)
   const compact = density !== 'comfortable'
+  const tight = density === 'tight'
   const styles = createSignalBandsStyles(density, designPreset)
   const status = getStatusValue(csr)
 

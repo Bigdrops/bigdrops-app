@@ -27,31 +27,31 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
   const l = { fontFamily: 'Helvetica-Bold' }
   return StyleSheet.create({
     page: {
-      paddingTop: tight ? 8 : 10,
-      paddingBottom: tight ? 6 : 8,
-      paddingHorizontal: tight ? 10 : 12,
+      paddingTop: tight ? 10 : 20,
+      paddingBottom: tight ? 10 : 20,
+      paddingHorizontal: tight ? 12 : 24,
       backgroundColor: '#ffffff',
       fontFamily: 'Helvetica',
-      fontSize: tight ? 7 : compact ? 7.4 : 7.8,
+      fontSize: tight ? 7 : compact ? 7.5 : 8.5,
       color: '#111827',
     },
     headerTop: {
       flexDirection: 'row',
       borderBottomWidth: 2,
       borderBottomColor: '#111827',
-      marginBottom: compact ? 4 : 6,
+      marginBottom: compact ? 6 : 12,
     },
     headerLeft: {
       flex: 1,
-      paddingVertical: tight ? 4 : 6,
-      paddingRight: 10,
+      paddingVertical: tight ? 6 : 10,
+      paddingRight: 15,
     },
     brandBlock: { width: '100%' },
-    companyName: { fontSize: 16, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: -0.3, color: '#111827' },
-    companyTagline: { fontSize: 6.5, color: '#374151', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', marginTop: 1 },
-    contactLine: { fontSize: 6, color: '#6B7280', marginTop: 1 },
+    companyName: { fontSize: 20, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: -0.3, color: '#111827' },
+    companyTagline: { fontSize: 8, color: '#374151', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', marginTop: 2 },
+    contactLine: { fontSize: 7, color: '#6B7280', marginTop: 2 },
     headerRight: {
-      width: 180,
+      width: 220,
       borderLeftWidth: 2,
       borderLeftColor: '#111827',
     },
@@ -61,38 +61,38 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       borderBottomColor: '#d1d5db',
     },
     idLabel: {
-      width: 80,
+      width: 100,
       backgroundColor: '#f3f4f6',
-      fontSize: 6.2,
+      fontSize: 7.5,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       color: '#374151',
-      paddingVertical: 2,
-      paddingHorizontal: 5,
+      paddingVertical: 4,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#d1d5db',
     },
     idValue: {
       flex: 1,
-      fontSize: 6.8,
+      fontSize: 8.5,
       fontFamily: fillableBold,
       color: fillableColor,
-      paddingVertical: 2,
-      paddingHorizontal: 5,
+      paddingVertical: 4,
+      paddingHorizontal: 6,
     },
     section: {
-      marginBottom: compact ? 3 : 5,
+      marginBottom: compact ? 5 : 10,
       borderWidth: 2,
       borderColor: '#111827',
     },
     sectionTitle: {
       backgroundColor: '#111827',
       color: '#ffffff',
-      fontSize: tight ? 6.3 : 6.8,
+      fontSize: tight ? 7 : 8,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 8,
       letterSpacing: 1,
     },
     fieldRow: {
@@ -101,34 +101,34 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       borderBottomColor: '#d1d5db',
     },
     fieldCell: {
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 4,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#d1d5db',
     },
     fieldLabel: {
-      fontSize: 5.8,
+      fontSize: 6.5,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       color: '#374151',
-      marginBottom: 1,
+      marginBottom: 2,
       letterSpacing: 0.3,
     },
     fieldValue: {
-      fontSize: tight ? 6.6 : compact ? 7 : 7.4,
+      fontSize: tight ? 7.5 : compact ? 8 : 8.5,
       color: fillableColor,
       fontFamily: fillableBold,
-      lineHeight: 1.2,
+      lineHeight: 1.3,
     },
     blockCard: {
-      paddingVertical: tight ? 3 : 4,
-      paddingHorizontal: 5,
+      paddingVertical: tight ? 4 : 6,
+      paddingHorizontal: 6,
     },
     blockText: {
-      fontSize: tight ? 6.6 : compact ? 7 : 7.4,
+      fontSize: tight ? 7.5 : compact ? 8 : 8.5,
       color: fillableColor,
       fontFamily: 'Helvetica',
-      lineHeight: 1.3,
+      lineHeight: 1.4,
     },
     sideBySide: {
       flexDirection: 'row',
@@ -140,17 +140,17 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
     },
     sidePanelLast: { flex: 1 },
     textAreaOnly: {
-      padding: compact ? 4 : 6,
-      minHeight: tight ? 18 : compact ? 20 : 24,
+      padding: compact ? 6 : 8,
+      minHeight: tight ? 24 : compact ? 30 : 36,
     },
     labelBar: {
       backgroundColor: '#f3f4f6',
-      fontSize: 6,
+      fontSize: 7,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       color: '#374151',
-      paddingVertical: 2,
-      paddingHorizontal: 6,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
       borderBottomWidth: 1,
       borderBottomColor: '#d1d5db',
       letterSpacing: 0.5,
@@ -158,20 +158,20 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
     statusGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      padding: tight ? 3 : 5,
-      gap: 1,
+      padding: tight ? 4 : 6,
+      gap: 2,
     },
     statusItem: {
       width: '48%',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 3,
-      paddingVertical: 1.5,
-      paddingHorizontal: 3,
+      gap: 4,
+      paddingVertical: 2,
+      paddingHorizontal: 4,
     },
     checkBox: {
-      width: 7,
-      height: 7,
+      width: 9,
+      height: 9,
       borderWidth: 1.5,
       borderColor: '#9ca3af',
       alignItems: 'center',
@@ -182,12 +182,12 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       backgroundColor: '#111827',
     },
     checkMark: {
-      fontSize: 5,
+      fontSize: 6,
       color: '#ffffff',
       fontFamily: 'Helvetica-Bold',
     },
     statusText: {
-      fontSize: 6.2,
+      fontSize: 7,
       color: fillableColor,
       fontFamily: fillableBold,
       textTransform: 'uppercase',
@@ -199,11 +199,11 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       backgroundColor: '#f3f4f6',
     },
     matHeaderCell: {
-      fontSize: 6.2,
+      fontSize: 7,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 5,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#d1d5db',
     },
@@ -213,11 +213,11 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       borderBottomColor: '#e5e7eb',
     },
     matCell: {
-      fontSize: tight ? 6.6 : 7,
+      fontSize: tight ? 7.5 : 8.5,
       fontFamily: fillableBold,
       color: fillableColor,
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 5,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 6,
       borderRightWidth: 1,
       borderRightColor: '#e5e7eb',
     },
@@ -232,43 +232,43 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
     timeLabel: {
       width: '50%',
       backgroundColor: '#f9fafb',
-      fontSize: 6,
+      fontSize: 7,
       fontFamily: 'Helvetica-Bold',
       color: '#6B7280',
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 8,
       textTransform: 'uppercase',
       borderRightWidth: 1,
       borderRightColor: '#e5e7eb',
     },
     timeValue: {
       width: '50%',
-      fontSize: tight ? 6.6 : 7,
+      fontSize: tight ? 7.5 : 8.5,
       fontFamily: fillableBold,
       color: fillableColor,
-      paddingVertical: tight ? 2 : 3,
-      paddingHorizontal: 6,
+      paddingVertical: tight ? 3 : 5,
+      paddingHorizontal: 8,
     },
     ackSection: {
       borderWidth: 2,
       borderColor: '#111827',
-      marginBottom: compact ? 3 : 5,
+      marginBottom: compact ? 5 : 10,
     },
     ackHeader: {
       backgroundColor: '#111827',
       color: '#ffffff',
-      fontSize: 6.8,
+      fontSize: 8,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
-      paddingVertical: 3,
-      paddingHorizontal: 6,
+      paddingVertical: 5,
+      paddingHorizontal: 8,
       letterSpacing: 1,
     },
     ackTopRow: {
       flexDirection: 'row',
       borderBottomWidth: 1,
       borderBottomColor: '#111827',
-      minHeight: tight ? 28 : compact ? 30 : 34,
+      minHeight: tight ? 36 : compact ? 40 : 46,
     },
     ackTopCell: {
       width: '50%',
@@ -277,23 +277,23 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
     },
     ackTopLabel: {
       backgroundColor: '#f3f4f6',
-      fontSize: 5.8,
+      fontSize: 6.5,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       color: '#374151',
-      paddingVertical: 2,
-      paddingHorizontal: 6,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
       borderBottomWidth: 1,
       borderBottomColor: '#d1d5db',
     },
     ackTopContent: {
       flex: 1,
-      paddingHorizontal: 6,
-      paddingVertical: 3,
+      paddingHorizontal: 8,
+      paddingVertical: 5,
     },
     ackBottomRow: {
       flexDirection: 'row',
-      minHeight: tight ? 46 : compact ? 50 : 56,
+      minHeight: tight ? 60 : compact ? 70 : 80,
     },
     ackClientSig: {
       width: '50%',
@@ -318,23 +318,23 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       justifyContent: 'center',
     },
     ackSigText: {
-      fontSize: 5.5,
+      fontSize: 6.5,
       color: '#d1d5db',
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
     },
     ackSigImage: {
-      maxHeight: 22,
-      maxWidth: 72,
+      maxHeight: 30,
+      maxWidth: 90,
       objectFit: 'contain',
     },
     ackTechNameContent: {
       flex: 1,
       justifyContent: 'flex-end',
-      padding: 5,
+      padding: 8,
     },
     ackTechNameText: {
-      fontSize: 6.8,
+      fontSize: 8,
       fontFamily: 'Helvetica-Bold',
       color: fillableColor,
       borderBottomWidth: 1.5,
@@ -346,16 +346,16 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
     footer: {
       backgroundColor: '#111827',
       color: '#ffffff',
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      fontSize: 6.2,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      fontSize: 7,
       fontFamily: 'Helvetica-Bold',
       textTransform: 'uppercase',
       letterSpacing: 1.2,
       flexDirection: 'row',
       justifyContent: 'space-between',
     },
-    logoImage: { width: 34, height: 'auto', objectFit: 'contain' },
+    logoImage: { width: 80, maxHeight: 40, objectFit: 'contain' },
   })
 }
 
@@ -443,9 +443,9 @@ function renderHeaderIdTable(styles: any, csr: CsrRenderModel) {
 
 function renderEquipField(label: string, value: string, width = '16.66%') {
   return (
-    <View style={{ width, paddingVertical: 2, paddingHorizontal: 3, borderRightWidth: 1, borderRightColor: '#d1d5db' }}>
-      <Text style={{ fontSize: 5.5, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', color: '#374151', marginBottom: 1 }}>{label}</Text>
-      <Text style={{ fontSize: 6.4, color: '#111827', fontFamily: 'Helvetica-Bold' }}>{renderEquipValue(value)}</Text>
+    <View style={{ width, paddingVertical: 4, paddingHorizontal: 5, borderRightWidth: 1, borderRightColor: '#d1d5db' }}>
+      <Text style={{ fontSize: 6.5, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', color: '#374151', marginBottom: 2 }}>{label}</Text>
+      <Text style={{ fontSize: 7.5, color: '#111827', fontFamily: 'Helvetica-Bold' }}>{renderEquipValue(value)}</Text>
     </View>
   )
 }
@@ -511,7 +511,7 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
               <Text style={styles.fieldLabel}>Site Address</Text>
               <Text style={styles.fieldValue}>{safe(csr.address) || ' '}</Text>
             </View>
-            <View style={[{ width: '16.66%', paddingVertical: 2, paddingHorizontal: 4 }]}>
+            <View style={[{ width: '16.66%', paddingVertical: 4, paddingHorizontal: 6 }]}>
               <Text style={styles.fieldLabel}>Service Date</Text>
               <Text style={styles.fieldValue}>{safe(csr.date) || ' '}</Text>
             </View>
@@ -522,7 +522,7 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
           <Text style={styles.sectionTitle}>Equipment Specification &amp; Operational Metrics</Text>
           <View style={styles.fieldRow}>
             {equipRow1.map((f, idx) => (
-              <View key={idx} style={{ width: '16.66%', paddingVertical: 2, paddingHorizontal: 3, borderRightWidth: 1, borderRightColor: '#d1d5db' }}>
+              <View key={idx} style={{ width: '16.66%', paddingVertical: 4, paddingHorizontal: 5, borderRightWidth: 1, borderRightColor: '#d1d5db' }}>
                 <Text style={styles.fieldLabel}>{f.label}</Text>
                 <Text style={styles.fieldValue}>{renderEquipValue(f.value)}</Text>
               </View>
@@ -531,7 +531,7 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
           {hasReadings || readingsRows.length > 0 ? (
             <View style={[styles.fieldRow, { borderBottomWidth: 0 }]}>
               {equipRow2.map((r: any, idx: number) => (
-                <View key={idx} style={{ width: '16.66%', paddingVertical: 2, paddingHorizontal: 3, borderRightWidth: idx < equipRow2.length - 1 ? 1 : 0, borderRightColor: '#d1d5db' }}>
+                <View key={idx} style={{ width: '16.66%', paddingVertical: 4, paddingHorizontal: 5, borderRightWidth: idx < equipRow2.length - 1 ? 1 : 0, borderRightColor: '#d1d5db' }}>
                   <Text style={styles.fieldLabel}>{r.label}</Text>
                   <Text style={styles.fieldValue}>{safe(r.value) || '—'}</Text>
                 </View>
