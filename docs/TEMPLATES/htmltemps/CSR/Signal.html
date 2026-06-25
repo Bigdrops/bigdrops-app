@@ -32,7 +32,6 @@
                 </div>
             </div>
 
-            <!-- Fixed green border clash -->
             <div class="w-80 border border-white/30 bg-white/5 rounded-xl p-4 text-sm">
                 <div class="grid grid-cols-2 gap-y-2">
                     <span class="font-semibold">CSR NUMBER</span>
@@ -340,7 +339,7 @@
 
     </div>
 
-    <!-- ACKNOWLEDGEMENT -->
+    <!-- ACKNOWLEDGEMENT (Merged borders, blank recipient sig, labels touching ceiling) -->
     <div class="grid grid-cols-[170px_1fr] border-t">
 
         <div class="bg-slate-800 text-white p-4">
@@ -354,52 +353,54 @@
         </div>
 
         <div class="p-4">
-
-            <!-- RECIPIENT NAME / TITLE (Split 50/50, NO inner box) -->
-            <div class="flex mb-4 border-b border-gray-200 pb-3">
-                <div class="w-1/2 pr-2">
-                    <div class="text-xs font-semibold uppercase text-gray-500">Recipient Name</div>
-                    <div class="h-8"></div> <!-- Blank space, no box -->
-                </div>
-                <div class="w-1/2 pl-2 border-l border-gray-300">
-                    <div class="text-xs font-semibold uppercase text-gray-500">Title / Comment</div>
-                    <div class="h-8"></div> <!-- Blank space, no box -->
-                </div>
-            </div>
-
-            <!-- SIGNATURE SECTION -->
-            <div class="border rounded-2xl overflow-hidden min-h-[150px] flex">
+            <!-- Unified container with shared border -->
+            <div class="border rounded-2xl overflow-hidden flex flex-col">
                 
-                <!-- Left: Recipient Signature (Completely blank) -->
-                <div class="w-[40%] p-4 border-r-2 border-gray-500 flex flex-col items-start pt-4">
-                    <div class="text-xs font-semibold uppercase text-gray-500">Recipient Signature</div>
-                    <div class="flex-1 w-full"></div> <!-- Empty space, no dashed box -->
+                <!-- TOP: Recipient Name / Title (Split 50/50, no inner box) -->
+                <div class="flex border-b border-gray-300">
+                    <div class="w-1/2 p-4 border-r border-gray-300 flex flex-col items-start">
+                        <div class="text-xs font-semibold uppercase text-gray-500">Recipient Name</div>
+                        <div class="h-8 w-full"></div> <!-- Blank space -->
+                    </div>
+                    <div class="w-1/2 p-4 flex flex-col items-start">
+                        <div class="text-xs font-semibold uppercase text-gray-500">Title / Comment</div>
+                        <div class="h-8 w-full"></div> <!-- Blank space -->
+                    </div>
                 </div>
 
-                <!-- Right: Technician (Split vertically) -->
-                <div class="flex-1 flex flex-row">
+                <!-- BOTTOM: Signature Section -->
+                <div class="flex min-h-[150px]">
                     
-                    <!-- Technician Signature (Left half) -->
-                    <div class="w-1/2 p-4 border-r-2 border-gray-500 flex flex-col items-start pt-4">
-                        <div class="text-xs font-semibold uppercase text-gray-500">Technician Signature</div>
-                        <div class="flex-1 w-full flex justify-center items-center pt-2">
-                            <!-- Replace src with your actual signature image path -->
-                            <img src="technician-signature.png" alt="Signature" class="h-16 object-contain">
-                        </div>
+                    <!-- Left: Recipient Signature (Completely blank) -->
+                    <div class="w-[40%] p-4 border-r-2 border-gray-500 flex flex-col items-start">
+                        <div class="text-xs font-semibold uppercase text-gray-500">Recipient Signature</div>
+                        <div class="flex-1 w-full"></div> <!-- Empty space, no dashed box -->
                     </div>
 
-                    <!-- Technician Name (Right half) -->
-                    <div class="w-1/2 p-4 flex flex-col items-start pt-4">
-                        <div class="text-xs font-semibold uppercase text-gray-500">Technician Name</div>
-                        <div class="flex-1 w-full flex items-center pt-2">
-                            <div class="text-lg font-bold">JAY KOLA MONDAY</div>
+                    <!-- Right: Technician (Split vertically) -->
+                    <div class="flex-1 flex flex-row">
+                        
+                        <!-- Technician Signature (Left half of tech box) -->
+                        <div class="w-1/2 p-4 border-r-2 border-gray-500 flex flex-col items-start">
+                            <div class="text-xs font-semibold uppercase text-gray-500">Technician Signature</div>
+                            <div class="flex-1 w-full flex justify-center items-center pt-2">
+                                <!-- Replace src with your actual signature image path -->
+                                <img src="technician-signature.png" alt="Signature" class="h-16 object-contain">
+                            </div>
                         </div>
+
+                        <!-- Technician Name (Right half of tech box) -->
+                        <div class="w-1/2 p-4 flex flex-col items-start">
+                            <div class="text-xs font-semibold uppercase text-gray-500">Technician Name</div>
+                            <div class="flex-1 w-full flex items-center pt-2">
+                                <div class="text-lg font-bold">JAY KOLA MONDAY</div>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
-
             </div>
-
         </div>
 
     </div>
