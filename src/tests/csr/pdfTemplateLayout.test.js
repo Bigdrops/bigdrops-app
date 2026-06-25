@@ -23,8 +23,6 @@ test('resolveMaterialColumnBlocks preserves template row ceilings before comma f
   assert.equal(resolveMaterialColumnBlocks(6, 'signalbands'), 2)
   assert.equal(resolveMaterialColumnBlocks(18, 'zinc'), 3)
   assert.equal(resolveMaterialColumnBlocks(19, 'zinc'), 0)
-  assert.equal(resolveMaterialColumnBlocks(30, 'pulseframe'), 3)
-  assert.equal(resolveMaterialColumnBlocks(31, 'pulseframe'), 0)
 })
 
 test('resolveZincLifecycleStages activates only the current report status stage', () => {

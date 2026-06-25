@@ -21,29 +21,6 @@ export const CSR_STATUS_OPTIONS_PDF = CSR_STATUS_OPTIONS.filter(
 )
 
 export const CSR_TEMPLATE_VARIANTS = {
-  pulseframe: {
-    headerBg: '#0F172A',
-    headerFg: '#ffffff',
-    accent: '#1D4ED8',
-    border: '#DBEAFE',
-    mutedBg: '#EFF6FF',
-    sectionBg: '#ffffff',
-    sectionTitleBg: '#1D4ED8',
-    sectionTitleFg: '#ffffff',
-    pageBg: '#ffffff',
-    pageFg: '#14213D',
-    pagePadding: 18,
-    fontSize: 8.8,
-    titleSize: 10.5,
-    headerNameSize: 16,
-    sectionTitleSize: 8,
-    valueSize: 8.8,
-    compact: true,
-    headerMode: 'pulseframe',
-    statusStyle: 'dots',
-    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)',
-    previewShell: 'linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 100%)',
-  },
   signalbands: {
     headerBg: '#7F1D1D',
     headerFg: '#ffffff',
@@ -140,12 +117,6 @@ export const CSR_TEMPLATE_VARIANTS = {
 
 export const CSR_TEMPLATE_OPTIONS = [
   {
-    key: '1',
-    label: 'PulseFrame',
-    blurb: 'Premium modern report with summary cards and strong top identity.',
-    accent: '#1D4ED8',
-  },
-  {
     key: '2',
     label: 'SignalBands',
     blurb: 'Banded report with narrative rails and strong section identity.',
@@ -172,7 +143,6 @@ export const CSR_TEMPLATE_OPTIONS = [
 ]
 
 export function getCsrTemplateVariant(template = '4') {
-  if (template === '1') return 'pulseframe'
   if (template === '2') return 'signalbands'
   if (template === '3') return 'zinc'
   if (template === '5') return 'industry'

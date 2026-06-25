@@ -26,7 +26,7 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
 import { Input } from '@/components/ui/input'
-import { PenLine, Palette, Type } from 'lucide-react'
+import { PenLine, Type } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
@@ -39,17 +39,8 @@ const MODAL_ARCHIVE = 'archive'
 const CSR_TEMPLATE_KEY = 'csr_view_template'
 const CSR_CUSTOM_FONT_KEY = 'csr_custom_font'
 const CSR_CUSTOM_COLOR_KEY = 'csr_custom_color'
-const CSR_TEMPLATE_ACCENT_KEY = 'csr_template_accent_color'
 
 const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
-
-const CSR_PULSEFRAME_SWATCHES: { label: string; hex: string; textColor: string }[] = [
-  { label: 'Corporate Crimson', hex: '#801515', textColor: '#ffffff' },
-  { label: 'Deep Charcoal', hex: '#22252A', textColor: '#ffffff' },
-  { label: 'Slate Blue-Grey', hex: '#334155', textColor: '#ffffff' },
-  { label: 'Teal Oxide', hex: '#0F766E', textColor: '#ffffff' },
-  { label: 'Warm Alabaster', hex: '#F4F1EA', textColor: '#1A1A1A' },
-]
 
 const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
   { value: 'Reenie Beanie', label: 'Reenie Beanie' },
@@ -59,7 +50,6 @@ const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] =
 ]
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
-  '1': { font: 'Inter', color: '#111827' },
   '2': { font: 'Inter', color: '#0f172a' },
   '3': { font: 'Inter', color: '#3b82f6' },
   '4': { font: 'Inter', color: '#1e293b' },
@@ -80,11 +70,6 @@ function getStoredCustomColor(): 'auto' | string {
   return window.localStorage.getItem(CSR_CUSTOM_COLOR_KEY) || 'auto'
 }
 
-function getStoredTemplateAccentColor(): 'auto' | string {
-  if (typeof window === 'undefined') return 'auto'
-  return window.localStorage.getItem(CSR_TEMPLATE_ACCENT_KEY) || 'auto'
-}
-
 export default function ViewCSR() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -100,27 +85,25 @@ export default function ViewCSR() {
   const [template, setTemplate] = useState(getStoredTemplate)
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
-  const [templateAccentColor, setTemplateAccentColor] = useState<'auto' | string>(getStoredTemplateAccentColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [comments, setComments] = useState('')
 
   // Compute effective preset based on auto/custom toggles
-  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string, accent: 'auto' | string) => {
+  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string) => {
     const defaults = CSR_TEMPLATE_DEFAULTS[tmpl] || CSR_TEMPLATE_DEFAULTS['3']
     return {
       ...designPreset,
       fillableFont: font === 'auto' ? defaults.font : font,
       fillableColor: color === 'auto' ? defaults.color : color,
       fillableFontMode: 'custom' as const,
-      templateAccentColor: accent === 'auto' ? undefined : accent,
     }
   }
 
   // Keep designPreset in sync with toggle state
   useEffect(() => {
-    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor, templateAccentColor))
+    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template, customFont, customColor, templateAccentColor])
+  }, [template, customFont, customColor])
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -333,77 +316,7 @@ export default function ViewCSR() {
                   <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
                 </div>
 
-                {/* ROW 1: Template Accent Color Switch (PulseFrame EXCLUSIVE) */}
-                {template === '1' ? (
-                  <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                    <div
-                      className="flex cursor-pointer items-center justify-between select-none"
-                      onClick={() => {
-                        setTemplateAccentColor(templateAccentColor === 'auto' ? '#0046C7' : 'auto')
-                      }}
-                    >
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                          <Palette className="h-4 w-4 text-bd-button-primary-bg" />
-                          Template Accent
-                        </div>
-                        <p className="text-xs text-bd-text-muted">Override PulseFrame structural accent with a custom palette.</p>
-                      </div>
-                      <Switch
-                        checked={templateAccentColor !== 'auto'}
-                        onCheckedChange={(checked) => {
-                          setTemplateAccentColor(checked ? '#0046C7' : 'auto')
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-
-                    {templateAccentColor !== 'auto' ? (
-                      <div className="mt-4 space-y-3 rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">PulseFrame Palette</div>
-                        <div className="grid grid-cols-6 gap-2">
-                          <button
-                            type="button"
-                            className="h-9 w-9 rounded-lg border-2 border-bd-text scale-110 shadow-sm transition"
-                            style={{ backgroundColor: templateAccentColor }}
-                            aria-label="Live color"
-                          />
-                          {CSR_PULSEFRAME_SWATCHES.map((swatch) => {
-                            const active = templateAccentColor.toLowerCase() === swatch.hex.toLowerCase()
-                            return (
-                              <button
-                                key={swatch.hex}
-                                type="button"
-                                onClick={() => setTemplateAccentColor(swatch.hex)}
-                                className={cn(
-                                  'h-9 w-9 rounded-lg border-2 shadow-sm transition',
-                                  active ? 'border-bd-text scale-110' : 'border-transparent hover:border-bd-text-muted/40',
-                                )}
-                                style={{ backgroundColor: swatch.hex }}
-                                aria-label={swatch.label}
-                                title={swatch.label}
-                              />
-                            )
-                          })}
-                        </div>
-                        <div className="relative">
-                          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-bd-text-muted">#</span>
-                          <Input
-                            value={templateAccentColor.startsWith('#') ? templateAccentColor.slice(1) : templateAccentColor}
-                            onChange={(e) => {
-                              const raw = e.target.value.replace(/^#/, '')
-                              setTemplateAccentColor(`#${raw}`)
-                            }}
-                            className="h-10 rounded-[12px] bg-bd-surface pl-7 font-mono text-xs"
-                            placeholder="0046C7"
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {/* ROW 2: Ink Color Switch (Global) */}
+                {/* Ink Color Switch */}
                 <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
                   <div
                     className="flex cursor-pointer items-center justify-between select-none"
@@ -521,7 +434,6 @@ export default function ViewCSR() {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
                       window.localStorage.setItem(CSR_CUSTOM_FONT_KEY, customFont)
                       window.localStorage.setItem(CSR_CUSTOM_COLOR_KEY, customColor)
-                      window.localStorage.setItem(CSR_TEMPLATE_ACCENT_KEY, templateAccentColor)
                     }
                     setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()

@@ -22,7 +22,6 @@ type TemplateTheme = {
 }
 
 function getCsrVariantKey(key: string) {
-  if (key === '1') return 'pulseframe'
   if (key === '2') return 'signalbands'
   if (key === '3') return 'zinc'
   return 'crimson'

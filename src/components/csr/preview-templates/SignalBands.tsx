@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import {
   getLayoutDensity,
@@ -14,16 +14,14 @@ import {
   getTechnicianSignatureUrl,
 } from './utils'
 import {
-  StructuredTopIdentity,
-  DefectsFoundBlock,
   SharedEquipmentSection,
   ReadingsStrip,
   MaterialsSection,
   StatusListChecks,
   ServiceTimeSection,
   PdfField,
-  PdfSignatureCard,
-  PdfSection,
+  PdfLogoSlot,
+  PdfBrandBlock,
 } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
@@ -46,7 +44,7 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       gap: compact ? 8 : 10,
-      backgroundColor: '#7f1d1d',
+      backgroundColor: '#7e1f1f',
       borderRadius: 10,
       paddingVertical: tight ? 7 : 8,
       paddingHorizontal: tight ? 9 : 10,
@@ -54,25 +52,27 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     },
     brandBlock: { flex: 1 },
     logoSlot: {
-      width: 48,
-      height: 48,
+      width: 96,
+      height: 128,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
+    logoImage: { maxWidth: 96, maxHeight: 128, objectFit: 'contain' },
     logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     companyName: { fontSize: 16, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
     companyTagline: { fontSize: 7.2, color: '#FDE68A', marginTop: 2 },
     contactLine: { fontSize: 6.6, color: '#ffffff', marginTop: 3, lineHeight: 1.2 },
     identityCard: {
-      width: tight ? 184 : 192,
+      width: tight ? 200 : 220,
       backgroundColor: '#ffffff22',
       borderWidth: 1,
       borderColor: '#ffffff33',
       borderRadius: 10,
       padding: tight ? 6 : 7,
     },
-    identityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    identityGrid: { flexDirection: 'column', gap: 6 },
+    identityRow: { flexDirection: 'row', gap: 6 },
+    identityHalf: { flex: 1 },
     identityFull: { width: '100%' },
     metaLabel: { fontSize: 6.4, color: '#FDECEC', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     metaValue: { fontSize: 8.8, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
@@ -184,21 +184,15 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     statusText: { fontSize: 6.8, color: fillableColor, fontFamily: fillableBold, textTransform: 'uppercase' },
 
     textAreaOnly: { padding: compact ? 6 : 8, minHeight: tight ? 24 : 28 },
-    ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    signRow: { flexDirection: 'row', gap: compact ? 6 : 8, padding: compact ? 6 : 8 },
-    signCard: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: '#e7d7c8',
-      borderRadius: 12,
-      padding: compact ? 6 : 8,
-      backgroundColor: '#ffffff',
-    },
-    signSpace: {
-      height: tight ? 14 : 18,
-      marginBottom: 4,
-    },
-    signLabel: { fontSize: 7, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackContainer: { borderWidth: 1, borderColor: '#e7d7c8', borderRadius: 12, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e7d7c8' },
+    ackTopHalf: { flex: 1, paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 1, borderRightColor: '#e7d7c8' },
+    ackTopHalfLast: { flex: 1, paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10 },
+    ackBottomRow: { flexDirection: 'row', minHeight: 150 },
+    ackRecipientSig: { width: '40%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 2, borderRightColor: '#9ca3af' },
+    ackTechSig: { width: '30%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10, borderRightWidth: 2, borderRightColor: '#9ca3af' },
+    ackTechName: { width: '30%', paddingVertical: tight ? 6 : 8, paddingHorizontal: tight ? 7 : 10 },
+    ackFieldLabel: { fontSize: 6.5, color: '#78716c', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
 
     footer: {
       marginTop: compact ? 2 : 4,
@@ -215,7 +209,9 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
 
 export function SignalBandsTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
-  const styles = createSignalBandsStyles(getLayoutDensity(csr), designPreset)
+  const density = getLayoutDensity(csr)
+  const compact = density !== 'comfortable'
+  const styles = createSignalBandsStyles(density, designPreset)
   const status = getStatusValue(csr)
 
   const Band = ({ colorStyle, title, sub, children }: any) => (
@@ -228,10 +224,51 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
     </View>
   )
 
+  const SignalBandsHeader = ({ styles, csr, branding }: any) => (
+    <View style={styles.headerRow}>
+      <View style={{ flexDirection: 'row', gap: 8, flex: 1, alignItems: 'center' }}>
+        <PdfLogoSlot styles={styles} branding={branding} />
+        <PdfBrandBlock styles={styles} branding={branding} />
+      </View>
+      <View style={styles.identityCard}>
+        <View style={styles.identityGrid}>
+          <View style={styles.identityRow}>
+            <View style={styles.identityHalf}>
+              <Text style={styles.metaLabel}>CSR Number</Text>
+              <Text style={styles.metaValue}>{safe(csr.csr_number)}</Text>
+            </View>
+            <View style={styles.identityHalf}>
+              <Text style={styles.metaLabel}>Date</Text>
+              <Text style={styles.metaValue}>{safe(csr.date)}</Text>
+            </View>
+          </View>
+          {csr.show_po && hasText(csr.po_number) ? (
+            <View style={styles.identityFull}>
+              <Text style={styles.metaLabel}>P.O. Number</Text>
+              <Text style={styles.metaValue}>{safe(csr.po_number)}</Text>
+            </View>
+          ) : null}
+          {hasText(csr.callTypeDisplay) ? (
+            <View style={styles.identityFull}>
+              <Text style={styles.metaLabel}>Call Type</Text>
+              <Text style={styles.metaValue}>{safe(csr.callTypeDisplay)}</Text>
+            </View>
+          ) : null}
+          {hasText(csr.systemDownDisplay) ? (
+            <View style={styles.identityFull}>
+              <Text style={styles.metaLabel}>System Status</Text>
+              <Text style={styles.metaValue}>{safe(csr.systemDownDisplay)}</Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  )
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <StructuredTopIdentity styles={styles} csr={csr} branding={branding} />
+        <SignalBandsHeader styles={styles} csr={csr} branding={branding} />
 
         <Band
           colorStyle={styles.bandKeyRed}
@@ -307,39 +344,56 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
 
         {csr.showAcknowledgement || csr.showTechnicianSignLine ? (
           <Band colorStyle={styles.bandKeyCharcoal} title="Acknowledgement" sub="Recipient identity, approval, and signature fields.">
-            <PdfSection styles={styles} title="Acknowledgement">
-              {csr.showAcknowledgement ? (
-                <View style={styles.grid4}>
-                  <PdfField styles={styles} label="Recipient name/title" value={csr.acknowledgement_name} span={4} />
-                </View>
-              ) : null}
-
-              {shouldRender(true, csr.customer_feedback) ? (
-                <View style={styles.textAreaOnly}>
-                  <Text style={styles.fieldLabel}>Comment</Text>
-                  <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.signRow}>
+            <View style={{ padding: compact ? 6 : 8 }}>
+              <View style={styles.ackContainer}>
                 {csr.showAcknowledgement ? (
-                  <PdfSignatureCard
-                    styles={styles}
-                    label="Signature"
-                    name={safe(csr.acknowledgement_name)}
-                  />
+                  <View style={styles.ackTopRow}>
+                    <View style={styles.ackTopHalf}>
+                      <Text style={styles.ackFieldLabel}>Recipient Name</Text>
+                      <Text style={[styles.fieldValue, { marginTop: 6 }]}>
+                        {hasText(csr.acknowledgement_name) ? csr.acknowledgement_name : ' '}
+                      </Text>
+                    </View>
+                    <View style={styles.ackTopHalfLast}>
+                      <Text style={styles.ackFieldLabel}>Comment</Text>
+                      {hasText(csr.customer_feedback) ? (
+                        <Text style={[styles.blockText, { marginTop: 6 }]}>{csr.customer_feedback}</Text>
+                      ) : null}
+                    </View>
+                  </View>
                 ) : null}
 
-                {csr.showTechnicianSignLine ? (
-                  <PdfSignatureCard
-                    styles={styles}
-                    label="Signature"
-                    name={getTechnicianName(csr)}
-                    signatureUrl={getTechnicianSignatureUrl(csr)}
-                  />
-                ) : null}
+                <View style={styles.ackBottomRow}>
+                  {csr.showAcknowledgement ? (
+                    <View style={styles.ackRecipientSig}>
+                      <Text style={styles.ackFieldLabel}>Recipient Signature</Text>
+                      <View style={{ flex: 1, width: '100%' }} />
+                    </View>
+                  ) : null}
+
+                  {csr.showTechnicianSignLine ? (
+                    <>
+                      <View style={styles.ackTechSig}>
+                        <Text style={styles.ackFieldLabel}>Technician Signature</Text>
+                        <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                          {getTechnicianSignatureUrl(csr) ? (
+                            <Image src={getTechnicianSignatureUrl(csr)} style={{ maxHeight: 56, maxWidth: 96, objectFit: 'contain' }} />
+                          ) : null}
+                        </View>
+                      </View>
+                      <View style={styles.ackTechName}>
+                        <Text style={styles.ackFieldLabel}>Technician Name</Text>
+                        <View style={{ flex: 1, width: '100%', justifyContent: 'center' }}>
+                          {hasText(getTechnicianName(csr)) ? (
+                            <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>{getTechnicianName(csr)}</Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    </>
+                  ) : null}
+                </View>
               </View>
-            </PdfSection>
+            </View>
           </Band>
         ) : null}
 

@@ -288,37 +288,6 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
   )
 }
 
-export function PulseAcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRenderModel }) {
-  csr = csr || ({} as CsrRenderModel)
-  if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
-  const technicianName = getTechnicianName(csr)
-  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
-
-  return (
-    <PdfSection styles={styles} title="Acknowledgement">
-      <View style={styles.signRow}>
-        {csr.showTechnicianSignLine ? (
-          <PdfSignatureCard
-            styles={styles}
-            label="Signature"
-            name={technicianName}
-            signatureUrl={technicianSignatureUrl}
-          />
-        ) : null}
-
-        {csr.showAcknowledgement ? (
-          <View style={styles.signCard}>
-            <View style={[styles.fieldLabel, { fontSize: 6, marginBottom: 2 }]}>Recipient / Signature</View>
-            <View style={{ marginTop: 4 }}>
-              <Text style={[styles.fieldLabel, { fontSize: 6 }]}>Comment</Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
-    </PdfSection>
-  )
-}
-
 export function StructuredTopIdentity({ styles, csr, branding }: { styles: any; csr: CsrRenderModel; branding: any }) {
   csr = csr || ({} as CsrRenderModel)
   return (
