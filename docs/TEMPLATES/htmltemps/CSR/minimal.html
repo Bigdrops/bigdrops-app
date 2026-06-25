@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Report - Data-Centric Table View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        @media print {
+            body { background-color: white; padding: 0; }
+            .max-w-5xl { max-width: 100%; border: none; shadow: none; }
+            .no-print { display: none; }
+        }
+        .table-cell-label { @apply bg-gray-100 font-bold text-[10px] uppercase tracking-wider text-gray-600 px-3 py-1 border-b border-gray-300; }
+        .table-cell-value { @apply px-3 py-2 text-sm text-gray-900 font-semibold; }
+        .border-tight { @apply border-collapse border-spacing-0; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-10 font-mono">
+<div class="max-w-5xl mx-auto bg-white border-2 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+<!-- HEADER BLOCK -->
+<div class="flex flex-col md:flex-row border-b-2 border-black">
+<div class="p-6 flex-1 flex gap-6 items-center">
+<div class="w-24 h-24 bg-black text-white flex items-center justify-center text-xs font-bold text-center p-2 uppercase">Company Logo</div>
+<div>
+<h1 class="text-3xl font-black uppercase tracking-tighter leading-none">Sun &amp; Shield Power</h1>
+<p class="text-xs mt-2 font-bold uppercase">Field Service Division</p>
+<p class="text-[10px] mt-1 text-gray-600">43 Oshola Street, Ifako-Ijaiye | Lagos State | Tel: +2348066190685</p>
+<p class="text-[10px] text-gray-600">sunshieldpowersolutions@gmail.com</p>
+</div>
+</div>
+<div class="w-full md:w-80 border-t-2 md:border-t-0 md:border-l-2 border-black">
+<table class="w-full h-full border-tight">
+<tbody><tr>
+<td class="table-cell-label border-r border-gray-300">CSR NUMBER</td>
+<td class="table-cell-value">SASICSR-007</td>
+</tr>
+<tr>
+<td class="table-cell-label border-r border-gray-300">REPORT DATE</td>
+<td class="table-cell-value">2026-06-22</td>
+</tr>
+<tr>
+<td class="table-cell-label border-r border-gray-300">CALL TYPE</td>
+<td class="table-cell-value">NOT SPECIFIED</td>
+</tr>
+<tr>
+<td class="table-cell-label border-r border-gray-300">SYSTEM STATUS</td>
+<td class="table-cell-value">NOT SPECIFIED</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+<!-- CLIENT INFO TABLE -->
+<div class="border-b-2 border-black">
+<table class="w-full border-tight">
+<thead>
+<tr>
+<th class="bg-black text-white text-left px-3 py-1 text-[11px] uppercase tracking-widest" colspan="3">Client &amp; Site Information</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="w-1/3 border-r border-gray-300">
+<div class="table-cell-label">Client Name</div>
+<div class="table-cell-value">TATA International, Nigeria</div>
+</td>
+<td class="w-1/2 border-r border-gray-300">
+<div class="table-cell-label">Site Address</div>
+<div class="table-cell-value">Plot C89, Amuwo Odofin Industrial Layout, Along Oshodi–Apapa Express Way, Lagos, Nigeria</div>
+</td>
+<td class="w-1/6">
+<div class="table-cell-label">Service Date</div>
+<div class="table-cell-value">2026-06-22</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- EQUIPMENT METRICS HEADER TABLE (DENSE) -->
+<div class="border-b-2 border-black">
+<table class="w-full border-tight">
+<thead>
+<tr>
+<th class="bg-gray-800 text-white text-left px-3 py-1 text-[11px] uppercase tracking-widest" colspan="6">Equipment Specification &amp; Operational Metrics</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-300">
+<tr class="divide-x divide-gray-300">
+<td class="w-1/6"><div class="table-cell-label">Unit Type</div><div class="table-cell-value">Genset</div></td>
+<td class="w-1/6"><div class="table-cell-label">Location</div><div class="table-cell-value">Amuwo-Odofin</div></td>
+<td class="w-1/6"><div class="table-cell-label">Manufacturer</div><div class="table-cell-value">Cummins</div></td>
+<td class="w-1/6"><div class="table-cell-label">Model No.</div><div class="table-cell-value">NT855G6</div></td>
+<td class="w-1/6"><div class="table-cell-label">Serial No.</div><div class="table-cell-value">SN 11518</div></td>
+<td class="w-1/6"><div class="table-cell-label">Engine No.</div><div class="table-cell-value">25398493</div></td>
+</tr>
+<tr class="divide-x divide-gray-300">
+<td class="w-1/6"><div class="table-cell-label">Voltage (V)</div><div class="table-cell-value">220 V</div></td>
+<td class="w-1/6"><div class="table-cell-label">Freq (Hz)</div><div class="table-cell-value">50 Hz</div></td>
+<td class="w-1/6"><div class="table-cell-label">Battery (V)</div><div class="table-cell-value">12.5 V</div></td>
+<td class="w-1/6"><div class="table-cell-label">Temp (°C)</div><div class="table-cell-value">87 °C</div></td>
+<td class="w-1/6"><div class="table-cell-label">Pressure (PSI)</div><div class="table-cell-value">65 PSI</div></td>
+<td class="w-1/6"><div class="table-cell-label">Run Hours</div><div class="table-cell-value">1,450 H</div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- PROBLEM & DEFECTS SIDE-BY-SIDE -->
+<div class="grid grid-cols-1 md:grid-cols-2 border-b-2 border-black divide-y md:divide-y-0 md:divide-x-2 divide-black">
+<div class="flex flex-col">
+<div class="table-cell-label border-b border-black">Reported Problem</div>
+<div class="p-4 text-sm font-medium h-full italic">"Diesel, oil and water leakage"</div>
+</div>
+<div class="flex flex-col">
+<div class="table-cell-label border-b border-black">Defects Found</div>
+<div class="p-4 text-sm font-medium h-full">Diesel leakage, oil leakage, water leakage</div>
+</div>
+</div>
+<!-- SERVICE RENDERED -->
+<div class="border-b-2 border-black flex flex-col">
+<div class="table-cell-label border-b border-black">Work Description / Service Rendered</div>
+<div class="p-4 text-sm font-semibold">Servicing of genset and rectification of diesel, oil and water leakages.</div>
+</div>
+<!-- MATERIALS USED TABLE -->
+<div class="border-b-2 border-black">
+<table class="w-full border-tight">
+<thead>
+<tr class="bg-gray-100 border-b border-black">
+<th class="text-left px-3 py-2 text-[10px] font-black uppercase tracking-widest border-r border-black">Item Description / Part Number</th>
+<th class="text-center px-3 py-2 text-[10px] font-black uppercase tracking-widest w-40">Quantity / Volume</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200">
+<tr>
+<td class="px-3 py-2 text-sm border-r border-black">Fuel Filter FS1212</td>
+<td class="px-3 py-2 text-sm font-bold text-center">2</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-sm border-r border-black">Oil Filter LF9009</td>
+<td class="px-3 py-2 text-sm font-bold text-center">1</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-sm border-r border-black">Air Filter AF26173</td>
+<td class="px-3 py-2 text-sm font-bold text-center">1</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-sm border-r border-black">Engine Oil</td>
+<td class="px-3 py-2 text-sm font-bold text-center">50 L</td>
+</tr>
+<tr>
+<td class="px-3 py-2 text-sm border-r border-black">Valve Cover Gasket</td>
+<td class="px-3 py-2 text-sm font-bold text-center">3 PCS</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- STATUS & TIME TABLE -->
+<div class="grid grid-cols-1 md:grid-cols-2 border-b-2 border-black divide-y md:divide-y-0 md:divide-x-2 divide-black">
+<div class="flex flex-col">
+<div class="table-cell-label border-b border-black">System Operational Status</div>
+<div class="p-4 grid grid-cols-2 gap-2">
+<div class="flex items-center gap-2 font-bold text-xs"><div class="w-4 h-4 border-2 border-black bg-black text-white flex items-center justify-center text-[10px]">✓</div> COMPLETE</div>
+<div class="flex items-center gap-2 text-gray-400 text-xs"><div class="w-4 h-4 border-2 border-gray-300"></div> INCOMPLETE</div>
+<div class="flex items-center gap-2 text-gray-400 text-xs"><div class="w-4 h-4 border-2 border-gray-300"></div> PENDING SPARES</div>
+<div class="flex items-center gap-2 text-gray-400 text-xs"><div class="w-4 h-4 border-2 border-gray-300"></div> UNDER OBSERVATION</div>
+<div class="flex items-center gap-2 text-gray-400 text-xs col-span-2"><div class="w-4 h-4 border-2 border-gray-300"></div> WORKING SOLUTION</div>
+</div>
+</div>
+<div>
+<div class="table-cell-label border-b border-black">Service Time Logs</div>
+<table class="w-full border-tight">
+<tbody><tr class="border-b border-gray-200">
+<td class="table-cell-label border-r border-gray-200 w-1/2">Start: 2026-06-20</td>
+<td class="table-cell-value">11:35 AM</td>
+</tr>
+<tr>
+<td class="table-cell-label border-r border-gray-200 w-1/2">End: 2026-06-20</td>
+<td class="table-cell-value">06:35 PM</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+<!-- SIGN-OFF GRID (OFFICE USE STYLE) -->
+<div class="bg-white">
+<div class="table-cell-label bg-black text-white border-b-2 border-black">Final Acknowledgement &amp; Sign-off</div>
+<!-- Top Row -->
+<div class="flex border-b border-black h-20">
+<div class="w-1/2 border-r border-black flex flex-col">
+<div class="table-cell-label">Client Representative Name</div>
+<div class="flex-1 bg-gray-50"></div>
+</div>
+<div class="w-1/2 flex flex-col">
+<div class="table-cell-label">Designation / Comments</div>
+<div class="flex-1 bg-gray-50"></div>
+</div>
+</div>
+<!-- Bottom Row (Signatures) -->
+<div class="flex h-32">
+<!-- Client Side -->
+<div class="w-1/2 border-r border-black flex flex-col">
+<div class="table-cell-label">Client Signature &amp; Stamp</div>
+<div class="flex-1 flex items-center justify-center text-[10px] text-gray-300 font-bold uppercase">Authorized Signatory Only</div>
+</div>
+<!-- Tech Side Split -->
+<div class="w-1/2 flex divide-x border-black">
+<div class="w-1/2 flex flex-col border-r border-black">
+<div class="table-cell-label">Technician Signature</div>
+<div class="flex-1 flex items-center justify-center p-2">
+<img alt="Signature" class="max-h-16 grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8f00CxyEZEvm3LogOnzhXKl5t7FRNO9KFd7KpQHxU9fTuv1KwMxi_4LzczZHu16Y1GAYIzsc8SkdD4I6ATbOr4zU99Amk58GZ_PR5PEMsz74VEDRM6c-aoyxIIhfMX-r46kDz-OXpn80SwWZWawmjB6fbf-mOGsaf-K5lqgGZBisCx_ee5AOaqyCh3ApKpoWyaHxncaFTqp-SmD00yPkk-665TssBzxyQ4J2J4E7_1g_BWW3kpyTkTaZhEctSaMRKsjWvIFK8west"/>
+</div>
+</div>
+<div class="w-1/2 flex flex-col">
+<div class="table-cell-label">Lead Technician Name</div>
+<div class="flex-1 flex items-end p-3">
+<div class="text-sm font-black border-b-2 border-black w-full uppercase">Jay Kola Monday</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- INDUSTRIAL FOOTER -->
+<div class="bg-black text-white p-4 flex flex-col md:flex-row justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+<div>Official Service Document | Sun &amp; Shield Power Solutions</div>
+<div class="mt-2 md:mt-0">Page 01 of 01</div>
+</div>
+</div>
+<div class="max-w-5xl mx-auto mt-6 no-print text-center pb-10">
+<button class="bg-black text-white px-8 py-3 font-bold hover:bg-gray-800 transition-colors uppercase tracking-widest" onclick="window.print()">Print Report</button>
+</div>
+</body></html>
