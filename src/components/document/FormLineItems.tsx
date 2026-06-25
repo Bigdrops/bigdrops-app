@@ -189,7 +189,7 @@ export function FormLineItems({
             items={groupItems}
             invoice={invoice}
             context={ctx}
-            enableItemSuggestions={true}
+            enableItemSuggestions={ctx !== 'waybill'}
             customColumns={customColumns}
             groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
             onUpdateGroupName={onUpdateGroupName}
@@ -215,7 +215,7 @@ export function FormLineItems({
               number={row.number}
               invoice={invoice}
               context={ctx}
-              enableItemSuggestions={true}
+              enableItemSuggestions={ctx !== 'waybill'}
               customColumns={customColumns}
               computedAmount={getComputedAmount(row.item)}
               isFirst={row.isFirst}
