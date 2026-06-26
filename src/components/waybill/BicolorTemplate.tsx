@@ -54,8 +54,6 @@ function createStyles(preset: PdfDesignPreset) {
     },
     bannerText: {
       flex: 1,
-      maxHeight: 42,
-      overflow: 'hidden',
     },
     bannerName: {
       fontSize: 13,
