@@ -1,11 +1,11 @@
 import { Link, Text, View } from '@react-pdf/renderer'
-import type { IndustryTemplateData } from '../industryAdapter'
+import type { PdfTemplateData } from '../industryAdapter'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { styles } from './industryStyles'
 
 type PartyCardProps = {
   title: string
-  party: NonNullable<IndustryTemplateData['company']> | NonNullable<IndustryTemplateData['client']>
+  party: NonNullable<PdfTemplateData['company']> | NonNullable<PdfTemplateData['client']>
   isLast?: boolean
   surfaceColor?: string | null
   borderColor?: string | null
@@ -17,7 +17,7 @@ type PartyCardProps = {
 }
 
 type GroupRowProps = {
-  row: IndustryTemplateData['table']['rows'][number]
+  row: PdfTemplateData['table']['rows'][number]
   rowIdx: number
   ruleColor?: string | null
   surfaceColor?: string | null
@@ -27,7 +27,7 @@ type GroupRowProps = {
   bodyFontFamily?: string
 }
 
-export function renderOptionalList(items: IndustryTemplateData['attachments']) {
+export function renderOptionalList(items: PdfTemplateData['attachments']) {
   return items.map((item, idx) => {
     if (typeof item === 'string') return <Text key={`attach-${idx}`} style={styles.attachmentItem}>- {item}</Text>
     if (item?.url && item?.label) return <Link key={`attach-${idx}`} src={item.url} style={styles.attachmentLink}>{item.label}</Link>
@@ -43,7 +43,7 @@ export function getAccentTint(accentColor: string | null, fallback: string) {
   return fallback
 }
 
-export function IndustryPartyCard({
+export function PdfPartyCard({
   title,
   party,
   isLast = false,
@@ -94,7 +94,7 @@ export function IndustryPartyCard({
   )
 }
 
-export function IndustryGroupHeaderRow({
+export function PdfGroupHeaderRow({
   row,
   rowIdx,
   ruleColor,
@@ -124,7 +124,7 @@ export function IndustryGroupHeaderRow({
   )
 }
 
-export function IndustryGroupFooterRow({
+export function PdfGroupFooterRow({
   row,
   rowIdx,
   ruleColor,

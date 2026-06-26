@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { Check, ChevronsUpDown, UserPlus, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import type { ClientRecord } from '@/domain/clientWorkspace'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
@@ -15,18 +12,7 @@ import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '../supabase'
-
-type ClientDraft = {
-  name: string
-  email: string
-  phone: string
-  address: string
-  address2: string
-  city: string
-  state: string
-  contact_person: string
-  category: string
-}
+import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 
 type ClientSelectorClient = ClientRecord
 
@@ -41,20 +27,6 @@ export type ClientSelectorProps = {
   onOpenChange?: (open: boolean) => void
   hideTrigger?: boolean
   allowClear?: boolean
-}
-
-const CATEGORIES = ['Residential', 'Commercial', 'Industrial', 'Government', 'NGO', 'Other'] as const
-
-const emptyClient: ClientDraft = {
-  name: '',
-  email: '',
-  phone: '',
-  address: '',
-  address2: '',
-  city: '',
-  state: '',
-  contact_person: '',
-  category: '',
 }
 
 export default function ClientSelector({
@@ -74,7 +46,6 @@ export default function ClientSelector({
   const [selectedClient, setSelectedClient] = useState<ClientSelectorClient | null>(null)
   const [internalOpen, setInternalOpen] = useState<boolean>(false)
   const [showAddModal, setShowAddModal] = useState<boolean>(false)
-  const [newClient, setNewClient] = useState<ClientDraft>({ ...emptyClient })
   const [saving, setSaving] = useState<boolean>(false)
   void dense
 
@@ -102,8 +73,6 @@ export default function ClientSelector({
     setClients((data || []) as ClientSelectorClient[])
   }
 
-  const updateNew = (field: keyof ClientDraft, value: string) => setNewClient((client) => ({ ...client, [field]: value }))
-
   const options: ComboboxOption[] = useMemo(() => {
     return clients.map((client) => ({
       value: client.id,
@@ -126,27 +95,20 @@ export default function ClientSelector({
     setOpen(false)
   }
 
-  const handleSaveNewClient = async (): Promise<void> => {
-    if (!newClient.name.trim()) {
-      feedback.error('Client name is required')
-      return
-    }
-
+  const handleSaveNewClient = async (data: Omit<ClientFormData, 'address2'> & { address: string }): Promise<void> => {
     setSaving(true)
-    const { data, error } = await supabase
+    const { data: savedData, error } = await supabase
       .from('clients')
       .insert([
         {
-          name: newClient.name.trim(),
-          email: newClient.email.trim(),
-          phone: newClient.phone.trim(),
-          address: newClient.address2.trim()
-            ? `${newClient.address.trim()}, ${newClient.address2.trim()}`
-            : newClient.address.trim(),
-          city: newClient.city.trim(),
-          state: newClient.state.trim(),
-          contact_person: newClient.contact_person.trim(),
-          category: newClient.category,
+          name: data.name.trim(),
+          email: data.email.trim(),
+          phone: data.phone.trim(),
+          address: data.address.trim(),
+          city: data.city.trim(),
+          state: data.state.trim(),
+          contact_person: data.contact_person.trim(),
+          category: data.category,
         },
       ])
       .select()
@@ -159,10 +121,9 @@ export default function ClientSelector({
     }
 
     await fetchClients()
-    const savedClient = (data || null) as ClientSelectorClient | null
+    const savedClient = (savedData || null) as ClientSelectorClient | null
     setSelectedClient(savedClient)
     onClientChange(savedClient?.id || '', savedClient?.name || '', savedClient)
-    setNewClient({ ...emptyClient })
     setShowAddModal(false)
     setOpen(false)
     setSaving(false)
@@ -170,10 +131,6 @@ export default function ClientSelector({
   }
 
   const selectedSummary = selectedClient || (clientId ? { name: clientName } : null)
-
-  const handleDraftChange = (field: keyof ClientDraft) => (event: ChangeEvent<HTMLInputElement>) => {
-    updateNew(field, event.target.value)
-  }
 
   const triggerContent = (
     <div className={cn(
@@ -211,84 +168,13 @@ export default function ClientSelector({
             <DialogHeader className="mb-4">
               <DialogTitle>Add New Client</DialogTitle>
             </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Company / Client Name *</Label>
-                <Input
-                  className="mt-2 border-bd-border bg-bd-surface-muted/50"
-                  value={newClient.name}
-                  onChange={handleDraftChange('name')}
-                  placeholder="e.g. Coronation Power & Gas Ltd"
-                  autoFocus
-                />
-              </div>
-
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <div>
-                  <Label>Contact Person</Label>
-                  <Input className="mt-2 bg-background" value={newClient.contact_person} onChange={handleDraftChange('contact_person')} />
-                </div>
-                <div>
-                  <Label>Category</Label>
-                  <Select value={newClient.category || '__none__'} onValueChange={(value) => updateNew('category', value === '__none__' ? '' : value)}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Select category</SelectItem>
-                      {CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <div>
-                  <Label>Phone</Label>
-                  <Input className="mt-2 bg-background" value={newClient.phone} onChange={handleDraftChange('phone')} />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input className="mt-2 bg-background" type="email" value={newClient.email} onChange={handleDraftChange('email')} />
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div>
-                  <Label>Address Line 1</Label>
-                  <Input className="mt-2 bg-background" value={newClient.address} onChange={handleDraftChange('address')} />
-                </div>
-                <div>
-                  <Label>Address Line 2</Label>
-                  <Input className="mt-2 bg-background" value={newClient.address2} onChange={handleDraftChange('address2')} />
-                </div>
-              </div>
-
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <div>
-                  <Label>City</Label>
-                  <Input className="mt-2 bg-background" value={newClient.city} onChange={handleDraftChange('city')} />
-                </div>
-                <div>
-                  <Label>State</Label>
-                  <Input className="mt-2 bg-background" value={newClient.state} onChange={handleDraftChange('state')} />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="button" className="flex-[1.3]" onClick={handleSaveNewClient} loading={saving}>
-                  Save Client
-                </Button>
-              </div>
-            </div>
+            <ClientForm
+              mode="create"
+              onSave={handleSaveNewClient}
+              onCancel={() => setShowAddModal(false)}
+              saving={saving}
+              compact
+            />
           </div>
         </DialogContent>
       </Dialog>

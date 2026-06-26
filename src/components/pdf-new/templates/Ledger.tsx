@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
-import type { IndustryTemplateData } from '../industryAdapter';
+import type { PdfTemplateData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
 import { safeText } from '../core/safeText';
@@ -12,7 +12,7 @@ function formatValidUrl(url: string | undefined): string {
   return `https://${url}`;
 }
 
-export default function Ledger({ data }: { data: IndustryTemplateData }) {
+export default function Ledger({ data }: { data: PdfTemplateData }) {
   const company = data.company;
   const client = data.client;
   const table = data.table;

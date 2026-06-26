@@ -1,7 +1,7 @@
 import React from 'react'
 import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import { darkenHex, lightenHex } from '@/lib/pdfDesignPreset'
-import type { IndustryTemplateData } from '../industryAdapter'
+import type { PdfTemplateData } from '../industryAdapter'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { styles } from './BoltStyles'
 import { safeText } from '../core/safeText'
@@ -9,7 +9,7 @@ import { getDescriptionMain, getDescriptionSub } from '../core/description'
 
 const DEFAULT_ACCENT = '#1a56db'
 
-export default function Bolt({ data }: { data: IndustryTemplateData }) {
+export default function Bolt({ data }: { data: PdfTemplateData }) {
   const design = data.design
   const accent = design.accentColor || DEFAULT_ACCENT
   const ink = design.textColor || '#0f172a'

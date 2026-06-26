@@ -1,15 +1,15 @@
 import React from 'react';
 import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import { styles, resolveAlignment } from './ObsidianReceiptStyles';
-import type { IndustryTemplateData } from '../industryAdapter';
+import type { PdfTemplateData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { safeText } from '../core/safeText';
 import { getDescriptionMain, getDescriptionSub } from '../core/description';
 
 const OBSIDIAN_HEADER_ACCENT = '#2f7f7c';
 
-export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }) {
-  const safeData = data ?? ({} as IndustryTemplateData);
+export default function ObsidianReceipt({ data }: { data: PdfTemplateData }) {
+  const safeData = data ?? ({} as PdfTemplateData);
   const {
     title = '',
     customTitle = null,
@@ -38,7 +38,7 @@ export default function ObsidianReceipt({ data }: { data: IndustryTemplateData }
     design = {},
   } = safeData;
 
-  const safeDesign = (design || {}) as NonNullable<IndustryTemplateData['design']>;
+  const safeDesign = (design || {}) as NonNullable<PdfTemplateData['design']>;
   const accent = safeDesign.accentColor || OBSIDIAN_HEADER_ACCENT;
   const text = safeDesign.textColor || '#1a1a1a';
   const muted = safeDesign.mutedColor || '#8c8279';

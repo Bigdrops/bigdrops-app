@@ -1,5 +1,5 @@
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
-import { adaptIndustryData } from '@/components/pdf-new/industryAdapter'
+import { adaptPdfTemplateData } from '@/components/pdf-new/industryAdapter'
 import { buildPdfRowCells, interpretPdfTableSettings } from '@/components/pdf-new/table'
 
 import type {
@@ -172,7 +172,7 @@ export function buildInvoicePreviewItems(
   const sourceItems = Array.isArray(items) ? items : []
   const resolvedTable = tableSettings || resolveInvoicePreviewTableSettings(sourceItems, customFieldObject)
 
-  const adapted = adaptIndustryData({
+  const adapted = adaptPdfTemplateData({
     identity: { id: '', kind: 'invoice', number: '', title: '' },
     items: sourceItems.map((item, index) => ({
       id: String((item as any).id || (item as any)._uiKey || index),

@@ -1,137 +1,85 @@
-import React, { useState, useEffect, ChangeEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { feedback } from '@/lib/feedback'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ButtonLoading } from '@/components/loading/AppLoadingStates'
-import { pageFormCardClassName, pageFormFieldClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
+import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
+import { feedback } from '@/lib/feedback'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-
-interface ClientData {
-  id?: string
-  name: string
-  contact_person: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  state: string
-}
+import { pageFormCardClassName } from '@/components/ui/form-page-styles'
 
 export default function EditClient() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [client, setClient] = useState<ClientData>({
-    name: '',
-    contact_person: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: ''
-  })
+  const [client, setClient] = useState<Partial<ClientFormData>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const load = async () => {
+      if (!id) return
       const { data, error } = await supabase.from('clients').select('*').eq('id', id).single()
-      if (error) console.error(error)
-      else if (data) setClient(data)
+      if (error) {
+        console.error(error)
+        feedback.error('Failed to load client')
+      } else if (data) {
+        // Split address back into address1 and address2 if needed
+        // For now, just set the data as-is since we don't store address2 separately
+        setClient({
+          id: data.id,
+          name: data.name || '',
+          contact_person: data.contact_person || '',
+          category: data.category || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          address2: '',
+          city: data.city || '',
+          state: data.state || '',
+        })
+      }
       setLoading(false)
     }
-    if (id) load()
+    load()
   }, [id])
 
-  const update = (field: keyof ClientData, value: string) =>
-    setClient(c => ({ ...c, [field]: value }))
-
-  const handleSave = async () => {
+  const handleSave = async (data: Omit<ClientFormData, 'address2'> & { address: string }) => {
+    if (!id) return
     setSaving(true)
-    const { error } = await supabase.from('clients').update(client).eq('id', id)
+    const { error } = await supabase.from('clients').update({
+      name: data.name,
+      contact_person: data.contact_person,
+      category: data.category,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+    }).eq('id', id)
     setSaving(false)
     if (error) {
       console.error('Update error', error)
       feedback.error('Save failed', { description: 'Failed to save client' })
     } else {
+      feedback.success('Client updated')
       navigate('/clients')
     }
   }
 
-  if (loading) return (
-
-    <Layout title="Edit Client">
-      <Card className={pageFormCardClassName}>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 7 }).map((_, idx) => <Skeleton key={idx} className="h-11 w-full rounded-xl" />)}
-          <Skeleton className="ml-auto h-10 w-24 rounded-xl" />
-        </CardContent>
-      </Card>
-    </Layout>
-  )
-
   return (
-
     <Layout title="Edit Client">
       <Card className={pageFormCardClassName}>
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-slate-900">Edit Client</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="Company Name"
-            value={client.name || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('name', e.target.value)}
+        <CardContent>
+          <ClientForm
+            mode="edit"
+            initialData={client}
+            onSave={handleSave}
+            onCancel={() => navigate('/clients')}
+            saving={saving}
+            loading={loading}
           />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="Contact Person"
-            value={client.contact_person || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('contact_person', e.target.value)}
-          />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="Email"
-            type="email"
-            value={client.email || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('email', e.target.value)}
-          />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="Phone"
-            value={client.phone || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('phone', e.target.value)}
-          />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="Address"
-            value={client.address || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('address', e.target.value)}
-          />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="City"
-            value={client.city || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('city', e.target.value)}
-          />
-          <Input
-            className={pageFormFieldClassName}
-            placeholder="State"
-            value={client.state || ''}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => update('state', e.target.value)}
-          />
-          <div className="flex justify-end pt-2">
-            <Button type="button" className={pageFormPrimaryActionClassName} onClick={handleSave} disabled={saving}>
-              <ButtonLoading loading={saving} loadingLabel="Saving" idleLabel="Save" />
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </Layout>

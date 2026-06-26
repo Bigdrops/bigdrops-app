@@ -11,7 +11,7 @@ test('invoice preview model uses the shared pdf table interpreter and industry s
   const source = fs.readFileSync(invoicePreviewPath, 'utf8').replace(/\s+/g, ' ')
 
   assert.match(source, /interpretPdfTableSettings/)
-  assert.match(source, /adaptIndustryData/)
+  assert.match(source, /adaptPdfTemplateData/)
   assert.match(source, /hideEmptyGroups/)
   assert.match(source, /previewItems: buildInvoicePreviewItems\(/)
 })
@@ -20,7 +20,7 @@ test('quotation preview model uses the shared pdf table interpreter and industry
   const source = fs.readFileSync(quotationPreviewPath, 'utf8').replace(/\s+/g, ' ')
 
   assert.match(source, /interpretPdfTableSettings/)
-  assert.match(source, /adaptIndustryData/)
+  assert.match(source, /adaptPdfTemplateData/)
   assert.match(source, /hideEmptyGroups/)
   assert.match(source, /previewItems: buildQuotationPreviewItems\(/)
 })
