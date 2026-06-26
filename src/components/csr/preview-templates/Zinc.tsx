@@ -20,7 +20,6 @@ import {
   PdfTextBlock,
   ReadingsStrip,
   MaterialsSection,
-  PdfSignatureCard,
 } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import { resolveZincLifecycleStages, safeText } from './layoutModel'
@@ -174,6 +173,15 @@ function createZincStyles(density = 'comfortable', designPreset: any) {
     signCard: { flex: 1, borderWidth: 1, borderColor: '#e4e4e7', borderRadius: 4 },
     signSpace: { height: tight ? 14 : 18, borderBottomWidth: 1.5, borderBottomColor: '#09090b', marginBottom: 4 },
     signLabel: { fontSize: 6.5, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackContainer: { borderWidth: 1, borderColor: '#e4e4e7', borderRadius: 4, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e4e4e7' },
+    ackTopHalf: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 1, borderRightColor: '#e4e4e7' },
+    ackTopHalfLast: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6 },
+    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 50 : compact ? 60 : 70 },
+    ackRecipientSig: { width: '40%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#a1a1aa' },
+    ackTechSig: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#a1a1aa' },
+    ackTechName: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6 },
+    ackFieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#71717a', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: { marginTop: compact ? 6 : 8, paddingTop: 5, borderTopWidth: 1, borderTopColor: '#e4e4e7', fontSize: 6, color: '#71717a', textAlign: 'center' },
     statusGrid: { display: 'none' },
     statusItem: {},
@@ -326,37 +334,56 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
 
         {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
           <PdfSection styles={styles} title="Acknowledgement">
-            {csr.showAcknowledgement ? (
-              <View style={[styles.fieldCard, { width: '100%', marginBottom: 4 }]}>
-                <Text style={styles.fieldLabel}>Recipient name/title</Text>
-                <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name) || ' '}</Text>
-              </View>
-            ) : null}
-
-            {shouldRender(true, csr.customer_feedback) ? (
-              <View style={[styles.blockCard, { marginBottom: 6 }]}>
-                <Text style={styles.fieldLabel}>Comment</Text>
-                <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.ackGrid}>
+            <View style={styles.ackContainer}>
               {csr.showAcknowledgement ? (
-                <PdfSignatureCard
-                  styles={styles}
-                  label="Signature"
-                  name={csr.acknowledgement_name}
-                />
+                <View style={styles.ackTopRow}>
+                  <View style={styles.ackTopHalf}>
+                    <Text style={styles.ackFieldLabel}>Recipient Name</Text>
+                    <Text style={[styles.fieldValue, { marginTop: 6 }]}>
+                      {hasText(csr.acknowledgement_name) ? csr.acknowledgement_name : ' '}
+                    </Text>
+                  </View>
+                  <View style={styles.ackTopHalfLast}>
+                    <Text style={styles.ackFieldLabel}>Comment</Text>
+                    {hasText(csr.customer_feedback) ? (
+                      <Text style={[styles.blockText, { marginTop: 6 }]}>{csr.customer_feedback}</Text>
+                    ) : null}
+                  </View>
+                </View>
               ) : null}
 
-              {csr.showTechnicianSignLine ? (
-                <PdfSignatureCard
-                  styles={styles}
-                  label="Signature"
-                  name={technicianName}
-                  signatureUrl={technicianSignatureUrl}
-                />
-              ) : null}
+              <View style={styles.ackBottomRow}>
+                {csr.showAcknowledgement ? (
+                  <View style={styles.ackRecipientSig}>
+                    <Text style={styles.ackFieldLabel}>Recipient Signature</Text>
+                    <View style={{ flex: 1, width: '100%' }} />
+                  </View>
+                ) : null}
+
+                {csr.showTechnicianSignLine ? (
+                  <>
+                    <View style={styles.ackTechSig}>
+                      <Text style={styles.ackFieldLabel}>Technician Signature</Text>
+                      <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                        {technicianSignatureUrl ? (
+                          <Image
+                            src={technicianSignatureUrl}
+                            style={{ maxHeight: 56, maxWidth: 96, objectFit: 'contain' }}
+                          />
+                        ) : null}
+                      </View>
+                    </View>
+                    <View style={styles.ackTechName}>
+                      <Text style={styles.ackFieldLabel}>Technician Name</Text>
+                      <View style={{ flex: 1, width: '100%', justifyContent: 'center' }}>
+                        {hasText(technicianName) ? (
+                          <Text style={styles.fieldValue}>{technicianName}</Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  </>
+                ) : null}
+              </View>
             </View>
           </PdfSection>
         ) : null}

@@ -30,6 +30,8 @@ Font.register = (options: any) => {
 
 import { SignalBandsTemplate } from './src/components/csr/preview-templates/SignalBands';
 import { MinimalTemplate } from './src/components/csr/preview-templates/Minimal';
+import { CrimsonTemplate } from './src/components/csr/preview-templates/Crimson';
+import { ZincTemplate } from './src/components/csr/preview-templates/Zinc';
 import { registerPdfFonts } from './src/lib/pdfFontRegistry';
 
 registerPdfFonts(); // execute the real registry
@@ -74,6 +76,14 @@ const branding = {
     console.log('Rendering Minimal...');
     await renderToFile(<MinimalTemplate csr={mockCsr} comments="" branding={branding} designPreset={null} />, './minimal-test.pdf');
     console.log('Minimal rendered successfully.');
+
+    console.log('Rendering Crimson...');
+    await renderToFile(<CrimsonTemplate csr={mockCsr} comments="" branding={branding} designPreset={null} />, './crimson-test.pdf');
+    console.log('Crimson rendered successfully.');
+
+    console.log('Rendering Zinc...');
+    await renderToFile(<ZincTemplate csr={mockCsr} comments="" branding={branding} designPreset={null} />, './zinc-test.pdf');
+    console.log('Zinc rendered successfully.');
   } catch (err) {
     console.error('Error rendering PDFs:', err);
   }

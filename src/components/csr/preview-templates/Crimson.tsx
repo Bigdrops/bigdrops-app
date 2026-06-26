@@ -227,6 +227,15 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
       marginBottom: 4,
     },
     signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackContainer: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 6, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+    ackTopHalf: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 1, borderRightColor: '#e2e8f0' },
+    ackTopHalfLast: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6 },
+    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 50 : compact ? 60 : 70 },
+    ackRecipientSig: { width: '40%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#cbd5e1' },
+    ackTechSig: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#cbd5e1' },
+    ackTechName: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6 },
+    ackFieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     footer: {
       marginTop: compact ? 6 : 8,
       paddingTop: 5,
@@ -244,6 +253,7 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
   csr = csr || {} as CsrRenderModel
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
+  const compact = layoutDensity !== 'comfortable'
   const styles = createCrimsonStyles(layoutDensity, designPreset)
   const status = getStatusValue(csr)
   const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
@@ -375,37 +385,58 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
 
         {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
           <PdfSection styles={styles} title="Acknowledgement">
-            {csr.showAcknowledgement ? (
-              <View style={[styles.fieldCard, { width: '100%', marginBottom: 0 }]}>
-                <Text style={styles.fieldLabel}>Recipient name/title</Text>
-                <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name) || ' '}</Text>
+            <View style={{ padding: tightLayout ? 3 : compact ? 4 : 5 }}>
+              <View style={styles.ackContainer}>
+                {csr.showAcknowledgement ? (
+                  <View style={styles.ackTopRow}>
+                    <View style={styles.ackTopHalf}>
+                      <Text style={styles.ackFieldLabel}>Recipient Name</Text>
+                      <Text style={[styles.fieldValue, { marginTop: 6 }]}>
+                        {hasText(csr.acknowledgement_name) ? csr.acknowledgement_name : ' '}
+                      </Text>
+                    </View>
+                    <View style={styles.ackTopHalfLast}>
+                      <Text style={styles.ackFieldLabel}>Comment</Text>
+                      {hasText(csr.customer_feedback) ? (
+                        <Text style={[styles.blockText, { marginTop: 6 }]}>{csr.customer_feedback}</Text>
+                      ) : null}
+                    </View>
+                  </View>
+                ) : null}
+
+                <View style={styles.ackBottomRow}>
+                  {csr.showAcknowledgement ? (
+                    <View style={styles.ackRecipientSig}>
+                      <Text style={styles.ackFieldLabel}>Recipient Signature</Text>
+                      <View style={{ flex: 1, width: '100%' }} />
+                    </View>
+                  ) : null}
+
+                  {csr.showTechnicianSignLine ? (
+                    <>
+                      <View style={styles.ackTechSig}>
+                        <Text style={styles.ackFieldLabel}>Technician Signature</Text>
+                        <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                          {technicianSignatureUrl ? (
+                            <Image
+                              src={technicianSignatureUrl}
+                              style={{ maxHeight: 56, maxWidth: 96, objectFit: 'contain' }}
+                            />
+                          ) : null}
+                        </View>
+                      </View>
+                      <View style={styles.ackTechName}>
+                        <Text style={styles.ackFieldLabel}>Technician Name</Text>
+                        <View style={{ flex: 1, width: '100%', justifyContent: 'center' }}>
+                          {hasText(technicianName) ? (
+                            <Text style={styles.fieldValue}>{technicianName}</Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    </>
+                  ) : null}
+                </View>
               </View>
-            ) : null}
-
-            {shouldRender(true, csr.customer_feedback) ? (
-              <View style={[styles.blockCard, { marginTop: 6 }]}>
-                <Text style={styles.fieldLabel}>Comment</Text>
-                <Text style={styles.blockText}>{safe(csr.customer_feedback)}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.ackGrid}>
-              {csr.showAcknowledgement ? (
-                <PdfSignatureCard
-                  styles={styles}
-                  label="Signature"
-                  name={csr.acknowledgement_name}
-                />
-              ) : null}
-
-              {csr.showTechnicianSignLine ? (
-                <PdfSignatureCard
-                  styles={styles}
-                  label="Signature"
-                  name={technicianName}
-                  signatureUrl={technicianSignatureUrl}
-                />
-              ) : null}
             </View>
           </PdfSection>
         ) : null}
