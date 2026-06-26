@@ -81,7 +81,8 @@ export function buildInvoicePreviewModel({
 }: BuildInvoicePreviewModelInput) {
   const previewBankAccounts = buildBankAccountsProjection(bankAccounts)
   const selectedPreviewBank = resolveSelectedBankAccount(previewBankAccounts, pdfOutput?.bankAccountId)
-  const companyPreviewLines = buildCompanyPreviewLines(settings)
+  const companyPreviewResult = buildCompanyPreviewLines(settings)
+  const companyPreviewLines = companyPreviewResult.addressLines
   const clientPreviewLines = buildClientPreviewLines(client)
   const topHeaderFields = Array.isArray(customFieldObject?.header)
     ? customFieldObject.header.filter((field) => field?.label && field?.value)
@@ -108,6 +109,8 @@ export function buildInvoicePreviewModel({
     selectedPreviewBank,
     signatory: buildSignatoryProjection(signatory),
     companyPreviewLines,
+    companyWebsite: companyPreviewResult.website,
+    companyCustomInfo: companyPreviewResult.customInfo,
     clientPreviewLines,
     topHeaderFields,
     previewDetailRows,

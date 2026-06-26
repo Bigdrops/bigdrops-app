@@ -94,6 +94,8 @@ export type SettingsLike = {
   company_vat?: string | null
   company_phone?: string | null
   company_email?: string | null
+  company_website?: string | null
+  custom_info?: string | null
 }
 
 export type BankAccountLike = {

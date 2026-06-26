@@ -29,6 +29,7 @@ export type PdfParty = {
   email?: string | null
   phone?: string | null
   addressLines?: string[]
+  website?: string | null
 }
 
 export type PdfHeaderField = {

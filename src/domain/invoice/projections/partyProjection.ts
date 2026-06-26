@@ -33,11 +33,35 @@ export function resolveSelectedBankAccount(
   )
 }
 
-export function buildCompanyPreviewLines(settings?: SettingsLike): string[] {
-  return [
+export type CompanyPreviewResult = {
+  addressLines: string[]
+  website: string | null
+  customInfo: Array<{ label: string; value: string }>
+}
+
+export function buildCompanyPreviewLines(settings?: SettingsLike): CompanyPreviewResult {
+  const addressLines = [
     settings?.company_address,
     [settings?.company_city, settings?.company_state].filter(Boolean).join(', '),
   ].filter(Boolean) as string[]
+
+  const website = settings?.company_website || null
+
+  let customInfo: Array<{ label: string; value: string }> = []
+  if (settings?.custom_info) {
+    try {
+      const parsed = JSON.parse(settings.custom_info)
+      if (Array.isArray(parsed)) {
+        customInfo = parsed
+          .filter((item: any) => item?.label && item?.value)
+          .map((item: any) => ({ label: String(item.label), value: String(item.value) }))
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+  }
+
+  return { addressLines, website, customInfo }
 }
 
 export function buildClientPreviewLines(client?: ClientLike): string[] {

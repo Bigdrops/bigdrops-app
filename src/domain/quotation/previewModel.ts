@@ -33,7 +33,8 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
 
   const previewBankAccounts = buildBankAccountsProjection(Array.isArray(bankAccounts) ? bankAccounts : []);
   const selectedPreviewBank = resolveSelectedBankAccount(previewBankAccounts, pdfOutput.bankAccountId);
-  const companyPreviewLines = buildCompanyPreviewLines(settings);
+  const companyPreviewResult = buildCompanyPreviewLines(settings);
+  const companyPreviewLines = companyPreviewResult.addressLines;
   const clientPreviewLines = buildClientPreviewLines(client);
 
   const previewDetailRows = [
@@ -125,6 +126,8 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
     previewBankAccounts,
     selectedPreviewBank,
     companyPreviewLines,
+    companyWebsite: companyPreviewResult.website,
+    companyCustomInfo: companyPreviewResult.customInfo,
     clientPreviewLines,
     previewDetailRows,
     pageLayout: previewTableSettings.pageLayout,
