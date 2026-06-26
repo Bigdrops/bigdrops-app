@@ -37,19 +37,13 @@ export function buildCompanyPreviewLines(settings?: SettingsLike): string[] {
   return [
     settings?.company_address,
     [settings?.company_city, settings?.company_state].filter(Boolean).join(', '),
-    settings?.company_vat ? `VAT Number: ${settings.company_vat}` : null,
-    settings?.company_phone ? `Phone: ${settings.company_phone}` : null,
-    settings?.company_email ? `Email: ${settings.company_email}` : null,
   ].filter(Boolean) as string[]
 }
 
 export function buildClientPreviewLines(client?: ClientLike): string[] {
   return [
-    client?.contact_person ? `Attn: ${client.contact_person}` : null,
     client?.address || null,
     [client?.city, client?.state].filter(Boolean).join(', '),
-    client?.phone || null,
-    client?.email || null,
   ].filter(Boolean) as string[]
 }
 
