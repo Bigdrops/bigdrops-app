@@ -8,11 +8,10 @@ import { EvergreenTemplateDocument } from './EvergreenTemplate'
 import { MinimalTemplateDocument } from './MinimalTemplate'
 import { ThermalTemplateDocument } from './ThermalTemplate'
 import { ClassicTemplateDocument } from './ClassicTemplate'
-import { BicolorTemplateDocument } from './BicolorTemplate'
 import { PremiumTemplateDocument } from './PremiumTemplate'
 import { SlateTemplateDocument } from './SlateTemplate'
 
-type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'bicolor' | 'premium' | 'slate'
+type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'
 
 interface WaybillPDFProps {
   model?: WaybillRenderModel
@@ -35,10 +34,6 @@ export default function WaybillPDF({ model, designPreset, template = 'evergreen'
 
   if (template === 'classic') {
     return <ClassicTemplateDocument model={model} designPreset={designPreset} />
-  }
-
-  if (template === 'bicolor') {
-    return <BicolorTemplateDocument model={model} designPreset={designPreset} />
   }
 
   if (template === 'premium') {

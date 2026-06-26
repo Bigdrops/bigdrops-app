@@ -7,6 +7,7 @@ import type {
   BankAccountLike,
   PdfOutputLike,
 } from '../renderTypes'
+import { normalizeCompanyCustomInfo } from '../normalize'
 
 export function buildBankAccountsProjection(
   bankAccounts: BankAccountLike[],
@@ -47,19 +48,7 @@ export function buildCompanyPreviewLines(settings?: SettingsLike): CompanyPrevie
 
   const website = settings?.company_website || null
 
-  let customInfo: Array<{ label: string; value: string }> = []
-  if (settings?.custom_info) {
-    try {
-      const parsed = JSON.parse(settings.custom_info)
-      if (Array.isArray(parsed)) {
-        customInfo = parsed
-          .filter((item: any) => item?.label && item?.value)
-          .map((item: any) => ({ label: String(item.label), value: String(item.value) }))
-      }
-    } catch {
-      // ignore malformed JSON
-    }
-  }
+  const customInfo = normalizeCompanyCustomInfo(settings?.custom_info)
 
   return { addressLines, website, customInfo }
 }

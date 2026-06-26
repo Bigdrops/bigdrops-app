@@ -12,6 +12,51 @@ import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
 import { normalizeExtraCharges } from './factories'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 
+type CompanyCustomInfoEntry = { label: string; value: string }
+
+/**
+ * Parse and normalize company custom_info JSON into the canonical
+ * `{ label, value }` shape.
+ *
+ * This is the **single** compatibility boundary for legacy data that was
+ * saved with `{ title, content }` keys.  Every downstream consumer
+ * (partyProjection, previewModel, PDF adapter, CommercialPartyCard)
+ * operates exclusively on `{ label, value }`.
+ *
+ * TODO: Remove the legacy `title`/`content` mapping once all persisted
+ * settings rows have been re-saved through the updated settings form.
+ */
+export function normalizeCompanyCustomInfo(
+  input: string | null | undefined,
+): CompanyCustomInfoEntry[] {
+  if (!input) return []
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(input)
+  } catch {
+    return []
+  }
+
+  if (!Array.isArray(parsed)) return []
+
+  return parsed
+    .filter(
+      (item): item is Record<string, unknown> =>
+        item != null && typeof item === 'object' && !Array.isArray(item),
+    )
+    .map((item) => {
+      const label = String(
+        item.label ?? item.title ?? '',
+      ).trim()
+      const value = String(
+        item.value ?? item.content ?? '',
+      ).trim()
+      return { label, value }
+    })
+    .filter((entry) => entry.label.length > 0 && entry.value.length > 0)
+}
+
 export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showBankDetails: true,
   bankAccountId: null,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Building2, Pencil, Plus, Trash2, Mail, Phone, Globe, MapPin, Fingerprint, X, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import { normalizeCompanyCustomInfo } from '@/domain/invoice/normalize'
 import {
   SettingsField,
   SettingsInput,
@@ -23,8 +24,8 @@ type CompanyForm = {
 }
 
 type CustomInfoItem = {
-  title?: string
-  content?: string
+  label?: string
+  value?: string
 }
 
 export function CompanySettingsSection() {
@@ -45,13 +46,7 @@ export function CompanySettingsSection() {
   useEffect(() => {
     if (!loading && settings) {
       setForm((current) => ({ ...current, ...settings }))
-
-      try {
-        const parsed = JSON.parse(settings.custom_info || '[]')
-        if (Array.isArray(parsed)) setCustomInfo(parsed)
-      } catch {
-        setCustomInfo([])
-      }
+      setCustomInfo(normalizeCompanyCustomInfo(settings.custom_info))
     }
   }, [loading, settings])
 
@@ -70,12 +65,7 @@ export function CompanySettingsSection() {
         company_email: settings.company_email || '',
         company_website: settings.company_website || '',
       })
-      try {
-        const parsed = JSON.parse(settings.custom_info || '[]')
-        setCustomInfo(Array.isArray(parsed) ? parsed : [])
-      } catch {
-        setCustomInfo([])
-      }
+      setCustomInfo(normalizeCompanyCustomInfo(settings.custom_info))
     }
     setIsEditing(false)
   }
@@ -86,7 +76,7 @@ export function CompanySettingsSection() {
     try {
       await saveSettings({
         ...form,
-        custom_info: JSON.stringify(customInfo.filter((item) => item.title || item.content)),
+        custom_info: JSON.stringify(customInfo.filter((item) => item.label || item.value)),
       })
 
       feedback.success('Company info updated')
@@ -230,7 +220,7 @@ export function CompanySettingsSection() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCustomInfo((current) => [...current, { title: '', content: '' }])}
+                onClick={() => setCustomInfo((current) => [...current, { label: '', value: '' }])}
                 className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg"
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -249,17 +239,17 @@ export function CompanySettingsSection() {
                     <div className="grid flex-1 gap-2 sm:grid-cols-2">
                       <input
                         className="w-full rounded-lg border border-bd-border bg-bd-surface px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
-                        value={item.title || ''}
+                        value={item.label || ''}
                         onChange={(e) =>
-                          setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, title: e.target.value } : c))
+                          setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, label: e.target.value } : c))
                         }
-                        placeholder="Field Title (e.g. TIN)"
+                        placeholder="Field Label (e.g. TIN)"
                       />
                       <input
                         className="w-full rounded-lg border border-bd-border bg-bd-surface px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
-                        value={item.content || ''}
+                        value={item.value || ''}
                         onChange={(e) =>
-                          setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, content: e.target.value } : c))
+                          setCustomInfo(curr => curr.map((c, i) => i === index ? { ...c, value: e.target.value } : c))
                         }
                         placeholder="Field Value"
                       />
@@ -331,12 +321,12 @@ export function CompanySettingsSection() {
               description="Extra metadata and registration details."
             >
               {customInfo
-                .filter(item => item.title || item.content)
+                .filter(item => item.label || item.value)
                 .map((item, idx) => (
                   <SettingsSummaryRow 
                     key={idx}
-                    label={item.title || 'Untitled Field'} 
-                    value={item.content} 
+                    label={item.label || 'Untitled Field'} 
+                    value={item.value} 
                     icon={<Fingerprint size={16} />}
                   />
                 ))}

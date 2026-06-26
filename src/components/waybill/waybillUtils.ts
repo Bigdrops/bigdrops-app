@@ -2,7 +2,7 @@ import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 
-export type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'bicolor' | 'premium' | 'slate'
+export type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'
 
 export type WaybillType = 'internal' | 'external'
 
@@ -479,7 +479,7 @@ export function normalizeWaybillPurpose(value: unknown): WaybillPurpose | null {
 export function normalizeWaybillPdfTemplateId(value: unknown): WaybillPdfTemplateId {
   const v = String(value || '').toLowerCase()
   if (v === 'minimal' || v === 'thermal' || v === 'classic' || v === 'premium') return v
-  if (v === 'bicolor' || v === 'split') return 'bicolor'
+  if (v === 'bicolor' || v === 'split') return 'classic'
   if (v === 'slate' || v === 'industry') return 'slate'
   if (v === 'evergreen' || v === 'green') return 'evergreen'
   return 'evergreen'
