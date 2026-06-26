@@ -28,7 +28,7 @@ type CompactOverrides = {
   tableRow: Style
 }
 
-export const compactPdfTemplate: Partial<CompactOverrides> = {
+export const compactCommercialDocument: Partial<CompactOverrides> = {
   page: { paddingTop: 12, paddingBottom: 48, paddingHorizontal: 20 },
   header: { marginBottom: 4 },
   customTitle: { marginBottom: 3 },

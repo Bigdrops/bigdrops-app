@@ -1,9 +1,9 @@
 import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
-import type { PdfTemplateData } from '../industryAdapter'
+import type { CommercialDocumentData } from '../industryAdapter'
 import { renderPdfRichText } from '../core/pdfRichText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { lightenHex } from '@/lib/pdfDesignPreset'
-import { compactPdfTemplate } from '../core/pdfCompact'
+import { compactCommercialDocument } from '../core/pdfCompact'
 import {
   getCellText,
   getDescriptionMain,
@@ -14,17 +14,17 @@ import {
 } from './industryStyles'
 import {
   getAccentTint,
-  PdfGroupFooterRow,
-  PdfGroupHeaderRow,
-  PdfPartyCard,
+  CommercialGroupFooterRow,
+  CommercialGroupHeaderRow,
+  CommercialPartyCard,
   renderOptionalList,
-} from './pdfTemplateBlocks'
+} from './commercialDocumentBlocks'
 
-type TemplateProps = { data: PdfTemplateData; compact?: boolean }
+type TemplateProps = { data: CommercialDocumentData; compact?: boolean }
 
 const keepWholePdfWord = (word: string) => [word]
 
-function resolveFinalIndustryColumnStyle(column: PdfTemplateData['table']['columns'][number]) {
+function resolveFinalIndustryColumnStyle(column: CommercialDocumentData['table']['columns'][number]) {
   const columnStyle = resolveIndustryColumnStyle(column)
   return [
     columnStyle,
@@ -33,7 +33,7 @@ function resolveFinalIndustryColumnStyle(column: PdfTemplateData['table']['colum
 }
 
 export default function IndustryTemplate({ data, compact }: TemplateProps) {
-  const design: PdfTemplateData['design'] = data?.design || {
+  const design: CommercialDocumentData['design'] = data?.design || {
     accentColor: null,
     textColor: null,
     mutedColor: null,
@@ -84,9 +84,9 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
   )
 
   return (
-    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, compact ? compactPdfTemplate.page : null]}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, compact ? compactCommercialDocument.page : null]}>
       {(data.title || metaRows.length > 0 || data.company?.companyLogoUrl) && (
-        <View style={[styles.header, compact ? compactPdfTemplate.header : null]}>
+        <View style={[styles.header, compact ? compactCommercialDocument.header : null]}>
           <View style={styles.headerLeft}>
             <Text
               style={[
@@ -101,7 +101,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
               <Text
                 style={[
                   styles.customTitle,
-                  compact ? compactPdfTemplate.customTitle : null,
+                  compact ? compactCommercialDocument.customTitle : null,
                   mutedColor ? { color: mutedColor } : null,
                   bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
                 ]}
@@ -172,7 +172,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
       {(data.company || data.client) ? (
         <View style={styles.partyRow}>
           {data.company ? (
-            <PdfPartyCard
+            <CommercialPartyCard
               title="From"
               party={data.company}
               surfaceColor={panelSurfaceColor}
@@ -186,7 +186,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
           ) : null}
 
           {data.client ? (
-            <PdfPartyCard
+            <CommercialPartyCard
               title="To"
               party={data.client}
               isLast
@@ -235,7 +235,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
           {data.table.rows.map((row, rowIdx) => {
             if (row.isGroupHeader) {
               return (
-                <PdfGroupHeaderRow
+                <CommercialGroupHeaderRow
                   key={`group-h-${rowIdx}`}
                   row={row}
                   rowIdx={rowIdx}
@@ -251,7 +251,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
 
             if (row.isGroupFooter) {
               return (
-                <PdfGroupFooterRow
+                <CommercialGroupFooterRow
                   key={`group-f-${rowIdx}`}
                   row={row}
                   rowIdx={rowIdx}

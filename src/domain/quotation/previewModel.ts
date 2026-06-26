@@ -1,6 +1,6 @@
 import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
-import { adaptPdfTemplateData } from "@/components/pdf-new/industryAdapter";
+import { adaptCommercialDocumentData } from "@/components/pdf-new/industryAdapter";
 import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf-new/table";
 import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf-new/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
@@ -145,7 +145,7 @@ export function buildQuotationPreviewItems(
   const sourceItems = Array.isArray(items) ? items : [];
   const resolvedTable = tableSettings || resolveQuotationPreviewTableSettings(sourceItems, customFields);
 
-  const adapted = adaptPdfTemplateData({
+  const adapted = adaptCommercialDocumentData({
     identity: { id: "", kind: "quotation", number: "", title: "" },
     items: sourceItems.map((item, index) => ({
       id: String(item.id || item._uiKey || index),

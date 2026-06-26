@@ -1,10 +1,10 @@
 import React from 'react'
 import { Page, Text, View } from '@react-pdf/renderer'
-import type { PdfTemplateData } from '../industryAdapter'
+import type { CommercialDocumentData } from '../industryAdapter'
 import { styles } from './ApexStyles'
 import { safeText } from '../core/safeText'
 
-export default function Apex({ data }: { data: PdfTemplateData }) {
+export default function Apex({ data }: { data: CommercialDocumentData }) {
   const accent = data.design.accentColor || '#111827'
   const documentLabel = data.customTitle || data.title || 'Document'
   const message =

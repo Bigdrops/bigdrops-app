@@ -1,7 +1,7 @@
 import React from 'react'
 import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
-import { adaptPdfTemplateData } from './industryAdapter'
+import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
@@ -67,29 +67,29 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
 
   let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
-  let templateData: unknown = adaptPdfTemplateData(request.model)
+  let templateData: unknown = adaptCommercialDocumentData(request.model)
 
   switch (activeTemplateId) {
     case 'obsidian-receipt':
       Template = ObsidianReceipt
-      templateData = adaptPdfTemplateData(request.model)
+      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'ledger':
       Template = Ledger
-      templateData = adaptPdfTemplateData(request.model)
+      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'apex':
       Template = Apex
-      templateData = adaptPdfTemplateData(request.model)
+      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'bolt':
       Template = Bolt
-      templateData = adaptPdfTemplateData(request.model)
+      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'industry':
     default:
       Template = Industry
-      templateData = adaptPdfTemplateData(request.model)
+      templateData = adaptCommercialDocumentData(request.model)
       break
   }
 

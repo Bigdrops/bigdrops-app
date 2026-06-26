@@ -5,7 +5,7 @@ import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../dom
 import { resolvePreviewGroupSubtotal } from '@/domain/invoice/projections/lineItemResolvers'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
-type PdfTemplateDesign = Pick<
+type CommercialDocumentDesign = Pick<
   PdfDesignPreset,
   | 'accentColor'
   | 'textColor'
@@ -26,7 +26,7 @@ type PdfTemplateDesign = Pick<
   bodyFont: string | null
 }
 
-export type PdfTemplateData = {
+export type CommercialDocumentData = {
   title: string
   customTitle: string | null
   documentNumber: string
@@ -110,7 +110,7 @@ export type PdfTemplateData = {
     extraText: string
   }
   layout: PdfPageLayout
-  design: PdfTemplateDesign
+  design: CommercialDocumentDesign
 }
 
 const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate'])
@@ -179,7 +179,7 @@ function resolveGroupSubtotal(model: PdfDocumentModel, groupId: string | null) {
 function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinition[]) {
   const hideEmptyGroups = model.hideEmptyGroups !== false
   let lineNumber = 0
-  const rows: PdfTemplateData['table']['rows'] = []
+  const rows: CommercialDocumentData['table']['rows'] = []
   let currentGroupHeader: any = null
 
   model.items.forEach((item, index) => {
@@ -304,7 +304,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
   return filtered
 }
 
-export function adaptPdfTemplateData(model: PdfDocumentModel): PdfTemplateData {
+export function adaptCommercialDocumentData(model: PdfDocumentModel): CommercialDocumentData {
   const issuerAddress = splitAddressLines(model.issuer?.addressLines || [])
   const recipientAddress = splitAddressLines(model.recipient?.addressLines || [])
   const mainLine = model.totals.rows.find((line) => line.emphasis)

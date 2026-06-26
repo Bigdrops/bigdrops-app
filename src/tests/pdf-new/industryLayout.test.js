@@ -4,10 +4,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { styles } from '../../components/pdf-new/templates/industryStyles.ts'
-import { adaptPdfTemplateData } from '../../components/pdf-new/industryAdapter.ts'
+import { adaptCommercialDocumentData } from '../../components/pdf-new/industryAdapter.ts'
 
 const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
-const industryBlocksPath = path.resolve('src/components/pdf-new/templates/pdfTemplateBlocks.tsx')
+const industryBlocksPath = path.resolve('src/components/pdf-new/templates/commercialDocumentBlocks.tsx')
 
 test('Industry pdf layout keeps the footer reserve compact instead of leaving a large dead zone', () => {
   assert.equal(styles.page.paddingBottom, 64)
@@ -61,7 +61,7 @@ test('Industry group footer stays quiet and does not render subtotal label text'
 })
 
 test('Industry PDF receives merged qty-unit as a visible fixed-width token', () => {
-  const data = adaptPdfTemplateData({
+  const data = adaptCommercialDocumentData({
     identity: { id: 'inv-1', kind: 'invoice', number: 'INV-1', title: 'Invoice', issueDate: '', dueDate: '', poNumber: '', status: '', currency: 'NGN' },
     issuer: { label: 'From', name: 'Bigdrops', addressLines: [], phone: '', email: '', taxId: '' },
     recipient: { label: 'To', name: 'Client', addressLines: [], phone: '', email: '' },

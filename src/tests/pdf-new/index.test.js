@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { adaptPdfTemplateData } from '../../components/pdf-new/industryAdapter.ts'
+import { adaptCommercialDocumentData } from '../../components/pdf-new/industryAdapter.ts'
 
 function createPdfModel(kind) {
   return {
@@ -81,8 +81,8 @@ function createPdfModel(kind) {
   }
 }
 
-test('adaptPdfTemplateData formats pdf money values through the shared safe formatter path', () => {
-  const data = adaptPdfTemplateData({
+test('adaptCommercialDocumentData formats pdf money values through the shared safe formatter path', () => {
+  const data = adaptCommercialDocumentData({
     ...createPdfModel('invoice'),
     columns: [
       { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20 },
@@ -126,8 +126,8 @@ test('adaptPdfTemplateData formats pdf money values through the shared safe form
   assert.equal(data.totals.mainLine.value, '₦ 300,000')
 })
 
-test('adaptPdfTemplateData preserves grouped subtotal presentation when a group header enables it', () => {
-  const data = adaptPdfTemplateData({
+test('adaptCommercialDocumentData preserves grouped subtotal presentation when a group header enables it', () => {
+  const data = adaptCommercialDocumentData({
     ...createPdfModel('invoice'),
     columns: [
       { key: 'num', label: '#', kind: 'builtin', align: 'center', pdfWidth: 20 },
@@ -177,8 +177,8 @@ test('adaptPdfTemplateData preserves grouped subtotal presentation when a group 
   assert.equal(data.table.rows[0].groupSubtotalValue, '₦ 200,000')
 })
 
-test('adaptPdfTemplateData strips html markup from notes and terms before the PDF template renders them', () => {
-  const data = adaptPdfTemplateData({
+test('adaptCommercialDocumentData strips html markup from notes and terms before the PDF template renders them', () => {
+  const data = adaptCommercialDocumentData({
     ...createPdfModel('quotation'),
     notes: {
       title: 'Notes',
