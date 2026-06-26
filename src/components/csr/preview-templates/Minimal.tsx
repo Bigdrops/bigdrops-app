@@ -45,8 +45,11 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       flex: 1,
       paddingVertical: tight ? 6 : 10,
       paddingRight: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 15,
     },
-    brandBlock: { width: '100%' },
+    brandBlock: { flex: 1 },
     companyName: { fontSize: 20, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: -0.3, color: '#111827' },
     companyTagline: { fontSize: 8, color: '#374151', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', marginTop: 2 },
     contactLine: { fontSize: 7, color: '#6B7280', marginTop: 2 },
@@ -337,8 +340,6 @@ function createMinimalStyles(density = 'comfortable', designPreset: any) {
       fontSize: 8,
       fontFamily: 'Helvetica-Bold',
       color: fillableColor,
-      borderBottomWidth: 1.5,
-      borderBottomColor: '#111827',
       textTransform: 'uppercase',
     },
     signCard: {},
@@ -491,11 +492,11 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
             {branding.logoUrl ? (
-              <View style={{ marginBottom: 2 }}>
-                <Image src={branding.logoUrl} style={styles.logoImage} />
-              </View>
+              <Image src={branding.logoUrl} style={styles.logoImage} />
             ) : null}
-            <PdfBrandBlock styles={styles} branding={branding} />
+            <View style={{ flex: 1 }}>
+              <PdfBrandBlock styles={styles} branding={branding} />
+            </View>
           </View>
           {renderHeaderIdTable(styles, csr)}
         </View>

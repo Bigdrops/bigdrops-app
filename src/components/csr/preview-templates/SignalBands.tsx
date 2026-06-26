@@ -65,8 +65,6 @@ function createSignalBandsStyles(density = 'comfortable', designPreset: any) {
     identityCard: {
       width: tight ? 200 : 220,
       backgroundColor: '#ffffff22',
-      borderWidth: 1,
-      borderColor: '#ffffff33',
       borderRadius: 10,
       padding: tight ? 6 : 7,
     },
@@ -386,7 +384,7 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
                         <Text style={styles.ackFieldLabel}>Technician Name</Text>
                         <View style={{ flex: 1, width: '100%', justifyContent: 'center' }}>
                           {hasText(getTechnicianName(csr)) ? (
-                            <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>{getTechnicianName(csr)}</Text>
+                            <Text style={styles.fieldValue}>{getTechnicianName(csr)}</Text>
                           ) : null}
                         </View>
                       </View>
