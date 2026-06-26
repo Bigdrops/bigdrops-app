@@ -90,29 +90,6 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
     previewShell: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%)',
   },
-  industry: {
-    headerBg: '#ffffff',
-    headerFg: '#1f2937',
-    accent: '#7d8a88',
-    border: '#d4d4d4',
-    mutedBg: '#f5f7f6',
-    sectionBg: '#ffffff',
-    sectionTitleBg: '#0f172a',
-    sectionTitleFg: '#ffffff',
-    pageBg: '#ffffff',
-    pageFg: '#333333',
-    pagePadding: 14,
-    fontSize: 8.6,
-    titleSize: 10.5,
-    headerNameSize: 16,
-    sectionTitleSize: 7.2,
-    valueSize: 8.6,
-    compact: true,
-    headerMode: 'industry',
-    statusStyle: 'dots',
-    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-    previewShell: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%)',
-  },
   minimal: {
     headerBg: '#111827',
     headerFg: '#ffffff',
@@ -158,12 +135,6 @@ export const CSR_TEMPLATE_OPTIONS = [
     accent: '#B91C1C',
   },
   {
-    key: '5',
-    label: 'Industry',
-    blurb: 'Clean professional report borrowing the Invoice Industry design language.',
-    accent: '#7d8a88',
-  },
-  {
     key: '6',
     label: 'Minimal',
     blurb: 'Monochrome industrial report with dense table-driven layout and strong borders.',
@@ -174,7 +145,6 @@ export const CSR_TEMPLATE_OPTIONS = [
 export function getCsrTemplateVariant(template = '4') {
   if (template === '2') return 'signalbands'
   if (template === '3') return 'zinc'
-  if (template === '5') return 'industry'
   if (template === '6') return 'minimal'
   return 'crimson'
 }

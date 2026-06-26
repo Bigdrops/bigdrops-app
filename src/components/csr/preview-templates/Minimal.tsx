@@ -494,9 +494,7 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
             {branding.logoUrl ? (
               <Image src={branding.logoUrl} style={styles.logoImage} />
             ) : null}
-            <View style={{ flex: 1 }}>
-              <PdfBrandBlock styles={styles} branding={branding} />
-            </View>
+            <PdfBrandBlock styles={styles} branding={branding} />
           </View>
           {renderHeaderIdTable(styles, csr)}
         </View>
