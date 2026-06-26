@@ -1,251 +1,306 @@
-# ROLE
+You are inspecting an existing production codebase, not proposing a greenfield architecture.
 
-You are a **Senior React PDF + TypeScript Engineer** for the BIGDROPS project.
+Target repository: BIGDROPS
 
-Your task is to create a **brand-new CSR PDF template** inspired by the existing **Invoice Industry** template.
+Role
 
-This is a **new template**, **NOT a modification** of PulseFrame, Crimson, Zinc, or SignalBands.
+Act as a Principal Software Architect, Staff Backend Engineer, and Performance Engineer conducting a production architecture review.
 
----
-
-# REQUIRED SKILLS (MANDATORY)
-
-Before writing any code you MUST follow the project skill system.
-
-## Step 1
-
-Read:
-
-docs/PROJECTSKIILINDEX.md
-
-## Step 2
-
-Load these skills:
-
-- using-superpowers
-- react-pdf
-
-If the loader fails:
-
-- manually locate the skill paths from PROJECTSKIILINDEX.md
-- open the corresponding SKILL.md files directly
-- continue only after reading them.
-
-If the skill files cannot be loaded manually, STOP and report failure.
+Base your response only on the repository contents. Do not extrapolate or invent implementations that are not present.
 
 ---
 
-# OBJECTIVE
+Objective
 
-Create a new CSR template that visually follows the design language of the **Invoice Industry template**.
+Determine whether BIGDROPS should adopt:
 
-The goal is to reuse its:
+1. Redis
+2. Kafka
+3. Elasticsearch
 
-- header proportions
-- spacing
-- typography
-- logo sizing
-- alignment
-- visual hierarchy
-
-while still rendering CSR data.
-
-This is **NOT** an invoice.
-
-It is a CSR document that borrows the Invoice Industry branding style.
+The recommendation must be based on the current implementation, not future possibilities.
 
 ---
 
-# IMPORTANT
+Required Reading
 
-DO NOT modify:
+Inspect the repository in this order:
 
-- PulseFrame
-- Crimson
-- Zinc
-- SignalBands
+1. README.md
+2. AGENTS.md
+3. docs/
+4. package.json
+5. vite.config.*
+6. supabase/
+7. src/
+8. Any architecture documents
+9. Migration files
+10. Services and domain layers
 
-They are production templates.
+Pay particular attention to:
 
-Create a completely new template.
-
----
-
-# TEMPLATE NAME
-
-Create:
-
-IndustryCSR.tsx
-
-under
-
-src/components/csr/preview-templates/
-
-Register it in the CSR template registry exactly the same way the other templates are registered.
-
----
-
-# DESIGN SOURCE
-
-Locate the existing Invoice Industry template.
-
-Study it carefully.
-
-Reuse its:
-
-- header layout
-- logo dimensions
-- company information placement
-- font sizes
-- section spacing
-- margins
-- border treatment
-- page rhythm
-
-Do NOT guess.
-
-Copy the visual system.
+- src/domain
+- src/modules
+- src/services
+- src/lib
+- src/hooks
+- src/context
+- src/supabase
+- src/components
+- src/pages
 
 ---
 
-# HEADER REQUIREMENTS
+Inspection Areas
 
-The header should visually match the Invoice Industry template.
+1. Architecture
 
-Specifically:
+Determine:
 
-- same logo size
-- same logo alignment
-- same company name size
-- same company information placement
-- same whitespace
-- same spacing after the header
+- Modular monolith vs layered monolith
+- Existing domain boundaries
+- Coupling between modules
+- Separation of UI, domain and infrastructure
+- Technical debt
+- Architectural strengths
+- Architectural risks
 
-The current PulseFrame header MUST NOT be copied.
-
-Use the Invoice Industry header instead.
-
----
-
-# BODY
-
-Render the existing CSR Render Model.
-
-Do NOT invent fields.
-
-Consume the existing
-
-CsrRenderModel
-
-pipeline.
-
-Do NOT bypass it.
+Support every conclusion with file references.
 
 ---
 
-# SIGNATURE SECTION
+2. Database
 
-Reuse the corrected shared signature component.
+Inspect:
 
-Do NOT create another custom signature implementation.
+- Supabase usage
+- Query patterns
+- JSONB usage
+- Aggregation queries
+- N+1 patterns
+- Missing indexes
+- Expensive joins
+- RPC usage
+- Materialized views
+- RLS complexity
 
-No inline signature JSX.
-
-No duplicated signature layout.
-
----
-
-# COMMENTS
-
-Support the existing compact Client Notes implementation.
-
-No large multiline notes area.
-
----
-
-# NO BUSINESS LOGIC
-
-Do NOT modify:
-
-- csrRenderModel
-- buildCsrRenderModel
-- calculations
-- services
-- database
-- forms
-
-Only create a presentation layer.
+Determine whether the current database is becoming a bottleneck.
 
 ---
 
-# NO DUPLICATION
+3. Performance
 
-If there are reusable helpers from the Invoice template:
+Identify:
 
-extract or reuse them.
+- Slow data flows
+- Duplicate fetches
+- Re-render hotspots
+- Heavy calculations
+- Large bundle risks
+- Memory issues
+- Network waterfalls
+- Expensive report generation
 
-Do NOT duplicate styles unnecessarily.
-
----
-
-# VALIDATION
-
-Verify:
-
-- header matches Invoice Industry proportions
-- logo size matches Invoice Industry
-- single-page rendering remains intact
-- signatures render correctly
-- PDF generation succeeds
-- no TypeScript errors
-
-Run:
-
-bun run typecheck
-
-and
-
-bun run build
-
-Both must pass.
+Point to the exact files.
 
 ---
 
-# REPORT
+4. Background Work
 
-Write a report to:
+Find every operation that currently runs synchronously, including:
 
-Task/reports/csr-industry-template.md
+- PDF generation
+- Notifications
+- Imports
+- Exports
+- Reports
+- Audit logging
+- Email
+- File processing
+- Dashboard aggregation
 
-Include:
-
-- files created
-- files modified
-- Invoice template files referenced
-- reusable components reused
-- styling decisions
-- screenshots or rendering observations if available
-- validation results
-- confirmation that no existing CSR template was modified
+Determine whether these should become background jobs.
 
 ---
 
-# SUCCESS CRITERIA
+5. Redis Evaluation
 
-✔ New template added
+Determine whether Redis would provide immediate value.
 
-✔ Existing templates untouched
+Look for:
 
-✔ Uses Invoice Industry visual style
+- repeated queries
+- expensive dashboard calculations
+- repeated configuration loading
+- session-heavy operations
+- rate limiting
+- distributed locks
+- caching opportunities
+- queue opportunities
 
-✔ Uses existing CsrRenderModel
+Answer:
 
-✔ Uses shared signature component
+- Should Redis be added now?
+- Exactly where?
+- Expected performance improvement.
+- Complexity introduced.
+- Priority (High/Medium/Low).
 
-✔ Logo size matches Invoice Industry
+---
 
-✔ its obviously a different template from the others 
+6. Kafka Evaluation
 
-✔ Builds successfully
+Determine whether Kafka is justified.
 
-✔ Report written
+Inspect whether the codebase already exhibits:
+
+- domain events
+- asynchronous workflows
+- module decoupling
+- integrations
+- event pipelines
+- notification fan-out
+- analytics events
+- audit pipelines
+
+If Kafka is not justified, explain precisely why.
+
+If another event system would be more appropriate, explain why.
+
+---
+
+7. Elasticsearch Evaluation
+
+Inspect current search capabilities.
+
+Determine:
+
+- where searching exists
+- how filtering works
+- how many modules require search
+- whether PostgreSQL full-text search is sufficient
+- whether fuzzy search is needed
+- autocomplete requirements
+- cross-module search requirements
+
+Answer:
+
+- Should Elasticsearch be adopted?
+- Immediately?
+- Later?
+- Not at all?
+
+Support every recommendation with repository evidence.
+
+---
+
+8. Scalability Review
+
+Estimate how well the current architecture scales.
+
+Evaluate:
+
+- 10 users
+- 100 users
+- 1,000 users
+- 10,000 users
+
+Identify what breaks first.
+
+---
+
+9. Code Quality
+
+Review:
+
+- consistency
+- abstraction quality
+- duplication
+- domain modeling
+- React architecture
+- Supabase integration
+- maintainability
+
+Highlight the strongest engineering decisions as well as the weakest.
+
+---
+
+10. Opportunities
+
+Identify the ten highest-impact improvements.
+
+Rank them by:
+
+- Impact
+- Effort
+- Risk
+
+Do not recommend technology simply because it is popular.
+
+---
+
+Constraints
+
+- Do not modify any files.
+- Do not propose code.
+- Do not invent missing features.
+- Base every conclusion on repository evidence.
+- Cite file paths for every major observation.
+- Distinguish clearly between observations and recommendations.
+- If evidence is insufficient for a claim, explicitly state that.
+
+---
+
+Output Format
+
+Produce exactly the following sections:
+
+1. Executive Summary
+2. Current Architecture
+3. Current Performance Profile
+4. Redis Assessment
+5. Kafka Assessment
+6. Elasticsearch Assessment
+7. Scalability Assessment
+8. Top 10 Architectural Risks
+9. Top 10 Architectural Strengths
+10. Immediate Wins (Next 30 Days)
+11. Medium-Term Improvements (3–6 Months)
+12. Long-Term Evolution (6–18 Months)
+13. Final Verdict
+
+End with a scorecard:
+
+Category| Score (/10)| Evidence
+Architecture| | 
+Scalability| | 
+Performance| | 
+Maintainability| | 
+Domain Design| | 
+Database Design| | 
+Developer Experience| | 
+Readiness for Redis| | 
+Readiness for Kafka| | 
+Readiness for Elasticsearch| | 
+
+Finally provide a prioritized roadmap with:
+
+- Do now
+- Do next
+- Do later
+- Avoid
+
+Success Criteria
+
+The review is complete only when every conclusion is supported by concrete repository evidence, the three technologies (Redis, Kafka, Elasticsearch) are evaluated independently, and the recommendations reflect the current implementation rather than hypothetical future requirements.
+
+Stop Condition
+
+Stop after producing the complete a
+
+rchitectural review. Do not propose or implement code changes.
+
+
+REPORTING PROTOCOL (MANDATORY)
+==================================================
+Save report to: `docs/Task/reports/
