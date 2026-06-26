@@ -73,6 +73,8 @@ export async function handleDownloadQuotationPdf(input: {
           phone: String(settings?.company_phone || ""),
           email: String(settings?.company_email || ""),
           taxId: String(settings?.company_vat || ""),
+          website: String(previewModel?.companyWebsite || ""),
+          customInfo: Array.isArray(previewModel?.companyCustomInfo) ? previewModel.companyCustomInfo : [],
         },
         recipient: {
           label: "Prepared For",

@@ -48,6 +48,7 @@ export type CommercialDocumentData = {
     cityState: string
     phone: string
     email: string
+    website: string
     customInfo: Array<{ label: string; value: string }>
   } | null
   client: {
@@ -365,7 +366,11 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
           cityState: issuerAddress.cityState,
           phone: model.issuer.phone || '',
           email: model.issuer.email || '',
-          customInfo: model.issuer.taxId ? [{ label: 'Tax ID', value: model.issuer.taxId }] : [],
+          website: model.issuer.website || '',
+          customInfo: [
+            ...(model.issuer.customInfo || []),
+            ...(model.issuer.taxId ? [{ label: 'Tax ID', value: model.issuer.taxId }] : []),
+          ],
         }
       : null,
     client: model.recipient

@@ -30,6 +30,7 @@ export type PdfParty = {
   phone?: string | null
   addressLines?: string[]
   website?: string | null
+  customInfo?: Array<{ label: string; value: string }>
 }
 
 export type PdfHeaderField = {

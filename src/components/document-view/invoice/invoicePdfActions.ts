@@ -113,6 +113,7 @@ export const downloadInvoicePdfDocument = async ({
         email: String(settingsData?.company_email || ""),
         taxId: String(settingsData?.company_vat || ""),
         website: String(targetPreviewModel?.companyWebsite || ""),
+        customInfo: Array.isArray(targetPreviewModel?.companyCustomInfo) ? targetPreviewModel.companyCustomInfo : [],
       },
       recipient: {
         label: "Bill To",

@@ -80,6 +80,7 @@ export function CommercialPartyCard({
       {party.cityState ? <Text style={[styles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.cityState}</Text> : null}
       {party.phone ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.phone}</Text> : null}
       {party.email ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.email}</Text> : null}
+      {'website' in party && party.website ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.website}</Text> : null}
       {customInfo.length > 0 ? (
         <View style={[styles.customInfoWrap, borderColor ? { borderTopColor: borderColor } : null]}>
           {customInfo.map((entry, idx) => (
