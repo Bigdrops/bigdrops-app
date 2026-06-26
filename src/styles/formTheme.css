@@ -215,10 +215,6 @@
   color: hsl(var(--bd-text));
 }
 
-html[data-keyboard-open="true"] [data-bd-shell="app"] {
-  min-height: 100lvh;
-}
-
 @media (min-width: 768px) {
   [data-bd-shell="app"] {
     flex-direction: row;

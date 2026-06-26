@@ -11,27 +11,21 @@ function syncKeyboardState() {
 
 export default function KeyboardAwareness() {
   useEffect(() => {
-    let rafId = 0
-    const visualViewport = window.visualViewport
+    syncKeyboardState()
 
-    const scheduleSync = () => {
-      window.cancelAnimationFrame(rafId)
-      rafId = window.requestAnimationFrame(syncKeyboardState)
+    const visualViewport = window.visualViewport
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined
+
+    function onViewportChange() {
+      if (debounceTimer !== undefined) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(syncKeyboardState, 150)
     }
 
-    scheduleSync()
-
-    window.addEventListener('resize', scheduleSync)
-    document.addEventListener('focusin', scheduleSync)
-    document.addEventListener('focusout', scheduleSync)
-    visualViewport?.addEventListener('resize', scheduleSync)
+    visualViewport?.addEventListener('resize', onViewportChange)
 
     return () => {
-      window.cancelAnimationFrame(rafId)
-      window.removeEventListener('resize', scheduleSync)
-      document.removeEventListener('focusin', scheduleSync)
-      document.removeEventListener('focusout', scheduleSync)
-      visualViewport?.removeEventListener('resize', scheduleSync)
+      if (debounceTimer !== undefined) clearTimeout(debounceTimer)
+      visualViewport?.removeEventListener('resize', onViewportChange)
     }
   }, [])
 

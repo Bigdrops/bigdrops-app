@@ -1,82 +1,90 @@
-# Phase 2A — Data Contract Cleanup: Remove Labels from Address Lines
+# Phase 2A: Data Contract Cleanup — Remove Presentation Labels from Address Lines
 
-**Date:** 2026-06-26
-**Scope:** Party projection layer only — `partyProjection.ts`
-**Status:** ✅ Complete
+**Date:** 2026-06-26  
+**Status:** Complete  
+**Phase:** 2A — Data Contract Cleanup
 
 ---
 
 ## Problem
 
-`buildCompanyPreviewLines()` and `buildClientPreviewLines()` in `partyProjection.ts` injected presentation labels into the `addressLines` string array:
+`buildCompanyPreviewLines()` and `buildClientPreviewLines()` in `partyProjection.ts` were injecting presentation labels into address data lines:
 
-- **Company:** `"VAT Number: {vat}"`, `"Phone: {phone}"`, `"Email: {email}"`
-- **Client:** `"Attn: {contact_person}"`, `"{phone}"`, `"{email}"`
+- `buildCompanyPreviewLines()` included `VAT Number: <vat>`, `Phone: <phone>`, `Email: <email>` as separate lines in the address lines array
+- `buildClientPreviewLines()` included `Attn: <contact>`, phone, and email as separate lines
 
-These labels leaked into downstream consumers:
+These labels leaked into the PDF data contract because:
 
-1. **PDF rendering pipeline:** `addressLines` → `PdfParty.addressLines` → `splitAddressLines()` parsed `addressLines[0]` as address, then joined all remaining lines (including labels) as `cityState` — polluting the city/state display.
-2. **Screen preview cards:** `InvoiceDocumentCard` and `QuotationDocumentPreview` rendered these lines directly, mixing address data with contact metadata.
+1. Both callers (`invoicePdfActions.ts`, `pdfDownloadHandler.ts`) mapped `companyPreviewLines`/`clientPreviewLines` to `PdfParty.addressLines`
+2. `industryAdapter.ts::splitAddressLines()` then consumed these polluted address lines, potentially contaminating the `cityState` field
+3. Meanwhile, both callers ALSO correctly mapped phone/email/vat to dedicated semantic `PdfParty` fields (`phone`, `email`, `taxId`)
 
-Meanwhile, the callers (`invoicePdfActions.ts`, `pdfDownloadHandler.ts`) already mapped phone/email/VAT to **separate first-class fields** on `PdfParty` (`phone`, `email`, `taxId`). The addressLines labels were redundant — and harmful.
+The result was redundant — phone/email/vat appeared both in address lines (with labels) and in semantic fields — and the label text could appear in unintended display contexts.
 
-## Solution
+---
 
-### Changed files
+## Fix
 
-**`src/domain/invoice/projections/partyProjection.ts`** — 2 functions modified:
+**Modified file:** `src/domain/invoice/projections/partyProjection.ts`
 
-| Function | Change |
+### `buildCompanyPreviewLines()`
+
+**Before:**
+```
+return [company_address, cityState, `VAT Number: ${vat}`, `Phone: ${phone}`, `Email: ${email}`]
+```
+
+**After:**
+```
+return [company_address, cityState]
+```
+
+### `buildClientPreviewLines()`
+
+**Before:**
+```
+lines.push(`Attn: ${contactPerson}`)
+// ... pushes address, cityState, phone, email
+```
+
+**After:**
+```
+lines.push(address, cityState)
+```
+
+---
+
+## Files Verified Unchanged (No Changes Needed)
+
+| File | Reason |
 |---|---|
-| `buildCompanyPreviewLines()` | Removed `VAT Number:`, `Phone:`, `Email:` lines. Now returns `[company_address, cityState]` only. |
-| `buildClientPreviewLines()` | Removed `Attn:`, phone, email lines. Now returns `[address, cityState]` only. |
+| `src/components/pdf-new/industryAdapter.ts` | Already reads `PdfParty.phone`, `PdfParty.email`, `PdfParty.taxId` directly; `splitAddressLines()` now receives clean input |
+| `src/components/pdf-new/types.ts` | `PdfParty` already has `phone`, `email`, `taxId`, `attention` fields |
+| `src/domain/invoice/renderTypes.ts` | `SettingsLike`/`ClientLike` already have phone/email/vat/contact_person |
+| `src/domain/invoice/previewModel.ts` | Pass-through only |
+| `src/domain/quotation/previewModel.ts` | Pass-through only |
+| `src/components/document-view/invoice/invoicePdfActions.ts` | Already maps phone/email/vat as separate `PdfParty` fields |
+| `src/domain/quotation/pdfDownloadHandler.ts` | Same pattern as invoice |
+| `src/components/pdf-new/templates/commercialDocumentBlocks.tsx` | Renders `party.phone`, `party.email`, `party.customInfo` directly; never reads phone/email from addressLines |
+| `src/components/pdf-new/templates/Industry.tsx` | Same pattern |
+| `src/components/document-view/invoice/InvoiceDocumentCard.tsx` | Screen preview — loses label lines but phone/email can be added later via `settings` props if needed |
+| `src/components/document-view/quotation/QuotationDocumentPreview.tsx` | Same |
 
-### Files verified — no changes needed
-
-| File | Why unchanged |
-|---|---|
-| `src/components/pdf-new/industryAdapter.ts` | Already reads `PdfParty.phone`, `PdfParty.email`, `PdfParty.taxId` directly from party objects. `splitAddressLines()` now receives clean input. |
-| `src/components/pdf-new/types.ts` | `PdfParty` already has `phone`, `email`, `taxId`, `attention` fields. |
-| `src/domain/invoice/renderTypes.ts` | `SettingsLike`/`ClientLike` already have phone/email/vat/contact_person fields. |
-| `src/domain/invoice/previewModel.ts` | Pass-through only — no transformation of address lines. |
-| `src/domain/quotation/previewModel.ts` | Same pattern — pass-through only. |
-| `src/components/document-view/invoice/invoicePdfActions.ts` | Already maps `settingsData.company_phone` → `PdfParty.phone`, `company_email` → `PdfParty.email`, `company_vat` → `PdfParty.taxId`. |
-| `src/domain/quotation/pdfDownloadHandler.ts` | Same pattern as above. |
-| All 5 PDF templates | Consume `CommercialDocumentData.seller.buyer.phone/email/customInfo` — never read phone/email from `addressLines`. |
+---
 
 ## Verification
 
 | Check | Result |
 |---|---|
-| `bun run audit:load` | ✅ Passed |
-| `bun run typecheck` | ✅ Passed (0 errors) |
-| `bun run build` | ✅ Passed (53.78s) |
+| `bun run audit:load` | Passed |
+| `bun run typecheck` | 0 errors |
+| `bun run build` | Passed |
 
-## Data Flow (post-fix)
+---
 
-```
-partyProjection.ts
-  buildCompanyPreviewLines(company) → ["123 Main St", "Lagos, LA"]
-  buildClientPreviewLines(client)    → ["456 Oak Ave", "Abuja, FC"]
-        │
-        ▼
-  PDF actions map addressLines → PdfParty.addressLines
-  PLUS map phone/email/vat → PdfParty.phone/email/taxId
-        │
-        ▼
-  industryAdapter.ts::splitAddressLines(addressLines)
-    → address = addressLines[0]  (clean address, no labels)
-    → cityState = addressLines.slice(1).join(", ")  (clean city/state, no labels)
-        │
-        ▼
-  Templates render:
-    • address + cityState from PdfParty
-    • phone from PdfParty.phone
-    • email from PdfParty.email
-    • customInfo from PdfParty.taxId (VAT)
-```
+## Impact
 
-## Notes
-
-- Screen preview cards (`InvoiceDocumentCard`, `QuotationDocumentPreview`) consume `companyPreviewLines`/`clientPreviewLines` directly — they now show address + city/state only. Phone/email/VAT are available from `settings`/`settingsData` props if needed in a future enhancement.
-- No changes to templates, typography, spacing, or visual layout were introduced — this was a data-layer-only cleanup.
+- **Positive:** Phone, email, and VAT are now delivered exclusively via semantic fields (`PdfParty.phone`, `PdfParty.email`, `PdfParty.taxId`) rather than duplicated in address lines with presentation labels
+- **Positive:** `splitAddressLines()` in `industryAdapter.ts` now receives only genuine address data — no risk of label text leaking into cityState or other display fields
+- **Side effect:** Screen preview cards (`InvoiceDocumentCard`, `QuotationDocumentPreview`) will no longer display phone/email/VAT in address line blocks since those labels were removed. These previews have access to `settings`/`settingsData` props if phone/email display is needed later
+- **Preserved:** 100% backward compatible — all 5 PDF templates, all PDF-generated output, all screen forms remain identical
