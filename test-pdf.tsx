@@ -1,9 +1,39 @@
 import React from 'react';
+import path from 'path';
+import { Font } from '@react-pdf/renderer';
 import { renderToFile } from '@react-pdf/renderer';
+
+const originalRegister = Font.register;
+Font.register = (options: any) => {
+  let src = options.src;
+  if (Array.isArray(options.fonts)) {
+    options.fonts.forEach((f: any) => {
+      if (f.src && typeof f.src === 'string' && f.src.includes('/src/assets/pdf-fonts/')) {
+        f.src = f.src.replace('/src/assets/pdf-fonts/', 'C:\\Users\\DELL\\Desktop\\bigdrops-app\\src\\assets\\pdf-fonts\\');
+      }
+    });
+  } else if (src && typeof src === 'string' && src.includes('/src/assets/pdf-fonts/')) {
+    options.src = src.replace('/src/assets/pdf-fonts/', 'C:\\Users\\DELL\\Desktop\\bigdrops-app\\src\\assets\\pdf-fonts\\');
+  }
+
+  // Handle missing Patrick Hand Bold by mapping to Regular
+  if (options.family === 'Patrick Hand' && Array.isArray(options.fonts)) {
+    const regular = options.fonts.find(f => f.fontWeight === 400);
+    const bold = options.fonts.find(f => f.fontWeight === 700);
+    if (regular && (!bold || !bold.src)) {
+      options.fonts.push({ src: regular.src, fontWeight: 700 });
+    }
+  }
+
+  originalRegister(options);
+};
+
 import { SignalBandsTemplate } from './src/components/csr/preview-templates/SignalBands';
 import { MinimalTemplate } from './src/components/csr/preview-templates/Minimal';
+import { registerPdfFonts } from './src/lib/pdfFontRegistry';
 
-// Mock data
+registerPdfFonts(); // execute the real registry
+
 const mockCsr: any = {
   csr_number: 'CSR-001',
   date: '2026-06-25',
@@ -31,7 +61,7 @@ const mockCsr: any = {
 
 const branding = {
   companyName: 'Test Company',
-  logoUrl: 'https://via.placeholder.com/150',
+  logoUrl: '',
   primaryColor: '#000000',
 };
 
