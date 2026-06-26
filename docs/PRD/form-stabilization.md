@@ -1,366 +1,425 @@
-# BIGDROPS Form Platform Stabilization & Evolution Plan
+# PRD — Form Stabilization & Capability Architecture
 
-**Status:** Proposed
-**Objective:** Stabilize the existing platform before introducing new architecture.
-**Principle:** Evidence-first. Refactor only after root causes are confirmed.
-
----
-
-# Guiding Principles
-
-1. Preserve the current UI/UX.
-2. Preserve existing workflows.
-3. Avoid rewrites.
-4. Separate platform issues from business logic issues.
-5. Extract responsibilities only after boundaries are verified.
-6. Every phase must leave the application in a deployable state.
+**Status:** Approved for implementation
+**Priority:** Critical
+**Scope:** Shared document form infrastructure
+**Target Version:** Next Engineering Cycle
 
 ---
 
-# Phase 0 — Platform Stabilization (Highest Priority)
+# Vision
 
-## Goal
+Transform the current shared document form into a stable platform capable of supporting both financial and operational documents without feature leakage.
 
-Determine why mobile input experiences are unstable across the entire application.
+This is NOT a rewrite.
 
-## Scope
-
-Not limited to document forms.
-
-Investigate:
-
-- AppShell
-- Global layout
-- Mobile viewport handling
-- Keyboard handling
-- Safe area calculations
-- Focus management
-- CSS transitions
-- Modal infrastructure
-- Scroll containers
-- Input remounting
-- React render lifecycle
-
-## Deliverables
-
-- Root cause report
-- Render trace
-- Keyboard interaction trace
-- List of components causing remounts
-- List of unnecessary re-renders
-
-## Exit Criteria
-
-- Keyboard no longer causes:
-  - white flashes
-  - blur
-  - focus loss
-  - layout jumping
-  - unnecessary repainting
-
-No architecture work begins before this is complete.
+This is a controlled stabilization and architectural extraction.
 
 ---
 
-# Phase 1 — Capability Model
+# Current Problems
 
-## Goal
+## 1. Capability Leakage
 
-Replace scattered document-type conditionals with a formal capability model.
+Financial behaviour currently leaks into operational documents.
 
-Current symptoms include:
+Examples:
 
-- ctx !== "waybill"
-- invoice-specific feature leakage
-- repeated document checks
-- hidden feature coupling
+- Item price suggestions appearing in Waybill
+- Unit price injection reaching non-financial forms
+- Financial metadata being evaluated where it has no meaning
 
-Instead introduce one document capability registry.
+Current fixes rely on scattered checks such as:
 
-Example concept:
+```
+ctx !== "waybill"
+```
 
-Financial
+instead of a single architectural contract.
+
+---
+
+## 2. Shared Form Instability
+
+Observed across mobile:
+
+- white flashes
+- keyboard resize glitches
+- blur/focus instability
+- layout jumping
+- repaint while typing
+- viewport instability
+- keyboard causing component remounts
+
+Important:
+
+These issues occur outside document forms as well.
+
+Therefore this is treated as an application-shell/input rendering problem until proven otherwise.
+
+---
+
+## 3. Item Library Coupling
+
+Item Library has become a shared engine instead of a reusable service.
+
+Evidence includes:
+
+- invoice suggestion engine
+- quotation suggestion engine
+- embedded price history
+- cleanup engine
+- duplicate detection
+- history
+- merge logic
+
+Large portions are imported directly into financial forms.
+
+---
+
+## 4. Growing Technical Debt
+
+Evidence:
+
+- 6,350+ line module
+- 1,122 line cleanup engine
+- 1,037 line cleanup panel
+- shared behaviours added incrementally
+- context-specific guards spread across components
+
+The architecture remains functional but difficult to evolve safely.
+
+---
+
+# Project Goals
+
+1. Stabilize mobile input behaviour.
+
+2. Remove capability leakage.
+
+3. Keep one consistent UI across all document types.
+
+4. Keep one shared form.
+
+5. Reduce document-specific conditional logic.
+
+6. Prepare the form for future document types.
+
+---
+
+# Non Goals
+
+This project will NOT:
+
+- rewrite document pages
+- redesign UI
+- migrate to another framework
+- introduce Redux/Zustand
+- rebuild Item Library
+- introduce Redis/Kafka/Elastic
+
+---
+
+# Architecture Direction
+
+The shared form remains.
+
+Only document capabilities become modular.
+
+The architecture becomes:
+
+```
+Shared Form
+
+        │
+
+        ▼
+
+Document Capability Profile
+
+        │
+
+        ▼
+
+Feature Modules
+
+        │
+
+        ▼
+
+Domain Logic
+```
+
+The UI is shared.
+
+Behaviour is selected by capability.
+
+---
+
+# Document Classification
+
+## Financial Documents
 
 - Invoice
 - Quotation
-- BOQ
 - RFQ
+- BOQ
 
-Operational
+Characteristics
+
+✓ Prices
+
+✓ Taxes
+
+✓ Totals
+
+✓ Item Suggestions
+
+✓ Price History
+
+✓ Financial Validation
+
+✓ Discounts
+
+✓ VAT
+
+---
+
+## Operational Documents
 
 - Waybill
 - CSR
 
-Capabilities become declarative.
+Characteristics
 
-Examples
+✓ Items
 
-- supportsPricing
-- supportsVAT
-- supportsDiscounts
-- supportsItemSuggestions
-- supportsFinancialTotals
-- supportsPaymentTracking
+✓ Quantity
 
-Every existing conditional should derive from these capabilities.
+✓ Units
 
-## Deliverables
+✓ Attachments
 
-- Capability registry
-- Capability audit
-- Removal of duplicated document checks
-- Migration map
+✓ Notes
 
-## Exit Criteria
+✗ Prices
 
-No feature is enabled or disabled using hardcoded document names.
+✗ Taxes
 
-Everything derives from capabilities.
+✗ Financial Suggestions
+
+✗ Price Injection
+
+✗ Financial Validation
 
 ---
 
-# Phase 2 — Shared Form Audit
+# Phase 1 — Global Input Stabilization
 
-## Goal
+Objective
 
-Determine which parts of the form are truly shared.
+Determine why keyboard interaction causes flashing and unstable rendering.
 
-Split responsibilities into layers.
+Deliverables
 
-Layer 1
+- inspect AppShell
+- inspect viewport listeners
+- inspect resize listeners
+- inspect focus handlers
+- inspect theme transitions
+- inspect keyboard events
+- inspect modal behaviour
+- inspect safe-area handling
 
-Shared UI
+Exit Criteria
 
-Examples
+Typing into any input should not:
 
-- Inputs
-- Selects
-- Tables
-- Attachments
-- Notes
+- flash
+- blur unexpectedly
+- repaint the screen
+- change background colour
+- lose focus
+- jump layout
 
-Layer 2
+---
 
-Shared Form Engine
+# Phase 2 — Capability Extraction
 
-Examples
+Replace scattered document checks with a single capability model.
 
-- validation
-- dirty tracking
-- autosave
-- keyboard navigation
-- line item management
+Instead of
 
-Layer 3
+```
+ctx !== "waybill"
+```
 
-Financial Extensions
+the form asks
 
-Examples
+```
+supportsItemSuggestions
+```
 
-- price history
-- tax
-- discounts
+Instead of
+
+```
+ctx === "invoice"
+```
+
+the form asks
+
+```
+supportsFinancialFields
+```
+
+Instead of
+
+```
+hideUnitPrice
+```
+
+the form asks
+
+```
+supportsPricing
+```
+
+The shared UI no longer knows document types.
+
+It only knows capabilities.
+
+---
+
+# Phase 3 — Item Library Boundary
+
+Item Library becomes a provider.
+
+Not a controller.
+
+Responsibilities retained
+
+- suggestions
+- aliases
+- history
+- ranking
+- cleanup
+- merge
+
+Responsibilities removed
+
+- document behaviour
+- document decisions
+- UI assumptions
+
+Documents choose which Item Library capabilities they consume.
+
+Item Library never decides.
+
+---
+
+# Phase 4 — Financial Isolation
+
+Financial logic is isolated behind financial capabilities.
+
+Includes
+
 - totals
-- payment state
+- VAT
+- discount
+- markup
+- pricing
+- amount validation
 - invoice calculations
 
-Layer 4
-
-Operational Extensions
-
-Examples
-
-- logistics
-- delivery
-- transport
-- execution
-- fulfillment
-
-## Deliverables
-
-Dependency graph
-
-Shared component inventory
-
-Extension point inventory
-
-Feature ownership map
-
-## Exit Criteria
-
-Financial logic no longer exists inside operational workflows.
-
-Operational workflows no longer disable financial behavior.
-
-Instead they simply never enable it.
+Operational documents never evaluate these paths.
 
 ---
 
-# Phase 3 — Item Library Decomposition
+# Phase 5 — Performance Stabilization
 
-## Goal
-
-Reduce module complexity without changing user experience.
-
-Current evidence
-
-- ~6,350 LOC
-- Multiple unrelated responsibilities
-- Shared by Invoice and Quotation
-- Partial coupling into forms
-
-Target bounded contexts
-
-Item Catalog
-
-- master item records
-- aliases
-- categories
-
-Pricing Intelligence
-
-- price history
-- historical analytics
-- suggestion ranking
-
-Suggestion Engine
-
-- search
-- matching
-- recommendation
-- ranking
-
-Cleanup
-
-- duplicate detection
-- merge planning
-- normalization
-
-Merge History
-
-- audit
-- history
-- recovery
-
-Import Services
-
-- fallback imports
-- exchange payloads
-
-## Deliverables
-
-Dependency map
-
-Coupling report
-
-Extraction sequence
-
-## Exit Criteria
-
-No single module owns unrelated business responsibilities.
-
----
-
-# Phase 4 — Export Platform
-
-## Goal
-
-Stabilize large exports before scaling.
-
-Audit
-
-- dataset sizes
-- browser memory
-- serialization
-- Supabase response size
-- nested relationship expansion
-
-Determine
-
-- synchronous exports
-- asynchronous exports
-- background jobs
-- progress tracking
-
-## Exit Criteria
-
-Large exports become predictable and measurable.
-
----
-
-# Phase 5 — Performance
+Inspect and reduce unnecessary rendering.
 
 Focus areas
 
-- render profiling
-- expensive hooks
-- unnecessary state propagation
-- virtualization
-- memoization
-- query optimization
-- dashboard aggregation
-- report aggregation
+- expensive memo chains
+- repeated derived arrays
+- unnecessary parent renders
+- large list rendering
+- heavy cleanup computations
 
-No architectural rewrites.
+No behavioural changes.
 
-Only evidence-backed optimization.
+Performance only.
 
 ---
 
-# Phase 6 — Future Architecture
+# Phase 6 — Export Stabilization
 
-Only after Phases 0–5 are complete.
+Audit every export path.
 
-Evaluate
+Separate:
 
-- background jobs
-- Redis
-- server-side PDF generation
-- report caching
-- PostgreSQL full-text search
-- eventual Item Library services
+- current-page export
+- filtered export
+- lifetime export
+- JSON export
+- PDF export
 
-Explicitly out of scope
+Document the limits of each.
 
-- Kafka
-- Microservices
-- Elasticsearch
-
-Unless future scale justifies them.
+Ensure large datasets are handled intentionally rather than accidentally.
 
 ---
 
 # Success Criteria
 
-The project should achieve the following outcomes:
+The project is complete when:
 
-## Platform
+✓ Mobile typing is visually stable.
 
-- Stable mobile keyboard experience
-- No layout flashing
-- No focus instability
+✓ No document contains another document's behaviour.
 
-## Forms
+✓ Financial features cannot appear inside operational documents.
 
-- One consistent UI across all document types
-- Capability-driven behavior
-- No document-specific hacks
+✓ Operational documents remain lightweight.
 
-## Item Library
+✓ Shared form remains the single UI implementation.
 
-- Clear bounded responsibilities
-- Reduced coupling
-- Easier maintenance
+✓ Item Library is consumed through capabilities rather than controlling document behaviour.
 
-## Performance
+✓ Existing document UX remains visually consistent.
 
-- Predictable rendering
-- Stable exports
-- Measurable bottlenecks
+✓ No regression in Invoice or Quotation functionality.
 
-## Architecture
+---
 
-- Preserve the modular monolith
-- Increase internal modularity
-- Reduce accidental coupling
-- Prepare for future scalability without premature infrastructure
+# Future Work (Out of Scope)
+
+After stabilization, future projects may include:
+
+- Item Library decomposition
+- Background job system
+- Export pipeline redesign
+- Document application services
+- PostgreSQL full-text search
+- Server-side PDF generation
+
+These are intentionally deferred until the shared form platform is stable.
+
+---
+
+# Engineering Principles
+
+1. Stabilize before optimizing.
+
+2. Extract before rewriting.
+
+3. One UI.
+
+4. Multiple capabilities.
+
+5. Domain behaviour must never leak across document types.
+
+6. Shared infrastructure must remain document-agnostic.
+
+7. Every new document should be added by defining capabilities, not by introducing new conditional branches throughout the UI.
