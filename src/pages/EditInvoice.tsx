@@ -224,18 +224,25 @@ export default function EditInvoice() {
     void load()
   }, [id, navigate, setColumns])
 
-  const updateInvoice = (field: string, value: any) => setInvoice((current) => current ? ({ ...current, [field]: value }) : null)
+  const updateInvoice = (field: string, value: any) => setInvoice((current) => {
+    if (!current) return null
+    if (current[field] === value) return current
+    return { ...current, [field]: value }
+  })
 
   const updateItem = (index: number, field: string, value: any) =>
-    setItems((current) =>
-      current.map((item, itemIndex) => {
-        if (itemIndex !== index) return item
-        if (field === '__install_rate_override' && value && typeof value === 'object') {
-          return { ...item, ...value }
-        }
-        return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
-      }),
-    )
+    setItems((current) => {
+      const target = current[index]
+      if (!target) return current
+      if (field === '__install_rate_override' && value && typeof value === 'object') {
+        const keys = Object.keys(value) as string[]
+        if (keys.length > 0 && keys.every((k) => target[k] === value[k])) return current
+        return current.map((item, itemIndex) => itemIndex !== index ? item : { ...item, ...value })
+      }
+      const resolved = field === 'quantity' ? normalizeQuantity(value, 1) : value
+      if (target[field] === resolved) return current
+      return current.map((item, itemIndex) => itemIndex !== index ? item : { ...item, [field]: resolved })
+    })
 
   const resetItemOverrides = (fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
     setItems((current) =>
@@ -259,15 +266,21 @@ export default function EditInvoice() {
       if (insertAt === null || insertAt >= current.length) {
         return [...current, { ...newItem, sort_order: current.length }]
       }
-      const next = [...current]
-      next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
-      return next.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
+      const before = current.slice(0, insertAt)
+      const inserted = { ...newItem, sort_order: insertAt }
+      const after = current.slice(insertAt).map((item, i) => ({ ...item, sort_order: insertAt + 1 + i }))
+      return [...before, inserted, ...after]
     })
   }
 
   const addItem = () => addUngroupedItem()
   const removeItem = (index: number) =>
-    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
+    setItems((current) => {
+      if (index < 0 || index >= current.length) return current
+      const before = current.slice(0, index)
+      const after = current.slice(index + 1).map((item, i) => ({ ...item, sort_order: before.length + i }))
+      return [...before, ...after]
+    })
   const insertItemAfter = (index: number) => {
     const item = itemsRef.current[index]
     addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
@@ -359,7 +372,7 @@ export default function EditInvoice() {
 
     setGroups((current) => [...current, group])
     setItems((current) => [
-      ...current.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+      ...current,
       {
         ...makeEmptyItem(),
         row_type: 'group_header',
@@ -372,7 +385,10 @@ export default function EditInvoice() {
 
   const updateGroupName = (groupId: string, name: string) => {
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name } : group)))
-    setItems((current) => current.map((item) => (item.group_id === groupId ? { ...item, group_name: name } : item)))
+    setItems((current) => {
+      if (!current.some((item) => item.group_id === groupId)) return current
+      return current.map((item) => (item.group_id === groupId ? { ...item, group_name: name } : item))
+    })
   }
 
   const toggleGroupSubtotal = (groupId: string) =>

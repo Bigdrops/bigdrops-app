@@ -1,14 +1,16 @@
-import { StyleSheet } from '@react-pdf/renderer'
-
-const styles = StyleSheet.create({
-  textRight: { textAlign: 'right' },
-  textCenter: { textAlign: 'center' },
-})
-
-export function resolveTextAlignmentStyle(column: { align?: string }) {
-  if (column.align === 'right') return styles.textRight
-  if (column.align === 'center') return styles.textCenter
-  return null
+type IndustryColumn = {
+  key: string
+  align?: string
+  width?: number
+  flex?: number
+  dataType?: string | null
 }
 
-export { styles as textAlignmentStyles }
+const TEXT_RIGHT = { textAlign: 'right' as const }
+const TEXT_CENTER = { textAlign: 'center' as const }
+
+export function resolveTextAlignmentStyle(column: IndustryColumn) {
+  if (column.align === 'right') return TEXT_RIGHT
+  if (column.align === 'center') return TEXT_CENTER
+  return null
+}

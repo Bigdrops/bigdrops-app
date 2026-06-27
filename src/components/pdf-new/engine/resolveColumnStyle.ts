@@ -19,7 +19,7 @@ const INDUSTRY_COLUMN_OVERRIDES: Record<string, { width?: number; flex?: number 
   discount_rate: { width: 48, flex: 0.92 },
 }
 
-export function resolveIndustryColumnStyle(column: IndustryColumn) {
+export function resolveColumnStyle(column: IndustryColumn) {
   const override = INDUSTRY_COLUMN_OVERRIDES[column.key] || {}
   const width = Number(column.width ?? override.width ?? 0)
   const flex = Number(column.flex ?? override.flex ?? 1)

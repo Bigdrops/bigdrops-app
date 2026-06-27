@@ -1,8 +1,8 @@
 import { Text, View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
-import { partyCardStyles } from './CommercialPartyCard.styles'
+import { styles } from '../templates/industryStyles'
 
-export type CommercialPartyCardProps = {
+export type PartyCardProps = {
   title: string
   party: NonNullable<CommercialDocumentData['company']> | NonNullable<CommercialDocumentData['client']>
   isLast?: boolean
@@ -26,36 +26,36 @@ export function CommercialPartyCard({
   mutedColor,
   headerFontFamily,
   bodyFontFamily,
-}: CommercialPartyCardProps) {
+}: PartyCardProps) {
   const customInfo = 'customInfo' in party ? party.customInfo : []
 
   return (
     <View
       style={[
-        partyCardStyles.partyBox,
-        isLast ? partyCardStyles.partyBoxLast : null,
+        styles.partyBox,
+        isLast ? styles.partyBoxLast : null,
         surfaceColor ? { backgroundColor: surfaceColor } : null,
         borderColor ? { borderColor } : null,
       ]}
     >
       <Text
         style={[
-          partyCardStyles.partyTitle,
+          styles.partyTitle,
           accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
           headerFontFamily ? { fontFamily: headerFontFamily } : null,
         ]}
       >
         {title}
       </Text>
-      {party.name ? <Text style={[partyCardStyles.partyName, textColor ? { color: textColor } : null]}>{party.name}</Text> : null}
-      {party.address ? <Text style={[partyCardStyles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.address}</Text> : null}
-      {party.cityState ? <Text style={[partyCardStyles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.cityState}</Text> : null}
-      {party.phone ? <Text style={[partyCardStyles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.phone}</Text> : null}
-      {party.email ? <Text style={[partyCardStyles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.email}</Text> : null}
-      {'website' in party && party.website ? <Text style={[partyCardStyles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.website}</Text> : null}
+      {party.name ? <Text style={[styles.partyName, textColor ? { color: textColor } : null]}>{party.name}</Text> : null}
+      {party.address ? <Text style={[styles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.address}</Text> : null}
+      {party.cityState ? <Text style={[styles.partyLine, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.cityState}</Text> : null}
+      {party.phone ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.phone}</Text> : null}
+      {party.email ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.email}</Text> : null}
+      {'website' in party && party.website ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.website}</Text> : null}
       {customInfo.length > 0
         ? customInfo.map((entry, idx) => (
-            <Text key={`company-extra-${idx}`} style={[partyCardStyles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{entry.label}: {entry.value}</Text>
+            <Text key={`company-extra-${idx}`} style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{entry.label}: {entry.value}</Text>
           ))
         : null}
     </View>

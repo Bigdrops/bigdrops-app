@@ -1,14 +1,16 @@
 import { View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
 import { PdfCurrencyText } from '../pdfCurrency'
-import { groupFooterStyles } from './CommercialGroupFooterRow.styles'
+import { styles } from '../templates/industryStyles'
 
-export type CommercialGroupFooterRowProps = {
+export type GroupRowProps = {
   row: CommercialDocumentData['table']['rows'][number]
   rowIdx: number
   ruleColor?: string | null
   surfaceColor?: string | null
   textColor?: string | null
+  mutedColor?: string | null
+  headerFontFamily?: string
   bodyFontFamily?: string
 }
 
@@ -19,22 +21,22 @@ export function CommercialGroupFooterRow({
   surfaceColor,
   textColor,
   bodyFontFamily,
-}: CommercialGroupFooterRowProps) {
+}: GroupRowProps) {
   return (
     <View
       key={`group-f-${rowIdx}`}
       style={[
-        groupFooterStyles.tableGroupFooter,
+        styles.tableGroupFooter,
         ruleColor ? { borderBottomColor: ruleColor } : null,
         surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
       {row.showSubtotal ? (
-        <View style={groupFooterStyles.groupSubtotalRow}>
+        <View style={styles.groupSubtotalRow}>
           <PdfCurrencyText
             value={row.groupSubtotalValue}
             style={[
-              groupFooterStyles.groupSubtotalValue,
+              styles.groupSubtotalValue,
               textColor ? { color: textColor } : null,
               bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
             ]}

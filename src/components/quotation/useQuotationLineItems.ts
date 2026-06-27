@@ -108,6 +108,15 @@ export function useQuotationLineItems({
 
   const updateItem = useCallback(
     (index: number, field: string, value: unknown) => {
+      const target = itemsRef.current[index]
+      if (!target) return
+      if (field === "custom_data") {
+        const currentData = target.custom_data
+        if (currentData === value || (currentData && value && JSON.stringify(currentData) === JSON.stringify(value))) return
+      } else {
+        const resolved = field === "quantity" ? normalizeQuantity(value, 1) : value
+        if (target[field] === resolved) return
+      }
       commitGrouping((current) =>
         current.map((item, itemIndex) => {
           if (itemIndex !== index) return item;
@@ -169,9 +178,10 @@ export function useQuotationLineItems({
         };
         if (insertAt === null || insertAt >= current.length)
           return [...current, { ...newItem, sort_order: current.length }];
-        const next = [...current];
-        next.splice(insertAt, 0, { ...newItem, sort_order: insertAt });
-        return next.map((item, index) => ({ ...item, sort_order: index }));
+        const before = current.slice(0, insertAt);
+        const inserted = { ...newItem, sort_order: insertAt };
+        const after = current.slice(insertAt).map((item, i) => ({ ...item, sort_order: insertAt + 1 + i }));
+        return [...before, inserted, ...after];
       });
     },
     [commitGrouping],
@@ -215,10 +225,7 @@ export function useQuotationLineItems({
           sort_order: current.length,
         };
 
-        return [
-          ...current.map((item, index) => ({ ...item, sort_order: index })),
-          groupHeader,
-        ];
+        return [...current, groupHeader];
       },
       (current) => [...current, group],
     );
@@ -314,11 +321,12 @@ export function useQuotationLineItems({
 
   const removeItemAt = useCallback(
     (itemIndex: number) =>
-      commitGrouping((current) =>
-        current
-          .filter((_, entryIndex) => entryIndex !== itemIndex)
-          .map((entry, entryIndex) => ({ ...entry, sort_order: entryIndex })),
-      ),
+      commitGrouping((current) => {
+        if (itemIndex < 0 || itemIndex >= current.length) return current
+        const before = current.slice(0, itemIndex)
+        const after = current.slice(itemIndex + 1).map((item, i) => ({ ...item, sort_order: before.length + i }))
+        return [...before, ...after]
+      }),
     [commitGrouping],
   );
 

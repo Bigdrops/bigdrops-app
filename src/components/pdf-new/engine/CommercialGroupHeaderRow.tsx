@@ -1,8 +1,8 @@
 import { Text, View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
-import { groupHeaderStyles } from './CommercialGroupHeaderRow.styles'
+import { styles } from '../templates/industryStyles'
 
-export type CommercialGroupHeaderRowProps = {
+export type GroupRowProps = {
   row: CommercialDocumentData['table']['rows'][number]
   rowIdx: number
   ruleColor?: string | null
@@ -20,19 +20,19 @@ export function CommercialGroupHeaderRow({
   surfaceColor,
   textColor,
   headerFontFamily,
-}: CommercialGroupHeaderRowProps) {
+}: GroupRowProps) {
   return (
     <View
       key={`group-h-${rowIdx}`}
       style={[
-        groupHeaderStyles.tableGroupHeader,
+        styles.tableGroupHeader,
         ruleColor ? { borderTopColor: ruleColor } : null,
         surfaceColor ? { backgroundColor: surfaceColor } : null,
       ]}
     >
       <Text
         style={[
-          groupHeaderStyles.groupTitleCell,
+          styles.groupTitleCell,
           textColor ? { color: textColor } : null,
           headerFontFamily ? { fontFamily: headerFontFamily } : null,
         ]}

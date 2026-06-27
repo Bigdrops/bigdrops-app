@@ -1,22 +1,6 @@
 import { Link, Text } from '@react-pdf/renderer'
-import { StyleSheet } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
-
-const styles = StyleSheet.create({
-  attachmentItem: {
-    fontSize: 10,
-    color: '#555555',
-    marginBottom: 4,
-    lineHeight: 1.4,
-  },
-  attachmentLink: {
-    fontSize: 10,
-    color: '#555555',
-    textDecoration: 'underline',
-    marginBottom: 4,
-    lineHeight: 1.4,
-  },
-})
+import { styles } from '../templates/industryStyles'
 
 export function renderOptionalList(items: CommercialDocumentData['attachments']) {
   return items.map((item, idx) => {
