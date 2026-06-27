@@ -45,14 +45,6 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-3/4 rounded-full bg-slate-200'],
   },
   {
-    id: 'bolt',
-    label: 'Bolt',
-    eyebrow: 'Banner',
-    shell: 'bg-white border border-slate-200',
-    accents: ['h-4 w-full rounded-[10px] bg-[#1a56db]', 'h-1 w-2/5 rounded-full bg-[#93c5fd]', 'h-1 w-4/5 rounded-full bg-slate-200'],
-    columns: ['h-7 w-full rounded-md bg-[#eff6ff]', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-3/4 rounded-full bg-slate-200'],
-  },
-  {
     id: 'obsidian-receipt',
     label: 'Obsidian Receipt',
     eyebrow: 'Elegant',

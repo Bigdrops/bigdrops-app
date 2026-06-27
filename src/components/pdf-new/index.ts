@@ -43,7 +43,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { PdfRenderer },
     IndustryModule,
     ApexModule,
-    BoltModule,
     ObsidianModule,
     LedgerModule,
   ] = await Promise.all([
@@ -51,14 +50,12 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/Apex'),
-    import('./templates/Bolt'),
     import('./templates/ObsidianReceipt'),
     import('./templates/Ledger'),
   ])
 
   const Industry = IndustryModule.default
   const Apex = ApexModule.default
-  const Bolt = BoltModule.default
   const ObsidianReceipt = ObsidianModule.default
   const Ledger = LedgerModule.default
 
@@ -80,10 +77,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       break
     case 'apex':
       Template = Apex
-      templateData = adaptCommercialDocumentData(request.model)
-      break
-    case 'bolt':
-      Template = Bolt
       templateData = adaptCommercialDocumentData(request.model)
       break
     case 'industry':

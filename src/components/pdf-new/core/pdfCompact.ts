@@ -72,23 +72,6 @@ export const compactLedger: Partial<CompactOverrides> = {
   tableRow: { borderBottomWidth: 0.5 },
 }
 
-export const compactBolt: Partial<CompactOverrides> = {
-  page: { paddingTop: 16, paddingBottom: 24 },
-  header: { marginBottom: 8 },
-  partyRow: { marginBottom: 10 },
-  partyBox: { paddingTop: 10, paddingBottom: 10, paddingHorizontal: 12 },
-  tableWrap: { marginBottom: 10 },
-  tableHeaderCell: { paddingVertical: 5 },
-  tableCell: { paddingVertical: 4 },
-  closingRow: { marginBottom: 10 },
-  totalsBox: { paddingTop: 8, paddingBottom: 8, paddingHorizontal: 12 },
-  totalRow: { marginBottom: 3 },
-  totalFinal: { marginTop: 4, paddingTop: 4 },
-  optionalSection: { marginBottom: 8 },
-  signatureWrap: { marginTop: 8 },
-  tableRow: { borderBottomWidth: 0.5 },
-}
-
 export const compactObsidian: Partial<CompactOverrides> = {
   page: { padding: 16 },
   partyRow: { marginBottom: 8 },

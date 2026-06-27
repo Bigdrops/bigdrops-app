@@ -59,6 +59,15 @@ const PROVIDER_ICON_MAP: Record<string, typeof GoogleGeminiIcon> = {
   kimi: KimiAiIcon,
 }
 
+const BRAND_COLORS: Record<string, string> = {
+  gemini: '#1a73e8',
+  chatgpt: '#10a37f',
+  claude: '#cc785c',
+  deepseek: '#2b5bed',
+  qwen: '#5046e5',
+  kimi: '#e6533c',
+}
+
 function openApp(url: string, androidPkg: string, playStoreUrl: string) {
   const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
   if (isAndroid) {
@@ -96,10 +105,10 @@ export function OpenInAIDropdown({
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsOpen(false)
     }
-    document.addEventListener('mousedown', handle)
+    document.addEventListener('click', handle)
     document.addEventListener('keydown', handleKey)
     return () => {
-      document.removeEventListener('mousedown', handle)
+      document.removeEventListener('click', handle)
       document.removeEventListener('keydown', handleKey)
     }
   }, [isOpen])
@@ -179,7 +188,7 @@ export function OpenInAIDropdown({
                     title={provider.label}
                     className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
                   >
-                    <HugeiconsIcon icon={Icon} size={20} strokeWidth={1.5} />
+                    <HugeiconsIcon icon={Icon} size={20} strokeWidth={1.5} color={BRAND_COLORS[provider.name]} />
                   </button>
                 )
               })}
