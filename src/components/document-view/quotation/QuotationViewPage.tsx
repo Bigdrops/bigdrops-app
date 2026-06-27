@@ -49,7 +49,10 @@ export default function QuotationViewPage({
     <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
       {previewContent}
 
-      <BankDetailsCard bankAccounts={bankAccounts} />
+      <BankDetailsCard 
+        bankAccounts={bankAccounts}
+        selectedBankId={pdfOutput?.bankAccountId}
+      />
 
       <DocumentOptionsCard
         pdfOutput={pdfOutput}

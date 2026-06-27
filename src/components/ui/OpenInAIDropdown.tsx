@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
+import { HiSparkles } from 'react-icons/hi2'
 import { AI_PROVIDERS } from '@/lib/openInAI'
 import { cn } from '@/lib/utils'
 
@@ -41,10 +42,10 @@ export function OpenInAIDropdown({
         onChange={handleChange}
         disabled={disabled}
         aria-label="Open in AI provider picker"
-        className="h-8 min-h-[44px] min-w-[44px] appearance-none rounded-lg pl-2 pr-7 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(217_91%_35%)] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-8 min-h-[44px] min-w-[44px] appearance-none rounded-lg pl-2 pr-7 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-transparent bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <option value="" disabled hidden>
-          Open in AI ↗
+          Open in AI
         </option>
         {AI_PROVIDERS.map((provider) => (
           <option key={provider.name} value={provider.name}>
@@ -52,6 +53,12 @@ export function OpenInAIDropdown({
           </option>
         ))}
       </select>
+      <div className="pointer-events-none absolute inset-0 flex items-center gap-1 px-2">
+        <HiSparkles size={14} className="text-[#1e40af]" />
+        <span className="text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[#1e40af]">
+          Open in AI
+        </span>
+      </div>
       <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 opacity-60" />
     </div>
   )

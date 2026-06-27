@@ -1,19 +1,23 @@
 import * as React from 'react'
+import { memo, useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import MobileItemCard from './MobileItemCard'
 import type { Invoice, InvoiceItem, InvoiceGroup, ColumnConfig } from '../../domain/invoice/types'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
 
+interface GroupItemEntry {
+  item: InvoiceItem
+  index: number
+  number: number
+  isFirst: boolean
+  isLast: boolean
+  computedAmount: number | string
+}
+
 interface MobileGroupCardProps {
   group: InvoiceGroup
-  items: {
-    item: InvoiceItem
-    index: number
-    number: number
-    isFirst: boolean
-    isLast: boolean
-  }[]
+  items: GroupItemEntry[]
   invoice: Invoice
   context?: ItemContext
   enableItemSuggestions?: boolean
@@ -29,10 +33,9 @@ interface MobileGroupCardProps {
   onInsertItemAfter: (index: number) => void
   isVisible: (key: string) => boolean
   getColumn: (key: string) => ColumnConfig | undefined
-  getComputedAmount: (item: InvoiceItem) => number | string
 }
 
-export default function MobileGroupCard({
+function MobileGroupCard({
   group,
   items,
   invoice,
@@ -50,10 +53,12 @@ export default function MobileGroupCard({
   onInsertItemAfter,
   isVisible,
   getColumn,
-  getComputedAmount,
 }: MobileGroupCardProps) {
   const subtotalOn = !!group.showSubtotal
   const groupId = group.id || ''
+
+  const handleMoveUp = useCallback((itemIdx: number) => onMoveItem(itemIdx, -1), [onMoveItem])
+  const handleMoveDown = useCallback((itemIdx: number) => onMoveItem(itemIdx, 1), [onMoveItem])
 
   return (
     <div className="border-b border-[var(--bd-border-soft)] bg-[var(--bd-bg)]">
@@ -92,7 +97,7 @@ export default function MobileGroupCard({
               No items in this group
             </div>
           ) : (
-            items.map(({ item, index, number, isFirst, isLast }) => (
+            items.map(({ item, index, number, isFirst, isLast, computedAmount }) => (
               <MobileItemCard
                 key={item._uiKey || item.id || index}
                 item={item}
@@ -102,13 +107,13 @@ export default function MobileGroupCard({
                 context={ctx}
                 enableItemSuggestions={enableItemSuggestions}
                 customColumns={customColumns}
-                computedAmount={getComputedAmount(item)}
+                computedAmount={computedAmount}
                 isFirst={isFirst}
                 isLast={isLast}
                 onUpdate={onUpdateItem}
                 onRemove={onRemoveItem}
-                onMoveUp={(itemIdx: number) => onMoveItem(itemIdx, -1)}
-                onMoveDown={(itemIdx: number) => onMoveItem(itemIdx, 1)}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
                 onInsertBelow={onInsertItemAfter}
                 isVisible={isVisible}
                 getColumn={getColumn}
@@ -155,3 +160,38 @@ export default function MobileGroupCard({
     </div>
   )
 }
+
+function groupCardAreEqual(prevProps: MobileGroupCardProps, nextProps: MobileGroupCardProps) {
+  const pg = prevProps.group
+  const ng = nextProps.group
+  if (pg.id !== ng.id || pg.name !== ng.name || pg.showSubtotal !== ng.showSubtotal) return false
+
+  if (prevProps.items.length !== nextProps.items.length) return false
+  if (prevProps.items.some((entry, i) => {
+    const nextEntry = nextProps.items[i]
+    return !nextEntry || entry.item !== nextEntry.item || entry.index !== nextEntry.index ||
+      entry.number !== nextEntry.number || entry.isFirst !== nextEntry.isFirst ||
+      entry.isLast !== nextEntry.isLast || entry.computedAmount !== nextEntry.computedAmount
+  })) return false
+
+  if (prevProps.groupSubtotal !== nextProps.groupSubtotal) return false
+  if (prevProps.invoice !== nextProps.invoice) return false
+  if (prevProps.context !== nextProps.context) return false
+  if (prevProps.enableItemSuggestions !== nextProps.enableItemSuggestions) return false
+  if (prevProps.customColumns !== nextProps.customColumns) return false
+
+  if (prevProps.onUpdateGroupName !== nextProps.onUpdateGroupName) return false
+  if (prevProps.onToggleGroupSubtotal !== nextProps.onToggleGroupSubtotal) return false
+  if (prevProps.onDeleteGroup !== nextProps.onDeleteGroup) return false
+  if (prevProps.onAddItemToGroup !== nextProps.onAddItemToGroup) return false
+  if (prevProps.onUpdateItem !== nextProps.onUpdateItem) return false
+  if (prevProps.onRemoveItem !== nextProps.onRemoveItem) return false
+  if (prevProps.onMoveItem !== nextProps.onMoveItem) return false
+  if (prevProps.onInsertItemAfter !== nextProps.onInsertItemAfter) return false
+  if (prevProps.isVisible !== nextProps.isVisible) return false
+  if (prevProps.getColumn !== nextProps.getColumn) return false
+
+  return true
+}
+
+export default memo(MobileGroupCard, groupCardAreEqual)

@@ -58,7 +58,6 @@ export const FormLineItems = React.memo(function FormLineItems({
   onOpenImport,
   onOpenTableSettings,
 }: FormLineItemsProps) {
-  
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
   const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
 
@@ -148,10 +147,11 @@ export const FormLineItems = React.memo(function FormLineItems({
           number: getItemNumber(idx),
           isFirst: i === 0,
           isLast: i === arr.length - 1,
+          computedAmount: getComputedAmount(item),
         }))
       return { group, items: groupItems }
     })
-  }, [groups, items])
+  }, [groups, items, getComputedAmount])
 
   const groupedItemIndices = useMemo(() => {
     const indices = new Set<number>()
@@ -209,7 +209,6 @@ export const FormLineItems = React.memo(function FormLineItems({
             onInsertItemAfter={onInsertItemAfter}
             isVisible={isVisible}
             getColumn={getColumn}
-            getComputedAmount={getComputedAmount}
           />
         ))}
         {lineItemRows

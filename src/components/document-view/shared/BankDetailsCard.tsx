@@ -5,10 +5,14 @@ import previewStyles from "./DocumentPreview.module.css";
 
 interface BankDetailsCardProps {
   bankAccounts: any[];
+  selectedBankId?: string | null;
+  onSelect?: (bankId: string) => void;
 }
 
 export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
   bankAccounts,
+  selectedBankId,
+  onSelect,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -35,13 +39,40 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
 
       {isOpen && (
         <>
-          {bankAccounts.map((bank, index) => (
-            <div key={index} className={previewStyles.bankDetail}>
-              <div className={previewStyles.bankName}>{bank.bankName}</div>
-              <div className={previewStyles.bankDetailValue}>{bank.accountName}</div>
-              <div className={previewStyles.bankDetailValue}>{bank.accountNumber}</div>
-            </div>
-          ))}
+          {bankAccounts.map((bank, index) => {
+            const isSelected = selectedBankId && bank.id === selectedBankId;
+            return (
+              <div 
+                key={index} 
+                className={previewStyles.bankDetail}
+                style={{
+                  backgroundColor: isSelected ? "hsl(var(--bd-primary) / 0.05)" : undefined,
+                  borderLeft: isSelected ? "3px solid hsl(var(--bd-primary))" : undefined,
+                  paddingLeft: isSelected ? "12px" : undefined,
+                  cursor: onSelect ? "pointer" : "default",
+                }}
+                onClick={() => onSelect?.(bank.id)}
+              >
+                <div className={previewStyles.bankName}>
+                  {bank.bankName}
+                  {isSelected && (
+                    <span style={{ 
+                      marginLeft: "8px", 
+                      fontSize: "10px", 
+                      fontWeight: 600,
+                      color: "hsl(var(--bd-primary))",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}>
+                      Active
+                    </span>
+                  )}
+                </div>
+                <div className={previewStyles.bankDetailValue}>{bank.accountName}</div>
+                <div className={previewStyles.bankDetailValue}>{bank.accountNumber}</div>
+              </div>
+            );
+          })}
         </>
       )}
     </div>

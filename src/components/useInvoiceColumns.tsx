@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { ColumnConfig } from '../domain/invoice/types'
 
 export {
@@ -51,12 +51,12 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     (initial || BUILTIN_COLUMNS).map((column) => normalizeColumnConfig({ ...column }) as InvoiceColumn),
   )
   
-  const getColumn = (key: string) => columns.find(c => c.key === key)
+  const getColumn = useCallback((key: string) => columns.find(c => c.key === key), [columns])
   
-  const isVisible = (key: string) => {
-    const column = getColumn(key)
+  const isVisible = useCallback((key: string) => {
+    const column = columns.find(c => c.key === key)
     return column ? (column.visibilityMode || 'show') === 'show' : false
-  }
+  }, [columns])
   
   const toggleVisible = (key: string) =>
     setColumns((cols) =>

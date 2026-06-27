@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import {
   Camera,
   ChevronDown,
@@ -67,7 +67,7 @@ interface MobileItemCardProps {
   compact?: boolean
 }
 
-export default function MobileItemCard({
+function MobileItemCard({
   item,
   index,
   number,
@@ -477,3 +477,49 @@ export default function MobileItemCard({
     </div>
   )
 }
+
+function itemCardAreEqual(prevProps: MobileItemCardProps, nextProps: MobileItemCardProps) {
+  if (prevProps.index !== nextProps.index) return false
+  if (prevProps.number !== nextProps.number) return false
+  if (prevProps.computedAmount !== nextProps.computedAmount) return false
+  if (prevProps.isFirst !== nextProps.isFirst) return false
+  if (prevProps.isLast !== nextProps.isLast) return false
+  if (prevProps.compact !== nextProps.compact) return false
+  if (prevProps.context !== nextProps.context) return false
+  if (prevProps.enableItemSuggestions !== nextProps.enableItemSuggestions) return false
+
+  if (prevProps.onUpdate !== nextProps.onUpdate) return false
+  if (prevProps.onRemove !== nextProps.onRemove) return false
+  if (prevProps.onMoveUp !== nextProps.onMoveUp) return false
+  if (prevProps.onMoveDown !== nextProps.onMoveDown) return false
+  if (prevProps.onInsertBelow !== nextProps.onInsertBelow) return false
+  if (prevProps.onDuplicate !== nextProps.onDuplicate) return false
+  if (prevProps.isVisible !== nextProps.isVisible) return false
+  if (prevProps.getColumn !== nextProps.getColumn) return false
+
+  if (prevProps.invoice !== nextProps.invoice) return false
+  if (prevProps.customColumns !== nextProps.customColumns) return false
+
+  const a = prevProps.item
+  const b = nextProps.item
+  if (a._uiKey !== b._uiKey || a.id !== b.id || a.item_id !== b.item_id) return false
+  if (a.description !== b.description) return false
+  if (a.sub_description !== b.sub_description) return false
+  if (a.quantity !== b.quantity) return false
+  if (a.unit !== b.unit) return false
+  if (a.unit_price !== b.unit_price) return false
+  if (a.vat_rate !== b.vat_rate) return false
+  if (a.discount_rate !== b.discount_rate) return false
+  if (a.row_type !== b.row_type) return false
+  if (a.image_url !== b.image_url) return false
+  if (a.make !== b.make) return false
+  if (a.partNo !== b.partNo) return false
+  if (a.condition !== b.condition) return false
+  if (a.install_rate !== b.install_rate) return false
+  if (a.install_rate_override !== b.install_rate_override) return false
+  if (JSON.stringify(a.custom_data) !== JSON.stringify(b.custom_data)) return false
+
+  return true
+}
+
+export default memo(MobileItemCard, itemCardAreEqual)

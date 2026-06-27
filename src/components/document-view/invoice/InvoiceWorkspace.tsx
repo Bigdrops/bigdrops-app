@@ -28,6 +28,7 @@ interface InvoiceWorkspaceProps {
   companyName?: string;
   companySub?: string;
   settings?: any;
+  previewControls?: React.ReactNode;
 
   // Actions
   onBack: () => void;
@@ -64,6 +65,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
   companyName,
   companySub,
   settings,
+  previewControls,
 
   onBack,
   onShare,
@@ -124,7 +126,12 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         settings={settings}
       />
 
-      <BankDetailsCard bankAccounts={previewModel?.previewBankAccounts || bankAccounts} />
+      <BankDetailsCard 
+        bankAccounts={previewModel?.previewBankAccounts || bankAccounts}
+        selectedBankId={pdfOutput?.bankAccountId}
+      />
+
+      {previewControls}
 
       <DocumentOptionsCard
         pdfOutput={pdfOutput}
