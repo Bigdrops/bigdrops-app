@@ -1,47 +1,33 @@
+import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { richTextToPlainText } from '@/lib/richTextPlain'
 import DocumentPreviewShell from '../shared/DocumentPreviewShell'
 import styles from './WaybillDocumentPreview.module.css'
 
-type WaybillPreviewItem = {
-  description?: string
-  quantity?: number
-  unit?: string
-  condition?: string
-}
+export default function WaybillDocumentPreview({ model }: { model: WaybillRenderModel | null }) {
+  if (!model) return null
 
-type WaybillPreviewData = {
-  companyName: string
-  companyLines: string[]
-  documentNumber: string
-  dispatchDate: string
-  consigneeName: string
-  consigneeLines: string[]
-  vehicleReg: string
-  deliveryReference: string
-  driverName: string
-  driverPhone: string
-  notes: string
-  items: WaybillPreviewItem[]
-}
+  const { branding, header, parties, logistics, notes, table } = model
 
-export default function WaybillDocumentPreview({ preview }: { preview: WaybillPreviewData }) {
+  const columnTemplate = table.columns.map((_, i) => (i === 0 ? '1fr' : 'minmax(70px, auto)')).join(' ')
+
   return (
     <DocumentPreviewShell>
       <div className={styles.head}>
         <div>
           <div className={styles.typeLabel}>Shipper</div>
-          <div className={styles.shipperName}>{preview.companyName || 'Company not set'}</div>
+          <div className={styles.shipperName}>{branding.name || 'Company not set'}</div>
           <div className={styles.shipperAddress}>
-            {preview.companyLines.length > 0 ? preview.companyLines.map((line) => <div key={line}>{line}</div>) : <div>No company identity saved.</div>}
+            {branding.address ? <div>{branding.address}</div> : <div>No company identity saved.</div>}
           </div>
         </div>
 
         <div className={styles.idBlock}>
           <div className={styles.typeLabel}>Waybill No.</div>
-          <div className={styles.number}>{preview.documentNumber || '—'}</div>
+          <div className={styles.number}>{header.waybillNumber || '—'}</div>
           <div style={{ marginTop: 12 }}>
             <div className={styles.typeLabel}>Dispatch Date</div>
             <div className={styles.number} style={{ fontSize: 13, color: 'var(--dv-text)' }}>
-              {preview.dispatchDate || '—'}
+              {header.date || '—'}
             </div>
           </div>
         </div>
@@ -50,60 +36,61 @@ export default function WaybillDocumentPreview({ preview }: { preview: WaybillPr
       <div className={styles.metaGrid}>
         <div className={styles.metaCell}>
           <div className={styles.metaLabel}>Consignee / Deliver To</div>
-          <div className={styles.metaValue}>{preview.consigneeName || '—'}</div>
-          {preview.consigneeLines.map((line) => (
-            <div key={line} className={styles.metaSub}>
-              {line}
-            </div>
-          ))}
+          <div className={styles.metaValue}>{parties.clientName || '—'}</div>
+          {parties.clientAddress && <div className={styles.metaSub}>{parties.clientAddress}</div>}
         </div>
         <div className={styles.metaCell}>
           <div className={styles.metaLabel}>Logistics Info</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
             <div>
               <div className={styles.metaSub}>Vehicle Reg:</div>
-              <div className={styles.metaValue}>{preview.vehicleReg || '—'}</div>
+              <div className={styles.metaValue}>{logistics.vehiclePlate || '—'}</div>
             </div>
             <div>
               <div className={styles.metaSub}>Ref No:</div>
-              <div className={styles.metaValue}>{preview.deliveryReference || '—'}</div>
+              <div className={styles.metaValue}>{header.poNumber || '—'}</div>
             </div>
             <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
               <div className={styles.metaSub}>Driver:</div>
-              <div className={styles.metaValue}>
-                {[preview.driverName, preview.driverPhone].filter(Boolean).join(' · ') || '—'}
-              </div>
+              <div className={styles.metaValue}>{logistics.driverName || '—'}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className={styles.itemsHead}>
-        <div className={styles.columnLabel}>Item Description</div>
-        <div className={`${styles.columnLabel} ${styles.right}`}>Qty</div>
-        <div className={`${styles.columnLabel} ${styles.right}`}>Unit</div>
-        <div className={`${styles.columnLabel} ${styles.right}`}>Condition</div>
+      <div className={styles.itemsHead} style={{ gridTemplateColumns: columnTemplate }}>
+        {table.columns.map((col) => (
+          <div key={col.key} className={`${styles.columnLabel}${col.key === 'description' ? '' : ` ${styles.right}`}`}>
+            {col.label}
+          </div>
+        ))}
       </div>
 
-      {preview.items.length > 0 ? (
-        preview.items.map((item, index) => (
-          <div key={`${item.description || 'item'}-${index}`} className={styles.itemRow}>
-            <div>
-              <div className={styles.itemName}>{item.description || 'Untitled item'}</div>
+      {table.rows.length > 0
+        ? table.rows.map((row, index) => (
+            <div key={index} className={styles.itemRow} style={{ gridTemplateColumns: columnTemplate }}>
+              {table.columns.map((col) => {
+                const value = richTextToPlainText(row.cells[col.key] || '')
+                return (
+                  <div key={col.key} className={col.key === 'description' ? styles.itemName : styles.metric}>
+                    {value || '—'}
+                  </div>
+                )
+              })}
             </div>
-            <div className={styles.quantity}>{String(item.quantity ?? '—')}</div>
-            <div className={styles.metric}>{item.unit || '—'}</div>
-            <div className={styles.metric}>{item.condition || '—'}</div>
+          ))
+        : (
+        <div className={styles.itemRow} style={{ gridTemplateColumns: columnTemplate }}>
+          <div className={styles.itemName} style={{ fontStyle: 'italic', color: 'var(--dv-text-3)' }}>
+            No items added yet.
           </div>
-        ))
-      ) : (
-        <div className={styles.footerText}>No items added yet.</div>
-      )}
+        </div>
+        )}
 
       <div className={styles.footer}>
         <div>
           <div className={styles.footerLabel}>Delivery Remarks</div>
-          <div className={styles.footerText}>{preview.notes || 'No delivery notes recorded.'}</div>
+          <div className={styles.footerText}>{richTextToPlainText(notes) || 'No delivery notes recorded.'}</div>
         </div>
 
         <div className={styles.signatureGrid}>

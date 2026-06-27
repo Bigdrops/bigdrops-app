@@ -273,27 +273,33 @@ export default function ViewWaybill() {
   if (!waybill) return null
 
   const customFields = parseWaybillCustomFields(waybill.custom_fields)
-  const companyLines = [
-    settings?.company_address,
-    settings?.company_city,
-    settings?.company_phone,
-    settings?.company_email,
-  ].filter(Boolean) as string[]
 
-  const preview = {
-    companyName: String(settings?.company_name || ''),
-    companyLines,
-    documentNumber: waybill.waybill_number || '',
-    dispatchDate: waybill.date || '',
-    consigneeName: waybill.receiver_name || waybill.client_name || '',
-    consigneeLines: [waybill.delivery_location, waybill.client_name].filter(Boolean),
-    vehicleReg: waybill.vehicle_plate || '',
-    deliveryReference: customFields.references?.linkedInvoiceNumber || waybill.po_number || '',
-    driverName: waybill.sender_name || '',
-    driverPhone: '',
-    notes: waybill.notes || '',
-    items: waybill.items || [],
-  }
+  const model = rawWaybill && settings
+    ? (() => {
+        const columnVisibility = customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
+        const columnTitles = Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
+        const standardColumns = STANDARD_ITEM_COLUMNS
+          .filter(col => col.key !== 'quantity' && col.key !== 'unit')
+          .filter(col => columnVisibility[col.key] !== false)
+          .map(col => ({ key: col.key, label: columnTitles[col.key] || col.label }))
+        const qtyLabelVisible = columnVisibility.quantity !== false && columnVisibility.unit !== false
+        const qtyLabelCol = qtyLabelVisible ? [{ key: 'qtyLabel', label: 'Qty/Unit' }] : []
+        const customCols = (customFields.customColumns || [])
+          .filter(col => !STANDARD_ITEM_COLUMNS.some(sc => sc.key === col.key))
+          .filter(col => columnVisibility[col.key] !== false)
+          .map(col => ({ key: col.key, label: col.label }))
+        const columns: ResolvedColumn[] = [...standardColumns, ...qtyLabelCol, ...customCols]
+        const company: CompanySettings = {
+          name: settings?.company_name || '',
+          tagline: settings?.company_tagline || null,
+          logo: settings?.company_logo_url || null,
+          address: settings?.company_address || null,
+          phone: settings?.company_phone || null,
+          email: settings?.company_email || null,
+        }
+        return buildWaybillRenderModel({ waybill: rawWaybill, columns, company })
+      })()
+    : null
 
   const docProps: BaseDocument = {
     id: waybill.id,
@@ -554,7 +560,7 @@ export default function ViewWaybill() {
         <WaybillViewPage
           document={docProps}
           metrics={metrics}
-          preview={<WaybillDocumentPreview preview={preview} />}
+          preview={<WaybillDocumentPreview model={model} />}
           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
           onEdit={() => navigate(`/waybills/${id}/edit`)}
           onDuplicate={() => void handleDuplicate()}
