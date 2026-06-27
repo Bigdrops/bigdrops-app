@@ -90,7 +90,7 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
       <div className={styles.footer}>
         <div>
           <div className={styles.footerLabel}>Delivery Remarks</div>
-          <div className={styles.footerText}>{richTextToPlainText(notes) || 'No delivery notes recorded.'}</div>
+          <div className={styles.footerText}>{richTextToPlainText(notes) || ''}</div>
         </div>
 
         <div className={styles.signatureGrid}>
