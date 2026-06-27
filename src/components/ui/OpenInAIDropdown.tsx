@@ -122,6 +122,7 @@ export function OpenInAIDropdown({
   }
 
   const handleProviderClick = (providerName: string) => {
+    console.log('[OpenInAI] handleProviderClick fired', providerName)
     const provider = AI_PROVIDERS.find(p => p.name === providerName)
     if (!provider) return
 
