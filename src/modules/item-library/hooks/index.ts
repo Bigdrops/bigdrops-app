@@ -1,4 +1,5 @@
 export * from './useItemSuggestions'
+export * from './useItemSuggestionEngine'
 export * from './useItemHistoryList'
 export * from './useItemHistoryDetail'
 export * from './useItemAliases'

@@ -15,10 +15,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { feedback } from '@/lib/feedback'
 import UnitInput from '@/components/UnitInput'
-import { useItemSuggestions } from '@/modules/item-library/hooks'
-import { getInvoiceSuggestionSelection } from '@/modules/item-library/domain/invoiceSuggestionSelection'
-import { getInvoiceSuggestionPriceContextText } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
-import { loadItemPriceContext, resolveExactItemMatch } from '@/modules/item-library/services'
+import { useItemSuggestionEngine } from '@/modules/item-library/hooks/useItemSuggestionEngine'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
 import { formatNaira } from '@/lib/formatters/money'
@@ -91,8 +88,6 @@ function MobileItemCard({
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [uploading, setUploading] = useState(false)
   const [descriptionFocused, setDescriptionFocused] = useState(false)
-  const [debouncedDescription, setDebouncedDescription] = useState(item.description || '')
-  const [selectedSuggestionContextText, setSelectedSuggestionContextText] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const updateField = (key: string, value: any) => {
@@ -118,61 +113,34 @@ function MobileItemCard({
 
   const resolvedItemId = getItemId()
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedDescription(item.description || '')
-    }, 180)
+  const suggestionQuery =
+    enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
+      ? item.description || ''
+      : ''
 
-    return () => window.clearTimeout(timeoutId)
-  }, [item.description])
-
-  useEffect(() => {
-    if (!resolvedItemId) {
-      setSelectedSuggestionContextText(null)
-    }
-  }, [resolvedItemId])
-
-  useEffect(() => {
-    if (!enableItemSuggestions) return undefined
-    if (item.row_type && item.row_type !== 'standard') return undefined
-    if (resolvedItemId) return undefined
-
-    const trimmedDescription = String(debouncedDescription || '').trim()
-    if (trimmedDescription.length < 2) return undefined
-    if (trimmedDescription !== String(item.description || '').trim()) return undefined
-
-    let cancelled = false
-
-    const run = async () => {
-      const exactMatch = await resolveExactItemMatch(trimmedDescription, invoice?.client_id)
-      if (cancelled || !exactMatch?.item_id) return
-      if (resolvedItemId) return
-      if (trimmedDescription !== String(item.description || '').trim()) return
-      updateField('item_id', exactMatch.item_id)
-    }
-
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [debouncedDescription, enableItemSuggestions, index, invoice?.client_id, item.description, resolvedItemId, item.row_type, onUpdate])
+  const {
+    suggestions,
+    suggestionsLoading,
+    exactMatch,
+    priceContextText,
+    handleSuggestionSelect: engineSelect,
+    clearSelection,
+  } = useItemSuggestionEngine(
+    suggestionQuery,
+    invoice?.client_id,
+    enableItemSuggestions,
+    descriptionFocused,
+    item.row_type,
+  )
 
   useEffect(() => {
-    if (!resolvedItemId) return undefined
+    if (!enableItemSuggestions) return
+    if (item.row_type && item.row_type !== 'standard') return
+    if (resolvedItemId) return
+    if (!exactMatch?.item_id) return
 
-    let cancelled = false
-
-    const run = async () => {
-      const priceContext = await loadItemPriceContext(resolvedItemId || '', invoice?.client_id)
-      if (cancelled) return
-      setSelectedSuggestionContextText(getInvoiceSuggestionPriceContextText(priceContext))
-    }
-
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [resolvedItemId, invoice?.client_id])
+    updateField('item_id', exactMatch.item_id)
+  }, [exactMatch, enableItemSuggestions, index, item.description, resolvedItemId, item.row_type, onUpdate])
 
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -181,11 +149,6 @@ function MobileItemCard({
       : null
   })()
 
-  const suggestionQuery =
-    enableItemSuggestions && descriptionFocused && String(debouncedDescription || '').trim().length >= 2
-      ? debouncedDescription
-      : ''
-  const { data: suggestions, loading: suggestionsLoading } = useItemSuggestions(suggestionQuery, 5, invoice?.client_id)
   const showSuggestions =
     enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
 
@@ -217,13 +180,12 @@ function MobileItemCard({
   }
 
   const handleSuggestionSelect = (suggestion: ItemSuggestion) => {
-    const selection = getInvoiceSuggestionSelection(suggestion)
+    const selection = engineSelect(suggestion)
     onUpdate(index, 'description', selection.description)
     updateField('item_id', selection.item_id)
     if (ctx !== 'waybill') {
       onUpdate(index, 'unit_price', selection.unit_price)
     }
-    setSelectedSuggestionContextText(selection.item_id ? getInvoiceSuggestionPriceContextText(suggestion) : null)
     setDescriptionFocused(false)
   }
 
@@ -232,7 +194,7 @@ function MobileItemCard({
     onUpdate(index, 'description', nextDescription)
     if (resolvedItemId) {
       updateField('item_id', null)
-      setSelectedSuggestionContextText(null)
+      clearSelection()
     }
   }
 
@@ -282,9 +244,9 @@ function MobileItemCard({
                 )}
               </div>
             )}
-            {resolvedItemId && selectedSuggestionContextText ? (
+            {resolvedItemId && priceContextText ? (
               <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)] whitespace-pre-line">
-                {selectedSuggestionContextText}
+                {priceContextText}
               </div>
             ) : null}
           </div>
