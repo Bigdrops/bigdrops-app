@@ -23,11 +23,11 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
 
         <div className={styles.idBlock}>
           <div className={styles.typeLabel}>Waybill No.</div>
-          <div className={styles.number}>{header.waybillNumber || '—'}</div>
+          <div className={styles.number}>{header.waybillNumber || ''}</div>
           <div style={{ marginTop: 12 }}>
             <div className={styles.typeLabel}>Dispatch Date</div>
             <div className={styles.number} style={{ fontSize: 13, color: 'var(--dv-text)' }}>
-              {header.date || '—'}
+              {header.date || ''}
             </div>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
       <div className={styles.metaGrid}>
         <div className={styles.metaCell}>
           <div className={styles.metaLabel}>Consignee / Deliver To</div>
-          <div className={styles.metaValue}>{parties.clientName || '—'}</div>
+          <div className={styles.metaValue}>{parties.clientName || ''}</div>
           {parties.clientAddress && <div className={styles.metaSub}>{parties.clientAddress}</div>}
         </div>
         <div className={styles.metaCell}>
@@ -44,15 +44,15 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
             <div>
               <div className={styles.metaSub}>Vehicle Reg:</div>
-              <div className={styles.metaValue}>{logistics.vehiclePlate || '—'}</div>
+              <div className={styles.metaValue}>{logistics.vehiclePlate || ''}</div>
             </div>
             <div>
-              <div className={styles.metaSub}>Ref No:</div>
-              <div className={styles.metaValue}>{header.poNumber || '—'}</div>
+              <div className={styles.metaSub}>P.O. No:</div>
+              <div className={styles.metaValue}>{header.poNumber || ''}</div>
             </div>
             <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
               <div className={styles.metaSub}>Driver:</div>
-              <div className={styles.metaValue}>{logistics.driverName || '—'}</div>
+              <div className={styles.metaValue}>{logistics.driverName || ''}</div>
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
                 const value = richTextToPlainText(row.cells[col.key] || '')
                 return (
                   <div key={col.key} className={col.key === 'description' ? styles.itemName : styles.metric}>
-                    {value || '—'}
+                    {value || ''}
                   </div>
                 )
               })}

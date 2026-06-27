@@ -18,6 +18,8 @@ interface QuotationViewPageProps {
   pdfOutput?: Partial<PdfOutputSettingsValue>;
   onOutputChange?: (next: PdfOutputSettingsValue) => void;
   onCustomize?: () => void;
+  selectedBankId?: string | null;
+  onBankAccountSelect?: (bankId: string) => void;
   relatedDocuments?: RelatedDocumentItem[];
   activityHistory?: ReactNode;
   attachments?: Array<{ id: string; label: string }>;
@@ -37,6 +39,8 @@ export default function QuotationViewPage({
   pdfOutput,
   onOutputChange,
   onCustomize,
+  selectedBankId,
+  onBankAccountSelect,
   relatedDocuments,
   activityHistory,
   attachments,
@@ -51,7 +55,8 @@ export default function QuotationViewPage({
 
       <BankDetailsCard 
         bankAccounts={bankAccounts}
-        selectedBankId={pdfOutput?.bankAccountId}
+        selectedBankId={selectedBankId}
+        onSelect={onBankAccountSelect}
       />
 
       <DocumentOptionsCard

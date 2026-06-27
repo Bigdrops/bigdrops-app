@@ -20,8 +20,6 @@ import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
 import { CenteredSpinner } from "@/components/loading/AppLoadingStates";
 import DocumentPage from "@/components/document-view/shared/DocumentPage";
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav";
-import { PdfBankControls } from "@/components/PdfOutputSettings";
-import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 
 import { InvoiceWorkspace } from "@/components/document-view/invoice/InvoiceWorkspace";
 import { InvoiceOverlays } from "@/components/document-view/invoice/InvoiceOverlays";
@@ -119,28 +117,12 @@ export default function ViewInvoice() {
     pdfOutput, setPdfOutput, pdfTemplateId, settingsData: settings
   });
 
-  const handleInlinePdfOutputChange = useCallback(
-    (nextPdfOutput: PdfOutputSettingsValue) => { void actions.handleSaveCustomization(nextPdfOutput); },
-    [actions.handleSaveCustomization],
-  );
-
   const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settings), [settings]);
+
+  const previewBankAccounts = useMemo(() => buildBankAccountsProjection(bankAccounts || []), [bankAccounts]);
 
   if (loading) return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
   if (!invoice) return null;
-
-  const previewBankAccounts = buildBankAccountsProjection(bankAccounts || []);
-
-  const previewControls = useMemo(
-    () => (
-      <PdfBankControls 
-        value={pdfOutput} 
-        onChange={handleInlinePdfOutputChange} 
-        bankAccounts={previewBankAccounts} 
-      />
-    ),
-    [handleInlinePdfOutputChange, pdfOutput, previewBankAccounts],
-  );
 
   return (
     <InvoiceWorkspace
@@ -160,7 +142,8 @@ export default function ViewInvoice() {
       companyName={settings?.company_name || ""}
       companySub={settings?.company_tagline || ""}
       settings={settings}
-      previewControls={previewControls}
+      onBankAccountSelect={(bankId) => actions.handleSaveCustomization({ bankAccountId: bankId })}
+      selectedBankId={pdfOutput?.bankAccountId}
       
       onBack={() => navigate("/invoices")}
       onShare={actions.handleShare}

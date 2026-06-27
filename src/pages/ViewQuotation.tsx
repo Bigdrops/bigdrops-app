@@ -2,10 +2,7 @@ import { useMemo, useState } from "react";
 import { Download, Edit3, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  PdfBankControls,
-  PdfDocumentOptionsCard,
-} from "@/components/PdfOutputSettings";
+import { PdfDocumentOptionsCard } from "@/components/PdfOutputSettings";
 import { QuotationActivityCard } from "@/components/document-view/quotation/QuotationActivityCard";
 import QuotationDocumentPreview from "@/components/document-view/quotation/QuotationDocumentPreview";
 import PdfOutputCustomizeSheet from "@/components/document-view/shared/PdfOutputCustomizeSheet";
@@ -140,12 +137,9 @@ export default function ViewQuotation() {
 
   const previewControls = useMemo(
     () => (
-      <>
-        <PdfBankControls value={pdfOutput} onChange={actions.handleInlinePdfOutputChange} bankAccounts={previewModel.previewBankAccounts} />
-        <PdfDocumentOptionsCard value={pdfOutput} onChange={actions.handleInlinePdfOutputChange} companyTagline={String(settings?.company_tagline || "")} footerText={String(settings?.footer_text || "")} />
-      </>
+      <PdfDocumentOptionsCard value={pdfOutput} onChange={actions.handleInlinePdfOutputChange} companyTagline={String(settings?.company_tagline || "")} footerText={String(settings?.footer_text || "")} />
     ),
-    [actions.handleInlinePdfOutputChange, pdfOutput, previewModel.previewBankAccounts, settings?.company_tagline, settings?.footer_text],
+    [actions.handleInlinePdfOutputChange, pdfOutput, settings?.company_tagline, settings?.footer_text],
   );
 
   if (loading) {
@@ -260,6 +254,8 @@ export default function ViewQuotation() {
           pdfOutput={pdfOutput}
           onOutputChange={actions.handleInlinePdfOutputChange}
           onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
+          selectedBankId={pdfOutput?.bankAccountId}
+          onBankAccountSelect={(bankId) => actions.handleSaveCustomization({ ...pdfOutput, bankAccountId: bankId } as any)}
           relatedDocuments={relatedDocuments}
           activityHistory={<QuotationActivityCard documentId={quotation.id} />}
           attachments={previewModel.quotationAttachments}
