@@ -1,250 +1,183 @@
-ROLE
+You are working on the BIGDROPS business platform.
 
-You are a Senior React PDF Engineer working on the BIGDROPS project.
+Stack:
+- React 19
+- Vite 7
+- TypeScript 5.9
+- Tailwind CSS 3.4
+- Supabase
+- Bun runtime
 
-Your task is to repair the CSR PDF signature section only.
+==================================================
+SKILL LOADING PROTOCOL (MANDATORY)
+==================================================
 
----
+1. Read docs/PROJECTSKILLINDEX.md.
+2. Load:
+   - Karpathy
+   - typescript-advanced-types
+   - frontend-design
+3. Read AGENTS.md.
+4. Run:
 
-REQUIRED SKILL LOADING (MANDATORY)
+bun run audit:load
 
-Before writing or modifying any code:
+before any implementation.
 
-1. Read:
+==================================================
+REPORTING PROTOCOL
+==================================================
 
-"docs/PROJECTSKIILINDEX.md"
+Save report to
 
-2. Load the following skills exactly as listed:
+docs/Task/reports/state-update-isolation-phase1.md
 
-- using-superpowers
-- react-pdf
+Include
 
-3. If the skill loader cannot locate them, manually open the files using the paths provided inside "PROJECTSKIILINDEX.md".
+- architecture summary
+- files modified
+- reference graph before
+- reference graph after
+- render flow
+- risks
+- verification
 
-4. If the required skills cannot be loaded, stop immediately and report the failure.
-
----
-
+==================================================
 OBJECTIVE
+==================================================
 
-Repair the technician signature section across every CSR PDF template.
+Implement Phase 5:
 
-Templates:
+State Update Isolation.
 
-- PulseFrame
-- SignalBands
-- Crimson
-- Zinc
+Previous phases already introduced:
 
-This is a layout repair only.
+- keyboard architecture cleanup
+- React.memo isolation
+- callback stabilization
+- computeDocument memoization
+- suggestion engine consolidation
 
-Do not redesign any other section.
+Do NOT modify any of those systems.
 
-Do not modify business logic.
+==================================================
+GOAL
+==================================================
 
-Do not modify calculations.
+Reduce unnecessary reference churn.
 
-Do not modify unrelated components.
+The objective is NOT to change business logic.
 
----
+The objective is to preserve object identity wherever data has not changed.
 
-CURRENT BUGS
+==================================================
+AUDIT
+==================================================
 
-The previous implementation is incorrect.
+Trace:
 
-Current behaviour:
+NewInvoice
 
-- Signature image does not display correctly.
-- Technician name occupies the signature drawing area.
-- The vertical divider never appears.
-- The signature box layout is broken.
+EditInvoice
 
-This implementation must be discarded.
+updateItem()
 
----
+setItems()
 
-REQUIRED LAYOUT
+group updates
 
-The signature card must be ONE bordered rectangle divided into TWO equal columns.
+item insertion
 
-Required visual layout:
+item deletion
 
-┌──────────────────────────────────────┐
-│                                      │
-│  Signature Image   │   John Doe      │
-│                    │                 │
-│   Signature        │                 │
-│                    │                 │
-└──────────────────────────────────────┘
+moveItem
 
-LEFT COLUMN
+group operations
 
-Contains ONLY:
+Identify every place where entire arrays or objects are recreated unnecessarily.
 
-- Signature image
-- "Signature" label
+==================================================
+IMPLEMENTATION
+==================================================
 
-Nothing else.
+Where safe:
 
-RIGHT COLUMN
+• preserve existing object references
 
-Contains ONLY:
+• preserve existing group references
 
-- Technician name
+• preserve existing item references
 
-Nothing else.
+• avoid cloning untouched objects
 
-No role.
+• avoid rebuilding collections unless structure actually changes
 
-No designation.
+Do NOT redesign the application.
 
-No "Technical Director".
+Do NOT introduce Redux.
 
-No stacked labels.
+Do NOT introduce Zustand.
 
-No additional text.
+Do NOT introduce Immer.
 
----
+Do NOT change APIs.
 
-REQUIRED IMPLEMENTATION
+Do NOT change calculations.
 
-Implement the layout using a true two-column React PDF structure.
+Do NOT change computeDocument.
 
-Example:
+Do NOT change document behaviour.
 
-<View style={styles.signatureCard}>
+==================================================
+DO NOT TOUCH
+==================================================
 
-  <View style={styles.leftColumn}>
-    {signatureUrl ? (
-      <Image
-        src={signatureUrl}
-        style={styles.signatureImage}
-      />
-    ) : null}
+Calculations.ts
 
-    <Text style={styles.signatureLabel}>
-      Signature
-    </Text>
-  </View>
+Suggestion Engine
 
-  <View style={styles.verticalDivider} />
+NumericInput
 
-  <View style={styles.rightColumn}>
-    <Text style={styles.nameText}>
-      {technicianName}
-    </Text>
-  </View>
+KeyboardAwareness
 
-</View>
+Rendering architecture
 
-Required style characteristics:
+Capability profiles
 
-- "signatureCard"
-  
-  - "flexDirection: "row""
+Financial logic
 
-- "leftColumn"
-  
-  - "flex: 1"
-  - centered vertically
-  - centered horizontally
+Operational document logic
 
-- "verticalDivider"
-  
-  - width: 1
-  - visible border color
-  - stretches full card height
+==================================================
+VERIFY
+==================================================
 
-- "rightColumn"
-  
-  - "flex: 1"
-  - centered vertically
-  - centered horizontally
+Run
 
-The divider MUST be its own View.
+bun run audit:load
 
-Do not fake the divider using margins, borders, or nested layouts.
+bun run typecheck
 
----
+bun run build
 
-STRICT REQUIREMENTS
+bun run test
 
-The following MUST all be true.
+==================================================
+SUCCESS
+==================================================
 
-✓ Signature image renders.
+Done when:
 
-✓ Technician name renders.
+• unchanged items retain reference equality
 
-✓ Technician name never enters the signature area.
+• unchanged groups retain reference equality
 
-✓ Signature image never enters the name area.
+• updateItem changes only affected objects
 
-✓ Vertical divider is visible.
+• insert/delete only affect required collections
 
-✓ Both columns have equal width.
+• no UI changes
 
-✓ Layout is identical across:
+• no behavioural changes
 
-- PulseFrame
-- SignalBands
-- Crimson
-- Zinc
-
----
-
-DO NOT
-
-Do NOT redesign the acknowledgement section.
-
-Do NOT change spacing outside the signature card.
-
-Do NOT remove borders.
-
-Do NOT change page flow.
-
-Do NOT modify any unrelated PDF component.
-
-Do NOT modify CsrRenderModel.
-
-Do NOT modify database logic.
-
----
-
-VALIDATION
-
-Before completion:
-
-- Run "bun run typecheck"
-- Ensure zero TypeScript errors.
-- Generate and visually verify all four PDF templates.
-
-Confirm:
-
-- Signature image appears.
-- Name appears.
-- Divider is visible.
-- Name and signature never overlap.
-- All four templates render identically.
-
-If any template still places the name inside the signature area, the task is NOT complete.
-
----
-
-DELIVERABLE
-
-After implementation, write a detailed implementation report.
-
-Save it to:
-
-"Task/reports/csr-signature-layout-repair.md"
-
-The report must include:
-
-- Root cause.
-- Files modified.
-- Components modified.
-- Exact layout changes.
-- Validation performed.
-- Typecheck results.
-- Visual verification results for all four templates.
-- Confirmation that no unrelated functionality was changed.
+• all verification passes
