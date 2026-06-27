@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
@@ -256,9 +256,9 @@ export default function NewInvoice() {
     setPdfOutput(getInvoicePdfOutput(prefill?.custom_fields))
   }, [prefill?.custom_fields])
 
-  const updateInvoice = (field: string, value: any) => setInvoice((current) => ({ ...current, [field]: value }))
+  const updateInvoice = useCallback((field: string, value: any) => setInvoice((current) => ({ ...current, [field]: value })), [])
 
-  const updateItem = (index: number, field: string, value: any) =>
+  const updateItem = useCallback((index: number, field: string, value: any) =>
     setItems((current) =>
       current.map((item, itemIndex) => {
         if (itemIndex !== index) return item
@@ -267,9 +267,9 @@ export default function NewInvoice() {
         }
         return { ...item, [field]: field === 'quantity' ? normalizeQuantity(value, 1) : value }
       }),
-    )
+    ), [])
 
-  const resetItemOverrides = (fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
+  const resetItemOverrides = useCallback((fields: { vat?: boolean; discount?: boolean; install?: boolean }) =>
     setItems((current) =>
       current.map((item) => {
         if (item.row_type !== 'standard') return item
@@ -283,9 +283,9 @@ export default function NewInvoice() {
         }
         return { ...item, ...patch }
       }),
-    )
+    ), [])
 
-  const addUngroupedItem = (insertAt: number | null = null, groupId: string | null = null, groupName = '') => {
+  const addUngroupedItem = useCallback((insertAt: number | null = null, groupId: string | null = null, groupName = '') => {
     setItems((current) => {
       const newItem: InvoiceItem = { ...makeEmptyItem(), row_type: 'standard', group_id: groupId, group_name: groupName }
       if (insertAt === null || insertAt >= current.length) {
@@ -295,16 +295,16 @@ export default function NewInvoice() {
       next.splice(insertAt, 0, { ...newItem, sort_order: insertAt })
       return next.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
     })
-  }
+  }, [])
 
-  const addItem = () => addUngroupedItem()
-  const removeItem = (index: number) =>
-    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex })))
-  const insertItemAfter = (index: number) => {
+  const addItem = useCallback(() => addUngroupedItem(), [addUngroupedItem])
+  const removeItem = useCallback((index: number) =>
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))), [])
+  const insertItemAfter = useCallback((index: number) => {
     const item = itemsRef.current[index]
     addUngroupedItem(index + 1, item?.group_id || null, item?.group_name || '')
-  }
-  const moveItem = (index: number, direction: number) => {
+  }, [addUngroupedItem])
+  const moveItem = useCallback((index: number, direction: number) => {
     const nextIndex = index + direction
     if (nextIndex < 0 || nextIndex >= items.length) return
     setItems((current) => {
@@ -379,38 +379,39 @@ export default function NewInvoice() {
 
       return current
     })
-  }
+  }, [groups, items.length])
 
-  const addGroup = () => {
+  const addGroup = useCallback(() => {
     const baseGroup = makeEmptyGroup()
-    const group: InvoiceGroup = {
-      ...baseGroup,
-      name: baseGroup.name || `Group ${groups.length + 1}`,
-      showSubtotal: !!baseGroup.showSubtotal,
-    }
+    setGroups((current) => {
+      const group: InvoiceGroup = {
+        ...baseGroup,
+        name: baseGroup.name || `Group ${current.length + 1}`,
+        showSubtotal: !!baseGroup.showSubtotal,
+      }
+      setItems((prev) => [
+        ...prev.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+        {
+          ...makeEmptyItem(),
+          row_type: 'group_header',
+          group_id: group.id,
+          group_name: group.name,
+          sort_order: prev.length,
+        } as InvoiceItem,
+      ])
+      return [...current, group]
+    })
+  }, [])
 
-    setGroups((current) => [...current, group])
-    setItems((current) => [
-      ...current.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
-      {
-        ...makeEmptyItem(),
-        row_type: 'group_header',
-        group_id: group.id,
-        group_name: group.name,
-        sort_order: current.length,
-      } as InvoiceItem,
-    ])
-  }
-
-  const updateGroupName = (groupId: string, name: string) => {
+  const updateGroupName = useCallback((groupId: string, name: string) => {
     setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, name } : group)))
     setItems((current) => current.map((item) => (item.group_id === groupId ? { ...item, group_name: name } : item)))
-  }
+  }, [])
 
-  const toggleGroupSubtotal = (groupId: string) =>
-    setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group)))
+  const toggleGroupSubtotal = useCallback((groupId: string) =>
+    setGroups((current) => current.map((group) => (group.id === groupId ? { ...group, showSubtotal: !group.showSubtotal } : group))), [])
 
-  const deleteGroup = (groupId: string) => {
+  const deleteGroup = useCallback((groupId: string) => {
     setGroups((current) => current.filter((group) => group.id !== groupId))
     setItems((current) =>
       current
@@ -421,9 +422,9 @@ export default function NewInvoice() {
             : { ...item, sort_order: itemIndex },
         ),
     )
-  }
+  }, [])
 
-  const addItemToGroup = (groupId: string) => {
+  const addItemToGroup = useCallback((groupId: string) => {
     const group = groups.find((entry) => entry.id === groupId)
     if (!group) return
 
@@ -447,9 +448,9 @@ export default function NewInvoice() {
       next.splice(insertAt + 1, 0, newItem)
       return next.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
     })
-  }
+  }, [groups])
 
-  const handleImportApply = (result: any) => {
+  const handleImportApply = useCallback((result: any) => {
     invoiceImportAdapter.applyResult({
       result,
       setColumns,
@@ -461,7 +462,7 @@ export default function NewInvoice() {
       setExtraCharges,
       setGroups,
     })
-  }
+  }, [updateInvoice])
 
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
   const documentTotals = computeDocument({
@@ -479,7 +480,7 @@ export default function NewInvoice() {
     },
   })
 
-  const handleSave = async (status: string) => {
+  const handleSave = useCallback(async (status: string) => {
     if (!invoice.client_id) {
       feedback.error('Validation Error', { description: 'Pick a client before saving' })
       return
@@ -688,7 +689,29 @@ export default function NewInvoice() {
       supabaseCalls: itemsToSave.length > 0 ? 4 : 3,
       itemRowCount: itemsToSave.length,
     })
-  }
+  }, [invoice, invoiceTitle, items, groups, initialCustomFields, customFields, additionalFields, extraCharges, chargeLabels, columns, notesTitle, termsTitle, attachments, mergeQtyUnit, discountType, discountTiming, whtType, calculationInputs, signatoryId, pdfOutput, settings?.document_prefixes, documentTotals])
+
+  const handleSaveUnpaid = useCallback(() => handleSave('unpaid'), [handleSave])
+  const handleCancel = useCallback(() => navigate('/invoices'), [navigate])
+  const handleAddHeaderField = useCallback(() => setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })]), [])
+  const handleUpdateHeaderField = useCallback((id: string | number, field: string, value: any) =>
+    setCustomFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry))), [])
+  const handleRemoveHeaderField = useCallback((id: string | number) =>
+    setCustomFields((current) => current.filter((entry) => entry.id !== id)), [])
+  const handleAddAdditionalField = useCallback(() =>
+    setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })]), [])
+  const handleUpdateAdditionalField = useCallback((id: string | number, field: string, value: any) =>
+    setAdditionalFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry))), [])
+  const handleRemoveAdditionalField = useCallback((id: string | number) =>
+    setAdditionalFields((current) => current.filter((entry) => entry.id !== id)), [])
+  const handleChargeLabelChange = useCallback((key: string, value: string) =>
+    setChargeLabels((current) => ({ ...current, [key]: value })), [])
+  const handleAddExtraCharge = useCallback((withTax: boolean) =>
+    setExtraCharges((current) => [...current, makeExtraCharge({ withTax })]), [])
+  const handleUpdateExtraCharge = useCallback((id: string | number, field: string, value: any) =>
+    setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge))), [])
+  const handleRemoveExtraCharge = useCallback((id: string | number) =>
+    setExtraCharges((current) => current.filter((charge) => charge.id !== id)), [])
 
   return (
     <Layout title="Create Invoice" hidePageHeader>
@@ -746,10 +769,10 @@ export default function NewInvoice() {
           setWhtType={setWhtType}
           saving={saving}
           primaryLabel="Create Invoice"
-          onSaveSent={() => handleSave('unpaid')}
-          onSaveDraft={() => handleSave('unpaid')}
-          onFloatingSave={() => handleSave('unpaid')}
-          onCancel={() => navigate('/invoices')}
+          onSaveSent={handleSaveUnpaid}
+          onSaveDraft={handleSaveUnpaid}
+          onFloatingSave={handleSaveUnpaid}
+          onCancel={handleCancel}
           onApplyImport={handleImportApply}
           importAdapter={invoiceImportAdapter}
           onAddItem={addItem}
@@ -763,24 +786,16 @@ export default function NewInvoice() {
           onUpdateGroupName={updateGroupName}
           onToggleGroupSubtotal={toggleGroupSubtotal}
           onDeleteGroup={deleteGroup}
-          onAddHeaderField={() => setCustomFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
-          onUpdateHeaderField={(id, field, value) =>
-            setCustomFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
-          }
-          onRemoveHeaderField={(id) => setCustomFields((current) => current.filter((entry) => entry.id !== id))}
-          onAddAdditionalField={() => setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
-          onUpdateAdditionalField={(id, field, value) =>
-            setAdditionalFields((current) =>
-              current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)),
-            )
-          }
-          onRemoveAdditionalField={(id) => setAdditionalFields((current) => current.filter((entry) => entry.id !== id))}
-          onChargeLabelChange={(key, value) => setChargeLabels((current) => ({ ...current, [key]: value }))}
-          onAddExtraCharge={(withTax) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
-          onUpdateExtraCharge={(id, field, value) =>
-            setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge)))
-          }
-          onRemoveExtraCharge={(id) => setExtraCharges((current) => extraCharges.filter((charge) => charge.id !== id))}
+          onAddHeaderField={handleAddHeaderField}
+          onUpdateHeaderField={handleUpdateHeaderField}
+          onRemoveHeaderField={handleRemoveHeaderField}
+          onAddAdditionalField={handleAddAdditionalField}
+          onUpdateAdditionalField={handleUpdateAdditionalField}
+          onRemoveAdditionalField={handleRemoveAdditionalField}
+          onChargeLabelChange={handleChargeLabelChange}
+          onAddExtraCharge={handleAddExtraCharge}
+          onUpdateExtraCharge={handleUpdateExtraCharge}
+          onRemoveExtraCharge={handleRemoveExtraCharge}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}

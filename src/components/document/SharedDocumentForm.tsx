@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useRef, useState } from 'react'
+import React, { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import ClientSelector from '@/components/ClientSelector'
 import ActionsSheet from '@/components/invoice/ActionsSheet'
 import { FormHeader } from './FormHeader'
@@ -20,7 +20,7 @@ function SheetLoadingState({ label }: { label: string }) {
   )
 }
 
-export default function SharedDocumentForm(props: any) {
+const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
   const {
     title,
     modeLabel,
@@ -107,6 +107,22 @@ export default function SharedDocumentForm(props: any) {
   } = props
 
   const [showImportSheet, setShowImportSheet] = useState(false)
+  const handleOpenImport = useCallback(() => setShowImportSheet(true), [])
+  const handleOpenTableSettings = useCallback(() => setShowColumnManager(true), [])
+  const handleUpdateReferenceLink = useCallback((idx: number, field: string, val: any) => {
+    setAttachments((prev: any[]) => prev.map((l: any, i: number) => i === idx ? { ...l, [field]: val } : l))
+  }, [])
+  const handleRemoveReferenceLink = useCallback((idx: number) => {
+    setAttachments((prev: any[]) => prev.filter((_: any, i: number) => i !== idx))
+  }, [])
+  const handleAddReferenceLink = useCallback(() => {
+    setAttachments((prev: any[]) => [...prev, { label: '', url: '', _uiKey: crypto.randomUUID() }])
+  }, [])
+  const handleClientChange = useCallback((id: string, name: string) => {
+    updateInvoice('client_id', id)
+    updateInvoice('client_name', name)
+  }, [updateInvoice])
+  const handleCloseColumnManager = useCallback(() => setShowColumnManager(false), [])
   const [showActionsSheet, setShowActionsSheet] = useState(false)
   const [showNotesTerms, setShowNotesTerms] = useState(false)
   const [showSignatory, setShowSignatory] = useState(false)
@@ -200,8 +216,8 @@ export default function SharedDocumentForm(props: any) {
             onUpdateGroupName={onUpdateGroupName}
             onToggleGroupSubtotal={onToggleGroupSubtotal}
             onDeleteGroup={onDeleteGroup}
-            onOpenImport={() => setShowImportSheet(true)}
-            onOpenTableSettings={() => setShowColumnManager(true)}
+            onOpenImport={handleOpenImport}
+            onOpenTableSettings={handleOpenTableSettings}
           />
 
           <FormCommercialTerms
@@ -250,12 +266,9 @@ export default function SharedDocumentForm(props: any) {
               showSignatory={showSignatory}
               setShowSignatory={setShowSignatory}
               referenceLinks={attachments}
-              updateReferenceLink={(idx, field, val) => {
-                const next = attachments.map((l: any, i: number) => i === idx ? { ...l, [field]: val } : l)
-                setAttachments(next)
-              }}
-              removeReferenceLink={(idx) => setAttachments(attachments.filter((_: any, i: number) => i !== idx))}
-              addReferenceLink={() => setAttachments([...attachments, { label: '', url: '', _uiKey: crypto.randomUUID() }])}
+              updateReferenceLink={handleUpdateReferenceLink}
+              removeReferenceLink={handleRemoveReferenceLink}
+              addReferenceLink={handleAddReferenceLink}
               showLinks={showLinks}
               setShowLinks={setShowLinks}
               linksSectionRef={linksRef}
@@ -283,10 +296,7 @@ export default function SharedDocumentForm(props: any) {
         allowClear={false}
         open={showClientPicker}
         onOpenChange={setShowClientPicker}
-        onClientChange={(id: string, name: string) => {
-          updateInvoice('client_id', id)
-          updateInvoice('client_name', name)
-        }}
+        onClientChange={handleClientChange}
       />
 
       <ActionsSheet
@@ -337,11 +347,13 @@ export default function SharedDocumentForm(props: any) {
             onRemoveCustom={removeCustomColumn}
             onReset={resetColumns}
             onMove={moveColumn}
-            onClose={() => setShowColumnManager(false)}
+            onClose={handleCloseColumnManager}
             onResetItemOverrides={onResetItemOverrides}
           />
         </Suspense>
       )}
     </div>
   )
-}
+})
+
+export default SharedDocumentForm

@@ -5,7 +5,7 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
-import { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
 
@@ -34,7 +34,7 @@ interface FormLineItemsProps {
   onOpenTableSettings: () => void
 }
 
-export function FormLineItems({
+export const FormLineItems = React.memo(function FormLineItems({
   items,
   groups,
   invoice,
@@ -77,11 +77,18 @@ export function FormLineItems({
     [computedGroups],
   )
 
-  const getItemNumber = (index: number) =>
-    items.slice(0, index + 1).filter((item) => item.row_type === 'standard').length
+  const getItemNumber = useCallback(
+    (index: number) => items.slice(0, index + 1).filter((item) => item.row_type === 'standard').length,
+    [items],
+  )
 
-  const getComputedAmount = (item: any) =>
-    computedAmountMap.get(item._uiKey || item.id) ?? normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0)
+  const getComputedAmount = useCallback(
+    (item: any) => computedAmountMap.get(item._uiKey || item.id) ?? normalizeQuantity(item.quantity, 1) * Number(item.unit_price || 0),
+    [computedAmountMap],
+  )
+
+  const handleMoveUp = useCallback((idx: number) => onMoveItem(idx, -1), [onMoveItem])
+  const handleMoveDown = useCallback((idx: number) => onMoveItem(idx, 1), [onMoveItem])
 
   const lineItemRows = useMemo(() => {
     const rows = []
@@ -222,8 +229,8 @@ export function FormLineItems({
               isLast={row.isLast}
               onUpdate={onUpdateItem}
               onRemove={onRemoveItem}
-              onMoveUp={(idx) => onMoveItem(idx, -1)}
-              onMoveDown={(idx) => onMoveItem(idx, 1)}
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
               onInsertBelow={onInsertItemAfter}
               isVisible={isVisible}
               getColumn={getColumn}
@@ -253,4 +260,4 @@ export function FormLineItems({
       </div>
     </div>
   )
-}
+})

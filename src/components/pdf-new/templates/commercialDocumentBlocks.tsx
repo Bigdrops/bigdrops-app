@@ -81,16 +81,11 @@ export function CommercialPartyCard({
       {party.phone ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.phone}</Text> : null}
       {party.email ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.email}</Text> : null}
       {'website' in party && party.website ? <Text style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{party.website}</Text> : null}
-      {customInfo.length > 0 ? (
-        <View style={[styles.customInfoWrap, borderColor ? { borderTopColor: borderColor } : null]}>
-          {customInfo.map((entry, idx) => (
-            <View key={`company-extra-${idx}`} style={styles.metaRow}>
-              <Text style={[styles.metaLabel, mutedColor ? { color: mutedColor } : null]}>{entry.label}</Text>
-              <Text style={[styles.metaValue, textColor ? { color: textColor } : null]}>{entry.value}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      {customInfo.length > 0
+        ? customInfo.map((entry, idx) => (
+            <Text key={`company-extra-${idx}`} style={[styles.partyLine, mutedColor ? { color: mutedColor } : null, bodyFontFamily ? { fontFamily: bodyFontFamily } : null]}>{entry.label}: {entry.value}</Text>
+          ))
+        : null}
     </View>
   )
 }
