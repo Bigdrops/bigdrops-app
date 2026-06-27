@@ -1,52 +1,53 @@
 export type AIProvider = {
+  id: string
   name: string
-  label: string
-  buildUrl: (prompt: string) => string
+  url: string
+  androidIntent: string
 }
 
 export const AI_PROVIDERS: AIProvider[] = [
   {
-    name: 'gemini',
-    label: 'Gemini',
-    buildUrl: (prompt: string) =>
-      `https://gemini.google.com/?q=${encodeURIComponent(prompt)}`,
+    id: 'gemini',
+    name: 'Gemini',
+    url: 'https://gemini.google.com',
+    androidIntent: 'intent://gemini.google.com/#Intent;scheme=https;package=com.google.android.apps.bard;end',
   },
   {
-    name: 'chatgpt',
-    label: 'ChatGPT',
-    buildUrl: (prompt: string) =>
-      `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`,
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    url: 'https://chatgpt.com',
+    androidIntent: 'intent://chatgpt.com/#Intent;scheme=https;package=com.openai.chatgpt;end',
   },
   {
-    name: 'claude',
-    label: 'Claude',
-    buildUrl: (prompt: string) =>
-      `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
+    id: 'claude',
+    name: 'Claude',
+    url: 'https://claude.ai',
+    androidIntent: 'intent://claude.ai/#Intent;scheme=https;package=com.anthropic.claude;end',
   },
   {
-    name: 'deepseek',
-    label: 'DeepSeek',
-    buildUrl: (prompt: string) =>
-      `https://chat.deepseek.com/?q=${encodeURIComponent(prompt)}`,
+    id: 'deepseek',
+    name: 'DeepSeek',
+    url: 'https://chat.deepseek.com',
+    androidIntent: 'intent://chat.deepseek.com/#Intent;scheme=https;package=com.deepseek.chat;end',
   },
   {
-    name: 'qwen',
-    label: 'Qwen',
-    buildUrl: (prompt: string) =>
-      `https://chat.qwen.ai/?q=${encodeURIComponent(prompt)}`,
+    id: 'qwen',
+    name: 'Qwen',
+    url: 'https://chat.qwen.ai',
+    androidIntent: 'intent://chat.qwen.ai/#Intent;scheme=https;package=com.tongyi.assistant;end',
   },
   {
-    name: 'kimi',
-    label: 'Kimi',
-    buildUrl: (prompt: string) =>
-      `https://kimi.moonshot.cn/?q=${encodeURIComponent(prompt)}`,
+    id: 'kimi',
+    name: 'Kimi',
+    url: 'https://kimi.moonshot.cn',
+    androidIntent: 'intent://kimi.moonshot.cn/#Intent;scheme=https;package=com.moonshot.kimichat;end',
   },
 ]
 
-export type AITarget = AIProvider['name']
+export type AITarget = AIProvider['id']
 
 export function openInAI(target: AITarget, prompt: string): void {
-  const provider = AI_PROVIDERS.find(p => p.name === target)
+  const provider = AI_PROVIDERS.find(p => p.id === target)
   if (!provider) return
 
   try {
@@ -55,5 +56,5 @@ export function openInAI(target: AITarget, prompt: string): void {
     // clipboard unavailable — open tab anyway
   }
 
-  window.open(provider.buildUrl(prompt), '_blank', 'noopener,noreferrer')
+  window.open(provider.url, '_blank', 'noopener,noreferrer')
 }

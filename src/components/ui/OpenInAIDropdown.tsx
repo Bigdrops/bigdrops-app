@@ -3,9 +3,113 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { HiSparkles } from 'react-icons/hi2'
 import { motion, AnimatePresence } from 'motion/react'
-import { OpenAI, Google, Anthropic, DeepSeek, Qwen, Moonshot } from '@lobehub/icons'
-import { AI_PROVIDERS } from '@/lib/openInAI'
 import { cn } from '@/lib/utils'
+
+interface Provider {
+  id: string
+  name: string
+  url: string
+  androidIntent: string
+}
+
+const AI_PROVIDERS: Provider[] = [
+  {
+    id: 'gemini',
+    name: 'Gemini',
+    url: 'https://gemini.google.com',
+    androidIntent: 'intent://gemini.google.com/#Intent;scheme=https;package=com.google.android.apps.bard;end',
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    url: 'https://chatgpt.com',
+    androidIntent: 'intent://chatgpt.com/#Intent;scheme=https;package=com.openai.chatgpt;end',
+  },
+  {
+    id: 'claude',
+    name: 'Claude',
+    url: 'https://claude.ai',
+    androidIntent: 'intent://claude.ai/#Intent;scheme=https;package=com.anthropic.claude;end',
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    url: 'https://chat.deepseek.com',
+    androidIntent: 'intent://chat.deepseek.com/#Intent;scheme=https;package=com.deepseek.chat;end',
+  },
+  {
+    id: 'qwen',
+    name: 'Qwen',
+    url: 'https://chat.qwen.ai',
+    androidIntent: 'intent://chat.qwen.ai/#Intent;scheme=https;package=com.tongyi.assistant;end',
+  },
+  {
+    id: 'kimi',
+    name: 'Kimi',
+    url: 'https://kimi.moonshot.cn',
+    androidIntent: 'intent://kimi.moonshot.cn/#Intent;scheme=https;package=com.moonshot.kimichat;end',
+  },
+]
+
+function navigateToProvider(url: string, androidIntent: string) {
+  const isAndroid = /Android/i.test(navigator.userAgent)
+  if (isAndroid && androidIntent) {
+    window.location.href = androidIntent
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
+
+function ProviderIcon({ providerId }: { providerId: string }) {
+  const size = 20
+
+  switch (providerId) {
+    case 'gemini':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#1A73E8" />
+          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">G</text>
+        </svg>
+      )
+    case 'chatgpt':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#10A37F" />
+          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">C</text>
+        </svg>
+      )
+    case 'claude':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#D97757" />
+          <path d="M6.5 13V7.2c0-1.7 1.1-2.6 2.4-2.6.8 0 1.4.3 1.7.8l1.2-1.2C11 3.5 10.1 3 9.1 3 7 3 5.4 4.6 5.4 6.9v6.1h1.1zM12.5 13V6.8c0-1.7 1.1-2.6 2.4-2.6.8 0 1.4.3 1.7.8l1.2-1.2C17 3 16.1 2.5 15.1 2.5c-2.1 0-3.6 1.6-3.6 3.9V13h1zM6.5 13h1V19h1V13h1V12H6.5v1z" fill="#fff" />
+        </svg>
+      )
+    case 'deepseek':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#2B5BED" />
+          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">D</text>
+        </svg>
+      )
+    case 'qwen':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#615CED" />
+          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">Q</text>
+        </svg>
+      )
+    case 'kimi':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#000000" />
+          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">K</text>
+        </svg>
+      )
+    default:
+      return null
+  }
+}
 
 interface OpenInAIDropdownProps {
   prompt: string
@@ -13,64 +117,6 @@ interface OpenInAIDropdownProps {
   onCloseAfterSelect?: () => void
   className?: string
   disabled?: boolean
-}
-
-const ANDROID_CONFIG: Record<string, { packageName: string; playStoreUrl: string }> = {
-  gemini: {
-    packageName: 'com.google.android.apps.bard',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.google.android.apps.bard',
-  },
-  chatgpt: {
-    packageName: 'com.openai.chatgpt',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.openai.chatgpt',
-  },
-  claude: {
-    packageName: 'com.anthropic.claude',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.anthropic.claude',
-  },
-  deepseek: {
-    packageName: 'com.deepseek.chat',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.deepseek.chat',
-  },
-  qwen: {
-    packageName: 'com.tongyi.assistant',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.tongyi.assistant',
-  },
-  kimi: {
-    packageName: 'com.moonshot.kimichat',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.moonshot.kimichat',
-  },
-}
-
-function ProviderIcon({ providerName }: { providerName: string }) {
-  const size = 20
-
-  switch (providerName) {
-    case 'gemini':
-      return <Google.Color size={size} />
-    case 'chatgpt':
-      return <OpenAI size={size} style={{ color: OpenAI.colorPrimary }} />
-    case 'claude':
-      return <Anthropic size={size} style={{ color: Anthropic.colorPrimary }} />
-    case 'deepseek':
-      return <DeepSeek.Color size={size} />
-    case 'qwen':
-      return <Qwen.Color size={size} />
-    case 'kimi':
-      return <Moonshot size={size} style={{ color: Moonshot.colorPrimary }} />
-    default:
-      return null
-  }
-}
-
-function openApp(url: string, androidPkg: string, playStoreUrl: string) {
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
-  if (isAndroid) {
-    const clean = url.replace(/^https?:\/\//, '')
-    window.location.href = `intent://${clean}#Intent;scheme=https;package=${androidPkg};S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end;`
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
 }
 
 export function OpenInAIDropdown({
@@ -121,22 +167,15 @@ export function OpenInAIDropdown({
     setIsOpen(prev => !prev)
   }
 
-  const handleProviderClick = (providerName: string) => {
-    console.log('[OpenInAI] handleProviderClick fired', providerName)
-    const provider = AI_PROVIDERS.find(p => p.name === providerName)
+  const handleProviderClick = (providerId: string) => {
+    const provider = AI_PROVIDERS.find(p => p.id === providerId)
     if (!provider) return
 
-    void navigator.clipboard.writeText(prompt).catch(() => {})
+    navigator.clipboard.writeText(prompt).catch(() => {})
 
-    const android = ANDROID_CONFIG[provider.name]
-    const url = provider.buildUrl(prompt)
-    if (android) {
-      openApp(url, android.packageName, android.playStoreUrl)
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer')
-    }
+    navigateToProvider(provider.url, provider.androidIntent)
 
-    onProviderSelect?.(provider.name, provider.label)
+    onProviderSelect?.(provider.id, provider.name)
     onCloseAfterSelect?.()
     setIsOpen(false)
   }
@@ -175,13 +214,13 @@ export function OpenInAIDropdown({
             >
               {AI_PROVIDERS.map((provider) => (
                 <button
-                  key={provider.name}
+                  key={provider.id}
                   type="button"
-                  onClick={() => handleProviderClick(provider.name)}
-                  title={provider.label}
+                  onClick={() => handleProviderClick(provider.id)}
+                  title={provider.name}
                   className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
                 >
-                  <ProviderIcon providerName={provider.name} />
+                  <ProviderIcon providerId={provider.id} />
                 </button>
               ))}
             </motion.div>
