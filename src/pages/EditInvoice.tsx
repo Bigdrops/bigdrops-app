@@ -457,7 +457,10 @@ export default function EditInvoice() {
     )
   }
 
-  const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
+  const calculationInputs = useMemo(
+    () => buildCalculationInputs({ invoice, discountType, discountTiming, whtType }),
+    [invoice?.vat, invoice?.discount, invoice?.wht, discountType, discountTiming, whtType],
+  )
   const documentTotals = useMemo(() => {
     return computeDocument({
       items,
