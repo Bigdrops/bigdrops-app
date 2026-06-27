@@ -6,6 +6,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Wand2, Copy, Check, ClipboardPaste, Info } from 'lucide-react'
+import { HiSparkles } from 'react-icons/hi2'
 import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { OpenInAIDropdown } from '@/components/ui/OpenInAIDropdown'
@@ -122,6 +123,7 @@ export function JsonImportUI({
               className="h-8 rounded-lg text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[hsl(142_46%_28%)] bg-[hsl(142_71%_45%/0.15)] hover:brightness-95 px-[var(--bd-space-md)] transition-colors"
             >
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+              {!copied && <HiSparkles size={14} className="text-[#1e40af] mr-1" />}
               {copied ? 'Copied' : 'AI Prompt'}
             </Button>
             <OpenInAIDropdown
