@@ -1,162 +1,267 @@
-### Role
-Senior Full-Stack React + Supabase Engineer specializing in form state integrity, import pipelines, and production debugging.
+You are working on the BIGDROPS business platform.
 
----
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
+Runtime: Bun. Never use npm or yarn.
 
-### Goal
-Fix the CSR JSON import regression where CSR import shows success but imported data (especially materials and form hydration) is not actually persisted or reflected in UI/state.
+==================================================
+SKILL LOADING PROTOCOL (MANDATORY)
 
-You MUST ignore any prior assumption that this issue is already fixed or committed. Treat the system as broken until proven otherwise by runtime verification.
-
----
-
-### Context
-Project: BIGDROPS business platform
-
-Stack:
-- React 19
-- Vite 7
-- TypeScript 5.9
-- Supabase (Postgres)
-- Bun runtime
-- Tailwind CSS 3.4
-
-Critical Modules:
-- CSR form system (CsrFormScreen, NewCSR, EditCSR)
-- CSR import system (CsrImportSheet, csrImport.ts, csrService.ts)
-- Import pipeline: normalize → resolve → apply
-- Supabase csrs table
-
-Known Symptom:
-- Import UI shows “successfully imported”
-- CSR fields do NOT appear in form after import
-- materialsRows is NOT populated correctly
-- save pipeline relies on serializeCsrMaterials(materialsRows)
-- imported materials are lost due to state mismatch
-
----
-
-### MANDATORY SKILL LOADING PROTOCOL
-You MUST load and follow real project skills only:
-
-1. Read: docs/PROJECTSKIILINDEX.md
-2. Load:
-   - supabase-postgres-best-practices
+1. Read "docs/PROJECTSKILLINDEX.md" first.
+2. Load the following skills:
+   - Karpathy
+   - frontend-design
    - typescript-advanced-types
-   - vercel-react-best-practices
-   - shadcn
-3. If any skill file is missing or unreadable:
-   - STOP
-   - fall back to direct file inspection
-   - DO NOT continue with assumptions
-4. Read AGENTS.md before making any code changes
+3. Attempt to load each skill through the skill system. If loading fails, fallback to reading the corresponding files from ".claude/skills" or the project skill directory.
+4. If any required skill cannot be read, stop immediately and report the error.
+5. Read "AGENTS.md" completely before making any code changes.
+
+==================================================
+REPORTING PROTOCOL (MANDATORY)
+
+Save a detailed implementation report to:
+
+"docs/Task/reports/bank-details-view-selection-refinement.md"
+
+The report must include:
+
+- Root Cause Analysis
+- Files Modified
+- UI Behaviour Before/After
+- Hook Order Verification
+- State Flow
+- Verification Results
+- Risks
+
+==================================================
+CONTEXT
+
+The previous implementation partially reused the existing PDF bank account selection infrastructure.
+
+However, it introduced two major problems:
+
+1. Invoice View now crashes with React error #310.
+2. The requested UX was not implemented.
+
+The user never requested an additional "Switch Account" control.
+
+The user requested that the existing Bank Details section itself becomes the selector.
+
+This implementation must correct the architecture, not patch around it.
+
+==================================================
+OBJECTIVE
+
+Redesign the Bank Details section so it becomes the single place for viewing and selecting payment accounts.
+
+The Bank Details card must:
+
+- display the active account
+- expand/collapse independently
+- allow selecting another account directly
+- immediately update the PDF selection
+- never require a second selector elsewhere
+
+The previous PdfBankControls duplication should be removed if it is no longer necessary.
+
+==================================================
+REQUIRED UX
+
+Collapsed:
+
+Bank Details ▼
+
+✓ FCMB
+Jaiyeola Monday
+2238393012
+
+Nothing else is shown.
+
+When expanded:
+
+Bank Details ▲
+
+✓ Active
+FCMB
+Jaiyeola Monday
+2238393012
 
 ---
 
-### CRITICAL INSTRUCTION (NON-NEGOTIABLE)
-- Ignore any previous agent claim that this issue is already fixed or committed (including any git hash references).
-- Re-validate everything from source code and runtime behavior.
-- Do NOT assume correctness from commit history.
+○ UBA
+Sun and Shield Power Solutions
+1024829598
 
 ---
 
-### Assumptions
-- CSR import pipeline exists but is not reliably hydrating UI state
-- materialsRows is the single source of truth for materials before save
-- Supabase schema already supports CSR fields including materials_used and engine_no
+○ Zenith
+...
 
----
+Clicking another account:
 
-### Success Criteria
-- Imported CSR data immediately appears in UI after import
-- materialsRows is correctly populated from import payload
-- serializeCsrMaterials(materialsRows) receives correct data at save time
-- CSR saved record in Supabase matches imported data
-- No regression in manual CSR creation/edit flows
-- engine_no remains optional and non-blocking
-- Toast success only triggers when UI state is actually hydrated
+- immediately moves the Active indicator
+- updates bankAccountId
+- saves using the existing persistence mechanism
+- updates PDF output
+- DOES NOT collapse the section
 
----
+==================================================
+IMPORTANT UX RULES
 
-### Constraints
-- Do NOT modify Supabase schema unnecessarily
-- Do NOT remove serializeCsrMaterials
-- Do NOT introduce duplicate sources of truth
-- Do NOT rely on git history as proof of correctness
-- Do NOT assume any fix exists unless verified in runtime code path
+The chevron performs ONE responsibility only:
 
----
+- expand
+- collapse
 
-### Required Investigation (MUST DO FIRST)
-Before writing any fix:
+Nothing else.
 
-1. Trace CSR import flow end-to-end:
-   - CsrImportSheet.tsx → apply import handler
-   - csrImport adapter → parsed output structure
-   - csrService → sanitize and save logic
-   - NewCSR / EditCSR → state hydration
+Selecting an account performs ONE responsibility only:
 
-2. Verify:
-   - Where materialsRows is populated (if at all)
-   - Whether imported materials are lost before reaching form state
-   - Whether CSR object is diverging from UI state
+- change active account
 
-3. Explicitly confirm actual runtime disconnect point
+Nothing else.
 
----
+These responsibilities must never be coupled.
 
-### Required Fix Strategy
-You MUST implement a single-source-of-truth fix:
+==================================================
+REMOVE DUPLICATED UI
 
-1. Ensure JSON import hydrates:
-   - materialsRows state directly (NOT csr.materials_used string)
+Review whether PdfBankControls is still required.
 
-2. Ensure applyResult maps:
-   - imported materials → UI array structure
+If BankDetailsCard now performs account selection completely, remove the duplicated selector from Invoice and Quotation view pages.
 
-3. Ensure save pipeline remains:
-   - serializeCsrMaterials(materialsRows) as ONLY serializer
+There must be only ONE account-selection interface.
 
-4. Ensure engine_no:
-   - is mapped normally into CSR form state
-   - remains optional and non-blocking
+==================================================
+INVOICE CRASH
 
----
+Investigate and fix the React #310 error.
 
-### Validation (MANDATORY REAL TESTING)
-You must manually verify:
+Do not guess.
 
-1. Import CSR JSON with materials
-   → materialsRows is populated immediately
+Determine the exact cause.
 
-2. Open CSR form after import
-   → materials are visible in UI
+Verify:
 
-3. Save CSR
-   → Supabase record contains correct materials
+- no conditional hook execution
+- no hooks after conditional returns
+- no hook order changes between renders
+- no render path changes violating Rules of Hooks
 
-4. Reload CSR
-   → persistence is correct
+If another cause is found, document it with evidence.
 
-5. Manual CSR creation still works
+==================================================
+QUOTATION VIEW
 
-6. Import without materials does not break form
+Ensure the Quotation page receives the identical behaviour.
 
-7. Success toast only triggers after real hydration success
+Invoice and Quotation must remain visually and functionally identical.
 
----
+Do not implement the feature differently in each screen.
 
-### Deliverables
-1. Root cause (verified, not assumed)
-2. File-level patch changes
-3. Explanation of state breakdown (if found)
-4. Final verdict:
-   - FIXED or BLOCKED (with real reason, not assumptions)
+==================================================
+STATE MANAGEMENT
 
----
+Reuse the existing persistence.
 
-### If Blocked
-If any part of the system contradicts assumptions:
-- STOP immediately
-- report actual observed flow
-- do not proceed with patching until root cause is confirmed
+Reuse the existing bankAccountId.
+
+Reuse the existing save mechanism.
+
+Do NOT introduce:
+
+- new database columns
+- new tables
+- duplicated state
+- duplicated selectors
+
+==================================================
+STRICT SCOPE
+
+Modify only the components required to:
+
+- fix the React crash
+- redesign BankDetailsCard
+- remove duplicated selector UI
+- wire account selection into existing persistence
+- ensure Invoice and Quotation behave identically
+
+Do not modify Settings.
+
+Do not modify the PDF renderer.
+
+Do not redesign unrelated document sections.
+
+==================================================
+VERIFICATION
+
+Run in this exact order:
+
+1. bun run audit:load
+2. bun run typecheck
+3. bun run build
+
+Manual verification:
+
+Invoice:
+
+- opens without React #310
+- Bank Details collapsed by default
+- active account visible
+- expand works
+- collapse works
+- selecting another account updates immediately
+- PDF uses new account
+- refresh persists selection
+
+Quotation:
+
+Repeat every verification above.
+
+Regression:
+
+- no duplicate selector
+- no duplicated state
+- no broken hooks
+- no console errors
+- no React warnings
+
+==================================================
+OUTPUT
+
+Provide:
+
+1. Root Cause of React #310
+2. Why it occurred
+3. Files modified
+4. Before/After UI description
+5. State flow
+6. Verification evidence
+7. Risks
+8. Confirmation that Invoice and Quotation now share identical behaviour
+
+==================================================
+STOP CONDITION
+
+Stop only after:
+
+- React #310 is resolved.
+- BankDetailsCard is the only selector.
+- Invoice and Quotation behave identically.
+- PDF uses the selected account.
+- No duplicate bank-selection UI remains.
+- All verification passes.
+
+==================================================
+SUCCESS CRITERIA
+
+Done means:
+
+- Invoice no longer crashes.
+- Quotation implements the same UX.
+- Bank Details is collapsed by default.
+- The active account is immediately visible.
+- The chevron only expands/collapses.
+- Clicking an account only changes the active account.
+- There is only one bank-selection interface.
+- Existing persistence is reused.
+- No new schema or architectural duplication is introduced.
