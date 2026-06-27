@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
@@ -442,20 +442,22 @@ export default function EditInvoice() {
   }
 
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
-  const documentTotals = computeDocument({
-    items,
-    columns,
-    document: {
-      ...invoice,
-      workmanship: Number(invoice.workmanship || 0),
-      transportation: Number(invoice.transportation || 0),
-      shipping: Number(invoice.shipping || 0),
-    },
-    cf: {
-      extraCharges,
-      calculationInputs,
-    },
-  })
+  const documentTotals = useMemo(() => {
+    return computeDocument({
+      items,
+      columns,
+      document: {
+        ...invoice,
+        workmanship: Number(invoice.workmanship || 0),
+        transportation: Number(invoice.transportation || 0),
+        shipping: Number(invoice.shipping || 0),
+      },
+      cf: {
+        extraCharges,
+        calculationInputs,
+      },
+    })
+  }, [items, columns, extraCharges, calculationInputs, invoice])
 
   const handleSave = async (status: string) => {
     if (!invoice.client_id) {

@@ -465,20 +465,22 @@ export default function NewInvoice() {
   }, [updateInvoice])
 
   const calculationInputs = buildCalculationInputs({ invoice, discountType, discountTiming, whtType })
-  const documentTotals = computeDocument({
-    items,
-    columns,
-    document: {
-      ...invoice,
-      workmanship: Number(invoice.workmanship || 0),
-      transportation: Number(invoice.transportation || 0),
-      shipping: Number(invoice.shipping || 0),
-    },
-    cf: {
-      extraCharges,
-      calculationInputs,
-    },
-  })
+  const documentTotals = useMemo(() => {
+    return computeDocument({
+      items,
+      columns,
+      document: {
+        ...invoice,
+        workmanship: Number(invoice.workmanship || 0),
+        transportation: Number(invoice.transportation || 0),
+        shipping: Number(invoice.shipping || 0),
+      },
+      cf: {
+        extraCharges,
+        calculationInputs,
+      },
+    })
+  }, [items, columns, extraCharges, calculationInputs, invoice])
 
   const handleSave = useCallback(async (status: string) => {
     if (!invoice.client_id) {
