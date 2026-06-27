@@ -42,28 +42,22 @@ const ANDROID_CONFIG: Record<string, { packageName: string; playStoreUrl: string
   },
 }
 
-const FALLBACK_COLORS: Record<string, string> = {
-  chatgpt: OpenAI.colorPrimary,
-  claude: Anthropic.colorPrimary,
-  kimi: Moonshot.colorPrimary,
-}
-
 function ProviderIcon({ providerName }: { providerName: string }) {
-  const props = { size: 20 }
+  const size = 20
 
   switch (providerName) {
     case 'gemini':
-      return <Google.Color {...props} />
+      return <Google.Color size={size} />
     case 'chatgpt':
-      return <OpenAI.Mono {...props} style={{ color: FALLBACK_COLORS.chatgpt }} />
+      return <OpenAI size={size} style={{ color: OpenAI.colorPrimary }} />
     case 'claude':
-      return <Anthropic.Mono {...props} style={{ color: FALLBACK_COLORS.claude }} />
+      return <Anthropic size={size} style={{ color: Anthropic.colorPrimary }} />
     case 'deepseek':
-      return <DeepSeek.Color {...props} />
+      return <DeepSeek.Color size={size} />
     case 'qwen':
-      return <Qwen.Color {...props} />
+      return <Qwen.Color size={size} />
     case 'kimi':
-      return <Moonshot.Mono {...props} style={{ color: FALLBACK_COLORS.kimi }} />
+      return <Moonshot size={size} style={{ color: Moonshot.colorPrimary }} />
     default:
       return null
   }
