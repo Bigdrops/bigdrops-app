@@ -18,7 +18,7 @@ export default function KeyboardAwareness() {
 
     function onViewportChange() {
       if (debounceTimer !== undefined) clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(syncKeyboardState, 150)
+      debounceTimer = setTimeout(syncKeyboardState, 30)
     }
 
     visualViewport?.addEventListener('resize', onViewportChange)

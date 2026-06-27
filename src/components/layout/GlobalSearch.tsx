@@ -55,7 +55,7 @@ export function GlobalSearch() {
   const toggle = () => {
     setIsOpen(!isOpen)
     if (!isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => inputRef.current?.focus(), 350)
     } else {
       setQuery('')
     }
@@ -103,7 +103,7 @@ export function GlobalSearch() {
         size="icon"
         onClick={toggle}
         className={cn(
-          "h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950",
+          "h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center justify-center transition-all duration-300 ease-out outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950",
           isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100"
         )}
         aria-label="Search"
@@ -123,8 +123,8 @@ export function GlobalSearch() {
         className={cn(
           "fixed right-4 top-4 z-[70] w-[calc(100vw-32px)] overflow-hidden rounded-[26px] border border-border/80 bg-card shadow-2xl transition-all duration-300 ease-out sm:absolute sm:right-0 sm:top-0 sm:w-[420px]",
           isOpen
-            ? "translate-y-0 opacity-100 scale-100 visible"
-            : "-translate-y-4 opacity-0 scale-95 invisible"
+            ? "translate-y-0 opacity-100 scale-100 pointer-events-auto"
+            : "-translate-y-4 opacity-0 scale-95 pointer-events-none"
         )}
       >
         <div className="p-3">

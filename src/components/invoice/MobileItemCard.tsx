@@ -221,7 +221,7 @@ function MobileItemCard({
               className="min-h-[38px] w-full resize-none rounded-[8px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[13px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
             />
             {showSuggestions && (suggestionsLoading || (suggestions && suggestions.length > 0)) && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-[280px] overflow-y-auto overscroll-contain rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-lg">
                 {suggestionsLoading ? (
                   <div className="p-3 text-xs text-[var(--bd-text3)]">Loading suggestions...</div>
                 ) : (

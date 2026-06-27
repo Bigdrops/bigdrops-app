@@ -79,7 +79,7 @@
 
 html {
   background: var(--dv-bg);
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
