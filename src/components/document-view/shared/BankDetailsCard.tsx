@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, CreditCard, Check } from "lucide-react";
+import { ChevronDown, CreditCard, CheckCircle2 } from "lucide-react";
 import styles from "../invoice/InvoiceWorkspace.module.css";
 import previewStyles from "./DocumentPreview.module.css";
 
@@ -36,10 +36,45 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
         </div>
       </div>
 
+      {/* Collapsed: show only the active account with prominent green styling */}
       {!isOpen && selectedBank && (
-        <div className={previewStyles.bankDetail}>
-          <div className={previewStyles.bankName}>
-            <Check size={12} style={{ marginRight: 6, color: "hsl(var(--bd-primary))" }} />
+        <div
+          style={{
+            margin: "0 18px 14px",
+            padding: "16px",
+            background: "hsl(142 46% 93%)",
+            borderRadius: "var(--bd-radius-lg)",
+            border: "2px solid hsl(142 71% 45%)",
+            boxShadow: "0 1px 3px hsl(142 71% 45% / 0.15)",
+            position: "relative",
+            transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
+          }}
+        >
+          {/* Active badge */}
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "3px 10px",
+              borderRadius: 999,
+              background: "hsl(142 71% 45%)",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              lineHeight: 1,
+            }}
+          >
+            <CheckCircle2 size={11} strokeWidth={2.5} />
+            Active
+          </div>
+
+          <div className={previewStyles.bankName} style={{ paddingRight: 60 }}>
             {selectedBank.bankName}
           </div>
           <div className={previewStyles.bankDetailValue}>{selectedBank.accountName}</div>
@@ -47,39 +82,95 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
         </div>
       )}
 
+      {/* Expanded: show all accounts */}
       {isOpen && (
         <>
           {bankAccounts.map((bank, index) => {
             const isSelected = bank.id === selectedBank?.id;
             return (
               <React.Fragment key={bank.id || index}>
-                <div 
-                  className={previewStyles.bankDetail}
+                <div
                   style={{
+                    margin: "0 18px 14px",
+                    padding: "16px",
+                    background: isSelected
+                      ? "hsl(142 46% 93%)"
+                      : "hsl(var(--bd-surface-muted))",
+                    borderRadius: "var(--bd-radius-lg)",
+                    border: isSelected
+                      ? "2px solid hsl(142 71% 45%)"
+                      : "1px solid hsl(var(--bd-border))",
+                    boxShadow: isSelected
+                      ? "0 1px 3px hsl(142 71% 45% / 0.15)"
+                      : "none",
                     cursor: onSelect ? "pointer" : "default",
-                    backgroundColor: isSelected ? "hsl(var(--bd-primary) / 0.05)" : undefined,
-                    borderLeft: isSelected ? "3px solid hsl(var(--bd-primary))" : undefined,
-                    paddingLeft: isSelected ? "12px" : undefined,
+                    position: "relative",
+                    transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s, border-width 0.15s",
                   }}
                   onClick={() => onSelect?.(bank.id)}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = "hsl(var(--bd-text-muted))";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = "hsl(var(--bd-border))";
+                    }
+                  }}
                 >
-                  <div className={previewStyles.bankName}>
-                    {isSelected ? (
-                      <Check size={12} style={{ marginRight: 6, color: "hsl(var(--bd-primary))" }} />
-                    ) : (
-                      <span style={{ marginRight: 18 }} />
-                    )}
-                    {isSelected && (
-                      <span style={{ 
-                        marginRight: "8px", 
-                        fontSize: "10px", 
-                        fontWeight: 600,
-                        color: "hsl(var(--bd-primary))",
+                  {/* Active badge */}
+                  {isSelected && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        padding: "3px 10px",
+                        borderRadius: 999,
+                        background: "hsl(142 71% 45%)",
+                        color: "#fff",
+                        fontSize: 10,
+                        fontWeight: 700,
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
-                      }}>
-                        Active
-                      </span>
+                        lineHeight: 1,
+                      }}
+                    >
+                      <CheckCircle2 size={11} strokeWidth={2.5} />
+                      Active
+                    </div>
+                  )}
+
+                  <div className={previewStyles.bankName} style={{ paddingRight: isSelected ? 60 : 0 }}>
+                    {isSelected ? (
+                      <CheckCircle2
+                        size={16}
+                        style={{
+                          marginRight: 6,
+                          color: "hsl(142 71% 45%)",
+                          verticalAlign: "text-bottom",
+                        }}
+                      />
+                    ) : (
+                      /* Unselected: empty radio circle */
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 16,
+                          height: 16,
+                          borderRadius: "50%",
+                          border: "2px solid hsl(var(--bd-border))",
+                          marginRight: 6,
+                          verticalAlign: "text-bottom",
+                          transition: "border-color 0.15s",
+                        }}
+                      />
                     )}
                     {bank.bankName}
                   </div>
@@ -87,11 +178,13 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
                   <div className={previewStyles.bankDetailValue}>{bank.accountNumber}</div>
                 </div>
                 {index < bankAccounts.length - 1 && (
-                  <div style={{ 
-                    height: 1, 
-                    backgroundColor: "hsl(var(--border))",
-                    margin: "0 16px",
-                  }} />
+                  <div
+                    style={{
+                      height: 1,
+                      backgroundColor: "hsl(var(--border))",
+                      margin: "0 16px",
+                    }}
+                  />
                 )}
               </React.Fragment>
             );
