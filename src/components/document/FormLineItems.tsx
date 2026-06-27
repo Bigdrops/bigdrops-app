@@ -1,13 +1,23 @@
-import { FileInput, FolderPlus, Plus, Settings2 } from 'lucide-react'
+import { FileInput, FolderPlus, Plus, Settings2, Trash2 } from 'lucide-react'
 import {
   SectionLabel,
   ToolbarButton,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface FormLineItemsProps {
   items: any[]
@@ -32,6 +42,7 @@ interface FormLineItemsProps {
   onDeleteGroup: (groupId: string) => void
   onOpenImport: () => void
   onOpenTableSettings: () => void
+  onClearAll?: () => void
 }
 
 export const FormLineItems = React.memo(function FormLineItems({
@@ -57,7 +68,9 @@ export const FormLineItems = React.memo(function FormLineItems({
   onDeleteGroup,
   onOpenImport,
   onOpenTableSettings,
+  onClearAll,
 }: FormLineItemsProps) {
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
   const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
 
@@ -177,15 +190,33 @@ export const FormLineItems = React.memo(function FormLineItems({
       </SectionLabel>
 
       <div className="mb-3 flex items-center gap-2 border-b border-[var(--bd-border-soft)] py-2">
+          <div className="mr-1 text-[11px] font-mono font-bold text-[var(--bd-text3)]">
+            {lineItemsCount} {lineItemsCount === 1 ? 'row' : 'rows'}
+          </div>
+          <ToolbarButton onClick={onAddItem} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
+            <Plus className="h-3.5 w-3.5" />
+            <span className="text-[12px]">Add</span>
+          </ToolbarButton>
+          {onAddGroup && (
+            <ToolbarButton onClick={onAddGroup} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
+              <FolderPlus className="h-3.5 w-3.5" />
+              <span className="text-[12px]">Group</span>
+            </ToolbarButton>
+          )}
           <ToolbarButton onClick={onOpenImport} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <FileInput className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Import Items</span>
+            <span className="text-[12px]">Import</span>
           </ToolbarButton>
+          {onClearAll && lineItemsCount > 0 && (
+            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="text-[12px]">Clear</span>
+            </ToolbarButton>
+          )}
           <ToolbarButton onClick={onOpenTableSettings} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <Settings2 className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Table Settings</span>
+            <span className="text-[12px]">Settings</span>
           </ToolbarButton>
-          <div className="ml-auto text-[11px] font-mono text-[var(--bd-text3)]">Rows</div>
       </div>
 
       <div className="space-y-0">
@@ -257,6 +288,29 @@ export const FormLineItems = React.memo(function FormLineItems({
           </button>
         )}
       </div>
+
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all {lineItemsCount} line items and {groups.length} {groups.length === 1 ? 'group' : 'groups'} from this document. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onClearAll?.()
+                setShowClearConfirm(false)
+              }}
+              className="bg-[var(--bd-rose)] text-white hover:bg-[var(--bd-rose)]/90"
+            >
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 })

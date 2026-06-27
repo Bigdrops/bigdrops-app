@@ -306,15 +306,20 @@ export default function EditInvoice() {
         const block = rows.splice(index, blockEnd - index + 1)
         const insertAt = direction < 0
           ? (() => {
-              if (index === 0) return 0
-              const remainder = rows
+              if (rows.length === 0) return 0
               for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-                if (remainder[cursor].row_type === 'group_header') return cursor
+                if (rows[cursor].row_type === 'group_header') {
+                  let prevEnd = cursor
+                  for (let sub = cursor + 1; sub < rows.length; sub += 1) {
+                    if (rows[sub].row_type === 'group_header') break
+                    if (rows[sub].group_id === rows[cursor].group_id) prevEnd = sub
+                  }
+                  return prevEnd + 1
+                }
               }
-              return index - 1 >= 0 ? index - 1 : 0
+              return 0
             })()
           : (() => {
-              if (index >= rows.length) return rows.length
               for (let cursor = index; cursor < rows.length; cursor += 1) {
                 if (rows[cursor].row_type === 'group_header') {
                   let end = cursor
@@ -325,7 +330,7 @@ export default function EditInvoice() {
                   return end + 1
                 }
               }
-              return index + 1
+              return rows.length
             })()
         rows.splice(insertAt, 0, ...block)
         return rows.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
@@ -447,14 +452,9 @@ export default function EditInvoice() {
     })
   }
 
-  if (loading || !invoice) {
-    return (
-      <Layout title="Edit Invoice" hidePageHeader>
-        <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
-          Loading invoice...
-        </div>
-      </Layout>
-    )
+  const handleClearAll = () => {
+    setItems([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem])
+    setGroups([])
   }
 
   const calculationInputs = useMemo(
@@ -477,6 +477,16 @@ export default function EditInvoice() {
       },
     })
   }, [items, columns, extraCharges, calculationInputs, invoice])
+
+  if (loading || !invoice) {
+    return (
+      <Layout title="Edit Invoice" hidePageHeader>
+        <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
+          Loading invoice...
+        </div>
+      </Layout>
+    )
+  }
 
   const handleSave = async (status: string) => {
     if (!invoice.client_id) {
@@ -778,6 +788,7 @@ export default function EditInvoice() {
             setExtraCharges((current) => current.map((charge) => (charge.id === chargeId ? { ...charge, [field]: value } : charge)))
           }
           onRemoveExtraCharge={(chargeId) => setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
+          onClearAll={handleClearAll}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}

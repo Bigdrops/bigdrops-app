@@ -68,8 +68,8 @@ function ComboboxPanel({
   const inputRef = React.useRef<HTMLInputElement | null>(null)
 
   React.useEffect(() => {
-    const raf = window.requestAnimationFrame(() => inputRef.current?.focus())
-    return () => window.cancelAnimationFrame(raf)
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 50)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const filteredOptions = React.useMemo(() => {

@@ -1,6 +1,6 @@
 import { StyleSheet } from '@react-pdf/renderer'
-import { safeText } from '../core/safeText'
-import { getDescriptionMain, getDescriptionSub } from '../core/description'
+import { safeText } from '../../core/safeText'
+import { getDescriptionMain, getDescriptionSub } from '../../core/description'
 
 export { safeText as getCellText, getDescriptionMain, getDescriptionSub }
 
@@ -144,25 +144,43 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   tableRowEven: { backgroundColor: '#f8fafc' },
-  tableGroupHeader: {
-    marginTop: 14,
-    paddingTop: 8,
+  groupHeaderRow: {
+    flexDirection: 'row',
+    paddingTop: 6,
     paddingBottom: 6,
-    paddingHorizontal: 12,
-    borderTopWidth: 1.8,
-    borderTopColor: '#333333',
+    paddingHorizontal: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
     backgroundColor: '#f9fafb',
   },
-  tableGroupFooter: {
-    marginBottom: 14,
-    paddingTop: 6,
-    paddingBottom: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1.8,
-    borderBottomColor: '#333333',
-    backgroundColor: '#f9fafb',
+  groupHeaderText: {
+    textAlign: 'left',
+    fontSize: 10.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1f2937',
+  },
+  groupFooterRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingTop: 4,
+    paddingBottom: 4,
+    paddingHorizontal: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: '#333333',
+  },
+  groupSubtotalLabel: {
+    fontSize: 10,
+    color: '#6b7280',
+    fontFamily: 'Helvetica-Bold',
+    marginRight: 8,
+  },
+  groupSubtotalValue: {
+    fontSize: 10,
+    color: '#1f2937',
+    fontFamily: 'Helvetica-Bold',
   },
   tableRowInGroup: {
     borderLeftWidth: 3,
@@ -202,16 +220,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  groupSubtotalLabel: {
-    fontSize: 10,
-    color: '#6b7280',
-    fontFamily: 'Helvetica-Bold',
-  },
-  groupSubtotalValue: {
-    fontSize: 10,
-    color: '#1f2937',
-    fontFamily: 'Helvetica-Bold',
   },
   descriptionMain: {
     fontSize: 10.2,
@@ -548,5 +556,3 @@ export const styles = StyleSheet.create({
     color: '#888888',
   },
 })
-
-

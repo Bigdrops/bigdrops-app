@@ -3,15 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { HiSparkles } from 'react-icons/hi2'
 import { motion, AnimatePresence } from 'motion/react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import {
-  ChatGptIcon,
-  ClaudeIcon,
-  GoogleGeminiIcon,
-  DeepseekIcon,
-  QwenIcon,
-  KimiAiIcon,
-} from '@hugeicons/core-free-icons'
+import { OpenAI, Google, Anthropic, DeepSeek, Qwen, Moonshot } from '@lobehub/icons'
 import { AI_PROVIDERS } from '@/lib/openInAI'
 import { cn } from '@/lib/utils'
 
@@ -50,22 +42,31 @@ const ANDROID_CONFIG: Record<string, { packageName: string; playStoreUrl: string
   },
 }
 
-const PROVIDER_ICON_MAP: Record<string, typeof GoogleGeminiIcon> = {
-  gemini: GoogleGeminiIcon,
-  chatgpt: ChatGptIcon,
-  claude: ClaudeIcon,
-  deepseek: DeepseekIcon,
-  qwen: QwenIcon,
-  kimi: KimiAiIcon,
+const FALLBACK_COLORS: Record<string, string> = {
+  chatgpt: OpenAI.colorPrimary,
+  claude: Anthropic.colorPrimary,
+  kimi: Moonshot.colorPrimary,
 }
 
-const BRAND_COLORS: Record<string, string> = {
-  gemini: '#1a73e8',
-  chatgpt: '#10a37f',
-  claude: '#cc785c',
-  deepseek: '#2b5bed',
-  qwen: '#5046e5',
-  kimi: '#e6533c',
+function ProviderIcon({ providerName }: { providerName: string }) {
+  const props = { size: 20 }
+
+  switch (providerName) {
+    case 'gemini':
+      return <Google.Color {...props} />
+    case 'chatgpt':
+      return <OpenAI.Mono {...props} style={{ color: FALLBACK_COLORS.chatgpt }} />
+    case 'claude':
+      return <Anthropic.Mono {...props} style={{ color: FALLBACK_COLORS.claude }} />
+    case 'deepseek':
+      return <DeepSeek.Color {...props} />
+    case 'qwen':
+      return <Qwen.Color {...props} />
+    case 'kimi':
+      return <Moonshot.Mono {...props} style={{ color: FALLBACK_COLORS.kimi }} />
+    default:
+      return null
+  }
 }
 
 function openApp(url: string, androidPkg: string, playStoreUrl: string) {
@@ -177,21 +178,17 @@ export function OpenInAIDropdown({
               style={popupStyle}
               className="flex flex-row gap-1 rounded-lg border bg-white p-1.5 shadow-lg"
             >
-              {AI_PROVIDERS.map((provider) => {
-                const Icon = PROVIDER_ICON_MAP[provider.name]
-                if (!Icon) return null
-                return (
-                  <button
-                    key={provider.name}
-                    type="button"
-                    onClick={() => handleProviderClick(provider.name)}
-                    title={provider.label}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
-                  >
-                    <HugeiconsIcon icon={Icon} size={20} strokeWidth={1.5} color={BRAND_COLORS[provider.name]} />
-                  </button>
-                )
-              })}
+              {AI_PROVIDERS.map((provider) => (
+                <button
+                  key={provider.name}
+                  type="button"
+                  onClick={() => handleProviderClick(provider.name)}
+                  title={provider.label}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
+                >
+                  <ProviderIcon providerName={provider.name} />
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>,

@@ -3,11 +3,10 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { styles } from '../../components/pdf-new/templates/industryStyles.ts'
+import { styles } from '../../components/pdf-new/presentation/industry/industryStyles.ts'
 import { adaptCommercialDocumentData } from '../../components/pdf-new/industryAdapter.ts'
 
-const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
-const industryBlocksPath = path.resolve('src/components/pdf-new/templates/commercialDocumentBlocks.tsx')
+const industryTemplatePath = path.resolve('src/components/pdf-new/presentation/industry/IndustryTemplate.tsx')
 
 test('Industry pdf layout keeps the footer reserve compact instead of leaving a large dead zone', () => {
   assert.equal(styles.page.paddingBottom, 64)
@@ -33,7 +32,6 @@ test('Industry item images render larger and expose a clickable image link label
 
 test('Industry template applies the custom accent color to template identity surfaces beyond balance due', () => {
   const source = fs.readFileSync(industryTemplatePath, 'utf8')
-  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
 
   assert.match(source, /styles\.tableHeaderRow,[\s\S]*accentColor \? \{ backgroundColor: accentColor \} : null/)
   assert.match(source, /styles\.totalFinal,[\s\S]*accentColor \? \{ borderTopColor: accentColor \} : null/)
@@ -44,20 +42,17 @@ test('Industry template applies the custom accent color to template identity sur
   assert.match(source, /subtleSurfaceColor \? \{ backgroundColor: subtleSurfaceColor \} : null/)
 })
 
-test('Industry group rows stay spreadsheet-clean instead of using the old banner treatment', () => {
-  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
-
-  assert.equal(styles.tableGroupHeader.borderTopWidth, 1.8)
-  assert.equal(styles.tableGroupFooter.justifyContent, 'flex-end')
-  assert.match(blocksSource, /styles\.tableGroupHeader/)
-  assert.match(blocksSource, /styles\.tableGroupFooter/)
+test('Industry group rows use spreadsheet-style rendering with thin rules', () => {
+  assert.equal(styles.groupHeaderRow.borderTopWidth, 1)
+  assert.equal(styles.groupHeaderRow.borderBottomWidth, 1)
+  assert.equal(styles.groupFooterRow.borderBottomWidth, 2)
 })
 
-test('Industry group footer stays quiet and does not render subtotal label text', () => {
-  const blocksSource = fs.readFileSync(industryBlocksPath, 'utf8')
-
-  assert.doesNotMatch(blocksSource, /Group Subtotal/)
-  assert.doesNotMatch(blocksSource, /groupSubtotalLabel \?/)
+test('Industry group footer renders subtotal label and value', () => {
+  const source = fs.readFileSync(industryTemplatePath, 'utf8')
+  assert.match(source, /shouldShowGroupSubtotal/)
+  assert.match(source, /getGroupSubtotal/)
+  assert.match(source, /Subtotal/)
 })
 
 test('Industry PDF receives merged qty-unit as a visible fixed-width token', () => {

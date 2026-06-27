@@ -1,43 +1,42 @@
 import { Text, View } from '@react-pdf/renderer'
-import type { CommercialDocumentData } from '../industryAdapter'
-import { styles } from '../templates/industryStyles'
+import type { CommercialDocumentData } from '../../industryAdapter'
+import { styles } from './industryStyles'
+import { getGroupLabel } from '../../engine/group'
 
-export type GroupRowProps = {
+type GroupHeaderRowProps = {
   row: CommercialDocumentData['table']['rows'][number]
   rowIdx: number
   ruleColor?: string | null
-  surfaceColor?: string | null
   textColor?: string | null
-  mutedColor?: string | null
   headerFontFamily?: string
-  bodyFontFamily?: string
 }
 
-export function CommercialGroupHeaderRow({
+export function GroupHeaderRow({
   row,
   rowIdx,
   ruleColor,
-  surfaceColor,
   textColor,
   headerFontFamily,
-}: GroupRowProps) {
+}: GroupHeaderRowProps) {
+  const label = getGroupLabel(row)
+
   return (
     <View
       key={`group-h-${rowIdx}`}
       style={[
-        styles.tableGroupHeader,
-        ruleColor ? { borderTopColor: ruleColor } : null,
-        surfaceColor ? { backgroundColor: surfaceColor } : null,
+        styles.groupHeaderRow,
+        ruleColor ? { borderTopColor: ruleColor, borderBottomColor: ruleColor } : null,
       ]}
+      wrap={false}
     >
       <Text
         style={[
-          styles.groupTitleCell,
+          styles.groupHeaderText,
           textColor ? { color: textColor } : null,
           headerFontFamily ? { fontFamily: headerFontFamily } : null,
         ]}
       >
-        {row.groupName || row.groupLabel || ''}
+        {label}
       </Text>
     </View>
   )

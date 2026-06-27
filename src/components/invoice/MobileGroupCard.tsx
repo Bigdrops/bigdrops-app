@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { memo, useCallback } from 'react'
-import { Plus, X } from 'lucide-react'
+import { memo, useCallback, useState } from 'react'
+import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import MobileItemCard from './MobileItemCard'
 import type { Invoice, InvoiceItem, InvoiceGroup, ColumnConfig } from '../../domain/invoice/types'
@@ -56,14 +56,27 @@ function MobileGroupCard({
 }: MobileGroupCardProps) {
   const subtotalOn = !!group.showSubtotal
   const groupId = group.id || ''
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleMoveUp = useCallback((itemIdx: number) => onMoveItem(itemIdx, -1), [onMoveItem])
   const handleMoveDown = useCallback((itemIdx: number) => onMoveItem(itemIdx, 1), [onMoveItem])
+  const handleUngroupItem = useCallback((itemIdx: number) => {
+    onUpdateItem(itemIdx, 'group_id', null)
+    onUpdateItem(itemIdx, 'group_name', '')
+  }, [onUpdateItem])
 
   return (
     <div className="border-b border-[var(--bd-border-soft)] bg-[var(--bd-bg)]">
       {/* Group Header */}
       <div className="flex items-center gap-3 border-b border-[var(--bd-indigo-border)] bg-gradient-to-br from-[var(--bd-indigo-bg)] to-[#f0f4ff] px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[var(--bd-indigo)]"
+          aria-label={collapsed ? 'Expand group' : 'Collapse group'}
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
         <div className="h-7 w-1 rounded-full bg-[var(--bd-indigo)]" />
         <div className="min-w-0 flex-1">
           <Input
@@ -75,6 +88,7 @@ function MobileGroupCard({
         </div>
 
         <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-[var(--bd-indigo)] opacity-50">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
           <button
             type="button"
             onClick={() => onDeleteGroup(groupId)}
@@ -87,6 +101,7 @@ function MobileGroupCard({
       </div>
 
       {/* Group Body */}
+      {!collapsed && (
       <div className="relative bg-[var(--bd-surface)]">
         {/* Left Indigo Rule for family connection */}
         <div className="absolute bottom-0 left-0 top-0 w-1 bg-[var(--bd-indigo-border)]" />
@@ -115,6 +130,7 @@ function MobileGroupCard({
                 onMoveUp={handleMoveUp}
                 onMoveDown={handleMoveDown}
                 onInsertBelow={onInsertItemAfter}
+                onUngroup={handleUngroupItem}
                 isVisible={isVisible}
                 getColumn={getColumn}
               />
@@ -122,6 +138,7 @@ function MobileGroupCard({
           )}
         </div>
       </div>
+      )}
 
       {/* Group Footer - Visual Closing Treatment */}
       <div className="flex items-center justify-between border-t border-[var(--bd-indigo-border)] bg-gradient-to-tr from-[#f8faff] to-[var(--bd-indigo-bg)] px-4 py-2.5">

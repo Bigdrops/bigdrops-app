@@ -351,14 +351,6 @@ export function useQuotationLineItems({
           return endIndex;
         };
 
-        const getBlockRange = (startIndex: number) => {
-          const target = rows[startIndex];
-          if (!target) return { start: startIndex, end: startIndex };
-          if (target.row_type === "group_header")
-            return { start: startIndex, end: getGroupBlockEnd(startIndex) };
-          return { start: startIndex, end: startIndex };
-        };
-
         if (row.row_type === "group_header") {
           const block = rows.slice(itemIndex, getGroupBlockEnd(itemIndex) + 1);
           const remainder = [
@@ -369,22 +361,31 @@ export function useQuotationLineItems({
 
           if (direction < 0) {
             if (itemIndex === 0) return rows;
-            const previousBlockStart = (() => {
-              if (remainder[itemIndex - 1]?.row_type !== "group_header")
-                return itemIndex - 1;
-              for (let cursor = itemIndex - 1; cursor >= 0; cursor -= 1) {
-                if (remainder[cursor].row_type === "group_header")
-                  return cursor;
+            for (let cursor = itemIndex - 1; cursor >= 0; cursor -= 1) {
+              if (remainder[cursor].row_type === "group_header") {
+                let prevEnd = cursor;
+                for (let sub = cursor + 1; sub < remainder.length; sub += 1) {
+                  if (remainder[sub].row_type === "group_header") break;
+                  if (remainder[sub].group_id === remainder[cursor].group_id) prevEnd = sub;
+                }
+                insertAt = prevEnd + 1;
+                break;
               }
-              return 0;
-            })();
-            insertAt = previousBlockStart;
+            }
+            if (insertAt === itemIndex) insertAt = 0;
           } else {
-            const nextBlockStart = itemIndex;
-            insertAt =
-              nextBlockStart >= remainder.length
-                ? remainder.length
-                : getBlockRange(nextBlockStart).end + 1;
+            for (let cursor = 0; cursor < remainder.length; cursor += 1) {
+              if (remainder[cursor].row_type === "group_header" && cursor >= itemIndex) {
+                let end = cursor;
+                for (let sub = cursor + 1; sub < remainder.length; sub += 1) {
+                  if (remainder[sub].row_type === "group_header") break;
+                  if (remainder[sub].group_id === remainder[cursor].group_id) end = sub;
+                }
+                insertAt = end + 1;
+                break;
+              }
+            }
+            if (insertAt === itemIndex) insertAt = remainder.length;
           }
 
           remainder.splice(insertAt, 0, ...block);

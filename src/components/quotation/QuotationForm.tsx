@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
@@ -338,6 +338,13 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       setExtraCharges: (charges) => setExtraCharges(charges),
     })
   }
+
+  const handleClearAll = useCallback(() => {
+    lineItemsHandlers.commitGrouping(
+      [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }],
+      [],
+    )
+  }, [lineItemsHandlers])
 
   const calculationInputs = useMemo(
     () => buildCalculationInputs({ invoice: quotation, discountType, discountTiming, whtType }),
@@ -812,6 +819,7 @@ timer.phaseEnd('build-payload', buildPayloadStart, {
           setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge)))
         }
         onRemoveExtraCharge={(id: string) => setExtraCharges((current) => current.filter((charge) => charge.id !== id))}
+        onClearAll={handleClearAll}
         showColumnManager={showColumnManager}
         setShowColumnManager={setShowColumnManager}
         isMobile={isMobile}

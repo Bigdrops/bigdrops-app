@@ -337,15 +337,20 @@ export default function NewInvoice() {
         const block = rows.splice(index, blockEnd - index + 1)
         const insertAt = direction < 0
           ? (() => {
-              if (index === 0) return 0
-              const remainder = rows
+              if (rows.length === 0) return 0
               for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-                if (remainder[cursor].row_type === 'group_header') return cursor
+                if (rows[cursor].row_type === 'group_header') {
+                  let prevEnd = cursor
+                  for (let sub = cursor + 1; sub < rows.length; sub += 1) {
+                    if (rows[sub].row_type === 'group_header') break
+                    if (rows[sub].group_id === rows[cursor].group_id) prevEnd = sub
+                  }
+                  return prevEnd + 1
+                }
               }
-              return index - 1 >= 0 ? index - 1 : 0
+              return 0
             })()
           : (() => {
-              if (index >= rows.length) return rows.length
               for (let cursor = index; cursor < rows.length; cursor += 1) {
                 if (rows[cursor].row_type === 'group_header') {
                   let end = cursor
@@ -356,7 +361,7 @@ export default function NewInvoice() {
                   return end + 1
                 }
               }
-              return index + 1
+              return rows.length
             })()
         rows.splice(insertAt, 0, ...block)
         return rows.map((item, itemIndex) => ({ ...item, sort_order: itemIndex }))
@@ -733,6 +738,11 @@ export default function NewInvoice() {
   const handleRemoveExtraCharge = useCallback((id: string | number) =>
     setExtraCharges((current) => current.filter((charge) => charge.id !== id)), [])
 
+  const handleClearAll = useCallback(() => {
+    setItems([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem])
+    setGroups([])
+  }, [])
+
   return (
     <Layout title="Create Invoice" hidePageHeader>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
@@ -816,6 +826,7 @@ export default function NewInvoice() {
           onAddExtraCharge={handleAddExtraCharge}
           onUpdateExtraCharge={handleUpdateExtraCharge}
           onRemoveExtraCharge={handleRemoveExtraCharge}
+          onClearAll={handleClearAll}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}

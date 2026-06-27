@@ -59,6 +59,7 @@ interface MobileItemCardProps {
   onMoveDown: (index: number) => void
   onInsertBelow: (index: number) => void
   onDuplicate?: (index: number) => void
+  onUngroup?: (index: number) => void
   isVisible: (field: string) => boolean
   getColumn: (field: string) => any
   compact?: boolean
@@ -81,6 +82,7 @@ function MobileItemCard({
   onMoveDown,
   onInsertBelow,
   onDuplicate = undefined,
+  onUngroup = undefined,
   isVisible,
   getColumn,
   compact = false,
@@ -414,6 +416,11 @@ function MobileItemCard({
           <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isLast ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
+          {onUngroup && item.group_id && (
+            <button onClick={() => onUngroup(index)} title="Remove from group" className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)] transition hover:brightness-95">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95">
             <X className="h-3.5 w-3.5" />
           </button>
@@ -456,6 +463,7 @@ function itemCardAreEqual(prevProps: MobileItemCardProps, nextProps: MobileItemC
   if (prevProps.onMoveDown !== nextProps.onMoveDown) return false
   if (prevProps.onInsertBelow !== nextProps.onInsertBelow) return false
   if (prevProps.onDuplicate !== nextProps.onDuplicate) return false
+  if (prevProps.onUngroup !== nextProps.onUngroup) return false
   if (prevProps.isVisible !== nextProps.isVisible) return false
   if (prevProps.getColumn !== nextProps.getColumn) return false
 
@@ -474,6 +482,7 @@ function itemCardAreEqual(prevProps: MobileItemCardProps, nextProps: MobileItemC
   if (a.discount_rate !== b.discount_rate) return false
   if (a.row_type !== b.row_type) return false
   if (a.image_url !== b.image_url) return false
+  if (a.group_id !== b.group_id) return false
   if (a.make !== b.make) return false
   if (a.partNo !== b.partNo) return false
   if (a.condition !== b.condition) return false
