@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { HiSparkles } from 'react-icons/hi2'
 import { motion, AnimatePresence } from 'motion/react'
+import { ModelIcon } from '@lobehub/icons'
 import { cn } from '@/lib/utils'
 
 interface Provider {
@@ -65,12 +66,7 @@ function ProviderIcon({ providerId }: { providerId: string }) {
 
   switch (providerId) {
     case 'gemini':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#1A73E8" />
-          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">G</text>
-        </svg>
-      )
+      return <ModelIcon model="gemini" size={size} type="color" />
     case 'chatgpt':
       return (
         <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -79,12 +75,7 @@ function ProviderIcon({ providerId }: { providerId: string }) {
         </svg>
       )
     case 'claude':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#D97757" />
-          <path d="M6.5 13V7.2c0-1.7 1.1-2.6 2.4-2.6.8 0 1.4.3 1.7.8l1.2-1.2C11 3.5 10.1 3 9.1 3 7 3 5.4 4.6 5.4 6.9v6.1h1.1zM12.5 13V6.8c0-1.7 1.1-2.6 2.4-2.6.8 0 1.4.3 1.7.8l1.2-1.2C17 3 16.1 2.5 15.1 2.5c-2.1 0-3.6 1.6-3.6 3.9V13h1zM6.5 13h1V19h1V13h1V12H6.5v1z" fill="#fff" />
-        </svg>
-      )
+      return <ModelIcon model="claude" size={size} type="color" />
     case 'deepseek':
       return (
         <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
