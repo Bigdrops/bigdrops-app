@@ -227,7 +227,7 @@ export function buildApplyResult({
     const resultGroups = groups.map((g) => ({
       id: g.id,
       name: g.name,
-      showSubtotal: g.showSubtotal,
+      showSubtotal: true,
     }))
 
     return {

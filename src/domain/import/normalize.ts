@@ -169,7 +169,7 @@ export function normalizeImportData(
           return {
             id: grp.id ? String(grp.id) : generateGroupId(),
             name: groupName,
-            showSubtotal: typeof grp.showSubtotal === 'boolean' ? grp.showSubtotal : false,
+            showSubtotal: true,
             itemIds: Array.isArray(grp.itemIds) ? grp.itemIds.filter((id): id is string => typeof id === 'string') : [],
           }
         })
