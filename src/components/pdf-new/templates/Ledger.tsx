@@ -3,6 +3,7 @@ import { Page, Text, View, Image, Link } from '@react-pdf/renderer';
 import type { CommercialDocumentData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
+import { renderPdfRichText } from '../core/pdfRichText';
 import { safeText } from '../core/safeText';
 import { getDescriptionMain, getDescriptionSub } from '../core/description';
 import {
@@ -320,14 +321,30 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
               {notes?.content && (
                 <View>
                   <Text style={styles.sectionTitle}>{safeText(notes.title)}</Text>
-                  <Text style={styles.textBlock}>{safeText(notes.content)}</Text>
+                  {renderPdfRichText(notes.content, {
+                    containerStyle: styles.notesRichText,
+                    paragraphStyle: styles.notesParagraph,
+                    listStyle: styles.notesList,
+                    listItemRowStyle: styles.notesListItemRow,
+                    listMarkerStyle: styles.notesListMarker,
+                    listItemTextStyle: styles.notesListItemText,
+                    fallbackTextStyle: styles.textBlock,
+                  }) || <Text style={styles.textBlock}>{notes.plainText || ''}</Text>}
                 </View>
               )}
 
               {terms?.content && (
                 <View>
                   <Text style={styles.sectionTitle}>{safeText(terms.title)}</Text>
-                  <Text style={styles.textBlock}>{safeText(terms.content)}</Text>
+                  {renderPdfRichText(terms.content, {
+                    containerStyle: styles.notesRichText,
+                    paragraphStyle: styles.notesParagraph,
+                    listStyle: styles.notesList,
+                    listItemRowStyle: styles.notesListItemRow,
+                    listMarkerStyle: styles.notesListMarker,
+                    listItemTextStyle: styles.notesListItemText,
+                    fallbackTextStyle: styles.textBlock,
+                  }) || <Text style={styles.textBlock}>{terms.plainText || ''}</Text>}
                 </View>
               )}
             </View>

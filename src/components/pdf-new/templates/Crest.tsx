@@ -168,7 +168,9 @@ export default function Crest({ data }: { data: CommercialDocumentData }) {
 
               {data.company?.companyLogoUrl ? (
                 <View style={styles.headerRight}>
-                  <Image src={data.company.companyLogoUrl} style={styles.logo} />
+                  <View style={styles.logoWrapper}>
+                    <Image src={data.company.companyLogoUrl} style={styles.logo} />
+                  </View>
                 </View>
               ) : null}
             </View>

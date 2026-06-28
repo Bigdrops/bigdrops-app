@@ -160,6 +160,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 2,
     borderBottomColor: colors.ink,
+    paddingTop: 8,
     paddingBottom: 8,
     marginBottom: 8,
   },
@@ -322,6 +323,37 @@ export const styles = StyleSheet.create({
     color: '#4a4a4a',
     lineHeight: 1.5,
     marginBottom: 16,
+  },
+  notesRichText: {
+    marginTop: 2,
+    marginBottom: 16,
+  },
+  notesParagraph: {
+    fontSize: 8,
+    color: '#4a4a4a',
+    lineHeight: 1.5,
+    marginBottom: 5,
+  },
+  notesList: {
+    marginBottom: 5,
+  },
+  notesListItemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 2,
+  },
+  notesListMarker: {
+    width: 12,
+    fontSize: 8,
+    color: '#4a4a4a',
+    lineHeight: 1.5,
+    fontWeight: 'bold',
+  },
+  notesListItemText: {
+    flex: 1,
+    fontSize: 8,
+    color: '#4a4a4a',
+    lineHeight: 1.5,
   },
 
   rightCol: {
@@ -494,8 +526,8 @@ export const styles = StyleSheet.create({
     bottom: 0,
     left: 24,
     right: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
     paddingHorizontal: 12,
     borderTopWidth: 1,
     borderTopColor: colors.lightRule,

@@ -57,6 +57,15 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
   },
+  logoWrapper: {
+    width: 76,
+    height: 76,
+    backgroundColor: '#ffffff',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   logo: {
     width: 76,
     height: 76,
