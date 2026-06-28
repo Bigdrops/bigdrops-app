@@ -5,171 +5,406 @@ Runtime: Bun. Never use npm or yarn.
 ==================================================
 SKILL LOADING PROTOCOL (MANDATORY)
 ==================================================
-1. Read `docs/PROJECTSKIILINDEX.md`
-2. Load: `Karpathy`, `supabase-postgres-best-practices`, `typescript-advanced-types`
-3. Fallback to direct file read if skill fails. Stop if unreadable.
-4. Read `AGENTS.md` before editing.
+1. Read `docs/PROJECTSKILLINDEX.md` first.
+2. Load the following skills:
+   - Karpathy
+   - frontend-design
+   - typescript-advanced-types
+3. For each skill: Attempt to load via the skill system. If it fails, fallback to direct file read from disk (e.g. `.claude/skills/...`).
+4. If any critical skill is unreadable, stop and report the error immediately.
+5. Read `AGENTS.md` before any editing or implementation work.
 
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save report to: `docs/Task/reports/waybill-table-settings-import-audit.md`
+Save a full detailed report to:
 
-THIS IS A READ-ONLY AUDIT. DO NOT MODIFY ANY FILES.
-DO NOT PROPOSE FIXES. DO NOT DESIGN AN ENGINE.
+`docs/Task/reports/invoice-toolbar-restoration-and-group-behaviour.md`
 
-==================================================
-CONTEXT
-==================================================
-The Waybill PDF system is being rebuilt. Before designing any engine,
-we must understand exactly how three coupled systems currently work:
+The report MUST include:
 
-1. Table Settings (column visibility, custom columns, renaming)
-2. JSON Import (prompt generation, column creation, data mapping)
-3. Waybill data model (custom_fields shape, Supabase storage)
+- Architecture summary
+- Files read
+- Files modified
+- Root cause
+- Before/After UI comparison
+- Before/After movement logic
+- Decisions taken
+- Risks
+- Verification
+- Screenshots/ASCII layouts where useful
 
-These systems currently fight for control of the column schema.
-This audit maps them so we can lock stable boundaries.
+---
 
-==================================================
-SYSTEM A — TABLE SETTINGS
-==================================================
-Read these files fully:
-- `src/components/waybill/WaybillForm.tsx` — find Table Settings modal/panel
-- `src/components/waybill/waybillUtils.ts` — types and state management
-- Any file that exports `WaybillCustomColumn`, `columnVisibility`, or similar
+# CONTEXT
 
-Report EXACTLY:
+A previous implementation introduced regressions into the shared Invoice/Quotation line item toolbar.
 
-A1. Where does Table Settings state LIVE?
-    - React state in WaybillForm? Separate hook? Redux/context?
-    - Variable name and type
+Invoice and Quotation both use the same shared form components.
 
-A2. What is the EXACT shape of customColumns?
-    - Type definition (quote it verbatim with line numbers)
-    - How many entries exist by default?
-    - What keys are allowed?
+Any toolbar or grouping modification affects BOTH forms simultaneously.
 
-A3. How is column visibility stored?
-    - Variable name, type, default values
-    - How does it map to customColumns?
+The objective is to restore the original UX while preserving only the requested improvements.
 
-A4. How are column LABELS renamed?
-    - What field holds the display name vs the internal key?
-    - Where is renaming handled?
+Use commit:
 
-A5. How does Table Settings PERSIST?
-    - Saved to Supabase? localStorage? Both?
-    - Exact field name in the DB (e.g. custom_fields.columnVisibility)
-    - What function writes it?
+`33628b19b2d8485584010dfcc8b0827b31dfabd9`
 
-A6. Where does "Add custom column" logic live?
-    - Function name, file, line
-    - What validation exists (if any)?
-    - Is there ANY limit on how many can be added?
+as the visual and behavioural reference for the toolbar.
 
-A7. Is there any code that READS column state from custom_data at runtime
-    and DERIVES new columns from it? (e.g. scanning items for unknown keys)
-    - If yes: exact file, line, trigger condition
+Do NOT redesign the toolbar.
 
-==================================================
-SYSTEM B — JSON IMPORT
-==================================================
-Read these files fully:
-- `src/domain/waybill/externalWaybillImportAdapter.ts`
-- `src/domain/waybill/internalWaybillImportAdapter.ts`
-- `src/domain/waybill/externalWaybillPrompt.ts`
-- `src/domain/waybill/internalWaybillPrompt.ts`
-- `src/components/waybill/WaybillImportSheet.tsx`
-- `src/domain/import/` — shared import pipeline (normalize.ts, resolve.ts, apply.ts)
+Restore it.
 
-Report EXACTLY:
+Then apply only the requested additions.
 
-B1. How is the import prompt generated?
-    - Does it read Table Settings (columnVisibility, customColumns)?
-    - Or is it a static/hardcoded prompt?
-    - Show the exact code that builds the prompt
+---
 
-B2. When JSON is pasted and applied, what EXACT steps happen?
-    - Trace the call chain: parse → normalize → resolve → apply
-    - Which functions from src/domain/import/ are called (if any)?
-    - Or does Waybill have its own separate logic?
+# OBJECTIVE
 
-B3. Does the import adapter CREATE new columns?
-    - If yes: show the exact code that adds to customColumns/columnVisibility
-    - What function is called? (addCustomColumn, setColumns, etc.)
-    - Is there any limit?
+Complete FOUR tasks.
 
-B4. How does the import handle a key it DOESN'T recognize?
-    - Does it discard it? Map to custom_data? Create a new column?
-    - Show the exact code path
+1. Restore the toolbar to its original design.
+2. Remove duplicate row-count information.
+3. Investigate and repair the "Escanor effect" in grouping behaviour.
+4. Investigate drag-and-drop by completing the existing template before introducing new architecture.
 
-B5. Does the import adapter MODIFY Table Settings state directly?
-    - Does it call setColumns, setCustomColumns, or similar?
-    - Show the exact call
+---
 
-B6. Does the import prompt ONLY reference columns currently visible
-    in Table Settings? Or does it include all possible columns?
-    - Show the prompt generation logic
+# SCOPE
 
-==================================================
-SYSTEM C — WAYBILL DATA MODEL
-==================================================
-Read these files fully:
-- `src/components/waybill/waybillUtils.ts` — `WaybillCustomFields`, `parseWaybillCustomFields`, `buildWaybillCustomFields`
-- `supabase/migrations/` — any migration that defines the waybills table
-- `src/lib/database.types.ts` — waybill-related types
+Modify only the components directly involved in:
 
-Report EXACTLY:
+- shared line item toolbar
+- invoice line item movement
+- quotation line item movement
+- drag/drop integration
 
-C1. What is the EXACT shape of custom_fields on a waybill?
-    - Type definition (quote verbatim)
-    - Every field it contains
+Do not redesign unrelated UI.
 
-C2. Which custom_fields entries are "UI metadata" vs "business data"?
-    - UI metadata: columnVisibility, customColumns, pdfTemplateId, etc.
-    - Business data: signatures, references, partyNotes, etc.
+Do not change invoice calculations.
 
-C3. How does custom_fields get WRITTEN to Supabase?
-    - What function serializes it?
-    - Is it JSON.stringify'd? Passed as an object?
+Do not change imports.
 
-C4. How does custom_fields get READ from Supabase?
-    - What function parses it?
-    - What defaults are applied if fields are missing?
+Do not change PDF generation.
 
-C5. Is there ANY code path where custom_data keys from items
-    get written INTO custom_fields (the column metadata)?
-    - If yes: show exact code
+Do not change database schemas.
 
-C6. What is the current state of item_id in the system?
-    - Does WaybillItem type include item_id?
-    - Does normalizeWaybillItem handle it?
-    - Does any import adapter add it?
-    - Does the DB store it inside items JSONB?
+Do not invent new workflows.
 
-==================================================
-QUESTION D — THE ROGUE COLUMN
-==================================================
-The user reports a column appearing in Table Settings that they did not
-create. It is "clearly from Supabase."
+Do not introduce new concepts.
 
-Search for:
-- Any code that reads keys from items[].custom_data and adds them to
-  customColumns or columnVisibility
-- Any useEffect or state initializer that merges item data into
-  column definitions
-- Any import path that persists column state to the DB automatically
+---
 
-Report any code path that could cause a Supabase-stored value to
-"appear" as a column in the UI without the user explicitly adding it.
+# TASK 1 — RESTORE TOOLBAR
 
-==================================================
-OUTPUT
-==================================================
-One section per system (A, B, C) plus section D. Within each section,
-answer every question with exact file paths, line numbers, and quoted
-code. No recommendations. No engine design. No fixes.
+Compare the current toolbar against commit:
 
-If a question cannot be answered from the code alone (e.g. requires
-live DB query), state that explicitly — do not guess.
+`33628b19b2d8485584010dfcc8b0827b31dfabd9`
+
+Restore:
+
+- spacing
+- alignment
+- sizing
+- icon sizing
+- padding
+- button order
+
+Exactly.
+
+The toolbar should contain only:
+
+- Import
+- Clear All (NEW)
+- Settings
+
+Requirements:
+
+- Import keeps its original size.
+- Settings keeps its original size.
+- Clear uses identical sizing and styling.
+- Clear must NOT become the visual centrepiece.
+- Settings remains right-aligned.
+- No horizontal overflow.
+- No scrolling.
+- No oversized buttons.
+- No new toolbar buttons.
+
+The large dotted buttons below remain exactly as before:
+
+- Add Item
+- Add Group
+
+Do not duplicate those actions in the toolbar.
+
+---
+
+# TASK 2 — REMOVE DUPLICATE ROW COUNTER
+
+Current UI displays:
+
+Line Items (5 items)
+
+AND
+
+5 rows
+
+These communicate the same information.
+
+Remove ONLY the secondary "Rows" counter.
+
+Keep:
+
+Line Items (X items)
+
+This becomes the single source of truth.
+
+Do not replace it with another counter.
+
+Do not introduce badges.
+
+Do not move the existing header.
+
+---
+
+# TASK 3 — INVESTIGATE THE "ESCANOR EFFECT"
+
+Current behaviour:
+
+Groups behave as though they cannot have anything above them.
+
+Examples:
+
+Rows:
+
+1
+2
+3
+
+Create group from:
+
+4
+5
+
+Leave:
+
+6
+
+Expected:
+
+1
+2
+3
+
+Group
+4
+5
+
+6
+
+Actual:
+
+The group jumps to the beginning or bottom despite its internal ordering.
+
+Investigate why.
+
+Do NOT patch symptoms.
+
+Find the architectural cause.
+
+Questions to answer:
+
+- Is movement operating on the group header only?
+- Is insertion position calculated incorrectly?
+- Is normalization relocating headers?
+- Is commitGrouping responsible?
+- Is invoice behaviour different from quotation?
+- Which function ultimately reorders the array?
+
+Produce an architecture diagram.
+
+Then repair the logic.
+
+Goal:
+
+Treat a group as one movable block.
+
+Not as a special row.
+
+Moving a group should move:
+
+Header
+
++
+
+Every child
+
+as one contiguous block.
+
+Groups must no longer "fight" surrounding rows.
+
+---
+
+# TASK 4 — DRAG & DROP INVESTIGATION
+
+Before adding any dependency:
+
+Inspect
+
+`docs/TEMPLATES/React-temps/sortable.tsx`
+
+Determine:
+
+- Is it unfinished?
+- Is it disconnected?
+- Is it outdated?
+- Is it already compatible?
+- Why isn't it currently working?
+
+Do NOT introduce dnd-kit or any new dependency until proving the existing template cannot be completed.
+
+If existing infrastructure can be finished:
+
+Use it.
+
+Only if impossible:
+
+Document exactly why.
+
+Then justify introducing any dependency.
+
+---
+
+# MOVEMENT BEHAVIOUR REQUIREMENTS
+
+Dragging or moving must eventually support:
+
+✓ Item above a group
+
+✓ Item below a group
+
+✓ Item into a group
+
+✓ Item out of a group
+
+✓ Moving an entire group
+
+✓ Preserving contiguous group blocks
+
+No jumping.
+
+No teleporting.
+
+No automatic relocation.
+
+No forced movement to the beginning.
+
+No forced movement to the bottom.
+
+Movement should feel similar to Excel row manipulation.
+
+---
+
+# FILES TO READ
+
+Minimum:
+
+- `src/components/document/FormLineItems.tsx`
+- `src/components/document/SharedDocumentForm.tsx`
+- `src/pages/NewInvoice.tsx`
+- `src/pages/EditInvoice.tsx`
+- `src/components/quotation/QuotationForm.tsx`
+- `src/components/quotation/useQuotationLineItems.ts`
+- `src/components/invoice/MobileItemCard.tsx`
+- `src/components/invoice/MobileGroupCard.tsx`
+- `docs/TEMPLATES/React-temps/sortable.tsx`
+
+Also inspect any movement utilities discovered during tracing.
+
+---
+
+# CONSTRAINTS
+
+- Preserve backward compatibility.
+- No feature regressions.
+- Keep modules under project limits.
+- No duplicated movement logic.
+- Do not redesign the toolbar.
+- Do not redesign grouping.
+- Repair behaviour rather than replacing architecture.
+- Invoice and Quotation must remain behaviourally identical.
+
+---
+
+# REQUIRED VERIFICATION
+
+Run in order:
+
+```
+bun run audit:load
+bun run typecheck
+bun run build
+```
+
+Additionally verify manually:
+
+- Toolbar matches commit reference.
+- Settings never disappears.
+- Clear All appears only when appropriate.
+- No duplicate row counter exists.
+- Groups remain where placed.
+- Moving a group no longer causes jumping.
+- Drag handle behaviour verified.
+- Invoice and quotation remain synchronized.
+
+---
+
+# OUTPUT
+
+Provide:
+
+1. Root cause for the Escanor effect.
+
+2. Root cause for drag-and-drop not functioning.
+
+3. Toolbar comparison:
+
+- Before
+- After
+- Commit reference
+
+4. Files modified.
+
+5. Behaviour comparison.
+
+6. Any architectural debt discovered.
+
+7. Verification results.
+
+Do not omit failures.
+
+If something cannot be completed, explain exactly why.
+
+---
+
+# STOP CONDITION
+
+Stop immediately if the existing sortable template can be completed without introducing new dependencies.
+
+Do not replace existing architecture until that investigation is complete.
+
+---
+
+# SUCCESS CRITERIA
+
+Done when:
+
+- Toolbar visually matches the pre-regression version.
+- Clear All is the only new toolbar action.
+- Duplicate row counter is removed.
+- Settings is always visible.
+- Group movement no longer exhibits the Escanor effect.
+- Groups behave as contiguous movable blocks.
+- Drag-and-drop has been repaired using the existing template where possible, or a documented justification exists for any new dependency.
+- Invoice and Quotation remain fully synchronized.
