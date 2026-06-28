@@ -35,376 +35,310 @@ The report MUST include:
 - Screenshots/ASCII layouts where useful
 
 ---
+Restore the invoice/quotation line-item toolbar to the exact behaviour before the regression, while keeping only the requested addition (Clear All). This is a restoration task, not a redesign.
 
-# CONTEXT
-
-A previous implementation introduced regressions into the shared Invoice/Quotation line item toolbar.
-
-Invoice and Quotation both use the same shared form components.
-
-Any toolbar or grouping modification affects BOTH forms simultaneously.
-
-The objective is to restore the original UX while preserving only the requested improvements.
+CONTEXT
 
 Use commit:
 
-`33628b19b2d8485584010dfcc8b0827b31dfabd9`
+"33628b19b2d8485584010dfcc8b0827b31dfabd9"
 
-as the visual and behavioural reference for the toolbar.
+as the visual and behavioural baseline for the toolbar.
+
+The recent implementation introduced layout regressions.
+
+---
+
+GOAL
+
+Restore the original toolbar layout exactly as it was before the regression.
 
 Do NOT redesign the toolbar.
 
-Restore it.
-
-Then apply only the requested additions.
+Do NOT introduce any new toolbar actions.
 
 ---
 
-# OBJECTIVE
+TASK 1 — Restore Original Toolbar
 
-Complete FOUR tasks.
+Compare the current implementation against commit:
 
-1. Restore the toolbar to its original design.
-2. Remove duplicate row-count information.
-3. Investigate and repair the "Escanor effect" in grouping behaviour.
-4. Investigate drag-and-drop by completing the existing template before introducing new architecture.
-
----
-
-# SCOPE
-
-Modify only the components directly involved in:
-
-- shared line item toolbar
-- invoice line item movement
-- quotation line item movement
-- drag/drop integration
-
-Do not redesign unrelated UI.
-
-Do not change invoice calculations.
-
-Do not change imports.
-
-Do not change PDF generation.
-
-Do not change database schemas.
-
-Do not invent new workflows.
-
-Do not introduce new concepts.
-
----
-
-# TASK 1 — RESTORE TOOLBAR
-
-Compare the current toolbar against commit:
-
-`33628b19b2d8485584010dfcc8b0827b31dfabd9`
+"33628b19b2d8485584010dfcc8b0827b31dfabd9"
 
 Restore:
 
 - spacing
-- alignment
 - sizing
-- icon sizing
+- alignment
 - padding
-- button order
+- icon sizes
+- button sizes
+- visual hierarchy
 
-Exactly.
+The toolbar should look visually identical to the baseline commit.
 
-The toolbar should contain only:
+---
 
-- Import
-- Clear All (NEW)
-- Settings
+TASK 2 — Keep Only One New Button
+
+The only new toolbar button that should exist is:
+
+Clear All
+
+Nothing else.
+
+Do NOT add:
+
+- Add
+- Group
+- any extra shortcuts
+- any additional toolbar actions
+
+Those actions already exist below as the large dotted buttons.
+
+They must remain there only.
+
+---
+
+TASK 3 — Button Order
+
+Restore the original order.
+
+When rows exist:
+
+Import     Settings     Clear All
 
 Requirements:
 
-- Import keeps its original size.
-- Settings keeps its original size.
-- Clear uses identical sizing and styling.
-- Clear must NOT become the visual centrepiece.
-- Settings remains right-aligned.
-- No horizontal overflow.
-- No scrolling.
-- No oversized buttons.
-- No new toolbar buttons.
+- Import stays in its original position.
+- Settings stays exactly where it originally was.
+- Clear All is appended as the third and last action.
+- Clear All must sit on the far right.
+- Clear All must NEVER appear between Import and Settings.
+- Clear All must NEVER become the centred button.
+- Do NOT use layout tricks (such as ml-auto on Clear) that split existing controls.
 
-The large dotted buttons below remain exactly as before:
+The existing relationship between Import and Settings must remain untouched.
+
+Think of Clear All as an extra action appended after the original toolbar—not inserted into the middle of it.
+
+---
+
+TASK 4 — Remove Duplicate Counter
+
+There are currently two counters describing the same thing.
+
+Current:
+
+Line Items (3 items)
+
+3 rows
+
+This is redundant.
+
+Remove only:
+
+3 rows
+
+Keep:
+
+Line Items (3 items)
+
+The Line Items title already communicates the count.
+
+There should only be one visible counter.
+
+---
+
+TASK 5 — Preserve Empty State
+
+When there are no rows:
+
+Keep exactly the original behaviour:
+
+- Import
+- Settings
+
+Large dotted buttons remain:
 
 - Add Item
 - Add Group
 
-Do not duplicate those actions in the toolbar.
+Do not change this layout.
 
 ---
 
-# TASK 2 — REMOVE DUPLICATE ROW COUNTER
+TASK 6 — Preserve Existing Behaviour
 
-Current UI displays:
+Do not modify:
 
-Line Items (5 items)
+- import workflow
+- settings menu
+- Clear All confirmation dialog
+- add item
+- add group
 
-AND
-
-5 rows
-
-These communicate the same information.
-
-Remove ONLY the secondary "Rows" counter.
-
-Keep:
-
-Line Items (X items)
-
-This becomes the single source of truth.
-
-Do not replace it with another counter.
-
-Do not introduce badges.
-
-Do not move the existing header.
+Only restore the toolbar layout.
 
 ---
 
-# TASK 3 — INVESTIGATE THE "ESCANOR EFFECT"
+TASK 7 — Drag-and-Drop Investigation Only
+
+Inspect:
+
+"docs/TEMPLATES/React-temps/sortable.tsx"
+
+Compare it against the current implementation.
+
+Determine why dragging is still not functioning correctly.
+
+Do NOT redesign it yet.
+TASK 8 — Investigate Group "Escanor" Behaviour (Root Cause Only)
+
+There is a long-standing grouping bug in both Invoice and Quotation forms.
 
 Current behaviour:
 
-Groups behave as though they cannot have anything above them.
+Suppose the user creates:
 
-Examples:
+1  Item A
+2  Item B
+3  Item C
+4  Group A
+5  Item D
+6  Item E
 
-Rows:
+or
 
-1
-2
-3
+Item A
+Item B
+Group A
+Item C
+Item D
 
-Create group from:
+The visual enumeration clearly shows the group's current position.
 
-4
-5
+However, after regrouping, moving, saving, importing, editing, or other state updates, the group ignores that position and moves itself to another location (typically the beginning or the bottom), bringing its children with it.
 
-Leave:
+The group behaves as if it owns the list instead of behaving like a normal row.
 
-6
-
-Expected:
-
-1
-2
-3
-
-Group
-4
-5
-
-6
-
-Actual:
-
-The group jumps to the beginning or bottom despite its internal ordering.
-
-Investigate why.
-
-Do NOT patch symptoms.
-
-Find the architectural cause.
-
-Questions to answer:
-
-- Is movement operating on the group header only?
-- Is insertion position calculated incorrectly?
-- Is normalization relocating headers?
-- Is commitGrouping responsible?
-- Is invoice behaviour different from quotation?
-- Which function ultimately reorders the array?
-
-Produce an architecture diagram.
-
-Then repair the logic.
-
-Goal:
-
-Treat a group as one movable block.
-
-Not as a special row.
-
-Moving a group should move:
-
-Header
-
-+
-
-Every child
-
-as one contiguous block.
-
-Groups must no longer "fight" surrounding rows.
+This is referred to as the Escanor effect.
 
 ---
 
-# TASK 4 — DRAG & DROP INVESTIGATION
+Objective
 
-Before adding any dependency:
+Perform a complete root-cause investigation.
 
-Inspect
-
-`docs/TEMPLATES/React-temps/sortable.tsx`
-
-Determine:
-
-- Is it unfinished?
-- Is it disconnected?
-- Is it outdated?
-- Is it already compatible?
-- Why isn't it currently working?
-
-Do NOT introduce dnd-kit or any new dependency until proving the existing template cannot be completed.
-
-If existing infrastructure can be finished:
-
-Use it.
-
-Only if impossible:
-
-Document exactly why.
-
-Then justify introducing any dependency.
+Do NOT implement a fix yet.
 
 ---
 
-# MOVEMENT BEHAVIOUR REQUIREMENTS
+Trace the entire lifecycle of group ordering
 
-Dragging or moving must eventually support:
+Inspect every place where item order may be rebuilt, including:
 
-✓ Item above a group
+- moving items
+- moving groups
+- addGroup
+- deleteGroup
+- ungroup
+- commitGrouping
+- normalizeGrouping
+- normalize
+- import adapters
+- save adapters
+- load adapters
+- sorting by "sort_order"
+- sorting by "group_id"
+- any automatic array sorting
+- any reconciliation after save/load
 
-✓ Item below a group
-
-✓ Item into a group
-
-✓ Item out of a group
-
-✓ Moving an entire group
-
-✓ Preserving contiguous group blocks
-
-No jumping.
-
-No teleporting.
-
-No automatic relocation.
-
-No forced movement to the beginning.
-
-No forced movement to the bottom.
-
-Movement should feel similar to Excel row manipulation.
+Determine where the user's manual ordering is lost.
 
 ---
 
-# FILES TO READ
+Determine whether ordering is driven by:
 
-Minimum:
+- array index
+- sort_order
+- group_id
+- group header position
+- normalization
+- commitGrouping
+- database ordering
+- import/export pipeline
 
-- `src/components/document/FormLineItems.tsx`
-- `src/components/document/SharedDocumentForm.tsx`
-- `src/pages/NewInvoice.tsx`
-- `src/pages/EditInvoice.tsx`
-- `src/components/quotation/QuotationForm.tsx`
-- `src/components/quotation/useQuotationLineItems.ts`
-- `src/components/invoice/MobileItemCard.tsx`
-- `src/components/invoice/MobileGroupCard.tsx`
-- `docs/TEMPLATES/React-temps/sortable.tsx`
-
-Also inspect any movement utilities discovered during tracing.
+Identify the single source of truth.
 
 ---
 
-# CONSTRAINTS
+Explain why the visual numbering disagrees with the final rendered position.
 
-- Preserve backward compatibility.
-- No feature regressions.
-- Keep modules under project limits.
-- No duplicated movement logic.
-- Do not redesign the toolbar.
-- Do not redesign grouping.
-- Repair behaviour rather than replacing architecture.
-- Invoice and Quotation must remain behaviourally identical.
+If the UI says the group is Row 4, explain why the next render moves it elsewhere.
 
 ---
 
-# REQUIRED VERIFICATION
+Deliverables
 
-Run in order:
+Answer:
 
-```
+1. What exactly causes the Escanor effect?
+2. Which function is responsible?
+3. Is the problem in UI state, normalization, persistence, or rendering?
+4. Does the same root cause affect both Invoice and Quotation?
+5. What is the smallest architectural fix that preserves free-form ordering without breaking grouping?
+
+Do not implement the fix during this task.
+
+This is an investigation and architecture report only.
+
+Answer:
+
+1. What is missing?
+2. What differs from the template?
+3. Why do Up/Down work while drag does not?
+4. Is the current implementation incomplete, incorrectly wired, or blocked elsewhere?
+
+Produce a root-cause report only.
+
+Do not implement further drag changes during this task.
+
+---
+
+OUT OF SCOPE
+
+Do NOT modify:
+
+- grouping behaviour
+- Escanor/group movement logic
+- invoice calculations
+- quotation calculations
+- import pipeline
+- save pipeline
+- mobile item layout
+- suggestion engine
+
+---
+
+REQUIRED VERIFICATION
+
+Run:
+
 bun run audit:load
 bun run typecheck
 bun run build
-```
 
-Additionally verify manually:
+---
 
-- Toolbar matches commit reference.
-- Settings never disappears.
-- Clear All appears only when appropriate.
+SUCCESS CRITERIA
+
+Done only when:
+
+- Toolbar visually matches commit "33628b19b2d8485584010dfcc8b0827b31dfabd9".
+- Button sizes match the original.
+- Import and Settings remain adjacent.
+- Clear All appears as the last action on the far right.
 - No duplicate row counter exists.
-- Groups remain where placed.
-- Moving a group no longer causes jumping.
-- Drag handle behaviour verified.
-- Invoice and quotation remain synchronized.
-
----
-
-# OUTPUT
-
-Provide:
-
-1. Root cause for the Escanor effect.
-
-2. Root cause for drag-and-drop not functioning.
-
-3. Toolbar comparison:
-
-- Before
-- After
-- Commit reference
-
-4. Files modified.
-
-5. Behaviour comparison.
-
-6. Any architectural debt discovered.
-
-7. Verification results.
-
-Do not omit failures.
-
-If something cannot be completed, explain exactly why.
-
----
-
-# STOP CONDITION
-
-Stop immediately if the existing sortable template can be completed without introducing new dependencies.
-
-Do not replace existing architecture until that investigation is complete.
-
----
-
-# SUCCESS CRITERIA
-
-Done when:
-
-- Toolbar visually matches the pre-regression version.
-- Clear All is the only new toolbar action.
-- Duplicate row counter is removed.
-- Settings is always visible.
-- Group movement no longer exhibits the Escanor effect.
-- Groups behave as contiguous movable blocks.
-- Drag-and-drop has been repaired using the existing template where possible, or a documented justification exists for any new dependency.
-- Invoice and Quotation remain fully synchronized.
+- No redundant toolbar buttons exist.
+- Drag-and-drop investigation report is produced without making additional drag changes.
