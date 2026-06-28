@@ -2,94 +2,95 @@ You are working on the BIGDROPS business platform.
 Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
 Runtime: Bun. Never use npm or yarn.
 
-TASK: Update the Waybill Render Engine PRD and Implementation docs only.
-DO NOT build, create, or modify any engine code. DO NOT run bun run dev.
-This is a documentation update task only.
-
-FILES TO UPDATE:
-- docs/contracts/Waybill-Render-Engine-Contract.md
-- docs/EXECUTION/Waybill-Render-Engine-Developer-Implementation.md
-
 ==================================================
-CORRECTIONS TO FOLD IN
+SKILL LOADING PROTOCOL (MANDATORY)
 ==================================================
-
-1. ADD TYPE DISCRIMINATOR (missing from current contract)
-
-   Add a `type: 'internal' | 'external'` field to the output model
-   (HeaderBlock is the natural home for it, alongside waybillNumber).
-   This is required because templates need to know the waybill's type
-   to decide whether to render the Client/PO Number section (external
-   only) and which heading label applies. The engine does not make
-   this rendering decision — it just exposes the value so templates can.
-
-   Update Section 4.2 (Header) field map and the WaybillRenderModel
-   interface accordingly.
-
-2. PURPOSE APPLIES TO BOTH TYPES (correct an earlier draft error)
-
-   purpose is populated for BOTH external (Supply/Return/Repair/Other)
-   and internal (Transfer/Repair/Other) waybills — not external-only.
-   Printable Blank Preservation still applies: unselected resolves to
-   "". Update Section 4.4 (Logistics) to remove any external-only note
-   if one was added, and confirm this explicitly in the field map.
-
-3. AUDIT INDUSTRY.TSX BEFORE LOCKING FOOTER/PAGINATION (do not assume)
-
-   Add an explicit Phase 0 step to the Developer Implementation doc:
-   read src/components/pdf-new/templates/Industry.tsx in full and
-   report:
-   - exact footer structure (what content, what position — left/
-     center/right)
-   - exact continuation-page header behavior (column headers only, or
-     a condensed document header repeated too)
-   - exact mechanism used for page numbering (confirm it's React-PDF's
-     <Text render={({pageNumber, totalPages}) => ...}/> pattern)
-
-   This audit's findings — not assumptions — determine what Section 11
-   ("Open Decisions — continuation page header style") resolves to.
-   Do not write a recommendation into the contract until this audit
-   has actually been read and reported.
-
-4. FIX THE DUPLICATE HTML SANITIZER
-
-   The Developer Implementation doc currently specifies a new
-   sanitizers/sanitizeText.ts using a raw regex tag-strip
-   (input.replace(/<[^>]*>/g, "").trim()). Remove this. The doc must
-   instead specify reusing the existing richTextToPlainText() utility
-   from src/components/pdf-new/core/richText.ts. Update Phase 1.5
-   (Notes Resolver) accordingly. State explicitly: do not create a
-   second HTML-stripping implementation.
-
-5. MAKE qtyLabel UNCONDITIONAL
-
-   Phase 2.3 currently says "If needed upstream: qtyLabel = ...".
-   Remove the conditional language. The engine must ALWAYS compute
-   qtyLabel = "${quantity} ${unit}" for every row. Templates must use
-   qtyLabel and never format quantity/unit separately.
-
-==================================================
-OUTPUT
-==================================================
-
-Update both documents directly with the corrections above. Do not
-create a third document. Do not change anything else in either file
-beyond what's listed here. Confirm in your response which exact
-sections/lines were changed in each file.
-
-==================================================
-DO NOT
-==================================================
-
-- Do NOT write or modify any engine code
-- Do NOT run bun run dev
-- Do NOT make assumptions about Industry.tsx — read it
-- Do NOT remove the "Open Decisions" section from the contract until
-  the Industry audit actually resolves it
+1. Read `docs/PROJECTSKILLINDEX.md`
+2. Load: `Karpathy` (surgical execution)
+3. All skills in project directory only. Fallback to direct read. Stop if unreadable.
+4. Read `AGENTS.md` before editing.
 
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save report to `docs/Task/reports/waybill-render-engine-docs-update.md`
-Include: files changed, exact sections/lines modified per correction,
-any issues encountered, and confirmation that no source code was modified.
+Save work report to `docs/Task/reports/ai-dropdown-restore-and-click-fix.md`
+
+==================================================
+TASK: Restore Previous Icons + Fix Click Navigation
+==================================================
+
+Two issues:
+1. The previous agent accidentally changed ChatGPT, DeepSeek, Qwen, and Kimi
+   icons to single letters instead of the correct brand icons that existed
+   before. Restore those four to their previous correct versions.
+2. The most critical bug: clicking ANY provider icon still does NOT open
+   the app or website. This must be fixed.
+
+READ FIRST:
+- `src/components/ui/OpenInAIDropdown.tsx` (current state)
+- Run `git show 62e00648703cc4b58f75314fd83d9d2365434f40:src/components/ui/OpenInAIDropdown.tsx`
+  to see the previous version where the four icons were correct.
+- `AGENTS.md`
+
+==================================================
+CHANGE 1 — RESTORE THE FOUR PROVIDER ICONS
+==================================================
+
+From the git reference commit, extract ONLY the icon rendering code for
+these four providers: ChatGPT, DeepSeek, Qwen, Kimi.
+
+Do NOT touch Gemini or Claude icons — they are correct now and must stay
+as `<ModelIcon model="gemini" />` and `<ModelIcon model="claude" />`.
+
+The other four must be restored to exactly how they rendered in commit
+`62e00648703cc4b58f75314fd83d9d2365434f40`. Copy the JSX for their
+icon buttons from that commit.
+
+==================================================
+CHANGE 2 — DEBUG AND FIX THE CLICK NAVIGATION
+==================================================
+
+All six provider icons share the same `handleProviderClick` function,
+but clicking them does nothing. Investigate and fix:
+
+1. Add a temporary `console.log('clicked', providerId)` at the very top
+   of `handleProviderClick`. Confirm it fires when you click an icon.
+2. If it does NOT fire, the `onClick` is not wired correctly or a
+   parent event is swallowing the click.
+3. If it DOES fire but navigation still fails, check:
+   - Is `navigator.clipboard.writeText(prompt)` being called? Is `prompt`
+     a valid non-empty string?
+   - On desktop, does `window.open(url, '_blank', 'noopener,noreferrer')`
+     execute? Are pop-ups blocked?
+   - On Android, does the `intent://` URL actually redirect? Check with
+     a simple `window.location.href = intentUrl` instead of `window.open`.
+4. Fix the root cause. The icons MUST open the app/website when clicked.
+
+==================================================
+VERIFICATION
+==================================================
+1. `bun run typecheck` — must pass
+2. `bun run lint` — focused on changed file
+
+Manual checks (document in report):
+- ChatGPT, DeepSeek, Qwen, Kimi show their correct brand icons (not single letters)
+- Gemini and Claude still show their ModelIcon versions
+- Clicking ANY of the 6 icons opens the app/website and copies the prompt
+
+==================================================
+DONE WHEN
+==================================================
+- [ ] ChatGPT, DeepSeek, Qwen, Kimi icons restored to previous correct versions
+- [ ] Gemini and Claude icons unchanged from current ModelIcon versions
+- [ ] Clicking any provider icon successfully opens the app/website
+- [ ] `bun run typecheck` passes
+- [ ] Work report saved
+
+==================================================
+DO NOT
+==================================================
+- Do NOT touch Gemini or Claude icons
+- Do NOT change the provider list
+- Do NOT change the portal or animation logic
+- Do NOT run `bun run dev`
+- Do NOT skip the work report
