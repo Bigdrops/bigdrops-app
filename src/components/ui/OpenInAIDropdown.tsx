@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { HiSparkles } from 'react-icons/hi2'
 import { motion, AnimatePresence } from 'motion/react'
-import { ModelIcon } from '@lobehub/icons'
+import { OpenAI, DeepSeek, Qwen, Moonshot, ModelIcon } from '@lobehub/icons'
 import { cn } from '@/lib/utils'
 
 interface Provider {
@@ -68,35 +68,15 @@ function ProviderIcon({ providerId }: { providerId: string }) {
     case 'gemini':
       return <ModelIcon model="gemini" size={size} type="color" />
     case 'chatgpt':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#10A37F" />
-          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">C</text>
-        </svg>
-      )
+      return <OpenAI size={size} style={{ color: OpenAI.colorPrimary }} />
     case 'claude':
       return <ModelIcon model="claude" size={size} type="color" />
     case 'deepseek':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#2B5BED" />
-          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">D</text>
-        </svg>
-      )
+      return <DeepSeek.Color size={size} />
     case 'qwen':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#615CED" />
-          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">Q</text>
-        </svg>
-      )
+      return <Qwen.Color size={size} />
     case 'kimi':
-      return (
-        <svg width={size} height={size} viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#000000" />
-          <text x="10" y="10" textAnchor="middle" dominantBaseline="central" fill="#fff" fontWeight="700" fontSize="12" fontFamily="system-ui, sans-serif">K</text>
-        </svg>
-      )
+      return <Moonshot size={size} style={{ color: Moonshot.colorPrimary }} />
     default:
       return null
   }
@@ -162,7 +142,7 @@ export function OpenInAIDropdown({
     const provider = AI_PROVIDERS.find(p => p.id === providerId)
     if (!provider) return
 
-    navigator.clipboard.writeText(prompt).catch(() => {})
+    navigator.clipboard?.writeText(prompt)?.catch(() => {})
 
     navigateToProvider(provider.url, provider.androidIntent)
 

@@ -219,43 +219,45 @@ export const styles = StyleSheet.create({
 
   // Grouping
   groupHeader: {
-    backgroundColor: colors.bgPanel,
-    paddingVertical: 8,
+    backgroundColor: colors.paper,
+    paddingVertical: 7,
     paddingHorizontal: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.rule,
     borderBottomWidth: 1,
     borderBottomColor: colors.rule,
     flexDirection: 'row',
   },
   groupHeaderText: {
-    fontSize: 8,
+    fontSize: 10.5,
     fontWeight: 'bold',
-    textTransform: 'uppercase',
     color: colors.ink,
-  },
-  groupItemRow: {
-    backgroundColor: colors.groupBg,
   },
   groupSubtotalRow: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: colors.rule,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.ink,
-    paddingVertical: 12,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     backgroundColor: colors.paper,
   },
   groupSubtotalLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
     color: colors.ink,
     textAlign: 'right',
-    paddingRight: 8,
+    marginRight: 8,
   },
   groupSubtotalVal: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
     color: colors.ink,
     textAlign: 'right',
+  },
+  groupClosingRule: {
+    width: '100%',
+    height: 2,
+    backgroundColor: colors.ink,
   },
 
   // Bottom Section

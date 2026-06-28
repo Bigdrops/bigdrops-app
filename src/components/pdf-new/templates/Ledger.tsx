@@ -5,11 +5,31 @@ import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
 import { safeText } from '../core/safeText';
 import { getDescriptionMain, getDescriptionSub } from '../core/description';
+import {
+  buildPartyLines,
+  buildAttachmentItems,
+  resolveColumnLayout,
+  resolveTextAlignment,
+  isGroupHeader,
+  isGroupFooter,
+  getGroupLabel,
+  getGroupSubtotal,
+  shouldShowGroupSubtotal,
+  buildTotalsLines,
+  getMainTotal,
+  getBalanceDue,
+  getAmountInWords,
+  buildAdvanceSummary,
+} from '../engine';
 
-function formatValidUrl(url: string | undefined): string {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `https://${url}`;
+function toTitleCase(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 export default function Ledger({ data }: { data: CommercialDocumentData }) {
@@ -17,7 +37,16 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
   const client = data.client;
   const table = data.table;
   const totals = data.totals;
-  const advance = data.advanceSummary;
+  const companyLines = company ? buildPartyLines(company) : [];
+  const clientLines = client ? buildPartyLines(client) : [];
+  const companyLineMap = new Map<string, string>(companyLines.map((line) => [line.type, line.value] as const));
+  const clientLineMap = new Map<string, string>(clientLines.map((line) => [line.type, line.value] as const));
+  const attachmentItems = buildAttachmentItems(data.attachments);
+  const totalsLines = buildTotalsLines(totals);
+  const mainTotal = getMainTotal(totals);
+  const balanceDue = getBalanceDue(totals);
+  const amountInWords = getAmountInWords(totals);
+  const advance = buildAdvanceSummary(data.advanceSummary);
   const payment = data.paymentDetails;
   const notes = data.notes;
   const terms = data.terms;
@@ -27,8 +56,11 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
   const renderTableHeader = () => (
     <View style={styles.tableHeaderRow} fixed>
       {table.columns.map((col, idx) => {
-        const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
-        const widthStyle = col.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: col.flex || 1, flexBasis: 0 };
+        const alignStyle = resolveTextAlignment(col.align) || styles.textLeft;
+        const layout = resolveColumnLayout(col);
+        const widthStyle = layout.width
+          ? { width: layout.width, flexGrow: 0, flexShrink: 0 }
+          : { flex: layout.flexGrow, flexGrow: layout.flexGrow, flexShrink: layout.flexShrink, flexBasis: layout.flexBasis };
         return (
           <Text key={col.key || idx} style={[styles.tableHeaderCell, alignStyle, widthStyle as any]}>
             {safeText(col.label)}
@@ -44,16 +76,16 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
         {/* 1. HEADER */}
         <View style={styles.header} wrap={false}>
           <View style={styles.headerLeft}>
-            <Text style={styles.brandName}>{safeText(company?.name)}</Text>
-            {company?.address && (
+            <Text style={styles.brandName}>{safeText(companyLineMap.get('name') || company?.name)}</Text>
+            {companyLineMap.get('address') && (
               <Text style={styles.brandContact}>
-                {safeText(company.address)}
-                {company.cityState ? `, ${safeText(company.cityState)}` : ''}
+                {safeText(companyLineMap.get('address'))}
+                {companyLineMap.get('cityState') ? `, ${safeText(companyLineMap.get('cityState'))}` : ''}
               </Text>
             )}
-            {(company?.phone || company?.email) && (
+            {(companyLineMap.get('phone') || companyLineMap.get('email')) && (
               <Text style={styles.brandContact}>
-                {[safeText(company?.phone), safeText(company?.email)].filter(Boolean).join(' | ')}
+                {[safeText(companyLineMap.get('phone')), safeText(companyLineMap.get('email'))].filter(Boolean).join(' | ')}
               </Text>
             )}
           </View>
@@ -97,11 +129,11 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             {client && (
               <View style={styles.addressBlock}>
                 <Text style={styles.addressLabel}>Bill To</Text>
-                <Text style={styles.addressVal}>{safeText(client.name)}</Text>
-                {client.address && <Text style={styles.addressVal}>{safeText(client.address)}</Text>}
-                {client.cityState && <Text style={styles.addressVal}>{safeText(client.cityState)}</Text>}
-                {client.email && <Text style={styles.addressVal}>{safeText(client.email)}</Text>}
-                {client.phone && <Text style={styles.addressVal}>{safeText(client.phone)}</Text>}
+                <Text style={styles.addressVal}>{safeText(clientLineMap.get('name'))}</Text>
+                {clientLineMap.get('address') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('address'))}</Text>}
+                {clientLineMap.get('cityState') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('cityState'))}</Text>}
+                {clientLineMap.get('email') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('email'))}</Text>}
+                {clientLineMap.get('phone') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('phone'))}</Text>}
               </View>
             )}
           </View>
@@ -129,31 +161,43 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
           {renderTableHeader()}
 
           {table.rows.map((row, rIndex) => {
-            if (row.rowType === 'group_header') {
+            if (isGroupHeader(row)) {
               return (
                 <View key={rIndex} style={styles.groupHeader} wrap={false}>
-                  <Text style={styles.groupHeaderText}>{safeText(row.groupLabel)}</Text>
+                  <Text style={styles.groupHeaderText}>{safeText(toTitleCase(getGroupLabel(row)))}</Text>
                 </View>
               );
             }
 
-            if (row.rowType === 'group_footer') {
+            if (isGroupFooter(row)) {
+              const subtotalValue = getGroupSubtotal(row);
+              const showSubtotal = shouldShowGroupSubtotal(row) && subtotalValue !== null && subtotalValue !== undefined && subtotalValue !== '';
+
+              if (!showSubtotal) {
+                return <View key={rIndex} style={styles.groupClosingRule} wrap={false} />;
+              }
+
               return (
-                <View key={rIndex} style={styles.groupSubtotalRow} wrap={false}>
-                  <View style={{ flex: 1 }} />
-                  <Text style={styles.groupSubtotalLabel}>Group Total:</Text>
-                  <PdfCurrencyText value={safeText(row.groupSubtotalValue)} style={styles.groupSubtotalVal} />
+                <View key={rIndex} wrap={false}>
+                  <View style={styles.groupSubtotalRow}>
+                    <Text style={styles.groupSubtotalLabel}>Subtotal</Text>
+                    <PdfCurrencyText value={safeText(subtotalValue)} style={styles.groupSubtotalVal} />
+                  </View>
+                  <View style={styles.groupClosingRule} />
                 </View>
               );
             }
 
-            const rowStyles = [styles.tableRow, row.isInGroup && styles.groupItemRow].filter(Boolean);
+            const rowStyles = [styles.tableRow].filter(Boolean);
             
             return (
               <View key={rIndex} style={rowStyles} wrap={false}>
                 {table.columns.map((col, cIndex) => {
-                  const alignStyle = col.align === 'right' ? styles.textRight : col.align === 'center' ? styles.textCenter : styles.textLeft;
-                  const widthStyle = col.width ? { width: col.width, flexGrow: 0, flexShrink: 0 } : { flex: col.flex || 1, flexBasis: 0 };
+                  const alignStyle = resolveTextAlignment(col.align) || styles.textLeft;
+                  const layout = resolveColumnLayout(col);
+                  const widthStyle = layout.width
+                    ? { width: layout.width, flexGrow: 0, flexShrink: 0 }
+                    : { flex: layout.flexGrow, flexGrow: layout.flexGrow, flexShrink: layout.flexShrink, flexBasis: layout.flexBasis };
                   
                   const isDescriptionCol = col.key === 'description';
 
@@ -162,7 +206,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                       {isDescriptionCol ? (
                         <>
                           <Text style={styles.itemDesc}>
-                            {row.isInGroup ? '└ ' : ''}{getDescriptionMain(row.cells)}
+                            {getDescriptionMain(row.cells)}
                           </Text>
                           {getDescriptionSub(row.cells) ? (
                             <Text style={styles.itemSub}>{getDescriptionSub(row.cells)}</Text>
@@ -171,18 +215,18 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                           {row.imageUrl ? (
                             <View style={styles.thumbnailContainer} wrap={false}>
                               <Image src={row.imageUrl} style={styles.itemThumbnail} />
-                              <Link src={formatValidUrl(row.imageUrl)} style={styles.openImageLink}>
+                              <Link src={row.imageUrl.startsWith('http://') || row.imageUrl.startsWith('https://') ? row.imageUrl : `https://${row.imageUrl}`} style={styles.openImageLink}>
                                 Open image
                               </Link>
                             </View>
                           ) : null}
                         </>
                       ) : (
-                        <PdfCurrencyText value={safeText(row.cells?.[col.key])} style={styles.tableCell} />
-                      )}
-                    </View>
-                  );
-                })}
+                    <PdfCurrencyText value={safeText(row.cells?.[col.key])} style={styles.tableCell} />
+                  )}
+                </View>
+              );
+            })}
               </View>
             );
           })}
@@ -229,29 +273,29 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             <View style={styles.totalsWrap} wrap={false}>
               <View style={styles.rightCol}>
                 <View style={styles.totalsPanel}>
-                  {totals.lines.map((line, idx) => (
+                  {totalsLines.map((line, idx) => (
                     <View key={idx} style={styles.totalLine}>
                       <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
                       <PdfCurrencyText value={safeText(line.value)} style={styles.totalVal} />
                     </View>
                   ))}
                   
-                  {totals.mainLine && (
+                  {mainTotal && (
                     <View style={styles.totalLineGrand}>
-                      <Text style={styles.totalLabelGrand}>{safeText(totals.mainLine.label)}</Text>
-                      <PdfCurrencyText value={safeText(totals.mainLine.value)} style={styles.totalValGrand} />
+                      <Text style={styles.totalLabelGrand}>{safeText(mainTotal.label)}</Text>
+                      <PdfCurrencyText value={safeText(mainTotal.value)} style={styles.totalValGrand} />
                     </View>
                   )}
 
-                  {!isAdvanceInvoice && totals.balanceDue && (
+                  {!isAdvanceInvoice && balanceDue && (
                     <View style={styles.totalLineGrand}>
-                      <Text style={styles.totalLabelGrand}>{safeText(totals.balanceDue.label)}</Text>
-                      <PdfCurrencyText value={safeText(totals.balanceDue.value)} style={styles.totalValGrand} />
+                      <Text style={styles.totalLabelGrand}>{safeText(balanceDue.label)}</Text>
+                      <PdfCurrencyText value={safeText(balanceDue.value)} style={styles.totalValGrand} />
                     </View>
                   )}
                   
-                  {totals.amountInWords && (
-                    <Text style={styles.amountWords}>{safeText(totals.amountInWords)}</Text>
+                  {amountInWords && (
+                    <Text style={styles.amountWords}>{safeText(amountInWords)}</Text>
                   )}
                 </View>
 
@@ -315,13 +359,13 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
               ) : null}
             </View>
 
-            {data.attachments && data.attachments.length > 0 && (
+            {attachmentItems.length > 0 && (
               <View style={styles.attachmentsBox}>
                 <Text style={styles.sectionTitle}>Attachments</Text>
-                {data.attachments.map((att, idx) => (
+                {attachmentItems.map((att, idx) => (
                   <View key={idx} style={styles.attachmentItem}>
-                    {att.url ? (
-                      <Link src={formatValidUrl(att.url)} style={styles.attachmentLink}>
+                    {att.formattedUrl ? (
+                      <Link src={att.formattedUrl} style={styles.attachmentLink}>
                         {safeText(att.label)}
                       </Link>
                     ) : (
