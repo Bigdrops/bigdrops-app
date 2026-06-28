@@ -13,6 +13,7 @@ import {
   mapDbInvoiceItem,
   normalizeAdditionalFieldEntries,
   parseCustomFields,
+  syncGroupsFromItems,
 } from '@/domain/invoice'
 import type { 
   InvoiceItem, 
@@ -115,6 +116,7 @@ export default function EditInvoice() {
   const [groups, setGroups] = useState<InvoiceGroup[]>([])
   const itemsRef = useRef(items)
   useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { setGroups((current) => syncGroupsFromItems(items, current)) }, [items, setGroups])
   const {
     columns,
     setColumns,

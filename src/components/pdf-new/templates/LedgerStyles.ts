@@ -323,7 +323,7 @@ export const styles = StyleSheet.create({
   },
 
   rightCol: {
-    width: '40%', 
+    width: '100%',
   },
   totalsWrap: {
     width: '40%',

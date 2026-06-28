@@ -5,6 +5,7 @@ import type {
   Invoice,
   InvoiceAttachment,
   InvoiceCustomFields,
+  InvoiceGroup,
   InvoiceItem,
   InvoicePdfOutput,
 } from './types'
@@ -13,6 +14,42 @@ import { normalizeExtraCharges } from './factories'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 
 type CompanyCustomInfoEntry = { label: string; value: string }
+
+/**
+ * Derive group order from item `group_header` rows and return a re-ordered
+ * `groups` array that stays in sync with `items`.  Returns the original
+ * array reference when no re-ordering is needed so callers can bail out
+ * of unnecessary state updates.
+ *
+ * This is the **single source of truth** for synchronising the group
+ * metadata array (used by `groupEntries` in `FormLineItems`) with the
+ * live ordering of `group_header` rows in the items array.
+ */
+export function syncGroupsFromItems(
+  items: InvoiceItem[],
+  currentGroups: InvoiceGroup[],
+): InvoiceGroup[] {
+  const seen = new Set<string>()
+  const ordered: InvoiceGroup[] = []
+
+  for (const item of items) {
+    if (item.row_type === 'group_header' && item.group_id && !seen.has(item.group_id)) {
+      seen.add(item.group_id)
+      const existing = currentGroups.find((g) => g.id === item.group_id)
+      if (existing) {
+        ordered.push(existing)
+      } else {
+        ordered.push({ id: item.group_id, name: item.group_name || 'Group', showSubtotal: false })
+      }
+    }
+  }
+
+  if (ordered.length !== currentGroups.length) return ordered
+  for (let i = 0; i < ordered.length; i++) {
+    if (ordered[i].id !== currentGroups[i].id) return ordered
+  }
+  return currentGroups
+}
 
 /**
  * Parse and normalize company custom_info JSON into the canonical

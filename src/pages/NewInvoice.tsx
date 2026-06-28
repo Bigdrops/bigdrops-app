@@ -8,10 +8,11 @@ import {
   DEFAULT_INVOICE_PDF_OUTPUT,
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
-  normalizeAdditionalFieldEntries,
   invoiceImportAdapter,
+  normalizeAdditionalFieldEntries,
   parseCustomFields,
   filterPopulatedAdditionalFields,
+  syncGroupsFromItems,
 } from '@/domain/invoice'
 import type { 
   InvoiceItem, 
@@ -183,6 +184,7 @@ export default function NewInvoice() {
   const [groups, setGroups] = useState<InvoiceGroup[]>([])
   const itemsRef = useRef(items)
   useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { setGroups((current) => syncGroupsFromItems(items, current)) }, [items, setGroups])
   const initialCustomFields = useMemo(() => parseCustomFields(prefill?.custom_fields), [prefill?.custom_fields])
 
   useEffect(() => {

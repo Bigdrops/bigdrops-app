@@ -52,6 +52,14 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     accents: ['h-1.5 w-full rounded-full bg-[#2f7f7c]', 'h-1 w-2/5 rounded-full bg-[#8c8279]', 'h-1 w-3/5 rounded-full bg-slate-100'],
     columns: ['h-7 w-full rounded-md bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-2/3 rounded-full bg-slate-200'],
   },
+  {
+    id: 'crest',
+    label: 'Crest',
+    eyebrow: 'Coming Soon',
+    shell: 'bg-white border border-slate-200',
+    accents: ['h-1.5 w-full rounded-full bg-[#1e3a5f]', 'h-1 w-2/5 rounded-full bg-[#c9a96e]', 'h-1 w-3/5 rounded-full bg-slate-200'],
+    columns: ['h-7 w-full rounded-md border border-slate-200 bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-2/3 rounded-full bg-slate-200'],
+  },
 ] as const satisfies ReadonlyArray<{
   id: InvoicePdfTemplateId
   label: string
