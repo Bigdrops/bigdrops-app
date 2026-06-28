@@ -19,6 +19,7 @@
         "@dnd-kit/utilities": "^3.2.2",
         "@fontsource-variable/inter": "^5.2.8",
         "@fontsource/caveat": "^5.2.8",
+        "@fontsource/cormorant-garamond": "^5.2.11",
         "@fontsource/handlee": "^5.2.7",
         "@fontsource/inter": "^5.2.8",
         "@fontsource/kalam": "^5.2.8",
@@ -327,6 +328,8 @@
     "@fontsource-variable/inter": ["@fontsource-variable/inter@5.2.8", "", {}, "sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ=="],
 
     "@fontsource/caveat": ["@fontsource/caveat@5.2.8", "", {}, "sha512-9fUUfFE2IQFKbx+xOcaeQxxmh8iJguEb8z+j1PeueO4UUx+XfT4pRm/B04ZDvFA794/iRxY/IibmP8ZKtIf4rw=="],
+
+    "@fontsource/cormorant-garamond": ["@fontsource/cormorant-garamond@5.2.11", "", {}, "sha512-5JjpN023lhA5soijgVT0BdRGzmlijm402ppjccMd6h+vRE0mX2lJnE+41UPfnlidrkV9/rCo1mf58WZlHnB0CA=="],
 
     "@fontsource/handlee": ["@fontsource/handlee@5.2.7", "", {}, "sha512-QsykNLIaHeM2jHG9VPVAKQniOh8WoX02WhYqOql/wfYs0798tjhWRjgRCKAPqaOFwxDjcxpmK5Mtaoz06B87vA=="],
 

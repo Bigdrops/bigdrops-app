@@ -388,6 +388,13 @@ export default function EditInvoice() {
         group_name: group.name,
         sort_order: current.length,
       } as InvoiceItem,
+      {
+        ...makeEmptyItem(),
+        row_type: 'standard',
+        group_id: group.id,
+        group_name: group.name,
+        sort_order: current.length + 1,
+      } as InvoiceItem,
     ])
   }
 

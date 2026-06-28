@@ -418,6 +418,13 @@ export default function NewInvoice() {
           group_name: group.name,
           sort_order: prev.length,
         } as InvoiceItem,
+        {
+          ...makeEmptyItem(),
+          row_type: 'standard',
+          group_id: group.id,
+          group_name: group.name,
+          sort_order: prev.length + 1,
+        } as InvoiceItem,
       ])
       return [...current, group]
     })

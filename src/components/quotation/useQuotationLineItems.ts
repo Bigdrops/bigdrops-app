@@ -225,7 +225,15 @@ export function useQuotationLineItems({
           sort_order: current.length,
         };
 
-        return [...current, groupHeader];
+        const childRow: InvoiceItem = {
+          ...makeEmptyItem(),
+          row_type: "standard",
+          group_id: group.id,
+          group_name: group.name,
+          sort_order: current.length + 1,
+        };
+
+        return [...current, groupHeader, childRow];
       },
       (current) => [...current, group],
     );

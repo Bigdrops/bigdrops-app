@@ -30,6 +30,9 @@ import robotoCondensedBold from '@fontsource/roboto-condensed/files/roboto-conde
 import robotoCondensedItalic from '@fontsource/roboto-condensed/files/roboto-condensed-latin-400-italic.woff'
 import notoSansRegular from '@fontsource/noto-sans/files/noto-sans-latin-ext-400-normal.woff'
 import notoSansBold from '@fontsource/noto-sans/files/noto-sans-latin-ext-700-normal.woff'
+import cormorantGaramondRegular from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-normal.woff'
+import cormorantGaramondBold from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff'
+import cormorantGaramondItalic from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-italic.woff'
 import type { PdfFontChoice } from '@/lib/pdfDesignPreset'
 
 export type RegisteredSharedFontConfig = {
@@ -42,6 +45,7 @@ export type RegisteredSharedFontConfig = {
 }
 
 export const PDF_CURRENCY_FONT_FAMILY = 'Noto Sans'
+export const CREST_FONT_FAMILY = 'Cormorant Garamond'
 
 export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
@@ -134,6 +138,14 @@ export const REGISTERED_LOCKED_SHARED_FONTS: Record<string, RegisteredSharedFont
     boldSrc: notoSansBold,
     italicSrc: notoSansRegular,
     boldItalicSrc: notoSansBold,
+  },
+  [CREST_FONT_FAMILY]: {
+    family: CREST_FONT_FAMILY,
+    webFamily: CREST_FONT_FAMILY,
+    regularSrc: cormorantGaramondRegular,
+    boldSrc: cormorantGaramondBold,
+    italicSrc: cormorantGaramondItalic,
+    boldItalicSrc: cormorantGaramondBold,
   },
 }
 
