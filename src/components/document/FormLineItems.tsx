@@ -241,23 +241,20 @@ export const FormLineItems = React.memo(function FormLineItems({
       </SectionLabel>
 
       <div className="mb-3 flex items-center gap-2 border-b border-[var(--bd-border-soft)] py-2">
-          <div className="mr-1 text-[11px] font-mono font-bold text-[var(--bd-text3)]">
-            {lineItemsCount} {lineItemsCount === 1 ? 'row' : 'rows'}
-          </div>
           <ToolbarButton onClick={onOpenImport} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <FileInput className="h-3.5 w-3.5" />
             <span className="text-[12px]">Import</span>
           </ToolbarButton>
+          <ToolbarButton onClick={onOpenTableSettings} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
+            <Settings2 className="h-3.5 w-3.5" />
+            <span className="text-[12px]">Settings</span>
+          </ToolbarButton>
           {onClearAll && lineItemsCount > 0 && (
-            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
+            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
               <Trash2 className="h-3.5 w-3.5" />
               <span className="text-[12px]">Clear</span>
             </ToolbarButton>
           )}
-          <ToolbarButton onClick={onOpenTableSettings} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
-            <Settings2 className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Settings</span>
-          </ToolbarButton>
       </div>
 
       <div className="space-y-0">
