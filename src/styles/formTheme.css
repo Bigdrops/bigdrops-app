@@ -503,3 +503,14 @@ h1, .bd-h1 {
     max-width: 85vw !important;
   }
 }
+
+@keyframes bd-row-invalid-pulse {
+  0%, 100% { outline-color: transparent; }
+  15%, 85% { outline-color: hsl(var(--bd-feedback-error-text) / 0.5); }
+}
+.bd-row-invalid {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  border-radius: inherit;
+  animation: bd-row-invalid-pulse 2s ease-in-out;
+}

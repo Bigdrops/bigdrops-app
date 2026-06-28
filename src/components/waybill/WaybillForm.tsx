@@ -85,6 +85,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
 
+  const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [showTableSettings, setShowTableSettings] = useState(false)
   const [showImportSheet, setShowImportSheet] = useState(false)
@@ -178,6 +179,11 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
       next.splice(index + 1, 0, createDefaultItem())
       return { ...prev, items: next }
     })
+    markDirty()
+  }
+
+  const handleClearAll = () => {
+    setState(prev => ({ ...prev, items: [createDefaultItem()] }))
     markDirty()
   }
 
@@ -357,6 +363,8 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     for (let i = 0; i < items.length; i++) {
       if (!items[i].description || items[i].quantity <= 0) {
         feedback.error('Validation Error', { description: `Item ${i + 1} is missing a description or has quantity ≤ 0.` })
+        setInvalidRowIndex(i)
+        setTimeout(() => setInvalidRowIndex(null), 2500)
         return
       }
     }
@@ -584,6 +592,9 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             onDeleteGroup={() => {}}
             onOpenImport={() => setShowImportSheet(true)}
             onOpenTableSettings={() => setShowTableSettings(true)}
+            onClearAll={handleClearAll}
+            invalidRowIndex={invalidRowIndex}
+            onClearInvalidRow={() => setInvalidRowIndex(null)}
           />
 
           {/* Custody Details */}

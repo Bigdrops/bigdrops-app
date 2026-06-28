@@ -62,7 +62,7 @@ export default function SortableLineItem({
   }
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} data-row-index={index}>
       <MobileItemCard
         item={item}
         index={index}

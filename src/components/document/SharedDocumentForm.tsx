@@ -102,6 +102,8 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
     onRemoveExtraCharge,
     onFloatingSave,
     onClearAll,
+    invalidRowIndex,
+    onClearInvalidRow,
     showColumnManager,
     setShowColumnManager,
     isMobile,
@@ -220,6 +222,8 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             onOpenImport={handleOpenImport}
             onOpenTableSettings={handleOpenTableSettings}
             onClearAll={onClearAll}
+            invalidRowIndex={invalidRowIndex}
+            onClearInvalidRow={onClearInvalidRow}
           />
 
           <FormCommercialTerms

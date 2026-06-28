@@ -18,12 +18,14 @@ export const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.paper,
     fontFamily: 'Helvetica',
-    padding: 0,
+    paddingTop: 0,
+    paddingHorizontal: 0,
+    paddingBottom: 55,
   },
   invoiceContainer: {
     flex: 1,
     backgroundColor: colors.paper,
-    paddingBottom: 60,
+    paddingBottom: 5,
   },
   
   // Header (Fixed Flex Layout)

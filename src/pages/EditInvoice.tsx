@@ -87,6 +87,7 @@ export default function EditInvoice() {
 
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [discountType, setDiscountType] = useState<DiscountType>('percent')
   const [discountTiming, setDiscountTiming] = useState<DiscountTiming>('before')
@@ -506,6 +507,9 @@ export default function EditInvoice() {
 
     const invalidStandardRowCount = standardItems.filter((item) => !item.description?.trim()).length
     if (invalidStandardRowCount > 0) {
+      const firstInvalidIdx = items.findIndex((item) => item.row_type === 'standard' && !item.description?.trim())
+      setInvalidRowIndex(firstInvalidIdx)
+      setTimeout(() => setInvalidRowIndex(null), 2500)
       feedback.error('Validation Error', {
         description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
       })
@@ -792,6 +796,8 @@ export default function EditInvoice() {
           }
           onRemoveExtraCharge={(chargeId) => setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId))}
           onClearAll={handleClearAll}
+          invalidRowIndex={invalidRowIndex}
+          onClearInvalidRow={() => setInvalidRowIndex(null)}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}

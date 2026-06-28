@@ -6,7 +6,7 @@ import {
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
 import SortableLineItem from '@/components/document/SortableLineItem'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
 import {
@@ -56,6 +56,8 @@ interface FormLineItemsProps {
   onOpenImport: () => void
   onOpenTableSettings: () => void
   onClearAll?: () => void
+  invalidRowIndex?: number | null
+  onClearInvalidRow?: () => void
 }
 
 export const FormLineItems = React.memo(function FormLineItems({
@@ -82,6 +84,8 @@ export const FormLineItems = React.memo(function FormLineItems({
   onOpenImport,
   onOpenTableSettings,
   onClearAll,
+  invalidRowIndex,
+  onClearInvalidRow,
 }: FormLineItemsProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
@@ -121,6 +125,22 @@ export const FormLineItems = React.memo(function FormLineItems({
   const handleMoveUp = useCallback((idx: number) => onMoveItem(idx, -1), [onMoveItem])
   const handleMoveDown = useCallback((idx: number) => onMoveItem(idx, 1), [onMoveItem])
 
+  useEffect(() => {
+    if (invalidRowIndex == null || invalidRowIndex < 0) return
+    const el = document.querySelector(`[data-row-index="${invalidRowIndex}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('bd-row-invalid')
+      const timer = setTimeout(() => {
+        el.classList.remove('bd-row-invalid')
+        onClearInvalidRow?.()
+      }, 2000)
+      return () => clearTimeout(timer)
+    } else {
+      onClearInvalidRow?.()
+    }
+  }, [invalidRowIndex, onClearInvalidRow])
+
   const lineItemRows = useMemo(() => {
     const rows = []
     for (let index = 0; index < items.length; index += 1) {
@@ -140,6 +160,7 @@ export const FormLineItems = React.memo(function FormLineItems({
               number: getItemNumber(cursor),
               isFirst: groupItems.length === 0,
               isLast: false,
+              computedAmount: getComputedAmount(nextItem),
             })
             index = cursor
             cursor += 1
@@ -167,23 +188,6 @@ export const FormLineItems = React.memo(function FormLineItems({
   }, [groupMap, items])
 
   const groupIdSet = useMemo(() => new Set(groups.map((g: any) => g.id)), [groups])
-
-  const groupEntries = useMemo(() => {
-    return groups.map((group: any) => {
-      const groupItems = items
-        .map((item: any, idx: number) => ({ item, idx }))
-        .filter(({ item }) => item.group_id === group.id && item.row_type === 'standard')
-        .map(({ item, idx }, i, arr) => ({
-          item,
-          index: idx,
-          number: getItemNumber(idx),
-          isFirst: i === 0,
-          isLast: i === arr.length - 1,
-          computedAmount: getComputedAmount(item),
-        }))
-      return { group, items: groupItems }
-    })
-  }, [groups, items, getComputedAmount])
 
   const groupedItemIndices = useMemo(() => {
     const indices = new Set<number>()
@@ -258,52 +262,56 @@ export const FormLineItems = React.memo(function FormLineItems({
       </div>
 
       <div className="space-y-0">
-        {groupEntries.map(({ group, items: groupItems }) => (
-          <MobileGroupCard
-            key={group.id}
-            group={group}
-            items={groupItems}
-            invoice={invoice}
-            context={ctx}
-            enableItemSuggestions={ctx !== 'waybill'}
-            customColumns={customColumns}
-            groupSubtotal={computedGroupMap.get(group.id)?.subtotal || 0}
-            onUpdateGroupName={onUpdateGroupName}
-            onToggleGroupSubtotal={onToggleGroupSubtotal}
-            onDeleteGroup={onDeleteGroup}
-            onAddItemToGroup={onAddItemToGroup}
-            onUpdateItem={onUpdateItem}
-            onRemoveItem={onRemoveItem}
-            onMoveItem={onMoveItem}
-            onInsertItemAfter={onInsertItemAfter}
-            isVisible={isVisible}
-            getColumn={getColumn}
-          />
-        ))}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={ungroupedItemIds} strategy={verticalListSortingStrategy}>
-            {ungroupedItems.map((row: any) => (
-              <SortableLineItem
-                key={row.key}
-                item={row.item}
-                index={row.index}
-                number={row.number}
-                invoice={invoice}
-                context={ctx}
-                enableItemSuggestions={ctx !== 'waybill'}
-                customColumns={customColumns}
-                computedAmount={getComputedAmount(row.item)}
-                isFirst={row.isFirst}
-                isLast={row.isLast}
-                onUpdate={onUpdateItem}
-                onRemove={onRemoveItem}
-                onMoveUp={handleMoveUp}
-                onMoveDown={handleMoveDown}
-                onInsertBelow={onInsertItemAfter}
-                isVisible={isVisible}
-                getColumn={getColumn}
-              />
-            ))}
+            {lineItemRows.map((row: any) => {
+              if (row.type === 'group') {
+                return (
+                  <MobileGroupCard
+                    key={row.group.id}
+                    group={row.group}
+                    items={row.items}
+                    invoice={invoice}
+                    context={ctx}
+                    enableItemSuggestions={ctx !== 'waybill'}
+                    customColumns={customColumns}
+                    groupSubtotal={computedGroupMap.get(row.group.id)?.subtotal || 0}
+                    onUpdateGroupName={onUpdateGroupName}
+                    onToggleGroupSubtotal={onToggleGroupSubtotal}
+                    onDeleteGroup={onDeleteGroup}
+                    onAddItemToGroup={onAddItemToGroup}
+                    onUpdateItem={onUpdateItem}
+                    onRemoveItem={onRemoveItem}
+                    onMoveItem={onMoveItem}
+                    onInsertItemAfter={onInsertItemAfter}
+                    isVisible={isVisible}
+                    getColumn={getColumn}
+                  />
+                )
+              }
+              return (
+                <SortableLineItem
+                  key={row.key}
+                  item={row.item}
+                  index={row.index}
+                  number={row.number}
+                  invoice={invoice}
+                  context={ctx}
+                  enableItemSuggestions={ctx !== 'waybill'}
+                  customColumns={customColumns}
+                  computedAmount={getComputedAmount(row.item)}
+                  isFirst={row.isFirst}
+                  isLast={row.isLast}
+                  onUpdate={onUpdateItem}
+                  onRemove={onRemoveItem}
+                  onMoveUp={handleMoveUp}
+                  onMoveDown={handleMoveDown}
+                  onInsertBelow={onInsertItemAfter}
+                  isVisible={isVisible}
+                  getColumn={getColumn}
+                />
+              )
+            })}
           </SortableContext>
         </DndContext>
       </div>

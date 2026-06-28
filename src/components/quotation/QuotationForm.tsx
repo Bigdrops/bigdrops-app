@@ -71,6 +71,7 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
   const isEdit = mode === 'edit'
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
+  const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [quotation, setQuotation] = useState<QuotationEditorState>({
     quotation_number: '',
@@ -425,6 +426,9 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
 
     const invalidStandardRowCount = standardItems.filter((item) => !item.description?.trim()).length
     if (invalidStandardRowCount > 0) {
+      const firstInvalidIdx = items.findIndex((item) => item.row_type === 'standard' && !item.description?.trim())
+      setInvalidRowIndex(firstInvalidIdx)
+      setTimeout(() => setInvalidRowIndex(null), 2500)
       feedback.error('Validation Error', {
         description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
       })
@@ -821,6 +825,8 @@ timer.phaseEnd('build-payload', buildPayloadStart, {
         }
         onRemoveExtraCharge={(id: string) => setExtraCharges((current) => current.filter((charge) => charge.id !== id))}
         onClearAll={handleClearAll}
+        invalidRowIndex={invalidRowIndex}
+        onClearInvalidRow={() => setInvalidRowIndex(null)}
         showColumnManager={showColumnManager}
         setShowColumnManager={setShowColumnManager}
         isMobile={isMobile}
