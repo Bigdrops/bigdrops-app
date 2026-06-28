@@ -63,6 +63,7 @@ interface MobileItemCardProps {
   isVisible: (field: string) => boolean
   getColumn: (field: string) => any
   compact?: boolean
+  dragHandleProps?: Record<string, any>
 }
 
 function MobileItemCard({
@@ -86,6 +87,7 @@ function MobileItemCard({
   isVisible,
   getColumn,
   compact = false,
+  dragHandleProps,
 }: MobileItemCardProps) {
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [uploading, setUploading] = useState(false)
@@ -206,7 +208,10 @@ function MobileItemCard({
         {/* Row Number & Enumeration */}
         <div className="flex w-4 flex-col items-center gap-0.5 pt-2">
           <div className="text-[10px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
-          <div className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing">
+          <div
+            {...(dragHandleProps || {})}
+            className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing"
+          >
             <GripVertical className="h-3.5 w-3.5" />
           </div>
         </div>

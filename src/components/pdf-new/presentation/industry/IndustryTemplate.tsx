@@ -15,18 +15,25 @@ import {
   getBalanceDue,
   getAmountInWords,
   buildAdvanceSummary,
-  isGroupHeader,
-  isGroupFooter,
+  getGroupLabel,
 } from '../../engine'
 import { INDUSTRY_COLUMN_OVERRIDES } from './IndustryColumnOverrides'
 import { PartyCard } from './PartyCard'
-import { GroupHeaderRow } from './GroupHeaderRow'
-import { GroupFooterRow } from './GroupFooterRow'
 import { OptionalList } from './OptionalList'
 
 type TemplateProps = { data: CommercialDocumentData; compact?: boolean }
 
 const keepWholePdfWord = (word: string) => [word]
+
+function toTitleCase(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}
 
 function resolveFinalIndustryColumnStyle(
   column: CommercialDocumentData['table']['columns'][number]
@@ -68,7 +75,7 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
   const panelBorderColor = (design.useCustomColors && accentColor)
     ? (borderColor && borderColor !== '#cbd5e1' ? borderColor : lightenHex(accentColor, 28))
     : (borderColor || null)
-  const groupRuleColor = accentColor || panelBorderColor
+  const groupRuleColor = panelBorderColor || '#e5e7eb'
   const sectionTitleStyle = [
     styles.optionalTitle,
     accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
@@ -249,28 +256,65 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
           </View>
 
           {data.table.rows.map((row, rowIdx) => {
-            if (isGroupHeader(row)) {
+            if (row.rowType === 'group_header') {
+              const groupLabel = toTitleCase(getGroupLabel(row))
+
               return (
-                <GroupHeaderRow
+                <View
                   key={`group-h-${rowIdx}`}
-                  row={row}
-                  rowIdx={rowIdx}
-                  ruleColor={groupRuleColor}
-                  textColor={textColor}
-                  headerFontFamily={headerFontFamily}
-                />
+                  style={[
+                    styles.groupHeaderRow,
+                    groupRuleColor ? { borderTopColor: groupRuleColor, borderBottomColor: groupRuleColor } : null,
+                  ]}
+                  wrap={false}
+                >
+                  <Text
+                    style={[
+                      styles.groupHeaderText,
+                      textColor ? { color: textColor } : null,
+                      headerFontFamily ? { fontFamily: headerFontFamily } : null,
+                    ]}
+                  >
+                    {groupLabel}
+                  </Text>
+                </View>
               )
             }
 
-            if (isGroupFooter(row)) {
-              return (
-                <GroupFooterRow
-                  key={`group-f-${rowIdx}`}
-                  row={row}
-                  rowIdx={rowIdx}
-                  ruleColor={groupRuleColor}
-                  textColor={textColor}
-                  bodyFontFamily={bodyFontFamily}
+            if (row.rowType === 'group_footer') {
+              const subtotalValue = row.groupSubtotalValue
+              const showSubtotal = row.showSubtotal === true && subtotalValue !== null && subtotalValue !== undefined && subtotalValue !== ''
+
+              return showSubtotal ? (
+                <View key={`group-f-${rowIdx}`} wrap={false}>
+                  <View
+                    style={styles.groupSubtotalRow}
+                  >
+                    <Text
+                      style={[
+                        styles.groupSubtotalLabel,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    >
+                      Subtotal
+                    </Text>
+                    <PdfCurrencyText
+                      value={subtotalValue}
+                      style={[
+                        styles.groupSubtotalValue,
+                        textColor ? { color: textColor } : null,
+                        bodyFontFamily ? { fontFamily: bodyFontFamily } : null,
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.groupClosingRule} wrap={false} />
+                </View>
+              ) : (
+                <View
+                  key={`group-f-${rowIdx}-rule`}
+                  style={styles.groupClosingRule}
+                  wrap={false}
                 />
               )
             }
@@ -281,8 +325,6 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
                 style={[
                   styles.tableRow,
                   rowIdx % 2 === 1 ? (accentColor ? { backgroundColor: subtleSurfaceColor } : styles.tableRowEven) : null,
-                  row.isInGroup ? styles.tableRowInGroup : null,
-                  row.isInGroup && accentColor ? { borderLeftColor: accentColor } : null,
                 ] as any}
                 wrap={false}
               >

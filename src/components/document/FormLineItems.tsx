@@ -5,6 +5,7 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
+import SortableLineItem from '@/components/document/SortableLineItem'
 import React, { useCallback, useMemo, useState } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
@@ -18,6 +19,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 
 interface FormLineItemsProps {
   items: any[]
@@ -73,6 +86,12 @@ export const FormLineItems = React.memo(function FormLineItems({
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
   const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  )
 
   const computedAmountMap = useMemo(() => {
     const map = new Map()
@@ -176,6 +195,38 @@ export const FormLineItems = React.memo(function FormLineItems({
     return indices
   }, [items, groupIdSet])
 
+  const ungroupedItems = useMemo(
+    () => lineItemRows.filter((row: any) => row.type !== 'group' && !groupedItemIndices.has(row.index)),
+    [lineItemRows, groupedItemIndices],
+  )
+
+  const ungroupedItemIds = useMemo(
+    () => ungroupedItems.map((row: any) => row.item._uiKey || row.item.id || `item-${row.index}`),
+    [ungroupedItems],
+  )
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+
+      const activeRow = ungroupedItems.find((r: any) => (r.item._uiKey || r.item.id) === active.id)
+      const overRow = ungroupedItems.find((r: any) => (r.item._uiKey || r.item.id) === over.id)
+      if (!activeRow || !overRow) return
+
+      const fromIndex = activeRow.index
+      const toIndex = overRow.index
+      if (fromIndex === toIndex) return
+
+      const direction = toIndex > fromIndex ? 1 : -1
+      const steps = Math.abs(toIndex - fromIndex)
+      for (let i = 0; i < steps; i++) {
+        onMoveItem(fromIndex + i * direction, direction)
+      }
+    },
+    [ungroupedItems, onMoveItem],
+  )
+
   return (
     <div className="border-b border-[var(--bd-border-soft)] pb-4">
       <SectionLabel
@@ -193,27 +244,17 @@ export const FormLineItems = React.memo(function FormLineItems({
           <div className="mr-1 text-[11px] font-mono font-bold text-[var(--bd-text3)]">
             {lineItemsCount} {lineItemsCount === 1 ? 'row' : 'rows'}
           </div>
-          <ToolbarButton onClick={onAddItem} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
-            <Plus className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Add</span>
-          </ToolbarButton>
-          {onAddGroup && (
-            <ToolbarButton onClick={onAddGroup} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
-              <FolderPlus className="h-3.5 w-3.5" />
-              <span className="text-[12px]">Group</span>
-            </ToolbarButton>
-          )}
           <ToolbarButton onClick={onOpenImport} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <FileInput className="h-3.5 w-3.5" />
             <span className="text-[12px]">Import</span>
           </ToolbarButton>
           {onClearAll && lineItemsCount > 0 && (
-            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
+            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
               <Trash2 className="h-3.5 w-3.5" />
               <span className="text-[12px]">Clear</span>
             </ToolbarButton>
           )}
-          <ToolbarButton onClick={onOpenTableSettings} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
+          <ToolbarButton onClick={onOpenTableSettings} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
             <Settings2 className="h-3.5 w-3.5" />
             <span className="text-[12px]">Settings</span>
           </ToolbarButton>
@@ -242,30 +283,32 @@ export const FormLineItems = React.memo(function FormLineItems({
             getColumn={getColumn}
           />
         ))}
-        {lineItemRows
-          .filter((row: any) => row.type !== 'group' && !groupedItemIndices.has(row.index))
-          .map((row: any) => (
-            <MobileItemCard
-              key={row.key}
-              item={row.item}
-              index={row.index}
-              number={row.number}
-              invoice={invoice}
-              context={ctx}
-              enableItemSuggestions={ctx !== 'waybill'}
-              customColumns={customColumns}
-              computedAmount={getComputedAmount(row.item)}
-              isFirst={row.isFirst}
-              isLast={row.isLast}
-              onUpdate={onUpdateItem}
-              onRemove={onRemoveItem}
-              onMoveUp={handleMoveUp}
-              onMoveDown={handleMoveDown}
-              onInsertBelow={onInsertItemAfter}
-              isVisible={isVisible}
-              getColumn={getColumn}
-            />
-          ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={ungroupedItemIds} strategy={verticalListSortingStrategy}>
+            {ungroupedItems.map((row: any) => (
+              <SortableLineItem
+                key={row.key}
+                item={row.item}
+                index={row.index}
+                number={row.number}
+                invoice={invoice}
+                context={ctx}
+                enableItemSuggestions={ctx !== 'waybill'}
+                customColumns={customColumns}
+                computedAmount={getComputedAmount(row.item)}
+                isFirst={row.isFirst}
+                isLast={row.isLast}
+                onUpdate={onUpdateItem}
+                onRemove={onRemoveItem}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                onInsertBelow={onInsertItemAfter}
+                isVisible={isVisible}
+                getColumn={getColumn}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
 
       <div className="mt-3 flex gap-2">
