@@ -142,9 +142,9 @@ export function OpenInAIDropdown({
     const provider = AI_PROVIDERS.find(p => p.id === providerId)
     if (!provider) return
 
-    navigator.clipboard?.writeText(prompt)?.catch(() => {})
-
     navigateToProvider(provider.url, provider.androidIntent)
+
+    navigator.clipboard?.writeText(prompt)?.catch(() => {})
 
     onProviderSelect?.(provider.id, provider.name)
     onCloseAfterSelect?.()

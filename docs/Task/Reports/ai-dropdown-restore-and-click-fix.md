@@ -4,12 +4,12 @@
 
 - Restored the ChatGPT, DeepSeek, Qwen, and Kimi icons in `src/components/ui/OpenInAIDropdown.tsx` to branded icon components.
 - Left Gemini and Claude on `ModelIcon` as requested.
-- Fixed provider navigation by guarding the clipboard write so a missing or unavailable Clipboard API cannot abort the click handler before navigation runs.
+- Fixed provider navigation by opening the provider synchronously first, then copying the prompt, then closing the popup.
 
 ## Root cause
 
 - The previous dropdown used branded icons for the four providers, but the current version had been replaced with single-letter SVG placeholders.
-- The click flow was brittle because `navigator.clipboard.writeText(prompt)` was called without a safe guard. If the clipboard API is unavailable, the handler can throw before the app or website opens.
+- The click flow needed to stay inside the user gesture so the browser would not treat the popup as blocked. Opening first keeps navigation attached to the click.
 
 ## Verification
 
@@ -22,4 +22,3 @@
 - Confirmed Gemini and Claude still render `ModelIcon` variants.
 - Confirmed the click handler now continues to navigation even if clipboard access is unavailable.
 - Live browser interaction was not run in this thread because there was no attached app terminal/session to reuse without starting a new dev server.
-
