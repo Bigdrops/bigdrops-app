@@ -423,8 +423,11 @@ export default function QuotationForm({ mode, quotationId }: { mode: 'new' | 'ed
       return
     }
 
-    if (standardItems.some((item) => !item.description?.trim())) {
-      feedback.error('Validation Error', { description: 'Each item needs a description' })
+    const invalidStandardRowCount = standardItems.filter((item) => !item.description?.trim()).length
+    if (invalidStandardRowCount > 0) {
+      feedback.error('Validation Error', {
+        description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
+      })
       return
     }
 
@@ -520,9 +523,7 @@ timer.phaseEnd('build-payload', buildPayloadStart, {
       termsNormalized: termsChanged,
     })
 
-    const persistableItems = normalizedItems.filter((item) =>
-      item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim(),
-    )
+    const persistableItems = normalizedItems
 
     if (!isEdit && canUseOfflineQuotationDrafts()) {
       try {

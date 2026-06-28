@@ -521,8 +521,11 @@ export default function NewInvoice() {
       return
     }
 
-    if (standardItems.some((item) => !item.description?.trim())) {
-      feedback.error('Validation Error', { description: 'Each item needs a description' })
+    const invalidStandardRowCount = standardItems.filter((item) => !item.description?.trim()).length
+    if (invalidStandardRowCount > 0) {
+      feedback.error('Validation Error', {
+        description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
+      })
       return
     }
 
@@ -645,9 +648,7 @@ export default function NewInvoice() {
       return
     }
 
-    const itemsToSave = items
-      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-      .map((item, index) => toDbItem(item, invoiceRow.id, index))
+    const itemsToSave = items.map((item, index) => toDbItem(item, invoiceRow.id, index))
 
     const deleteExistingItemsStart = timer.phaseStart('delete-existing-items')
     timer.phaseEnd('delete-existing-items', deleteExistingItemsStart, {
