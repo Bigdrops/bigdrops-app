@@ -214,6 +214,7 @@ export interface InvoiceItem {
   custom_data?: CustomDataMap
   created_at?: string | null
   updated_at?: string | null
+  temp_ref?: string
 }
 
 export interface Invoice extends InvoiceTotalsSource {
