@@ -12,23 +12,33 @@ const extraChargeSchema = z.object({
 
 const groupSchema = z.object({
   id: z.string().optional(),
-  name: z.string().min(1),
-  showSubtotal: z.boolean().optional().default(false),
+  name: z.string().trim().min(1, 'Group name is required.'),
   itemIds: z.array(z.string()).optional(),
 })
 
 function buildItemSchema(mode: ImportMode, maxRow: number) {
   return unknownRecordSchema.superRefine((item, ctx) => {
+    if (Object.prototype.hasOwnProperty.call(item, 'description')) {
+      const description = item.description
+      if (typeof description !== 'string' || description.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['description'],
+          message: 'Description is required and cannot be blank.',
+        })
+      }
+    }
+
     if (mode !== 'Update') return
-    if (!Object.prototype.hasOwnProperty.call(item, 'row_number')) {
+
+    const raw = item.row_number
+    if (raw === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Each update row must include row_number.',
       })
       return
     }
-
-    const raw = item.row_number
     if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

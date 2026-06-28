@@ -26,7 +26,7 @@ export const quotationImportAdapter = {
     setItems(result.items)
 
     if (result.groups && result.groups.length > 0) {
-      setGroups(result.groups)
+      setGroups(result.groups.map((group) => ({ ...group, showSubtotal: true })))
     }
 
     if (result.topLevel.title !== undefined) updateTopLevelField('title', result.topLevel.title)

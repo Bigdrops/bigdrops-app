@@ -55,7 +55,6 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
         {
           id: "grp_1",
           name: "Section or Category Name",
-          showSubtotal: false,
           itemIds: ["item_1", "item_2"]
         }
       ]
