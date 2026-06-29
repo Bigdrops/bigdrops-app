@@ -1,115 +1,190 @@
 import { StyleSheet } from '@react-pdf/renderer'
 
-export const INK = '#0f172a'
-export const DARK_ACCENT = '#111827'
-export const MUTED = '#64748b'
-export const LIGHT_BG = '#f8fafc'
+export const INK = '#1a1a2e'
+export const DEEP_PINE = '#1b4332'
+export const PRIMARY = '#2d6a4f'
+export const ACCENT = '#52b788'
+export const GOLD = '#d4a373'
+export const GOLD_DIM = '#bc6c25'
+export const PAPER = '#faf8f0'
+export const MUTED_TEXT = '#6b7280'
 export const WHITE = '#ffffff'
-export const RULE = '#e2e8f0'
+export const LIGHT_RULE = '#d1d5db'
 
-const PAGE_PADDING = 40
+export const BOLT_SERIF = 'Times-Roman'
+export const BOLT_SANS = 'Helvetica'
+
+const PAGE_PADDING = 48
+const RULE_THICK = 2
+const RULE_THIN = 1
 
 export const styles = StyleSheet.create({
   page: {
-    backgroundColor: WHITE,
-    fontFamily: 'Helvetica',
-    paddingBottom: 44,
+    padding: PAGE_PADDING,
+    paddingTop: 0,
+    fontFamily: BOLT_SANS,
     fontSize: 9,
     color: INK,
+    backgroundColor: PAPER,
   },
 
-  /* ── Hero Band ───────────────────────────────────── */
-  heroBand: {
-    paddingTop: 32,
-    paddingBottom: 28,
+  /* ── Top Seal Band ───────────────────────────────── */
+  sealBand: {
+    backgroundColor: DEEP_PINE,
+    marginLeft: -PAGE_PADDING,
+    marginRight: -PAGE_PADDING,
+    paddingTop: 28,
+    paddingBottom: 20,
     paddingHorizontal: PAGE_PADDING,
   },
-  heroRow: {
+  sealContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
   },
-  heroLeft: {},
-  heroLabel: {
-    fontSize: 8,
+  sealLeft: {},
+  sealBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  sealBadgeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: GOLD,
+  },
+  sealBadgeText: {
+    fontSize: 7,
     letterSpacing: 3,
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
+    color: GOLD,
+    fontFamily: BOLT_SANS,
   },
-  heroTitle: {
-    fontSize: 26,
-    fontFamily: 'Helvetica-Bold',
-    color: WHITE,
-    marginBottom: 8,
-  },
-  heroMeta: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
-  },
-  heroMetaItem: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  heroMetaLabel: {
-    fontSize: 7,
+  sealDocumentType: {
+    fontSize: 11,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
+    color: ACCENT,
+    fontFamily: BOLT_SANS,
   },
-  heroMetaValue: {
-    fontSize: 9,
+  sealTitle: {
+    fontSize: 20,
+    fontFamily: BOLT_SERIF,
     color: WHITE,
-    fontFamily: 'Helvetica-Bold',
+    marginTop: 4,
+  },
+  sealRight: {
+    alignItems: 'flex-end',
+  },
+  sealNumber: {
+    fontSize: 10,
+    color: ACCENT,
+    fontFamily: BOLT_SANS,
+  },
+  sealNumberValue: {
+    fontSize: 14,
+    fontFamily: BOLT_SERIF,
+    color: WHITE,
+    marginTop: 2,
   },
 
-  /* ── Content Area ────────────────────────────────── */
-  content: {
-    paddingHorizontal: PAGE_PADDING,
-    paddingTop: 24,
+  /* ── Gold Divisor ────────────────────────────────── */
+  goldRule: {
+    height: RULE_THICK,
+    backgroundColor: GOLD,
+    marginTop: 0,
+    marginLeft: -PAGE_PADDING,
+    marginRight: -PAGE_PADDING,
+  },
+  thinGoldRule: {
+    height: RULE_THIN,
+    backgroundColor: GOLD_DIM,
+    marginVertical: 12,
   },
 
-  /* ── Company / Tagline ───────────────────────────── */
-  companyBlock: {
+  /* ── Company / Title Block ───────────────────────── */
+  headerBlock: {
+    marginTop: 20,
     marginBottom: 16,
   },
   companyName: {
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontSize: 16,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
     marginBottom: 2,
   },
   tagline: {
     fontSize: 8,
-    color: MUTED,
+    color: MUTED_TEXT,
+    fontFamily: BOLT_SANS,
     fontStyle: 'italic',
+    marginBottom: 8,
   },
 
-  /* ── Party Row ───────────────────────────────────── */
+  /* ── Meta Rows ───────────────────────────────────── */
+  metaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginBottom: 8,
+  },
+  metaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: RULE_THIN,
+    borderColor: LIGHT_RULE,
+    borderRadius: 2,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    backgroundColor: WHITE,
+    gap: 4,
+  },
+  metaChipLabel: {
+    fontSize: 7,
+    color: MUTED_TEXT,
+    fontFamily: BOLT_SANS,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  metaChipValue: {
+    fontSize: 8,
+    color: INK,
+    fontFamily: BOLT_SANS,
+  },
+
+  /* ── Party / Address ─────────────────────────────── */
   partyRow: {
     flexDirection: 'row',
-    gap: 32,
-    marginBottom: 20,
+    gap: 24,
+    marginBottom: 16,
   },
-  partyBox: {},
+  partyBox: {
+    flex: 1,
+    padding: 12,
+    borderWidth: RULE_THIN,
+    borderColor: ACCENT,
+    backgroundColor: WHITE,
+  },
   partyTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
-    marginBottom: 4,
+    color: PRIMARY,
+    fontFamily: BOLT_SANS,
+    marginBottom: 6,
   },
   partyName: {
-    fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontSize: 11,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
     marginBottom: 2,
   },
   partyLine: {
     fontSize: 8,
     color: INK,
+    fontFamily: BOLT_SANS,
     lineHeight: 1.6,
   },
 
@@ -117,20 +192,22 @@ export const styles = StyleSheet.create({
   customFieldsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     marginBottom: 16,
   },
   customFieldChip: {
     flexDirection: 'row',
-    gap: 4,
     alignItems: 'center',
-    backgroundColor: LIGHT_BG,
+    gap: 4,
+    backgroundColor: WHITE,
+    borderWidth: RULE_THIN,
+    borderColor: LIGHT_RULE,
     paddingVertical: 3,
     paddingHorizontal: 8,
   },
   customFieldLabel: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -141,35 +218,36 @@ export const styles = StyleSheet.create({
 
   /* ── Table ───────────────────────────────────────── */
   tableWrap: {
-    marginBottom: 20,
+    marginBottom: 16,
+    borderWidth: RULE_THIN,
+    borderColor: DEEP_PINE,
   },
   tableHeaderRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: INK,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    backgroundColor: DEEP_PINE,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
   },
   tableHeaderCell: {
     fontSize: 7,
-    letterSpacing: 2,
+    letterSpacing: 1,
     textTransform: 'uppercase',
-    color: INK,
-    fontFamily: 'Helvetica-Bold',
+    color: WHITE,
+    fontFamily: BOLT_SANS,
   },
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: RULE,
+    paddingHorizontal: 8,
+    backgroundColor: WHITE,
   },
   tableRowEven: {
-    backgroundColor: LIGHT_BG,
+    backgroundColor: '#f0f7f0',
   },
   tableCell: {
     fontSize: 8,
     color: INK,
+    fontFamily: BOLT_SANS,
   },
   descriptionCellYield: {
     flexGrow: 1,
@@ -179,11 +257,13 @@ export const styles = StyleSheet.create({
   descriptionMain: {
     fontSize: 8,
     color: INK,
+    fontFamily: BOLT_SANS,
   },
   descriptionSub: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     marginTop: 1,
+    fontFamily: BOLT_SANS,
   },
   imageThumb: {
     width: 48,
@@ -193,89 +273,99 @@ export const styles = StyleSheet.create({
   },
   imageLink: {
     fontSize: 7,
-    color: DARK_ACCENT,
+    color: ACCENT,
     marginTop: 2,
-    textDecoration: 'underline',
   },
   tightCellText: {
     fontSize: 8,
+    fontFamily: BOLT_SANS,
   },
   qtyUnitToken: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
 
   /* ── Group Rows ──────────────────────────────────── */
   groupHeaderRow: {
+    backgroundColor: '#e8f0e8',
     paddingVertical: 5,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: RULE,
-    backgroundColor: LIGHT_BG,
+    paddingHorizontal: 8,
+    borderBottomWidth: RULE_THIN,
+    borderBottomColor: LIGHT_RULE,
   },
   groupHeaderText: {
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontSize: 8,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
+    fontStyle: 'italic',
   },
   groupSubtotalRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
+    backgroundColor: WHITE,
     gap: 8,
   },
   groupSubtotalLabel: {
     fontSize: 8,
-    color: INK,
+    color: DEEP_PINE,
+    fontFamily: BOLT_SANS,
   },
   groupSubtotalValue: {
     fontSize: 8,
-    color: INK,
+    color: DEEP_PINE,
     textAlign: 'right',
   },
   groupClosingRule: {
-    height: 1,
-    backgroundColor: RULE,
-    marginHorizontal: 4,
+    height: RULE_THIN,
+    backgroundColor: LIGHT_RULE,
+    marginHorizontal: 8,
   },
 
   /* ── Closing (Totals + Bank) ─────────────────────── */
   closingRow: {
     flexDirection: 'row',
-    gap: 24,
-    marginBottom: 20,
+    gap: 16,
+    marginBottom: 16,
   },
   closingRowWide: {
     justifyContent: 'space-between',
   },
   bankBox: {
     flex: 1,
+    padding: 12,
+    borderWidth: RULE_THIN,
+    borderColor: LIGHT_RULE,
+    backgroundColor: WHITE,
   },
   bankTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: PRIMARY,
+    fontFamily: BOLT_SANS,
     marginBottom: 6,
   },
   bankRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: RULE,
   },
   bankLabel: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
   bankValue: {
     fontSize: 8,
     color: INK,
   },
   totalsBox: {
-    width: 240,
+    width: 220,
+    padding: 12,
+    borderWidth: RULE_THIN,
+    borderColor: DEEP_PINE,
+    backgroundColor: WHITE,
   },
   totalRow: {
     flexDirection: 'row',
@@ -284,7 +374,7 @@ export const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 8,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
   totalValue: {
     fontSize: 8,
@@ -294,25 +384,25 @@ export const styles = StyleSheet.create({
   totalFinal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderTopWidth: 2,
-    borderTopColor: INK,
+    borderTopWidth: RULE_THICK,
+    borderTopColor: DEEP_PINE,
     marginTop: 4,
     paddingTop: 4,
   },
   totalFinalLabel: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
   },
   totalFinalValue: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
     textAlign: 'right',
   },
   amountWords: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     fontStyle: 'italic',
     marginTop: 4,
     textAlign: 'right',
@@ -320,26 +410,26 @@ export const styles = StyleSheet.create({
   balanceDue: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: DARK_ACCENT,
-    marginTop: 8,
-    paddingVertical: 5,
+    backgroundColor: DEEP_PINE,
+    marginTop: 6,
+    paddingVertical: 4,
     paddingHorizontal: 8,
   },
   balanceDueText: {
     fontSize: 9,
     color: WHITE,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BOLT_SERIF,
   },
   balanceDueValue: {
     fontSize: 9,
-    color: WHITE,
+    color: GOLD,
     textAlign: 'right',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BOLT_SERIF,
   },
   advanceBox: {
     marginTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: RULE,
+    borderTopWidth: RULE_THIN,
+    borderTopColor: LIGHT_RULE,
     paddingTop: 4,
   },
   advanceRow: {
@@ -349,35 +439,37 @@ export const styles = StyleSheet.create({
   },
   advanceProminentLabel: {
     fontSize: 8,
-    color: INK,
+    color: PRIMARY,
+    fontFamily: BOLT_SANS,
   },
   advanceProminentValue: {
     fontSize: 8,
-    color: INK,
+    color: PRIMARY,
     textAlign: 'right',
   },
   advanceLabel: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
   advanceValue: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     textAlign: 'right',
   },
 
-  /* ── Optional Sections ───────────────────────────── */
+  /* ── Optional Sections (Notes, Terms) ────────────── */
   optionalSection: {
     marginBottom: 12,
     borderLeftWidth: 2,
-    borderLeftColor: DARK_ACCENT,
+    borderLeftColor: ACCENT,
     paddingLeft: 10,
   },
   optionalTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: PRIMARY,
+    fontFamily: BOLT_SANS,
     marginBottom: 4,
   },
   optionalRichText: {},
@@ -402,7 +494,7 @@ export const styles = StyleSheet.create({
   optionalListMarker: {
     width: 10,
     fontSize: 8,
-    color: DARK_ACCENT,
+    color: ACCENT,
   },
   optionalListItemText: {
     flex: 1,
@@ -417,7 +509,7 @@ export const styles = StyleSheet.create({
   },
   attachmentLink: {
     fontSize: 8,
-    color: DARK_ACCENT,
+    color: PRIMARY,
     textDecoration: 'underline',
   },
   attachmentItem: {
@@ -435,7 +527,7 @@ export const styles = StyleSheet.create({
   },
   additionalLabel: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     width: 100,
   },
   additionalValue: {
@@ -459,40 +551,41 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   signatureLine: {
-    height: 1,
+    height: RULE_THIN,
     backgroundColor: INK,
     marginBottom: 4,
   },
   signerName: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: BOLT_SERIF,
+    color: DEEP_PINE,
   },
   signerRole: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
 
   /* ── Footer ──────────────────────────────────────── */
   footerZone: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: PAGE_PADDING,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: RULE,
+    bottom: 20,
+    left: PAGE_PADDING,
+    right: PAGE_PADDING,
+  },
+  footerRule: {
+    height: RULE_THIN,
+    backgroundColor: GOLD_DIM,
+    marginBottom: 6,
   },
   footerExtraText: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     textAlign: 'center',
     marginBottom: 4,
   },
   taglineFooter: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 4,
@@ -503,6 +596,6 @@ export const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 7,
-    color: MUTED,
+    color: MUTED_TEXT,
   },
 })

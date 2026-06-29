@@ -1,84 +1,114 @@
 import { StyleSheet } from '@react-pdf/renderer'
 
-export const INK = '#0f172a'
-export const DARK_ACCENT = '#111827'
-export const MUTED = '#64748b'
-export const LIGHT_BG = '#f8fafc'
+export const NAVY = '#2c3e50'
+export const BLUE = '#4a90e2'
+export const AMBER = '#e67e22'
+export const AMBER_LIGHT = '#fef3c7'
+export const BORDER_LIGHT = '#e9edf2'
+export const INK = '#1e2a3a'
+export const MUTED = '#7a8a9a'
+export const LIGHT_BG = '#f4f6f8'
 export const WHITE = '#ffffff'
-export const RULE = '#e2e8f0'
+export const DANGER = '#e74c3c'
+
+export const DISPLAY = 'Helvetica-Bold'
+export const BODY = 'Helvetica'
 
 const PAGE_PADDING = 40
 
 export const styles = StyleSheet.create({
   page: {
-    backgroundColor: WHITE,
-    fontFamily: 'Helvetica',
+    backgroundColor: LIGHT_BG,
+    fontFamily: BODY,
     paddingBottom: 44,
     fontSize: 9,
     color: INK,
   },
 
-  /* ── Hero Band ───────────────────────────────────── */
-  heroBand: {
-    paddingTop: 32,
-    paddingBottom: 28,
+  /* ── Header Band ──────────────────────────────────── */
+  headerBand: {
+    backgroundColor: NAVY,
+    paddingTop: 28,
+    paddingBottom: 20,
     paddingHorizontal: PAGE_PADDING,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
-  heroRow: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  heroLeft: {},
-  heroLabel: {
+  headerLeft: {},
+  headerLabel: {
     fontSize: 8,
     letterSpacing: 3,
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 2,
   },
-  heroTitle: {
-    fontSize: 26,
-    fontFamily: 'Helvetica-Bold',
+  headerTitle: {
+    fontSize: 22,
+    fontFamily: DISPLAY,
     color: WHITE,
     marginBottom: 8,
   },
-  heroMeta: {
+  headerMeta: {
     flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
   },
-  heroMetaItem: {
+  headerMetaItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
-    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
   },
-  heroMetaLabel: {
-    fontSize: 7,
-    letterSpacing: 2,
+  headerMetaLabel: {
+    fontSize: 6,
+    letterSpacing: 1,
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.5)',
   },
-  heroMetaValue: {
-    fontSize: 9,
+  headerMetaValue: {
+    fontSize: 8,
     color: WHITE,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: DISPLAY,
   },
 
-  /* ── Content Area ────────────────────────────────── */
-  content: {
-    paddingHorizontal: PAGE_PADDING,
-    paddingTop: 24,
+  /* ── Amber Accent Bar ─────────────────────────────── */
+  amberBar: {
+    backgroundColor: AMBER,
+    height: 4,
+    marginHorizontal: PAGE_PADDING,
+    marginTop: 0,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
   },
 
-  /* ── Company / Tagline ───────────────────────────── */
+  /* ── Content Card ─────────────────────────────────── */
+  contentCard: {
+    backgroundColor: WHITE,
+    marginHorizontal: PAGE_PADDING,
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 24,
+  },
+
+  /* ── Company ──────────────────────────────────────── */
   companyBlock: {
     marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER_LIGHT,
+    paddingBottom: 12,
   },
   companyName: {
     fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: DISPLAY,
+    color: NAVY,
     marginBottom: 2,
   },
   tagline: {
@@ -87,24 +117,27 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  /* ── Party Row ───────────────────────────────────── */
+  /* ── Party Row ────────────────────────────────────── */
   partyRow: {
     flexDirection: 'row',
-    gap: 32,
-    marginBottom: 20,
+    gap: 24,
+    marginBottom: 16,
   },
-  partyBox: {},
+  partyBox: {
+    flex: 1,
+  },
   partyTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: BLUE,
+    fontFamily: DISPLAY,
     marginBottom: 4,
   },
   partyName: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: DISPLAY,
+    color: NAVY,
     marginBottom: 2,
   },
   partyLine: {
@@ -113,20 +146,21 @@ export const styles = StyleSheet.create({
     lineHeight: 1.6,
   },
 
-  /* ── Custom Fields ───────────────────────────────── */
+  /* ── Custom Fields ────────────────────────────────── */
   customFieldsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     marginBottom: 16,
   },
   customFieldChip: {
     flexDirection: 'row',
-    gap: 4,
     alignItems: 'center',
+    gap: 4,
     backgroundColor: LIGHT_BG,
+    borderRadius: 20,
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
   customFieldLabel: {
     fontSize: 7,
@@ -139,33 +173,35 @@ export const styles = StyleSheet.create({
     color: INK,
   },
 
-  /* ── Table ───────────────────────────────────────── */
+  /* ── Table ────────────────────────────────────────── */
   tableWrap: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tableHeaderRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: INK,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    backgroundColor: NAVY,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   tableHeaderCell: {
     fontSize: 7,
-    letterSpacing: 2,
+    letterSpacing: 1,
     textTransform: 'uppercase',
-    color: INK,
-    fontFamily: 'Helvetica-Bold',
+    color: WHITE,
+    fontFamily: DISPLAY,
   },
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 6,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
+    backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: RULE,
+    borderBottomColor: BORDER_LIGHT,
   },
   tableRowEven: {
-    backgroundColor: LIGHT_BG,
+    backgroundColor: '#fafbfc',
   },
   tableCell: {
     fontSize: 8,
@@ -190,10 +226,11 @@ export const styles = StyleSheet.create({
     height: 48,
     marginTop: 4,
     objectFit: 'cover',
+    borderRadius: 6,
   },
   imageLink: {
     fontSize: 7,
-    color: DARK_ACCENT,
+    color: BLUE,
     marginTop: 2,
     textDecoration: 'underline',
   },
@@ -205,66 +242,68 @@ export const styles = StyleSheet.create({
     color: MUTED,
   },
 
-  /* ── Group Rows ──────────────────────────────────── */
+  /* ── Group Rows ───────────────────────────────────── */
   groupHeaderRow: {
+    backgroundColor: '#f0f4f8',
     paddingVertical: 5,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: RULE,
-    backgroundColor: LIGHT_BG,
+    borderBottomColor: BORDER_LIGHT,
   },
   groupHeaderText: {
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontSize: 8,
+    fontFamily: DISPLAY,
+    color: NAVY,
   },
   groupSubtotalRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     gap: 8,
   },
   groupSubtotalLabel: {
     fontSize: 8,
-    color: INK,
+    color: NAVY,
+    fontFamily: DISPLAY,
   },
   groupSubtotalValue: {
     fontSize: 8,
-    color: INK,
+    color: NAVY,
     textAlign: 'right',
   },
   groupClosingRule: {
     height: 1,
-    backgroundColor: RULE,
-    marginHorizontal: 4,
+    backgroundColor: BORDER_LIGHT,
+    marginHorizontal: 12,
   },
 
-  /* ── Closing (Totals + Bank) ─────────────────────── */
+  /* ── Closing (Totals + Bank) ──────────────────────── */
   closingRow: {
     flexDirection: 'row',
-    gap: 24,
-    marginBottom: 20,
+    gap: 16,
   },
   closingRowWide: {
     justifyContent: 'space-between',
   },
   bankBox: {
     flex: 1,
+    backgroundColor: LIGHT_BG,
+    borderRadius: 12,
+    padding: 14,
   },
   bankTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: BLUE,
+    fontFamily: DISPLAY,
     marginBottom: 6,
   },
   bankRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: RULE,
   },
   bankLabel: {
     fontSize: 7,
@@ -275,7 +314,12 @@ export const styles = StyleSheet.create({
     color: INK,
   },
   totalsBox: {
-    width: 240,
+    width: 220,
+    backgroundColor: WHITE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+    padding: 14,
   },
   totalRow: {
     flexDirection: 'row',
@@ -295,19 +339,19 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 2,
-    borderTopColor: INK,
+    borderTopColor: BLUE,
     marginTop: 4,
     paddingTop: 4,
   },
   totalFinalLabel: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: DISPLAY,
+    color: NAVY,
   },
   totalFinalValue: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: DISPLAY,
+    color: NAVY,
     textAlign: 'right',
   },
   amountWords: {
@@ -320,26 +364,27 @@ export const styles = StyleSheet.create({
   balanceDue: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: DARK_ACCENT,
+    backgroundColor: AMBER,
     marginTop: 8,
     paddingVertical: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
   },
   balanceDueText: {
     fontSize: 9,
     color: WHITE,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: DISPLAY,
   },
   balanceDueValue: {
     fontSize: 9,
     color: WHITE,
     textAlign: 'right',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: DISPLAY,
   },
   advanceBox: {
     marginTop: 6,
     borderTopWidth: 1,
-    borderTopColor: RULE,
+    borderTopColor: BORDER_LIGHT,
     paddingTop: 4,
   },
   advanceRow: {
@@ -349,11 +394,11 @@ export const styles = StyleSheet.create({
   },
   advanceProminentLabel: {
     fontSize: 8,
-    color: INK,
+    color: NAVY,
   },
   advanceProminentValue: {
     fontSize: 8,
-    color: INK,
+    color: NAVY,
     textAlign: 'right',
   },
   advanceLabel: {
@@ -366,18 +411,21 @@ export const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-  /* ── Optional Sections ───────────────────────────── */
+  /* ── Optional Sections ────────────────────────────── */
   optionalSection: {
     marginBottom: 12,
-    borderLeftWidth: 2,
-    borderLeftColor: DARK_ACCENT,
-    paddingLeft: 10,
+    backgroundColor: LIGHT_BG,
+    borderRadius: 12,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: BLUE,
   },
   optionalTitle: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: BLUE,
+    fontFamily: DISPLAY,
     marginBottom: 4,
   },
   optionalRichText: {},
@@ -402,7 +450,7 @@ export const styles = StyleSheet.create({
   optionalListMarker: {
     width: 10,
     fontSize: 8,
-    color: DARK_ACCENT,
+    color: BLUE,
   },
   optionalListItemText: {
     flex: 1,
@@ -411,13 +459,13 @@ export const styles = StyleSheet.create({
     lineHeight: 1.6,
   },
 
-  /* ── Attachments ─────────────────────────────────── */
+  /* ── Attachments ──────────────────────────────────── */
   attachmentsWrap: {
     gap: 2,
   },
   attachmentLink: {
     fontSize: 8,
-    color: DARK_ACCENT,
+    color: BLUE,
     textDecoration: 'underline',
   },
   attachmentItem: {
@@ -425,7 +473,7 @@ export const styles = StyleSheet.create({
     color: INK,
   },
 
-  /* ── Additional Fields ───────────────────────────── */
+  /* ── Additional Fields ────────────────────────────── */
   additionalWrap: {
     gap: 3,
   },
@@ -444,7 +492,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
-  /* ── Signature ───────────────────────────────────── */
+  /* ── Signature ────────────────────────────────────── */
   signatureWrap: {
     marginTop: 16,
     marginBottom: 16,
@@ -465,15 +513,15 @@ export const styles = StyleSheet.create({
   },
   signerName: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    fontFamily: DISPLAY,
+    color: NAVY,
   },
   signerRole: {
     fontSize: 7,
     color: MUTED,
   },
 
-  /* ── Footer ──────────────────────────────────────── */
+  /* ── Footer ───────────────────────────────────────── */
   footerZone: {
     position: 'absolute',
     bottom: 0,
@@ -482,7 +530,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: PAGE_PADDING,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: RULE,
+    borderTopColor: BORDER_LIGHT,
   },
   footerExtraText: {
     fontSize: 7,
