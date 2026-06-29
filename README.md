@@ -113,4 +113,4 @@ bun run build
 
 ## Agent Workflow
 
-All coding agents must read `AGENTS.md` at the project root before modifying any file and consult the relevant skill files in `.agents/skills/` before writing code. The full skills registry is cataloged at `docs/PROJECTSKIILINDEX.md`.
+All coding agents must read `AGENTS.md` at the project root before modifying any file and consult the relevant skill files in `.agents/skills/` before writing code. The full skills registry is cataloged at `docs/PROJECTSKILLINDEX.md`.
