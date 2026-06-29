@@ -39,7 +39,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
     data.poNumber ? { label: data.poNumberLabel, value: data.poNumber } : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>
 
-  const customFields = data.customHeaderFields
+  const customFields = data.customHeaderFields ?? []
   const hasCustomFields = customFields.length > 0
 
   const hasBankDetails = data.showBankDetails && Boolean(data.paymentDetails)
@@ -148,7 +148,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
         ) : null}
 
         {/* Items table */}
-        {data.table.columns.length > 0 && data.table.rows.length > 0 ? (
+        {(data.table.columns?.length ?? 0) > 0 && (data.table.rows?.length ?? 0) > 0 ? (
           <View style={styles.tableWrap}>
             <View style={styles.tableHeaderRow} fixed>
               {data.table.columns.map((column, idx) => {
@@ -340,7 +340,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
         ) : null}
 
         {/* Attachments */}
-        {data.attachments.length > 0 ? (
+        {(data.attachments?.length ?? 0) > 0 ? (
           <View style={styles.optionalSection}>
             <Text style={styles.optionalTitle}>Attachments</Text>
             <View style={styles.attachmentsWrap}>
@@ -354,7 +354,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
         ) : null}
 
         {/* Additional Fields */}
-        {data.additionalFields.length > 0 ? (
+        {(data.additionalFields?.length ?? 0) > 0 ? (
           <View style={styles.optionalSection}>
             <View style={styles.additionalWrap}>
               {data.additionalFields.map((field, idx) => (

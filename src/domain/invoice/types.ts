@@ -77,7 +77,7 @@ export interface InvoicePdfOutput {
   compact: boolean
 }
 
-export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'apex', 'obsidian-receipt', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const
+export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'apex', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
 

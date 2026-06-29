@@ -43,7 +43,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { PdfRenderer },
     IndustryModule,
     ApexModule,
-    ObsidianModule,
     LedgerModule,
     CrestModule,
     MinimalModule,
@@ -55,7 +54,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/Apex'),
-    import('./templates/ObsidianReceipt'),
     import('./templates/Ledger'),
     import('./templates/Crest'),
     import('./templates/Minimal'),
@@ -66,7 +64,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
 
   const Industry = IndustryModule.default
   const Apex = ApexModule.default
-  const ObsidianReceipt = ObsidianModule.default
   const Ledger = LedgerModule.default
   const Crest = CrestModule.default
   const Minimal = MinimalModule.default
@@ -82,10 +79,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   let templateData: unknown = adaptCommercialDocumentData(request.model)
 
   switch (activeTemplateId) {
-    case 'obsidian-receipt':
-      Template = ObsidianReceipt
-      templateData = adaptCommercialDocumentData(request.model)
-      break
     case 'ledger':
       Template = Ledger
       templateData = adaptCommercialDocumentData(request.model)

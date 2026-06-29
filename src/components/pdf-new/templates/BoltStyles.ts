@@ -49,12 +49,6 @@ export const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
-  sealBadgeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: GOLD,
-  },
   sealBadgeText: {
     fontSize: 7,
     letterSpacing: 3,

@@ -35,7 +35,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
     data.poNumber ? { label: data.poNumberLabel, value: data.poNumber } : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>
 
-  const customFields = data.customHeaderFields
+  const customFields = data.customHeaderFields ?? []
   const hasCustomFields = customFields.length > 0
 
   const footerVisible = Boolean(
@@ -116,7 +116,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
       ) : null}
 
       <View style={styles.content}>
-        {data.table.columns.length > 0 && data.table.rows.length > 0 ? (
+        {(data.table.columns?.length ?? 0) > 0 && (data.table.rows?.length ?? 0) > 0 ? (
           <View style={styles.tableCard} wrap={false}>
             <View style={styles.tableHeader} fixed>
               {data.table.columns.map((column, idx) => {
@@ -198,7 +198,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
           </View>
         ) : null}
 
-        {(data.notes?.content || data.terms?.content || data.attachments.length > 0) ? (
+        {(data.notes?.content || data.terms?.content || (data.attachments?.length ?? 0) > 0) ? (
           <View style={styles.infoRow}>
             {data.notes?.content ? (
               <View style={styles.infoSection}>
@@ -228,7 +228,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                 }) || <Text style={styles.infoText}>{data.terms.plainText || ''}</Text>}
               </View>
             ) : null}
-            {data.attachments.length > 0 ? (
+            {(data.attachments?.length ?? 0) > 0 ? (
               <View style={styles.infoSection}>
                 <Text style={styles.infoTitle}>Attachments</Text>
                 <View style={{ gap: 2 }}>
@@ -297,7 +297,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
           </View>
         ) : null}
 
-        {(data.signature?.name || data.signature?.imageUrl || data.additionalFields.length > 0) ? (
+        {(data.signature?.name || data.signature?.imageUrl || (data.additionalFields?.length ?? 0) > 0) ? (
           <View style={styles.sigExtraRow}>
             {data.signature?.name || data.signature?.imageUrl ? (
               <View style={styles.sigBox}>
@@ -313,7 +313,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
             ) : (
               <View style={styles.sigBox} />
             )}
-            {data.additionalFields.length > 0 ? (
+            {(data.additionalFields?.length ?? 0) > 0 ? (
               <View style={styles.extraFieldsWrap}>
                 {data.additionalFields.map((field, idx) => (
                   <View key={`ext-${idx}`} style={styles.extraFieldRow}>

@@ -47,10 +47,6 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     shell: 'bg-[#f4f6f8] border border-[#2c3e50]',
     nodes: ['h-1.5 w-full rounded-full bg-[#2c3e50]', 'h-1 w-2/5 rounded-full bg-[#e67e22]', 'h-1 w-4/5 rounded-full bg-[#e9edf2]'],
   },
-  'obsidian-receipt': {
-    shell: 'bg-white border border-slate-200',
-    nodes: ['h-1.5 w-full rounded-full bg-[#2f7f7c]', 'h-1 w-2/5 rounded-full bg-[#8c8279]', 'h-1 w-3/5 rounded-full bg-slate-100'],
-  },
   bordered_schedule: {
     shell: 'bg-white border border-slate-300',
     nodes: ['h-1.5 w-full bg-slate-700', 'h-0.5 w-full bg-slate-300', 'h-4 w-full border border-slate-400 bg-white'],
