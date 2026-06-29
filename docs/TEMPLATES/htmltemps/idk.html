@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice · Huashu Design</title>
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts: Inter & Space Grotesk for a modern feel -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ------------- RESET & BASE ------------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #eef2f7;
+      padding: 40px 20px;
+      color: #1e2a3a;
+    }
+    .invoice-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 20, 40, 0.15);
+      padding: 48px 56px;
+      position: relative;
+    }
+    /* decorative accent line */
+    .invoice-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #2c3e50, #4a90e2, #e67e22);
+      border-radius: 24px 24px 0 0;
+    }
+
+    /* ------------- COLOUR PALETTE ------------- */
+    :root {
+      --primary: #1a2a3a;       /* dark navy */
+      --primary-light: #2c3e50;
+      --secondary: #4a90e2;      /* vibrant blue */
+      --accent: #e67e22;         /* warm orange */
+      --light-bg: #f8fafc;
+      --border-light: #e9edf2;
+      --text-muted: #5f6b7a;
+      --white: #ffffff;
+    }
+
+    /* ------------- TYPOGRAPHY ------------- */
+    h1, h2, h3, h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .text-muted {
+      color: var(--text-muted);
+    }
+    .text-primary {
+      color: var(--primary);
+    }
+    .text-secondary {
+      color: var(--secondary);
+    }
+    .text-accent {
+      color: var(--accent);
+    }
+    .fw-700 { font-weight: 700; }
+    .fw-600 { font-weight: 600; }
+    .fs-small { font-size: 0.85rem; }
+    .fs-large { font-size: 1.1rem; }
+
+    /* ------------- HEADER / BRANDING ------------- */
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border-light);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      flex-shrink: 0;
+    }
+    .brand-text h1 {
+      font-size: 28px;
+      color: var(--primary);
+      letter-spacing: -0.03em;
+    }
+    .brand-text .sub {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .invoice-meta {
+      text-align: right;
+      min-width: 200px;
+    }
+    .invoice-meta .meta-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .invoice-meta .meta-value {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+    .invoice-meta .badge {
+      background: var(--accent);
+      color: white;
+      padding: 4px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* ------------- CUSTOM HEADER FIELDS ------------- */
+    .custom-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 32px;
+      background: var(--light-bg);
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 32px;
+    }
+    .custom-field {
+      display: flex;
+      gap: 6px;
+      font-size: 0.9rem;
+    }
+    .custom-field .label {
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .custom-field .value {
+      font-weight: 500;
+    }
+
+    /* ------------- PARTY INFO ------------- */
+    .party-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 36px;
+    }
+    .party-box h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .party-box .name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .party-box .detail {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #2d3a4a;
+    }
+    .party-box .detail i {
+      color: var(--secondary);
+      width: 20px;
+    }
+
+    /* ------------- ITEMS TABLE ------------- */
+    .items-section {
+      margin: 32px 0;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .invoice-table th {
+      background: var(--primary);
+      color: white;
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .invoice-table th:last-child {
+      text-align: right;
+    }
+    .invoice-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .invoice-table td:last-child {
+      text-align: right;
+    }
+    .invoice-table .item-image {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--light-bg);
+      border: 1px solid var(--border-light);
+    }
+    .invoice-table .item-name {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .invoice-table .item-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .invoice-table .item-group {
+      background: var(--light-bg);
+      font-weight: 600;
+    }
+    .invoice-table .item-group td {
+      border-bottom: 2px solid var(--primary);
+      padding: 8px 12px;
+    }
+
+    /* ------------- TOTALS ------------- */
+    .totals-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 16px 48px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 2px solid var(--border-light);
+    }
+    .totals-col {
+      min-width: 200px;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+    .totals-row .label {
+      color: var(--text-muted);
+    }
+    .totals-row .value {
+      font-weight: 500;
+    }
+    .totals-row.grand-total {
+      font-weight: 700;
+      font-size: 1.3rem;
+      border-top: 2px solid var(--primary);
+      margin-top: 4px;
+      padding-top: 12px;
+    }
+    .totals-row.grand-total .value {
+      color: var(--accent);
+    }
+    .totals-row .discount {
+      color: #e74c3c;
+    }
+
+    /* -------------- AMOUNT IN WORDS -------------- */
+    .amount-words {
+      background: var(--light-bg);
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 16px 0 24px 0;
+      font-size: 0.95rem;
+      border-left: 4px solid var(--secondary);
+    }
+    .amount-words strong {
+      color: var(--primary);
+    }
+
+    /* ------------- BANK & REFERENCES ------------- */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 2px solid var(--border-light);
+    }
+    .footer-grid .col h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .footer-grid .col p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .footer-grid .col i {
+      color: var(--secondary);
+      width: 20px;
+    }
+    .signature-area {
+      display: flex;
+      gap: 40px;
+      margin-top: 16px;
+    }
+    .signature-area .sig-block {
+      flex: 1;
+    }
+    .signature-area .sig-line {
+      border-bottom: 2px solid var(--primary);
+      width: 160px;
+      margin-top: 28px;
+      margin-bottom: 4px;
+    }
+    .signature-area .sig-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ------------- FOOTER ------------- */
+    .invoice-footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-light);
+      padding-top: 20px;
+    }
+
+    /* ------------- ATTACHMENTS ------------- */
+    .attachments {
+      margin: 16px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .attachment-tag {
+      background: var(--light-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 40px;
+      padding: 4px 16px 4px 12px;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+    }
+    .attachment-tag i {
+      color: var(--secondary);
+    }
+
+    /* ------------- RESPONSIVE ------------- */
+    @media (max-width: 768px) {
+      .invoice-wrapper { padding: 24px 20px; }
+      .party-grid { grid-template-columns: 1fr; gap: 16px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+      .invoice-header { flex-direction: column; align-items: stretch; }
+      .invoice-meta { text-align: left; }
+      .custom-fields { flex-direction: column; gap: 8px; }
+      .totals-grid { justify-content: stretch; }
+      .signature-area { flex-direction: column; gap: 20px; }
+      .invoice-table td, .invoice-table th { padding: 10px 8px; }
+    }
+
+    /* ------------- PRINT STYLES ------------- */
+    @media print {
+      body { background: white; padding: 0; }
+      .invoice-wrapper {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 30px 40px;
+        max-width: 100%;
+      }
+      .invoice-wrapper::before { display: none; }
+      .no-print { display: none; }
+      .invoice-table th { background: var(--primary) !important; color: white !important; }
+      .badge { background: var(--accent) !important; color: white !important; }
+      .amount-words { background: #f4f6f8 !important; }
+      .invoice-table .item-image { border: 1px solid #ccc; }
+    }
+
+    /* print button */
+    .print-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--secondary);
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(74, 144, 226, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 999;
+      transition: 0.2s;
+    }
+    .print-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 32px rgba(74, 144, 226, 0.5);
+    }
+    @media print {
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="invoice-wrapper" id="invoice">
+
+  <!-- ========== HEADER ========== -->
+  <header class="invoice-header">
+    <div class="brand">
+      <div class="brand-logo">H</div>
+      <div class="brand-text">
+        <h1>Huashu<span style="color:var(--secondary);">.</span></h1>
+        <div class="sub">Design · Development · Innovation</div>
+      </div>
+    </div>
+    <div class="invoice-meta">
+      <div><span class="meta-label">Invoice #</span></div>
+      <div class="meta-value">INV-2026-0042</div>
+      <div><span class="meta-label">Date</span> <span class="meta-value" style="font-weight:400;">April 28, 2026</span></div>
+      <div><span class="badge"><i class="fas fa-check-circle"></i> PAID</span></div>
+    </div>
+  </header>
+
+  <!-- ========== CUSTOM HEADER FIELDS ========== -->
+  <div class="custom-fields">
+    <div class="custom-field"><span class="label">PO Reference:</span><span class="value">PO-2026-1289</span></div>
+    <div class="custom-field"><span class="label">Project:</span><span class="value">Website Redesign</span></div>
+    <div class="custom-field"><span class="label">Due Date:</span><span class="value">May 15, 2026</span></div>
+    <div class="custom-field"><span class="label">Payment Terms:</span><span class="value">Net 15</span></div>
+  </div>
+
+  <!-- ========== PARTY INFO ========== -->
+  <div class="party-grid">
+    <div class="party-box">
+      <h3><i class="fas fa-building"></i> Bill To</h3>
+      <div class="name">Acme Corp</div>
+      <div class="detail">
+        <i class="fas fa-user"></i> Attn: John Smith<br>
+        <i class="fas fa-map-pin"></i> 1234 Main Street, Suite 200<br>
+        <i class="fas fa-city"></i> San Francisco, CA 94105<br>
+        <i class="fas fa-envelope"></i> john@acme.com<br>
+        <i class="fas fa-phone"></i> +1 (555) 123-4567
+      </div>
+    </div>
+    <div class="party-box">
+      <h3><i class="fas fa-ship"></i> Ship To</h3>
+      <div class="name">Acme Corp - Warehouse</div>
+      <div class="detail">
+        <i class="fas fa-map-pin"></i> 5678 Industrial Way<br>
+        <i class="fas fa-city"></i> Oakland, CA 94607<br>
+        <i class="fas fa-phone"></i> +1 (555) 987-6543
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GROUPED ITEMS WITH IMAGES ========== -->
+  <div class="items-section">
+    <div class="table-responsive">
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th style="width:60px;">Image</th>
+            <th>Item / Description</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Group 1: Design Services -->
+          <tr class="item-group">
+            <td colspan="5"><i class="fas fa-paint-brush" style="margin-right:8px;"></i> Design Services</td>
+          </tr>
+          <tr>
+            <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f4f8'/%3E%3Ctext x='8' y='30' font-family='Arial' font-size='20' fill='%234a90e2'%3E🎨%3C/text%3E%3C/svg%3E" alt="icon" class="item-image"></td>
+            <td><div class="item-name">UI/UX Design</div><div class="item-desc">Homepage & dashboard wireframes</div></td>
+            <td style="text-align:center;">4</td>
+            <td style="text-align:right;">$150.00</td>
+            <td style="text-align:right;">$600.00</td>
+          </tr>
+          <tr>
+            <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f4f8'/%3E%3Ctext x='8' y='30' font-family='Arial' font-size='20' fill='%234a90e2'%3E🖌️%3C/text%3E%3C/svg%3E" alt="icon" class="item-image"></td>
+            <td><div class="item-name">Brand Identity</div><div class="item-desc">Logo, color palette, typography system</div></td>
+            <td style="text-align:center;">1</td>
+            <td style="text-align:right;">$400.00</td>
+            <td style="text-align:right;">$400.00</td>
+          </tr>
+
+          <!-- Group 2: Development -->
+          <tr class="item-group">
+            <td colspan="5"><i class="fas fa-code" style="margin-right:8px;"></i> Development</td>
+          </tr>
+          <tr>
+            <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f4f8'/%3E%3Ctext x='6' y='30' font-family='Arial' font-size='20' fill='%234a90e2'%3E⚛️%3C/text%3E%3C/svg%3E" alt="icon" class="item-image"></td>
+            <td><div class="item-name">Frontend Development</div><div class="item-desc">React components, responsive layouts</div></td>
+            <td style="text-align:center;">8</td>
+            <td style="text-align:right;">$120.00</td>
+            <td style="text-align:right;">$960.00</td>
+          </tr>
+          <tr>
+            <td><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f4f8'/%3E%3Ctext x='6' y='30' font-family='Arial' font-size='20' fill='%234a90e2'%3E🗄️%3C/text%3E%3C/svg%3E" alt="icon" class="item-image"></td>
+            <td><div class="item-name">Backend API</div><div class="item-desc">Node.js, PostgreSQL, authentication</div></td>
+            <td style="text-align:center;">6</td>
+            <td style="text-align:right;">$140.00</td>
+            <td style="text-align:right;">$840.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== TOTALS (with discount, VAT, multiple totals) ========== -->
+  <div class="totals-grid">
+    <div class="totals-col">
+      <div class="totals-row"><span class="label">Subtotal</span><span class="value">$2,800.00</span></div>
+      <div class="totals-row"><span class="label">Discount (10%)</span><span class="value discount">-$280.00</span></div>
+      <div class="totals-row"><span class="label">VAT (20%)</span><span class="value">$504.00</span></div>
+      <div class="totals-row"><span class="label">Shipping</span><span class="value">$50.00</span></div>
+      <div class="totals-row grand-total"><span class="label">Grand Total</span><span class="value">$3,074.00</span></div>
+    </div>
+    <div class="totals-col" style="min-width:180px;">
+      <div class="totals-row"><span class="label">Paid (advance)</span><span class="value">-$500.00</span></div>
+      <div class="totals-row"><span class="label">Balance Due</span><span class="value" style="color:var(--accent);font-weight:700;">$2,574.00</span></div>
+    </div>
+  </div>
+
+  <!-- ========== AMOUNT IN WORDS ========== -->
+  <div class="amount-words" id="amountWords">
+    <strong>Amount in words:</strong> <span id="wordsDisplay">Three thousand seventy-four dollars and 00 cents</span>
+  </div>
+
+  <!-- ========== ATTACHMENTS ========== -->
+  <div class="attachments">
+    <span class="attachment-tag"><i class="fas fa-paperclip"></i> wireframes.pdf</span>
+    <span class="attachment-tag"><i class="fas fa-paperclip"></i> style-guide.zip</span>
+    <span class="attachment-tag"><i class="fas fa-paperclip"></i> contract-signed.pdf</span>
+  </div>
+
+  <!-- ========== BANK DETAILS, REFERENCES, NOTES, TERMS, SIGNATURES ========== -->
+  <div class="footer-grid">
+    <div class="col">
+      <h4><i class="fas fa-university"></i> Bank Details</h4>
+      <p>
+        <i class="fas fa-building"></i> Bank: Global Bank<br>
+        <i class="fas fa-user"></i> Account Name: Huashu Design<br>
+        <i class="fas fa-hashtag"></i> Account No: 12-3456-7890<br>
+        <i class="fas fa-code-branch"></i> Sort Code: 40-20-10<br>
+        <i class="fas fa-globe"></i> IBAN: GB12ABCD1234567890
+      </p>
+    </div>
+    <div class="col">
+      <h4><i class="fas fa-info-circle"></i> Notes & Terms</h4>
+      <p><strong>Notes:</strong> Thank you for your business. Please include invoice number on payment.</p>
+      <p><strong>Terms:</strong> Payment due within 15 days. Late payments subject to 2% monthly interest.</p>
+      <p><strong>Payment Reference:</strong> INV-0042</p>
+    </div>
+  </div>
+
+  <!-- ========== SIGNATURES ========== -->
+  <div class="signature-area">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Authorized Signature (Issuer)</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Authorized Signature (Receiver)</div>
+    </div>
+  </div>
+
+  <!-- ========== FOOTER ========== -->
+  <div class="invoice-footer">
+    <i class="fas fa-print" style="margin-right:6px;"></i> Generated on April 28, 2026 · Huashu Design Inc. · 123 Design St, New York, NY 10001 · <i class="fas fa-envelope"></i> hello@huashu.design
+  </div>
+
+</div>
+
+<!-- ========== PRINT BUTTON ========== -->
+<button class="print-btn no-print" onclick="window.print()">
+  <i class="fas fa-print"></i> Print / PDF
+</button>
+
+<script>
+  // ---------- AMOUNT IN WORDS CONVERTER ----------
+  // Simple converter for numbers up to millions
+  function numberToWords(num) {
+    if (num === 0) return 'Zero';
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const scales = ['', 'Thousand', 'Million', 'Billion'];
+
+    function convertChunk(n) {
+      if (n === 0) return '';
+      let str = '';
+      if (n >= 100) {
+        str += ones[Math.floor(n / 100)] + ' Hundred ';
+        n %= 100;
+      }
+      if (n >= 20) {
+        str += tens[Math.floor(n / 10)] + ' ';
+        n %= 10;
+      }
+      if (n > 0 && n < 20) {
+        str += ones[n] + ' ';
+      }
+      return str.trim();
+    }
+
+    let result = '';
+    let scaleIndex = 0;
+    let remaining = Math.floor(num);
+    // handle cents separately
+    let cents = Math.round((num - remaining) * 100);
+    while (remaining > 0) {
+      let chunk = remaining % 1000;
+      if (chunk !== 0) {
+        let chunkWords = convertChunk(chunk);
+        if (scaleIndex > 0) chunkWords += ' ' + scales[scaleIndex];
+        result = chunkWords + ' ' + result;
+      }
+      remaining = Math.floor(remaining / 1000);
+      scaleIndex++;
+    }
+    result = result.trim();
+    if (cents > 0) {
+      let centsWords = convertChunk(cents);
+      if (centsWords) result += ' and ' + centsWords + ' cents';
+      else result += ' and 00 cents';
+    } else {
+      result += ' and 00 cents';
+    }
+    return result;
+  }
+
+  // grab the grand total value from the table (or we can hardcode)
+  // we'll extract from the displayed text or just set manually for demo
+  // better: we'll set the amount in words from a fixed value.
+  // We'll use the grand total displayed: 3074.00
+  const totalAmount = 3074.00;
+  const words = numberToWords(totalAmount);
+  // capitalise first letter
+  const formatted = words.charAt(0).toUpperCase() + words.slice(1);
+  document.getElementById('wordsDisplay').textContent = formatted;
+</script>
+
+</body>
+</html>
