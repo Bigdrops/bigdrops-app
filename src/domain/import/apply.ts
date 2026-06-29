@@ -131,78 +131,58 @@ export function buildApplyResult({
       }
     }
 
-    const itemTempRefMap = new Map<string, number>()
-
-    resolved.items.forEach((item, index) => {
-      const tempRef = item.baseFields.temp_ref as string | undefined
-      if (tempRef) {
-        itemTempRefMap.set(tempRef, index)
-      }
-    })
-
-    const groupedItemIndices = new Set<number>()
-
-    groups.forEach((group) => {
-      group.itemIds.forEach((tempRef) => {
-        const idx = itemTempRefMap.get(tempRef)
-        if (idx !== undefined) groupedItemIndices.add(idx)
-      })
-    })
-
-    resolved.items.forEach((item, idx) => {
-      const itemGroupId = item.baseFields.group_id as string | undefined
-      if (itemGroupId) {
-        const groupIdx = groups.findIndex((g) => g.id === itemGroupId)
-        if (groupIdx !== -1) groupedItemIndices.add(idx)
-      }
-    })
-
     const importedItems: InvoiceItem[] = []
     let currentSortOrder = existingItems.length
+    const emittedGroupHeaders = new Set<string>()
 
-    groups.forEach((group) => {
-      importedItems.push({
-        ...createItem(),
-        row_type: 'group_header',
-        group_id: group.id,
-        group_name: group.name,
-        sort_order: currentSortOrder++,
-        description: group.name,
-        quantity: 0,
-        unit_price: 0,
-      })
+    resolved.items.forEach((item) => {
+      const tempRef = item.baseFields.temp_ref as string | undefined
+      const itemGroupId = item.baseFields.group_id as string | undefined
 
-      resolved.items.forEach((item, itemIndex) => {
-        const itemTempRef = item.baseFields.temp_ref as string | undefined
-        const itemGroupId = item.baseFields.group_id as string | undefined
-        const matchedViaItemIds = group.itemIds.includes(itemTempRef || '')
-        const matchedViaGroupId = itemGroupId === group.id
+      let matchedGroup: (typeof groups)[number] | undefined
 
-        if (matchedViaItemIds || matchedViaGroupId) {
-          const nextItem = assignResolvedFields(
-            {
-              ...createItem(),
-              row_type: 'standard',
-              group_id: group.id,
-              group_name: group.name,
-              sort_order: currentSortOrder++,
-            },
-            item,
-            exemptSet,
-          )
+      if (itemGroupId) {
+        matchedGroup = groups.find((g) => g.id === itemGroupId)
+      }
 
+      if (!matchedGroup && tempRef) {
+        matchedGroup = groups.find((g) => g.itemIds.includes(tempRef))
+      }
+
+      if (matchedGroup) {
+        if (!emittedGroupHeaders.has(matchedGroup.id)) {
+          emittedGroupHeaders.add(matchedGroup.id)
           importedItems.push({
-            ...nextItem,
-            row_type: 'standard' as const,
-            group_id: group.id,
-            group_name: group.name,
+            ...createItem(),
+            row_type: 'group_header',
+            group_id: matchedGroup.id,
+            group_name: matchedGroup.name,
+            sort_order: currentSortOrder++,
+            description: matchedGroup.name,
+            quantity: 0,
+            unit_price: 0,
           })
         }
-      })
-    })
 
-    resolved.items.forEach((item, index) => {
-      if (!groupedItemIndices.has(index)) {
+        const nextItem = assignResolvedFields(
+          {
+            ...createItem(),
+            row_type: 'standard',
+            group_id: matchedGroup.id,
+            group_name: matchedGroup.name,
+            sort_order: currentSortOrder++,
+          },
+          item,
+          exemptSet,
+        )
+
+        importedItems.push({
+          ...nextItem,
+          row_type: 'standard' as const,
+          group_id: matchedGroup.id,
+          group_name: matchedGroup.name,
+        })
+      } else {
         const nextItem = assignResolvedFields(
           {
             ...createItem(),

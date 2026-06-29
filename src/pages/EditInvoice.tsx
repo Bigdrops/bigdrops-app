@@ -41,7 +41,7 @@ import {
   toDbItem,
   useInvoiceColumns,
 } from '../components/useInvoiceColumns'
-import { computeDocument } from '../lib/Calculations'
+import { computeDocument, type ComputedItem, type ComputedGroup } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
@@ -472,6 +472,21 @@ export default function EditInvoice() {
     [invoice?.vat, invoice?.discount, invoice?.wht, discountType, discountTiming, whtType],
   )
   const documentTotals = useMemo(() => {
+    if (!invoice) {
+      return {
+        items: [] as ComputedItem[],
+        groups: [] as ComputedGroup[],
+        subtotal: 0,
+        installRateTotal: 0,
+        extraChargesTotal: 0,
+        taxableBase: 0,
+        discount: 0,
+        vat: 0,
+        wht: 0,
+        grandTotal: 0,
+        totalPayable: 0,
+      }
+    }
     return computeDocument({
       items,
       columns,
