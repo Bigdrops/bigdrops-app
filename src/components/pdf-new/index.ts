@@ -46,6 +46,8 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     ObsidianModule,
     LedgerModule,
     CrestModule,
+    MinimalModule,
+    EvergreenModule,
   ] = await Promise.all([
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
@@ -54,6 +56,8 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     import('./templates/ObsidianReceipt'),
     import('./templates/Ledger'),
     import('./templates/Crest'),
+    import('./templates/Minimal'),
+    import('./templates/Evergreen'),
   ])
 
   const Industry = IndustryModule.default
@@ -61,6 +65,8 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   const ObsidianReceipt = ObsidianModule.default
   const Ledger = LedgerModule.default
   const Crest = CrestModule.default
+  const Minimal = MinimalModule.default
+  const Evergreen = EvergreenModule.default
 
   registerPdfFonts()
 
@@ -84,6 +90,14 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       break
     case 'crest':
       Template = Crest
+      templateData = adaptCommercialDocumentData(request.model)
+      break
+    case 'minimal':
+      Template = Minimal
+      templateData = adaptCommercialDocumentData(request.model)
+      break
+    case 'evergreen':
+      Template = Evergreen
       templateData = adaptCommercialDocumentData(request.model)
       break
     case 'industry':

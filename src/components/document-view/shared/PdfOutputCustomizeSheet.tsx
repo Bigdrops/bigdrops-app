@@ -60,6 +60,22 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     accents: ['h-1.5 w-full rounded-full bg-[#1e3a5f]', 'h-1 w-2/5 rounded-full bg-[#c9a96e]', 'h-1 w-3/5 rounded-full bg-slate-200'],
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-2/3 rounded-full bg-slate-200'],
   },
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    eyebrow: 'Restrained',
+    shell: 'bg-white border border-slate-200',
+    accents: ['h-1.5 w-full rounded-full bg-[#111827]', 'h-0.5 w-4/5 rounded-full bg-slate-300', 'h-0.5 w-3/5 rounded-full bg-slate-200'],
+    columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
+  },
+  {
+    id: 'evergreen',
+    label: 'Evergreen',
+    eyebrow: 'Fresh',
+    shell: 'bg-white border border-slate-200',
+    accents: ['h-1.5 w-full rounded-full bg-[#1f6e5c]', 'h-1 w-2/5 rounded-full bg-[#2a8a73]', 'h-1 w-3/5 rounded-full bg-[#e8f3ef]'],
+    columns: ['h-7 w-full rounded-md bg-[#f0f6f2]', 'h-1 w-full rounded-full bg-[#d4dfd8]', 'h-1 w-2/3 rounded-full bg-[#d4dfd8]'],
+  },
 ] as const satisfies ReadonlyArray<{
   id: InvoicePdfTemplateId
   label: string
