@@ -1,109 +1,109 @@
 import { StyleSheet } from '@react-pdf/renderer'
 
-export const INK = '#0f172a'
-export const DARK_ACCENT = '#111827'
-export const MUTED = '#64748b'
-export const LIGHT_BG = '#f8fafc'
-export const WHITE = '#ffffff'
-export const RULE = '#e2e8f0'
+export const INK = '#1a2f2f'
+export const ACCENT = '#0d7c7c'
+export const ACCENT_DIM = '#e6f4f4'
+export const PAPER = '#fefefe'
+export const RULE = '#b8c4c4'
+export const LIGHT_RULE = '#dfe5e5'
+export const PANEL = '#f5f8f8'
+export const SAND = '#f0ebe0'
+export const LINK = '#0d5c5c'
+export const LINK_BG = '#e0f2f2'
+
+export const BODY_SERIF = 'Times-Roman'
+export const BODY_SERIF_BOLD = 'Times-Bold'
+export const BODY_SERIF_ITALIC = 'Times-Italic'
+export const BODY_SANS = 'Helvetica'
 
 const PAGE_PADDING = 40
 
 export const styles = StyleSheet.create({
   page: {
-    backgroundColor: WHITE,
-    fontFamily: 'Helvetica',
-    paddingBottom: 44,
+    backgroundColor: PAPER,
+    fontFamily: BODY_SANS,
+    paddingBottom: 50,
     fontSize: 9,
     color: INK,
+    lineHeight: 1.4,
   },
 
-  /* ── Hero Band ───────────────────────────────────── */
-  heroBand: {
-    paddingTop: 32,
-    paddingBottom: 28,
+  headerContent: {
     paddingHorizontal: PAGE_PADDING,
+    paddingTop: 28,
+    paddingBottom: 12,
   },
-  heroRow: {
+  headerGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    gap: 20,
   },
-  heroLeft: {},
-  heroLabel: {
-    fontSize: 8,
-    letterSpacing: 3,
+  headerLeft: {
+    width: 64,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  logoCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: INK,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontFamily: BODY_SERIF_BOLD,
+    fontSize: 7,
+    color: ACCENT,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  heroTitle: {
-    fontSize: 26,
-    fontFamily: 'Helvetica-Bold',
-    color: WHITE,
-    marginBottom: 8,
+  headerCenter: {
+    flex: 1,
   },
-  heroMeta: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
-  },
-  heroMetaItem: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  heroMetaLabel: {
+  docLabel: {
     fontSize: 7,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
-  },
-  heroMetaValue: {
-    fontSize: 9,
-    color: WHITE,
-    fontFamily: 'Helvetica-Bold',
-  },
-
-  /* ── Content Area ────────────────────────────────── */
-  content: {
-    paddingHorizontal: PAGE_PADDING,
-    paddingTop: 24,
-  },
-
-  /* ── Company / Tagline ───────────────────────────── */
-  companyBlock: {
-    marginBottom: 16,
-  },
-  companyName: {
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: INK,
+    color: ACCENT,
+    fontFamily: BODY_SANS,
     marginBottom: 2,
   },
-  tagline: {
-    fontSize: 8,
-    color: MUTED,
-    fontStyle: 'italic',
+  docTitle: {
+    fontFamily: BODY_SERIF,
+    fontSize: 22,
+    color: INK,
+    marginBottom: 8,
   },
-
-  /* ── Party Row ───────────────────────────────────── */
-  partyRow: {
+  metaRow: {
     flexDirection: 'row',
-    gap: 32,
-    marginBottom: 20,
+    gap: 12,
   },
-  partyBox: {},
-  partyTitle: {
-    fontSize: 7,
+  metaItem: {},
+  metaLabel: {
+    fontSize: 6,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: RULE,
+    marginBottom: 1,
+  },
+  metaValue: {
+    fontSize: 8,
+    color: INK,
+  },
+  headerRight: {
+    width: 156,
+  },
+  partyLabel: {
+    fontSize: 6,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
+    color: RULE,
     marginBottom: 4,
   },
   partyName: {
-    fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontSize: 9,
+    fontFamily: BODY_SANS,
     color: INK,
     marginBottom: 2,
   },
@@ -113,59 +113,72 @@ export const styles = StyleSheet.create({
     lineHeight: 1.6,
   },
 
-  /* ── Custom Fields ───────────────────────────────── */
-  customFieldsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  customFieldChip: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-    backgroundColor: LIGHT_BG,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-  },
-  customFieldLabel: {
-    fontSize: 7,
-    color: MUTED,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  customFieldValue: {
-    fontSize: 8,
-    color: INK,
+  accentBar: {
+    height: 2,
+    backgroundColor: ACCENT,
+    marginHorizontal: PAGE_PADDING,
+    marginBottom: 8,
   },
 
-  /* ── Table ───────────────────────────────────────── */
-  tableWrap: {
-    marginBottom: 20,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
+  ribbon: {
+    marginHorizontal: PAGE_PADDING,
+    marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: INK,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    borderBottomColor: LIGHT_RULE,
+    paddingBottom: 8,
   },
-  tableHeaderCell: {
-    fontSize: 7,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: INK,
-    fontFamily: 'Helvetica-Bold',
-  },
-  tableRow: {
+  ribbonItem: {
     flexDirection: 'row',
+    paddingVertical: 3,
+    gap: 8,
+  },
+  ribbonLabel: {
+    fontSize: 7,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: RULE,
+    width: 100,
+  },
+  ribbonValue: {
+    fontSize: 8,
+    color: INK,
+    flex: 1,
+  },
+
+  content: {
+    paddingHorizontal: PAGE_PADDING,
+    paddingTop: 4,
+  },
+
+  tableCard: {
+    borderWidth: 1,
+    borderColor: RULE,
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: PANEL,
     paddingVertical: 6,
-    paddingHorizontal: 4,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: RULE,
   },
-  tableRowEven: {
-    backgroundColor: LIGHT_BG,
+  tableHeaderCell: {
+    fontSize: 7,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: INK,
+    fontFamily: BODY_SANS,
+  },
+  tableBody: {},
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: LIGHT_RULE,
   },
   tableCell: {
     fontSize: 8,
@@ -182,18 +195,18 @@ export const styles = StyleSheet.create({
   },
   descriptionSub: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
     marginTop: 1,
   },
   imageThumb: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     marginTop: 4,
     objectFit: 'cover',
   },
   imageLink: {
     fontSize: 7,
-    color: DARK_ACCENT,
+    color: LINK,
     marginTop: 2,
     textDecoration: 'underline',
   },
@@ -202,28 +215,28 @@ export const styles = StyleSheet.create({
   },
   qtyUnitToken: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
   },
 
-  /* ── Group Rows ──────────────────────────────────── */
   groupHeaderRow: {
     paddingVertical: 5,
-    paddingHorizontal: 4,
+    paddingHorizontal: 10,
+    backgroundColor: ACCENT_DIM,
     borderBottomWidth: 1,
-    borderBottomColor: RULE,
-    backgroundColor: LIGHT_BG,
+    borderBottomColor: LIGHT_RULE,
   },
   groupHeaderText: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BODY_SERIF_BOLD,
     color: INK,
   },
   groupSubtotalRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingVertical: 4,
-    paddingHorizontal: 4,
-    gap: 8,
+    paddingHorizontal: 10,
+    gap: 12,
+    backgroundColor: PANEL,
   },
   groupSubtotalLabel: {
     fontSize: 8,
@@ -233,49 +246,76 @@ export const styles = StyleSheet.create({
     fontSize: 8,
     color: INK,
     textAlign: 'right',
+    width: 80,
   },
   groupClosingRule: {
     height: 1,
-    backgroundColor: RULE,
-    marginHorizontal: 4,
+    backgroundColor: LIGHT_RULE,
+    marginHorizontal: 10,
   },
 
-  /* ── Closing (Totals + Bank) ─────────────────────── */
-  closingRow: {
+  infoRow: {
     flexDirection: 'row',
     gap: 24,
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  closingRowWide: {
-    justifyContent: 'space-between',
-  },
-  bankBox: {
+  infoSection: {
     flex: 1,
   },
-  bankTitle: {
-    fontSize: 7,
+  infoTitle: {
+    fontSize: 8,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: MUTED,
-    marginBottom: 6,
+    color: ACCENT,
+    fontFamily: BODY_SERIF_BOLD,
+    marginBottom: 4,
   },
-  bankRow: {
+  infoText: {
+    fontSize: 8,
+    color: INK,
+    lineHeight: 1.6,
+  },
+  infoRichText: {},
+  infoParagraph: {
+    fontSize: 8,
+    color: INK,
+    lineHeight: 1.6,
+    marginBottom: 4,
+  },
+  infoList: {
+    marginTop: 2,
+  },
+  infoListItemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: RULE,
+    marginBottom: 2,
   },
-  bankLabel: {
-    fontSize: 7,
-    color: MUTED,
+  infoListMarker: {
+    width: 10,
+    fontSize: 8,
+    color: ACCENT,
   },
-  bankValue: {
+  infoListItemText: {
+    flex: 1,
+    fontSize: 8,
+    color: INK,
+    lineHeight: 1.6,
+  },
+  attachmentLink: {
+    fontSize: 8,
+    color: LINK,
+    textDecoration: 'underline',
+  },
+  attachmentItem: {
     fontSize: 8,
     color: INK,
   },
-  totalsBox: {
-    width: 240,
+
+  totalsWrap: {
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  totalsGrid: {
+    width: 220,
   },
   totalRow: {
     flexDirection: 'row',
@@ -284,7 +324,7 @@ export const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 8,
-    color: MUTED,
+    color: INK,
   },
   totalValue: {
     fontSize: 8,
@@ -301,208 +341,163 @@ export const styles = StyleSheet.create({
   },
   totalFinalLabel: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BODY_SERIF_BOLD,
     color: INK,
   },
   totalFinalValue: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BODY_SERIF_BOLD,
     color: INK,
     textAlign: 'right',
   },
   amountWords: {
     fontSize: 7,
-    color: MUTED,
-    fontStyle: 'italic',
+    color: RULE,
+    fontFamily: BODY_SERIF_ITALIC,
     marginTop: 4,
     textAlign: 'right',
+  },
+  advanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: ACCENT_DIM,
+    marginTop: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+  },
+  advanceLabel: {
+    fontSize: 8,
+    color: INK,
+    fontFamily: BODY_SERIF_BOLD,
+  },
+  advanceValue: {
+    fontSize: 8,
+    color: INK,
+    textAlign: 'right',
+    fontFamily: BODY_SERIF_BOLD,
   },
   balanceDue: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: DARK_ACCENT,
-    marginTop: 8,
+    backgroundColor: INK,
+    marginTop: 6,
     paddingVertical: 5,
     paddingHorizontal: 8,
   },
   balanceDueText: {
     fontSize: 9,
-    color: WHITE,
-    fontFamily: 'Helvetica-Bold',
+    color: PAPER,
+    fontFamily: BODY_SANS,
   },
   balanceDueValue: {
     fontSize: 9,
-    color: WHITE,
+    color: PAPER,
     textAlign: 'right',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: BODY_SANS,
   },
   advanceBox: {
-    marginTop: 6,
+    marginTop: 4,
     borderTopWidth: 1,
-    borderTopColor: RULE,
+    borderTopColor: LIGHT_RULE,
     paddingTop: 4,
   },
-  advanceRow: {
+  advanceSubRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 2,
   },
-  advanceProminentLabel: {
-    fontSize: 8,
-    color: INK,
-  },
-  advanceProminentValue: {
-    fontSize: 8,
-    color: INK,
-    textAlign: 'right',
-  },
-  advanceLabel: {
+  advanceSubLabel: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
   },
-  advanceValue: {
+  advanceSubValue: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
     textAlign: 'right',
   },
 
-  /* ── Optional Sections ───────────────────────────── */
-  optionalSection: {
-    marginBottom: 12,
-    borderLeftWidth: 2,
-    borderLeftColor: DARK_ACCENT,
-    paddingLeft: 10,
-  },
-  optionalTitle: {
-    fontSize: 7,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: MUTED,
-    marginBottom: 4,
-  },
-  optionalRichText: {},
-  optionalText: {
-    fontSize: 8,
-    color: INK,
-    lineHeight: 1.6,
-  },
-  optionalParagraph: {
-    fontSize: 8,
-    color: INK,
-    lineHeight: 1.6,
-    marginBottom: 4,
-  },
-  optionalList: {
-    marginTop: 2,
-  },
-  optionalListItemRow: {
+  sigExtraRow: {
     flexDirection: 'row',
-    marginBottom: 2,
-  },
-  optionalListMarker: {
-    width: 10,
-    fontSize: 8,
-    color: DARK_ACCENT,
-  },
-  optionalListItemText: {
-    flex: 1,
-    fontSize: 8,
-    color: INK,
-    lineHeight: 1.6,
-  },
-
-  /* ── Attachments ─────────────────────────────────── */
-  attachmentsWrap: {
-    gap: 2,
-  },
-  attachmentLink: {
-    fontSize: 8,
-    color: DARK_ACCENT,
-    textDecoration: 'underline',
-  },
-  attachmentItem: {
-    fontSize: 8,
-    color: INK,
-  },
-
-  /* ── Additional Fields ───────────────────────────── */
-  additionalWrap: {
-    gap: 3,
-  },
-  additionalRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  additionalLabel: {
-    fontSize: 7,
-    color: MUTED,
-    width: 100,
-  },
-  additionalValue: {
-    fontSize: 8,
-    color: INK,
-    flex: 1,
-  },
-
-  /* ── Signature ───────────────────────────────────── */
-  signatureWrap: {
-    marginTop: 16,
+    gap: 32,
     marginBottom: 16,
   },
-  signatureBox: {
+  sigBox: {
     width: 200,
   },
-  signatureImage: {
+  sigImage: {
     width: 120,
     height: 40,
     objectFit: 'contain',
     marginBottom: 4,
   },
-  signatureLine: {
+  sigLine: {
+    width: 180,
     height: 1,
-    backgroundColor: INK,
+    backgroundColor: RULE,
     marginBottom: 4,
   },
-  signerName: {
+  sigScribble: {
+    width: 180,
+    height: 28,
+    marginBottom: 4,
+  },
+  sigName: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
     color: INK,
   },
-  signerRole: {
+  sigRole: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
+  },
+  extraFieldsWrap: {
+    gap: 3,
+    flex: 1,
+  },
+  extraFieldRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  extraFieldLabel: {
+    fontSize: 7,
+    color: RULE,
+    width: 100,
+  },
+  extraFieldValue: {
+    fontSize: 8,
+    color: INK,
+    flex: 1,
   },
 
-  /* ── Footer ──────────────────────────────────────── */
   footerZone: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    backgroundColor: PANEL,
     paddingHorizontal: PAGE_PADDING,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: RULE,
+    borderTopColor: LIGHT_RULE,
   },
-  footerExtraText: {
+  footerExtra: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
     textAlign: 'center',
     marginBottom: 4,
   },
-  taglineFooter: {
+  footerTagline: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 4,
   },
-  documentFooter: {
+  footerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footerText: {
     fontSize: 7,
-    color: MUTED,
+    color: RULE,
   },
 })

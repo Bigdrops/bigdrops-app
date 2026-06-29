@@ -36,8 +36,16 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     nodes: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
   },
   apex: {
-    shell: 'bg-white border border-slate-200',
-    nodes: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-slate-300', 'h-1 w-4/5 rounded-full bg-slate-200'],
+    shell: 'bg-white border border-[#b8c4c4]',
+    nodes: ['h-1.5 w-full rounded-full bg-[#1a2f2f]', 'h-1 w-2/5 rounded-full bg-[#0d7c7c]', 'h-1 w-4/5 rounded-full bg-[#e6f4f4]'],
+  },
+  bolt: {
+    shell: 'bg-[#faf8f0] border border-[#1b4332]',
+    nodes: ['h-1.5 w-full rounded-full bg-[#2d6a4f]', 'h-1 w-2/5 rounded-full bg-[#52b788]', 'h-1 w-4/5 rounded-full bg-[#d4a373]'],
+  },
+  ember: {
+    shell: 'bg-[#f4f6f8] border border-[#2c3e50]',
+    nodes: ['h-1.5 w-full rounded-full bg-[#2c3e50]', 'h-1 w-2/5 rounded-full bg-[#e67e22]', 'h-1 w-4/5 rounded-full bg-[#e9edf2]'],
   },
   'obsidian-receipt': {
     shell: 'bg-white border border-slate-200',

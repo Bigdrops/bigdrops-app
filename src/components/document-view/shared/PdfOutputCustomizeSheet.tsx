@@ -76,6 +76,22 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     accents: ['h-1.5 w-full rounded-full bg-[#1f6e5c]', 'h-1 w-2/5 rounded-full bg-[#2a8a73]', 'h-1 w-3/5 rounded-full bg-[#e8f3ef]'],
     columns: ['h-7 w-full rounded-md bg-[#f0f6f2]', 'h-1 w-full rounded-full bg-[#d4dfd8]', 'h-1 w-2/3 rounded-full bg-[#d4dfd8]'],
   },
+  {
+    id: 'bolt',
+    label: 'Bolt',
+    eyebrow: 'Certificate',
+    shell: 'bg-[#faf8f0] border border-[#1b4332]',
+    accents: ['h-1.5 w-full rounded-full bg-[#2d6a4f]', 'h-1 w-2/5 rounded-full bg-[#52b788]', 'h-1 w-3/5 rounded-full bg-[#d4a373]'],
+    columns: ['h-7 w-full rounded-md bg-white border border-[#d1d5db]', 'h-1 w-full rounded-full bg-[#d1d5db]', 'h-1 w-2/3 rounded-full bg-[#d1d5db]'],
+  },
+  {
+    id: 'ember',
+    label: 'Ember',
+    eyebrow: 'Warm',
+    shell: 'bg-[#f4f6f8] border border-[#2c3e50]',
+    accents: ['h-1.5 w-full rounded-full bg-[#2c3e50]', 'h-1 w-2/5 rounded-full bg-[#e67e22]', 'h-1 w-3/5 rounded-full bg-[#e9edf2]'],
+    columns: ['h-7 w-full rounded-md bg-white border border-[#e9edf2]', 'h-1 w-full rounded-full bg-[#e9edf2]', 'h-1 w-2/3 rounded-full bg-[#e9edf2]'],
+  },
 ] as const satisfies ReadonlyArray<{
   id: InvoicePdfTemplateId
   label: string
