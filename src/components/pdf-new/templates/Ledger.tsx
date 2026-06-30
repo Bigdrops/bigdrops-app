@@ -22,6 +22,7 @@ import {
   getAmountInWords,
   buildAdvanceSummary,
 } from '../engine';
+import { resolveDesignTokens } from '../designTokens';
 
 function toTitleCase(value: string): string {
   return value
@@ -54,6 +55,17 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
   const footer = data.footer;
   const isAdvanceInvoice = !!advance;
 
+  const tokens = resolveDesignTokens(data.design)
+  const c = {
+    text: tokens.textColor ? { color: tokens.textColor } : null,
+    accent: tokens.accentColor ? { color: tokens.accentColor } : null,
+    muted: tokens.mutedColor ? { color: tokens.mutedColor } : null,
+    border: tokens.borderColor ? { borderColor: tokens.borderColor } : null,
+    surface: tokens.surfaceColor ? { backgroundColor: tokens.surfaceColor } : null,
+    headerFont: tokens.headerFont ? { fontFamily: tokens.headerFont } : null,
+    bodyFont: tokens.bodyFont ? { fontFamily: tokens.bodyFont } : null,
+  }
+
   const renderTableHeader = () => (
     <View style={styles.tableHeaderRow} fixed>
       {table.columns.map((col, idx) => {
@@ -63,7 +75,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
           ? { width: layout.width, flexGrow: 0, flexShrink: 0 }
           : { flex: layout.flexGrow, flexGrow: layout.flexGrow, flexShrink: layout.flexShrink, flexBasis: layout.flexBasis };
         return (
-          <Text key={col.key || idx} style={[styles.tableHeaderCell, alignStyle, widthStyle as any]}>
+          <Text key={col.key || idx} style={[styles.tableHeaderCell, c.text, c.bodyFont, alignStyle, widthStyle as any]}>
             {safeText(col.label)}
           </Text>
         );
@@ -72,20 +84,20 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
   );
 
   return (
-    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, c.surface]}>
       <View style={styles.invoiceContainer}>
         {/* 1. HEADER */}
         <View style={styles.header} wrap={false}>
           <View style={styles.headerLeft}>
-            <Text style={styles.brandName}>{safeText(companyLineMap.get('name') || company?.name)}</Text>
+            <Text style={[styles.brandName, c.text, c.headerFont]}>{safeText(companyLineMap.get('name') || company?.name)}</Text>
             {companyLineMap.get('address') && (
-              <Text style={styles.brandContact}>
+              <Text style={[styles.brandContact, c.text]}>
                 {safeText(companyLineMap.get('address'))}
                 {companyLineMap.get('cityState') ? `, ${safeText(companyLineMap.get('cityState'))}` : ''}
               </Text>
             )}
             {(companyLineMap.get('phone') || companyLineMap.get('email')) && (
-              <Text style={styles.brandContact}>
+              <Text style={[styles.brandContact, c.text]}>
                 {[safeText(companyLineMap.get('phone')), safeText(companyLineMap.get('email'))].filter(Boolean).join(' | ')}
               </Text>
             )}
@@ -98,25 +110,25 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
           </View>
 
           <View style={styles.headerRight}>
-            <Text style={styles.docTitle}>
+            <Text style={[styles.docTitle, c.text, c.headerFont]}>
               {safeText(data.title)}
             </Text>
             {data.customTitle ? (
-              <Text style={styles.customTitleText}>
+              <Text style={[styles.customTitleText, c.muted]}>
                 {safeText(data.customTitle)}
               </Text>
             ) : null}
             <View style={styles.docMetaBlock}>
-              <Text style={styles.docMeta}>
+              <Text style={[styles.docMeta, c.muted]}>
                 {safeText(data.documentNumberLabel)}: {safeText(data.documentNumber)}
               </Text>
               {data.issueDate ? (
-                <Text style={styles.docMeta}>
+                <Text style={[styles.docMeta, c.muted]}>
                   {safeText(data.issueDateLabel)}: {safeText(data.issueDate)}
                 </Text>
               ) : null}
               {data.dueDateOrValidityDate ? (
-                <Text style={styles.docMeta}>
+                <Text style={[styles.docMeta, c.muted]}>
                   {safeText(data.dueDateOrValidityDateLabel)}: {safeText(data.dueDateOrValidityDate)}
                 </Text>
               ) : null}
@@ -129,12 +141,12 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
           <View style={styles.addressPanel}>
             {client && (
               <View style={styles.addressBlock}>
-                <Text style={styles.addressLabel}>Bill To</Text>
-                <Text style={styles.addressVal}>{safeText(clientLineMap.get('name'))}</Text>
-                {clientLineMap.get('address') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('address'))}</Text>}
-                {clientLineMap.get('cityState') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('cityState'))}</Text>}
-                {clientLineMap.get('email') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('email'))}</Text>}
-                {clientLineMap.get('phone') && <Text style={styles.addressVal}>{safeText(clientLineMap.get('phone'))}</Text>}
+                <Text style={[styles.addressLabel, c.accent, c.headerFont]}>Bill To</Text>
+                <Text style={[styles.addressVal, c.text]}>{safeText(clientLineMap.get('name'))}</Text>
+                {clientLineMap.get('address') && <Text style={[styles.addressVal, c.text]}>{safeText(clientLineMap.get('address'))}</Text>}
+                {clientLineMap.get('cityState') && <Text style={[styles.addressVal, c.text]}>{safeText(clientLineMap.get('cityState'))}</Text>}
+                {clientLineMap.get('email') && <Text style={[styles.addressVal, c.text]}>{safeText(clientLineMap.get('email'))}</Text>}
+                {clientLineMap.get('phone') && <Text style={[styles.addressVal, c.text]}>{safeText(clientLineMap.get('phone'))}</Text>}
               </View>
             )}
           </View>
@@ -143,14 +155,14 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             <View style={styles.customHeadersWrap}>
               {data.poNumber && (
                 <View style={styles.customItem}>
-                  <Text style={styles.customKey}>{safeText(data.poNumberLabel)}</Text>
-                  <Text style={styles.customVal}>{safeText(data.poNumber)}</Text>
+                  <Text style={[styles.customKey, c.muted]}>{safeText(data.poNumberLabel)}</Text>
+                  <Text style={[styles.customVal, c.text]}>{safeText(data.poNumber)}</Text>
                 </View>
               )}
               {data.customHeaderFields?.map((field, idx) => (
                 <View key={idx} style={styles.customItem}>
-                  <Text style={styles.customKey}>{safeText(field.label)}</Text>
-                  <Text style={styles.customVal}>{safeText(field.value)}</Text>
+                  <Text style={[styles.customKey, c.muted]}>{safeText(field.label)}</Text>
+                  <Text style={[styles.customVal, c.text]}>{safeText(field.value)}</Text>
                 </View>
               ))}
             </View>
@@ -165,7 +177,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             if (isGroupHeader(row)) {
               return (
                 <View key={rIndex} style={styles.groupHeader} wrap={false}>
-                  <Text style={styles.groupHeaderText}>{safeText(toTitleCase(getGroupLabel(row)))}</Text>
+                  <Text style={[styles.groupHeaderText, c.text, c.headerFont]}>{safeText(toTitleCase(getGroupLabel(row)))}</Text>
                 </View>
               );
             }
@@ -175,16 +187,16 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
               const showSubtotal = shouldShowGroupSubtotal(row) && subtotalValue !== null && subtotalValue !== undefined && subtotalValue !== '';
 
               if (!showSubtotal) {
-                return <View key={rIndex} style={styles.groupClosingRule} wrap={false} />;
+                return <View key={rIndex} style={[styles.groupClosingRule, c.border]} wrap={false} />;
               }
 
               return (
                 <View key={rIndex} wrap={false}>
                   <View style={styles.groupSubtotalRow}>
-                    <Text style={styles.groupSubtotalLabel}>Subtotal</Text>
-                    <PdfCurrencyText value={safeText(subtotalValue)} style={styles.groupSubtotalVal} />
+                    <Text style={[styles.groupSubtotalLabel, c.text]}>Subtotal</Text>
+                    <PdfCurrencyText value={safeText(subtotalValue)} style={[styles.groupSubtotalVal, c.text]} />
                   </View>
-                  <View style={styles.groupClosingRule} />
+                  <View style={[styles.groupClosingRule, c.border]} />
                 </View>
               );
             }
@@ -206,11 +218,11 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                     <View key={cIndex} style={[widthStyle as any, alignStyle]}>
                       {isDescriptionCol ? (
                         <>
-                          <Text style={styles.itemDesc}>
+                          <Text style={[styles.itemDesc, c.text]}>
                             {getDescriptionMain(row.cells)}
                           </Text>
                           {getDescriptionSub(row.cells) ? (
-                            <Text style={styles.itemSub}>{getDescriptionSub(row.cells)}</Text>
+                            <Text style={[styles.itemSub, c.muted]}>{getDescriptionSub(row.cells)}</Text>
                           ) : null}
                           
                           {row.imageUrl ? (
@@ -223,7 +235,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                           ) : null}
                         </>
                       ) : (
-                    <PdfCurrencyText value={safeText(row.cells?.[col.key])} style={styles.tableCell} />
+                    <PdfCurrencyText value={safeText(row.cells?.[col.key])} style={[styles.tableCell, c.text]} />
                   )}
                 </View>
               );
@@ -239,30 +251,30 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             <View style={styles.paymentCol}>
               {payment && data.showBankDetails && (
                 <View wrap={false}>
-                  <Text style={styles.sectionTitle}>Payment Information</Text>
+                  <Text style={[styles.sectionTitle, c.accent, c.headerFont]}>Payment Information</Text>
                   <View style={styles.bankDetails}>
                     {payment.bankName && (
                       <View style={styles.bankRow}>
-                        <Text style={styles.bankLabel}>Bank:</Text>
-                        <Text style={styles.bankVal}>{safeText(payment.bankName)}</Text>
+                        <Text style={[styles.bankLabel, c.muted]}>Bank:</Text>
+                        <Text style={[styles.bankVal, c.text]}>{safeText(payment.bankName)}</Text>
                       </View>
                     )}
                     {payment.accountName && (
                       <View style={styles.bankRow}>
-                        <Text style={styles.bankLabel}>Account Name:</Text>
-                        <Text style={styles.bankVal}>{safeText(payment.accountName)}</Text>
+                        <Text style={[styles.bankLabel, c.muted]}>Account Name:</Text>
+                        <Text style={[styles.bankVal, c.text]}>{safeText(payment.accountName)}</Text>
                       </View>
                     )}
                     {payment.accountNumber && (
                       <View style={styles.bankRow}>
-                        <Text style={styles.bankLabel}>Account No:</Text>
-                        <Text style={styles.bankVal}>{safeText(payment.accountNumber)}</Text>
+                        <Text style={[styles.bankLabel, c.muted]}>Account No:</Text>
+                        <Text style={[styles.bankVal, c.text]}>{safeText(payment.accountNumber)}</Text>
                       </View>
                     )}
                     {payment.sortCode && (
                       <View style={styles.bankRow}>
-                        <Text style={styles.bankLabel}>Sort Code:</Text>
-                        <Text style={styles.bankVal}>{safeText(payment.sortCode)}</Text>
+                        <Text style={[styles.bankLabel, c.muted]}>Sort Code:</Text>
+                        <Text style={[styles.bankVal, c.text]}>{safeText(payment.sortCode)}</Text>
                       </View>
                     )}
                   </View>
@@ -276,39 +288,39 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                 <View style={styles.totalsPanel}>
                   {totalsLines.map((line, idx) => (
                     <View key={idx} style={styles.totalLine}>
-                      <Text style={styles.totalLabel}>{safeText(line.label)}</Text>
-                      <PdfCurrencyText value={safeText(line.value)} style={styles.totalVal} />
+                      <Text style={[styles.totalLabel, c.muted]}>{safeText(line.label)}</Text>
+                      <PdfCurrencyText value={safeText(line.value)} style={[styles.totalVal, c.text]} />
                     </View>
                   ))}
                   
                   {mainTotal && (
                     <View style={styles.totalLineGrand}>
-                      <Text style={styles.totalLabelGrand}>{safeText(mainTotal.label)}</Text>
-                      <PdfCurrencyText value={safeText(mainTotal.value)} style={styles.totalValGrand} />
+                      <Text style={[styles.totalLabelGrand, c.text, c.headerFont]}>{safeText(mainTotal.label)}</Text>
+                      <PdfCurrencyText value={safeText(mainTotal.value)} style={[styles.totalValGrand, c.text, c.headerFont]} />
                     </View>
                   )}
 
                   {!isAdvanceInvoice && balanceDue && (
                     <View style={styles.totalLineGrand}>
-                      <Text style={styles.totalLabelGrand}>{safeText(balanceDue.label)}</Text>
-                      <PdfCurrencyText value={safeText(balanceDue.value)} style={styles.totalValGrand} />
+                      <Text style={[styles.totalLabelGrand, c.text, c.headerFont]}>{safeText(balanceDue.label)}</Text>
+                      <PdfCurrencyText value={safeText(balanceDue.value)} style={[styles.totalValGrand, c.text, c.headerFont]} />
                     </View>
                   )}
                   
                   {amountInWords && (
-                    <Text style={styles.amountWords}>{safeText(amountInWords)}</Text>
+                    <Text style={[styles.amountWords, c.muted]}>{safeText(amountInWords)}</Text>
                   )}
                 </View>
 
                 {isAdvanceInvoice && advance && (
                   <View style={styles.advanceBlock}>
                     <View style={styles.advanceDue}>
-                      <Text style={styles.advanceDueLbl}>{safeText(advance.primaryLabel)}</Text>
-                      <PdfCurrencyText value={safeText(advance.advanceAmount)} style={styles.advanceDueVal} />
+                      <Text style={[styles.advanceDueLbl, c.accent, c.headerFont]}>{safeText(advance.primaryLabel)}</Text>
+                      <PdfCurrencyText value={safeText(advance.advanceAmount)} style={[styles.advanceDueVal, c.accent, c.headerFont]} />
                     </View>
                     <View style={styles.advanceBal}>
-                      <Text style={styles.advanceBalText}>{safeText(advance.secondaryLabel)}</Text>
-                      <PdfCurrencyText value={safeText(advance.balanceRemaining)} style={styles.advanceBalTextVal} />
+                      <Text style={[styles.advanceBalText, c.muted]}>{safeText(advance.secondaryLabel)}</Text>
+                      <PdfCurrencyText value={safeText(advance.balanceRemaining)} style={[styles.advanceBalTextVal, c.text]} />
                     </View>
                   </View>
                 )}
@@ -320,7 +332,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             <View style={styles.leftFlowCol}>
               {notes?.content && (
                 <View>
-                  <Text style={styles.sectionTitle}>{safeText(notes.title)}</Text>
+                  <Text style={[styles.sectionTitle, c.accent, c.headerFont]}>{safeText(notes.title)}</Text>
                   {renderPdfRichText(notes.content, {
                     containerStyle: styles.notesRichText,
                     paragraphStyle: styles.notesParagraph,
@@ -335,7 +347,7 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
 
               {terms?.content && (
                 <View>
-                  <Text style={styles.sectionTitle}>{safeText(terms.title)}</Text>
+                  <Text style={[styles.sectionTitle, c.accent, c.headerFont]}>{safeText(terms.title)}</Text>
                   {renderPdfRichText(terms.content, {
                     containerStyle: styles.notesRichText,
                     paragraphStyle: styles.notesParagraph,
@@ -354,8 +366,8 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
             <View style={styles.additionalFieldsBar} wrap={false}>
               {data.additionalFields.map((field, idx) => (
                 <View key={idx} style={styles.customItem}>
-                  <Text style={styles.customKey}>{safeText(field.label)}</Text>
-                  <Text style={styles.customVal}>{safeText(field.value)}</Text>
+                  <Text style={[styles.customKey, c.muted]}>{safeText(field.label)}</Text>
+                  <Text style={[styles.customVal, c.text]}>{safeText(field.value)}</Text>
                 </View>
               ))}
             </View>
@@ -368,17 +380,17 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                   {data.signature.imageUrl ? (
                     <Image src={data.signature.imageUrl} style={styles.signatureImg} />
                   ) : (
-                    <View style={styles.sigLineFallback} />
+                    <View style={[styles.sigLineFallback, c.border]} />
                   )}
-                  {data.signature.name && <Text style={styles.sigName}>{safeText(data.signature.name)}</Text>}
-                  {data.signature.role && <Text style={styles.sigRole}>{safeText(data.signature.role)}</Text>}
+                  {data.signature.name && <Text style={[styles.sigName, c.text, c.headerFont]}>{safeText(data.signature.name)}</Text>}
+                  {data.signature.role && <Text style={[styles.sigRole, c.muted]}>{safeText(data.signature.role)}</Text>}
                 </>
               ) : null}
             </View>
 
             {attachmentItems.length > 0 && (
               <View style={styles.attachmentsBox}>
-                <Text style={styles.sectionTitle}>Attachments</Text>
+                <Text style={[styles.sectionTitle, c.accent, c.headerFont]}>Attachments</Text>
                 {attachmentItems.map((att, idx) => (
                   <View key={idx} style={styles.attachmentItem}>
                     {att.formattedUrl ? (
@@ -397,10 +409,10 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
       </View>
 
       {/* 7. FIXED PAGE FOOTER */}
-      <View fixed style={styles.pageFooter}>
-        <Text style={styles.ftLeft}>{safeText(footer?.documentNumber)}</Text>
-        <Text style={styles.ftCenter} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
-        <Text style={styles.ftRight}>
+      <View fixed style={[styles.pageFooter, c.surface]}>
+        <Text style={[styles.ftLeft, c.muted]}>{safeText(footer?.documentNumber)}</Text>
+        <Text style={[styles.ftCenter, c.muted]} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        <Text style={[styles.ftRight, c.muted]}>
           {[safeText(footer?.companyName), safeText(footer?.extraText)].filter(Boolean).join(' • ')}
         </Text>
       </View>

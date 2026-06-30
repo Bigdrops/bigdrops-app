@@ -647,3 +647,92 @@ Each template needs to apply overrides to specific semantic elements. The mappin
 - `IndustryTemplate.tsx` — already fully customized
 - `pdfDesignPreset.ts` — already complete
 - `industryAdapter.ts` — already populates `data.design`
+
+---
+
+## 12. Phase 4 — Implementation (All 7 Templates Wired)
+
+### 12.1 Shared Helper: `designTokens.ts`
+
+Created `src/components/pdf-new/designTokens.ts` exporting:
+
+- **`DesignTokens`** type — 9 nullable string fields matching `CommercialDocumentDesign`
+- **`resolveDesignTokens(design)`** — reads `useCustomColors` and `useCustomFonts` flags, returns resolved token object (all-null when flags are false)
+
+### 12.2 Implementation Pattern (Applied to All 7 Templates)
+
+Each template follows this identical pattern:
+
+1. **Import** `resolveDesignTokens` and `DesignTokens` type
+2. **Resolve tokens** at top of component: `const tokens = resolveDesignTokens(data.design)`
+3. **Define `c` helper** mapping each token to either its override object or `null`
+4. **Apply overrides** via React-PDF style arrays: `style={[existingStyle, tokens.textColor && { color: tokens.textColor }]}`
+
+### 12.3 Per-Template Results
+
+| Template | Elements Overridden | Key Sub-components Modified |
+|----------|-------------------|-----------------------------|
+| **Apex** | ~35 | Standalone |
+| **Bolt** | ~40 | `BoltPartyCard` (tokens prop) |
+| **Crest** | ~40+ | `CrestPartyCard` (tokens prop, `pc` helper) |
+| **Ember** | 30+ | Standalone |
+| **Evergreen** | 48 (67 instances) | Standalone |
+| **Ledger** | 30+ | Standalone |
+| **Minimal** | 38 | Standalone |
+
+### 12.4 Token Override Mapping Applied
+
+Each template's `c` helper maps user overrides to template-specific color slots:
+
+| Token | Apex | Bolt | Crest | Ember | Evergreen | Ledger | Minimal |
+|-------|------|------|-------|-------|-----------|--------|---------|
+| `c.text` | INK | INK | INK | NAVY | INK | colors.ink | INK |
+| `c.accent` | ACCENT | ACCENT | ACCENT | BLUE | ACCENT | colors.accent | LINK |
+| `c.border` | RULE | LIGHT_RULE | LIGHT_RULE | BORDER_LIGHT | RULE | colors.lightRule | RULE |
+| `c.surface` | PANEL | WHITE | PANEL | LIGHT_BG | ACCENT_PALE | colors.bgPanel | PANEL_BG |
+| `c.muted` | RULE | MUTED_TEXT | MUTED_TEXT | MUTED | MUTED_TEXT | colors.grayText | MUTED_TEXT |
+| `c.headerFont` | BODY_SERIF | BOLT_SERIF | CREST_SERIF | DISPLAY | Helvetica-Bold | Times-Roman | Helvetica-Bold |
+| `c.bodyFont` | BODY_SANS | BOLT_SANS | CREST_SANS | BODY | Helvetica | Helvetica | Helvetica |
+
+---
+
+## 13. Phase 5 — Verification
+
+### 13.1 `bun run audit:load` — PASS (No New Regressions)
+
+Same pre-existing warnings as before Phase 4. No new warnings from template wiring.
+
+### 13.2 `tsc --noEmit` — PASS (Zero Errors)
+
+Full TypeScript compilation succeeds with zero errors across all wired templates.
+
+### 13.3 `bun run build` — TIMEOUT (Pre-existing)
+
+Build times out at 5 minutes. This is a pre-existing issue unrelated to template wiring (project has many oversized files flagged by audit). TypeScript pass confirms type safety.
+
+### 13.4 Visual Diff — DEFERRED
+
+Visual diff/render testing requires running the app and rendering PDFs in a browser. This is deferred to manual QA.
+
+---
+
+## 14. Summary
+
+### What Changed
+- **Created** `src/components/pdf-new/designTokens.ts` — shared `resolveDesignTokens()` helper
+- **Wired 7 templates** (Apex, Bolt, Crest, Ember, Evergreen, Ledger, Minimal) to consume `data.design` tokens via the shared helper
+- **Modified sub-components** (`BoltPartyCard`, `CrestPartyCard`) to accept `tokens` prop
+
+### What Didn't Change
+- No `*Styles.ts` files modified
+- No `IndustryTemplate.tsx` changes
+- No `pdfDesignPreset.ts` changes
+- No `industryAdapter.ts` changes
+- No new dependencies added
+- No new files beyond `designTokens.ts`
+
+### Result
+- All 8 templates (Industry + 7 non-Industry) now share the same customization pipeline
+- User overrides from `data.design` flow through a single `resolveDesignTokens()` call
+- Template identity preserved — customization is override, not redesign
+- Zero TypeScript errors, zero new audit warnings

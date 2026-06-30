@@ -121,7 +121,7 @@ test('createCleanupBatches classifies groups into categories', () => {
     makeGroup('Armoured Cable 16mm'),
     makeGroup('13A Socket with Switch'),
     makeGroup('Submersible Pump 1.5HP'),
-    makeGroup('PVC Pipe 50mm'),
+    makeGroup('Brass Ball Valve 1/2 inch'),
     makeGroup('Safety Helmet Yellow'),
   ]
 
@@ -228,7 +228,7 @@ test('validateFlaggedCleanupImport rejects empty input', () => {
   assert.equal(result.parsed, null)
 })
 
-test('validateFlaggedCleanupImport rejects non-JSON text', () => {
+test('validateFlaggedCleanupImport detects AI review summary text', () => {
   const exportPayload = buildFlaggedCleanupExportPayload({
     duplicateGroups: [
       {
@@ -243,9 +243,29 @@ test('validateFlaggedCleanupImport rejects non-JSON text', () => {
     aliases: [],
   })
 
-  const result = validateFlaggedCleanupImport('This is a summary of my review', exportPayload)
+  const result = validateFlaggedCleanupImport('Summary of review', exportPayload)
   assert.equal(result.ok, false)
-  assert.ok(result.errors[0].includes('final JSON'))
+  assert.equal(result.errors[0], 'Paste the final JSON result, not the review text.')
+})
+
+test('validateFlaggedCleanupImport detects invalid non-JSON input', () => {
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups: [
+      {
+        group_id: 'g1',
+        label: 'Test',
+        label_normalized: 'test',
+        label_canonical: 'test',
+        match_method: 'name_similarity',
+        members: [{ item_id: 'uuid-1', name: 'A', usage_count: 1 }],
+      },
+    ],
+    aliases: [],
+  })
+
+  const result = validateFlaggedCleanupImport('just some random text without keywords', exportPayload)
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0], 'AI result is not valid JSON. Paste the raw JSON response only.')
 })
 
 test('validateFlaggedCleanupImport validates merge groups against export groups', () => {

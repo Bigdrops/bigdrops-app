@@ -1,0 +1,255 @@
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { Page, Text, View, Image, Link } from "@react-pdf/renderer";
+import { PdfCurrencyText } from "../pdfCurrency";
+import { styles } from "./LedgerStyles";
+import { renderPdfRichText } from "../core/pdfRichText";
+import { safeText } from "../core/safeText";
+import { getDescriptionMain, getDescriptionSub } from "../core/description";
+import {
+  buildPartyLines,
+  buildAttachmentItems,
+  resolveColumnLayout,
+  resolveTextAlignment,
+  isGroupHeader,
+  isGroupFooter,
+  getGroupLabel,
+  getGroupSubtotal,
+  shouldShowGroupSubtotal,
+  buildTotalsLines,
+  getMainTotal,
+  getBalanceDue,
+  getAmountInWords,
+  buildAdvanceSummary
+} from "../engine";
+import { resolveDesignTokens } from "../designTokens";
+function toTitleCase(value) {
+  return value.trim().replace(/\s+/g, " ").split(" ").filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ");
+}
+export default function Ledger({ data }) {
+  const company = data.company;
+  const client = data.client;
+  const table = data.table;
+  const totals = data.totals;
+  const companyLines = company ? buildPartyLines(company) : [];
+  const clientLines = client ? buildPartyLines(client) : [];
+  const companyLineMap = new Map(companyLines.map((line) => [line.type, line.value]));
+  const clientLineMap = new Map(clientLines.map((line) => [line.type, line.value]));
+  const attachmentItems = buildAttachmentItems(data.attachments);
+  const totalsLines = buildTotalsLines(totals);
+  const mainTotal = getMainTotal(totals);
+  const balanceDue = getBalanceDue(totals);
+  const amountInWords = getAmountInWords(totals);
+  const advance = buildAdvanceSummary(data.advanceSummary);
+  const payment = data.paymentDetails;
+  const notes = data.notes;
+  const terms = data.terms;
+  const footer = data.footer;
+  const isAdvanceInvoice = !!advance;
+  const tokens = resolveDesignTokens(data.design);
+  const c = {
+    text: tokens.textColor ? { color: tokens.textColor } : null,
+    accent: tokens.accentColor ? { color: tokens.accentColor } : null,
+    muted: tokens.mutedColor ? { color: tokens.mutedColor } : null,
+    border: tokens.borderColor ? { borderColor: tokens.borderColor } : null,
+    surface: tokens.surfaceColor ? { backgroundColor: tokens.surfaceColor } : null,
+    headerFont: tokens.headerFont ? { fontFamily: tokens.headerFont } : null,
+    bodyFont: tokens.bodyFont ? { fontFamily: tokens.bodyFont } : null
+  };
+  const renderTableHeader = () => /* @__PURE__ */ jsx(View, { style: styles.tableHeaderRow, fixed: true, children: table.columns.map((col, idx) => {
+    const alignStyle = resolveTextAlignment(col.align) || styles.textLeft;
+    const layout = resolveColumnLayout(col);
+    const widthStyle = layout.width ? { width: layout.width, flexGrow: 0, flexShrink: 0 } : { flex: layout.flexGrow, flexGrow: layout.flexGrow, flexShrink: layout.flexShrink, flexBasis: layout.flexBasis };
+    return /* @__PURE__ */ jsx(Text, { style: [styles.tableHeaderCell, c.text, c.bodyFont, alignStyle, widthStyle], children: safeText(col.label) }, col.key || idx);
+  }) });
+  return /* @__PURE__ */ jsxs(Page, { size: data.layout?.size || "A4", orientation: data.layout?.orientation || "portrait", style: [styles.page, c.surface], children: [
+    /* @__PURE__ */ jsxs(View, { style: styles.invoiceContainer, children: [
+      /* @__PURE__ */ jsxs(View, { style: styles.header, wrap: false, children: [
+        /* @__PURE__ */ jsxs(View, { style: styles.headerLeft, children: [
+          /* @__PURE__ */ jsx(Text, { style: [styles.brandName, c.text, c.headerFont], children: safeText(companyLineMap.get("name") || company?.name) }),
+          companyLineMap.get("address") && /* @__PURE__ */ jsxs(Text, { style: [styles.brandContact, c.text], children: [
+            safeText(companyLineMap.get("address")),
+            companyLineMap.get("cityState") ? `, ${safeText(companyLineMap.get("cityState"))}` : ""
+          ] }),
+          (companyLineMap.get("phone") || companyLineMap.get("email")) && /* @__PURE__ */ jsx(Text, { style: [styles.brandContact, c.text], children: [safeText(companyLineMap.get("phone")), safeText(companyLineMap.get("email"))].filter(Boolean).join(" | ") })
+        ] }),
+        /* @__PURE__ */ jsx(View, { style: styles.headerCenter, children: company?.companyLogoUrl ? /* @__PURE__ */ jsx(Image, { src: company.companyLogoUrl, style: styles.logoBox }) : null }),
+        /* @__PURE__ */ jsxs(View, { style: styles.headerRight, children: [
+          /* @__PURE__ */ jsx(Text, { style: [styles.docTitle, c.text, c.headerFont], children: safeText(data.title) }),
+          data.customTitle ? /* @__PURE__ */ jsx(Text, { style: [styles.customTitleText, c.muted], children: safeText(data.customTitle) }) : null,
+          /* @__PURE__ */ jsxs(View, { style: styles.docMetaBlock, children: [
+            /* @__PURE__ */ jsxs(Text, { style: [styles.docMeta, c.muted], children: [
+              safeText(data.documentNumberLabel),
+              ": ",
+              safeText(data.documentNumber)
+            ] }),
+            data.issueDate ? /* @__PURE__ */ jsxs(Text, { style: [styles.docMeta, c.muted], children: [
+              safeText(data.issueDateLabel),
+              ": ",
+              safeText(data.issueDate)
+            ] }) : null,
+            data.dueDateOrValidityDate ? /* @__PURE__ */ jsxs(Text, { style: [styles.docMeta, c.muted], children: [
+              safeText(data.dueDateOrValidityDateLabel),
+              ": ",
+              safeText(data.dueDateOrValidityDate)
+            ] }) : null
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(View, { style: styles.metaSection, wrap: false, children: [
+        /* @__PURE__ */ jsx(View, { style: styles.addressPanel, children: client && /* @__PURE__ */ jsxs(View, { style: styles.addressBlock, children: [
+          /* @__PURE__ */ jsx(Text, { style: [styles.addressLabel, c.accent, c.headerFont], children: "Bill To" }),
+          /* @__PURE__ */ jsx(Text, { style: [styles.addressVal, c.text], children: safeText(clientLineMap.get("name")) }),
+          clientLineMap.get("address") && /* @__PURE__ */ jsx(Text, { style: [styles.addressVal, c.text], children: safeText(clientLineMap.get("address")) }),
+          clientLineMap.get("cityState") && /* @__PURE__ */ jsx(Text, { style: [styles.addressVal, c.text], children: safeText(clientLineMap.get("cityState")) }),
+          clientLineMap.get("email") && /* @__PURE__ */ jsx(Text, { style: [styles.addressVal, c.text], children: safeText(clientLineMap.get("email")) }),
+          clientLineMap.get("phone") && /* @__PURE__ */ jsx(Text, { style: [styles.addressVal, c.text], children: safeText(clientLineMap.get("phone")) })
+        ] }) }),
+        /* @__PURE__ */ jsx(View, { style: styles.customHeadersPanel, children: /* @__PURE__ */ jsxs(View, { style: styles.customHeadersWrap, children: [
+          data.poNumber && /* @__PURE__ */ jsxs(View, { style: styles.customItem, children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.customKey, c.muted], children: safeText(data.poNumberLabel) }),
+            /* @__PURE__ */ jsx(Text, { style: [styles.customVal, c.text], children: safeText(data.poNumber) })
+          ] }),
+          data.customHeaderFields?.map((field, idx) => /* @__PURE__ */ jsxs(View, { style: styles.customItem, children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.customKey, c.muted], children: safeText(field.label) }),
+            /* @__PURE__ */ jsx(Text, { style: [styles.customVal, c.text], children: safeText(field.value) })
+          ] }, idx))
+        ] }) })
+      ] }),
+      /* @__PURE__ */ jsxs(View, { style: styles.tableSection, children: [
+        renderTableHeader(),
+        table.rows.map((row, rIndex) => {
+          if (isGroupHeader(row)) {
+            return /* @__PURE__ */ jsx(View, { style: styles.groupHeader, wrap: false, children: /* @__PURE__ */ jsx(Text, { style: [styles.groupHeaderText, c.text, c.headerFont], children: safeText(toTitleCase(getGroupLabel(row))) }) }, rIndex);
+          }
+          if (isGroupFooter(row)) {
+            const subtotalValue = getGroupSubtotal(row);
+            const showSubtotal = shouldShowGroupSubtotal(row) && subtotalValue !== null && subtotalValue !== void 0 && subtotalValue !== "";
+            if (!showSubtotal) {
+              return /* @__PURE__ */ jsx(View, { style: [styles.groupClosingRule, c.border], wrap: false }, rIndex);
+            }
+            return /* @__PURE__ */ jsxs(View, { wrap: false, children: [
+              /* @__PURE__ */ jsxs(View, { style: styles.groupSubtotalRow, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.groupSubtotalLabel, c.text], children: "Subtotal" }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(subtotalValue), style: [styles.groupSubtotalVal, c.text] })
+              ] }),
+              /* @__PURE__ */ jsx(View, { style: [styles.groupClosingRule, c.border] })
+            ] }, rIndex);
+          }
+          const rowStyles = [styles.tableRow].filter(Boolean);
+          return /* @__PURE__ */ jsx(View, { style: rowStyles, wrap: false, children: table.columns.map((col, cIndex) => {
+            const alignStyle = resolveTextAlignment(col.align) || styles.textLeft;
+            const layout = resolveColumnLayout(col);
+            const widthStyle = layout.width ? { width: layout.width, flexGrow: 0, flexShrink: 0 } : { flex: layout.flexGrow, flexGrow: layout.flexGrow, flexShrink: layout.flexShrink, flexBasis: layout.flexBasis };
+            const isDescriptionCol = col.key === "description";
+            return /* @__PURE__ */ jsx(View, { style: [widthStyle, alignStyle], children: isDescriptionCol ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Text, { style: [styles.itemDesc, c.text], children: getDescriptionMain(row.cells) }),
+              getDescriptionSub(row.cells) ? /* @__PURE__ */ jsx(Text, { style: [styles.itemSub, c.muted], children: getDescriptionSub(row.cells) }) : null,
+              row.imageUrl ? /* @__PURE__ */ jsxs(View, { style: styles.thumbnailContainer, wrap: false, children: [
+                /* @__PURE__ */ jsx(Image, { src: row.imageUrl, style: styles.itemThumbnail }),
+                /* @__PURE__ */ jsx(Link, { src: row.imageUrl.startsWith("http://") || row.imageUrl.startsWith("https://") ? row.imageUrl : `https://${row.imageUrl}`, style: styles.openImageLink, children: "Open image" })
+              ] }) : null
+            ] }) : /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(row.cells?.[col.key]), style: [styles.tableCell, c.text] }) }, cIndex);
+          }) }, rIndex);
+        })
+      ] }),
+      /* @__PURE__ */ jsxs(View, { style: styles.bottomSection, children: [
+        /* @__PURE__ */ jsxs(View, { style: styles.bottomPrimaryRow, wrap: false, children: [
+          /* @__PURE__ */ jsx(View, { style: styles.paymentCol, children: payment && data.showBankDetails && /* @__PURE__ */ jsxs(View, { wrap: false, children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.sectionTitle, c.accent, c.headerFont], children: "Payment Information" }),
+            /* @__PURE__ */ jsxs(View, { style: styles.bankDetails, children: [
+              payment.bankName && /* @__PURE__ */ jsxs(View, { style: styles.bankRow, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankLabel, c.muted], children: "Bank:" }),
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankVal, c.text], children: safeText(payment.bankName) })
+              ] }),
+              payment.accountName && /* @__PURE__ */ jsxs(View, { style: styles.bankRow, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankLabel, c.muted], children: "Account Name:" }),
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankVal, c.text], children: safeText(payment.accountName) })
+              ] }),
+              payment.accountNumber && /* @__PURE__ */ jsxs(View, { style: styles.bankRow, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankLabel, c.muted], children: "Account No:" }),
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankVal, c.text], children: safeText(payment.accountNumber) })
+              ] }),
+              payment.sortCode && /* @__PURE__ */ jsxs(View, { style: styles.bankRow, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankLabel, c.muted], children: "Sort Code:" }),
+                /* @__PURE__ */ jsx(Text, { style: [styles.bankVal, c.text], children: safeText(payment.sortCode) })
+              ] })
+            ] })
+          ] }) }),
+          /* @__PURE__ */ jsx(View, { style: styles.totalsWrap, wrap: false, children: /* @__PURE__ */ jsxs(View, { style: styles.rightCol, children: [
+            /* @__PURE__ */ jsxs(View, { style: styles.totalsPanel, children: [
+              totalsLines.map((line, idx) => /* @__PURE__ */ jsxs(View, { style: styles.totalLine, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.totalLabel, c.muted], children: safeText(line.label) }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(line.value), style: [styles.totalVal, c.text] })
+              ] }, idx)),
+              mainTotal && /* @__PURE__ */ jsxs(View, { style: styles.totalLineGrand, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.totalLabelGrand, c.text, c.headerFont], children: safeText(mainTotal.label) }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(mainTotal.value), style: [styles.totalValGrand, c.text, c.headerFont] })
+              ] }),
+              !isAdvanceInvoice && balanceDue && /* @__PURE__ */ jsxs(View, { style: styles.totalLineGrand, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.totalLabelGrand, c.text, c.headerFont], children: safeText(balanceDue.label) }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(balanceDue.value), style: [styles.totalValGrand, c.text, c.headerFont] })
+              ] }),
+              amountInWords && /* @__PURE__ */ jsx(Text, { style: [styles.amountWords, c.muted], children: safeText(amountInWords) })
+            ] }),
+            isAdvanceInvoice && advance && /* @__PURE__ */ jsxs(View, { style: styles.advanceBlock, children: [
+              /* @__PURE__ */ jsxs(View, { style: styles.advanceDue, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.advanceDueLbl, c.accent, c.headerFont], children: safeText(advance.primaryLabel) }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(advance.advanceAmount), style: [styles.advanceDueVal, c.accent, c.headerFont] })
+              ] }),
+              /* @__PURE__ */ jsxs(View, { style: styles.advanceBal, children: [
+                /* @__PURE__ */ jsx(Text, { style: [styles.advanceBalText, c.muted], children: safeText(advance.secondaryLabel) }),
+                /* @__PURE__ */ jsx(PdfCurrencyText, { value: safeText(advance.balanceRemaining), style: [styles.advanceBalTextVal, c.text] })
+              ] })
+            ] })
+          ] }) })
+        ] }),
+        (notes?.content || terms?.content) && /* @__PURE__ */ jsxs(View, { style: styles.leftFlowCol, children: [
+          notes?.content && /* @__PURE__ */ jsxs(View, { children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.sectionTitle, c.accent, c.headerFont], children: safeText(notes.title) }),
+            renderPdfRichText(notes.content, {
+              containerStyle: styles.notesRichText,
+              paragraphStyle: styles.notesParagraph,
+              listStyle: styles.notesList,
+              listItemRowStyle: styles.notesListItemRow,
+              listMarkerStyle: styles.notesListMarker,
+              listItemTextStyle: styles.notesListItemText,
+              fallbackTextStyle: styles.textBlock
+            }) || /* @__PURE__ */ jsx(Text, { style: styles.textBlock, children: notes.plainText || "" })
+          ] }),
+          terms?.content && /* @__PURE__ */ jsxs(View, { children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.sectionTitle, c.accent, c.headerFont], children: safeText(terms.title) }),
+            renderPdfRichText(terms.content, {
+              containerStyle: styles.notesRichText,
+              paragraphStyle: styles.notesParagraph,
+              listStyle: styles.notesList,
+              listItemRowStyle: styles.notesListItemRow,
+              listMarkerStyle: styles.notesListMarker,
+              listItemTextStyle: styles.notesListItemText,
+              fallbackTextStyle: styles.textBlock
+            }) || /* @__PURE__ */ jsx(Text, { style: styles.textBlock, children: terms.plainText || "" })
+          ] })
+        ] }),
+        data.additionalFields && data.additionalFields.length > 0 && /* @__PURE__ */ jsx(View, { style: styles.additionalFieldsBar, wrap: false, children: data.additionalFields.map((field, idx) => /* @__PURE__ */ jsxs(View, { style: styles.customItem, children: [
+          /* @__PURE__ */ jsx(Text, { style: [styles.customKey, c.muted], children: safeText(field.label) }),
+          /* @__PURE__ */ jsx(Text, { style: [styles.customVal, c.text], children: safeText(field.value) })
+        ] }, idx)) }),
+        /* @__PURE__ */ jsxs(View, { style: styles.footerMetaGrid, children: [
+          /* @__PURE__ */ jsx(View, { style: styles.signatureBox, children: data.signature ? /* @__PURE__ */ jsxs(Fragment, { children: [
+            data.signature.imageUrl ? /* @__PURE__ */ jsx(Image, { src: data.signature.imageUrl, style: styles.signatureImg }) : /* @__PURE__ */ jsx(View, { style: [styles.sigLineFallback, c.border] }),
+            data.signature.name && /* @__PURE__ */ jsx(Text, { style: [styles.sigName, c.text, c.headerFont], children: safeText(data.signature.name) }),
+            data.signature.role && /* @__PURE__ */ jsx(Text, { style: [styles.sigRole, c.muted], children: safeText(data.signature.role) })
+          ] }) : null }),
+          attachmentItems.length > 0 && /* @__PURE__ */ jsxs(View, { style: styles.attachmentsBox, children: [
+            /* @__PURE__ */ jsx(Text, { style: [styles.sectionTitle, c.accent, c.headerFont], children: "Attachments" }),
+            attachmentItems.map((att, idx) => /* @__PURE__ */ jsx(View, { style: styles.attachmentItem, children: att.formattedUrl ? /* @__PURE__ */ jsx(Link, { src: att.formattedUrl, style: styles.attachmentLink, children: safeText(att.label) }) : /* @__PURE__ */ jsx(Text, { style: styles.attachmentLink, children: safeText(att.label) }) }, idx))
+          ] })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs(View, { fixed: true, style: [styles.pageFooter, c.surface], children: [
+      /* @__PURE__ */ jsx(Text, { style: [styles.ftLeft, c.muted], children: safeText(footer?.documentNumber) }),
+      /* @__PURE__ */ jsx(Text, { style: [styles.ftCenter, c.muted], render: ({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}` }),
+      /* @__PURE__ */ jsx(Text, { style: [styles.ftRight, c.muted], children: [safeText(footer?.companyName), safeText(footer?.extraText)].filter(Boolean).join(" \u2022 ") })
+    ] })
+  ] });
+}

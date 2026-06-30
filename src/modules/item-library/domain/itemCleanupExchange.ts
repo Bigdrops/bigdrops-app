@@ -13,7 +13,6 @@ import type {
   CatalogCleanupSession,
   DuplicateCandidateGroup,
   CleanupApplyProposal,
-  CleanupApplyResult,
   FlaggedCleanupExportGroup,
   FlaggedCleanupExportItem,
   FlaggedCleanupExportPayload,
@@ -1074,37 +1073,6 @@ export function validateFlaggedCleanupImport(
   }
 }
 
-export function isCleanupProposalStale(
-  proposal: CleanupApplyProposal,
-  exportPayload: FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload,
-) {
-  const exportGroup = exportPayload.groups.find((group) => group.group_id === proposal.group_id)
-  if (!exportGroup) {
-    return {
-      stale: true,
-      reason: 'This flagged group is no longer present in the current duplicate review scope.',
-    }
-  }
-
-  const groupItemIds = new Set(safeArray(exportGroup.items).map((item) => item.item_id))
-  if (!groupItemIds.has(proposal.winner_item_id)) {
-    return {
-      stale: true,
-      reason: 'The proposed primary item is no longer available in this flagged group.',
-    }
-  }
-
-  const outsideIds = proposal.merged_item_ids.filter((itemId) => !groupItemIds.has(itemId))
-  if (outsideIds.length > 0) {
-    return {
-      stale: true,
-      reason: 'One or more proposed merge items are no longer available in this flagged group.',
-    }
-  }
-
-  return { stale: false, reason: '' }
-}
-
 export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupApplyProposal {
   const mergedItemIds = asArray(group.merged_item_ids).length > 0 
     ? asArray(group.merged_item_ids)
@@ -1125,10 +1093,4 @@ export function createCleanupApplyProposal(group: CleanupPreviewGroup): CleanupA
   }
 }
 
-export function summarizeCleanupApplyResults(results: CleanupApplyResult[]) {
-  return {
-    applied: results.filter((result) => result.status === 'applied'),
-    stale: results.filter((result) => result.status === 'stale'),
-    failed: results.filter((result) => result.status === 'failed'),
-  }
-}
+
