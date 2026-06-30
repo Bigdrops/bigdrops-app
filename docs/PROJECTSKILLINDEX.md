@@ -11,12 +11,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 14 skills | General-purpose dev, UI, and infra skills |
-| `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
+| `.agents/skills/` | 15 skills | General-purpose dev, UI, and infra skills |
+| `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
-| **Total** | **24 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| **Total** | **25 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
@@ -39,7 +39,6 @@ General engineering and frontend skills used by Claude agents during development
 | 13 | vite | .agents/skills/vite/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vite\SKILL.md | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
 | 14 | redesign-existing-projects | .agents/skills/redesign-existing-projects/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\redesign-existing-projects\SKILL.md | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS. |
 | 15 | react-pdf | .agents/skills/react-pdf/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-pdf\SKILL.md | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation, document creation, or react-pdf. Prefer this skill over the standard 'pdf' skill, since it is more accurate |
-| 16 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Investigate and fix defects in waybill PDF templates — signature overflow, date labels, tagline placement, footer architecture, sequence consumption bugs |
 
 ---
 ## `.claude/skills/`
@@ -53,9 +52,16 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | 4 | ui-ux-pro-max | .claude/skills/ui-ux-pro-max/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\ui-ux-pro-max\SKILL.md | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
 | 5 | webapp-testing | .claude/skills/webapp-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\webapp-testing\SKILL.md | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
 | 6 | using-superpowers | .claude/skills/using-superpowers/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\using-superpowers\SKILL.md | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
-
+| 7 | gitnexus | .claude/skills/gitnexus/ | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\gitnexus\ | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring (architecture), CLI commands, and reference guide for GitNexus code intelligence. Entry: `docs/contracts/gitnexus-operations.md` |
 
 ---
+## `.mimocode/skills/`
+Specialized agent skills for targeted debugging workflows.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
+
 ---
 ## `.opencode/agents/`
 232 upstream [agency-agents](https://github.com/msitarzewski/agency-agents) personas installed for use as opencode subagents. Organized into 18 divisions:
@@ -111,6 +117,7 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 │       ├── skill-creator/
 │       ├── ui-ux-pro-max/
 │       ├── using-superpowers/
+│       ├── gitnexus/             ← 6 sub-skills
 │       └── webapp-testing/
 ├── .mimocode/
 │   ├── commands/
@@ -121,4 +128,4 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 │   └── agents/          ← 232 upstream agency-agents (18 divisions)
 ```
 ---
-*Last updated: June 23, 2026, 4:20 PM*
+*Last updated: June 30, 2026, 9:00 AM*

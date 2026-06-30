@@ -35,7 +35,7 @@ export function DesktopSidebar({
     <aside 
       className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex"
     >
-      <div className="flex flex-col h-full overflow-y-auto bd-custom-scrollbar">
+      <div className="flex flex-col h-full bd-custom-scrollbar">
         <div className="px-5 py-6">
           <div className="text-[13px] font-black tracking-tight text-bd-text">
             {APP_NAME}
@@ -50,7 +50,7 @@ export function DesktopSidebar({
           ) : null}
         </div>
 
-        <div className="flex-1 space-y-[var(--bd-section-gap)] px-4 pb-10">
+        <div className="flex-1 overflow-y-auto space-y-[var(--bd-section-gap)] px-4 pb-10">
           <div>
             <div className="mb-2.5 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-bd-text-muted">
               Navigation
@@ -145,13 +145,14 @@ export function DesktopSidebar({
             </div>
           ))}
 
-          <div className="mt-auto pt-4">
-             <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.5] px-3 py-3 shadow-sm">
-                <div className="mb-[var(--bd-space-sm)] px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
-                  Business Context
-                </div>
-                <BusinessSwitcher />
-             </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-3">
+          <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.5] px-3 py-3 shadow-sm">
+            <div className="mb-[var(--bd-space-sm)] px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
+              Business Context
+            </div>
+            <BusinessSwitcher />
           </div>
         </div>
       </div>

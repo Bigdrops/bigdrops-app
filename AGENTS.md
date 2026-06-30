@@ -144,6 +144,14 @@ src/
 | 3 | `skill-creator` | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), progressive disclosure, packaging & validation |
 | 4 | `ui-ux-pro-max` | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
 | 5 | `webapp-testing` | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
+| 6 | `using-superpowers` | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
+| 7 | `gitnexus` | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring (architecture), CLI commands, and reference guide for GitNexus code intelligence |
+
+### `.mimocode/skills/` — Specialized Agent Skills
+
+| # | Skill | Niche |
+|---|---|---|
+| 1 | `waybill-template-debug` | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
 
 ---
 
