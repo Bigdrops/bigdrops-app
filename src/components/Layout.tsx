@@ -16,6 +16,16 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import MobilePageHeader from '@/components/layout/MobilePageHeader'
 import { useSettings } from '../hooks/useSettings'
@@ -81,6 +91,7 @@ export default function Layout({
   const [salesOpen, setSalesOpen] = React.useState(false)
   const [moreOpen, setMoreOpen] = React.useState(false)
   const [drawerSalesOpen, setDrawerSalesOpen] = React.useState(false)
+  const [signOutDialogOpen, setSignOutDialogOpen] = React.useState(false)
   
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/' || props['data-bd-page'] === 'dashboard'
@@ -97,10 +108,9 @@ export default function Layout({
 
   const handleMorePick = async (key: string) => {
     if (key === 'signout') {
-      await supabase.auth.signOut()
-      navigate('/login')
       setMoreOpen(false)
       setSidebarOpen(false)
+      setSignOutDialogOpen(true)
       return
     }
 
@@ -115,6 +125,13 @@ export default function Layout({
     setMoreOpen(false)
     setSidebarOpen(false)
     navigate(pathByKey[key] || '/')
+  }
+
+  const executeSignOut = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+    setMoreOpen(false)
+    setSidebarOpen(false)
   }
 
   const onTabClick = (key: string) => {
@@ -248,6 +265,23 @@ export default function Layout({
           handleMorePick={handleMorePick}
         />
       </div>
+
+      <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be signed out of your account. Any unsaved work may be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={executeSignOut}>
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

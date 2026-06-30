@@ -122,18 +122,18 @@ src/
 | 1 | `accessibility` | WCAG 2.2 compliance, a11y audits, screen reader support, keyboard navigation, color contrast, ARIA patterns |
 | 2 | `deploy-to-vercel` | Deploying apps to Vercel — CLI auth, git push deploys, preview URLs, team selection, no-auth fallbacks |
 | 3 | `frontend-design` | Distinctive, production-grade UI — anti-"AI slop" aesthetics, creative typography, color, motion, spatial composition |
-| 4 | `nodejs-backend-patterns` | Production-ready Node.js backends — Express/Fastify, layered architecture, middleware, auth, DB integration, error handling, caching |
-| 5 | `nodejs-best-practices` | Node.js decision-making — framework selection (Hono/Fastify/Express), async patterns, security, architecture thinking |
-| 6 | `pdf-rendering-correctness` | Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules |
-| 7 | `seo` | Technical SEO — meta tags, structured data (JSON-LD), sitemaps, URL structure, mobile SEO, hreflang |
-| 8 | `shadcn` | shadcn/ui — CLI usage, component composition, form patterns, icon handling, styling rules, registry management |
-| 9 | `supabase-postgres-best-practices` | Postgres performance — indexing, connection pooling, RLS, schema design, locking, monitoring, query optimization |
-| 10 | `tailwind-css-patterns` | Tailwind CSS utility-first styling — responsive design, flexbox/grid, dark mode, component extraction, performance, a11y |
-| 11 | `tailwind-v4-shadcn` | Tailwind v4 + shadcn/ui — `@theme inline`, CSS variable architecture, dark mode with ThemeProvider, plugin directives, migration from v3 |
-| 12 | `typescript-advanced-types` | Advanced TypeScript — generics, conditional types, mapped types, template literals, type-safe patterns |
-| 13 | `vercel-composition-patterns` | React composition — compound components, avoiding boolean prop proliferation, context providers, React 19 APIs |
-| 14 | `vercel-react-best-practices` | React/Next.js performance — eliminating waterfalls, bundle optimization, server-side perf, re-render optimization (70 rules, 8 categories) |
-| 15 | `vite` | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
+| 4 | `pdf-rendering-correctness` | Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules |
+| 5 | `seo` | Technical SEO — meta tags, structured data (JSON-LD), sitemaps, URL structure, mobile SEO, hreflang |
+| 6 | `shadcn` | shadcn/ui — CLI usage, component composition, form patterns, icon handling, styling rules, registry management |
+| 7 | `supabase-postgres-best-practices` | Postgres performance — indexing, connection pooling, RLS, schema design, locking, monitoring, query optimization |
+| 8 | `tailwind-css-patterns` | Tailwind CSS utility-first styling — responsive design, flexbox/grid, dark mode, component extraction, performance, a11y |
+| 9 | `tailwind-v4-shadcn` | Tailwind v4 + shadcn/ui — `@theme inline`, CSS variable architecture, dark mode with ThemeProvider, plugin directives, migration from v3 |
+| 10 | `typescript-advanced-types` | Advanced TypeScript — generics, conditional types, mapped types, template literals, type-safe patterns |
+| 11 | `vercel-composition-patterns` | React composition — compound components, avoiding boolean prop proliferation, context providers, React 19 APIs |
+| 12 | `vercel-react-best-practices` | React/Next.js performance — eliminating waterfalls, bundle optimization, server-side perf, re-render optimization (70 rules, 8 categories) |
+| 13 | `vite` | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
+| 14 | `react-pdf` | Generate PDF documents using React-PDF library (@react-pdf/renderer) |
+| 15 | `redesign-existing-projects` | Upgrades existing websites and apps to premium quality — audits current design, identifies generic AI patterns, applies high-end design standards |
 
 ### `.claude/skills/` — Higher-Order & Meta Skills
 
@@ -194,3 +194,48 @@ These files, functions, and constraints must never be modified without explicit 
 ## Open Questions
 
 - Invoice number format: not determined from available sources — extract from `20260520090003_invoices.sql` migration if needed.
+
+<!-- gitnexus:start -->
+# GitNexus — Code Intelligence
+
+This project is indexed by GitNexus as **bigdrops-app** (18701 symbols, 41567 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+
+> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
+
+## Always Do
+
+- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+- **MUST run `detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
+- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
+- When exploring unfamiliar code, use `query({search_query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
+- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
+- For security review, `explain({target: "fileOrSymbol"})` lists taint findings (source→sink flows; needs `analyze --pdg`).
+
+## Never Do
+
+- NEVER edit a function, class, or method without first running `impact` on it.
+- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
+- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
+- NEVER commit changes without running `detect_changes()` to check affected scope.
+
+## Resources
+
+| Resource | Use for |
+|----------|---------|
+| `gitnexus://repo/bigdrops-app/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/bigdrops-app/clusters` | All functional areas |
+| `gitnexus://repo/bigdrops-app/processes` | All execution flows |
+| `gitnexus://repo/bigdrops-app/process/{name}` | Step-by-step execution trace |
+
+## CLI
+
+| Task | Read this skill file |
+|------|---------------------|
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+
+<!-- gitnexus:end -->

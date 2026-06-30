@@ -2,6 +2,16 @@ import React from 'react'
 import { supabase } from '../supabase'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ShieldAlert } from 'lucide-react'
 
 interface PendingApprovalProps {
@@ -9,6 +19,8 @@ interface PendingApprovalProps {
 }
 
 export default function PendingApproval({ email }: PendingApprovalProps) {
+  const [signOutDialogOpen, setSignOutDialogOpen] = React.useState(false)
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'
@@ -110,13 +122,30 @@ export default function PendingApproval({ email }: PendingApprovalProps) {
               type="button"
               variant="destructive"
               className="rounded-full px-6 font-semibold shadow-sm"
-              onClick={handleSignOut}
+              onClick={() => setSignOutDialogOpen(true)}
             >
               Sign Out
             </Button>
           </CardFooter>
         </Card>
       </div>
+
+      <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be signed out of your account. Any unsaved work may be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleSignOut}>
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
