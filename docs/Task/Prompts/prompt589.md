@@ -10,348 +10,209 @@ SKILL LOADING PROTOCOL (MANDATORY)
 1. Read `docs/PROJECTSKILLINDEX.md` first.
 2. Load the following skills:
    - Karpathy
-   - frontend-design
-   - pdf-rendering-correctness
-   - typescript-advanced-types
+   - using-superpowers
 3. For each skill:
-   - Attempt to load via the skill system.
-   - If loading fails, fallback to direct file read from `.claude/skills/` or `.agents/skills/`.
-4. If any critical skill cannot be loaded, STOP immediately and report the failure.
-5. Read `AGENTS.md` before making any edits.
+   - Attempt to load through the skill system.
+   - If loading fails, read the skill directly from disk.
+4. If any critical skill cannot be loaded, stop immediately and report the error.
+5. Read `AGENTS.md` before making any code changes.
 
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
 
-Save a complete implementation report to:
+Continue updating the existing report:
 
-docs/Task/reports/pdf-template-foundation-fixes.md
+`docs/Task/reports/item-library-phase-1-stabilization.md`
 
-The report MUST include:
+Add dedicated sections for:
 
-- Executive Summary
-- Root Cause Analysis
-- Files Modified
-- Obsidian Removal Audit
-- Template Registration Audit
-- PDF Customisation Audit
-- Verification Results
-- Remaining Issues (if any)
+- Catalog Integrity Audit
+- Performance Audit
+- Additional fixes (if any)
+- Final Phase 1 Summary
+- Phase 2 Readiness Assessment
 
 ==================================================
 CONTEXT
 ==================================================
 
-Several new templates have recently been implemented.
+The Item Library Phase 1 stabilization is almost complete.
 
-Current status:
+The following work has already been completed:
 
-✓ Industry works.
+✓ Fixed suggestion normalization mismatch by mirroring the database normalization logic.
 
-✓ Bolt renders.
+✓ Eliminated unnecessary rerenders by memoizing the suggestion engine return object.
 
-✗ Ember crashes during PDF generation.
+✓ Removed duplicated logic from `useItemAliases`.
 
-✗ Apex renders blank pages.
+✓ Audited Cleanup Export / Import.
 
-✗ PDF customisation only works correctly with Industry.
+✓ Audited Duplicate Detection.
 
-The customization modal allows:
+✓ Audited Merge Workflow.
 
-- Custom Accent Colour
-- Custom Fonts
-- Compact Layout
-- Landscape Layout
-
-However, changing these settings has no visible effect on the new templates.
-
-This indicates the templates are likely bypassing the shared PDF customization pipeline.
-
-The objective is to fix the foundation before adding any more templates.
+Do not repeat these investigations unless required to verify a new finding.
 
 ==================================================
 OBJECTIVE
 ==================================================
 
-Fix all current PDF template regressions.
+Complete the remaining Phase 1 stabilization work.
 
-Do NOT create any new templates.
+The goal is to prove that the Item Library is internally consistent, performant, and production-ready before beginning Phase 2.
 
-Do NOT redesign any templates.
-
-Restore correct behaviour across all templates.
+This is primarily an audit with targeted low-risk fixes where justified.
 
 ==================================================
-TASK 1 — FIX EMBER
+TASK 1
+Catalog Integrity Audit
 ==================================================
 
-Current error:
+Perform a complete integrity review of the Item Library.
 
-Download failed
+Investigate whether the catalogue can ever become internally inconsistent.
 
-s(...).map is not a function
+Specifically inspect for:
 
-Find the exact source.
+- orphan aliases
+- aliases referencing deleted items
+- duplicate active aliases
+- duplicate normalized aliases
+- aliases pointing to multiple items
+- inactive catalogue items returned in search
+- retired aliases still influencing suggestions
+- merge history pointing at invalid records
+- cleanup batches referencing missing items
+- import batches referencing invalid merge history
+- repository assumptions that bypass database guarantees
 
-Do NOT patch with optional chaining or `as any`.
+Verify every relationship between:
 
-Identify which value is expected to be an array and why it is not.
+- item_catalog
+- item_aliases
+- item_merge_log
+- item_import_batches
 
-Match Crest's defensive rendering behaviour.
+Document every finding.
 
-Ember must render successfully.
-
-==================================================
-TASK 2 — FIX APEX
-==================================================
-
-Current behaviour:
-
-PDF renders two blank pages.
-
-Audit the render tree.
-
-Determine why React-PDF is producing blank pages.
-
-Possible causes include:
-
-- invalid layout hierarchy
-- unsupported styling
-- page positioned outside viewport
-- invalid fixed element
-- render exception
-- zero-height content
-
-Fix the actual root cause.
-
-Also verify Apex follows
-docs/TEMPLATES/htmltemps/apex.html
-
-Do NOT revert to the original placeholder styling.
+If no issues exist, explicitly state why the implementation is considered safe.
 
 ==================================================
-TASK 3 — FIX BOLT
+TASK 2
+Performance Audit
 ==================================================
 
-Bolt renders successfully.
+Review the Item Library for obvious performance problems.
 
-Remove the decorative banner:
+Inspect for:
 
-● Verified document
+- unnecessary repository queries
+- duplicate fetches
+- repeated normalization work
+- repeated suggestion ranking
+- unnecessary filtering
+- avoidable rerenders
+- unstable references
+- expensive derived state
+- N+1 query patterns
+- repeated alias loading
+- repeated merge history loading
 
-The oversized coloured bullet should not appear.
+Only implement low-risk optimizations.
 
-Replace it with either:
+Do not redesign architecture.
 
-Verified document
-
-or a proper badge component.
-
-No oversized bullet.
-
-==================================================
-TASK 4 — DELETE OBSIDIAN
-==================================================
-
-Remove Obsidian completely.
-
-Delete template files.
-
-Remove registrations.
-
-Remove selector entries.
-
-Remove preview mappings.
-
-Remove template ids.
-
-Search the repository for every remaining reference.
-
-Nothing referencing Obsidian should remain.
+Do not prematurely optimize.
 
 ==================================================
-TASK 5 — AUDIT TEMPLATE CUSTOMISATION
+TASK 3
+Low-Risk Stability Improvements
 ==================================================
 
-This is the highest priority investigation.
+If additional issues are discovered during either audit:
 
-Determine why Industry responds to PDF customisation while the newer templates do not.
+Fix only issues that are:
 
-Audit the entire pipeline.
+- isolated
+- low risk
+- backward compatible
+- clearly beneficial
 
-Start from the UI:
+Avoid feature work.
 
-- PdfOutputCustomizeSheet
+Avoid architectural redesign.
 
-Follow the settings through:
-
-- persisted settings
-- render model
-- template adapter
-- template registry
-- template props
-
-Verify how these values arrive at every template:
-
-- accent colour
-- header font
-- body font
-- compact mode
-- landscape mode
-
-Determine why Industry respects these settings.
-
-Determine why:
-
-- Crest
-- Ledger
-- Apex
-- Bolt
-- Ember
-- Minimal
-- Evergreen
-
-do not.
-
-Document the exact root cause.
+Avoid speculative refactoring.
 
 ==================================================
-TASK 6 — FIX CUSTOMISATION
+OUT OF SCOPE
 ==================================================
 
-Once the root cause is identified,
+Do NOT work on:
 
-ensure EVERY template uses the shared customization pipeline.
+- Bulk Export
+- Bulk CSV Export
+- Bulk JSON Export
+- Shared Export Dropdown
+- Document Export
+- Document Import
+- JSON Import
+- Invoice forms
+- Quotation forms
+- Waybill forms
+- Query Platform
+- PDF generation
+- CSR export
 
-Verify that all templates respond correctly to:
-
-✓ Accent colour
-
-✓ Header font
-
-✓ Body font
-
-✓ Compact layout
-
-✓ Landscape layout
-
-Do NOT duplicate customisation logic.
-
-Use the existing shared pipeline.
+Those belong to later PRD phases.
 
 ==================================================
-STRICT RULES
+CONSTRAINTS
 ==================================================
 
-Do NOT invent a second customization system.
+Do not redesign the Item Library.
 
-Do NOT hardcode theme colours where shared values should be used.
+Do not change database schema.
 
-Do NOT bypass shared font resolution.
+Do not introduce breaking APIs.
 
-Do NOT bypass compact mode helpers.
+Do not replace repository architecture.
 
-Do NOT bypass landscape helpers.
+Keep changes focused and minimal.
 
-If Industry already solves something correctly,
+Preserve backward compatibility.
 
-reuse that implementation.
+Touch only files required for Phase 1 completion.
 
 ==================================================
-VERIFICATION
+OUTPUT
 ==================================================
 
-Run:
+Provide:
 
-1.
-bun run audit:load
-
-2.
-bun run typecheck
-
-3.
-bun run build
-
-Manual verification:
-
-Generate PDFs for:
-
-Industry
-
-Ledger
-
-Crest
-
-Apex
-
-Bolt
-
-Ember
-
-Minimal
-
-Evergreen
-
-For every template verify:
-
-✓ Accent colour changes
-
-✓ Header font changes
-
-✓ Body font changes
-
-✓ Compact mode changes spacing
-
-✓ Landscape mode changes orientation
-
-✓ Footer renders correctly
-
-✓ Multi-page invoices paginate correctly
-
-✓ Group subtotals remain outside footer
-
-✓ PDF downloads successfully
+1. Catalog integrity findings.
+2. Performance findings.
+3. Any additional bugs fixed.
+4. Files modified.
+5. Root causes.
+6. Before/after behaviour.
+7. Edge cases verified.
+8. Remaining technical debt.
+9. Recommendation on whether Phase 1 can be considered complete.
+10. Explicit Phase 2 readiness assessment.
 
 ==================================================
 STOP CONDITION
 ==================================================
 
-Stop only after:
+Stop once:
 
-- Ember renders
-- Apex renders
-- Bolt is cleaned up
-- Obsidian is removed
-- Every template responds to all PDF customisation settings
-- Verification passes
-- Report is complete
+- Catalog integrity has been fully verified.
+- Performance audit has been completed.
+- Any low-risk stability fixes have been implemented.
+- The Phase 1 report has been finalized.
+- A clear recommendation has been made on whether the Item Library is ready for Phase 2.
 
-==================================================
-SUCCESS CRITERIA
-==================================================
-
-✅ Ember downloads successfully.
-
-✅ Apex renders correctly.
-
-✅ Bolt decorative bullet removed.
-
-✅ Obsidian completely removed.
-
-✅ Every template honours accent colour.
-
-✅ Every template honours custom fonts.
-
-✅ Every template honours compact mode.
-
-✅ Every template honours landscape mode.
-
-✅ Industry behaviour remains unchanged.
-
-✅ bun run audit:load passes.
-
-✅ bun run typecheck passes.
-
-✅ bun run build passes.
-
-✅ Report complete.
+Do not begin Phase 2 implementation.
