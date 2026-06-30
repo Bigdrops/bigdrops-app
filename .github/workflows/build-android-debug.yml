@@ -113,25 +113,49 @@ jobs:
       - name: Install dependencies with Bun
         run: bun install --frozen-lockfile
 
-      # ── 9. Build web assets ──────────────────────────────────────────────
+      # ── 9. Clean stale build artifacts ──────────────────────────────────
+      # Ensure no cached or stale dist/ influences the new build
+      - name: Clean stale build artifacts
+        run: |
+          rm -rf dist/
+          rm -rf android/app/src/main/assets/public/
+          echo "✅ Cleaned dist/ and android/app/src/main/assets/public/"
+
+      # ── 10. Build web assets ─────────────────────────────────────────────
       # Capacitor syncs the dist/ directory into the Android project
       - name: Build production web assets
         run: bun run build
 
-      # ── 10. Sync Capacitor ───────────────────────────────────────────────
+      # ── 11. Sync Capacitor ───────────────────────────────────────────────
       - name: Sync Capacitor Android project
         run: npx cap sync android
 
-      # ── 11. Make Gradle wrapper executable ───────────────────────────────
+      # ── 12. Verify Capacitor assets ──────────────────────────────────────
+      # Confirm index.html and assets exist before Gradle build
+      - name: Verify Capacitor assets
+        run: |
+          if [ ! -f "android/app/src/main/assets/public/index.html" ]; then
+            echo "::error::android/app/src/main/assets/public/index.html not found after Capacitor sync."
+            exit 1
+          fi
+          if [ ! -d "android/app/src/main/assets/public/assets" ]; then
+            echo "::error::android/app/src/main/assets/public/assets/ directory not found after Capacitor sync."
+            exit 1
+          fi
+          echo "✅ Capacitor assets verified:"
+          ls -la android/app/src/main/assets/public/
+          ls -la android/app/src/main/assets/public/assets/
+
+      # ── 13. Make Gradle wrapper executable ───────────────────────────────
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
 
-      # ── 12. Build Debug APK ─────────────────────────────────────────────
+      # ── 14. Build Debug APK ─────────────────────────────────────────────
       - name: Build Android Debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      # ── 13. Locate and rename APK ───────────────────────────────────────
+      # ── 15. Locate and rename APK ───────────────────────────────────────
       # Find the generated APK and rename it with branch + short SHA + run number
       - name: Locate and rename APK
         id: find-apk
@@ -153,7 +177,7 @@ jobs:
           echo "apk_size=$APK_SIZE" >> "$GITHUB_OUTPUT"
           echo "✅ APK renamed: $NEW_NAME ($APK_SIZE)"
 
-      # ── 14. Upload APK artifact ──────────────────────────────────────────
+      # ── 16. Upload APK artifact ──────────────────────────────────────────
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
