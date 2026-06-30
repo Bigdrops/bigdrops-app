@@ -145,3 +145,5 @@ Run the project's existing commands:
 bun run audit\:load
 bun run typecheck
 bun run build
+If accessibility automation exists:
+bun run test\:a11y
