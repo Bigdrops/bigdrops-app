@@ -7,9 +7,10 @@ import {
 } from '../../domain/invoice/types.ts'
 
 test('invoice pdf template ids keep live templates and reject legacy classic variants', () => {
-  assert.deepEqual(INVOICE_PDF_TEMPLATE_IDS, ['industry', 'ledger', 'apex', 'bolt', 'obsidian-receipt'])
+  assert.deepEqual(INVOICE_PDF_TEMPLATE_IDS, ['industry', 'ledger', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'])
   assert.equal(normalizeInvoicePdfTemplateId('bolt'), 'bolt')
-  assert.equal(normalizeInvoicePdfTemplateId('obsidian-receipt'), 'obsidian-receipt')
+  assert.equal(normalizeInvoicePdfTemplateId('apex'), null)
+  assert.equal(normalizeInvoicePdfTemplateId('naijabiz'), null)
   assert.equal(normalizeInvoicePdfTemplateId('classic'), null)
   assert.equal(normalizeInvoicePdfTemplateId('bold'), null)
   assert.equal(normalizeInvoicePdfTemplateId('compact'), null)

@@ -175,9 +175,6 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
           <View style={styles.sealBand}>
             <View style={styles.sealContent}>
               <View style={styles.sealLeft}>
-                <View style={styles.sealBadge}>
-                  <Text style={styles.sealBadgeText}>Verified Document</Text>
-                </View>
                 <Text style={[styles.sealDocumentType, c.accent]}>
                   {data.customTitle || data.title}
                 </Text>

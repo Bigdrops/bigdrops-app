@@ -30,7 +30,6 @@ export const styles = StyleSheet.create({
     backgroundColor: NAVY,
     paddingTop: 28,
     paddingBottom: 20,
-    paddingHorizontal: PAGE_PADDING,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
   },
@@ -83,16 +82,12 @@ export const styles = StyleSheet.create({
   amberBar: {
     backgroundColor: AMBER,
     height: 4,
-    marginHorizontal: PAGE_PADDING,
     marginTop: 0,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
   },
 
   /* ── Content Card ─────────────────────────────────── */
   contentCard: {
     backgroundColor: WHITE,
-    marginHorizontal: PAGE_PADDING,
     marginTop: 16,
     borderRadius: 16,
     padding: 24,
@@ -527,7 +522,6 @@ export const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: PAGE_PADDING,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: BORDER_LIGHT,

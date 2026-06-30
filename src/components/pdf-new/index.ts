@@ -42,7 +42,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     { pdf },
     { PdfRenderer },
     IndustryModule,
-    ApexModule,
     LedgerModule,
     CrestModule,
     MinimalModule,
@@ -53,7 +52,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
-    import('./templates/Apex'),
     import('./templates/Ledger'),
     import('./templates/Crest'),
     import('./templates/Minimal'),
@@ -63,7 +61,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   ])
 
   const Industry = IndustryModule.default
-  const Apex = ApexModule.default
   const Ledger = LedgerModule.default
   const Crest = CrestModule.default
   const Minimal = MinimalModule.default
@@ -81,10 +78,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   switch (activeTemplateId) {
     case 'ledger':
       Template = Ledger
-      templateData = adaptCommercialDocumentData(request.model)
-      break
-    case 'apex':
-      Template = Apex
       templateData = adaptCommercialDocumentData(request.model)
       break
     case 'crest':

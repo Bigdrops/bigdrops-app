@@ -77,7 +77,7 @@ export interface InvoicePdfOutput {
   compact: boolean
 }
 
-export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'apex', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const
+export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
 
@@ -86,7 +86,7 @@ export function isInvoicePdfTemplateId(value: unknown): value is InvoicePdfTempl
 }
 
 export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplateId | null {
-  if (value === 'naijabiz') return 'apex'
+  if (value === 'naijabiz' || value === 'apex') return null
   return isInvoicePdfTemplateId(value) ? value : null
 }
 

@@ -35,10 +35,6 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     shell: 'bg-[#2F3A44] border border-[#24303A]',
     nodes: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
   },
-  apex: {
-    shell: 'bg-white border border-[#b8c4c4]',
-    nodes: ['h-1.5 w-full rounded-full bg-[#1a2f2f]', 'h-1 w-2/5 rounded-full bg-[#0d7c7c]', 'h-1 w-4/5 rounded-full bg-[#e6f4f4]'],
-  },
   bolt: {
     shell: 'bg-[#faf8f0] border border-[#1b4332]',
     nodes: ['h-1.5 w-full rounded-full bg-[#2d6a4f]', 'h-1 w-2/5 rounded-full bg-[#52b788]', 'h-1 w-4/5 rounded-full bg-[#d4a373]'],

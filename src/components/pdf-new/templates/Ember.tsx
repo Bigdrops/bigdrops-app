@@ -84,7 +84,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
   return (
     <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, c.surface]}>
       {/* Header Band — navy */}
-      <View style={[styles.headerBand, c.surface]}>
+      <View style={styles.headerBand}>
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={[styles.headerLabel, c.muted]}>{data.customTitle || data.title}</Text>

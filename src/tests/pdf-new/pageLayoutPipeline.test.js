@@ -16,7 +16,6 @@ const quotationPreviewCssPath = path.resolve('src/components/document-view/quota
 const templatePaths = [
   path.resolve('src/components/pdf-new/templates/Industry.tsx'),
   path.resolve('src/components/pdf-new/templates/Ledger.tsx'),
-  path.resolve('src/components/pdf-new/templates/Apex.tsx'),
   path.resolve('src/components/pdf-new/templates/Bolt.tsx'),
   path.resolve('src/components/pdf-new/templates/ObsidianReceipt.tsx'),
 ]

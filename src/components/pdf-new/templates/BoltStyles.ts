@@ -20,8 +20,6 @@ const RULE_THIN = 1
 
 export const styles = StyleSheet.create({
   page: {
-    padding: PAGE_PADDING,
-    paddingTop: 0,
     fontFamily: BOLT_SANS,
     fontSize: 9,
     color: INK,
@@ -31,8 +29,6 @@ export const styles = StyleSheet.create({
   /* ── Top Seal Band ───────────────────────────────── */
   sealBand: {
     backgroundColor: DEEP_PINE,
-    marginLeft: -PAGE_PADDING,
-    marginRight: -PAGE_PADDING,
     paddingTop: 28,
     paddingBottom: 20,
     paddingHorizontal: PAGE_PADDING,
@@ -43,19 +39,6 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   sealLeft: {},
-  sealBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  sealBadgeText: {
-    fontSize: 7,
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-    color: GOLD,
-    fontFamily: BOLT_SANS,
-  },
   sealDocumentType: {
     fontSize: 11,
     letterSpacing: 2,
@@ -89,8 +72,6 @@ export const styles = StyleSheet.create({
     height: RULE_THICK,
     backgroundColor: GOLD,
     marginTop: 0,
-    marginLeft: -PAGE_PADDING,
-    marginRight: -PAGE_PADDING,
   },
   thinGoldRule: {
     height: RULE_THIN,
@@ -563,8 +544,8 @@ export const styles = StyleSheet.create({
   footerZone: {
     position: 'absolute',
     bottom: 20,
-    left: PAGE_PADDING,
-    right: PAGE_PADDING,
+    left: 0,
+    right: 0,
   },
   footerRule: {
     height: RULE_THIN,

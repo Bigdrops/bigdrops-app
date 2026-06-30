@@ -37,14 +37,6 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
     columns: ['h-7 w-full rounded-md bg-[#F3EFE6]', 'h-1 w-full rounded-full bg-white/45', 'h-1 w-2/3 rounded-full bg-white/30'],
   },
   {
-    id: 'apex',
-    label: 'Apex',
-    eyebrow: 'Placeholder',
-    shell: 'bg-white border border-slate-200',
-    accents: ['h-1.5 w-full rounded-full bg-slate-900', 'h-1 w-2/5 rounded-full bg-slate-300', 'h-1 w-4/5 rounded-full bg-slate-200'],
-    columns: ['h-7 w-full rounded-md border border-slate-200 bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-3/4 rounded-full bg-slate-200'],
-  },
-  {
     id: 'crest',
     label: 'Crest',
     eyebrow: 'Coming Soon',
