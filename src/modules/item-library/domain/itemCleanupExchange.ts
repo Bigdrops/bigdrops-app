@@ -30,20 +30,32 @@ export const FLAGGED_CLEANUP_SCHEMA_VERSION = 1 as const
 
 const CATEGORIES = [
   {
+    title: 'Lighting',
+    keywords: ['lamp', 'bulb', 'led', 'light', 'tube', 'flood', 'lantern', 'globe', 'strip'],
+  },
+  {
     title: 'Breakers, Contactors & Transformers',
-    keywords: ['breaker', 'mcb', 'mccb', 'contactor', 'transformer', 'isolator', 'relay', 'vigi'],
+    keywords: ['breaker', 'mcb', 'mccb', 'contactor', 'transformer', 'isolator', 'relay', 'vigi', 'rcbo', 'spd', 'rcd'],
   },
   {
     title: 'Cables, Lugs & Containment',
-    keywords: ['cable', 'wire', 'flex', 'lug', 'gland', 'tray', 'trunking', 'conduit', 'pvc'],
+    keywords: ['cable', 'wire', 'flex', 'lug', 'gland', 'tray', 'trunking', 'conduit', 'pvc', 'cable tie', 'termina'],
   },
   {
     title: 'Sockets, Switches & Fittings',
-    keywords: ['socket', 'switch', 'plate', 'fitting', 'lamp', 'bulb', 'led', 'box', 'dimmer'],
+    keywords: ['socket', 'switch', 'plate', 'fitting', 'box', 'dimmer', 'outlet'],
   },
   {
     title: 'Pumps, Panels & Power',
-    keywords: ['pump', 'panel', 'starter', 'inverter', 'generator', 'ups', 'stabilizer', 'battery'],
+    keywords: ['pump', 'panel', 'starter', 'inverter', 'generator', 'ups', 'stabilizer', 'battery', 'charger', 'solar', 'power supply'],
+  },
+  {
+    title: 'Plumbing & Pipe Fittings',
+    keywords: ['pipe', 'valve', 'tap', 'coupling', 'elbow', 'tee', 'union', 'nipple', 'flange', 'hose'],
+  },
+  {
+    title: 'Safety Equipment & PPE',
+    keywords: ['helmet', 'boot', 'glove', 'goggle', 'mask', 'safety', 'ppe', 'harness', 'reflect'],
   },
 ]
 

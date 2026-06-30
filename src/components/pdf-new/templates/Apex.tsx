@@ -16,6 +16,7 @@ import {
   getAmountInWords,
   buildAdvanceSummary,
 } from '../engine'
+import { resolveDesignTokens } from '../designTokens'
 
 function toTitleCase(value: string) {
   return value
@@ -53,6 +54,17 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
 
   const docLabel = data.customTitle || data.title || 'Document'
 
+  const tokens = resolveDesignTokens(data.design)
+  const c = {
+    text: tokens.textColor ? { color: tokens.textColor } : null,
+    accent: tokens.accentColor ? { color: tokens.accentColor } : null,
+    muted: tokens.mutedColor ? { color: tokens.mutedColor } : null,
+    border: tokens.borderColor ? { borderColor: tokens.borderColor } : null,
+    surface: tokens.surfaceColor ? { backgroundColor: tokens.surfaceColor } : null,
+    headerFont: tokens.headerFont ? { fontFamily: tokens.headerFont } : null,
+    bodyFont: tokens.bodyFont ? { fontFamily: tokens.bodyFont } : null,
+  }
+
   function resolveColumnStyle(column: CommercialDocumentData['table']['columns'][number]) {
     const layout = resolveColumnLayout(column)
     const widthStyle = layout.width
@@ -65,7 +77,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
   }
 
   return (
-    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, c.surface]}>
       <View style={styles.headerContent}>
         <View style={styles.headerGrid}>
           <View style={styles.headerLeft}>
@@ -75,14 +87,14 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
           </View>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.docLabel}>{docLabel}</Text>
-            <Text style={styles.docTitle}>{data.title || docLabel}</Text>
+            <Text style={[styles.docLabel, c.accent]}>{docLabel}</Text>
+            <Text style={[styles.docTitle, c.text, c.headerFont]}>{data.title || docLabel}</Text>
             {metaRows.length > 0 ? (
               <View style={styles.metaRow}>
                 {metaRows.slice(0, 4).map((row, idx) => (
                   <View key={`meta-${idx}`} style={styles.metaItem}>
-                    <Text style={styles.metaLabel}>{row.label}</Text>
-                    <Text style={styles.metaValue}>{row.value}</Text>
+                    <Text style={[styles.metaLabel, c.muted]}>{row.label}</Text>
+                    <Text style={[styles.metaValue, c.text]}>{row.value}</Text>
                   </View>
                 ))}
               </View>
@@ -91,25 +103,25 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
 
           {data.client ? (
             <View style={styles.headerRight}>
-              <Text style={styles.partyLabel}>Bill To</Text>
-              {data.client.name ? <Text style={styles.partyName}>{data.client.name}</Text> : null}
-              {data.client.address ? <Text style={styles.partyLine}>{data.client.address}</Text> : null}
-              {data.client.cityState ? <Text style={styles.partyLine}>{data.client.cityState}</Text> : null}
-              {data.client.phone ? <Text style={styles.partyLine}>{data.client.phone}</Text> : null}
-              {data.client.email ? <Text style={styles.partyLine}>{data.client.email}</Text> : null}
+              <Text style={[styles.partyLabel, c.muted]}>Bill To</Text>
+              {data.client.name ? <Text style={[styles.partyName, c.text, c.bodyFont]}>{data.client.name}</Text> : null}
+              {data.client.address ? <Text style={[styles.partyLine, c.text]}>{data.client.address}</Text> : null}
+              {data.client.cityState ? <Text style={[styles.partyLine, c.text]}>{data.client.cityState}</Text> : null}
+              {data.client.phone ? <Text style={[styles.partyLine, c.text]}>{data.client.phone}</Text> : null}
+              {data.client.email ? <Text style={[styles.partyLine, c.text]}>{data.client.email}</Text> : null}
             </View>
           ) : null}
         </View>
       </View>
 
-      <View style={styles.accentBar} />
+      <View style={[styles.accentBar, c.accent && { backgroundColor: tokens.accentColor }]} />
 
       {hasCustomFields ? (
         <View style={styles.ribbon}>
           {customFields.map((field, idx) => (
             <View key={`rib-${idx}`} style={styles.ribbonItem}>
-              <Text style={styles.ribbonLabel}>{field.label}</Text>
-              <Text style={styles.ribbonValue}>{field.value}</Text>
+              <Text style={[styles.ribbonLabel, c.muted]}>{field.label}</Text>
+              <Text style={[styles.ribbonValue, c.text]}>{field.value}</Text>
             </View>
           ))}
         </View>
@@ -117,13 +129,13 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
 
       <View style={styles.content}>
         {(data.table.columns?.length ?? 0) > 0 && (data.table.rows?.length ?? 0) > 0 ? (
-          <View style={styles.tableCard} wrap={false}>
-            <View style={styles.tableHeader} fixed>
+          <View style={[styles.tableCard, c.border]} wrap={false}>
+            <View style={[styles.tableHeader, c.surface, c.border && { borderBottomColor: tokens.borderColor }]} fixed>
               {data.table.columns.map((column, idx) => {
                 const alignStyle = resolveTextAlignment(column.align)
                 const colStyle = resolveColumnStyle(column)
                 return (
-                  <Text key={`th-${idx}`} style={[styles.tableHeaderCell, ...colStyle, alignStyle]}>
+                  <Text key={`th-${idx}`} style={[styles.tableHeaderCell, ...colStyle, alignStyle, c.text, c.bodyFont]}>
                     {column.label}
                   </Text>
                 )
@@ -135,8 +147,8 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                 if (row.rowType === 'group_header') {
                   const groupLabel = toTitleCase(row.groupName || row.groupLabel || '')
                   return (
-                    <View key={`gh-${rowIdx}`} style={styles.groupHeaderRow} wrap={false}>
-                      <Text style={styles.groupHeaderText}>{groupLabel || 'Group'}</Text>
+                    <View key={`gh-${rowIdx}`} style={[styles.groupHeaderRow, c.surface && { backgroundColor: tokens.surfaceColor }, c.border && { borderBottomColor: tokens.borderColor }]} wrap={false}>
+                      <Text style={[styles.groupHeaderText, c.text, c.headerFont]}>{groupLabel || 'Group'}</Text>
                     </View>
                   )
                 }
@@ -146,11 +158,11 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                   const showSubtotal = row.showSubtotal === true && subtotalValue !== null && subtotalValue !== undefined && subtotalValue !== ''
                   return showSubtotal ? (
                     <View key={`gf-${rowIdx}`} wrap={false}>
-                      <View style={styles.groupSubtotalRow}>
-                        <Text style={styles.groupSubtotalLabel}>Subtotal</Text>
-                        <PdfCurrencyText value={subtotalValue} style={styles.groupSubtotalValue} />
+                      <View style={[styles.groupSubtotalRow, c.surface && { backgroundColor: tokens.surfaceColor }]}>
+                        <Text style={[styles.groupSubtotalLabel, c.text]}>Subtotal</Text>
+                        <PdfCurrencyText value={subtotalValue} style={[styles.groupSubtotalValue, c.text]} />
                       </View>
-                      <View style={styles.groupClosingRule} />
+                      <View style={[styles.groupClosingRule, c.border && { backgroundColor: tokens.borderColor }]} />
                     </View>
                   ) : (
                     <View key={`gcr-${rowIdx}`} style={styles.groupClosingRule} />
@@ -158,7 +170,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                 }
 
                 return (
-                  <View key={`tr-${rowIdx}`} style={styles.tableRow} wrap={false}>
+                  <View key={`tr-${rowIdx}`} style={[styles.tableRow, c.border && { borderBottomColor: tokens.borderColor }]} wrap={false}>
                     {data.table.columns.map((column, colIdx) => {
                       const cell = row.cells?.[column.key]
                       const alignStyle = resolveTextAlignment(column.align)
@@ -170,9 +182,9 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                         <View key={`tc-${rowIdx}-${colIdx}`} style={[styles.tableCell, ...colStyle, alignStyle]}>
                           {isDescription ? (
                             <>
-                              <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
+                              <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
                               {getDescriptionSub(cell) ? (
-                                <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
+                                <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
                               ) : null}
                               {row.imageUrl ? (
                                 <>
@@ -182,7 +194,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                               ) : null}
                             </>
                           ) : isTightSingleLineCell ? (
-                            <Text style={[styles.tightCellText, styles.qtyUnitToken, alignStyle || { textAlign: 'center' }]} wrap={false}>
+                            <Text style={[styles.tightCellText, styles.qtyUnitToken, c.muted, alignStyle || { textAlign: 'center' }]} wrap={false}>
                               {safeText(cell)}
                             </Text>
                           ) : (
@@ -202,7 +214,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
           <View style={styles.infoRow}>
             {data.notes?.content ? (
               <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>{data.notes.title || 'Notes'}</Text>
+                <Text style={[styles.infoTitle, c.accent, c.headerFont]}>{data.notes.title || 'Notes'}</Text>
                 {renderPdfRichText(data.notes.content, {
                   containerStyle: styles.infoRichText,
                   paragraphStyle: styles.infoParagraph,
@@ -216,7 +228,7 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
             ) : null}
             {data.terms?.content ? (
               <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>{data.terms.title || 'Terms'}</Text>
+                <Text style={[styles.infoTitle, c.accent, c.headerFont]}>{data.terms.title || 'Terms'}</Text>
                 {renderPdfRichText(data.terms.content, {
                   containerStyle: styles.infoRichText,
                   paragraphStyle: styles.infoParagraph,
@@ -255,42 +267,42 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
             <View style={styles.totalsGrid}>
               {totalsLines.map((line, idx) => (
                 <View key={`tl-${idx}`} style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>{line.label}</Text>
-                  <PdfCurrencyText value={line.value} style={styles.totalValue} />
+                  <Text style={[styles.totalLabel, c.text]}>{line.label}</Text>
+                  <PdfCurrencyText value={line.value} style={[styles.totalValue, c.text]} />
                 </View>
               ))}
 
               {mainTotal ? (
-                <View style={styles.totalFinal}>
-                  <Text style={styles.totalFinalLabel}>{mainTotal.label}</Text>
-                  <PdfCurrencyText value={mainTotal.value} style={styles.totalFinalValue} />
+                <View style={[styles.totalFinal, c.border && { borderTopColor: tokens.textColor || '#1a2f2f' }]}>
+                  <Text style={[styles.totalFinalLabel, c.text, c.headerFont]}>{mainTotal.label}</Text>
+                  <PdfCurrencyText value={mainTotal.value} style={[styles.totalFinalValue, c.text, c.headerFont]} />
                 </View>
               ) : null}
 
               {amountInWords ? (
-                <Text style={styles.amountWords}>{amountInWords}</Text>
+                <Text style={[styles.amountWords, c.muted]}>{amountInWords}</Text>
               ) : null}
 
               {advanceSummary ? (
-                <View style={styles.advanceRow}>
-                  <Text style={styles.advanceLabel}>{advanceSummary.primaryLabel}</Text>
-                  <PdfCurrencyText value={advanceSummary.advanceAmount} style={styles.advanceValue} />
+                <View style={[styles.advanceRow, c.surface && { backgroundColor: tokens.surfaceColor }]}>
+                  <Text style={[styles.advanceLabel, c.text, c.headerFont]}>{advanceSummary.primaryLabel}</Text>
+                  <PdfCurrencyText value={advanceSummary.advanceAmount} style={[styles.advanceValue, c.text, c.headerFont]} />
                 </View>
               ) : null}
 
               {advanceSummary?.balanceRemaining ? (
-                <View style={styles.advanceBox}>
+                  <View style={[styles.advanceBox, c.border && { borderTopColor: tokens.borderColor }]}>
                   <View style={styles.advanceSubRow}>
-                    <Text style={styles.advanceSubLabel}>{advanceSummary.secondaryLabel}</Text>
-                    <PdfCurrencyText value={advanceSummary.balanceRemaining} style={styles.advanceSubValue} />
+                    <Text style={[styles.advanceSubLabel, c.muted]}>{advanceSummary.secondaryLabel}</Text>
+                    <PdfCurrencyText value={advanceSummary.balanceRemaining} style={[styles.advanceSubValue, c.muted]} />
                   </View>
                 </View>
               ) : null}
 
               {balanceDue ? (
                 <View style={styles.balanceDue}>
-                  <Text style={styles.balanceDueText}>{balanceDue.label}</Text>
-                  <PdfCurrencyText value={balanceDue.value} style={styles.balanceDueValue} />
+                  <Text style={[styles.balanceDueText, c.surface && { color: tokens.surfaceColor }]}>{balanceDue.label}</Text>
+                  <PdfCurrencyText value={balanceDue.value} style={[styles.balanceDueValue, c.surface && { color: tokens.surfaceColor }]} />
                 </View>
               ) : null}
             </View>
@@ -306,9 +318,9 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
                 ) : (
                   <View style={styles.sigScribble} />
                 )}
-                <View style={styles.sigLine} />
-                {data.signature.name ? <Text style={styles.sigName}>{data.signature.name}</Text> : null}
-                {data.signature.role ? <Text style={styles.sigRole}>{data.signature.role}</Text> : null}
+                <View style={[styles.sigLine, c.border && { backgroundColor: tokens.borderColor }]} />
+                {data.signature.name ? <Text style={[styles.sigName, c.text]}>{data.signature.name}</Text> : null}
+                {data.signature.role ? <Text style={[styles.sigRole, c.muted]}>{data.signature.role}</Text> : null}
               </View>
             ) : (
               <View style={styles.sigBox} />
@@ -317,8 +329,8 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
               <View style={styles.extraFieldsWrap}>
                 {data.additionalFields.map((field, idx) => (
                   <View key={`ext-${idx}`} style={styles.extraFieldRow}>
-                    <Text style={styles.extraFieldLabel}>{field.label}</Text>
-                    <Text style={styles.extraFieldValue}>{field.value}</Text>
+                    <Text style={[styles.extraFieldLabel, c.muted]}>{field.label}</Text>
+                    <Text style={[styles.extraFieldValue, c.text]}>{field.value}</Text>
                   </View>
                 ))}
               </View>
@@ -328,15 +340,15 @@ export default function Apex({ data }: { data: CommercialDocumentData }) {
       </View>
 
       {footerVisible ? (
-        <View style={styles.footerZone} fixed>
-          {data.footer.extraText ? <Text style={styles.footerExtra}>{data.footer.extraText}</Text> : null}
+        <View style={[styles.footerZone, c.surface && { backgroundColor: tokens.surfaceColor }, c.border && { borderTopColor: tokens.borderColor }]} fixed>
+          {data.footer.extraText ? <Text style={[styles.footerExtra, c.muted]}>{data.footer.extraText}</Text> : null}
           {data.showTagline && data.company?.tagline ? (
-            <Text style={styles.footerTagline}>{data.company.tagline}</Text>
+            <Text style={[styles.footerTagline, c.muted]}>{data.company.tagline}</Text>
           ) : null}
           <View style={styles.footerBar}>
-            <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} fixed />
-            <Text style={styles.footerText}>{data.footer.documentNumber || data.documentNumber}</Text>
-            <Text style={styles.footerText}>{data.footer.companyName || data.company?.name || ''}</Text>
+            <Text style={[styles.footerText, c.muted]} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} fixed />
+            <Text style={[styles.footerText, c.muted]}>{data.footer.documentNumber || data.documentNumber}</Text>
+            <Text style={[styles.footerText, c.muted]}>{data.footer.companyName || data.company?.name || ''}</Text>
           </View>
         </View>
       ) : null}

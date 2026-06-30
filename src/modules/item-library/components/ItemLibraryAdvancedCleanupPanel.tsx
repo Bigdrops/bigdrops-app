@@ -15,13 +15,17 @@ import {
 } from '../domain/itemCleanupExchange'
 import { isValidCatalogItemId } from '../repositories/itemLibraryRepository'
 import type {
+  CatalogCleanupBatch,
   CatalogCleanupBatchExportPayload,
   CatalogCleanupBatchStatus,
+  CatalogCleanupExportItem,
   CatalogCleanupImportPreview,
+  CatalogCleanupPreviewMergeSuggestion,
   CleanupApplyProposal,
   CleanupApplyResult,
   CleanupPreviewGroup,
   DuplicateCandidateGroup,
+  FlaggedCleanupExportGroup,
   ItemAlias,
   ItemCatalogItem,
   FlaggedCleanupBatch,
@@ -144,8 +148,16 @@ function createMergeProposal(
   mergedItemIds: string[],
   canonicalName: string,
 ): CleanupApplyProposal {
-  const itemMap = new Map(safeArray(exportPayload.items).map((item) => [item.item_id, item]))
+  const items = safeArray(exportPayload.items)
+  const itemMap = new Map(items.map((item) => [item.item_id, item]))
   const winner = itemMap.get(winnerItemId)
+  const unknownIds = mergedItemIds.filter((id) => !itemMap.has(id))
+
+  if (unknownIds.length > 0) {
+    console.warn(
+      `[BigDrops] createMergeProposal: ${unknownIds.length} merged item(s) (${unknownIds.join(', ')}) not found in export payload for "${canonicalName}".`,
+    )
+  }
 
   return {
     group_id: winner?.duplicate_group_id || winnerItemId,
@@ -180,8 +192,8 @@ export function ItemLibraryAdvancedCleanupPanel({
   const flaggedExportPayload = useMemo(() => {
     if (!isDuplicates) return null
     return buildFlaggedCleanupExportPayload({ 
-      duplicateGroups: (duplicateGroups ?? []) as any, 
-      aliases: (aliases ?? []) as any 
+      duplicateGroups: (duplicateGroups ?? []), 
+      aliases: (aliases ?? []), 
     })
   }, [isDuplicates, duplicateGroups, aliases])
 
@@ -198,7 +210,7 @@ export function ItemLibraryAdvancedCleanupPanel({
     if (!lockedSession || !currentBatch) return null
     return buildCatalogCleanupBatchExportPayload({
       session: lockedSession,
-      batch: currentBatch as any,
+      batch: currentBatch as CatalogCleanupBatch,
       batchIndex: currentBatchIndex,
     })
   }, [isDuplicates, flaggedExportPayload, currentBatch, currentBatchIndex, lockedSession])
@@ -246,7 +258,7 @@ export function ItemLibraryAdvancedCleanupPanel({
     return buildCatalogCleanupPrompt(currentExportPayload as CatalogCleanupBatchExportPayload)
   }, [isDuplicates, currentExportPayload])
   const preview = validation?.preview as (CatalogCleanupImportPreview | CleanupImportPreview | null)
-  const applyableMerges = isDuplicates ? (preview as CleanupImportPreview)?.merge_groups || [] : (preview as CatalogCleanupImportPreview)?.merge_suggestions || []
+  const applyableMerges: (CleanupPreviewGroup | CatalogCleanupPreviewMergeSuggestion)[] = isDuplicates ? (preview as CleanupImportPreview)?.merge_groups || [] : (preview as CatalogCleanupImportPreview)?.merge_suggestions || []
   const renameSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.rename_suggestions || [] : []
   const aliasSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.alias_suggestions || [] : []
   const ignoredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.ignored_items || [] : []
@@ -255,21 +267,23 @@ export function ItemLibraryAdvancedCleanupPanel({
 
   // Merge Guard: count how many proposals contain only valid catalog UUIDs
   const syntheticMergeCount = useMemo(() => {
-    return safeArray(applyableMerges as any[]).filter((merge: any) => {
-      const winnerId = merge?.winner_item_id || merge?.winner?.item_id || ''
-      const mergedIds: string[] = safeArray(merge?.merged_item_ids || merge?.merged_items || []).map((item: any) =>
-        typeof item === 'string' ? item : item?.item_id || '',
-      )
+    return applyableMerges.filter((merge) => {
+      const winnerId = 'winner_item_id' in merge
+        ? merge.winner_item_id
+        : merge.winner?.item_id || ''
+      const mergedIds: string[] = 'merged_item_ids' in merge
+        ? merge.merged_item_ids
+        : safeArray(merge.merged_items).map((item) => item.item_id)
       const allIds = [winnerId, ...mergedIds].filter(Boolean)
-      return allIds.some((id: string) => !isValidCatalogItemId(id))
+      return allIds.some((id) => !isValidCatalogItemId(id))
     }).length
   }, [applyableMerges])
 
   const hasOnlyInvalidMerges = applyableMerges.length > 0 && syntheticMergeCount === applyableMerges.length
   const ignoredGroups = useMemo(() => {
-    return safeArray(rawIgnoredGroups).map((g: any) => ({
+    return safeArray(rawIgnoredGroups).map((g: FlaggedCleanupExportGroup) => ({
       group_id: g?.group_id || 'unknown',
-      export_label: g?.label || g?.export_label || 'Unnamed Group',
+      export_label: g?.label || 'Unnamed Group',
     }))
   }, [rawIgnoredGroups])
 
@@ -346,16 +360,25 @@ export function ItemLibraryAdvancedCleanupPanel({
         ? safeArray(applyableMerges as CleanupPreviewGroup[])
             .filter((merge) => merge && merge.group_id && (merge.winner_item_id || merge.winner?.item_id))
             .map((merge) => createCleanupApplyProposal(merge))
-        : safeArray(applyableMerges as any[])
+        : safeArray(applyableMerges as CatalogCleanupPreviewMergeSuggestion[])
             .filter((merge) => merge && merge.winner?.item_id && safeArray(merge.merged_items).length > 0)
             .map((merge) =>
               createMergeProposal(
                 currentExportPayload as CatalogCleanupBatchExportPayload,
                 merge.winner.item_id,
-                safeArray(merge.merged_items).map((item: any) => item.item_id),
+                safeArray(merge.merged_items).map((item: CatalogCleanupExportItem) => item.item_id),
                 merge.canonical_name,
               ),
             )
+
+      // Defensive: payload type must match workflow mode
+      const rawType: string = currentExportPayload.export_type
+      if (isDuplicates && rawType !== 'flagged_cleanup' && rawType !== 'flagged_cleanup_batch') {
+        throw new Error(`Payload type mismatch: workflow="${workflow}" but export_type="${rawType}". Expected "flagged_cleanup" or "flagged_cleanup_batch".`)
+      }
+      if (!isDuplicates && rawType !== 'catalog_cleanup_batch') {
+        throw new Error(`Payload type mismatch: workflow="${workflow}" but export_type="${rawType}". Expected "catalog_cleanup_batch".`)
+      }
 
       // Ironclad Merge Guard: strip proposals containing non-UUID synthetic IDs
       const validProposals = proposals.filter((proposal) => {
@@ -706,7 +729,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                   {ignoredGroups.length ? (
                     <div className="rounded-md border border-bd-border bg-bd-surface p-4">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Ignored groups</div>
-                      <p className="mt-2 text-[11px] text-bd-text-muted">{safeArray(ignoredGroups).map((g: any) => g.export_label).join(', ')}</p>
+                      <p className="mt-2 text-[11px] text-bd-text-muted">{safeArray(ignoredGroups).map((g) => g.export_label).join(', ')}</p>
                     </div>
                   ) : null}
 
@@ -929,11 +952,11 @@ export function ItemLibraryAdvancedCleanupPanel({
                     )}
 
                     <div className="mt-3 space-y-3">
-                      {asArray(applyableMerges as any[]).map((merge) => (
+                      {asArray(applyableMerges as CatalogCleanupPreviewMergeSuggestion[]).map((merge) => (
                         <article key={`${merge.winner?.item_id}-${merge.canonical_name}`} className="rounded-md bg-bd-surface-muted p-3">
                           <h3 className="text-[13px] font-bold text-bd-text">{merge.canonical_name}</h3>
                           <p className="mt-1 text-[11px] text-bd-text-muted">
-                            Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item: any) => item.name).join(', ')}
+                            Winner: {merge.winner?.name} • Merge: {asArray(merge.merged_items).map((item: CatalogCleanupExportItem) => item.name).join(', ')}
                           </p>
                         </article>
                       ))}

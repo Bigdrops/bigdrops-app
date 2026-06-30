@@ -30,6 +30,8 @@ import {
   buildAdvanceSummary,
   getAccentTint,
 } from '../engine'
+import { resolveDesignTokens } from '../designTokens'
+import type { DesignTokens } from '../designTokens'
 
 const keepWholePdfWord = (word: string) => [word]
 
@@ -46,25 +48,29 @@ function toTitleCase(value: string) {
 function BoltPartyCard({
   title,
   party,
+  tokens,
 }: {
   title: string
   party: NonNullable<CommercialDocumentData['company']>
+  tokens: DesignTokens
 }) {
   const lines = buildPartyLines(party)
+  const mutedColor = tokens.mutedColor || MUTED_TEXT
+  const accentColor = tokens.accentColor || ACCENT
 
   return (
-    <View style={styles.partyBox}>
-      <Text style={styles.partyTitle}>{title}</Text>
+    <View style={[styles.partyBox, tokens.borderColor && { borderColor: tokens.borderColor }]}>
+      <Text style={[styles.partyTitle, tokens.accentColor && { color: accentColor }]}>{title}</Text>
       {lines.map((line, idx) => {
         if (line.type === 'name') {
           return (
-            <Text key={line.key} style={styles.partyName}>
+            <Text key={line.key} style={[styles.partyName, tokens.textColor && { color: tokens.textColor }, tokens.headerFont && { fontFamily: tokens.headerFont }]}>
               {line.value}
             </Text>
           )
         }
         return (
-          <Text key={`${line.key}-${idx}`} style={styles.partyLine}>
+          <Text key={`${line.key}-${idx}`} style={[styles.partyLine, tokens.textColor && { color: tokens.textColor }, tokens.bodyFont && { fontFamily: tokens.bodyFont }]}>
             {line.value}
           </Text>
         )
@@ -136,6 +142,17 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
     data.title || metaRows.length > 0 || data.company?.companyLogoUrl,
   )
 
+  const tokens = resolveDesignTokens(data.design)
+  const c = {
+    text: tokens.textColor ? { color: tokens.textColor } : null,
+    accent: tokens.accentColor ? { color: tokens.accentColor } : null,
+    muted: tokens.mutedColor ? { color: tokens.mutedColor } : null,
+    border: tokens.borderColor ? { borderColor: tokens.borderColor } : null,
+    surface: tokens.surfaceColor ? { backgroundColor: tokens.surfaceColor } : null,
+    headerFont: tokens.headerFont ? { fontFamily: tokens.headerFont } : null,
+    bodyFont: tokens.bodyFont ? { fontFamily: tokens.bodyFont } : null,
+  }
+
   function resolveColumnStyle(
     column: CommercialDocumentData['table']['columns'][number],
   ) {
@@ -151,7 +168,7 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
   }
 
   return (
-    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={styles.page}>
+    <Page size={data.layout?.size || 'A4'} orientation={data.layout?.orientation || 'portrait'} style={[styles.page, c.surface && { backgroundColor: tokens.surfaceColor || PAPER }]}>
       {/* ── Seal Band ───────────────────────────────────── */}
       {showHeader ? (
         <>
@@ -161,7 +178,7 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                 <View style={styles.sealBadge}>
                   <Text style={styles.sealBadgeText}>Verified Document</Text>
                 </View>
-                <Text style={styles.sealDocumentType}>
+                <Text style={[styles.sealDocumentType, c.accent]}>
                   {data.customTitle || data.title}
                 </Text>
                 <Text style={styles.sealTitle}>{data.title}</Text>
@@ -169,7 +186,7 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
               <View style={styles.sealRight}>
                 {data.documentNumber ? (
                   <>
-                    <Text style={styles.sealNumber}>{data.documentNumberLabel}</Text>
+                    <Text style={[styles.sealNumber, c.accent]}>{data.documentNumberLabel}</Text>
                     <Text style={styles.sealNumberValue}>{data.documentNumber}</Text>
                   </>
                 ) : null}
@@ -183,9 +200,9 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
       {/* ── Company / Title Block ──────────────────────── */}
       {data.company?.name ? (
         <View style={styles.headerBlock}>
-          <Text style={styles.companyName}>{data.company.name}</Text>
+          <Text style={[styles.companyName, c.text, c.headerFont]}>{data.company.name}</Text>
           {data.company.tagline ? (
-            <Text style={styles.tagline}>{data.company.tagline}</Text>
+            <Text style={[styles.tagline, c.muted]}>{data.company.tagline}</Text>
           ) : null}
         </View>
       ) : null}
@@ -194,9 +211,9 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
       {metaRows.length > 0 ? (
         <View style={styles.metaGrid}>
           {metaRows.map((row, idx) => (
-            <View key={`meta-${idx}`} style={styles.metaChip}>
-              <Text style={styles.metaChipLabel}>{row.label}</Text>
-              <Text style={styles.metaChipValue}>{row.value}</Text>
+            <View key={`meta-${idx}`} style={[styles.metaChip, c.border && { borderColor: tokens.borderColor }]}>
+              <Text style={[styles.metaChipLabel, c.muted]}>{row.label}</Text>
+              <Text style={[styles.metaChipValue, c.text]}>{row.value}</Text>
             </View>
           ))}
         </View>
@@ -206,25 +223,25 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
       {(data.company || data.client) ? (
         <View style={styles.partyRow}>
           {data.company ? (
-            <BoltPartyCard title="From" party={data.company} />
+            <BoltPartyCard title="From" party={data.company} tokens={tokens} />
           ) : null}
           {data.client ? (
-            <View style={styles.partyBox}>
-              <Text style={styles.partyTitle}>To</Text>
+            <View style={[styles.partyBox, tokens.borderColor && { borderColor: tokens.borderColor }]}>
+              <Text style={[styles.partyTitle, tokens.accentColor && { color: tokens.accentColor }]}>To</Text>
               {data.client.name ? (
-                <Text style={styles.partyName}>{data.client.name}</Text>
+                <Text style={[styles.partyName, tokens.textColor && { color: tokens.textColor }, tokens.headerFont && { fontFamily: tokens.headerFont }]}>{data.client.name}</Text>
               ) : null}
               {data.client.address ? (
-                <Text style={styles.partyLine}>{data.client.address}</Text>
+                <Text style={[styles.partyLine, tokens.textColor && { color: tokens.textColor }, tokens.bodyFont && { fontFamily: tokens.bodyFont }]}>{data.client.address}</Text>
               ) : null}
               {data.client.cityState ? (
-                <Text style={styles.partyLine}>{data.client.cityState}</Text>
+                <Text style={[styles.partyLine, tokens.textColor && { color: tokens.textColor }, tokens.bodyFont && { fontFamily: tokens.bodyFont }]}>{data.client.cityState}</Text>
               ) : null}
               {data.client.phone ? (
-                <Text style={styles.partyLine}>{data.client.phone}</Text>
+                <Text style={[styles.partyLine, tokens.textColor && { color: tokens.textColor }, tokens.bodyFont && { fontFamily: tokens.bodyFont }]}>{data.client.phone}</Text>
               ) : null}
               {data.client.email ? (
-                <Text style={styles.partyLine}>{data.client.email}</Text>
+                <Text style={[styles.partyLine, tokens.textColor && { color: tokens.textColor }, tokens.bodyFont && { fontFamily: tokens.bodyFont }]}>{data.client.email}</Text>
               ) : null}
             </View>
           ) : null}
@@ -236,8 +253,8 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
         <View style={styles.customFieldsWrap}>
           {customFields.map((field, idx) => (
             <View key={`cf-${idx}`} style={styles.customFieldChip}>
-              <Text style={styles.customFieldLabel}>{field.label}</Text>
-              <Text style={styles.customFieldValue}>{field.value}</Text>
+              <Text style={[styles.customFieldLabel, c.muted]}>{field.label}</Text>
+              <Text style={[styles.customFieldValue, c.text]}>{field.value}</Text>
             </View>
           ))}
         </View>
@@ -258,6 +275,8 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                     styles.tableHeaderCell,
                     ...colStyle,
                     alignStyle,
+                    c.text,
+                    c.bodyFont,
                   ]}
                 >
                   {column.label}
@@ -276,7 +295,7 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                   style={styles.groupHeaderRow}
                   wrap={false}
                 >
-                  <Text style={styles.groupHeaderText}>
+                  <Text style={[styles.groupHeaderText, c.text, c.headerFont]}>
                     {groupLabel || 'Group'}
                   </Text>
                 </View>
@@ -290,12 +309,12 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
               return showSubtotal ? (
                 <View key={`group-f-${rowIdx}`} wrap={false}>
                   <View style={styles.groupSubtotalRow}>
-                    <Text style={styles.groupSubtotalLabel}>
+                    <Text style={[styles.groupSubtotalLabel, c.text]}>
                       Subtotal
                     </Text>
                     <PdfCurrencyText
                       value={subtotalValue}
-                      style={styles.groupSubtotalValue}
+                      style={[styles.groupSubtotalValue, c.text]}
                     />
                   </View>
                   <View style={styles.groupClosingRule} wrap={false} />
@@ -336,9 +355,9 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                     >
                       {isDescription ? (
                         <>
-                          <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
+                          <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
                           {getDescriptionSub(cell) ? (
-                            <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
+                            <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
                           ) : null}
                           {row.imageUrl ? (
                             <>
@@ -351,7 +370,7 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                         </>
                       ) : isTightSingleLineCell ? (
                         <Text
-                          style={[styles.tightCellText, styles.qtyUnitToken, alignStyle || { textAlign: 'center' }]}
+                          style={[styles.tightCellText, styles.qtyUnitToken, c.muted, alignStyle || { textAlign: 'center' }]}
                           wrap={false}
                           hyphenationCallback={keepWholePdfWord}
                         >
@@ -411,40 +430,40 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
           <View style={styles.totalsBox}>
             {totalsLines.map((line, idx) => (
               <View key={`total-${idx}`} style={styles.totalRow}>
-                <Text style={styles.totalLabel}>{line.label}</Text>
+                <Text style={[styles.totalLabel, c.muted]}>{line.label}</Text>
                 <PdfCurrencyText
                   value={line.value}
-                  style={styles.totalValue}
+                  style={[styles.totalValue, c.text]}
                 />
               </View>
             ))}
 
             {mainTotal ? (
-              <View style={styles.totalFinal}>
-                <Text style={styles.totalFinalLabel}>
+              <View style={[styles.totalFinal, c.border && { borderTopColor: tokens.borderColor || DEEP_PINE }]}>
+                <Text style={[styles.totalFinalLabel, c.text, c.headerFont]}>
                   {mainTotal.label}
                 </Text>
                 <PdfCurrencyText
                   value={mainTotal.value}
-                  style={styles.totalFinalValue}
+                  style={[styles.totalFinalValue, c.text, c.headerFont]}
                 />
               </View>
             ) : null}
 
             {amountInWords ? (
-              <Text style={styles.amountWords}>
+              <Text style={[styles.amountWords, c.muted]}>
                 {amountInWords}
               </Text>
             ) : null}
 
             {balanceDue ? (
               <View style={styles.balanceDue}>
-                <Text style={styles.balanceDueText}>
+                <Text style={[styles.balanceDueText, c.surface && { color: tokens.surfaceColor || WHITE }]}>
                   {balanceDue.label}
                 </Text>
                 <PdfCurrencyText
                   value={balanceDue.value}
-                  style={styles.balanceDueValue}
+                  style={[styles.balanceDueValue, c.surface && { color: tokens.surfaceColor || GOLD }]}
                 />
               </View>
             ) : null}
@@ -453,24 +472,24 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
               <View style={styles.advanceBox}>
                 {advanceSummary.advanceAmount ? (
                   <View style={styles.advanceRow}>
-                    <Text style={styles.advanceProminentLabel}>
+                    <Text style={[styles.advanceProminentLabel, c.accent]}>
                       {advanceSummary.primaryLabel}
                     </Text>
                     <PdfCurrencyText
                       value={advanceSummary.advanceAmount}
-                      style={styles.advanceProminentValue}
+                      style={[styles.advanceProminentValue, c.accent]}
                     />
                   </View>
                 ) : null}
 
                 {advanceSummary.balanceRemaining ? (
                   <View style={styles.advanceRow}>
-                    <Text style={styles.advanceLabel}>
+                    <Text style={[styles.advanceLabel, c.muted]}>
                       {advanceSummary.secondaryLabel}
                     </Text>
                     <PdfCurrencyText
                       value={advanceSummary.balanceRemaining}
-                      style={styles.advanceValue}
+                      style={[styles.advanceValue, c.muted]}
                     />
                   </View>
                 ) : null}
@@ -482,8 +501,8 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
 
       {/* ── Notes ──────────────────────────────────────── */}
       {data.notes?.content ? (
-        <View style={styles.optionalSection}>
-          {data.notes.title ? <Text style={styles.optionalTitle}>{data.notes.title}</Text> : null}
+        <View style={[styles.optionalSection, c.accent && { borderLeftColor: tokens.accentColor || ACCENT }]}>
+          {data.notes.title ? <Text style={[styles.optionalTitle, c.accent]}>{data.notes.title}</Text> : null}
           {renderPdfRichText(data.notes.content, {
             containerStyle: styles.optionalRichText,
             paragraphStyle: styles.optionalParagraph,
@@ -492,14 +511,14 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
             listMarkerStyle: styles.optionalListMarker,
             listItemTextStyle: styles.optionalListItemText,
             fallbackTextStyle: styles.optionalText,
-          }) || <Text style={styles.optionalText}>{data.notes.plainText || ''}</Text>}
+          }) || <Text style={[styles.optionalText, c.text]}>{data.notes.plainText || ''}</Text>}
         </View>
       ) : null}
 
       {/* ── Terms ──────────────────────────────────────── */}
       {data.terms?.content ? (
-        <View style={styles.optionalSection}>
-          {data.terms.title ? <Text style={styles.optionalTitle}>{data.terms.title}</Text> : null}
+        <View style={[styles.optionalSection, c.accent && { borderLeftColor: tokens.accentColor || ACCENT }]}>
+          {data.terms.title ? <Text style={[styles.optionalTitle, c.accent]}>{data.terms.title}</Text> : null}
           {renderPdfRichText(data.terms.content, {
             containerStyle: styles.optionalRichText,
             paragraphStyle: styles.optionalParagraph,
@@ -508,14 +527,14 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
             listMarkerStyle: styles.optionalListMarker,
             listItemTextStyle: styles.optionalListItemText,
             fallbackTextStyle: styles.optionalText,
-          }) || <Text style={styles.optionalText}>{data.terms.plainText || ''}</Text>}
+          }) || <Text style={[styles.optionalText, c.text]}>{data.terms.plainText || ''}</Text>}
         </View>
       ) : null}
 
       {/* ── Attachments ────────────────────────────────── */}
       {(data.attachments?.length ?? 0) > 0 ? (
-        <View style={styles.optionalSection}>
-          <Text style={styles.optionalTitle}>Attachments</Text>
+        <View style={[styles.optionalSection, c.accent && { borderLeftColor: tokens.accentColor || ACCENT }]}>
+          <Text style={[styles.optionalTitle, c.accent]}>Attachments</Text>
           <View style={styles.attachmentsWrap}>
             {BoltOptionalList(data.attachments)}
           </View>
@@ -524,12 +543,12 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
 
       {/* ── Additional Fields ──────────────────────────── */}
       {(data.additionalFields?.length ?? 0) > 0 ? (
-        <View style={styles.optionalSection}>
+        <View style={[styles.optionalSection, c.accent && { borderLeftColor: tokens.accentColor || ACCENT }]}>
           <View style={styles.additionalWrap}>
             {data.additionalFields.map((field, idx) => (
               <View key={`add-${idx}`} style={styles.additionalRow}>
-                <Text style={styles.additionalLabel}>{field.label}</Text>
-                <Text style={styles.additionalValue}>{field.value}</Text>
+                <Text style={[styles.additionalLabel, c.muted]}>{field.label}</Text>
+                <Text style={[styles.additionalValue, c.text]}>{field.value}</Text>
               </View>
             ))}
           </View>
@@ -551,9 +570,9 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                 style={styles.signatureImage}
               />
             ) : null}
-            <View style={styles.signatureLine} />
-            {data.signature.name ? <Text style={styles.signerName}>{data.signature.name}</Text> : null}
-            {data.signature.role ? <Text style={styles.signerRole}>{data.signature.role}</Text> : null}
+            <View style={[styles.signatureLine, c.border && { backgroundColor: tokens.borderColor || INK }]} />
+            {data.signature.name ? <Text style={[styles.signerName, c.text, c.headerFont]}>{data.signature.name}</Text> : null}
+            {data.signature.role ? <Text style={[styles.signerRole, c.muted]}>{data.signature.role}</Text> : null}
           </View>
         </View>
       ) : null}
@@ -562,18 +581,18 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
       {footerVisible ? (
         <View style={styles.footerZone} fixed>
           <View style={styles.footerRule} />
-          {data.footer.extraText ? <Text style={styles.footerExtraText}>{data.footer.extraText}</Text> : null}
+          {data.footer.extraText ? <Text style={[styles.footerExtraText, c.muted]}>{data.footer.extraText}</Text> : null}
           {data.showTagline && data.company?.tagline ? (
-            <Text style={styles.taglineFooter}>{data.company.tagline}</Text>
+            <Text style={[styles.taglineFooter, c.muted]}>{data.company.tagline}</Text>
           ) : null}
           <View style={styles.documentFooter}>
             <Text
-              style={styles.footerText}
+              style={[styles.footerText, c.muted]}
               render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
               fixed
             />
-            <Text style={styles.footerText}>{data.footer.documentNumber || data.documentNumber}</Text>
-            <Text style={styles.footerText}>{data.footer.companyName || data.company?.name || ''}</Text>
+            <Text style={[styles.footerText, c.muted]}>{data.footer.documentNumber || data.documentNumber}</Text>
+            <Text style={[styles.footerText, c.muted]}>{data.footer.companyName || data.company?.name || ''}</Text>
           </View>
         </View>
       ) : null}
