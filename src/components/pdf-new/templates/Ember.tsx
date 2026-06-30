@@ -24,7 +24,7 @@ function toTitleCase(value: string) {
 }
 
 function keepWholePdfWord(str: string) {
-  return str
+  return [str]
 }
 
 export default function Ember({ data }: { data: CommercialDocumentData }) {

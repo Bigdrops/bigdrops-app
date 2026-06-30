@@ -1,8 +1,5 @@
-import type { ItemSuggestion } from '../types/index.ts'
-
-function normalizeExactMatchText(value: unknown): string {
-  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ')
-}
+import { normalizeItemText } from './suggestionRanking'
+import type { ItemSuggestion } from '../types'
 
 export interface InvoiceSuggestionSelection {
   description: string
@@ -29,12 +26,12 @@ export function findExactItemSuggestionMatch(
   description: string | null | undefined,
   suggestions: ItemSuggestion[] | null | undefined,
 ): ItemSuggestion | null {
-  const normalizedDescription = normalizeExactMatchText(description)
+  const normalizedDescription = normalizeItemText(description)
   if (normalizedDescription.length < 2) return null
 
   const exactMatches = (Array.isArray(suggestions) ? suggestions : []).filter((suggestion) => {
-    const normalizedName = normalizeExactMatchText(suggestion?.name)
-    const normalizedMatchedText = normalizeExactMatchText(suggestion?.matched_text)
+    const normalizedName = normalizeItemText(suggestion?.name)
+    const normalizedMatchedText = normalizeItemText(suggestion?.matched_text)
     return normalizedDescription === normalizedName || normalizedDescription === normalizedMatchedText
   })
 

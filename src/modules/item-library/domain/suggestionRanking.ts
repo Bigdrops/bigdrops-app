@@ -1,7 +1,17 @@
 import type { ItemSuggestion } from '../types'
 
+export function normalizeItemText(input: string): string {
+  return String(input || '')
+    .replace(/mm²/g, 'sqmm')
+    .replace(/mm2/g, 'sqmm')
+    .replace(/&/g, 'and')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function normalizeSuggestionQuery(searchText: string): string {
-  return String(searchText || '').trim()
+  return normalizeItemText(searchText)
 }
 
 export function rankItemSuggestions(suggestions: ItemSuggestion[]): ItemSuggestion[] {

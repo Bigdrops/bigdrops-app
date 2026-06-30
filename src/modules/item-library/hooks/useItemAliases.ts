@@ -20,11 +20,9 @@ export function useItemAliases(itemIds: string[], options: { enabled?: boolean }
 
     const run = async () => {
       if (!enabled || !stableItemIds.length) {
-        if (!enabled || !stableItemIds.length) {
-           setData([])
-           setLoading(false)
-           setError(null)
-        }
+        setData([])
+        setLoading(false)
+        setError(null)
         return
       }
 
@@ -47,7 +45,7 @@ export function useItemAliases(itemIds: string[], options: { enabled?: boolean }
     return () => {
       cancelled = true
     }
-  }, [itemIdsKey, stableItemIds, enabled])
+  }, [itemIdsKey, enabled])
 
   return { data, loading, error }
 }

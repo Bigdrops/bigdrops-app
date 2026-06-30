@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { findExactItemSuggestionMatch } from '../domain/invoiceSuggestionSelection'
 import { getInvoiceSuggestionPriceContextText } from '../domain/invoiceSuggestionPriceContext'
 import { loadSuggestions, loadItemPriceContext } from '../services'
@@ -132,12 +132,15 @@ export function useItemSuggestionEngine(
     setPriceContextText(null)
   }, [])
 
-  return {
-    suggestions,
-    suggestionsLoading,
-    exactMatch,
-    priceContextText,
-    handleSuggestionSelect,
-    clearSelection,
-  }
+  return useMemo(
+    () => ({
+      suggestions,
+      suggestionsLoading,
+      exactMatch,
+      priceContextText,
+      handleSuggestionSelect,
+      clearSelection,
+    }),
+    [suggestions, suggestionsLoading, exactMatch, priceContextText, handleSuggestionSelect, clearSelection],
+  )
 }
