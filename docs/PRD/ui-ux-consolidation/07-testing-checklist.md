@@ -8,26 +8,26 @@
 
 | Module | Desktop | Tablet | Mobile | Keyboard | Screen Reader | Dark Mode | Light Mode | Status |
 |--------|---------|--------|--------|----------|--------------|-----------|------------|--------|
-| Dashboard | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Invoice (New) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Invoice (Edit) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Invoice (View) | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Quotation (New) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Quotation (Edit) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Quotation (View) | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Waybill (New) | ✅ | ⚠️ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Waybill (Edit) | ✅ | ⚠️ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Waybill (View) | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| CSR | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Partial |
-| RFQ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Settings | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Clients | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
-| Suppliers | ✅ | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ | Partial |
+| Dashboard | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Invoice (New) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Invoice (Edit) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Invoice (View) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Quotation (New) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Quotation (Edit) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Quotation (View) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Waybill (New) | Not Yet Verified | Requires Validation | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Waybill (Edit) | Not Yet Verified | Requires Validation | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Waybill (View) | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| CSR | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| RFQ | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Settings | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Clients | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
+| Suppliers | Not Yet Verified | Not Yet Verified | Requires Validation | Not Yet Verified | Not Yet Verified | Not Yet Verified | Not Yet Verified | Pending Audit |
 
 **Legend:**
-- ✅ = Pass
-- ⚠️ = Partial/Needs Work
-- ❌ = Fail
+- ✅ Verified
+- ⚠️ Requires Validation
+- ❓ Not Yet Verified
 
 ---
 
@@ -63,6 +63,10 @@
 - [ ] Form inputs have associated labels
 - [ ] Dialogs trap focus
 - [ ] Skip links present (if applicable)
+- [ ] Respects `prefers-contrast`
+- [ ] Respects `zoom` at 200%
+- [ ] Respects browser text scaling
+- [ ] Respects `prefers-reduced-transparency` (if supported)
 
 #### **Responsive Behavior**
 - [ ] Desktop (≥1024px): Full layout
@@ -79,16 +83,17 @@
 - [ ] Spring animations consistent (stiffness: 300, damping: 20)
 - [ ] No motion sickness triggers (excessive parallax, etc.)
 
+#### **Performance Targets**
+- Target LCP < 2.5s
+- Target CLS < 0.1
+- Target FID < 100ms
+
 #### **Cross-Cutting**
 - [ ] Dark mode works
 - [ ] Light mode works
 - [ ] Print styles (if applicable)
-- [ ] Performance: No layout thrashing
-- [ ] Performance: LCP < 2.5s
-- [ ] Performance: CLS < 0.1
 
 ---
-
 ## 📸 Screenshot Verification
 
 **Reference:** `assets/screenshots.md` (13 spec sheets)
@@ -122,7 +127,6 @@ After each consolidation phase, capture:
    - Overflow conditions (long text, many items)
 
 ---
-
 ## 🔄 Regression Testing
 
 ### Before/After Comparison
@@ -136,11 +140,8 @@ For every consolidated component:
    - [ ] Performance unchanged or improved
 
 ### Automated Checks
+Run the project's existing commands:
 ```bash
-# Run these before merging:
 bun run audit\:load
 bun run typecheck
 bun run build
-
-# Accessibility (if available):
-npm run test\:a11y
