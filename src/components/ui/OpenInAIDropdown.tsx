@@ -1,10 +1,8 @@
 import * as React from 'react'
-import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronUp } from 'lucide-react'
 import { HiSparkles } from 'react-icons/hi2'
-import { motion, AnimatePresence } from 'motion/react'
 import { OpenAI, DeepSeek, Qwen, Moonshot, ModelIcon } from '@lobehub/icons'
 import { cn } from '@/lib/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface Provider {
   id: string
@@ -98,45 +96,6 @@ export function OpenInAIDropdown({
   disabled = false,
 }: OpenInAIDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
-  const triggerRef = React.useRef<HTMLButtonElement>(null)
-  const popupRef = React.useRef<HTMLDivElement>(null)
-  const [popupStyle, setPopupStyle] = React.useState<React.CSSProperties>({})
-
-  React.useEffect(() => {
-    if (!isOpen) return
-    const handle = (e: MouseEvent) => {
-      if (
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node) &&
-        popupRef.current &&
-        !popupRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false)
-      }
-    }
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false)
-    }
-    document.addEventListener('click', handle)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('click', handle)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [isOpen])
-
-  const handleToggle = () => {
-    if (!isOpen && triggerRef.current) {
-      const r = triggerRef.current.getBoundingClientRect()
-      setPopupStyle({
-        position: 'fixed',
-        bottom: window.innerHeight - r.top + 8,
-        right: window.innerWidth - r.right,
-        zIndex: 9999,
-      })
-    }
-    setIsOpen(prev => !prev)
-  }
 
   const handleProviderClick = (providerId: string) => {
     const provider = AI_PROVIDERS.find(p => p.id === providerId)
@@ -153,52 +112,38 @@ export function OpenInAIDropdown({
 
   return (
     <div className={cn("inline-flex items-center", className)}>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={handleToggle}
-        disabled={disabled}
-        aria-label="Open in AI provider picker"
-        aria-expanded={isOpen}
-        className="flex h-8 items-center gap-1 rounded-lg px-2 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[#1e40af] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span>Open in AI</span>
-        <HiSparkles size={14} className="text-[#1e40af]" />
-        {isOpen ? (
-          <ChevronUp className="h-3 w-3 opacity-60" />
-        ) : (
-          <ChevronDown className="h-3 w-3 opacity-60" />
-        )}
-      </button>
-
-      {createPortal(
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              ref={popupRef}
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ type: "spring", duration: 0.25 }}
-              style={popupStyle}
-              className="flex flex-row gap-1 rounded-lg border bg-white p-1.5 shadow-lg"
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label="Open in AI provider picker"
+            aria-expanded={isOpen}
+            className="flex h-8 items-center gap-1 rounded-lg px-2 text-[9px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-[#1e40af] bg-[hsl(217_91%_60%/0.15)] hover:bg-[hsl(217_91%_60%/0.25)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>Open in AI</span>
+            <HiSparkles size={14} className="text-[#1e40af]" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          side="top"
+          align="center"
+          sideOffset={8}
+          className="w-auto flex flex-row gap-1 p-1.5"
+        >
+          {AI_PROVIDERS.map((provider) => (
+            <button
+              key={provider.id}
+              type="button"
+              onClick={() => handleProviderClick(provider.id)}
+              title={provider.name}
+              className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
             >
-              {AI_PROVIDERS.map((provider) => (
-                <button
-                  key={provider.id}
-                  type="button"
-                  onClick={() => handleProviderClick(provider.id)}
-                  title={provider.name}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg transition-all hover:bg-gray-100 active:scale-95"
-                >
-                  <ProviderIcon providerId={provider.id} />
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+              <ProviderIcon providerId={provider.id} />
+            </button>
+          ))}
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }
