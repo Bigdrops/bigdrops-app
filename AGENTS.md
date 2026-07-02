@@ -26,6 +26,8 @@
 - Waybill `type` field is restricted to `'external'` or `'internal'` — enforced by `check_waybill_type`.
 - All document numbering (invoice, quotation, waybill, RFQ, CSR, BOQ, project) MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Prefixes are resolved at runtime via `resolvePrefix()` — never hardcode a prefix string in generation logic.
 - All document lifecycle operations (edit, duplicate, revert) MUST follow `docs/STANDARD/document-transformation-standard.md`. Prescriptive — defines state-aware edit locking, duplication rules, and invoice-only revert behavior across all document types.
+- Document lifecycle ownership must remain explicit. Business rules belong in the domain layer. Pages orchestrate lifecycle execution. Components render UI. Do not move business logic into presentation components.
+- Standards under `docs/STANDARD/` are normative. Implementations must conform to them. If implementation conflicts with a standard, either update the implementation, or revise the standard with explicit approval. Never silently diverge.
 - Lint excludes: `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
 - New document modules that support JSON import MUST follow `docs/STANDARD/json-import-standard.md`. Prescriptive — all prompts, schemas, adapters, and UI integration must conform.
 - New document modules with configurable columns MUST follow `docs/STANDARD/document-column-standard.md`. Prescriptive — all column ordering, persistence, drag, and initialization must conform.
@@ -33,19 +35,44 @@
 
 ---
 
-## 3. Project Workflow Rules (Permanent)
+## 3. Standards Hierarchy
 
-- **Audit first.** Before making any code change to a symbol, function, or file, read all relevant source files. Do not infer implementation details.
-- **Load skills before coding.** Read `docs/PROJECTSKILLINDEX.md` before any task involving a new domain — see §8.
+When multiple standards apply, the following precedence order is enforced:
+
+1. AGENTS.md
+2. `docs/STANDARD/*`
+3. Module-specific documentation
+4. Task instructions
+
+Higher-level standards take precedence. In case of conflict, resolve upward.
+
+---
+
+## 4. Project Workflow Rules (Permanent)
+
+- **Audit first.** Before changing any implementation:
+  - identify ownership
+  - identify callers
+  - identify downstream effects
+  - identify applicable platform standards
+  Never modify behavior before understanding existing ownership.
+- **Load skills before coding.** Read `docs/PROJECTSKILLINDEX.md` before any task involving a new domain — see §9.
 - **State assumptions explicitly.** If uncertain, ask. If multiple interpretations exist, present them — do not pick silently.
-- **Minimum code that solves the problem.** No speculative features, no premature abstractions, no "flexibility" or "configurability" that was not requested.
+- **Implement the smallest correct solution.** Avoid speculative abstractions, framework building, or future-proofing unless explicitly requested.
 - **Surgical changes.** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or improve things unrelated to the task. Every changed line must trace directly to the user's request.
+- **Preserve Existing Business Behaviour.** Unless the task explicitly changes business rules:
+  - preserve user-visible behaviour
+  - preserve audit trail behaviour
+  - preserve document lineage
+  - preserve document numbering
+  - preserve transformation semantics
+  Structural refactoring must not change business behaviour.
 - **Verify with tests.** Define success criteria before implementing. Loop until verified.
 - **Karpathy discipline applies throughout:** think before coding, simplicity first, goal-driven execution with verifiable success criteria.
 
 ---
 
-## 4. Documentation Rules (Permanent)
+## 5. Documentation Rules (Permanent)
 
 - **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
@@ -54,7 +81,7 @@
 
 ---
 
-## 5. File Structure Map
+## 6. File Structure Map
 
 ```
 
@@ -106,7 +133,7 @@ src/
 │   ├── compliance/              Compliance domain
 │   ├── document/                Document conversion, media, relationships
 │   └── ...                      project, notifications, table-document, import
-├── hooks/                       Custom React hooks (20 hooks)
+├── hooks/                       Custom React hooks
 ├── lib/                         Core libraries
 │   ├── Calculations.ts          SOURCE OF TRUTH for financial calculations
 │   ├── withUniqueRetry.ts       Collision retry utility for document number inserts
@@ -116,7 +143,7 @@ src/
 │   ├── native/                  Native bridge utilities
 │   └── ...                      PDF fonts, themes, signatures, icons, audit, utils
 ├── modules/                     Module-specific logic (invoices, quotations, compliance, item-library)
-├── pages/                       Route-level page components (48 files)
+├── pages/                       Route-level page components
 ├── services/                    External service integrations
 ├── styles/                      Global CSS
 ├── supabase/                    Supabase client
@@ -128,7 +155,7 @@ src/
 
 ---
 
-## 6. Naming Conventions
+## 7. Naming Conventions
 
 | Artifact | Convention | Example |
 |---|---|---|
@@ -139,7 +166,7 @@ src/
 
 ---
 
-## 7. Workflow Commands
+## 8. Workflow Commands
 
 - **Bun only** — never use npm, yarn, or pnpm.
 - **Run `bun run audit:load`** before typecheck or build.
@@ -148,7 +175,7 @@ src/
 
 ---
 
-## 8. Skills Registry
+## 9. Skills Registry
 
 Full skill index (locations, absolute paths, niches, ~25 skills + 232 subagents): **`docs/PROJECTSKILLINDEX.md`**. Read it before any task involving a new domain — do not re-derive the list from memory or from this file.
 
@@ -159,7 +186,7 @@ Full skill index (locations, absolute paths, niches, ~25 skills + 232 subagents)
 
 ---
 
-## 9. Module Status
+## 10. Module Status
 
 | Built | In Progress | Pending |
 |---|---|---|
@@ -175,7 +202,7 @@ Full skill index (locations, absolute paths, niches, ~25 skills + 232 subagents)
 
 ---
 
-## 10. No-Touch Zones
+## 11. No-Touch Zones
 
 These files, functions, and constraints must never be modified without explicit written instruction:
 
@@ -196,7 +223,7 @@ These files, functions, and constraints must never be modified without explicit 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **bigdrops-app** (18701 symbols, 41567 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **bigdrops-app**. Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
@@ -230,5 +257,3 @@ This project is indexed by GitNexus as **bigdrops-app** (18701 symbols, 41567 re
 Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.claude/skills/gitnexus/` (exploring, impact-analysis, debugging, refactoring, guide, cli). Consult the index rather than duplicating paths here.
 
 <!-- gitnexus:end -->
-```
-
