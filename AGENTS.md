@@ -75,14 +75,15 @@ Higher-level standards take precedence. In case of conflict, resolve upward.
 ## 5. Documentation Rules (Permanent)
 
 - **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
-- **Report Quality Standards** — Every implementation report MUST satisfy the following. Audits and documentation-only tasks may omit sections that are not applicable, but must state why.
-  1. **Agent Identity** — The first line after the title must be: `This report was written by [Agent Name].` (e.g. "This report was written by Mimo."). Never omit this.
-  2. **Concrete Behavioral Evidence** — Claims of "unchanged" or "preserved" are not evidence. Every behavioral assertion must include a specific, verifiable statement. Example: "Saved invoice still prevents client modification" — not "Edit Law: unchanged."
-  3. **Ownership Before → After** — A table mapping lifecycle stages (`init`, `load`, `edit`, `compute`, `validate`, `persist`, `export`) to owning modules before and after the change.
-  4. **Transformation Standard Compliance** — An explicit section listing each law (Edit, Duplicate, Revert) from `docs/STANDARD/document-transformation-standard.md` with concrete verification that it remains intact. If the task did not touch document lifecycle code, state that explicitly.
-  5. **Risk Section** — Known risks, line-count concerns, behavioral exposure, or anything a future developer should watch for.
-  6. **Deferred Work** — What was intentionally left untouched for future phases. This prevents silent assumptions that something "was handled."
-  7. **Build Verification** — `bun run build` result: `passed`, `failed` (with details), or `deferred` (with reason). Never leave build status unstated.
+- **Agent Identity** — The first line after the title must be: `This report was written by [Agent Name].` (e.g. "This report was written by Mimo."). Never omit this.
+- **Report Quality Standard** — All reports must satisfy the following principles. The exact section structure should be chosen to suit the report type (audit, implementation, investigation, migration, etc.), not forced into a single template.
+  1. **Objective & Scope** — Clearly state what the report covers and, just as importantly, what is intentionally excluded. This prevents readers from assuming something was overlooked.
+  2. **Evidence-Based** — Every finding must be traceable to inspected code, executed tests, or other verifiable sources. Prefer file paths, function names, line references, and execution traces over adjectives. Never use vague qualifiers ("seems", "probably", "appears to").
+  3. **Fact vs. Conclusion** — Distinguish raw observations from interpretations. A section of raw findings (what was seen) should be separate from conclusions (what it means).
+  4. **Risks & Limitations** — Record any known risks, unverified assumptions, or limitations of the work. A reader should know what confidence to place in the report.
+  5. **Verification** — State what verification was performed. For implementation reports, include build results (`bun run build` passed/failed/deferred). For audits, note that no code was modified.
+  6. **Deferred Work** — List what was intentionally left for future phases. This prevents silent assumptions that something "was handled."
+  7. **Standalone Value** — Another engineer should be able to understand the work without reading the original conversation. Include enough context that the report remains useful months later.
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
 - **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
 - **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
