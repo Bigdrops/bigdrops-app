@@ -46,7 +46,7 @@
 
 ## 4. Documentation Rules (Permanent)
 
-- **Every completed task requires a report**, saved under `docs/Task/reports/` in the subfolder that matches its domain (invoice-and-quote, general, waybill, boq-and-rfq, csr, etc.). Never in the repository root.
+- **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
 - **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
 - **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
