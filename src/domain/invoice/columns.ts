@@ -41,11 +41,6 @@ export function getResetColumnConfigs(): ColumnConfig[] {
     .map((column) => normalizeColumnConfig({ ...column! }))
 }
 
-export const COLUMN_TYPES: ColumnTypeOption[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'number', label: 'Number' },
-]
-
 export function resolveInstallRate(item: InvoiceItem, installCol?: ColumnConfig): number {
   if (item.install_rate_override && item.install_rate !== null && item.install_rate !== undefined) {
     return Number(item.install_rate)

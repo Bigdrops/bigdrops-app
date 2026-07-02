@@ -3,7 +3,6 @@ import type { ColumnConfig } from '../domain/invoice/types'
 
 import {
   BUILTIN_COLUMNS,
-  COLUMN_TYPES,
   makeEmptyItem,
   makeEmptyGroup,
   makeFieldEntry,
@@ -34,7 +33,6 @@ import {
 
 export {
   BUILTIN_COLUMNS,
-  COLUMN_TYPES,
   makeEmptyItem,
   makeEmptyGroup,
   makeFieldEntry,

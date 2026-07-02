@@ -36,6 +36,7 @@ import {
   buildCalculationInputs,
   ensureUiKey,
 } from '../components/useInvoiceColumns'
+import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import { computeDocument } from '../lib/Calculations'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
@@ -197,6 +198,12 @@ export default function NewInvoice() {
     if (initialCustomFields?.discountTiming) setDiscountTiming(initialCustomFields.discountTiming as DiscountTiming)
     if (initialCustomFields?.whtType) setWhtType(initialCustomFields.whtType as WhtType)
   }, [initialCustomFields])
+
+  useEffect(() => {
+    if (initialCustomFields?.columnConfig) {
+      setColumns(resolveFinancialColumns(initialCustomFields.columnConfig as any[]))
+    }
+  }, [initialCustomFields, setColumns])
 
   useEffect(() => {
     if (!prefillItems || prefillItems.length === 0) return
