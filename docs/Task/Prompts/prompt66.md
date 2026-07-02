@@ -1,190 +1,288 @@
-You are working on the BIGDROPS business platform.
+)
 
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+BIGDROPS — Invoice + Quotation Parity Audit (READ-ONLY)
 
-==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
-==================================================
+You are working on the BIGDROPS business platform. Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel. Runtime: Bun. Never use npm or yarn.
 
-1. Read `docs/PROJECTSKILLINDEX.md` first.
-2. Load the following skills:
-   - Karpathy
-   - frontend-design
-   - typescript-advanced-types
-3. For each skill:
-   - Attempt to load via the skill system.
-   - If loading fails, fallback to direct file read from `.claude/skills/` or `.agents/skills/`.
-4. If any critical skill cannot be loaded, STOP immediately and report the failure.
-5. Read `AGENTS.md` completely before making any code changes.
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
+---
 
-Save a complete implementation report to:
-`docs/Task/reports/commercial-rendering-engine-phase-4.md`
-
-The report MUST include:
-- Executive Summary
-- Gate 1: Behaviour Adoption (changes, verification)
-- Gate 2: Presentation Cleanup (changes, verification)
-- Gate 3: Group Rendering Refresh (changes, verification)
-- Verification Results (audit:load, typecheck, build, visual parity)
-
-==================================================
 CONTEXT
-==================================================
 
-Phase 3 extracted the engine as a pure behaviour layer. Phase 3.1 refined Industry's group rendering to a spreadsheet‑style design language using its own presentation layer.
+An audit already exists for Invoice @docs/Task/Reports/invoice-form-architecture-audit.md:
 
-Ledger currently has inline data preparation and rendering logic. It does not use the engine.
+NewInvoice.tsx
 
-The goal is to migrate Ledger to use the engine's behaviour functions while preserving its visual identity.
+EditInvoice.tsx
 
-==================================================
+SharedDocumentForm.tsx
+
+Invoice domain + financial + column systems
+
+
+That audit established Invoice architecture and orchestration patterns.
+
+Invoice and Quotation are known to share parts of the system:
+
+View page structure (shared across multiple document types)
+
+Form system (Invoice, Quotation, Waybill)
+
+PDF/template system (Invoice-heavy, Quotation also uses it)
+
+
+This audit does NOT redesign anything.
+
+It only extends existing Invoice findings to Quotation.
+
+
+---
+
 OBJECTIVE
-==================================================
 
-**Primary Goal:** Migrate Ledger to the Commercial Rendering Engine's behaviour layer without changing Ledger's visual appearance.
+Perform a strict architectural parity audit between Invoice and Quotation.
 
-**Guiding Principle:** Share behaviour. Preserve presentation. Align design language—not components.
+Determine:
 
-==================================================
-STRICT SCOPE
-==================================================
+> Are Invoice and Quotation actually structurally identical at the orchestration level?
 
-**Allowed files:**
-- `src/components/pdf-new/presentation/ledger/LedgerTemplate.tsx`
-- `src/components/pdf-new/presentation/ledger/ledgerStyles.ts`
-- (and any new presentation files within `presentation/ledger/` if needed)
 
-**NOT allowed:**
-- Modify `engine/`
-- Modify `core/`
-- Modify Industry presentation
-- Modify Obsidian presentation
-- Modify any shared components
-- Import Industry JSX or styles into Ledger
 
-==================================================
-PHASE 4 — THREE VERIFICATION GATES
-==================================================
+No redesign. No abstraction proposals. No system design.
 
-### Gate 1: Behaviour Adoption
 
-**Goal:** Replace Ledger's inline data preparation with engine behaviour functions. Zero visual changes expected.
+---
 
-**Actions:**
-1. Import engine behaviour functions:
-   - `buildPartyLines` from `engine/party`
-   - `buildAttachmentItems` from `engine/attachments`
-   - `resolveColumnLayout` from `engine/columnLayout`
-   - `resolveTextAlignment` from `core/alignment` (or `engine/alignment`)
-   - `isGroupHeader`, `isGroupFooter`, `getGroupLabel`, `getGroupSubtotal`, `shouldShowGroupSubtotal` from `engine/group`
-   - `buildTotalsLines`, `getMainTotal`, `getBalanceDue`, `formatAmountInWords` from `engine/totals`
-   - `buildAdvanceSummary` from `engine/advance`
-   - (also `buildGroupRows` if available, or equivalent)
+SCOPE (READ ONLY)
 
-2. Replace inline data extraction/formatting:
-   - Party rendering: use `buildPartyLines(company)` and `buildPartyLines(client)` to get display lines.
-   - Group metadata: use `getGroupLabel(row)` instead of `row.groupName || row.groupLabel`.
-   - Subtotal logic: use `getGroupSubtotal(row)` and `shouldShowGroupSubtotal(row)`.
-   - Column layout: use `resolveColumnLayout(col)` (no overrides needed—Ledger has its own column widths defined inline).
-   - Totals: use `buildTotalsLines(totals)` to generate label/value pairs.
-   - Advance: use `buildAdvanceSummary(advanceData)`.
-   - Attachments: use `buildAttachmentItems(data.attachments)`.
+Inspect Quotation system:
 
-3. Keep all JSX and styles exactly the same. The data feeding the JSX should be produced by engine functions, not inline logic.
+NewQuotation.tsx
 
-**Verification:**
-- Generate a Ledger Invoice PDF before and after.
-- Compare visually: must be pixel‑identical.
-- Run `typecheck`, `build`, `audit:load`.
+EditQuotation.tsx
 
-**If any visual difference exists, stop and investigate before proceeding.**
+Quotation view page
 
-### Gate 2: Presentation Cleanup
+Quotation domain layer usage
 
-**Goal:** Remove any duplicated behaviour logic that was replaced in Gate 1. Keep rendering pixel‑identical.
+Quotation save/load flow
 
-**Actions:**
-1. Delete inline helper functions that are now provided by the engine (e.g., custom `safeText` wrappers, custom alignment helpers, custom group label extraction).
-2. Remove any unused imports.
-3. Ensure all JSX still compiles and renders identically.
+Quotation validation logic
 
-**Verification:**
-- Re‑run visual comparison.
-- `typecheck`, `build`, `audit:load` must pass.
+Quotation column system usage
 
-### Gate 3: Group Rendering Refresh
+Quotation PDF/template pipeline
 
-**Goal:** Apply the spreadsheet-style design principles (white background, thin opening rule, heavy closing rule, "Subtotal" label) to Ledger's group rendering. This is the only intended visual change.
+SharedDocumentForm usage in Quotation
 
-**Actions:**
-1. Update group header rendering in `LedgerTemplate.tsx`:
-   - Remove any tinted background (use `#ffffff`).
-   - Apply thin opening rule (1px) above and below the group title.
-   - Use title‑case (or mixed‑case) for group labels, not uppercase.
-   - Use bold font, 10–10.5pt.
-   - Keep padding minimal (6–8px).
 
-2. Update group footer rendering:
-   - If subtotal exists: render a "Subtotal" label + value row, right‑aligned, bold, followed by a heavy closing rule (2px).
-   - If no subtotal: render only the heavy closing rule (2px) — no empty row.
-   - No background tint. White background only.
+Compare against Invoice:
 
-3. Ensure item rows remain unchanged (no indentation, no decoration).
+orchestration flow
 
-4. Ensure existing Ledger styles (colors, fonts, spacing, borders) for non‑group elements are unaffected.
+state ownership
 
-**Verification:**
-- Generate a Ledger Invoice PDF after the refresh.
-- Compare against the previous version:
-  - Only group rendering should have changed (removal of tint, new rules, "Subtotal" label).
-  - Everything else (company header, table items, totals panel, bank details, footer) must remain identical.
-- `typecheck`, `build`, `audit:load` must pass.
+save/load pipeline
 
-==================================================
-STRICT RULES
-==================================================
+validation logic
 
-- **DO NOT** import Industry components or styles into Ledger.
-- **DO NOT** modify the engine.
-- **DO NOT** touch Obsidian.
-- **DO NOT** change Ledger's overall visual identity (colors, font families, layout philosophy).
-- The spreadsheet principles are implemented in Ledger's own stylesheet and JSX.
+column system behavior
 
-==================================================
-VERIFICATION (FULL)
-==================================================
+form composition usage
 
-Run in this order after each gate:
-1. `bun run audit:load`
-2. `bun run typecheck`
-3. `bun run build`
+lifecycle behavior as implemented in code
 
-Visual verification:
-- Generate a Ledger Invoice PDF before the refactor.
-- Generate a Ledger Invoice PDF after each gate.
-- Compare visually for regressions.
 
-==================================================
+
+---
+
+TASK 1 — QUOTATION INVENTORY
+
+Document Quotation as implemented:
+
+entry points
+
+state structure
+
+orchestration flow
+
+domain usage
+
+persistence logic
+
+validation
+
+column handling
+
+PDF/template usage
+
+navigation behavior
+
+
+
+---
+
+TASK 2 — STRUCTURAL BREAKDOWN
+
+Break down:
+
+NewQuotation.tsx
+
+EditQuotation.tsx
+
+
+Classify each section as:
+
+Same as Invoice
+
+Similar to Invoice (describe difference)
+
+Quotation-specific logic
+
+
+Do not abstract. Do not generalize.
+
+
+---
+
+TASK 3 — INVOICE VS QUOTATION COMPARISON
+
+Compare directly:
+
+form orchestration
+
+state ownership
+
+save logic
+
+validation logic
+
+column system usage
+
+domain function usage
+
+
+For each, state:
+
+Identical
+
+Similar (describe exact difference)
+
+Different (describe exact difference)
+
+
+
+---
+
+TASK 4 — VIEW + PDF PIPELINE
+
+Inspect:
+
+view page structure
+
+PDF generation flow
+
+template usage
+
+
+Compare Invoice vs Quotation usage only.
+
+No deep rendering analysis.
+
+
+---
+
+TASK 5 — END-TO-END FLOW COMPARISON
+
+Describe actual implemented flow:
+
+load/init
+
+edit
+
+validate
+
+compute
+
+save
+
+navigate
+
+
+Compare differences between Invoice and Quotation.
+
+
+---
+
+TASK 6 — SHARED SYSTEM VALIDATION
+
+Answer strictly:
+
+1. Are Invoice and Quotation orchestration systems structurally the same?
+
+
+2. If not, what exactly differs?
+
+
+
+No suggestions. No refactor planning.
+
+
+---
+
+OUTPUT FORMAT
+
+1. Executive Summary
+
+
+2. Quotation Architecture Inventory
+
+
+3. Breakdown (New vs Edit)
+
+
+4. Invoice vs Quotation Comparison
+
+
+5. View + PDF Comparison
+
+
+6. Divergences (explicit list)
+
+
+7. Parity Conclusion (Yes / No / Partial)
+
+
+8. Evidence Summary
+
+
+9. Files Inspected
+
+
+
+
+---
+
 STOP CONDITION
-==================================================
 
-Stop immediately after Gate 3 is complete and all verification passes.
+Stop immediately after comparison.
 
-Do NOT begin Obsidian migration (Phase 5) or any other phase.
+Do not propose refactors. Do not design systems. Do not suggest abstraction layers.
 
-==================================================
+
+---
+
 SUCCESS CRITERIA
-==================================================
 
-- Ledger uses engine behaviour functions for data preparation (Gate 1).
-- Ledger no longer has inline data‑extraction logic (Gate 2).
-- Ledger group rendering uses spreadsheet-style section markers (white background, thin opening rule, heavy closing rule, "Subtotal" label) implemented in its own presentation layer (Gate 3).
-- Ledger's visual identity (colours, fonts, spacing, layout philosophy) remains unchanged.
-- No Industry components or styles are imported into Ledger.
-- `bun run audit:load`, `typecheck`, `build` pass after each gate.
-- The report is complete and ready for review.
+Done when:
+
+Quotation is fully mapped
+
+Invoice vs Quotation parity is clearly established
+
+All divergences are explicitly evidence-based
+
+No architectural invention was introduced
+
+
+
