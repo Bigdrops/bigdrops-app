@@ -1,20 +1,11 @@
-```markdown
 # React-PDF Template Binding Guide
-
-Below is a template binding guide for safely consuming the `WaybillPrintModel` without reintroducing business logic, column leaks, or layout-side computation. This is written to be strictly “render-only” compliant with the engine contract.
-
----
-
+Below is a template binding guide for safely consuming the WaybillPrintModel without reintroducing business logic, column leaks, or layout-side computation. This is written to be strictly “render-only” compliant with the engine contract.
 ## 1. Core Rule (Non-Negotiable)
 Templates **MUST NOT** interpret, transform, filter, or enrich data.
-
-* **Allowed:** Render strings, render arrays of pre-shaped rows/columns, apply static layout (styles, flex, borders), use React-PDF primitives (`Text`, `View`, `Image`).
-* **Forbidden:** Compute totals, merge quantity + unit, decide visible columns, infer missing fields, normalize data, handle pagination logic beyond React-PDF built-ins.
-
+ * **Allowed:** Render strings, render arrays of pre-shaped rows/columns, apply static layout (styles, flex, borders), use React-PDF primitives (Text, View, Image).
+ * **Forbidden:** Compute totals, merge quantity + unit, decide visible columns, infer missing fields, normalize data, handle pagination logic beyond React-PDF built-ins.
 > **👉 If logic is needed → it belongs in the engine.**
-
----
-
+> 
 ## 2. Input Contract
 ```typescript
 type WaybillPrintModel = {
@@ -77,7 +68,7 @@ If null → render empty box. Never fallback or scale dynamically.
 ```
 ## 7. Pagination Rules (React-PDF ONLY)
  * **Page numbers:** MUST use React-PDF native renderer:
-   <Text render={({ pageNumber, totalPages }) => \${pageNumber} / ${totalPages}`} />`
+   <Text render={({ pageNumber, totalPages }) => \${pageNumber} / ${totalPages}} />``
  * **Header repetition:** If repeatTableHeader = true, use <View wrap={false}> <TableHeader /> </View>.
  * **Forbidden:** DO NOT compute page breaks, measure content height, or split arrays manually.
 ## 8. Footer Contract
@@ -106,6 +97,3 @@ Think of the template as **“A printer that only knows how to draw what it is g
  1. **Engine** decides meaning.
  2. **Template** decides placement.
  3. **React-PDF** decides pagination.
-```
-
-```
