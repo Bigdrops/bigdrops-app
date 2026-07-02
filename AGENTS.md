@@ -16,52 +16,44 @@
 ## 2. Hard Architecture Rules (Non-Negotiable)
 
 - `src/lib/Calculations.ts` is the single source of truth for all financial calculations. Never modify without explicit instruction.
-- Quotations must reuse the invoice domain layer — never duplicate logic.
+- `calcTotals()` and `resolveRowVat()` inside it are core calculation pipelines — changing them affects every financial document.
 - PDFs are dumb renderers — they receive shaped data via preview functions but never compute prices, taxes, or totals.
+- Quotations must reuse the invoice domain layer — never duplicate financial logic between modules.
 - No Tailwind v4 syntax — project is on Tailwind CSS v3.4.
 - No framer-motion — the dependency exists but is not used in production components.
-- Waybill numbers follow the prefix engine: `[PREFIX]-[M?][E|I]-[000000]` (e.g., `AWB-E-000001`, `AWB-ME-000001`).
-- `purpose` field is NULL for internal waybills — enforced by a Postgres CHECK constraint.
-- `items` JSONB arrays must pass structural validation — non-empty, each item must have `description` + `qty`, and `qty > 0`.
-- Invoice numbering format: extract from migration `20260520090003_invoices.sql`.
-- Waybill type field: `'external'` or `'internal'` — validated by DB CHECK constraint.
-- Lint excludes: `android/` and `dist/` must be in `.eslintignore` (or ESLint config ignores).
-- New document modules that support JSON import MUST follow the standard defined in `docs/STANDARD/json-import-standard.md`. This standard is prescriptive — all prompts, schemas, adapters, and UI integration must conform.
-- New document modules with configurable columns MUST follow the standard defined in `docs/STANDARD/document-column-standard.md`. This standard is prescriptive — all column ordering, persistence, drag, and initialization must conform.
+- External waybills must have a purpose; internal waybills must have purpose `NULL` — enforced by the `check_waybill_purpose_conditional` Postgres CHECK constraint.
+- `items` JSONB arrays must pass structural validation — non-empty, each item must have `description` + `qty`, and `qty > 0` — enforced by `check_items_json_structure`.
+- Waybill `type` field is restricted to `'external'` or `'internal'` — enforced by `check_waybill_type`.
+- Invoice numbering format: extract from migration `20260520090003_invoices.sql` — not documented elsewhere, do not guess.
+- Lint excludes: `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
+- New document modules that support JSON import MUST follow `docs/STANDARD/json-import-standard.md`. Prescriptive — all prompts, schemas, adapters, and UI integration must conform.
+- New document modules with configurable columns MUST follow `docs/STANDARD/document-column-standard.md`. Prescriptive — all column ordering, persistence, drag, and initialization must conform.
+- Extend existing standards in `docs/STANDARD/` before creating new ones — never duplicate a concept a standard already covers.
 
 ---
 
 ## 3. Project Workflow Rules (Permanent)
 
 - **Audit first.** Before making any code change to a symbol, function, or file, read all relevant source files. Do not infer implementation details.
-- **Use `find-skills` before any task involving a new domain.** Load relevant SKILL.md files before writing code.
+- **Load skills before coding.** Read `docs/PROJECTSKILLINDEX.md` before any task involving a new domain — see §8.
 - **State assumptions explicitly.** If uncertain, ask. If multiple interpretations exist, present them — do not pick silently.
 - **Minimum code that solves the problem.** No speculative features, no premature abstractions, no "flexibility" or "configurability" that was not requested.
 - **Surgical changes.** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or improve things unrelated to the task. Every changed line must trace directly to the user's request.
 - **Verify with tests.** Define success criteria before implementing. Loop until verified.
+- **Karpathy discipline applies throughout:** think before coding, simplicity first, goal-driven execution with verifiable success criteria.
 
 ---
 
 ## 4. Documentation Rules (Permanent)
 
-- **No reports in repository root.** All reports must be placed under `docs/Task/reports/`.
+- **Every completed task requires a report**, saved under `docs/Task/reports/` in the subfolder that matches its domain (invoice-and-quote, general, waybill, boq-and-rfq, csr, etc.). Never in the repository root.
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
 - **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
-- **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets.
+- **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
 
 ---
 
-## 5. Architecture Discipline (Permanent)
-
-- **PDFs are dumb renderers.** They receive shaped data via preview functions but never compute prices, taxes, or totals.
-- **Quotations reuse the invoice domain layer.** Never duplicate financial logic between modules.
-- **Column architecture is documented.** The canonical standard lives at `docs/STANDARD/document-column-standard.md`. All configurable-column modules must conform.
-- **Extend before abstract.** Always extend existing systems before creating new abstractions or separate implementations.
-- **Follow Karpathy coding discipline:** simplicity first, surgical changes, goal-driven execution, think before coding.
-
----
-
-## 6. File Structure Map
+## 5. File Structure Map
 
 ```
 src/
@@ -76,7 +68,7 @@ src/
 │   ├── client/                 Client form/selector components
 │   ├── compliance/             Compliance module components
 │   ├── csr/                    CSR-specific components
-│   ├── dashboard/              Dashboard widgets
+│   ├── dashboard/               Dashboard widgets
 │   ├── document/               Document-level reusable components
 │   ├── document-view/          Document view components
 │   ├── export/                 Export functionality
@@ -103,36 +95,36 @@ src/
 ├── context/                    React contexts (DocumentQueryContext)
 ├── domain/                     Domain logic per module
 │   ├── invoice/                Invoice domain (types, columns, calculations, normalize, factory, preview)
-│   ├── quotation/              Quotation domain
-│   ├── waybill/                Waybill domain
-│   ├── csr/                    CSR domain
-│   ├── boq/                    BOQ domain
-│   ├── rfq/                    RFQ domain
-│   ├── audit/                  Audit domain
-│   ├── compliance/             Compliance domain
-│   ├── document/               Document conversion, media, relationships
-│   └── ...                     project, notifications, table-document, import
-├── hooks/                      Custom React hooks (20 hooks)
-├── lib/                        Core libraries
-│   ├── Calculations.ts         SOURCE OF TRUTH for financial calculations
-│   ├── formatters/             Number/date formatting
-│   ├── json/                   JSON utilities
-│   ├── cache/                  Caching layer
-│   ├── native/                 Native bridge utilities
-│   └── ...                     PDF fonts, themes, signatures, icons, audit, utils
-├── modules/                    Module-specific logic (invoices, quotations, compliance, item-library)
-├── pages/                      Route-level page components (48 files)
-├── services/                   External service integrations
-├── styles/                     Global CSS
-├── supabase/                   Supabase client
-├── tests/                      Critical path tests
-├── types/                      Shared type definitions
-└── utils/                      Utility functions (export compilers, number formatting)
+│   ├── quotation/               Quotation domain
+│   ├── waybill/                 Waybill domain
+│   ├── csr/                     CSR domain
+│   ├── boq/                     BOQ domain
+│   ├── rfq/                     RFQ domain
+│   ├── audit/                   Audit domain
+│   ├── compliance/              Compliance domain
+│   ├── document/                Document conversion, media, relationships
+│   └── ...                      project, notifications, table-document, import
+├── hooks/                       Custom React hooks (20 hooks)
+├── lib/                         Core libraries
+│   ├── Calculations.ts          SOURCE OF TRUTH for financial calculations
+│   ├── formatters/              Number/date formatting
+│   ├── json/                    JSON utilities
+│   ├── cache/                   Caching layer
+│   ├── native/                  Native bridge utilities
+│   └── ...                      PDF fonts, themes, signatures, icons, audit, utils
+├── modules/                     Module-specific logic (invoices, quotations, compliance, item-library)
+├── pages/                       Route-level page components (48 files)
+├── services/                    External service integrations
+├── styles/                      Global CSS
+├── supabase/                    Supabase client
+├── tests/                       Critical path tests
+├── types/                       Shared type definitions
+└── utils/                       Utility functions (export compilers, number formatting)
 ```
 
 ---
 
-## 7. Naming Conventions
+## 6. Naming Conventions
 
 | Artifact | Convention | Example |
 |---|---|---|
@@ -144,45 +136,23 @@ src/
 
 ---
 
+## 7. Workflow Commands
+
+- **Bun only** — never use npm, yarn, or pnpm.
+- **Run `bun run audit:load`** before typecheck or build.
+- **PowerShell PATH note:** `C:\Users\DELL\.bun\bin` must appear before Kiro's stub at `AppData\Local\Kiro-Cli\bun` for `bun` to resolve correctly.
+- **Test command:** `bun run test` — runs `node --test "src/tests/critical/*.test.js"`.
+
+---
+
 ## 8. Skills Registry
 
-### `.agents/skills/` — General Engineering & Frontend Skills
+Full skill index (locations, absolute paths, niches, ~25 skills + 232 subagents): **`docs/PROJECTSKILLINDEX.md`**. Read it before any task involving a new domain — do not re-derive the list from memory or from this file.
 
-| # | Skill | Niche |
-|---|---|---|
-| 1 | `accessibility` | WCAG 2.2 compliance, a11y audits, screen reader support, keyboard navigation, color contrast, ARIA patterns |
-| 2 | `deploy-to-vercel` | Deploying apps to Vercel — CLI auth, git push deploys, preview URLs, team selection, no-auth fallbacks |
-| 3 | `frontend-design` | Distinctive, production-grade UI — anti-"AI slop" aesthetics, creative typography, color, motion, spatial composition |
-| 4 | `pdf-rendering-correctness` | Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules |
-| 5 | `seo` | Technical SEO — meta tags, structured data (JSON-LD), sitemaps, URL structure, mobile SEO, hreflang |
-| 6 | `shadcn` | shadcn/ui — CLI usage, component composition, form patterns, icon handling, styling rules, registry management |
-| 7 | `supabase-postgres-best-practices` | Postgres performance — indexing, connection pooling, RLS, schema design, locking, monitoring, query optimization |
-| 8 | `tailwind-css-patterns` | Tailwind CSS utility-first styling — responsive design, flexbox/grid, dark mode, component extraction, performance, a11y |
-| 9 | `tailwind-v4-shadcn` | Tailwind v4 + shadcn/ui — `@theme inline`, CSS variable architecture, dark mode with ThemeProvider, plugin directives, migration from v3 |
-| 10 | `typescript-advanced-types` | Advanced TypeScript — generics, conditional types, mapped types, template literals, type-safe patterns |
-| 11 | `vercel-composition-patterns` | React composition — compound components, avoiding boolean prop proliferation, context providers, React 19 APIs |
-| 12 | `vercel-react-best-practices` | React/Next.js performance — eliminating waterfalls, bundle optimization, server-side perf, re-render optimization (70 rules, 8 categories) |
-| 13 | `vite` | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
-| 14 | `react-pdf` | Generate PDF documents using React-PDF library (@react-pdf/renderer) |
-| 15 | `redesign-existing-projects` | Upgrades existing websites and apps to premium quality — audits current design, identifies generic AI patterns, applies high-end design standards |
-
-### `.claude/skills/` — Higher-Order & Meta Skills
-
-| # | Skill | Niche |
-|---|---|---|
-| 1 | `awesome-claude-skills` | Collection of 30+ sub-skills — artifacts-builder, brand-guidelines, canvas-design, changelog-generator, content-research-writer, domain-name-brainstormer, file-organizer, image-enhancer, invoice-organizer, lead-research-assistant, mcp-builder, meeting-insights-analyzer, skill-creator, slack-gif-creator, tailored-resume-generator, theme-factory, twitter-algorithm-optimizer, video-downloader, webapp-testing, and more |
-| 2 | `Karpathy` | Coding discipline — think before coding, simplicity first, surgical changes only, goal-driven execution with verifiable success criteria |
-| 3 | `skill-creator` | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), progressive disclosure, packaging & validation |
-| 4 | `ui-ux-pro-max` | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
-| 5 | `webapp-testing` | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
-| 6 | `using-superpowers` | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
-| 7 | `gitnexus` | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring (architecture), CLI commands, and reference guide for GitNexus code intelligence |
-
-### `.mimocode/skills/` — Specialized Agent Skills
-
-| # | Skill | Niche |
-|---|---|---|
-| 1 | `waybill-template-debug` | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
+**Loading rules:**
+- Load skills from the project directory only — `.agents/skills/`, `.claude/skills/`, `.mimocode/skills/`, `.opencode/agents/`.
+- If a skill-loading tool fails or can't find a skill, do not stop — fall back to directly reading the `SKILL.md` at the path listed in the index.
+- If a requested skill name doesn't match exactly (typo, truncation, shorthand), match to the closest related skill by name/keyword overlap rather than failing. Example: "superpower" → `using-superpowers`.
 
 ---
 
@@ -202,18 +172,7 @@ src/
 
 ---
 
-## 10. Workflow Rules
-
-- **Bun only** — never use npm, yarn, or pnpm.
-- **Run `bun run audit:load`** before typecheck or build.
-- **Read relevant SKILL.md files** before writing any code for a domain the skill covers.
-- **PowerShell PATH note:** `C:\Users\DELL\.bun\bin` must appear before Kiro's stub at `AppData\Local\Kiro-Cli\bun` for `bun` to resolve correctly.
-- **Lint excludes:** `android/` and `dist/` are excluded from ESLint via `.eslintignore` (deprecated) or `eslint.config.js` `ignores` property.
-- **Test command:** `bun run test` — runs `node --test "src/tests/critical/*.test.js"`.
-
----
-
-## 11. No-Touch Zones
+## 10. No-Touch Zones
 
 These files, functions, and constraints must never be modified without explicit written instruction:
 
@@ -230,9 +189,7 @@ These files, functions, and constraints must never be modified without explicit 
 
 ---
 
-## Open Questions
 
-- Invoice number format: not determined from available sources — extract from `20260520090003_invoices.sql` migration if needed.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
@@ -268,13 +225,6 @@ This project is indexed by GitNexus as **bigdrops-app** (18701 symbols, 41567 re
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.claude/skills/gitnexus/` (exploring, impact-analysis, debugging, refactoring, guide, cli). Consult the index rather than duplicating paths here.
 
 <!-- gitnexus:end -->
