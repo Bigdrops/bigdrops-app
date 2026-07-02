@@ -37,7 +37,7 @@ Two independent changes: (1) fix logo background bleed on the Slate waybill temp
 
 | File | Action |
 |---|---|
-| `docs/Task/Tickets/bicolor-header-missing-company-info.md` | Created — documentation-only ticket |
+| `docs/Tickets/bicolor-header-missing-company-info.md` | Created — documentation-only ticket |
 
 ### What Was Done
 
@@ -61,13 +61,13 @@ Two independent changes: (1) fix logo background bleed on the Slate waybill temp
 
 - [x] Logo wrapper has white background in `SlateTemplate.tsx`
 - [x] `ModernTemplate.tsx` — N/A (file does not exist in codebase)
-- [x] `docs/Task/Tickets/bicolor-header-missing-company-info.md` exists with exact specified content
+- [x] `docs/Tickets/bicolor-header-missing-company-info.md` exists with exact specified content
 - [x] `BicolorTemplate.tsx` NOT modified
 - [x] No other templates touched (Evergreen, Premium, Minimal, Classic, Thermal)
 - [x] `bun run audit:load` passes
 - [x] `bun run typecheck` passes with zero errors
 - [x] `bun run lint` shows zero new errors on changed files
-- [x] Work report saved to `docs/Task/reports/waybill-logo-and-bicolor-ticket.md`
+- [x] Work report saved to `docs/Reports/waybill-logo-and-bicolor-ticket.md`
 - [x] No files outside the documented scope were modified
 
 ---

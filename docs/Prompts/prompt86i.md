@@ -13,7 +13,7 @@ SKILL LOADING PROTOCOL (MANDATORY)
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save work report to `docs/Task/reports/ai-dropdown-restore-and-click-fix.md`
+Save work report to `docs/Reports/ai-dropdown-restore-and-click-fix.md`
 
 ==================================================
 TASK: Restore Previous Icons + Fix Click Navigation

@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-15
 **Commit:** `2ee30b4`
-**Prompt source:** `Task/Prompts/prompt679.md`
+**Prompt source:** `Prompts/prompt679.md`
 
 ---
 
@@ -41,8 +41,8 @@ New execution plan covering:
 |---|---|
 | `docs/PREFIX_ENGINE_SETTINGS.md` | `docs/PRD/PREFIX_ENGINE_SETTINGS.md` |
 | `docs/execution` (no file) | Created `docs/EXECUTION/prefix-engine.md` |
-| `Task/reports/settings-table-audit.md` | Does not exist — skipped |
-| `Task/reports/...` (lowercase r) | `Task/Reports/...` (uppercase R) |
+| `Reports/settings-table-audit.md` | Does not exist — skipped |
+| `Reports/...` (lowercase r) | `Reports/...` (uppercase R) |
 
 ---
 

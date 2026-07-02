@@ -17,7 +17,7 @@ An Invoice architecture audit already exists for:
 - `SharedDocumentForm.tsx`
 - Invoice domain layer
 - Financial + column systems
-@docs/Task/Reports/invoice-form-architecture-audit.md
+@docs/Reports/invoice-form-architecture-audit.md
 That audit established internal Invoice structure but did NOT fully evaluate Quotation parity or cross-module ownership boundaries.
 
 Known shared systems:

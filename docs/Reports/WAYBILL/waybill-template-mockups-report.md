@@ -99,4 +99,4 @@ Both mockups contain exactly **2 `.page` divs** with `page-break-after: always`:
 - [x] No engine logic or data transformation used
 - [x] 2-page layout simulated with `page-break-after: always`
 - [x] No source files modified
-- [x] Report saved to `docs/Task/reports/waybill-template-mockups-report.md`
+- [x] Report saved to `docs/Reports/waybill-template-mockups-report.md`

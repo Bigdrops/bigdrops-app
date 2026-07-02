@@ -74,7 +74,7 @@ This roadmap depends on the Prefix Engine (`docs/PRD/PREFIX_ENGINE_SETTINGS.md`)
 ## Phase 2B — CSR PDF Pipeline Audit & Fixes
 
 **Goal:** Complete field-to-template audit of all 4 CSR PDF variants. Fix field mismatches, hardcoded values, and layout issues.
-**Audit Report:** `docs/Task/reports/csr-pdf-audit.md`
+**Audit Report:** `docs/Reports/csr-pdf-audit.md`
 
 ### Audit Findings Summary
 
@@ -267,7 +267,7 @@ Editorial, Bolt, and Obsidian do not use the shared `industryAdapter` and HTML p
 
 **Goal:** Fix the BOQ storage split bug, align both forms visually with the Invoice design system, replace both broken templates, fix image output readability, add missing JSON import to whichever module is missing it, and overhaul the palette/color system.
 
-**Audit Report:** `docs/Task/reports/boq-rfq-audit.md`
+**Audit Report:** `docs/Reports/boq-rfq-audit.md`
 
 ---
 
@@ -446,7 +446,7 @@ The `reconciled_at` and `linked_*_id` columns are set when a blank is later clai
 
 **Goal:** Port Invoice landscape rendering capability to CSR. Fix confirmed critical issues from memo verification and audit.
 **Depends on:** Phase 2 (CSR PDF Pipeline Audit & Fixes) completion
-**Audit Report:** `docs/Task/reports/csr-pdf-audit.md` (Sections 8–9)
+**Audit Report:** `docs/Reports/csr-pdf-audit.md` (Sections 8–9)
 
 ### Critical Problems
 

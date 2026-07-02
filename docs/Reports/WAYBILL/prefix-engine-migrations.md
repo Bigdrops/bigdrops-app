@@ -40,6 +40,6 @@
 - [x] `document_prefixes` field added to `settings` Row type in `database.types.ts`
 - [x] `blank_csr_logs` table type added to `database.types.ts`
 - [x] `bun run typecheck` passes with zero errors
-- [x] Work report saved to `docs/Task/reports/prefix-engine-migrations.md`
+- [x] Work report saved to `docs/Reports/prefix-engine-migrations.md`
 - [x] No source code files modified beyond `database.types.ts`
 - [x] No SQL executed — DB changes are already live

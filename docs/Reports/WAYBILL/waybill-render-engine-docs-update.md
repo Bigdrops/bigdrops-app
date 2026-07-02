@@ -1,7 +1,7 @@
 # Waybill Render Engine — Docs Update Report
 
 **Date:** 2026-06-21
-**Source:** `docs/Task/Prompts/prompt86i.md`
+**Source:** `docs/Prompts/prompt86i.md`
 **Status:** All corrections applied
 
 ---
@@ -37,4 +37,4 @@
 
 - Source code: **NOT modified**
 - All 5 corrections from `prompt86i.md`: **APPLIED**
-- Report saved to: `docs/Task/reports/waybill-render-engine-docs-update.md`
+- Report saved to: `docs/Reports/waybill-render-engine-docs-update.md`

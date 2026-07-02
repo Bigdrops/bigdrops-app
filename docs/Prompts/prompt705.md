@@ -7,7 +7,7 @@ THIS IS A READ-ONLY INSPECTION. DO NOT CREATE, MODIFY, OR DELETE ANY FILES.
 ==================================================
 REPORTING PROTOCOL (MANDATORY)
 ==================================================
-Save report to: docs/Task/reports/waybill-engine-inspection.md
+Save report to: docs/Reports/waybill-engine-inspection.md
 
 ==================================================
 TASK: Check for existing/partial Waybill PDF engine code

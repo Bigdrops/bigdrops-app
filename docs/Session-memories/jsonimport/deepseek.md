@@ -52,7 +52,7 @@ src/lib/openInAI.ts Replaced hardcoded 3‑provider map with exported AI_PROVIDE
 src/components/ui/OpenInAIDropdown.tsx Replaced single Gemini button with a shadcn DropdownMenu listing all 6 providers. Clipboard write before window.open(). Toast via feedback.info(). Dropdown never opened — Radix pointerdown handler blocked. Later rewritten to Popover, still failed. Final fix: native <select>.
 src/domain/import/promptGenerator.ts Appended code‑block + paste‑back instruction to every generated prompt. —
 src/components/import/JsonImportLayout.tsx Updated parent to pre‑compute prompt via useMemo and wire onProviderSelect toast. Initial version lacked useMemo. Fixed later.
-Task/reports/phase0‑*.md Multiple reports generated. Early agents did not save reports to Task/reports/; corrected later.
+Reports/phase0‑*.md Multiple reports generated. Early agents did not save reports to Reports/; corrected later.
 Key failure The YouTube iframe inside JsonImportUI was firing continuous postMessage events, blocking the main thread and preventing any Radix‑based dropdown from opening. This was only discovered after two failed rewrite attempts.
 
 Final Phase 0 state: Discipline spec injected; provider dropdown functional (native select); clipboard silent write; toast; deep‑link validation manual.
@@ -138,7 +138,7 @@ Technical Debt Identified
 
 Agent Workflow Failures
 
-1. No‑report agents: Early Phase 0 agents did not write work reports to Task/reports/. This made debugging the dropdown failure extremely difficult. Every subsequent prompt now mandates a report.
+1. No‑report agents: Early Phase 0 agents did not write work reports to Reports/. This made debugging the dropdown failure extremely difficult. Every subsequent prompt now mandates a report.
 2. Unverified changes: Agents claimed verification steps (e.g., “clicking each provider works”) without actually running the UI. We now explicitly ask agents to “document the observed behavior” and to state if manual verification was not possible.
 3. Skill‑loading omission: The first Phase 0 prompt lacked the skill‑loading protocol. The agent did not read AGENTS.md or relevant skills, leading to a component structure (inline prompt computation) that caused performance issues. All prompts after that include a mandatory SKILL LOADING PROTOCOL block.
 4. Scope creep by misinterpretation: The agent creating the PDF roadmap added extra detail beyond the requested placeholder. This is low‑impact but illustrates that agents need precise boundaries.

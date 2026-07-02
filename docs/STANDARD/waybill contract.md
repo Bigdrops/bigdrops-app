@@ -171,4 +171,4 @@ DONE WHEN
 - Blank + filled templates structurally identical
 - No layout drift possible without code change
 - All verification passes
-- Report saved to: docs/Task/reports/waybill-print-layout-lock.md
+- Report saved to: docs/Reports/waybill-print-layout-lock.md

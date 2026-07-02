@@ -1,6 +1,6 @@
 # Findings — UI/UX Consolidation PRD
 
-_Reference: Full inspection report at `docs/Task/reports/ui-ux-consolidation-inspection.md`_
+_Reference: Full inspection report at `docs/Reports/ui-ux-consolidation-inspection.md`_
 
 ---
 

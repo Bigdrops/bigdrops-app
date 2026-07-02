@@ -386,7 +386,7 @@ To port Invoice landscape capability to CSR, the following steps are required:
 
 ## 9. Memo Issue Verification
 
-Verified the 10 issues listed in the task prompt (`docs/Task/Prompts/prompt6i5.md`) against actual code:
+Verified the 10 issues listed in the task prompt (`docs/Prompts/prompt6i5.md`) against actual code:
 
 ### 9.1 Geometry & Elasticity
 

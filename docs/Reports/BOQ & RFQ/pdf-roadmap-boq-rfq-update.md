@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-16  
 **Task:** Add Phase 3D (BOQ & RFQ Overhaul) to PDF Rendering Roadmap  
-**Source Audit:** `docs/Task/reports/boq-rfq-audit.md`
+**Source Audit:** `docs/Reports/boq-rfq-audit.md`
 
 ---
 
@@ -67,4 +67,4 @@ All changes were documentation-only.
 
 | File | Purpose |
 |---|---|
-| `docs/Task/reports/pdf-roadmap-boq-rfq-update.md` | This work report |
+| `docs/Reports/pdf-roadmap-boq-rfq-update.md` | This work report |

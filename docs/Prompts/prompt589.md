@@ -23,7 +23,7 @@ REPORTING PROTOCOL (MANDATORY)
 
 Continue updating the existing report:
 
-`docs/Task/reports/item-library-phase-1-stabilization.md`
+`docs/Reports/item-library-phase-1-stabilization.md`
 
 Add dedicated sections for:
 

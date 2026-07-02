@@ -35,7 +35,7 @@ This report consolidates findings from 20+ PRD documents, governance validation,
 | 14 | REUI Adoption Matrix | `docs/PRD/UI-UX-Consolidation/reui-adoption-matrix.md` | Cross-source scoring |
 | 15 | REUI Migration Opportunities | `docs/PRD/UI-UX-Consolidation/reui-migration-opportunities.md` | Migration paths |
 | 16 | Platform Component Recommendations | `docs/PRD/UI-UX-Consolidation/platform-component-recommendations.md` | Final winners per family |
-| 17 | Governance Validation | `docs/Task/reports/reui-standard-validation.md` | 7-criteria governance check |
+| 17 | Governance Validation | `docs/Reports/reui-standard-validation.md` | 7-criteria governance check |
 | 18 | AGENTS.md | `AGENTS.md` | Project hard rules, conventions |
 
 ---

@@ -19,7 +19,7 @@ REPORTING PROTOCOL (MANDATORY)
 ==================================================
 Save a full detailed report to:
 
-`docs/Task/reports/invoice-toolbar-restoration-and-group-behaviour.md`
+`docs/Reports/invoice-toolbar-restoration-and-group-behaviour.md`
 
 The report MUST include:
 

@@ -24,7 +24,7 @@ REPORTING PROTOCOL (MANDATORY)
 ==================================================
 
 Save a complete implementation report to:
-`docs/Task/reports/commercial-rendering-engine-phase-3.1.md`
+`docs/Reports/commercial-rendering-engine-phase-3.1.md`
 
 The report MUST include:
 - Executive Summary

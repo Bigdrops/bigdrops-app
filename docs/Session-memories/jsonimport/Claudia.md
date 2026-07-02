@@ -263,17 +263,17 @@ Additionally, every prompt must end with:
 
 | File | Purpose |
 |---|---|
-| `Task/reports/json-import-audit.md` | Full audit of all import modules — filed by agent |
-| `Task/reports/waybill-field-audit.md` | Waybill-specific field gap analysis — 8 gaps documented |
-| `Task/reports/phase0-discipline-spec.md` | Phase 0 discipline spec injection report |
-| `Task/reports/phase-0-open-in-ai-fix.md` | Popover → native select fix report |
-| `Task/reports/phase-0-select-swap.md` | Select swap final implementation report |
-| `Task/reports/phase-2-invoice-add-mode.md` | Phase 2 anti-inference layer report |
-| `Task/reports/phase-2b-update-mode.md` | Phase 2b update mode safety report |
-| `Task/reports/phase-4-5-compliance-rfq.md` | Phases 4+5 combined report |
-| `Task/reports/phase-6-csr-and-phase-8-clipboard.md` | Phases 6+8 combined report |
-| `Task/reports/roadmap-housekeeping.md` | Roadmap close-out report |
-| `Task/reports/json-import-standard.md` | JSON import standard creation report |
+| `Reports/json-import-audit.md` | Full audit of all import modules — filed by agent |
+| `Reports/waybill-field-audit.md` | Waybill-specific field gap analysis — 8 gaps documented |
+| `Reports/phase0-discipline-spec.md` | Phase 0 discipline spec injection report |
+| `Reports/phase-0-open-in-ai-fix.md` | Popover → native select fix report |
+| `Reports/phase-0-select-swap.md` | Select swap final implementation report |
+| `Reports/phase-2-invoice-add-mode.md` | Phase 2 anti-inference layer report |
+| `Reports/phase-2b-update-mode.md` | Phase 2b update mode safety report |
+| `Reports/phase-4-5-compliance-rfq.md` | Phases 4+5 combined report |
+| `Reports/phase-6-csr-and-phase-8-clipboard.md` | Phases 6+8 combined report |
+| `Reports/roadmap-housekeeping.md` | Roadmap close-out report |
+| `Reports/json-import-standard.md` | JSON import standard creation report |
 | `docs/Json-import-roadmap.md` | Main roadmap — now marked Complete |
 | `docs/pdf-rendering-roadmap.md` | Deferred PDF + Project Documents work |
 | `docs/json-import-standard.md` | Prescriptive standard for new modules |

@@ -531,6 +531,6 @@ src/components/pdf-new/
 
 | File | Role |
 |------|------|
-| `docs/Task/reports/template-platform-audit-phase-1.md` | Phase 1 audit report |
-| `docs/Task/reports/template-platform-audit-phase-1-supplement.md` | Supplement audit (Advanced Invoice, Crest, Tables) |
-| `docs/Task/reports/commercial-rendering-engine-architecture-report.md` | This report |
+| `docs/Reports/template-platform-audit-phase-1.md` | Phase 1 audit report |
+| `docs/Reports/template-platform-audit-phase-1-supplement.md` | Supplement audit (Advanced Invoice, Crest, Tables) |
+| `docs/Reports/commercial-rendering-engine-architecture-report.md` | This report |
