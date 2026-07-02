@@ -464,3 +464,16 @@ The **Document Transformation Standard** defines the rules users experience.
 The **Lifecycle Ownership Standard** defines where those rules are implemented.
 
 A well-structured document module has one clear owner for every lifecycle stage, one authoritative source for every business rule, and one predictable execution path for every lifecycle operation.
+# Standards Hierarchy
+
+This standard governs architectural ownership only.
+
+Business behaviour is governed by:
+
+docs/STANDARD/document-transformation-standard.md
+
+If an ownership decision conflicts with the Document Transformation Standard, the Document Transformation Standard SHALL take precedence.
+
+Refactoring may relocate code.
+
+It MUST NOT change business behaviour.
