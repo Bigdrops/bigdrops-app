@@ -1,3 +1,4 @@
+
 # AGENTS.md — BIGDROPS Project Guide for AI Coding Agents
 
 > Read this file before making any changes to the repository. It documents hard rules, architecture boundaries, and conventions that must not be violated.
@@ -75,7 +76,18 @@ Higher-level standards take precedence. In case of conflict, resolve upward.
 ## 5. Documentation Rules (Permanent)
 
 - **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
-- **Agent Identity** — The first line after the title must be: `This report was written by [Agent Name].` (e.g. "This report was written by Mimo."). Never omit this.
+
+- **Agent Identity** — Every report MUST begin with an identity line immediately after the title. The line must state:
+  - The real name of the AI that produced the report (e.g., Claude, DeepSeek, Cursor AI).
+  - The date the report was generated.
+  - Optionally, the development harness or tool (e.g., "via Cursor", "via Claude Code") if relevant.
+  
+  Example: `This report was written by DeepSeek on 2026-07-03.`
+  
+  **Do NOT copy any example name from these instructions.** Fill in your own actual identifier. If you do not know your name, state `AI Coding Agent` and explain why.
+
+  Never use placeholder text like `[Agent Name]` — that text is a violation of this rule.
+
 - **Report Quality Standard** — All reports must satisfy the following principles. The exact section structure should be chosen to suit the report type (audit, implementation, investigation, migration, etc.), not forced into a single template.
   1. **Objective & Scope** — Clearly state what the report covers and, just as importantly, what is intentionally excluded. This prevents readers from assuming something was overlooked.
   2. **Evidence-Based** — Every finding must be traceable to inspected code, executed tests, or other verifiable sources. Prefer file paths, function names, line references, and execution traces over adjectives. Never use vague qualifiers ("seems", "probably", "appears to").
@@ -84,6 +96,7 @@ Higher-level standards take precedence. In case of conflict, resolve upward.
   5. **Verification** — State what verification was performed. For implementation reports, include build results (`bun run build` passed/failed/deferred). For audits, note that no code was modified.
   6. **Deferred Work** — List what was intentionally left for future phases. This prevents silent assumptions that something "was handled."
   7. **Standalone Value** — Another engineer should be able to understand the work without reading the original conversation. Include enough context that the report remains useful months later.
+
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
 - **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
 - **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
@@ -266,3 +279,5 @@ This project is indexed by GitNexus as **bigdrops-app**. Use the GitNexus MCP to
 Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.claude/skills/gitnexus/` (exploring, impact-analysis, debugging, refactoring, guide, cli). Consult the index rather than duplicating paths here.
 
 <!-- gitnexus:end -->
+```
+
