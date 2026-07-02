@@ -27,17 +27,12 @@ jobs:
           ref: ${{ inputs.ref || github.ref }}
 
       # ── 2. Compute build metadata ────────────────────────────────────────
-      # Derive branch name, short SHA, and sanitized branch for filenames
       - name: Compute build metadata
         id: meta
         run: |
-          # Branch name (strip refs/heads/ prefix)
           BRANCH="${GITHUB_REF#refs/heads/}"
-          # Short commit SHA
           SHORT_SHA="${GITHUB_SHA::7}"
-          # Sanitized branch: replace non-alphanumeric with hyphens, collapse runs, trim edges
           SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//')
-          # Fallback if sanitization empties the string
           if [ -z "$SANITIZED_BRANCH" ]; then
             SANITIZED_BRANCH="unknown"
           fi
@@ -56,7 +51,21 @@ jobs:
           echo "Build Time  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "────────────────────────────────────────────"
 
-      # ── 3. Log tool versions ─────────────────────────────────────────────
+      # ── 3. Set up Java 21 ────────────────────────────────────────────────
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # ── 4. Set up Bun ────────────────────────────────────────────────────
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ── 5. Log tool versions (moved here) ──────────────────────────────
       - name: Log tool versions
         run: |
           echo "────────────── Tool Versions ───────────────"
@@ -68,7 +77,7 @@ jobs:
           echo "Capacitor   : $CAPACITOR_VERSION"
           echo "────────────────────────────────────────────"
 
-      # ── 4. Validate prerequisites ────────────────────────────────────────
+      # ── 6. Validate prerequisites (moved here) ──────────────────────────
       - name: Validate Android project exists
         run: |
           if [ ! -d "android" ]; then
@@ -85,21 +94,6 @@ jobs:
           fi
           echo "✅ Android project structure validated."
 
-      # ── 5. Set up Java 21 ────────────────────────────────────────────────
-      # Required by android/app/build.gradle: compileOptions JavaVersion.VERSION_21
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: gradle
-
-      # ── 6. Set up Bun ────────────────────────────────────────────────────
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       # ── 7. Cache Bun dependencies ────────────────────────────────────────
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -114,7 +108,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       # ── 9. Clean stale build artifacts ──────────────────────────────────
-      # Ensure no cached or stale dist/ influences the new build
       - name: Clean stale build artifacts
         run: |
           rm -rf dist/
@@ -122,16 +115,27 @@ jobs:
           echo "✅ Cleaned dist/ and android/app/src/main/assets/public/"
 
       # ── 10. Build web assets ─────────────────────────────────────────────
-      # Capacitor syncs the dist/ directory into the Android project
       - name: Build production web assets
         run: bun run build
 
-      # ── 11. Sync Capacitor ───────────────────────────────────────────────
+      # ── 11. Verify Vite build output (new) ──────────────────────────────
+      - name: Verify Vite build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "::error::dist/index.html not found."
+            exit 1
+          fi
+          if ! grep -q '\./assets/' dist/index.html; then
+            echo "::error::index.html does not contain relative asset paths."
+            exit 1
+          fi
+          echo "✅ Vite build verified."
+
+      # ── 12. Sync Capacitor ───────────────────────────────────────────────
       - name: Sync Capacitor Android project
         run: npx cap sync android
 
-      # ── 12. Verify Capacitor assets ──────────────────────────────────────
-      # Confirm index.html and assets exist before Gradle build
+      # ── 13. Verify Capacitor assets ──────────────────────────────────────
       - name: Verify Capacitor assets
         run: |
           if [ ! -f "android/app/src/main/assets/public/index.html" ]; then
@@ -146,17 +150,16 @@ jobs:
           ls -la android/app/src/main/assets/public/
           ls -la android/app/src/main/assets/public/assets/
 
-      # ── 13. Make Gradle wrapper executable ───────────────────────────────
+      # ── 14. Make Gradle wrapper executable ───────────────────────────────
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
 
-      # ── 14. Build Debug APK ─────────────────────────────────────────────
+      # ── 15. Build Debug APK ─────────────────────────────────────────────
       - name: Build Android Debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      # ── 15. Locate and rename APK ───────────────────────────────────────
-      # Find the generated APK and rename it with branch + short SHA + run number
+      # ── 16. Locate and rename APK ───────────────────────────────────────
       - name: Locate and rename APK
         id: find-apk
         run: |
@@ -167,7 +170,6 @@ jobs:
           fi
           APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
 
-          # Build the new filename: BIGDROPS-debug-<branch>-<short_sha>-run<number>.apk
           NEW_NAME="BIGDROPS-debug-${{ steps.meta.outputs.sanitized_branch }}-${{ steps.meta.outputs.short_sha }}-run${{ github.run_number }}.apk"
           NEW_PATH="$(dirname "$APK_PATH")/$NEW_NAME"
           mv "$APK_PATH" "$NEW_PATH"
@@ -177,7 +179,26 @@ jobs:
           echo "apk_size=$APK_SIZE" >> "$GITHUB_OUTPUT"
           echo "✅ APK renamed: $NEW_NAME ($APK_SIZE)"
 
-      # ── 16. Upload APK artifact ──────────────────────────────────────────
+      # ── 17. Generate Build Summary (new) ────────────────────────────────
+      - name: Generate Build Summary
+        run: |
+          {
+            echo "# Android Debug Build"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| Repository | ${{ github.repository }} |"
+            echo "| Branch | ${{ steps.meta.outputs.branch }} |"
+            echo "| Commit | ${{ steps.meta.outputs.short_sha }} |"
+            echo "| Run | ${{ github.run_number }} |"
+            echo "| APK | ${{ steps.find-apk.outputs.apk_name }} |"
+            echo "| APK Size | ${{ steps.find-apk.outputs.apk_size }} |"
+            echo "| Java | 21 |"
+            echo "| Gradle | Wrapper |"
+            echo "| Status | ✅ Success |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 18. Upload APK artifact ──────────────────────────────────────────
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
