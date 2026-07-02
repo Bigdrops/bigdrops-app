@@ -75,6 +75,14 @@ Higher-level standards take precedence. In case of conflict, resolve upward.
 ## 5. Documentation Rules (Permanent)
 
 - **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
+- **Report Quality Standards** — Every implementation report MUST satisfy the following. Audits and documentation-only tasks may omit sections that are not applicable, but must state why.
+  1. **Agent Identity** — The first line after the title must be: `This report was written by [Agent Name].` (e.g. "This report was written by Mimo."). Never omit this.
+  2. **Concrete Behavioral Evidence** — Claims of "unchanged" or "preserved" are not evidence. Every behavioral assertion must include a specific, verifiable statement. Example: "Saved invoice still prevents client modification" — not "Edit Law: unchanged."
+  3. **Ownership Before → After** — A table mapping lifecycle stages (`init`, `load`, `edit`, `compute`, `validate`, `persist`, `export`) to owning modules before and after the change.
+  4. **Transformation Standard Compliance** — An explicit section listing each law (Edit, Duplicate, Revert) from `docs/STANDARD/document-transformation-standard.md` with concrete verification that it remains intact. If the task did not touch document lifecycle code, state that explicitly.
+  5. **Risk Section** — Known risks, line-count concerns, behavioral exposure, or anything a future developer should watch for.
+  6. **Deferred Work** — What was intentionally left untouched for future phases. This prevents silent assumptions that something "was handled."
+  7. **Build Verification** — `bun run build` result: `passed`, `failed` (with details), or `deferred` (with reason). Never leave build status unstated.
 - **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
 - **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
 - **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
@@ -230,7 +238,7 @@ This project is indexed by GitNexus as **bigdrops-app**. Use the GitNexus MCP to
 ## Always Do
 
 - **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
+- **MUST run `detect_changes()` before committing`** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
 - **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
 - When exploring unfamiliar code, use `query({search_query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
 - When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
