@@ -26,11 +26,42 @@
 - Invoice numbering format: extract from migration `20260520090003_invoices.sql`.
 - Waybill type field: `'external'` or `'internal'` — validated by DB CHECK constraint.
 - Lint excludes: `android/` and `dist/` must be in `.eslintignore` (or ESLint config ignores).
-- New document modules that support JSON import MUST follow the standard defined in `docs/json-import-standard.md`. This standard is prescriptive — all prompts, schemas, adapters, and UI integration must conform.
+- New document modules that support JSON import MUST follow the standard defined in `docs/STANDARD/json-import-standard.md`. This standard is prescriptive — all prompts, schemas, adapters, and UI integration must conform.
+- New document modules with configurable columns MUST follow the standard defined in `docs/STANDARD/document-column-standard.md`. This standard is prescriptive — all column ordering, persistence, drag, and initialization must conform.
 
 ---
 
-## 3. File Structure Map
+## 3. Project Workflow Rules (Permanent)
+
+- **Audit first.** Before making any code change to a symbol, function, or file, read all relevant source files. Do not infer implementation details.
+- **Use `find-skills` before any task involving a new domain.** Load relevant SKILL.md files before writing code.
+- **State assumptions explicitly.** If uncertain, ask. If multiple interpretations exist, present them — do not pick silently.
+- **Minimum code that solves the problem.** No speculative features, no premature abstractions, no "flexibility" or "configurability" that was not requested.
+- **Surgical changes.** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or improve things unrelated to the task. Every changed line must trace directly to the user's request.
+- **Verify with tests.** Define success criteria before implementing. Loop until verified.
+
+---
+
+## 4. Documentation Rules (Permanent)
+
+- **No reports in repository root.** All reports must be placed under `docs/Task/reports/`.
+- **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
+- **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
+- **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets.
+
+---
+
+## 5. Architecture Discipline (Permanent)
+
+- **PDFs are dumb renderers.** They receive shaped data via preview functions but never compute prices, taxes, or totals.
+- **Quotations reuse the invoice domain layer.** Never duplicate financial logic between modules.
+- **Column architecture is documented.** The canonical standard lives at `docs/STANDARD/document-column-standard.md`. All configurable-column modules must conform.
+- **Extend before abstract.** Always extend existing systems before creating new abstractions or separate implementations.
+- **Follow Karpathy coding discipline:** simplicity first, surgical changes, goal-driven execution, think before coding.
+
+---
+
+## 6. File Structure Map
 
 ```
 src/
@@ -101,7 +132,7 @@ src/
 
 ---
 
-## 4. Naming Conventions
+## 7. Naming Conventions
 
 | Artifact | Convention | Example |
 |---|---|---|
@@ -113,7 +144,7 @@ src/
 
 ---
 
-## 5. Skills Registry
+## 8. Skills Registry
 
 ### `.agents/skills/` — General Engineering & Frontend Skills
 
@@ -155,7 +186,7 @@ src/
 
 ---
 
-## 6. Module Status
+## 9. Module Status
 
 | Built | In Progress | Pending |
 |---|---|---|
@@ -171,7 +202,7 @@ src/
 
 ---
 
-## 7. Workflow Rules
+## 10. Workflow Rules
 
 - **Bun only** — never use npm, yarn, or pnpm.
 - **Run `bun run audit:load`** before typecheck or build.
@@ -182,7 +213,7 @@ src/
 
 ---
 
-## 8. No-Touch Zones
+## 11. No-Touch Zones
 
 These files, functions, and constraints must never be modified without explicit written instruction:
 
