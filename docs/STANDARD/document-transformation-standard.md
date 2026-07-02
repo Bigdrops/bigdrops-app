@@ -1,4 +1,4 @@
-# Document Transformation Standard (The 3 Laws System)
+# Document Transformation Standard (The 3 Laws System) — v1.0
 
 > This standard defines lifecycle rules for ALL financial documents:
 > Invoice, Quotation, Waybill, CSR, BOQ, RFQ.
@@ -23,10 +23,11 @@ Saved documents have an immutable identity. Identity consists of:
 - `client_id`
 - `document_number`
 - `type`
+- **Lineage:** `sourceDocumentId`, `sourceDocumentType`, `sourceDocumentNumber`
 
-Attempting to modify any of these fields after a document is saved **MUST be rejected**.
+Attempting to modify any of these identity fields after a document is saved **MUST be rejected**.
 
-> Saved documents lock identity. Unsaved documents do not.
+> Saved documents lock identity — including lineage. Unsaved documents do not.
 
 ### 2.2 Unsaved Documents (Draft Mode)
 
@@ -42,11 +43,11 @@ Allowed:
 
 ### 2.3 Required User Feedback (Saved Documents)
 
-If a user attempts to change an identity field on a saved document, the system MUST:
+If a user attempts to change any identity field (client, document number, type, or lineage) on a saved document, the system MUST:
 - Block the action
 - Show the message:
 
-> "Client and document number cannot be changed after saving."
+> "Client, document number, and lineage cannot be changed after saving."
 > "To use a different client or number, please duplicate this document."
 
 ---
@@ -58,7 +59,7 @@ Duplication ALWAYS creates a new document in **UNSAVED** state.
 **Must:**
 - Open document in **FORM** view
 - Set state → `unsaved (draft)`
-- Generate NO final document number (preview only if needed)
+- **Generate a new document number** according to the document numbering policy; the duplicated document must never reuse the source document number
 - Clear `client_id`
 - Clear `id`
 - Clear document-level financial state (payment records, workflow approvals, payment status, balance due)
@@ -84,10 +85,10 @@ Duplication ALWAYS creates a new document in **UNSAVED** state.
 
 ---
 
-## 4. Law 3 — Revert Law (Invoice Recovery & Navigation Rule)
+## 4. Law 3 — Revert Law (Invoice Correction & Navigation Rule)
 
-Revert is a **type‑correction or navigation** tool that applies only to Invoices.
-It is NOT rollback, NOT undo.
+Revert is a **document correction operation** whose behavior depends on document lineage.  
+It applies only to Invoices and is NOT rollback, NOT undo.
 
 ### 4.1 Revert Eligibility
 
@@ -136,7 +137,7 @@ This is the “I should have created a quotation first” scenario.
 ### 4.4 Revert Behavior — Case B: Invoice WITH source quotation
 
 The invoice was created from an existing quotation.
-Revert acts as a smart navigation/rollback, depending on whether the invoice has diverged (per §4.2).
+Revert’s behavior depends on whether the invoice has diverged (per §4.2).
 
 #### 4.4.1 Invoice is identical to its source quotation
 
@@ -184,7 +185,7 @@ interface DocumentIdentity {
   documentNumber: string
   clientId: string
 
-  // lineage — where this document came from
+  // lineage — where this document came from (immutable after save)
   sourceDocumentId?: string
   sourceDocumentType?: string
   sourceDocumentNumber?: string   // for display in revert warnings
@@ -204,7 +205,7 @@ No transformation type or origin flag is stored on the document.
 Operation State Result
 Create Unsaved → Saved New identity created
 Edit (unsaved) Draft Full freedom
-Edit (saved) Saved Identity-locked edits
+Edit (saved) Saved Identity-locked edits (incl. lineage)
 Duplicate Draft New draft with items + pricing, no client/no number/no lineage
 Convert Saved New identity + new type, lineage set to source document
 Revert (unsourced) Invoice Delete invoice, create quotation
@@ -217,7 +218,7 @@ Revert (sourced, modified) Invoice Warn → delete invoice, keep source quotatio
 
 · Duplicate preserves content but creates a fresh identity — a new draft with no lineage.
 · Convert preserves business intent while changing document type (e.g., quotation → invoice) — lineage is maintained.
-· Revert corrects document type (invoice back to quotation) when no conversion was appropriate, or simply navigates back to the source quotation.
+· Revert is an invoice‑only correction operation whose behavior depends on lineage: if unsourced, it becomes a quotation; if sourced, it navigates or destructively returns to the source.
 
 All three operations generate corresponding audit trail entries.
 
@@ -238,6 +239,7 @@ All three operations generate corresponding audit trail entries.
 8.3 Duplicate Entry Behavior
 
 · Open form
+· Generate new document number per numbering policy (never reuse source)
 · Clear client
 · Clear document number
 · Clear lineage (sourceDocumentId, sourceDocumentType, sourceDocumentNumber)
@@ -275,4 +277,5 @@ Rules enforced at:
 
 11. Final Principle
 
-Drafts are flexible. Saved documents lock identity. Duplicates carry all item‑level financial data but shed client, document identity, and lineage — they are a new origin. Revert is a smart invoice correction tool: if no source, it becomes a quotation; if sourced and unmodified, it’s a direct navigation back; if sourced and modified, it’s a warned deletion. The audit trail is the single source of truth for all lifecycle events.
+Drafts are flexible. Saved documents lock identity — including lineage. Duplicates carry all item‑level financial data but shed client, document identity, and lineage — they are a new origin. Revert is an invoice‑only correction operation: if no source, it becomes a quotation; if sourced and unmodified, it’s a direct navigation back; if sourced and modified, it’s a warned deletion. The audit trail is the single source of truth for all lifecycle events.
+
