@@ -24,7 +24,7 @@
 - External waybills must have a purpose; internal waybills must have purpose `NULL` — enforced by the `check_waybill_purpose_conditional` Postgres CHECK constraint.
 - `items` JSONB arrays must pass structural validation — non-empty, each item must have `description` + `qty`, and `qty > 0` — enforced by `check_items_json_structure`.
 - Waybill `type` field is restricted to `'external'` or `'internal'` — enforced by `check_waybill_type`.
-- Invoice numbering format: extract from migration `20260520090003_invoices.sql` — not documented elsewhere, do not guess.
+- All document numbering (invoice, quotation, waybill, RFQ, CSR, BOQ, project) MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Prefixes are resolved at runtime via `resolvePrefix()` — never hardcode a prefix string in generation logic.
 - Lint excludes: `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
 - New document modules that support JSON import MUST follow `docs/STANDARD/json-import-standard.md`. Prescriptive — all prompts, schemas, adapters, and UI integration must conform.
 - New document modules with configurable columns MUST follow `docs/STANDARD/document-column-standard.md`. Prescriptive — all column ordering, persistence, drag, and initialization must conform.
@@ -56,6 +56,7 @@
 ## 5. File Structure Map
 
 ```
+
 src/
 ├── app/                        App bootstrap (useSyncBootstrap)
 ├── assets/                     Static assets
@@ -107,6 +108,7 @@ src/
 ├── hooks/                       Custom React hooks (20 hooks)
 ├── lib/                         Core libraries
 │   ├── Calculations.ts          SOURCE OF TRUTH for financial calculations
+│   ├── withUniqueRetry.ts       Collision retry utility for document number inserts
 │   ├── formatters/              Number/date formatting
 │   ├── json/                    JSON utilities
 │   ├── cache/                   Caching layer
@@ -120,6 +122,7 @@ src/
 ├── tests/                       Critical path tests
 ├── types/                       Shared type definitions
 └── utils/                       Utility functions (export compilers, number formatting)
+
 ```
 
 ---
@@ -131,8 +134,7 @@ src/
 | Components | PascalCase | `WaybillForm.tsx`, `ClientSelector.tsx` |
 | Files (general) | kebab-case | `waybillUtils.ts`, `mobileFormPrimitives.tsx` |
 | DB fields | snake_case | `waybill_number`, `client_id`, `po_number` |
-| Invoice numbers | Extract from migration | Format defined in `20260520090003_invoices.sql` |
-| Waybill numbers | `AWB-E-000001`, `AWB-ME-000001` | External: `[PREFIX]-E-[SERIAL]`, Manual: `[PREFIX]-ME-[SERIAL]` |
+| Document numbers (all types) | `{resolvedPrefix}-{routingToken?}-{6-digit serial}` | Prefix resolved at runtime via `resolvePrefix()`, default `WBL`/`INV`/`QTN`/etc — see `docs/STANDARD/prefix-engine-settings-standard.md`. Never hardcode a prefix. |
 
 ---
 
@@ -180,6 +182,7 @@ These files, functions, and constraints must never be modified without explicit 
 |---|---|
 | `src/lib/Calculations.ts` | Single source of truth for all financial calculations |
 | `src/lib/Calculations.ts` — `calcTotals()`, `resolveRowVat()` | Core calculation pipelines — changing them affects every financial document |
+| `src/domain/prefixConstants.ts` — `DEFAULT_PREFIXES`, `resolvePrefix()` | Canonical prefix engine — changing defaults or resolution logic breaks numbering across all document types |
 | DB constraint `check_waybill_purpose_conditional` | Enforces business mutex — external waybills must have purpose, internal must be NULL |
 | DB constraint `check_items_json_structure` | Structural JSONB validation — non-empty array, description + qty required, qty > 0 |
 | DB constraint `check_waybill_type` | Restricts type to `'external'` or `'internal'` |
@@ -188,8 +191,6 @@ These files, functions, and constraints must never be modified without explicit 
 | `blank_waybill_logs` number reuse protection | Once a blank token number is consumed, it is permanently locked and cannot be recycled |
 
 ---
-
-
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
@@ -228,3 +229,4 @@ This project is indexed by GitNexus as **bigdrops-app** (18701 symbols, 41567 re
 Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.claude/skills/gitnexus/` (exploring, impact-analysis, debugging, refactoring, guide, cli). Consult the index rather than duplicating paths here.
 
 <!-- gitnexus:end -->
+```
