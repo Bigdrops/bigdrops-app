@@ -16,7 +16,8 @@
 | `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
-| **Total** | **25 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin |
+| **Total** | **31 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
@@ -90,6 +91,22 @@ Specialized agent skills for targeted debugging workflows.
 Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: subagent`, `color`). Used by opencode's `/agent` command.
 
 ---
+## `@dietrichgebert/ponytail` Plugin
+
+[Ponytail](https://github.com/DietrichGebert/ponytail) — lazy senior dev mode for AI agents. Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands, and 10 hooks. Mode toggling: `/ponytail lite|full|ultra|off`.
+
+| # | Skill | Package Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- |
+| 1 | ponytail | `node_modules/@dietrichgebert/ponytail/skills/ponytail/SKILL.md` | Core lazy senior dev mode — YAGNI ladder, minimum code, root-cause fixes |
+| 2 | ponytail-audit | `node_modules/@dietrichgebert/ponytail/skills/ponytail-audit/SKILL.md` | Audit mode — codebase waste, dead code, over-engineering detection |
+| 3 | ponytail-debt | `node_modules/@dietrichgebert/ponytail/skills/ponytail-debt/SKILL.md` | Technical debt assessment and prioritization |
+| 4 | ponytail-gain | `node_modules/@dietrichgebert/ponytail/skills/ponytail-gain/SKILL.md` | Gain mode — maximum ROI, leverage existing code |
+| 5 | ponytail-help | `node_modules/@dietrichgebert/ponytail/skills/ponytail-help/SKILL.md` | Help system for ponytail commands |
+| 6 | ponytail-review | `node_modules/@dietrichgebert/ponytail/skills/ponytail-review/SKILL.md` | Code review with ponytail lens — minimal diffs, YAGNI enforcement |
+
+**Commands:** `/ponytail`, `/ponytail-audit`, `/ponytail-debt`, `/ponytail-gain`, `/ponytail-help`, `/ponytail-review`
+
+---
 ## Quick Reference
 ```
 .
@@ -126,6 +143,14 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 │       └── waybill-template-debug/
 ├── .opencode/
 │   └── agents/          ← 232 upstream agency-agents (18 divisions)
+├── node_modules/
+│   └── @dietrichgebert/
+│       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
+│           ├── skills/  (ponytail, audit, debt, gain, help, review)
+│           ├── hooks/   (10 runtime hooks)
+│           └── .opencode/
+│               ├── plugins/ponytail.mjs  ← Entry point
+│               └── command/ (6 ponytail commands)
 ```
 ---
 *Last updated: June 30, 2026, 9:00 AM*
