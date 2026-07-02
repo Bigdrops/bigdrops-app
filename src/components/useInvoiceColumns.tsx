@@ -1,6 +1,37 @@
 import { useCallback, useState } from 'react'
 import type { ColumnConfig } from '../domain/invoice/types'
 
+import {
+  BUILTIN_COLUMNS,
+  COLUMN_TYPES,
+  makeEmptyItem,
+  makeEmptyGroup,
+  makeFieldEntry,
+  makeExtraCharge,
+  ensureUiKey,
+  normalizeFieldEntries,
+  normalizeExtraCharges,
+  normalizeQuantity,
+  toDbItem,
+  buildCalculationInputs,
+  extractCalculationInputs,
+  buildEditableCalculationInputs,
+  filterPopulatedAdditionalFields,
+  resolveInstallRate,
+  getActiveColumns,
+  getPdfColumns,
+  getPdfCellValue,
+  normalizeColumnConfig,
+  normalizeVisibilityMode,
+  resolveColumnBehavior,
+  shouldIncludeColumnInTotals,
+  inferLegacyCalculationInputs,
+  inferLegacyCalculationState,
+  resolveRowVat,
+  calcTotals,
+  getResetColumnConfigs,
+} from '../domain/invoice'
+
 export {
   BUILTIN_COLUMNS,
   COLUMN_TYPES,
@@ -9,7 +40,6 @@ export {
   makeFieldEntry,
   makeExtraCharge,
   ensureUiKey,
-  mergeColumnConfigs,
   normalizeFieldEntries,
   normalizeExtraCharges,
   normalizeQuantity,
@@ -34,12 +64,6 @@ export {
 
 const normalizeTitle = (title: string) => 
   title.trim().toLowerCase().replace(/\s+/g, ' ')
-
-import {
-  BUILTIN_COLUMNS,
-  getResetColumnConfigs,
-  normalizeColumnConfig,
-} from '../domain/invoice'
 
 export interface InvoiceColumn extends ColumnConfig {
   width?: string
@@ -121,26 +145,19 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
   const resetColumns = () => 
     setColumns(getResetColumnConfigs().map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn))
     
-  const moveColumn = (key: string, dir: number) => setColumns(cols => {
+  const moveColumn = (key: string, targetIdx: number) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)
     if (idx < 0) return cols
     if (key === 'description') return cols
-    
-    if (typeof dir === 'number' && Math.abs(dir) !== 1) {
-      let newIdx = dir
-      if (newIdx < 0 || newIdx >= cols.length) return cols
-      if (newIdx === 0) newIdx = 1
-      const next = [...cols]
-      const [col] = next.splice(idx, 1)
-      next.splice(newIdx, 0, col)
-      return next
-    }
-    
-    let newIdx = idx + dir
+    if (targetIdx === idx) return cols
+
+    let newIdx = targetIdx
     if (newIdx < 0 || newIdx >= cols.length) return cols
     if (newIdx === 0) newIdx = 1
+
     const next = [...cols]
-    ;[next[idx], next[newIdx]] = [next[newIdx], next[idx]]
+    const [col] = next.splice(idx, 1)
+    next.splice(newIdx, 0, col)
     return next
   })
   

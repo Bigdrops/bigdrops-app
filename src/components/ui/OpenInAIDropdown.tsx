@@ -112,7 +112,7 @@ export function OpenInAIDropdown({
 
   return (
     <div className={cn("inline-flex items-center", className)}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -129,7 +129,7 @@ export function OpenInAIDropdown({
           side="top"
           align="center"
           sideOffset={8}
-          className="w-auto flex flex-row gap-1 p-1.5"
+          className="z-[9999] w-auto flex flex-row gap-1 p-1.5"
         >
           {AI_PROVIDERS.map((provider) => (
             <button

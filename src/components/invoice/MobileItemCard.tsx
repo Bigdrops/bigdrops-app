@@ -387,13 +387,23 @@ function MobileItemCard({
               return (
                 <div key={col.key} className="min-w-0">
                   <label className={labelCls}>{col.label}</label>
-                  <NumericInput
-                    value={val}
-                    onChange={(nextVal) => {
-                      onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
-                    }}
-                    className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
-                  />
+                  {col.type === 'number' ? (
+                    <NumericInput
+                      value={val}
+                      onChange={(nextVal) => {
+                        onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
+                      }}
+                      className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                    />
+                  ) : (
+                    <Input
+                      value={val}
+                      onChange={(e) => {
+                        onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: e.target.value })
+                      }}
+                      className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                    />
+                  )}
                 </div>
               )
             })}
@@ -473,7 +483,7 @@ function itemCardAreEqual(prevProps: MobileItemCardProps, nextProps: MobileItemC
   if (prevProps.getColumn !== nextProps.getColumn) return false
 
   if (prevProps.invoice !== nextProps.invoice) return false
-  if (prevProps.customColumns !== nextProps.customColumns) return false
+  if (JSON.stringify(prevProps.customColumns) !== JSON.stringify(nextProps.customColumns)) return false
 
   const a = prevProps.item
   const b = nextProps.item

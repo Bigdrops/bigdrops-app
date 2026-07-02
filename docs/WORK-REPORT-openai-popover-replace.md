@@ -23,10 +23,18 @@ Replaced the custom portal-based popup mechanism in `OpenInAIDropdown` with the 
 ### Added
 
 - `Popover`, `PopoverContent`, `PopoverTrigger` imports from `@/components/ui/popover`
-- Controlled `<Popover open={isOpen} onOpenChange={setIsOpen}>` wrapper
+- Controlled `<Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>` wrapper
 - `<PopoverTrigger asChild>` wrapping the trigger button
 - `<PopoverContent side="top" align="center" sideOffset={8}>` containing the icon grid
+- `z-[9999]` class on PopoverContent to render above Sheet overlay
 - `w-auto` class on PopoverContent to override default `w-72` and fit the icon row
+
+### Fix: Sheet Overlay Escape (Round 2)
+
+The initial shadcn Popover implementation rendered inside the Sheet's stacking context, causing the popover to be trapped behind the overlay. Fixed by:
+
+1. `modal={true}` on `<Popover>` — tells Radix to portal content outside any ancestor stacking context
+2. `z-[9999]` on `<PopoverContent>` — ensures the portaled content renders above the Sheet's overlay z-index
 
 ### Kept Unchanged
 

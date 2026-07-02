@@ -85,31 +85,6 @@ export function normalizeColumnConfig(column: ColumnConfig): ColumnConfig {
   }
 }
 
-export function mergeColumnConfigs(columns: ColumnConfig[] = []): ColumnConfig[] {
-  if (!Array.isArray(columns) || columns.length === 0) {
-    return BUILTIN_COLUMNS.map((column) => normalizeColumnConfig({ ...column }))
-  }
-
-  const builtinByKey = new Map(BUILTIN_COLUMNS.map((column) => [column.key, column]))
-  const savedByKey = new Map(columns.map((column) => [column.key, column]))
-  const seenBuiltinKeys = new Set<string>()
-
-  const merged: ColumnConfig[] = columns.map((saved) => {
-    const builtin = builtinByKey.get(saved.key)
-    if (builtin) {
-      seenBuiltinKeys.add(saved.key)
-      return normalizeColumnConfig({ ...builtin, ...saved })
-    }
-    return normalizeColumnConfig(saved)
-  })
-
-  const missingBuiltins = BUILTIN_COLUMNS
-    .filter((column) => !seenBuiltinKeys.has(column.key))
-    .map((column) => normalizeColumnConfig({ ...column, ...(savedByKey.get(column.key) || {}) }))
-
-  return [...merged, ...missingBuiltins]
-}
-
 function isEmptyColumnValue(value: unknown): boolean {
   return value === null || value === undefined || value === ''
 }

@@ -30,7 +30,6 @@ import {
   BUILTIN_COLUMNS,
   buildCalculationInputs,
   inferLegacyCalculationState,
-  mergeColumnConfigs,
   makeEmptyGroup,
   makeEmptyItem,
   makeExtraCharge,
@@ -42,6 +41,7 @@ import {
   useInvoiceColumns,
 } from '../components/useInvoiceColumns'
 import { computeDocument, type ComputedItem, type ComputedGroup } from '../lib/Calculations'
+import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
@@ -165,7 +165,7 @@ export default function EditInvoice() {
           setAdditionalFields(normalizeAdditionalFieldEntries(parsed.additionalFields, parsed.bottom))
           setExtraCharges(normalizeExtraCharges(parsed.extraCharges))
           if (parsed.chargeLabels) setChargeLabels(parsed.chargeLabels as any)
-          if (parsed.columnConfig) setColumns(mergeColumnConfigs(parsed.columnConfig as any[]))
+          if (parsed.columnConfig) setColumns(resolveFinancialColumns(parsed.columnConfig as any[]))
           if (parsed.notesTitle) setNotesTitle(parsed.notesTitle as any)
           if (parsed.termsTitle) setTermsTitle(parsed.termsTitle as any)
           if (parsed.attachments) setAttachments(parsed.attachments as any)

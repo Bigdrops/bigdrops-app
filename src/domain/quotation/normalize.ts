@@ -2,8 +2,6 @@ import {
   BUILTIN_COLUMNS,
   ensureUiKey,
   inferLegacyCalculationState,
-  mergeColumnConfigs,
-  normalizeColumnConfig,
   normalizeQuantity,
   normalizeAdditionalFieldEntries,
   normalizeFieldEntries,
@@ -11,6 +9,7 @@ import {
   toNumber,
   toNullableDate,
 } from '@/domain/invoice'
+import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import type { InvoiceItem } from '@/domain/invoice'
@@ -142,7 +141,7 @@ export function buildQuotationFormState(
       })
     : [ensureUiKey({ description: '', quantity: 1, unit_price: 0, row_type: 'standard', custom_data: {} })]
 
-  const columns = mergeColumnConfigs(Array.isArray(customFields.columnConfig) ? customFields.columnConfig : [])
+  const columns = resolveFinancialColumns(Array.isArray(customFields.columnConfig) ? customFields.columnConfig : [])
 
   const legacyCalculationState = inferLegacyCalculationState({
     invoice: quotationRow,

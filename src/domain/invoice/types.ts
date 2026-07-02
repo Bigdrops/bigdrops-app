@@ -352,6 +352,7 @@ export interface InvoiceCustomFields {
   bottom?: Array<Record<string, unknown>>
   conversionTrail?: DocumentConversionTrail
   advance_invoice?: AdvanceConfig
+  columnConfig?: ColumnConfig[]
   [key: string]: unknown
 }
 
