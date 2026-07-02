@@ -25,6 +25,7 @@
 - `items` JSONB arrays must pass structural validation — non-empty, each item must have `description` + `qty`, and `qty > 0` — enforced by `check_items_json_structure`.
 - Waybill `type` field is restricted to `'external'` or `'internal'` — enforced by `check_waybill_type`.
 - All document numbering (invoice, quotation, waybill, RFQ, CSR, BOQ, project) MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Prefixes are resolved at runtime via `resolvePrefix()` — never hardcode a prefix string in generation logic.
+- All document lifecycle operations (edit, duplicate, revert) MUST follow `docs/STANDARD/document-transformation-standard.md`. Prescriptive — defines state-aware edit locking, duplication rules, and invoice-only revert behavior across all document types.
 - Lint excludes: `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
 - New document modules that support JSON import MUST follow `docs/STANDARD/json-import-standard.md`. Prescriptive — all prompts, schemas, adapters, and UI integration must conform.
 - New document modules with configurable columns MUST follow `docs/STANDARD/document-column-standard.md`. Prescriptive — all column ordering, persistence, drag, and initialization must conform.
@@ -230,3 +231,4 @@ Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.cl
 
 <!-- gitnexus:end -->
 ```
+
