@@ -299,7 +299,96 @@ Of 3 integration events:
 
 ---
 
-## 4. Gap Severity Summary
+## 4. Deep Architectural Verification
+
+### 4.1 Verified Data Flow (from execution trace)
+
+```
+[src/lib/Calculations.ts:computeDocument()]
+  ↓ computes: subtotal, vat, wht, discount, total, grand_total
+  ↓ stores in: invoices.{subtotal, vat, wht, discount, total, grand_total}
+  ↓ called by: both invoice and quotation modules
+  ↓ NEVER recalculated at payment or compliance layer
+
+[src/domain/invoice/calculations.ts:calcTotals()]
+  ↓ invoice-specific wrapper, same calculations
+  ↓ also called by quotation domain (imports invoice calculations)
+  ⚠️ duplicate logic with Calculations.ts
+
+[src/modules/invoices/services/paymentService.ts:recordInvoicePayment()]
+  ↓ receives normalized PaymentInput (cash_amount, wht_amount, amount)
+  ↓ calls paymentRepository.insertPayment()
+    → hardcodes wht_rate: null, wht_type: null
+    → never calls any calculation function
+  ↓ queries invoice_financials_v for computed_status
+  ↓ updates invoices.status (paid|partially_paid)
+  ↓ records audit event via audit.ts
+
+[src/domain/invoice/financialState.ts:calculateInvoiceFinancialState()]
+  ↓ derives: balanceDue, settledAmount, paymentState, overpaymentAmount
+  ↓ pure function — no side effects, no DB calls
+  ⚠️ clamps balance to 0 (TS), SQL view allows negative
+
+[Compliance Hub — Independent CRUD]
+  ↓ WhtReceiptsPanel: inserts into wht_receipts (direct supabase, no service layer)
+  ↓ VatInputsPanel: inserts into tax_input_entries (direct supabase)
+  ↓ TaxFilingsPanel: inserts into tax_filings (direct supabase)
+  ↓ TaxRemindersPanel: inserts into tax_reminders (direct supabase)
+  ↓ NO event-driven hooks from invoice/payment lifecycle
+  ↓ NO consumption of financial state projections
+```
+
+### 4.2 Architecture Violations (Evidence Trace)
+
+| # | Violation | Source | Line | Target | Risk |
+|---|-----------|--------|------|--------|------|
+| V1 | Compliance panels bypass service/repository layer | `WhtReceiptsPanel.tsx` | 193 | `supabase.from('wht_receipts').insert()` | Adding validation or events requires rewriting all panels |
+| V2 | Payment WHT metadata explicitly nulled | `paymentRepository.ts` | 27-28 | `wht_rate: null, wht_type: null` | WHT context lost at payment time |
+| V3 | Payment entry helpers ignore WHT input | `paymentEntryHelpers.ts` | 38 destructures, 50 returns 0 | `whtDeducted` param unused | UI cannot record WHT |
+| V4 | Dual calculation engines | `Calculations.ts` + `domain/invoice/calculations.ts` | Both | Same formulas duplicated | Fixes must apply to both |
+| V5 | Reports query DB directly | `ReceivablesSection.tsx`, `ProjectsSection.tsx` | Various | `supabase.from(...).select('*')` | Bypasses projection layer |
+| V6 | Compliance is fully disconnected CRUD | All Compliance panels | All | No event subscription | No auto-population from lifecycle |
+
+### 4.3 Function-Level Ownership Verification
+
+| Function | File | Line | Actually Does | PRD Claims | Alignment |
+|----------|------|------|---------------|------------|-----------|
+| `computeDocument()` | `src/lib/Calculations.ts` | 700 | Full document calculation (vat, wht, discount, totals) | — engine | ✅ |
+| `calcTotals()` | `src/domain/invoice/calculations.ts` | 310 | Invoice financial totals | — engine | ⚠️ duplicate |
+| `resolveRowVat()` | `src/lib/Calculations.ts` | 350+ | Per-item VAT computation | — engine | ✅ |
+| `recordInvoicePayment()` | `paymentService.ts` | 52 | Insert payment + update status + audit | Settlement orchestration | ✅ |
+| `voidInvoicePayment()` | `paymentService.ts` | 106 | Void payment + update status + audit | Reversal handling | ⚠️ voids only |
+| `insertPayment()` | `paymentRepository.ts` | 19 | DB insert, hardcodes wht_rate: null | WHT snapshot | ❌ V2 |
+| `calculateInvoiceFinancialState()` | `financialState.ts` | 30 | Pure function: balance, payment state | State derivation | ✅ |
+| `getPaymentEntrySummary()` | `paymentEntryHelpers.ts` | 22 | Format payment summary, hardcodes whtDeducted: 0 | WHT display | ❌ V3 |
+| `validatePaymentEntry()` | `paymentEntryHelpers.ts` | 75 | Validate cash > 0, check invoice not paid | Input validation | ✅ |
+| `summarizeComplianceWht()` | `whtSummary.ts` | 26 | Cross-ref invoices → payments → receipts | WHT compliance | ⚠️ always 0 |
+| `getInvoiceActionAvailability()` | `invoiceActionAvailability.ts` | 10 | Gate canRecordPayment, canEdit, etc. | Access control | ✅ |
+| `canRecordPayment()` | `invoiceActionAvailability.ts` | 34 | !isPaid && !isArchived | Payment gating | ✅ |
+| `createWhtReceipt()` | `whtReceiptService.ts` | 34 | Insert receipt record | Receipt CRUD | ✅ |
+| `updateWhtReceiptStatus()` | `WhtReceiptsPanel.tsx` | ~250 | Update receipt lifecycle | Receipt lifecycle | ⚠️ direct supabase |
+
+### 4.4 Data Integrity Findings
+
+1. **WHT is always zero because:**
+   - `paymentEntryHelpers.ts:50`: `getPaymentEntrySummary` returns `{ whtDeducted: 0 }`
+   - `paymentRepository.ts:27-28`: `insertPayment` sets `wht_rate: null, wht_type: null`
+   - `whtSummary.ts:55-60`: sums `payment.wht_amount` which is always 0 or null
+   - Net result: Compliance summary can never show accurate WHT from payments
+
+2. **Financial state divergence:**
+   - TS (`financialState.ts:52`): `balanceDue = Math.max(0, invoiceTotal - settled)` — clamps to 0
+   - SQL (`invoice_financials_v:29`): `balance_due = invoice_total - COALESCE(settled, 0)` — allows negative
+   - Risk: Overpaid invoices show `balance_due < 0` in reports but `balanceDue = 0` in TS
+
+3. **Compliance separation:**
+   - Every compliance panel creates its own supabase client connection
+   - No shared service/repository layer for compliance tables
+   - No event queue or trigger connects invoice lifecycle → compliance population
+
+---
+
+## 5. Gap Severity Summary
 
 | Severity | Count | Description |
 |----------|-------|-------------|
@@ -359,7 +448,7 @@ Of 3 integration events:
 
 ---
 
-## 5. Ponytail Quick Wins
+## 6. Ponytail Quick Wins
 
 These are low-effort fixes with high impact, suitable for immediate implementation:
 
@@ -374,7 +463,7 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 
 ---
 
-## 6. Unverified Assumptions
+## 7. Unverified Assumptions
 
 | Assumption | Risk | Verification needed |
 |------------|------|--------------------|
@@ -385,7 +474,7 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 
 ---
 
-## 7. Recommendations (by Ponytail Priority)
+## 8. Recommendations (by Ponytail Priority)
 
 **Do now (ponytail quick wins, < 1 day):**
 1. Remove dead `RecordPaymentModal.tsx`
@@ -405,7 +494,7 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 
 ---
 
-## 8. Verification
+## 9. Verification
 
 | Command | Status |
 |---------|--------|
@@ -417,7 +506,7 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 
 ---
 
-## 9. Appendices
+## 10. Appendices
 
 ### A. Key Files Referenced
 

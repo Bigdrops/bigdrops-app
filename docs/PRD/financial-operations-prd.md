@@ -337,16 +337,70 @@ These are future modules that will consume clean financial events.
 
 ---
 
-## 21. Ownership Matrix
+## 21. Verified Ownership Matrix
 
-| Capability | Owner | Source | Status |
-|------------|-------|--------|--------|
-| Settlement Processing | Payment Service | `paymentService.ts` | ✅ |
-| Calculations | Calculation Engine | `Calculations.ts` | ✅ |
-| Financial State | financialState.ts + invoice_financials_v | dual | ⚠️ |
-| Compliance | Compliance Hub components | `ComplianceHub.tsx` + panels | ✅ |
-| Reports | Report components | `OverviewSection.tsx` etc. | ⚠️ |
-| Audit | audit.ts library | `audit.ts` | ⚠️ |
+### 21.1 Layer-by-Layer Ownership
+
+| Layer | Capability | Owner Module | Entry Point | Status |
+|-------|------------|-------------|-------------|--------|
+| 0 — Calculation Engine | VAT calculation, WHT calculation, discount, subtotal, totals | `src/lib/Calculations.ts` | `computeDocument()` | ✅ |
+| 0 — Calculation Engine | Invoice-specific calc wrapper | `src/domain/invoice/calculations.ts` | `calcTotals()`, `resolveRowVat()` | ⚠️ duplicate |
+| 1 — Payment Recording | Record payment, void payment, normalize input | `src/modules/invoices/services/paymentService.ts` | `recordInvoicePayment()`, `voidInvoicePayment()` | ✅ |
+| 1 — Payment DB | CRUD on payments table | `src/modules/invoices/repositories/paymentRepository.ts` | `insertPayment()`, `fetchPaymentsForInvoice()` | ⚠️ WHT snapshot missing |
+| 2 — Financial State | Balance, settled amount, payment state, overpayment | `src/domain/invoice/financialState.ts` | `calculateInvoiceFinancialState()` | ✅ |
+| 2 — Financial State (SQL) | Same, via view | `invoice_financials_v` in `20260520090010_views.sql` | queried by paymentRepository | ⚠️ dual/diverge |
+| 3 — Action Gating | canEdit, canDelete, canRecordPayment, etc. | `src/modules/invoices/domain/invoiceActionAvailability.ts` | `getInvoiceActionAvailability()` | ✅ |
+| 4 — Payment UI (active) | Payment entry form + validation | `src/components/document-view/invoice/InvoiceRecordPaymentSheet.tsx` | renders inside InvoiceOverlays | ✅ |
+| 4 — Payment UI helpers | Settlement summary, validation | `src/components/invoice/paymentEntryHelpers.ts` | `getPaymentEntrySummary()`, `validatePaymentEntry()` | ⚠️ whtDeducted: 0 |
+| 4 — Payment UI (dead) | Unused modal | `src/components/RecordPaymentModal.tsx` | not imported anywhere | ❌ dead code |
+| 5 — Compliance: WHT | WHT receipt lifecycle + matching | `src/components/compliance/WhtReceiptsPanel.tsx` | renders in ComplianceHub | ✅ violates separation |
+| 5 — Compliance: WHT summary | Cross-reference invoices/payments/receipts | `src/domain/compliance/whtSummary.ts` | `summarizeComplianceWht()` | ⚠️ always 0 WHT |
+| 5 — Compliance: VAT inputs | VAT input CRUD | `src/components/compliance/VatInputsPanel.tsx` | renders in ComplianceHub | ✅ violates separation |
+| 5 — Compliance: Tax filings | Tax filing CRUD | `src/components/compliance/TaxFilingsPanel.tsx` | renders in ComplianceHub | ✅ |
+| 5 — Compliance: Tax reminders | Tax reminder CRUD | `src/components/compliance/TaxRemindersPanel.tsx` | renders in ComplianceHub | ✅ |
+| 5 — Compliance: Settings | Tax settings CRUD | `src/components/compliance/ComplianceSettingsPanel.tsx` | renders in ComplianceHub | ✅ |
+| 6 — Reports | Overview, receivables, collections, projects, tax | Report components | direct Supabase queries | ❌ violates §3.3 |
+| 7 — Audit | Event recording, actor attribution | `src/lib/audit.ts` | direct-call RPCs | ⚠️ incomplete |
+
+### 21.2 Data Flow Verification
+
+```
+[Invoice Module]
+  Computes financial values via:
+    src/lib/Calculations.ts:computeDocument()
+  Stores computed totals in invoices.{subtotal, vat, wht, discount, total}
+       ↓
+[Payment Module]
+  Records settlements via:
+    src/modules/invoices/services/paymentService.ts:recordInvoicePayment()
+      → inserts into payments.{cash_amount, wht_amount, amount}
+      → queries invoice_financials_v for computed_status
+      → updates invoices.status
+    NO tax calculation — only records user-entered amounts
+       ↓
+[Financial State]
+  Derived from payments + invoice total via:
+    src/domain/invoice/financialState.ts:calculateInvoiceFinancialState()
+    invoice_financials_v (SQL view)
+       ↓
+[Compliance — Independent CRUD]
+  WHT receipts:    wht_receipts table (manual insert from WhtReceiptsPanel)
+  VAT inputs:      tax_input_entries table (manual insert from VatInputsPanel)
+  Tax filings:     tax_filings table (manual insert from TaxFilingsPanel)
+  Tax reminders:   tax_reminders table (manual insert from TaxRemindersPanel)
+  Cross-reference: whtSummary.ts summarizes invoices → payments → receipts
+```
+
+### 21.3 Architecture Violations Found
+
+| # | Violation | Source | Target | Impact |
+|---|-----------|--------|--------|--------|
+| V1 | Compliance components write directly to Supabase | `WhtReceiptsPanel.tsx:193`, `VatInputsPanel.tsx:61` | `supabase.from('wht_receipts').insert(...)` | Bypasses service/repository layer — cannot add validation or events |
+| V2 | PaymentRepository hardcodes WHT metadata to null | `paymentRepository.ts:27-28` | `wht_rate: null, wht_type: null` | WHT context lost at payment time — compliance summary shows 0 |
+| V3 | Payment entry helpers ignore whtDeducted param | `paymentEntryHelpers.ts:38` destructures but `:50` hardcodes `0` | input param unused | UI cannot record WHT even if form had the field |
+| V4 | Dual calculation engines with overlapping logic | `src/lib/Calculations.ts` + `src/domain/invoice/calculations.ts` | Same calculations duplicated | Risk of divergence — fixes must apply to both |
+| V5 | Reports query DB directly | `ReceivablesSection.tsx`, `ProjectsSection.tsx` | `supabase.from(...).select('*')` | Violates §3.3 — no projection layer |
+| V6 | Compliance is fully independent CRUD | Compliance components | Direct Supabase calls | No event-driven hooks from invoice/payment lifecycle |
 
 ---
 
