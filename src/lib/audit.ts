@@ -49,7 +49,38 @@ export const PROJECT_TRACKED_FIELDS = [
   'location',
 ]
 
-type AuditEntityType = 'invoice' | 'quotation' | 'project'
+export const CSR_TRACKED_FIELDS = [
+  'csr_number',
+  'client_id',
+  'client_name',
+  'equipment_type',
+  'make',
+  'status',
+  'linked_invoice_id',
+  'project_id',
+  'date',
+  'start_date',
+  'end_date',
+  'po_number',
+]
+
+export const WAYBILL_TRACKED_FIELDS = [
+  'waybill_number',
+  'type',
+  'status',
+  'client_id',
+  'client_name',
+  'project_id',
+  'invoice_id',
+  'purpose',
+  'sender_name',
+  'receiver_name',
+  'date',
+  'delivery_location',
+  'vehicle_plate',
+]
+
+type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill'
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
 
 function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
@@ -275,6 +306,66 @@ export async function recordProjectLinkedActivity(
     p_linked_entity_type: linkedEntityType,
     p_linked_entity_id: linkedEntityId,
     p_linked_entity_label: linkedEntityLabel ?? null,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
+export async function recordCsrCreated(csrId: string, csrNumber: string | null, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_csr_created', {
+    p_csr_id: csrId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
+export async function recordCsrStatusChanged(csrId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_csr_status_changed', {
+    p_csr_id: csrId,
+    p_old_status: oldStatus,
+    p_new_status: newStatus,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
+export async function recordCsrLinked(csrId: string, invoiceId: string, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_csr_linked', {
+    p_csr_id: csrId,
+    p_invoice_id: invoiceId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
+export async function recordWaybillCreated(waybillId: string, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_waybill_created', {
+    p_waybill_id: waybillId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
+export async function recordWaybillStatusChanged(waybillId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_waybill_status_changed', {
+    p_waybill_id: waybillId,
+    p_old_status: oldStatus,
+    p_new_status: newStatus,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',

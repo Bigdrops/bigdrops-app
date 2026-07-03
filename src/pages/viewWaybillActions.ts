@@ -1,18 +1,63 @@
 import { supabase } from '@/supabase'
+import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
 
 export async function archiveWaybillRecord(id: string) {
   const { error } = await supabase.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
+  // ponytail: audit inline, no refactoring
+  try {
+    void recordAuditLog({
+      entityType: 'waybill',
+      recordId: id,
+      action: 'ARCHIVE',
+      oldData: null,
+      newData: null,
+      trackedFields: WAYBILL_TRACKED_FIELDS,
+    })
+  } catch { /* audit failure must not break mutation */ }
 }
 
 export async function deleteWaybillRecord(id: string) {
   const { error } = await supabase.from('waybills').delete().eq('id', id)
   if (error) throw error
+  // ponytail: audit inline, no refactoring
+  try {
+    void recordAuditLog({
+      entityType: 'waybill',
+      recordId: id,
+      action: 'DELETE',
+      oldData: null,
+      newData: null,
+      trackedFields: WAYBILL_TRACKED_FIELDS,
+    })
+  } catch { /* audit failure must not break mutation */ }
 }
 
 export async function updateWaybillStatus(id: string, status: string) {
+  // Fetch old status before update for activity_events
+  let oldStatus: string | null = null
+  try {
+    const { data } = await supabase.from('waybills').select('status').eq('id', id).single()
+    oldStatus = data?.status ?? null
+  } catch { /* ponytail: best-effort old status */ }
+
   const { error } = await supabase.from('waybills').update({ status }).eq('id', id)
   if (error) throw error
+
+  // ponytail: audit inline, no refactoring
+  try {
+    void recordAuditLog({
+      entityType: 'waybill',
+      recordId: id,
+      action: 'STATUS_CHANGE',
+      oldData: { status: oldStatus },
+      newData: { status },
+      trackedFields: WAYBILL_TRACKED_FIELDS,
+    })
+    // Lazy import to avoid circular dependency at module load
+    const { recordWaybillStatusChanged } = await import('@/lib/audit')
+    void recordWaybillStatusChanged(id, oldStatus, status)
+  } catch { /* audit failure must not break mutation */ }
 }
 
 export async function duplicateWaybillRecord(id: string) {
@@ -39,5 +84,22 @@ export async function duplicateWaybillRecord(id: string) {
   }]).select().single()
 
   if (insertError) throw insertError
+
+  // ponytail: audit inline, no refactoring
+  if (created) {
+    try {
+      void recordAuditLog({
+        entityType: 'waybill',
+        recordId: created.id,
+        entityLabel: created.waybill_number,
+        action: 'CREATE',
+        oldData: null,
+        newData: created,
+        trackedFields: WAYBILL_TRACKED_FIELDS,
+      })
+      void recordWaybillCreated(created.id)
+    } catch { /* audit failure must not break mutation */ }
+  }
+
   return created
 }

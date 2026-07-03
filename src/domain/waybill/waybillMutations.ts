@@ -4,6 +4,7 @@ import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
+import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -100,6 +101,19 @@ export async function saveWaybill(params: {
       throw new Error(`Failed to save waybill: ${error.message}`)
     }
     invalidateListCache('bd:list:waybills:v1:all')
+    // Audit: fire-and-forget after successful create
+    try {
+      void recordAuditLog({
+        entityType: 'waybill',
+        recordId: data?.id ?? '',
+        entityLabel: waybillNumber,
+        action: 'CREATE',
+        oldData: null,
+        newData: payload,
+        trackedFields: WAYBILL_TRACKED_FIELDS,
+      })
+      void recordWaybillCreated(data?.id ?? '')
+    } catch { /* ponytail: audit failure must not break mutation */ }
     return { status: 'online', waybillId: data?.id }
   } else {
     if (!waybillId) throw new Error("waybillId is required in edit mode");
@@ -109,6 +123,18 @@ export async function saveWaybill(params: {
       throw new Error(`Failed to update waybill: ${error.message}`)
     }
     invalidateListCache('bd:list:waybills:v1:all')
+    // Audit: fire-and-forget after successful update
+    try {
+      void recordAuditLog({
+        entityType: 'waybill',
+        recordId: waybillId,
+        entityLabel: waybillNumber,
+        action: 'UPDATE',
+        oldData: null,
+        newData: payload,
+        trackedFields: WAYBILL_TRACKED_FIELDS,
+      })
+    } catch { /* ponytail: audit failure must not break mutation */ }
     return { status: 'online', waybillId }
   }
 }

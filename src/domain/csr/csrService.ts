@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { recordAuditLog, recordCsrCreated, recordCsrStatusChanged, recordCsrLinked, CSR_TRACKED_FIELDS } from '@/lib/audit'
 
 export type CsrRow = {
   id: string
@@ -114,6 +115,20 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
     throw err
   }
 
+  // Audit: fire-and-forget after successful create
+  try {
+    void recordAuditLog({
+      entityType: 'csr',
+      recordId: data.id,
+      entityLabel: data.csr_number,
+      action: 'CREATE',
+      oldData: null,
+      newData: csrData,
+      trackedFields: CSR_TRACKED_FIELDS,
+    })
+    void recordCsrCreated(data.id, data.csr_number)
+  } catch { /* ponytail: audit failure must not break mutation */ }
+
   return data as CreatedCsr
 }
 
@@ -132,6 +147,19 @@ export async function updateCsr(id: string, csrData: Record<string, unknown>): P
     console.error('[csrService] updateCsr supabase error', JSON.stringify(error, null, 2))
     throw error
   }
+
+  // Audit: fire-and-forget after successful update
+  try {
+    void recordAuditLog({
+      entityType: 'csr',
+      recordId: id,
+      entityLabel: csrData.csr_number as string | null ?? null,
+      action: 'UPDATE',
+      oldData: null,
+      newData: csrData,
+      trackedFields: CSR_TRACKED_FIELDS,
+    })
+  } catch { /* ponytail: audit failure must not break mutation */ }
 }
 
 export async function loadCsrsFromSupabase(): Promise<CsrRow[]> {
@@ -190,6 +218,20 @@ export async function attachInvoiceToCsr(csrId: string, invoiceId: string) {
   if (fetchError) {
     throw fetchError
   }
+
+  // Audit: fire-and-forget after successful link
+  try {
+    void recordAuditLog({
+      entityType: 'csr',
+      recordId: csrId,
+      entityLabel: data.csr_number,
+      action: 'LINK',
+      oldData: null,
+      newData: { linked_invoice_id: invoiceId },
+      trackedFields: CSR_TRACKED_FIELDS,
+    })
+    void recordCsrLinked(csrId, invoiceId)
+  } catch { /* ponytail: audit failure must not break mutation */ }
 
   return data as CsrRow
 }
