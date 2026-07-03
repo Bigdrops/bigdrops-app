@@ -1,398 +1,284 @@
 You are working on the BIGDROPS business platform.
+
 Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
 Runtime: Bun. Never use npm or yarn.
 
 ==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
+BEFORE YOU BEGIN — READ AGENTS.md
 ==================================================
-1. Read `docs/PROJECTSKILLINDEX.md` first.
-2. Load the following skills:
-   - Karpathy
-   - frontend-design
-   - typescript-advanced-types
-3. For each skill: Attempt to load via the skill system. If it fails, fallback to direct file read from disk (e.g. `.claude/skills/...`).
-4. If any critical skill is unreadable, stop and report the error immediately.
-5. Read `AGENTS.md` before any editing or implementation work.
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
-Save a full detailed report to:
+You have full file access. Immediately read AGENTS.md.
 
-`docs/Reports/invoice-toolbar-restoration-and-group-behaviour.md`
+It contains:
 
-The report MUST include:
+- Skill loading protocol (with failsafe)
+- Reporting protocol (save to docs/Reports/{domain}/)
+- Report quality standards
+- Hard architecture rules, no-touch zones, and business behaviour preservation rules
+- Standards hierarchy (AGENTS.md > docs/STANDARD/* > module documentation)
 
-- Architecture summary
-- Files read
-- Files modified
-- Root cause
-- Before/After UI comparison
-- Before/After movement logic
-- Decisions taken
-- Risks
-- Verification
-- Screenshots/ASCII layouts where useful
+All of these apply to this task. Do not ask for them to be repeated.
+
+Immediately load the appropriate skills:
+
+- Karpathy
+- typescript-advanced-types
+- frontend-design
+
+Run:
+
+`bun run audit:load`
+
+before implementation.
 
 ---
 
 # CONTEXT
 
-A previous implementation introduced regressions into the shared Invoice/Quotation line item toolbar.
+Invoice normalization is complete.
 
-Invoice and Quotation both use the same shared form components.
+The Document Transformation Standard is authoritative.
 
-Any toolbar or grouping modification affects BOTH forms simultaneously.
+The Edit Law requires document identity to remain immutable after creation.
 
-The objective is to restore the original UX while preserving only the requested improvements.
+The Invoice module already contains the Domain invariant:
 
-Use commit:
+`src/domain/invoice/assertIdentityImmutable.ts`
 
-`33628b19b2d8485584010dfcc8b0827b31dfabd9`
+However, the Invoice module is not yet fully aligned with the standard:
 
-as the visual and behavioural reference for the toolbar.
+- the existing invariant no longer reflects the current Invoice identity contract
+- the invariant is not invoked
+- the edit UI currently allows client identity to be modified
 
-Do NOT redesign the toolbar.
+This task completes Edit Law compliance.
 
-Restore it.
-
-Then apply only the requested additions.
+Do not redesign the Invoice architecture.
 
 ---
 
 # OBJECTIVE
 
-Complete FOUR tasks.
+Bring the Invoice module into full compliance with the Edit Law by:
 
-1. Restore the toolbar to its original design.
-2. Remove duplicate row-count information.
-3. Investigate and repair the "Escanor effect" in grouping behaviour.
-4. Investigate drag-and-drop by completing the existing template before introducing new architecture.
+1. Reconciling the existing `assertIdentityImmutable` invariant with the current Invoice identity contract.
+2. Preventing identity mutation through the edit UI.
+3. Invoking the existing invariant from one canonical enforcement point before persistence.
+
+Do not create new validators.
+
+Do not introduce new abstractions.
 
 ---
 
 # SCOPE
 
-Modify only the components directly involved in:
+Work only on the Invoice module.
 
-- shared line item toolbar
-- invoice line item movement
-- quotation line item movement
-- drag/drop integration
+Do not modify:
 
-Do not redesign unrelated UI.
+- Quotation
+- Waybill
+- CSR
+- RFQ
+- BOQ
 
-Do not change invoice calculations.
-
-Do not change imports.
-
-Do not change PDF generation.
-
-Do not change database schemas.
-
-Do not invent new workflows.
-
-Do not introduce new concepts.
+Only make compatibility fixes outside Invoice if required for compilation.
 
 ---
 
-# TASK 1 — RESTORE TOOLBAR
+# REQUIREMENTS
 
-Compare the current toolbar against commit:
+## 1. Reconcile the Existing Domain Invariant
 
-`33628b19b2d8485584010dfcc8b0827b31dfabd9`
+Review:
 
-Restore:
+- `docs/STANDARD/document-transformation-standard.md`
+- `src/domain/invoice/assertIdentityImmutable.ts`
 
-- spacing
-- alignment
-- sizing
-- icon sizing
-- padding
-- button order
+Update the existing invariant to match the current Invoice identity contract.
 
-Exactly.
+Do not duplicate logic.
 
-The toolbar should contain only:
+Do not create a second identity validator.
 
-- Import
-- Clear All (NEW)
-- Settings
-
-Requirements:
-
-- Import keeps its original size.
-- Settings keeps its original size.
-- Clear uses identical sizing and styling.
-- Clear must NOT become the visual centrepiece.
-- Settings remains right-aligned.
-- No horizontal overflow.
-- No scrolling.
-- No oversized buttons.
-- No new toolbar buttons.
-
-The large dotted buttons below remain exactly as before:
-
-- Add Item
-- Add Group
-
-Do not duplicate those actions in the toolbar.
+If Invoice-specific identity differs from the generic Transformation Standard terminology, document the mapping.
 
 ---
 
-# TASK 2 — REMOVE DUPLICATE ROW COUNTER
+## 2. Enforce Identity in the UI
 
-Current UI displays:
+Saved invoices must not allow identity mutation.
 
-Line Items (5 items)
+Ensure:
 
-AND
+- client identity cannot be changed in edit mode
+- client remains selectable during creation
+- existing client information remains visible
 
-5 rows
-
-These communicate the same information.
-
-Remove ONLY the secondary "Rows" counter.
-
-Keep:
-
-Line Items (X items)
-
-This becomes the single source of truth.
-
-Do not replace it with another counter.
-
-Do not introduce badges.
-
-Do not move the existing header.
+Keep the user experience consistent with the rest of the application.
 
 ---
 
-# TASK 3 — INVESTIGATE THE "ESCANOR EFFECT"
+## 3. Wire the Canonical Enforcement Point
 
-Current behaviour:
+Identify the correct lifecycle boundary for identity validation.
 
-Groups behave as though they cannot have anything above them.
+Invoke the existing Domain invariant from exactly one canonical location.
 
-Examples:
+The invariant must execute before persistence.
 
-Rows:
-
-1
-2
-3
-
-Create group from:
-
-4
-5
-
-Leave:
-
-6
-
-Expected:
-
-1
-2
-3
-
-Group
-4
-5
-
-6
-
-Actual:
-
-The group jumps to the beginning or bottom despite its internal ordering.
-
-Investigate why.
-
-Do NOT patch symptoms.
-
-Find the architectural cause.
-
-Questions to answer:
-
-- Is movement operating on the group header only?
-- Is insertion position calculated incorrectly?
-- Is normalization relocating headers?
-- Is commitGrouping responsible?
-- Is invoice behaviour different from quotation?
-- Which function ultimately reorders the array?
-
-Produce an architecture diagram.
-
-Then repair the logic.
-
-Goal:
-
-Treat a group as one movable block.
-
-Not as a special row.
-
-Moving a group should move:
-
-Header
-
-+
-
-Every child
-
-as one contiguous block.
-
-Groups must no longer "fight" surrounding rows.
+Do not invoke it from multiple locations.
 
 ---
 
-# TASK 4 — DRAG & DROP INVESTIGATION
+## 4. Preserve Architectural Ownership
 
-Before adding any dependency:
+Maintain ownership boundaries.
 
-Inspect
+Domain:
 
-`docs/TEMPLATES/React-temps/sortable.tsx`
+- identity rules
+- immutable identity invariant
 
-Determine:
+InvoiceFormPage:
 
-- Is it unfinished?
-- Is it disconnected?
-- Is it outdated?
-- Is it already compatible?
-- Why isn't it currently working?
+- validation coordination
+- save orchestration
+- user feedback
 
-Do NOT introduce dnd-kit or any new dependency until proving the existing template cannot be completed.
+Services:
 
-If existing infrastructure can be finished:
+- persistence
 
-Use it.
+UI:
 
-Only if impossible:
+- presentation
+- interaction
 
-Document exactly why.
-
-Then justify introducing any dependency.
+Do not move business rules into UI components or React hooks.
 
 ---
 
-# MOVEMENT BEHAVIOUR REQUIREMENTS
+## 5. Preserve Existing Behaviour
 
-Dragging or moving must eventually support:
+Outside Edit Law enforcement, preserve:
 
-✓ Item above a group
+- calculations
+- validation
+- duplicate
+- revert
+- conversion
+- import
+- attachments
+- PDF generation
+- audit behaviour
+- navigation
+- save pipeline
 
-✓ Item below a group
-
-✓ Item into a group
-
-✓ Item out of a group
-
-✓ Moving an entire group
-
-✓ Preserving contiguous group blocks
-
-No jumping.
-
-No teleporting.
-
-No automatic relocation.
-
-No forced movement to the beginning.
-
-No forced movement to the bottom.
-
-Movement should feel similar to Excel row manipulation.
+No behavioural regression is acceptable.
 
 ---
 
-# FILES TO READ
+## 6. Preserve Audit Behaviour
 
-Minimum:
+Do not modify:
 
-- `src/components/document/FormLineItems.tsx`
-- `src/components/document/SharedDocumentForm.tsx`
-- `src/pages/NewInvoice.tsx`
-- `src/pages/EditInvoice.tsx`
-- `src/components/quotation/QuotationForm.tsx`
-- `src/components/quotation/useQuotationLineItems.ts`
-- `src/components/invoice/MobileItemCard.tsx`
-- `src/components/invoice/MobileGroupCard.tsx`
-- `docs/TEMPLATES/React-temps/sortable.tsx`
+- audit events
+- execution order
+- payloads
+- timing
 
-Also inspect any movement utilities discovered during tracing.
+Identity validation must occur before persistence and before any audit event that would otherwise commit an invalid mutation.
 
 ---
 
 # CONSTRAINTS
 
+- No Invoice redesign.
+- No further normalization.
+- No generic validation framework.
+- No duplicate validation logic.
 - Preserve backward compatibility.
-- No feature regressions.
-- Keep modules under project limits.
-- No duplicated movement logic.
-- Do not redesign the toolbar.
-- Do not redesign grouping.
-- Repair behaviour rather than replacing architecture.
-- Invoice and Quotation must remain behaviourally identical.
+- Preserve existing business behaviour.
 
 ---
 
 # REQUIRED VERIFICATION
 
-Run in order:
+Run:
 
-```
-bun run audit:load
-bun run typecheck
-bun run build
-```
+1. `bun run audit:load`
+2. `bun run typecheck`
+3. `bun run build`
 
-Additionally verify manually:
+Manually verify:
 
-- Toolbar matches commit reference.
-- Settings never disappears.
-- Clear All appears only when appropriate.
-- No duplicate row counter exists.
-- Groups remain where placed.
-- Moving a group no longer causes jumping.
-- Drag handle behaviour verified.
-- Invoice and quotation remain synchronized.
+### Edit Law
+
+- Saved client identity cannot change.
+- Valid edits continue to succeed.
+
+### Duplicate Law
+
+- No regression.
+
+### Revert Law
+
+- No regression.
+
+### Audit
+
+Verify:
+
+- Invoice creation
+- Invoice update
+- Duplicate
+- Convert
+- Revert
+
+Confirm audit behaviour is unchanged.
 
 ---
 
 # OUTPUT
 
-Provide:
+Save the implementation report to:
 
-1. Root cause for the Escanor effect.
+`docs/Reports/invoice-quote/invoice-edit-law-compliance.md`
 
-2. Root cause for drag-and-drop not functioning.
+Include:
 
-3. Toolbar comparison:
-
-- Before
-- After
-- Commit reference
-
-4. Files modified.
-
-5. Behaviour comparison.
-
-6. Any architectural debt discovered.
-
-7. Verification results.
-
-Do not omit failures.
-
-If something cannot be completed, explain exactly why.
+1. Executive Summary
+2. Files Modified
+3. Identity Contract Mapping
+4. Canonical Enforcement Point
+5. UI Changes
+6. Domain Changes
+7. Behaviour Verification
+8. Transformation Standard Verification
+9. Audit Verification
+10. Risks
+11. Deferred Work
 
 ---
 
 # STOP CONDITION
 
-Stop immediately if the existing sortable template can be completed without introducing new dependencies.
+Stop immediately after:
 
-Do not replace existing architecture until that investigation is complete.
+- updating the existing invariant
+- enforcing identity immutability in the UI
+- wiring the canonical enforcement point
+- completing verification
+- writing the implementation report
+
+Do not begin:
+
+- Quotation work
+- additional Invoice normalization
+- lifecycle redesign
+- cross-document consolidation
 
 ---
 
@@ -400,11 +286,13 @@ Do not replace existing architecture until that investigation is complete.
 
 Done when:
 
-- Toolbar visually matches the pre-regression version.
-- Clear All is the only new toolbar action.
-- Duplicate row counter is removed.
-- Settings is always visible.
-- Group movement no longer exhibits the Escanor effect.
-- Groups behave as contiguous movable blocks.
-- Drag-and-drop has been repaired using the existing template where possible, or a documented justification exists for any new dependency.
-- Invoice and Quotation remain fully synchronized.
+- The Invoice module fully complies with the Edit Law.
+- The existing `assertIdentityImmutable` invariant reflects the current Invoice identity contract.
+- Client identity cannot be modified after invoice creation.
+- The invariant is invoked from one canonical enforcement point.
+- Domain remains the authoritative owner of identity rules.
+- No duplicate validation logic exists.
+- Existing behaviour is preserved outside Edit Law enforcement.
+- `bun run typecheck` passes.
+- `bun run build` passes.
+- Verification confirms no regressions.
