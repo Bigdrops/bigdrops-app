@@ -1,10 +1,5 @@
-import Layout from '../components/Layout'
-import QuotationForm from '../components/quotation/QuotationForm'
+import QuotationFormPage from './QuotationFormPage'
 
 export default function NewQuotation() {
-  return (
-    <Layout title="New Quotation" session={null}>
-      <QuotationForm mode="new" />
-    </Layout>
-  )
+  return <QuotationFormPage mode="create" />
 }
