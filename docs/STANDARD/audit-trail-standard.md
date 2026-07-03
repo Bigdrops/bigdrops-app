@@ -14,7 +14,7 @@ codification of a mechanism that already existed and was already working for
 most action types before this document was written.
 **Evidence basis:**
 - `docs/PRD/audit-trail-integrity-prd.md` (v1.1)
-- `docs/Reports/invoice-quote/` — three audit rounds + implementation +
+- `docs/Reports/Audit-trail/` — three audit rounds + implementation +
   verification reports
 - Live SQL confirmation, 2026-07-03: `PAYMENT_RECORDED` activity_events row
   confirmed present after a real payment recording.

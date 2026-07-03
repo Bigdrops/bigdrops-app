@@ -5,7 +5,7 @@
 **Date:** 2026-07-03
 **Authors:** Sirius 7, Gu Change (peer-reviewed by rector, dorime)
 **Repository path:** `docs/PRD/audit-trail-integrity-prd.md`
-**Evidence basis:** `docs/Reports/invoice-quote/` — three prior audit rounds:
+**Evidence basis:** `docs/Reports/Audit-trail/` — three prior audit rounds:
 1. Payment Recording System — Architecture & Data Flow Audit (DeepSeek)
 2. Financial Operations Architecture Audit (DeepSeek)
 3. Third Audit: Invoice & Quotation Audit-Trail, Financial-State, and Lineage Integrity

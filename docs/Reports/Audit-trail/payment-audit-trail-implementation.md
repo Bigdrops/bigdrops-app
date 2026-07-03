@@ -98,4 +98,4 @@ This report was written by AI Coding Agent on 2026-07-03.
 
 - Running `supabase db push` or `supabase migration up` to apply the migration in dev/staging environments
 - Verifying the `record_payment_voided` RPC works end-to-end in a live Supabase instance
-- Updating the prior audit report (`docs/Reports/invoice-quote/third-audit-trail-financial-lineage.md`) to reflect implementation completion
+- Updating the prior audit report (`docs/Reports/Audit-trail/third-audit-trail-financial-lineage.md`) to reflect implementation completion
