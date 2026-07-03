@@ -50,7 +50,7 @@ export const PROJECT_TRACKED_FIELDS = [
 ]
 
 type AuditEntityType = 'invoice' | 'quotation' | 'project'
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
+type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
 
 function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
   if (!obj) return null
@@ -113,6 +113,7 @@ export async function recordAuditLog({
   if (
     action !== 'CREATE' &&
     action !== 'DELETE' &&
+    action !== 'ARCHIVE' &&
     isSamePayload(p_old_data, p_new_data)
   ) {
     return { data: null, error: null }

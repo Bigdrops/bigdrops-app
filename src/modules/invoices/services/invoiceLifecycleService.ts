@@ -17,6 +17,12 @@ export interface ChangeInvoiceStatusResult {
 
 export async function archiveInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const { data: previousInvoice } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("id", invoiceId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from("invoices")
       .update({ archived_at: new Date().toISOString() })
@@ -24,6 +30,27 @@ export async function archiveInvoice(invoiceId: string): Promise<{ success: bool
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    try {
+      const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import("@/lib/audit")
+      const { data: updatedInvoice } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", invoiceId)
+        .maybeSingle()
+
+      await recordAuditLog({
+        entityType: "invoice",
+        recordId: invoiceId,
+        entityLabel: updatedInvoice?.invoice_number ?? null,
+        action: "ARCHIVE",
+        oldData: previousInvoice,
+        newData: updatedInvoice,
+        trackedFields: INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error("Audit trail failed:", auditErr)
     }
 
     return { success: true }
@@ -34,6 +61,12 @@ export async function archiveInvoice(invoiceId: string): Promise<{ success: bool
 
 export async function deleteInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const { data: invoice } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("id", invoiceId)
+      .maybeSingle()
+
     const { error } = await supabase
       .from("invoices")
       .delete()
@@ -41,6 +74,20 @@ export async function deleteInvoice(invoiceId: string): Promise<{ success: boole
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    try {
+      const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import("@/lib/audit")
+      await recordAuditLog({
+        entityType: "invoice",
+        recordId: invoiceId,
+        entityLabel: invoice?.invoice_number ?? null,
+        action: "DELETE",
+        oldData: invoice,
+        trackedFields: INVOICE_TRACKED_FIELDS,
+      })
+    } catch (auditErr) {
+      console.error("Audit trail failed:", auditErr)
     }
 
     return { success: true }
