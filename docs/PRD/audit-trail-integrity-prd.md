@@ -215,7 +215,21 @@ This PRD is complete when:
 
 ## 11. Documentation Hierarchy (for reference)
 
-```
+```## Appendix: Future Requirement — Standalone Audit Viewer
+
+DELETE and ARCHIVE actions on Invoice and Quotation now write audit_logs rows 
+(Phase 2 implementation). However, these are only accessible via database query 
+— there is no UI surface to view them, since the documents themselves no longer 
+exist on the detail page.
+
+**Future work (not currently prioritized):** Build a standalone Audit Viewer 
+page that allows searching and viewing the complete audit trail for any 
+invoice/quotation, including those that have been deleted or archived. This 
+viewer should be independent of the document's lifecycle state.
+
+Until that viewer exists, audit rows for DELETE/ARCHIVE are permanent but 
+user-inaccessible. This is acceptable — the data is durable and available for 
+forensic/compliance purposes via direct database query or API if needed.
 
 Financial Operations PRD
     ↓ (defines target architecture)
