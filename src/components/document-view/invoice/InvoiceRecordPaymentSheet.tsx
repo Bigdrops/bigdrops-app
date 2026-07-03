@@ -146,15 +146,6 @@ export default function InvoiceRecordPaymentSheet({
         throw new Error(result.error || 'Failed to record payment')
       }
 
-      try {
-        const { recordPaymentRecorded } = await import('@/lib/audit')
-        if (result.paymentId) {
-          await recordPaymentRecorded(invoice.id, settlementSummary.settlementTotal, form.notes.trim() || null)
-        }
-      } catch (auditErr) {
-        console.error('Audit trail failed:', auditErr)
-      }
-
       onSaved()
       onClose()
     } catch (err) {

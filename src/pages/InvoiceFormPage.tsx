@@ -44,6 +44,7 @@ import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { useSettings } from '@/hooks/useSettings'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import { assertIdentityImmutable } from '@/domain/invoice/assertIdentityImmutable'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -366,6 +367,20 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
         description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
       })
       return
+    }
+
+    /* ── Edit Law: identity immutability ── */
+    if (isEdit && hydration.initialInvoiceSnapshot) {
+      try {
+        assertIdentityImmutable(hydration.initialInvoiceSnapshot, invoice)
+      } catch (err: any) {
+        const field = err.message?.replace('IDENTITY_MUTATION_DETECTED: ', '') || 'identity'
+        feedback.error('Identity locked', {
+          description: `${field} cannot be changed after saving. To use a different client or number, please duplicate this document.`,
+        })
+        setSaving(false)
+        return
+      }
     }
 
     const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase as any, {

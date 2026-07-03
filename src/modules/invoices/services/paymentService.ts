@@ -7,7 +7,9 @@ import {
   fetchBankAccounts,
   voidPayment as repositoryVoidPayment,
   syncInvoiceStatusFromFinancials as repositorySyncStatus,
+  fetchPaymentById,
 } from "../repositories/paymentRepository"
+import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 
 interface SettlementSummary {
   cashReceived: number
@@ -59,6 +61,12 @@ export async function recordInvoicePayment(
 
     await updateInvoiceStatus(input.invoiceId, newStatus)
 
+    try {
+      await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null)
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     return {
       success: true,
       paymentId: paymentRow.id,
@@ -97,8 +105,18 @@ export interface VoidPaymentInput {
 
 export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ success: boolean; error?: string }> {
   try {
-    await repositoryVoidPayment(input.paymentId)
+    const payment = await fetchPaymentById(input.paymentId)
+    const amount = payment ? payment.cash_amount + payment.wht_amount : 0
+
+    await repositoryVoidPayment(input.paymentId, input.reason)
     await repositorySyncStatus(input.invoiceId)
+
+    try {
+      await recordPaymentVoided(input.paymentId, input.invoiceId, amount, input.reason || null)
+    } catch (auditErr) {
+      console.error('Audit trail failed:', auditErr)
+    }
+
     return { success: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to void payment"

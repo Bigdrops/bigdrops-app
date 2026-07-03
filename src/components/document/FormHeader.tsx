@@ -15,6 +15,7 @@ interface FormHeaderProps {
   setInvoiceTitle: (val: string) => void
   updateInvoice: (field: string, value: any) => void
   isQuotation: boolean
+  isEdit?: boolean
   onOpenClientPicker: () => void
   customFields: Array<{ id?: string; label?: string; value?: string }>
   onAddHeaderField: () => void
@@ -31,6 +32,7 @@ export function FormHeader({
   setInvoiceTitle,
   updateInvoice,
   isQuotation,
+  isEdit = false,
   onOpenClientPicker,
   customFields,
   onAddHeaderField,
@@ -59,8 +61,13 @@ export function FormHeader({
         <div>
           <button
             type="button"
-            onClick={onOpenClientPicker}
-            className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+            onClick={isEdit ? undefined : onOpenClientPicker}
+            disabled={isEdit}
+            className={`flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border px-4 py-3 text-left transition ${
+              isEdit
+                ? 'border-[var(--bd-border)] bg-[var(--bd-bg2)] opacity-70 cursor-not-allowed'
+                : 'border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]'
+            }`}
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
               <BriefcaseBusiness className="h-4.5 w-4.5" />
@@ -71,7 +78,7 @@ export function FormHeader({
                 {invoice.client_name || 'Select a client'}
               </div>
             </div>
-            <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+            {!isEdit && <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />}
           </button>
         </div>
 
@@ -99,8 +106,9 @@ export function FormHeader({
                   <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bd-text4)]" />
                   <Input
                     value={invoice.invoice_number || ''}
-                    onChange={(event) => updateInvoice('invoice_number', event.target.value)}
-                    className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)]`}
+                    readOnly={isEdit}
+                    onChange={isEdit ? undefined : (event) => updateInvoice('invoice_number', event.target.value)}
+                    className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)] ${isEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>

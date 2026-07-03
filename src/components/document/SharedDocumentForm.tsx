@@ -122,9 +122,10 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
     setAttachments((prev: any[]) => [...prev, { label: '', url: '', _uiKey: crypto.randomUUID() }])
   }, [])
   const handleClientChange = useCallback((id: string, name: string) => {
+    if (props.mode === 'edit') return
     updateInvoice('client_id', id)
     updateInvoice('client_name', name)
-  }, [updateInvoice])
+  }, [updateInvoice, props.mode])
   const handleCloseColumnManager = useCallback(() => setShowColumnManager(false), [])
   const [showActionsSheet, setShowActionsSheet] = useState(false)
   const [showNotesTerms, setShowNotesTerms] = useState(false)
@@ -192,6 +193,7 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             setInvoiceTitle={setInvoiceTitle}
             updateInvoice={updateInvoice}
             isQuotation={isQuotation}
+            isEdit={props.mode === 'edit'}
             onOpenClientPicker={() => setShowClientPicker(true)}
             customFields={customFields}
             onAddHeaderField={onAddHeaderField}
@@ -300,8 +302,8 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
         hideHeader
         hideTrigger
         allowClear={false}
-        open={showClientPicker}
-        onOpenChange={setShowClientPicker}
+        open={props.mode === 'edit' ? false : showClientPicker}
+        onOpenChange={props.mode === 'edit' ? () => {} : setShowClientPicker}
         onClientChange={handleClientChange}
       />
 

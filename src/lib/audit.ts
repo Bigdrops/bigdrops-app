@@ -168,6 +168,19 @@ export async function recordPaymentRecorded(invoiceId: string, amount: number, r
   })
 }
 
+export async function recordPaymentVoided(paymentId: string, invoiceId: string, amount: number, reason?: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_payment_voided', {
+    p_payment_id: paymentId,
+    p_invoice_id: invoiceId,
+    p_amount: amount,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_reason: reason ?? null,
+  })
+}
+
 export async function recordQuotationCreated(quotationId: string) {
   const actor = await getActor()
   return supabase.rpc('record_quotation_created', {
