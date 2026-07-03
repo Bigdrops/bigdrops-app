@@ -25,10 +25,6 @@ import type {
 } from '@/domain/invoice'
 import {
   buildCalculationInputs,
-  inferLegacyCalculationState,
-  makeEmptyItem,
-  normalizeExtraCharges,
-  normalizeFieldEntries,
   toDbItem,
   useInvoiceColumns,
 } from '../components/useInvoiceColumns'
@@ -37,6 +33,8 @@ import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColu
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { numberToWords } from '../hooks/useInvoiceForm'
 import { useInvoiceEditableState } from '@/hooks/useInvoiceEditableState'
+import { useInvoiceReferenceData } from '@/hooks/useInvoiceReferenceData'
+import { useInvoiceHydration } from '@/hooks/useInvoiceHydration'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
@@ -46,7 +44,6 @@ import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { useSettings } from '@/hooks/useSettings'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
-import { mapDbInvoiceItem } from '@/domain/invoice'
 
 interface InvoiceFormFields {
   invoice_number: string
@@ -112,14 +109,8 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     : { projectId: '', clientId: '', clientName: '' }
 
   const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(isEdit)
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
-  const [signatories, setSignatories] = useState<any[]>([])
-  const [bankAccounts, setBankAccounts] = useState<any[]>([])
-  const [settingsData, setSettingsData] = useState<any>(null)
-  const [initialInvoiceSnapshot, setInitialInvoiceSnapshot] = useState<any>(null)
-  const [baseCustomFields, setBaseCustomFields] = useState<any>({})
 
   const {
     invoice,
@@ -182,10 +173,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     handleClearAll,
   } = useInvoiceEditableState({ mode, prefill, prefillItems, projectPrefill })
 
-  const initialCustomFields = useMemo(
-    () => (isCreate ? parseCustomFields(prefill?.custom_fields) : baseCustomFields),
-    [isCreate, prefill?.custom_fields, baseCustomFields],
-  )
+  const refData = useInvoiceReferenceData()
 
   const {
     columns,
@@ -201,6 +189,36 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     moveColumn,
     customColumns,
   } = useInvoiceColumns()
+
+  const hydration = useInvoiceHydration(
+    { id, isEdit },
+    {
+      setInvoice,
+      setItems,
+      setGroups,
+      setCustomFields,
+      setAdditionalFields,
+      setExtraCharges,
+      setChargeLabels,
+      setNotesTitle,
+      setTermsTitle,
+      setMergeQtyUnit,
+      setInvoiceTitle,
+      setAttachments,
+      setSignatoryId,
+      setPdfOutput,
+      setDiscountType,
+      setDiscountTiming,
+      setWhtType,
+      setColumns,
+    },
+    useCallback(() => navigate('/invoices'), [navigate]),
+  )
+
+  const initialCustomFields = useMemo(
+    () => (isCreate ? parseCustomFields(prefill?.custom_fields) : hydration.baseCustomFields),
+    [isCreate, prefill?.custom_fields, hydration.baseCustomFields],
+  )
 
   /* ── Create-mode init effects ── */
   useEffect(() => {
@@ -269,119 +287,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     setPdfOutput(getInvoicePdfOutput(prefill?.custom_fields))
   }, [isCreate, prefill?.custom_fields])
 
-  /* ── Edit-mode load effect ── */
-  useEffect(() => {
-    if (!isEdit || !id) return
-
-    const load = async () => {
-      const [signatoryRows, bankAccountRows, settingsRows, invoiceResult] = await Promise.all([
-        supabase.from('signatories').select('*').order('name'),
-        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
-        supabase.from('invoices').select('*').eq('id', id).single(),
-      ])
-      setSignatories(signatoryRows.data || [])
-      setBankAccounts(bankAccountRows.data || [])
-      setSettingsData(settingsRows.data || null)
-
-      const data = invoiceResult.data
-      if (!data) {
-        navigate('/invoices')
-        return
-      }
-
-      let savedGroupMeta: Record<string, any> = {}
-      let parsedCustomFields: any = null
-
-      try {
-        const parsed = parseCustomFields(data.custom_fields)
-        parsedCustomFields = parsed
-        setBaseCustomFields(parsed)
-        setSignatoryId(getInvoiceSignatoryId(parsed))
-        setPdfOutput(getInvoicePdfOutput(parsed))
-        if (parsed && !Array.isArray(parsed)) {
-          setCustomFields(normalizeFieldEntries(parsed.header, 'value'))
-          setAdditionalFields(normalizeAdditionalFieldEntries(parsed.additionalFields, parsed.bottom))
-          setExtraCharges(normalizeExtraCharges(parsed.extraCharges))
-          if (parsed.chargeLabels) setChargeLabels(parsed.chargeLabels as any)
-          setColumns(resolveFinancialColumns(parsed.columnConfig as any[]))
-          if (parsed.notesTitle) setNotesTitle(parsed.notesTitle as any)
-          if (parsed.termsTitle) setTermsTitle(parsed.termsTitle as any)
-          if (parsed.attachments) setAttachments(parsed.attachments as any)
-          if (typeof parsed.mergeQtyUnit === 'boolean') setMergeQtyUnit(parsed.mergeQtyUnit as any)
-          if (parsed.discountType) setDiscountType(parsed.discountType)
-          if (parsed.discountTiming) setDiscountTiming(parsed.discountTiming)
-          if (parsed.whtType) setWhtType(parsed.whtType)
-          if (parsed.groupMeta) savedGroupMeta = parsed.groupMeta
-        } else if (Array.isArray(parsed)) {
-          setCustomFields(normalizeFieldEntries(parsed, 'value'))
-        }
-      } catch (err) {
-        console.error('Failed to parse custom fields:', err)
-      }
-
-      if (data.invoice_title) setInvoiceTitle(data.invoice_title)
-
-      const { data: itemRows } = await supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
-      const legacyCalculationState = inferLegacyCalculationState({
-        invoice: data,
-        items: itemRows || [],
-        customFields: parsedCustomFields && !Array.isArray(parsedCustomFields) ? parsedCustomFields : {},
-      })
-
-      const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) => mapDbInvoiceItem(item))
-
-      setItems(loadedItems)
-      setInitialInvoiceSnapshot(data)
-      setInvoice({
-        ...data,
-        vat: legacyCalculationState.editableInputs.vatRate,
-        discount: legacyCalculationState.editableInputs.discountValue,
-        wht: legacyCalculationState.calculationInputs.whtValue,
-      })
-      setDiscountType(legacyCalculationState.calculationInputs.discountType as DiscountType)
-      setDiscountTiming(legacyCalculationState.calculationInputs.discountTiming as DiscountTiming)
-      setWhtType(legacyCalculationState.calculationInputs.whtType as WhtType)
-
-      const seenGroupIds = new Set()
-      const discoveredGroups = loadedItems
-        .filter((item) => item.row_type === 'group_header')
-        .map((item, index) => {
-          const groupId = item.group_id || `group_${index}`
-          if (seenGroupIds.has(groupId)) return null
-          seenGroupIds.add(groupId)
-          const meta = savedGroupMeta[groupId] || savedGroupMeta[item.group_name || ''] || {}
-          return {
-            id: groupId,
-            name: item.group_name || `Group ${index + 1}`,
-            showSubtotal: !!meta.showSubtotal,
-          }
-        })
-        .filter(Boolean) as InvoiceGroup[]
-
-      setGroups(discoveredGroups)
-      setLoading(false)
-    }
-
-    void load()
-  }, [isEdit, id, navigate, setColumns])
-
-  /* ── Shared init effect (signatories, bank accounts, settings) ── */
-  useEffect(() => {
-    if (isEdit) return
-    const loadSignatories = async () => {
-      const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
-        supabase.from('signatories').select('*').order('name'),
-        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
-      ])
-      setSignatories(signatoriesResult.data || [])
-      setBankAccounts(bankAccountsResult.data || [])
-      setSettingsData(settingsResult.data || null)
-    }
-
-    void loadSignatories()
-  }, [isEdit])
+  /* ── Edit-mode & create-mode init handled by hydration + reference data hooks ── */
 
   const handleImportApply = useCallback((result: any) => {
     invoiceImportAdapter.applyResult({
@@ -486,7 +392,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     const paymentTermsValue = invoice.payment_terms === 'Custom' ? invoice.custom_payment_terms : invoice.payment_terms
 
     const customFieldsMergeBase = isEdit
-      ? { ...baseCustomFields }
+      ? { ...hydration.baseCustomFields }
       : { ...initialCustomFields }
     delete customFieldsMergeBase.bottom
 
@@ -525,10 +431,10 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     /* ── Build payload ── */
     const buildPayloadStart = timer.phaseStart('build-payload')
 
-    const notesChanged = isEdit ? (invoice.notes !== initialInvoiceSnapshot?.notes) : true
-    const termsChanged = isEdit ? (invoice.terms !== initialInvoiceSnapshot?.terms) : true
-    const normalizedNotes = notesChanged ? normalizeRichTextHtml(invoice.notes) : (initialInvoiceSnapshot?.notes ?? invoice.notes)
-    const normalizedTerms = termsChanged ? normalizeRichTextHtml(invoice.terms) : (initialInvoiceSnapshot?.terms ?? invoice.terms)
+    const notesChanged = isEdit ? (invoice.notes !== hydration.initialInvoiceSnapshot?.notes) : true
+    const termsChanged = isEdit ? (invoice.terms !== hydration.initialInvoiceSnapshot?.terms) : true
+    const normalizedNotes = notesChanged ? normalizeRichTextHtml(invoice.notes) : (hydration.initialInvoiceSnapshot?.notes ?? invoice.notes)
+    const normalizedTerms = termsChanged ? normalizeRichTextHtml(invoice.terms) : (hydration.initialInvoiceSnapshot?.terms ?? invoice.terms)
 
     const updatedInvoice = isEdit
       ? {
@@ -700,9 +606,9 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
         await recordAuditLog({
           entityType: 'invoice',
           recordId: effectiveId || '',
-          entityLabel: initialInvoiceSnapshot?.invoice_number || null,
+          entityLabel: hydration.initialInvoiceSnapshot?.invoice_number || null,
           action: 'UPDATE',
-          oldData: initialInvoiceSnapshot,
+          oldData: hydration.initialInvoiceSnapshot,
           newData: updatedInvoice,
           trackedFields: INVOICE_TRACKED_FIELDS,
         })
@@ -728,12 +634,12 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
       itemRowCount: itemsToSave.length,
     })
   }, [
-    invoice, invoiceTitle, items, groups, initialCustomFields, baseCustomFields,
+    invoice, invoiceTitle, items, groups, initialCustomFields, hydration.baseCustomFields,
     customFields, additionalFields, extraCharges, chargeLabels, columns,
     notesTitle, termsTitle, attachments, mergeQtyUnit,
     discountType, discountTiming, whtType, calculationInputs,
     signatoryId, pdfOutput, settings?.document_prefixes, documentTotals,
-    isCreate, isEdit, id, initialInvoiceSnapshot,
+    isCreate, isEdit, id, hydration.initialInvoiceSnapshot,
   ])
 
   /* ── Render ── */
@@ -746,7 +652,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
 
   const handleCancel = useCallback(() => navigate(isCreate ? '/invoices' : '/invoices/' + id), [isCreate, id, navigate])
 
-  if (isEdit && (loading || !invoice)) {
+  if (isEdit && (hydration.loading || !invoice)) {
     return (
       <Layout title={pageTitle} hidePageHeader>
         <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
@@ -778,7 +684,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
           setTermsTitle={setTermsTitle}
           attachments={attachments}
           setAttachments={setAttachments}
-          signatories={signatories}
+          signatories={refData.signatories}
           signatoryId={signatoryId}
           onSignatoryChange={setSignatoryId}
           mergeQtyUnit={mergeQtyUnit}
@@ -851,7 +757,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
           <PdfOutputSettings
             value={pdfOutput}
             onChange={setPdfOutput}
-            bankAccounts={bankAccounts.map((account) => ({
+            bankAccounts={refData.bankAccounts.map((account) => ({
               id: account.id,
               bankName: account.bank_name || '',
               accountName: account.account_name || '',
@@ -859,8 +765,8 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
               sortCode: account.sort_code || '',
               isDefault: !!account.is_default,
             }))}
-            companyTagline={settingsData?.company_tagline || ''}
-            footerText={settingsData?.footer_text || ''}
+            companyTagline={refData.settingsData?.company_tagline || ''}
+            footerText={refData.settingsData?.footer_text || ''}
             showBalanceDueOption
           />
         </div>
