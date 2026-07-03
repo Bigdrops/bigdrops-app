@@ -1,4 +1,3 @@
-
 # BIGDROPS Financial Operations Platform — Product Requirements Document (Architecture v2.1)
 
 **Status:** Final  
@@ -129,7 +128,7 @@ Responsible for recording settlement events.
 Responsible for all derived financial information.
 
 **Owns:** outstanding balance, settled amount, overpayment, credit available, settlement %, receivable amount, aging, financial status  
-**Consumes:** obligations (invoices), payments, credits  
+**Consumes:** financial obligations, settlements, credits and immutable financial events.  
 **Produces:** projections
 
 **Financial State is a derived projection, never stored as mutable business data.**  
@@ -169,20 +168,26 @@ Settlements are the mechanisms that resolve obligations.
 
 Settlement
 ├── Payment
-├── Credit
+├── Credit Application
 ├── Refund
 ├── Adjustment
-└── Reversal
+├── Reversal
+└── Write‑off
 
 ```
 
 All settlements are immutable. Corrections append new settlement entries; original records never change.
 
+### Settlement Allocation
+
+Allocations associate settlement records with one or more financial obligations. Allocations are immutable and preserve the history of how settlements were distributed. This enables complex scenarios such as splitting a single payment across multiple invoices or combining multiple payments to settle one obligation.
+
 ---
 
 ## 8. Financial Event Model
 
-Financial Operations is event‑driven.
+Financial Operations is event‑driven.  
+Every Financial Event is a Domain Event. Not every Domain Event is necessarily published outside Financial Operations.
 
 ### Domain Events (internal to Financial Operations)
 - PaymentRecorded
@@ -265,7 +270,7 @@ Operational status must never be confused with financial status.
 
 ## 12. Credit Lifecycle
 
-Credits are first‑class entities that originate from overpayments, refunds, adjustments, or credit notes.
+Credits are first‑class entities that originate from overpayments, refunds, adjustments, credit notes, or retention releases (future).
 
 States: Created, Applied, Transferred, Expired, Cancelled.  
 Credits are immutable.
@@ -331,7 +336,21 @@ Projections are disposable — they can be rebuilt at any time from immutable ev
 ## 17. Financial Audit Architecture
 
 ### 17.1 Audit as a Platform Service
-When any domain publishes a financial event, the Audit service records it automatically. Domains do not call audit functions directly; they emit events, and Audit subscribes.
+
+**Target architecture:** When any domain publishes a financial event, the Audit service records it automatically. Domains do not call audit functions directly; they emit events, and Audit subscribes.
+
+**Implementation Note (current baseline):**  
+The current implementation uses the verified direct‑call audit pattern documented in `docs/STANDARD/audit-trail-standard.md`. The platform‑service architecture described here is the target architecture. Migration shall occur incrementally without changing observable business behaviour.
+
+**Migration strategy:**  
+The platform‑service model will be reached incrementally:
+
+1. **Phase 1:** Extend the verified direct‑call pattern to all remaining financial events (Quotation UPDATE/DELETE/ARCHIVE, Compliance CRUD, CSR, Waybill) per the coverage matrix.
+2. **Phase 2:** Introduce an internal publisher abstraction behind the existing function signatures — no behavioural change, no new schema.
+3. **Phase 3:** Publisher dispatches to a dedicated Audit Platform service.
+4. **Phase 4:** Domains emit events; they no longer know audit implementation details.
+
+The destination has not changed. The migration strategy now reflects the verified implementation baseline rather than an assumption.
 
 ### 17.2 Event Metadata
 Every financial event carries immutable metadata:
@@ -431,9 +450,10 @@ No implementation may violate the following:
 3. No downstream module recalculates financial values.
 4. Historical financial events are append‑only.
 5. Operational state and financial state are independent.
-6. Financial projections are disposable and rebuildable.
+6. Financial projections are disposable and rebuildable, and shall never become the system of record.
 7. Financial truth originates only from authoritative domains.
 8. Every financial event is recorded by Audit automatically.
+9. Every financial event publication must be idempotent.
 
 ---
 
@@ -441,8 +461,8 @@ No implementation may violate the following:
 
 | Capability | Owner | Consumers |
 |---|---|---|
+| Settlement Processing | Payments | Financial State |
 | Calculations | Calculation Engine | Financial State |
-| Settlement | Payments | Financial State |
 | Financial State | Projection Layer | Reports, Compliance |
 | Compliance | Compliance | Dashboards |
 | Reports | Reports | Users |
@@ -458,7 +478,7 @@ No implementation may violate the following:
 - Preserve WHT rate/type snapshots on payment records.
 - Eliminate dual ownership of invoice financial status.
 - Add database‑level integrity constraints.
-- Extend audit coverage to all financial events.
+- Complete audit coverage using the verified Audit Trail Standard.
 
 ### Phase 2 — Financial Lifecycle
 - Implement immutable payment corrections and reversals.
@@ -491,3 +511,4 @@ The Financial Operations platform is complete when:
 - Audit is a platform‑level capability, not a bolt‑on; correlation chains and replayability are built in.
 ```
 
+---
