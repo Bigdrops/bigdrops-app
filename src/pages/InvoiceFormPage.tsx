@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
+import IdentityLockDialog from '@/components/document/IdentityLockDialog'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   DEFAULT_INVOICE_PDF_OUTPUT,
@@ -112,6 +113,8 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
   const [saving, setSaving] = useState(false)
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
+
+  const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'invoice_number' | null }>({ open: false, field: null })
 
   const {
     invoice,
@@ -303,6 +306,31 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
       setGroups,
     })
   }, [updateInvoice])
+
+  /* ── Identity lock: duplicate from current editable state ── */
+  const handleDuplicateFromEditable = useCallback(() => {
+    const clonedInvoice = JSON.parse(JSON.stringify(invoice))
+    const clonedItems = items.map((item) => ({ ...JSON.parse(JSON.stringify(item)), id: null }))
+
+    navigate('/invoices/new', {
+      state: {
+        prefill: {
+          ...clonedInvoice,
+          client_id: null,
+          client_name: '',
+          project_id: null,
+          status: 'unpaid',
+          issue_date: new Date().toISOString().split('T')[0],
+          due_date: null,
+          subtotal: 0,
+          total: 0,
+          install_rate_total: 0,
+          amount_in_words: '',
+        },
+        prefillItems: clonedItems,
+      },
+    })
+  }, [invoice, items, navigate])
 
   /* ── Derived values ── */
 
@@ -667,6 +695,10 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
 
   const handleCancel = useCallback(() => navigate(isCreate ? '/invoices' : '/invoices/' + id), [isCreate, id, navigate])
 
+  const handleLockedFieldClick = useCallback((field: 'client' | 'invoice_number') => {
+    setIdentityLockDialog({ open: true, field })
+  }, [])
+
   if (isEdit && (hydration.loading || !invoice)) {
     return (
       <Layout title={pageTitle} hidePageHeader>
@@ -766,6 +798,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}
+          onLockedFieldClick={isEdit ? handleLockedFieldClick : undefined}
         />
 
         <div className="mx-auto w-full max-w-4xl px-0 pb-6 sm:px-2">
@@ -785,6 +818,15 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
             showBalanceDueOption
           />
         </div>
+
+        {isEdit && (
+          <IdentityLockDialog
+            open={identityLockDialog.open}
+            onOpenChange={(open) => setIdentityLockDialog((prev) => ({ ...prev, open }))}
+            fieldLabel={identityLockDialog.field === 'client' ? 'Client' : 'Invoice Number'}
+            onDuplicate={handleDuplicateFromEditable}
+          />
+        )}
       </div>
     </Layout>
   )

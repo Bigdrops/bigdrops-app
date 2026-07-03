@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, ChevronRight, Hash, MoreHorizontal } from 'lucide-react'
+import { BriefcaseBusiness, ChevronRight, Hash, Lock, MoreHorizontal } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   fieldCls,
@@ -17,6 +17,7 @@ interface FormHeaderProps {
   isQuotation: boolean
   isEdit?: boolean
   onOpenClientPicker: () => void
+  onLockedFieldClick?: (field: 'client' | 'invoice_number') => void
   customFields: Array<{ id?: string; label?: string; value?: string }>
   onAddHeaderField: () => void
   onUpdateHeaderField: (id: string | undefined, field: 'label' | 'value', value: string) => void
@@ -34,6 +35,7 @@ export function FormHeader({
   isQuotation,
   isEdit = false,
   onOpenClientPicker,
+  onLockedFieldClick,
   customFields,
   onAddHeaderField,
   onUpdateHeaderField,
@@ -61,7 +63,7 @@ export function FormHeader({
         <div>
           <button
             type="button"
-            onClick={isEdit ? undefined : onOpenClientPicker}
+            onClick={isEdit ? () => onLockedFieldClick?.('client') : onOpenClientPicker}
             disabled={isEdit}
             className={`flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border px-4 py-3 text-left transition ${
               isEdit
@@ -70,7 +72,7 @@ export function FormHeader({
             }`}
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
-              <BriefcaseBusiness className="h-4.5 w-4.5" />
+              {isEdit ? <Lock className="h-4.5 w-4.5" /> : <BriefcaseBusiness className="h-4.5 w-4.5" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
@@ -100,18 +102,23 @@ export function FormHeader({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>{isQuotation ? 'Quotation No.' : 'Invoice No.'}</label>
-                <div className="relative">
+            <div>
+              <label className={labelCls}>{isQuotation ? 'Quotation No.' : 'Invoice No.'}</label>
+              <div className="relative">
+                {isEdit ? (
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bd-text4)]" />
+                ) : (
                   <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bd-text4)]" />
-                  <Input
-                    value={invoice.invoice_number || ''}
-                    readOnly={isEdit}
-                    onChange={isEdit ? undefined : (event) => updateInvoice('invoice_number', event.target.value)}
-                    className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)] ${isEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  />
-                </div>
+                )}
+                <Input
+                  value={invoice.invoice_number || ''}
+                  readOnly={isEdit}
+                  onChange={isEdit ? undefined : (event) => updateInvoice('invoice_number', event.target.value)}
+                  onClick={isEdit ? () => onLockedFieldClick?.('invoice_number') : undefined}
+                  className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)] ${isEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                />
               </div>
+            </div>
               <div>
                 <label className={labelCls}>PO Number</label>
                 <Input

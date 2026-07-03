@@ -195,6 +195,7 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             isQuotation={isQuotation}
             isEdit={props.mode === 'edit'}
             onOpenClientPicker={() => setShowClientPicker(true)}
+            onLockedFieldClick={props.onLockedFieldClick}
             customFields={customFields}
             onAddHeaderField={onAddHeaderField}
             onUpdateHeaderField={onUpdateHeaderField}
