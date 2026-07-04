@@ -10,7 +10,7 @@
 * **Stack:** React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase (Postgres), Vite 7, Bun, Vercel, Capacitor 8.
 * **Runtime constraint:** Bun ONLY. Never use npm, yarn, or pnpm.
 * **Commands:** Use `bun install`, `bun run dev`, `bun run build`, `bun run typecheck`, `bun run lint`.
-* **Audit Command:** Run `bun run audit:load` before typecheck or build.
+* **Audit Command:** Run `bun run audit:load` before typecheck.
 * **Test Command:** `bun run test` (executes `node --test "src/tests/critical/*.test.js"`).
 * **Naming Conventions:**
     * Components: PascalCase (e.g., `WaybillForm.tsx`).
@@ -41,7 +41,11 @@ All coding agents must follow this strict execution methodology to prevent regre
 * **Plan Before Execution:** Think step-by-step in a `<plan>` block before writing code. Prioritize simple control flow, goal-driven execution, and verifiable success criteria over complex abstractions.
 * **Surgical Changes Only:** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or rename symbols outside the immediate scope of the user's request.
 * **Preserve Business Behavior:** Unless the task explicitly changes business rules, you must preserve user-visible behavior, audit trails, document lineage, numbering, and transformation semantics. Structural refactoring must not alter existing output.
-* **Verify via Build:** Define success criteria before implementing. You MUST run the build/typecheck commands to verify your changes do not break downstream modules. Loop until checks pass.
+* **Verify via Verification Gate (HARD HARDWARE GATE):** Define success criteria before implementing. You MUST run the fast verification commands below to verify your changes do not break downstream modules. Loop until checks pass:
+    * `bun run typecheck` (Catches all type errors in seconds).
+    * `bun run audit:load` (Catches query-pattern issues).
+    * `git status` (Confirms no unintended files were modified).
+    * **CRITICAL:** NEVER run `bun run build` as a standard verification step. Due to local host RAM limitations (4GB), full bundler building will timeout and choke the execution workspace. Build testing is strictly reserved for the project lead to run manually.
 
 ---
 
@@ -76,15 +80,15 @@ Every completed task requires a rigorous report saved under `docs/Reports/` in t
 
 **Report Identity Standard:**
 Every report MUST begin with an identity line immediately after the title stating the real name of the AI, the date, and the tool harness.
-* *Example format:* `This report was written by [Insert Your Actual AI Name] on [Insert Current Date].`
-* You must generate your actual name (e.g., Claude, Gemini, DeepSeek). Do not use placeholder brackets.
+* *Example format:* `This report was written by OpenCode on 2026-07-04 via Local Runner.`
+* You must generate your actual name (e.g., OpenCode). Do not use placeholder brackets or generic variables.
 
 **Report Quality Principles:**
 1. **Objective & Scope:** State what is covered and what is intentionally excluded.
 2. **Evidence-Based:** Trace every finding to inspected code, paths, or execution traces. Never use vague qualifiers like "seems" or "probably".
 3. **Fact vs. Conclusion:** Keep raw observations separate from interpretations.
 4. **Risks & Limitations:** Record known risks, unverified assumptions, or limitations.
-5. **Verification:** State exact build/test results (e.g., `bun run build` passed).
+5. **Verification:** State exact verification gate pass status (e.g., `bun run typecheck` passed, build skipped due to hardware policy).
 6. **Deferred Work:** Explicitly list what was intentionally left for future phases.
 
 ---
