@@ -1,311 +1,133 @@
-o
 You are working on the BIGDROPS business platform.
-
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Capacitor 8 + Bun + React Router DOM 7 + Android APK.
 
 ==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
+TASK: Fix three Android native integration issues
 ==================================================
 
-1. Read `docs/PROJECTSKILLINDEX.md` first.
-2. Load the following skills:
-   - Karpathy
-   - frontend-design
-   - typescript-advanced-types
-3. For each skill:
-   - Attempt to load via the skill system.
-   - If loading fails, fallback to direct file read from `.claude/skills/` or `.agents/skills/`.
-4. If any critical skill cannot be loaded, STOP immediately and report the failure.
-5. Read `AGENTS.md` completely before making any code changes.
+Three bugs exist in the Android APK. Do NOT assume causes.
+Read existing implementations first. Only change code that is necessary.
+Do NOT regress web behaviour.
+
+**Already installed (do NOT install again):**
+@capacitor/clipboard
+@capacitor/app-launcher
 
 ==================================================
-REPORTING PROTOCOL (MANDATORY)
+READ FIRST (mandatory, before any changes)
 ==================================================
+- `AGENTS.md`
+- `src/components/app/AndroidBackHandler.tsx`
+- `src/components/ui/OpenInAIDropdown.tsx`
+- `src/components/import/JsonImportLayout.tsx`
+- `App.tsx`, `src/main.tsx`, any root layout/provider component
+- `android/app/src/main/java/**/MainActivity.java`
+- `capacitor.config.*`
 
-Save a complete implementation report to:
-`docs/Reports/commercial-rendering-engine-phase-3.1.md`
-
-The report MUST include:
-- Executive Summary
-- Files Modified (with before/after excerpts)
-- Visual Design Specification (spreadsheet-style group rendering)
-- Verification Results (audit:load, typecheck, build, visual parity)
-
-==================================================
-CONTEXT
-==================================================
-
-Phase 3 successfully extracted the engine as a pure behaviour layer and migrated Industry to `presentation/industry/`. However, the group rendering still retains decorative elements from the old design:
-
-- Tinted backgrounds (`#f9fafb`) on group headers
-- Tinted backgrounds on group footers
-- "Group Total" label instead of "Subtotal"
-- Decorative cards / containers
-- Header/footer component abstractions that are too heavy
-
-The client has requested a spreadsheet‑style group rendering that follows the Excel/accounting aesthetic:
-- White background only
-- Thin opening rule (1px) above the group title
-- Group title: bold, title case (or small caps), 10.5–11pt
-- Item rows: unchanged, no decoration
-- Subtotal row (if present): bold, right‑aligned, with a heavy closing rule (2px)
-- Closing rule (if no subtotal): heavy rule only — no empty row
-- No backgrounds, no cards, no rounded corners, no left accent bars
-- No separate "Header"/"Footer" components — table renderer owns the logic inline
+Also locate every usage of:
+`navigator.clipboard`, `window.open`, `Browser.open`, `AppLauncher`,
+`Clipboard`, `navigate(...)`, `navigate(...,{ replace:true })`
 
 ==================================================
-OBJECTIVE
+ISSUE 1 — Clipboard paste fails on Android
 ==================================================
+Symptom: "Paste failed – Unable to read from clipboard."
 
-Refine Industry's group rendering to the spreadsheet-style specification.
+Investigate: How does the Paste button currently access the clipboard?
+On Android native, replace any web‑only `navigator.clipboard.readText()`
+with `@capacitor/clipboard`.
 
-This is a presentation‑only change. No engine modifications. No behaviour changes. No Ledger or Obsidian changes.
-
-==================================================
-STRICT SCOPE
-==================================================
-
-ONLY modify:
-- `presentation/industry/IndustryTemplate.tsx` — table rendering section
-- `presentation/industry/industryStyles.ts` — add/update group styles
-
-DO NOT touch:
-- `engine/` — no changes
-- `core/` — no changes
-- `presentation/ledger/` — no changes
-- `presentation/obsidian/` — no changes
-- `src/components/pdf-new/` outside the two files above
+Requirements:
+- Desktop keeps using current behaviour.
+- Android uses the Capacitor Clipboard plugin.
+- Preserve existing error handling and UI.
+- Do NOT rewrite unrelated import logic.
 
 ==================================================
-VISUAL SPECIFICATION
+ISSUE 2 — Open in AI does not launch installed AI apps
 ==================================================
+Symptom: On Android, the "Open in AI" buttons either do nothing or
+behave like a browser instead of opening the installed app.
 
-### Group Start (Section Marker — Open)
+Investigate: How does the current `handleProviderClick` / `openApp`
+function decide where to navigate?
 
-```
+On Android native, use `@capacitor/app-launcher`:
+- If the provider app is installed → launch the native app.
+- If not installed → open the Play Store page.
 
-────────────────────────────────────────────────────────────
-Electrical Installation
-────────────────────────────────────────────────────────────
-
-```
-
-Characteristics:
-- Full‑width table row
-- Thin rule above and below (1px)
-- No background tint
-- Font: Helvetica Bold, 10.5–11pt, title case (e.g., "Electrical Installation", not "ELECTRICAL INSTALLATION")
-- Vertical padding: 6–8px (slightly more than item rows)
-
-### Item Rows
-
-```
-
-Cable installation                      2         1,200.00
-Conduit work                            5         3,400.00
-Termination                             1         5,600.00
-
-```
-
-Characteristics:
-- Completely unchanged from current item rows
-- No indentation, no background, no borders
-- The contrast comes from the start and end markers, not the items themselves
-
-### Group End (Section Divider)
-
-**If subtotal exists:**
-```
-
-────────────────────────────────────────────────────────────
-Subtotal                                       10,200.00
-════════════════════════════════════════════════════════════
-
-```
-- One row: "Subtotal" label + value
-- Subtotal value right‑aligned to numeric columns
-- Bold font
-- Heavy closing rule (2px) — double the thickness of the opening rule
-
-**If no subtotal exists:**
-```
-
-────────────────────────────────────────────────────────────
-════════════════════════════════════════════════════════════
-
-```
-- No text — just the heavy closing rule (2px)
-- This signals "section finished" without a fake footer
-
-### Key Principles
-- White background throughout
-- No rounded corners, no cards, no left accent bars
-- No margin blocks (rules provide separation)
-- Only typography and horizontal rules distinguish sections
+Desktop behaviour MUST remain unchanged.
+Do NOT break the existing provider list or UI.
 
 ==================================================
-IMPLEMENTATION NOTES
+ISSUE 3 — Android hardware Back exits the app immediately
 ==================================================
+Symptom: Pressing Android Back closes the app on every screen,
+even when several pages deep.
 
-### 1. Remove Existing Decorative Elements
-
-- Remove `backgroundColor` from group header styles
-- Remove `backgroundColor` from group footer styles
-- Remove any `borderRadius`, `marginTop`, `marginBottom` that create card‑like spacing around groups
-- Remove left accent bars or side borders
-
-### 2. Inline the Logic
-
-Do NOT create separate `GroupStartRow.tsx` or `GroupEndRow.tsx` components. The table renderer in `IndustryTemplate.tsx` should own this logic inline.
-
-**Conceptual structure (inside the table render loop):**
-
-```tsx
-// Within the table row map
-if (row.rowType === 'group_header') {
-  // Render group start row
-  return (
-    <View style={[styles.groupStartRow, ruleColor ? { borderTopColor: ruleColor, borderBottomColor: ruleColor } : null]} wrap={false}>
-      <Text style={[styles.groupStartText, textColor ? { color: textColor } : null, headerFontFamily ? { fontFamily: headerFontFamily } : null]}>
-        {getGroupLabel(row)}
-      </Text>
-    </View>
-  )
-}
-
-// ... item rows ...
-
-// After processing all items in the group, render the group end
-if (hasGroupEnd) {
-  if (hasSubtotal) {
-    // Render subtotal row + closing rule
-    return (
-      <>
-        <View style={[styles.groupSubtotalRow]} wrap={false}>
-          <Text style={styles.groupSubtotalLabel}>Subtotal</Text>
-          <PdfCurrencyText value={subtotal} style={styles.groupSubtotalValue} />
-        </View>
-        <View style={styles.groupClosingRule} />
-      </>
-    )
-  } else {
-    // Render closing rule only
-    return <View style={styles.groupClosingRule} />
-  }
-}
-```
-
-3. Update Styles in industryStyles.ts
-
-```ts
-groupStartRow: {
-  flexDirection: 'row',
-  paddingVertical: 6,
-  paddingHorizontal: 6,
-  borderTopWidth: 1,
-  borderTopColor: '#e5e7eb',
-  borderBottomWidth: 1,
-  borderBottomColor: '#e5e7eb',
-  backgroundColor: 'transparent', // or remove entirely
-},
-groupStartText: {
-  textAlign: 'left',
-  fontSize: 10.5,
-  fontFamily: 'Helvetica-Bold',
-  color: '#1f2937',
-  // no letter-spacing, no uppercase
-},
-groupSubtotalRow: {
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  alignItems: 'center',
-  paddingVertical: 4,
-  paddingHorizontal: 6,
-  backgroundColor: 'transparent',
-},
-groupSubtotalLabel: {
-  fontSize: 10,
-  fontFamily: 'Helvetica-Bold',
-  color: '#1f2937',
-  marginRight: 8,
-},
-groupSubtotalValue: {
-  fontSize: 10,
-  fontFamily: 'Helvetica-Bold',
-  color: '#1f2937',
-},
-groupClosingRule: {
-  height: 2,
-  backgroundColor: '#333333',
-  marginVertical: 0,
-},
-```
-
-4. Verify the Opening Rule Colour
-
-If ruleColor (from design presets) is available, apply it to the opening rule. Otherwise, use a neutral colour like #e5e7eb (grey‑200) or #cdc9c1 (Industry's current rule colour).
-
-5. Ensure Page Breaks Still Work
-
-The existing buildTableWithPageBreaks() and splitTableAcrossPages() functions must be updated to treat the start and end markers as part of the group they belong to. The group should not be split across pages unless necessary — keep the wrap={false} on the start/end rows to prevent orphaned markers.
+Expected behaviour (priority order):
+1. Close keyboard if open
+2. Close dialog/sheet if open
+3. Navigate back through React Router history
+4. Navigate to logical parent route if needed
+5. Only exit after double‑back on a true root screen
 
 ==================================================
-VERIFICATION
+INVESTIGATE THE BACK BUTTON (do NOT guess)
 ==================================================
 
-Run in this order:
+1. Is `AndroidBackHandler` actually mounted?
+   - Search for every usage of `AndroidBackHandler`.
+   - If it is not mounted at the root of the application, mount it
+     exactly once inside the Router so it is always active.
 
-1. bun run audit:load
-2. bun run typecheck
-3. bun run build
+2. Add TEMPORARY debug logging inside the Capacitor `backButton`
+   listener:
+   - current pathname
+   - `canGoBack`
+   - `window.history.length`
+   - `window.history.state?.idx`
+   - logical target
+   - whether an overlay was closed
+   - whether `exitApp()` would be called
 
-Manual verification:
+3. Determine why one of these is always happening:
+   - `canGoBack` is always `false`
+   - `history.state.idx` never increases
+   - `history.length` remains 1
+   - listener never fires
+   - listener gets removed unexpectedly
 
-· Generate an Industry Invoice PDF.
-· Compare visually against a previous version (or ensure the following are true):
-  · Group headers have white background (no tint)
-  · Thin rule above and below each group title
-  · Group title is bold, title case (not uppercase)
-  · Item rows unchanged
-  · Subtotal row (if present) has "Subtotal" label + value, right‑aligned
-  · Heavy closing rule (2px) after subtotal or after last item if no subtotal
-  · No cards, no rounded corners, no left accent bars
-  · No background on any group‑related element
-  · Compact mode (if tested) still works
+4. Inspect `MainActivity.java`. Ensure there is no native override
+   that consumes the Android back press or calls `finish()`.
 
-If any visual difference exists (other than intentional removal of decorative elements), stop and investigate.
+5. After fixing, REMOVE the temporary logging and keep the handler clean.
 
-==================================================
-STOP CONDITION
-==================================================
-
-Stop immediately after:
-
-· Industry's group rendering has been updated to spreadsheet style
-· Verification passes
-· The report is complete
-
-Do NOT touch Ledger, Obsidian, or the engine.
+Do NOT remove double‑back‑to‑exit behaviour.
+Do NOT remove overlay closing or logical parent navigation.
+Do NOT replace everything with `navigate(-1)`.
+Do NOT break desktop or PWA behaviour.
 
 ==================================================
-SUCCESS CRITERIA
+VALIDATION
 ==================================================
+Run:
+- `bun run typecheck`
+- `npx cap sync android`
 
-✅ Group headers have no background tint
-✅ Group headers have thin rule above and below
-✅ Group headers use title case, not uppercase
-✅ Subtotal rows (if present) use "Subtotal" label
-✅ Closing rule is 2px heavy
-✅ No‑subtotal groups close with a 2px heavy rule only
-✅ No cards, no rounded corners, no left accent bars
-✅ Item rows unchanged
-✅ bun run audit:load passes
-✅ bun run typecheck passes
-✅ bun run build passes
-✅ Report is complete and ready for review
+Do NOT run `bun run dev`.
+Do NOT modify unrelated files.
 
-```
-
----
-
+==================================================
+REPORT
+==================================================
+Write a report to `docs/Task/reports/fix-android-native-integration.md`
+Include:
+- Root causes
+- Files read
+- Files modified
+- Exact code changes
+- Why each fix was required
+- Verification performed
+- Remaining assumptions
+- Risks
