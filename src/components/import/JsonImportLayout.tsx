@@ -10,6 +10,8 @@ import { HiSparkles } from 'react-icons/hi2'
 import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { OpenInAIDropdown } from '@/components/ui/OpenInAIDropdown'
+import { Clipboard as CapacitorClipboard } from '@capacitor/clipboard'
+import { isAndroidNative } from '@/lib/native/capacitor'
 
 interface JsonImportUIProps {
   title: string
@@ -88,7 +90,11 @@ export function JsonImportUI({
 
   const handleCopyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(promptText)
+      if (isAndroidNative()) {
+        await CapacitorClipboard.write({ string: promptText })
+      } else {
+        await navigator.clipboard.writeText(promptText)
+      }
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -226,7 +232,9 @@ export function JsonImportUI({
                   size="sm"
                   onClick={async () => {
                     try {
-                      const text = await navigator.clipboard.readText()
+                      const text = isAndroidNative()
+                        ? (await CapacitorClipboard.read()).value
+                        : await navigator.clipboard.readText()
                       onRawInputChange(text)
                     } catch {
                       feedback.error('Paste failed', { description: 'Unable to read from clipboard.' })

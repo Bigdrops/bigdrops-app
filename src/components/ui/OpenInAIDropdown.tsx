@@ -3,12 +3,15 @@ import { HiSparkles } from 'react-icons/hi2'
 import { OpenAI, DeepSeek, Qwen, Moonshot, ModelIcon } from '@lobehub/icons'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { AppLauncher } from '@capacitor/app-launcher'
+import { isAndroidNative } from '@/lib/native/capacitor'
 
 interface Provider {
   id: string
   name: string
   url: string
-  androidIntent: string
+  packageId: string
+  androidUrl: string
 }
 
 const AI_PROVIDERS: Provider[] = [
@@ -16,46 +19,63 @@ const AI_PROVIDERS: Provider[] = [
     id: 'gemini',
     name: 'Gemini',
     url: 'https://gemini.google.com',
-    androidIntent: 'intent://gemini.google.com/#Intent;scheme=https;package=com.google.android.apps.bard;end',
+    packageId: 'com.google.android.apps.bard',
+    androidUrl: 'https://gemini.google.com',
   },
   {
     id: 'chatgpt',
     name: 'ChatGPT',
     url: 'https://chatgpt.com',
-    androidIntent: 'intent://chatgpt.com/#Intent;scheme=https;package=com.openai.chatgpt;end',
+    packageId: 'com.openai.chatgpt',
+    androidUrl: 'https://chatgpt.com',
   },
   {
     id: 'claude',
     name: 'Claude',
     url: 'https://claude.ai',
-    androidIntent: 'intent://claude.ai/#Intent;scheme=https;package=com.anthropic.claude;end',
+    packageId: 'com.anthropic.claude',
+    androidUrl: 'https://claude.ai',
   },
   {
     id: 'deepseek',
     name: 'DeepSeek',
     url: 'https://chat.deepseek.com',
-    androidIntent: 'intent://chat.deepseek.com/#Intent;scheme=https;package=com.deepseek.chat;end',
+    packageId: 'com.deepseek.chat',
+    androidUrl: 'https://chat.deepseek.com',
   },
   {
     id: 'qwen',
     name: 'Qwen',
     url: 'https://chat.qwen.ai',
-    androidIntent: 'intent://chat.qwen.ai/#Intent;scheme=https;package=com.tongyi.assistant;end',
+    packageId: 'com.tongyi.assistant',
+    androidUrl: 'https://chat.qwen.ai',
   },
   {
     id: 'kimi',
     name: 'Kimi',
     url: 'https://kimi.moonshot.cn',
-    androidIntent: 'intent://kimi.moonshot.cn/#Intent;scheme=https;package=com.moonshot.kimichat;end',
+    packageId: 'com.moonshot.kimichat',
+    androidUrl: 'https://kimi.moonshot.cn',
   },
 ]
 
-function navigateToProvider(url: string, androidIntent: string) {
-  const isAndroid = /Android/i.test(navigator.userAgent)
-  if (isAndroid && androidIntent) {
-    window.location.href = androidIntent
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer')
+async function navigateToProvider(provider: Provider) {
+  if (!isAndroidNative()) {
+    window.open(provider.url, '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  const playStoreUrl = `https://play.google.com/store/apps/details?id=${provider.packageId}`
+
+  try {
+    const { value } = await AppLauncher.canOpenUrl({ url: provider.packageId })
+    if (value) {
+      await AppLauncher.openUrl({ url: provider.androidUrl })
+    } else {
+      window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
+    }
+  } catch {
+    window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -101,7 +121,7 @@ export function OpenInAIDropdown({
     const provider = AI_PROVIDERS.find(p => p.id === providerId)
     if (!provider) return
 
-    navigateToProvider(provider.url, provider.androidIntent)
+    void navigateToProvider(provider)
 
     navigator.clipboard?.writeText(prompt)?.catch(() => {})
 

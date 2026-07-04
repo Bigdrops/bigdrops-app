@@ -190,7 +190,7 @@ export default function AndroidBackHandler() {
         const historyIndex = Number(window.history.state?.idx ?? 0)
 
         if (canGoBack || historyIndex > 0 || window.history.length > 1) {
-          window.history.back()
+          navigate(-1)
           return
         }
 
