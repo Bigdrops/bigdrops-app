@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarDays, FileSpreadsheet, Receipt, Wallet } from 'lucide-react'
-import { supabase } from '@/supabase'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -40,6 +39,9 @@ type Props = {
   setCustomStart: (val: string) => void
   customEnd: string
   setCustomEnd: (val: string) => void
+  data: InvoiceFinancialRow[]
+  error?: string
+  isLoading: boolean
 }
 
 export function ReceivablesSection({
@@ -57,43 +59,11 @@ export function ReceivablesSection({
   setCustomStart,
   customEnd,
   setCustomEnd,
+  data,
+  error = '',
+  isLoading,
 }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [loadedRange, setLoadedRange] = useState<string | null>(null)
-  const [error, setError] = useState('')
-  const [data, setData] = useState<InvoiceFinancialRow[]>([])
   const [receivablesFilter, setReceivablesFilter] = useState<ReceivablesFilter>('all')
-  const requestIdRef = useRef(0)
-
-  const load = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
-    const requestId = ++requestIdRef.current
-
-    setLoading(true)
-    setError('')
-
-    let query = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
-
-    if (startDate) query = query.gte('issue_date', startDate)
-    if (endDate) query = query.lte('issue_date', endDate)
-
-    const result = await query
-
-    if (requestIdRef.current !== requestId) return
-
-    setData((result.data || []) as InvoiceFinancialRow[])
-    setLoading(false)
-    setError(result.error?.message || '')
-
-    if (!result.error) {
-      setLoadedRange(nextRangeKey)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isActive && loadedRange !== rangeKey && !loading) {
-      void load(start || null, end || null, rangeKey)
-    }
-  }, [isActive, start, end, rangeKey, loadedRange, loading, load])
 
   const searchTerm = search.trim().toLowerCase()
 
@@ -133,7 +103,7 @@ export function ReceivablesSection({
     ]
   }, [filtered])
 
-  const isLoading = loading || loadedRange !== rangeKey
+  // ponytail: loading driven by parent prop
 
   return (
     <div className="space-y-4">

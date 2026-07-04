@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
+import {
+  loadEnrichedCollections,
+  loadProjects,
+  loadReceivables,
+  loadTaxInvoices,
+} from '@/modules/reports/services/reportProjectionService'
 
 // Shared Report Types & Utils
 import {
-  BankAccountLookupRow,
   CollectionRow,
   DatePreset,
   InvoiceFinancialRow,
@@ -74,26 +78,26 @@ export default function Reports() {
   const [clientFilter, setClientFilter] = useState('all')
   const [search, setSearch] = useState('')
 
-  // Shared Data (Collections is needed by both Collections and Tax tabs)
+  // Shared Data (collections shared by overview, collections, and tax tabs)
   const [collections, setCollections] = useState<CollectionRow[]>([])
   const [collectionsLoading, setCollectionsLoading] = useState(false)
   const [collectionsLoadedRange, setCollectionsLoadedRange] = useState<string | null>(null)
   const [collectionsError, setCollectionsError] = useState('')
 
-  const [overviewReceivables, setOverviewReceivables] = useState<InvoiceFinancialRow[]>([])
-  const [overviewReceivablesLoading, setOverviewReceivablesLoading] = useState(false)
-  const [overviewReceivablesLoadedRange, setOverviewReceivablesLoadedRange] = useState<string | null>(null)
-  const [overviewReceivablesError, setOverviewReceivablesError] = useState('')
+  const [receivables, setReceivables] = useState<InvoiceFinancialRow[]>([])
+  const [receivablesLoading, setReceivablesLoading] = useState(false)
+  const [receivablesLoadedRange, setReceivablesLoadedRange] = useState<string | null>(null)
+  const [receivablesError, setReceivablesError] = useState('')
 
-  const [overviewProjects, setOverviewProjects] = useState<ProjectFinancialRow[]>([])
-  const [overviewProjectsLoading, setOverviewProjectsLoading] = useState(false)
-  const [overviewProjectsLoaded, setOverviewProjectsLoaded] = useState(false)
-  const [overviewProjectsError, setOverviewProjectsError] = useState('')
+  const [projects, setProjects] = useState<ProjectFinancialRow[]>([])
+  const [projectsLoading, setProjectsLoading] = useState(false)
+  const [projectsLoaded, setProjectsLoaded] = useState(false)
+  const [projectsError, setProjectsError] = useState('')
 
-  const [overviewTaxInvoices, setOverviewTaxInvoices] = useState<TaxInvoiceRow[]>([])
-  const [overviewTaxLoading, setOverviewTaxLoading] = useState(false)
-  const [overviewTaxLoadedRange, setOverviewTaxLoadedRange] = useState<string | null>(null)
-  const [overviewTaxError, setOverviewTaxError] = useState('')
+  const [taxInvoices, setTaxInvoices] = useState<TaxInvoiceRow[]>([])
+  const [taxLoading, setTaxLoading] = useState(false)
+  const [taxLoadedRange, setTaxLoadedRange] = useState<string | null>(null)
+  const [taxError, setTaxError] = useState('')
   
   const requestIds = useRef({ collections: 0, receivables: 0, projects: 0, tax: 0 })
 
@@ -104,142 +108,77 @@ export default function Reports() {
 
   const loadCollections = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
     const requestId = ++requestIds.current.collections
-
     setCollectionsLoading(true)
     setCollectionsError('')
 
-    let paymentsQuery = supabase
-      .from('payments')
-      .select('*, invoices(invoice_number, client_name)')
-      .is('voided_at', null)
-      .order('date', { ascending: false })
-
-    if (startDate) paymentsQuery = paymentsQuery.gte('date', startDate)
-    if (endDate) paymentsQuery = paymentsQuery.lte('date', endDate)
-
-    const paymentsResult = await paymentsQuery
-
-    if (requestIds.current.collections !== requestId) return
-
-    const paymentsData = (paymentsResult.data || []) as CollectionRow[]
-    const bankAccountIds = Array.from(
-      new Set(
-        paymentsData
-          .map((payment) => payment.bank_account_id)
-          .filter((value): value is string => Boolean(value)),
-      ),
-    )
-
-    let bankAccountsMap = new Map<string, BankAccountLookupRow>()
-    let bankAccountsErrorMessage = ''
-
-    if (!paymentsResult.error && bankAccountIds.length > 0) {
-      const { data: bankAccountRows, error: bankAccountsError } = await supabase
-        .from('bank_accounts')
-        .select('id, bank_name, account_number')
-        .in('id', bankAccountIds)
-
+    try {
+      const rows = await loadEnrichedCollections(startDate, endDate)
       if (requestIds.current.collections !== requestId) return
-
-      bankAccountsErrorMessage = bankAccountsError?.message || ''
-      if (!bankAccountsError) {
-        bankAccountsMap = new Map(
-          ((bankAccountRows || []) as BankAccountLookupRow[]).map((bankAccount) => [bankAccount.id, bankAccount]),
-        )
-      }
-    }
-
-    const collectionRows = paymentsData.map((payment) => {
-      const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices
-      const linkedAccount = payment.bank_account_id ? bankAccountsMap.get(payment.bank_account_id) : null
-      return {
-        ...payment,
-        invoice_number: joinedInvoice?.invoice_number || '—',
-        client_name: joinedInvoice?.client_name || '—',
-        account_label: linkedAccount?.bank_name
-          ? `${linkedAccount.bank_name} — ${linkedAccount.account_number || 'No account'}`
-          : payment.method || '—',
-      }
-    })
-
-    setCollections(collectionRows)
-    setCollectionsLoading(false)
-    setCollectionsError(paymentsResult.error?.message || bankAccountsErrorMessage)
-
-    if (!paymentsResult.error && !bankAccountsErrorMessage) {
+      setCollections(rows)
+      setCollectionsLoading(false)
       setCollectionsLoadedRange(nextRangeKey)
+    } catch (err) {
+      if (requestIds.current.collections !== requestId) return
+      setCollections([])
+      setCollectionsLoading(false)
+      setCollectionsError(err instanceof Error ? err.message : 'Failed to load collections')
     }
   }, [])
 
-  const loadOverviewReceivables = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
+  const loadReceivablesData = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
     const requestId = ++requestIds.current.receivables
+    setReceivablesLoading(true)
+    setReceivablesError('')
 
-    setOverviewReceivablesLoading(true)
-    setOverviewReceivablesError('')
-
-    let query = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
-
-    if (startDate) query = query.gte('issue_date', startDate)
-    if (endDate) query = query.lte('issue_date', endDate)
-
-    const result = await query
-
-    if (requestIds.current.receivables !== requestId) return
-
-    setOverviewReceivables((result.data || []) as InvoiceFinancialRow[])
-    setOverviewReceivablesLoading(false)
-    setOverviewReceivablesError(result.error?.message || '')
-
-    if (!result.error) {
-      setOverviewReceivablesLoadedRange(nextRangeKey)
+    try {
+      const rows = await loadReceivables(startDate, endDate)
+      if (requestIds.current.receivables !== requestId) return
+      setReceivables(rows)
+      setReceivablesLoading(false)
+      setReceivablesLoadedRange(nextRangeKey)
+    } catch (err) {
+      if (requestIds.current.receivables !== requestId) return
+      setReceivables([])
+      setReceivablesLoading(false)
+      setReceivablesError(err instanceof Error ? err.message : 'Failed to load receivables')
     }
   }, [])
 
-  const loadOverviewProjects = useCallback(async () => {
+  const loadProjectsData = useCallback(async () => {
     const requestId = ++requestIds.current.projects
+    setProjectsLoading(true)
+    setProjectsError('')
 
-    setOverviewProjectsLoading(true)
-    setOverviewProjectsError('')
-
-    const result = await supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false })
-
-    if (requestIds.current.projects !== requestId) return
-
-    setOverviewProjects((result.data || []) as ProjectFinancialRow[])
-    setOverviewProjectsLoading(false)
-    setOverviewProjectsError(result.error?.message || '')
-
-    if (!result.error) {
-      setOverviewProjectsLoaded(true)
+    try {
+      const rows = await loadProjects()
+      if (requestIds.current.projects !== requestId) return
+      setProjects(rows)
+      setProjectsLoading(false)
+      setProjectsLoaded(true)
+    } catch (err) {
+      if (requestIds.current.projects !== requestId) return
+      setProjects([])
+      setProjectsLoading(false)
+      setProjectsError(err instanceof Error ? err.message : 'Failed to load projects')
     }
   }, [])
 
-  const loadOverviewTaxInvoices = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
+  const loadTaxData = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
     const requestId = ++requestIds.current.tax
+    setTaxLoading(true)
+    setTaxError('')
 
-    setOverviewTaxLoading(true)
-    setOverviewTaxError('')
-
-    let query = supabase
-      .from('invoices')
-      .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
-      .not('status', 'eq', 'archived')
-      .is('archived_at', null)
-      .order('issue_date', { ascending: false })
-
-    if (startDate) query = query.gte('issue_date', startDate)
-    if (endDate) query = query.lte('issue_date', endDate)
-
-    const result = await query
-
-    if (requestIds.current.tax !== requestId) return
-
-    setOverviewTaxInvoices((result.data || []) as TaxInvoiceRow[])
-    setOverviewTaxLoading(false)
-    setOverviewTaxError(result.error?.message || '')
-
-    if (!result.error) {
-      setOverviewTaxLoadedRange(nextRangeKey)
+    try {
+      const rows = await loadTaxInvoices(startDate, endDate)
+      if (requestIds.current.tax !== requestId) return
+      setTaxInvoices(rows)
+      setTaxLoading(false)
+      setTaxLoadedRange(nextRangeKey)
+    } catch (err) {
+      if (requestIds.current.tax !== requestId) return
+      setTaxInvoices([])
+      setTaxLoading(false)
+      setTaxError(err instanceof Error ? err.message : 'Failed to load tax invoices')
     }
   }, [])
 
@@ -254,60 +193,58 @@ export default function Reports() {
   }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
 
   useEffect(() => {
-    if (tab !== 'overview') return
     const startDate = safeDate(queryStart)
     const endDate = safeDate(queryEnd)
 
-    if (overviewReceivablesLoadedRange !== rangeKey && !overviewReceivablesLoading) {
-      void loadOverviewReceivables(startDate, endDate, rangeKey)
+    if (receivablesLoadedRange !== rangeKey && !receivablesLoading) {
+      void loadReceivablesData(startDate, endDate, rangeKey)
     }
-    if (!overviewProjectsLoaded && !overviewProjectsLoading) {
-      void loadOverviewProjects()
+    if (!projectsLoaded && !projectsLoading) {
+      void loadProjectsData()
     }
-    if (overviewTaxLoadedRange !== rangeKey && !overviewTaxLoading) {
-      void loadOverviewTaxInvoices(startDate, endDate, rangeKey)
+    if (taxLoadedRange !== rangeKey && !taxLoading) {
+      void loadTaxData(startDate, endDate, rangeKey)
     }
   }, [
-    tab,
     rangeKey,
     queryStart,
     queryEnd,
-    overviewReceivablesLoadedRange,
-    overviewReceivablesLoading,
-    overviewProjectsLoaded,
-    overviewProjectsLoading,
-    overviewTaxLoadedRange,
-    overviewTaxLoading,
-    loadOverviewProjects,
-    loadOverviewReceivables,
-    loadOverviewTaxInvoices,
+    receivablesLoadedRange,
+    receivablesLoading,
+    projectsLoaded,
+    projectsLoading,
+    taxLoadedRange,
+    taxLoading,
+    loadProjectsData,
+    loadReceivablesData,
+    loadTaxData,
   ])
 
   const overviewClientOptions = useMemo(() => {
     const clients = new Set<string>()
 
-    for (const row of overviewReceivables) {
+    for (const row of receivables) {
       if (row.client_name) clients.add(row.client_name)
     }
     for (const row of collections) {
       if (row.client_name) clients.add(row.client_name)
     }
-    for (const row of overviewProjects) {
+    for (const row of projects) {
       if (row.client_name) clients.add(row.client_name)
     }
-    for (const row of overviewTaxInvoices) {
+    for (const row of taxInvoices) {
       if (row.client_name) clients.add(row.client_name)
     }
 
     return Array.from(clients).sort((left, right) => left.localeCompare(right))
-  }, [overviewReceivables, collections, overviewProjects, overviewTaxInvoices])
+  }, [receivables, collections, projects, taxInvoices])
 
   const overviewSummary = useMemo<ReportsOverviewSummary>(() => {
     const searchTerm = search.trim().toLowerCase()
     const matchesSearch = (...values: Array<string | null | undefined>) =>
       !searchTerm || values.some((value) => String(value || '').toLowerCase().includes(searchTerm))
 
-    const filteredReceivables = overviewReceivables
+    const filteredReceivables = receivables
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => matchesSearch(row.invoice_number, row.client_name))
 
@@ -315,11 +252,11 @@ export default function Reports() {
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => matchesSearch(row.invoice_number, row.client_name))
 
-    const filteredProjects = overviewProjects
+    const filteredProjects = projects
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => matchesSearch(row.project_name, row.name, row.client_name))
 
-    const filteredTaxInvoices = overviewTaxInvoices
+    const filteredTaxInvoices = taxInvoices
       .filter((row) => (clientFilter === 'all' ? true : row.client_name === clientFilter))
       .filter((row) => matchesSearch(row.invoice_number, row.client_name))
 
@@ -393,10 +330,10 @@ export default function Reports() {
       .map(({ amountValue: _amountValue, sortWeight: _sortWeight, ...row }) => row)
 
     const errors = [
-      overviewReceivablesError ? `Receivables overview: ${overviewReceivablesError}` : '',
+      receivablesError ? `Receivables overview: ${receivablesError}` : '',
       collectionsError ? `Collections overview: ${collectionsError}` : '',
-      overviewProjectsError ? `Projects overview: ${overviewProjectsError}` : '',
-      overviewTaxError ? `Tax overview: ${overviewTaxError}` : '',
+      projectsError ? `Projects overview: ${projectsError}` : '',
+      taxError ? `Tax overview: ${taxError}` : '',
     ].filter(Boolean)
 
     return {
@@ -418,31 +355,31 @@ export default function Reports() {
       highRiskReceivables,
       errors,
       unsupported: {
-        tax: Boolean(overviewTaxError) && filteredTaxInvoices.length === 0,
+        tax: Boolean(taxError) && filteredTaxInvoices.length === 0,
       },
     }
   }, [
     search,
     clientFilter,
-    overviewReceivables,
+    receivables,
     collections,
-    overviewProjects,
-    overviewTaxInvoices,
-    overviewReceivablesError,
+    projects,
+    taxInvoices,
+    receivablesError,
     collectionsError,
-    overviewProjectsError,
-    overviewTaxError,
+    projectsError,
+    taxError,
   ])
 
   const overviewLoading =
-    (tab === 'overview' && overviewReceivablesLoadedRange !== rangeKey) ||
+    (tab === 'overview' && receivablesLoadedRange !== rangeKey) ||
     (tab === 'overview' && collectionsLoadedRange !== rangeKey) ||
-    (tab === 'overview' && overviewTaxLoadedRange !== rangeKey) ||
-    (tab === 'overview' && !overviewProjectsLoaded) ||
-    overviewReceivablesLoading ||
+    (tab === 'overview' && taxLoadedRange !== rangeKey) ||
+    (tab === 'overview' && !projectsLoaded) ||
+    receivablesLoading ||
     collectionsLoading ||
-    overviewTaxLoading ||
-    overviewProjectsLoading
+    taxLoading ||
+    projectsLoading
 
   const activeMetadata = TAB_METADATA[tab]
 
@@ -495,6 +432,9 @@ export default function Reports() {
             setCustomStart={setCustomStart}
             customEnd={customEnd}
             setCustomEnd={setCustomEnd}
+            data={receivables}
+            isLoading={receivablesLoading || receivablesLoadedRange !== rangeKey}
+            error={receivablesError}
           />
         ) : null}
 
@@ -523,7 +463,6 @@ export default function Reports() {
         {tab === 'projects' ? (
           <ProjectsSection
             isActive
-            rangeKey={rangeKey}
             clientFilter={clientFilter}
             setClientFilter={setClientFilter}
             search={search}
@@ -534,6 +473,9 @@ export default function Reports() {
             setCustomStart={setCustomStart}
             customEnd={customEnd}
             setCustomEnd={setCustomEnd}
+            data={projects}
+            isLoading={projectsLoading || !projectsLoaded}
+            error={projectsError}
           />
         ) : null}
 
@@ -553,8 +495,10 @@ export default function Reports() {
             setCustomStart={setCustomStart}
             customEnd={customEnd}
             setCustomEnd={setCustomEnd}
+            data={taxInvoices}
             collections={collections}
-            isCollectionsLoading={collectionsLoading || collectionsLoadedRange !== rangeKey}
+            isLoading={(taxLoading || taxLoadedRange !== rangeKey) || (collectionsLoading || collectionsLoadedRange !== rangeKey)}
+            error={taxError || collectionsError}
           />
         ) : null}
       </ReportsShell>

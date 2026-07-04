@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, BriefcaseBusiness, FileSpreadsheet, Receipt, Wallet } from 'lucide-react'
-import { supabase } from '@/supabase'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -19,7 +18,6 @@ import { EmptyState, ErrorBanner, Filters, LoadingState, MetricStrip } from './R
 
 type Props = {
   isActive: boolean
-  rangeKey: string
   clientFilter: string
   setClientFilter: (val: string) => void
   search: string
@@ -30,11 +28,13 @@ type Props = {
   setCustomStart: (val: string) => void
   customEnd: string
   setCustomEnd: (val: string) => void
+  data: ProjectFinancialRow[]
+  error?: string
+  isLoading: boolean
 }
 
 export function ProjectsSection({
   isActive,
-  rangeKey,
   clientFilter,
   setClientFilter,
   search,
@@ -45,38 +45,11 @@ export function ProjectsSection({
   setCustomStart,
   customEnd,
   setCustomEnd,
+  data,
+  error = '',
+  isLoading,
 }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [error, setError] = useState('')
-  const [data, setData] = useState<ProjectFinancialRow[]>([])
   const [receivablesFilter, setReceivablesFilter] = useState<ReceivablesFilter>('all')
-  const requestIdRef = useRef(0)
-
-  const load = useCallback(async () => {
-    const requestId = ++requestIdRef.current
-
-    setLoading(true)
-    setError('')
-
-    const result = await supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false })
-
-    if (requestIdRef.current !== requestId) return
-
-    setData((result.data || []) as ProjectFinancialRow[])
-    setLoading(false)
-    setError(result.error?.message || '')
-
-    if (!result.error) {
-      setIsLoaded(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isActive && !isLoaded && !loading) {
-      void load()
-    }
-  }, [isActive, isLoaded, loading, load])
 
   const searchTerm = search.trim().toLowerCase()
 
@@ -106,7 +79,7 @@ export function ProjectsSection({
     ]
   }, [filtered])
 
-  const isLoading = loading || !isLoaded
+  // ponytail: loading driven by parent prop
 
   return (
     <div className="space-y-4">
