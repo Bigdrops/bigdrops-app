@@ -18,7 +18,9 @@ const FIELD_LABELS: Record<string, string> = {
   status: 'Status',
 }
 
-const CURRENCY_FIELDS = new Set(['subtotal', 'discount', 'vat', 'wht', 'total'])
+const PAYMENT_FIELDS = new Set(['amount'])
+
+const CURRENCY_FIELDS = new Set(['subtotal', 'discount', 'vat', 'wht', 'total', 'amount'])
 const DATE_FIELDS = new Set(['issue_date', 'due_date', 'valid_until', 'start_date', 'created_at', 'updated_at'])
 
 const ACTION_LABELS: Record<string, Record<string, string>> = {
@@ -30,6 +32,7 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     LINK: 'linked this invoice',
     UNLINK: 'unlinked this invoice',
     PAYMENT_RECORDED: 'recorded a payment on this invoice',
+    PAYMENT_VOIDED: 'voided a payment on this invoice',
   },
   quotation: {
     CREATE: 'created this quotation',
@@ -187,6 +190,41 @@ export function buildAuditTrailChanges(row: AuditLogRecord): AuditTrailChange[] 
     })
 }
 
+function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
+  const meta = row.metadata
+  if (!meta) return []
+
+  if (row.action === 'PAYMENT_RECORDED') {
+    const changes: AuditTrailChange[] = []
+    if (meta.amount != null) {
+      changes.push({ field: 'amount', label: 'Amount', oldValue: EMPTY_VALUE, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
+    }
+    if (meta.payment_date != null) {
+      changes.push({ field: 'payment_date', label: 'Date', oldValue: EMPTY_VALUE, newValue: formatDisplayDate(meta.payment_date as string) })
+    }
+    if (meta.payment_method != null) {
+      changes.push({ field: 'payment_method', label: 'Method', oldValue: EMPTY_VALUE, newValue: String(meta.payment_method) })
+    }
+    if (meta.reason != null) {
+      changes.push({ field: 'reason', label: 'Reason', oldValue: EMPTY_VALUE, newValue: String(meta.reason) })
+    }
+    return changes
+  }
+
+  if (row.action === 'PAYMENT_VOIDED') {
+    const changes: AuditTrailChange[] = []
+    if (meta.amount != null) {
+      changes.push({ field: 'amount', label: 'Amount', oldValue: EMPTY_VALUE, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
+    }
+    if (meta.reason != null) {
+      changes.push({ field: 'reason', label: 'Reason', oldValue: EMPTY_VALUE, newValue: String(meta.reason) })
+    }
+    return changes
+  }
+
+  return []
+}
+
 export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] {
   return rows.map((row) => ({
     id: String(row.id),
@@ -204,6 +242,6 @@ export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] 
       },
     }),
     rawTimestamp: row.created_at || null,
-    changes: buildAuditTrailChanges(row),
+    changes: buildAuditTrailChanges(row).length > 0 ? buildAuditTrailChanges(row) : buildPaymentChanges(row),
   }))
 }

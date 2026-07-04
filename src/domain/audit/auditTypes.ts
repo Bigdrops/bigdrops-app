@@ -22,6 +22,7 @@ export interface AuditLogRecord {
   scope_type?: string | null
   created_at?: string | null
   changes?: Array<{ field: string; old: unknown; new: unknown }> | null
+  metadata?: Record<string, unknown> | null
   reason?: string | null
 }
 

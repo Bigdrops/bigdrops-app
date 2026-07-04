@@ -48,6 +48,7 @@ function mapActivityEventToAuditLog(event: Record<string, unknown>): AuditLogRec
     scope_type: event.scope_type as string | null | undefined,
     created_at: event.created_at as string | null | undefined,
     changes: null,
+    metadata: (event.metadata as Record<string, unknown>) || null,
     reason: event.reason as string | null | undefined,
   }
 }
@@ -56,12 +57,21 @@ function roundToSecond(ts: string): number {
   return Math.round(new Date(ts).getTime() / 1000)
 }
 
-function dedupActivityEvents(auditRows: AuditLogRecord[], activityRows: AuditLogRecord[]): AuditLogRecord[] {
+function dedupActivityEvents(auditRows: AuditLogRecord[], activityRows: AuditLogRecord[]) {
+  const createEntityIds = new Set(
+    auditRows.filter((r) => r.action === 'CREATE').map((r) => r.entity_id),
+  )
+  const activityFiltered = activityRows.filter(
+    (r) => !(r.action === 'CREATE' && createEntityIds.has(r.entity_id)),
+  )
   const activityKeys = new Set<string>()
-  for (const r of activityRows) {
+  for (const r of activityFiltered) {
     if (r.created_at) activityKeys.add(`${r.entity_id}:${roundToSecond(r.created_at)}`)
   }
-  return auditRows.filter((r) => !r.created_at || !activityKeys.has(`${r.entity_id}:${roundToSecond(r.created_at)}`))
+  const auditDeduped = auditRows.filter(
+    (r) => !r.created_at || !activityKeys.has(`${r.entity_id}:${roundToSecond(r.created_at)}`),
+  )
+  return { auditDeduped, activityFiltered }
 }
 
 function sortByCreatedDesc(rows: AuditLogRecord[]): AuditLogRecord[] {
@@ -102,9 +112,9 @@ async function fetchMerged(entityType: string, entityId: string, before?: string
 
   const auditRows = (auditResult.data || []) as AuditLogRecord[]
   const activityRows = (activityResult.data || []).map(mapActivityEventToAuditLog)
-  const auditDeduped = dedupActivityEvents(auditRows, activityRows)
+  const { auditDeduped, activityFiltered } = dedupActivityEvents(auditRows, activityRows)
 
-  return sortByCreatedDesc([...auditDeduped, ...activityRows])
+  return sortByCreatedDesc([...auditDeduped, ...activityFiltered])
 }
 
 const CACHE_TTL_MS = 30_000
