@@ -11,6 +11,7 @@ interface CsrViewPageProps {
   metrics: CsrMetric[]
   documentPreview?: ReactNode
   preview?: ReactNode // deprecated, use documentPreview
+  activityHistory?: ReactNode
   onDuplicate: () => void
   onCopyNumber: () => void
 }
@@ -20,6 +21,7 @@ export default function CsrViewPage({
   metrics,
   documentPreview,
   preview,
+  activityHistory,
   onDuplicate: _onDuplicate,
   onCopyNumber: _onCopyNumber,
 }: CsrViewPageProps) {
@@ -32,6 +34,8 @@ export default function CsrViewPage({
       <DocumentSection title="Service report content">
         {previewContent}
       </DocumentSection>
+
+      {activityHistory}
     </div>
   )
 }

@@ -50,6 +50,22 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     LINK: 'linked this project',
     UNLINK: 'unlinked this project',
   },
+  csr: {
+    CREATE: 'created this service report',
+    UPDATE: 'updated this service report',
+    DELETE: 'deleted this service report',
+    STATUS_CHANGE: 'updated this service report',
+    LINK: 'linked this service report',
+    UNLINK: 'unlinked this service report',
+  },
+  waybill: {
+    CREATE: 'created this waybill',
+    UPDATE: 'updated this waybill',
+    DELETE: 'deleted this waybill',
+    STATUS_CHANGE: 'updated this waybill',
+    LINK: 'linked this waybill',
+    UNLINK: 'unlinked this waybill',
+  },
 }
 
 function toTitleCase(value: string): string {

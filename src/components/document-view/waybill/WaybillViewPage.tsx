@@ -11,6 +11,7 @@ interface WaybillViewPageProps {
   document: BaseDocument
   metrics: WaybillMetric[]
   preview: ReactNode
+  activityHistory?: ReactNode
   onMarkAsDelivered: () => void
   onEdit: () => void
   onDuplicate: () => void
@@ -21,6 +22,7 @@ export default function WaybillViewPage({
   document: _document,
   metrics,
   preview,
+  activityHistory,
   onMarkAsDelivered,
   onEdit,
   onDuplicate,
@@ -37,6 +39,8 @@ export default function WaybillViewPage({
       <DocumentSection title="Dispatch manifest">
         {preview}
       </DocumentSection>
+
+      {activityHistory}
     </div>
   )
 }

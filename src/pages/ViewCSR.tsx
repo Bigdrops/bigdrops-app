@@ -30,6 +30,7 @@ import { PenLine, Type } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
+import { CsrActivityCard } from '@/components/document-view/csr/sections/ActivityCard'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -505,6 +506,7 @@ export default function ViewCSR() {
           document={docProps}
           metrics={metrics}
           documentPreview={<CsrDocumentPreview csr={csr} previewModel={previewData} settingsData={settings} />}
+          activityHistory={<CsrActivityCard documentId={docProps.id} />}
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}
         />

@@ -34,6 +34,7 @@ import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
+import { WaybillActivityCard } from '@/components/document-view/waybill/sections/ActivityCard'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -561,6 +562,7 @@ export default function ViewWaybill() {
           document={docProps}
           metrics={metrics}
           preview={<WaybillDocumentPreview model={model} />}
+          activityHistory={<WaybillActivityCard documentId={docProps.id} />}
           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
           onEdit={() => navigate(`/waybills/${id}/edit`)}
           onDuplicate={() => void handleDuplicate()}
