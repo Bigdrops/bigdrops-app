@@ -70,15 +70,18 @@ Every generated prompt must structurally break down into these four distinct blo
  4. **REQUIRED VERIFICATION:**
    * For documentation/audits: Instruct the agent to run git status and bun run audit:load. Do NOT request test runs or builds.
    * For implementation/code changes: Instruct the agent to run bun run audit:load, bun run typecheck, and git status. Only include bun run build if explicitly required by the user.
+
 ## 4. Mandatory Output Wrapper
+
 When operating in Prompt Master Mode, you must bypass conversational commentary and output exactly this layout:
+
 ```text
 Prompt Master logic applied.
 
 [Generated Prompt Code Block]
 
+Target: OpenCode (Local Agent Mode)
+Strategy: [One-sentence tactical implementation strategy optimized for OpenCode modular processing]
 
 ```
-```
-
-```
+ * **OpenCode Generation Rule:** Structure the generated prompt to be hyper-direct and flat. Avoid nested conversational paragraphs. Break instructions down into explicit, sequential action items targeted at specific file paths so OpenCode can process the change linearly.
