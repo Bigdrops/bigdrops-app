@@ -1,0 +1,603 @@
+
+PS C:\Users\DELL\desktop\bigdrops-app> npx skills add Cap-go/capgo-skills
+Need to install the following packages:
+skills@1.5.14
+Ok to proceed? (y) y
+
+███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+
+┌   skills
+│
+◇  Source: https://github.com/Cap-go/capgo-skills.git
+│
+◇  Repository cloned
+│
+◇  Found 48 skills
+│
+◇  Select skills to install (space to toggle)
+│  capacitor-accessibility, capacitor-best-practices, capacitor-ci-cd, capacitor-deep-linking, capacitor-keyboard,
+capacitor-mcp, capacitor-offline-first, capacitor-performance, capacitor-plugin-spm-support, capacitor-plugin-upgrades,
+capacitor-plugins, capacitor-push-notifications, capacitor-security, capacitor-splash-screen, capacitor-testing,
+capgo-live-updates, capgo-release-management, capgo-release-workflows, cocoapods-to-spm, cordova-to-capacitor,
+debugging-capacitor, framework-to-capacitor, ionic-appflow-migration, ionic-design, ionic-enterprise-sdk-migration,
+ios-android-logs, konsta-ui, safe-area-handling, skill-creator, sqlite-to-fast-sql, subscription-app-revenue,
+tailwind-capacitor, webapp-to-capacitor
+│
+◇  72 agents
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◆  Which agents do you want to install to?
+│
+│  ── Universal (.agents/skills) ── always included ────────────
+│    • Amp
+│    • Antigravity
+◇  Which agents do you want to install to?
+│  Amp, Antigravity, Antigravity CLI, Cline, Codex, Cursor, Deep Agents, Gemini CLI, GitHub Copilot, Kimi Code CLI, OpenCode, Warp, Zed, Claude Code, Command Code, Continue, Hermes Agent, Kilo Code, Kiro CLI, Roo Code, Windsurf
+│
+◇  Installation scope
+│  Project
+│
+◇  Installation method
+│  Symlink (Recommended)
+
+│
+◇  Installation Summary ─────────────────────────────────────────────────────────────╮
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\subscription-app-revenue                    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\sqlite-to-fast-sql                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\skill-creator                               │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│    overwrites: Claude Code                                                         │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\safe-area-handling                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\konsta-ui                                   │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\ios-android-logs                            │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\ionic-enterprise-sdk-migration              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\ionic-design                                │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\ionic-appflow-migration                     │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\framework-to-capacitor                      │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\debugging-capacitor                         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\cordova-to-capacitor                        │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\cocoapods-to-spm                            │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capgo-release-workflows                     │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capgo-release-management                    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capgo-live-updates                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-testing                           │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-splash-screen                     │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-security                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-push-notifications                │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugins                           │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-upgrades                   │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-spm-support                │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-performance                       │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-offline-first                     │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-mcp                               │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-keyboard                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-deep-linking                      │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-ci-cd                             │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-best-practices                    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\capacitor-accessibility                     │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\tailwind-capacitor                          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+│  ~\Desktop\bigdrops-app\.agents\skills\webapp-to-capacitor                         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more              │
+│    symlink → Claude Code, Windsurf, Hermes Agent, Command Code, Kilo Code +3 more  │
+│                                                                                    │
+├────────────────────────────────────────────────────────────────────────────────────╯
+│
+◇  Security Risk Assessments ─────────────────────────────────────────────────────╮
+│                                                                                 │
+│                                  Gen               Socket            Snyk       │
+│  subscription-app-revenue        Safe              0 alerts          Med Risk   │
+│  sqlite-to-fast-sql              Safe              0 alerts          Low Risk   │
+│  skill-creator                   Safe              0 alerts          Low Risk   │
+│  safe-area-handling              Safe              0 alerts          Low Risk   │
+│  konsta-ui                       Safe              0 alerts          Low Risk   │
+│  ios-android-logs                Safe              0 alerts          Low Risk   │
+│  ionic-enterprise-sdk-migration  Safe              0 alerts          Low Risk   │
+│  ionic-design                    Safe              0 alerts          Low Risk   │
+│  ionic-appflow-migration         Safe              0 alerts          Low Risk   │
+│  framework-to-capacitor          Safe              0 alerts          Low Risk   │
+│  debugging-capacitor             Safe              0 alerts          Low Risk   │
+│  cordova-to-capacitor            Safe              0 alerts          Low Risk   │
+│  cocoapods-to-spm                Safe              0 alerts          Low Risk   │
+│  capgo-release-workflows         Safe              0 alerts          Low Risk   │
+│  capgo-release-management        Safe              0 alerts          Med Risk   │
+│  capgo-live-updates              Safe              0 alerts          High Risk  │
+│  capacitor-testing               Safe              0 alerts          Low Risk   │
+│  capacitor-splash-screen         Safe              0 alerts          Low Risk   │
+│  capacitor-security              Safe              0 alerts          Low Risk   │
+│  capacitor-push-notifications    Safe              0 alerts          Med Risk   │
+│  capacitor-plugins               Safe              0 alerts          Med Risk   │
+│  capacitor-plugin-upgrades       Safe              0 alerts          Low Risk   │
+│  capacitor-plugin-spm-support    Safe              0 alerts          Low Risk   │
+│  capacitor-performance           Safe              0 alerts          Low Risk   │
+│  capacitor-offline-first         Safe              0 alerts          Low Risk   │
+│  capacitor-mcp                   High Risk         0 alerts          High Risk  │
+│  capacitor-keyboard              Safe              0 alerts          Low Risk   │
+│  capacitor-deep-linking          Safe              0 alerts          Med Risk   │
+│  capacitor-ci-cd                 Safe              0 alerts          Med Risk   │
+│  capacitor-best-practices        Safe              0 alerts          Low Risk   │
+│  capacitor-accessibility         Safe              0 alerts          Low Risk   │
+│  tailwind-capacitor              Safe              0 alerts          Low Risk   │
+│  webapp-to-capacitor             Safe              0 alerts          Low Risk   │
+│                                                                                 │
+│  Details: https://skills.sh/Cap-go/capgo-skills                                 │
+│                                                                                 │
+├─────────────────────────────────────────────────────────────────────────────────╯
+│
+◇  Proceed with installation?
+│  Yes
+│
+◇  Installation complete
+
+│
+◇  Installed 33 skills ────────────────────────────────────────────────────╮
+│                                                                          │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\subscription-app-revenue        │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\sqlite-to-fast-sql              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\skill-creator                   │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\safe-area-handling              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\konsta-ui                       │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\ios-android-logs                │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\ionic-enterprise-sdk-migration  │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\ionic-design                    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\ionic-appflow-migration         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\framework-to-capacitor          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\debugging-capacitor             │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\cordova-to-capacitor            │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\cocoapods-to-spm                │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capgo-release-workflows         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capgo-release-management        │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capgo-live-updates              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-testing               │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-splash-screen         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-security              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-push-notifications    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugins               │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-upgrades       │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-spm-support    │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-performance           │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-offline-first         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-mcp                   │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-keyboard              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-deep-linking          │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-ci-cd                 │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-best-practices        │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\capacitor-accessibility         │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\tailwind-capacitor              │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│  ✓ ~\Desktop\bigdrops-app\.agents\skills\webapp-to-capacitor             │
+│    universal: Amp, Antigravity, Antigravity CLI, Cline, Codex +8 more    │
+│    symlinked: Claude Code                                                │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+
+│
+└  Done!  Review skills before use; they run with full agent permissions.
+
+PS C:\Users\DELL\desktop\bigdrops-app>

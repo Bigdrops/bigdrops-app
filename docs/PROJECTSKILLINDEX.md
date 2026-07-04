@@ -10,13 +10,13 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 15 skills | General-purpose dev, UI, and infra skills |
+| `.agents/skills/` | 48 skills | General-purpose dev, UI, infra, and Capacitor skills |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **31 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| **Total** | **64 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
@@ -39,6 +39,39 @@ General engineering and frontend skills used by coding agents during development
 | 13 | vite | .agents/skills/vite/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vite\SKILL.md | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
 | 14 | redesign-existing-projects | .agents/skills/redesign-existing-projects/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\redesign-existing-projects\SKILL.md | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. |
 | 15 | react-pdf | .agents/skills/react-pdf/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-pdf\SKILL.md | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation. |
+| 16 | capacitor-accessibility | .agents/skills/capacitor-accessibility/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-accessibility\SKILL.md | Accessibility guide for Capacitor apps — screen readers, semantic HTML, focus management, WCAG compliance |
+| 17 | capacitor-best-practices | .agents/skills/capacitor-best-practices/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-best-practices\SKILL.md | Best practices for Capacitor — project structure, plugin usage, performance, security, deployment |
+| 18 | capacitor-ci-cd | .agents/skills/capacitor-ci-cd/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-ci-cd\SKILL.md | CI/CD for Capacitor apps — GitHub Actions, GitLab CI, build automation, app signing, deployment pipelines |
+| 19 | capacitor-deep-linking | .agents/skills/capacitor-deep-linking/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-deep-linking\SKILL.md | Deep links and universal links — iOS Universal Links, Android App Links, custom URL schemes |
+| 20 | capacitor-keyboard | .agents/skills/capacitor-keyboard/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-keyboard\SKILL.md | Keyboard handling — visibility detection, accessory bar, scroll behavior, input focus |
+| 21 | capacitor-mcp | .agents/skills/capacitor-mcp/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-mcp\SKILL.md | MCP tools for Capacitor — Ionic/Capacitor component APIs, plugin documentation, CLI commands, AI-assisted dev |
+| 22 | capacitor-offline-first | .agents/skills/capacitor-offline-first/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-offline-first\SKILL.md | Offline-first Capacitor apps — data sync, caching strategies, conflict resolution, Fast SQL, service workers |
+| 23 | capacitor-performance | .agents/skills/capacitor-performance/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-performance\SKILL.md | Performance optimization — bundle size, rendering, memory, native bridge, profiling |
+| 24 | capacitor-plugin-spm-support | .agents/skills/capacitor-plugin-spm-support/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-spm-support\SKILL.md | Swift Package Manager support for Capacitor plugins — Package.swift, CAPBridgedPlugin conversion |
+| 25 | capacitor-plugin-upgrades | .agents/skills/capacitor-plugin-upgrades/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-plugin-upgrades\SKILL.md | Upgrade Capacitor plugins to newer major versions — dependency alignment, native changes, verification |
+| 26 | capacitor-plugins | .agents/skills/capacitor-plugins/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-plugins\SKILL.md | Official Capacitor package guide + Capgo ecosystem plugin recommendations |
+| 27 | capacitor-push-notifications | .agents/skills/capacitor-push-notifications/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-push-notifications\SKILL.md | Push notifications via FCM and APNs — setup, handling, best practices |
+| 28 | capacitor-security | .agents/skills/capacitor-security/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-security\SKILL.md | Security audit with Capsec scanner — 63+ rules across secrets, storage, network, auth, crypto |
+| 29 | capacitor-splash-screen | .agents/skills/capacitor-splash-screen/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-splash-screen\SKILL.md | Splash screen configuration — asset generation, animation, programmatic control |
+| 30 | capacitor-testing | .agents/skills/capacitor-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capacitor-testing\SKILL.md | Testing guide — unit, integration, E2E, native; Jest, Vitest, Playwright, Appium |
+| 31 | capgo-live-updates | .agents/skills/capgo-live-updates/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capgo-live-updates\SKILL.md | Live updates via Capgo — deploy without app store review, update strategies, CI/CD integration |
+| 32 | capgo-release-management | .agents/skills/capgo-release-management/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capgo-release-management\SKILL.md | Capgo OTA release workflows — bundle uploads, channels, cleanup, encryption key setup |
+| 33 | capgo-release-workflows | .agents/skills/capgo-release-workflows/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\capgo-release-workflows\SKILL.md | Capgo-centered release workflows — live updates, native builds, app store publishing via CI/CD |
+| 34 | cocoapods-to-spm | .agents/skills/cocoapods-to-spm/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\cocoapods-to-spm\SKILL.md | Migrate iOS from CocoaPods to Swift Package Manager — SPM migration, xcconfig, plugin verification |
+| 35 | cordova-to-capacitor | .agents/skills/cordova-to-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\cordova-to-capacitor\SKILL.md | Migrate from Apache Cordova to Capacitor — plugin migration, platform differences |
+| 36 | debugging-capacitor | .agents/skills/debugging-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\debugging-capacitor\SKILL.md | Debugging Capacitor apps — WebView/native debugging, crash analysis, network inspection |
+| 37 | framework-to-capacitor | .agents/skills/framework-to-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\framework-to-capacitor\SKILL.md | Integrate web frameworks with Capacitor — Next.js, React, Vue, Angular, Svelte |
+| 38 | ionic-appflow-migration | .agents/skills/ionic-appflow-migration/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ionic-appflow-migration\SKILL.md | Migrate from Ionic Appflow to Capgo — replace live updates, cloud builds, store deployment |
+| 39 | ionic-design | .agents/skills/ionic-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ionic-design\SKILL.md | Ionic Framework components — component usage, theming, platform-specific styling, mobile UI |
+| 40 | ionic-enterprise-sdk-migration | .agents/skills/ionic-enterprise-sdk-migration/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ionic-enterprise-sdk-migration\SKILL.md | Migrate from Ionic Enterprise SDK plugins to Capgo/Capacitor alternatives |
+| 41 | ios-android-logs | .agents/skills/ios-android-logs/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ios-android-logs\SKILL.md | Access device logs on iOS and Android — CLI tools, GUI apps, filtering, real-time streaming |
+| 42 | konsta-ui | .agents/skills/konsta-ui/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\konsta-ui\SKILL.md | Konsta UI for native-looking iOS/Material Design components — React, Vue, Svelte |
+| 43 | safe-area-handling | .agents/skills/safe-area-handling/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\safe-area-handling\SKILL.md | Safe area handling — iPhone notch, Dynamic Island, home indicator, Android cutouts |
+| 44 | skill-creator | .agents/skills/skill-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\skill-creator\SKILL.md | Author and validate agent skills — metadata, references, packaging, eval preparation |
+| 45 | sqlite-to-fast-sql | .agents/skills/sqlite-to-fast-sql/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\sqlite-to-fast-sql\SKILL.md | Migrate SQLite/Capacitor SQL plugins to @capgo/capacitor-fast-sql — encryption, transactions |
+| 46 | subscription-app-revenue | .agents/skills/subscription-app-revenue/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\subscription-app-revenue\SKILL.md | Revenue playbook for subscription apps — $1K MRR, monetization, ASO, growth loops, pricing |
+| 47 | tailwind-capacitor | .agents/skills/tailwind-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\tailwind-capacitor\SKILL.md | Tailwind CSS in Capacitor apps — mobile-first design, touch targets, safe areas, dark mode, performance |
+| 48 | webapp-to-capacitor | .agents/skills/webapp-to-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\webapp-to-capacitor\SKILL.md | Migrate web app/PWA/SPA to store-ready Capacitor iOS/Android app |
 
 ---
 ## `.claude/skills/`
@@ -144,5 +177,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: July 4, 2026, 5:17 PM*
+*Last updated: July 4, 2026, 6:03 PM*
 ```
