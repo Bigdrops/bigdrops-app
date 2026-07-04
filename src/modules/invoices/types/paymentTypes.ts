@@ -1,5 +1,4 @@
 export type PaymentMethod = "Transfer" | "Cash" | "POS" | "Cheque" | "Other"
-export type PaymentType = "full" | "partial"
 
 export interface InvoicePayment {
   id: string
@@ -38,16 +37,6 @@ export interface PaymentInput {
   bank_account_id?: string | null
   wht_rate?: number | null
   wht_type?: string | null
-}
-
-export interface PaymentFormState {
-  cashReceived: number | null
-  whtDeducted: number | null
-  date: string
-  method: PaymentMethod
-  reference: string
-  notes: string
-  type: PaymentType
 }
 
 export interface PaymentRecordResult {

@@ -11,7 +11,7 @@ import {
   getPaymentEntrySummary,
   validatePaymentEntry,
 } from '@/components/invoice/paymentEntryHelpers'
-import { loadBankAccountsList, calculatePreviousSettled, recordInvoicePayment } from '@/modules/invoices/services/paymentService'
+import { loadPaymentSheetData, recordInvoicePayment } from '@/modules/invoices/services/paymentService'
 import type { BankAccountSummary } from '@/modules/invoices/types/paymentTypes'
 import type { PaymentMethod } from '@/modules/invoices/types/paymentTypes'
 
@@ -55,7 +55,7 @@ export default function InvoiceRecordPaymentSheet({
   invoice,
 }: InvoiceRecordPaymentSheetProps) {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
-  const [previousSettled, setPreviousSettled] = useState(0)
+  const [currentBalance, setCurrentBalance] = useState(0)
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
   const [selectedBankId, setSelectedBankId] = useState('')
   const [loadingData, setLoadingData] = useState(false)
@@ -71,15 +71,12 @@ export default function InvoiceRecordPaymentSheet({
     let cancelled = false
     const loadData = async () => {
       setLoadingData(true)
-      const [previousSettledValue, bankAccountsData] = await Promise.all([
-        calculatePreviousSettled(invoice.id),
-        loadBankAccountsList(),
-      ])
+      const result = await loadPaymentSheetData(invoice.id, invoice.total)
 
       if (cancelled) return
 
-      setPreviousSettled(previousSettledValue)
-      const banks = bankAccountsData as BankAccount[]
+      setCurrentBalance(result.currentBalance)
+      const banks = result.bankAccounts
       setBankAccounts(banks)
       setSelectedBankId(banks[0]?.id || '')
       setLoadingData(false)
@@ -95,7 +92,6 @@ export default function InvoiceRecordPaymentSheet({
     }
   }, [open, invoice?.id])
 
-  const currentBalance = Math.max(0, Number(invoice?.total || 0) - previousSettled)
   const settlementSummary = getPaymentEntrySummary({
     balanceDue: currentBalance,
     cashReceived: form.cashReceived,

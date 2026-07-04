@@ -1,4 +1,4 @@
-import type { PaymentInput, PaymentMethod, PaymentRecordResult } from "../types/paymentTypes"
+import type { PaymentInput, PaymentMethod, PaymentRecordResult, BankAccountSummary } from "../types/paymentTypes"
 import {
   insertPayment,
   fetchPaymentsForInvoice,
@@ -100,9 +100,23 @@ export async function loadBankAccountsList() {
   return fetchBankAccounts()
 }
 
-export async function refreshInvoicePaymentState(invoiceId: string): Promise<string> {
-  const financials = await fetchInvoiceFinancials(invoiceId)
-  return financials?.computed_status || "unpaid"
+export interface PaymentSheetLoadResult {
+  currentBalance: number
+  bankAccounts: BankAccountSummary[]
+}
+
+export async function loadPaymentSheetData(
+  invoiceId: string,
+  invoiceTotal: number
+): Promise<PaymentSheetLoadResult> {
+  const [previousSettled, bankAccounts] = await Promise.all([
+    calculatePreviousSettled(invoiceId),
+    loadBankAccountsList(),
+  ])
+  return {
+    currentBalance: Math.max(0, invoiceTotal - previousSettled),
+    bankAccounts,
+  }
 }
 
 export interface VoidPaymentInput {

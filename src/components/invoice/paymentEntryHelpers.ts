@@ -10,13 +10,11 @@ const normalizeAmount = (value: number | null | undefined) => {
 export interface PaymentEntrySummaryInput {
   balanceDue: number
   cashReceived: number | null | undefined
-  whtDeducted?: number | null | undefined
 }
 
 export interface PaymentEntrySummary {
   balanceDue: number
   cashReceived: number
-  whtDeducted: number
   settlementTotal: number
   remainingBalance: number
   exceedsBalance: boolean
@@ -26,7 +24,6 @@ export interface PaymentEntryValidationResult {
   isValid: boolean
   message: string
   cashError: string
-  whtError: string
 }
 
 export const OVER_BALANCE_MESSAGE =
@@ -47,7 +44,6 @@ export function getPaymentEntrySummary({
   return {
     balanceDue: normalizedBalance,
     cashReceived: normalizedCash,
-    whtDeducted: 0,
     settlementTotal,
     remainingBalance,
     exceedsBalance,
@@ -59,43 +55,18 @@ export function validatePaymentEntry(input: PaymentEntrySummaryInput): PaymentEn
   const cashError = summary.cashReceived < 0 ? 'Cash received cannot be negative.' : ''
 
   if (cashError) {
-    return {
-      isValid: false,
-      message: cashError,
-      cashError,
-      whtError: '',
-    }
+    return { isValid: false, message: cashError, cashError }
   }
 
   if (summary.settlementTotal <= 0) {
-    return {
-      isValid: false,
-      message: 'Enter cash received before recording payment.',
-      cashError: '',
-      whtError: '',
-    }
+    return { isValid: false, message: 'Enter cash received before recording payment.', cashError: '' }
   }
 
   if (summary.exceedsBalance) {
-    return {
-      isValid: false,
-      message: OVER_BALANCE_MESSAGE,
-      cashError: '',
-      whtError: '',
-    }
+    return { isValid: false, message: OVER_BALANCE_MESSAGE, cashError: '' }
   }
 
-  return {
-    isValid: true,
-    message: '',
-    cashError: '',
-    whtError: '',
-  }
+  return { isValid: true, message: '', cashError: '' }
 }
 
-export function buildFullPaymentPreset(balanceDue: number) {
-  const normalizedBalance = Math.max(0, normalizeAmount(balanceDue))
-  return {
-    cashReceived: roundCurrency(normalizedBalance),
-  }
-}
+
