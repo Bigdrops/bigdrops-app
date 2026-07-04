@@ -68,9 +68,9 @@ async function navigateToProvider(provider: Provider) {
   const playStoreUrl = `https://play.google.com/store/apps/details?id=${provider.packageId}`
 
   try {
-    const { value } = await AppLauncher.canOpenUrl({ url: provider.packageId })
+    const { value } = await AppLauncher.canOpenUrl({ url: provider.url })
     if (value) {
-      await AppLauncher.openUrl({ url: provider.androidUrl })
+      await AppLauncher.openUrl({ url: provider.url })
     } else {
       window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
     }
