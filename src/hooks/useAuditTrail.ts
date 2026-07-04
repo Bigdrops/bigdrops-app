@@ -21,6 +21,92 @@ interface UseAuditTrailResult {
 const AUDIT_LOG_SELECT =
   'id, entity_type, entity_id, entity_label, action, actor_id, actor_label, source, scope_type, created_at, changes, reason'
 
+const ACTIVITY_EVENT_SELECT =
+  'id, entity_type, entity_id, entity_label, event_type, actor_id, actor_label, source, scope_type, created_at, metadata, reason'
+
+const ACTIVITY_EVENT_TYPES = ['CREATED', 'STATUS_CHANGED', 'PAYMENT_RECORDED', 'PAYMENT_VOIDED', 'LINKED', 'UNLINKED']
+
+const EVENT_TYPE_TO_ACTION: Record<string, string> = {
+  CREATED: 'CREATE',
+  STATUS_CHANGED: 'STATUS_CHANGE',
+  PAYMENT_RECORDED: 'PAYMENT_RECORDED',
+  PAYMENT_VOIDED: 'PAYMENT_VOIDED',
+  LINKED: 'LINK',
+  UNLINKED: 'UNLINK',
+}
+
+function mapActivityEventToAuditLog(event: Record<string, unknown>): AuditLogRecord {
+  return {
+    id: `aev_${event.id}`,
+    entity_type: event.entity_type as string,
+    entity_id: event.entity_id as string,
+    entity_label: event.entity_label as string | null | undefined,
+    action: EVENT_TYPE_TO_ACTION[event.event_type as string] || (event.event_type as string),
+    actor_id: event.actor_id as string | null | undefined,
+    actor_label: event.actor_label as string | null | undefined,
+    source: event.source as string | null | undefined,
+    scope_type: event.scope_type as string | null | undefined,
+    created_at: event.created_at as string | null | undefined,
+    changes: null,
+    reason: event.reason as string | null | undefined,
+  }
+}
+
+function roundToSecond(ts: string): number {
+  return Math.round(new Date(ts).getTime() / 1000)
+}
+
+function dedupActivityEvents(auditRows: AuditLogRecord[], activityRows: AuditLogRecord[]): AuditLogRecord[] {
+  const activityKeys = new Set<string>()
+  for (const r of activityRows) {
+    if (r.created_at) activityKeys.add(`${r.entity_id}:${roundToSecond(r.created_at)}`)
+  }
+  return auditRows.filter((r) => !r.created_at || !activityKeys.has(`${r.entity_id}:${roundToSecond(r.created_at)}`))
+}
+
+function sortByCreatedDesc(rows: AuditLogRecord[]): AuditLogRecord[] {
+  return rows.sort((a, b) => {
+    const aT = a.created_at ? new Date(a.created_at).getTime() : 0
+    const bT = b.created_at ? new Date(b.created_at).getTime() : 0
+    return bT - aT
+  })
+}
+
+async function fetchMerged(entityType: string, entityId: string, before?: string): Promise<AuditLogRecord[]> {
+  const auditQuery = supabase
+    .from('audit_logs')
+    .select(AUDIT_LOG_SELECT)
+    .eq('entity_type', entityType)
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const activityQuery = supabase
+    .from('activity_events')
+    .select(ACTIVITY_EVENT_SELECT)
+    .eq('entity_type', entityType)
+    .eq('entity_id', entityId)
+    .in('event_type', ACTIVITY_EVENT_TYPES)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (before) {
+    auditQuery.lt('created_at', before)
+    activityQuery.lt('created_at', before)
+  }
+
+  const [auditResult, activityResult] = await Promise.all([auditQuery, activityQuery])
+
+  if (auditResult.error) throw auditResult.error
+  if (activityResult.error) throw activityResult.error
+
+  const auditRows = (auditResult.data || []) as AuditLogRecord[]
+  const activityRows = (activityResult.data || []).map(mapActivityEventToAuditLog)
+  const auditDeduped = dedupActivityEvents(auditRows, activityRows)
+
+  return sortByCreatedDesc([...auditDeduped, ...activityRows])
+}
+
 const CACHE_TTL_MS = 30_000
 
 const requestCache = new Map<string, Promise<AuditLogRecord[]>>()
@@ -67,33 +153,22 @@ export function useAuditTrail({
 
     const cacheKey = getCacheKey(String(entityType), String(entityId))
 
-    const maybeFetch = async (): Promise<AuditLogRecord[]> => {
-      const { data, error: auditError } = await supabase
-        .from('audit_logs')
-        .select(AUDIT_LOG_SELECT)
-        .eq('entity_type', entityType)
-        .eq('entity_id', entityId)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (auditError) throw auditError
-      return (data || []) as AuditLogRecord[]
-    }
-
     try {
       let rows: AuditLogRecord[]
+
+      const doFetch = () => fetchMerged(entityType, entityId)
 
       if (!skipCache) {
         const cached = getCachedPromise(cacheKey)
         if (cached) {
           rows = await cached
         } else {
-          const fresh = maybeFetch()
+          const fresh = doFetch()
           setCachedPromise(cacheKey, fresh)
           rows = await fresh
         }
       } else {
-        const fresh = maybeFetch()
+        const fresh = doFetch()
         setCachedPromise(cacheKey, fresh)
         rows = await fresh
       }
@@ -147,33 +222,27 @@ export function useAuditTrail({
     setLoading(true)
     setError(null)
 
-    const { data, error: auditError } = await supabase
-      .from('audit_logs')
-      .select(AUDIT_LOG_SELECT)
-      .eq('entity_type', entityType)
-      .eq('entity_id', entityId)
-      .lt('created_at', before)
-      .order('created_at', { ascending: false })
-      .limit(50)
+    try {
+      const rows = await fetchMerged(entityType, entityId, before)
 
-    if (cancelledRef.current) return
+      if (cancelledRef.current) return
 
-    if (auditError) {
       startTransition(() => {
-        setError(auditError.message || 'Unable to load older history.')
+        setEntries((prev) => [...prev, ...buildAuditTrailItems(rows)])
+        setError(null)
         setLoading(false)
       })
-      return
-    }
+    } catch (auditError: unknown) {
+      if (cancelledRef.current) return
 
-    startTransition(() => {
-      setEntries((prev) => [
-        ...prev,
-        ...buildAuditTrailItems((data || []) as AuditLogRecord[]),
-      ])
-      setError(null)
-      setLoading(false)
-    })
+      const message =
+        auditError instanceof Error ? auditError.message : 'Unable to load older history.'
+
+      startTransition(() => {
+        setError(message)
+        setLoading(false)
+      })
+    }
   }, [entityId, entityType, cancelledRef])
 
   return {
