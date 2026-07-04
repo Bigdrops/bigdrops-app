@@ -487,6 +487,9 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
           subtotal: documentTotals.subtotal,
           install_rate_total: documentTotals.installRateTotal,
           total: documentTotals.totalPayable,
+          vat: documentTotals.vat,
+          discount: documentTotals.discount,
+          wht: documentTotals.wht,
         }
       : null
 
