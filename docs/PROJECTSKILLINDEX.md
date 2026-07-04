@@ -1,11 +1,10 @@
-
-# Claude Skills Directory
+# docs/PROJECTSKILLINDEX.md — Claude & OpenCode Skills Directory
 > ### 🚨 CRITICAL AGENT INSTRUCTION & PATH FAIL-SAFE:
 > Before executing any task, read this index to locate the relevant skill. 
-> **CRITICAL CONTEXT:** Every directory listed below (like `.agents/` and `.claude/`) lives directly INSIDE the root of this active project repository (C:\Users\DELL\Desktop\bigdrops-app\). They are NOT global system folders.
+> **CRITICAL CONTEXT:** Every directory listed below (like `.agents/` and `.claude/`) lives directly INSIDE the root of this active project repository (`C:\Users\DELL\Desktop\bigdrops-app\`). They are NOT global system folders.
 > **If your skill-loading tool fails or claims it cannot find a skill, DO NOT QUIT.** 
-> You are strictly commanded to bypass the tool, use your direct file-reading tools, look inside the current workspace directory first, and manually open the SKILL.md file using either the Relative Path or Absolute Path listed below.
-> A curated library of reusable Claude skills for the BIGDROPS project — organized by location, niche, and purpose.
+> You are strictly commanded to bypass the tool, use your direct file-reading tools, look inside the current workspace directory first, and manually open the `SKILL.md` file using either the Relative Path or Absolute Path listed below.
+> A curated library of reusable skills for the BIGDROPS project — organized by location, niche, and purpose.
 ---
 ## Overview
 
@@ -16,12 +15,12 @@
 | `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
-| `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin |
+| `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
 | **Total** | **31 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
 
 ---
 ## `.agents/skills/`
-General engineering and frontend skills used by Claude agents during development tasks.
+General engineering and frontend skills used by coding agents during development tasks.
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
@@ -38,8 +37,8 @@ General engineering and frontend skills used by Claude agents during development
 | 11 | vercel-composition-patterns | .agents/skills/vercel-composition-patterns/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vercel-composition-patterns\SKILL.md | React composition — compound components, avoiding boolean prop proliferation, context providers, React 19 APIs |
 | 12 | vercel-react-best-practices | .agents/skills/vercel-react-best-practices/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vercel-react-best-practices\SKILL.md | React/Next.js performance — eliminating waterfalls, bundle optimization, server-side perf, re-render optimization (70 rules, 8 categories) |
 | 13 | vite | .agents/skills/vite/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\vite\SKILL.md | Vite build tool — config, plugin API, SSR, library mode, Vite 8 Rolldown migration, Environment API |
-| 14 | redesign-existing-projects | .agents/skills/redesign-existing-projects/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\redesign-existing-projects\SKILL.md | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS. |
-| 15 | react-pdf | .agents/skills/react-pdf/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-pdf\SKILL.md | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation, document creation, or react-pdf. Prefer this skill over the standard 'pdf' skill, since it is more accurate |
+| 14 | redesign-existing-projects | .agents/skills/redesign-existing-projects/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\redesign-existing-projects\SKILL.md | Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. |
+| 15 | react-pdf | .agents/skills/react-pdf/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-pdf\SKILL.md | Generate PDF documents using React-PDF library (@react-pdf/renderer). Use when creating PDFs, generating documents, reports, invoices, forms, or when user mentions PDF generation. |
 
 ---
 ## `.claude/skills/`
@@ -47,13 +46,13 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | awesome-claude-skills | .claude/skills/awesome-claude-skills/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\awesome-claude-skills\SKILL.md | Collection of 30+ sub-skills — artifacts-builder, brand-guidelines, canvas-design, changelog-generator, content-research-writer, domain-name-brainstormer, file-organizer, image-enhancer, invoice-organizer, lead-research-assistant, mcp-builder, meeting-insights-analyzer, skill-creator, slack-gif-creator, tailored-resume-generator, theme-factory, twitter-algorithm-optimizer, video-downloader, webapp-testing, and more |
+| 1 | awesome-claude-skills | .claude/skills/awesome-claude-skills/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\awesome-claude-skills\SKILL.md | Collection of 30+ sub-skills — artifacts-builder, brand-guidelines, canvas-design, changelog-generator, webapp-testing, and more |
 | 2 | Karpathy | .claude/skills/Karpathy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\Karpathy\SKILL.md | Coding discipline — think before coding, simplicity first, surgical changes only, goal-driven execution with verifiable success criteria |
-| 3 | skill-creator | .claude/skills/skill-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\skill-creator\SKILL.md | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), progressive disclosure, packaging & validation |
-| 4 | ui-ux-pro-max | .claude/skills/ui-ux-pro-max/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\ui-ux-pro-max\SKILL.md | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, 13 tech stacks, searchable design system generator with Python CLI |
-| 5 | webapp-testing | .claude/skills/webapp-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\webapp-testing\SKILL.md | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery, console logging |
-| 6 | using-superpowers | .claude/skills/using-superpowers/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\using-superpowers\SKILL.md | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags, instruction hierarchy |
-| 7 | gitnexus | .claude/skills/gitnexus/ | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\gitnexus\ | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring (architecture), CLI commands, and reference guide for GitNexus code intelligence. Entry: `docs/contracts/gitnexus-operations.md` |
+| 3 | skill-creator | .claude/skills/skill-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\skill-creator\SKILL.md | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), packaging & validation |
+| 4 | ui-ux-pro-max | .claude/skills/ui-ux-pro-max/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\ui-ux-pro-max\SKILL.md | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, searchable design system generator |
+| 5 | webapp-testing | .claude/skills/webapp-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\webapp-testing\SKILL.md | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery |
+| 6 | using-superpowers | .claude/skills/using-superpowers/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\using-superpowers\SKILL.md | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags |
+| 7 | gitnexus | .claude/skills/gitnexus/ | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\gitnexus\ | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring. Entry: `docs/contracts/gitnexus-operations.md` |
 
 ---
 ## `.mimocode/skills/`
@@ -65,7 +64,7 @@ Specialized agent skills for targeted debugging workflows.
 
 ---
 ## `.opencode/agents/`
-232 upstream [agency-agents](https://github.com/msitarzewski/agency-agents) personas installed for use as opencode subagents. Organized into 18 divisions:
+232 upstream agency-agents personas installed for use as OpenCode subagents. Organized into 18 divisions:
 
 | Division | Example Agents | Count |
 | :--- | :--- | :--- |
@@ -74,26 +73,24 @@ Specialized agent skills for targeted debugging workflows.
 | engineering | backend-architect, frontend-developer, devops-automator, code-reviewer | 8 |
 | examples | codebase-onboarding-engineer, document-generator, report-distribution-agent | 3 |
 | finance | account-strategist, bookkeeper-controller, cfo, financial-analyst, tax-strategist | 12 |
-| game-development | 3d-scene-developer, game-designer, godot-*, roblox-*, unity-*, unreal-* | 23 |
+| game-development | 3d-scene-developer, game-designer, godot-\*, roblox-\*, unity-\*, unreal-\* | 23 |
 | gis | geographer, gis-analyst, cartography-designer, spatial-data-engineer, web-gis-developer | 12 |
-| marketing | seo-specialist, social-media-strategist, content-creator, email-marketing, tiktok-* | 19 |
+| marketing | seo-specialist, social-media-strategist, content-creator, email-marketing, tiktok-\* | 19 |
 | paid-media | ad-creative-strategist, ppc-campaign-strategist, programmatic-display-buyer | 6 |
 | product | product-manager, sprint-prioritizer, proposal-strategist, discovery-coach | 7 |
 | project-management | project-shepherd, jira-workflow-steward, senior-project-manager | 4 |
 | sales | deal-strategist, sales-engineer, sales-coach, outbound-strategist | 9 |
 | security | application-security-engineer, penetration-tester, threat-detection-engineer | 10 |
 | spatial-computing | xr-immersive-developer, visionos-spatial-engineer, macos-spatial-engineer | 6 |
-| specialized | grant-writer, legal-*, medical-billing, compliance-auditor, data-privacy-officer | 28 |
+| specialized | grant-writer, legal-\*, medical-billing, compliance-auditor, data-privacy-officer | 28 |
 | strategy | business-strategist, m-a-integration-manager, change-management-consultant | 4 |
 | support | customer-service, support-responder, it-service-manager | 5 |
 | testing | api-tester, test-results-analyzer, performance-benchmarker | 5 |
 
-Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: subagent`, `color`). Used by opencode's `/agent` command.
-
+Used by OpenCode's `/agent` command.
 ---
 ## `@dietrichgebert/ponytail` Plugin
-
-[Ponytail](https://github.com/DietrichGebert/ponytail) — lazy senior dev mode for AI agents. Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands, and 10 hooks. Mode toggling: `/ponytail lite|full|ultra|off`.
+Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands, and 10 hooks. Perfect for 4GB RAM resource safety by prioritizing minimal impact fixes. Mode toggling: `/ponytail lite|full|ultra|off`.
 
 | # | Skill | Package Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- |
@@ -105,7 +102,6 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 | 6 | ponytail-review | `node_modules/@dietrichgebert/ponytail/skills/ponytail-review/SKILL.md` | Code review with ponytail lens — minimal diffs, YAGNI enforcement |
 
 **Commands:** `/ponytail`, `/ponytail-audit`, `/ponytail-debt`, `/ponytail-gain`, `/ponytail-help`, `/ponytail-review`
-
 ---
 ## Quick Reference
 ```
@@ -130,7 +126,7 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 ├── .claude/
 │   └── skills/
 │       ├── awesome-claude-skills/   ← ~30 bundled sub-skills
-│       ├── Karpathy/
+│       ├── Karpathy/                ← LIVE: Thinking discipline engine
 │       ├── skill-creator/
 │       ├── ui-ux-pro-max/
 │       ├── using-superpowers/
@@ -146,11 +142,7 @@ Each agent is a `.md` file with YAML frontmatter (`name`, `description`, `mode: 
 ├── node_modules/
 │   └── @dietrichgebert/
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
-│           ├── skills/  (ponytail, audit, debt, gain, help, review)
-│           ├── hooks/   (10 runtime hooks)
-│           └── .opencode/
-│               ├── plugins/ponytail.mjs  ← Entry point
-│               └── command/ (6 ponytail commands)
 ```
 ---
-*Last updated: June 30, 2026, 9:00 AM*
+*Last updated: July 4, 2026, 5:17 PM*
+```
