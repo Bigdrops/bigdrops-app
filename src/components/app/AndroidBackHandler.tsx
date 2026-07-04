@@ -173,14 +173,29 @@ export default function AndroidBackHandler() {
 
     const setup = async () => {
       listener = await CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
-        if (cancelled) return
+        // ---- LOGGING START ----
+        console.log('[BACK] Event fired')
+        console.log('[BACK] canGoBack =', canGoBack)
+        console.log('[BACK] pathname =', pathnameRef.current)
+        console.log('[BACK] history.length =', window.history.length)
+        console.log('[BACK] history.state =', window.history.state)
+        console.log('[BACK] history.idx =', window.history.state?.idx)
+        console.log('[BACK] isRootRoute =', isRootRouteRef.current)
+        // ---- END LOGGING ----
+
+        if (cancelled) {
+          console.log('[BACK] Cancelled')
+          return
+        }
 
         const keyboardState = getKeyboardViewportState()
         if (keyboardState.isOpen && dismissActiveKeyboard()) {
+          console.log('[BACK] Dismiss keyboard')
           return
         }
 
         if (await tryCloseOverlay()) {
+          console.log('[BACK] Closed overlay')
           return
         }
 
@@ -190,27 +205,32 @@ export default function AndroidBackHandler() {
         const historyIndex = Number(window.history.state?.idx ?? 0)
 
         if (canGoBack || historyIndex > 0 || window.history.length > 1) {
+          console.log('[BACK] Going back in history')
           navigate(-1)
           return
         }
 
         const logicalTarget = getLogicalBackTarget(pathname, routeState)
         if (logicalTarget && logicalTarget !== pathname) {
+          console.log('[BACK] Navigate logical target', logicalTarget)
           navigate(logicalTarget, { replace: true })
           return
         }
 
         if (!isRootRoute) {
+          console.log('[BACK] Navigate home')
           navigate('/', { replace: true })
           return
         }
 
         const now = Date.now()
         if (now - lastBackPressAtRef.current < EXIT_WINDOW_MS) {
+          console.log('[BACK] EXIT APP')
           await CapacitorApp.exitApp()
           return
         }
 
+        console.log('[BACK] First back press')
         lastBackPressAtRef.current = now
         feedback.info('Press back again to exit', {
           description: 'You are already at the top level of the app.',
