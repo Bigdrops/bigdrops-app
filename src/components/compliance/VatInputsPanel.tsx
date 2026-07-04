@@ -15,8 +15,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
+import * as complianceService from '@/modules/compliance/services/complianceService'
 import { TaxInputEntry } from '@/domain/compliance/types'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { formatNaira } from '@/lib/formatters/money'
@@ -58,17 +58,10 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
       }
 
       if (isNew) {
-        const { error } = await supabase
-          .from('tax_input_entries')
-          .insert([{ ...recordToSave, created_at: new Date().toISOString() }])
-        if (error) throw error
+        await complianceService.insertTaxInputEntry(recordToSave)
         feedback.success('VAT input recorded')
       } else {
-        const { error } = await supabase
-          .from('tax_input_entries')
-          .update(recordToSave)
-          .eq('id', editingEntry.id)
-        if (error) throw error
+        await complianceService.updateTaxInputEntry(editingEntry.id, recordToSave)
         feedback.success('VAT input updated')
       }
 
@@ -84,8 +77,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
   const handleDelete = async (id: string) => {
     try {
       setIsDeleting(id)
-      const { error } = await supabase.from('tax_input_entries').delete().eq('id', id)
-      if (error) throw error
+        await complianceService.deleteTaxInputEntry(id)
       feedback.success('VAT input deleted')
       onInputsChanged()
     } catch (e: any) {

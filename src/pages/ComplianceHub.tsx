@@ -11,6 +11,7 @@ import {
 
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
+import { fetchWhtReceipts, fetchTaxInputEntries, fetchTaxFilings, fetchTaxReminders } from '@/modules/compliance/services/complianceService'
 import { Button } from '@/components/ui/button'
 import PageLoader from '@/components/app/PageLoader'
 import {
@@ -79,7 +80,7 @@ export default function ComplianceHub() {
       setError('')
 
       try {
-        const [invoicesResult, paymentsResult, receiptsResult, taxInputsResult, filingsResult, remindersResult] = await Promise.all([
+        const [invoicesResult, paymentsResult] = await Promise.all([
           supabase
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
@@ -90,37 +91,24 @@ export default function ComplianceHub() {
             .select('*, invoices(invoice_number, client_name)')
             .is('voided_at', null)
             .order('date', { ascending: false }),
-          supabase
-            .from('wht_receipts')
-            .select('*'),
-          supabase
-            .from('tax_input_entries')
-            .select('*')
-            .order('date', { ascending: false }),
-          supabase
-            .from('tax_filings')
-            .select('*')
-            .order('period_start', { ascending: false }),
-          supabase
-            .from('tax_reminders')
-            .select('*')
-            .order('due_date', { ascending: true }),
+        ])
+        const [receiptsData, taxInputsData, filingsData, remindersData] = await Promise.all([
+          fetchWhtReceipts(),
+          fetchTaxInputEntries(),
+          fetchTaxFilings(),
+          fetchTaxReminders(),
         ])
 
         if (cancelled) return
 
         if (invoicesResult.error) throw invoicesResult.error
         if (paymentsResult.error) throw paymentsResult.error
-        if (receiptsResult.error) throw receiptsResult.error
-        if (taxInputsResult.error) throw taxInputsResult.error
-        if (filingsResult.error) throw filingsResult.error
-        if (remindersResult.error) throw remindersResult.error
 
         setInvoices(invoicesResult.data || [])
-        setReceipts(receiptsResult.data || [])
-        setTaxInputs(taxInputsResult.data || [])
-        setFilings(filingsResult.data || [])
-        setReminders(remindersResult.data || [])
+        setReceipts(receiptsData)
+        setTaxInputs(taxInputsData)
+        setFilings(filingsData)
+        setReminders(remindersData)
 
         const flattenedPayments = (paymentsResult.data || []).map((payment) => {
           const joinedInvoice = Array.isArray(payment.invoices) ? payment.invoices[0] : payment.invoices

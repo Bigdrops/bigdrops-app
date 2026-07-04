@@ -13,7 +13,7 @@ import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { COMPLIANCE_IMPORT_CONTRACTS, ComplianceRecordType } from '@/domain/compliance/import/contracts'
 import { parseJsonObject, validateRequiredFields, normalizeDate, normalizeNumber } from '@/domain/compliance/import/parse'
-import { supabase } from '@/supabase'
+import { importRecord } from '@/modules/compliance/services/complianceService'
 import ComplianceJsonPreviewCard from './ComplianceJsonPreviewCard'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 
@@ -91,11 +91,9 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
     
     try {
       setIsSaving(true)
-      let table = ''
-      let record: any = {}
+      let record: Record<string, unknown> = {}
 
       if (type === 'vat_input') {
-        table = 'tax_input_entries'
         record = {
           settings_id: 1,
           date: parsedData.date,
@@ -108,7 +106,6 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
           notes: parsedData.notes || null,
         }
       } else if (type === 'tax_filing') {
-        table = 'tax_filings'
         record = {
           settings_id: 1,
           tax_type: parsedData.tax_type,
@@ -127,7 +124,6 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
           feedback.error('Select a payment to link this receipt.')
           return
         }
-        table = 'wht_receipts'
         record = {
           payment_id: selectedPaymentId,
           invoice_id: selectedPayment?.invoice_id || null,
@@ -141,8 +137,7 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
         }
       }
 
-      const { error: dbErr } = await supabase.from(table).insert([record])
-      if (dbErr) throw dbErr
+      await importRecord(type, record)
 
       feedback.success(`${contract.label} created successfully`)
       onSuccess()

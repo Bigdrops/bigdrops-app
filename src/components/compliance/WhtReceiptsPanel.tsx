@@ -23,9 +23,9 @@ import {
   FileJson
 } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
+import { insertInlineWhtReceipt, updateInlineWhtReceipt } from '@/modules/compliance/services/complianceService'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import WhtReceiptStatusStrip from './WhtReceiptStatusStrip'
 import WhtReceiptQueueRow, { type WhtPaymentRecord, type WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
@@ -180,29 +180,17 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
     try {
       setProcessingId(payment.id)
       const nextWhtAmount = payment.wht_amount == null ? null : Number(payment.wht_amount)
-      const newRecord: Partial<WhtReceipt> = {
+      const data = await insertInlineWhtReceipt({
         payment_id: payment.id,
         invoice_id: payment.invoice_id,
         client_name: payment.client_name,
         wht_amount: Number.isFinite(nextWhtAmount) ? nextWhtAmount : null,
         receipt_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      const { data, error } = await supabase
-        .from('wht_receipts')
-        .insert([newRecord])
-        .select()
-        .single()
-
-      if (error) throw error
-      if (data) {
-        setLocalReceipts((current) => [...current, data])
-        onReceiptsChanged?.()
-        feedback.success('WHT tracking initialized')
-        return data
-      }
+      })
+      setLocalReceipts((current) => [...current, data])
+      onReceiptsChanged?.()
+      feedback.success('WHT tracking initialized')
+      return data
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'create' }))
     } finally {
@@ -215,20 +203,11 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
   async function updateRecord(receipt: WhtReceipt, updates: Partial<WhtReceipt>) {
     try {
       setProcessingId(receipt.payment_id)
-      const { data, error } = await supabase
-        .from('wht_receipts')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', receipt.id)
-        .select()
-        .single()
-
-      if (error) throw error
-      if (data) {
-        setLocalReceipts((current) => current.map((row) => (row.id === data.id ? data : row)))
-        onReceiptsChanged?.()
-        feedback.success('Receipt updated')
-        return data
-      }
+      const data = await updateInlineWhtReceipt(receipt.id, updates)
+      setLocalReceipts((current) => current.map((row) => (row.id === data.id ? data : row)))
+      onReceiptsChanged?.()
+      feedback.success('Receipt updated')
+      return data
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'update' }))
     } finally {

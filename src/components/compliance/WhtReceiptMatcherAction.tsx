@@ -9,7 +9,7 @@ import {
   submitCertificate,
   markReceiptVerified,
   uploadReceiptFile,
-} from '@/modules/compliance/services/whtReceiptService'
+} from '@/modules/compliance/services/complianceService'
 import type { WhtReceipt } from '@/domain/compliance/types'
 import type { WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
 

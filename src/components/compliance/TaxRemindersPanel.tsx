@@ -21,9 +21,9 @@ import {
 } from '@/components/ui/select'
 import { Combobox } from '@/components/ui/combobox'
 import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon, AlertCircle } from 'lucide-react'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
+import * as complianceService from '@/modules/compliance/services/complianceService'
 import { TaxReminder, TaxReminderStatus, TaxFilingTaxType, TaxFiling } from '@/domain/compliance/types'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
@@ -85,17 +85,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       }
 
       if (isNew) {
-        const { error } = await supabase
-          .from('tax_reminders')
-          .insert([{ ...record, created_at: new Date().toISOString() }])
-        if (error) throw error
+        await complianceService.insertTaxReminder(record)
         feedback.success('Reminder added')
       } else {
-        const { error } = await supabase
-          .from('tax_reminders')
-          .update(record)
-          .eq('id', editingReminder.id!)
-        if (error) throw error
+        await complianceService.updateTaxReminder(editingReminder.id!, record)
         feedback.success('Reminder updated')
       }
 
@@ -112,8 +105,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
     if (!confirm('Remove this reminder?')) return
     try {
       setIsDeleting(id)
-      const { error } = await supabase.from('tax_reminders').delete().eq('id', id)
-      if (error) throw error
+      await complianceService.deleteTaxReminder(id)
       feedback.success('Reminder removed')
       onRemindersChanged()
     } catch (e: any) {
@@ -125,11 +117,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
   const resolveReminder = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('tax_reminders')
-        .update({ status: 'resolved', updated_at: new Date().toISOString() })
-        .eq('id', id)
-      if (error) throw error
+      await complianceService.updateTaxReminder(id, { status: 'resolved' } as Partial<TaxReminder>)
       feedback.success('Obligation resolved')
       onRemindersChanged()
     } catch (e: any) {

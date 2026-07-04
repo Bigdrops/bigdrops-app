@@ -22,9 +22,9 @@ import {
 } from '@/components/ui/select'
 import { ClipboardList, PlusCircle, Edit, Trash2, FileJson } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
 import { TaxFiling, TaxFilingStatus, TaxFilingTaxType } from '@/domain/compliance/types'
+import * as complianceService from '@/modules/compliance/services/complianceService'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { formatDisplayDate } from '@/lib/formatters/date'
@@ -90,17 +90,10 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
       }
 
       if (isNew) {
-        const { error } = await supabase
-          .from('tax_filings')
-          .insert([{ ...record, created_at: new Date().toISOString() }])
-        if (error) throw error
+        await complianceService.insertTaxFiling(record)
         feedback.success('Filing record created')
       } else {
-        const { error } = await supabase
-          .from('tax_filings')
-          .update(record)
-          .eq('id', editingFiling.id!)
-        if (error) throw error
+        await complianceService.updateTaxFiling(editingFiling.id!, record)
         feedback.success('Filing record updated')
       }
 
@@ -117,8 +110,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
     if (!confirm('Delete this filing record?')) return
     try {
       setIsDeleting(id)
-      const { error } = await supabase.from('tax_filings').delete().eq('id', id)
-      if (error) throw error
+      await complianceService.deleteTaxFiling(id)
       feedback.success('Filing deleted')
       onFilingsChanged()
     } catch (e: any) {

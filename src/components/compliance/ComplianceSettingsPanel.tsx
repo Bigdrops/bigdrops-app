@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { feedback } from '@/lib/feedback'
 import { TaxSettings } from '@/domain/compliance/types'
+import { fetchTaxSettings, upsertTaxSettings } from '@/modules/compliance/services/complianceService'
 
 export default function ComplianceSettingsPanel() {
   const [loading, setLoading] = useState(true)
@@ -26,13 +26,7 @@ export default function ComplianceSettingsPanel() {
     async function loadSettings() {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('tax_settings')
-          .select('*')
-          .eq('settings_id', 1)
-          .single()
-
-        if (error && error.code !== 'PGRST116') throw error
+        const data = await fetchTaxSettings()
         if (data) setSettings(data)
       } catch (error: any) {
         console.error('Error loading tax settings:', error)
@@ -47,18 +41,10 @@ export default function ComplianceSettingsPanel() {
   async function handleSave() {
     try {
       setSaving(true)
-      const { error } = await supabase
-        .from('tax_settings')
-        .upsert(
-          {
-            settings_id: 1,
-            ...settings,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'settings_id' }
-        )
-
-      if (error) throw error
+      await upsertTaxSettings({
+        settings_id: 1,
+        ...settings,
+      } as Partial<TaxSettings>)
       feedback.success('Tax settings updated successfully')
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'save' }))
