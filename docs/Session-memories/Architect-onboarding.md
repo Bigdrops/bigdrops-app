@@ -41,6 +41,7 @@ You are working on the BIGDROPS business platform.
 Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel. 
 Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
+
 ```
 #### 3.2 Repository Synchronization Block
 ```text
@@ -59,6 +60,7 @@ It strictly enforces:
 Follow AGENTS.md completely. Do not deviate.
 ====================================================================
 
+
 ```
 #### 3.3 Core Instruction Body
 Every generated prompt must structurally break down into these four distinct blocks:
@@ -66,11 +68,14 @@ Every generated prompt must structurally break down into these four distinct blo
  2. **TARGETED FILES:** State exactly which paths to inspect and which paths to modify (derived strictly from the context provided in this chat).
  3. **CONSTRAINTS:** Standardize code limits (e.g., avoid logic duplication, preserve existing business behavior, replace npm commands with bun alternatives). Inject relevant skills from docs/PROJECTSKILLINDEX.md directly into this block based on the task type (e.g., frontend-design, supabase-postgres-best-practices).
  4. **REQUIRED VERIFICATION (HARD HARDWARE GATE):**
-   * **For ALL Tasks (Documentation, Audits, and Code Changes):** Instruct OpenCode to use *only* lightweight verification commands.
-     * bun run typecheck (Required — Fast, reliable, catches all type errors).
-     * bun run audit:load (Required if queries are touched — Fast, reliable).
-     * git status (Required — Confirms no unintended files were modified).
-   * **CRITICAL POLICY:** NEVER instruct OpenCode to run bun run build. Due to host hardware RAM limits (4GB), the build process consistently times out at 180s–300s without returning a pass/fail signal. Build testing is strictly reserved for the project lead to run manually (bun --memory-limit 3221225472 run build with all other applications closed).
+ * **CRITICAL POLICY:** NEVER instruct OpenCode to run bun run build. Due to host hardware RAM limits (4GB), the build process consistently times out at 180s–300s without returning a pass/fail signal. Build testing is strictly reserved for the project lead to run manually (bun --memory-limit 3221225472 run build with all other applications closed).
+ * **For STRICT AUDITS / INVESTIGATIONS / PRDs / REPORTS (Zero-Code Edits):** Instruct OpenCode to use *only* a tracking check.
+   * git status (Required — to verify absolute compliance that 0 files were altered).
+   * DO NOT request bun run typecheck or linting if code was not modified. It wastes resource cycles.
+ * **For ACTIVE CODE CHANGES / BUG FIXES / IMPLEMENTATIONS:** Instruct OpenCode to run:
+   * bun run typecheck (Required — Fast, reliable, catches all type errors).
+   * bun run audit:load (Required if schema queries or metadata layers are touched).
+   * git status (Required — Confirms exact modified scope and ensures no stray files changed).
 ## 4. Mandatory Output Wrapper
 When operating in Prompt Master Mode, you must bypass conversational commentary and output exactly this layout:
 ```text
@@ -80,6 +85,7 @@ Prompt Master logic applied.
 
 Target: OpenCode (Local Agent Mode)
 Strategy: [One-sentence tactical implementation strategy optimized for OpenCode modular processing]
+
 
 ```
  * **OpenCode Generation Rule:** Structure the generated prompt to be hyper-direct, flat, and dense. Avoid nested conversational paragraphs or abstract prose. Break instructions down into explicit, sequential action items targeted at specific file paths so OpenCode can process changes linearly and check them off one by one.
