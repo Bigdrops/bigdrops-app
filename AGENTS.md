@@ -1,283 +1,103 @@
-
 # AGENTS.md — BIGDROPS Project Guide for AI Coding Agents
 
 > Read this file before making any changes to the repository. It documents hard rules, architecture boundaries, and conventions that must not be violated.
 
 ---
 
-## 1. Project Identity
+## 1. Project Fundamentals & Tooling
 
-- **Platform:** B2B business management suite for Nigerian SMEs
-- **Stack:** React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase (Postgres), Vite 7, Bun, Vercel, Capacitor 8
-- **Runtime:** Bun only — never npm or yarn
-- **Package manager commands:** `bun install`, `bun run dev`, `bun run build`, `bun run typecheck`, `bun run lint`
+* **Platform:** B2B business management suite for Nigerian SMEs.
+* **Stack:** React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase (Postgres), Vite 7, Bun, Vercel, Capacitor 8.
+* **Runtime constraint:** Bun ONLY. Never use npm, yarn, or pnpm.
+* **Commands:** Use `bun install`, `bun run dev`, `bun run build`, `bun run typecheck`, `bun run lint`.
+* **Audit Command:** Run `bun run audit:load` before typecheck or build.
+* **Test Command:** `bun run test` (executes `node --test "src/tests/critical/*.test.js"`).
+* **Naming Conventions:**
+    * Components: PascalCase (e.g., `WaybillForm.tsx`).
+    * Files: kebab-case (e.g., `waybill-utils.ts`).
+    * Database fields: snake_case (e.g., `waybill_number`).
 
 ---
 
 ## 2. Hard Architecture Rules (Non-Negotiable)
 
-- `src/lib/Calculations.ts` is the single source of truth for all financial calculations. Never modify without explicit instruction.
-- `calcTotals()` and `resolveRowVat()` inside it are core calculation pipelines — changing them affects every financial document.
-- PDFs are dumb renderers — they receive shaped data via preview functions but never compute prices, taxes, or totals.
-- Quotations must reuse the invoice domain layer — never duplicate financial logic between modules.
-- No Tailwind v4 syntax — project is on Tailwind CSS v3.4.
-- No framer-motion — the dependency exists but is not used in production components.
-- External waybills must have a purpose; internal waybills must have purpose `NULL` — enforced by the `check_waybill_purpose_conditional` Postgres CHECK constraint.
-- `items` JSONB arrays must pass structural validation — non-empty, each item must have `description` + `qty`, and `qty > 0` — enforced by `check_items_json_structure`.
-- Waybill `type` field is restricted to `'external'` or `'internal'` — enforced by `check_waybill_type`.
-- All document numbering (invoice, quotation, waybill, RFQ, CSR, BOQ, project) MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Prefixes are resolved at runtime via `resolvePrefix()` — never hardcode a prefix string in generation logic.
-- All document lifecycle operations (edit, duplicate, revert) MUST follow `docs/STANDARD/document-transformation-standard.md`. Prescriptive — defines state-aware edit locking, duplication rules, and invoice-only revert behavior across all document types.
-- Document lifecycle ownership must remain explicit. Business rules belong in the domain layer. Pages orchestrate lifecycle execution. Components render UI. Do not move business logic into presentation components.
-- Standards under `docs/STANDARD/` are normative. Implementations must conform to them. If implementation conflicts with a standard, either update the implementation, or revise the standard with explicit approval. Never silently diverge.
-- Lint excludes: `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
-- New document modules that support JSON import MUST follow `docs/STANDARD/json-import-standard.md`. Prescriptive — all prompts, schemas, adapters, and UI integration must conform.
-- New document modules with configurable columns MUST follow `docs/STANDARD/document-column-standard.md`. Prescriptive — all column ordering, persistence, drag, and initialization must conform.
-- Extend existing standards in `docs/STANDARD/` before creating new ones — never duplicate a concept a standard already covers.
+The following rules and codebase boundaries are strictly enforced. Rules marked **[LOCKED]** represent single sources of truth or critical constraints that must never be modified without explicit, written user instruction.
+
+* **[LOCKED] Financial Source of Truth:** `src/lib/Calculations.ts` handles all financial calculations. The `calcTotals()` and `resolveRowVat()` functions are core pipelines; changing them affects every financial document.
+* **[LOCKED] Document Numbering Engine:** `src/domain/prefixConstants.ts` (`DEFAULT_PREFIXES`, `resolvePrefix()`) is the canonical prefix engine. All document numbering MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Format: `{resolvedPrefix}-{routingToken?}-{6-digit serial}`. Never hardcode a prefix string.
+* **[LOCKED] Waybill Number Generation:** `generateWaybillSequenceNumber()` format must not be changed, and consumed `blank_waybill_logs` tokens are permanently locked and cannot be recycled.
+* **Domain Segregation:** PDFs are dumb renderers that receive shaped data via preview functions; they never compute prices, taxes, or totals. Quotations must reuse the invoice domain layer; never duplicate financial logic. When transforming invoice items to waybills, all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`) must be stripped.
+* **Document Lifecycle Operations:** Edit, duplicate, and revert operations MUST follow `docs/STANDARD/document-transformation-standard.md`. 
+* **UI Constraints:** No framer-motion components in production.
+* **Linting:** `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
 
 ---
 
-## 3. Standards Hierarchy
+## 3. Workflow & Execution Methodology
+
+All coding agents must follow this strict execution methodology to prevent regressions and scope creep.
+
+* **Audit & Skill Load First:** Before changing any implementation, you MUST identify the file's ownership, callers, and downstream effects. Search the codebase for usage before modifying shared utilities. **If the task involves a new or unfamiliar domain, you MUST read `docs/PROJECTSKILLINDEX.md` and load the corresponding skill before writing code.**
+* **Plan Before Execution:** Think step-by-step in a `<plan>` block before writing code. Prioritize simple control flow, goal-driven execution, and verifiable success criteria over complex abstractions.
+* **Surgical Changes Only:** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or rename symbols outside the immediate scope of the user's request.
+* **Preserve Business Behavior:** Unless the task explicitly changes business rules, you must preserve user-visible behavior, audit trails, document lineage, numbering, and transformation semantics. Structural refactoring must not alter existing output.
+* **Verify via Build:** Define success criteria before implementing. You MUST run the build/typecheck commands to verify your changes do not break downstream modules. Loop until checks pass.
+
+---
+
+## 4. Standards Hierarchy & Conformity
 
 When multiple standards apply, the following precedence order is enforced:
 
-1. AGENTS.md
+1. `AGENTS.md` (This file)
 2. `docs/STANDARD/*`
 3. Module-specific documentation
 4. Task instructions
 
-Higher-level standards take precedence. In case of conflict, resolve upward.
+* **Strict Conformity:** Standards under `docs/STANDARD/` are normative. Both existing code modifications and new modules must strictly conform to them. If an implementation conflicts with a standard, you must either update the implementation to match the standard, or explicitly halt and ask to revise the standard. **Never silently diverge.**
+* **New Module Requirements:** New document modules MUST fully conform to `docs/STANDARD/json-import-standard.md` (for JSON imports) and `docs/STANDARD/document-column-standard.md` (for configurable columns).
+* **No Duplication:** Extend existing standards in `docs/STANDARD/` before creating new ones—never duplicate a concept an existing standard already covers.
 
 ---
 
-## 4. Project Workflow Rules (Permanent)
+## 5. Skills Registry & Loading Protocol
 
-- **Audit first.** Before changing any implementation:
-  - identify ownership
-  - identify callers
-  - identify downstream effects
-  - identify applicable platform standards
-  Never modify behavior before understanding existing ownership.
-- **Load skills before coding.** Read `docs/PROJECTSKILLINDEX.md` before any task involving a new domain — see §9.
-- **State assumptions explicitly.** If uncertain, ask. If multiple interpretations exist, present them — do not pick silently.
-- **Implement the smallest correct solution.** Avoid speculative abstractions, framework building, or future-proofing unless explicitly requested.
-- **Surgical changes.** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or improve things unrelated to the task. Every changed line must trace directly to the user's request.
-- **Preserve Existing Business Behaviour.** Unless the task explicitly changes business rules:
-  - preserve user-visible behaviour
-  - preserve audit trail behaviour
-  - preserve document lineage
-  - preserve document numbering
-  - preserve transformation semantics
-  Structural refactoring must not change business behaviour.
-- **Verify with tests.** Define success criteria before implementing. Loop until verified.
-- **Karpathy discipline applies throughout:** think before coding, simplicity first, goal-driven execution with verifiable success criteria.
+The full skill index containing ~25 skills and 232 subagents is located at: **`docs/PROJECTSKILLINDEX.md`**. Do not re-derive this index from memory.
+
+* **Load Location:** Load skills from `.agents/skills/`, `.claude/skills/`, `.mimocode/skills/`, or `.opencode/agents/`.
+* **Strict Matching:** You must use exact skill names. If a requested skill name does not match exactly or cannot be found, you MUST HALT and request clarification. Never guess, hallucinate, or fallback to a similarly named skill.
+* **Fallback:** If a skill-loading tool fails but the exact path is known, read the `SKILL.md` directly at the path listed in the index.
 
 ---
 
-## 5. Documentation Rules (Permanent)
+## 6. Documentation & Reporting Rules
 
-- **Every completed task requires a report**, saved under `docs/Reports/` in the subfolder that matches its domain. Existing subfolders: `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`. Check the directory before creating a new one — if a matching domain folder already exists, reuse it. Never place reports in the repository root.
+Every completed task requires a rigorous report saved under `docs/Reports/` in the matching domain folder (e.g., `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`). Never place reports in the repository root.
 
-- **Agent Identity** — Every report MUST begin with an identity line immediately after the title. The line must state:
-  - The real name of the AI that produced the report (e.g., Claude, DeepSeek, Cursor AI).
-  - The date the report was generated.
-  - Optionally, the development harness or tool (e.g., "via Cursor", "via Claude Code") if relevant.
-  
-  Example: `This report was written by DeepSeek on 2026-07-03.`
-  
-  **Do NOT copy any example name from these instructions.** Fill in your own actual identifier. If you do not know your name, state `AI Coding Agent` and explain why.
+**Report Identity Standard:**
+Every report MUST begin with an identity line immediately after the title stating the real name of the AI, the date, and the tool harness.
+* *Example format:* `This report was written by [Insert Your Actual AI Name] on [Insert Current Date].`
+* You must generate your actual name (e.g., Claude, Gemini, DeepSeek). Do not use placeholder brackets.
 
-  Never use placeholder text like `[Agent Name]` — that text is a violation of this rule.
-
-- **Report Quality Standard** — All reports must satisfy the following principles. The exact section structure should be chosen to suit the report type (audit, implementation, investigation, migration, etc.), not forced into a single template.
-  1. **Objective & Scope** — Clearly state what the report covers and, just as importantly, what is intentionally excluded. This prevents readers from assuming something was overlooked.
-  2. **Evidence-Based** — Every finding must be traceable to inspected code, executed tests, or other verifiable sources. Prefer file paths, function names, line references, and execution traces over adjectives. Never use vague qualifiers ("seems", "probably", "appears to").
-  3. **Fact vs. Conclusion** — Distinguish raw observations from interpretations. A section of raw findings (what was seen) should be separate from conclusions (what it means).
-  4. **Risks & Limitations** — Record any known risks, unverified assumptions, or limitations of the work. A reader should know what confidence to place in the report.
-  5. **Verification** — State what verification was performed. For implementation reports, include build results (`bun run build` passed/failed/deferred). For audits, note that no code was modified.
-  6. **Deferred Work** — List what was intentionally left for future phases. This prevents silent assumptions that something "was handled."
-  7. **Standalone Value** — Another engineer should be able to understand the work without reading the original conversation. Include enough context that the report remains useful months later.
-
-- **Reusable platform standards go in `docs/STANDARD/`.** Module-specific documentation goes in the module's domain directory.
-- **Extend existing standards before creating new ones.** If a standard at `docs/STANDARD/` already covers the concept, update it — do not duplicate.
-- **Documentation-only tasks must never modify production code.** AGENTS.md and `docs/STANDARD/*` files are the only allowed write targets for doc-only tasks.
+**Report Quality Principles:**
+1. **Objective & Scope:** State what is covered and what is intentionally excluded.
+2. **Evidence-Based:** Trace every finding to inspected code, paths, or execution traces. Never use vague qualifiers like "seems" or "probably".
+3. **Fact vs. Conclusion:** Keep raw observations separate from interpretations.
+4. **Risks & Limitations:** Record known risks, unverified assumptions, or limitations.
+5. **Verification:** State exact build/test results (e.g., `bun run build` passed).
+6. **Deferred Work:** Explicitly list what was intentionally left for future phases.
 
 ---
 
-## 6. File Structure Map
+## 7. Core Architecture Map
 
-```
+Refer to this high-level map to understand system boundaries. Do not assume exhaustive mapping of UI directories.
 
-src/
-├── app/                        App bootstrap (useSyncBootstrap)
-├── assets/                     Static assets
-├── auth/                       Session error handling
-├── components/
-│   ├── actions/                Shared action buttons
-│   ├── app/                    App-level components (ErrorBoundary, Layout)
-│   ├── batch/                  Batch document operations
-│   ├── boq/                    BOQ-specific components
-│   ├── client/                 Client form/selector components
-│   ├── compliance/             Compliance module components
-│   ├── csr/                    CSR-specific components
-│   ├── dashboard/               Dashboard widgets
-│   ├── document/               Document-level reusable components
-│   ├── document-view/          Document view components
-│   ├── export/                 Export functionality
-│   ├── import/                 Import functionality
-│   ├── invoice/                Invoice-specific components (mobile, PDF, form primitives)
-│   ├── items/                  Item/image components
-│   ├── layout/                 Layout primitives
-│   ├── list/                   List view components
-│   ├── loading/                Loading states
-│   ├── notifications/          Notification components
-│   ├── pdf/                    PDF renderers (invoice, quotation)
-│   ├── pdf-new/                New PDF system
-│   ├── project/                Project-specific components
-│   ├── query/                  Query components
-│   ├── quotation/              Quotation-specific components
-│   ├── reports/                Report components
-│   ├── rfq/                    RFQ-specific components
-│   ├── settings/               Settings panel components
-│   ├── table-document/         Table-document shared logic
-│   ├── ui/                     Generic UI primitives (Button, Input, Select, Dialog, etc.)
-│   ├── unlumen-ui/             Unlumen design system components
-│   └── waybill/                Waybill-specific components (form, PDF, gateway, utils)
-├── config/                     Module adapters, filter configs, quick tiles
-├── context/                    React contexts (DocumentQueryContext)
-├── domain/                     Domain logic per module
-│   ├── invoice/                Invoice domain (types, columns, calculations, normalize, factory, preview)
-│   ├── quotation/               Quotation domain
-│   ├── waybill/                 Waybill domain
-│   ├── csr/                     CSR domain
-│   ├── boq/                     BOQ domain
-│   ├── rfq/                     RFQ domain
-│   ├── audit/                   Audit domain
-│   ├── compliance/              Compliance domain
-│   ├── document/                Document conversion, media, relationships
-│   └── ...                      project, notifications, table-document, import
-├── hooks/                       Custom React hooks
-├── lib/                         Core libraries
-│   ├── Calculations.ts          SOURCE OF TRUTH for financial calculations
-│   ├── withUniqueRetry.ts       Collision retry utility for document number inserts
-│   ├── formatters/              Number/date formatting
-│   ├── json/                    JSON utilities
-│   ├── cache/                   Caching layer
-│   ├── native/                  Native bridge utilities
-│   └── ...                      PDF fonts, themes, signatures, icons, audit, utils
-├── modules/                     Module-specific logic (invoices, quotations, compliance, item-library)
-├── pages/                       Route-level page components
-├── services/                    External service integrations
-├── styles/                      Global CSS
-├── supabase/                    Supabase client
-├── tests/                       Critical path tests
-├── types/                       Shared type definitions
-└── utils/                       Utility functions (export compilers, number formatting)
-
-```
-
----
-
-## 7. Naming Conventions
-
-| Artifact | Convention | Example |
-|---|---|---|
-| Components | PascalCase | `WaybillForm.tsx`, `ClientSelector.tsx` |
-| Files (general) | kebab-case | `waybillUtils.ts`, `mobileFormPrimitives.tsx` |
-| DB fields | snake_case | `waybill_number`, `client_id`, `po_number` |
-| Document numbers (all types) | `{resolvedPrefix}-{routingToken?}-{6-digit serial}` | Prefix resolved at runtime via `resolvePrefix()`, default `WBL`/`INV`/`QTN`/etc — see `docs/STANDARD/prefix-engine-settings-standard.md`. Never hardcode a prefix. |
-
----
-
-## 8. Workflow Commands
-
-- **Bun only** — never use npm, yarn, or pnpm.
-- **Run `bun run audit:load`** before typecheck or build.
-- **PowerShell PATH note:** `C:\Users\DELL\.bun\bin` must appear before Kiro's stub at `AppData\Local\Kiro-Cli\bun` for `bun` to resolve correctly.
-- **Test command:** `bun run test` — runs `node --test "src/tests/critical/*.test.js"`.
-
----
-
-## 9. Skills Registry
-
-Full skill index (locations, absolute paths, niches, ~25 skills + 232 subagents): **`docs/PROJECTSKILLINDEX.md`**. Read it before any task involving a new domain — do not re-derive the list from memory or from this file.
-
-**Loading rules:**
-- Load skills from the project directory only — `.agents/skills/`, `.claude/skills/`, `.mimocode/skills/`, `.opencode/agents/`.
-- If a skill-loading tool fails or can't find a skill, do not stop — fall back to directly reading the `SKILL.md` at the path listed in the index.
-- If a requested skill name doesn't match exactly (typo, truncation, shorthand), match to the closest related skill by name/keyword overlap rather than failing. Example: "superpower" → `using-superpowers`.
-
----
-
-## 10. Module Status
-
-| Built | In Progress | Pending |
-|---|---|---|
-| Invoices (pages, modules, domain, components, migration) | Payments (partial — RecordPaymentModal exists, payment flow in spec) | Expense tracking |
-| Quotations (pages, modules, domain, components, migration) | Devices (migration exists, no pages) | Profit/loss reporting |
-| CSR (pages, components, domain, migration) | Notifications (migration + hooks + components exist) | Attendance tracking |
-| Projects (pages, domain, components, migration) | Compliance (pages, components, domain exist) | File uploads |
-| Clients (pages, components, domain, migration) | Item catalog (migration + modules exist) | |
-| Waybills (pages, components, domain, PDF, migration) | | |
-| BOQ (pages, domain exist) | | |
-| RFQ (pages, domain exist) | | |
-| Waybill blank token audit log (migration, domain) | | |
-
----
-
-## 11. No-Touch Zones
-
-These files, functions, and constraints must never be modified without explicit written instruction:
-
-| Asset | Reason |
-|---|---|
-| `src/lib/Calculations.ts` | Single source of truth for all financial calculations |
-| `src/lib/Calculations.ts` — `calcTotals()`, `resolveRowVat()` | Core calculation pipelines — changing them affects every financial document |
-| `src/domain/prefixConstants.ts` — `DEFAULT_PREFIXES`, `resolvePrefix()` | Canonical prefix engine — changing defaults or resolution logic breaks numbering across all document types |
-| DB constraint `check_waybill_purpose_conditional` | Enforces business mutex — external waybills must have purpose, internal must be NULL |
-| DB constraint `check_items_json_structure` | Structural JSONB validation — non-empty array, description + qty required, qty > 0 |
-| DB constraint `check_waybill_type` | Restricts type to `'external'` or `'internal'` |
-| `generateWaybillSequenceNumber()` in waybill domain | Prefix engine — changing format breaks existing waybill numbers |
-| Invoice domain `items` to waybill spawn transform | Must strip all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`) |
-| `blank_waybill_logs` number reuse protection | Once a blank token number is consumed, it is permanently locked and cannot be recycled |
-
----
-
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
-
-This project is indexed by GitNexus as **bigdrops-app**. Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
-
-> Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
-
-## Always Do
-
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `detect_changes()` before committing`** to verify your changes only affect expected symbols and execution flows. For regression review, compare against the default branch: `detect_changes({scope: "compare", base_ref: "main"})`.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `query({search_query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `context({name: "symbolName"})`.
-- For security review, `explain({target: "fileOrSymbol"})` lists taint findings (source→sink flows; needs `analyze --pdg`).
-
-## Never Do
-
-- NEVER edit a function, class, or method without first running `impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
-- NEVER commit changes without running `detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/bigdrops-app/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/bigdrops-app/clusters` | All functional areas |
-| `gitnexus://repo/bigdrops-app/processes` | All execution flows |
-| `gitnexus://repo/bigdrops-app/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-Sub-skills for GitNexus workflows live in `docs/PROJECTSKILLINDEX.md` under `.claude/skills/gitnexus/` (exploring, impact-analysis, debugging, refactoring, guide, cli). Consult the index rather than duplicating paths here.
-
-<!-- gitnexus:end -->
-```
-
+* `src/app/` — App bootstrap
+* `src/components/` — UI layer. Contains reusable domain modules (e.g., `invoice/`, `waybill/`, `pdf/`) and generic primitives (`ui/`). Do not place business logic here.
+* `src/domain/` — Business logic per module (e.g., `invoice/`, `quotation/`, `waybill/`). Owns types, calculations, factories, and rules.
+* `src/lib/` — Core libraries, utilities, formatters, and the canonical `Calculations.ts`.
+* `src/modules/` — Module-specific integrations and adapters.
+* `src/pages/` — Route-level orchestration components.
+* `src/supabase/` — Database client.
+* `src/tests/` — Critical path test suite.
