@@ -1,0 +1,377 @@
+
+PS C:\Users\DELL\desktop\bigdrops-app> adb install -r .\android\app\build\outputs\apk\debug\app-debug.apk
+Performing Streamed Install
+Success
+PS C:\Users\DELL\desktop\bigdrops-app> adb logcat | findstr "\[BACK\]"
+PS C:\Users\DELL\desktop\bigdrops-app> adb logcat -c
+- waiting for device -
+PS C:\Users\DELL\desktop\bigdrops-app> adb logcat Capacitor/Console:I *:S
+--------- beginning of main
+07-04 20:35:24.656 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.656 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.672 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:24.672 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.674 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.676 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"result":false}
+07-04 20:35:24.677 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.752 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:24.752 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.757 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"result":false}
+07-04 20:35:24.757 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.770 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:24.770 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:24.774 28379 28379 E Capacitor/Console: File:  - Line 330 - Msg: [object Object]
+07-04 20:35:24.777 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 67 - Msg: Offline access state check failed: Error: ExecuteSet: No value for values
+07-04 20:35:27.949 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] fetchSettings start (force: false )
+07-04 20:35:27.950 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:27.968 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: One-shot CSR sync crashed during app bootstrap: Error: ExecuteSet: No value for values
+07-04 20:35:27.968 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 67 - Msg: Local device hydration skipped: Error: ExecuteSet: No value for values
+07-04 20:35:27.986 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:27.987 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.017 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:28.018 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.018 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.019 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.034 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: One-shot quotation sync crashed during app bootstrap: Error: ExecuteSet: No value for values
+07-04 20:35:28.035 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:28.111 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] fetchSettings start (force: false )
+07-04 20:35:28.111 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] fetchSettings start (force: false )
+07-04 20:35:28.112 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] fetchSettings start (force: false )
+07-04 20:35:28.119 28379 28379 E Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 55 - Msg: Error: <path> attribute d: Expected moveto path command ('M' or 'm'), "undefined".
+07-04 20:35:28.131 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.132 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.133 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.133 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.182 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.184 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:28.185 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.218 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:28.218 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.219 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:28.221 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.221 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.222 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.442 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Fetch success from Supabase, raw data: [object Object]
+07-04 20:35:28.442 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Normalizing raw settings data: [object Object]
+07-04 20:35:28.443 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Final normalized settings: [object Object]
+07-04 20:35:28.443 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Update listeners with: [object Object]
+07-04 20:35:28.443 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.443 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.446 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:28.446 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.447 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.447 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.742 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:28.742 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:28.776 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:28.776 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:28.777 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:28.944 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Fetch success from Supabase, raw data: [object Object]
+07-04 20:35:28.944 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Normalizing raw settings data: [object Object]
+07-04 20:35:28.945 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Final normalized settings: [object Object]
+07-04 20:35:28.945 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Merging local theme/grace settings into fetched data
+07-04 20:35:28.945 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Update listeners with: [object Object]
+07-04 20:35:28.969 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:28.969 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.162 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Fetch success from Supabase, raw data: [object Object]
+07-04 20:35:29.163 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Normalizing raw settings data: [object Object]
+07-04 20:35:29.164 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Final normalized settings: [object Object]
+07-04 20:35:29.164 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Merging local theme/grace settings into fetched data
+07-04 20:35:29.165 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Update listeners with: [object Object]
+07-04 20:35:29.165 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.166 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.166 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.166 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.279 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:29.279 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.280 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Fetch success from Supabase, raw data: [object Object]
+07-04 20:35:29.280 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Normalizing raw settings data: [object Object]
+07-04 20:35:29.280 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Final normalized settings: [object Object]
+07-04 20:35:29.280 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Merging local theme/grace settings into fetched data
+07-04 20:35:29.280 28379 28379 I Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: [useSettings] Update listeners with: [object Object]
+07-04 20:35:29.292 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:29.293 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.293 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.293 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:29.293 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:31.272 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.273 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.273 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.274 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.280 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:31.281 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.284 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:31.285 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.285 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.285 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:31.286 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:31.638 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-DjwwTQbO.js - Line 45 - Msg: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+07-04 20:35:33.027 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.028 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.028 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.028 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.028 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.028 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.029 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.029 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.029 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.029 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.029 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.083 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:33.084 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.084 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:33.085 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.085 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.085 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.086 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.086 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.087 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.087 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.118 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:33.119 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.119 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.120 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.316 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.316 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.316 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.316 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.317 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:35:33.317 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.317 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:33.479 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.480 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.480 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.480 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.508 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:33.509 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.542 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:33.542 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.543 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.543 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:33.544 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:35.681 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.682 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.683 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.684 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.709 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:35.709 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.759 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:35.759 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.760 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.760 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:35.761 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:37.139 28379 28379 E Capacitor/Console: File: https://localhost/assets/index-DjwwTQbO.js - Line 45 - Msg: `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+07-04 20:35:37.139 28379 28379 E Capacitor/Console:
+07-04 20:35:37.139 28379 28379 E Capacitor/Console: If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+07-04 20:35:37.139 28379 28379 E Capacitor/Console:
+07-04 20:35:37.139 28379 28379 E Capacitor/Console: For more information, see https://radix-ui.com/primitives/docs/components/dialog
+07-04 20:35:37.139 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-DjwwTQbO.js - Line 45 - Msg: Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+07-04 20:35:37.891 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.891 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.892 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.892 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.920 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:37.920 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.940 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:37.940 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.940 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.940 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:37.940 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:40.092 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.092 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.092 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.093 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.121 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:40.122 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.136 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:40.136 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.137 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.137 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:40.137 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:42.275 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.275 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.276 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.276 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.321 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:42.321 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.374 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:42.375 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.375 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.375 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:42.376 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:44.489 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.489 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.489 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.490 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.502 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:44.502 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.532 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:44.532 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.532 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.533 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:44.533 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:46.671 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.671 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.671 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.671 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.699 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:46.700 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.715 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:46.716 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.717 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.717 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:46.734 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:49.137 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.138 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.138 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.139 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.152 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:49.153 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.161 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:49.166 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:49.167 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.168 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:49.169 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.160 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.162 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.164 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.166 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.177 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:51.177 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.189 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:51.193 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:51.194 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.195 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:51.196 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.152 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.153 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.154 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.155 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.163 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:54.164 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.173 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:54.176 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:54.177 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.178 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:54.179 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.146 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.147 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.148 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.149 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.157 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:56.158 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.167 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:56.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:56.173 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.178 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:56.180 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.146 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.147 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.148 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.150 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.156 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:35:58.157 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.168 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:35:58.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:35:58.172 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.174 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:35:58.175 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.159 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.160 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.161 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.162 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:00.173 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.181 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:00.185 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:00.186 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.186 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:00.187 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.157 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.159 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.161 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.163 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:02.172 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.182 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:02.186 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:02.186 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.187 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:02.188 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.146 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.147 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.147 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.149 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.160 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:05.161 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.169 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:05.174 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:05.174 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.175 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:05.176 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.137 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.138 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.138 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.139 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.144 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:07.145 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.153 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:07.154 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.157 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.158 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.159 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:07.794 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.794 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.794 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.794 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.835 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 67 - Msg: Offline access state check failed: Error: ExecuteSet: No value for values
+07-04 20:36:07.835 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: One-shot CSR sync crashed during visibility: Error: ExecuteSet: No value for values
+07-04 20:36:07.835 28379 28379 W Capacitor/Console: File: https://localhost/assets/index-r9Cw0m8l.js - Line 63 - Msg: One-shot quotation sync crashed during visibility: Error: ExecuteSet: No value for values
+07-04 20:36:07.865 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.867 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.867 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.868 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.868 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.868 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.868 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.869 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"available":true,"widthDp":406.6666564941406,"heightDp":904,"widthClass":"compact","heightClass":"expanded","layoutMode":"mobile","isFoldable":false,"hasSeparatingFold":false,"isFlat":false,"isHalfOpened":false,"isTabletop":false,"isBookPosture":false}
+07-04 20:36:07.873 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:07.874 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:07.874 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.138 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:08.138 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.141 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:08.141 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.142 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.142 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.142 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:08.166 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:08.167 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.172 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.172 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:08.172 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:08.667 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.667 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.667 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.668 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.670 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:08.670 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.674 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:08.674 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.674 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.674 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:08.676 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:08.678 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:10.898 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.899 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.900 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.900 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.936 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"receive":"granted"}
+07-04 20:36:10.936 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.945 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:10.950 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: {"value":"dbc0mFpLREKA8qoTG_KdTY:APA91bGkUKN8cu0KCN_nhFWtYNIqdHqbGKVbdAJwsNJnYcXczKSm0sMZ6w3w95zyNWyTvyDGo3gCXLoXo20xFSoKz0x4TkppGzEg4ftyXd-tChfv6hjoiqo"}
+07-04 20:36:10.960 28379 28379 I Capacitor/Console: File:  - Line 333 - Msg: undefined
+07-04 20:36:10.961 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.961 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+07-04 20:36:10.962 28379 28379 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
