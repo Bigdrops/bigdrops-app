@@ -56,7 +56,7 @@ export function calculateInvoiceFinancialState(input: {
   let displayStatus = 'Unpaid'
   let statusTone: InvoiceStatusTone = 'info'
 
-  if (settledAmount >= invoiceTotal - tolerance) {
+  if (settledAmount >= invoiceTotal) {
     paymentState = 'paid'
     displayStatus = 'Paid'
     statusTone = 'success'

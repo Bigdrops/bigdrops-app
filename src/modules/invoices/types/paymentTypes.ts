@@ -6,6 +6,8 @@ export interface InvoicePayment {
   invoice_id: string
   cash_amount: number
   wht_amount: number
+  wht_rate: number | null
+  wht_type: string | null
   amount: number
   date: string
   method: string
@@ -34,6 +36,8 @@ export interface PaymentInput {
   reference?: string
   notes?: string
   bank_account_id?: string | null
+  wht_rate?: number | null
+  wht_type?: string | null
 }
 
 export interface PaymentFormState {

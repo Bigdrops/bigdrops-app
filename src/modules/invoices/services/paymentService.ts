@@ -8,6 +8,7 @@ import {
   voidPayment as repositoryVoidPayment,
   syncInvoiceStatusFromFinancials as repositorySyncStatus,
   fetchPaymentById,
+  fetchInvoiceWhtConfig,
 } from "../repositories/paymentRepository"
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 
@@ -54,6 +55,13 @@ export async function recordInvoicePayment(
 ): Promise<PaymentRecordResult> {
   try {
     const payload = normalizePaymentInput(input)
+
+    const whtConfig = await fetchInvoiceWhtConfig(input.invoiceId)
+    if (whtConfig) {
+      payload.wht_rate = whtConfig.wht_rate
+      payload.wht_type = whtConfig.wht_type
+    }
+
     const paymentRow = await insertPayment(payload)
 
     const financialsRow = await fetchInvoiceFinancials(input.invoiceId)
