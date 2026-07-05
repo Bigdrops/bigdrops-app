@@ -1,344 +1,231 @@
 You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
-==================================================
-1. Read `docs/PROJECTSKILLINDEX.md` first.
-2. Load the following skills:
-   - Karpathy
-   - frontend-design
-   - typescript-advanced-types
-3. For each skill: Attempt to load via the skill system. If it fails, fallback to direct file read from disk (e.g. `.claude/skills/...`).
-4. If any critical skill is unreadable, stop and report the error immediately.
-5. Read `AGENTS.md` before any editing or implementation work.
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
-Save a full detailed report to:
+Read AGENTS.md first and follow it completely.
 
-`docs/Reports/invoice-toolbar-restoration-and-group-behaviour.md`
+Load the required skills:
+- Karpathy
+- supabase-postgres-best-practices
 
-The report MUST include:
-
-- Architecture summary
-- Files read
-- Files modified
-- Root cause
-- Before/After UI comparison
-- Before/After movement logic
-- Decisions taken
-- Risks
-- Verification
-- Screenshots/ASCII layouts where useful
-
----
-Restore the invoice/quotation line-item toolbar to the exact behaviour before the regression, while keeping only the requested addition (Clear All). This is a restoration task, not a redesign.
-
+====================================================================
 CONTEXT
+====================================================================
 
-Use commit:
+Financial Operations Phase 2.1 introduced a Compliance Service/Repository layer.
 
-"33628b19b2d8485584010dfcc8b0827b31dfabd9"
+Phase 2.2 introduced the Reporting Projection Layer.
 
-as the visual and behavioural baseline for the toolbar.
+Phase 1 already persists:
 
-The recent implementation introduced layout regressions.
+- payments.wht_amount
+- payments.wht_rate
+- payments.wht_type
 
----
+The remaining manual step in the WHT evidence chain is creating the draft WHT receipt after a payment containing WHT has been recorded.
 
-GOAL
+The business already supports manual WHT receipt creation.
 
-Restore the original toolbar layout exactly as it was before the regression.
+This task only automates that existing manual action.
 
-Do NOT redesign the toolbar.
+No UI changes.
+No workflow changes.
+No business rule changes.
 
-Do NOT introduce any new toolbar actions.
+====================================================================
+OBJECTIVE
+====================================================================
 
----
+Automatically create a draft WHT receipt after a successful payment recording whenever:
 
-TASK 1 — Restore Original Toolbar
+    wht_amount > 0
 
-Compare the current implementation against commit:
+The payment flow must remain authoritative.
 
-"33628b19b2d8485584010dfcc8b0827b31dfabd9"
+Receipt creation is best-effort only.
 
-Restore:
+Failure to create a receipt must never fail payment recording.
 
-- spacing
-- sizing
-- alignment
-- padding
-- icon sizes
-- button sizes
-- visual hierarchy
+====================================================================
+TARGET FILES
+====================================================================
 
-The toolbar should look visually identical to the baseline commit.
+Read:
 
----
+- src/modules/invoices/services/paymentService.ts
+- src/modules/compliance/services/complianceService.ts
+- src/modules/compliance/repositories/complianceRepository.ts
+- src/domain/compliance/types.ts
+- src/components/compliance/WhtReceiptsPanel.tsx
 
-TASK 2 — Keep Only One New Button
+Modify only:
 
-The only new toolbar button that should exist is:
-
-Clear All
-
-Nothing else.
-
-Do NOT add:
-
-- Add
-- Group
-- any extra shortcuts
-- any additional toolbar actions
-
-Those actions already exist below as the large dotted buttons.
-
-They must remain there only.
-
----
-
-TASK 3 — Button Order
-
-Restore the original order.
-
-When rows exist:
-
-Import     Settings     Clear All
-
-Requirements:
-
-- Import stays in its original position.
-- Settings stays exactly where it originally was.
-- Clear All is appended as the third and last action.
-- Clear All must sit on the far right.
-- Clear All must NEVER appear between Import and Settings.
-- Clear All must NEVER become the centred button.
-- Do NOT use layout tricks (such as ml-auto on Clear) that split existing controls.
-
-The existing relationship between Import and Settings must remain untouched.
-
-Think of Clear All as an extra action appended after the original toolbar—not inserted into the middle of it.
-
----
-
-TASK 4 — Remove Duplicate Counter
-
-There are currently two counters describing the same thing.
-
-Current:
-
-Line Items (3 items)
-
-3 rows
-
-This is redundant.
-
-Remove only:
-
-3 rows
-
-Keep:
-
-Line Items (3 items)
-
-The Line Items title already communicates the count.
-
-There should only be one visible counter.
-
----
-
-TASK 5 — Preserve Empty State
-
-When there are no rows:
-
-Keep exactly the original behaviour:
-
-- Import
-- Settings
-
-Large dotted buttons remain:
-
-- Add Item
-- Add Group
-
-Do not change this layout.
-
----
-
-TASK 6 — Preserve Existing Behaviour
+- src/modules/compliance/services/complianceService.ts
+- src/modules/invoices/services/paymentService.ts
 
 Do not modify:
 
-- import workflow
-- settings menu
-- Clear All confirmation dialog
-- add item
-- add group
+- paymentRepository.ts
+- audit.ts
+- Calculations.ts
+- database migrations
+- SQL views
+- UI components
 
-Only restore the toolbar layout.
+====================================================================
+TASK 1
+Compliance Service Automation
+====================================================================
 
----
+Add:
 
-TASK 7 — Drag-and-Drop Investigation Only
+autoCreateWhtReceiptDraft(...)
 
-Inspect:
+Responsibilities:
 
-"docs/TEMPLATES/React-temps/sortable.tsx"
+- accept:
+    paymentId
+    invoiceId
+    whtAmount
+    whtRate
+    whtType
 
-Compare it against the current implementation.
+- build the same draft receipt structure currently created manually
 
-Determine why dragging is still not functioning correctly.
+- delegate persistence to the existing Compliance Repository
 
-Do NOT redesign it yet.
-TASK 8 — Investigate Group "Escanor" Behaviour (Root Cause Only)
+- status must be:
 
-There is a long-standing grouping bug in both Invoice and Quotation forms.
+    pending
 
-Current behaviour:
+The function should contain no UI logic.
 
-Suppose the user creates:
+====================================================================
+TASK 2
+Idempotency
+====================================================================
 
-1  Item A
-2  Item B
-3  Item C
-4  Group A
-5  Item D
-6  Item E
+First inspect the existing schema.
 
-or
+If a UNIQUE constraint already guarantees one receipt per payment:
 
-Item A
-Item B
-Group A
-Item C
-Item D
+- safely treat duplicate insert attempts as a no-op.
 
-The visual enumeration clearly shows the group's current position.
+Otherwise:
 
-However, after regrouping, moving, saving, importing, editing, or other state updates, the group ignores that position and moves itself to another location (typically the beginning or the bottom), bringing its children with it.
+- perform an existence check before inserting.
 
-The group behaves as if it owns the list instead of behaving like a normal row.
+Do not introduce new migrations.
 
-This is referred to as the Escanor effect.
+Duplicate receipt creation must never throw into the payment pipeline.
 
----
+====================================================================
+TASK 3
+Hook into Payment Flow
+====================================================================
 
-Objective
+After all existing payment work completes successfully:
 
-Perform a complete root-cause investigation.
+- payment insert
+- audit recording
+- invoice status synchronization
 
-Do NOT implement a fix yet.
+trigger:
 
----
+autoCreateWhtReceiptDraft()
 
-Trace the entire lifecycle of group ordering
+ONLY when:
 
-Inspect every place where item order may be rebuilt, including:
+wht_amount > 0
 
-- moving items
-- moving groups
-- addGroup
-- deleteGroup
-- ungroup
-- commitGrouping
-- normalizeGrouping
-- normalize
-- import adapters
-- save adapters
-- load adapters
-- sorting by "sort_order"
-- sorting by "group_id"
-- any automatic array sorting
-- any reconciliation after save/load
+The automation must be:
 
-Determine where the user's manual ordering is lost.
+- fire-and-forget
+- non-blocking
 
----
+Never await it.
 
-Determine whether ordering is driven by:
+Never delay payment completion.
 
-- array index
-- sort_order
-- group_id
-- group header position
-- normalization
-- commitGrouping
-- database ordering
-- import/export pipeline
+If automation fails:
 
-Identify the single source of truth.
+- log the error
+- preserve existing payment success
 
----
+====================================================================
+PRESERVE EXISTING BEHAVIOUR
+====================================================================
 
-Explain why the visual numbering disagrees with the final rendered position.
+Do not change:
 
-If the UI says the group is Row 4, explain why the next render moves it elsewhere.
+- payment validation
+- payment UI
+- loading states
+- audit behaviour
+- invoice status synchronization
+- manual WHT receipt creation
+- Calculation Engine
+- Financial State
 
----
+====================================================================
+CONSTRAINTS
+====================================================================
 
-Deliverables
+Keep changes minimal.
 
-Answer:
+Do not introduce new abstractions.
 
-1. What exactly causes the Escanor effect?
-2. Which function is responsible?
-3. Is the problem in UI state, normalization, persistence, or rendering?
-4. Does the same root cause affect both Invoice and Quotation?
-5. What is the smallest architectural fix that preserves free-form ordering without breaking grouping?
+Reuse the Compliance Service and Repository added during Phase 2.1.
 
-Do not implement the fix during this task.
-
-This is an investigation and architecture report only.
-
-Answer:
-
-1. What is missing?
-2. What differs from the template?
-3. Why do Up/Down work while drag does not?
-4. Is the current implementation incomplete, incorrectly wired, or blocked elsewhere?
-
-Produce a root-cause report only.
-
-Do not implement further drag changes during this task.
-
----
-
-OUT OF SCOPE
-
-Do NOT modify:
-
-- grouping behaviour
-- Escanor/group movement logic
-- invoice calculations
-- quotation calculations
-- import pipeline
-- save pipeline
-- mobile item layout
-- suggestion engine
-
----
-
+====================================================================
 REQUIRED VERIFICATION
+====================================================================
 
 Run:
 
-bun run audit:load
-bun run typecheck
-bun run build
+- bun run audit:load
+- bun run typecheck
+- git status
 
----
+Do NOT run:
 
+- bun run build
+
+Manual verification:
+
+1. Record payment with WHT.
+   Draft receipt should automatically appear.
+
+2. Record payment without WHT.
+   No receipt should be created.
+
+3. Attempt duplicate automation.
+   Confirm idempotent behaviour.
+
+4. Confirm manual receipt creation still behaves exactly as before.
+
+====================================================================
+OUTPUT
+====================================================================
+
+Save:
+
+docs/Reports/FinancialOperations/phase-2-3-wht-auto-receipt-report.md
+
+Include:
+
+- Summary
+- Files modified
+- Idempotency strategy
+- Verification
+- Deferred work
+
+====================================================================
 SUCCESS CRITERIA
+====================================================================
 
-Done only when:
-
-- Toolbar visually matches commit "33628b19b2d8485584010dfcc8b0827b31dfabd9".
-- Button sizes match the original.
-- Import and Settings remain adjacent.
-- Clear All appears as the last action on the far right.
-- No duplicate row counter exists.
-- No redundant toolbar buttons exist.
-- Drag-and-drop investigation report is produced without making additional drag changes.
+A payment containing WHT automatically creates one pending WHT receipt through the Compliance Service without changing payment behaviour, UI behaviour, audit behaviour, or financial calculations.
