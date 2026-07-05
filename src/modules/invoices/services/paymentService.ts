@@ -11,6 +11,7 @@ import {
   fetchInvoiceWhtConfig,
 } from "../repositories/paymentRepository"
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
+import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
 
 interface SettlementSummary {
   cashReceived: number
@@ -73,6 +74,18 @@ export async function recordInvoicePayment(
       await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null)
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
+    }
+
+    if (payload.wht_amount > 0) {
+      autoCreateWhtReceiptDraft({
+        paymentId: paymentRow.id,
+        invoiceId: input.invoiceId,
+        whtAmount: payload.wht_amount,
+        whtRate: payload.wht_rate ?? null,
+        whtType: payload.wht_type ?? null,
+      }).catch((err) => {
+        console.error('Auto WHT receipt draft failed:', err)
+      })
     }
 
     return {

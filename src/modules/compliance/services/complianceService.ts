@@ -85,6 +85,41 @@ export async function fetchWhtReceipts(): Promise<WhtReceipt[]> {
   return repo.fetchWhtReceipts()
 }
 
+export async function autoCreateWhtReceiptDraft(params: {
+  paymentId: string
+  invoiceId: string
+  whtAmount: number
+  whtRate: number | null
+  whtType: string | null
+}): Promise<void> {
+  const { data: existing } = await supabase
+    .from('wht_receipts')
+    .select('id')
+    .eq('payment_id', params.paymentId)
+    .maybeSingle()
+
+  if (existing) return
+
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('client_name')
+    .eq('id', params.invoiceId)
+    .maybeSingle()
+
+  const timestamp = now()
+
+  await repo.insertWhtReceipt({
+    payment_id: params.paymentId,
+    invoice_id: params.invoiceId,
+    client_name: invoice?.client_name ?? null,
+    wht_amount: params.whtAmount,
+    wht_rate: params.whtRate,
+    receipt_status: 'pending',
+    created_at: timestamp,
+    updated_at: timestamp,
+  } as Partial<WhtReceipt>)
+}
+
 export async function insertInlineWhtReceipt(record: Partial<WhtReceipt>): Promise<WhtReceipt> {
   return repo.insertWhtReceipt({ ...record, created_at: now(), updated_at: now() } as Partial<WhtReceipt>)
 }
