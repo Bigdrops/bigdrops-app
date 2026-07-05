@@ -35,7 +35,7 @@ function createStyles(preset: PdfDesignPreset) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 8,
+      marginBottom: 10,
     },
     brandBlock: {
       flex: 1,
@@ -165,9 +165,9 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 0.5,
       borderColor: '#cbd5e1',
       borderRadius: 4,
-      padding: 6,
+      padding: 8,
       backgroundColor: '#f8fafc',
-      minHeight: 52,
+      minHeight: 60,
     },
     blockLabel: {
       fontSize: 7,
@@ -390,7 +390,6 @@ export const ClassicTemplateDocument: React.FC<{
                 accentColor="#1e40af"
                 textColor="#475569"
                 mutedColor="#475569"
-                compact
               />
             </View>
             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
@@ -422,7 +421,6 @@ export const ClassicTemplateDocument: React.FC<{
                 accentColor="#64748b"
                 textColor="#1e40af"
                 mutedColor="#1e40af"
-                compact
               />
             </View>
           </View>

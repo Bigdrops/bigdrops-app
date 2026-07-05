@@ -21,7 +21,7 @@ function createStyles(preset: PdfDesignPreset) {
     darkHeader: {
       backgroundColor: '#7d8a88',
       paddingHorizontal: 22,
-      paddingVertical: 12,
+      paddingVertical: 16,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -428,9 +428,8 @@ export const SlateTemplateDocument: React.FC<{
                   borderColor="transparent"
                   accentColor="#ffffff"
                   textColor="#dbe4e1"
-                  mutedColor="#dbe4e1"
-                  compact
-                />
+                mutedColor="#dbe4e1"
+              />
               </View>
             </View>
             <View style={S.wbBlock}>
@@ -452,9 +451,8 @@ export const SlateTemplateDocument: React.FC<{
                     borderColor="transparent"
                     accentColor="#7d8a88"
                     textColor="#1a2624"
-                    mutedColor="#1a2624"
-                    compact
-                  />
+                mutedColor="#1a2624"
+              />
                 </View>
                 <View style={S.leftBlock}>
                   <Text style={S.blockTag}>Destination Address</Text>

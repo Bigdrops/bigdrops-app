@@ -26,7 +26,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderColor: '#2b2520',
       paddingTop: 14,
       marginBottom: 8,
-      minHeight: 56,
+      minHeight: 68,
     },
     logoBox: {
       width: 110,
@@ -116,7 +116,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 1,
       borderColor: '#bda98f',
       backgroundColor: '#fcf8f1',
-      padding: 7,
+      padding: 10,
     },
     panelTitle: {
       fontSize: 7,
@@ -145,7 +145,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 1,
       borderColor: '#d4c5b2',
       padding: 5,
-      minHeight: 44,
+      minHeight: 52,
     },
     metaLabel: {
       fontSize: 7,
@@ -429,7 +429,6 @@ export const PremiumTemplateDocument: React.FC<{
                 accentColor="#2d241b"
                 textColor="#5e5146"
                 mutedColor="#5e5146"
-                compact
               />
             </View>
             <View style={S.docBox}>
@@ -454,7 +453,6 @@ export const PremiumTemplateDocument: React.FC<{
                 accentColor="#7b6b5e"
                 textColor="#2f261d"
                 mutedColor="#2f261d"
-                compact
               />
             </View>
             <View style={S.panel}>

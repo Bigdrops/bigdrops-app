@@ -57,8 +57,8 @@ function createStyles(preset: PdfDesignPreset) {
       borderBottomWidth: 0.5,
       borderBottomStyle: 'dashed',
       borderBottomColor: '#333333',
-      paddingBottom: 6,
-      marginBottom: 6,
+      paddingBottom: 8,
+      marginBottom: 8,
       alignItems: 'center',
     },
     brandLogo: {
@@ -157,7 +157,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 0.5,
       borderStyle: 'dashed',
       borderColor: '#666666',
-      padding: 6,
+      padding: 8,
       marginBottom: 6,
     },
     addrName: {
@@ -338,7 +338,6 @@ export const ThermalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#333333"
                 mutedColor="#333333"
-                compact
               />
             </View>
 
@@ -384,7 +383,6 @@ export const ThermalTemplateDocument: React.FC<{
                   accentColor={S.blockTitle.color}
                   textColor={S.addrName.color}
                   mutedColor={S.addrName.color}
-                  compact
                 />
               </View>
             </View>
@@ -400,7 +398,6 @@ export const ThermalTemplateDocument: React.FC<{
                   borderColor="transparent"
                   accentColor="#000000"
                   textColor="#000000"
-                  compact
                   mutedColor="#000000"
                 />
                 {model.logistics.deliveryLocation ? (

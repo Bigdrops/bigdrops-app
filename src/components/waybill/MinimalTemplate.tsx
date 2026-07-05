@@ -36,7 +36,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     headerGrid: {
       flexDirection: 'row',
-      marginBottom: 6,
+      marginBottom: 8,
     },
     brandInfo: {
       flex: 1,
@@ -106,8 +106,8 @@ function createStyles(preset: PdfDesignPreset) {
       flex: 1,
       borderWidth: 0.5,
       borderColor: '#000000',
-      padding: 4,
-      minHeight: 34,
+      padding: 6,
+      minHeight: 44,
     },
     secondGrid: {
       flexDirection: 'row',
@@ -330,7 +330,6 @@ export const MinimalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#444444"
                 mutedColor="#444444"
-                compact
               />
             </View>
             <View style={S.docIdent}>
@@ -351,7 +350,6 @@ export const MinimalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#000000"
                 mutedColor="#000000"
-                compact
               />
             </View>
             <View style={S.topBox}>

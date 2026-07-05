@@ -40,10 +40,10 @@ function createStyles(preset: PdfDesignPreset) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 8,
+      marginBottom: 10,
       borderBottomWidth: 1.5,
       borderBottomColor: '#e6ede8',
-      paddingBottom: 8,
+      paddingBottom: 10,
     },
     brand: {
       flexDirection: 'row',
@@ -89,7 +89,7 @@ function createStyles(preset: PdfDesignPreset) {
     waybillBadge: {
       backgroundColor: '#f0f6f2',
       paddingHorizontal: 10,
-      paddingVertical: 4,
+      paddingVertical: 6,
       borderRadius: 12,
       borderWidth: 0.5,
       borderColor: '#c9d9cf',
@@ -218,7 +218,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 0.5,
       borderColor: '#e0ece4',
       borderRadius: 6,
-      padding: 5,
+      padding: 8,
     },
     blockLabel: {
       fontSize: 6.5,
@@ -460,8 +460,7 @@ export const EvergreenTemplateDocument: React.FC<{
                   accentColor="#1a3a32"
                   textColor="#5a7268"
                   mutedColor="#5a7268"
-                  compact
-                />
+              />
               </View>
             </View>
             <View style={S.waybillBadge}>
@@ -544,7 +543,6 @@ export const EvergreenTemplateDocument: React.FC<{
                 accentColor="#6a8a7c"
                 textColor="#1a3a32"
                 mutedColor="#1a3a32"
-                compact
               />
             </View>
             <View style={S.block}>

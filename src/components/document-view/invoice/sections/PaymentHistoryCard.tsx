@@ -93,18 +93,18 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
               >
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-sm font-semibold text-bd-text truncate">
-                    {row.method ? `${row.method} Payment` : "Payment Received"}
+                    {row.paymentMethodLabel}
                   </span>
                   <span className="text-xs text-bd-text-muted truncate">
                     {row.date}
                     {row.time && <> · {row.time}</>}
                   </span>
                   <div className="flex items-center gap-1 text-xs text-bd-text-muted truncate">
-                    {row.reference && <span>{row.reference}</span>}
-                    {row.reference && row.notes && <span>·</span>}
-                    {row.notes && <span>{row.notes}</span>}
+                    {row.hasReference && <span>{row.reference}</span>}
+                    {row.hasReference && row.hasNotes && <span>·</span>}
+                    {row.hasNotes && <span>{row.notes}</span>}
                   </div>
-                  {row.voidedAt && (
+                  {row.isVoided && (
                     <span className="text-[11px] font-bold uppercase tracking-wider text-bd-status-danger-text">
                       VOIDED
                     </span>
@@ -112,9 +112,9 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0 ml-3">
                   <span className="font-mono font-bold text-sm text-bd-text">
-                    {formatNaira(row.amount)}
+                    {row.formattedAmount}
                   </span>
-                  {!row.voidedAt && (
+                  {!row.isVoided && (
                     <button
                       type="button"
                       className="text-[10px] font-semibold text-bd-status-danger-text hover:text-bd-status-danger-border transition-colors bg-transparent border-none cursor-pointer"
