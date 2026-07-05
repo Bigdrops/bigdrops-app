@@ -128,3 +128,11 @@ I will incorporate this metadata scheme and the revised naming into the implemen
 4. Test with a manual curl to confirm files land in the correct topic with the caption as desired.
 
 Once that's confirmed, signal me and I'll generate the full implementation prompt with the metadata logic integrated. No more premature prompting.
+
+Done! Congratulations on your new bot. You will find it at t.me/Erpdb_bot. You can now add a description, about section and profile picture for your bot, see /help for a list of commands. By the way, when you've finished creating your cool bot, ping our Bot Support if you want a better username for it. Just make sure the bot is fully operational before you do this.
+
+Use this token to access the HTTP API:
+8722546948:AAGn0_CBi_XouBWjqVxsLaI__VZKi1VzAqU
+Keep your token secure and store it safely, it can be used by anyone to control your bot.
+
+For a description of the Bot API, see this page: https://core.telegram.org/bots/api
