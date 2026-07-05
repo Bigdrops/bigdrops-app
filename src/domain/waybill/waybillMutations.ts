@@ -4,7 +4,7 @@ import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
-import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
+import { recordAuditLog, recordWaybillCreated, recordWaybillStatusChanged, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -117,6 +117,12 @@ export async function saveWaybill(params: {
     return { status: 'online', waybillId: data?.id }
   } else {
     if (!waybillId) throw new Error("waybillId is required in edit mode");
+    // Fetch old status before update for audit
+    let oldWaybillStatus: string | null = null
+    try {
+      const { data } = await supabase.from('waybills').select('status').eq('id', waybillId).single()
+      oldWaybillStatus = data?.status ?? null
+    } catch { /* ponytail: best-effort old status */ }
     const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
     if (error) {
       console.error('Waybill update error:', error)
@@ -134,6 +140,10 @@ export async function saveWaybill(params: {
         newData: payload,
         trackedFields: WAYBILL_TRACKED_FIELDS,
       })
+      const newWaybillStatus = (payload.status as string | null) ?? null
+      if (oldWaybillStatus !== newWaybillStatus) {
+        void recordWaybillStatusChanged(waybillId, oldWaybillStatus, newWaybillStatus)
+      }
     } catch { /* ponytail: audit failure must not break mutation */ }
     return { status: 'online', waybillId }
   }

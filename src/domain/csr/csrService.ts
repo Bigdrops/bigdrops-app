@@ -133,6 +133,13 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
 }
 
 export async function updateCsr(id: string, csrData: Record<string, unknown>): Promise<void> {
+  // Fetch old status before update for audit
+  let oldStatus: string | null = null
+  try {
+    const { data } = await supabase.from('csrs').select('status').eq('id', id).single()
+    oldStatus = data?.status ?? null
+  } catch { /* ponytail: best-effort old status */ }
+
   const safeData = sanitizeCsrInsertPayload(csrData)
   const { error } = await withRetry(
     async () =>
@@ -159,6 +166,10 @@ export async function updateCsr(id: string, csrData: Record<string, unknown>): P
       newData: csrData,
       trackedFields: CSR_TRACKED_FIELDS,
     })
+    const newStatus = (csrData.status as string | null) ?? null
+    if (oldStatus !== newStatus) {
+      void recordCsrStatusChanged(id, oldStatus, newStatus)
+    }
   } catch { /* ponytail: audit failure must not break mutation */ }
 }
 
