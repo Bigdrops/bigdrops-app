@@ -64,3 +64,9 @@
     right: 20px;
     z-index: 200;
 }
+
+@media (max-width: 767px) {
+    .floating {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+}
