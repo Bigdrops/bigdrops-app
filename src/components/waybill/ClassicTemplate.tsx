@@ -2,6 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -381,15 +382,15 @@ export const ClassicTemplateDocument: React.FC<{
                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
                 </View>
               )}
-              <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
-              {model.branding.address ? (
-                <Text style={S.brandDetail}>{model.branding.address}</Text>
-              ) : null}
-              {model.branding.phone || model.branding.email ? (
-                <Text style={S.brandDetail}>
-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' · ')}
-                </Text>
-              ) : null}
+              <PartyCard
+                title="Company"
+                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.brandName.color}
+                textColor={S.brandDetail.color}
+                mutedColor={S.brandDetail.color}
+              />
             </View>
             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
           </View>
@@ -404,7 +405,6 @@ export const ClassicTemplateDocument: React.FC<{
               { label: 'Waybill No', value: model.header.waybillNumber || '' },
               { label: 'Vehicle Plate', value: model.logistics.vehiclePlate || '' },
               { label: 'Driver Name', value: model.logistics.driverName || '' },
-              { label: 'Client', value: model.parties.clientName || '' },
               { label: 'Delivery Location', value: model.logistics.deliveryLocation || '' },
             ].map((item) => (
               <View key={item.label} style={S.metaCard}>
@@ -412,6 +412,17 @@ export const ClassicTemplateDocument: React.FC<{
                 <Text style={S.metaValue}>{item.value}</Text>
               </View>
             ))}
+            <View style={S.metaCard}>
+              <PartyCard
+                title="Client"
+                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.metaLabel.color}
+                textColor={S.metaValue.color}
+                mutedColor={S.metaValue.color}
+              />
+            </View>
           </View>
 
           <View style={S.tickRow}>

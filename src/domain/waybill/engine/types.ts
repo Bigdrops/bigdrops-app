@@ -19,6 +19,8 @@ export interface WaybillRenderModel {
   footer: FooterBlock
   pagination: PaginationPolicy
   table: TableBlock
+  company: CompanyPartyData | null
+  client: ClientPartyData | null
 }
 
 export interface BrandingBlock {
@@ -28,6 +30,8 @@ export interface BrandingBlock {
   address: string | null
   phone: string | null
   email: string | null
+  website: string | null
+  customInfo: Array<{ label: string; value: string }> | null
 }
 
 export interface HeaderBlock {
@@ -41,6 +45,9 @@ export interface HeaderBlock {
 export interface PartiesBlock {
   clientName: string | null
   clientAddress: string | null
+  clientPhone: string | null
+  clientEmail: string | null
+  clientCityState: string | null
   senderName: string | null
   receiverName: string | null
 }
@@ -97,6 +104,9 @@ export interface RawWaybill {
   po_number?: string | null
   client_name?: string | null
   client_address?: string | null
+  client_phone?: string | null
+  client_email?: string | null
+  client_city_state?: string | null
   sender_name?: string | null
   receiver_name?: string | null
   vehicle_plate?: string | null
@@ -147,4 +157,28 @@ export interface CompanySettings {
   address: string | null
   phone: string | null
   email: string | null
+  website: string | null
+  customInfo: Array<{ label: string; value: string }> | null
+  city: string | null
+  state: string | null
+}
+
+export interface CompanyPartyData {
+  companyLogoUrl: string
+  name: string
+  tagline: string
+  address: string
+  cityState: string
+  phone: string
+  email: string
+  website: string
+  customInfo: Array<{ label: string; value: string }>
+}
+
+export interface ClientPartyData {
+  name: string
+  address: string
+  cityState: string
+  phone: string
+  email: string
 }

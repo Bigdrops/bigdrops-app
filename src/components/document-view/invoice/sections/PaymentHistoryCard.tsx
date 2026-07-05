@@ -95,7 +95,7 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                   </span>
                   <span className="text-xs text-bd-text-muted truncate">
                     {formatDisplayDate(payment.payment_date)}
-                    {payment.notes ? ` • ${payment.notes}` : ""}
+                    {payment.notes || payment.reference ? ` • ${[payment.reference, payment.notes].filter(Boolean).join(" • ")}` : ""}
                   </span>
                   {payment.voided_at && (
                     <span className="text-[11px] font-bold uppercase tracking-wider text-bd-status-danger-text">

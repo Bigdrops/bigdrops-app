@@ -119,11 +119,17 @@ export default function ViewWaybill() {
         if (data.client_id) {
           const { data: clientData } = await supabase
             .from('clients')
-            .select('address')
+            .select('address, city, state, phone, email')
             .eq('id', data.client_id)
             .single()
-          if (clientData?.address) {
-            setRawWaybill((curr: any) => ({ ...curr, client_address: clientData.address }))
+          if (clientData) {
+            setRawWaybill((curr: any) => ({
+              ...curr,
+              client_address: clientData.address || curr.client_address,
+              client_phone: clientData.phone || curr.client_phone,
+              client_email: clientData.email || curr.client_email,
+              client_city_state: [clientData.city, clientData.state].filter(Boolean).join(', ') || curr.client_city_state,
+            }))
           }
         }
 
@@ -200,6 +206,10 @@ export default function ViewWaybill() {
         address: settings?.company_address || null,
         phone: settings?.company_phone || null,
         email: settings?.company_email || null,
+        website: settings?.company_website || null,
+        customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
+        city: settings?.company_city || null,
+        state: settings?.company_state || null,
       }
       const model = rawWaybill ? buildWaybillRenderModel({
         waybill: rawWaybill,

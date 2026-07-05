@@ -132,7 +132,7 @@ function normalizeHeaderLabel(value: string | null | undefined) {
     .trim()
 }
 
-function splitAddressLines(lines: string[] = []) {
+export function splitAddressLines(lines: string[] = []) {
   const filtered = lines.filter(Boolean)
   return {
     address: filtered[0] || '',

@@ -9,5 +9,7 @@ export function resolveBranding(company: CompanySettings): BrandingBlock {
     address: normalizeBlank(company.address),
     phone: normalizeBlank(company.phone),
     email: normalizeBlank(company.email),
+    website: normalizeBlank(company.website),
+    customInfo: company.customInfo || null,
   }
 }

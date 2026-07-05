@@ -2,6 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -420,15 +421,15 @@ export const PremiumTemplateDocument: React.FC<{
               )}
             </View>
             <View style={S.brandBox}>
-              <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
-              {model.branding.address ? (
-                <Text style={S.brandDetail}>{model.branding.address}</Text>
-              ) : null}
-              {model.branding.phone || model.branding.email ? (
-                <Text style={S.brandDetail}>
-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' · ')}
-                </Text>
-              ) : null}
+              <PartyCard
+                title="Company"
+                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.brandName.color}
+                textColor={S.brandDetail.color}
+                mutedColor={S.brandDetail.color}
+              />
             </View>
             <View style={S.docBox}>
               <Text style={S.docLabel}>Waybill No</Text>
@@ -444,9 +445,15 @@ export const PremiumTemplateDocument: React.FC<{
 
           <View style={S.summaryRow}>
             <View style={S.panel}>
-              <Text style={S.panelTitle}>Consignee / Client</Text>
-              <Text style={S.panelBig}>{model.parties.clientName || ''}</Text>
-              {model.parties.clientAddress ? <Text style={[S.panelBig, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
+              <PartyCard
+                title="Consignee / Client"
+                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.panelTitle.color}
+                textColor={S.panelBig.color}
+                mutedColor={S.panelBig.color}
+              />
             </View>
             <View style={S.panel}>
               <Text style={S.panelTitle}>Delivery Location</Text>

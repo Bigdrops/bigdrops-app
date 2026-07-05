@@ -64,8 +64,7 @@ export const AdvanceInvoicesCard: React.FC<AdvanceInvoicesCardProps> = ({
           <div className={styles.advLeft}>
             <div className={styles.num}>{advanceInvoice.invoice_number}</div>
             <div className={styles.sub}>
-              {advanceInvoice.issue_date ? `Issued ${formatDisplayDate(advanceInvoice.issue_date)} • ` : ""}
-              {advanceInvoice.status}
+              {advanceInvoice.issue_date ? `Issued ${formatDisplayDate(advanceInvoice.issue_date)}` : ""}
             </div>
           </div>
           <div className={styles.advRight}>

@@ -5,6 +5,7 @@ import {
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -321,18 +322,15 @@ export const MinimalTemplateDocument: React.FC<{
                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
                 </View>
               )}
-              <Text style={S.brandName}>{model.branding.name || ''}</Text>
-              {model.branding.address ? (
-                <Text style={S.brandDetail}>{model.branding.address}</Text>
-              ) : null}
-              {model.branding.phone || model.branding.email ? (
-                <Text style={S.brandContact}>
-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' | ')}
-                </Text>
-              ) : null}
-              {model.branding.tagline ? (
-                <Text style={S.brandTagline}>{model.branding.tagline}</Text>
-              ) : null}
+              <PartyCard
+                title="Company"
+                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.brandName.color}
+                textColor={S.brandDetail.color}
+                mutedColor={S.brandDetail.color}
+              />
             </View>
             <View style={S.docIdent}>
               <Text style={S.pill}>{model.header.waybillNumber || ''}</Text>
@@ -344,9 +342,15 @@ export const MinimalTemplateDocument: React.FC<{
           {/* Client & Destination */}
           <View style={S.topGrid}>
             <View style={S.topBox}>
-              <Text style={S.fieldLabel}>Client / Consignee</Text>
-              <Text>{model.parties.clientName || ''}</Text>
-              {model.parties.clientAddress ? <Text style={{ fontSize: 7, marginTop: 1 }}>{model.parties.clientAddress}</Text> : null}
+              <PartyCard
+                title="Client / Consignee"
+                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
+                surfaceColor="transparent"
+                borderColor="transparent"
+                accentColor={S.fieldLabel.color}
+                textColor={S.fieldLabel.color}
+                mutedColor={S.fieldLabel.color}
+              />
             </View>
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Destination Address</Text>
