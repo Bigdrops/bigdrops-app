@@ -12,6 +12,7 @@ import {
 } from "../repositories/paymentRepository"
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
+import { supabase } from "@/supabase"
 
 interface SettlementSummary {
   cashReceived: number
@@ -33,6 +34,17 @@ interface PaymentRecordInput {
 function normalizeAmount(value: number | null | undefined): number {
   const numericValue = Number(value ?? 0)
   return Number.isFinite(numericValue) ? numericValue : 0
+}
+
+async function fetchBankAccountName(bankAccountId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('bank_accounts')
+    .select('bank_name, account_number')
+    .eq('id', bankAccountId)
+    .single()
+  if (!data) return null
+  const parts = [data.bank_name, data.account_number].filter(Boolean)
+  return parts.length > 0 ? parts.join(' ') : null
 }
 
 export function normalizePaymentInput(
@@ -71,7 +83,15 @@ export async function recordInvoicePayment(
     await updateInvoiceStatus(input.invoiceId, newStatus)
 
     try {
-      await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null)
+      const bankAccountName = input.bankAccountId
+        ? await fetchBankAccountName(input.bankAccountId)
+        : null
+      await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null, {
+        payment_mode: input.method,
+        account_paid_to: bankAccountName,
+        running_balance_after: Math.max(0, input.settlement.remainingBalance),
+        wht_amount: payload.wht_amount > 0 ? payload.wht_amount : null,
+      })
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
     }

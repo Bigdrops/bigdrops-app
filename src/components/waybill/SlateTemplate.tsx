@@ -429,6 +429,7 @@ export const SlateTemplateDocument: React.FC<{
                   accentColor="#ffffff"
                   textColor="#dbe4e1"
                   mutedColor="#dbe4e1"
+                  compact
                 />
               </View>
             </View>
@@ -452,6 +453,7 @@ export const SlateTemplateDocument: React.FC<{
                     accentColor="#7d8a88"
                     textColor="#1a2624"
                     mutedColor="#1a2624"
+                    compact
                   />
                 </View>
                 <View style={S.leftBlock}>

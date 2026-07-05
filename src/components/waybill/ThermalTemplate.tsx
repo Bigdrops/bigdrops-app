@@ -338,6 +338,7 @@ export const ThermalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#333333"
                 mutedColor="#333333"
+                compact
               />
             </View>
 
@@ -383,6 +384,7 @@ export const ThermalTemplateDocument: React.FC<{
                   accentColor={S.blockTitle.color}
                   textColor={S.addrName.color}
                   mutedColor={S.addrName.color}
+                  compact
                 />
               </View>
             </View>
@@ -398,6 +400,7 @@ export const ThermalTemplateDocument: React.FC<{
                   borderColor="transparent"
                   accentColor="#000000"
                   textColor="#000000"
+                  compact
                   mutedColor="#000000"
                 />
                 {model.logistics.deliveryLocation ? (

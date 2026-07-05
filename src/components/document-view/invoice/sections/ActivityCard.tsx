@@ -86,7 +86,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({ documentId }) => {
                     }}
                   >
                     <strong style={{ color: "hsl(var(--bd-text))", fontWeight: 600 }}>{change.label}</strong>
-                    {": "}{change.oldValue || "—"}{" → "}{change.newValue || "—"}
+                    {": "}
+                    {change.oldValue === null
+                      ? change.newValue || "—"
+                      : <>{change.oldValue || "—"}{" → "}{change.newValue || "—"}</>
+                    }
                   </div>
                 ))}
               </React.Fragment>

@@ -1,4 +1,4 @@
-import { Text, View } from '@react-pdf/renderer'
+import { Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../../industryAdapter'
 import { styles } from './industryStyles'
 import { buildPartyLines } from '../../engine/party'
@@ -14,6 +14,7 @@ type PartyCardProps = {
   mutedColor?: string | null
   headerFontFamily?: string
   bodyFontFamily?: string
+  compact?: boolean
 }
 
 export function PartyCard({
@@ -27,6 +28,7 @@ export function PartyCard({
   mutedColor,
   headerFontFamily,
   bodyFontFamily,
+  compact = false,
 }: PartyCardProps) {
   const lines = buildPartyLines(party)
 
@@ -34,6 +36,7 @@ export function PartyCard({
     <View
       style={[
         styles.partyBox,
+        compact ? compactStyles.partyBox : null,
         isLast ? styles.partyBoxLast : null,
         surfaceColor ? { backgroundColor: surfaceColor } : null,
         borderColor ? { borderColor } : null,
@@ -42,6 +45,7 @@ export function PartyCard({
       <Text
         style={[
           styles.partyTitle,
+          compact ? compactStyles.partyTitle : null,
           accentColor ? { color: accentColor } : textColor ? { color: textColor } : null,
           headerFontFamily ? { fontFamily: headerFontFamily } : null,
         ]}
@@ -52,7 +56,9 @@ export function PartyCard({
         <Text
           key={line.key}
           style={[
-            line.type === 'name' ? styles.partyName : styles.partyLine,
+            line.type === 'name'
+              ? compact ? compactStyles.partyName : styles.partyName
+              : compact ? compactStyles.partyLine : styles.partyLine,
             line.type === 'phone' || line.type === 'email' || line.type === 'website' || line.type === 'custom'
               ? (textColor ? { color: textColor } : null)
               : null,
@@ -65,3 +71,28 @@ export function PartyCard({
     </View>
   )
 }
+
+const compactStyles = StyleSheet.create({
+  partyBox: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 10,
+    marginRight: 0,
+    borderRadius: 2,
+  },
+  partyTitle: {
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  partyName: {
+    fontSize: 10.5,
+    marginBottom: 2,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1f2937',
+  },
+  partyLine: {
+    fontSize: 9,
+    marginBottom: 1,
+    lineHeight: 1.25,
+  },
+})

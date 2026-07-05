@@ -330,6 +330,7 @@ export const MinimalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#444444"
                 mutedColor="#444444"
+                compact
               />
             </View>
             <View style={S.docIdent}>
@@ -350,6 +351,7 @@ export const MinimalTemplateDocument: React.FC<{
                 accentColor="#000000"
                 textColor="#000000"
                 mutedColor="#000000"
+                compact
               />
             </View>
             <View style={S.topBox}>

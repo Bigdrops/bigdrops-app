@@ -429,6 +429,7 @@ export const PremiumTemplateDocument: React.FC<{
                 accentColor="#2d241b"
                 textColor="#5e5146"
                 mutedColor="#5e5146"
+                compact
               />
             </View>
             <View style={S.docBox}>
@@ -453,6 +454,7 @@ export const PremiumTemplateDocument: React.FC<{
                 accentColor="#7b6b5e"
                 textColor="#2f261d"
                 mutedColor="#2f261d"
+                compact
               />
             </View>
             <View style={S.panel}>

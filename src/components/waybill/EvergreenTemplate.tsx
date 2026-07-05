@@ -460,6 +460,7 @@ export const EvergreenTemplateDocument: React.FC<{
                   accentColor="#1a3a32"
                   textColor="#5a7268"
                   mutedColor="#5a7268"
+                  compact
                 />
               </View>
             </View>
@@ -543,6 +544,7 @@ export const EvergreenTemplateDocument: React.FC<{
                 accentColor="#6a8a7c"
                 textColor="#1a3a32"
                 mutedColor="#1a3a32"
+                compact
               />
             </View>
             <View style={S.block}>

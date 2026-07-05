@@ -2857,6 +2857,10 @@ export type Database = {
           p_invoice_id: string
           p_reason?: string
           p_source?: string
+          p_payment_mode?: string
+          p_account_paid_to?: string
+          p_running_balance_after?: number
+          p_wht_amount?: number
         }
         Returns: {
           actor_id: string | null

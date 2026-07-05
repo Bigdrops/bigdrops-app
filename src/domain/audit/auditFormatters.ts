@@ -16,6 +16,10 @@ const FIELD_LABELS: Record<string, string> = {
   wht: 'WHT',
   total: 'Total',
   status: 'Status',
+  payment_mode: 'Method',
+  account_paid_to: 'Paid To',
+  running_balance_after: 'Balance After',
+  wht_amount: 'WHT Deducted',
 }
 
 const PAYMENT_FIELDS = new Set(['amount'])
@@ -218,8 +222,17 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
     if (meta.payment_date != null) {
       changes.push({ field: 'payment_date', label: 'Date', oldValue: EMPTY_VALUE, newValue: formatDisplayDate(meta.payment_date as string) })
     }
-    if (meta.payment_method != null) {
-      changes.push({ field: 'payment_method', label: 'Method', oldValue: EMPTY_VALUE, newValue: String(meta.payment_method) })
+    if (meta.payment_mode != null) {
+      changes.push({ field: 'payment_mode', label: getAuditFieldLabel('payment_mode'), oldValue: null, newValue: String(meta.payment_mode) })
+    }
+    if (meta.account_paid_to != null) {
+      changes.push({ field: 'account_paid_to', label: getAuditFieldLabel('account_paid_to'), oldValue: null, newValue: String(meta.account_paid_to) })
+    }
+    if (meta.running_balance_after != null) {
+      changes.push({ field: 'running_balance_after', label: getAuditFieldLabel('running_balance_after'), oldValue: null, newValue: formatNaira(meta.running_balance_after as string | number, { preserveFraction: true }) })
+    }
+    if (meta.wht_amount != null && Number(meta.wht_amount) > 0) {
+      changes.push({ field: 'wht_amount', label: getAuditFieldLabel('wht_amount'), oldValue: null, newValue: formatNaira(meta.wht_amount as string | number, { preserveFraction: true }) })
     }
     if (meta.reason != null) {
       changes.push({ field: 'reason', label: 'Reason', oldValue: EMPTY_VALUE, newValue: String(meta.reason) })
@@ -242,22 +255,30 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
 }
 
 export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] {
-  return rows.map((row) => ({
-    id: String(row.id),
-    action: row.action,
-    actionLabel: getAuditActionLabel(row.entity_type, row.action),
-    actorLabel: String(row.actor_label || 'Unknown user'),
-    timestamp: formatDisplayDate(row.created_at, {
-      fallback: EMPTY_VALUE,
-      dateOptions: {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      },
-    }),
-    rawTimestamp: row.created_at || null,
-    changes: buildAuditTrailChanges(row).length > 0 ? buildAuditTrailChanges(row) : buildPaymentChanges(row),
-  }))
+  return rows.map((row) => {
+    const isAdvanceCreate = row.action === 'CREATE'
+      && typeof row.reason === 'string'
+      && row.reason.includes('Advance invoice metadata created')
+
+    return {
+      id: String(row.id),
+      action: row.action,
+      actionLabel: isAdvanceCreate
+        ? 'created advance invoice'
+        : getAuditActionLabel(row.entity_type, row.action),
+      actorLabel: String(row.actor_label || 'Unknown user'),
+      timestamp: formatDisplayDate(row.created_at, {
+        fallback: EMPTY_VALUE,
+        dateOptions: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        },
+      }),
+      rawTimestamp: row.created_at || null,
+      changes: buildAuditTrailChanges(row).length > 0 ? buildAuditTrailChanges(row) : buildPaymentChanges(row),
+    }
+  })
 }

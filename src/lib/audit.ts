@@ -188,7 +188,19 @@ export async function recordInvoiceStatusChanged(invoiceId: string, oldStatus: s
   })
 }
 
-export async function recordPaymentRecorded(invoiceId: string, amount: number, reason?: string | null) {
+export interface PaymentRecordedParams {
+  payment_mode?: string
+  account_paid_to?: string
+  running_balance_after?: number
+  wht_amount?: number
+}
+
+export async function recordPaymentRecorded(
+  invoiceId: string,
+  amount: number,
+  reason?: string | null,
+  extra?: PaymentRecordedParams,
+) {
   const actor = await getActor()
   return supabase.rpc('record_payment_recorded', {
     p_invoice_id: invoiceId,
@@ -197,6 +209,10 @@ export async function recordPaymentRecorded(invoiceId: string, amount: number, r
     p_actor_label: actor.label,
     p_source: 'web',
     p_reason: reason ?? null,
+    p_payment_mode: extra?.payment_mode ?? null,
+    p_account_paid_to: extra?.account_paid_to ?? null,
+    p_running_balance_after: extra?.running_balance_after ?? null,
+    p_wht_amount: extra?.wht_amount ?? null,
   })
 }
 

@@ -390,6 +390,7 @@ export const ClassicTemplateDocument: React.FC<{
                 accentColor="#1e40af"
                 textColor="#475569"
                 mutedColor="#475569"
+                compact
               />
             </View>
             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
@@ -421,6 +422,7 @@ export const ClassicTemplateDocument: React.FC<{
                 accentColor="#64748b"
                 textColor="#1e40af"
                 mutedColor="#1e40af"
+                compact
               />
             </View>
           </View>
