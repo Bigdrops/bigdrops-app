@@ -1,5 +1,7 @@
+import { useLocation, useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
-
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import { getActiveTab } from "@/components/layout/navData";
 import styles from "./DocumentPage.module.css";
 
 interface DocumentPageProps {
@@ -11,10 +13,6 @@ interface DocumentPageProps {
   overlays?: ReactNode;
 }
 
-/**
- * TRUE STRUCTURAL TRANSPLANT
- * Mirrors viewpage.html hierarchy 1:1
- */
 export default function DocumentPage({
   topNav,
   actionRow,
@@ -23,6 +21,21 @@ export default function DocumentPage({
   floating,
   overlays,
 }: DocumentPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = getActiveTab(location.pathname);
+
+  const onTabClick = (key: string) => {
+    const pathByKey: Record<string, string> = {
+      home: "/",
+      projects: "/projects",
+      sales: "/invoices",
+      clients: "/clients",
+      more: "/reports",
+    };
+    navigate(pathByKey[key] || "/");
+  };
+
   return (
     <div className={styles.workspace}>
       <header className={styles.topbar}>{topNav}</header>
@@ -37,6 +50,10 @@ export default function DocumentPage({
 
       {overlays}
       {floating && <div className={styles.floating}>{floating}</div>}
+
+      <div className="md:hidden">
+        <MobileBottomNav active={activeTab} onSelect={onTabClick} />
+      </div>
     </div>
   );
 }

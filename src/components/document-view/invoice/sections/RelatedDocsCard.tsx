@@ -28,7 +28,7 @@ export const RelatedDocsCard: React.FC<RelatedDocsCardProps> = ({
       >
         <div className={styles.sectionHeaderLeft}>
           <Link2 size={16} />
-          <span>Related Documents</span>
+          <span>Linked Documents</span>
         </div>
         <div className={`${styles.sectionChevron} ${isOpen ? styles.sectionChevronOpen : ""}`}>
           <ChevronDown size={14} />

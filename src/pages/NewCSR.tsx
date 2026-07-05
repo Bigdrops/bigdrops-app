@@ -307,7 +307,12 @@ export default function NewCSR() {
       const { data: savedCsr, error: saveError } = await withUniqueRetry(
         async (candidateNumber: string) => {
           csrData.csr_number = candidateNumber
-          return supabase.from('csrs').insert([csrData]).select('id, csr_number').single()
+          try {
+            const result = await createCsr(csrData)
+            return { data: result, error: null }
+          } catch (err) {
+            return { data: null, error: err as any }
+          }
         },
         async () => {
           const { data: rows } = await supabase
