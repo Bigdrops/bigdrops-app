@@ -151,7 +151,7 @@ export default function ViewInvoice() {
       onEdit={() => navigate(`/invoices/edit/${id}`)}
       onDownload={actions.handleDownload}
       onMore={() => ui.openSheet("more-actions")}
-      onVoidPayment={actions.confirmVoidPayment}
+      onVoidPayment={actions.handleVoidPayment}
       onCreateAdvance={actions.openCreateAdvanceSheet}
       onViewAdvance={(adv) => actions.openAdvanceDetails(adv, "view")}
       onViewDoc={(type, docId) => navigate(`/${type === 'quotation' ? 'quotations' : type === 'csr' ? 'csr' : 'waybills'}/${docId}`)}

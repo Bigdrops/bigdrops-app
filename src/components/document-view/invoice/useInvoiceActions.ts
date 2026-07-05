@@ -181,6 +181,11 @@ export function useInvoiceActions({
     }
   }, [customFields, invoice?.id, pdfOutput, pdfTemplateId, refresh, setPdfOutput]);
 
+  const handleVoidPayment = useCallback((paymentId: string) => {
+    setPendingVoidPaymentId(paymentId);
+    ui.openModal(MODAL_VOID_PAYMENT);
+  }, [ui]);
+
   const confirmVoidPayment = async (reason: string) => {
     if (!pendingVoidPaymentId || !invoice?.id || voiding) return;
     setVoiding(true);
@@ -322,7 +327,7 @@ export function useInvoiceActions({
 
   return {
     downloading, handleDownload, handleArchive, handleDelete, handleDuplicate, handleDownloadCsv,
-    handleCopyNumber, handleToggleMergeQtyUnit, handleSaveCustomization, confirmVoidPayment,
+    handleCopyNumber, handleToggleMergeQtyUnit, handleSaveCustomization, handleVoidPayment, confirmVoidPayment,
     projectLinkOpen, setProjectLinkOpen, voiding, pendingVoidPaymentId, setPendingVoidPaymentId,
     advanceSheetMode, selectedAdvanceInvoice, advanceSaving, advancePdfGenerating, advanceDeleteConfirmOpen,
     setAdvanceDeleteConfirmOpen, advanceMode, setAdvanceMode, advanceInputValue, setAdvanceInputValue,
