@@ -426,9 +426,9 @@ export const SlateTemplateDocument: React.FC<{
                   party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                   surfaceColor="transparent"
                   borderColor="transparent"
-                  accentColor={S.brandName.color}
-                  textColor={S.brandAddress.color}
-                  mutedColor={S.brandAddress.color}
+                  accentColor="#ffffff"
+                  textColor="#dbe4e1"
+                  mutedColor="#dbe4e1"
                 />
               </View>
             </View>
@@ -449,9 +449,9 @@ export const SlateTemplateDocument: React.FC<{
                     party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                     surfaceColor="transparent"
                     borderColor="transparent"
-                    accentColor={S.blockTag.color}
-                    textColor={S.blockMain.color}
-                    mutedColor={S.blockMain.color}
+                    accentColor="#7d8a88"
+                    textColor="#1a2624"
+                    mutedColor="#1a2624"
                   />
                 </View>
                 <View style={S.leftBlock}>

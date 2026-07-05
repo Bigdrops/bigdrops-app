@@ -199,6 +199,12 @@
   --bd-icon-container-radius: var(--bd-radius-md);
 }
 
+/* Dark mode overrides — single source of truth for brand token */
+.dark {
+  --bd-brand: 235 70% 60%;
+  --bd-brand-foreground: 0 0% 100%;
+}
+
 /* Layout Token Overrides */
 .bd-sidebar-hidden aside { display: none !important; }
 .bd-nav-hidden [data-bd-layout="bottom-nav"] {

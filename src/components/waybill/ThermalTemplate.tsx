@@ -396,9 +396,9 @@ export const ThermalTemplateDocument: React.FC<{
                   party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                   surfaceColor="transparent"
                   borderColor="transparent"
-                  accentColor={S.blockTitle.color}
-                  textColor={S.addrName.color}
-                  mutedColor={S.addrName.color}
+                  accentColor="#000000"
+                  textColor="#000000"
+                  mutedColor="#000000"
                 />
                 {model.logistics.deliveryLocation ? (
                   <Text>{model.logistics.deliveryLocation}</Text>

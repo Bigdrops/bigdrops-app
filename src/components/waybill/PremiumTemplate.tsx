@@ -426,9 +426,9 @@ export const PremiumTemplateDocument: React.FC<{
                 party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.brandName.color}
-                textColor={S.brandDetail.color}
-                mutedColor={S.brandDetail.color}
+                accentColor="#2d241b"
+                textColor="#5e5146"
+                mutedColor="#5e5146"
               />
             </View>
             <View style={S.docBox}>
@@ -450,9 +450,9 @@ export const PremiumTemplateDocument: React.FC<{
                 party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.panelTitle.color}
-                textColor={S.panelBig.color}
-                mutedColor={S.panelBig.color}
+                accentColor="#7b6b5e"
+                textColor="#2f261d"
+                mutedColor="#2f261d"
               />
             </View>
             <View style={S.panel}>

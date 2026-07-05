@@ -410,25 +410,25 @@
     width: 52px;
     height: 52px;
     border-radius: var(--bd-radius-lg);
-    background: hsl(var(--bd-brand));
+    background: hsl(var(--primary));
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: hsl(var(--bd-brand) / 0.3) 0px 6px 20px 0px;
+    box-shadow: hsl(var(--primary) / 0.3) 0px 6px 20px 0px;
     transition: all 0.15s;
 }
 
 .fab:hover {
     transform: translateY(-2px);
-    box-shadow: hsl(var(--bd-brand) / 0.4) 0px 8px 24px 0px;
+    box-shadow: hsl(var(--primary) / 0.4) 0px 8px 24px 0px;
 }
 
 .fab svg {
     width: 22px;
     height: 22px;
-    color: hsl(var(--bd-surface));
+    color: hsl(var(--primary-foreground));
 }
 
 /* ── Document Options toggle rows ── */

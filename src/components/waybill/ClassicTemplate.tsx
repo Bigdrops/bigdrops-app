@@ -387,9 +387,9 @@ export const ClassicTemplateDocument: React.FC<{
                 party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.brandName.color}
-                textColor={S.brandDetail.color}
-                mutedColor={S.brandDetail.color}
+                accentColor="#1e40af"
+                textColor="#475569"
+                mutedColor="#475569"
               />
             </View>
             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
@@ -418,9 +418,9 @@ export const ClassicTemplateDocument: React.FC<{
                 party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.metaLabel.color}
-                textColor={S.metaValue.color}
-                mutedColor={S.metaValue.color}
+                accentColor="#64748b"
+                textColor="#1e40af"
+                mutedColor="#1e40af"
               />
             </View>
           </View>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, Settings2 } from "lucide-react";
 import styles from "../invoice/InvoiceWorkspace.module.css";
 import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
+import { Switch } from "@/components/ui/switch";
 
 interface DocumentOptionsCardProps {
   pdfOutput?: Partial<PdfOutputSettingsValue>;
@@ -36,11 +37,13 @@ interface ToggleRowProps {
 
 function ToggleRow({ label, checked, onToggle }: ToggleRowProps) {
   return (
-    <div className={styles.optRow} onClick={onToggle}>
+    <div className={styles.optRow}>
       <span className={styles.optLabel}>{label}</span>
-      <span className={styles.optToggle} data-on={String(checked)}>
-        <span className={styles.optToggleKnob} />
-      </span>
+      <Switch
+        size="sm"
+        checked={checked}
+        onCheckedChange={onToggle}
+      />
     </div>
   );
 }

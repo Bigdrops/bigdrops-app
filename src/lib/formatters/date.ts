@@ -5,6 +5,13 @@ export interface DateOptions {
   dateOptions?: Intl.DateTimeFormatOptions
 }
 
+export function formatDisplayTime(value: string | null | undefined): string {
+  if (!value) return ""
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+}
+
 export function formatDisplayDate(value: string | number | Date | null | undefined, options: DateOptions = {}): string {
   const {
     fallback = '-',

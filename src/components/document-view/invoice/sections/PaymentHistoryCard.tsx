@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { ChevronDown, Receipt } from "lucide-react";
 import { formatNaira } from "@/lib/formatters/money";
-import { formatDisplayDate } from "@/lib/formatters/date";
 import { buildPaymentSummaryProjection } from "@/domain/invoice/projections/financialProjection";
+import { buildPaymentHistoryRowViewModels } from "./paymentHistoryViewModel";
 
 interface PaymentHistoryCardProps {
   payments: any[];
@@ -25,6 +25,8 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
     () => buildPaymentSummaryProjection(invoiceTotal, payments || [], (v) => formatNaira(v)),
     [invoiceTotal, payments],
   );
+
+  const rowViewModels = useMemo(() => buildPaymentHistoryRowViewModels(payments || []), [payments]);
 
   return (
     <div className="bg-bd-card-bg border border-bd-border rounded-2xl overflow-hidden">
@@ -84,20 +86,25 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
           </div>
 
           <div className="space-y-1">
-            {payments.map((payment, index) => (
+            {rowViewModels.map((row) => (
               <div
-                key={payment.id || index}
+                key={row.id}
                 className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-bd-surface-muted/60 hover:bg-bd-surface-muted transition-colors"
               >
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-sm font-semibold text-bd-text truncate">
-                    {payment.payment_method ? `${payment.payment_method} Payment` : "Payment Received"}
+                    {row.method ? `${row.method} Payment` : "Payment Received"}
                   </span>
                   <span className="text-xs text-bd-text-muted truncate">
-                    {formatDisplayDate(payment.payment_date)}
-                    {payment.notes || payment.reference ? ` • ${[payment.reference, payment.notes].filter(Boolean).join(" • ")}` : ""}
+                    {row.date}
+                    {row.time && <> · {row.time}</>}
                   </span>
-                  {payment.voided_at && (
+                  <div className="flex items-center gap-1 text-xs text-bd-text-muted truncate">
+                    {row.reference && <span>{row.reference}</span>}
+                    {row.reference && row.notes && <span>·</span>}
+                    {row.notes && <span>{row.notes}</span>}
+                  </div>
+                  {row.voidedAt && (
                     <span className="text-[11px] font-bold uppercase tracking-wider text-bd-status-danger-text">
                       VOIDED
                     </span>
@@ -105,13 +112,13 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0 ml-3">
                   <span className="font-mono font-bold text-sm text-bd-text">
-                    {formatNaira(payment.cash_amount)}
+                    {formatNaira(row.amount)}
                   </span>
-                  {!payment.voided_at && (
+                  {!row.voidedAt && (
                     <button
                       type="button"
                       className="text-[10px] font-semibold text-bd-status-danger-text hover:text-bd-status-danger-border transition-colors bg-transparent border-none cursor-pointer"
-                      onClick={() => onVoidPayment(payment.id)}
+                      onClick={() => onVoidPayment(row.id)}
                     >
                       Void
                     </button>
@@ -119,7 +126,7 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                 </div>
               </div>
             ))}
-            {payments.length === 0 && (
+            {rowViewModels.length === 0 && (
               <div className="text-center py-6 text-sm text-bd-text-muted">
                 No payments recorded yet.
               </div>

@@ -78,14 +78,14 @@
 }
 
 html {
-  background: var(--dv-bg);
+  background: hsl(var(--bd-surface));
   scroll-behavior: auto;
 }
 
 body {
-  background: var(--dv-bg);
-  color: var(--dv-text);
-  font-family: var(--dv-font-ui);
+  background: hsl(var(--bd-surface));
+  color: hsl(var(--bd-text));
+  font-family: 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -94,7 +94,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, var(--dv-primary) 0.5px, transparent 0.5px);
+  background-image: radial-gradient(circle, hsl(var(--primary)) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
   opacity: 0.04;
   pointer-events: none;
@@ -117,18 +117,18 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--dv-border);
+  background: hsl(var(--bd-border));
   border-radius: 2px;
 }
 
 
 /* ── UTILITIES ── */
 .dv-card {
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius-lg);
+  background: hsl(var(--bd-card-bg));
+  border: 1px solid hsl(var(--bd-border));
+  border-radius: var(--bd-radius-lg);
   overflow: hidden;
-  box-shadow: var(--dv-shadow-sm);
+  box-shadow: var(--bd-shadow-sm);
 }
 
 .dv-section {
@@ -148,5 +148,5 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
 }
