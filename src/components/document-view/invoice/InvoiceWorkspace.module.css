@@ -431,6 +431,12 @@
     color: hsl(var(--primary-foreground));
 }
 
+@media (max-width: 767px) {
+    .fab {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 /* ── Document Options toggle rows ── */
 
 .optRow {

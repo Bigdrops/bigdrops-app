@@ -107,6 +107,10 @@ export const THEME_COLOR_TOKENS = [
   "bd-overlay-disabled-text",
   "bd-icon-container-bg",
   "bd-icon-container-text",
+  "bd-brand",
+  "bd-brand-foreground",
+  "bd-accent",
+  "bd-accent-foreground",
 ] as const
 
 export const THEME_NON_COLOR_TOKENS = [

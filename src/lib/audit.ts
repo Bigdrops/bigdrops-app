@@ -216,6 +216,24 @@ export async function recordPaymentRecorded(
   })
 }
 
+export async function recordPaymentAttachmentUploaded(
+  paymentId: string,
+  invoiceId: string,
+  fileName: string | null,
+  fileSize: number | null,
+) {
+  const actor = await getActor()
+  return supabase.rpc('record_payment_attachment_uploaded', {
+    p_payment_id: paymentId,
+    p_invoice_id: invoiceId,
+    p_file_name: fileName,
+    p_file_size: fileSize,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}
+
 export async function recordPaymentVoided(paymentId: string, invoiceId: string, amount: number, reason?: string | null) {
   const actor = await getActor()
   return supabase.rpc('record_payment_voided', {

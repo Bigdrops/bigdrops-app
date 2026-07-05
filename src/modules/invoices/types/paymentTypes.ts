@@ -1,3 +1,5 @@
+import type { PaymentAttachment } from "@/lib/attachmentTypes"
+
 export type PaymentMethod = "Transfer" | "Cash" | "POS" | "Cheque" | "Other"
 
 export interface InvoicePayment {
@@ -16,6 +18,7 @@ export interface InvoicePayment {
   bank_account_id: string | null
   created_at: string
   voided_at: string | null
+  attachments: PaymentAttachment[]
 }
 
 export interface InvoiceFinancialsRow {
@@ -37,6 +40,7 @@ export interface PaymentInput {
   bank_account_id?: string | null
   wht_rate?: number | null
   wht_type?: string | null
+  attachments?: PaymentAttachment[]
 }
 
 export interface PaymentRecordResult {

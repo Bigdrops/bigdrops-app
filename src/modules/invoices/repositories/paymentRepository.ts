@@ -104,8 +104,8 @@ export async function fetchBankAccounts(): Promise<BankAccountSummary[]> {
   return (data || []) as BankAccountSummary[]
 }
 
-export async function voidPayment(paymentId: string, reason?: string): Promise<void> {
-  const { error } = await supabase
+export async function voidPayment(paymentId: string, reason?: string): Promise<InvoicePayment | null> {
+  const { data, error } = await supabase
     .from("payments")
     .update({
       voided_at: new Date().toISOString(),
@@ -113,21 +113,34 @@ export async function voidPayment(paymentId: string, reason?: string): Promise<v
     })
     .eq("id", paymentId)
     .is("voided_at", null)
+    .select()
+    .single()
 
   if (error) {
     throw error
   }
+
+  return data as InvoicePayment | null
 }
 
-export async function fetchPaymentById(paymentId: string): Promise<{ cash_amount: number; wht_amount: number; invoice_id: string } | null> {
+export async function fetchPaymentById(paymentId: string): Promise<InvoicePayment | null> {
   const { data, error } = await supabase
     .from("payments")
-    .select("cash_amount, wht_amount, invoice_id")
+    .select("*")
     .eq("id", paymentId)
     .single()
 
   if (error || !data) return null
-  return data
+  return data as InvoicePayment
+}
+
+export async function updatePaymentAttachments(paymentId: string, attachments: unknown[]): Promise<void> {
+  const { error } = await supabase
+    .from("payments")
+    .update({ attachments: JSON.stringify(attachments) })
+    .eq("id", paymentId)
+
+  if (error) throw error
 }
 
 export async function syncInvoiceStatusFromFinancials(invoiceId: string): Promise<string> {

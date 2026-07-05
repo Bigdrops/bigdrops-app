@@ -179,10 +179,10 @@
   --bd-violet-border: #ddd6fe;
 
   /* Brand & Accent Tokens */
-  --bd-brand: 240 56% 18%;
-  --bd-brand-foreground: 0 0% 100%;
-  --bd-accent: 20 83% 48%;
-  --bd-accent-foreground: 0 0% 100%;
+  --bd-brand: var(--primary);
+  --bd-brand-foreground: var(--primary-foreground);
+  --bd-accent: var(--accent);
+  --bd-accent-foreground: var(--accent-foreground);
 
   /* Shadow Tokens */
   --bd-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
@@ -199,11 +199,7 @@
   --bd-icon-container-radius: var(--bd-radius-md);
 }
 
-/* Dark mode overrides — single source of truth for brand token */
-.dark {
-  --bd-brand: 235 70% 60%;
-  --bd-brand-foreground: 0 0% 100%;
-}
+/* Dark mode overrides — brand tokens inherit from primary/accent above */
 
 /* Layout Token Overrides */
 .bd-sidebar-hidden aside { display: none !important; }
