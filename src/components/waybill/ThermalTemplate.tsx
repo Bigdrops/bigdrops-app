@@ -335,9 +335,9 @@ export const ThermalTemplateDocument: React.FC<{
                 party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.brandName.color}
-                textColor={S.brandDetail.color}
-                mutedColor={S.brandDetail.color}
+                accentColor="#000000"
+                textColor="#333333"
+                mutedColor="#333333"
               />
             </View>
 

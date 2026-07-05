@@ -327,9 +327,9 @@ export const MinimalTemplateDocument: React.FC<{
                 party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.brandName.color}
-                textColor={S.brandDetail.color}
-                mutedColor={S.brandDetail.color}
+                accentColor="#000000"
+                textColor="#444444"
+                mutedColor="#444444"
               />
             </View>
             <View style={S.docIdent}>
@@ -347,9 +347,9 @@ export const MinimalTemplateDocument: React.FC<{
                 party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.fieldLabel.color}
-                textColor={S.fieldLabel.color}
-                mutedColor={S.fieldLabel.color}
+                accentColor="#000000"
+                textColor="#000000"
+                mutedColor="#000000"
               />
             </View>
             <View style={S.topBox}>

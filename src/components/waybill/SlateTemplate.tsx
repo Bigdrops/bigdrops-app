@@ -2,6 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -420,10 +421,15 @@ export const SlateTemplateDocument: React.FC<{
                 </View>
               )}
               <View style={S.brandTextBlock}>
-                <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
-                <Text style={S.brandAddress}>
-                  {[model.branding.address, model.branding.phone].filter(Boolean).join(' · ')}
-                </Text>
+                <PartyCard
+                  title="Company"
+                  party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
+                  surfaceColor="transparent"
+                  borderColor="transparent"
+                  accentColor={S.brandName.color}
+                  textColor={S.brandAddress.color}
+                  mutedColor={S.brandAddress.color}
+                />
               </View>
             </View>
             <View style={S.wbBlock}>
@@ -438,9 +444,15 @@ export const SlateTemplateDocument: React.FC<{
             <View style={S.topGrid}>
               <View style={S.leftCol}>
                 <View style={S.leftBlock}>
-                  <Text style={S.blockTag}>Client / Consignee</Text>
-                  <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
-                  {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
+                  <PartyCard
+                    title="Client / Consignee"
+                    party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
+                    surfaceColor="transparent"
+                    borderColor="transparent"
+                    accentColor={S.blockTag.color}
+                    textColor={S.blockMain.color}
+                    mutedColor={S.blockMain.color}
+                  />
                 </View>
                 <View style={S.leftBlock}>
                   <Text style={S.blockTag}>Destination Address</Text>

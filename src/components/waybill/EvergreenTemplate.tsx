@@ -457,9 +457,9 @@ export const EvergreenTemplateDocument: React.FC<{
                   party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
                   surfaceColor="transparent"
                   borderColor="transparent"
-                  accentColor={S.brandName.color}
-                  textColor={S.brandAddress.color}
-                  mutedColor={S.brandAddress.color}
+                  accentColor="#1a3a32"
+                  textColor="#5a7268"
+                  mutedColor="#5a7268"
                 />
               </View>
             </View>
@@ -540,9 +540,9 @@ export const EvergreenTemplateDocument: React.FC<{
                 party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
                 surfaceColor="transparent"
                 borderColor="transparent"
-                accentColor={S.blockLabel.color}
-                textColor={S.blockMain.color}
-                mutedColor={S.blockMain.color}
+                accentColor="#6a8a7c"
+                textColor="#1a3a32"
+                mutedColor="#1a3a32"
               />
             </View>
             <View style={S.block}>

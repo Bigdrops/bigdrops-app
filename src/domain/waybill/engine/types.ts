@@ -157,10 +157,10 @@ export interface CompanySettings {
   address: string | null
   phone: string | null
   email: string | null
-  website: string | null
-  customInfo: Array<{ label: string; value: string }> | null
-  city: string | null
-  state: string | null
+  website?: string | null
+  customInfo?: Array<{ label: string; value: string }> | null
+  city?: string | null
+  state?: string | null
 }
 
 export interface CompanyPartyData {
