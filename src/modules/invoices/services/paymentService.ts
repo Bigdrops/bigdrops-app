@@ -140,7 +140,12 @@ export async function recordInvoicePayment(
               const data = await res.json()
               if (data.attachment) uploadResults.push(data.attachment)
             } else {
-              const errBody = await res.json().catch(() => ({ error: "Upload failed" }))
+              const rawText = await res.text().catch(() => "Could not read response")
+              let errBody: { error?: string; stage?: string; message?: string } = {}
+              try { errBody = JSON.parse(rawText) } catch { errBody = { error: rawText.slice(0, 200) } }
+              const stageInfo = errBody.stage ? `[${errBody.stage}] ` : ""
+              const msg = errBody.message || errBody.error || "Upload failed"
+              console.error(`[UPLOAD] ${stageInfo}${msg} (HTTP ${res.status})`)
               uploadResults.push({
                 id: crypto.randomUUID(),
                 provider: "telegram",
@@ -149,10 +154,12 @@ export async function recordInvoicePayment(
                 sizeBytes: file.size,
                 uploadedAt: new Date().toISOString(),
                 uploadStatus: "failed",
-                error: errBody.error || "Upload failed",
+                error: `${stageInfo}${msg}`,
               })
             }
           } catch (err) {
+            const msg = err instanceof Error ? err.message : "Network error"
+            console.error(`[UPLOAD] Network error for ${file.name}:`, msg)
             uploadResults.push({
               id: crypto.randomUUID(),
               provider: "telegram",
@@ -161,7 +168,7 @@ export async function recordInvoicePayment(
               sizeBytes: file.size,
               uploadedAt: new Date().toISOString(),
               uploadStatus: "failed",
-              error: err instanceof Error ? err.message : "Upload failed",
+              error: msg,
             })
           }
         }

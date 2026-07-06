@@ -35,6 +35,13 @@ export interface BuildPaymentCaptionParams {
 
 const TELEGRAM_API_BASE = "https://api.telegram.org/bot";
 
+const TAG = "[TELEGRAM]";
+
+function maskToken(token: string): string {
+  if (!token || token.length < 10) return "???";
+  return token.slice(0, 6) + "..." + token.slice(-4);
+}
+
 async function telegramFetch(
   botToken: string,
   method: string,
@@ -49,6 +56,9 @@ async function telegramFetch(
 }
 
 export async function uploadFile(params: UploadFileParams): Promise<UploadFileResult> {
+  const masked = maskToken(params.botToken);
+  console.log(`${TAG} uploadFile() token=${masked} chatId=${params.chatId} threadId=${params.threadId} fileName=${params.fileName}`);
+
   const formData = new FormData();
   formData.append("chat_id", params.chatId);
   formData.append("message_thread_id", String(params.threadId));
@@ -61,15 +71,18 @@ export async function uploadFile(params: UploadFileParams): Promise<UploadFileRe
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Telegram upload failed (${res.status}): ${body}`);
+    console.error(`${TAG} sendDocument FAILED status=${res.status} body=${body.slice(0, 500)}`);
+    throw new Error(`Telegram upload failed (${res.status}): ${body.slice(0, 200)}`);
   }
 
   const json = await res.json();
   const doc = json?.result?.document;
   if (!doc?.file_id) {
+    console.error(`${TAG} sendDocument OK but missing file_id, result keys:`, Object.keys(json?.result || {}));
     throw new Error("Telegram response missing document file_id");
   }
 
+  console.log(`${TAG} uploadFile OK message_id=${json.result.message_id} file_id=${doc.file_id.slice(0, 20)}...`);
   return {
     messageId: json.result.message_id,
     fileId: doc.file_id,

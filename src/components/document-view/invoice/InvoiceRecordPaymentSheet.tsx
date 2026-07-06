@@ -403,12 +403,22 @@ export default function InvoiceRecordPaymentSheet({
             />
             {uploadResults ? (
               <div className="space-y-1.5">
-                {uploadResults.map((r, i) => (
-                  <div key={r.id} className={`flex items-center gap-2 text-xs ${r.uploadStatus === "uploaded" ? "text-bd-status-success-text" : "text-bd-status-danger-text"}`}>
-                    <Check size={12} className="shrink-0" />
-                    {r.fileName} — {r.uploadStatus === "uploaded" ? "Uploaded" : `Failed: ${r.error || ""}`}
+                {uploadResults.map((r) => {
+                  const failed = r.uploadStatus === "uploaded" ? "Uploaded" : `Failed: ${r.error || ""}`
+                  return (
+                    <div key={r.id} className={`flex items-center gap-2 text-xs ${r.uploadStatus === "uploaded" ? "text-bd-status-success-text" : "text-bd-status-danger-text"}`}>
+                      <Check size={12} className="shrink-0" />
+                      <span className="font-semibold">{r.fileName}</span>
+                      <span className="text-bd-text-muted">—</span>
+                      <span>{failed}</span>
+                    </div>
+                  )
+                })}
+                {uploadResults.some(r => r.uploadStatus !== "uploaded") ? (
+                  <div className="mt-1 bg-bd-status-danger-bg border border-bd-status-danger-border rounded-xl px-3 py-2 text-[11px] text-bd-status-danger-text">
+                    {uploadResults.filter(r => r.uploadStatus !== "uploaded").map(r => r.error).join("; ")}
                   </div>
-                ))}
+                ) : null}
                 <div className="pt-1 text-xs text-bd-text-muted border-t border-bd-border/40">
                   Payment recorded. You can close this sheet.
                 </div>
