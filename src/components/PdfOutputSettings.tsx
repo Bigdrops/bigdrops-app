@@ -1,6 +1,7 @@
 import * as React from "react"
 import { ChevronDown, ChevronUp, Landmark } from "lucide-react"
 
+import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -104,23 +105,6 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
   }
 }
 
-function OutputToggle({ checked, onToggle }: { checked: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-        checked ? 'bg-bd-feedback-success' : 'bg-bd-border'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-bd-surface shadow-md transition-transform duration-200 ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  )
-}
 
 function SettingsRow({
   label,
@@ -163,9 +147,9 @@ export function PdfBankControls({
         <CardContent className="space-y-4 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-extrabold tracking-[-0.02em] text-foreground">Bank Details</div>
-            <OutputToggle
+            <Switch size="sm"
               checked={state.showBankDetails}
-              onToggle={() =>
+              onCheckedChange={() =>
                 update({
                   showBankDetails: !state.showBankDetails,
                   bankAccountId: state.bankAccountId || defaultBank?.id || null,
@@ -268,7 +252,7 @@ export function PdfDocumentOptionsCard({
           <div className="border-t border-border px-4 py-2.5">
             <SettingsRow
               label="Tagline"
-              control={<OutputToggle checked={state.showTagline} onToggle={() => update({ showTagline: !state.showTagline })} />}
+              control={<Switch size="sm" checked={state.showTagline} onCheckedChange={() => update({ showTagline: !state.showTagline })} />}
             >
               {state.showTagline ? (
                 <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-surface-muted px-3 py-3 text-sm text-bd-text">
@@ -279,7 +263,7 @@ export function PdfDocumentOptionsCard({
 
             <SettingsRow
               label="Footer"
-              control={<OutputToggle checked={state.showFooter} onToggle={() => update({ showFooter: !state.showFooter })} />}
+              control={<Switch size="sm" checked={state.showFooter} onCheckedChange={() => update({ showFooter: !state.showFooter })} />}
             >
               {state.showFooter ? (
                 <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-surface-muted px-3 py-3 text-sm text-bd-text">
@@ -291,31 +275,31 @@ export function PdfDocumentOptionsCard({
             {showBalanceDueOption ? (
               <SettingsRow
                 label="Show balance due"
-                control={<OutputToggle checked={state.showBalanceDue} onToggle={() => update({ showBalanceDue: !state.showBalanceDue })} />}
+                control={<Switch size="sm" checked={state.showBalanceDue} onCheckedChange={() => update({ showBalanceDue: !state.showBalanceDue })} />}
               />
             ) : null}
 
             <SettingsRow
               label="Show amount in words"
-              control={<OutputToggle checked={state.showAmountInWords} onToggle={() => update({ showAmountInWords: !state.showAmountInWords })} />}
+              control={<Switch size="sm" checked={state.showAmountInWords} onCheckedChange={() => update({ showAmountInWords: !state.showAmountInWords })} />}
             />
 
             <SettingsRow
               label="Show VAT % in brackets"
-              control={<OutputToggle checked={state.showVatPercentage} onToggle={() => update({ showVatPercentage: !state.showVatPercentage })} />}
+              control={<Switch size="sm" checked={state.showVatPercentage} onCheckedChange={() => update({ showVatPercentage: !state.showVatPercentage })} />}
             />
 
             <SettingsRow
               label="Show WHT % in brackets"
-              control={<OutputToggle checked={state.showWhtPercentage} onToggle={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
+              control={<Switch size="sm" checked={state.showWhtPercentage} onCheckedChange={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
             />
 
             <SettingsRow
               label="Show discount % in brackets"
               control={
-                <OutputToggle
+                <Switch size="sm"
                   checked={state.showDiscountPercentage}
-                  onToggle={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
+                  onCheckedChange={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
                 />
               }
             />

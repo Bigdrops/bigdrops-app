@@ -1,4 +1,5 @@
 import type { PaymentInput, PaymentMethod, PaymentRecordResult, BankAccountSummary } from "../types/paymentTypes"
+import type { PaymentAttachment } from "@/lib/attachmentTypes"
 import {
   insertPayment,
   fetchPaymentsForInvoice,
@@ -12,6 +13,7 @@ import {
 } from "../repositories/paymentRepository"
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
+import { editCaption } from "./telegramService"
 import { supabase } from "@/supabase"
 
 interface SettlementSummary {
@@ -158,21 +160,22 @@ export interface VoidPaymentInput {
   reason: string
 }
 
-async function editVoidCaptions(paymentId: string): Promise<void> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+async function editVoidCaptions(attachments: PaymentAttachment[]): Promise<void> {
+  const chatId = import.meta.env.VITE_TELEGRAM_GROUP_CHAT_ID
+  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
+  if (!chatId || !botToken) return
 
-    await fetch('/api/edit-payment-caption', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ paymentId, isVoided: true }),
+  const VOID_PREFIX = "\u{1F6AB} VOIDED — This payment has been voided.\n\n"
+
+  for (const att of attachments) {
+    if (att.provider !== "telegram" || !att.providerMetadata?.messageId) continue
+    await editCaption({
+      chatId,
+      messageId: att.providerMetadata.messageId,
+      threadId: att.providerMetadata.threadId,
+      caption: VOID_PREFIX,
+      botToken,
     })
-  } catch (err) {
-    console.error('Edit void captions failed:', err)
   }
 }
 
@@ -191,7 +194,7 @@ export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ suc
     }
 
     if (voided?.attachments?.length) {
-      await editVoidCaptions(input.paymentId)
+      await editVoidCaptions(voided.attachments as PaymentAttachment[])
     }
 
     return { success: true }

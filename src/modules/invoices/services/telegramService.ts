@@ -17,6 +17,7 @@ export interface UploadFileResult {
 export interface EditCaptionParams {
   chatId: string;
   messageId: number;
+  threadId?: number;
   caption: string;
   botToken: string;
 }
@@ -78,11 +79,15 @@ export async function uploadFile(params: UploadFileParams): Promise<UploadFileRe
 
 export async function editCaption(params: EditCaptionParams): Promise<void> {
   try {
-    const res = await telegramFetch(params.botToken, "editMessageCaption", {
+    const body: Record<string, unknown> = {
       chat_id: params.chatId,
       message_id: params.messageId,
       caption: params.caption,
-    });
+    };
+    if (params.threadId !== undefined) {
+      body.message_thread_id = params.threadId;
+    }
+    const res = await telegramFetch(params.botToken, "editMessageCaption", body);
 
     if (!res.ok) {
       const body = await res.text();

@@ -465,38 +465,6 @@
     letter-spacing: -0.26px;
 }
 
-.optToggle {
-    width: 36px;
-    height: 20px;
-    border-radius: 10px;
-    position: relative;
-    flex-shrink: 0;
-    transition: background 0.15s;
-}
-
-.optToggle[data-on="true"] {
-    background: hsl(var(--bd-brand));
-}
-
-.optToggle[data-on="false"] {
-    background: hsl(var(--bd-border));
-}
-
-.optToggleKnob {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: hsl(var(--bd-surface));
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    transition: transform 0.15s;
-    box-shadow: 0 1px 2px hsl(var(--bd-text) / 0.2);
-}
-
-.optToggle[data-on="true"] .optToggleKnob {
-    transform: translateX(16px);
-}
 
 .optCustomizeBtn {
     display: flex;
