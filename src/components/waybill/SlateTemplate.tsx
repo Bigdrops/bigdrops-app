@@ -2,7 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -179,7 +179,7 @@ function createStyles(preset: PdfDesignPreset) {
       letterSpacing: 0.4,
     },
     metaValue: {
-      fontSize: 9.5,
+      fontSize: 9,
       fontWeight: '600',
       color: '#1a2624',
       borderBottomWidth: 0.5,
@@ -421,15 +421,10 @@ export const SlateTemplateDocument: React.FC<{
                 </View>
               )}
               <View style={S.brandTextBlock}>
-                <PartyCard
-                  title="Company"
-                  party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                  surfaceColor="transparent"
-                  borderColor="transparent"
-                  accentColor="#ffffff"
-                  textColor="#dbe4e1"
-                mutedColor="#dbe4e1"
-              />
+                <Text style={S.brandName}>{model.branding.name}</Text>
+                <Text style={S.brandAddress}>
+                  {[model.branding.address, model.branding.email, model.branding.phone && `Phone: ${model.branding.phone}`].filter(Boolean).join(' | ')}
+                </Text>
               </View>
             </View>
             <View style={S.wbBlock}>
@@ -444,15 +439,12 @@ export const SlateTemplateDocument: React.FC<{
             <View style={S.topGrid}>
               <View style={S.leftCol}>
                 <View style={S.leftBlock}>
-                  <PartyCard
-                    title="Client / Consignee"
-                    party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                    surfaceColor="transparent"
-                    borderColor="transparent"
-                    accentColor="#7d8a88"
-                    textColor="#1a2624"
-                mutedColor="#1a2624"
-              />
+                  <Text style={S.blockTag}>Client / Consignee</Text>
+                  <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+                  {model.parties.clientAddress && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>{model.parties.clientAddress}</Text>}
+                  {model.parties.clientCityState && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>{model.parties.clientCityState}</Text>}
+                  {model.parties.clientPhone && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>}
+                  {model.parties.clientEmail && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>}
                 </View>
                 <View style={S.leftBlock}>
                   <Text style={S.blockTag}>Destination Address</Text>

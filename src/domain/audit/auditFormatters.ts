@@ -144,9 +144,9 @@ function truncate(text: string, length: number = 180): string {
   return text.substring(0, length).trim() + '...'
 }
 
-export function formatAuditValue(field: string, value: unknown): { preview: string; full?: string } {
+export function formatAuditValue(field: string, value: unknown): { preview: string | null; full?: string } {
   if (!hasMeaningfulAuditValue(value)) {
-    return { preview: EMPTY_VALUE }
+    return { preview: null }
   }
 
   if (CURRENCY_FIELDS.has(field)) {
@@ -166,7 +166,7 @@ export function formatAuditValue(field: string, value: unknown): { preview: stri
   }
 
   if (Array.isArray(value)) {
-    return { preview: value.length ? `${value.length} item${value.length === 1 ? '' : 's'}` : EMPTY_VALUE }
+    return { preview: value.length ? `${value.length} item${value.length === 1 ? '' : 's'}` : null }
   }
 
   if (typeof value === 'object') {
@@ -217,10 +217,10 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
   if (row.action === 'PAYMENT_RECORDED') {
     const changes: AuditTrailChange[] = []
     if (meta.amount != null) {
-      changes.push({ field: 'amount', label: 'Amount', oldValue: EMPTY_VALUE, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
+      changes.push({ field: 'amount', label: 'Amount', oldValue: null, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
     }
     if (meta.payment_date != null) {
-      changes.push({ field: 'payment_date', label: 'Date', oldValue: EMPTY_VALUE, newValue: formatDisplayDate(meta.payment_date as string) })
+      changes.push({ field: 'payment_date', label: 'Date', oldValue: null, newValue: formatDisplayDate(meta.payment_date as string) })
     }
     if (meta.payment_mode != null) {
       changes.push({ field: 'payment_mode', label: getAuditFieldLabel('payment_mode'), oldValue: null, newValue: String(meta.payment_mode) })
@@ -235,7 +235,7 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
       changes.push({ field: 'wht_amount', label: getAuditFieldLabel('wht_amount'), oldValue: null, newValue: formatNaira(meta.wht_amount as string | number, { preserveFraction: true }) })
     }
     if (meta.reason != null) {
-      changes.push({ field: 'reason', label: 'Reason', oldValue: EMPTY_VALUE, newValue: String(meta.reason) })
+      changes.push({ field: 'reason', label: 'Reason', oldValue: null, newValue: String(meta.reason) })
     }
     return changes
   }
@@ -243,10 +243,10 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
   if (row.action === 'PAYMENT_VOIDED') {
     const changes: AuditTrailChange[] = []
     if (meta.amount != null) {
-      changes.push({ field: 'amount', label: 'Amount', oldValue: EMPTY_VALUE, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
+      changes.push({ field: 'amount', label: 'Amount', oldValue: null, newValue: formatNaira(meta.amount as string | number, { preserveFraction: true }) })
     }
     if (meta.reason != null) {
-      changes.push({ field: 'reason', label: 'Reason', oldValue: EMPTY_VALUE, newValue: String(meta.reason) })
+      changes.push({ field: 'reason', label: 'Reason', oldValue: null, newValue: String(meta.reason) })
     }
     return changes
   }
@@ -264,7 +264,7 @@ export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] 
       id: String(row.id),
       action: row.action,
       actionLabel: isAdvanceCreate
-        ? 'created advance invoice'
+        ? 'created an advance invoice'
         : getAuditActionLabel(row.entity_type, row.action),
       actorLabel: String(row.actor_label || 'Unknown user'),
       timestamp: formatDisplayDate(row.created_at, {

@@ -40,10 +40,10 @@ function createStyles(preset: PdfDesignPreset) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 10,
+      marginBottom: 8,
       borderBottomWidth: 1.5,
       borderBottomColor: '#e6ede8',
-      paddingBottom: 10,
+      paddingBottom: 8,
     },
     brand: {
       flexDirection: 'row',
@@ -89,7 +89,7 @@ function createStyles(preset: PdfDesignPreset) {
     waybillBadge: {
       backgroundColor: '#f0f6f2',
       paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingVertical: 4,
       borderRadius: 12,
       borderWidth: 0.5,
       borderColor: '#c9d9cf',
@@ -218,7 +218,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 0.5,
       borderColor: '#e0ece4',
       borderRadius: 6,
-      padding: 8,
+      padding: 5,
     },
     blockLabel: {
       fontSize: 6.5,
@@ -452,15 +452,20 @@ export const EvergreenTemplateDocument: React.FC<{
                 </View>
               )}
               <View style={S.brandText}>
-                <PartyCard
-                  title="Company"
-                  party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                  surfaceColor="transparent"
-                  borderColor="transparent"
-                  accentColor="#1a3a32"
-                  textColor="#5a7268"
-                  mutedColor="#5a7268"
-              />
+                <Text style={S.brandName}>{model.branding.name}</Text>
+                <Text style={S.brandAddress}>
+                  {[
+                    model.branding.address,
+                    model.branding.phone && `Phone: ${model.branding.phone}`,
+                    model.branding.email,
+                    model.branding.website && `Web: ${model.branding.website}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' | ')}
+                </Text>
+                {model.branding.customInfo?.map((info, i) => (
+                  <Text key={i} style={S.brandAddress}>{info.label}: {info.value}</Text>
+                ))}
               </View>
             </View>
             <View style={S.waybillBadge}>
@@ -535,15 +540,18 @@ export const EvergreenTemplateDocument: React.FC<{
           {/* Client & Destination */}
           <View style={S.clientDestRow}>
             <View style={S.block}>
-              <PartyCard
-                title="Client / Consignee"
-                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#6a8a7c"
-                textColor="#1a3a32"
-                mutedColor="#1a3a32"
-              />
+              <Text style={S.blockLabel}>Client / Consignee</Text>
+              <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+              <Text style={S.blockSub}>{model.parties.clientAddress || ''}</Text>
+              {model.parties.clientCityState && (
+                <Text style={S.blockSub}>{model.parties.clientCityState}</Text>
+              )}
+              {model.parties.clientPhone && (
+                <Text style={S.blockSub}>Phone: {model.parties.clientPhone}</Text>
+              )}
+              {model.parties.clientEmail && (
+                <Text style={S.blockSub}>Email: {model.parties.clientEmail}</Text>
+              )}
             </View>
             <View style={S.block}>
               <Text style={S.blockLabel}>Destination Address</Text>

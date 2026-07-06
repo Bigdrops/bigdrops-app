@@ -2,7 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -145,7 +145,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderWidth: 1,
       borderColor: '#d4c5b2',
       padding: 5,
-      minHeight: 52,
+      minHeight: 44,
     },
     metaLabel: {
       fontSize: 7,
@@ -154,7 +154,7 @@ function createStyles(preset: PdfDesignPreset) {
       marginBottom: 1,
     },
     metaValue: {
-      fontSize: 9,
+      fontSize: 8,
       fontWeight: 'bold',
       color: '#2f261d',
       lineHeight: 1.3,
@@ -421,15 +421,20 @@ export const PremiumTemplateDocument: React.FC<{
               )}
             </View>
             <View style={S.brandBox}>
-              <PartyCard
-                title="Company"
-                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#2d241b"
-                textColor="#5e5146"
-                mutedColor="#5e5146"
-              />
+              <Text style={S.brandName}>{model.branding.name}</Text>
+              <Text style={S.brandDetail}>
+                {[
+                  model.branding.address,
+                  model.branding.phone && `Phone: ${model.branding.phone}`,
+                  model.branding.email,
+                  model.branding.website && `Web: ${model.branding.website}`,
+                ]
+                  .filter(Boolean)
+                  .join(' | ')}
+              </Text>
+              {model.branding.customInfo?.map((info, i) => (
+                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
+              ))}
             </View>
             <View style={S.docBox}>
               <Text style={S.docLabel}>Waybill No</Text>
@@ -445,15 +450,20 @@ export const PremiumTemplateDocument: React.FC<{
 
           <View style={S.summaryRow}>
             <View style={S.panel}>
-              <PartyCard
-                title="Consignee / Client"
-                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#7b6b5e"
-                textColor="#2f261d"
-                mutedColor="#2f261d"
-              />
+              <Text style={S.panelTitle}>Consignee / Client</Text>
+              <Text style={S.panelBig}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress && (
+                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>{model.parties.clientAddress}</Text>
+              )}
+              {model.parties.clientCityState && (
+                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>{model.parties.clientCityState}</Text>
+              )}
+              {model.parties.clientPhone && (
+                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>
+              )}
+              {model.parties.clientEmail && (
+                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>
+              )}
             </View>
             <View style={S.panel}>
               <Text style={S.panelTitle}>Delivery Location</Text>

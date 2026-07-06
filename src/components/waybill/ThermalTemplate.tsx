@@ -5,7 +5,7 @@ import {
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -330,15 +330,11 @@ export const ThermalTemplateDocument: React.FC<{
                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
                 </View>
               )}
-              <PartyCard
-                title="Company"
-                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#000000"
-                textColor="#333333"
-                mutedColor="#333333"
-              />
+              <Text style={S.brandName}>{model.branding.name}</Text>
+              <Text style={S.brandDetail}>{model.branding.address}</Text>
+              {model.branding.phone && <Text style={S.brandDetail}>Phone: {model.branding.phone}</Text>}
+              {model.branding.email && <Text style={S.brandDetail}>{model.branding.email}</Text>}
+              {model.branding.website && <Text style={S.brandDetail}>Web: {model.branding.website}</Text>}
             </View>
 
             {/* Title */}
@@ -375,15 +371,8 @@ export const ThermalTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockTitle}>DISPATCH FROM</Text>
               <View style={S.addrBox}>
-                <PartyCard
-                  title="Company"
-                  party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                  surfaceColor="transparent"
-                  borderColor="transparent"
-                  accentColor={S.blockTitle.color}
-                  textColor={S.addrName.color}
-                  mutedColor={S.addrName.color}
-                />
+                <Text style={S.addrName}>{model.branding.name}</Text>
+                <Text>{model.branding.address}</Text>
               </View>
             </View>
 
@@ -391,17 +380,13 @@ export const ThermalTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockTitle}>DELIVER TO</Text>
               <View style={S.addrBox}>
-                <PartyCard
-                  title="Client / Consignee"
-                  party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                  surfaceColor="transparent"
-                  borderColor="transparent"
-                  accentColor="#000000"
-                  textColor="#000000"
-                  mutedColor="#000000"
-                />
+                <Text style={S.addrName}>{model.parties.clientName || ''}</Text>
+                {model.parties.clientAddress && <Text>{model.parties.clientAddress}</Text>}
+                {model.parties.clientCityState && <Text>{model.parties.clientCityState}</Text>}
+                {model.parties.clientPhone && <Text>Phone: {model.parties.clientPhone}</Text>}
+                {model.parties.clientEmail && <Text>Email: {model.parties.clientEmail}</Text>}
                 {model.logistics.deliveryLocation ? (
-                  <Text>{model.logistics.deliveryLocation}</Text>
+                  <Text>Destination: {model.logistics.deliveryLocation}</Text>
                 ) : null}
               </View>
             </View>

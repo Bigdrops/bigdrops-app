@@ -2,7 +2,7 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -17,7 +17,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     content: {
       paddingHorizontal: 14,
-      paddingBottom: 16,
+      paddingBottom: 12,
       flex: 1,
     },
     title: {
@@ -39,7 +39,7 @@ function createStyles(preset: PdfDesignPreset) {
     },
     brandBlock: {
       flex: 1,
-      paddingRight: 12,
+      paddingRight: 8,
     },
     brandLogo: {
       width: 40,
@@ -64,7 +64,7 @@ function createStyles(preset: PdfDesignPreset) {
       color: '#94a3b8',
     },
     brandName: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: 'bold',
       color: '#1e40af',
       marginBottom: 1,
@@ -75,7 +75,7 @@ function createStyles(preset: PdfDesignPreset) {
       lineHeight: 1.35,
     },
     docNumber: {
-      fontSize: 10,
+      fontSize: 9,
       textAlign: 'right',
       fontWeight: 'bold',
       color: '#1e40af',
@@ -88,12 +88,12 @@ function createStyles(preset: PdfDesignPreset) {
     metaGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      marginBottom: 8,
+      marginBottom: 6,
     },
     metaCard: {
       width: '25%',
       paddingHorizontal: 4,
-      marginBottom: 6,
+      marginBottom: 4,
     },
     metaLabel: {
       fontSize: 7,
@@ -103,16 +103,16 @@ function createStyles(preset: PdfDesignPreset) {
       letterSpacing: 0.3,
     },
     metaValue: {
-      fontSize: 9,
+      fontSize: 8,
       fontWeight: 'bold',
-      color: '#1e40af',
+      color: '#334155',
       lineHeight: 1.25,
     },
     tickRow: {
       flexDirection: 'row',
       gap: 14,
       alignItems: 'center',
-      paddingVertical: 5,
+      paddingVertical: 4,
       paddingHorizontal: 8,
       borderWidth: 0.5,
       borderColor: '#cbd5e1',
@@ -167,7 +167,7 @@ function createStyles(preset: PdfDesignPreset) {
       borderRadius: 4,
       padding: 8,
       backgroundColor: '#f8fafc',
-      minHeight: 60,
+      minHeight: 50,
     },
     blockLabel: {
       fontSize: 7,
@@ -176,7 +176,7 @@ function createStyles(preset: PdfDesignPreset) {
       marginBottom: 2,
     },
     blockValue: {
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: 'bold',
       color: '#1e40af',
       lineHeight: 1.3,
@@ -382,15 +382,20 @@ export const ClassicTemplateDocument: React.FC<{
                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
                 </View>
               )}
-              <PartyCard
-                title="Company"
-                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#1e40af"
-                textColor="#475569"
-                mutedColor="#475569"
-              />
+              <Text style={S.brandName}>{model.branding.name}</Text>
+              <Text style={S.brandDetail}>
+                {[
+                  model.branding.address,
+                  model.branding.phone && `Phone: ${model.branding.phone}`,
+                  model.branding.email,
+                  model.branding.website && `Web: ${model.branding.website}`,
+                ]
+                  .filter(Boolean)
+                  .join(' | ')}
+              </Text>
+              {model.branding.customInfo?.map((info, i) => (
+                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
+              ))}
             </View>
             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
           </View>
@@ -413,15 +418,17 @@ export const ClassicTemplateDocument: React.FC<{
               </View>
             ))}
             <View style={S.metaCard}>
-              <PartyCard
-                title="Client"
-                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#64748b"
-                textColor="#1e40af"
-                mutedColor="#1e40af"
-              />
+              <Text style={S.metaLabel}>Client</Text>
+              <Text style={S.metaValue}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress && (
+                <Text style={[S.metaValue, { fontSize: 7, marginTop: 1 }]}>{model.parties.clientAddress}</Text>
+              )}
+              {model.parties.clientCityState && (
+                <Text style={[S.metaValue, { fontSize: 7 }]}>{model.parties.clientCityState}</Text>
+              )}
+              {model.parties.clientPhone && (
+                <Text style={[S.metaValue, { fontSize: 7 }]}>Phone: {model.parties.clientPhone}</Text>
+              )}
             </View>
           </View>
 
@@ -458,6 +465,9 @@ export const ClassicTemplateDocument: React.FC<{
               <Text style={S.blockLabel}>Client / Consignee</Text>
               <Text style={S.blockValue}>{model.parties.clientName || ''}</Text>
               {model.parties.clientAddress ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
+              {model.parties.clientCityState ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientCityState}</Text> : null}
+              {model.parties.clientPhone ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>Phone: {model.parties.clientPhone}</Text> : null}
+              {model.parties.clientEmail ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>Email: {model.parties.clientEmail}</Text> : null}
             </View>
           </View>
 

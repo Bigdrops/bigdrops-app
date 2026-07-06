@@ -118,7 +118,7 @@
   align-items: center;
   padding: 8px 12px;
   background: var(--dv-bg-2);
-  border-radius: var(--dv-radius-sm);
+  border-radius: var(--bd-radius-sm);
   border: 1px solid var(--dv-border-soft);
 }
 

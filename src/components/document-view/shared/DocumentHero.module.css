@@ -5,9 +5,9 @@
   gap: 14px;
   margin-top: 16px;
   border: 1px solid hsl(var(--bd-border));
-  border-radius: var(--dv-radius-xl);
+  border-radius: var(--bd-radius-xl);
   background: hsl(var(--bd-card-bg));
-  box-shadow: var(--dv-shadow-sm);
+  box-shadow: var(--bd-shadow-sm);
 }
 
 @media (min-width: 640px) {

@@ -5,7 +5,7 @@ import {
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const txt = preset.textColor
@@ -322,15 +322,23 @@ export const MinimalTemplateDocument: React.FC<{
                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
                 </View>
               )}
-              <PartyCard
-                title="Company"
-                party={model.company || { name: '', address: '', cityState: '', phone: '', email: '', website: '', customInfo: [], companyLogoUrl: '', tagline: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#000000"
-                textColor="#444444"
-                mutedColor="#444444"
-              />
+              <Text style={S.brandName}>{model.branding.name}</Text>
+              {model.branding.tagline && (
+                <Text style={S.brandTagline}>{model.branding.tagline}</Text>
+              )}
+              <Text style={S.brandDetail}>
+                {[
+                  model.branding.address,
+                  model.branding.phone && `Phone: ${model.branding.phone}`,
+                  model.branding.email,
+                  model.branding.website && `Web: ${model.branding.website}`,
+                ]
+                  .filter(Boolean)
+                  .join(' | ')}
+              </Text>
+              {model.branding.customInfo?.map((info, i) => (
+                <Text key={i} style={S.brandContact}>{info.label}: {info.value}</Text>
+              ))}
             </View>
             <View style={S.docIdent}>
               <Text style={S.pill}>{model.header.waybillNumber || ''}</Text>
@@ -342,15 +350,20 @@ export const MinimalTemplateDocument: React.FC<{
           {/* Client & Destination */}
           <View style={S.topGrid}>
             <View style={S.topBox}>
-              <PartyCard
-                title="Client / Consignee"
-                party={model.client || { name: '', address: '', cityState: '', phone: '', email: '' }}
-                surfaceColor="transparent"
-                borderColor="transparent"
-                accentColor="#000000"
-                textColor="#000000"
-                mutedColor="#000000"
-              />
+              <Text style={S.fieldLabel}>Client / Consignee</Text>
+              <Text style={{ fontSize: 9, fontWeight: 'bold', marginTop: 2 }}>{model.parties.clientName || ''}</Text>
+              {model.parties.clientAddress && (
+                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>{model.parties.clientAddress}</Text>
+              )}
+              {model.parties.clientCityState && (
+                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>{model.parties.clientCityState}</Text>
+              )}
+              {model.parties.clientPhone && (
+                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>
+              )}
+              {model.parties.clientEmail && (
+                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>
+              )}
             </View>
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Destination Address</Text>

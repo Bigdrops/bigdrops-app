@@ -29,10 +29,10 @@ export interface AuditLogRecord {
 export interface AuditTrailChange {
   field: string
   label: string
-  oldValue: string
-  newValue: string
-  oldValueFull?: string
-  newValueFull?: string
+  oldValue: string | null
+  newValue: string | null
+  oldValueFull?: string | null
+  newValueFull?: string | null
 }
 
 export interface AuditTrailEntry {
