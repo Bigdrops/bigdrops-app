@@ -13,6 +13,7 @@ import {
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
 import { supabase } from "@/supabase"
+import type { PaymentAttachment } from "@/lib/attachmentTypes"
 
 interface SettlementSummary {
   cashReceived: number
@@ -29,6 +30,9 @@ interface PaymentRecordInput {
   reference?: string
   notes?: string
   bankAccountId?: string | null
+  attachments?: File[]
+  invoiceNumber?: string
+  clientName?: string
 }
 
 function normalizeAmount(value: number | null | undefined): number {
@@ -108,9 +112,66 @@ export async function recordInvoicePayment(
       })
     }
 
+    let uploadResults: PaymentAttachment[] = []
+
+    if (input.attachments?.length) {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+
+      if (token) {
+        for (const file of input.attachments) {
+          try {
+            const fd = new FormData()
+            fd.append("file", file)
+            fd.append("paymentId", paymentRow.id)
+            fd.append("invoiceNumber", input.invoiceNumber || "")
+            fd.append("clientName", input.clientName || "")
+            fd.append("amount", String(payload.amount))
+            fd.append("method", input.method)
+            fd.append("paymentDate", input.date)
+
+            const res = await fetch("/api/upload-payment-attachment", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: fd,
+            })
+
+            if (res.ok) {
+              const data = await res.json()
+              if (data.attachment) uploadResults.push(data.attachment)
+            } else {
+              const errBody = await res.json().catch(() => ({ error: "Upload failed" }))
+              uploadResults.push({
+                id: crypto.randomUUID(),
+                provider: "telegram",
+                fileName: file.name,
+                mimeType: file.type || "application/octet-stream",
+                sizeBytes: file.size,
+                uploadedAt: new Date().toISOString(),
+                uploadStatus: "failed",
+                error: errBody.error || "Upload failed",
+              })
+            }
+          } catch (err) {
+            uploadResults.push({
+              id: crypto.randomUUID(),
+              provider: "telegram",
+              fileName: file.name,
+              mimeType: file.type || "application/octet-stream",
+              sizeBytes: file.size,
+              uploadedAt: new Date().toISOString(),
+              uploadStatus: "failed",
+              error: err instanceof Error ? err.message : "Upload failed",
+            })
+          }
+        }
+      }
+    }
+
     return {
       success: true,
       paymentId: paymentRow.id,
+      uploadResults: uploadResults.length > 0 ? uploadResults : undefined,
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to record payment"

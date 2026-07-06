@@ -26,7 +26,7 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
           <div className={styles.number}>{header.waybillNumber || ''}</div>
           <div style={{ marginTop: 12 }}>
             <div className={styles.typeLabel}>Dispatch Date</div>
-            <div className={styles.number} style={{ fontSize: 13, color: 'var(--dv-text)' }}>
+            <div className={styles.number} style={{ fontSize: 13, color: 'hsl(var(--bd-text))' }}>
               {header.date || ''}
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function WaybillDocumentPreview({ model }: { model: WaybillRender
           ))
         : (
         <div className={styles.itemRow} style={{ gridTemplateColumns: columnTemplate }}>
-          <div className={styles.itemName} style={{ fontStyle: 'italic', color: 'var(--dv-text-3)' }}>
+          <div className={styles.itemName} style={{ fontStyle: 'italic', color: 'hsl(var(--bd-text-muted) / 0.8)' }}>
             No items added yet.
           </div>
         </div>

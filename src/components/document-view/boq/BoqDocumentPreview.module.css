@@ -4,20 +4,20 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  border-bottom: 1px solid var(--dv-border-soft);
-  background: var(--dv-surface-2);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
+  background: hsl(var(--bd-surface-muted));
 }
 
 .projectName {
   font-size: 15px;
   font-weight: 800;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
   letter-spacing: -0.01em;
 }
 
 .clientName {
   font-size: 12px;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
   margin-top: 3px;
 }
 
@@ -31,26 +31,26 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
 }
 
 .number {
   font-family: var(--dv-font-mono);
   font-size: 14px;
   font-weight: 600;
-  color: var(--dv-primary);
+  color: hsl(var(--bd-fab-bg));
   margin-top: 2px;
 }
 
 .metaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .metaCell {
   padding: 13px 20px;
-  border-right: 1px solid var(--dv-border-soft);
+  border-right: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .metaCell:last-child {
@@ -62,22 +62,22 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   margin-bottom: 4px;
 }
 
 .metaValue {
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .itemsHead {
   display: grid;
   grid-template-columns: 40px 1fr 60px 60px 80px 100px;
   padding: 10px 20px;
-  background: var(--dv-bg);
-  border-bottom: 2px solid var(--dv-border-soft);
+  background: hsl(var(--bd-surface));
+  border-bottom: 2px solid hsl(var(--bd-border) / 0.5);
 }
 
 .columnLabel {
@@ -85,7 +85,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
 }
 
 .right {
@@ -94,8 +94,8 @@
 
 .groupRow {
   padding: 12px 20px;
-  background: var(--dv-bg-2);
-  border-bottom: 1px solid var(--dv-border);
+  background: hsl(var(--bd-surface-muted));
+  border-bottom: 1px solid hsl(var(--bd-border));
 }
 
 .groupName {
@@ -103,34 +103,34 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--dv-primary);
+  color: hsl(var(--bd-fab-bg));
 }
 
 .itemRow {
   display: grid;
   grid-template-columns: 40px 1fr 60px 60px 80px 100px;
   padding: 12px 20px;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
   align-items: start;
 }
 
 .refCode {
   font-family: var(--dv-font-mono);
   font-size: 11px;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
   padding-top: 2px;
 }
 
 .itemName {
   font-size: 12px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
   line-height: 1.4;
 }
 
 .itemDescription {
   font-size: 11px;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   line-height: 1.5;
   margin-top: 4px;
 }
@@ -138,7 +138,7 @@
 .metricValue {
   font-family: var(--dv-font-mono);
   font-size: 12px;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
   text-align: right;
   padding-top: 2px;
 }
@@ -148,8 +148,8 @@
   flex-direction: column;
   padding: 16px 20px;
   gap: 10px;
-  border-bottom: 1px solid var(--dv-border-soft);
-  background: var(--dv-bg);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
+  background: hsl(var(--bd-surface));
   align-items: flex-end;
 }
 
@@ -162,32 +162,32 @@
 
 .totalLabel {
   font-size: 11px;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
 }
 
 .totalValue {
   font-family: var(--dv-font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .grandLabel {
   font-size: 12px;
   font-weight: 700;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .grandValue {
   font-family: var(--dv-font-mono);
   font-size: 15px;
   font-weight: 700;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .subLabel {
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .footer {
@@ -202,12 +202,12 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   margin-bottom: 5px;
 }
 
 .footerText {
   font-size: 11px;
-  color: var(--dv-text-2);
+  color: hsl(var(--bd-text-muted));
   line-height: 1.7;
 }

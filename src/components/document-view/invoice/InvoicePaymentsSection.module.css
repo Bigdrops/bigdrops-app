@@ -1,20 +1,20 @@
 .card {
-  background: var(--dv-surface);
-  border: 1px solid var(--dv-border);
-  border-radius: var(--dv-radius-lg);
+  background: hsl(var(--bd-card-bg));
+  border: 1px solid hsl(var(--bd-border));
+  border-radius: var(--bd-radius-lg);
   overflow: hidden;
-  box-shadow: var(--dv-shadow-sm);
+  box-shadow: var(--bd-shadow-sm);
 }
 
 .summaryGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .summaryCell {
   padding: 12px 14px;
-  border-right: 1px solid var(--dv-border-soft);
+  border-right: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .summaryCell:last-child {
@@ -26,7 +26,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   margin-bottom: 3px;
 }
 
@@ -34,25 +34,25 @@
   font-family: var(--dv-font-mono);
   font-size: 15px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .green {
-  color: var(--dv-emerald);
+  color: hsl(var(--bd-status-success-text));
 }
 
 .amber {
-  color: var(--dv-amber);
+  color: hsl(var(--bd-status-warning-text));
 }
 
 .progressWrap {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .progressBar {
   height: 5px;
-  background: var(--dv-bg-3);
+  background: hsl(var(--bd-surface-muted) / 0.8);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -60,7 +60,7 @@
 .progressFill {
   width: 42%;
   height: 100%;
-  background: linear-gradient(90deg, var(--dv-emerald), hsl(var(--bd-status-success-text) / 0.6));
+  background: linear-gradient(90deg, hsl(var(--bd-status-success-text)), hsl(var(--bd-status-success-text) / 0.6));
   border-radius: 3px;
 }
 
@@ -68,7 +68,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   margin-top: 5px;
 }
 
@@ -77,7 +77,7 @@
   align-items: center;
   gap: 11px;
   padding: 11px 14px;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
   transition: background 0.1s;
 }
 
@@ -86,7 +86,7 @@
 }
 
 .historyItem:hover {
-  background: var(--dv-bg);
+  background: hsl(var(--bd-surface));
 }
 
 .icon {
@@ -97,18 +97,18 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--dv-emerald-bg);
-  color: var(--dv-emerald);
+  background: hsl(var(--bd-status-success-text) / 0.1);
+  color: hsl(var(--bd-status-success-text));
 }
 
 .iconWht {
-  background: var(--dv-primary-bg);
-  color: var(--dv-primary);
+  background: hsl(var(--bd-fab-bg) / 0.1);
+  color: hsl(var(--bd-fab-bg));
 }
 
 .iconVoided {
-  background: var(--dv-rose-bg);
-  color: var(--dv-rose);
+  background: hsl(var(--bd-status-danger-text) / 0.1);
+  color: hsl(var(--bd-status-danger-text));
   opacity: 0.7;
 }
 
@@ -120,12 +120,12 @@
 .method {
   font-size: 12px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: hsl(var(--bd-text));
 }
 
 .reference {
   font-size: 11px;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   font-family: var(--dv-font-mono);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -142,26 +142,26 @@
   font-family: var(--dv-font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-emerald);
+  color: hsl(var(--bd-status-success-text));
 }
 
 .amountVoided {
-  color: var(--dv-rose);
+  color: hsl(var(--bd-status-danger-text));
   text-decoration: line-through;
   opacity: 0.6;
 }
 
 .date {
   font-size: 10px;
-  color: var(--dv-text-3);
+  color: hsl(var(--bd-text-muted) / 0.8);
   margin-top: 2px;
 }
 
 .tag {
   display: inline-block;
   font-size: 9px;
-  background: var(--dv-primary-bg);
-  color: var(--dv-primary);
+  background: hsl(var(--bd-fab-bg) / 0.1);
+  color: hsl(var(--bd-fab-bg));
   padding: 1px 5px;
   border-radius: 3px;
   margin-top: 2px;

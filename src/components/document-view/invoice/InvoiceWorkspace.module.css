@@ -12,7 +12,7 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-image: radial-gradient(circle, var(--dv-primary) 0.5px, transparent 0.5px);
+    background-image: radial-gradient(circle, hsl(var(--bd-fab-bg)) 0.5px, transparent 0.5px);
     background-size: 24px 24px;
     opacity: 0.04;
     pointer-events: none;

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Banknote, Calendar, Check } from 'lucide-react'
+import { Loader2, Banknote, Calendar, Check, CircleCheck } from 'lucide-react'
+import { PaymentAttachmentUploader } from '@/components/ui/PaymentAttachmentUploader'
+import type { PaymentAttachment } from '@/lib/attachmentTypes'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatNaira } from '@/lib/formatters/money'
@@ -63,6 +65,9 @@ export default function InvoiceRecordPaymentSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [uploadResults, setUploadResults] = useState<PaymentAttachment[] | null>(null)
+  const [paymentRecorded, setPaymentRecorded] = useState(false)
   const [pctInput, setPctInput] = useState('')
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
@@ -88,6 +93,9 @@ export default function InvoiceRecordPaymentSheet({
     setPctInput('')
     setError('')
     setSubmitAttempted(false)
+    setAttachments([])
+    setUploadResults(null)
+    setPaymentRecorded(false)
     void loadData()
 
     return () => {
@@ -172,17 +180,26 @@ export default function InvoiceRecordPaymentSheet({
         reference: form.reference,
         notes: form.notes,
         bankAccountId: form.method === 'Transfer' && selectedBankId ? selectedBankId : null,
+        attachments: attachments.length > 0 ? attachments : undefined,
+        invoiceNumber: invoice.invoice_number,
+        clientName: invoice.client_name,
       })
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to record payment')
       }
 
-      onSaved()
-      onClose()
+      setPaymentRecorded(true)
+
+      if (result.uploadResults) {
+        setUploadResults(result.uploadResults)
+        setSaving(false)
+      } else {
+        onSaved()
+        onClose()
+      }
     } catch (err) {
       setError(getUserFacingMutationMessage(err, { action: 'record' }))
-    } finally {
       setSaving(false)
     }
   }
@@ -379,6 +396,31 @@ export default function InvoiceRecordPaymentSheet({
             </div>
           </div>
 
+          <div className="bg-bd-surface-muted rounded-2xl p-4 space-y-3">
+            <PaymentAttachmentUploader
+              files={attachments}
+              onFilesChanged={setAttachments}
+            />
+            {uploadResults ? (
+              <div className="space-y-1.5">
+                {uploadResults.map((r, i) => (
+                  <div key={r.id} className={`flex items-center gap-2 text-xs ${r.uploadStatus === "uploaded" ? "text-bd-status-success-text" : "text-bd-status-danger-text"}`}>
+                    <Check size={12} className="shrink-0" />
+                    {r.fileName} — {r.uploadStatus === "uploaded" ? "Uploaded" : `Failed: ${r.error || ""}`}
+                  </div>
+                ))}
+                <div className="pt-1 text-xs text-bd-text-muted border-t border-bd-border/40">
+                  Payment recorded. You can close this sheet.
+                </div>
+              </div>
+            ) : paymentRecorded ? (
+              <div className="flex items-center gap-2 text-xs text-bd-status-success-text">
+                <CircleCheck size={14} />
+                Payment recorded successfully
+              </div>
+            ) : null}
+          </div>
+
           <div className="flex-shrink-0 space-y-3 pt-2 border-t border-bd-border/60">
             {error ? (
               <div className="bg-bd-status-danger-bg border border-bd-status-danger-border text-bd-status-danger-text px-4 py-2.5 rounded-xl text-sm font-medium">
@@ -397,11 +439,11 @@ export default function InvoiceRecordPaymentSheet({
               <button
                 type="button"
                 onClick={() => void handleSave()}
-                disabled={saving}
+                disabled={saving || paymentRecorded}
                 className="flex-[2] h-12 rounded-2xl bg-bd-button-primary-bg text-sm font-bold text-bd-button-primary-text flex items-center justify-center gap-2 transition-all hover:bg-bd-button-primary-hover-bg disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-bd-button-primary-bg/20"
               >
-                {saving ? <Loader2 className="animate-spin" size={18} /> : <Banknote size={18} />}
-                {saving ? 'Saving...' : 'Record Payment'}
+                {saving ? <Loader2 className="animate-spin" size={18} /> : paymentRecorded ? <Check size={18} /> : <Banknote size={18} />}
+                {saving ? 'Recording payment...' : paymentRecorded ? 'Done' : 'Record Payment'}
               </button>
             </div>
           </div>

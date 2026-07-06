@@ -5,7 +5,7 @@ export interface PaymentAttachment {
   mimeType: string;
   sizeBytes: number;
   uploadedAt: string;
-  providerMetadata: {
+  providerMetadata?: {
     messageId: number;
     fileId: string;
     fileUniqueId: string;

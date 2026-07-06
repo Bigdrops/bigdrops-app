@@ -14,9 +14,9 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  background: var(--dv-primary-bg);
-  color: var(--dv-primary);
-  border: 1px solid var(--dv-primary-border);
+  background: hsl(var(--bd-fab-bg) / 0.1);
+  color: hsl(var(--bd-fab-bg));
+  border: 1px solid hsl(var(--bd-fab-bg) / 0.2);
   margin-top: 6px;
   width: fit-content;
 }

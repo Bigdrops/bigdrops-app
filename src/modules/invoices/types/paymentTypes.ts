@@ -47,6 +47,7 @@ export interface PaymentRecordResult {
   success: boolean
   paymentId?: string
   error?: string
+  uploadResults?: PaymentAttachment[]
 }
 
 export interface BankAccountSummary {
