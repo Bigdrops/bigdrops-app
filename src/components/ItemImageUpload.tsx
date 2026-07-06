@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { ImagePlus, LoaderCircle } from 'lucide-react'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
@@ -26,8 +27,8 @@ export default function ItemImageUpload({ value, onChange }: ItemImageUploadProp
     if (!file) return
     setValidationError(null)
 
-    if (!file.type.startsWith('image/')) {
-      setValidationError('Please choose an image file.')
+    if (!isSupportedImageFile(file)) {
+      setValidationError(getUnsupportedImageErrorMessage(file.name))
       return
     }
 
@@ -97,7 +98,7 @@ export default function ItemImageUpload({ value, onChange }: ItemImageUploadProp
         <input 
           ref={ref} 
           type="file" 
-          accept="image/*" 
+          accept={IMAGE_ACCEPT_ATTRIBUTE}
           className="hidden" 
           onChange={e => handleFile(e.target.files?.[0])} 
         />
@@ -127,7 +128,7 @@ export default function ItemImageUpload({ value, onChange }: ItemImageUploadProp
         <input 
           ref={ref} 
           type="file" 
-          accept="image/*" 
+          accept={IMAGE_ACCEPT_ATTRIBUTE}
           className="hidden" 
           onChange={e => handleFile(e.target.files?.[0])} 
         />

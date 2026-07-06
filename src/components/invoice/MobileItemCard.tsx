@@ -19,6 +19,7 @@ import { useItemSuggestionEngine } from '@/modules/item-library/hooks/useItemSug
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
 import { formatNaira } from '@/lib/formatters/money'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { ITEM_FIELD_POLICY, type ItemContext } from '@/components/shared/itemFieldPolicy'
 import type { InvoiceItem } from '@/domain/invoice/types'
 import type { ItemSuggestion } from '@/modules/item-library/types'
@@ -159,6 +160,11 @@ function MobileItemCard({
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
+
+    if (!isSupportedImageFile(file)) {
+      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
+      return
+    }
 
     setUploading(true)
     try {
@@ -302,7 +308,7 @@ function MobileItemCard({
               <Camera className="h-3 w-3" />
               Photo
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleImageUpload} />
           </div>          {/* Compact Inputs Row */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 sm:grid-cols-5">
             {isVisible('make') && (

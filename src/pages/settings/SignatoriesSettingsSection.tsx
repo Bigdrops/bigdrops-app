@@ -7,6 +7,7 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { feedback } from '@/lib/feedback'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import {
   Sheet,
   SheetContent,
@@ -98,8 +99,8 @@ export function SignatoriesSettingsSection() {
     if (!file) return
     setUploadError(null)
 
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please choose an image file.')
+    if (!isSupportedImageFile(file)) {
+      setUploadError(getUnsupportedImageErrorMessage(file.name))
       return
     }
 
@@ -285,7 +286,7 @@ export function SignatoriesSettingsSection() {
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT_ATTRIBUTE}
                   className="hidden"
                   onChange={(event) => handleUpload(event.target.files?.[0] || null)}
                 />

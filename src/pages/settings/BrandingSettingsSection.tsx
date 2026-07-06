@@ -7,6 +7,7 @@ import {
 } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { feedback } from '@/lib/feedback'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
 import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
@@ -85,8 +86,8 @@ export function BrandingSettingsSection() {
     if (!file) return
     setUploadError(null)
 
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please choose an image file.')
+    if (!isSupportedImageFile(file)) {
+      setUploadError(getUnsupportedImageErrorMessage(file.name))
       setLogoState('error')
       return
     }
@@ -228,7 +229,7 @@ export function BrandingSettingsSection() {
                 <input
                   ref={logoInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT_ATTRIBUTE}
                   className="hidden"
                   onChange={(event) => handleUpload(event.target.files?.[0] || null)}
                 />

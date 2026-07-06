@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { ParsedCsrImport } from '@/components/csr/csrImport'
 import MobileFab from '@/components/layout/MobileFab'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
+import { feedback } from '@/lib/feedback'
 
 type SignatoryRow = {
   id: string
@@ -733,10 +735,15 @@ export default function CsrFormScreen({
                 <input
                   ref={recipientSignatureInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT_ATTRIBUTE}
                   className="hidden"
                   onChange={(event) => {
                     const file = event.target.files?.[0]
+                    if (file && !isSupportedImageFile(file)) {
+                      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
+                      event.target.value = ''
+                      return
+                    }
                     setRecipientSignatureName(file?.name || '')
                     if (file) {
                       const reader = new FileReader()

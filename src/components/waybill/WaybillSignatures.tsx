@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sheet'
 import { feedback } from '@/lib/feedback'
 import { processSignature, dataURItoFile } from '@/lib/processSignature'
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { supabase } from '@/supabase'
 import type { WaybillCustomFields } from './waybillUtils'
 
@@ -321,6 +322,11 @@ function SignatureCard({
   const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
+    if (!isSupportedImageFile(file)) {
+      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
+      event.target.value = ''
+      return
+    }
     setUploading(true)
     try {
       const processedDataURI = await processSignature(file)
@@ -405,7 +411,7 @@ function SignatureCard({
               <Upload className="h-3.5 w-3.5" />
               {uploading ? 'Uploading…' : 'Upload'}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleUpload} />
 
             <button
               type="button"

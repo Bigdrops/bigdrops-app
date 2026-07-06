@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import { Plus, X, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile } from "@/lib/documentImageUploadPolicy"
 
 interface PaymentAttachmentUploaderProps {
   files: File[]
@@ -10,13 +11,12 @@ interface PaymentAttachmentUploaderProps {
 }
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024
-const DEFAULT_ACCEPT = "image/jpeg,image/png,application/pdf"
 
 export function PaymentAttachmentUploader({
   files,
   onFilesChanged,
   maxSize = DEFAULT_MAX_SIZE,
-  accept = DEFAULT_ACCEPT,
+  accept = IMAGE_ACCEPT_ATTRIBUTE,
 }: PaymentAttachmentUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
