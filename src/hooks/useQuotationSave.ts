@@ -29,8 +29,8 @@ import {
 import type { QuotationEditorState, PdfOutputState } from '@/components/quotation/quotationFormTypes'
 
 interface QuotationGroup {
-  id?: string
-  name?: string
+  id: string
+  name: string
   showSubtotal?: boolean
 }
 
@@ -145,7 +145,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
     const customFieldsData = buildCustomFields({
       quotation,
       columns,
-      customFields,
+      headerFields: customFields,
       additionalFields,
       discountType,
       discountTiming,
@@ -279,7 +279,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
         await recordAuditLog({
           entityType: 'quotation',
           recordId: effectiveId,
-          entityLabel: initialQuotationSnapshot?.quotation_number || null,
+          entityLabel: String(initialQuotationSnapshot?.quotation_number || ''),
           action: 'UPDATE',
           oldData: initialQuotationSnapshot,
           newData: _savedQuotation,

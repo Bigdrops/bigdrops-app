@@ -200,4 +200,30 @@ via TInput.
 6. Current Implementations
 
 · src/hooks/useInvoiceSave.ts — Invoice save strategy.
+· src/hooks/useQuotationSave.ts — Quotation save strategy.
+
+Both Invoice and Quotation now share the identical save lifecycle
+(Validation → Saving state → Save timer → Payload construction →
+Persistence → After-save lifecycle → Navigation → Error handling).
+Only the strategy object differs — all orchestration is handled by
+useDocumentSave.
+
 · (New document types add their own strategy files in src/hooks/.)
+
+---
+
+7. Future Document Types
+
+All new document types (CSR, BOQ, RFQ, Waybill, etc.) MUST implement their
+own DocumentSaveStrategy instead of duplicating the orchestration lifecycle.
+
+Steps:
+1. Define a UseXxxSaveParams interface carrying all form state, items,
+   computed totals, and callbacks.
+2. Implement xxxStrategy: DocumentSaveStrategy<UseXxxSaveParams>.
+3. Create a useXxxSave() hook wrapper that calls useDocumentSave().
+4. Wire the hook into the form page's save callbacks.
+
+Do NOT duplicate Supabase error handling, saving-state management,
+save-timer lifecycle, or navigation boilerplate. The generic hook owns all
+of that — the strategy only provides document-type-specific behaviour.

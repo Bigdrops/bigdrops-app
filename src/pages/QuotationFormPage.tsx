@@ -12,7 +12,7 @@ import {
   normalizeExtraCharges,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
-import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
+import type { ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
   type DbQuotation,
