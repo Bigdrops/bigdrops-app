@@ -12,6 +12,7 @@ Load all relevant skills from docs/PROJECTSKILLINDEX.md before making changes.
 ====================================================================
 
 # Objective
+reference commit: 4460dc00dc78e675c5993ecad0fa29dc35341f33
 
 Perform a targeted regression audit and correction of the recent document image upload policy.
 
