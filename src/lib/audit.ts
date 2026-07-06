@@ -367,15 +367,32 @@ export async function recordProjectLinkedActivity(
   })
 }
 
+// ───────────────────────────────────────────────────────────────
+// TEMPORARY DIAGNOSTIC PATCH — CSR & WAYBILL AUDIT RPC VISIBILITY
+// Date: 2026-07-06 | Author: Gu
+// Purpose: Expose RPC return state and surface hidden Postgres errors
+// Remove after CSR + Waybill audit logging is verified.
+// ───────────────────────────────────────────────────────────────
+
 export async function recordCsrCreated(csrId: string, csrNumber: string | null, reason?: string | null) {
-  const actor = await getActor()
-  return supabase.rpc('record_csr_created', {
-    p_csr_id: csrId,
-    p_actor_id: actor.id,
-    p_actor_label: actor.label,
-    p_source: 'web',
-    p_reason: reason ?? null,
-  })
+  try {
+    const actor = await getActor()
+    const res = await supabase.rpc('record_csr_created', {
+      p_csr_id: csrId,
+      p_actor_id: actor.id,
+      p_actor_label: actor.label,
+      p_source: 'web',
+      p_reason: reason ?? null,
+    })
+    console.log('[CSR AUDIT RPC RESULT]', {
+      data: res.data,
+      error: res.error,
+    })
+    return res
+  } catch (err) {
+    console.error('[CSR AUDIT RPC THROW]', err)
+    throw err
+  }
 }
 
 export async function recordCsrStatusChanged(csrId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
@@ -404,14 +421,24 @@ export async function recordCsrLinked(csrId: string, invoiceId: string, reason?:
 }
 
 export async function recordWaybillCreated(waybillId: string, reason?: string | null) {
-  const actor = await getActor()
-  return supabase.rpc('record_waybill_created', {
-    p_waybill_id: waybillId,
-    p_actor_id: actor.id,
-    p_actor_label: actor.label,
-    p_source: 'web',
-    p_reason: reason ?? null,
-  })
+  try {
+    const actor = await getActor()
+    const res = await supabase.rpc('record_waybill_created', {
+      p_waybill_id: waybillId,
+      p_actor_id: actor.id,
+      p_actor_label: actor.label,
+      p_source: 'web',
+      p_reason: reason ?? null,
+    })
+    console.log('[WAYBILL AUDIT RPC RESULT]', {
+      data: res.data,
+      error: res.error,
+    })
+    return res
+  } catch (err) {
+    console.error('[WAYBILL AUDIT RPC THROW]', err)
+    throw err
+  }
 }
 
 export async function recordWaybillStatusChanged(waybillId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
