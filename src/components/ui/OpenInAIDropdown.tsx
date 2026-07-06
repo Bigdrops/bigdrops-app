@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { AppLauncher } from '@capacitor/app-launcher'
 import { isAndroidNative } from '@/lib/native/capacitor'
+import { emitFeedback } from '@/lib/NativeFeedbackBus'
 
 interface Provider {
   id: string
@@ -61,21 +62,33 @@ const AI_PROVIDERS: Provider[] = [
 
 async function navigateToProvider(provider: Provider) {
   if (!isAndroidNative()) {
+    emitFeedback({ type: 'ai:launch:attempt', payload: { providerName: provider.name, method: 'browser' } })
     window.open(provider.url, '_blank', 'noopener,noreferrer')
+    emitFeedback({ type: 'ai:launch:success', payload: { providerName: provider.name, method: 'browser' } })
     return
   }
 
+  emitFeedback({ type: 'ai:launch:attempt', payload: { providerName: provider.name, method: 'native' } })
   const playStoreUrl = `https://play.google.com/store/apps/details?id=${provider.packageId}`
 
   try {
     const { value } = await AppLauncher.canOpenUrl({ url: provider.url })
     if (value) {
       await AppLauncher.openUrl({ url: provider.url })
+      emitFeedback({ type: 'ai:launch:success', payload: { providerName: provider.name, method: 'native' } })
     } else {
       window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
+      emitFeedback({
+        type: 'ai:launch:fallback',
+        payload: { providerName: provider.name, method: 'play-store', reason: 'App not installed' },
+      })
     }
   } catch {
     window.open(playStoreUrl, '_blank', 'noopener,noreferrer')
+    emitFeedback({
+      type: 'ai:launch:fallback',
+      payload: { providerName: provider.name, method: 'play-store', reason: 'Could not launch app' },
+    })
   }
 }
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import type { Session, AuthChangeEvent, Subscription } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { Toaster } from '@/components/ui/toaster'
+import { NativeFeedbackRenderer } from '@/lib/native-feedback-renderer'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AppShell from '@/components/app/AppShell'
 import PageLoader from '@/components/app/PageLoader'
@@ -544,6 +545,7 @@ function App() {
       <BrowserRouter>
         <PushNotificationRuntime userId={profile?.id} />
         <Toaster />
+        <NativeFeedbackRenderer />
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
