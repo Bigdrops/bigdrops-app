@@ -1,256 +1,325 @@
-Read Agents.md 1st
+You are working on the BIGDROPS business platform.
 
-# ✅ BIGDROPS — Invoice + Quotation Full Parity + Ownership Audit (READ-ONLY)
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-You are working on the BIGDROPS business platform.  
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.  
-Runtime: Bun. Never use npm or yarn.
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access.
+Read AGENTS.md before touching anything.
+Follow the audit-first workflow, project fundamentals, standards,
+locked business rules, and required skills.
+====================================================================
 
----
+A. CONTEXT & OBJECTIVE
 
-# CONTEXT
+Phase 2.6B attachment uploads consistently fail from the application.
 
-An Invoice architecture audit already exists for:
+A manual PowerShell upload to Telegram succeeds.
 
-- `NewInvoice.tsx`
-- `EditInvoice.tsx`
-- `SharedDocumentForm.tsx`
-- Invoice domain layer
-- Financial + column systems
-@docs/Reports/invoice-form-architecture-audit.md
-That audit established internal Invoice structure but did NOT fully evaluate Quotation parity or cross-module ownership boundaries.
+Therefore the Telegram Bot API is already verified.
 
-Known shared systems:
+The objective of this task is NOT to fix the issue.
 
-- View page structure (Invoice, Quotation, CSR, Waybill)
-- Form system (Invoice, Quotation, Waybill via SharedDocumentForm)
-- PDF/template system (Invoice-heavy, also used by Quotation)
+The objective is to identify the FIRST failing stage of the upload pipeline with hard evidence.
 
-This audit is strictly READ-ONLY and evidence-based.
+No feature work.
+No refactors.
+No architecture changes.
+No retry implementation.
 
-No redesigns. No abstractions. No refactoring.
+Treat this as a forensic investigation.
 
----
+====================================================================
 
-# OBJECTIVE
+B. TARGET COMPONENTS
 
-Determine whether Invoice and Quotation are structurally identical or divergent at the orchestration level by:
+Read only:
 
-1. Mapping real ownership boundaries (as implemented)
-2. Comparing Invoice vs Quotation behavior
-3. Identifying hidden divergences
-4. Validating parity with evidence
+- src/components/ui/PaymentAttachmentUploader.tsx
+- src/components/document-view/invoice/InvoiceRecordPaymentSheet.tsx
+- src/modules/invoices/services/paymentService.ts
+- api/upload-payment-attachment.ts
+- src/modules/invoices/services/telegramService.ts
+- paymentRepository upload/update methods
+- PaymentAttachment types
 
----
+Create only if necessary:
 
-# SCOPE
+scripts/test-upload-pipeline.ts
 
-## Invoice
+Temporary instrumentation only.
 
-- NewInvoice.tsx
-- EditInvoice.tsx
-- View page (if present)
-- SharedDocumentForm usage
-- Invoice domain layer usage
+====================================================================
 
-## Quotation
+C. INVESTIGATION PIPELINE
 
-- NewQuotation.tsx
-- EditQuotation.tsx
-- View page
-- Quotation domain layer usage
-- Save/load orchestration
-- Validation logic
-- Column system usage
-- PDF/template pipeline usage
-- SharedDocumentForm usage
+Audit every stage.
 
----
+DO NOT SKIP ANY STAGE.
 
-# TASK 0 — OWNERSHIP BOUNDARY MAPPING (CRITICAL FIRST STEP)
+For every stage produce evidence proving it executed.
 
-Before any comparison, independently analyze BOTH Invoice and Quotation and produce a real implementation-based ownership map.
+1.
+User selected files.
 
-Do NOT idealize. Do NOT redesign.
+Verify:
 
-## For EACH module (Invoice AND Quotation), document:
+- File count
+- File names
+- MIME types
+- File sizes
 
----
+2.
+PaymentAttachmentUploader
 
-## A. Page Layer (New/Edit/View)
+Verify:
 
-- What state is defined here?
-- What side effects exist here?
-- What orchestration logic exists here?
-- What persistence logic exists here?
-- What navigation logic exists here?
+- Files passed through callback
 
----
+3.
+InvoiceRecordPaymentSheet
 
-## B. Hook Layer (if applicable)
+Verify:
 
-- What state is managed in hooks?
-- What logic is centralized?
-- What logic is duplicated across pages?
-- Are hooks true controllers or thin wrappers?
+- Files received
+- Files passed into recordInvoicePayment()
 
----
+4.
+paymentService
 
-## C. SharedDocumentForm Layer
+Verify:
 
-- Does it strictly render UI or also orchestrate logic?
-- What props represent state vs behavior?
-- Does it control business flow or just display?
+- Files received
+- Upload loop entered
+- FormData built correctly
 
----
+Log:
 
-## D. Domain Layer
+- filename
+- mime type
+- size
+- FormData keys
 
-- What is pure business logic?
-- What is transformation logic?
-- What UI concerns are leaking in?
+5.
+fetch()
 
----
+Verify:
 
-## E. Persistence Layer
+- Request URL
+- HTTP Method
+- Content-Type
 
-- Where are DB reads performed?
-- Where are DB writes performed?
-- Is persistence centralized or scattered?
+6.
+Browser Network
 
----
+If local runner supports browser inspection:
 
-## OUTPUT REQUIREMENT
+Capture:
 
-Produce a complete ownership map for BOTH Invoice and Quotation BEFORE continuing.
+- request URL
+- request headers
+- request payload
+- response status
+- response body
+- timing
 
----
+If request never appears,
+identify why.
 
-# TASK 1 — QUOTATION ARCHITECTURE INVENTORY
+7.
+api/upload-payment-attachment
 
-Document Quotation as implemented:
+TEMP DEBUG:
 
-- Entry points
-- State structure
-- Orchestration flow
-- Domain usage
-- Persistence logic
-- Validation
-- Column handling
-- PDF/template usage
-- Navigation behavior
+Log:
 
----
+- request entered
+- authentication result
+- request.formData()
+- file exists
+- filename
+- mime type
+- bytes
+- tenant resolution
+- telegram_topics query
+- resolved thread_id
 
-# TASK 2 — STRUCTURAL BREAKDOWN (QUOTATION)
+8.
+telegramService
 
-Analyze:
+TEMP DEBUG:
 
-- NewQuotation.tsx
-- EditQuotation.tsx
+Log:
 
-Classify each section as:
+- chat_id
+- thread_id
+- caption length
+- Telegram endpoint
+  (mask token)
 
-- Same as Invoice
-- Similar to Invoice (with exact differences)
-- Quotation-specific logic
+Log:
 
-Do NOT generalize. Be explicit.
+- HTTP status
 
----
+Capture COMPLETE Telegram response.
 
-# TASK 3 — INVOICE VS QUOTATION COMPARISON
+Do NOT truncate.
 
-Compare directly:
+Mask only secrets.
 
-- Form orchestration
-- State ownership
-- Save/load logic
-- Validation logic
-- Column system behavior
-- Domain function usage
-- Persistence strategy
+9.
+Database
 
-For each classify:
+Verify:
 
-- Identical
-- Similar (with exact differences)
-- Different (explicitly described)
+payments.attachments update executes.
 
----
+Capture:
 
-# TASK 4 — VIEW + PDF PIPELINE COMPARISON
+- update payload
+- success/failure
+- affected rows
 
-Inspect ONLY:
+10.
+Client
 
-- View page structure
-- PDF generation flow
-- Template usage
+Verify:
 
-Compare Invoice vs Quotation.
+Returned JSON received.
 
-No deep rendering analysis.
+Log:
 
----
+- success payload
 
-# TASK 5 — END-TO-END LIFECYCLE COMPARISON
+OR
 
-Compare actual implemented flows:
+- failure payload
 
-- Initialization / load
-- Editing flow
-- Validation
-- Computation
-- Save
-- Navigation
+====================================================================
 
-Highlight differences only.
+D. DIAGNOSTIC SCRIPT
 
----
+Create:
 
-# TASK 6 — SHARED SYSTEM VALIDATION
+scripts/test-upload-pipeline.ts
 
-Answer strictly:
+Purpose:
 
-1. Are Invoice and Quotation orchestration systems structurally identical today?
-2. If not, what exact differences exist?
+Bypass the browser completely.
 
-No suggestions. No redesign. No refactor planning.
+The script should:
 
----
+• Load TELEGRAM_BOT_TOKEN
+• Load TELEGRAM_GROUP_CHAT_ID
+• Resolve thread_id
+• Create a tiny in-memory test file
+• Call telegramService.uploadFile()
+• Print raw Telegram JSON
+• Exit
 
-# OUTPUT FORMAT
+Do NOT modify production data.
 
-1. Executive Summary  
-2. Invoice Ownership Map  
-3. Quotation Ownership Map  
-4. Quotation Architecture Inventory  
-5. Quotation Breakdown (New vs Edit)  
-6. Invoice vs Quotation Comparison Matrix  
-7. View + PDF Comparison  
-8. Lifecycle Comparison  
-9. Divergence List (explicit only)  
-10. Final Parity Verdict (Yes / No / Partial)  
-11. Evidence Summary  
-12. Files Inspected  
+Do NOT insert fake payments.
 
----
+If attachment persistence cannot be safely tested,
+skip it and explain why.
 
-# STOP CONDITION
+====================================================================
 
-Stop immediately after analysis.
+E. HARD EVIDENCE TABLE
 
-Do NOT propose refactors.  
-Do NOT design new architecture.  
-Do NOT suggest abstractions.
+The report MUST contain this exact table.
 
----
+| Stage | Evidence | PASS | FAIL | Error |
+|------|------|------|------|------|
+| File selected | | | | |
+| Uploader callback | | | | |
+| Sheet received files | | | | |
+| paymentService entered | | | | |
+| FormData built | | | | |
+| fetch executed | | | | |
+| Browser request exists | | | | |
+| API route entered | | | | |
+| request.formData parsed | | | | |
+| File extracted | | | | |
+| Auth validated | | | | |
+| Topic lookup | | | | |
+| thread_id resolved | | | | |
+| Telegram request | | | | |
+| Telegram response | | | | |
+| Attachment persisted | | | | |
+| Client received response | | | | |
 
-# SUCCESS CRITERIA
+====================================================================
 
-Done when:
+F. INVESTIGATION RULES
 
-- Ownership boundaries are explicitly mapped for BOTH modules
-- Invoice vs Quotation parity is proven or disproven with evidence
-- All divergences are explicitly identified
-- No assumptions or architectural redesigns are introduced
+You are NOT allowed to conclude:
+
+"Upload failed."
+
+You are NOT allowed to conclude:
+
+"Likely..."
+
+You are NOT allowed to speculate.
+
+You MUST identify the FIRST failing stage.
+
+If impossible,
+
+state exactly what evidence is missing and why.
+
+====================================================================
+
+G. CONSTRAINTS
+
+• No business logic changes.
+• No UI changes.
+• No retry implementation.
+• No architecture changes.
+• Temporary debug logging only.
+• Mask secrets.
+• Remove nothing except temporary diagnostics if instructed later.
+
+====================================================================
+
+H. REQUIRED VERIFICATION
+
+Run:
+
+- bun run typecheck
+- bun run audit:load
+- git status
+
+If the local environment allows execution:
+
+Run the diagnostic script.
+
+If not,
+
+provide exact execution instructions for the user.
+
+====================================================================
+
+I. OUTPUT
+
+Save the investigation to:
+
+docs/Reports/FinancialOperations/phase-2-6b-upload-pipeline-forensics.md
+
+The report MUST include:
+
+1. Files instrumented.
+2. Diagnostic script.
+3. Browser evidence (if available).
+4. Raw Telegram response (masked).
+5. Pipeline Evidence Table.
+6. First confirmed failing stage.
+7. Root cause (only if proven by evidence).
+8. Recommended surgical fix (no implementation).
+9. Confirmation that zero production behavior was intentionally changed.
+
+Do NOT run bun run build.
