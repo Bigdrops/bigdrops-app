@@ -19,8 +19,6 @@ export interface WaybillRenderModel {
   footer: FooterBlock
   pagination: PaginationPolicy
   table: TableBlock
-  company: CompanyPartyData | null
-  client: ClientPartyData | null
 }
 
 export interface BrandingBlock {
@@ -163,22 +161,4 @@ export interface CompanySettings {
   state?: string | null
 }
 
-export interface CompanyPartyData {
-  companyLogoUrl: string
-  name: string
-  tagline: string
-  address: string
-  cityState: string
-  phone: string
-  email: string
-  website: string
-  customInfo: Array<{ label: string; value: string }>
-}
 
-export interface ClientPartyData {
-  name: string
-  address: string
-  cityState: string
-  phone: string
-  email: string
-}

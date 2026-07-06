@@ -1,5 +1,4 @@
 import type { PaymentInput, PaymentMethod, PaymentRecordResult, BankAccountSummary } from "../types/paymentTypes"
-import type { PaymentAttachment } from "@/lib/attachmentTypes"
 import {
   insertPayment,
   fetchPaymentsForInvoice,
@@ -13,7 +12,6 @@ import {
 } from "../repositories/paymentRepository"
 import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
-import { editCaption } from "./telegramService"
 import { supabase } from "@/supabase"
 
 interface SettlementSummary {
@@ -160,22 +158,18 @@ export interface VoidPaymentInput {
   reason: string
 }
 
-async function editVoidCaptions(attachments: PaymentAttachment[]): Promise<void> {
-  const chatId = import.meta.env.VITE_TELEGRAM_GROUP_CHAT_ID
-  const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN
-  if (!chatId || !botToken) return
+async function editVoidCaptions(paymentId: string): Promise<void> {
+  const token = (await supabase.auth.getSession()).data.session?.access_token
+  if (!token) return
 
-  const VOID_PREFIX = "\u{1F6AB} VOIDED — This payment has been voided.\n\n"
-
-  for (const att of attachments) {
-    if (att.provider !== "telegram" || !att.providerMetadata?.messageId) continue
-    await editCaption({
-      chatId,
-      messageId: att.providerMetadata.messageId,
-      threadId: att.providerMetadata.threadId,
-      caption: VOID_PREFIX,
-      botToken,
+  try {
+    await fetch("/api/edit-payment-caption", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ paymentId }),
     })
+  } catch (err) {
+    console.error("Failed to void Telegram captions:", err)
   }
 }
 
@@ -194,7 +188,7 @@ export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ suc
     }
 
     if (voided?.attachments?.length) {
-      await editVoidCaptions(voided.attachments as PaymentAttachment[])
+      await editVoidCaptions(voided.id)
     }
 
     return { success: true }

@@ -7,7 +7,7 @@ import {
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
-import { PartyCard } from '@/components/pdf-new/presentation/industry/PartyCard'
+
 
 function createStyles(preset: PdfDesignPreset) {
   const fillableChoice = getEffectiveFillableFont(preset)
