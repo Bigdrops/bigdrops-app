@@ -1,214 +1,184 @@
-
 You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
 
-==================================================
-BEFORE YOU BEGIN — READ AGENTS.md
-==================================================
-You have full file access. Immediately read AGENTS.md.
-It contains:
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-· Skill loading protocol (with failsafe)
-· Reporting protocol (save to docs/Reports/{domain}/)
-· Report quality standards (identity, evidence, ownership tables, transformation standard compliance, risks, deferred work, build verification)
-· Hard architecture rules, no-touch zones, and business behaviour preservation rules
-· Standards hierarchy (AGENTS.md > docs/STANDARD/* > module docs)
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access. Read AGENTS.md immediately.
+Follow AGENTS.md completely, including audit-first workflow, project standards, and skills loading.
+====================================================================
 
-All of these apply to this task. Do not ask for them to be repeated.
+# Objective
 
-Required skills:
-- Karpathy
-- supabase-postgres-best-practices
+Standardize image attachment selection across all document forms.
 
-==================================================
-CONTEXT
-==================================================
+Currently, the "Photo" picker incorrectly allows users to select non-image files such as PDFs. This results in invalid uploads and inconsistent behavior across Invoice, Quotation, and other document modules.
 
-The Financial Operations PRD at `docs/PRD/financial-operations-prd.md` has been rewritten as a Business Architecture Specification (v2). Two architects (dorime and rector) have reviewed it and identified ten specific refinements to elevate it from an implementation description to a long‑lived platform architecture specification. These refinements do not change the architecture — they clarify ownership, add missing conceptual models, and improve the document’s structure so it can guide development for years.
+The goal is to create a single reusable image upload validation policy that every document form uses.
 
-This is a documentation‑only task. Do not modify any production code.
+---
 
-==================================================
-OBJECTIVE
-==================================================
+# Scope
 
-Apply ten precise architectural refinements to `docs/PRD/financial-operations-prd.md`, producing v3.0 — the canonical Financial Operations Platform Architecture Specification.
+Locate every image/photo picker used by:
 
-==================================================
-SCOPE
-==================================================
+- Invoice
+- Quotation
+- Waybill
+- CSR
+- BOQ
+- RFQ
+- Any shared attachment/image upload component
 
-Modify only `docs/PRD/financial-operations-prd.md`. You may read any source file referenced in the PRD to verify claims, but do not change source code, migrations, or standards.
+If multiple implementations exist, consolidate them onto one shared validation helper instead of duplicating MIME checks.
 
-==================================================
-REQUIREMENTS — TEN REFINEMENTS
-==================================================
+Do not change unrelated attachment systems that intentionally support arbitrary files.
 
-Apply each refinement exactly as described. Preserve all existing correct content; only add, reorder, or clarify.
+---
 
-### Refinement 1 — Financial Source of Truth Hierarchy
-- **Where:** Insert immediately after §2 (Architecture Philosophy), before the current §3 (Financial Obligation Model). Renumber subsequent sections.
-- **What to add:**
+# Create
+
+Create a shared utility similar to:
 
 ```
-
-3. Financial Source of Truth Hierarchy
-
-The financial platform has a single ownership chain.
-
-Calculation Engine
-↓
-Financial Obligation (Invoice)
-↓
-Settlement (Payments)
-↓
-Financial State (Derived)
-↓
-Consumers (Compliance, Reports, Dashboards, Exports, Future Accounting)
-
-Upstream domains never consume downstream state.
-Downstream domains never overwrite upstream truth.
-Financial truth flows in one direction.
-
+src/lib/documentImageUploadPolicy.ts
 ```
 
-### Refinement 2 — Financial State as its own domain
-- **Where:** Split the current "Financial Status Model" (§9 in v2) into two sections:
-  1. **Financial State** — owns settled amount, outstanding, balance, payment percentage, overpayment, payment state (derivation logic)
-  2. **Financial Status** — the output labels (unpaid, partially_paid, paid, overpaid, written_off, closed)
-- Keep the dual-derivation discussion and the OVERDUE note in Financial State. Financial Status should only list the statuses and their conditions.
+(or another appropriate shared location following existing project conventions).
 
-### Refinement 3 — WHT five-stage evidence model
-- **Where:** Replace the three-layer model in §6 (WHT Architecture) with a five-stage pipeline:
-```
+The helper should expose:
 
-Expected → Deducted → Recorded → Certificate Received → Verified
+- supported MIME types
+- validation helper(s)
+- reusable error message(s)
 
-```
-- Map each stage to the existing tables/columns:
-  - Expected: `invoices.wht`, `invoices.wht_rate`, `invoices.wht_type`
-  - Deducted: `payments.wht_amount`
-  - Recorded: `payments` row (audit event)
-  - Certificate Received: `wht_receipts` (status ≥ received)
-  - Verified: `wht_receipts` (status = verified)
-- Mark which stages are fully implemented, partially implemented, or not implemented.
+so all document forms behave identically.
 
-### Refinement 4 — VAT lifecycle
-- **Where:** Expand §7 (VAT Architecture) into a lifecycle model:
-```
+---
 
-VAT Calculated → VAT Collected → VAT Input → VAT Liability → VAT Filing → Evidence
+# Allowed image formats
 
-```
-- For each stage, note current status:
-  - Calculated: ✅ Calculation Engine
-  - Collected: ⚠️ embedded in grand total, not tracked separately
-  - Input: ✅ `tax_input_entries` table
-  - Liability: ❌ not computed
-  - Filing: ❌ not implemented
-  - Evidence: ❌ not implemented
+Accept only these MIME types:
 
-### Refinement 5 — Financial Consumers section
-- **Where:** New section immediately after Financial State (after the split from Refinement 2).
-- **Content:**
-```
+- image/jpeg
+- image/png
+- image/webp
+- image/heic
+- image/heif
+- image/avif
+- image/gif
+- image/bmp
+- image/tiff
 
-Financial Consumers
+Reject every other MIME type.
 
-Everything below Financial State is a consumer. Consumers read derived financial data; they never compute it independently.
+Examples that MUST be rejected include:
 
-· Compliance — reads WHT/VAT state for evidence tracking
-· Reports — reads projections for display
-· Dashboard — reads summary metrics
-· Analytics — future consumer
-· PDF Exports — dumb renderers
-· Future Accounting — external module consuming clean events
+- application/pdf
+- application/msword
+- application/vnd.*
+- application/zip
+- text/*
+- audio/*
+- video/*
+- application/octet-stream
 
-Consumers must not:
+Do NOT support RAW camera formats such as:
 
-· Query raw payment or invoice tables for financial values
-· Recalculate balances, taxes, or totals
-· Write financial state back to authoritative tables
+- .dng
+- .cr2
+- .cr3
+- .nef
+- .arw
+- .orf
+- .rw2
+- .raf
 
-```
+These are intentionally excluded because they are extremely large, inconsistently supported by browsers, and unnecessary for business document attachments.
 
-### Refinement 6 — Move Data Flow Authority Map earlier
-- **Where:** Relocate the current Data Flow Authority Map (currently §15) to immediately after Calculation Engine (§4 after renumbering). It should appear before Financial Obligation Model.
+---
 
-### Refinement 7 — Rename "Implementation Roadmap" to "Architecture Evolution Roadmap"
-- **Where:** §16 heading and any internal references.
-- **Why:** The document is now a platform architecture specification; "roadmap" describes the evolution of the architecture, not a task list.
+# Picker behavior
 
-### Refinement 8 — Rephrase dual-derivation statement
-- **Where:** In the Financial State section (refined from §9.2).
-- **Current wording:** "One should be authoritative; currently neither is."
-- **Replace with:**
-  > The SQL projection and TypeScript projection are intended to represent identical business rules. Maintaining behavioral equivalence between both implementations is mandatory until a single authoritative derivation strategy is adopted.
+Where the platform supports MIME filtering (accept attribute, native picker, Capacitor picker, etc.):
 
-### Refinement 9 — Business Ownership Matrix
-- **Where:** Add a new section before the current file‑oriented Ownership Matrix.
-- **Content:** A table with two columns: Business Concept | Owner.
-  - Prices → Calculation Engine
-  - VAT → Calculation Engine
-  - WHT → Calculation Engine
-  - Invoice Total → Calculation Engine
-  - Financial Obligation → Invoice Domain
-  - Settlement → Payment Domain
-  - Financial State → Financial State Domain
-  - Compliance Evidence → Compliance Domain
-  - Operational Reports → Reporting Domain
-  - Audit History → Audit Domain
+Configure the picker so users only see supported image types.
 
-### Refinement 10 — Overall tone shift
-- Throughout the document, ensure the architectural model is described first, and the current implementation is presented as one realization of that model. Where sections currently start with "Currently…" or describe code structure before the concept, restructure to lead with the concept, then note the current state. Do not alter any technical claims — only reorder sentences for clarity.
+Do not rely solely on the picker.
 
-==================================================
-CONSTRAINTS
-==================================================
+Always perform validation after selection as well.
 
-- Do not change any technical claim unless it contradicts source‑code evidence. If you find a contradiction, flag it in the report but do not resolve it.
-- Preserve all existing correct content — this is additive refinement, not replacement.
-- Do not modify any file other than the PRD.
-- Keep the document under 800 lines if possible. If it grows beyond that, note it but do not truncate.
+Validation must remain the source of truth.
 
-==================================================
-PRESERVE EXISTING BUSINESS BEHAVIOUR
-==================================================
+---
 
-The document must continue to accurately reflect the implemented architecture. Do not invent features or claim implementation where none exists.
+# Error handling
 
-==================================================
-REQUIRED VERIFICATION
-==================================================
+If an unsupported file is selected:
 
-- After editing, re‑read the entire PRD to ensure no contradictions were introduced.
-- Verify that every new claim (e.g., five-stage WHT, VAT lifecycle stages) is consistent with the source code. If a claim cannot be verified, mark it as aspirational.
+- Reject only the invalid file(s)
+- Keep valid image selections
+- Show a consistent user-facing error explaining that only supported image formats are allowed.
 
-==================================================
-OUTPUT
-==================================================
+Do not crash.
 
-1. Update `docs/PRD/financial-operations-prd.md` with all ten refinements applied.
-2. Produce a brief report at `docs/Reports/FinancialOperations/prd-v3-refinements-report.md` containing:
-   - List of refinements applied with a one‑line confirmation each.
-   - Any sections where you could not fully verify a claim (with evidence).
-   - Verification status: did all existing claims remain consistent after edits?
+Do not silently ignore failures.
 
-==================================================
-STOP CONDITION
-==================================================
+---
 
-Stop after the updated PRD and report are saved. Do not generate implementation prompts or modify code.
+# Reuse
 
-==================================================
-SUCCESS CRITERIA
-==================================================
+Every document module must use the same helper.
 
-Done when:
-- All ten refinements are applied and consistent.
-- The PRD reads as a platform architecture specification, not an implementation report.
-- The ownership hierarchy, financial consumers, and lifecycle models are explicit.
-- No production code was changed.
-```
+Do not duplicate MIME arrays across the codebase.
 
+The upload policy should become the single source of truth.
+
+---
+
+# Documentation
+
+Create or update:
+
+docs/STANDARD/document-image-upload-policy.md
+
+Document:
+
+- supported formats
+- rejected formats
+- rationale
+- requirement that every document image picker reuse the shared policy
+- requirement that picker filtering is convenience only, while validation remains mandatory
+
+---
+
+# Constraints
+
+- Preserve existing upload workflows.
+- Do not modify PDF rendering.
+- Do not modify Calculations.ts.
+- Do not modify document save hooks.
+- Do not introduce document-specific behavior.
+- Keep changes minimal and backward compatible.
+
+---
+
+# Required Verification
+
+For active code changes:
+
+- Run `bun run typecheck`
+- Run `bun run audit:load`
+- Run `git status`
+
+Do NOT run `bun run build` (4 GB RAM policy).
+
+Confirm:
+
+- PDFs can no longer be selected or uploaded through image pickers.
+- HEIC/HEIF images remain selectable.
+- JPEG, PNG, WebP, AVIF, GIF, BMP, and TIFF remain supported.
+- The shared upload policy is reused by every document image picker touched.
+- No unrelated application behavior changed.
