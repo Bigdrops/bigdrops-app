@@ -6,7 +6,6 @@ import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   buildCalculationInputs,
   ensureUiKey,
-  filterPopulatedAdditionalFields,
   makeEmptyGroup,
   makeEmptyItem,
   makeExtraCharge,
@@ -14,7 +13,6 @@ import {
   normalizeExtraCharges,
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
-import { toDbItem } from '@/domain/invoice'
 import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
 import {
   buildQuotationFormState,
@@ -25,13 +23,8 @@ import {
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
 import { computeDocument } from '@/lib/Calculations'
-import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
-import { type ProjectLookupClient, validateProjectAssignment } from '@/domain/projects'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
 import {
-  createOfflineQuotationDraft,
   peekNextOfflineQuotationNumber,
 } from '@/lib/native/quotationOffline'
 import { feedback } from '@/lib/feedback'
@@ -56,10 +49,9 @@ import {
   normalizeQuotationGrouping,
   toGroupMetaMap,
   buildCustomFields,
-  toQuotationItem,
 } from '../components/quotation/quotationFormUtils'
-import { createSaveTimer, getJsonSizeBytes } from '@/lib/saveTiming'
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
+import { useQuotationSave } from '@/hooks/useQuotationSave'
 
 export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const navigate = useNavigate()
@@ -411,310 +403,41 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     }
   }, [isEdit, quotationId, quotation, columns, headerFields, additionalFields, discountType, discountTiming, whtType, notesTitle, termsTitle, mergeQtyUnit, showItemImages, normalizedGroups, attachments, extraCharges, chargeLabels, signatoryId, pdfOutput])
 
-  const handleSave = useCallback(async (status: Quotation['status']) => {
-    if (!quotation.client_id) {
-      feedback.error('Validation Error', { description: 'Pick a client before saving' })
-      return
-    }
-
-    const standardItems = items.filter((item) => item.row_type === 'standard')
-    const hasMeaningfulItem = standardItems.some((item) => item.description?.trim())
-
-    if (!hasMeaningfulItem) {
-      feedback.error('Validation Error', { description: 'Add at least one item before saving' })
-      return
-    }
-
-    const invalidStandardRowCount = standardItems.filter((item) => !item.description?.trim()).length
-    if (invalidStandardRowCount > 0) {
-      const firstInvalidIdx = items.findIndex((item) => item.row_type === 'standard' && !item.description?.trim())
-      setInvalidRowIndex(firstInvalidIdx)
-      setTimeout(() => setInvalidRowIndex(null), 2500)
-      feedback.error('Validation Error', {
-        description: `${invalidStandardRowCount} item row${invalidStandardRowCount === 1 ? '' : 's'} must have a description before saving.`,
-      })
-      return
-    }
-
-    const { project: validatedProject, error: projectError } = await validateProjectAssignment(
-      supabase as unknown as ProjectLookupClient,
-      {
-        projectId: quotation.project_id,
-        documentClientId: quotation.client_id,
-        documentClientName: quotation.client_name,
-      },
-    )
-
-    if (projectError) {
-      feedback.error('Project link invalid', { description: projectError })
-      return
-    }
-
-    setSaving(true)
-    const timer = createSaveTimer('quotation-save-total', {
-      mode: isEdit ? 'edit' : 'new',
-      status: status || 'open',
-      quotationId: quotationId || null,
-    })
-    const poNumber = String(quotation.po_number || '').trim()
-    const buildCustomFieldsStart = timer.phaseStart('build-custom-fields')
-    const customFieldsData = buildCustomFields({
-      quotation,
-      columns,
-      headerFields,
-      additionalFields,
-      discountType,
-      discountTiming,
-      whtType,
-      notesTitle,
-      termsTitle,
-      mergeQtyUnit,
-      showItemImages,
-      groups: normalizedGroups,
-      attachments,
-      extraCharges,
-      chargeLabels,
-      signatoryId,
-      pdfOutput,
-    })
-    const customFieldsJson = JSON.stringify(customFieldsData)
-    timer.phaseEnd('build-custom-fields', buildCustomFieldsStart, {
-      customFieldsBytes: getJsonSizeBytes(customFieldsData),
-      attachmentsCount: attachments.length,
-      headerFieldCount: headerFields.length,
-      additionalFieldCount: additionalFields.length,
-      extraChargeCount: extraCharges.length,
-      columnCount: columns.length,
-      groupCount: normalizedGroups.length,
-      pdfOutputBytes: getJsonSizeBytes(pdfOutput),
-    })
-
-    const buildPayloadStart = timer.phaseStart('build-payload')
-    const notesChanged = quotation.notes !== initialNotes
-    const termsChanged = quotation.terms !== initialTerms
-    const normalizedNotes = notesChanged ? normalizeRichTextHtml(quotation.notes || '') : initialNotes
-    const normalizedTerms = termsChanged ? normalizeRichTextHtml(quotation.terms || '') : initialTerms
-    const payload = {
-      quotation_number: quotation.quotation_number || '',
-      po_number: poNumber || null,
-      quotation_title: quotation.quotation_title || null,
-      project_id: validatedProject?.id || null,
-      client_id: quotation.client_id || null,
-      client_name: quotation.client_name || '',
-      issue_date: quotation.issue_date || null,
-      valid_until: quotation.valid_until || null,
-      status: status || 'open',
-      notes: normalizedNotes,
-      terms: normalizedTerms,
-      workmanship: Number(quotation.workmanship || 0),
-      transportation: Number(quotation.transportation || 0),
-      shipping: Number(quotation.shipping || 0),
-      discount: totals.discount,
-      vat: totals.vat,
-      wht: totals.wht,
-      subtotal: totals.subtotal,
-      install_rate_total: totals.installRateTotal,
-      total: totals.totalPayable,
-      amount_in_words: quotation.amount_in_words || '',
-      custom_fields: customFieldsJson,
-    }
-    timer.phaseEnd('build-payload', buildPayloadStart, {
-      documentTable: 'quotations',
-      payloadBytes: getJsonSizeBytes(payload),
-      notesBytes: getJsonSizeBytes(normalizedNotes),
-      termsBytes: getJsonSizeBytes(normalizedTerms),
-      customFieldsBytes: getJsonSizeBytes(customFieldsData),
-      notesNormalized: notesChanged,
-      termsNormalized: termsChanged,
-    })
-
-    const persistableItems = normalizedItems
-
-    if (isCreate && canUseOfflineQuotationDrafts()) {
-      try {
-        const localDraft = await createOfflineQuotationDraft({
-          ...payload,
-          items: persistableItems.map((item, index) => ({ ...item, sort_order: index })),
-        })
-        setQuotation((current) => ({ ...current, quotation_number: localDraft.quotationNumber }))
-        feedback.success('Saved offline', {
-          description: `${localDraft.quotationNumber} was saved locally and queued for sync.`,
-        })
-        navigate('/quotations')
-      } catch (error) {
-        feedback.error('Offline save failed', {
-          description: error instanceof Error ? error.message : 'Could not save this quotation offline.',
-        })
-      } finally {
-        setSaving(false)
-      }
-      return
-    }
-
-    if (isCreate) {
-      let candidateNumber = payload.quotation_number
-      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
-      const { data: existing } = await supabase
-        .from('quotations')
-        .select('id')
-        .eq('quotation_number', candidateNumber)
-        .maybeSingle()
-      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
-        table: 'quotations',
-        operation: 'pre-save-number-check',
-        supabaseCalls: 1,
-      })
-      if (existing) {
-        const collisionPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
-        const match = candidateNumber.match(/(\d+)$/)
-        const num = match ? parseInt(match[1], 10) : 0
-        candidateNumber = `${collisionPrefix}-${String(num + 1).padStart(4, '0')}`
-        payload.quotation_number = candidateNumber
-        setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
-      }
-    } else {
-      const postSaveRefetchStart = timer.phaseStart('post-save-refetch')
-      timer.phaseEnd('post-save-refetch', postSaveRefetchStart, {
-        skipped: true,
-        supabaseCalls: 0,
-        reason: 'edit quotation save does not refetch before navigation',
-      })
-    }
-
-    const saveDocumentRowStart = timer.phaseStart('save-document-row')
-    let savedQuotation: any = null
-    let error: any = null
-
-    if (isEdit && quotationId) {
-      const result = await supabase.from('quotations').update(payload).eq('id', quotationId).select().single()
-      savedQuotation = result.data
-      error = result.error
-    } else {
-      const result = await withUniqueRetry(
-        async (candidateNumber: string) => {
-          payload.quotation_number = candidateNumber
-          setQuotation((current) => ({ ...current, quotation_number: candidateNumber }))
-          return supabase.from('quotations').insert([payload]).select().single()
-        },
-        async () => {
-          const { data: rows } = await supabase.from('quotations').select('quotation_number')
-          const prefix = resolvePrefix(settings?.document_prefixes, 'quotation')
-          return `${prefix}-${String(((rows || []).length + 1)).padStart(4, '0')}`
-        },
-      )
-      savedQuotation = result.data
-      error = result.error
-    }
-
-    timer.phaseEnd('save-document-row', saveDocumentRowStart, {
-      table: 'quotations',
-      operation: isEdit ? 'update-select-single' : 'insert-select-single',
-      supabaseCalls: 1,
-    })
-    if (error || !savedQuotation) {
-      feedback.error('Save failed', {
-        description: getUserFacingMutationMessage(error, { action: 'save' }),
-      })
-      setSaving(false)
-      return
-    }
-
-    const resolvedId = String(savedQuotation.id)
-    const itemRows = persistableItems.map((item, index) => toQuotationItem(item, resolvedId, index))
-
-    const deleteExistingItemsStart = timer.phaseStart('delete-existing-items')
-    const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', resolvedId)
-    timer.phaseEnd('delete-existing-items', deleteExistingItemsStart, {
-      table: 'quotation_items',
-      operation: 'delete-by-quotation_id',
-      supabaseCalls: 1,
-    })
-    if (deleteError) {
-      feedback.error('Save failed', {
-        description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
-      })
-      setSaving(false)
-      return
-    }
-
-    if (itemRows.length > 0) {
-      const insertItemsStart = timer.phaseStart('insert-items')
-      const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
-      timer.phaseEnd('insert-items', insertItemsStart, {
-        table: 'quotation_items',
-        rowCount: itemRows.length,
-        payloadBytes: getJsonSizeBytes(itemRows),
-        supabaseCalls: 1,
-      })
-      if (itemError) {
-        feedback.error('Save failed', {
-          description: getUserFacingMutationMessage(itemError, { action: 'save' }),
-        })
-        setSaving(false)
-        return
-      }
-    } else {
-      const insertItemsStart = timer.phaseStart('insert-items')
-      timer.phaseEnd('insert-items', insertItemsStart, {
-        table: 'quotation_items',
-        rowCount: 0,
-        skipped: true,
-        supabaseCalls: 0,
-      })
-    }
-
-    setSaving(false)
-    const saveAuditLogStart = timer.phaseStart('save-audit-log')
-    try {
-      const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
-      if (!isEdit) {
-        await recordQuotationCreated(resolvedId)
-        await recordAuditLog({
-          entityType: 'quotation',
-          recordId: resolvedId,
-          entityLabel: savedQuotation.quotation_number,
-          action: 'CREATE',
-          oldData: null,
-          newData: savedQuotation,
-          trackedFields: QUOTATION_TRACKED_FIELDS,
-        })
-      } else {
-        await recordAuditLog({
-          entityType: 'quotation',
-          recordId: resolvedId,
-          entityLabel: savedQuotation.quotation_number,
-          action: 'UPDATE',
-          oldData: initialQuotationSnapshot,
-          newData: savedQuotation,
-          trackedFields: QUOTATION_TRACKED_FIELDS,
-        })
-      }
-    } catch (auditErr) {
-      console.error('Audit trail failed:', auditErr)
-    }
-    timer.phaseEnd('save-audit-log', saveAuditLogStart, {
-      tables: ['audit_logs'],
-      rpcCalls: isEdit ? 1 : 2,
-      includesAuthLookup: true,
-    })
-
-    setSaving(false)
-    const navigationAfterSaveStart = timer.phaseStart('navigation-after-save')
-    navigate(`/quotations/${resolvedId}`)
-    timer.phaseEnd('navigation-after-save', navigationAfterSaveStart, {
-      target: `/quotations/${resolvedId}`,
-    })
-    timer.finish({
-      supabaseCalls: (isEdit ? 0 : 1) + 1 + 1 + (itemRows.length > 0 ? 1 : 0) + (isEdit ? 1 : 2),
-      itemRowCount: itemRows.length,
-    })
-  }, [
-    quotation, items, normalizedItems, normalizedGroups, columns, headerFields, additionalFields,
-    extraCharges, chargeLabels, notesTitle, termsTitle, mergeQtyUnit, showItemImages,
-    discountType, discountTiming, whtType, signatoryId, pdfOutput, attachments,
-    calculationInputs, totals, initialNotes, initialTerms, initialQuotationSnapshot,
-    isEdit, quotationId, settings?.document_prefixes, navigate, lineItemsHandlers,
-  ])
+  const { save, saving } = useQuotationSave({
+    quotation,
+    quotationTitle: quotation.quotation_title || '',
+    items,
+    groups: normalizedGroups as any,
+    customFields: headerFields,
+    additionalFields,
+    extraCharges,
+    chargeLabels,
+    columns,
+    notesTitle,
+    termsTitle,
+    attachments: attachments as any,
+    mergeQtyUnit,
+    discountType,
+    discountTiming,
+    whtType,
+    calculationInputs,
+    signatoryId,
+    pdfOutput,
+    initialNotes,
+    initialTerms,
+    initialQuotationSnapshot,
+    normalizedItems,
+    normalizedGroups: normalizedGroups as any,
+    showItemImages,
+    documentTotals: totals,
+    documentPrefixes: settings?.document_prefixes,
+    isCreate,
+    isEdit,
+    id: quotationId,
+    navigate,
+    onInvalidRow: setInvalidRowIndex,
+    setQuotationNumber: (num: string) => setQuotation((current) => ({ ...current, quotation_number: num })),
+  })
 
   if (loading) {
     return (
@@ -801,9 +524,9 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           setWhtType={setWhtType}
           saving={saving}
           primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
-          onSaveSent={() => handleSave('open')}
-          onSaveDraft={() => handleSave('open')}
-          onFloatingSave={() => handleSave('open')}
+          onSaveSent={() => save('open')}
+          onSaveDraft={() => save('open')}
+          onFloatingSave={() => save('open')}
           onCancel={() => navigate('/quotations')}
           onApplyImport={handleImportApply}
           importAdapter={quotationImportAdapter}
