@@ -202,17 +202,37 @@ export async function recordPaymentRecorded(
   extra?: PaymentRecordedParams,
 ) {
   const actor = await getActor()
-  return supabase.rpc('record_payment_recorded', {
-    p_invoice_id: invoiceId,
-    p_amount: amount,
+
+  const { data: invoice, error } = await supabase
+    .from('invoices')
+    .select('invoice_number, status, total, scope_type')
+    .eq('id', invoiceId)
+    .single()
+
+  if (error || !invoice) {
+    throw new Error('Invoice not found: ' + invoiceId)
+  }
+
+  return supabase.rpc('record_activity_event', {
+    p_entity_type: 'invoice',
+    p_entity_id: invoiceId,
+    p_event_type: 'PAYMENT_RECORDED',
+    p_entity_label: invoice.invoice_number,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+    p_scope_type: invoice.scope_type ?? 'app',
+    p_metadata: {
+      amount,
+      status: invoice.status,
+      total: invoice.total,
+      payment_mode: extra?.payment_mode ?? null,
+      account_paid_to: extra?.account_paid_to ?? null,
+      running_balance_after: extra?.running_balance_after ?? null,
+      wht_amount: extra?.wht_amount ?? null,
+    },
     p_reason: reason ?? null,
-    p_payment_mode: extra?.payment_mode ?? null,
-    p_account_paid_to: extra?.account_paid_to ?? null,
-    p_running_balance_after: extra?.running_balance_after ?? null,
-    p_wht_amount: extra?.wht_amount ?? null,
+    p_dedupe_seconds: 15,
   })
 }
 
