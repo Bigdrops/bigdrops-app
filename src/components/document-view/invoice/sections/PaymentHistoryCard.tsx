@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { ChevronDown, Receipt } from "lucide-react";
+import { ChevronDown, Receipt, FileText, Image } from "lucide-react";
 import { formatNaira } from "@/lib/formatters/money";
 import { buildPaymentSummaryProjection } from "@/domain/invoice/projections/financialProjection";
-import { buildPaymentHistoryRowViewModels } from "./paymentHistoryViewModel";
+import { buildPaymentHistoryRowViewModels, type AttachmentPreview } from "./paymentHistoryViewModel";
 
 interface PaymentHistoryCardProps {
   payments: any[];
@@ -108,6 +108,32 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                     <span className="text-[11px] font-bold uppercase tracking-wider text-bd-status-danger-text">
                       VOIDED
                     </span>
+                  )}
+                  {row.hasAttachments && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      {row.attachmentPreviews.map((att: AttachmentPreview) =>
+                        att.isImage ? (
+                          <span
+                            key={att.fileId}
+                            title={att.fileName}
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-md"
+                            style={{ background: 'hsl(var(--bd-accent) / 0.1)' }}
+                          >
+                            <Image size={12} style={{ color: 'var(--bd-accent)' }} />
+                          </span>
+                        ) : (
+                          <span
+                            key={att.fileId}
+                            title={att.fileName}
+                            className="inline-flex items-center gap-1 text-[11px] truncate max-w-[140px]"
+                            style={{ color: 'var(--bd-text-muted)' }}
+                          >
+                            <FileText size={12} />
+                            <span className="truncate">{att.fileName}</span>
+                          </span>
+                        ),
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0 ml-3">

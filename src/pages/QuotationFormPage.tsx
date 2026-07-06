@@ -6,7 +6,6 @@ import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   buildCalculationInputs,
   ensureUiKey,
-  makeEmptyGroup,
   makeEmptyItem,
   makeExtraCharge,
   makeFieldEntry,
@@ -43,7 +42,6 @@ import type {
 import { defaultPdfOutput, canUseOfflineQuotationDrafts } from '../components/quotation/quotationFormConstants'
 import { useQuotationLineItems } from '../components/quotation/useQuotationLineItems'
 import {
-  makeQuotationGroupId,
   parseGroupMeta,
   parseChargeLabels,
   normalizeQuotationGrouping,
@@ -63,7 +61,6 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const isEdit = mode === 'edit'
   const isCreate = mode === 'create'
   const [loading, setLoading] = useState(isEdit)
-  const [saving, setSaving] = useState(false)
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [quotation, setQuotation] = useState<QuotationEditorState>({

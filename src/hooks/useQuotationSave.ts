@@ -71,6 +71,9 @@ interface UseQuotationSaveParams {
   initialNotes: string
   initialTerms: string
   initialQuotationSnapshot: Record<string, unknown> | null
+  normalizedItems: InvoiceItem[]
+  normalizedGroups: QuotationGroup[]
+  showItemImages: boolean
   documentTotals: DocumentTotals
   documentPrefixes: any
   isCreate: boolean
@@ -127,12 +130,12 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
 
   buildPayload(input, { status }) {
     const {
-      quotation, quotationTitle, columns, headerFields, additionalFields,
+      quotation, quotationTitle, columns, customFields, additionalFields,
       discountType, discountTiming, whtType, notesTitle, termsTitle,
       mergeQtyUnit, showItemImages, normalizedGroups, attachments,
       extraCharges, chargeLabels, signatoryId, pdfOutput,
       initialNotes, initialTerms, documentTotals, isEdit,
-    } = input as any
+    } = input
 
     const notesChanged = isEdit ? (quotation.notes !== initialNotes) : true
     const termsChanged = isEdit ? (quotation.terms !== initialTerms) : true
@@ -142,7 +145,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
     const customFieldsData = buildCustomFields({
       quotation,
       columns,
-      headerFields,
+      customFields,
       additionalFields,
       discountType,
       discountTiming,
@@ -189,10 +192,10 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   },
 
   async persist(input, payload, { isCreate, id }) {
-    const { documentPrefixes, setQuotationNumber } = input as any
+    const { documentPrefixes, setQuotationNumber } = input
 
     if (isCreate && canUseOfflineQuotationDrafts()) {
-      const offlineItems = (input as any).normalizedItems.map((item: any, index: number) => ({
+      const offlineItems = input.normalizedItems.map((item, index) => ({
         ...item,
         sort_order: index,
       }))
@@ -218,7 +221,9 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
       return withUniqueRetry(
         async (candidateNumber: string) => {
           payload.quotation_number = candidateNumber
-          return supabase.from('quotations').insert([payload]).select().single() as Promise<{ data: any; error: any }>
+          const result = await (supabase.from('quotations') as any).insert([payload]).select().single()
+          _savedQuotation = result.data
+          return result
         },
         async () => {
           const { data: rows } = await supabase.from('quotations').select('quotation_number')
@@ -226,14 +231,15 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
         },
       )
     }
-    const { error } = await supabase.from('quotations').update(payload).eq('id', id)
-    return { data: null, error }
+    const { data: updated, error } = await (supabase.from('quotations') as any).update(payload).eq('id', id).select().single()
+    _savedQuotation = updated
+    return { data: updated, error }
   },
 
   async afterSave(input, { effectiveId, isCreate, createResult }) {
-    const { normalizedItems, isEdit, initialQuotationSnapshot } = input as any
+    const { normalizedItems, isEdit, initialQuotationSnapshot } = input
 
-    const itemRows = normalizedItems.map((item: any, index: number) => toQuotationItem(item, effectiveId, index))
+    const itemRows = normalizedItems.map((item, index) => toQuotationItem(item, effectiveId, index))
 
     if (isEdit) {
       const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', effectiveId)

@@ -24,7 +24,6 @@ export function PaymentAttachmentUploader({
 
   const validateAndAdd = (incoming: FileList | File[]) => {
     const newErrors: string[] = []
-    const allowed = accept.split(",")
     const valid: File[] = []
 
     for (const file of Array.from(incoming)) {
@@ -32,11 +31,7 @@ export function PaymentAttachmentUploader({
         newErrors.push(`${file.name} exceeds 10 MB limit`)
         continue
       }
-      const matchesType = allowed.some((t) => {
-        const pattern = t.trim().replace("*", ".*")
-        return file.type.match(pattern)
-      })
-      if (!matchesType) {
+      if (!isSupportedImageFile(file)) {
         newErrors.push(`${file.name} is not a supported file type`)
         continue
       }

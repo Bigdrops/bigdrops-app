@@ -1,6 +1,14 @@
 import { formatDisplayDate, formatDisplayTime } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 
+export interface AttachmentPreview {
+  fileName: string
+  mimeType: string
+  isImage: boolean
+  fileId: string
+  fileUniqueId: string
+}
+
 export interface PaymentHistoryRowViewModel {
   id: string
   amount: number
@@ -17,12 +25,24 @@ export interface PaymentHistoryRowViewModel {
   isVoided: boolean
   statusLabel: string
   statusVariant: "voided" | "completed" | "pending"
+  hasAttachments: boolean
+  attachmentPreviews: AttachmentPreview[]
 }
 
 export function buildPaymentHistoryRowViewModels(rawPayments: any[]): PaymentHistoryRowViewModel[] {
   return rawPayments.map((p) => {
     const method = p.method ?? ""
     const isVoided = Boolean(p.voided_at)
+
+    const rawAttachments: any[] = p.attachments ?? []
+    const uploaded = rawAttachments.filter((a: any) => a.uploadStatus === "uploaded")
+    const attachmentPreviews: AttachmentPreview[] = uploaded.map((a: any) => ({
+      fileName: a.fileName ?? "",
+      mimeType: a.mimeType ?? "",
+      isImage: (a.mimeType ?? "").startsWith("image/"),
+      fileId: a.providerMetadata?.fileId ?? "",
+      fileUniqueId: a.providerMetadata?.fileUniqueId ?? "",
+    }))
 
     return {
       id: p.id ?? "",
@@ -40,6 +60,8 @@ export function buildPaymentHistoryRowViewModels(rawPayments: any[]): PaymentHis
       isVoided,
       statusLabel: isVoided ? "Voided" : "Completed",
       statusVariant: isVoided ? "voided" : "completed",
+      hasAttachments: attachmentPreviews.length > 0,
+      attachmentPreviews,
     }
   })
 }
