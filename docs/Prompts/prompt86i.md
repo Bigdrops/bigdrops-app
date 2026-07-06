@@ -1,96 +1,167 @@
 You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
 
-==================================================
-SKILL LOADING PROTOCOL (MANDATORY)
-==================================================
-1. Read `docs/PROJECTSKILLINDEX.md`
-2. Load: `Karpathy` (surgical execution)
-3. All skills in project directory only. Fallback to direct read. Stop if unreadable.
-4. Read `AGENTS.md` before editing.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
-Save work report to `docs/Reports/ai-dropdown-restore-and-click-fix.md`
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access.
+Read AGENTS.md immediately.
+Load all relevant skills from docs/PROJECTSKILLINDEX.md before making changes.
+====================================================================
 
-==================================================
-TASK: Restore Previous Icons + Fix Click Navigation
-==================================================
+# Objective
 
-Two issues:
-1. The previous agent accidentally changed ChatGPT, DeepSeek, Qwen, and Kimi
-   icons to single letters instead of the correct brand icons that existed
-   before. Restore those four to their previous correct versions.
-2. The most critical bug: clicking ANY provider icon still does NOT open
-   the app or website. This must be fixed.
+Perform a targeted regression audit and correction of the recent document image upload policy.
 
-READ FIRST:
-- `src/components/ui/OpenInAIDropdown.tsx` (current state)
-- Run `git show 62e00648703cc4b58f75314fd83d9d2365434f40:src/components/ui/OpenInAIDropdown.tsx`
-  to see the previous version where the four icons were correct.
-- `AGENTS.md`
+The goal is to ensure the new image validation policy does not unintentionally change existing business behaviour.
 
-==================================================
-CHANGE 1 — RESTORE THE FOUR PROVIDER ICONS
-==================================================
+There are two areas that require verification:
 
-From the git reference commit, extract ONLY the icon rendering code for
-these four providers: ChatGPT, DeepSeek, Qwen, Kimi.
+1. Signature upload pipeline
+2. Payment attachment uploads
 
-Do NOT touch Gemini or Claude icons — they are correct now and must stay
-as `<ModelIcon model="gemini" />` and `<ModelIcon model="claude" />`.
+The objective is behavior preservation first, then architectural correctness.
 
-The other four must be restored to exactly how they rendered in commit
-`62e00648703cc4b58f75314fd83d9d2365434f40`. Copy the JSX for their
-icon buttons from that commit.
+---
 
-==================================================
-CHANGE 2 — DEBUG AND FIX THE CLICK NAVIGATION
-==================================================
+# Part 1 — Signature Pipeline Audit
 
-All six provider icons share the same `handleProviderClick` function,
-but clicking them does nothing. Investigate and fix:
+Audit every signature upload flow including (but not limited to):
 
-1. Add a temporary `console.log('clicked', providerId)` at the very top
-   of `handleProviderClick`. Confirm it fires when you click an icon.
-2. If it does NOT fire, the `onClick` is not wired correctly or a
-   parent event is swallowing the click.
-3. If it DOES fire but navigation still fails, check:
-   - Is `navigator.clipboard.writeText(prompt)` being called? Is `prompt`
-     a valid non-empty string?
-   - On desktop, does `window.open(url, '_blank', 'noopener,noreferrer')`
-     execute? Are pop-ups blocked?
-   - On Android, does the `intent://` URL actually redirect? Check with
-     a simple `window.location.href = intentUrl` instead of `window.open`.
-4. Fix the root cause. The icons MUST open the app/website when clicked.
+- Waybill signatures
+- CSR signatures
+- Signatory Settings
+- Any reusable signature upload component
 
-==================================================
-VERIFICATION
-==================================================
-1. `bun run typecheck` — must pass
-2. `bun run lint` — focused on changed file
+Verify that the new image upload policy only validates file types.
 
-Manual checks (document in report):
-- ChatGPT, DeepSeek, Qwen, Kimi show their correct brand icons (not single letters)
-- Gemini and Claude still show their ModelIcon versions
-- Clicking ANY of the 6 icons opens the app/website and copies the prompt
+It must NOT:
 
-==================================================
-DONE WHEN
-==================================================
-- [ ] ChatGPT, DeepSeek, Qwen, Kimi icons restored to previous correct versions
-- [ ] Gemini and Claude icons unchanged from current ModelIcon versions
-- [ ] Clicking any provider icon successfully opens the app/website
-- [ ] `bun run typecheck` passes
-- [ ] Work report saved
+- modify image contents
+- redraw images
+- recompress images
+- convert formats
+- flatten transparency
+- strip alpha channels
+- recreate File objects unless absolutely required
 
-==================================================
-DO NOT
-==================================================
-- Do NOT touch Gemini or Claude icons
-- Do NOT change the provider list
-- Do NOT change the portal or animation logic
-- Do NOT run `bun run dev`
-- Do NOT skip the work report
+Specifically verify that transparent PNG signatures exported from tools such as Adobe Acrobat/Adobe Scan continue to render naturally inside generated PDFs exactly as before.
+
+If the audit finds any regression introduced by the image upload policy, restore the previous behaviour while keeping MIME validation.
+
+Validation and image processing must remain separate responsibilities.
+
+---
+
+# Part 2 — Payment Attachment Audit
+
+Audit PaymentAttachmentUploader.
+
+Determine its intended business contract by inspecting:
+
+- every caller
+- existing workflow
+- historical behaviour
+
+Do NOT assume it is an image uploader simply because it uses a file picker.
+
+If the component is intended for payment/supporting attachments, it must NOT be restricted by the document image upload policy.
+
+Verify support for legitimate financial attachments including:
+
+- PDF receipts
+- bank confirmations
+- image receipts
+- scanned documents
+
+Determine whether Office documents (Word, Excel, CSV) are intentionally supported today.
+
+If they are part of the existing workflow, preserve that behaviour.
+
+If the recent image policy removed valid attachment support, restore the previous attachment capability.
+
+If necessary, introduce a separate shared attachment validation policy instead of reusing the image policy.
+
+Image upload policy and attachment upload policy are different standards and must remain independent.
+
+---
+
+# Architectural Rules
+
+Image Upload Policy
+Purpose:
+- Logos
+- Signatures
+- Item Photos
+- Branding Images
+- Other image-only assets
+
+Attachment Policy
+Purpose:
+- Payment evidence
+- Financial documents
+- Supporting files
+
+Do not mix these responsibilities.
+
+---
+
+# Documentation
+
+Update documentation as required.
+
+If a separate attachment policy is introduced, document it under:
+
+docs/STANDARD/
+
+Explain the distinction between:
+
+- Image Upload Policy
+- Attachment Upload Policy
+
+so future implementations cannot accidentally reuse the wrong validation helper.
+
+---
+
+# Constraints
+
+Do NOT modify:
+
+- Calculations.ts
+- PDF renderer
+- Save orchestration
+- Financial logic
+
+Keep changes minimal and backward compatible.
+
+Preserve all existing business workflows unless a genuine bug is identified.
+
+---
+
+# Required Verification
+
+Run:
+
+- bun run typecheck
+- bun run audit:load
+- git status
+
+Do NOT run bun run build.
+
+Acceptance Criteria
+
+✓ Signature uploads still preserve transparency and render naturally in generated PDFs.
+
+✓ Image validation only validates file types and does not alter image data.
+
+✓ PaymentAttachmentUploader supports the business attachment types it was originally designed for.
+
+✓ Image-only uploaders remain image-only.
+
+✓ Attachment uploaders remain attachment uploaders.
+
+✓ No regressions introduced by the shared upload policy.
+
+✓ Documentation updated if separate attachment standards are required.
