@@ -17,7 +17,6 @@ import {
   buildQuotationFormState,
   type DbQuotation,
   type DbQuotationItem,
-  type Quotation,
   quotationImportAdapter,
 } from '@/domain/quotation'
 import type { ApplyImportResult } from '@/domain/import/types'
