@@ -408,7 +408,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
 
   if (isEdit && (hydration.loading || !invoice)) {
     return (
-      <Layout title={pageTitle} hidePageHeader>
+      <Layout title={pageTitle} hidePageHeader immersive>
         <div className="w-full px-4 py-6 pb-24 text-sm text-muted-foreground sm:px-6 md:mx-auto md:max-w-2xl md:pb-12 lg:px-8">
           Loading invoice...
         </div>
@@ -417,7 +417,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
   }
 
   return (
-    <Layout title={pageTitle} hidePageHeader>
+    <Layout title={pageTitle} hidePageHeader immersive>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
         <SharedDocumentForm
           title={pageTitle}

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { Plus, X, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile } from "@/lib/documentImageUploadPolicy"
+import { DOCUMENT_ATTACHMENT_ACCEPT_ATTRIBUTE, isAcceptedAttachmentFile } from "@/lib/documentAttachmentPolicy"
 
 interface PaymentAttachmentUploaderProps {
   files: File[]
@@ -16,7 +16,7 @@ export function PaymentAttachmentUploader({
   files,
   onFilesChanged,
   maxSize = DEFAULT_MAX_SIZE,
-  accept = IMAGE_ACCEPT_ATTRIBUTE,
+  accept = DOCUMENT_ATTACHMENT_ACCEPT_ATTRIBUTE,
 }: PaymentAttachmentUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -31,7 +31,7 @@ export function PaymentAttachmentUploader({
         newErrors.push(`${file.name} exceeds 10 MB limit`)
         continue
       }
-      if (!isSupportedImageFile(file)) {
+      if (!isAcceptedAttachmentFile(file)) {
         newErrors.push(`${file.name} is not a supported file type`)
         continue
       }

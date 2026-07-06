@@ -437,7 +437,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
 
   if (loading) {
     return (
-      <Layout title={isEdit ? 'Edit Quotation' : 'New Quotation'} session={null}>
+      <Layout title={isEdit ? 'Edit Quotation' : 'New Quotation'} session={null} immersive>
         <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground shadow-sm sm:px-6">Loading quotation...</div>
       </Layout>
     )
@@ -460,7 +460,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const pageTitle = isEdit ? 'Edit Quotation' : 'New Quotation'
 
   return (
-    <Layout title={pageTitle} session={null}>
+    <Layout title={pageTitle} session={null} immersive>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
         <SharedDocumentForm
           title={pageTitle}

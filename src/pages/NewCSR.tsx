@@ -365,7 +365,7 @@ export default function NewCSR() {
   }
 
   return (
-    <Layout title="New CSR" hidePageHeader contentClassName="px-0 pb-24 pt-0">
+    <Layout title="New CSR" hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
       <CsrFormScreen
         mode="new"
         csr={csr}

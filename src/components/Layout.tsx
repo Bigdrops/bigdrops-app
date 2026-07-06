@@ -72,6 +72,7 @@ interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   session?: Session | null
   hidePageHeader?: boolean
   hideMobileHomeHeader?: boolean
+  immersive?: boolean
   contentClassName?: string
 }
 
@@ -81,6 +82,7 @@ export default function Layout({
   session,
   hidePageHeader = false,
   hideMobileHomeHeader = false,
+  immersive = false,
   contentClassName = '',
   ...props
 }: LayoutProps) {
@@ -170,13 +172,15 @@ export default function Layout({
   return (
     <div data-bd-shell="app" className="app-ambient">
       {/* Desktop Navigation */}
-      <DesktopSidebar
-        session={session}
-        activeTab={activeTab}
-        onTabClick={onTabClick}
-        handleSalesPick={handleSalesPick}
-        handleMorePick={handleMorePick}
-      />
+      {!immersive && (
+        <DesktopSidebar
+          session={session}
+          activeTab={activeTab}
+          onTabClick={onTabClick}
+          handleSalesPick={handleSalesPick}
+          handleMorePick={handleMorePick}
+        />
+      )}
 
       {/* Main Content Area */}
       <div data-bd-shell="main">
@@ -237,34 +241,36 @@ export default function Layout({
       </div>
 
       {/* Mobile Navigation & Overlays */}
-      <div className="md:hidden">
-        <MobileBottomNav active={activeTab} onSelect={onTabClick} />
-        
-        <MobileSidebar
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
-          pathname={location.pathname}
-          navigate={navigate}
-          drawerSalesOpen={drawerSalesOpen}
-          setDrawerSalesOpen={setDrawerSalesOpen}
-          salesRouteActive={salesRouteActive}
-          presalesRouteActive={presalesRouteActive}
-          handleSalesPick={handleSalesPick}
-          handleMorePick={handleMorePick}
-        />
+      {!immersive && (
+        <div className="md:hidden">
+          <MobileBottomNav active={activeTab} onSelect={onTabClick} />
+          
+          <MobileSidebar
+            open={sidebarOpen}
+            onOpenChange={setSidebarOpen}
+            pathname={location.pathname}
+            navigate={navigate}
+            drawerSalesOpen={drawerSalesOpen}
+            setDrawerSalesOpen={setDrawerSalesOpen}
+            salesRouteActive={salesRouteActive}
+            presalesRouteActive={presalesRouteActive}
+            handleSalesPick={handleSalesPick}
+            handleMorePick={handleMorePick}
+          />
 
-        <MobileSalesSheet
-          open={salesOpen}
-          onOpenChange={setSalesOpen}
-          handleSalesPick={handleSalesPick}
-        />
+          <MobileSalesSheet
+            open={salesOpen}
+            onOpenChange={setSalesOpen}
+            handleSalesPick={handleSalesPick}
+          />
 
-        <MobileMoreSheet
-          open={moreOpen}
-          onOpenChange={setMoreOpen}
-          handleMorePick={handleMorePick}
-        />
-      </div>
+          <MobileMoreSheet
+            open={moreOpen}
+            onOpenChange={setMoreOpen}
+            handleMorePick={handleMorePick}
+          />
+        </div>
+      )}
 
       <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
         <AlertDialogContent>

@@ -66,7 +66,7 @@ export function partitionImageFiles(files: File[]): {
     } else {
       rejected.push({
         file,
-        reason: `"${file.name}" is not a supported image format. Please select a JPG, PNG, WebP, HEIC, HEIF, AVIF, GIF, BMP, or TIFF file.`,
+        reason: 'Please select an image file.',
       })
     }
   }
@@ -77,6 +77,6 @@ export function partitionImageFiles(files: File[]): {
 /**
  * Returns a consistent user-facing error message for a rejected file.
  */
-export function getUnsupportedImageErrorMessage(fileName: string): string {
-  return `"${fileName}" is not a supported image format. Please select a JPG, PNG, WebP, HEIC, HEIF, AVIF, GIF, BMP, or TIFF file.`
+export function getUnsupportedImageErrorMessage(_fileName: string): string {
+  return 'Please select an image file.'
 }
