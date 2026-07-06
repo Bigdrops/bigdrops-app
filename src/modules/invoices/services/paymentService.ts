@@ -158,18 +158,40 @@ export interface VoidPaymentInput {
   reason: string
 }
 
+async function editVoidCaptions(paymentId: string): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+
+    await fetch('/api/edit-payment-caption', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ paymentId, isVoided: true }),
+    })
+  } catch (err) {
+    console.error('Edit void captions failed:', err)
+  }
+}
+
 export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ success: boolean; error?: string }> {
   try {
     const payment = await fetchPaymentById(input.paymentId)
     const amount = payment ? payment.cash_amount + payment.wht_amount : 0
 
-    await repositoryVoidPayment(input.paymentId, input.reason)
+    const voided = await repositoryVoidPayment(input.paymentId, input.reason)
     await repositorySyncStatus(input.invoiceId)
 
     try {
       await recordPaymentVoided(input.paymentId, input.invoiceId, amount, input.reason || null)
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
+    }
+
+    if (voided?.attachments?.length) {
+      await editVoidCaptions(input.paymentId)
     }
 
     return { success: true }
