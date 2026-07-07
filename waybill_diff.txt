@@ -1,0 +1,1027 @@
+diff --git a/src/components/waybill/ClassicTemplate.tsx b/src/components/waybill/ClassicTemplate.tsx
+index e59917d3..352cb479 100644
+--- a/src/components/waybill/ClassicTemplate.tsx
++++ b/src/components/waybill/ClassicTemplate.tsx
+@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
+ import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const txt = preset.textColor
+ 
+@@ -16,7 +17,7 @@ function createStyles(preset: PdfDesignPreset) {
+     },
+     content: {
+       paddingHorizontal: 14,
+-      paddingBottom: 16,
++      paddingBottom: 12,
+       flex: 1,
+     },
+     title: {
+@@ -34,11 +35,11 @@ function createStyles(preset: PdfDesignPreset) {
+       flexDirection: 'row',
+       justifyContent: 'space-between',
+       alignItems: 'flex-start',
+-      marginBottom: 8,
++      marginBottom: 10,
+     },
+     brandBlock: {
+       flex: 1,
+-      paddingRight: 12,
++      paddingRight: 8,
+     },
+     brandLogo: {
+       width: 40,
+@@ -63,7 +64,7 @@ function createStyles(preset: PdfDesignPreset) {
+       color: '#94a3b8',
+     },
+     brandName: {
+-      fontSize: 13,
++      fontSize: 11,
+       fontWeight: 'bold',
+       color: '#1e40af',
+       marginBottom: 1,
+@@ -74,7 +75,7 @@ function createStyles(preset: PdfDesignPreset) {
+       lineHeight: 1.35,
+     },
+     docNumber: {
+-      fontSize: 10,
++      fontSize: 9,
+       textAlign: 'right',
+       fontWeight: 'bold',
+       color: '#1e40af',
+@@ -87,12 +88,12 @@ function createStyles(preset: PdfDesignPreset) {
+     metaGrid: {
+       flexDirection: 'row',
+       flexWrap: 'wrap',
+-      marginBottom: 8,
++      marginBottom: 6,
+     },
+     metaCard: {
+       width: '25%',
+       paddingHorizontal: 4,
+-      marginBottom: 6,
++      marginBottom: 4,
+     },
+     metaLabel: {
+       fontSize: 7,
+@@ -102,16 +103,16 @@ function createStyles(preset: PdfDesignPreset) {
+       letterSpacing: 0.3,
+     },
+     metaValue: {
+-      fontSize: 9,
++      fontSize: 8,
+       fontWeight: 'bold',
+-      color: '#1e40af',
++      color: '#334155',
+       lineHeight: 1.25,
+     },
+     tickRow: {
+       flexDirection: 'row',
+       gap: 14,
+       alignItems: 'center',
+-      paddingVertical: 5,
++      paddingVertical: 4,
+       paddingHorizontal: 8,
+       borderWidth: 0.5,
+       borderColor: '#cbd5e1',
+@@ -164,9 +165,9 @@ function createStyles(preset: PdfDesignPreset) {
+       borderWidth: 0.5,
+       borderColor: '#cbd5e1',
+       borderRadius: 4,
+-      padding: 6,
++      padding: 8,
+       backgroundColor: '#f8fafc',
+-      minHeight: 52,
++      minHeight: 50,
+     },
+     blockLabel: {
+       fontSize: 7,
+@@ -175,7 +176,7 @@ function createStyles(preset: PdfDesignPreset) {
+       marginBottom: 2,
+     },
+     blockValue: {
+-      fontSize: 10,
++      fontSize: 9,
+       fontWeight: 'bold',
+       color: '#1e40af',
+       lineHeight: 1.3,
+@@ -381,15 +382,25 @@ export const ClassicTemplateDocument: React.FC<{
+                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
+                 </View>
+               )}
+-              <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
+-              {model.branding.address ? (
++              <Text style={S.brandName}>{model.branding.name}</Text>
++              {model.branding.address && (
+                 <Text style={S.brandDetail}>{model.branding.address}</Text>
+-              ) : null}
+-              {model.branding.phone || model.branding.email ? (
+-                <Text style={S.brandDetail}>
+-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' ┬╖ ')}
+-                </Text>
+-              ) : null}
++              )}
++              {model.branding.city && (
++                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++              )}
++              {model.branding.phone && (
++                <Text style={S.brandDetail}>Phone: {model.branding.phone}</Text>
++              )}
++              {model.branding.email && (
++                <Text style={S.brandDetail}>{model.branding.email}</Text>
++              )}
++              {model.branding.website && (
++                <Text style={S.brandDetail}>Web: {model.branding.website}</Text>
++              )}
++              {model.branding.customInfo?.map((info, i) => (
++                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
++              ))}
+             </View>
+             <Text style={S.docNumber}>{model.header.waybillNumber || ''}</Text>
+           </View>
+@@ -404,7 +415,6 @@ export const ClassicTemplateDocument: React.FC<{
+               { label: 'Waybill No', value: model.header.waybillNumber || '' },
+               { label: 'Vehicle Plate', value: model.logistics.vehiclePlate || '' },
+               { label: 'Driver Name', value: model.logistics.driverName || '' },
+-              { label: 'Client', value: model.parties.clientName || '' },
+               { label: 'Delivery Location', value: model.logistics.deliveryLocation || '' },
+             ].map((item) => (
+               <View key={item.label} style={S.metaCard}>
+@@ -412,6 +422,19 @@ export const ClassicTemplateDocument: React.FC<{
+                 <Text style={S.metaValue}>{item.value}</Text>
+               </View>
+             ))}
++            <View style={S.metaCard}>
++              <Text style={S.metaLabel}>Client</Text>
++              <Text style={S.metaValue}>{model.parties.clientName || ''}</Text>
++              {model.parties.clientAddress && (
++                <Text style={[S.metaValue, { fontSize: 7, marginTop: 1 }]}>{model.parties.clientAddress}</Text>
++              )}
++              {model.parties.clientCityState && (
++                <Text style={[S.metaValue, { fontSize: 7 }]}>{model.parties.clientCityState}</Text>
++              )}
++              {model.parties.clientPhone && (
++                <Text style={[S.metaValue, { fontSize: 7 }]}>Phone: {model.parties.clientPhone}</Text>
++              )}
++            </View>
+           </View>
+ 
+           <View style={S.tickRow}>
+@@ -447,6 +470,9 @@ export const ClassicTemplateDocument: React.FC<{
+               <Text style={S.blockLabel}>Client / Consignee</Text>
+               <Text style={S.blockValue}>{model.parties.clientName || ''}</Text>
+               {model.parties.clientAddress ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
++              {model.parties.clientCityState ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientCityState}</Text> : null}
++              {model.parties.clientPhone ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>Phone: {model.parties.clientPhone}</Text> : null}
++              {model.parties.clientEmail ? <Text style={[S.blockValue, { fontSize: 8, marginTop: 2 }]}>Email: {model.parties.clientEmail}</Text> : null}
+             </View>
+           </View>
+ 
+diff --git a/src/components/waybill/EvergreenTemplate.tsx b/src/components/waybill/EvergreenTemplate.tsx
+index baff4f88..7cc3c9e0 100644
+--- a/src/components/waybill/EvergreenTemplate.tsx
++++ b/src/components/waybill/EvergreenTemplate.tsx
+@@ -8,6 +8,7 @@ import {
+ } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const fillableChoice = getEffectiveFillableFont(preset)
+   const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+@@ -451,16 +452,25 @@ export const EvergreenTemplateDocument: React.FC<{
+                 </View>
+               )}
+               <View style={S.brandText}>
+-                <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
+-                <Text style={S.brandAddress}>
+-                  {[
+-                    model.branding.address,
+-                    model.branding.phone ? `┬╖ ${model.branding.phone}` : null,
+-                    model.branding.email ? `┬╖ ${model.branding.email}` : null,
+-                  ]
+-                    .filter(Boolean)
+-                    .join(' ')}
+-                </Text>
++                <Text style={S.brandName}>{model.branding.name}</Text>
++                {model.branding.address && (
++                  <Text style={S.brandAddress}>{model.branding.address}</Text>
++                )}
++                {model.branding.city && (
++                  <Text style={S.brandAddress}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++                )}
++                {model.branding.phone && (
++                  <Text style={S.brandAddress}>Phone: {model.branding.phone}</Text>
++                )}
++                {model.branding.email && (
++                  <Text style={S.brandAddress}>{model.branding.email}</Text>
++                )}
++                {model.branding.website && (
++                  <Text style={S.brandAddress}>Web: {model.branding.website}</Text>
++                )}
++                {model.branding.customInfo?.map((info, i) => (
++                  <Text key={i} style={S.brandAddress}>{info.label}: {info.value}</Text>
++                ))}
+               </View>
+             </View>
+             <View style={S.waybillBadge}>
+@@ -537,7 +547,16 @@ export const EvergreenTemplateDocument: React.FC<{
+             <View style={S.block}>
+               <Text style={S.blockLabel}>Client / Consignee</Text>
+               <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+-              {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
++              <Text style={S.blockSub}>{model.parties.clientAddress || ''}</Text>
++              {model.parties.clientCityState && (
++                <Text style={S.blockSub}>{model.parties.clientCityState}</Text>
++              )}
++              {model.parties.clientPhone && (
++                <Text style={S.blockSub}>Phone: {model.parties.clientPhone}</Text>
++              )}
++              {model.parties.clientEmail && (
++                <Text style={S.blockSub}>Email: {model.parties.clientEmail}</Text>
++              )}
+             </View>
+             <View style={S.block}>
+               <Text style={S.blockLabel}>Destination Address</Text>
+diff --git a/src/components/waybill/MinimalTemplate.tsx b/src/components/waybill/MinimalTemplate.tsx
+index c57f1afb..fd89ff9e 100644
+--- a/src/components/waybill/MinimalTemplate.tsx
++++ b/src/components/waybill/MinimalTemplate.tsx
+@@ -6,6 +6,7 @@ import {
+ } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const txt = preset.textColor
+ 
+@@ -35,7 +36,7 @@ function createStyles(preset: PdfDesignPreset) {
+     },
+     headerGrid: {
+       flexDirection: 'row',
+-      marginBottom: 6,
++      marginBottom: 8,
+     },
+     brandInfo: {
+       flex: 1,
+@@ -105,8 +106,8 @@ function createStyles(preset: PdfDesignPreset) {
+       flex: 1,
+       borderWidth: 0.5,
+       borderColor: '#000000',
+-      padding: 4,
+-      minHeight: 34,
++      padding: 6,
++      minHeight: 44,
+     },
+     secondGrid: {
+       flexDirection: 'row',
+@@ -321,18 +322,28 @@ export const MinimalTemplateDocument: React.FC<{
+                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
+                 </View>
+               )}
+-              <Text style={S.brandName}>{model.branding.name || ''}</Text>
+-              {model.branding.address ? (
+-                <Text style={S.brandDetail}>{model.branding.address}</Text>
+-              ) : null}
+-              {model.branding.phone || model.branding.email ? (
+-                <Text style={S.brandContact}>
+-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' | ')}
+-                </Text>
+-              ) : null}
+-              {model.branding.tagline ? (
++              <Text style={S.brandName}>{model.branding.name}</Text>
++              {model.branding.tagline && (
+                 <Text style={S.brandTagline}>{model.branding.tagline}</Text>
+-              ) : null}
++              )}
++              {model.branding.address && (
++                <Text style={S.brandDetail}>{model.branding.address}</Text>
++              )}
++              {model.branding.city && (
++                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++              )}
++              {model.branding.phone && (
++                <Text style={S.brandContact}>Phone: {model.branding.phone}</Text>
++              )}
++              {model.branding.email && (
++                <Text style={S.brandContact}>{model.branding.email}</Text>
++              )}
++              {model.branding.website && (
++                <Text style={S.brandContact}>Web: {model.branding.website}</Text>
++              )}
++              {model.branding.customInfo?.map((info, i) => (
++                <Text key={i} style={S.brandContact}>{info.label}: {info.value}</Text>
++              ))}
+             </View>
+             <View style={S.docIdent}>
+               <Text style={S.pill}>{model.header.waybillNumber || ''}</Text>
+@@ -345,8 +356,19 @@ export const MinimalTemplateDocument: React.FC<{
+           <View style={S.topGrid}>
+             <View style={S.topBox}>
+               <Text style={S.fieldLabel}>Client / Consignee</Text>
+-              <Text>{model.parties.clientName || ''}</Text>
+-              {model.parties.clientAddress ? <Text style={{ fontSize: 7, marginTop: 1 }}>{model.parties.clientAddress}</Text> : null}
++              <Text style={{ fontSize: 9, fontWeight: 'bold', marginTop: 2 }}>{model.parties.clientName || ''}</Text>
++              {model.parties.clientAddress && (
++                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>{model.parties.clientAddress}</Text>
++              )}
++              {model.parties.clientCityState && (
++                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>{model.parties.clientCityState}</Text>
++              )}
++              {model.parties.clientPhone && (
++                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>
++              )}
++              {model.parties.clientEmail && (
++                <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>
++              )}
+             </View>
+             <View style={S.topBox}>
+               <Text style={S.fieldLabel}>Destination Address</Text>
+@@ -369,12 +391,12 @@ export const MinimalTemplateDocument: React.FC<{
+           {/* Delivery Mode & Purpose */}
+           <View style={S.modeRow}>
+             <View style={S.modeBox}>
+-              <Text style={S.fieldLabel}>Delivery Mode</Text>
++              <Text style={S.fieldLabel}>Method</Text>
+               <View style={S.checkboxRow}>
+                 {([
+                   { value: 'By Hand', label: 'Hand' },
+                   { value: 'By Vehicle', label: 'Vehicle' },
+-                  { value: 'By Courier', label: 'Other' },
++                  { value: 'By Courier', label: 'Courier' },
+                 ] as const).map((opt) => {
+                   const checked = deliveryMode === opt.value
+                   return (
+@@ -387,9 +409,9 @@ export const MinimalTemplateDocument: React.FC<{
+               </View>
+             </View>
+             <View style={S.modeBox}>
+-              <Text style={S.fieldLabel}>Delivery Reason</Text>
++              <Text style={S.fieldLabel}>Purpose</Text>
+               <View style={S.checkboxRow}>
+-                {(['Supply', 'Return', 'Repair', 'Other'] as const).map((opt) => {
++                {(['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const).map((opt) => {
+                   const checked = purpose === opt
+                   return (
+                     <View key={opt} style={S.tick}>
+diff --git a/src/components/waybill/PremiumTemplate.tsx b/src/components/waybill/PremiumTemplate.tsx
+index ead68c88..b5d5b65a 100644
+--- a/src/components/waybill/PremiumTemplate.tsx
++++ b/src/components/waybill/PremiumTemplate.tsx
+@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
+ import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const txt = preset.textColor
+ 
+@@ -25,7 +26,7 @@ function createStyles(preset: PdfDesignPreset) {
+       borderColor: '#2b2520',
+       paddingTop: 14,
+       marginBottom: 8,
+-      minHeight: 56,
++      minHeight: 68,
+     },
+     logoBox: {
+       width: 110,
+@@ -115,7 +116,7 @@ function createStyles(preset: PdfDesignPreset) {
+       borderWidth: 1,
+       borderColor: '#bda98f',
+       backgroundColor: '#fcf8f1',
+-      padding: 7,
++      padding: 10,
+     },
+     panelTitle: {
+       fontSize: 7,
+@@ -153,7 +154,7 @@ function createStyles(preset: PdfDesignPreset) {
+       marginBottom: 1,
+     },
+     metaValue: {
+-      fontSize: 9,
++      fontSize: 8,
+       fontWeight: 'bold',
+       color: '#2f261d',
+       lineHeight: 1.3,
+@@ -420,15 +421,25 @@ export const PremiumTemplateDocument: React.FC<{
+               )}
+             </View>
+             <View style={S.brandBox}>
+-              <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
+-              {model.branding.address ? (
++              <Text style={S.brandName}>{model.branding.name}</Text>
++              {model.branding.address && (
+                 <Text style={S.brandDetail}>{model.branding.address}</Text>
+-              ) : null}
+-              {model.branding.phone || model.branding.email ? (
+-                <Text style={S.brandDetail}>
+-                  {[model.branding.phone, model.branding.email].filter(Boolean).join(' ┬╖ ')}
+-                </Text>
+-              ) : null}
++              )}
++              {model.branding.city && (
++                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++              )}
++              {model.branding.phone && (
++                <Text style={S.brandDetail}>Phone: {model.branding.phone}</Text>
++              )}
++              {model.branding.email && (
++                <Text style={S.brandDetail}>{model.branding.email}</Text>
++              )}
++              {model.branding.website && (
++                <Text style={S.brandDetail}>Web: {model.branding.website}</Text>
++              )}
++              {model.branding.customInfo?.map((info, i) => (
++                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
++              ))}
+             </View>
+             <View style={S.docBox}>
+               <Text style={S.docLabel}>Waybill No</Text>
+@@ -446,7 +457,18 @@ export const PremiumTemplateDocument: React.FC<{
+             <View style={S.panel}>
+               <Text style={S.panelTitle}>Consignee / Client</Text>
+               <Text style={S.panelBig}>{model.parties.clientName || ''}</Text>
+-              {model.parties.clientAddress ? <Text style={[S.panelBig, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
++              {model.parties.clientAddress && (
++                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>{model.parties.clientAddress}</Text>
++              )}
++              {model.parties.clientCityState && (
++                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>{model.parties.clientCityState}</Text>
++              )}
++              {model.parties.clientPhone && (
++                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>
++              )}
++              {model.parties.clientEmail && (
++                <Text style={{ fontSize: 8, color: '#5e5146', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>
++              )}
+             </View>
+             <View style={S.panel}>
+               <Text style={S.panelTitle}>Delivery Location</Text>
+diff --git a/src/components/waybill/SlateTemplate.tsx b/src/components/waybill/SlateTemplate.tsx
+index 79bd80a4..ba0d8b3f 100644
+--- a/src/components/waybill/SlateTemplate.tsx
++++ b/src/components/waybill/SlateTemplate.tsx
+@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
+ import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const txt = preset.textColor
+ 
+@@ -20,7 +21,7 @@ function createStyles(preset: PdfDesignPreset) {
+     darkHeader: {
+       backgroundColor: '#7d8a88',
+       paddingHorizontal: 22,
+-      paddingVertical: 12,
++      paddingVertical: 16,
+       flexDirection: 'row',
+       justifyContent: 'space-between',
+       alignItems: 'center',
+@@ -178,7 +179,7 @@ function createStyles(preset: PdfDesignPreset) {
+       letterSpacing: 0.4,
+     },
+     metaValue: {
+-      fontSize: 9.5,
++      fontSize: 9,
+       fontWeight: '600',
+       color: '#1a2624',
+       borderBottomWidth: 0.5,
+@@ -420,10 +421,25 @@ export const SlateTemplateDocument: React.FC<{
+                 </View>
+               )}
+               <View style={S.brandTextBlock}>
+-                <Text style={S.brandName}>{model.branding.name || 'Company'}</Text>
+-                <Text style={S.brandAddress}>
+-                  {[model.branding.address, model.branding.phone].filter(Boolean).join(' ┬╖ ')}
+-                </Text>
++                <Text style={S.brandName}>{model.branding.name}</Text>
++                {model.branding.address && (
++                  <Text style={S.brandAddress}>{model.branding.address}</Text>
++                )}
++                {model.branding.city && (
++                  <Text style={S.brandAddress}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++                )}
++                {model.branding.phone && (
++                  <Text style={S.brandAddress}>Phone: {model.branding.phone}</Text>
++                )}
++                {model.branding.email && (
++                  <Text style={S.brandAddress}>{model.branding.email}</Text>
++                )}
++                {model.branding.website && (
++                  <Text style={S.brandAddress}>Web: {model.branding.website}</Text>
++                )}
++                {model.branding.customInfo?.map((info, i) => (
++                  <Text key={i} style={S.brandAddress}>{info.label}: {info.value}</Text>
++                ))}
+               </View>
+             </View>
+             <View style={S.wbBlock}>
+@@ -440,7 +456,10 @@ export const SlateTemplateDocument: React.FC<{
+                 <View style={S.leftBlock}>
+                   <Text style={S.blockTag}>Client / Consignee</Text>
+                   <Text style={S.blockMain}>{model.parties.clientName || ''}</Text>
+-                  {model.parties.clientAddress ? <Text style={[S.blockMain, { fontSize: 8, marginTop: 2 }]}>{model.parties.clientAddress}</Text> : null}
++                  {model.parties.clientAddress && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>{model.parties.clientAddress}</Text>}
++                  {model.parties.clientCityState && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>{model.parties.clientCityState}</Text>}
++                  {model.parties.clientPhone && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>Phone: {model.parties.clientPhone}</Text>}
++                  {model.parties.clientEmail && <Text style={{ fontSize: 8, color: '#4a5a57', marginTop: 1 }}>Email: {model.parties.clientEmail}</Text>}
+                 </View>
+                 <View style={S.leftBlock}>
+                   <Text style={S.blockTag}>Destination Address</Text>
+diff --git a/src/components/waybill/ThermalTemplate.tsx b/src/components/waybill/ThermalTemplate.tsx
+index faccb133..8d2ba05d 100644
+--- a/src/components/waybill/ThermalTemplate.tsx
++++ b/src/components/waybill/ThermalTemplate.tsx
+@@ -6,6 +6,7 @@ import {
+ } from '@/lib/pdfDesignPreset'
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+ 
++
+ function createStyles(preset: PdfDesignPreset) {
+   const txt = preset.textColor
+   return StyleSheet.create({
+@@ -56,8 +57,8 @@ function createStyles(preset: PdfDesignPreset) {
+       borderBottomWidth: 0.5,
+       borderBottomStyle: 'dashed',
+       borderBottomColor: '#333333',
+-      paddingBottom: 6,
+-      marginBottom: 6,
++      paddingBottom: 8,
++      marginBottom: 8,
+       alignItems: 'center',
+     },
+     brandLogo: {
+@@ -156,7 +157,7 @@ function createStyles(preset: PdfDesignPreset) {
+       borderWidth: 0.5,
+       borderStyle: 'dashed',
+       borderColor: '#666666',
+-      padding: 6,
++      padding: 8,
+       marginBottom: 6,
+     },
+     addrName: {
+@@ -329,12 +330,17 @@ export const ThermalTemplateDocument: React.FC<{
+                   <Text style={S.brandLogoPlaceholderText}>LOGO</Text>
+                 </View>
+               )}
+-              <Text style={S.brandName}>{model.branding.name || ''}</Text>
+-              <Text style={S.brandDetail}>
+-                {[model.branding.address, model.branding.phone, model.branding.email]
+-                  .filter(Boolean)
+-                  .join(' | ')}
+-              </Text>
++              <Text style={S.brandName}>{model.branding.name}</Text>
++              {model.branding.address && <Text style={S.brandDetail}>{model.branding.address}</Text>}
++              {model.branding.city && (
++                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
++              )}
++              {model.branding.phone && <Text style={S.brandDetail}>Phone: {model.branding.phone}</Text>}
++              {model.branding.email && <Text style={S.brandDetail}>{model.branding.email}</Text>}
++              {model.branding.website && <Text style={S.brandDetail}>Web: {model.branding.website}</Text>}
++              {model.branding.customInfo?.map((info, i) => (
++                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
++              ))}
+             </View>
+ 
+             {/* Title */}
+@@ -371,10 +377,8 @@ export const ThermalTemplateDocument: React.FC<{
+             <View style={S.block}>
+               <Text style={S.blockTitle}>DISPATCH FROM</Text>
+               <View style={S.addrBox}>
+-                <Text style={S.addrName}>{model.branding.name || ''}</Text>
+-                {model.branding.address ? (
+-                  <Text>{model.branding.address}</Text>
+-                ) : null}
++                <Text style={S.addrName}>{model.branding.name}</Text>
++                <Text>{model.branding.address}</Text>
+               </View>
+             </View>
+ 
+@@ -383,9 +387,12 @@ export const ThermalTemplateDocument: React.FC<{
+               <Text style={S.blockTitle}>DELIVER TO</Text>
+               <View style={S.addrBox}>
+                 <Text style={S.addrName}>{model.parties.clientName || ''}</Text>
+-                {model.parties.clientAddress ? <Text style={{ fontSize: 7 }}>{model.parties.clientAddress}</Text> : null}
++                {model.parties.clientAddress && <Text>{model.parties.clientAddress}</Text>}
++                {model.parties.clientCityState && <Text>{model.parties.clientCityState}</Text>}
++                {model.parties.clientPhone && <Text>Phone: {model.parties.clientPhone}</Text>}
++                {model.parties.clientEmail && <Text>Email: {model.parties.clientEmail}</Text>}
+                 {model.logistics.deliveryLocation ? (
+-                  <Text>{model.logistics.deliveryLocation}</Text>
++                  <Text>Destination: {model.logistics.deliveryLocation}</Text>
+                 ) : null}
+               </View>
+             </View>
+diff --git a/src/components/waybill/WaybillPDF.tsx b/src/components/waybill/WaybillPDF.tsx
+index d197d760..208ab2d7 100644
+--- a/src/components/waybill/WaybillPDF.tsx
++++ b/src/components/waybill/WaybillPDF.tsx
+@@ -4,6 +4,7 @@ import {
+ import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
+ 
+ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
++import { safeValidateRenderModel } from '@/domain/waybill/renderContract'
+ import { EvergreenTemplateDocument } from './EvergreenTemplate'
+ import { MinimalTemplateDocument } from './MinimalTemplate'
+ import { ThermalTemplateDocument } from './ThermalTemplate'
+@@ -24,6 +25,12 @@ registerPdfFillableFonts()
+ export default function WaybillPDF({ model, designPreset, template = 'evergreen' }: WaybillPDFProps) {
+   if (!model) return null
+ 
++  const result = safeValidateRenderModel(model)
++  if (!result.success) {
++    console.error('Waybill render model validation failed:', result.error.format())
++    return null
++  }
++
+   if (template === 'minimal') {
+     return <MinimalTemplateDocument model={model} designPreset={designPreset} />
+   }
+diff --git a/src/components/waybill/WaybillSignatures.tsx b/src/components/waybill/WaybillSignatures.tsx
+index e2f6cda9..a8f2c32a 100644
+--- a/src/components/waybill/WaybillSignatures.tsx
++++ b/src/components/waybill/WaybillSignatures.tsx
+@@ -20,6 +20,7 @@ import {
+ } from '@/components/ui/sheet'
+ import { feedback } from '@/lib/feedback'
+ import { processSignature, dataURItoFile } from '@/lib/processSignature'
++import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
+ import { supabase } from '@/supabase'
+ import type { WaybillCustomFields } from './waybillUtils'
+ 
+@@ -321,6 +322,11 @@ function SignatureCard({
+   const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+     const file = event.target.files?.[0]
+     if (!file) return
++    if (!isSupportedImageFile(file)) {
++      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
++      event.target.value = ''
++      return
++    }
+     setUploading(true)
+     try {
+       const processedDataURI = await processSignature(file)
+@@ -405,7 +411,7 @@ function SignatureCard({
+               <Upload className="h-3.5 w-3.5" />
+               {uploading ? 'UploadingΓÇª' : 'Upload'}
+             </button>
+-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
++            <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleUpload} />
+ 
+             <button
+               type="button"
+diff --git a/src/domain/waybill/engine/resolvers/branding.ts b/src/domain/waybill/engine/resolvers/branding.ts
+index 88f451d1..4f949a17 100644
+--- a/src/domain/waybill/engine/resolvers/branding.ts
++++ b/src/domain/waybill/engine/resolvers/branding.ts
+@@ -7,7 +7,11 @@ export function resolveBranding(company: CompanySettings): BrandingBlock {
+     tagline: normalizeBlank(company.tagline),
+     logo: normalizeBlank(company.logo),
+     address: normalizeBlank(company.address),
++    city: normalizeBlank(company.city),
++    state: normalizeBlank(company.state),
+     phone: normalizeBlank(company.phone),
+     email: normalizeBlank(company.email),
++    website: normalizeBlank(company.website),
++    customInfo: company.customInfo || null,
+   }
+ }
+diff --git a/src/domain/waybill/engine/resolvers/parties.ts b/src/domain/waybill/engine/resolvers/parties.ts
+index d44dea81..df9625f8 100644
+--- a/src/domain/waybill/engine/resolvers/parties.ts
++++ b/src/domain/waybill/engine/resolvers/parties.ts
+@@ -5,6 +5,9 @@ export function resolveParties(waybill: RawWaybill): PartiesBlock {
+   return {
+     clientName: normalizeBlank(waybill.client_name),
+     clientAddress: normalizeBlank(waybill.client_address),
++    clientPhone: normalizeBlank(waybill.client_phone),
++    clientEmail: normalizeBlank(waybill.client_email),
++    clientCityState: normalizeBlank(waybill.client_city_state),
+     senderName: normalizeBlank(waybill.sender_name),
+     receiverName: normalizeBlank(waybill.receiver_name),
+   }
+diff --git a/src/domain/waybill/engine/types.ts b/src/domain/waybill/engine/types.ts
+index 6a4f7b1b..1ac56604 100644
+--- a/src/domain/waybill/engine/types.ts
++++ b/src/domain/waybill/engine/types.ts
+@@ -26,8 +26,12 @@ export interface BrandingBlock {
+   tagline: string | null
+   logo: string | null
+   address: string | null
++  city: string | null
++  state: string | null
+   phone: string | null
+   email: string | null
++  website: string | null
++  customInfo: Array<{ label: string; value: string }> | null
+ }
+ 
+ export interface HeaderBlock {
+@@ -41,6 +45,9 @@ export interface HeaderBlock {
+ export interface PartiesBlock {
+   clientName: string | null
+   clientAddress: string | null
++  clientPhone: string | null
++  clientEmail: string | null
++  clientCityState: string | null
+   senderName: string | null
+   receiverName: string | null
+ }
+@@ -97,6 +104,9 @@ export interface RawWaybill {
+   po_number?: string | null
+   client_name?: string | null
+   client_address?: string | null
++  client_phone?: string | null
++  client_email?: string | null
++  client_city_state?: string | null
+   sender_name?: string | null
+   receiver_name?: string | null
+   vehicle_plate?: string | null
+@@ -147,4 +157,10 @@ export interface CompanySettings {
+   address: string | null
+   phone: string | null
+   email: string | null
++  website?: string | null
++  customInfo?: Array<{ label: string; value: string }> | null
++  city?: string | null
++  state?: string | null
+ }
++
++
+diff --git a/src/domain/waybill/renderContract.ts b/src/domain/waybill/renderContract.ts
+new file mode 100644
+index 00000000..ab823446
+--- /dev/null
++++ b/src/domain/waybill/renderContract.ts
+@@ -0,0 +1,142 @@
++/**
++ * Waybill Render Contract
++ *
++ * Canonical interfaces and Zod validation schemas for Waybill PDF rendering.
++ * Templates consume ONLY this contract ΓÇö never raw Supabase objects.
++ *
++ * RULES:
++ * 1. Every template must accept WaybillRenderModel, nothing deeper
++ * 2. Company blocks render vertically ΓÇö never concatenate with '|'
++ * 3. Blocks expand vertically when additional fields exist
++ * 4. Delivery method values: BY_HAND | COURIER | OTHER
++ * 5. Templates own typography/spacing; this contract owns data shape
++ */
++
++import { z } from 'zod'
++
++// ΓöÇΓöÇ Zod Schemas ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++
++export const CustomInfoItemSchema = z.object({
++  label: z.string(),
++  value: z.string(),
++})
++
++export const BrandingBlockSchema = z.object({
++  name: z.string(),
++  tagline: z.string().nullable(),
++  logo: z.string().nullable(),
++  address: z.string().nullable(),
++  city: z.string().nullable(),
++  state: z.string().nullable(),
++  phone: z.string().nullable(),
++  email: z.string().nullable(),
++  website: z.string().nullable(),
++  customInfo: z.array(CustomInfoItemSchema).nullable(),
++})
++
++export const HeaderBlockSchema = z.object({
++  type: z.enum(['internal', 'external']),
++  waybillNumber: z.string(),
++  date: z.string(),
++  time: z.string().nullable(),
++  poNumber: z.string().nullable(),
++})
++
++export const PartiesBlockSchema = z.object({
++  clientName: z.string().nullable(),
++  clientAddress: z.string().nullable(),
++  clientPhone: z.string().nullable(),
++  clientEmail: z.string().nullable(),
++  clientCityState: z.string().nullable(),
++  senderName: z.string().nullable(),
++  receiverName: z.string().nullable(),
++})
++
++export const LogisticsBlockSchema = z.object({
++  vehiclePlate: z.string().nullable(),
++  driverName: z.string().nullable(),
++  deliveryMode: z.string().nullable(),
++  deliveryLocation: z.string().nullable(),
++  purpose: z.string().nullable(),
++})
++
++export const NormalizedSignatureSchema = z.object({
++  url: z.string(),
++  width: z.literal(110),
++  height: z.literal(42),
++})
++
++export const SignatureBlockSchema = z.object({
++  sender: NormalizedSignatureSchema.nullable(),
++  receiver: NormalizedSignatureSchema.nullable(),
++})
++
++export const FooterBlockSchema = z.object({
++  waybillNumber: z.string(),
++  companyName: z.string(),
++})
++
++export const PaginationPolicySchema = z.object({
++  repeatTableHeader: z.boolean(),
++  keepSignatureTogether: z.boolean(),
++  keepNotesTogether: z.boolean(),
++})
++
++export const PrintColumnSchema = z.object({
++  key: z.string(),
++  label: z.string(),
++})
++
++export const PrintRowSchema = z.object({
++  cells: z.record(z.string(), z.string()),
++})
++
++export const TableBlockSchema = z.object({
++  columns: z.array(PrintColumnSchema),
++  rows: z.array(PrintRowSchema),
++})
++
++export const WaybillRenderModelSchema = z.object({
++  branding: BrandingBlockSchema,
++  header: HeaderBlockSchema,
++  parties: PartiesBlockSchema,
++  logistics: LogisticsBlockSchema,
++  notes: z.string(),
++  signatures: SignatureBlockSchema,
++  footer: FooterBlockSchema,
++  pagination: PaginationPolicySchema,
++  table: TableBlockSchema,
++})
++
++// ΓöÇΓöÇ Derived Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++
++export type CustomInfoItem = z.infer<typeof CustomInfoItemSchema>
++export type BrandingBlock = z.infer<typeof BrandingBlockSchema>
++export type HeaderBlock = z.infer<typeof HeaderBlockSchema>
++export type PartiesBlock = z.infer<typeof PartiesBlockSchema>
++export type LogisticsBlock = z.infer<typeof LogisticsBlockSchema>
++export type NormalizedSignature = z.infer<typeof NormalizedSignatureSchema>
++export type SignatureBlock = z.infer<typeof SignatureBlockSchema>
++export type FooterBlock = z.infer<typeof FooterBlockSchema>
++export type PaginationPolicy = z.infer<typeof PaginationPolicySchema>
++export type PrintColumn = z.infer<typeof PrintColumnSchema>
++export type PrintRow = z.infer<typeof PrintRowSchema>
++export type TableBlock = z.infer<typeof TableBlockSchema>
++export type WaybillRenderModel = z.infer<typeof WaybillRenderModelSchema>
++
++// ΓöÇΓöÇ Validation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++
++/**
++ * Validates a render model immediately before PDF generation.
++ * Throws on malformed data instead of silently producing broken PDFs.
++ */
++export function validateRenderModel(model: unknown): WaybillRenderModel {
++  return WaybillRenderModelSchema.parse(model)
++}
++
++/**
++ * Non-throwing validation ΓÇö returns { success, data, error }.
++ */
++export function safeValidateRenderModel(model: unknown) {
++  return WaybillRenderModelSchema.safeParse(model)
++}
+diff --git a/src/domain/waybill/waybillMutations.ts b/src/domain/waybill/waybillMutations.ts
+index 49abcf0a..0e6c492c 100644
+--- a/src/domain/waybill/waybillMutations.ts
++++ b/src/domain/waybill/waybillMutations.ts
+@@ -4,6 +4,7 @@ import { invalidateListCache } from '@/lib/cache/listCache'
+ import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
+ import { withUniqueRetry } from '@/lib/withUniqueRetry'
+ import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
++import { recordAuditLog, recordWaybillCreated, recordWaybillStatusChanged, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
+ 
+ export async function saveWaybill(params: {
+   waybill: Waybill;
+@@ -100,15 +101,50 @@ export async function saveWaybill(params: {
+       throw new Error(`Failed to save waybill: ${error.message}`)
+     }
+     invalidateListCache('bd:list:waybills:v1:all')
++    // Audit: fire-and-forget after successful create
++    try {
++      void recordAuditLog({
++        entityType: 'waybill',
++        recordId: data?.id ?? '',
++        entityLabel: waybillNumber,
++        action: 'CREATE',
++        oldData: null,
++        newData: payload,
++        trackedFields: WAYBILL_TRACKED_FIELDS,
++      })
++      void recordWaybillCreated(data?.id ?? '')
++    } catch { /* ponytail: audit failure must not break mutation */ }
+     return { status: 'online', waybillId: data?.id }
+   } else {
+     if (!waybillId) throw new Error("waybillId is required in edit mode");
++    // Fetch old status before update for audit
++    let oldWaybillStatus: string | null = null
++    try {
++      const { data } = await supabase.from('waybills').select('status').eq('id', waybillId).single()
++      oldWaybillStatus = data?.status ?? null
++    } catch { /* ponytail: best-effort old status */ }
+     const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
+     if (error) {
+       console.error('Waybill update error:', error)
+       throw new Error(`Failed to update waybill: ${error.message}`)
+     }
+     invalidateListCache('bd:list:waybills:v1:all')
++    // Audit: fire-and-forget after successful update
++    try {
++      void recordAuditLog({
++        entityType: 'waybill',
++        recordId: waybillId,
++        entityLabel: waybillNumber,
++        action: 'UPDATE',
++        oldData: null,
++        newData: payload,
++        trackedFields: WAYBILL_TRACKED_FIELDS,
++      })
++      const newWaybillStatus = (payload.status as string | null) ?? null
++      if (oldWaybillStatus !== newWaybillStatus) {
++        void recordWaybillStatusChanged(waybillId, oldWaybillStatus, newWaybillStatus)
++      }
++    } catch { /* ponytail: audit failure must not break mutation */ }
+     return { status: 'online', waybillId }
+   }
+ }
+diff --git a/src/pages/ViewWaybill.tsx b/src/pages/ViewWaybill.tsx
+index a3ef227a..fab90fa5 100644
+--- a/src/pages/ViewWaybill.tsx
++++ b/src/pages/ViewWaybill.tsx
+@@ -34,6 +34,7 @@ import WaybillPDF from '@/components/waybill/WaybillPDF'
+ import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
+ import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
+ import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
++import { WaybillActivityCard } from '@/components/document-view/waybill/sections/ActivityCard'
+ 
+ const SHEET_MORE = 'more-actions'
+ const SHEET_CUSTOMIZE = 'customize-output'
+@@ -118,11 +119,17 @@ export default function ViewWaybill() {
+         if (data.client_id) {
+           const { data: clientData } = await supabase
+             .from('clients')
+-            .select('address')
++            .select('address, city, state, phone, email')
+             .eq('id', data.client_id)
+             .single()
+-          if (clientData?.address) {
+-            setRawWaybill((curr: any) => ({ ...curr, client_address: clientData.address }))
++          if (clientData) {
++            setRawWaybill((curr: any) => ({
++              ...curr,
++              client_address: clientData.address || curr.client_address,
++              client_phone: clientData.phone || curr.client_phone,
++              client_email: clientData.email || curr.client_email,
++              client_city_state: [clientData.city, clientData.state].filter(Boolean).join(', ') || curr.client_city_state,
++            }))
+           }
+         }
+ 
+@@ -199,6 +206,10 @@ export default function ViewWaybill() {
+         address: settings?.company_address || null,
+         phone: settings?.company_phone || null,
+         email: settings?.company_email || null,
++        website: settings?.company_website || null,
++        customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
++        city: settings?.company_city || null,
++        state: settings?.company_state || null,
+       }
+       const model = rawWaybill ? buildWaybillRenderModel({
+         waybill: rawWaybill,
+@@ -296,6 +307,10 @@ export default function ViewWaybill() {
+           address: settings?.company_address || null,
+           phone: settings?.company_phone || null,
+           email: settings?.company_email || null,
++          website: settings?.company_website || null,
++          customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
++          city: settings?.company_city || null,
++          state: settings?.company_state || null,
+         }
+         return buildWaybillRenderModel({ waybill: rawWaybill, columns, company })
+       })()
+@@ -561,6 +576,7 @@ export default function ViewWaybill() {
+           document={docProps}
+           metrics={metrics}
+           preview={<WaybillDocumentPreview model={model} />}
++          activityHistory={<WaybillActivityCard documentId={docProps.id} />}
+           onMarkAsDelivered={() => ui.openModal(MODAL_DELIVERED)}
+           onEdit={() => navigate(`/waybills/${id}/edit`)}
+           onDuplicate={() => void handleDuplicate()}
