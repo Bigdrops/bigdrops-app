@@ -307,6 +307,10 @@ export default function ViewWaybill() {
           address: settings?.company_address || null,
           phone: settings?.company_phone || null,
           email: settings?.company_email || null,
+          website: settings?.company_website || null,
+          customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
+          city: settings?.company_city || null,
+          state: settings?.company_state || null,
         }
         return buildWaybillRenderModel({ waybill: rawWaybill, columns, company })
       })()

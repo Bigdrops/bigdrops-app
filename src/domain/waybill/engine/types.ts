@@ -26,6 +26,8 @@ export interface BrandingBlock {
   tagline: string | null
   logo: string | null
   address: string | null
+  city: string | null
+  state: string | null
   phone: string | null
   email: string | null
   website: string | null

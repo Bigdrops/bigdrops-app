@@ -326,16 +326,21 @@ export const MinimalTemplateDocument: React.FC<{
               {model.branding.tagline && (
                 <Text style={S.brandTagline}>{model.branding.tagline}</Text>
               )}
-              <Text style={S.brandDetail}>
-                {[
-                  model.branding.address,
-                  model.branding.phone && `Phone: ${model.branding.phone}`,
-                  model.branding.email,
-                  model.branding.website && `Web: ${model.branding.website}`,
-                ]
-                  .filter(Boolean)
-                  .join(' | ')}
-              </Text>
+              {model.branding.address && (
+                <Text style={S.brandDetail}>{model.branding.address}</Text>
+              )}
+              {model.branding.city && (
+                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
+              )}
+              {model.branding.phone && (
+                <Text style={S.brandContact}>Phone: {model.branding.phone}</Text>
+              )}
+              {model.branding.email && (
+                <Text style={S.brandContact}>{model.branding.email}</Text>
+              )}
+              {model.branding.website && (
+                <Text style={S.brandContact}>Web: {model.branding.website}</Text>
+              )}
               {model.branding.customInfo?.map((info, i) => (
                 <Text key={i} style={S.brandContact}>{info.label}: {info.value}</Text>
               ))}
@@ -386,12 +391,12 @@ export const MinimalTemplateDocument: React.FC<{
           {/* Delivery Mode & Purpose */}
           <View style={S.modeRow}>
             <View style={S.modeBox}>
-              <Text style={S.fieldLabel}>Delivery Mode</Text>
+              <Text style={S.fieldLabel}>Method</Text>
               <View style={S.checkboxRow}>
                 {([
                   { value: 'By Hand', label: 'Hand' },
                   { value: 'By Vehicle', label: 'Vehicle' },
-                  { value: 'By Courier', label: 'Other' },
+                  { value: 'By Courier', label: 'Courier' },
                 ] as const).map((opt) => {
                   const checked = deliveryMode === opt.value
                   return (
@@ -404,9 +409,9 @@ export const MinimalTemplateDocument: React.FC<{
               </View>
             </View>
             <View style={S.modeBox}>
-              <Text style={S.fieldLabel}>Delivery Reason</Text>
+              <Text style={S.fieldLabel}>Purpose</Text>
               <View style={S.checkboxRow}>
-                {(['Supply', 'Return', 'Repair', 'Other'] as const).map((opt) => {
+                {(['Supply', 'Return', 'Repair', 'Transfer', 'Other'] as const).map((opt) => {
                   const checked = purpose === opt
                   return (
                     <View key={opt} style={S.tick}>

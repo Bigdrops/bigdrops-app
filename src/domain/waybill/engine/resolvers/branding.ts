@@ -7,6 +7,8 @@ export function resolveBranding(company: CompanySettings): BrandingBlock {
     tagline: normalizeBlank(company.tagline),
     logo: normalizeBlank(company.logo),
     address: normalizeBlank(company.address),
+    city: normalizeBlank(company.city),
+    state: normalizeBlank(company.state),
     phone: normalizeBlank(company.phone),
     email: normalizeBlank(company.email),
     website: normalizeBlank(company.website),

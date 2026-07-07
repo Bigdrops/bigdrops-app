@@ -331,10 +331,16 @@ export const ThermalTemplateDocument: React.FC<{
                 </View>
               )}
               <Text style={S.brandName}>{model.branding.name}</Text>
-              <Text style={S.brandDetail}>{model.branding.address}</Text>
+              {model.branding.address && <Text style={S.brandDetail}>{model.branding.address}</Text>}
+              {model.branding.city && (
+                <Text style={S.brandDetail}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
+              )}
               {model.branding.phone && <Text style={S.brandDetail}>Phone: {model.branding.phone}</Text>}
               {model.branding.email && <Text style={S.brandDetail}>{model.branding.email}</Text>}
               {model.branding.website && <Text style={S.brandDetail}>Web: {model.branding.website}</Text>}
+              {model.branding.customInfo?.map((info, i) => (
+                <Text key={i} style={S.brandDetail}>{info.label}: {info.value}</Text>
+              ))}
             </View>
 
             {/* Title */}

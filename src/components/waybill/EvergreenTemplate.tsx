@@ -453,16 +453,21 @@ export const EvergreenTemplateDocument: React.FC<{
               )}
               <View style={S.brandText}>
                 <Text style={S.brandName}>{model.branding.name}</Text>
-                <Text style={S.brandAddress}>
-                  {[
-                    model.branding.address,
-                    model.branding.phone && `Phone: ${model.branding.phone}`,
-                    model.branding.email,
-                    model.branding.website && `Web: ${model.branding.website}`,
-                  ]
-                    .filter(Boolean)
-                    .join(' | ')}
-                </Text>
+                {model.branding.address && (
+                  <Text style={S.brandAddress}>{model.branding.address}</Text>
+                )}
+                {model.branding.city && (
+                  <Text style={S.brandAddress}>{model.branding.city}{model.branding.state ? `, ${model.branding.state}` : ''}</Text>
+                )}
+                {model.branding.phone && (
+                  <Text style={S.brandAddress}>Phone: {model.branding.phone}</Text>
+                )}
+                {model.branding.email && (
+                  <Text style={S.brandAddress}>{model.branding.email}</Text>
+                )}
+                {model.branding.website && (
+                  <Text style={S.brandAddress}>Web: {model.branding.website}</Text>
+                )}
                 {model.branding.customInfo?.map((info, i) => (
                   <Text key={i} style={S.brandAddress}>{info.label}: {info.value}</Text>
                 ))}
