@@ -12,7 +12,7 @@ export default function NewBoq() {
   const [saving, setSaving] = useState(false)
 
   return (
-    <Layout title="New BOQ" session={null} hidePageHeader>
+    <Layout title="New BOQ" session={null} hidePageHeader immersive>
       <BoqEditor
         initialBoq={createEmptyBoq()}
         saving={saving}

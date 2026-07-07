@@ -62,7 +62,7 @@ export default function NewRfq() {
   };
 
   return (
-    <Layout title="New RFQ" session={null} hidePageHeader>
+    <Layout title="New RFQ" session={null} hidePageHeader immersive>
       <RfqEditor onSave={handleSave} saving={saving} />
     </Layout>
   );

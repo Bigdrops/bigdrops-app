@@ -142,14 +142,14 @@ export default function EditCSR() {
 
   if (loading) {
     return (
-      <Layout title="Edit CSR" hidePageHeader contentClassName="px-0 pb-24 pt-0">
+      <Layout title="Edit CSR" hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
         <div className="mx-auto max-w-md px-4 py-10 text-sm text-muted-foreground">Loading CSR...</div>
       </Layout>
     )
   }
 
   return (
-    <Layout title="Edit CSR" hidePageHeader contentClassName="px-0 pb-24 pt-0">
+    <Layout title="Edit CSR" hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
       <CsrFormScreen
         mode="edit"
         csr={csr}

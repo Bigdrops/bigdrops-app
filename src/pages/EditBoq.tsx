@@ -24,11 +24,11 @@ export default function EditBoq() {
   }, [id, navigate])
 
   if (!boq) {
-    return <Layout title="Edit BOQ" session={null} hidePageHeader><div className="p-12 text-center text-muted-foreground animate-pulse">Loading BOQ...</div></Layout>
+    return <Layout title="Edit BOQ" session={null} hidePageHeader immersive><div className="p-12 text-center text-muted-foreground animate-pulse">Loading BOQ...</div></Layout>
   }
 
   return (
-    <Layout title="Edit BOQ" session={null} hidePageHeader>
+    <Layout title="Edit BOQ" session={null} hidePageHeader immersive>
       <BoqEditor
         initialBoq={boq}
         saving={saving}

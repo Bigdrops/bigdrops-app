@@ -79,11 +79,11 @@ export default function EditRfq() {
   };
 
   if (loading) {
-    return <Layout title="Edit RFQ" session={null} hidePageHeader><div className="p-12 text-center text-muted-foreground animate-pulse">Loading Document...</div></Layout>;
+    return <Layout title="Edit RFQ" session={null} hidePageHeader immersive><div className="p-12 text-center text-muted-foreground animate-pulse">Loading Document...</div></Layout>;
   }
 
   return (
-    <Layout title="Edit RFQ" session={null} hidePageHeader>
+    <Layout title="Edit RFQ" session={null} hidePageHeader immersive>
       <RfqEditor initialRfq={rfq!} initialItems={items} onSave={handleSave} saving={saving} />
     </Layout>
   );
