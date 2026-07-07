@@ -736,3 +736,10 @@ The Telegram attachment subsystem should remain frozen until production runtime 
 No further speculative modifications should be made to the upload pipeline.
 
 Future work should treat the attachment infrastructure as a reusable platform service that can later be integrated into Receipts, Expenses, Waybills, Delivery Confirmations, and any future evidence-producing workflows.
+
+---
+
+## 14. Related Ticket Documentation
+
+- `docs/Tickets/Telegram-payment-attachment-upload/Payment-Attachment-Upload-Failure.md` — diagnostic ticket (PHASE-2.6D-UPLOAD-DEBUG-001)
+- `docs/Tickets/Telegram-payment-attachment-upload/Telegramconvtest.md` — verified successful manual upload via PowerShell

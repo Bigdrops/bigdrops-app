@@ -7,6 +7,8 @@
 **Related docs:**
 - `docs/Tickets/Telegram-payment-attachment-upload/Telegramconvtest.md` — verified successful manual upload
 - `docs/Reports/FinancialOperations/phase-2-6d-upload-error-surfacing.md` — latest investigation report
+- `docs/Session-memories/Telegram-upload/gpt.md` — full session log (Phase 2.6A–2.6D)
+- `docs/Session-memories/Telegram-upload/deepseek.md` — architect synthesis session log
 
 ---
 
@@ -37,7 +39,7 @@ The payment attachment upload pipeline returns a generic “upload failed” to 
    - Upload landed in the correct topic with proper caption rendering.
 
 3. **Vercel Environment Variables**  
-   - Desktop screenshot of Vercel dashboard @`docs/Tickets/Telegram-payment-attachment-upload/ shows `TELEGRAM_BOT_TOKEN` and `TELEGRAM_GROUP_CHAT_ID` exist, are marked Sensitive, enabled for Production & Preview, and were updated ~4 hours ago.  
+   - Desktop screenshot of Vercel dashboard (`docs/Tickets/Telegram-payment-attachment-upload/desktop vercel.png`) shows `TELEGRAM_BOT_TOKEN` and `TELEGRAM_GROUP_CHAT_ID` exist, are marked Sensitive, enabled for Production & Preview, and were updated ~4 hours ago.
    - Names are correct; values were pasted (not typed) from the working token.
 
 4. **Code Instrumentation**  

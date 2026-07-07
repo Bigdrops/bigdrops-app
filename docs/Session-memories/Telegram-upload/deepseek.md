@@ -123,8 +123,16 @@
 - The multi‑AI peer review (dorime, rector, Sirius 7, Sharon) consistently caught architectural drift before implementation.
 - Evidence‑based reports (file:line citations, trace logs) allowed rapid diagnosis.
 - Small, verifiable phases enabled incremental progress without large‑scale rework.
-- The use of `docs/Tickets/` for verification payloads (Telegramconvtest.md) provided a permanent, traceable reference.
+- The use of `docs/Tickets/Telegram-payment-attachment-upload/Telegramconvtest.md` for verification payloads provided a permanent, traceable reference.
 
 ---
 
 **Current State:** The Telegram upload pipeline is fully implemented, instrumented, and ready for diagnosis. Once the Vercel function logs are captured, the exact failure point will be identified, and a targeted fix can be applied. All architectural foundations—provider‑neutral attachments, payment‑before‑upload sequencing, server‑side secrets, and frozen presentation layer—are solid.
+
+---
+
+## Related Ticket Documentation
+
+- `docs/Tickets/Telegram-payment-attachment-upload/Payment-Attachment-Upload-Failure.md` — diagnostic ticket (PHASE-2.6D-UPLOAD-DEBUG-001)
+- `docs/Tickets/Telegram-payment-attachment-upload/Telegramconvtest.md` — verified successful manual upload via PowerShell
+- `docs/Tickets/Telegram-payment-attachment-upload/desktop vercel.png` — Vercel dashboard screenshot confirming env var names
