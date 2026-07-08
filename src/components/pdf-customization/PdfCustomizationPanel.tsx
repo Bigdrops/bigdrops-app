@@ -8,10 +8,7 @@
 'use client'
 
 import type { ResolvedPdfCustomization, PdfCustomizationPolicy } from '@/domain/pdf/customization/types'
-import { PDF_ACCENT_SWATCHES, PDF_FONT_OPTIONS, PDF_FILLABLE_FONT_OPTIONS } from '@/lib/pdfDesignPreset'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
@@ -21,15 +18,14 @@ import {
   SheetDescription,
   SheetClose,
 } from '@/components/ui/sheet'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Undo02Icon } from '@hugeicons/core-free-icons'
+import {
+  AccentColorSection,
+  DocumentFontSection,
+  HandwritingFontSection,
+  HandwritingColorSection,
+} from './customization-controls'
 
 export interface PdfCustomizationPanelProps {
   open: boolean

@@ -25,7 +25,6 @@ import { downloadPdfFromElement } from '@/components/document-view/shared/downlo
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { PdfCustomizationPanel } from '@/components/pdf-customization/PdfCustomizationPanel'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import {
   WAYBILL_CAPABILITIES,
@@ -40,11 +39,28 @@ import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, upda
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
 import { WaybillActivityCard } from '@/components/document-view/waybill/sections/ActivityCard'
+import { PenLine, Type } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { PDF_FONT_OPTIONS, PDF_FILLABLE_FONT_OPTIONS } from '@/lib/pdfDesignPreset'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
 const WAYBILL_TEMPLATE_KEY = 'waybill_view_template'
+
+const WAYBILL_COLOR_SWATCHES = ['#000000', '#374151', '#0f172a', '#1e3a5f', '#7f1d1d']
+
+const WAYBILL_HANDWRITING_FONTS = PDF_FILLABLE_FONT_OPTIONS.filter(
+  (f) => f.value === 'Patrick Hand' || f.value === 'Reenie Beanie' || f.value === 'Caveat' || f.value === 'Kalam' || f.value === 'Handlee' || f.value === 'Sue Ellen Francisco',
+)
 
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
@@ -383,9 +399,81 @@ export default function ViewWaybill() {
               subtitle="These controls update the saved waybill PDF design preset used by download."
             >
               <div className="space-y-4">
-                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 text-sm font-semibold text-bd-text">Template Style</div>
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Template Style</div>
                   <WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />
+                </div>
+
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+                    <Type className="h-4 w-4 text-bd-button-primary-bg" />
+                    Document Font
+                  </div>
+                  <Select value={customization.documentFont} onValueChange={setDocumentFont}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PDF_FONT_OPTIONS.map((font) => (
+                        <SelectItem key={font.value} value={font.value}>
+                          {font.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+                    <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
+                    Ink Color
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {WAYBILL_COLOR_SWATCHES.map((swatch) => (
+                      <button
+                        key={swatch}
+                        type="button"
+                        onClick={() => setInkColour(swatch)}
+                        className={cn(
+                          'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                          customization.handwritingColor.toLowerCase() === swatch.toLowerCase()
+                            ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
+                            : 'border-transparent hover:border-bd-text-muted/40',
+                        )}
+                        style={{ backgroundColor: swatch }}
+                      />
+                    ))}
+                  </div>
+                  <Input
+                    type="color"
+                    value={customization.handwritingColor}
+                    onChange={(e) => setInkColour(e.target.value)}
+                    className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
+                  />
+                </div>
+
+                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+                    <Type className="h-4 w-4 text-bd-button-primary-bg" />
+                    Handwriting Font
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {WAYBILL_HANDWRITING_FONTS.map((font) => (
+                      <button
+                        key={font.value}
+                        type="button"
+                        onClick={() => setInkFont(font.value)}
+                        className={cn(
+                          'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
+                          customization.handwritingFont === font.value
+                            ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
+                            : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
+                        )}
+                      >
+                        {font.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <button
@@ -421,18 +509,6 @@ export default function ViewWaybill() {
                 </button>
               </div>
             </DocumentSheet>
-
-            <PdfCustomizationPanel
-              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
-              onOpenChange={(open) => { if (!open) ui.closeSheet() }}
-              customization={customization}
-              policy={WAYBILL_POLICY}
-              onAccentColorChange={() => {}}
-              onDocumentFontChange={setDocumentFont}
-              onInkFontChange={setInkFont}
-              onInkColourChange={setInkColour}
-              onReset={resetCustomization}
-            />
 
             <WaybillMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}
