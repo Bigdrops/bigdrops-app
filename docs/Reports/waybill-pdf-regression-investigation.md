@@ -1,5 +1,7 @@
 # Waybill PDF Regression Investigation Report
 
+This report was written by OpenCode on 2026-07-06 via Local Runner.
+
 **Date:** 2026-07-06  
 **Baseline commit:** `a0eff887` ("Update AGENTS.md")  
 **Current HEAD:** `a9baffd2` ("chore: waybill templates update, receipt standard, transformation audit")  

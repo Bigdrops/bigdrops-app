@@ -1,5 +1,7 @@
 # PDF Customization Engine — Implementation Report
 
+This report was written by OpenCode on 2026-07-08 via Local Runner.
+
 **Date:** 2026-07-08
 **Prompt:** `docs/Prompts/prompt589.md`
 **Status:** Complete — foundational engine created, zero existing files modified.
