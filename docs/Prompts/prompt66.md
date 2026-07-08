@@ -1,566 +1,355 @@
-[Sharon] Speaking:
-
-I agree the report shouldn't be trusted as evidence of completion if it claims behavior that you directly observed wasn't implemented. Rather than asking another agent to "refine" it, I'd have a fresh agent treat the previous report as untrusted and perform its own audit before making changes.
-
-
----
-
-Invoice Edit Law Phase 2 — Runtime UX Enforcement + Quotation Regression Recovery
-
 You are working on the BIGDROPS business platform.
 
 Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
-
-Runtime: Bun only.
-
-
----
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
 ====================================================================
-
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
 
 OpenCode has full repository access.
 
-Read:
+Read AGENTS.md immediately.
 
-AGENTS.md
+Load all relevant skills from docs/PROJECTSKILLINDEX.md before making changes.
 
-docs/STANDARD/document-transformation-standard.md
+This task requires at minimum:
 
-docs/EXECUTION/audits/2026-07-02-transformation-standard-baseline.md
+- using-superpowers
+- Karpathy
+- frontend-design
+- typescript-advanced-types
+- pdf-rendering-correctness
 
-docs/PROJECTSKILLINDEX.md
-
-
-Load only these skills:
-
-Karpathy
-
-typescript-advanced-types
-
-vercel-react-best-practices
-
-shadcn
-
-
-Do not load unrelated skills.
+Follow the Report Protocol defined in AGENTS.md.
 
 ====================================================================
+PHASE 2.1 — WAYBILL UX RESTORATION
+====================================================================
 
-IMPORTANT
+The PDF Customization Engine introduced in Phase 1 is correct.
 
-Do NOT trust previous implementation reports.
+The current Waybill integration is not.
 
-Previous reports claimed this work was already complete.
+The implementation changed the application's UX instead of changing the implementation underneath the existing UX.
 
-Runtime testing by the user proves those reports are inaccurate.
+This task restores the original Waybill customization experience while keeping the new engine.
 
-Treat every previous report as historical reference only.
+The engine is now the backend.
 
-You must independently audit the implementation from the codebase itself.
+The existing Waybill customization sheet remains the frontend.
 
-Do not assume any claimed fix actually exists.
+The engine owns:
 
+- state
+- persistence
+- resolver
+- capabilities
+- policy
+- font registration
 
----
+Waybill owns:
 
-REPORT
+- layout
+- interaction
+- presentation
+- user experience
 
-Create
+The engine must adapt to the application.
 
-docs/EXECUTION/implementation/invoice-edit-law-phase-2-runtime.md
+The application must NOT adapt to the engine.
 
-Include:
+====================================================================
+MANDATORY AUDIT
+====================================================================
 
-Executive Summary
+Before writing any code, audit these implementations completely.
 
-Runtime Audit
+Current Waybill:
 
-Root Cause Analysis
+- src/pages/ViewWaybill.tsx
+- src/components/waybill/WaybillTemplateSelector.tsx
 
-Invoice UX Changes
+Reference UX implementations:
 
-Quotation Crash Investigation
+- src/pages/ViewCSR.tsx
+- src/components/document-view/shared/PdfOutputCustomizeSheet.tsx
 
-Invoice Duplicate Number Investigation
+Engine:
 
-Files Modified
+- src/domain/pdf/customization/
+- src/components/pdf-customization/
 
-Behaviour Preserved
+Study:
 
-Verification
+- layout
+- spacing
+- save flow
+- scrolling
+- interaction model
+- font picker UX
+- colour picker UX
+- switch behaviour
+- swatch behaviour
 
+Use the existing application UX as the source of truth.
 
-Do not overwrite previous reports.
+====================================================================
+PROBLEM TO FIX
+====================================================================
 
+The previous implementation introduced a separate PdfCustomizationPanel
+Sheet/Drawer.
 
----
+This caused severe UX regressions.
 
-PRIMARY OBJECTIVE
+Specifically:
 
-Law 1 already exists.
+• The template picker became shorter.
 
-Save-time validation already exists.
+• A second drawer immediately opens from the right before the template
+picker finishes opening.
 
-This task is NOT about adding another save blocker.
+• The second drawer overlays the template picker.
 
-The goal is to make Edit Law operate entirely at interaction time.
+• Users cannot properly interact with template cards.
 
-The user should never begin editing identity.
+• Save lives on one panel while customization lives on another.
 
-The save validator must remain only as defence-in-depth.
+• Closing one panel closes the other.
 
+• The original colour swatches disappeared.
 
----
+• Toggle switches disappeared.
 
-PART A — AUDIT FIRST (MANDATORY)
+• The workflow became fragmented.
 
-Before modifying anything, trace the complete runtime path.
+This behaviour is rejected.
 
-For Invoice identify:
+====================================================================
+REQUIRED USER EXPERIENCE
+====================================================================
 
-InvoiceFormPage
+When the user taps 🎨
 
-SharedDocumentForm
+ONLY ONE customization sheet opens.
 
-FormHeader
+Inside that SAME sheet must be:
 
-Client selector
+1. Template picker
 
-Client button
+2. Custom Font
 
-Invoice number field
+3. Ink Font
 
-IdentityLockDialog
+4. Ink Colour
 
-updateInvoice
+5. Save button
 
-setInvoice
+Everything must live inside one continuous scrollable customization sheet exactly as before.
 
-useInvoiceEditableState
+No nested sheets.
 
-useInvoiceSave
+No second drawer.
 
-assertIdentityImmutable
+No overlay.
 
+No competing panels.
 
-Document exactly:
+====================================================================
+CUSTOMIZATION CONTROLS
+====================================================================
 
-where clicks originate
+Restore the original Waybill interaction model.
 
-where focus occurs
+Do NOT invent a new one.
 
-where dropdown opens
+Use the engine underneath the existing controls.
 
-where keyboard appears
+If the previous UI contained:
 
-where state mutates
+- switches
+- font chips
+- colour swatches
+- live colour preview
+- hex editor
 
-where dialog currently opens
+restore those interactions.
 
+Do NOT replace them with generic controls simply because the engine exposes different data.
 
-Do not begin coding until this audit is complete.
+====================================================================
+PDFCUSTOMIZATIONPANEL
+====================================================================
 
+PdfCustomizationPanel must no longer dictate presentation.
 
----
+Treat it as reusable customization controls.
 
-PART B — CLIENT FIELD
+NOT as a mandatory Sheet.
 
-Current behaviour is WRONG.
+NOT as a mandatory Drawer.
 
-Current runtime observed by user:
+If necessary:
 
-tapping Client still starts the normal interaction
+Refactor PdfCustomizationPanel into reusable presentation components so existing document customization sheets can embed those controls naturally.
 
-dialog appears too late
+The engine provides behaviour.
 
+The document page provides layout.
 
-Required behaviour:
+====================================================================
+WAYBILL PAGE
+====================================================================
 
-The Client field should still LOOK identical.
+Keep:
 
-However:
+- existing template selector
+- existing scrolling
+- existing Save button
+- existing workflow
 
-selector must never open
+Embed the engine-powered customization controls into that existing sheet.
 
-search must never start
+Do NOT create another popup.
 
-dropdown must never render
+Do NOT create another sheet.
 
-ClientSelector must never mount
+Do NOT create another drawer.
 
-client state must never mutate
+====================================================================
+FONT REGISTRY
+====================================================================
 
-keyboard must never appear
+Future font expansion must require ONLY updating the shared font registry.
 
+Adding a new font must NOT require modifying:
 
-The FIRST pointer interaction must immediately open IdentityLockDialog.
+- Waybill
+- CSR
+- Invoice
+- Quotation
 
-No intermediate behaviour is allowed.
+The UI should automatically display newly available fonts from the shared registry according to the document's capability and policy.
 
-Do not rely on save validation.
+====================================================================
+COLOUR PICKER
+====================================================================
 
-Do not rely on reverting state.
+Restore the previous Waybill colour picker UX.
 
-Prevent the interaction itself.
+Use the existing swatch interaction.
 
+Maintain:
 
----
+- preset swatches
+- live/custom swatch
+- hex editing
 
-PART C — INVOICE NUMBER FIELD
+Do NOT replace this with a single rectangular colour selector.
 
-Current runtime observed by user:
+====================================================================
+SAVE FLOW
+====================================================================
 
-The field still behaves like an editable textbox.
+There must be ONE Save button.
 
-Users can:
+That button saves:
 
-focus it
+- selected template
+- customization settings
+- existing persistence
+- existing database updates
 
-see a caret
+There must never be separate save flows.
 
-begin typing
+====================================================================
+PRESERVE
+====================================================================
 
-delete characters
+Keep all successful Phase 2 architectural work.
 
+Do NOT remove:
 
-Only afterwards is interception attempted.
+- customization engine
+- resolver
+- bridgeToDesignPreset()
+- capabilities
+- policy
+- font registry wrapper
 
-This violates Edit Law.
+These are now the foundation.
 
-Required behaviour:
+Only the presentation layer should change.
 
-Maintain the existing visual appearance.
-
-However:
-
-never receive focus
-
-never display caret
-
-never display keyboard
-
-never allow selection
-
-never allow deletion
-
-never allow typing
-
-
-The FIRST click/tap must immediately open IdentityLockDialog.
-
-Zero temporary mutation.
-
-Zero temporary focus.
-
-Zero temporary editing.
-
-If necessary, replace the interactive input with a visually identical non-editable component rather than trying to fight browser input behaviour.
-
-Visual appearance must remain unchanged.
-
-Behaviour must change.
-
-
----
-
-PART D — UNIFIED IDENTITY DIALOG
-
-The current implementation uses different wording depending on which field was clicked.
-
-Remove that behaviour.
-
-There must be ONE standard Edit Law message.
-
-Title:
-
-Identity Fields Locked
-
-Body:
-
-> Client and Invoice Number cannot be changed after an invoice has been saved.
-
-To use a different client or invoice number, duplicate this invoice to create a new draft while keeping your current work.
-
-
-
-Both Client and Invoice Number must open this exact dialog.
-
-Do not generate different text for different fields.
-
-Do not mention one field individually.
-
-
----
-
-PART E — QUOTATION REGRESSION (HIGH PRIORITY)
-
-The user reports:
-
-Opening an existing quotation in Edit mode crashes.
-
-The previous implementation report claimed this was fixed.
-
-It was not verified.
-
-Treat the previous report as unreliable.
-
-Do not merely inspect callbacks.
-
-Reproduce the runtime path.
-
-Locate the real cause.
-
-Fix the crash.
-
-Do not stop after making speculative hook dependency changes.
-
-The quotation edit screen must successfully open.
-
-Document the actual root cause.
-
-If multiple causes exist, resolve all of them.
-
-
----
-
-PART F — INVOICE DUPLICATE NUMBER INVESTIGATION
-
-This is documentation only.
-
-Do NOT modify numbering behaviour unless an actual defect is proven.
-
-Observed runtime:
-
-Invoice INV59
-
-↓
-
-Duplicate
-
-↓
-
-Draft initially displays INV59
-
-↓
-
-Save
-
-↓
-
-Saved invoice becomes INV60
-
-Determine the complete execution path.
-
-Trace:
-
-Duplicate action
-
-↓
-
-duplicateInvoice
-
-↓
-
-InvoiceFormPage
-
-↓
-
-Hydration
-
-↓
-
-Displayed invoice_number
-
-↓
-
-User edits
-
-↓
-
-Save
-
-↓
-
-useInvoiceSave
-
-↓
-
-Invoice creation
-
-↓
-
-Prefix engine
-
-↓
-
-Persist
-
-Document:
-
-where the displayed number comes from
-
-whether it is copied
-
-whether it is hydrated
-
-whether it is cached
-
-when a new number is requested
-
-which component owns the displayed draft number
-
-which component owns the persisted number
-
-whether this behaviour is intentional
-
-whether it violates Duplicate Law
-
-
-Do not investigate Quotation numbering.
-
-Only Invoice.
-
-
----
-
-STRICT NON-REGRESSION
+====================================================================
+DO NOT
+====================================================================
 
 Do NOT modify:
 
-Duplicate Law
+- Invoice
+- Quotation
+- CSR
 
-Revert Law
+Do NOT change:
 
-Conversion
+- Waybill render engine
+- pagination
+- PDF generation
+- template routing
+- template rendering
 
-Audit Trail
+Do NOT introduce additional dialogs.
 
-Prefix engine
+Do NOT introduce nested Sheets.
 
-Number generation algorithm
-
-Database schema
-
-Calculations
-
-Pricing
-
-Taxes
-
-Workflow
-
-Routing
-
-PDF generation
-
-
-No architectural refactors.
-
-No unrelated cleanup.
-
-No redesign.
-
-Only solve the runtime issues described above.
-
-
----
-
-VERIFICATION
-
-Run:
-
-bun run audit:load
-
-Run:
-
-bun run typecheck
+Do NOT introduce overlay Drawers.
 
 Do NOT run:
 
 bun run build
 
+====================================================================
+REQUIRED VERIFICATION
+====================================================================
 
----
+Run only:
 
-REQUIRED MANUAL VERIFICATION
+bun run typecheck
 
-Using an existing saved Invoice:
+git status
 
-Verify:
+Manual verification:
 
-✓ Client looks normal
+✓ Clicking 🎨 opens exactly one customization sheet.
 
-✓ Client never opens selector
+✓ Template picker is fully usable.
 
-✓ Client never opens dropdown
+✓ Custom Font is inside the same sheet.
 
-✓ Client never starts search
+✓ Ink Font is inside the same sheet.
 
-✓ First tap immediately opens IdentityLockDialog
+✓ Ink Colour is inside the same sheet.
 
-✓ Invoice Number looks identical to before
+✓ Colour swatches are restored.
 
-✓ Invoice Number never receives focus
+✓ Existing interaction model is preserved.
 
-✓ No caret
+✓ Save persists template and customization together.
 
-✓ No text selection
+✓ No overlapping panels exist.
 
-✓ No keyboard
+✓ PDF output remains unchanged.
 
-✓ First tap immediately opens IdentityLockDialog
+✓ No regressions occur.
 
-✓ No React state changes before dialog
-
-✓ Draft invoices remain fully editable
-
-✓ Save validator is never relied upon for normal interaction
-
-Using an existing saved Quotation:
-
-Verify:
-
-✓ Edit screen opens successfully
-
-✓ No React crash
-
-✓ Identity locking still functions
-
-Using a duplicated Invoice:
-
-Document:
-
-✓ Initial displayed number
-
-✓ Final persisted number
-
-✓ Complete ownership chain for numbering
-
-
----
-
+====================================================================
 ACCEPTANCE CRITERIA
+====================================================================
 
-This task is complete only when:
+The user should not feel that the UI changed.
 
-A fresh audit has been performed instead of relying on previous reports.
+Only the implementation underneath it should have changed.
 
-Invoice Client interaction is intercepted before any selector logic executes.
-
-Invoice Number is completely non-focusable while retaining its current visual design.
-
-Both identity fields open the same unified Identity Fields Locked dialog.
-
-No temporary editing, focus, keyboard, caret, dropdown, or state mutation occurs before interception.
-
-Quotation Edit mode opens without crashing and the actual root cause is documented.
-
-The Invoice duplicate numbering lifecycle is fully documented from duplicate action through persistence.
-
-bun run audit:load passes.
-
-bun run typecheck passes.
-
-The implementation report is written to docs/EXECUTION/implementation/invoice-edit-law-phase-2-runtime.md.
+The Waybill customization experience should feel identical to the pre-engine version while now being fully powered by the shared PDF Customization Engine.
