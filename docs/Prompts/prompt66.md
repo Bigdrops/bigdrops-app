@@ -1,325 +1,566 @@
+[Sharon] Speaking:
+
+I agree the report shouldn't be trusted as evidence of completion if it claims behavior that you directly observed wasn't implemented. Rather than asking another agent to "refine" it, I'd have a fresh agent treat the previous report as untrusted and perform its own audit before making changes.
+
+
+---
+
+Invoice Edit Law Phase 2 — Runtime UX Enforcement + Quotation Regression Recovery
+
 You are working on the BIGDROPS business platform.
 
 Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
-Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+
+Runtime: Bun only.
+
+
+---
 
 ====================================================================
+
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-====================================================================
+
 OpenCode has full repository access.
-Read AGENTS.md before touching anything.
-Follow the audit-first workflow, project fundamentals, standards,
-locked business rules, and required skills.
-====================================================================
 
-A. CONTEXT & OBJECTIVE
+Read:
 
-Phase 2.6B attachment uploads consistently fail from the application.
+AGENTS.md
 
-A manual PowerShell upload to Telegram succeeds.
+docs/STANDARD/document-transformation-standard.md
 
-Therefore the Telegram Bot API is already verified.
+docs/EXECUTION/audits/2026-07-02-transformation-standard-baseline.md
 
-The objective of this task is NOT to fix the issue.
+docs/PROJECTSKILLINDEX.md
 
-The objective is to identify the FIRST failing stage of the upload pipeline with hard evidence.
 
-No feature work.
-No refactors.
-No architecture changes.
-No retry implementation.
+Load only these skills:
 
-Treat this as a forensic investigation.
+Karpathy
 
-====================================================================
+typescript-advanced-types
 
-B. TARGET COMPONENTS
+vercel-react-best-practices
 
-Read only:
+shadcn
 
-- src/components/ui/PaymentAttachmentUploader.tsx
-- src/components/document-view/invoice/InvoiceRecordPaymentSheet.tsx
-- src/modules/invoices/services/paymentService.ts
-- api/upload-payment-attachment.ts
-- src/modules/invoices/services/telegramService.ts
-- paymentRepository upload/update methods
-- PaymentAttachment types
 
-Create only if necessary:
-
-scripts/test-upload-pipeline.ts
-
-Temporary instrumentation only.
+Do not load unrelated skills.
 
 ====================================================================
 
-C. INVESTIGATION PIPELINE
+IMPORTANT
 
-Audit every stage.
+Do NOT trust previous implementation reports.
 
-DO NOT SKIP ANY STAGE.
+Previous reports claimed this work was already complete.
 
-For every stage produce evidence proving it executed.
+Runtime testing by the user proves those reports are inaccurate.
 
-1.
-User selected files.
+Treat every previous report as historical reference only.
 
-Verify:
+You must independently audit the implementation from the codebase itself.
 
-- File count
-- File names
-- MIME types
-- File sizes
+Do not assume any claimed fix actually exists.
 
-2.
-PaymentAttachmentUploader
 
-Verify:
+---
 
-- Files passed through callback
+REPORT
 
-3.
-InvoiceRecordPaymentSheet
+Create
 
-Verify:
+docs/EXECUTION/implementation/invoice-edit-law-phase-2-runtime.md
 
-- Files received
-- Files passed into recordInvoicePayment()
+Include:
 
-4.
-paymentService
+Executive Summary
 
-Verify:
+Runtime Audit
 
-- Files received
-- Upload loop entered
-- FormData built correctly
+Root Cause Analysis
 
-Log:
+Invoice UX Changes
 
-- filename
-- mime type
-- size
-- FormData keys
+Quotation Crash Investigation
 
-5.
-fetch()
+Invoice Duplicate Number Investigation
 
-Verify:
+Files Modified
 
-- Request URL
-- HTTP Method
-- Content-Type
+Behaviour Preserved
 
-6.
-Browser Network
+Verification
 
-If local runner supports browser inspection:
 
-Capture:
+Do not overwrite previous reports.
 
-- request URL
-- request headers
-- request payload
-- response status
-- response body
-- timing
 
-If request never appears,
-identify why.
+---
 
-7.
-api/upload-payment-attachment
+PRIMARY OBJECTIVE
 
-TEMP DEBUG:
+Law 1 already exists.
 
-Log:
+Save-time validation already exists.
 
-- request entered
-- authentication result
-- request.formData()
-- file exists
-- filename
-- mime type
-- bytes
-- tenant resolution
-- telegram_topics query
-- resolved thread_id
+This task is NOT about adding another save blocker.
 
-8.
-telegramService
+The goal is to make Edit Law operate entirely at interaction time.
 
-TEMP DEBUG:
+The user should never begin editing identity.
 
-Log:
+The save validator must remain only as defence-in-depth.
 
-- chat_id
-- thread_id
-- caption length
-- Telegram endpoint
-  (mask token)
 
-Log:
+---
 
-- HTTP status
+PART A — AUDIT FIRST (MANDATORY)
 
-Capture COMPLETE Telegram response.
+Before modifying anything, trace the complete runtime path.
 
-Do NOT truncate.
+For Invoice identify:
 
-Mask only secrets.
+InvoiceFormPage
 
-9.
-Database
+SharedDocumentForm
 
-Verify:
+FormHeader
 
-payments.attachments update executes.
+Client selector
 
-Capture:
+Client button
 
-- update payload
-- success/failure
-- affected rows
+Invoice number field
 
-10.
-Client
+IdentityLockDialog
 
-Verify:
+updateInvoice
 
-Returned JSON received.
+setInvoice
 
-Log:
+useInvoiceEditableState
 
-- success payload
+useInvoiceSave
 
-OR
+assertIdentityImmutable
 
-- failure payload
 
-====================================================================
+Document exactly:
 
-D. DIAGNOSTIC SCRIPT
+where clicks originate
 
-Create:
+where focus occurs
 
-scripts/test-upload-pipeline.ts
+where dropdown opens
 
-Purpose:
+where keyboard appears
 
-Bypass the browser completely.
+where state mutates
 
-The script should:
+where dialog currently opens
 
-• Load TELEGRAM_BOT_TOKEN
-• Load TELEGRAM_GROUP_CHAT_ID
-• Resolve thread_id
-• Create a tiny in-memory test file
-• Call telegramService.uploadFile()
-• Print raw Telegram JSON
-• Exit
 
-Do NOT modify production data.
+Do not begin coding until this audit is complete.
 
-Do NOT insert fake payments.
 
-If attachment persistence cannot be safely tested,
-skip it and explain why.
+---
 
-====================================================================
+PART B — CLIENT FIELD
 
-E. HARD EVIDENCE TABLE
+Current behaviour is WRONG.
 
-The report MUST contain this exact table.
+Current runtime observed by user:
 
-| Stage | Evidence | PASS | FAIL | Error |
-|------|------|------|------|------|
-| File selected | | | | |
-| Uploader callback | | | | |
-| Sheet received files | | | | |
-| paymentService entered | | | | |
-| FormData built | | | | |
-| fetch executed | | | | |
-| Browser request exists | | | | |
-| API route entered | | | | |
-| request.formData parsed | | | | |
-| File extracted | | | | |
-| Auth validated | | | | |
-| Topic lookup | | | | |
-| thread_id resolved | | | | |
-| Telegram request | | | | |
-| Telegram response | | | | |
-| Attachment persisted | | | | |
-| Client received response | | | | |
+tapping Client still starts the normal interaction
 
-====================================================================
+dialog appears too late
 
-F. INVESTIGATION RULES
 
-You are NOT allowed to conclude:
+Required behaviour:
 
-"Upload failed."
+The Client field should still LOOK identical.
 
-You are NOT allowed to conclude:
+However:
 
-"Likely..."
+selector must never open
 
-You are NOT allowed to speculate.
+search must never start
 
-You MUST identify the FIRST failing stage.
+dropdown must never render
 
-If impossible,
+ClientSelector must never mount
 
-state exactly what evidence is missing and why.
+client state must never mutate
 
-====================================================================
+keyboard must never appear
 
-G. CONSTRAINTS
 
-• No business logic changes.
-• No UI changes.
-• No retry implementation.
-• No architecture changes.
-• Temporary debug logging only.
-• Mask secrets.
-• Remove nothing except temporary diagnostics if instructed later.
+The FIRST pointer interaction must immediately open IdentityLockDialog.
 
-====================================================================
+No intermediate behaviour is allowed.
 
-H. REQUIRED VERIFICATION
+Do not rely on save validation.
+
+Do not rely on reverting state.
+
+Prevent the interaction itself.
+
+
+---
+
+PART C — INVOICE NUMBER FIELD
+
+Current runtime observed by user:
+
+The field still behaves like an editable textbox.
+
+Users can:
+
+focus it
+
+see a caret
+
+begin typing
+
+delete characters
+
+
+Only afterwards is interception attempted.
+
+This violates Edit Law.
+
+Required behaviour:
+
+Maintain the existing visual appearance.
+
+However:
+
+never receive focus
+
+never display caret
+
+never display keyboard
+
+never allow selection
+
+never allow deletion
+
+never allow typing
+
+
+The FIRST click/tap must immediately open IdentityLockDialog.
+
+Zero temporary mutation.
+
+Zero temporary focus.
+
+Zero temporary editing.
+
+If necessary, replace the interactive input with a visually identical non-editable component rather than trying to fight browser input behaviour.
+
+Visual appearance must remain unchanged.
+
+Behaviour must change.
+
+
+---
+
+PART D — UNIFIED IDENTITY DIALOG
+
+The current implementation uses different wording depending on which field was clicked.
+
+Remove that behaviour.
+
+There must be ONE standard Edit Law message.
+
+Title:
+
+Identity Fields Locked
+
+Body:
+
+> Client and Invoice Number cannot be changed after an invoice has been saved.
+
+To use a different client or invoice number, duplicate this invoice to create a new draft while keeping your current work.
+
+
+
+Both Client and Invoice Number must open this exact dialog.
+
+Do not generate different text for different fields.
+
+Do not mention one field individually.
+
+
+---
+
+PART E — QUOTATION REGRESSION (HIGH PRIORITY)
+
+The user reports:
+
+Opening an existing quotation in Edit mode crashes.
+
+The previous implementation report claimed this was fixed.
+
+It was not verified.
+
+Treat the previous report as unreliable.
+
+Do not merely inspect callbacks.
+
+Reproduce the runtime path.
+
+Locate the real cause.
+
+Fix the crash.
+
+Do not stop after making speculative hook dependency changes.
+
+The quotation edit screen must successfully open.
+
+Document the actual root cause.
+
+If multiple causes exist, resolve all of them.
+
+
+---
+
+PART F — INVOICE DUPLICATE NUMBER INVESTIGATION
+
+This is documentation only.
+
+Do NOT modify numbering behaviour unless an actual defect is proven.
+
+Observed runtime:
+
+Invoice INV59
+
+↓
+
+Duplicate
+
+↓
+
+Draft initially displays INV59
+
+↓
+
+Save
+
+↓
+
+Saved invoice becomes INV60
+
+Determine the complete execution path.
+
+Trace:
+
+Duplicate action
+
+↓
+
+duplicateInvoice
+
+↓
+
+InvoiceFormPage
+
+↓
+
+Hydration
+
+↓
+
+Displayed invoice_number
+
+↓
+
+User edits
+
+↓
+
+Save
+
+↓
+
+useInvoiceSave
+
+↓
+
+Invoice creation
+
+↓
+
+Prefix engine
+
+↓
+
+Persist
+
+Document:
+
+where the displayed number comes from
+
+whether it is copied
+
+whether it is hydrated
+
+whether it is cached
+
+when a new number is requested
+
+which component owns the displayed draft number
+
+which component owns the persisted number
+
+whether this behaviour is intentional
+
+whether it violates Duplicate Law
+
+
+Do not investigate Quotation numbering.
+
+Only Invoice.
+
+
+---
+
+STRICT NON-REGRESSION
+
+Do NOT modify:
+
+Duplicate Law
+
+Revert Law
+
+Conversion
+
+Audit Trail
+
+Prefix engine
+
+Number generation algorithm
+
+Database schema
+
+Calculations
+
+Pricing
+
+Taxes
+
+Workflow
+
+Routing
+
+PDF generation
+
+
+No architectural refactors.
+
+No unrelated cleanup.
+
+No redesign.
+
+Only solve the runtime issues described above.
+
+
+---
+
+VERIFICATION
 
 Run:
 
-- bun run typecheck
-- bun run audit:load
-- git status
+bun run audit:load
 
-If the local environment allows execution:
+Run:
 
-Run the diagnostic script.
+bun run typecheck
 
-If not,
+Do NOT run:
 
-provide exact execution instructions for the user.
+bun run build
 
-====================================================================
 
-I. OUTPUT
+---
 
-Save the investigation to:
+REQUIRED MANUAL VERIFICATION
 
-docs/Reports/FinancialOperations/phase-2-6b-upload-pipeline-forensics.md
+Using an existing saved Invoice:
 
-The report MUST include:
+Verify:
 
-1. Files instrumented.
-2. Diagnostic script.
-3. Browser evidence (if available).
-4. Raw Telegram response (masked).
-5. Pipeline Evidence Table.
-6. First confirmed failing stage.
-7. Root cause (only if proven by evidence).
-8. Recommended surgical fix (no implementation).
-9. Confirmation that zero production behavior was intentionally changed.
+✓ Client looks normal
 
-Do NOT run bun run build.
+✓ Client never opens selector
+
+✓ Client never opens dropdown
+
+✓ Client never starts search
+
+✓ First tap immediately opens IdentityLockDialog
+
+✓ Invoice Number looks identical to before
+
+✓ Invoice Number never receives focus
+
+✓ No caret
+
+✓ No text selection
+
+✓ No keyboard
+
+✓ First tap immediately opens IdentityLockDialog
+
+✓ No React state changes before dialog
+
+✓ Draft invoices remain fully editable
+
+✓ Save validator is never relied upon for normal interaction
+
+Using an existing saved Quotation:
+
+Verify:
+
+✓ Edit screen opens successfully
+
+✓ No React crash
+
+✓ Identity locking still functions
+
+Using a duplicated Invoice:
+
+Document:
+
+✓ Initial displayed number
+
+✓ Final persisted number
+
+✓ Complete ownership chain for numbering
+
+
+---
+
+ACCEPTANCE CRITERIA
+
+This task is complete only when:
+
+A fresh audit has been performed instead of relying on previous reports.
+
+Invoice Client interaction is intercepted before any selector logic executes.
+
+Invoice Number is completely non-focusable while retaining its current visual design.
+
+Both identity fields open the same unified Identity Fields Locked dialog.
+
+No temporary editing, focus, keyboard, caret, dropdown, or state mutation occurs before interception.
+
+Quotation Edit mode opens without crashing and the actual root cause is documented.
+
+The Invoice duplicate numbering lifecycle is fully documented from duplicate action through persistence.
+
+bun run audit:load passes.
+
+bun run typecheck passes.
+
+The implementation report is written to docs/EXECUTION/implementation/invoice-edit-law-phase-2-runtime.md.
