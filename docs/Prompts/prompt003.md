@@ -1,537 +1,224 @@
-[Jason] Speaking:
 
-Invoice Edit Law UX Refinement — Phase 2 + Quotation Edit Regression Fix
+
+---
+
+Phase 2.2 — Remove Generic Panel & Restore CSR UX Exactly
 
 You are working on the BIGDROPS business platform.
 
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel. Runtime: Bun only. Never use npm, yarn, or pnpm.
 
-Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
-
-
----
-
-====================================================================
-
-CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-
-====================================================================
+==================================================================== CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 
 OpenCode has full repository access.
 
-Read immediately:
+Read AGENTS.md before touching any code.
 
-AGENTS.md
+Load every relevant skill from docs/PROJECTSKILLINDEX.md, especially:
 
-docs/STANDARD/document-transformation-standard.md
+using-superpowers
 
-docs/EXECUTION/audits/2026-07-02-transformation-standard-baseline.md
-
-docs/PROJECTSKILLINDEX.md
-
-
-Load only the relevant skills from docs/PROJECTSKILLINDEX.md:
-
-typescript-advanced-types
-
-shadcn
+frontend-design
 
 Karpathy
 
+typescript-advanced-types
 
-Do not load unrelated skills.
+pdf-rendering-correctness
 
-====================================================================
 
-REPORT
+Follow the Report Protocol in AGENTS.md exactly. Do not invent your own report format.
 
-Create:
+==================================================================== OBJECTIVE
 
-docs/EXECUTION/implementation/invoice-edit-law-phase-2.md
+The previous implementation misunderstood the architecture.
 
-Include:
+The shared PDF Customization Engine is headless.
 
-Executive Summary
+It provides:
 
-Quotation Regression Investigation
+state
 
-Invoice Runtime Investigation
+persistence
 
-UX Improvements
+resolver
 
-Files Modified
+policy
 
-Verification
+capabilities
 
-Numbering Investigation
 
-Behaviour Preserved
+It does NOT own UI.
 
+Waybill should use the same UI/UX pattern already proven in CSR.
 
-Do not overwrite previous reports.
+The generic PdfCustomizationPanel is no longer part of the architecture.
 
+==================================================================== CHANGE 1 — DELETE THE GENERIC PANEL
 
----
+Delete:
 
-OBJECTIVE
+src/components/pdf-customization/PdfCustomizationPanel.tsx
 
-This task has two goals.
+Remove every import and every reference.
 
-Goal 1
+It must no longer exist anywhere in the project.
 
-Fix the regression introduced during Quotation Edit Law Phase 1.
+The engine remains.
 
-Goal 2
+Only the generic UI is removed.
 
-Refine the existing Invoice Edit Law implementation.
+==================================================================== CHANGE 2 — COPY THE CSR CUSTOMIZATION UX
 
-Law 1 is already implemented functionally.
+Study the CSR implementation first.
 
-This task improves the interaction experience, not the business rules.
+Use CSR as the visual and interaction standard.
 
-The goal is to make identity fields behave like genuinely locked controls instead of editable controls that reject interaction later.
+Replicate its customization experience inside Waybill's existing DocumentSheet.
 
+This means using the same UI components and interaction model, including:
 
----
+switches
 
-PART A — CRITICAL PRECONDITION
+dropdowns
 
-Fix Quotation Edit Regression
+handwriting font chips
 
-Before beginning any Invoice work, investigate and eliminate the Quotation Edit crash.
+colour swatches
 
-Observed Runtime Behaviour
+live colour preview
 
-Opening an existing quotation in Edit mode immediately crashes.
+layout
 
-Runtime shows:
+spacing
 
-> Minified React error #310
+section organization
 
+behaviour
 
 
-This regression appeared after the Quotation Edit Law implementation.
+Do not redesign it.
 
+Do not simplify it.
 
----
+Do not invent a different UX.
 
-Investigation
+Waybill should feel like CSR adapted for Waybill's three supported customization sockets.
 
-Trace the complete execution path.
+==================================================================== CHANGE 3 — WAYBILL SUPPORTS ONLY THREE CUSTOMIZATIONS
 
-QuotationFormPage
-        ↓
-SharedDocumentForm
-        ↓
-IdentityLockDialog state
-        ↓
-guardedUpdateQuotation
-        ↓
-React render cycle
+Keep only:
 
-Determine the actual root cause.
+Document Font
 
-Inspect, where relevant:
+Ink Font
 
-hook ordering
+Ink Colour
 
-conditional hook execution
 
-invalid hook usage
+No Accent Colour.
 
-state initialization
+No extra controls.
 
-callback dependency loops
+No new concepts.
 
-infinite render/update loops
+Only the existing CSR experience mapped onto Waybill.
 
-SharedDocumentForm integration
+==================================================================== CHANGE 4 — FIX THE ENGINE WIRING
 
-IdentityLockDialog integration
+Current behaviour is incorrect.
 
-React StrictMode compatibility
+Changing fonts or colours updates the UI but the generated PDF still uses defaults.
 
-
-Do not guess.
-
-Do not rewrite the implementation.
-
-Identify the precise cause before making changes.
-
-
----
-
-Constraints
-
-Preserve all Quotation Edit Law behaviour.
-
-Do not modify:
-
-Duplicate Law
-
-Identity immutability rules
-
-Save validation
-
-Domain enforcement
-
-Number generation
-
-Prefix engine
-
-Calculations
-
-PDF generation
-
-Audit infrastructure
-
-
-Only remove the runtime regression.
-
-
----
-
-Required Verification
-
-Confirm:
-
-Existing quotations open normally in Edit mode.
-
-Draft quotations still open normally.
-
-Identity fields remain locked.
-
-IdentityLockDialog still appears.
-
-No React runtime errors occur.
-
-No behaviour outside the crash changes.
-
-
-Document:
-
-root cause
-
-fix
-
-affected files
-
-
-
----
-
-PART B — Invoice Identity Lock UX
-
-Implement the following behaviour for saved invoices only.
-
-Draft invoices must remain completely editable.
-
-
----
-
-Client Field
-
-The Client field should be visually identical to its editable appearance while behaving as a locked control.
-
-The very first mouse click or touch must immediately open the IdentityLockDialog.
-
-The following must never occur:
-
-client selector opening
-
-dropdown rendering
-
-client search starting
-
-focus entering selector
-
-React form state mutation
-
-dirty state creation
-
-temporary value changes
-
-
-The selector must not begin opening before interception.
-
-
----
-
-Invoice Number Field
-
-The Invoice Number field should retain the appearance of a normal input.
-
-However it must behave as a locked display control.
-
-The very first click/tap must immediately open IdentityLockDialog.
-
-The following must never happen:
-
-focus
-
-keyboard
-
-caret
-
-text selection
-
-typing
-
-delete
-
-paste
-
-temporary mutation
-
-dirty state
-
-
-The field should never enter an editable state before interception.
-
-
----
-
-PART C — Unified Identity Message
-
-Replace field-specific messaging.
-
-Use one standard Edit Law message for every locked identity field.
-
-Title:
-
-Identity Fields Locked
-
-Body:
-
-> Client and Invoice Number cannot be changed after an invoice has been saved.
-
-To use a different client or invoice number, duplicate this invoice to create a new draft while keeping your current work.
-
-
-
-Both locked fields must display this identical dialog.
-
-Do not maintain separate wording for Client and Invoice Number.
-
-
----
-
-PART D — Runtime Numbering Investigation (Documentation Only)
-
-Investigate the observed duplicate numbering behaviour.
-
-Observed runtime sequence:
-
-Invoice INV59 duplicated
-
-Duplicate initially displays INV59
-
-After Save the new invoice becomes INV60
-
-
-Determine the actual owner of invoice number generation.
-
-Trace:
-
-Duplicate action
-        ↓
-duplicateInvoice(...)
-        ↓
-InvoiceFormPage
-        ↓
-Displayed invoice_number
-        ↓
-useInvoiceSave
-        ↓
-Invoice creation
-        ↓
-Prefix Engine
-        ↓
-Persisted invoice_number
-
-Document:
-
-where the duplicate initially receives its invoice number
-
-whether the displayed number is copied, generated, hydrated, or cached
-
-where the persisted number is generated
-
-whether the Prefix Engine intentionally replaces the displayed value
-
-whether the observed behaviour is expected or an actual defect
-
-
-Do not modify numbering behaviour unless a genuine defect is conclusively identified.
-
-This section is investigation only.
-
-
----
-
-STRICT NON-REGRESSION
-
-Do not modify:
-
-Duplicate Law
-
-Revert Law
-
-Conversion
-
-Audit Trail
-
-Prefix Engine
-
-Number generation algorithm
-
-Database schema
-
-Financial calculations
-
-Tax logic
-
-Pricing
-
-Workflow rules
-
-Routing
-
-PDF generation
-
-Document layouts
-
-
-Do not redesign forms.
-
-Do not introduce architectural refactors.
-
-Do not change any business behaviour outside the requested UX refinements and quotation crash fix.
-
-
----
-
-TARGET COMPONENTS / FILES
-
-Investigate and modify only where necessary.
-
-Expected areas include:
-
-src/pages/InvoiceFormPage.tsx
-
-src/pages/QuotationFormPage.tsx
-
-src/components/document/SharedDocumentForm.tsx
-
-src/components/document/FormHeader.tsx
-
-src/components/document/IdentityLockDialog.tsx
-
-
-Avoid expanding the scope unless the investigation proves another file is directly responsible.
-
-
----
-
-REQUIRED VERIFICATION
-
-Run:
-
-bun run audit:load
-
-bun run typecheck
-
-git status
-
-
-Do NOT run:
-
-bun run build
-
-
-(Build execution is permanently prohibited by project policy.)
-
-
----
-
-MANUAL VERIFICATION
-
-Invoice
+Trace the complete data flow.
 
 Verify:
 
-Client appears normal but never opens the selector.
+DocumentSheet UI
 
-Invoice Number appears normal but never receives focus.
+↓
 
-First tap immediately opens IdentityLockDialog.
+usePdfCustomization()
 
-No keyboard appears.
+↓
 
-No dropdown appears.
+ResolvedPdfCustomization
 
-No caret appears.
+↓
 
-No text selection occurs.
+bridgeToDesignPreset()
 
-No dirty state is created.
+↓
 
-No React state mutation occurs.
+WaybillPDF
 
-Draft invoices remain fully editable.
+↓
 
-Save-time validation remains defence-in-depth only.
+Template Components
+
+↓
+
+React PDF rendering
+
+Determine exactly where the resolved customization stops being propagated.
+
+Do not assume.
+
+Audit every step.
+
+Repair the broken link.
+
+==================================================================== REQUIRED BEHAVIOUR
+
+After this change:
+
+✓ Changing Document Font immediately affects document typography.
+
+✓ Changing Ink Font changes only fillable handwriting.
+
+✓ Changing Ink Colour changes only handwriting colour.
+
+✓ Saving persists settings.
+
+✓ Reload restores settings.
+
+✓ Generated PDF reflects the saved customization.
+
+The rendered PDF must no longer remain on template defaults after customization.
+
+==================================================================== DO NOT
+
+Do not recreate PdfCustomizationPanel.
+
+Do not introduce another reusable customization UI.
+
+Do not redesign CSR.
+
+Do not redesign Waybill.
+
+Do not modify Invoice, Quotation or BOQ.
+
+Do not run bun run build.
+
+==================================================================== VERIFICATION
+
+Run only the verification required by AGENTS.md for active code changes.
+
+Additionally perform manual verification:
+
+Open Waybill customization.
+
+Confirm the UI matches CSR's interaction model.
+
+Change Document Font → PDF changes.
+
+Change Ink Font → handwriting changes.
+
+Change Ink Colour → handwriting colour changes.
+
+Reload page → settings persist.
+
+Generate multiple templates → customization still applies.
 
 
-Quotation
-
-Verify:
-
-Existing quotations open in Edit mode without crashing.
-
-Draft quotations remain editable.
-
-Locked identity fields still behave correctly.
-
-IdentityLockDialog still works.
-
-No React runtime errors occur.
-
-
-
----
-
-ACCEPTANCE CRITERIA
-
-This task is complete only when:
-
-The Quotation Edit crash is fully resolved.
-
-The root cause is documented.
-
-Existing quotations open normally.
-
-Invoice Client immediately opens IdentityLockDialog without opening the selector.
-
-Invoice Number immediately opens IdentityLockDialog without receiving focus.
-
-No keyboard, caret, dropdown, or temporary mutation occurs.
-
-A single unified identity message is used for all locked invoice identity fields.
-
-Save-time validation remains a safety net rather than the primary enforcement.
-
-No business behaviour outside Edit Law changes.
-
-The duplicate numbering flow is fully documented without altering Prefix Engine behaviour unless a verified defect exists.
-
-bun run audit:load passes.
-
-bun run typecheck passes.
-
-git status confirms only the intended files changed.
-
-An implementation report is written to:
-
-
-docs/EXECUTION/implementation/invoice-edit-law-phase-2.md
+If the PDF still renders defaults, continue tracing until the broken propagation path is identified and fixed. The task is not complete until the customization engine actually affects the rendered PDF.
