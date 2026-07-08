@@ -66,7 +66,18 @@ export default function ViewWaybill() {
   })
 
   // Engine: customization state + persistence
-  const { update: updateCustomization, ...customization } = usePdfCustomization('waybill', WAYBILL_CAPABILITIES, WAYBILL_TEMPLATE_DEFAULTS)
+  const {
+    customization,
+    setDocumentFont,
+    setInkFont,
+    setInkColour,
+    reset: resetCustomization,
+  } = usePdfCustomization({
+    documentFamily: 'waybill',
+    capabilities: WAYBILL_CAPABILITIES,
+    policy: WAYBILL_POLICY,
+    templateDefaults: WAYBILL_TEMPLATE_DEFAULTS,
+  })
   // Bridge: ResolvedPdfCustomization → PdfDesignPreset for template consumption
   const basePreset = getPdfDesignPreset('waybill')
   const designPreset = bridgeToDesignPreset(basePreset, customization)
@@ -80,9 +91,10 @@ export default function ViewWaybill() {
     const oldColor = window.localStorage.getItem('waybill_custom_color')
     if (!oldFont && !oldColor) return
     const migrated: PdfCustomizationSettings = {
+      version: 1,
       documentFont: 'Inter',
-      handwritingFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Patrick Hand',
-      handwritingColor: oldColor && oldColor !== 'auto' ? oldColor : '#0f172a',
+      inkFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Patrick Hand',
+      inkColour: oldColor && oldColor !== 'auto' ? oldColor : '#0f172a',
     }
     window.localStorage.setItem(newKey, JSON.stringify(migrated))
     window.localStorage.removeItem('waybill_custom_font')
@@ -376,14 +388,6 @@ export default function ViewWaybill() {
                   <WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />
                 </div>
 
-                <PdfCustomizationPanel
-                  capabilities={WAYBILL_CAPABILITIES}
-                  policy={WAYBILL_POLICY}
-                  settings={customization}
-                  templateDefaults={WAYBILL_TEMPLATE_DEFAULTS}
-                  onChange={updateCustomization}
-                />
-
                 <button
                   type="button"
                   className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -417,6 +421,18 @@ export default function ViewWaybill() {
                 </button>
               </div>
             </DocumentSheet>
+
+            <PdfCustomizationPanel
+              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
+              onOpenChange={(open) => { if (!open) ui.closeSheet() }}
+              customization={customization}
+              policy={WAYBILL_POLICY}
+              onAccentColorChange={() => {}}
+              onDocumentFontChange={setDocumentFont}
+              onInkFontChange={setInkFont}
+              onInkColourChange={setInkColour}
+              onReset={resetCustomization}
+            />
 
             <WaybillMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)}

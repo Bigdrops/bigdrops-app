@@ -1,9 +1,9 @@
 import {
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
-import { registerPdfFillableFonts } from '@/lib/pdfFontRegistry'
 
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
+import { registerPdfCustomizationFillableFonts } from '@/domain/pdf/customization/fontRegistry'
 import { safeValidateRenderModel } from '@/domain/waybill/renderContract'
 import { EvergreenTemplateDocument } from './EvergreenTemplate'
 import { MinimalTemplateDocument } from './MinimalTemplate'
@@ -20,7 +20,7 @@ interface WaybillPDFProps {
   template?: WaybillPdfTemplateId
 }
 
-registerPdfFillableFonts()
+registerPdfCustomizationFillableFonts()
 
 export default function WaybillPDF({ model, designPreset, template = 'evergreen' }: WaybillPDFProps) {
   if (!model) return null
