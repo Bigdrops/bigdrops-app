@@ -6,6 +6,7 @@ export const DEFAULT_PREFIXES = {
   quotation: 'QTN',
   project: 'PRJ',
   csr: 'CSR',
+  receipt: 'RCP',
 } as const
 
 export type DocumentPrefixKey = keyof typeof DEFAULT_PREFIXES

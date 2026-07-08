@@ -14,6 +14,8 @@ import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
 import { supabase } from "@/supabase"
 import type { PaymentAttachment } from "@/lib/attachmentTypes"
+import { insertReceipt } from "@/domain/receipt/receiptRepository"
+import { getNextReceiptNumber } from "@/domain/receipt/receiptNumber"
 
 interface SettlementSummary {
   cashReceived: number
@@ -110,6 +112,40 @@ export async function recordInvoicePayment(
       }).catch((err) => {
         console.error('Auto WHT receipt draft failed:', err)
       })
+    }
+
+    // Auto-create payment acknowledgement receipt
+    try {
+      const { data: existingReceipts } = await supabase
+        .from('receipts')
+        .select('receipt_number')
+        .limit(0)
+
+      const receiptNumber = getNextReceiptNumber(existingReceipts || [])
+
+      const { data: invoiceRow } = await supabase
+        .from('invoices')
+        .select('client_id, client_name, invoice_number')
+        .eq('id', input.invoiceId)
+        .single()
+
+      if (invoiceRow) {
+        await insertReceipt({
+          receipt_number: receiptNumber,
+          payment_id: paymentRow.id,
+          invoice_id: input.invoiceId,
+          client_id: invoiceRow.client_id,
+          client_name: invoiceRow.client_name || '',
+          amount: payload.amount,
+          currency_code: 'NGN',
+          payment_date: input.date,
+          payment_method: input.method,
+          payment_ref: input.reference || null,
+          notes: input.notes || null,
+        })
+      }
+    } catch (receiptErr) {
+      console.error('Auto receipt creation failed:', receiptErr)
     }
 
     let uploadResults: PaymentAttachment[] = []

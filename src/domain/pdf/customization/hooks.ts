@@ -84,8 +84,8 @@ export function usePdfCustomization({
   )
 
   const settings = useMemo(
-    () => resolveSettings(capabilities, policy, rawSettings),
-    [capabilities, policy, rawSettings],
+    () => resolveSettings(capabilities, policy, rawSettings, templateDefaults),
+    [capabilities, policy, rawSettings, templateDefaults],
   )
 
   const customization = useMemo(

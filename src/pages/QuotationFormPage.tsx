@@ -48,6 +48,7 @@ import {
   buildCustomFields,
 } from '../components/quotation/quotationFormUtils'
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
+import IdentityLockDialog from '@/components/document/IdentityLockDialog'
 import { useQuotationSave } from '@/hooks/useQuotationSave'
 
 export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' }) {
@@ -62,6 +63,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const [loading, setLoading] = useState(isEdit)
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
+  const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'quotation_number' | null }>({ open: false, field: null })
   const [quotation, setQuotation] = useState<QuotationEditorState>({
     quotation_number: '',
     po_number: '',
@@ -457,18 +459,32 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     setQuotation((current) => ({ ...current, [field]: value }))
   }
 
+  const IDENTITY_FIELDS = ['client_id', 'client_name', 'quotation_number'] as const
+  const guardedUpdateQuotation = useCallback((field: string, value: unknown) => {
+    if (isEdit && IDENTITY_FIELDS.includes(field as typeof IDENTITY_FIELDS[number])) {
+      setIdentityLockDialog({ open: true, field: field === 'client_id' || field === 'client_name' ? 'client' : 'quotation_number' })
+      return
+    }
+    handleInvoiceLikeUpdate(field, value)
+  }, [isEdit])
+
+  const handleLockedFieldClick = useCallback((field: 'client' | 'invoice_number') => {
+    setIdentityLockDialog({ open: true, field: field === 'client' ? 'client' : 'quotation_number' })
+  }, [])
+
   const pageTitle = isEdit ? 'Edit Quotation' : 'New Quotation'
 
   return (
     <Layout title={pageTitle} session={null} immersive>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
         <SharedDocumentForm
+          mode={mode}
           title={pageTitle}
           modeLabel={formatQuotationStatus(quotation.status || 'open')}
           invoice={invoiceLikeQuotation}
           invoiceTitle={quotation.quotation_title || ''}
           setInvoiceTitle={(value: string) => updateQuotation('quotation_title', value)}
-          updateInvoice={handleInvoiceLikeUpdate}
+          updateInvoice={guardedUpdateQuotation}
           items={normalizedItems}
           groups={normalizedGroups}
           customFields={headerFields}
@@ -562,6 +578,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}
+          onLockedFieldClick={isEdit ? handleLockedFieldClick : undefined}
         />
 
         <div className="mx-auto w-full max-w-4xl px-0 pb-6 sm:px-2">
@@ -580,6 +597,15 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
             footerText={settingsData?.footer_text || ''}
           />
         </div>
+
+        {isEdit && (
+          <IdentityLockDialog
+            open={identityLockDialog.open}
+            onOpenChange={(open) => setIdentityLockDialog((prev) => ({ ...prev, open }))}
+            fieldLabel={identityLockDialog.field === 'client' ? 'Client' : 'Quotation Number'}
+            onDuplicate={() => navigate('/quotations/new')}
+          />
+        )}
       </div>
     </Layout>
   )

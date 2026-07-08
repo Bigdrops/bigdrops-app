@@ -19,13 +19,17 @@ import { DEFAULT_CAPABILITIES, DEFAULT_POLICY, FALLBACK_TEMPLATE_DEFAULTS } from
  * Resolve user-saved settings into a fully concrete settings object,
  * applying only values for capabilities that are enabled in both the
  * template capabilities and the document policy.
+ *
+ * When a capability is disabled, the template default is used (not the
+ * fallback default and not the user setting).
  */
 export function resolveSettings(
   templateCapabilities: PdfCustomizationCapabilities,
   policy: PdfCustomizationPolicy,
   userSettings?: PdfCustomizationSettings,
+  templateDefaults?: PdfTemplateDefaults,
 ): ResolvedPdfCustomizationSettings {
-  const defaults = FALLBACK_TEMPLATE_DEFAULTS
+  const defaults = templateDefaults ?? FALLBACK_TEMPLATE_DEFAULTS
   const user: PdfCustomizationSettings = userSettings ?? { version: 1 }
 
   const canUse = (cap: keyof PdfCustomizationCapabilities) =>
@@ -81,7 +85,7 @@ export function resolveFull(
   const caps = templateCapabilities ?? DEFAULT_CAPABILITIES
   const pol = policy ?? DEFAULT_POLICY
 
-  const settings = resolveSettings(caps, pol, userSettings)
+  const settings = resolveSettings(caps, pol, userSettings, defaults)
   const customization = resolvePdfCustomization(defaults, settings)
 
   return { customization, settings }

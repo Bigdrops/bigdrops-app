@@ -80,7 +80,21 @@ export const WAYBILL_TRACKED_FIELDS = [
   'vehicle_plate',
 ]
 
-type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill'
+export const RECEIPT_TRACKED_FIELDS = [
+  'receipt_number',
+  'payment_id',
+  'invoice_id',
+  'client_id',
+  'client_name',
+  'amount',
+  'currency_code',
+  'payment_date',
+  'payment_method',
+  'payment_ref',
+  'notes',
+]
+
+type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'receipt'
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
 
 function pick(obj: Record<string, any> | null | undefined, fields: string[]) {

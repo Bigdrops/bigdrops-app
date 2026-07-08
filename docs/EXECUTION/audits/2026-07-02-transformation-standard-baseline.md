@@ -291,8 +291,8 @@ This is the first authoritative compliance audit against the Document Transforma
 |-----------|----------|-----|-------------|----------|-------|------|-------|--------|
 | EDIT-INV-001 | Critical | Edit | §2.1 | Invoice | Domain | `assertIdentityImmutable.ts:19` | `conversionTrail`/lineage not checked | OPEN |
 | EDIT-INV-002 | Major | Edit | §2.1 | Invoice | Domain | `assertIdentityImmutable.ts:19` | `document_type` not checked | OPEN |
-| EDIT-QTN-001 | Critical | Edit | §2.1 | Quotation | Domain | (absent) | No identity immutability enforcement | OPEN |
-| EDIT-QTN-002 | Critical | Edit | §2.4 | Quotation | UI | (absent) | No `IdentityLockDialog` | OPEN |
+| EDIT-QTN-001 | Critical | Edit | §2.1 | Quotation | Domain | `assertIdentityImmutable.ts` | No identity immutability enforcement | FIXED |
+| EDIT-QTN-002 | Critical | Edit | §2.4 | Quotation | UI | `QuotationFormPage.tsx` | No `IdentityLockDialog` | FIXED |
 | EDIT-CSR-001 | Critical | Edit | §2.1 | CSR | Domain | `csrService.ts:135` | `updateCsr` accepts identity field changes | OPEN |
 | EDIT-CSR-002 | Critical | Edit | §2.4 | CSR | UI | (absent) | No `IdentityLockDialog` | OPEN |
 | EDIT-WAY-001 | Critical | Edit | §2.1 | Waybill | Domain | `waybillMutations.ts:126` | No identity comparison on edit | OPEN |

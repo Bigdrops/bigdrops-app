@@ -20,6 +20,7 @@ import { useDocumentSave } from './useDocumentSave'
 import type { DocumentSaveStrategy } from './useDocumentSave'
 import { toQuotationItem } from '@/components/quotation/quotationFormUtils'
 import { buildCustomFields } from '@/components/quotation/quotationFormUtils'
+import { assertQuotationIdentityImmutable } from '@/domain/quotation/assertIdentityImmutable'
 import {
   canUseOfflineQuotationDrafts,
 } from '@/components/quotation/quotationFormConstants'
@@ -89,7 +90,20 @@ let _savedQuotation: any = null
 
 const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   async validate(input) {
-    const { quotation, items } = input
+    const { quotation, items, isEdit, initialQuotationSnapshot } = input
+
+    if (isEdit) {
+      try {
+        assertQuotationIdentityImmutable(initialQuotationSnapshot as any, quotation as any)
+      } catch (err: any) {
+        const field = err.message?.replace('IDENTITY_MUTATION_DETECTED: ', '') || 'identity field'
+        return {
+          valid: false,
+          error: 'Identity Error',
+          errorDescription: `Cannot change ${field} after creation. Use Duplicate to create a new quotation.`,
+        }
+      }
+    }
 
     if (!quotation?.client_id) {
       return { valid: false, error: 'Validation Error', errorDescription: 'Pick a client before saving' }
