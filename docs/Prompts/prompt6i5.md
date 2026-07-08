@@ -1,231 +1,128 @@
 You are working on the BIGDROPS business platform.
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
 Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
 ====================================================================
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 ====================================================================
+OpenCode has full repository access. Read AGENTS.md immediately.
+It defines project architecture, audit workflow, locked business rules,
+standards, and implementation constraints.
 
-Read AGENTS.md first and follow it completely.
-
-Load the required skills:
+Also load all relevant skills from docs/PROJECTSKILLINDEX.md before
+making changes. This task primarily requires:
+- using-superpowers
 - Karpathy
-- supabase-postgres-best-practices
-
-====================================================================
-CONTEXT
+- typescript-advanced-types
 ====================================================================
 
-Financial Operations Phase 2.1 introduced a Compliance Service/Repository layer.
-
-Phase 2.2 introduced the Reporting Projection Layer.
-
-Phase 1 already persists:
-
-- payments.wht_amount
-- payments.wht_rate
-- payments.wht_type
-
-The remaining manual step in the WHT evidence chain is creating the draft WHT receipt after a payment containing WHT has been recorded.
-
-The business already supports manual WHT receipt creation.
-
-This task only automates that existing manual action.
-
-No UI changes.
-No workflow changes.
-No business rule changes.
-
-====================================================================
-OBJECTIVE
+PHASE 1.5 — ENGINE FOUNDATION AUDIT & RESOLVER TESTS
 ====================================================================
 
-Automatically create a draft WHT receipt after a successful payment recording whenever:
+The PDF Customization Engine foundation was built in Phase 1A (5 new
+files under `src/domain/pdf/customization/` and `src/components/pdf-customization/`).
+Before any document adopts the engine, we must verify its correctness,
+add resolver unit tests, and lock the localStorage key convention.
 
-    wht_amount > 0
-
-The payment flow must remain authoritative.
-
-Receipt creation is best-effort only.
-
-Failure to create a receipt must never fail payment recording.
+This is an audit + test addition phase. Do NOT integrate any document.
+Do NOT modify any existing PDF pipeline, template, or UI.
 
 ====================================================================
-TARGET FILES
+AUDIT TASKS
 ====================================================================
 
-Read:
+1. Inspect the 5 created files and verify architecture compliance:
+   - `src/domain/pdf/customization/types.ts`
+   - `src/domain/pdf/customization/resolver.ts`
+   - `src/domain/pdf/customization/hooks.ts`
+   - `src/domain/pdf/customization/fontRegistry.ts`
+   - `src/components/pdf-customization/PdfCustomizationPanel.tsx`
 
-- src/modules/invoices/services/paymentService.ts
-- src/modules/compliance/services/complianceService.ts
-- src/modules/compliance/repositories/complianceRepository.ts
-- src/domain/compliance/types.ts
-- src/components/compliance/WhtReceiptsPanel.tsx
+   Confirm:
+   - The resolver is a pure function (no React, no storage).
+   - The hook separates storage from resolution.
+   - The font registry wraps existing functions without deleting them.
+   - The UI panel is capability‑driven and policy‑aware, with no hardcoded
+     document‑type logic.
 
-Modify only:
+2. Verify that the resolver STRIPS disabled capabilities.
 
-- src/modules/compliance/services/complianceService.ts
-- src/modules/invoices/services/paymentService.ts
+   Test scenario:
+   - capabilities: `{ accent: false, documentFont: false, inkFont: false, inkColour: true }`
+   - user settings: `{ inkFont: "Patrick Hand", inkColour: "#003399" }`
+   - policy: `{ inkFont: { default: "Patrick Hand", allowed: [...] }, inkColour: { default: "#000000", allowed: [...] } }`
+   - template defaults: `{ accentColor: "#0F172A", documentFont: "Inter", fillable: { font: "Patrick Hand", color: "#000000" } }`
 
-Do not modify:
+   Expected resolved output:
+   - `accentColor` = template default (capability disabled)
+   - `documentFont` = template default (capability disabled)
+   - `fillable.font` = template default (capability enabled but user didn't
+      override inkFont because the user only set inkColour; actually user
+      didn't set inkFont, so policy default is used — but capability for
+      inkFont is disabled in this scenario, so it should fall back to
+      template default)
+   - `fillable.color` = user's chosen colour (capability enabled + user set)
 
-- paymentRepository.ts
-- audit.ts
-- Calculations.ts
-- database migrations
-- SQL views
-- UI components
+   The rule: if a capability is disabled, user settings for that socket
+   are ignored entirely. Only enabled sockets may override template defaults.
 
-====================================================================
-TASK 1
-Compliance Service Automation
-====================================================================
+3. Check localStorage naming convention.
 
-Add:
-
-autoCreateWhtReceiptDraft(...)
-
-Responsibilities:
-
-- accept:
-    paymentId
-    invoiceId
-    whtAmount
-    whtRate
-    whtType
-
-- build the same draft receipt structure currently created manually
-
-- delegate persistence to the existing Compliance Repository
-
-- status must be:
-
-    pending
-
-The function should contain no UI logic.
+   The hook currently creates namespaced storage. Determine the exact
+   key pattern it uses (e.g., `pdf_customization_waybill` or
+   `pdf_customization_logistics`). If it uses per‑document keys, recommend
+   switching to the document‑family pattern locked in the PRD:
+   `pdf_customization_commercial`, `pdf_customization_logistics`, etc.
+   Do NOT change the hook yet — only document the finding and recommend
+   the final convention for Phase 2.
 
 ====================================================================
-TASK 2
-Idempotency
+RESOLVER UNIT TESTS
 ====================================================================
 
-First inspect the existing schema.
+Create `src/tests/critical/pdfCustomizationResolver.test.ts` with
+tests covering the following scenarios:
 
-If a UNIQUE constraint already guarantees one receipt per payment:
+1. Template defaults only → resolved object matches defaults.
+2. Template defaults + user override (enabled capability) → user value wins.
+3. Disabled capability + user setting → setting ignored, template default used.
+4. Invalid font/colour (not in policy.allowed) → fallback to policy default.
+5. Missing version in saved settings → migration path applied (version 0 → version 1).
+6. Empty saved settings (null) → policy defaults used.
+7. Partial saved settings (some fields, others missing) → policy defaults
+   fill the gaps.
 
-- safely treat duplicate insert attempts as a no-op.
-
-Otherwise:
-
-- perform an existence check before inserting.
-
-Do not introduce new migrations.
-
-Duplicate receipt creation must never throw into the payment pipeline.
-
-====================================================================
-TASK 3
-Hook into Payment Flow
-====================================================================
-
-After all existing payment work completes successfully:
-
-- payment insert
-- audit recording
-- invoice status synchronization
-
-trigger:
-
-autoCreateWhtReceiptDraft()
-
-ONLY when:
-
-wht_amount > 0
-
-The automation must be:
-
-- fire-and-forget
-- non-blocking
-
-Never await it.
-
-Never delay payment completion.
-
-If automation fails:
-
-- log the error
-- preserve existing payment success
+All tests must call `resolvePdfCustomization()` directly — no React,
+no hooks, no storage. Use hardcoded capability/policy/defaults objects.
 
 ====================================================================
-PRESERVE EXISTING BEHAVIOUR
-====================================================================
-
-Do not change:
-
-- payment validation
-- payment UI
-- loading states
-- audit behaviour
-- invoice status synchronization
-- manual WHT receipt creation
-- Calculation Engine
-- Financial State
-
-====================================================================
-CONSTRAINTS
-====================================================================
-
-Keep changes minimal.
-
-Do not introduce new abstractions.
-
-Reuse the Compliance Service and Repository added during Phase 2.1.
-
-====================================================================
-REQUIRED VERIFICATION
+VERIFICATION
 ====================================================================
 
 Run:
+  bun run typecheck
+  git status
 
-- bun run audit:load
-- bun run typecheck
-- git status
+DO NOT run:
+  bun run build
 
-Do NOT run:
-
-- bun run build
-
-Manual verification:
-
-1. Record payment with WHT.
-   Draft receipt should automatically appear.
-
-2. Record payment without WHT.
-   No receipt should be created.
-
-3. Attempt duplicate automation.
-   Confirm idempotent behaviour.
-
-4. Confirm manual receipt creation still behaves exactly as before.
+Only report files actually created or modified. The only new file
+should be the test file. If any existing pipeline file is touched,
+treat the task as failed.
 
 ====================================================================
-OUTPUT
+DO NOT
 ====================================================================
 
-Save:
-
-docs/Reports/FinancialOperations/phase-2-3-wht-auto-receipt-report.md
-
-Include:
-
-- Summary
-- Files modified
-- Idempotency strategy
-- Verification
-- Deferred work
+- Integrate any document family (Waybill, CSR, Invoice, Quotation).
+- Modify existing PDF templates, adapters, renderers, or previews.
+- Change the hook's localStorage key pattern (only document the finding).
+- Run `bun run build`.
+- Skip the work report.
 
 ====================================================================
-SUCCESS CRITERIA
+REPORT
 ====================================================================
 
-A payment containing WHT automatically creates one pending WHT receipt through the Compliance Service without changing payment behaviour, UI behaviour, audit behaviour, or financial calculations.
+Save a brief work report to `docs/reports/phase-1.5-audit-report.md`
+documenting findings, any corrections made, and test results.
