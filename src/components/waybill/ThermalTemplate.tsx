@@ -62,14 +62,14 @@ function createStyles(preset: PdfDesignPreset) {
       alignItems: 'center',
     },
     brandLogo: {
-      width: 30,
-      height: 30,
+      width: 36,
+      height: 36,
       borderRadius: 4,
       marginBottom: 4,
     },
     brandLogoPlaceholder: {
-      width: 30,
-      height: 30,
+      width: 36,
+      height: 36,
       borderWidth: 0.5,
       borderStyle: 'dashed',
       borderColor: '#666666',

@@ -64,7 +64,10 @@ export async function duplicateWaybillRecord(id: string) {
   const { data: original, error: fetchError } = await supabase.from('waybills').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'Waybill not found')
 
-  const { id: _id, created_at: _ca, updated_at: _ua, waybill_number: _wn, ...rest } = original
+  // ponytail: identity fields cleared per Law 2 — preserve items, routes, vehicle only
+  const { id: _id, created_at: _ca, updated_at: _ua, waybill_number: _wn,
+    client_id: _ci, client_name: _cn, project_id: _pi, invoice_id: _ii,
+    ...rest } = original
 
   const prefix = original.type === 'internal' ? 'AWB-I-' : 'AWB-E-'
   const { data: all } = await supabase.from('waybills').select('waybill_number').like('waybill_number', `${prefix}%`).order('created_at', { ascending: false })

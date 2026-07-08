@@ -42,14 +42,14 @@ function createStyles(preset: PdfDesignPreset) {
       flex: 1,
     },
     brandLogo: {
-      width: 38,
-      height: 38,
+      width: 48,
+      height: 48,
       borderRadius: 4,
       marginBottom: 3,
     },
     brandLogoPlaceholder: {
-      width: 38,
-      height: 38,
+      width: 48,
+      height: 48,
       borderWidth: 0.5,
       borderStyle: 'dashed',
       borderColor: '#94a3b8',

@@ -37,13 +37,13 @@ function createStyles(preset: PdfDesignPreset) {
       backgroundColor: '#f4efe6',
     },
     logoImg: {
-      width: 40,
-      height: 40,
+      width: 50,
+      height: 50,
       backgroundColor: '#ffffff',
     },
     logoPlaceholder: {
-      width: 40,
-      height: 40,
+      width: 50,
+      height: 50,
       borderWidth: 0.5,
       borderStyle: 'dashed',
       borderColor: '#bda98f',

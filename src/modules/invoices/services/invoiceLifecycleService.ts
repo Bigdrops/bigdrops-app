@@ -211,6 +211,9 @@ export async function duplicateInvoice({
     // Keep empty object if parse fails
   }
 
+  // ponytail: clear lineage — Law 2 requires no trace of source document
+  delete parsedCustomFields.conversionTrail
+
   const vatRate = parsedCustomFields?.calculationInputs?.vatPercent 
     ?? parsedCustomFields?.calculationInputs?.vatRate
     ?? parsedCustomFields?.vatPercent
@@ -242,6 +245,7 @@ export async function duplicateInvoice({
       total: 0,
       install_rate_total: 0,
       amount_in_words: "",
+      custom_fields: JSON.stringify(parsedCustomFields),
     },
     prefillItems: items.map((item) => {
       const clonedItem = JSON.parse(JSON.stringify(item))

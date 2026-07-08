@@ -66,8 +66,8 @@ function createStyles(preset: PdfDesignPreset) {
       color: '#ffffff',
     },
     brandLogo: {
-      width: 36,
-      height: 36,
+      width: 46,
+      height: 46,
       borderRadius: 8,
       flexShrink: 0,
       backgroundColor: '#ffffff',
