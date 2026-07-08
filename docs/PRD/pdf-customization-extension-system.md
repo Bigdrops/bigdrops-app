@@ -55,7 +55,13 @@ Create one shared **PDF Customization Engine** that every document plugs into. T
 │
 ▼
 ┌─────────────────────────────────────────────────────────┐
-│              ResolvedPdfCustomization                   │
+│                    Font Registry                        │
+│      (registers fonts based on resolved theme)          │
+└─────────────────────────────────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────┐
+│               PdfCustomizationTheme                     │
 └─────────────────────────────────────────────────────────┘
 │
 ▼
@@ -101,10 +107,10 @@ Document Font is the base typography for the entire PDF. If Ink Font is disabled
 | Configuration | Non-fillable text | Fillable text |
 |---------------|-------------------|---------------|
 | No customization | Template default font, default colour | Template default font, default colour |
-| Document Font only | Document Font (e.g., Poppins) | Document Font (Poppins), default colour |
-| Document Font + Ink Font | Document Font (Poppins) | Ink Font (Patrick Hand), default colour |
-| Document Font + Ink Colour | Document Font (Poppins) | Document Font (Poppins), Ink Colour (blue) |
-| Document Font + Ink Font + Ink Colour | Document Font (Poppins) | Ink Font (Patrick Hand), Ink Colour (blue) |
+| Document Font only | Document Font | Document Font, default colour |
+| Document Font + Ink Font | Document Font | Ink Font, default colour |
+| Document Font + Ink Colour | Document Font | Document Font, Ink Colour |
+| Document Font + Ink Font + Ink Colour | Document Font | Ink Font, Ink Colour |
 
 This inheritance is **mandatory**.
 
@@ -130,8 +136,8 @@ Capabilities almost never change once a document type is established.
 Policy
 
 ```typescript
-export type PdfFontId = 'Inter' | 'Helvetica' | 'Roboto' | 'Poppins' | 'Patrick Hand' | 'Caveat' | 'Kalam';
-export type PdfColourId = '#000000' | '#1A1A1A' | '#003399' | '#006400' | '#800000' | '#4B0082';
+export type PdfFontId = string;
+export type PdfColourId = string;
 
 export interface PdfCustomizationPolicy {
   accent?: { default: PdfColourId; allowed: PdfColourId[] };
@@ -140,6 +146,8 @@ export interface PdfCustomizationPolicy {
   inkColour?: { default: PdfColourId; allowed: PdfColourId[] };
 }
 ```
+
+The policy is the whitelist. New fonts and colours are added to the policy, not the type system. This makes future custom fonts or uploaded fonts possible without changing the engine.
 
 Policies change frequently — new colours are added, fonts are updated, defaults are refined. Keeping them separate from capabilities prevents breaking changes.
 
@@ -191,11 +199,11 @@ Every PDF template MUST export a PdfTemplateDefaults object. It is mandatory —
 
 ```typescript
 export interface PdfTemplateDefaults {
-  accentColor: string;
-  documentFont: string;
+  accentColor: PdfColourId;
+  documentFont: PdfFontId;
   fillable: {
-    font: string;
-    color: string;
+    font: PdfFontId;
+    color: PdfColourId;
   };
 }
 ```
@@ -215,27 +223,64 @@ const WaybillTemplateDefaults: PdfTemplateDefaults = {
 
 ---
 
-9. Resolver (Pure Function)
+9. PdfCustomizationTheme (Fully Resolved, No Nullable Fields)
 
-The resolver transforms template defaults, saved settings, policy, and capabilities into a ResolvedPdfCustomization object. It is a pure function — same inputs produce identical output. No side effects, no storage access, no font registration, no UI.
+The theme object contains only required fields. Every property is already fully resolved. Templates never handle undefined, null, or fallback logic.
 
 ```typescript
-export interface ResolvedPdfCustomization {
-  accentColor: string;
-  documentFont: string;
+export interface PdfCustomizationTheme {
+  accentColor: PdfColourId;
+  documentFont: PdfFontId;
   fillable: {
-    font: string;
-    color: string;
+    font: PdfFontId;
+    color: PdfColourId;
+  };
+  metadata: {
+    family: string;
+    version: number;
   };
 }
+```
 
+The metadata field is for debugging and future migrations. Templates MUST ignore it for rendering.
+
+---
+
+10. Resolver (Pure Function)
+
+The resolver transforms template defaults, saved settings, policy, and capabilities into a PdfCustomizationTheme object. It is a pure function — same inputs produce identical output.
+
+```typescript
 function resolvePdfCustomization(
   templateDefaults: PdfTemplateDefaults,
   savedSettings: PdfCustomizationSettings | null,
   capabilities: PdfCustomizationCapabilities,
   policy: PdfCustomizationPolicy,
-): ResolvedPdfCustomization;
+): PdfCustomizationTheme;
 ```
+
+Resolver Purity Law
+
+The resolver MUST NOT:
+
+· access storage (localStorage, sessionStorage, etc.)
+· register fonts
+· mutate state
+· log production errors
+· perform rendering
+· know about UI components (hex inputs, swatches, React, hooks, etc.)
+· access the DOM
+
+The resolver receives:
+
+· Template Defaults (mandatory)
+· Capabilities (what's supported)
+· Policy (allowed values + defaults)
+· Saved Settings (user choices)
+
+It produces:
+
+· PdfCustomizationTheme — fully resolved, all fields required, no fallbacks needed by templates.
 
 Resolver Logic
 
@@ -247,58 +292,98 @@ For each socket:
    · If valid → use it.
    · If invalid → use the policy default and log a development warning (never silently fall back to a different value).
 
-Resolver Purity Law
-
-The resolver MUST NOT:
-
-· access storage
-· register fonts
-· mutate state
-· log production errors
-· perform rendering
-
-Templates never call resolvePdfCustomization themselves. The engine calls it, and the template receives the resolved object as a prop.
+Templates never call resolvePdfCustomization themselves. The engine calls it, and the template receives the theme object as a prop.
 
 ---
 
-10. Saved Settings (Versioned)
+11. Font Registry Layer
 
-Settings are versioned to support future migrations without guesswork.
+Font registration is a separate layer between the Resolver and the Renderer.
 
-```typescript
-export interface PdfCustomizationSettings {
-  version: 1;
-  accentColor?: string;
-  documentFont?: string;
-  inkFont?: string;
-  inkColour?: string;
-}
+```
+Resolver
+    ↓
+PdfCustomizationTheme
+    ↓
+Font Registry  ← registers fonts based on resolved theme
+    ↓
+Renderer
 ```
 
-When v2 arrives, the engine's migration layer transforms v1 → v2 without losing user preferences.
+Font Registry Responsibilities
+
+· Register Google Fonts (via @font-face or equivalent)
+· Register embedded fonts
+· Register licensed fonts
+· Support future custom uploaded fonts
+
+The resolver must not know that fonts require registration. The engine handles font registration based on the resolved theme.
+
+Font Registration Timing (Strict Sequence)
+
+```
+Application loads
+       ↓
+Customization loaded (localStorage → saved settings)
+       ↓
+Policy loaded
+       ↓
+Theme resolved (pure function)
+       ↓
+Fonts registered (Font Registry layer)
+       ↓
+PDF rendered
+```
+
+Never: render → register → hope it works.
+
+Font Registration Rule
+
+Font registration is owned entirely by the shared engine.
+
+Templates MUST NOT register fonts.
+
+Templates simply receive the resolved customization and render using it.
 
 ---
 
-11. Rendering Law (Mandatory)
+12. Rendering Law (Mandatory)
 
 This is a project law, not a guideline.
 
-Templates MAY consume ResolvedPdfCustomization.
+Templates MAY ONLY consume PdfCustomizationTheme.
+
 Templates MAY NOT:
 
+· read localStorage
 · inspect saved settings
-· inspect localStorage
 · inspect switches
 · inspect capabilities
-· compute fallback values
+· inspect policy
 · perform validation
+· compute fallback values (??, ||, ?: for customization values)
 · resolve defaults
+· register fonts
+· perform capability checks
 
-All customization decisions occur before rendering.
+All customization decisions occur before rendering. Every property in PdfCustomizationTheme is already fully resolved.
+
+Templates can safely do:
+
+```tsx
+const theme = usePdfCustomization(documentFamily, capabilities, policy);
+// theme.accentColor is always defined, never null, never optional.
+```
+
+Templates must never do:
+
+```tsx
+const accent = savedSettings?.accentColor ?? '#000000'; // FORBIDDEN
+```
 
 ---
 
-12. Engine Boundary
+13. Engine Boundary
 
 Engine Owns Templates Own
 Persistence Rendering
@@ -310,54 +395,44 @@ Resolver —
 UI —
 Preview —
 Storage versioning —
+Capability filtering —
 
 ---
 
-13. Shared Engine Responsibilities
+14. Shared Engine Responsibilities
 
 The shared engine exclusively owns:
 
 · Persistence — standardised storage key per document family
 · Settings versioning — version: 1 in saved settings
 · Validation — only values within policy.allowed are stored; invalid values trigger a development warning and fall back to the policy default
-· Resolution — pure function producing ResolvedPdfCustomization
+· Resolution — pure function producing PdfCustomizationTheme
 · UI — a single PdfCustomizationPanel component that receives capabilities and renders only allowed controls
-· Font registration — the engine registers fillable fonts based on the resolved customization
+· Font registration — the engine registers all fonts based on the resolved theme
 · Capability filtering — the UI automatically hides unsupported sockets
+· Font Registry — separate layer between resolver and renderer
 
 ---
 
-14. Font Registration Rule
+15. Saved Settings (Versioned)
 
-Font registration is owned entirely by the shared engine.
+Settings are versioned to support future migrations without guesswork.
 
-Templates MUST NOT register fonts.
-
-Templates simply receive the resolved customization and render using it.
-
-Font Registration Timing
-
-Font registration must follow a strict sequence:
-
-```
-Application loads
-       ↓
-Customization loaded (localStorage → saved settings)
-       ↓
-Policy loaded
-       ↓
-Theme resolved (pure function)
-       ↓
-Fonts registered
-       ↓
-PDF rendered
+```typescript
+export interface PdfCustomizationSettings {
+  version: 1;
+  accentColor?: PdfColourId;
+  documentFont?: PdfFontId;
+  inkFont?: PdfFontId;
+  inkColour?: PdfColourId;
+}
 ```
 
-Never: render → register → hope it works.
+When v2 arrives, the engine's migration layer transforms v1 → v2 without losing user preferences.
 
 ---
 
-15. Document Family Registry
+16. Document Family Registry
 
 Instead of scattering raw strings like 'logistics', define them once.
 
@@ -378,7 +453,7 @@ Receipt Receipt pdf_customization_receipt
 
 ---
 
-16. UI
+17. UI
 
 Every document opens exactly the same component:
 
@@ -399,26 +474,6 @@ Colour picker UX: Five colour swatches plus one mirroring the active colour, plu
 
 ---
 
-17. Templates — What They Must Never Read
-
-Templates are rendering components only.
-
-Templates MUST NEVER:
-
-· read localStorage
-· inspect switches
-· inspect capabilities
-· inspect policy
-· perform validation
-· compute fallbacks
-· resolve defaults
-
-Templates MAY consume ONLY:
-
-ResolvedPdfCustomization
-
----
-
 18. Standard Creation Rule
 
 After the first document (Waybill) is fully integrated, publish the standard at docs/STANDARD/pdf-customization-extension-standard.md:
@@ -429,7 +484,7 @@ After the first document (Waybill) is fully integrated, publish the standard at 
 4. Resolver usage
 5. Hook usage: usePdfCustomization(documentFamily, capabilities, policy)
 6. Panel wiring: <PdfCustomizationPanel capabilities={capabilities} policy={policy} />
-7. Font registration: registerPdfFonts(resolvedCustomization)
+7. Font registration: registerPdfFonts(theme)
 8. Persistence key convention via PdfDocumentFamily
 9. Definition of fillable content
 10. Checklist for adding a new document type
@@ -443,7 +498,8 @@ Phase Scope Deliverable
 2 Integrate Waybill + create standard Waybill uses engine; standard published
 3 Migrate CSR CSR uses engine
 4 Migrate Invoice & Quotation Invoice & Quotation use engine
-5 Clean up Remove duplicated components and document-specific persistence keys — only engine + capability/policy declarations remain
+5 Clean up Remove duplicated components and document-specific persistence keys
+6 Final verification Remove legacy customization hooks, deprecated persistence keys, duplicate font registration logic. Verify every supported PDF document consumes only the shared engine.
 
 ---
 
@@ -472,7 +528,7 @@ Adding a new socket requires only:
 
 21. Logo — Never Customizable
 
-Logos belong to branding (company settings), not customization. They are not a socket, not a capability, not part of ResolvedPdfCustomization. Templates read the logo directly from company branding.
+Logos belong to branding (company settings), not customization. They are not a socket, not a capability, not part of PdfCustomizationTheme. Templates read the logo directly from company branding.
 
 ---
 
@@ -482,29 +538,36 @@ Decision Rationale
 Resolver is a pure function Same inputs → same output. No side effects. Trivial to test.
 Four independent sockets Users change ink colour without changing ink font, and vice versa.
 Capabilities separate from Policy Capabilities rarely change; policies change often. Keeps evolution safe.
-fillable object in resolved customization Future properties (opacity, stroke weight) can be added without touching templates.
+fillable object in theme Future properties (opacity, stroke weight) can be added without touching templates.
 Document family persistence Invoice + Quotation share commercial identity. Waybill + CSR share logistics identity.
 Settings versioned v1 → v2 migration becomes deterministic.
 No silent fallbacks Invalid values trigger warnings and fall back to policy defaults — never silently swap to something else.
 Standard created after one document Waybill is the hardest case; the standard will be battle-tested, not theoretical.
 Logo excluded Branding is a company setting, not a per-document customisation option.
 Fillable content explicitly defined Removes ambiguity: if a human would write it with a pen, it's fillable.
-Strongly typed policy values Prevents invalid configuration values and reduces typo-related bugs.
+Extensible types (PdfFontId = string) Policy is the whitelist. New fonts don't require core type changes.
 Engine owns all font registration Prevents fragmented font loading across templates.
+PdfCustomizationTheme has no optional fields Templates never handle undefined or null for customization values.
+Font Registry separate layer Supports Google fonts, embedded fonts, licensed fonts, custom uploaded fonts.
+metadata field in theme Debugging and future migrations — templates ignore it.
+Templates MAY ONLY consume theme Single source of truth for all customization decisions.
+Final cleanup phase in migration Ensures no transitional code remains after migration completes.
 
 ---
 
-23. Summary of Amendments Applied
+23. Summary of Amendments Applied (v1.1)
 
-Amendment Section
-Document Font Inheritance Law §5
-Templates Must Never Read Settings §11, §17
-Resolver Purity Law §9
-Engine Owns All Infrastructure §12, §13
-Strongly Typed Policy Values §6
-Font Registration Rule §14
-Rendering Law §11
-No Behaviour Change All sections preserve existing architecture
+Amendment Source Section
+Extensible PdfFontId and PdfColourId (type = string) Architect §6
+Rename ResolvedPdfCustomization → PdfCustomizationTheme Architect §9
+Strongly type theme with PdfFontId / PdfColourId ChatGPT + Architect §9
+Strengthen Rendering Law ("MAY ONLY") ChatGPT + Architect §12
+Add Phase 6 to Migration Plan ChatGPT + Architect §19
+Resolver must be UI-independent ChatGPT + Architect §10
+Split Font Registry as separate layer Architect §11
+No optional/nullable fields in theme Architect §9
+Add metadata field for debugging Architect §9
+Document Font Inheritance Law Architect §5
 
 ---
 
@@ -513,3 +576,4 @@ This is the final, frozen architecture — ready for implementation.
 ```
 
 ---
+
