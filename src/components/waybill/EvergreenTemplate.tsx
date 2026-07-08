@@ -12,12 +12,13 @@ import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 function createStyles(preset: PdfDesignPreset) {
   const fillableChoice = getEffectiveFillableFont(preset)
   const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor || preset.textColor
   const accent = preset.templateAccentColor || '#1f6e5c'
   const txt = preset.textColor
 
   return StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: preset.bodyFont || 'Helvetica',
       fontSize: 9,
       color: txt,
       padding: 0,
@@ -146,7 +147,7 @@ function createStyles(preset: PdfDesignPreset) {
     infoValue: {
       fontSize: 9,
       fontFamily: fillableBold,
-      color: '#1a3a32',
+      color: fillableColor,
       lineHeight: 1.2,
     },
     twinCards: {
@@ -173,7 +174,7 @@ function createStyles(preset: PdfDesignPreset) {
     cardValue: {
       fontSize: 8.5,
       fontFamily: fillableBold,
-      color: '#1a3a32',
+      color: fillableColor,
       lineHeight: 1.3,
     },
     tickGroup: {
@@ -230,7 +231,7 @@ function createStyles(preset: PdfDesignPreset) {
     blockMain: {
       fontSize: 10,
       fontFamily: fillableBold,
-      color: '#1a3a32',
+      color: fillableColor,
       marginTop: 1,
     },
     blockSub: {
@@ -282,7 +283,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     cell: {
       fontSize: 7.5,
-      color: '#1a2e2a',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     driverRow: {
       flexDirection: 'row',
@@ -305,7 +307,7 @@ function createStyles(preset: PdfDesignPreset) {
     driverValue: {
       fontSize: 8.5,
       fontFamily: fillableBold,
-      color: '#1a3a32',
+      color: fillableColor,
     },
     notesChecklist: {
       flexDirection: 'row',
@@ -330,7 +332,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     notesText: {
       fontSize: 7.5,
-      color: '#1a2e2a',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.3,
     },
     sigRow: {
@@ -371,7 +374,7 @@ function createStyles(preset: PdfDesignPreset) {
       paddingBottom: 2,
       fontSize: 8.5,
       fontFamily: fillableBold,
-      color: '#1a3a32',
+      color: fillableColor,
     },
     sigFieldValueBlank: {
       minHeight: 12,

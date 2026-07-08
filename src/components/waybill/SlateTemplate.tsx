@@ -1,15 +1,18 @@
 import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
-import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getDefaultPdfDesignPreset, getEffectiveFillableFont, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 
 
 function createStyles(preset: PdfDesignPreset) {
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor || preset.textColor
   const txt = preset.textColor
 
   return StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: preset.bodyFont || 'Helvetica',
       fontSize: 9,
       color: txt,
       padding: 0,
@@ -180,8 +183,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     metaValue: {
       fontSize: 9,
-      fontWeight: '600',
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
       borderBottomWidth: 0.5,
       borderBottomColor: '#e0e8e4',
       paddingBottom: 1,
@@ -233,7 +236,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     cell: {
       fontSize: 7.5,
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     driverRow: {
       flexDirection: 'row',
@@ -254,8 +258,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     driverValue: {
       fontSize: 8.5,
-      fontWeight: '600',
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     notesRow: {
       flexDirection: 'row',
@@ -278,7 +282,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     notesText: {
       fontSize: 8,
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.4,
       marginTop: 2,
     },
@@ -370,8 +375,8 @@ function createStyles(preset: PdfDesignPreset) {
       borderBottomColor: '#cbd5d1',
       minHeight: 13,
       fontSize: 8,
-      fontWeight: '500',
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
       paddingVertical: 1,
     },
     footer: {

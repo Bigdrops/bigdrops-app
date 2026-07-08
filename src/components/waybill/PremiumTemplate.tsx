@@ -1,15 +1,18 @@
 import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
-import { getDefaultPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getDefaultPdfDesignPreset, getEffectiveFillableFont, resolvePdfFontFamily, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 
 
 function createStyles(preset: PdfDesignPreset) {
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor || preset.textColor
   const txt = preset.textColor
 
   return StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: preset.bodyFont || 'Helvetica',
       fontSize: 9,
       color: txt,
       padding: 0,
@@ -127,8 +130,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     panelBig: {
       fontSize: 10,
-      fontWeight: 'bold',
-      color: '#2f261d',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.25,
     },
     metaGrid: {
@@ -155,8 +158,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     metaValue: {
       fontSize: 8,
-      fontWeight: 'bold',
-      color: '#2f261d',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.3,
     },
     choiceRow: {
@@ -245,7 +248,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     cell: {
       fontSize: 7.5,
-      color: '#2c241d',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.2,
     },
     driverRow: {
@@ -266,8 +270,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     driverValue: {
       fontSize: 9,
-      fontWeight: 'bold',
-      color: '#2f261d',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     lowerRow: {
       flexDirection: 'row',
@@ -290,7 +294,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     notesText: {
       fontSize: 8,
-      color: '#3c3229',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.4,
     },
     chkItem: {
@@ -343,8 +348,8 @@ function createStyles(preset: PdfDesignPreset) {
       borderBottomColor: '#8d7a65',
       paddingBottom: 1,
       fontSize: 8.5,
-      fontWeight: 'bold',
-      color: '#2f261d',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     sigFieldValueBlank: {
       minHeight: 13,

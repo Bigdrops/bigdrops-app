@@ -429,6 +429,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     <Layout title={pageTitle} hidePageHeader immersive>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-0 sm:px-2">
         <SharedDocumentForm
+          mode={mode}
           title={pageTitle}
           modeLabel={modeLabel}
           invoice={invoice!}

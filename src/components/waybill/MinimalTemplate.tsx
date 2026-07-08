@@ -2,17 +2,22 @@ import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import {
   getDefaultPdfDesignPreset,
+  getEffectiveFillableFont,
+  resolvePdfFontFamily,
   type PdfDesignPreset,
 } from '@/lib/pdfDesignPreset'
 import type { WaybillRenderModel } from '@/domain/waybill/engine/types'
 
 
 function createStyles(preset: PdfDesignPreset) {
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor || preset.textColor
   const txt = preset.textColor
 
   return StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: preset.bodyFont || 'Helvetica',
       fontSize: 9,
       color: txt,
       padding: 0,
@@ -193,7 +198,14 @@ function createStyles(preset: PdfDesignPreset) {
     },
     cell: {
       fontSize: 9,
-      color: '#000000',
+      fontFamily: fillableBold,
+      color: fillableColor,
+    },
+    notesText: {
+      fontSize: 9,
+      fontFamily: fillableBold,
+      color: fillableColor,
+      lineHeight: 1.35,
     },
     notesBox: {
       borderWidth: 0.5,
@@ -202,10 +214,7 @@ function createStyles(preset: PdfDesignPreset) {
       marginBottom: 5,
       minHeight: 34,
     },
-    notesText: {
-      fontSize: 9,
-      lineHeight: 1.35,
-    },
+    
     sigRow: {
       flexDirection: 'row',
       gap: 6,
