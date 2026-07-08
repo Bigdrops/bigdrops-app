@@ -1,184 +1,224 @@
+```text
 You are working on the BIGDROPS business platform.
-
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
 Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
 ====================================================================
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 ====================================================================
 OpenCode has full repository access. Read AGENTS.md immediately.
-Follow AGENTS.md completely, including audit-first workflow, project standards, and skills loading.
+It defines project architecture, audit workflow, locked business rules,
+standards, and implementation constraints.
+
+Also load all relevant skills from docs/PROJECTSKILLINDEX.md before
+making changes. This task primarily requires:
+- using-superpowers
+- Karpathy
+- frontend-design
+- typescript-advanced-types
 ====================================================================
 
-# Objective
+OBJECTIVE
 
-Standardize image attachment selection across all document forms.
+Implement the foundational PDF Customization Engine only. This phase
+builds the architecture. No existing document family may adopt it yet.
+No rendering behaviour may change. No PDF output may change. No existing
+UI may be replaced. This is an architecture extraction phase only.
 
-Currently, the "Photo" picker incorrectly allows users to select non-image files such as PDFs. This results in invalid uploads and inconsistent behavior across Invoice, Quotation, and other document modules.
+--------------------------------------------------------------------
+ENGINE RESPONSIBILITIES
 
-The goal is to create a single reusable image upload validation policy that every document form uses.
+Create the following reusable concepts.
+
+PdfCustomizationCapabilities
+Defines what a document/template supports. Examples include:
+- accent colour
+- document font
+- handwriting font
+- handwriting colour
+The type must be extensible.
+
+------------------------------------------------
+PdfCustomizationPolicy
+Defines which supported capabilities are exposed to users.
+Policies must be declarative. No UI logic.
+
+------------------------------------------------
+PdfTemplateDefaults
+Represents immutable template defaults. These are template-owned
+defaults only. Do not migrate existing templates.
+
+------------------------------------------------
+ResolvedPdfCustomization
+Represents the fully resolved immutable customization object that
+downstream document engines consume. No template should need to
+perform fallback logic.
+
+------------------------------------------------
+resolvePdfCustomization()
+Implement as a pure function.
+
+Inputs:
+- template defaults
+- customization policy
+- user settings
+- capabilities
+
+Output: ResolvedPdfCustomization
+
+No React. No storage. No side effects.
+
+------------------------------------------------
+User Settings
+
+Create a versioned settings model. Include schema versioning from the
+beginning. Use the exact interface defined below (do not invent your own):
+
+```typescript
+export interface PdfCustomizationSettings {
+  version: 1;
+  accentColor?: string;
+  documentFont?: string;
+  inkFont?: string;
+  inkColour?: string;
+}
+```
+
+Do not migrate existing storage keys yet. No existing persistence
+should change.
 
 ---
 
-# Scope
+usePdfCustomization()
 
-Locate every image/photo picker used by:
+Create a reusable hook.
 
-- Invoice
-- Quotation
-- Waybill
-- CSR
-- BOQ
-- RFQ
-- Any shared attachment/image upload component
+Responsibilities:
 
-If multiple implementations exist, consolidate them onto one shared validation helper instead of duplicating MIME checks.
+· load settings
+· save settings
+· invoke resolvePdfCustomization()
+· expose resolved customization
 
-Do not change unrelated attachment systems that intentionally support arbitrary files.
+The hook should support document-family storage names but MUST NOT
+replace existing document usage during this phase.
 
 ---
 
-# Create
+Font Registry
 
-Create a shared utility similar to:
+Create a unified font registration abstraction. This layer will
+eventually replace existing font registration.
+
+During this phase:
+DO NOT modify: Invoice, Quotation, Waybill, CSR
+They must continue using their existing font registration.
+The new abstraction simply exists ready for adoption.
+
+---
+
+Shared UI
+
+Create PdfCustomizationPanel.
+
+Requirements:
+
+· capability-driven
+· policy-driven
+· reusable
+· no document-specific assumptions
+
+It must not be wired into any existing page.
+
+---
+
+FILE STRUCTURE
+
+Create all engine files under a new directory:
+
+src/domain/pdf/customization/
+
+Use the following structure:
+
+src/domain/pdf/customization/
+types.ts                  — PdfCustomizationCapabilities, PdfCustomizationPolicy,
+PdfTemplateDefaults, ResolvedPdfCustomization,
+PdfCustomizationSettings
+resolver.ts               — resolvePdfCustomization() pure function
+hooks.ts                  — usePdfCustomization()
+fontRegistry.ts           — unified font registration abstraction
+
+src/components/pdf-customization/
+PdfCustomizationPanel.tsx — shared UI component
+
+Do NOT create files outside this structure. Keep all engine code co-located.
+
+---
+
+IMPORTANT ARCHITECTURAL RULES
+
+The shared customization engine MUST NOT own:
+
+· render models
+· adapters
+· pagination
+· HTML sanitization
+· PDF generation
+· React-PDF rendering
+· template layout
+· document transformation
+
+Those responsibilities remain permanently inside the existing document
+engines. The only output produced by the engine is:
+
+ResolvedPdfCustomization
+
+Existing document engines will consume that object during future
+migration phases.
+
+---
+
+DO NOT
+
+Do not modify:
+
+· Invoice pipeline
+· Quotation pipeline
+· Waybill pipeline
+· CSR pipeline
+· React-PDF templates
+· Render models
+· Preview systems
+· Adapters
+· Existing persistence keys
+· Existing UI
+· Existing document behaviour
+· Existing rendering behaviour
+
+---
+
+VERIFICATION
+
+Perform only safe verification. Run:
+bun run typecheck
+git status
+
+DO NOT run:
+bun run build
+
+Only report files actually created or modified. Changes must remain
+minimal, isolated, and backward compatible.
+
+---
+
+ACCEPTANCE CRITERIA
+
+· All types, the resolver, the hook, the font registry abstraction,
+  and the shared UI component exist under the specified directories.
+· bun run typecheck passes with zero errors.
+· No existing PDF pipeline, template, adapter, or UI component was
+  modified.
+· The engine can be imported by a future document without requiring
+  immediate migration of existing code.
 
 ```
-src/lib/documentImageUploadPolicy.ts
-```
-
-(or another appropriate shared location following existing project conventions).
-
-The helper should expose:
-
-- supported MIME types
-- validation helper(s)
-- reusable error message(s)
-
-so all document forms behave identically.
-
----
-
-# Allowed image formats
-
-Accept only these MIME types:
-
-- image/jpeg
-- image/png
-- image/webp
-- image/heic
-- image/heif
-- image/avif
-- image/gif
-- image/bmp
-- image/tiff
-
-Reject every other MIME type.
-
-Examples that MUST be rejected include:
-
-- application/pdf
-- application/msword
-- application/vnd.*
-- application/zip
-- text/*
-- audio/*
-- video/*
-- application/octet-stream
-
-Do NOT support RAW camera formats such as:
-
-- .dng
-- .cr2
-- .cr3
-- .nef
-- .arw
-- .orf
-- .rw2
-- .raf
-
-These are intentionally excluded because they are extremely large, inconsistently supported by browsers, and unnecessary for business document attachments.
-
----
-
-# Picker behavior
-
-Where the platform supports MIME filtering (accept attribute, native picker, Capacitor picker, etc.):
-
-Configure the picker so users only see supported image types.
-
-Do not rely solely on the picker.
-
-Always perform validation after selection as well.
-
-Validation must remain the source of truth.
-
----
-
-# Error handling
-
-If an unsupported file is selected:
-
-- Reject only the invalid file(s)
-- Keep valid image selections
-- Show a consistent user-facing error explaining that only supported image formats are allowed.
-
-Do not crash.
-
-Do not silently ignore failures.
-
----
-
-# Reuse
-
-Every document module must use the same helper.
-
-Do not duplicate MIME arrays across the codebase.
-
-The upload policy should become the single source of truth.
-
----
-
-# Documentation
-
-Create or update:
-
-docs/STANDARD/document-image-upload-policy.md
-
-Document:
-
-- supported formats
-- rejected formats
-- rationale
-- requirement that every document image picker reuse the shared policy
-- requirement that picker filtering is convenience only, while validation remains mandatory
-
----
-
-# Constraints
-
-- Preserve existing upload workflows.
-- Do not modify PDF rendering.
-- Do not modify Calculations.ts.
-- Do not modify document save hooks.
-- Do not introduce document-specific behavior.
-- Keep changes minimal and backward compatible.
-
----
-
-# Required Verification
-
-For active code changes:
-
-- Run `bun run typecheck`
-- Run `bun run audit:load`
-- Run `git status`
-
-Do NOT run `bun run build` (4 GB RAM policy).
-
-Confirm:
-
-- PDFs can no longer be selected or uploaded through image pickers.
-- HEIC/HEIF images remain selectable.
-- JPEG, PNG, WebP, AVIF, GIF, BMP, and TIFF remain supported.
-- The shared upload policy is reused by every document image picker touched.
-- No unrelated application behavior changed.
