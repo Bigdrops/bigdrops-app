@@ -19,16 +19,21 @@ import { supabase } from '@/supabase'
 import { buildWaybillCustomFields, mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
-import { cn } from '@/lib/utils'
-import { PenLine, Type } from 'lucide-react'
-import { Switch } from '@/components/ui/switch'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
+import { PdfCustomizationPanel } from '@/components/pdf-customization/PdfCustomizationPanel'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
+import {
+  WAYBILL_CAPABILITIES,
+  WAYBILL_POLICY,
+  WAYBILL_TEMPLATE_DEFAULTS,
+  bridgeToDesignPreset,
+} from '@/domain/pdf/customization/waybill'
+import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 
 import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
@@ -40,17 +45,6 @@ const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
 const WAYBILL_TEMPLATE_KEY = 'waybill_view_template'
-
-const WAYBILL_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
-
-const WAYBILL_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
-  { value: 'Reenie Beanie', label: 'Reenie Beanie' },
-  { value: 'Caveat', label: 'Caveat' },
-  { value: 'Kalam', label: 'Kalam' },
-  { value: 'Patrick Hand', label: 'Patrick Hand' },
-  { value: 'Handlee', label: 'Handlee' },
-  { value: 'Sue Ellen Francisco', label: 'Sue Ellen Francisco' },
-]
 
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
@@ -66,30 +60,36 @@ export default function ViewWaybill() {
   const [waybill, setWaybill] = useState<any>(null)
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
-  const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('waybill'))
   const [template, setTemplate] = useState<'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'>(() => {
     if (typeof window === 'undefined') return 'classic'
     return (window.localStorage.getItem(WAYBILL_TEMPLATE_KEY) as any) || 'classic'
   })
-  const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(() => {
-    if (typeof window === 'undefined') return 'auto'
-    return (window.localStorage.getItem('waybill_custom_font') as any) || 'auto'
-  })
-  const [customColor, setCustomColor] = useState<'auto' | string>(() => {
-    if (typeof window === 'undefined') return 'auto'
-    return window.localStorage.getItem('waybill_custom_color') || 'auto'
-  })
 
-  // Sync designPreset when font/color toggles change
+  // Engine: customization state + persistence
+  const { update: updateCustomization, ...customization } = usePdfCustomization('waybill', WAYBILL_CAPABILITIES, WAYBILL_TEMPLATE_DEFAULTS)
+  // Bridge: ResolvedPdfCustomization → PdfDesignPreset for template consumption
+  const basePreset = getPdfDesignPreset('waybill')
+  const designPreset = bridgeToDesignPreset(basePreset, customization)
+
+  // Migration: read old localStorage keys once and write to engine key
   useEffect(() => {
-    setDesignPreset((prev) => ({
-      ...prev,
-      fillableFont: customFont === 'auto' ? prev.fillableFont : customFont,
-      fillableColor: customColor === 'auto' ? prev.fillableColor : customColor,
-      fillableFontMode: 'custom' as const,
-    }))
+    if (typeof window === 'undefined') return
+    const newKey = 'bigdrops_pdf_customization_waybill'
+    if (window.localStorage.getItem(newKey)) return
+    const oldFont = window.localStorage.getItem('waybill_custom_font')
+    const oldColor = window.localStorage.getItem('waybill_custom_color')
+    if (!oldFont && !oldColor) return
+    const migrated: PdfCustomizationSettings = {
+      documentFont: 'Inter',
+      handwritingFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Patrick Hand',
+      handwritingColor: oldColor && oldColor !== 'auto' ? oldColor : '#0f172a',
+    }
+    window.localStorage.setItem(newKey, JSON.stringify(migrated))
+    window.localStorage.removeItem('waybill_custom_font')
+    window.localStorage.removeItem('waybill_custom_color')
+    window.location.reload()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customFont, customColor])
+  }, [])
 
   // Persist template to localStorage on change
   useEffect(() => {
@@ -371,113 +371,18 @@ export default function ViewWaybill() {
               subtitle="These controls update the saved waybill PDF design preset used by download."
             >
               <div className="space-y-4">
-
                 <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
                   <div className="mb-3 text-sm font-semibold text-bd-text">Template Style</div>
                   <WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />
                 </div>
 
-                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 text-sm font-semibold text-bd-text">PDF Design</div>
-                  <DocumentTemplateDesignOverrides value={designPreset} onChange={setDesignPreset} />
-                </div>
-
-                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      setCustomColor(customColor === 'auto' ? '#374151' : 'auto')
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
-                        Ink Color
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Override the fillable text color with a custom hex value.</p>
-                    </div>
-                    <Switch
-                      checked={customColor !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        setCustomColor(checked ? '#374151' : 'auto')
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customColor !== 'auto' ? (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex gap-2">
-                        {WAYBILL_COLOR_SWATCHES.map((swatch) => {
-                          const active = customColor.toLowerCase() === swatch.toLowerCase()
-                          return (
-                            <button
-                              key={swatch}
-                              type="button"
-                              onClick={() => setCustomColor(swatch)}
-                              className={cn(
-                                'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-bd-text scale-110 ring-2 ring-bd-text/20' : 'border-transparent hover:border-bd-text-muted/40',
-                              )}
-                              style={{ backgroundColor: swatch }}
-                              aria-label={`Color ${swatch}`}
-                            />
-                          )
-                        })}
-                      </div>
-                      <input
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="h-9 w-full rounded-[12px] border border-bd-border bg-bd-surface px-3 font-mono text-xs text-bd-text placeholder:text-bd-text-muted/50 focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg/30"
-                        placeholder="#374151"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="rounded-[24px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      setCustomFont(customFont === 'auto' ? 'Caveat' : 'auto')
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <Type className="h-4 w-4 text-bd-button-primary-bg" />
-                        Handwriting Font
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Swap the handwriting script used for fillable data entries.</p>
-                    </div>
-                    <Switch
-                      checked={customFont !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        setCustomFont(checked ? 'Caveat' : 'auto')
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customFont !== 'auto' ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {WAYBILL_HANDWRITING_FONTS.map((font) => (
-                        <button
-                          key={font.value}
-                          type="button"
-                          onClick={() => setCustomFont(font.value)}
-                          className={cn(
-                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                            customFont === font.value
-                              ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
-                              : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
-                          )}
-                        >
-                          {font.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+                <PdfCustomizationPanel
+                  capabilities={WAYBILL_CAPABILITIES}
+                  policy={WAYBILL_POLICY}
+                  settings={customization}
+                  templateDefaults={WAYBILL_TEMPLATE_DEFAULTS}
+                  onChange={updateCustomization}
+                />
 
                 <button
                   type="button"
@@ -488,10 +393,7 @@ export default function ViewWaybill() {
                     try {
                       if (typeof window !== 'undefined') {
                         window.localStorage.setItem(WAYBILL_TEMPLATE_KEY, template)
-                        window.localStorage.setItem('waybill_custom_font', customFont)
-                        window.localStorage.setItem('waybill_custom_color', customColor)
                       }
-                      setPdfDesignPreset('waybill', designPreset)
 
                       const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
                       const { error } = await supabase.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)

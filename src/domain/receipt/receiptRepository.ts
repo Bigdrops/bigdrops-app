@@ -1,19 +1,7 @@
 import { supabase } from '@/supabase'
 import type { ReceiptRow } from './types'
 
-export interface CreateReceiptInput {
-  receipt_number: string
-  payment_id: string
-  invoice_id: string
-  client_id: string
-  client_name: string
-  amount: number
-  currency_code: string
-  payment_date: string
-  payment_method: string | null
-  payment_ref: string | null
-  notes: string | null
-}
+export type CreateReceiptInput = Omit<ReceiptRow, 'id' | 'status' | 'voided_at' | 'void_reason' | 'created_by' | 'created_at'>
 
 export async function insertReceipt(input: CreateReceiptInput): Promise<ReceiptRow> {
   const { data, error } = await supabase
@@ -48,13 +36,17 @@ export async function fetchReceiptsForInvoice(invoiceId: string): Promise<Receip
   return (data || []) as ReceiptRow[]
 }
 
-export async function updateReceiptNotes(
+export async function voidReceipt(
   receiptId: string,
-  notes: string | null,
+  voidReason: string | null,
 ): Promise<void> {
   const { error } = await supabase
     .from('receipts')
-    .update({ notes })
+    .update({
+      status: 'voided',
+      voided_at: new Date().toISOString(),
+      void_reason: voidReason,
+    })
     .eq('id', receiptId)
 
   if (error) throw error

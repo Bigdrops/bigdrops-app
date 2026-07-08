@@ -452,12 +452,12 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     invoice_title: quotation.quotation_title || '',
   }
 
-  const handleInvoiceLikeUpdate = (field: string, value: unknown) => {
+  const handleInvoiceLikeUpdate = useCallback((field: string, value: unknown) => {
     if (field === 'invoice_number') return updateQuotation('quotation_number', String(value || ''))
     if (field === 'due_date') return updateQuotation('valid_until', String(value || ''))
     if (field === 'invoice_title') return updateQuotation('quotation_title', String(value || ''))
     setQuotation((current) => ({ ...current, [field]: value }))
-  }
+  }, [updateQuotation])
 
   const IDENTITY_FIELDS = ['client_id', 'client_name', 'quotation_number'] as const
   const guardedUpdateQuotation = useCallback((field: string, value: unknown) => {
@@ -466,7 +466,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
       return
     }
     handleInvoiceLikeUpdate(field, value)
-  }, [isEdit])
+  }, [isEdit, handleInvoiceLikeUpdate])
 
   const handleLockedFieldClick = useCallback((field: 'client' | 'invoice_number') => {
     setIdentityLockDialog({ open: true, field: field === 'client' ? 'client' : 'quotation_number' })
