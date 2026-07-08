@@ -1,252 +1,537 @@
+[Jason] Speaking:
+
+Invoice Edit Law UX Refinement — Phase 2 + Quotation Edit Regression Fix
+
 You are working on the BIGDROPS business platform.
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
 
-==================================================
-SKILL LOADING PROTOCOL (MANDATORY — DO NOT SKIP)
-==================================================
-Before writing any code, you MUST:
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
 
-1. Read the project skills index: `docs/PROJECTSKILLINDEX.md`
-2. Load the skills relevant to this task:
-   - `Karpathy` — coding discipline, surgical changes, no scope creep
-   - `using-superpowers` — skill invocation protocol, instruction hierarchy, red flags
-3. If a skill fails to load via your tool, FALL BACK to reading the SKILL.md file directly using the path from the index.
-4. If a SKILL.md file cannot be read by any means, STOP IMMEDIATELY. The task is a FAILED TASK.
-5. Read `AGENTS.md` at the project root before modifying any file.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-==================================================
-REPORTING PROTOCOL (MANDATORY)
-==================================================
-Save a brief work report to `docs/reports/pdf-customization-compatibility-audit.md`
-Include: date, agent name, files touched, what was done, any issues, and a confirmation that no application source files were modified.
 
-==================================================
-TASK: PDF Customization Engine Compatibility Audit (REPORT ONLY)
-==================================================
+---
 
-This is a **zero-code investigation**. Your only deliverables are two
-Markdown files. No application code may be modified, created, refactored,
-moved, or renamed.
+====================================================================
 
-**Do NOT:**
-- Modify application code
-- Create application code
-- Refactor application code
-- Move or rename files
-- Update the PRD
-- Create standards or scaffolding
-- Implement recommendations
-- Stage or commit changes (except the allowed report files)
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 
-If you believe code changes are necessary, document them in the report
-instead of making them.
+====================================================================
 
-==================================================
-REQUIRED OUTPUT
-==================================================
+OpenCode has full repository access.
 
-1. **Main audit report:** `docs/Reports/PDF/pdf-customization-engine-compatibility-audit.md`
-2. **Work report:** `docs/reports/pdf-customization-compatibility-audit.md`
+Read immediately:
 
-No other repository files may be modified.
+AGENTS.md
 
-==================================================
+docs/STANDARD/document-transformation-standard.md
+
+docs/EXECUTION/audits/2026-07-02-transformation-standard-baseline.md
+
+docs/PROJECTSKILLINDEX.md
+
+
+Load only the relevant skills from docs/PROJECTSKILLINDEX.md:
+
+typescript-advanced-types
+
+shadcn
+
+Karpathy
+
+
+Do not load unrelated skills.
+
+====================================================================
+
+REPORT
+
+Create:
+
+docs/EXECUTION/implementation/invoice-edit-law-phase-2.md
+
+Include:
+
+Executive Summary
+
+Quotation Regression Investigation
+
+Invoice Runtime Investigation
+
+UX Improvements
+
+Files Modified
+
+Verification
+
+Numbering Investigation
+
+Behaviour Preserved
+
+
+Do not overwrite previous reports.
+
+
+---
+
 OBJECTIVE
-==================================================
 
-Audit the proposed **Shared PDF Customization Extension System** against
-the current BIGDROPS repository. Determine whether the proposed
-architecture can be integrated safely without conflicting with existing
-PDF engines, rendering pipelines, standards, or shared infrastructure.
+This task has two goals.
 
-Your goal is to discover conflicts — not solve them in code.
+Goal 1
 
-==================================================
-REVIEW THE PRD
-==================================================
+Fix the regression introduced during Quotation Edit Law Phase 1.
 
-Read in full: `docs/PRD/pdf-customization-extension-system.md`
-Treat it as the proposed future architecture.
+Goal 2
 
-==================================================
-REVIEW EXISTING STANDARDS
-==================================================
+Refine the existing Invoice Edit Law implementation.
 
-Inspect every document inside `docs/STANDARD/`. Determine:
-- Standards already satisfied by the PRD
-- Standards duplicated
-- Standards contradicted
-- Standards affected
-- Standards requiring future amendments
+Law 1 is already implemented functionally.
 
-Document every finding.
+This task improves the interaction experience, not the business rules.
 
-==================================================
-AUDIT EVERY PDF ENGINE
-==================================================
+The goal is to make identity fields behave like genuinely locked controls instead of editable controls that reject interaction later.
 
-Review every existing PDF implementation including:
-- Waybill
-- CSR
-- Invoice
-- Quotation
-- Shared PDF renderer
-- Shared PDF utilities
-- Font registration
-- Pagination
-- HTML/RichText processing
-- Preview infrastructure
-- Existing customization systems
-- Existing persistence
-- Existing hooks
 
-Identify what each engine currently owns.
+---
 
-==================================================
-RESPONSIBILITY MAPPING
-==================================================
+PART A — CRITICAL PRECONDITION
 
-For every document determine ownership of:
-- Rendering
-- Pagination
-- Layout
-- HTML processing
-- Render model generation
-- Font registration
-- Customization
-- Persistence
-- Preview
-- Template defaults
-- Fillable rendering
+Fix Quotation Edit Regression
 
-Clearly identify what:
-- Must remain in the document engine
-- Should migrate into the shared customization engine
-- Should remain as shared infrastructure
+Before beginning any Invoice work, investigate and eliminate the Quotation Edit crash.
 
-==================================================
-INTEGRATION ANALYSIS
-==================================================
+Observed Runtime Behaviour
 
-Determine how the proposed customization engine should integrate with
-existing systems. Prefer adapters over rewrites. Document existing
-integration points including:
-- Design presets
-- Render models
-- Template props
-- Preview models
-- Shared utilities
-- Rendering contracts
+Opening an existing quotation in Edit mode immediately crashes.
 
-Recommend adapter layers where appropriate.
+Runtime shows:
 
-==================================================
-FONT REGISTRATION AUDIT
-==================================================
+> Minified React error #310
 
-Audit every existing font registration path. Identify:
-- Registration location
-- Ownership
-- Duplication
-- Missing registration
-- Migration path
 
-Determine whether the proposed shared Font Registry cleanly replaces
-current behaviour.
 
-==================================================
-PERSISTENCE AUDIT
-==================================================
+This regression appeared after the Quotation Edit Law implementation.
 
-Audit every existing customization storage key. For each key document:
-- Owner
-- Structure
-- Purpose
-- Migration target
-- Backward compatibility considerations
 
-==================================================
-COMPATIBILITY MATRIX
-==================================================
+---
 
-Produce a compatibility matrix for every supported PDF document showing:
-- Current architecture
-- Current customization
-- Existing owner
-- Future owner
-- Migration approach
-- Regression risk
-- Complexity
+Investigation
 
-==================================================
-ARCHITECTURAL CONFLICT REPORT
-==================================================
+Trace the complete execution path.
 
-Identify every conflict involving:
-- Rendering
-- Customization
-- Resolver
-- Persistence
-- Font registration
-- Hooks
-- Preview
-- Template defaults
-- Document family storage
-- Existing APIs
+QuotationFormPage
+        ↓
+SharedDocumentForm
+        ↓
+IdentityLockDialog state
+        ↓
+guardedUpdateQuotation
+        ↓
+React render cycle
 
-Classify each conflict as: No conflict, Low, Medium, or High. Explain why.
+Determine the actual root cause.
 
-==================================================
-PRD REVIEW
-==================================================
+Inspect, where relevant:
 
-Critically review the PRD. Identify:
-- Weaknesses
-- Missing considerations
-- Hidden assumptions
-- Missing migration steps
-- Missing extension points
-- Simplification opportunities
+hook ordering
 
-Do NOT modify the PRD. Only document findings.
+conditional hook execution
 
-==================================================
-FINAL REPORT STRUCTURE
-==================================================
+invalid hook usage
 
-The main audit report must follow this structure:
-1. Executive Summary
-2. Standards Review
-3. Existing Engine Analysis
-4. Responsibility Map
-5. Integration Points
-6. Adapter Recommendations
-7. Font Registration Audit
-8. Persistence Audit
-9. Compatibility Matrix
-10. Architectural Conflicts
-11. PRD Review
-12. Implementation Readiness
-13. Recommendations
+state initialization
 
-==================================================
-VERIFICATION
-==================================================
+callback dependency loops
 
-Immediately before beginning:
-- Run `git status` and record the output
+infinite render/update loops
 
-Immediately after completing:
-- Run `git status` again. The only modified or created files must be:
-  `docs/Reports/PDF/pdf-customization-engine-compatibility-audit.md`
-  `docs/reports/pdf-customization-compatibility-audit.md`
-- If any application source file is modified, treat the task as failed.
+SharedDocumentForm integration
 
-==================================================
-DO NOT
-==================================================
-- Do NOT modify application code
-- Do NOT run `bun run dev`
-- Do NOT stage or commit changes beyond the two allowed report files
-- Do NOT implement any recommendations
+IdentityLockDialog integration
+
+React StrictMode compatibility
+
+
+Do not guess.
+
+Do not rewrite the implementation.
+
+Identify the precise cause before making changes.
+
+
+---
+
+Constraints
+
+Preserve all Quotation Edit Law behaviour.
+
+Do not modify:
+
+Duplicate Law
+
+Identity immutability rules
+
+Save validation
+
+Domain enforcement
+
+Number generation
+
+Prefix engine
+
+Calculations
+
+PDF generation
+
+Audit infrastructure
+
+
+Only remove the runtime regression.
+
+
+---
+
+Required Verification
+
+Confirm:
+
+Existing quotations open normally in Edit mode.
+
+Draft quotations still open normally.
+
+Identity fields remain locked.
+
+IdentityLockDialog still appears.
+
+No React runtime errors occur.
+
+No behaviour outside the crash changes.
+
+
+Document:
+
+root cause
+
+fix
+
+affected files
+
+
+
+---
+
+PART B — Invoice Identity Lock UX
+
+Implement the following behaviour for saved invoices only.
+
+Draft invoices must remain completely editable.
+
+
+---
+
+Client Field
+
+The Client field should be visually identical to its editable appearance while behaving as a locked control.
+
+The very first mouse click or touch must immediately open the IdentityLockDialog.
+
+The following must never occur:
+
+client selector opening
+
+dropdown rendering
+
+client search starting
+
+focus entering selector
+
+React form state mutation
+
+dirty state creation
+
+temporary value changes
+
+
+The selector must not begin opening before interception.
+
+
+---
+
+Invoice Number Field
+
+The Invoice Number field should retain the appearance of a normal input.
+
+However it must behave as a locked display control.
+
+The very first click/tap must immediately open IdentityLockDialog.
+
+The following must never happen:
+
+focus
+
+keyboard
+
+caret
+
+text selection
+
+typing
+
+delete
+
+paste
+
+temporary mutation
+
+dirty state
+
+
+The field should never enter an editable state before interception.
+
+
+---
+
+PART C — Unified Identity Message
+
+Replace field-specific messaging.
+
+Use one standard Edit Law message for every locked identity field.
+
+Title:
+
+Identity Fields Locked
+
+Body:
+
+> Client and Invoice Number cannot be changed after an invoice has been saved.
+
+To use a different client or invoice number, duplicate this invoice to create a new draft while keeping your current work.
+
+
+
+Both locked fields must display this identical dialog.
+
+Do not maintain separate wording for Client and Invoice Number.
+
+
+---
+
+PART D — Runtime Numbering Investigation (Documentation Only)
+
+Investigate the observed duplicate numbering behaviour.
+
+Observed runtime sequence:
+
+Invoice INV59 duplicated
+
+Duplicate initially displays INV59
+
+After Save the new invoice becomes INV60
+
+
+Determine the actual owner of invoice number generation.
+
+Trace:
+
+Duplicate action
+        ↓
+duplicateInvoice(...)
+        ↓
+InvoiceFormPage
+        ↓
+Displayed invoice_number
+        ↓
+useInvoiceSave
+        ↓
+Invoice creation
+        ↓
+Prefix Engine
+        ↓
+Persisted invoice_number
+
+Document:
+
+where the duplicate initially receives its invoice number
+
+whether the displayed number is copied, generated, hydrated, or cached
+
+where the persisted number is generated
+
+whether the Prefix Engine intentionally replaces the displayed value
+
+whether the observed behaviour is expected or an actual defect
+
+
+Do not modify numbering behaviour unless a genuine defect is conclusively identified.
+
+This section is investigation only.
+
+
+---
+
+STRICT NON-REGRESSION
+
+Do not modify:
+
+Duplicate Law
+
+Revert Law
+
+Conversion
+
+Audit Trail
+
+Prefix Engine
+
+Number generation algorithm
+
+Database schema
+
+Financial calculations
+
+Tax logic
+
+Pricing
+
+Workflow rules
+
+Routing
+
+PDF generation
+
+Document layouts
+
+
+Do not redesign forms.
+
+Do not introduce architectural refactors.
+
+Do not change any business behaviour outside the requested UX refinements and quotation crash fix.
+
+
+---
+
+TARGET COMPONENTS / FILES
+
+Investigate and modify only where necessary.
+
+Expected areas include:
+
+src/pages/InvoiceFormPage.tsx
+
+src/pages/QuotationFormPage.tsx
+
+src/components/document/SharedDocumentForm.tsx
+
+src/components/document/FormHeader.tsx
+
+src/components/document/IdentityLockDialog.tsx
+
+
+Avoid expanding the scope unless the investigation proves another file is directly responsible.
+
+
+---
+
+REQUIRED VERIFICATION
+
+Run:
+
+bun run audit:load
+
+bun run typecheck
+
+git status
+
+
+Do NOT run:
+
+bun run build
+
+
+(Build execution is permanently prohibited by project policy.)
+
+
+---
+
+MANUAL VERIFICATION
+
+Invoice
+
+Verify:
+
+Client appears normal but never opens the selector.
+
+Invoice Number appears normal but never receives focus.
+
+First tap immediately opens IdentityLockDialog.
+
+No keyboard appears.
+
+No dropdown appears.
+
+No caret appears.
+
+No text selection occurs.
+
+No dirty state is created.
+
+No React state mutation occurs.
+
+Draft invoices remain fully editable.
+
+Save-time validation remains defence-in-depth only.
+
+
+Quotation
+
+Verify:
+
+Existing quotations open in Edit mode without crashing.
+
+Draft quotations remain editable.
+
+Locked identity fields still behave correctly.
+
+IdentityLockDialog still works.
+
+No React runtime errors occur.
+
+
+
+---
+
+ACCEPTANCE CRITERIA
+
+This task is complete only when:
+
+The Quotation Edit crash is fully resolved.
+
+The root cause is documented.
+
+Existing quotations open normally.
+
+Invoice Client immediately opens IdentityLockDialog without opening the selector.
+
+Invoice Number immediately opens IdentityLockDialog without receiving focus.
+
+No keyboard, caret, dropdown, or temporary mutation occurs.
+
+A single unified identity message is used for all locked invoice identity fields.
+
+Save-time validation remains a safety net rather than the primary enforcement.
+
+No business behaviour outside Edit Law changes.
+
+The duplicate numbering flow is fully documented without altering Prefix Engine behaviour unless a verified defect exists.
+
+bun run audit:load passes.
+
+bun run typecheck passes.
+
+git status confirms only the intended files changed.
+
+An implementation report is written to:
+
+
+docs/EXECUTION/implementation/invoice-edit-law-phase-2.md
