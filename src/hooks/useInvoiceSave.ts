@@ -139,10 +139,15 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
         assertIdentityImmutable(initialInvoiceSnapshot, invoice)
       } catch (err: any) {
         const field = err.message?.replace('IDENTITY_MUTATION_DETECTED: ', '') || 'identity'
+        const label = field === 'client_id' ? 'Client'
+          : field === 'invoice_number' ? 'Invoice Number'
+          : field === 'document_type' ? 'Document Type'
+          : field === 'conversionTrail' ? 'Document Lineage'
+          : field
         return {
           valid: false,
           error: 'Identity locked',
-          errorDescription: `${field} cannot be changed after saving. To use a different client or number, please duplicate this document.`,
+          errorDescription: `${label} cannot be changed after saving. To use a different ${label.toLowerCase()}, please duplicate this document.`,
         }
       }
     }

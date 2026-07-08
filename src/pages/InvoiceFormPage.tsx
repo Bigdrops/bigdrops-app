@@ -167,6 +167,9 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     handleClearAll,
   } = useInvoiceEditableState({ mode, prefill, prefillItems, projectPrefill })
 
+  const IDENTITY_FIELDS = ['client_id', 'client_name', 'invoice_number', 'document_type'] as const
+  const updateInvoiceBase = updateInvoice
+
   const refData = useInvoiceReferenceData()
 
   const {
@@ -282,6 +285,14 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
   }, [isCreate, prefill?.custom_fields])
 
   /* ── Edit-mode & create-mode init handled by hydration + reference data hooks ── */
+
+  const updateInvoice = useCallback((field: string, value: any) => {
+    if (isEdit && IDENTITY_FIELDS.includes(field as typeof IDENTITY_FIELDS[number])) {
+      setIdentityLockDialog({ open: true, field: field === 'client_id' ? 'client' : 'invoice_number' })
+      return
+    }
+    updateInvoiceBase(field, value)
+  }, [isEdit, updateInvoiceBase])
 
   const handleImportApply = useCallback((result: any) => {
     invoiceImportAdapter.applyResult({
