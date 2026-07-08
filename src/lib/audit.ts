@@ -81,18 +81,10 @@ export const WAYBILL_TRACKED_FIELDS = [
 ]
 
 export const RECEIPT_TRACKED_FIELDS = [
-  'receipt_number',
-  'payment_id',
-  'invoice_id',
-  'client_id',
-  'client_name',
-  'amount',
-  'currency_code',
-  'payment_date',
-  'payment_method',
-  'payment_ref',
-  'notes',
-]
+  'status',
+  'voided_at',
+  'void_reason',
+] as const
 
 type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'receipt'
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
@@ -465,5 +457,48 @@ export async function recordWaybillStatusChanged(waybillId: string, oldStatus: s
     p_actor_label: actor.label,
     p_source: 'web',
     p_reason: reason ?? null,
+  })
+}
+
+export async function recordReceiptGenerated(
+  receiptId: string,
+  receiptNumber: string,
+  paymentId: string,
+  invoiceId: string,
+  paymentAmount: number,
+  paymentMethod: string,
+) {
+  return recordAuditLog({
+    entityType: 'receipt',
+    recordId: receiptId,
+    entityLabel: receiptNumber,
+    action: 'CREATE',
+    newData: {
+      receipt_number: receiptNumber,
+      payment_id: paymentId,
+      invoice_id: invoiceId,
+      payment_amount: paymentAmount,
+      payment_method: paymentMethod,
+    },
+    trackedFields: ['receipt_number', 'payment_id', 'invoice_id'],
+  })
+}
+
+export async function recordReceiptVoided(
+  receiptId: string,
+  receiptNumber: string,
+  voidReason: string | null,
+  originalPaymentId: string,
+) {
+  return recordAuditLog({
+    entityType: 'receipt',
+    recordId: receiptId,
+    entityLabel: receiptNumber,
+    action: 'UPDATE',
+    newData: {
+      status: 'voided',
+      void_reason: voidReason,
+    },
+    trackedFields: ['status', 'voided_at', 'void_reason'],
   })
 }

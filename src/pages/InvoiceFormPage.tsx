@@ -539,7 +539,6 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
           <IdentityLockDialog
             open={identityLockDialog.open}
             onOpenChange={(open) => setIdentityLockDialog((prev) => ({ ...prev, open }))}
-            fieldLabel={identityLockDialog.field === 'client' ? 'Client' : 'Invoice Number'}
             onDuplicate={handleDuplicateFromEditable}
           />
         )}

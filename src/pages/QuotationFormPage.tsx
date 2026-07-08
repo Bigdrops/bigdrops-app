@@ -177,117 +177,125 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
 
   useEffect(() => {
     const load = async () => {
-      if (isCreate && canUseOfflineQuotationDrafts()) {
-        try {
-          const nextQuotationNumber = await peekNextOfflineQuotationNumber()
-          setQuotation((current) => ({
-            ...current,
-            quotation_number: current.quotation_number || nextQuotationNumber,
-          }))
-        } catch (error) {
-          console.warn('Failed to prepare offline quotation number', error)
+      try {
+        if (isCreate && canUseOfflineQuotationDrafts()) {
+          try {
+            const nextQuotationNumber = await peekNextOfflineQuotationNumber()
+            setQuotation((current) => ({
+              ...current,
+              quotation_number: current.quotation_number || nextQuotationNumber,
+            }))
+          } catch (error) {
+            console.warn('Failed to prepare offline quotation number', error)
+          }
+
+          setAttachments([])
+          setExtraCharges([])
+          setGroups([])
+          setSignatoryId(null)
+          setPdfOutput(defaultPdfOutput)
+          setLoading(false)
+          return
         }
 
+        const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
+          supabase.from('signatories').select('*').order('name'),
+          supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+          supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+        ])
+
+        setSignatories((signatoriesResult.data || []) as SignatoryRow[])
+        setBankAccounts((bankAccountsResult.data || []) as BankAccountRow[])
+        setSettingsData(settingsResult.data || null)
+
+        if (isEdit && quotationId) {
+          const [{ data: quotationRow, error }, { data: itemRows }] = await Promise.all([
+            supabase.from('quotations').select('*').eq('id', quotationId).single(),
+            supabase.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
+          ])
+
+          if (error || !quotationRow) {
+            feedback.error('Quotation not found', { description: 'Quotation not found.' })
+            navigate('/quotations')
+            return
+          }
+
+          const state = buildQuotationFormState(quotationRow as DbQuotation, (itemRows || []) as DbQuotationItem[])
+          const normalizedGrouping = normalizeQuotationGrouping(
+            state.items,
+            parseGroupMeta(state.quotation.custom_fields?.groupMeta),
+          )
+
+          setQuotation({
+            ...state.quotation,
+            payment_terms: String(state.quotation.custom_fields?.payment_terms || 'Custom'),
+            custom_payment_terms: String(state.quotation.custom_fields?.custom_payment_terms || ''),
+          })
+          setInitialQuotationSnapshot(quotationRow as Record<string, unknown>)
+          setInitialNotes((quotationRow.notes as string) || '')
+          setInitialTerms((quotationRow.terms as string) || '')
+          setItems(normalizedGrouping.items)
+          setColumns(state.columns)
+          setHeaderFields(state.headerFields)
+          setAdditionalFields(state.additionalFields)
+          setDiscountType(state.discountType)
+          setDiscountTiming(state.discountTiming)
+          setWhtType(state.whtType)
+          setNotesTitle(state.notesTitle)
+          setTermsTitle(state.termsTitle)
+          setMergeQtyUnit(state.mergeQtyUnit)
+          setShowItemImages(state.showItemImages)
+          setAttachments(Array.isArray(state.quotation.custom_fields?.attachments) ? (state.quotation.custom_fields?.attachments as Array<Record<string, unknown>>) : [])
+          setSignatoryId(typeof state.quotation.custom_fields?.signatoryId === 'string' ? state.quotation.custom_fields.signatoryId : null)
+          setPdfOutput(
+            state.quotation.custom_fields?.pdfOutput && typeof state.quotation.custom_fields.pdfOutput === 'object'
+              ? {
+                  ...defaultPdfOutput,
+                  ...(state.quotation.custom_fields.pdfOutput as Partial<PdfOutputState>),
+                }
+              : defaultPdfOutput,
+          )
+          setExtraCharges(
+            normalizeExtraCharges(
+              Array.isArray(state.quotation.custom_fields?.extraCharges)
+                ? state.quotation.custom_fields?.extraCharges
+                : [],
+            ),
+          )
+          setChargeLabels((current) => ({
+            ...current,
+            ...parseChargeLabels(state.quotation.custom_fields?.chargeLabels),
+          }))
+          setGroups(normalizedGrouping.groups)
+          setLoading(false)
+          return
+        }
+
+        const { data } = await supabase.from('quotations').select('quotation_number')
+        const nums = (data || []).map((q: { quotation_number?: string | null }) => {
+          const match = q.quotation_number?.match(/(\d+)$/)
+          return match ? parseInt(match[1], 10) : 0
+        })
+        const next = Math.max(0, ...nums) + 1
+        const quotationPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
+        const nextQuotationNumber = `${quotationPrefix}-${String(next).padStart(4, '0')}`
+        setQuotation((current) => ({
+          ...current,
+          quotation_number: nextQuotationNumber,
+        }))
         setAttachments([])
         setExtraCharges([])
         setGroups([])
         setSignatoryId(null)
         setPdfOutput(defaultPdfOutput)
         setLoading(false)
-        return
-      }
-
-      const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
-        supabase.from('signatories').select('*').order('name'),
-        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
-      ])
-
-      setSignatories((signatoriesResult.data || []) as SignatoryRow[])
-      setBankAccounts((bankAccountsResult.data || []) as BankAccountRow[])
-      setSettingsData(settingsResult.data || null)
-
-      if (isEdit && quotationId) {
-        const [{ data: quotationRow, error }, { data: itemRows }] = await Promise.all([
-          supabase.from('quotations').select('*').eq('id', quotationId).single(),
-          supabase.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
-        ])
-
-        if (error || !quotationRow) {
-          feedback.error('Quotation not found', { description: 'Quotation not found.' })
-          navigate('/quotations')
-          return
-        }
-
-        const state = buildQuotationFormState(quotationRow as DbQuotation, (itemRows || []) as DbQuotationItem[])
-        const normalizedGrouping = normalizeQuotationGrouping(
-          state.items,
-          parseGroupMeta(state.quotation.custom_fields?.groupMeta),
-        )
-
-        setQuotation({
-          ...state.quotation,
-          payment_terms: String(state.quotation.custom_fields?.payment_terms || 'Custom'),
-          custom_payment_terms: String(state.quotation.custom_fields?.custom_payment_terms || ''),
+      } catch (error) {
+        console.error('Failed to load quotation:', error)
+        feedback.error('Failed to load quotation', {
+          description: error instanceof Error ? error.message : 'An unexpected error occurred',
         })
-        setInitialQuotationSnapshot(quotationRow as Record<string, unknown>)
-        setInitialNotes((quotationRow.notes as string) || '')
-        setInitialTerms((quotationRow.terms as string) || '')
-        setItems(normalizedGrouping.items)
-        setColumns(state.columns)
-        setHeaderFields(state.headerFields)
-        setAdditionalFields(state.additionalFields)
-        setDiscountType(state.discountType)
-        setDiscountTiming(state.discountTiming)
-        setWhtType(state.whtType)
-        setNotesTitle(state.notesTitle)
-        setTermsTitle(state.termsTitle)
-        setMergeQtyUnit(state.mergeQtyUnit)
-        setShowItemImages(state.showItemImages)
-        setAttachments(Array.isArray(state.quotation.custom_fields?.attachments) ? (state.quotation.custom_fields?.attachments as Array<Record<string, unknown>>) : [])
-        setSignatoryId(typeof state.quotation.custom_fields?.signatoryId === 'string' ? state.quotation.custom_fields.signatoryId : null)
-        setPdfOutput(
-          state.quotation.custom_fields?.pdfOutput && typeof state.quotation.custom_fields.pdfOutput === 'object'
-            ? {
-                ...defaultPdfOutput,
-                ...(state.quotation.custom_fields.pdfOutput as Partial<PdfOutputState>),
-              }
-            : defaultPdfOutput,
-        )
-        setExtraCharges(
-          normalizeExtraCharges(
-            Array.isArray(state.quotation.custom_fields?.extraCharges)
-              ? state.quotation.custom_fields?.extraCharges
-              : [],
-          ),
-        )
-        setChargeLabels((current) => ({
-          ...current,
-          ...parseChargeLabels(state.quotation.custom_fields?.chargeLabels),
-        }))
-        setGroups(normalizedGrouping.groups)
-        setLoading(false)
-        return
+        navigate('/quotations')
       }
-
-      const { data } = await supabase.from('quotations').select('quotation_number')
-      const nums = (data || []).map((q: { quotation_number?: string | null }) => {
-        const match = q.quotation_number?.match(/(\d+)$/)
-        return match ? parseInt(match[1], 10) : 0
-      })
-      const next = Math.max(0, ...nums) + 1
-      const quotationPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
-      const nextQuotationNumber = `${quotationPrefix}-${String(next).padStart(4, '0')}`
-      setQuotation((current) => ({
-        ...current,
-        quotation_number: nextQuotationNumber,
-      }))
-      setAttachments([])
-      setExtraCharges([])
-      setGroups([])
-      setSignatoryId(null)
-      setPdfOutput(defaultPdfOutput)
-      setLoading(false)
     }
 
     void load()
@@ -472,6 +480,25 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     setIdentityLockDialog({ open: true, field: field === 'client' ? 'client' : 'quotation_number' })
   }, [])
 
+  const handleDuplicateFromEditable = useCallback(() => {
+    const clonedItems = JSON.parse(JSON.stringify(items))
+    navigate('/quotations/new', {
+      state: {
+        clientId: quotation.client_id || '',
+        clientName: quotation.client_name || '',
+        projectId: quotation.project_id || '',
+        sourceRfq: {
+          items: clonedItems.map((item: InvoiceItem) => ({
+            description: item.description || '',
+            quantity: item.quantity || 1,
+            unit: item.unit || '',
+            specification: item.sub_description || '',
+          })),
+        },
+      },
+    })
+  }, [items, quotation, navigate])
+
   const pageTitle = isEdit ? 'Edit Quotation' : 'New Quotation'
 
   return (
@@ -602,8 +629,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           <IdentityLockDialog
             open={identityLockDialog.open}
             onOpenChange={(open) => setIdentityLockDialog((prev) => ({ ...prev, open }))}
-            fieldLabel={identityLockDialog.field === 'client' ? 'Client' : 'Quotation Number'}
-            onDuplicate={() => navigate('/quotations/new')}
+            onDuplicate={handleDuplicateFromEditable}
           />
         )}
       </div>

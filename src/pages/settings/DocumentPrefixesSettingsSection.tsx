@@ -31,6 +31,7 @@ const PREFIX_KEYS: DocumentPrefixKey[] = [
   'boq',
   'project',
   'csr',
+  'receipt',
 ]
 
 const LABELS: Record<DocumentPrefixKey, string> = {
@@ -41,6 +42,7 @@ const LABELS: Record<DocumentPrefixKey, string> = {
   boq: 'BOQ',
   project: 'Project',
   csr: 'CSR',
+  receipt: 'Receipt',
 }
 
 const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: string }> = {
@@ -72,6 +74,10 @@ const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: strin
     title: 'CSR Numbers',
     description: 'For generating: Service Reports (base prefix), Blank CSR Forms (-M-).',
   },
+  receipt: {
+    title: 'Receipt Numbers',
+    description: 'For generating payment receipts (auto-created on payment recording).',
+  },
 }
 
 const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
@@ -82,6 +88,7 @@ const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
   boq: (p) => [`${p}-000001`],
   project: (p) => [`${p}-000001`],
   csr: (p) => [`${p}-000001`, `${p}-M-000001`],
+  receipt: (p) => [`${p}-000001`],
 }
 
 function sanitizePrefixInput(value: string): string {
@@ -127,6 +134,7 @@ export function DocumentPrefixesSettingsSection() {
       boq: typeof raw.boq === 'string' ? raw.boq : DEFAULT_PREFIXES.boq,
       project: typeof raw.project === 'string' ? raw.project : DEFAULT_PREFIXES.project,
       csr: typeof raw.csr === 'string' ? raw.csr : DEFAULT_PREFIXES.csr,
+      receipt: typeof raw.receipt === 'string' ? raw.receipt : DEFAULT_PREFIXES.receipt,
     }
   }, [settings])
 

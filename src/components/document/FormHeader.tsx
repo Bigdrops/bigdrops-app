@@ -64,10 +64,9 @@ export function FormHeader({
           <button
             type="button"
             onClick={isEdit ? () => onLockedFieldClick?.('client') : onOpenClientPicker}
-            disabled={isEdit}
             className={`flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border px-4 py-3 text-left transition ${
               isEdit
-                ? 'border-[var(--bd-border)] bg-[var(--bd-bg2)] opacity-70 cursor-not-allowed'
+                ? 'border-[var(--bd-border)] bg-[var(--bd-bg2)] opacity-70'
                 : 'border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]'
             }`}
           >
@@ -110,13 +109,20 @@ export function FormHeader({
                 ) : (
                   <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bd-text4)]" />
                 )}
-                <Input
-                  value={invoice.invoice_number || ''}
-                  readOnly={isEdit}
-                  onChange={isEdit ? undefined : (event) => updateInvoice('invoice_number', event.target.value)}
-                  onClick={isEdit ? () => onLockedFieldClick?.('invoice_number') : undefined}
-                  className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)] ${isEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
-                />
+                {isEdit ? (
+                  <span
+                    onClick={() => onLockedFieldClick?.('invoice_number')}
+                    className={`${fieldCls} inline-flex cursor-default items-center pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)] opacity-70`}
+                  >
+                    {invoice.invoice_number || ''}
+                  </span>
+                ) : (
+                  <Input
+                    value={invoice.invoice_number || ''}
+                    onChange={(event) => updateInvoice('invoice_number', event.target.value)}
+                    className={`${fieldCls} pl-9 font-mono text-[13px] font-bold tracking-tight text-[var(--bd-text)]`}
+                  />
+                )}
               </div>
             </div>
               <div>

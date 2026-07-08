@@ -16,6 +16,7 @@ import { supabase } from "@/supabase"
 import type { PaymentAttachment } from "@/lib/attachmentTypes"
 import { insertReceipt } from "@/domain/receipt/receiptRepository"
 import { getNextReceiptNumber } from "@/domain/receipt/receiptNumber"
+import type { DocumentPrefixes } from '@/domain/prefixConstants'
 
 interface SettlementSummary {
   cashReceived: number
@@ -114,35 +115,72 @@ export async function recordInvoicePayment(
       })
     }
 
-    // Auto-create payment acknowledgement receipt
+    // Auto-create payment acknowledgement receipt with snapshot
     try {
-      const { data: existingReceipts } = await supabase
-        .from('receipts')
-        .select('receipt_number')
-        .limit(0)
+      const [invoiceResult, clientResult, companyResult, bankResult, signatoryResult] = await Promise.all([
+        supabase.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
+        supabase.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await supabase.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
+        supabase.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
+        payload.bank_account_id ? supabase.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
+        supabase.from('signatories').select('name, role, signature_url').limit(1).single(),
+      ])
 
-      const receiptNumber = getNextReceiptNumber(existingReceipts || [])
+      if (invoiceResult.data && clientResult.data) {
+        const { buildReceiptSnapshot } = await import('@/domain/receipt/snapshotBuilder')
+        const snapshot = buildReceiptSnapshot({
+          payment: {
+            amount: payload.amount,
+            date: input.date,
+            method: input.method,
+            reference: input.reference || null,
+            notes: input.notes || null,
+            cash_amount: payload.cash_amount,
+            wht_amount: payload.wht_amount,
+            currency_code: 'NGN',
+            wht_rate: payload.wht_rate ?? null,
+            wht_type: payload.wht_type ?? null,
+            bank_account_id: payload.bank_account_id,
+          },
+          invoice: invoiceResult.data,
+          client: clientResult.data,
+          project: null,
+          company: (companyResult.data ?? {}) as { company_name: string | null; company_address: string | null; company_email: string | null; company_phone: string | null; company_logo_url: string | null },
+          bank: bankResult.data,
+          signatory: signatoryResult.data,
+        })
 
-      const { data: invoiceRow } = await supabase
-        .from('invoices')
-        .select('client_id, client_name, invoice_number')
-        .eq('id', input.invoiceId)
-        .single()
+        const { withUniqueRetry } = await import('@/lib/withUniqueRetry')
+        const { data: settings } = await supabase.from('settings').select('document_prefixes').limit(1).single()
 
-      if (invoiceRow) {
-        await insertReceipt({
-          receipt_number: receiptNumber,
+        const receiptPayload = {
+          ...snapshot,
+          receipt_number: '',
           payment_id: paymentRow.id,
           invoice_id: input.invoiceId,
-          client_id: invoiceRow.client_id,
-          client_name: invoiceRow.client_name || '',
-          amount: payload.amount,
-          currency_code: 'NGN',
-          payment_date: input.date,
-          payment_method: input.method,
-          payment_ref: input.reference || null,
-          notes: input.notes || null,
-        })
+        }
+
+        const { data: receiptRow, error: receiptError } = await withUniqueRetry(
+          async (candidateNumber: string) => {
+            receiptPayload.receipt_number = candidateNumber
+            return supabase.from('receipts').insert([receiptPayload]).select().single()
+          },
+          async () => {
+            const { data: rows } = await supabase.from('receipts').select('receipt_number')
+            return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null)
+          },
+        )
+
+        if (!receiptError && receiptRow) {
+          const { recordReceiptGenerated } = await import('@/lib/audit')
+          await recordReceiptGenerated(
+            receiptRow.id,
+            receiptRow.receipt_number,
+            paymentRow.id,
+            input.invoiceId,
+            payload.amount,
+            input.method,
+          )
+        }
       }
     } catch (receiptErr) {
       console.error('Auto receipt creation failed:', receiptErr)

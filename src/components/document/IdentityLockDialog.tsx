@@ -13,14 +13,12 @@ import {
 type IdentityLockDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  fieldLabel: string
   onDuplicate: () => void
 }
 
 export default function IdentityLockDialog({
   open,
   onOpenChange,
-  fieldLabel,
   onDuplicate,
 }: IdentityLockDialogProps) {
   const handleDuplicate = useCallback(() => {
@@ -32,9 +30,9 @@ export default function IdentityLockDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Identity field locked</AlertDialogTitle>
+          <AlertDialogTitle>Identity Fields Locked</AlertDialogTitle>
           <AlertDialogDescription>
-            {fieldLabel} cannot be changed after a document is saved. To use a different {fieldLabel.toLowerCase()}, duplicate this document as a new draft with your current changes.
+            Client and document number cannot be changed after a document is saved. To use different values, duplicate this document as a new draft with your current changes.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
