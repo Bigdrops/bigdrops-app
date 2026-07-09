@@ -36,6 +36,27 @@ export async function fetchReceiptsForInvoice(invoiceId: string): Promise<Receip
   return (data || []) as ReceiptRow[]
 }
 
+export async function fetchAllReceipts(): Promise<ReceiptRow[]> {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data || []) as ReceiptRow[]
+}
+
+export async function fetchReceiptById(id: string): Promise<ReceiptRow | null> {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw error
+  return data as ReceiptRow | null
+}
+
 export async function voidReceipt(
   receiptId: string,
   voidReason: string | null,

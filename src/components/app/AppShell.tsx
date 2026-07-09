@@ -54,6 +54,8 @@ const Boqs = lazy(() => import('@/pages/Boqs'))
 const NewBoq = lazy(() => import('@/pages/NewBoq'))
 const EditBoq = lazy(() => import('@/pages/EditBoq'))
 const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
+const Receipts = lazy(() => import('@/pages/Receipts'))
+const ViewReceipt = lazy(() => import('@/pages/ViewReceipt'))
 const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
@@ -201,6 +203,8 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/boqs/new" element={withBoundary(<NewBoq />)} />
           <Route path="/boqs/edit/:id" element={withBoundary(<EditBoq />)} />
           <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
+          <Route path="/receipts" element={withBoundary(<Receipts />)} />
+          <Route path="/receipts/:id" element={withBoundary(<ViewReceipt />)} />
         </Routes>
       </Suspense>
     </>

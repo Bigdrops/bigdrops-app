@@ -33,6 +33,7 @@ const MODULE_TYPE_MAP: Record<ModuleScope, DocumentQueryState["type"]> = {
   csr: "project",
   rfqs: "project",
   boqs: "project",
+  receipts: "financial",
 };
 
 // --- Initial State Factory ---

@@ -568,6 +568,58 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   },
 };
 
+// --- Receipts Adapter ---
+
+const receiptsAdapter: DocumentAdapter<FinancialQueryState, any> = {
+  initialSortBy: "created_at",
+  statusOptions: [],
+  cacheKey: "bd:list:receipts:v1:all",
+  cacheTtlMs: 5 * 60 * 1000,
+
+  async fetcher(query) {
+    const cached = readListCache<any>(receiptsAdapter.cacheKey);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, receiptsAdapter.cacheTtlMs)) {
+      return cached.rows;
+    }
+
+    let q = supabase
+      .from("receipts")
+      .select("*");
+
+    if (query.search.trim()) {
+      const term = query.search.trim().replace(/,/g, " ");
+      q = q.or(`receipt_number.ilike.%${term}%,invoice_number.ilike.%${term}%,client_name.ilike.%${term}%`);
+    }
+
+    if (query.statuses.length > 0 && !query.statuses.includes("All")) {
+      q = q.in("status", query.statuses.map((s) => s.toLowerCase()));
+    }
+
+    if (query.amountRange.min !== null) {
+      q = q.gte("payment_amount", query.amountRange.min);
+    }
+    if (query.amountRange.max !== null) {
+      q = q.lte("payment_amount", query.amountRange.max);
+    }
+
+    if (query.client && query.client !== "All") {
+      q = q.ilike("client_name", `%${query.client}%`);
+    }
+
+    q = applyDateFilter(q, query.dateRange);
+    q = applySortOrder(q, query.sortBy, query.sortDirection);
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    const rows = (data as any[]) || [];
+    if (!hasActiveFilters(query)) {
+      writeListCache(receiptsAdapter.cacheKey, rows);
+    }
+    return rows;
+  },
+};
+
 // --- BOQs Adapter ---
 
 const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
@@ -697,6 +749,7 @@ const adapterRegistry: Record<ModuleScope, DocumentAdapter<any, any>> = {
   csr: csrAdapter,
   rfqs: rfqsAdapter,
   boqs: boqsAdapter,
+  receipts: receiptsAdapter,
 };
 
 // --- Public API (exhaustive — compile-time safe) ---

@@ -43,6 +43,7 @@ export const Icons = {
   boq: ClipboardList,
   report: BarChart3,
   compliance: ClipboardCheck,
+  receipts: Receipt,
 
   // System / UI
   settings: Settings,

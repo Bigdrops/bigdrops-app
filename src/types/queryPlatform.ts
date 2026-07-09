@@ -48,7 +48,8 @@ export type ModuleScope =
   | "projects"
   | "csr"
   | "rfqs"
-  | "boqs";
+  | "boqs"
+  | "receipts";
 
 // --- Compile-Time Module → QueryState Mapping ---
 
@@ -60,6 +61,7 @@ export type ModuleQueryMap = {
   csr: ProjectQueryState;
   rfqs: ProjectQueryState;
   boqs: ProjectQueryState;
+  receipts: FinancialQueryState;
 };
 
 // --- Module → Type Discriminator Mapping ---
@@ -72,6 +74,7 @@ export type ModuleTypeMap = {
   csr: "project";
   rfqs: "project";
   boqs: "project";
+  receipts: "financial";
 };
 
 // --- Adapter Interface ---
