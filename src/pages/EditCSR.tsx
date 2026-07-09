@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { feedback } from '@/lib/feedback'
 
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import CsrFormScreen from '@/components/csr/CsrFormScreen'
+import IdentityLockDialog from '@/components/document/IdentityLockDialog'
 import {
   createDefaultCsr,
   DEFAULT_CSR_META,
@@ -24,6 +25,7 @@ export default function EditCSR() {
   const [csr, setCsr] = useState(() => createDefaultCsr(false))
   const [csrMeta, setCsrMeta] = useState(() => ({ ...DEFAULT_CSR_META }))
   const [materialsRows, setMaterialsRows] = useState([{ ...DEFAULT_MATERIAL_ROW }])
+  const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'csr_number' | null }>({ open: false, field: null })
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,6 +57,36 @@ export default function EditCSR() {
   const update = (field: string, value: any) => {
     setCsr((current: any) => ({ ...current, [field]: value }))
   }
+
+  const IDENTITY_FIELDS = ['client_id', 'client_name', 'csr_number'] as const
+  const guardedUpdate = useCallback((field: string, value: any) => {
+    if (IDENTITY_FIELDS.includes(field as typeof IDENTITY_FIELDS[number])) {
+      setIdentityLockDialog({ open: true, field: field === 'client_id' || field === 'client_name' ? 'client' : 'csr_number' })
+      return
+    }
+    update(field, value)
+  }, [update])
+
+  const handleLockedFieldClick = useCallback((field: 'client' | 'csr_number') => {
+    setIdentityLockDialog({ open: true, field })
+  }, [])
+
+  const handleDuplicateFromEditable = useCallback(() => {
+    navigate('/csr/new', {
+      state: {
+        duplicateState: {
+          csr: {
+            ...JSON.parse(JSON.stringify(csr)),
+            client_id: '',
+            client_name: '',
+            csr_number: '',
+          },
+          csrMeta: JSON.parse(JSON.stringify(csrMeta)),
+          materialsRows: JSON.parse(JSON.stringify(materialsRows)),
+        },
+      },
+    })
+  }, [csr, csrMeta, materialsRows, navigate])
 
   const updateMeta = (field: string, value: any) => {
     setCsrMeta((current: any) => ({ ...current, [field]: value }))
@@ -156,14 +188,23 @@ export default function EditCSR() {
         csrMeta={csrMeta as any}
         materialsRows={materialsRows}
         saving={saving}
-        onUpdate={update}
+        onUpdate={guardedUpdate}
         onUpdateMeta={updateMeta}
         onUpdateMaterialRow={updateMaterialRow}
         onAddMaterialRow={addMaterialRow}
         onRemoveMaterialRow={removeMaterialRow}
         onApplyImport={handleApplyImport}
         onSave={handleSave}
+        onLockedFieldClick={handleLockedFieldClick}
       />
+
+      {identityLockDialog.open && (
+        <IdentityLockDialog
+          open={identityLockDialog.open}
+          onOpenChange={(open) => setIdentityLockDialog((prev) => ({ ...prev, open }))}
+          onDuplicate={handleDuplicateFromEditable}
+        />
+      )}
     </Layout>
   )
 }

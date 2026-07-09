@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Download, Hash, MoreHorizontal, Save } from 'lucide-react'
+import { Download, Hash, Lock, MoreHorizontal, Save } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
@@ -55,6 +55,7 @@ type Props = {
   onApplyImport: (result: ParsedCsrImport) => void
   onSave: () => void
   onDownloadBlank?: () => void
+  onLockedFieldClick?: (field: 'client' | 'csr_number') => void
 }
 
 const STATUS_OPTIONS = [
@@ -184,6 +185,7 @@ export default function CsrFormScreen({
   onApplyImport,
   onSave,
   onDownloadBlank,
+  onLockedFieldClick,
 }: Props) {
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
@@ -271,37 +273,68 @@ export default function CsrFormScreen({
           </div>
 
           <div className="mt-4 rounded-[16px] border-2 border-dashed border-bd-border-strong bg-bd-surface-muted p-3">
-            <ClientSelector
-              clientId={String(csr.client_id || '')}
-              clientName={String(csr.client_name || '')}
-              open={clientPickerOpen}
-              onOpenChange={setClientPickerOpen}
-              onClientChange={(clientId: string, clientName: string, client: { address?: string | null; city?: string | null; state?: string | null } | null) => {
-                onUpdate('client_id', clientId || '')
-                onUpdate('client_name', clientName || '')
-                if (client) {
-                  const fullAddress = [client.address, client.city, client.state]
-                    .filter((part) => part && part.trim() !== '')
-                    .join(', ')
-                  onUpdate('address', fullAddress)
-                } else {
-                  onUpdate('address', '')
-                }
-              }}
-            />
+            {mode === 'edit' ? (
+              <button
+                type="button"
+                onClick={() => onLockedFieldClick?.('client')}
+                className="flex w-full items-center gap-3 text-left"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-bd-surface text-bd-text-muted">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-bd-text-muted">Client</div>
+                  <div className="mt-0.5 truncate text-[14px] font-bold text-bd-text">
+                    {csr.client_name || 'No client selected'}
+                  </div>
+                </div>
+              </button>
+            ) : (
+              <ClientSelector
+                clientId={String(csr.client_id || '')}
+                clientName={String(csr.client_name || '')}
+                open={clientPickerOpen}
+                onOpenChange={setClientPickerOpen}
+                onClientChange={(clientId: string, clientName: string, client: { address?: string | null; city?: string | null; state?: string | null } | null) => {
+                  onUpdate('client_id', clientId || '')
+                  onUpdate('client_name', clientName || '')
+                  if (client) {
+                    const fullAddress = [client.address, client.city, client.state]
+                      .filter((part) => part && part.trim() !== '')
+                      .join(', ')
+                    onUpdate('address', fullAddress)
+                  } else {
+                    onUpdate('address', '')
+                  }
+                }}
+              />
+            )}
           </div>
 
           <div className="mt-4 space-y-3">
             <div>
               <FieldLabel>CSR Number</FieldLabel>
               <div className="relative">
-                <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
-                <TextInput
-                  value={String(csr.csr_number || '')}
-                  onChange={(event) => onUpdate('csr_number', event.target.value)}
-                  onBlur={handleCsrNumberBlur}
-                  className="bg-bd-surface-muted pl-9 font-mono font-bold"
-                />
+                {mode === 'edit' ? (
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
+                ) : (
+                  <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
+                )}
+                {mode === 'edit' ? (
+                  <span
+                    onClick={() => onLockedFieldClick?.('csr_number')}
+                    className="inline-flex h-11 w-full cursor-default items-center rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted pl-9 font-mono text-[14px] font-bold text-bd-text opacity-70"
+                  >
+                    {csr.csr_number || ''}
+                  </span>
+                ) : (
+                  <TextInput
+                    value={String(csr.csr_number || '')}
+                    onChange={(event) => onUpdate('csr_number', event.target.value)}
+                    onBlur={handleCsrNumberBlur}
+                    className="bg-bd-surface-muted pl-9 font-mono font-bold"
+                  />
+                )}
               </div>
             </div>
 
@@ -316,10 +349,20 @@ export default function CsrFormScreen({
               </div>
               <div>
                 <FieldLabel>Customer Name</FieldLabel>
-                <TextInput
-                  value={String(csr.client_name || '')}
-                  onChange={(event) => onUpdate('client_name', event.target.value)}
-                />
+                {mode === 'edit' ? (
+                  <div
+                    onClick={() => onLockedFieldClick?.('client')}
+                    className="flex h-11 cursor-default items-center gap-2 rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] font-bold text-bd-text opacity-70"
+                  >
+                    <Lock className="h-4 w-4 shrink-0 text-bd-text-muted" />
+                    <span className="truncate">{csr.client_name || ''}</span>
+                  </div>
+                ) : (
+                  <TextInput
+                    value={String(csr.client_name || '')}
+                    onChange={(event) => onUpdate('client_name', event.target.value)}
+                  />
+                )}
               </div>
             </div>
 

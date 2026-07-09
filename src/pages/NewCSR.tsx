@@ -45,6 +45,7 @@ export default function NewCSR() {
   const type = searchParams.get('type')
   const isField = type === 'field'
   const routeState = (location.state as any) || {}
+  const duplicateState = routeState.duplicateState || null
   const sourceInvoice = routeState.sourceInvoice || null
   const projectPrefill = {
     projectId: String(routeState.projectId || ''),
@@ -53,9 +54,9 @@ export default function NewCSR() {
   }
 
   const [saving, setSaving] = useState(false)
-  const [csr, setCsr] = useState(() => createDefaultCsr(isField))
-  const [csrMeta, setCsrMeta] = useState(() => ({ ...DEFAULT_CSR_META }))
-  const [materialsRows, setMaterialsRows] = useState([{ ...DEFAULT_MATERIAL_ROW }])
+  const [csr, setCsr] = useState(() => duplicateState?.csr || createDefaultCsr(isField))
+  const [csrMeta, setCsrMeta] = useState(() => duplicateState?.csrMeta || ({ ...DEFAULT_CSR_META } as any))
+  const [materialsRows, setMaterialsRows] = useState(duplicateState?.materialsRows || [{ ...DEFAULT_MATERIAL_ROW }])
   const [comments] = useState('')
   const csrNumberPopulated = useRef(false)
 
