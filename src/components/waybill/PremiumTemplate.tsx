@@ -194,19 +194,19 @@ function createStyles(preset: PdfDesignPreset) {
       width: 10,
       height: 10,
       borderWidth: 1,
-      borderColor: '#4b3d30',
+      borderColor: fillableColor,
     },
     tickBoxChecked: {
       width: 10,
       height: 10,
       borderWidth: 1,
-      borderColor: '#4b3d30',
-      backgroundColor: '#4b3d30',
+      borderColor: fillableColor,
+      backgroundColor: fillableColor,
     },
     tickText: {
       fontSize: 8,
       fontWeight: 'bold',
-      color: '#2c241d',
+      color: fillableColor,
     },
     sectionTitle: {
       fontSize: 8,

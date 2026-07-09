@@ -20,7 +20,7 @@ import { buildWaybillCustomFields, mapDbWaybill, parseWaybillCustomFields } from
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, type PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -40,6 +40,7 @@ import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContrac
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
 import { WaybillActivityCard } from '@/components/document-view/waybill/sections/ActivityCard'
 import { PenLine, Type } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import {
@@ -55,8 +56,20 @@ const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
 
 const WAYBILL_TEMPLATE_KEY = 'waybill_view_template'
+const WAYBILL_CUSTOM_FONT_KEY = 'waybill_custom_font_stash'
+const WAYBILL_CUSTOM_COLOR_KEY = 'waybill_custom_color_stash'
 
 const WAYBILL_COLOR_SWATCHES = ['#000000', '#374151', '#0f172a', '#1e3a5f', '#7f1d1d']
+
+function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
+  if (typeof window === 'undefined') return 'auto'
+  return (window.localStorage.getItem(WAYBILL_CUSTOM_FONT_KEY) as any) || 'auto'
+}
+
+function getStoredCustomColor(): 'auto' | string {
+  if (typeof window === 'undefined') return 'auto'
+  return window.localStorage.getItem(WAYBILL_CUSTOM_COLOR_KEY) || 'auto'
+}
 
 const WAYBILL_HANDWRITING_FONTS = PDF_FILLABLE_FONT_OPTIONS.filter(
   (f) => f.value === 'Patrick Hand' || f.value === 'Reenie Beanie' || f.value === 'Caveat' || f.value === 'Kalam' || f.value === 'Handlee' || f.value === 'Sue Ellen Francisco',
@@ -97,6 +110,19 @@ export default function ViewWaybill() {
   // Bridge: ResolvedPdfCustomization → PdfDesignPreset for template consumption
   const basePreset = getPdfDesignPreset('waybill')
   const designPreset = bridgeToDesignPreset(basePreset, customization)
+
+  const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
+  const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
+
+  useEffect(() => {
+    setInkFont(customFont === 'auto' ? WAYBILL_TEMPLATE_DEFAULTS.handwritingFont : customFont)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customFont])
+
+  useEffect(() => {
+    setInkColour(customColor === 'auto' ? WAYBILL_TEMPLATE_DEFAULTS.handwritingColor : customColor)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customColor])
 
   // Migration: read old localStorage keys once and write to engine key
   useEffect(() => {
@@ -424,56 +450,118 @@ export default function ViewWaybill() {
                 </div>
 
                 <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
-                    <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
-                    Ink Color
+                  <div
+                    className="flex cursor-pointer items-center justify-between select-none"
+                    onClick={() => {
+                      if (customColor === 'auto') {
+                        const stashed = getStoredCustomColor()
+                        setCustomColor(stashed !== 'auto' ? stashed : WAYBILL_TEMPLATE_DEFAULTS.handwritingColor)
+                      } else {
+                        setCustomColor('auto')
+                      }
+                    }}
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+                        <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
+                        Ink Color
+                      </div>
+                      <p className="text-xs text-bd-text-muted">Override the fillable text color with a custom hex value.</p>
+                    </div>
+                    <Switch
+                      checked={customColor !== 'auto'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const stashed = getStoredCustomColor()
+                          setCustomColor(stashed !== 'auto' ? stashed : WAYBILL_TEMPLATE_DEFAULTS.handwritingColor)
+                        } else {
+                          setCustomColor('auto')
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {WAYBILL_COLOR_SWATCHES.map((swatch) => (
-                      <button
-                        key={swatch}
-                        type="button"
-                        onClick={() => setInkColour(swatch)}
-                        className={cn(
-                          'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                          customization.handwritingColor.toLowerCase() === swatch.toLowerCase()
-                            ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
-                            : 'border-transparent hover:border-bd-text-muted/40',
-                        )}
-                        style={{ backgroundColor: swatch }}
+
+                  {customColor !== 'auto' ? (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {WAYBILL_COLOR_SWATCHES.map((swatch) => (
+                          <button
+                            key={swatch}
+                            type="button"
+                            onClick={() => setCustomColor(swatch)}
+                            className={cn(
+                              'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                              customColor.toLowerCase() === swatch.toLowerCase()
+                                ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
+                                : 'border-transparent hover:border-bd-text-muted/40',
+                            )}
+                            style={{ backgroundColor: swatch }}
+                          />
+                        ))}
+                      </div>
+                      <Input
+                        type="color"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
                       />
-                    ))}
-                  </div>
-                  <Input
-                    type="color"
-                    value={customization.handwritingColor}
-                    onChange={(e) => setInkColour(e.target.value)}
-                    className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
-                  />
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
-                    <Type className="h-4 w-4 text-bd-button-primary-bg" />
-                    Handwriting Font
+                  <div
+                    className="flex cursor-pointer items-center justify-between select-none"
+                    onClick={() => {
+                      if (customFont === 'auto') {
+                        const stashed = getStoredCustomFont()
+                        setCustomFont(stashed !== 'auto' ? stashed : 'Caveat')
+                      } else {
+                        setCustomFont('auto')
+                      }
+                    }}
+                  >
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+                        <Type className="h-4 w-4 text-bd-button-primary-bg" />
+                        Handwriting Font
+                      </div>
+                      <p className="text-xs text-bd-text-muted">Swap the handwriting script used for fillable data entries.</p>
+                    </div>
+                    <Switch
+                      checked={customFont !== 'auto'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const stashed = getStoredCustomFont()
+                          setCustomFont(stashed !== 'auto' ? stashed : 'Caveat')
+                        } else {
+                          setCustomFont('auto')
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {WAYBILL_HANDWRITING_FONTS.map((font) => (
-                      <button
-                        key={font.value}
-                        type="button"
-                        onClick={() => setInkFont(font.value)}
-                        className={cn(
-                          'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                          customization.handwritingFont === font.value
-                            ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
-                            : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
-                        )}
-                      >
-                        {font.label}
-                      </button>
-                    ))}
-                  </div>
+
+                  {customFont !== 'auto' ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {WAYBILL_HANDWRITING_FONTS.map((font) => (
+                        <button
+                          key={font.value}
+                          type="button"
+                          onClick={() => setCustomFont(font.value)}
+                          className={cn(
+                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
+                            customFont === font.value
+                              ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
+                              : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
+                          )}
+                        >
+                          {font.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <button
@@ -485,6 +573,8 @@ export default function ViewWaybill() {
                     try {
                       if (typeof window !== 'undefined') {
                         window.localStorage.setItem(WAYBILL_TEMPLATE_KEY, template)
+                        window.localStorage.setItem(WAYBILL_CUSTOM_FONT_KEY, customFont)
+                        window.localStorage.setItem(WAYBILL_CUSTOM_COLOR_KEY, customColor)
                       }
 
                       const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })

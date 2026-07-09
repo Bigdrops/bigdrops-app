@@ -20,7 +20,7 @@ const VARIANTS: Record<UIIntent['variant'], string> = {
 
 function IntentCard({ intent, onDismiss }: { intent: UIIntent; onDismiss: (id: string) => void }) {
   const [exiting, setExiting] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     if (intent.duration > 0) {
@@ -68,7 +68,10 @@ function sorted(intents: UIIntent[]): UIIntent[] {
 export function NativeFeedbackRenderer() {
   const [intents, setIntents] = useState<UIIntent[]>([])
 
-  useEffect(() => subscribe(setIntents), [])
+  useEffect(() => {
+    const unsub = subscribe(setIntents)
+    return () => { unsub() }
+  }, [])
 
   const visible = sorted(intents)
 
