@@ -4,6 +4,7 @@ import { supabase } from "@/supabase"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
 import ReceiptPdf from "@/components/pdf-new/ReceiptPdf"
+import { getPdfDesignPreset } from "@/lib/pdfDesignPreset"
 import { downloadPdfFromElement } from "@/components/document-view/shared/downloadPdf"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
@@ -18,6 +19,7 @@ export default function ViewReceipt() {
   const navigate = useNavigate()
   const [receipt, setReceipt] = useState<ReceiptRow | null>(null)
   const [loading, setLoading] = useState(true)
+  const designPreset = getPdfDesignPreset("receipt")
 
   useEffect(() => {
     if (!id) return
@@ -42,7 +44,7 @@ export default function ViewReceipt() {
   const handleDownload = useCallback(async () => {
     if (!receipt) return
     const model = buildReceiptPreviewData(receipt)
-    const element = <ReceiptPdf model={model} />
+    const element = <ReceiptPdf model={model} designPreset={designPreset} />
     await downloadPdfFromElement({
       element,
       fileName: `receipt-${receipt.receipt_number}.pdf`,

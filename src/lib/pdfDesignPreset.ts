@@ -1,7 +1,7 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
 import { getRegisteredSharedFontConfig, getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
-export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq'
+export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq' | 'receipt'
 export type PdfFontChoice =
   | 'Inter'
   | 'Roboto'
@@ -46,6 +46,7 @@ const DESIGN_PRESET_KEYS: Record<PdfDesignPresetDocument, string> = {
   csr: 'csr_pdf_design_preset',
   waybill: 'waybill_pdf_design_preset',
   boq: 'boq_pdf_design_preset',
+  receipt: 'receipt_pdf_design_preset',
 }
 
 const PDF_FONT_VALUES: PdfFontChoice[] = [
@@ -165,6 +166,20 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     bodyFont: 'Inter',
     fillableFont: 'Inter',
     fillableFontMode: 'auto',
+    fillableColor: '#0f172a',
+  },
+  receipt: {
+    useCustomColors: false,
+    useCustomFonts: false,
+    accentColor: '#0f172a',
+    textColor: '#0f172a',
+    mutedColor: '#475569',
+    borderColor: '#cbd5e1',
+    surfaceColor: '#f8fafc',
+    headerFont: 'Inter',
+    bodyFont: 'Inter',
+    fillableFont: 'Patrick Hand',
+    fillableFontMode: 'custom',
     fillableColor: '#0f172a',
   },
 }

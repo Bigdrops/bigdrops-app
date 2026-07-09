@@ -72,15 +72,6 @@ export const salesPicker: PickerItem[] = [
     tint: QUICK_TILE_REGISTRY.waybills.tint,
     iconBg: QUICK_TILE_REGISTRY.waybills.iconBg,
   },
-  {
-    key: 'receipts',
-    label: 'Receipts',
-    subtitle: 'View payment receipts and download PDFs.',
-    description: 'View payment receipts and download PDFs.',
-    icon: Icons.receipts as LucideIcon,
-    tint: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30',
-    iconBg: 'bg-emerald-700 text-white dark:bg-emerald-500 dark:text-white',
-  },
 ]
 
 export const presalesPicker: PickerItem[] = [
@@ -119,6 +110,13 @@ export const moreGroups: NavGroup[] = [
         label: 'Compliance Hub',
         subtitle: 'Approvals, policy logs, and audit trail.',
         icon: Icons.compliance as LucideIcon,
+        iconBg: 'bg-muted text-foreground',
+      },
+      {
+        key: 'receipts',
+        label: 'Receipts',
+        subtitle: 'View payment receipts and download PDFs.',
+        icon: Icons.receipts as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
       {
@@ -184,7 +182,6 @@ export function getSalesPath(key: string): string {
     quotations: '/quotations',
     csr: '/csr',
     waybills: '/waybills',
-    receipts: '/receipts',
   }
 
   return pathByKey[key] || '/'
@@ -212,8 +209,7 @@ export function getActiveTab(pathname: string): TabKey {
     pathname.startsWith('/invoices') ||
     pathname.startsWith('/quotations') ||
     pathname.startsWith('/csr') ||
-    pathname.startsWith('/waybills') ||
-    pathname.startsWith('/receipts')
+    pathname.startsWith('/waybills')
   ) return 'sales'
   if (
     pathname.startsWith('/rfqs') ||

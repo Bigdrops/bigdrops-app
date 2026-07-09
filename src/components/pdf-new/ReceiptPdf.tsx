@@ -1,45 +1,47 @@
 import React from 'react'
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type { ReceiptPreviewData } from '@/domain/receipt/previewModel'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getDefaultPdfDesignPreset, resolvePdfFontFamily } from '@/lib/pdfDesignPreset'
 import { PdfCurrencyText } from './pdfCurrency'
 import { formatCurrency } from '@/lib/formatters/money'
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#1a1a1a' },
+  page: { padding: 40, fontSize: 10 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   headerLeft: { flex: 1 },
-  companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#111827', marginBottom: 2 },
-  companyDetail: { fontSize: 8, color: '#6b7280', marginBottom: 1 },
+  companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+  companyDetail: { fontSize: 8, marginBottom: 1 },
   logo: { width: 60, height: 60, objectFit: 'contain' },
-  title: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#111827', textAlign: 'center', marginVertical: 16 },
+  title: { fontSize: 20, fontFamily: 'Helvetica-Bold', textAlign: 'center', marginVertical: 16 },
   receiptMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, gap: 16 },
   metaBlock: { flex: 1 },
-  metaLabel: { fontSize: 8, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  metaValue: { fontSize: 11, color: '#111827' },
-  divider: { borderBottomWidth: 1, borderBottomColor: '#e5e7eb', marginBottom: 16 },
-  sectionTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  metaLabel: { fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  metaValue: { fontSize: 11 },
+  divider: { borderBottomWidth: 1, marginBottom: 16 },
+  sectionTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   detailRow: { flexDirection: 'row', marginBottom: 6 },
-  detailLabel: { width: 130, color: '#6b7280', fontSize: 9 },
-  detailValue: { flex: 1, color: '#111827', fontSize: 9 },
-  amountBox: { backgroundColor: '#f9fafb', padding: 14, borderRadius: 4, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amountLabel: { fontSize: 10, color: '#6b7280' },
-  amountValue: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: '#111827' },
-  amountWords: { fontSize: 9, color: '#374151', fontStyle: 'italic', marginTop: 4 },
+  detailLabel: { width: 130, fontSize: 9 },
+  detailValue: { flex: 1, fontSize: 9 },
+  amountBox: { padding: 14, borderRadius: 4, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  amountLabel: { fontSize: 10 },
+  amountValue: { fontSize: 18, fontFamily: 'Helvetica-Bold' },
+  amountWords: { fontSize: 9, fontStyle: 'italic', marginTop: 4 },
   section: { marginBottom: 16 },
-  notesBox: { backgroundColor: '#f9fafb', padding: 10, borderRadius: 4, marginBottom: 16 },
-  notesLabel: { fontSize: 8, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
-  notesText: { fontSize: 9, color: '#374151' },
+  notesBox: { padding: 10, borderRadius: 4, marginBottom: 16 },
+  notesLabel: { fontSize: 8, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
+  notesText: { fontSize: 9 },
   termsBox: { marginBottom: 20 },
-  termsTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#374151', marginBottom: 4 },
-  termsText: { fontSize: 8, color: '#6b7280', lineHeight: 1.4 },
+  termsTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  termsText: { fontSize: 8, lineHeight: 1.4 },
   signatureRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30, marginBottom: 20 },
   signatureBlock: { width: '45%' },
-  signatureLine: { borderBottomWidth: 1, borderBottomColor: '#d1d5db', marginBottom: 4, marginTop: 20 },
-  signatureLabel: { fontSize: 8, color: '#9ca3af' },
-  signatureValue: { fontSize: 9, color: '#111827', marginTop: 2 },
+  signatureLine: { borderBottomWidth: 1, marginBottom: 4, marginTop: 20 },
+  signatureLabel: { fontSize: 8 },
+  signatureValue: { fontSize: 9, marginTop: 2 },
   signatureImage: { width: 120, height: 40, objectFit: 'contain', marginTop: 4 },
-  footer: { marginTop: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e5e7eb', alignItems: 'center' },
-  footerText: { fontSize: 8, color: '#9ca3af' },
+  footer: { marginTop: 20, paddingTop: 12, borderTopWidth: 1, alignItems: 'center' },
+  footerText: { fontSize: 8 },
 })
 
 const TERMS = [
@@ -49,15 +51,24 @@ const TERMS = [
   'Payment terms are subject to the original invoice terms and conditions.',
 ]
 
-export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
+export default function ReceiptPdf({ model, designPreset }: { model: ReceiptPreviewData; designPreset?: PdfDesignPreset | null }) {
+  const preset = designPreset || getDefaultPdfDesignPreset('receipt')
+  const headerFont = resolvePdfFontFamily(preset.headerFont, 'bold')
+  const bodyFont = resolvePdfFontFamily(preset.bodyFont)
+  const pageStyle = { ...styles.page, fontFamily: bodyFont, color: preset.textColor }
+  const dividerStyle = { ...styles.divider, borderBottomColor: preset.borderColor }
+  const mutedColor = preset.mutedColor
+  const surfaceColor = preset.surfaceColor
+  const footerStyle = { ...styles.footer, borderTopColor: preset.borderColor }
+
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={pageStyle}>
         {/* Header: Company info + Logo */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.companyName}>{model.companyName}</Text>
-            {model.companyAddress ? <Text style={styles.companyDetail}>{model.companyAddress}</Text> : null}
+            {model.companyAddress ?             <Text style={{ ...styles.companyDetail, color: mutedColor }}>{model.companyAddress}</Text> : null}
             {model.companyPhone ? <Text style={styles.companyDetail}>{model.companyPhone}</Text> : null}
             {model.companyEmail ? <Text style={styles.companyDetail}>{model.companyEmail}</Text> : null}
           </View>
@@ -65,7 +76,7 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>PAYMENT RECEIPT</Text>
+        <Text style={{ ...styles.title, fontFamily: headerFont, color: preset.accentColor }}>PAYMENT RECEIPT</Text>
 
         {/* Receipt meta: number, date, status */}
         <View style={styles.receiptMeta}>
@@ -83,7 +94,7 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
           </View>
         </View>
 
-        <View style={styles.divider} />
+        <View style={dividerStyle} />
 
         {/* Client Block */}
         <View style={styles.section}>
@@ -118,12 +129,12 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
           ) : null}
         </View>
 
-        <View style={styles.divider} />
+        <View style={dividerStyle} />
 
         {/* Payment Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Details</Text>
-          <View style={styles.amountBox}>
+          <View style={{ ...styles.amountBox, backgroundColor: surfaceColor }}>
             <View>
               <Text style={styles.amountLabel}>Amount Received</Text>
               <PdfCurrencyText value={formatCurrency(model.paymentAmount)} style={styles.amountValue} />
@@ -154,7 +165,7 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
           ) : null}
         </View>
 
-        <View style={styles.divider} />
+        <View style={dividerStyle} />
 
         {/* Invoice Reference */}
         <View style={styles.section}>
@@ -252,7 +263,7 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
         {/* Signature */}
         <View style={styles.signatureRow}>
           <View style={styles.signatureBlock}>
-            <View style={styles.signatureLine} />
+            <View style={{ ...styles.signatureLine, borderBottomColor: preset.borderColor }} />
             <Text style={styles.signatureLabel}>Authorized Signature</Text>
             {model.signatoryName ? <Text style={styles.signatureValue}>{model.signatoryName}</Text> : null}
             {model.signatoryRole ? <Text style={styles.signatureValue}>{model.signatoryRole}</Text> : null}
@@ -265,7 +276,7 @@ export default function ReceiptPdf({ model }: { model: ReceiptPreviewData }) {
         </View>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={footerStyle}>
           <Text style={styles.footerText}>This is a computer-generated receipt. No signature required.</Text>
           <Text style={styles.footerText}>{model.companyName}</Text>
         </View>
