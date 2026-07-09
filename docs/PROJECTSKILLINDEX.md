@@ -12,11 +12,10 @@
 | :--- | :--- | :--- |
 | `.agents/skills/` | 89 skills | General-purpose dev, UI, infra, and Capacitor skills (48 base + 41 from `softaworks/agent-toolkit`) |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
-| `.opencode/agents/` | 232 subagents | Upstream agency-agents — 18 divisions of specialized personas |
 | `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
 | `.mimocode/commands/` | 1 command | Type checking verification |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **105 skills + 232 subagents** | *(+ ~30 bundled inside `awesome-claude-skills`)* |
+| **Total** | **105 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 ---
 ## `.agents/skills/`
@@ -144,30 +143,7 @@ Specialized agent skills for targeted debugging workflows.
 
 ---
 ## `.opencode/agents/`
-232 upstream agency-agents personas installed for use as OpenCode subagents. Organized into 18 divisions:
-
-| Division | Example Agents | Count |
-| :--- | :--- | :--- |
-| academic | anthropologist, geographer, historian, narratologist, psychologist | 5 |
-| design | brand-guardian, ui-designer, ux-architect, ux-researcher, visual-storyteller | 7 |
-| engineering | backend-architect, frontend-developer, devops-automator, code-reviewer | 8 |
-| examples | codebase-onboarding-engineer, document-generator, report-distribution-agent | 3 |
-| finance | account-strategist, bookkeeper-controller, cfo, financial-analyst, tax-strategist | 12 |
-| game-development | 3d-scene-developer, game-designer, godot-\*, roblox-\*, unity-\*, unreal-\* | 23 |
-| gis | geographer, gis-analyst, cartography-designer, spatial-data-engineer, web-gis-developer | 12 |
-| marketing | seo-specialist, social-media-strategist, content-creator, email-marketing, tiktok-\* | 19 |
-| paid-media | ad-creative-strategist, ppc-campaign-strategist, programmatic-display-buyer | 6 |
-| product | product-manager, sprint-prioritizer, proposal-strategist, discovery-coach | 7 |
-| project-management | project-shepherd, jira-workflow-steward, senior-project-manager | 4 |
-| sales | deal-strategist, sales-engineer, sales-coach, outbound-strategist | 9 |
-| security | application-security-engineer, penetration-tester, threat-detection-engineer | 10 |
-| spatial-computing | xr-immersive-developer, visionos-spatial-engineer, macos-spatial-engineer | 6 |
-| specialized | grant-writer, legal-\*, medical-billing, compliance-auditor, data-privacy-officer | 28 |
-| strategy | business-strategist, m-a-integration-manager, change-management-consultant | 4 |
-| support | customer-service, support-responder, it-service-manager | 5 |
-| testing | api-tester, test-results-analyzer, performance-benchmarker | 5 |
-
-Used by OpenCode's `/agent` command.
+→ **Canonical index: `docs/SUBAGENTS.md`** (232 subagent personas, 18 divisions). This file tracks skills only; subagent routing and delegation rules live in `AGENTS.md` §8.
 ---
 ## `@dietrichgebert/ponytail` Plugin
 Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands, and 10 hooks. Perfect for 4GB RAM resource safety by prioritizing minimal impact fixes. Mode toggling: `/ponytail lite|full|ultra|off`.
@@ -218,7 +194,7 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │   └── skills/
 │       └── waybill-template-debug/
 ├── .opencode/
-│   └── agents/          ← 232 upstream agency-agents (18 divisions)
+│   └── agents/          ← 232 subagents → canonical index: docs/SUBAGENTS.md
 ├── node_modules/
 │   └── @dietrichgebert/
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks

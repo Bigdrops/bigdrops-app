@@ -1,13 +1,16 @@
-import React, { useMemo, useState } from "react";
-import { ChevronDown, Receipt, FileText, Image } from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { ChevronDown, Receipt, FileText, Image, ExternalLink } from "lucide-react";
 import { formatNaira } from "@/lib/formatters/money";
 import { buildPaymentSummaryProjection } from "@/domain/invoice/projections/financialProjection";
 import { buildPaymentHistoryRowViewModels, type AttachmentPreview } from "./paymentHistoryViewModel";
+import { supabase } from "@/supabase";
+import { useNavigate } from "react-router-dom";
 
 interface PaymentHistoryCardProps {
   payments: any[];
   invoiceTotal: number;
   viewModel: any;
+  invoiceId: string;
   onRecordPayment: () => void;
   onVoidPayment: (id: string) => void;
 }
@@ -16,10 +19,23 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
   payments,
   invoiceTotal,
   viewModel,
+  invoiceId,
   onRecordPayment,
   onVoidPayment,
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
+  const [receiptsByPayment, setReceiptsByPayment] = useState<Record<string, { id: string; number: string }>>({});
+
+  useEffect(() => {
+    if (!invoiceId) return;
+    supabase.from('receipts').select('id, receipt_number, payment_id').eq('invoice_id', invoiceId)
+      .then(({ data }) => {
+        const map: Record<string, { id: string; number: string }> = {};
+        if (data) data.forEach(r => { map[r.payment_id] = { id: r.id, number: r.receipt_number } });
+        setReceiptsByPayment(map);
+      });
+  }, [invoiceId]);
 
   const paymentSummary = useMemo(
     () => buildPaymentSummaryProjection(invoiceTotal, payments || [], (v) => formatNaira(v)),
@@ -140,6 +156,16 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
                   <span className="font-mono font-bold text-sm text-bd-text">
                     {row.formattedAmount}
                   </span>
+                  {receiptsByPayment[row.id] && (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-bd-accent hover:underline bg-transparent border-none cursor-pointer"
+                      onClick={() => navigate(`/receipts/${receiptsByPayment[row.id].id}`)}
+                    >
+                      <ExternalLink size={10} />
+                      Receipt #{receiptsByPayment[row.id].number}
+                    </button>
+                  )}
                   {!row.isVoided && (
                     <button
                       type="button"

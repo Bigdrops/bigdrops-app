@@ -56,12 +56,14 @@ const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] =
   { value: 'Caveat', label: 'Caveat' },
   { value: 'Kalam', label: 'Kalam' },
   { value: 'Patrick Hand', label: 'Patrick Hand' },
+  { value: 'Handlee', label: 'Handlee' },
+  { value: 'Sue Ellen Francisco', label: 'Sue Ellen Francisco' },
 ]
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
-  '2': { font: 'Inter', color: '#0f172a' },
-  '3': { font: 'Inter', color: '#3b82f6' },
-  '4': { font: 'Inter', color: '#1e293b' },
+  '2': { font: 'Caveat', color: '#0f172a' },
+  '3': { font: 'Patrick Hand', color: '#3b82f6' },
+  '4': { font: 'Handlee', color: '#1e293b' },
 }
 
 function getStoredTemplate() {

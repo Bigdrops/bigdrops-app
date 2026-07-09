@@ -8,14 +8,14 @@ import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 export const CSR_CAPABILITIES: PdfCustomizationCapabilities = {
   accentColor: false,
-  documentFont: false,
+  documentFont: true,
   handwritingFont: true,
   handwritingColor: true,
 }
 
 export const CSR_POLICY: PdfCustomizationPolicy = {
   accentColor: false,
-  documentFont: false,
+  documentFont: true,
   handwritingFont: true,
   handwritingColor: true,
 }

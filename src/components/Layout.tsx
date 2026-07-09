@@ -121,6 +121,7 @@ export default function Layout({
       boqs: '/boqs',
       reports: '/reports',
       compliance: '/compliance',
+      receipts: '/receipts',
       'item-library': '/item-library',
       settings: '/settings',
     }

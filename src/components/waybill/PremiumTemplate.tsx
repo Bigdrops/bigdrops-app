@@ -449,7 +449,7 @@ export const PremiumTemplateDocument: React.FC<{
             <View style={S.docBox}>
               <Text style={S.docLabel}>Waybill No</Text>
               <View style={S.docValue}>
-                <Text style={{ fontSize: (model.header.waybillNumber?.length || 0) > 18 ? 7 : 11 }}>{model.header.waybillNumber || ''}</Text>
+                <Text style={{ fontSize: (model.header.waybillNumber?.length || 0) > 24 ? 5.5 : (model.header.waybillNumber?.length || 0) > 18 ? 7 : 9 }}>{model.header.waybillNumber || ''}</Text>
               </View>
             </View>
           </View>

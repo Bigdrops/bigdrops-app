@@ -10,11 +10,11 @@ import {
   fetchPaymentById,
   fetchInvoiceWhtConfig,
 } from "../repositories/paymentRepository"
-import { recordPaymentRecorded, recordPaymentVoided } from "@/lib/audit"
+import { recordPaymentRecorded, recordPaymentVoided, recordReceiptVoided } from "@/lib/audit"
+import { insertReceipt, fetchReceiptByPaymentId, voidReceipt } from "@/domain/receipt/receiptRepository"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
 import { supabase } from "@/supabase"
 import type { PaymentAttachment } from "@/lib/attachmentTypes"
-import { insertReceipt } from "@/domain/receipt/receiptRepository"
 import { getNextReceiptNumber } from "@/domain/receipt/receiptNumber"
 import type { DocumentPrefixes } from '@/domain/prefixConstants'
 
@@ -331,6 +331,16 @@ export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ suc
 
     if (voided?.attachments?.length) {
       await editVoidCaptions(voided.id)
+    }
+
+    try {
+      const receipt = await fetchReceiptByPaymentId(input.paymentId)
+      if (receipt) {
+        await voidReceipt(receipt.id, input.reason || null)
+        await recordReceiptVoided(receipt.id, receipt.receipt_number, input.reason || null, input.paymentId)
+      }
+    } catch (receiptVoidErr) {
+      console.error('Receipt void failed:', receiptVoidErr)
     }
 
     return { success: true }

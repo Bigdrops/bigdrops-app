@@ -43,6 +43,7 @@ export const InvoiceOperationalSections: React.FC<InvoiceOperationalSectionsProp
         payments={payments}
         invoiceTotal={invoiceTotal || viewModel?.invoiceTotal || 0}
         viewModel={viewModel}
+        invoiceId={invoiceId}
         onRecordPayment={onRecordPayment}
         onVoidPayment={onVoidPayment}
       />

@@ -37,7 +37,7 @@ The following rules and codebase boundaries are strictly enforced. Rules marked 
 
 All coding agents must follow this strict execution methodology to prevent regressions and scope creep.
 
-* **Audit & Skill Load First:** Before changing any implementation, you MUST identify the file's ownership, callers, and downstream effects. Search the codebase for usage before modifying shared utilities. **If the task involves a new or unfamiliar domain, you MUST read `docs/PROJECTSKILLINDEX.md` and load the corresponding skill before writing code.** After identifying an unfamiliar domain and before implementation, also consult `docs/SUBAGENTS.md` (§8) and delegate to a specialized subagent where one exists.
+* **Audit & Skill Load First:** Before changing any implementation, you MUST identify the file's ownership, callers, and downstream effects. Search the codebase for usage before modifying shared utilities. **If the task involves a new or unfamiliar domain, you MUST read `docs/SUBAGENTS.md` (§8) and load/invoke the corresponding subagent or skill before writing code.** After identifying an unfamiliar domain and before implementation, also delegate to a specialized subagent where one exists. (The skill list itself lives in `docs/PROJECTSKILLINDEX.md`; see §5.)
 * **Plan Before Execution:** Think step-by-step in a `<plan>` block before writing code. Prioritize simple control flow, goal-driven execution, and verifiable success criteria over complex abstractions.
 * **Surgical Changes Only:** Touch only what the task requires. Do not refactor adjacent code, fix formatting, or rename symbols outside the immediate scope of the user's request.
 * **Preserve Business Behavior:** Unless the task explicitly changes business rules, you must preserve user-visible behavior, audit trails, document lineage, numbering, and transformation semantics. Structural refactoring must not alter existing output.
@@ -81,7 +81,7 @@ Every normative standard in `docs/STANDARD/` is catalogued here so agents can lo
 
 ## 5. Skills Registry & Loading Protocol
 
-The full skill index containing ~25 skills and 232 subagents is located at: **`docs/PROJECTSKILLINDEX.md`**. Do not re-derive this index from memory.
+The skill index (skills only) is located at: **`docs/PROJECTSKILLINDEX.md`**. The subagent list (232 personas) is located at: **`docs/SUBAGENTS.md`** (see §8). Do not re-derive either index from memory.
 
 * **Load Location:** Load skills from `.agents/skills/`, `.claude/skills/`, `.mimocode/skills/`, or `.opencode/agents/`.
 * **Strict Matching:** You must use exact skill names. If a requested skill name does not match exactly or cannot be found, you MUST HALT and request clarification. Never guess, hallucinate, or fallback to a similarly named skill.

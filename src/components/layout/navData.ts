@@ -214,6 +214,7 @@ export function getActiveTab(pathname: string): TabKey {
   if (
     pathname.startsWith('/rfqs') ||
     pathname.startsWith('/boqs') ||
+    pathname.startsWith('/receipts') ||
     pathname.startsWith('/reports') ||
     pathname.startsWith('/compliance') ||
     pathname.startsWith('/item-library') ||

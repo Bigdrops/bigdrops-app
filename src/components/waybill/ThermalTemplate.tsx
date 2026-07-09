@@ -314,6 +314,9 @@ export const ThermalTemplateDocument: React.FC<{
   designPreset?: PdfDesignPreset
 }> = ({ model, designPreset }) => {
   const preset = designPreset || getDefaultPdfDesignPreset('waybill')
+  const fillableChoice = getEffectiveFillableFont(preset)
+  const fillableBold = resolvePdfFontFamily(fillableChoice, 'bold')
+  const fillableColor = preset.fillableColor || preset.textColor
   const S = createStyles(preset)
 
   const deliveryMode = model.logistics.deliveryMode || ''
