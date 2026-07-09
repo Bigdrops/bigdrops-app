@@ -8,7 +8,11 @@ import { REGISTERED_LOCKED_SHARED_FONTS, REGISTERED_SHARED_FONTS } from '@/lib/p
 let pdfFontsRegistered = false
 
 function registerPdfAlias(family: RegisteredFillableFontFamily | string, src: string) {
-  Font.register({ family, src })
+  try {
+    Font.register({ family, src })
+  } catch {
+    console.warn(`[pdfFontRegistry] Failed to register PDF font "${family}". Font features using this family may fall back to Helvetica.`)
+  }
 }
 
 function registerFillableFontConfig(
@@ -41,15 +45,19 @@ function registerSharedFontConfig(
     boldItalicSrc?: string
   },
 ) {
-  Font.register({
-    family: config.family,
-    fonts: [
-      { src: config.regularSrc, fontWeight: 400 },
-      { src: config.boldSrc || config.regularSrc, fontWeight: 700 },
-      { src: config.italicSrc || config.regularSrc, fontStyle: 'italic' },
-      { src: config.boldItalicSrc || config.boldSrc || config.regularSrc, fontWeight: 700, fontStyle: 'italic' },
-    ],
-  })
+  try {
+    Font.register({
+      family: config.family,
+      fonts: [
+        { src: config.regularSrc, fontWeight: 400 },
+        { src: config.boldSrc || config.regularSrc, fontWeight: 700 },
+        { src: config.italicSrc || config.regularSrc, fontStyle: 'italic' },
+        { src: config.boldItalicSrc || config.boldSrc || config.regularSrc, fontWeight: 700, fontStyle: 'italic' },
+      ],
+    })
+  } catch {
+    console.warn(`[pdfFontRegistry] Failed to register shared PDF font "${config.family}". Text using this font may fall back to Helvetica.`)
+  }
 }
 
 export function registerPdfFonts() {
