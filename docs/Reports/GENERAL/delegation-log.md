@@ -1,0 +1,3 @@
+[DELEGATION] task="Upgrade AGENTS.md to integrate .opencode/agents/ subagent directory as delegation source of truth" | domain="docs" | subagent="agents-orchestrator" | source=".opencode/agents/agents-orchestrator.md" | harness="Local Runner"
+[DELEGATION] task="Implement AGENTS.md delegation protocol (§8), surgical §3/§5 edits, author report, run verification gate" | domain="docs" | subagent="technical-writer" | source=".opencode/agents/technical-writer.md" | harness="Local Runner"
+[DELEGATION] task="Index unindexed docs/STANDARD/ files (except receipt-standard) into AGENTS.md" | domain="docs" | subagent="NONE" | justification="no matching subagent for surgical AGENTS.md standards-registry edit; in-house doc change" | harness="Local Runner"
