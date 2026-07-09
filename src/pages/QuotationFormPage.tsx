@@ -317,8 +317,8 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     addItemToGroup,
   } = lineItemsHandlers
 
-  const updateQuotation = <K extends keyof QuotationEditorState>(field: K, value: QuotationEditorState[K]) =>
-    setQuotation((current) => ({ ...current, [field]: value }))
+  const updateQuotation = useCallback(<K extends keyof QuotationEditorState>(field: K, value: QuotationEditorState[K]) =>
+    setQuotation((current) => ({ ...current, [field]: value })), [])
 
   const normalizedGroupMeta = useMemo(() => toGroupMetaMap(groups), [groups])
   const normalizedGrouping = useMemo(() => normalizeQuotationGrouping(items, normalizedGroupMeta), [items, normalizedGroupMeta])
@@ -480,6 +480,47 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     setIdentityLockDialog({ open: true, field: field === 'client' ? 'client' : 'quotation_number' })
   }, [])
 
+  const handleSetInvoiceTitle = useCallback((value: string) => updateQuotation('quotation_title', value), [updateQuotation])
+
+  const handleUpdateItem = useCallback((itemIndex: number, field: string, value: unknown) => {
+    if (field === '__install_rate_override') return applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
+    updateItem(itemIndex, field, value)
+  }, [applyRowPatch, updateItem])
+
+  const handleAddHeaderField = useCallback(() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })]), [])
+
+  const handleUpdateHeaderField = useCallback((id: string, field: 'label' | 'value', value: string) =>
+    setHeaderFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry))), [])
+
+  const handleRemoveHeaderField = useCallback((id: string) => setHeaderFields((current) => current.filter((entry) => entry.id !== id)), [])
+
+  const handleAddAdditionalField = useCallback(() => setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })]), [])
+
+  const handleUpdateAdditionalField = useCallback((id: string, field: 'label' | 'value', value: string) =>
+    setAdditionalFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry))), [])
+
+  const handleRemoveAdditionalField = useCallback((id: string) => setAdditionalFields((current) => current.filter((field) => field.id !== id)), [])
+
+  const handleChargeLabelChange = useCallback((key: string, value: string) => setChargeLabels((current) => ({ ...current, [key]: value })), [])
+
+  const handleAddExtraCharge = useCallback((withTax: boolean) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })]), [])
+
+  const handleUpdateExtraCharge = useCallback((id: string, field: string, value: unknown) =>
+    setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge))), [])
+
+  const handleRemoveExtraCharge = useCallback((id: string) => setExtraCharges((current) => current.filter((charge) => charge.id !== id)), [])
+
+  const handleClearInvalidRow = useCallback(() => setInvalidRowIndex(null), [])
+
+  const handleSave = useCallback(() => save('open'), [save])
+
+  const memoizedSignatories = useMemo(() => signatories.map((signatory) => ({
+    id: signatory.id,
+    name: signatory.name,
+    role: signatory.role || undefined,
+    signatureUrl: signatory.signature_url || undefined,
+  })), [signatories])
+
   const handleDuplicateFromEditable = useCallback(() => {
     const clonedItems = JSON.parse(JSON.stringify(items))
     navigate('/quotations/new', {
@@ -510,7 +551,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           modeLabel={formatQuotationStatus(quotation.status || 'open')}
           invoice={invoiceLikeQuotation}
           invoiceTitle={quotation.quotation_title || ''}
-          setInvoiceTitle={(value: string) => updateQuotation('quotation_title', value)}
+          setInvoiceTitle={handleSetInvoiceTitle}
           updateInvoice={guardedUpdateQuotation}
           items={normalizedItems}
           groups={normalizedGroups}
@@ -524,12 +565,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           setTermsTitle={setTermsTitle}
           attachments={attachments}
           setAttachments={setAttachments}
-          signatories={signatories.map((signatory) => ({
-            id: signatory.id,
-            name: signatory.name,
-            role: signatory.role || undefined,
-            signatureUrl: signatory.signature_url || undefined,
-          }))}
+          signatories={memoizedSignatories}
           signatoryId={signatoryId}
           onSignatoryChange={setSignatoryId}
           mergeQtyUnit={mergeQtyUnit}
@@ -563,19 +599,16 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           setWhtType={setWhtType}
           saving={saving}
           primaryLabel={isEdit ? 'Save Quotation' : 'Create Quotation'}
-          onSaveSent={() => save('open')}
-          onSaveDraft={() => save('open')}
-          onFloatingSave={() => save('open')}
+          onSaveSent={handleSave}
+          onSaveDraft={handleSave}
+          onFloatingSave={handleSave}
           onCancel={() => navigate('/quotations')}
           onApplyImport={handleImportApply}
           importAdapter={quotationImportAdapter}
           onAddItem={addQuotationItem}
           onAddGroup={addQuotationGroup}
           onAddItemToGroup={addItemToGroup}
-          onUpdateItem={(itemIndex: number, field: string, value: unknown) => {
-            if (field === '__install_rate_override') return applyRowPatch(itemIndex, value as Partial<InvoiceItem>)
-            updateItem(itemIndex, field, value)
-          }}
+          onUpdateItem={handleUpdateItem}
           onResetItemOverrides={resetItemOverrides}
           onRemoveItem={removeItemAt}
           onMoveItem={moveItemBy}
@@ -583,25 +616,19 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           onUpdateGroupName={updateGroupName}
           onToggleGroupSubtotal={toggleGroupSubtotal}
           onDeleteGroup={deleteGroup}
-          onAddHeaderField={() => setHeaderFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
-          onUpdateHeaderField={(id: string, field: 'label' | 'value', value: string) =>
-            setHeaderFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
-          }
-          onRemoveHeaderField={(id: string) => setHeaderFields((current) => current.filter((entry) => entry.id !== id))}
-          onAddAdditionalField={() => setAdditionalFields((current) => [...current, makeFieldEntry({ label: '', value: '' })])}
-          onUpdateAdditionalField={(id: string, field: 'label' | 'value', value: string) =>
-            setAdditionalFields((current) => current.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)))
-          }
-          onRemoveAdditionalField={(id: string) => setAdditionalFields((current) => current.filter((field) => field.id !== id))}
-          onChargeLabelChange={(key: string, value: string) => setChargeLabels((current) => ({ ...current, [key]: value }))}
-          onAddExtraCharge={(withTax: boolean) => setExtraCharges((current) => [...current, makeExtraCharge({ withTax })])}
-          onUpdateExtraCharge={(id: string, field: string, value: unknown) =>
-            setExtraCharges((current) => current.map((charge) => (charge.id === id ? { ...charge, [field]: value } : charge)))
-          }
-          onRemoveExtraCharge={(id: string) => setExtraCharges((current) => current.filter((charge) => charge.id !== id))}
+          onAddHeaderField={handleAddHeaderField}
+          onUpdateHeaderField={handleUpdateHeaderField}
+          onRemoveHeaderField={handleRemoveHeaderField}
+          onAddAdditionalField={handleAddAdditionalField}
+          onUpdateAdditionalField={handleUpdateAdditionalField}
+          onRemoveAdditionalField={handleRemoveAdditionalField}
+          onChargeLabelChange={handleChargeLabelChange}
+          onAddExtraCharge={handleAddExtraCharge}
+          onUpdateExtraCharge={handleUpdateExtraCharge}
+          onRemoveExtraCharge={handleRemoveExtraCharge}
           onClearAll={handleClearAll}
           invalidRowIndex={invalidRowIndex}
-          onClearInvalidRow={() => setInvalidRowIndex(null)}
+          onClearInvalidRow={handleClearInvalidRow}
           showColumnManager={showColumnManager}
           setShowColumnManager={setShowColumnManager}
           isMobile={isMobile}
