@@ -19,7 +19,15 @@ import { supabase } from '@/supabase'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
-import { getPdfDesignPreset, setPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
+import {
+  CSR_CAPABILITIES,
+  CSR_POLICY,
+  CSR_STATIC_DEFAULTS,
+  bridgeToDesignPreset,
+} from '@/domain/pdf/customization/csr'
+import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -38,8 +46,8 @@ const MODAL_COMPLETE = 'complete'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 const CSR_TEMPLATE_KEY = 'csr_view_template'
-const CSR_CUSTOM_FONT_KEY = 'csr_custom_font'
-const CSR_CUSTOM_COLOR_KEY = 'csr_custom_color'
+const CSR_CUSTOM_FONT_STASH = 'csr_custom_font_stash'
+const CSR_CUSTOM_COLOR_STASH = 'csr_custom_color_stash'
 
 const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
 
@@ -63,12 +71,12 @@ function getStoredTemplate() {
 
 function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
   if (typeof window === 'undefined') return 'auto'
-  return (window.localStorage.getItem(CSR_CUSTOM_FONT_KEY) as any) || 'auto'
+  return (window.localStorage.getItem(CSR_CUSTOM_FONT_STASH) as any) || 'auto'
 }
 
 function getStoredCustomColor(): 'auto' | string {
   if (typeof window === 'undefined') return 'auto'
-  return window.localStorage.getItem(CSR_CUSTOM_COLOR_KEY) || 'auto'
+  return window.localStorage.getItem(CSR_CUSTOM_COLOR_STASH) || 'auto'
 }
 
 export default function ViewCSR() {
@@ -82,29 +90,69 @@ export default function ViewCSR() {
   const [signatories, setSignatories] = useState<any[]>([])
   const [client, setClient] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
-  const [designPreset, setDesignPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset('csr'))
   const [template, setTemplate] = useState(getStoredTemplate)
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [comments, setComments] = useState('')
 
-  // Compute effective preset based on auto/custom toggles
-  const getEffectivePreset = (tmpl: string, font: 'auto' | PdfFillableFontChoice, color: 'auto' | string) => {
-    const defaults = CSR_TEMPLATE_DEFAULTS[tmpl] || CSR_TEMPLATE_DEFAULTS['3']
-    return {
-      ...designPreset,
-      fillableFont: font === 'auto' ? defaults.font : font,
-      fillableColor: color === 'auto' ? defaults.color : color,
-      fillableFontMode: 'custom' as const,
-    }
-  }
+  // Engine: customization state + persistence
+  const {
+    customization,
+    setInkFont,
+    setInkColour,
+    reset: resetCustomization,
+  } = usePdfCustomization({
+    documentFamily: 'csr',
+    capabilities: CSR_CAPABILITIES,
+    policy: CSR_POLICY,
+    templateDefaults: CSR_STATIC_DEFAULTS,
+  })
 
-  // Keep designPreset in sync with toggle state
+  const basePreset = getPdfDesignPreset('csr')
+  const designPreset = bridgeToDesignPreset(basePreset, customization)
+
+  // Sync: customFont sentinel → engine
   useEffect(() => {
-    setDesignPreset((prev) => getEffectivePreset(template, customFont, customColor))
+    const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+    setInkFont(customFont === 'auto' ? defaults.font : customFont)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template, customFont, customColor])
+  }, [customFont, template])
+
+  // Sync: customColor sentinel → engine
+  useEffect(() => {
+    const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
+    setInkColour(customColor === 'auto' ? defaults.color : customColor)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customColor, template])
+
+  // Migration: read old localStorage keys once and write to engine key
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const newKey = 'bigdrops_pdf_customization_csr'
+    if (window.localStorage.getItem(newKey)) return
+    const oldFont = window.localStorage.getItem('csr_custom_font')
+    const oldColor = window.localStorage.getItem('csr_custom_color')
+    if (!oldFont && !oldColor) return
+    const migrated: PdfCustomizationSettings = {
+      version: 1,
+      documentFont: 'Inter',
+      inkFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Inter',
+      inkColour: oldColor && oldColor !== 'auto' ? oldColor : '#3b82f6',
+    }
+    window.localStorage.setItem(newKey, JSON.stringify(migrated))
+    window.localStorage.removeItem('csr_custom_font')
+    window.localStorage.removeItem('csr_custom_color')
+    window.location.reload()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Persist template to localStorage on change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
+    }
+  }, [template])
 
   useEffect(() => {
     const loadCsr = async () => {
@@ -433,10 +481,9 @@ export default function ViewCSR() {
                   onClick={() => {
                     if (typeof window !== 'undefined') {
                       window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
-                      window.localStorage.setItem(CSR_CUSTOM_FONT_KEY, customFont)
-                      window.localStorage.setItem(CSR_CUSTOM_COLOR_KEY, customColor)
+                      window.localStorage.setItem(CSR_CUSTOM_FONT_STASH, customFont)
+                      window.localStorage.setItem(CSR_CUSTOM_COLOR_STASH, customColor)
                     }
-                    setPdfDesignPreset('csr', designPreset)
                     ui.closeSheet()
                     showToast('Customization saved', 'CSR template and fillable settings updated.', 'success')
                   }}
