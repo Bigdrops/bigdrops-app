@@ -445,14 +445,6 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     setQuotationNumber: (num: string) => setQuotation((current) => ({ ...current, quotation_number: num })),
   })
 
-  if (loading) {
-    return (
-      <Layout title={isEdit ? 'Edit Quotation' : 'New Quotation'} session={null} immersive>
-        <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground shadow-sm sm:px-6">Loading quotation...</div>
-      </Layout>
-    )
-  }
-
   const invoiceLikeQuotation = {
     ...quotation,
     invoice_number: quotation.quotation_number || '',
@@ -539,6 +531,14 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
       },
     })
   }, [items, quotation, navigate])
+
+  if (loading) {
+    return (
+      <Layout title={isEdit ? 'Edit Quotation' : 'New Quotation'} session={null} immersive>
+        <div className="rounded-xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground shadow-sm sm:px-6">Loading quotation...</div>
+      </Layout>
+    )
+  }
 
   const pageTitle = isEdit ? 'Edit Quotation' : 'New Quotation'
 
