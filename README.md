@@ -10,7 +10,7 @@ Internal business operations tool used by company staff to create, manage, and e
 [![Bun](https://img.shields.io/badge/Bun-1.x-000?logo=bun)](https://bun.sh)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000?logo=vercel)](https://vercel.com)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.x-119EFF?logo=capacitor)](https://capacitorjs.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](#license)
 
 ---
 
@@ -87,8 +87,20 @@ src/
 git clone https://github.com/Bigdrops/bigdrops-app.git
 bun install
 bun run dev
-bun run build
 ```
+
+> **Note:** Do not run `bun run build` locally. Production builds are RAM-intensive and are handled by Vercel / the project lead. Use `bun run typecheck` and `bun run lint` to verify changes.
+
+## Environment Variables
+
+Create a `.env` file in the project root before running `bun run dev`:
+
+```bash
+VITE_SUPABASE_URL=your-supabase-project-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+Both are required — the Supabase client in `src/supabase.ts` will not initialize without them.
 
 ## Scripts
 
@@ -114,3 +126,7 @@ bun run build
 ## Agent Workflow
 
 All coding agents must read `AGENTS.md` at the project root before modifying any file and consult the relevant skill files in `.agents/skills/` before writing code. The full skills registry is cataloged at `docs/PROJECTSKILLINDEX.md`.
+
+## License
+
+Proprietary. This is a private internal tool. All rights reserved. Not licensed for external use, redistribution, or modification outside the company.

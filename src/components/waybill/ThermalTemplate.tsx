@@ -170,6 +170,8 @@ function createStyles(preset: PdfDesignPreset) {
     addrName: {
       fontSize: 9,
       fontWeight: 'bold',
+      fontFamily: fillableBold,
+      color: fillableColor,
     },
     choiceLine: {
       flexDirection: 'row',
@@ -503,7 +505,7 @@ export const ThermalTemplateDocument: React.FC<{
             <View style={S.block}>
               <Text style={S.blockTitle}>NOTE</Text>
               <View style={S.noteBox}>
-                <Text>{model.notes || ''}</Text>
+                <Text style={{ fontFamily: fillableBold, color: fillableColor }}>{model.notes || ''}</Text>
               </View>
             </View>
 
@@ -513,7 +515,7 @@ export const ThermalTemplateDocument: React.FC<{
               <View style={S.ackBox}>
                 <View style={S.ackLine}>
                   <Text style={S.ackLabel}>Delivered By: </Text>
-                  <Text>{model.parties.senderName || model.branding.name || ''}</Text>
+                  <Text style={{ fontFamily: fillableBold, color: fillableColor }}>{model.parties.senderName || model.branding.name || ''}</Text>
                 </View>
                 <View style={S.ackLine}>
                   <Text style={S.ackLabel}>Signature: </Text>
@@ -534,7 +536,7 @@ export const ThermalTemplateDocument: React.FC<{
 
                 <View style={S.ackLine}>
                   <Text style={S.ackLabel}>Collected By: </Text>
-                  <Text>{model.parties.receiverName || ''}</Text>
+                  <Text style={{ fontFamily: fillableBold, color: fillableColor }}>{model.parties.receiverName || ''}</Text>
                 </View>
                 <View style={S.ackLine}>
                   <Text style={S.ackLabel}>Signature: </Text>

@@ -365,7 +365,7 @@ export const MinimalTemplateDocument: React.FC<{
           <View style={S.topGrid}>
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Client / Consignee</Text>
-              <Text style={{ fontSize: 9, fontWeight: 'bold', marginTop: 2 }}>{model.parties.clientName || ''}</Text>
+              <Text style={{ fontSize: 9, fontFamily: fillableBold, color: fillableColor, marginTop: 2 }}>{model.parties.clientName || ''}</Text>
               {model.parties.clientAddress && (
                 <Text style={{ fontSize: 8, color: '#444444', marginTop: 1 }}>{model.parties.clientAddress}</Text>
               )}
@@ -381,7 +381,7 @@ export const MinimalTemplateDocument: React.FC<{
             </View>
             <View style={S.topBox}>
               <Text style={S.fieldLabel}>Destination Address</Text>
-              <Text>{model.logistics.deliveryLocation || ''}</Text>
+              <Text style={{ fontSize: 9, fontFamily: fillableBold, color: fillableColor }}>{model.logistics.deliveryLocation || ''}</Text>
             </View>
           </View>
 
@@ -389,11 +389,11 @@ export const MinimalTemplateDocument: React.FC<{
           <View style={S.secondGrid}>
             <View style={S.secondBox}>
               <Text style={S.fieldLabel}>Vehicle Plate</Text>
-              <Text>{model.logistics.vehiclePlate || ''}</Text>
+              <Text style={{ fontSize: 9, fontFamily: fillableBold, color: fillableColor }}>{model.logistics.vehiclePlate || ''}</Text>
             </View>
             <View style={S.secondBox}>
               <Text style={S.fieldLabel}>Driver Name</Text>
-              <Text>{model.logistics.driverName || ''}</Text>
+              <Text style={{ fontSize: 9, fontFamily: fillableBold, color: fillableColor }}>{model.logistics.driverName || ''}</Text>
             </View>
           </View>
 
@@ -483,7 +483,7 @@ export const MinimalTemplateDocument: React.FC<{
               <Text style={S.sigHeader}>Delivered By / Driver</Text>
               <View style={S.sigMetaRow}>
                 <View style={S.sigMetaCellBordered}>
-                  <Text style={{ fontSize: 8, color: '#555555' }}>
+                  <Text style={{ fontSize: 8, fontFamily: fillableBold, color: fillableColor }}>
                     Name: {model.parties.senderName || model.branding.name || ''}
                   </Text>
                 </View>
@@ -504,7 +504,7 @@ export const MinimalTemplateDocument: React.FC<{
               <Text style={S.sigHeader}>Received By</Text>
               <View style={S.sigMetaRow}>
                 <View style={S.sigMetaCellBordered}>
-                  <Text style={{ fontSize: 8, color: '#555555' }}>
+                  <Text style={{ fontSize: 8, fontFamily: fillableBold, color: fillableColor }}>
                     Name: {model.parties.receiverName || ''}
                   </Text>
                 </View>

@@ -206,7 +206,7 @@ function createStyles(preset: PdfDesignPreset) {
     tickLabel: {
       fontSize: 7.5,
       fontWeight: 'bold',
-      color: fillableColor,
+      color: txt,
     },
     clientDestRow: {
       flexDirection: 'row',

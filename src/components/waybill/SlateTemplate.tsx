@@ -133,8 +133,8 @@ function createStyles(preset: PdfDesignPreset) {
     },
     blockMain: {
       fontSize: 11,
-      fontWeight: 'bold',
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
       lineHeight: 1.25,
     },
     tickGroup: {
@@ -153,7 +153,7 @@ function createStyles(preset: PdfDesignPreset) {
       width: 10,
       height: 10,
       borderWidth: 1.5,
-      borderColor: '#7d8a88',
+      borderColor: fillableColor,
       borderRadius: 2,
     },
     tickBoxChecked: {
@@ -166,7 +166,7 @@ function createStyles(preset: PdfDesignPreset) {
     tickText: {
       fontSize: 7.5,
       fontWeight: '500',
-      color: fillableColor,
+      color: txt,
     },
     rightCol: {
       flex: 0.8,
@@ -341,8 +341,8 @@ function createStyles(preset: PdfDesignPreset) {
       minHeight: 16,
       paddingBottom: 3,
       fontSize: 8.5,
-      fontWeight: '600',
-      color: '#1a2624',
+      fontFamily: fillableBold,
+      color: fillableColor,
       marginBottom: 2,
       marginTop: 1,
     },

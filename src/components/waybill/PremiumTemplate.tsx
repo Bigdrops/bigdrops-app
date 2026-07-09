@@ -206,7 +206,7 @@ function createStyles(preset: PdfDesignPreset) {
     tickText: {
       fontSize: 8,
       fontWeight: 'bold',
-      color: fillableColor,
+      color: txt,
     },
     sectionTitle: {
       fontSize: 8,
@@ -449,7 +449,7 @@ export const PremiumTemplateDocument: React.FC<{
             <View style={S.docBox}>
               <Text style={S.docLabel}>Waybill No</Text>
               <View style={S.docValue}>
-                <Text>{model.header.waybillNumber || ''}</Text>
+                <Text style={{ fontSize: (model.header.waybillNumber?.length || 0) > 18 ? 7 : 11 }}>{model.header.waybillNumber || ''}</Text>
               </View>
             </View>
           </View>
