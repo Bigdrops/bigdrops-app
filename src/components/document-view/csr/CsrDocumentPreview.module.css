@@ -4,20 +4,20 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  border-bottom: 1px solid var(--dv-border-soft);
-  background: var(--dv-surface-2);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
+  background: var(--bd-surface-muted);
 }
 
 .companyName {
   font-size: 15px;
   font-weight: 800;
-  color: var(--dv-text);
+  color: var(--bd-text);
   letter-spacing: -0.01em;
 }
 
 .companyContact {
   font-size: 11px;
-  color: var(--dv-text-3);
+  color: var(--bd-text-muted);
   line-height: 1.6;
   margin-top: 3px;
 }
@@ -32,26 +32,26 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: var(--bd-text-muted);
 }
 
 .number {
   font-family: var(--dv-font-mono);
   font-size: 14px;
   font-weight: 600;
-  color: var(--dv-primary);
+  color: var(--bd-fab-bg);
   margin-top: 2px;
 }
 
 .metaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .metaCell {
   padding: 13px 20px;
-  border-right: 1px solid var(--dv-border-soft);
+  border-right: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .metaCell:last-child {
@@ -63,26 +63,26 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--dv-text-3);
+  color: var(--bd-text-muted);
   margin-bottom: 4px;
 }
 
 .metaValue {
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-text);
+  color: var(--bd-text);
   line-height: 1.4;
 }
 
 .metaSub {
   font-size: 11px;
-  color: var(--dv-text-2);
+  color: var(--bd-text-muted);
   margin-top: 2px;
 }
 
 .section {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--dv-border-soft);
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .section:last-child {
@@ -94,13 +94,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--dv-primary);
+  color: var(--bd-fab-bg);
   margin-bottom: 8px;
 }
 
 .narrativeText {
   font-size: 13px;
-  color: var(--dv-text);
+  color: var(--bd-text);
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -117,22 +117,22 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: var(--dv-bg-2);
+  background: var(--bd-surface-muted);
   border-radius: var(--bd-radius-sm);
-  border: 1px solid var(--dv-border-soft);
+  border: 1px solid hsl(var(--bd-border) / 0.5);
 }
 
 .materialName {
   font-size: 12px;
   font-weight: 500;
-  color: var(--dv-text);
+  color: var(--bd-text);
 }
 
 .materialQuantity {
   font-family: var(--dv-font-mono);
   font-size: 12px;
   font-weight: 600;
-  color: var(--dv-text-2);
+  color: var(--bd-text-muted);
 }
 
 .signatureGrid {
@@ -150,13 +150,13 @@
 
 .signatureLine {
   height: 40px;
-  border-bottom: 1px dashed var(--dv-border);
+  border-bottom: 1px dashed var(--bd-border);
   margin-bottom: 4px;
 }
 
 .signatureTitle {
   font-size: 10px;
   font-weight: 600;
-  color: var(--dv-text-2);
+  color: var(--bd-text-muted);
   text-transform: uppercase;
 }

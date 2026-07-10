@@ -5,8 +5,10 @@ import { cn } from '@/lib/utils'
 import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { type InvoicePdfTemplateId } from '@/domain/invoice/types'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, bridgeToCommercialDesignPreset, resolveCommercialDocumentFamily } from '@/domain/pdf/customization/commercial'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
-import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getDefaultPdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 import DocumentSheet from './DocumentSheet'
 
@@ -117,21 +119,40 @@ export default function PdfOutputCustomizeSheet({
   onSave,
 }: PdfOutputCustomizeSheetProps) {
   const [draftValue, setDraftValue] = useState<PdfOutputSettingsValue>(value)
-  const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(() => getPdfDesignPreset(documentType))
   const [draftTemplateId, setDraftTemplateId] = useState<InvoicePdfTemplateId>(templateId)
   const [saving, setSaving] = useState(false)
+
+  const docFamily = resolveCommercialDocumentFamily(documentType)
+  const { customization, setAccentColor, setDocumentFont } = usePdfCustomization({
+    documentFamily: docFamily,
+    templateDefaults: COMMERCIAL_TEMPLATE_DEFAULTS,
+    capabilities: COMMERCIAL_CAPABILITIES,
+    policy: COMMERCIAL_POLICY,
+  })
+
+  const basePreset = getDefaultPdfDesignPreset(documentType)
+  const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(
+    () => bridgeToCommercialDesignPreset(basePreset, customization),
+  )
 
   useEffect(() => {
     if (!open) return
     setDraftValue(value)
-    setDraftPreset(getPdfDesignPreset(documentType))
     setDraftTemplateId(templateId)
-  }, [documentType, open, templateId, value])
+    setDraftPreset(bridgeToCommercialDesignPreset(getDefaultPdfDesignPreset(documentType), customization))
+  }, [documentType, open, templateId, value, customization])
+
+  const handlePresetChange = (next: PdfDesignPreset) => {
+    if (next.accentColor !== draftPreset.accentColor) setAccentColor(next.accentColor)
+    if (next.headerFont !== draftPreset.headerFont || next.bodyFont !== draftPreset.bodyFont) {
+      setDocumentFont(next.bodyFont)
+    }
+    setDraftPreset(next)
+  }
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      setPdfDesignPreset(documentType, draftPreset)
       await onSave(draftValue, draftPreset, draftTemplateId)
       onClose()
     } finally {
@@ -228,7 +249,7 @@ export default function PdfOutputCustomizeSheet({
 
 
           <div className="mt-4 border-t border-bd-border pt-4">
-            <DocumentTemplateDesignOverrides value={draftPreset} onChange={setDraftPreset} />
+            <DocumentTemplateDesignOverrides value={draftPreset} onChange={handlePresetChange} />
           </div>
         </div>
 

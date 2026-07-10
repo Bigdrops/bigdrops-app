@@ -9,7 +9,7 @@ import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/inv
 import { formatNaira } from "@/lib/formatters/money";
 import { calculateInvoiceFinancialState } from "@/domain/invoice/financialState";
 import { resolveCanonicalLogoUrl, resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
-import { getPdfDesignPreset } from "@/lib/pdfDesignPreset";
+import { resolveCommercialDesignPreset } from "@/domain/pdf/customization/commercial";
 
 
 export const downloadInvoicePdfDocument = async ({
@@ -184,7 +184,7 @@ export const downloadInvoicePdfDocument = async ({
       footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || "") : "",
       tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || "") : "",
       metaFooter: { companyName: String(settingsData?.company_name || "") },
-      template: { designPreset: getPdfDesignPreset("invoice") },
+      template: { designPreset: resolveCommercialDesignPreset("invoice") },
     },
     templateId: targetTemplateId,
     compact: pdfOutput.compact === true,

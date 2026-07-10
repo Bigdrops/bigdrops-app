@@ -14,7 +14,7 @@
 .sectionLink {
   font-size: 12px;
   font-weight: 700;
-  color: var(--dv-primary);
+  color: var(--bd-fab-bg);
   background: none;
   border: none;
   cursor: pointer;
@@ -25,5 +25,5 @@
 }
 
 .sectionLink:hover {
-  background: var(--dv-primary-bg);
+  background: var(--bd-fab-bg);
 }

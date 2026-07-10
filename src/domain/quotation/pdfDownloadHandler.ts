@@ -7,7 +7,7 @@ import {
   BUILTIN_COLUMNS,
   normalizeInvoicePdfTemplateId,
 } from "@/domain/invoice";
-import { getPdfDesignPreset } from "@/lib/pdfDesignPreset";
+import { resolveCommercialDesignPreset } from "@/domain/pdf/customization/commercial";
 
 export async function handleDownloadQuotationPdf(input: {
   quotation: any;
@@ -37,7 +37,7 @@ export async function handleDownloadQuotationPdf(input: {
       generateQuotationPdf,
       interpretPdfTableSettings,
     } = await import("@/components/pdf-new");
-    const pdfDesignPreset = getPdfDesignPreset("quotation");
+    const pdfDesignPreset = resolveCommercialDesignPreset("quotation");
     const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS;
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: customFields?.mergeQtyUnit === true,
