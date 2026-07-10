@@ -56,6 +56,10 @@ const EditBoq = lazy(() => import('@/pages/EditBoq'))
 const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
 const Receipts = lazy(() => import('@/pages/Receipts'))
 const ViewReceipt = lazy(() => import('@/pages/ViewReceipt'))
+const Letters = lazy(() => import('@/pages/Letters'))
+const NewLetter = lazy(() => import('@/pages/NewLetter'))
+const EditLetter = lazy(() => import('@/pages/EditLetter'))
+const ViewLetter = lazy(() => import('@/pages/ViewLetter'))
 const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 
@@ -205,6 +209,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
           <Route path="/receipts" element={withBoundary(<Receipts />)} />
           <Route path="/receipts/:id" element={withBoundary(<ViewReceipt />)} />
+          <Route path="/letters" element={withBoundary(<Letters />)} />
+          <Route path="/letters/new" element={withBoundary(<NewLetter />)} />
+          <Route path="/letters/edit/:id" element={withBoundary(<EditLetter />)} />
+          <Route path="/letters/:id" element={withBoundary(<ViewLetter />)} />
         </Routes>
       </Suspense>
     </>

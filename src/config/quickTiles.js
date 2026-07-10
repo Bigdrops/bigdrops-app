@@ -114,6 +114,26 @@ export const QUICK_TILE_REGISTRY = {
     tint: 'bg-bd-status-info-bg border-bd-status-info-border',
     iconBg: 'bg-bd-status-info-text text-white',
   },
+  letters: {
+    id: 'letters',
+    label: 'Letters',
+    path: '/letters',
+    icon: Icons.letter,
+    description: 'Official correspondence and notices',
+    tileHint: 'Open module',
+    tint: 'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30',
+    iconBg: 'bg-violet-700 text-white dark:bg-violet-500 dark:text-white',
+  },
+  new_letter: {
+    id: 'new_letter',
+    label: 'New Letter',
+    path: '/letters/new',
+    icon: Icons.letter,
+    description: 'Draft an official letter',
+    tileHint: 'Tap to start',
+    tint: 'bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30',
+    iconBg: 'bg-violet-700 text-white dark:bg-violet-500 dark:text-white',
+  },
 }
 
 export const ALL_QUICK_TILE_IDS = Object.keys(QUICK_TILE_REGISTRY)
@@ -125,6 +145,7 @@ export const DEFAULT_CREATE_ACTION_TILES = [
   'new_quotation',
   'new_csr',
   'new_waybill',
+  'new_letter',
 ]
 
 const LEGACY_ACTION_DEFAULTS = ['new_invoice', 'new_quotation', 'new_csr', 'new_project']

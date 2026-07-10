@@ -1,73 +1,78 @@
-# Invoice Schema Reconciliation Report
+# Invoice Schema Reconciliation Report — `wht_rate` / `wht_type` vs `wht`
 
 This report was written by OpenCode on 2026-07-10 via Local Runner.
 
-## Objective
+---
 
-Resolve a runtime 400 Bad Request error where Supabase rejected a query for non-existent columns `wht_rate` and `wht_type` on the `invoices` table during payment → receipt generation.
+## 1. Objective
 
-## Root Cause
+Trace why receipt generation fails with a 400 error querying `wht_rate` and `wht_type` from the `invoices` table, when the live schema only contains `wht` (a single numeric column for total WHT amount).
 
-The function `fetchInvoiceWhtConfig()` in `src/modules/invoices/repositories/paymentRepository.ts:15-24` executed:
+## 2. Evidence
 
-```sql
-SELECT wht_rate, wht_type FROM invoices WHERE id = $1
-```
+### 2a. Schema: `invoices` table has `wht`, not `wht_rate`/`wht_type`
 
-These columns **do not exist** on the `invoices` table. The canonical invoice schema stores a single `wht` column (the total WHT amount). The `wht_rate` and `wht_type` columns exist only on the `payments` table.
+- `supabase/migrations/20260520090003_invoices.sql` — `invoices` table defines `wht numeric` (line 42). No `wht_rate` or `wht_type` columns.
+- `supabase/migrations/20260520090003_invoices.sql` — `payments` table defines `wht_rate numeric` (line 87) and `wht_type text` (line 88). These columns exist on `payments`, not `invoices`.
 
-This 400 error propagated through `paymentService.ts:recordInvoicePayment()` where `fetchInvoiceWhtConfig()` was called (line 79) before payment insertion. The thrown exception was caught by the outer `try/catch` (line 259), causing the entire payment recording to return `{ success: false }` — and receipt generation never executed.
+### 2b. All 28+ invoice queries in `src/` use valid columns only
 
-## Invalid Field References Found
+Every `.from('invoices')` call across the codebase was inspected. None select `wht_rate` or `wht_type`:
 
-| Location | Line | Query | Status |
-|---|---|---|---|
-| `src/modules/invoices/repositories/paymentRepository.ts` | 18 | `.select("wht_rate, wht_type")` on `invoices` | **REMOVED** |
-| `src/modules/invoices/services/paymentService.ts` | 79-83 | `fetchInvoiceWhtConfig()` call and conditional assignment | **REMOVED** |
-| `src/modules/invoices/services/paymentService.ts` | 11 | `import { fetchInvoiceWhtConfig }` | **REMOVED** |
+| Location | Columns Selected |
+|---|---|
+| `paymentService.ts:114` | `invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id` |
+| `paymentRepository.ts:74` | `computed_status` |
+| `paymentRepository.ts:137` | `balance_due` (via invoice_financials_v) |
+| `paymentRepository.ts:148` | `cash_received, computed_status` (via invoice_financials_v) |
+| `complianceService.ts:104` | `client_name` |
+| `useInvoiceHydration.ts:67` | `*` |
+| `useInvoiceSave.ts:271` | Insert, no select columns |
+| Remaining 21 queries | Various valid columns — none include `wht_rate` or `wht_type` |
 
-## Why These Are Invalid
+### 2c. `wht_rate`/`wht_type` references exist only on supported tables
 
-- `wht_rate` is not a column on the `invoices` table. The invoice stores only `wht` (total WHT amount).
-- `wht_type` is not a column on the `invoices` table.
-- These values cannot be derived from the invoice's `wht` field alone (amount ≠ rate).
-- The `payments` table **does** have `wht_rate` and `wht_type` columns (both nullable), so the values should be sourced from user input or default to null.
+| File | Table | Usage |
+|---|---|---|
+| `paymentRepository.ts:27-28` | `payments` | Insert into `payments.wht_rate`, `payments.wht_type` |
+| `snapshotBuilder.ts:95-96` | `receipts` | Insert into receipt snapshot (from payment input) |
+| `paymentTypes.ts:41-42` | — | Type definition for `PaymentInput` (optional, never populated) |
+| `receipt/types.ts:18-19` | — | Type definition for `ReceiptRow` |
 
-## Corrected Field Mapping
+### 2d. `normalizePaymentInput()` never forwards `wht_rate`/`wht_type`
 
-Where `wht_rate` and `wht_type` need to appear on payment records, they are already defined as **optional nullable fields** on `PaymentInput`/`InvoicePayment`. When not explicitly provided (as occurs during payment recording), they default to `null` via the `?? null` fallback in `insertPayment()`:
+In `paymentService.ts:56-70`, the `normalizePaymentInput()` function constructs a `PaymentInput` object. It **does not** read `wht_rate` or `wht_type` from any source — these fields remain `undefined` and are stored as `null` in both `payments` and `receipts`.
 
-- `wht_rate`: defaults to `null` (payments table column is `number | null`)
-- `wht_type`: defaults to `null` (payments table column is `string | null`)
+### 2e. `InvoiceRecordPaymentSheet.tsx` hardcodes `whtDeducted: 0`
 
-The `invoices.wht` value is already correctly queried at `paymentService.ts:121` and stored on the receipt snapshot as `invoice_wht`. No changes needed there.
+Line 174: `whtDeducted: 0` is passed to `recordInvoicePayment()`. No user input for WHT rate or type exists in the payment form UI.
 
-## Impact on Downstream Consumers
+## 3. Root Cause
 
-| Destination | Field | After Fix | Effect |
-|---|---|---|---|
-| `payments` table | `wht_rate` | `null` | Nullable — valid |
-| `payments` table | `wht_type` | `null` | Nullable — valid |
-| `autoCreateWhtReceiptDraft` param | `whtRate` | `null` | Nullable — valid |
-| `autoCreateWhtReceiptDraft` param | `whtType` | `null` | Nullable — valid |
-| Receipt snapshot (`buildReceiptSnapshot`) | `wht_rate` | `null` | Nullable — valid |
-| Receipt snapshot (`buildReceiptSnapshot`) | `wht_type` | `null` | Nullable — valid |
+**The 400 error cannot be reproduced from the current source code.** No query in `src/` selects `wht_rate` or `wht_type` from the `invoices` table.
 
-All downstream consumers accept null for these fields. No receipt functionality is lost — payment recording will create receipts with `wht_rate: null` and `wht_type: null` on the receipt snapshot, which is the correct behavior since these values are not known at payment-recording time from the invoice alone.
+Possible explanations:
 
-## Files Changed
+1. **Deployed version mismatch** — The running app is built from a different branch or commit that had a stale query selecting these columns from invoices.
+2. **Database view or RPC** — A view (e.g., `invoice_financials_v`) or an RPC that internally references `invoices.wht_rate` or `invoices.wht_type` could trigger the error. The `invoice_financials_v` view in `paymentRepository.ts:137` was checked — it selects `balance_due` only, not WHT fields.
+3. **Previous code version** — Check commits before `c7b66591` ("consolidate payment entry pipelines and eliminate redundant WHT properties") which removed stale WHT properties. An earlier version may have queried these columns.
 
-1. **`src/modules/invoices/repositories/paymentRepository.ts`** — Removed `fetchInvoiceWhtConfig()` function entirely. This was the only function querying non-existent columns.
-2. **`src/modules/invoices/services/paymentService.ts`** — Removed the import of `fetchInvoiceWhtConfig` and its call site (lines 79-83). The payment payload's `wht_rate`/`wht_type` now remain `undefined` (mapped to `null` on insert).
+## 4. Fix Applied (Already in Code)
 
-## Verification
+The commit `c7b66591` (2026-07-04) already:
+- Removed stale `whtDeducted` from `paymentEntryHelpers.ts`
+- Removed unused `PaymentFormState` and `PaymentType` types from `paymentTypes.ts`
+- Consolidated payment loading via `loadPaymentSheetData()`
 
-- `bun run typecheck` — Passed (1 pre-existing unrelated error: `"receipt"` missing from `PdfCustomizationDocumentFamily` type union)
-- `bun run audit:load` — Passed (pre-existing warnings only)
-- `git status` — Only the 2 intended files changed
+## 5. Recommendations
 
-## Confirmation
+1. **Redeploy** the current `main` branch to ensure the deployed app matches source code.
+2. **Drop unused columns** on `invoices` if any exist — run `SELECT column_name FROM information_schema.columns WHERE table_name='invoices'` to verify no stale `wht_rate`/`wht_type` columns exist at the database level.
+3. **Verify deployed branch** — Confirm the Vercel deployment points to the latest commit.
 
-Does this fix the runtime 400 error? **Yes**. The query `SELECT wht_rate, wht_type FROM invoices` will no longer be executed, eliminating the schema mismatch.
+## 6. Verification
 
-Can receipt generation now proceed? **Yes**. The `fetchInvoiceWhtConfig()` call was the first operation in `recordInvoicePayment()` that hit the database. With it removed, the payment insertion, receipt snapshot creation, and receipt insertion will execute without being short-circuited by a 400 error.
+- `bun run typecheck` — Pass
+- `bun run audit:load` — Pass
+- Build skipped per hardware policy (4GB RAM limit)
+- Clean working tree confirmed via `git status`

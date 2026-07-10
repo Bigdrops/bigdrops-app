@@ -72,6 +72,15 @@ export const salesPicker: PickerItem[] = [
     tint: QUICK_TILE_REGISTRY.waybills.tint,
     iconBg: QUICK_TILE_REGISTRY.waybills.iconBg,
   },
+  {
+    key: 'letters',
+    label: 'Letters',
+    subtitle: 'Official correspondence and notices.',
+    description: 'Official correspondence and notices.',
+    icon: QUICK_TILE_REGISTRY.letters.icon as LucideIcon,
+    tint: QUICK_TILE_REGISTRY.letters.tint,
+    iconBg: QUICK_TILE_REGISTRY.letters.iconBg,
+  },
 ]
 
 export const presalesPicker: PickerItem[] = [
@@ -182,6 +191,7 @@ export function getSalesPath(key: string): string {
     quotations: '/quotations',
     csr: '/csr',
     waybills: '/waybills',
+    letters: '/letters',
   }
 
   return pathByKey[key] || '/'
@@ -209,7 +219,8 @@ export function getActiveTab(pathname: string): TabKey {
     pathname.startsWith('/invoices') ||
     pathname.startsWith('/quotations') ||
     pathname.startsWith('/csr') ||
-    pathname.startsWith('/waybills')
+    pathname.startsWith('/waybills') ||
+    pathname.startsWith('/letters')
   ) return 'sales'
   if (
     pathname.startsWith('/rfqs') ||
