@@ -7,3 +7,5 @@
 [DELEGATION] task="PDF Font Library & CSR Migration Investigation report" | domain="pdf" | subagent="NONE" | justification="Report-only task; subagent not needed for file reads + analysis" | harness="OpenCode"
 [DELEGATION] task="Live DB schema verification for receipts INSERT failure" | domain="db" | subagent="NONE" | justification="Read-only introspection task; PostgREST OpenAPI + INSERT tests sufficed without requiring database-optimizer" | harness="Local Runner"
 [DELEGATION] task="Fix layout immersive mode header regression on form pages" | domain="layout" | subagent="frontend-developer" | source=".opencode/agents/frontend-developer.md" | harness="Local Runner"
+[DELEGATION] task="Official Letter architecture investigation (full report)" | domain="correspondence" | subagent="NONE" | justification="Primary agent executed investigation directly - architecture analysis + standards review + library evaluation + report writing" | harness="MiMoCode"
+[DELEGATION] task="Explore PDF rendering architecture and domain layer" | domain="correspondence" | subagent="explore-1" | source=".opencode/agents/explore.md" | harness="MiMoCode"
