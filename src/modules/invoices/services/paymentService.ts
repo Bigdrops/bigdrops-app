@@ -170,7 +170,9 @@ export async function recordInvoicePayment(
           },
         )
 
-        if (!receiptError && receiptRow) {
+        if (receiptError) {
+          console.error('Receipt creation failed:', receiptError)
+        } else if (receiptRow) {
           const { recordReceiptGenerated } = await import('@/lib/audit')
           await recordReceiptGenerated(
             receiptRow.id,

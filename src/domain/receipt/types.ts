@@ -4,6 +4,7 @@ export interface ReceiptRow {
   payment_id: string
   invoice_id: string
   client_id: string
+  amount: number
 
   // Payment snapshot
   payment_amount: number

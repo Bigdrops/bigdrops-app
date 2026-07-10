@@ -185,43 +185,47 @@ export default function Layout({
 
       {/* Main Content Area */}
       <div data-bd-shell="main">
-        {/* Mobile Header (Home/Dashboard) */}
-        <div className="md:hidden">
-          {isHome && !hideMobileHomeHeader ? (
-            <div className="w-full">
-              <MobilePageHeader
-                title={APP_NAME}
-                subtitle={settings?.company_name || 'Invoicing and Projects'}
-                accentClassName="tone-info-accent"
-                onMenuClick={openSidebar}
-                isOpen={sidebarOpen}
-                className="rounded-none border-x-0 border-t-0 shadow-none"
-              />
-            </div>
-          ) : null}
-
-          {/* Mobile Header (Page) */}
-          {!isHome && !hidePageHeader ? (
-            <div className="w-full px-4 pt-3">
-              <MobilePageHeader
-                title={title}
-                onMenuClick={openSidebar}
-                isOpen={sidebarOpen}
-              />
-            </div>
-          ) : null}
-        </div>
-
-        {/* Desktop Header (Page) */}
-        <div className="hidden md:block">
-          {!isHome && !hidePageHeader ? (
-            <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-[var(--bd-space-md)]">
-              <div className="rounded-[var(--bd-radius-md)] border border-bd-border border-l-4 border-l-bd-status-info-text bg-bd-surface px-5 py-3 shadow-none">
-                <h1 className="text-lg font-bold text-bd-text">{title}</h1>
+        {/* Mobile Header (Home/Dashboard) — hidden in immersive mode */}
+        {!immersive && (
+          <div className="md:hidden">
+            {isHome && !hideMobileHomeHeader ? (
+              <div className="w-full">
+                <MobilePageHeader
+                  title={APP_NAME}
+                  subtitle={settings?.company_name || 'Invoicing and Projects'}
+                  accentClassName="tone-info-accent"
+                  onMenuClick={openSidebar}
+                  isOpen={sidebarOpen}
+                  className="rounded-none border-x-0 border-t-0 shadow-none"
+                />
               </div>
-            </header>
-          ) : null}
-        </div>
+            ) : null}
+
+            {/* Mobile Header (Page) */}
+            {!isHome && !hidePageHeader ? (
+              <div className="w-full px-4 pt-3">
+                <MobilePageHeader
+                  title={title}
+                  onMenuClick={openSidebar}
+                  isOpen={sidebarOpen}
+                />
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Desktop Header (Page) — hidden in immersive mode */}
+        {!immersive && (
+          <div className="hidden md:block">
+            {!isHome && !hidePageHeader ? (
+              <header className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-[var(--bd-layout-padding,1.5rem)] pt-[var(--bd-space-md)]">
+                <div className="rounded-[var(--bd-radius-md)] border border-bd-border border-l-4 border-l-bd-status-info-text bg-bd-surface px-5 py-3 shadow-none">
+                  <h1 className="text-lg font-bold text-bd-text">{title}</h1>
+                </div>
+              </header>
+            ) : null}
+          </div>
+        )}
 
         {/* Content Body */}
         <MobileChromeContext.Provider value={mobileChromeValue}>

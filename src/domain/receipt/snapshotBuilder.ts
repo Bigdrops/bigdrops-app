@@ -81,6 +81,7 @@ export function buildReceiptSnapshot(input: ReceiptSnapshotInput): ReceiptSnapsh
     payment_id: '',  // set by caller
     invoice_id: '',  // set by caller
     client_id: client.id,
+    amount: payment.amount,
 
     // Payment snapshot
     payment_amount: payment.amount,

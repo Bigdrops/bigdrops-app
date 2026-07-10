@@ -6,3 +6,4 @@
 [DELEGATION] task="Fix Waybill PDF regression (Minimal/Thermal crash, Premium overflow) + CSR parity closure" | domain="waybill" | subagent="minimal-change-engineer" | source=".opencode/agents/minimal-change-engineer.md" | harness="Local Runner"
 [DELEGATION] task="PDF Font Library & CSR Migration Investigation report" | domain="pdf" | subagent="NONE" | justification="Report-only task; subagent not needed for file reads + analysis" | harness="OpenCode"
 [DELEGATION] task="Live DB schema verification for receipts INSERT failure" | domain="db" | subagent="NONE" | justification="Read-only introspection task; PostgREST OpenAPI + INSERT tests sufficed without requiring database-optimizer" | harness="Local Runner"
+[DELEGATION] task="Fix layout immersive mode header regression on form pages" | domain="layout" | subagent="frontend-developer" | source=".opencode/agents/frontend-developer.md" | harness="Local Runner"
