@@ -12,17 +12,6 @@ export async function fetchInvoiceIdForPayment(paymentId: string): Promise<strin
   return data.invoice_id
 }
 
-export async function fetchInvoiceWhtConfig(invoiceId: string): Promise<{ wht_rate: number | null; wht_type: string | null } | null> {
-  const { data, error } = await supabase
-    .from("invoices")
-    .select("wht_rate, wht_type")
-    .eq("id", invoiceId)
-    .single()
-
-  if (error || !data) return null
-  return data as { wht_rate: number | null; wht_type: string | null }
-}
-
 export async function insertPayment(payload: PaymentInput): Promise<InvoicePayment> {
   const insertPayload = {
     invoice_id: payload.invoice_id,

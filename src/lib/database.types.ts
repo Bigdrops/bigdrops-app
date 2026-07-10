@@ -1064,6 +1064,54 @@ export type Database = {
           },
         ]
       }
+      letters: {
+        Row: {
+          attachments: Json
+          body: Json
+          created_at: string
+          custom_fields: Json
+          id: string
+          letter_number: string
+          recipient_address: string | null
+          recipient_id: string | null
+          recipient_name: string
+          status: string
+          subject: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          body?: Json
+          created_at?: string
+          custom_fields?: Json
+          id?: string
+          letter_number: string
+          recipient_address?: string | null
+          recipient_id?: string | null
+          recipient_name: string
+          status?: string
+          subject: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          body?: Json
+          created_at?: string
+          custom_fields?: Json
+          id?: string
+          letter_number?: string
+          recipient_address?: string | null
+          recipient_id?: string | null
+          recipient_name?: string
+          status?: string
+          subject?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           channel: string

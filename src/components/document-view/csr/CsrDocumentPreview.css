@@ -1,6 +1,4 @@
 :root {
-  --dv-csr-text: hsl(var(--bd-text));
-  --dv-csr-text-muted: hsl(var(--bd-text-muted));
   --dv-csr-text-soft: hsl(var(--bd-text-muted) / 0.7);
   --dv-csr-text-faint: hsl(var(--bd-text-muted) / 0.5);
   --dv-csr-border: hsl(var(--bd-border));
@@ -56,7 +54,7 @@
 .doc-co-name {
   font-size: 15px;
   font-weight: 800;
-  color: var(--dv-csr-text);
+  color: var(--bd-text-color);
   letter-spacing: -0.01em;
 }
 
@@ -128,14 +126,14 @@
 .doc-meta-value {
   font-size: 13px;
   font-weight: 600;
-  color: var(--dv-csr-text);
+  color: var(--bd-text-color);
   line-height: 1.4;
   word-break: break-word;
 }
 
 .doc-meta-sub {
   font-size: 11px;
-  color: var(--dv-csr-text-muted);
+  color: var(--bd-text2);
   margin-top: 2px;
 }
 
@@ -155,7 +153,7 @@
 
 .doc-narrative {
   font-size: 12px;
-  color: var(--dv-csr-text);
+  color: var(--bd-text-color);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
@@ -179,13 +177,13 @@
 .doc-material-name {
   font-size: 12px;
   font-weight: 500;
-  color: var(--dv-csr-text);
+  color: var(--bd-text-color);
 }
 
 .doc-material-qty {
   font-size: 11px;
   font-weight: 600;
-  color: var(--dv-csr-text-muted);
+  color: var(--bd-text2);
   font-family: var(--dv-font-mono);
 }
 
@@ -223,7 +221,7 @@
 .doc-signature-name {
   font-size: 11px;
   font-weight: 500;
-  color: var(--dv-csr-text);
+  color: var(--bd-text-color);
   margin-top: 4px;
 }
 

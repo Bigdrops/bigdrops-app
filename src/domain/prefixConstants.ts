@@ -7,6 +7,7 @@ export const DEFAULT_PREFIXES = {
   project: 'PRJ',
   csr: 'CSR',
   receipt: 'RCP',
+  letter: 'LTR',
 } as const
 
 export type DocumentPrefixKey = keyof typeof DEFAULT_PREFIXES
