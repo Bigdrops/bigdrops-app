@@ -1,305 +1,270 @@
-# Quotation Edit Law Enforcement — Phase 1
-
-**Scope:** Law 1 (Edit Law — Identity Immutability) enforcement for Quotation only.
-
 You are working on the BIGDROPS business platform.
 
 Stack:
-React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
-
-Runtime Environment:
-Bun only. Never use npm, yarn, or pnpm.
-
-====================================================================
-CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-====================================================================
-
-OpenCode has full repository access.
-
-Read immediately:
-
-- AGENTS.md
-- docs/STANDARD/document-transformation-standard.md
-- docs/EXECUTION/audits/2026-07-02-transformation-standard-baseline.md
-- docs/PROJECTSKILLINDEX.md
-
-Load ONLY these skills:
-
-- .claude/skills/Karpathy/SKILL.md
-- .claude/skills/gitnexus/
-- .agents/skills/typescript-advanced-types/SKILL.md
-- .agents/skills/vercel-react-best-practices/SKILL.md
-- .agents/skills/supabase-postgres-best-practices/SKILL.md
-
-Do not load unrelated skills.
+- React 19
+- Vite 7
+- TypeScript 5.9
+- Tailwind CSS 3.4
+- Capacitor
+- Android WebView
+- Bun runtime
 
 ====================================================================
+CRITICAL: READ AGENTS.md
+====================================================================
 
+This is a STRICTLY READ-ONLY INVESTIGATION.
 
-# REPORT
+DO NOT modify any code.
+DO NOT create patches.
+DO NOT implement fixes.
+DO NOT change CSS.
+DO NOT change TypeScript.
+DO NOT run bun run build.
+DO NOT run bun run typecheck.
 
-Create:
+This is an evidence-gathering architecture audit only.
 
-docs/EXECUTION/implementation/quotation-edit-law-phase-1.md
+====================================================================
+BACKGROUND
+====================================================================
 
-Include:
+Two mobile-only rendering problems have been observed.
 
-- Executive Summary
-- Runtime Investigation
-- Findings Addressed
-- Root Cause
-- Files Inspected
-- Files Modified
-- Behaviour Preserved
-- Verification Results
-- Remaining Findings
+They may share a root cause, or they may be completely independent.
 
-Do not overwrite previous reports.
+Do NOT assume they are related.
 
+Your task is to determine the actual root cause(s) using evidence only.
 
-# OBJECTIVE
+====================================================================
+ISSUE A — FORM BACKGROUND TURNS WHITE
+====================================================================
 
-Implement Law 1 — Edit Law from:
+Observed behaviour:
 
-docs/STANDARD/document-transformation-standard.md
+- On Android APK, document forms render correctly.
+- When an input gains focus and the software keyboard appears, part of the active form becomes white.
+- The application theme is no longer respected in that focused region.
+- The issue is visible on document forms.
 
-for:
+Investigate whether this originates from:
 
-Quotation only.
+• shared Input component
+• shared Textarea component
+• shared Select component
+• global form CSS
+• theme variables
+• Tailwind utilities
+• color-scheme
+• appearance
+• accent-color
+• :-webkit-autofill
+• browser default styling
+• Android WebView behaviour
+• parent form container backgrounds
 
-This task is an enforcement task.
+Determine exactly which layer owns the white background.
 
-It is NOT:
+If the browser is painting a native layer instead of CSS, state that explicitly.
 
-- an architectural refactor
-- a lifecycle redesign
-- a quotation service migration
-- an audit expansion
-- a duplicate workflow change
-- a conversion change
-- a numbering change
-- a PDF change
+====================================================================
+ISSUE B — POPUP / DIALOG KEYBOARD GLITCH
+====================================================================
 
-Only enforce Quotation identity immutability.
+Observed behaviour:
 
+When the Android keyboard opens while interacting with dialogs containing inputs, the popup becomes unstable.
 
-# BASELINE CONTEXT
+Examples include:
 
-Invoice Edit Law Phase 1 is already complete.
+- Import dialog
+- Table Settings dialog
+- Document View Customisation dialog
+- Hex colour input dialog
+- Any large popup containing text inputs
 
-Follow the same enforcement principles:
+Observed pattern:
 
-1. Interaction-time enforcement
-2. Domain/service defense-in-depth
+- Small dialogs jump once then stabilise.
+- Larger dialogs continuously jump while the keyboard is open.
 
-Do not copy Invoice-specific assumptions.
+Investigate the shared overlay architecture.
 
-First identify the actual Quotation runtime path.
+Locate every reusable implementation for:
 
+- Dialog
+- Modal
+- Sheet
+- Drawer
+- Popover
+- Portal
 
-# FINDINGS TO RESOLVE
+Determine:
 
-Resolve only:
+- positioning strategy
+- centering logic
+- scroll locking
+- viewport calculations
+- resize listeners
+- visualViewport usage
+- window resize handling
+- overflow handling
+- body locking
+- fixed positioning
+- transform positioning
 
-- EDIT-QTN-001
-- EDIT-QTN-002
+Search for:
 
-Ignore unrelated findings.
+- 100vh
+- h-screen
+- min-h-screen
+- max-h-screen
+- 100dvh
+- 100svh
+- visualViewport
+- env(safe-area-inset-*)
+- overflow:hidden
+- position: fixed
 
+Determine whether keyboard viewport changes can explain the observed instability.
 
-# REQUIRED IDENTITY PROTECTION
+====================================================================
+SHARED ARCHITECTURE REVIEW
+====================================================================
 
-For saved quotations only, these identity fields are immutable:
+Investigate whether both issues originate from the same shared infrastructure.
 
-- client_id
-- document_number
-- document_type
-- sourceDocumentId
-- sourceDocumentType
-- sourceDocumentNumber
-- equivalent quotation lineage representation if stored elsewhere
+Specifically determine whether they converge inside:
 
+- Layout
+- Theme system
+- Shared Input primitives
+- Shared Dialog system
+- Mobile shell
+- Global CSS
+- Browser/WebView behaviour
 
-Draft quotations remain fully editable.
+Do NOT assume they are connected.
 
+Provide evidence either way.
 
-# REQUIRED BEHAVIOUR
+====================================================================
+REQUIRED OUTPUT
+====================================================================
 
-For saved quotations:
+Write a markdown report to:
 
-Users must not be able to enter edit mode for immutable identity fields.
+docs/Reports/GENERAL/mobile-keyboard-rendering-investigation.md
 
-The application must intercept the interaction before state mutation.
+The report must contain:
 
-Required behaviour:
+# Executive Summary
 
-- Client selection cannot open/change.
-- Quotation number cannot be edited.
-- Document type cannot be changed.
-- Lineage fields cannot be modified.
+State whether the two issues are:
 
-When a locked field is clicked:
+- Same root cause
+- Related but independent
+- Completely independent
 
-- Open IdentityLockDialog.
-- Explain the field is immutable after saving.
-- Recommend using Duplicate if a new identity is required.
+Explain why.
 
-The form state must remain unchanged.
+---
 
-No dirty state.
+# Issue A Investigation
 
-No temporary invalid state.
+Root cause candidates.
 
-No save-time discovery as the primary mechanism.
+Evidence.
 
+File paths.
 
-# PHASE 1 — RUNTIME INVESTIGATION
+Line numbers.
 
-Before changing code:
+Confidence ranking:
 
-Trace the active Quotation flow.
+HIGH
 
-Identify:
+MEDIUM
 
-- Quotation form entry component
-- Actual edit state handling
-- Current update functions
-- Client selector implementation
-- Number field implementation
-- Existing identity lock components
-- Save/update service path
+LOW
 
-Verify:
+---
 
-- Which components are actually rendered.
-- Whether current lock UI exists but is disconnected.
-- Whether state can mutate before validation.
-- Whether updates bypass UI through generic setters.
+# Issue B Investigation
 
+Root cause candidates.
 
-Do not assume Invoice architecture applies.
+Evidence.
 
+File paths.
 
-# PHASE 2 — UI ENFORCEMENT
+Line numbers.
 
-Implement interaction-level protection.
+Confidence ranking.
 
-The UI must prevent illegal identity edits before mutation.
+---
 
-Use existing project patterns where possible.
+# Shared Component Inventory
 
-Reuse IdentityLockDialog if compatible.
+List every shared component involved.
 
-Do not create duplicate lock components.
+Examples:
 
+- Input
+- Textarea
+- Dialog
+- Sheet
+- Popover
+- Layout
+- Theme
 
-# PHASE 3 — DOMAIN / SERVICE DEFENCE
+Explain their role.
 
-Add or extend quotation identity validation.
+---
 
-Save/update operations must reject illegal identity mutations from:
+# Architectural Findings
 
-- programmatic updates
-- bypass paths
-- future UI changes
+Explain:
 
-Validation should remain a safety net.
+- how keyboard appearance changes the rendering pipeline
 
-It must not replace interaction enforcement.
+- whether Android WebView behaves differently from Chrome
 
+- whether Capacitor changes behaviour
 
-# STRICT NON-REGRESSION
+- whether viewport resizing contributes
 
-Do NOT modify:
+- whether browser-native styling contributes
 
-Duplicate Law:
+Support every conclusion with evidence.
 
-- duplicateQuotationRecord
-- duplicate numbering
-- duplicate behaviour
+---
 
-Conversion:
+# Recommended Fix Strategy
 
-- convertQuotationToInvoice
-- conversion trail behaviour
+DO NOT implement fixes.
 
-Invoice logic.
+Recommend the safest architectural approach for each issue.
 
-CSR logic.
+If they should be fixed separately, state that.
 
-Waybill logic.
+If they share infrastructure, explain which component should be corrected first.
 
-Audit system:
+====================================================================
+VERIFICATION
+====================================================================
 
-- AuditAction
-- audit formatters
-- audit infrastructure
+Before investigation:
 
-PDF generation.
+Run git status.
 
-Calculations.
+After investigation:
 
-Pricing.
+Run git status again.
 
-Tax rules.
+The working tree must remain unchanged except for the generated markdown report.
 
-Prefix engine.
+No application source files may be modified.
 
-Database schema.
-
-Routing.
-
-Lifecycle ownership refactors.
-
-
-# VERIFICATION
-
-Run:
-
-bun run audit:load
-
-bun run typecheck
-
-
-Do NOT run:
-
-bun run build
-
-Build execution is prohibited by project policy.
-
-
-# REQUIRED MANUAL VERIFICATION
-
-Verify a saved quotation.
-
-Confirm:
-
-- Client cannot be edited.
-- Quotation number cannot be edited.
-- Document type cannot be edited.
-- Lineage cannot be edited.
-- Clicking locked fields opens IdentityLockDialog.
-- No form state changes occur.
-- No dirty state is created.
-- Save is not responsible for blocking user mistakes.
-- Normal editable quotation fields still work.
-- Draft quotations remain fully editable.
-
-
-# ACCEPTANCE CRITERIA
-
-Complete only when:
-
-- EDIT-QTN-001 is resolved.
-- EDIT-QTN-002 is resolved.
-- Saved quotations enforce identity immutability.
-- Draft quotations remain editable.
-- Interaction is blocked before mutation.
-- Domain/service validation remains defense-in-depth.
-- Existing duplicate and conversion behaviour is unchanged.
-- No unrelated files are modified.
-- bun run audit:load passes.
-- bun run typecheck passes.
-- Report exists:
-
-docs/EXECUTION/implementation/quotation-edit-law-phase-1.md
+This is a zero-code architectural investigation.
