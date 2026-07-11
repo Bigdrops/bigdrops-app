@@ -1,224 +1,247 @@
-
-
----
-
-Phase 2.2 — Remove Generic Panel & Restore CSR UX Exactly
-
 You are working on the BIGDROPS business platform.
 
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel. Runtime: Bun only. Never use npm, yarn, or pnpm.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
-==================================================================== CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE DOING ANY WORK
+====================================================================
 
 OpenCode has full repository access.
 
-Read AGENTS.md before touching any code.
+Read AGENTS.md immediately and follow all repository standards.
 
-Load every relevant skill from docs/PROJECTSKILLINDEX.md, especially:
+This is a STRICTLY READ-ONLY GOVERNANCE AUDIT.
 
-using-superpowers
+The ONLY permitted repository modification is writing the final markdown report specified below.
 
-frontend-design
+====================================================================
+LOAD RELEVANT SKILLS
+====================================================================
 
-Karpathy
+Load the appropriate audit/documentation skills from:
 
-typescript-advanced-types
+docs/PROJECTSKILLINDEX.md
 
-pdf-rendering-correctness
+====================================================================
+A. CONTEXT & OBJECTIVE
+====================================================================
 
+Phase 2A and Phase 2B are complete.
 
-Follow the Report Protocol in AGENTS.md exactly. Do not invent your own report format.
+Mechanical alias migration has finished.
 
-==================================================================== OBJECTIVE
+Before any future cleanup of documentViewTheme.css, perform a repository-wide governance audit that classifies every remaining --dv-* token and determines whether any legacy definitions can safely be retired.
 
-The previous implementation misunderstood the architecture.
+This is an audit only.
 
-The shared PDF Customization Engine is headless.
+No source code changes are authorized.
 
-It provides:
+====================================================================
+B. PRE-AUDIT VERIFICATION
+====================================================================
 
-state
+Immediately execute:
 
-persistence
+git status
 
-resolver
+Record the output internally.
 
-policy
+This establishes the baseline before the audit begins.
 
-capabilities
+====================================================================
+C. AUDIT SCOPE
+====================================================================
 
+Search the repository for every occurrence of:
 
-It does NOT own UI.
+--dv-
 
-Waybill should use the same UI/UX pattern already proven in CSR.
+Consumer search MUST exclude:
 
-The generic PdfCustomizationPanel is no longer part of the architecture.
+src/components/document-view/shared/documentViewTheme.css
 
-==================================================================== CHANGE 1 — DELETE THE GENERIC PANEL
+when calculating active consumers.
 
-Delete:
+The theme file itself must still be inspected separately when evaluating orphaned definitions.
 
-src/components/pdf-customization/PdfCustomizationPanel.tsx
+====================================================================
+D. CLASSIFICATION RULES
+====================================================================
 
-Remove every import and every reference.
+Every remaining token MUST belong to exactly one category.
 
-It must no longer exist anywhere in the project.
+Category 1
+Mechanical Alias
 
-The engine remains.
+Definition:
+A remaining alias that should already have been migrated.
 
-Only the generic UI is removed.
+Action:
+Flag as migration defect.
 
-==================================================================== CHANGE 2 — COPY THE CSR CUSTOMIZATION UX
+Category 2
+Derived Semantic Token
 
-Study the CSR implementation first.
+Definition:
+Opacity wrappers,
+alpha-composed values,
+HSL-composed helpers,
+or other intentionally derived presentation tokens.
 
-Use CSR as the visual and interaction standard.
+Action:
+Retain.
 
-Replicate its customization experience inside Waybill's existing DocumentSheet.
+Category 3
+Design Primitive
 
-This means using the same UI components and interaction model, including:
+Definition:
+Intentional design-system primitives including:
 
-switches
+• font tokens
+• permanent accent/status colors
+• other foundational visual primitives
 
-dropdowns
+Action:
+Retain unless superseded by a future design-system expansion.
 
-handwriting font chips
+Category 4
+Dead Definition
 
-colour swatches
+Definition:
+Definition exists in documentViewTheme.css with zero consumers anywhere in the repository.
 
-live colour preview
+Action:
+Candidate for future deletion only.
 
-layout
+Do NOT delete.
 
-spacing
+====================================================================
+E. REQUIRED CROSS-CHECKS
+====================================================================
 
-section organization
+Answer BOTH questions with evidence.
 
-behaviour
+1.
 
+Leak Check
 
-Do not redesign it.
+Are any remaining mechanical aliases located outside
 
-Do not simplify it.
+src/components/document-view/
 
-Do not invent a different UX.
+If yes:
 
-Waybill should feel like CSR adapted for Waybill's three supported customization sockets.
+list every file.
 
-==================================================================== CHANGE 3 — WAYBILL SUPPORTS ONLY THREE CUSTOMIZATIONS
+2.
 
-Keep only:
+Orphan Check
 
-Document Font
+Which definitions inside
 
-Ink Font
+documentViewTheme.css
 
-Ink Colour
+have zero consumers across the repository?
 
+List every candidate.
 
-No Accent Colour.
+Do NOT modify the file.
 
-No extra controls.
+====================================================================
+F. REQUIRED OUTPUT
+====================================================================
 
-No new concepts.
+Write ONE markdown report only.
 
-Only the existing CSR experience mapped onto Waybill.
+Destination:
 
-==================================================================== CHANGE 4 — FIX THE ENGINE WIRING
+docs/Reports/GENERAL/phase-2c-token-governance-audit.md
 
-Current behaviour is incorrect.
+Required structure:
 
-Changing fonts or colours updates the UI but the generated PDF still uses defaults.
+# BIGDROPS Phase 2C Token Governance Audit Report
 
-Trace the complete data flow.
+## Executive Summary
 
-Verify:
+- Remaining active consumers
+- Unique files
+- Mechanical Alias count
+- Derived Semantic count
+- Design Primitive count
+- Dead Definition count
 
-DocumentSheet UI
+## Token Ledger
 
-↓
+| Token | File | Consumer Count | Classification | Recommended Action |
 
-usePdfCustomization()
+## Leak Check
 
-↓
+## Orphan Check
 
-ResolvedPdfCustomization
+## Final Governance Recommendation
 
-↓
+State explicitly whether documentViewTheme.css can or cannot be reduced at this time, with supporting evidence.
 
-bridgeToDesignPreset()
+====================================================================
+G. POST-AUDIT VERIFICATION
+====================================================================
 
-↓
+Run:
 
-WaybillPDF
+git status
 
-↓
+The ONLY repository modification permitted is:
 
-Template Components
+docs/Reports/GENERAL/phase-2c-token-governance-audit.md
 
-↓
+If any source code file appears modified:
 
-React PDF rendering
+STOP
 
-Determine exactly where the resolved customization stops being propagated.
+Report the unexpected modification.
 
-Do not assume.
+Do not continue.
 
-Audit every step.
+====================================================================
+H. HARD PROHIBITIONS
+====================================================================
 
-Repair the broken link.
+DO NOT:
 
-==================================================================== REQUIRED BEHAVIOUR
+- modify CSS
+- modify TS/TSX
+- modify JS
+- modify routing
+- modify layouts
+- rename files
+- delete files
+- move files
+- change documentViewTheme.css
+- run bun run build
+- run bun run typecheck
+- run lint
 
-After this change:
+This is an audit.
 
-✓ Changing Document Font immediately affects document typography.
+Nothing else.
 
-✓ Changing Ink Font changes only fillable handwriting.
+====================================================================
+ACCEPTANCE CRITERIA
+====================================================================
 
-✓ Changing Ink Colour changes only handwriting colour.
+✓ Governance report written successfully.
 
-✓ Saving persists settings.
+✓ Every remaining --dv-* token classified.
 
-✓ Reload restores settings.
+✓ Leak Check completed.
 
-✓ Generated PDF reflects the saved customization.
+✓ Orphan Check completed.
 
-The rendered PDF must no longer remain on template defaults after customization.
+✓ git status before and after recorded.
 
-==================================================================== DO NOT
+✓ Zero application source files modified.
 
-Do not recreate PdfCustomizationPanel.
-
-Do not introduce another reusable customization UI.
-
-Do not redesign CSR.
-
-Do not redesign Waybill.
-
-Do not modify Invoice, Quotation or BOQ.
-
-Do not run bun run build.
-
-==================================================================== VERIFICATION
-
-Run only the verification required by AGENTS.md for active code changes.
-
-Additionally perform manual verification:
-
-Open Waybill customization.
-
-Confirm the UI matches CSR's interaction model.
-
-Change Document Font → PDF changes.
-
-Change Ink Font → handwriting changes.
-
-Change Ink Colour → handwriting colour changes.
-
-Reload page → settings persist.
-
-Generate multiple templates → customization still applies.
-
-
-If the PDF still renders defaults, continue tracing until the broken propagation path is identified and fixed. The task is not complete until the customization engine actually affects the rendered PDF.
+====================================================================
+END OF PHASE 2C GOVERNANCE AUDIT
+====================================================================
