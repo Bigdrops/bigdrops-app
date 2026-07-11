@@ -50,7 +50,7 @@ interface ProjectDocumentStep3ReviewProps {
 }
 
 const neutralButtonClassName =
-  'h-9 gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+  'h-9 gap-1.5 rounded-xl border border-zinc-200 bg-bd-surface px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
 
 function toNumber(value: unknown) {
   const next = Number(value)
@@ -123,7 +123,7 @@ export function ProjectDocumentStep3Review({
         <div className="mt-1 text-[11px] text-zinc-500">Adjust the parsed values before saving the document to this project.</div>
       </div>
 
-      <div className="rounded-[24px] border border-zinc-200 bg-white p-4">{renderSharedFields()}</div>
+      <div className="rounded-[24px] border border-zinc-200 bg-bd-card-bg p-4">{renderSharedFields()}</div>
 
       {type === 'purchase_order' && (
         <div className="space-y-4 rounded-[24px] border-l-4 border-l-blue-500 border border-zinc-200 bg-card p-4 shadow-sm">

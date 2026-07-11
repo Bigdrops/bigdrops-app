@@ -149,7 +149,7 @@ function MobileGroupCard({
             className={`flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[9px] font-extrabold uppercase tracking-wider transition-all ${
               subtotalOn
                 ? 'border-[var(--bd-indigo)] bg-[var(--bd-indigo)] text-white shadow-sm'
-                : 'border-[var(--bd-indigo-border)] bg-white text-[var(--bd-indigo)]'
+                : 'border-[var(--bd-indigo-border)] bg-bd-surface text-[var(--bd-indigo)]'
             }`}
           >
             Subtotal
@@ -168,7 +168,7 @@ function MobileGroupCard({
         <button
           type="button"
           onClick={() => onAddItemToGroup(groupId)}
-          className="flex h-8 items-center gap-1.5 rounded-full border border-[var(--bd-indigo-border)] bg-white px-3 text-[11px] font-bold text-[var(--bd-indigo)] shadow-sm transition-all hover:bg-[var(--bd-indigo-bg)] active:scale-95"
+          className="flex h-8 items-center gap-1.5 rounded-full border border-[var(--bd-indigo-border)] bg-bd-surface px-3 text-[11px] font-bold text-[var(--bd-indigo)] shadow-sm transition-all hover:bg-[var(--bd-indigo-bg)] active:scale-95"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>Add item to group</span>

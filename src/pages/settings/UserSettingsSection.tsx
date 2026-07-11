@@ -162,7 +162,7 @@ export function UserSettingsSection({
               setError('')
               setOpen(true)
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
           >
             <LockKeyhole size={14} />
             Change Password
@@ -183,7 +183,7 @@ export function UserSettingsSection({
             <button
               onClick={retryDeviceHydration}
               disabled={hydrating}
-              className="rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
             >
               {hydrating ? 'Registering...' : 'Retry Registration'}
             </button>
@@ -197,7 +197,7 @@ export function UserSettingsSection({
             <div className="flex items-start gap-3 border-b border-slate-200/80 bg-slate-50/50 px-4 py-3.5">
               <button
                 onClick={resetModal}
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200/80 bg-white text-slate-500 transition-colors hover:bg-slate-50"
+                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200/80 bg-bd-surface text-slate-500 transition-colors hover:bg-slate-50"
                 aria-label="Close password modal"
               >
                 <ChevronLeft size={16} />
@@ -312,7 +312,7 @@ export function UserSettingsSection({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={resetModal}
-                  className="flex-1 rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="flex-1 rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   Cancel
                 </button>

@@ -4,6 +4,7 @@
 
 /* Core theme tokens */
 :root {
+  color-scheme: light;
   /* BigDrops bridge fallbacks (safety net — overridden by formTheme.css and theme presets) */
   --bd-surface-muted: var(--muted, 210 32% 95.5%);
   --bd-text-muted: var(--muted-foreground, 215 16% 47%);
@@ -88,6 +89,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: 222 25% 8%;
   --foreground: 210 35% 96%;
 
@@ -154,6 +156,35 @@
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Form element browser-compatibility hardening */
+  input,
+  textarea,
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px hsl(var(--bd-input-bg)) inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    caret-color: hsl(var(--foreground));
+    transition: background-color 5000s ease-in-out 0s;
   }
 
   body {

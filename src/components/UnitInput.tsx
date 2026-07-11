@@ -101,7 +101,7 @@ export default function UnitInput({ value, onChange }: UnitInputProps) {
         className="w-full"
       />
       {open && (
-        <Card className="absolute left-0 top-full z-[100] mt-1 min-w-40 max-h-[220px] overflow-y-auto rounded-md border border-zinc-300 bg-white py-0 shadow-xl">
+        <Card className="absolute left-0 top-full z-[100] mt-1 min-w-40 max-h-[220px] overflow-y-auto rounded-md border border-zinc-300 bg-bd-card-bg py-0 shadow-xl">
           {filtered.length === 0 && !addingNew && (
             <div className="px-3.5 py-2.5 text-sm text-zinc-500">No matches</div>
           )}

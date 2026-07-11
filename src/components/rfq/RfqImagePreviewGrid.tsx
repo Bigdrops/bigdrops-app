@@ -78,7 +78,7 @@ export const RfqImagePreviewGrid: React.FC<RfqImagePreviewGridProps> = ({ images
          </Button>
          <Button 
             variant="outline"
-            className="w-full flex-1 h-14 border-slate-200 bg-white text-slate-900 rounded-[20px] font-black gap-2 text-base"
+            className="w-full flex-1 h-14 border-slate-200 bg-bd-surface text-slate-900 rounded-[20px] font-black gap-2 text-base"
             onClick={handleShare}
          >
             <Share2 className="h-5 w-5" />

@@ -142,7 +142,7 @@ export default function NewProject() {
 
             <div className="space-y-1.5">
               <Label className={pageFormLabelClassName}>Project Value (₦)</Label>
-              <div className="flex h-10 items-center overflow-hidden rounded-lg border border-zinc-300 bg-white">
+              <div className="flex h-10 items-center overflow-hidden rounded-lg border border-zinc-300 bg-bd-surface">
                 <span className="flex h-full items-center border-r border-zinc-300 bg-slate-50 px-3 text-sm text-slate-500">₦</span>
                 <NumericInput
                   min={0}
@@ -177,7 +177,7 @@ export default function NewProject() {
             <div className="space-y-1.5">
               <Label className={pageFormLabelClassName}>Status</Label>
               <Select value={form.status} onValueChange={(value) => set('status', value)}>
-                <SelectTrigger className="h-10 rounded-lg border-zinc-300 bg-white px-3 text-sm text-slate-800">
+                <SelectTrigger className="h-10 rounded-lg border-zinc-300 bg-bd-surface px-3 text-sm text-slate-800">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -192,7 +192,7 @@ export default function NewProject() {
             <div className="space-y-1.5">
               <Label className={pageFormLabelClassName}>Notes</Label>
               <Textarea
-                className="min-h-20 rounded-lg border-zinc-300 bg-white px-3 py-2 text-sm text-slate-800"
+                className="min-h-20 rounded-lg border-zinc-300 bg-bd-surface px-3 py-2 text-sm text-slate-800"
                 value={form.notes}
                 onChange={e => set('notes', e.target.value)}
                 placeholder="Optional internal notes about this project"
@@ -205,7 +205,7 @@ export default function NewProject() {
           <Button
             type="button"
             variant="outline"
-            className="h-10 flex-1 rounded-lg border-zinc-300 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            className="h-10 flex-1 rounded-lg border-zinc-300 bg-bd-surface text-sm font-semibold text-slate-600 hover:bg-slate-50"
             onClick={() => navigate('/projects')}
           >
             Cancel

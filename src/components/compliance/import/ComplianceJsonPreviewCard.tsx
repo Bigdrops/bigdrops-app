@@ -36,7 +36,7 @@ export default function ComplianceJsonPreviewCard({ type, data }: PreviewCardPro
     <Card className="border-emerald-100 bg-card shadow-sm mt-4 overflow-hidden border-2">
       <div className="bg-emerald-50 px-4 py-2 border-b border-emerald-100 flex items-center justify-between">
         <span className="text-[10px] font-black uppercase text-emerald-700 tracking-widest">Parsed Preview</span>
-        <Badge variant="outline" className="text-[9px] uppercase font-bold bg-white text-emerald-600 border-emerald-200">
+        <Badge variant="outline" className="text-[9px] uppercase font-bold bg-bd-surface text-emerald-600 border-emerald-200">
           Ready to Save
         </Badge>
       </div>

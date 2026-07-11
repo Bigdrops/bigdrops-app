@@ -237,7 +237,7 @@ export function BrandingSettingsSection() {
                 {previewSrc ? (
                   <div className="space-y-4">
                     <div className="flex flex-col items-center rounded-2xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
-                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-bd-border bg-white shadow-sm">
+                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-bd-border bg-bd-card-bg shadow-sm">
                         <img
                           src={previewSrc}
                           alt="Company logo preview"
@@ -275,7 +275,7 @@ export function BrandingSettingsSection() {
                     className="group cursor-pointer rounded-2xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)] hover:bg-[hsl(var(--bd-surface-muted))/0.4]"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-bd-card-bg shadow-sm ring-1 ring-black/5">
                         {uploadingLogo ? (
                           <Loader2 size={20} className="animate-spin text-bd-text-muted" />
                         ) : (

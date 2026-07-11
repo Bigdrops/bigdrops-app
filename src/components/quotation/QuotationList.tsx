@@ -315,7 +315,7 @@ export default function QuotationList() {
           size="icon-lg"
           onClick={loadQuotationSyncQueue}
           disabled={syncQueueLoading || retryingQueueItemId != null}
-          className="h-10 w-10 rounded-2xl border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
+          className="h-10 w-10 rounded-2xl border-amber-200 dark:border-amber-800 bg-bd-surface text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
           aria-label="Refresh quotation sync queue"
         >
           {syncQueueLoading ? (
@@ -334,7 +334,7 @@ export default function QuotationList() {
             return (
               <div
                 key={item.id}
-                className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950/50 p-3"
+                className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-bd-surface p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -370,7 +370,7 @@ export default function QuotationList() {
                     size="sm"
                     onClick={() => handleRetryQueueItem(item.id)}
                     disabled={retryingQueueItemId != null}
-                    className="h-9 rounded-xl border-amber-200 dark:border-amber-800 bg-white dark:bg-amber-950 px-3 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900"
+                    className="h-9 rounded-xl border-amber-200 dark:border-amber-800 bg-bd-surface px-3 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900"
                   >
                     {isRetrying ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

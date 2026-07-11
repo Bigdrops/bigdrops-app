@@ -97,7 +97,7 @@ export default function ProjectActionRail({
         </button>
 
         {actionsOpen && (
-          <div className="absolute bottom-16 right-0 mb-4 flex w-56 flex-col gap-2 rounded-2xl bg-white p-3 shadow-2xl ring-1 ring-slate-200 animate-in fade-in slide-in-from-bottom-5">
+          <div className="absolute bottom-16 right-0 mb-4 flex w-56 flex-col gap-2 rounded-2xl bg-bd-card-bg p-3 shadow-2xl ring-1 ring-slate-200 animate-in fade-in slide-in-from-bottom-5">
             <div className="mb-1 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Actions
             </div>

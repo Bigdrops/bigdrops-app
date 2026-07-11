@@ -226,7 +226,7 @@ export function SignatoriesSettingsSection() {
               }
             >
               <div className="flex items-center gap-4 px-5 py-4">
-                <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-white">
+                <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg">
                   {item.signature_url ? (
                     <img
                       src={item.signature_url}
@@ -294,7 +294,7 @@ export function SignatoriesSettingsSection() {
                 {form.signature_url ? (
                   <div className="space-y-4">
                     <div className="flex flex-col items-center rounded-xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
-                      <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-white shadow-sm">
+                      <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg shadow-sm">
                         <img
                           src={form.signature_url}
                           alt="Signature preview"
@@ -330,7 +330,7 @@ export function SignatoriesSettingsSection() {
                     className="group cursor-pointer rounded-xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)]"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bd-card-bg shadow-sm">
                         {uploading ? (
                           <Loader2 size={18} className="animate-spin text-bd-text-muted" />
                         ) : (

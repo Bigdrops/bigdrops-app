@@ -59,7 +59,7 @@ export function ProjectDocumentTypeSelector({ onSelect, selectedType }: ProjectD
               type="button"
               onClick={() => onSelect(type)}
               className={`rounded-[24px] border-l-4 border p-4 text-left shadow-sm transition h-full ${
-                active ? `${option.accent} border-zinc-200 bg-white` : 'border-l-zinc-200 border-zinc-200 bg-zinc-50 hover:bg-white'
+                active ? `${option.accent} border-zinc-200 bg-bd-surface` : 'border-l-zinc-200 border-zinc-200 bg-zinc-50 hover:bg-bd-surface'
               }`}
             >
               <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl ${option.iconWrap}`}>

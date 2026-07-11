@@ -112,7 +112,7 @@ export default function DashboardQuickTilesSettings({
                         <button
                           type="button"
                           onClick={() => setPickerIndex(index)}
-                          className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-violet-50/50"
+                          className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-bd-surface px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-violet-50/50"
                         >
                           <span className="truncate">Change Tile</span>
                           <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-400" />
@@ -125,7 +125,7 @@ export default function DashboardQuickTilesSettings({
                             onClick={() => onMoveTile(index, 'up')}
                             disabled={index === 0}
                             aria-label={`Move tile ${index + 1} up`}
-                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
                           >
                             <ArrowUp className="h-4 w-4" />
                           </Button>
@@ -136,7 +136,7 @@ export default function DashboardQuickTilesSettings({
                             onClick={() => onMoveTile(index, 'down')}
                             disabled={index === activeTiles.length - 1}
                             aria-label={`Move tile ${index + 1} down`}
-                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
                           >
                             <ArrowDown className="h-4 w-4" />
                           </Button>
@@ -175,7 +175,7 @@ export default function DashboardQuickTilesSettings({
               type="button"
               variant="outline"
               onClick={closePicker}
-              className="h-9 w-9 rounded-xl border-slate-200/80 bg-white p-0 shadow-none"
+              className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 shadow-none"
               aria-label="Close tile picker"
             >
               <X className="h-4 w-4" />
@@ -197,7 +197,7 @@ export default function DashboardQuickTilesSettings({
                     type="button"
                     onClick={() => chooseTile(optionId)}
                     className={cn(
-                      'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-3 text-left transition-colors hover:bg-violet-50/40',
+                      'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-slate-200/80 bg-bd-surface px-3 py-3 text-left transition-colors hover:bg-violet-50/40',
                       isSelected && 'border-violet-200 bg-violet-50/50'
                     )}
                   >
@@ -224,7 +224,7 @@ export default function DashboardQuickTilesSettings({
                         'flex h-5 w-5 items-center justify-center rounded-md border transition-colors',
                         isSelected
                           ? 'border-violet-600 bg-violet-600 text-white'
-                          : 'border-slate-300 bg-white text-transparent'
+                          : 'border-slate-300 bg-bd-surface text-transparent'
                       )}
                     >
                       <Check className="h-3.5 w-3.5" />

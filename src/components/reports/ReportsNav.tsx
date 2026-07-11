@@ -81,7 +81,7 @@ export function ReportsNav({ activeTab, onTabChange }: ReportsNavProps) {
             <div className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all",
               isActive 
-                ? "border-[hsl(var(--bd-button-primary-bg)/0.2)] bg-white shadow-sm" 
+                ? "border-[hsl(var(--bd-button-primary-bg)/0.2)] bg-bd-surface shadow-sm"
                 : "border-transparent bg-[hsl(var(--bd-surface-muted)/0.3)] group-hover:bg-bd-surface-muted"
             )}>
               <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />

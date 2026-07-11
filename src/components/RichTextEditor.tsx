@@ -33,7 +33,7 @@ function ToolbarBtn({ onClick, active, title, children, wide = false }: ToolbarB
       className={cn(
         'inline-flex h-[38px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-zinc-200 px-3 text-[13px] font-medium transition-colors',
         wide ? 'min-w-[76px]' : 'min-w-[38px]',
-        active ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-700 hover:bg-zinc-50',
+        active ? 'bg-zinc-900 text-white' : 'bg-bd-surface text-zinc-700 hover:bg-zinc-50',
       )}
     >
       {children}
@@ -80,7 +80,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }: Ri
   const isEmpty = editor.isEmpty
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-300 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <div className="overflow-hidden rounded-2xl border border-zinc-300 bg-bd-input-bg shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-zinc-50 p-3">
         <ToolbarBtn
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -141,7 +141,7 @@ export default function RichTextEditor({ value, onChange, placeholder = '' }: Ri
         </ToolbarBtn>
       </div>
 
-      <div className="relative min-h-[150px] bg-white">
+      <div className="relative min-h-[150px] bg-bd-input-bg">
         {isEmpty && (
           <div className="pointer-events-none absolute left-4 top-3.5 select-none text-[15px] text-zinc-400">
             {placeholder}

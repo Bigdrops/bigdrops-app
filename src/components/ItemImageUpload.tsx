@@ -114,7 +114,7 @@ export default function ItemImageUpload({ value, onChange }: ItemImageUploadProp
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}
         className={`mt-1.5 flex h-14 w-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border-2 border-dashed text-center transition ${
-          uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50'
+          uploading ? 'border-zinc-300 bg-zinc-50 text-[10px] text-zinc-400' : 'border-zinc-300 bg-bd-surface text-zinc-400 hover:bg-zinc-50'
         }`}
         title="Add image"
         aria-label="Add image"

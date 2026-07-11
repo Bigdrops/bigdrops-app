@@ -74,7 +74,7 @@ export default function BatchActionFooter({
                   "flex h-11 items-center gap-1.5 rounded-lg px-4 text-[11px] font-bold uppercase tracking-wider transition-colors duration-200",
                   action.variant === "destructive"
                     ? "bg-red-600 text-white hover:bg-red-500 disabled:bg-red-800"
-                    : "bg-white text-slate-900 hover:bg-slate-100 disabled:bg-slate-600 disabled:text-slate-300"
+                    : "bg-bd-surface text-slate-900 hover:bg-slate-100 disabled:bg-slate-600 disabled:text-slate-300"
                 )}
               >
                 {isLoading ? (

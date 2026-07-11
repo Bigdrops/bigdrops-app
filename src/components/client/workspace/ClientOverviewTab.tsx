@@ -101,7 +101,7 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
               </div>
               <div className="space-y-2">
                 {overdue.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm ring-1 ring-red-100">
+                  <div key={inv.id} className="flex items-center justify-between rounded-lg bg-bd-card-bg p-3 shadow-sm ring-1 ring-red-100">
                     <div>
                         <span className="font-mono text-xs font-bold text-red-700">{inv.invoice_number}</span>
                         <div className="text-[10px] text-red-500 font-medium">Past Due {formatCurrency(inv.balance_due)}</div>
