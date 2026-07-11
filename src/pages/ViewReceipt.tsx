@@ -4,6 +4,7 @@ import { supabase } from "@/supabase"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
 import ReceiptPdf from "@/components/pdf-new/ReceiptPdf"
+import { registerPdfFonts } from "@/lib/pdfFontRegistry"
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset"
 import { downloadPdfFromElement } from "@/components/document-view/shared/downloadPdf"
 import { formatDisplayDate } from "@/lib/formatters/date"
@@ -43,6 +44,7 @@ export default function ViewReceipt() {
 
   const handleDownload = useCallback(async () => {
     if (!receipt) return
+    registerPdfFonts()
     const model = buildReceiptPreviewData(receipt)
     const element = <ReceiptPdf model={model} designPreset={designPreset} />
     await downloadPdfFromElement({

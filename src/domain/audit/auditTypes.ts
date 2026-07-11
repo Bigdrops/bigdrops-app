@@ -1,4 +1,4 @@
-export type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill'
+export type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'letter'
 
 export type AuditAction =
   | 'CREATE'

@@ -86,7 +86,16 @@ export const RECEIPT_TRACKED_FIELDS = [
   'void_reason',
 ] as const
 
-type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'receipt'
+export const LETTER_TRACKED_FIELDS = [
+  'letter_number',
+  'recipient_id',
+  'recipient_name',
+  'recipient_address',
+  'subject',
+  'status',
+]
+
+type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'receipt' | 'letter'
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
 
 function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
@@ -500,5 +509,58 @@ export async function recordReceiptVoided(
       void_reason: voidReason,
     },
     trackedFields: ['status', 'voided_at', 'void_reason'],
+  })
+}
+
+export async function recordLetterCreated(letterId: string) {
+  const actor = await getActor()
+  return supabase.rpc('record_letter_created', {
+    p_letter_id: letterId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}
+
+export async function recordLetterUpdated(letterId: string) {
+  const actor = await getActor()
+  return supabase.rpc('record_letter_updated', {
+    p_letter_id: letterId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}
+
+export async function recordLetterStatusChanged(letterId: string, oldStatus: string | null, newStatus: string | null) {
+  const actor = await getActor()
+  return supabase.rpc('record_letter_status_changed', {
+    p_letter_id: letterId,
+    p_old_status: oldStatus,
+    p_new_status: newStatus,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}
+
+export async function recordLetterDuplicated(letterId: string, sourceLetterId: string) {
+  const actor = await getActor()
+  return supabase.rpc('record_letter_duplicated', {
+    p_letter_id: letterId,
+    p_source_letter_id: sourceLetterId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}
+
+export async function recordLetterArchived(letterId: string) {
+  const actor = await getActor()
+  return supabase.rpc('record_letter_archived', {
+    p_letter_id: letterId,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
   })
 }

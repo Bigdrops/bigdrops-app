@@ -24,6 +24,7 @@ export function getNotificationRoute(notification: NotificationRouteInput): stri
   if (entityType === 'quotation' || entityType === 'quote') return `/quotations/${entityId}`
   if (entityType === 'rfq' || entityType === 'csr') return `/rfqs/${entityId}`
   if (entityType === 'waybill') return `/waybills/${entityId}`
+  if (entityType === 'letter') return `/letters/${entityId}`
   if (entityType === 'project') return `/projects/${entityId}`
   if (entityType === 'client') return `/clients/${entityId}`
 

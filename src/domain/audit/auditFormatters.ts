@@ -20,6 +20,10 @@ const FIELD_LABELS: Record<string, string> = {
   account_paid_to: 'Paid To',
   running_balance_after: 'Balance After',
   wht_amount: 'WHT Deducted',
+  letter_number: 'Letter Number',
+  subject: 'Subject',
+  recipient_name: 'Recipient',
+  recipient_address: 'Address',
 }
 
 const PAYMENT_FIELDS = new Set(['amount'])
@@ -69,6 +73,14 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     STATUS_CHANGE: 'updated this waybill',
     LINK: 'linked this waybill',
     UNLINK: 'unlinked this waybill',
+  },
+  letter: {
+    CREATE: 'created this letter',
+    UPDATE: 'updated this letter',
+    DELETE: 'deleted this letter',
+    STATUS_CHANGE: 'updated this letter',
+    LINK: 'linked this letter',
+    UNLINK: 'unlinked this letter',
   },
 }
 
