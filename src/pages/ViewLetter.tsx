@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { FileText, Pencil } from "lucide-react"
+import { Pencil } from "lucide-react"
 import DocumentPage from "@/components/document-view/shared/DocumentPage"
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav"
 import { getLetter } from "@/domain/correspondence/letter/letterRepository"
@@ -9,8 +9,9 @@ import type { LetterDocument, LetterBodyBlock } from "@/domain/correspondence/le
 function renderBlock(block: LetterBodyBlock, idx: number) {
   switch (block.type) {
     case "heading":
-      const H = `h${Math.min(block.level, 6)}` as keyof JSX.IntrinsicElements
-      return <H key={idx} className="font-bold text-bd-text mt-4 mb-1">{block.text}</H>
+      const level = Math.min(block.level ?? 1, 6)
+      const tag = `h${level}`
+      return <div key={idx} className={`font-bold text-bd-text mt-4 mb-1 ${tag === "h1" ? "text-lg" : tag === "h2" ? "text-base" : "text-sm"}`}>{block.text}</div>
     case "paragraph":
       return <p key={idx} className="text-sm text-bd-text leading-relaxed">{block.text}</p>
     case "list":

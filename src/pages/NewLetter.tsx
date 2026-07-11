@@ -94,7 +94,7 @@ export default function NewLetter() {
           </button>
           <button
             type="button"
-            onClick={save}
+            onClick={() => save("draft")}
             disabled={saving}
             className="flex h-12 flex-1 items-center justify-center rounded-xl bg-bd-button-primary-bg text-sm font-bold text-bd-button-primary-text transition-opacity hover:opacity-90 disabled:opacity-50"
           >
