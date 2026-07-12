@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIGDROPS Multi-Tenancy Prototype</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:24px}
+h1{font-size:22px;margin-bottom:4px;color:#16213e}
+.sub{color:#555;font-size:14px;margin-bottom:24px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:12px}
+.schema{margin-bottom:12px;border-radius:8px;overflow:hidden}
+.schema.public{background:#e3f2fd;border:2px solid #90caf9}
+.schema.entity{background:#f3e5f5;border:2px solid #ce93d8}
+.schema .header{padding:8px 12px;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.schema.public .header{background:#90caf9;color:#0d47a1}
+.schema.entity .header{background:#ce93d8;color:#4a148c}
+.schema .tables{padding:8px 12px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px}
+.schema .tables span{background:rgba(255,255,255,.8);padding:3px 8px;border-radius:4px;font-size:11px;white-space:nowrap}
+.controls{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.controls select{padding:6px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;background:#fff;width:200px}
+.controls .badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+.controls label{font-size:13px;font-weight:500;color:#333}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.data-table th{text-align:left;padding:6px 8px;background:#f5f5f5;font-weight:600;color:#555;border-bottom:2px solid#ddd}
+.data-table td{padding:6px 8px;border-bottom:1px solid #eee}
+.search-path{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px}
+.search-path.public{background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9}
+.search-path.entity{background:#f3e5f5;color:#4a148c;border:1px solid #ce93d8}
+.search-path .arrow{font-size:18px}
+.user-card{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px}
+.user-card .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.user-card .info{flex:1}
+.user-card .info .name{font-size:14px;font-weight:600}
+.user-card .info .detail{font-size:12px;color:#666}
+.user-card .role-badge{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600;text-transform:uppercase}
+.role-badge.super-admin{background:#ffeb3b;color:#333}
+.role-badge.entity-admin{background:#e91e63;color:#fff}
+.role-badge.engineer{background:#2196f3;color:#fff}
+.role-badge.viewer{background:#9e9e9e;color:#fff}
+.legend{display:flex;gap:16px;font-size:11px;color:#666;margin-top:8px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.public{background:#90caf9}
+.dot.entity{background:#ce93d8}
+.dot.shared{background:#81c784}
+.activity{list-style:none;font-size:12px;margin-top:8px}
+.activity li{padding:5px 0;border-bottom:1px solid #f0f0f0;color:#555;line-height:1.5}
+.activity li .highlight{font-weight:600;color:#1a1a2e}
+.entity-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.entity-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.entity-chip.active{border-color:#4a148c;background:#f3e5f5}
+.entity-chip.inactive{opacity:.6}
+.sql-pane{background:#1a1a2e;color:#e8e8e8;padding:12px;border-radius:8px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.6;margin-top:8px;overflow-x:auto}
+.sql-pane .keyword{color:#7ec8e3}
+.sql-pane .string{color:#a5d6a7}
+.sql-pane .comment{color:#666;font-style:italic}
+.invite-chain{font-size:12px;padding:8px 12px;background:#fff8e1;border-radius:6px;border-left:3px solid #ffc107;margin-top:8px}
+.invite-chain strong{color:#e65100}
+.entity-panel{margin-top:8px;padding:10px 12px;background:#f5f5f5;border-radius:6px;font-size:12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.entity-panel .label{color:#888}
+.entity-panel .value{font-weight:500}
+</style>
+</head>
+<body>
+
+<h1>BIGDROPS Multi-Tenancy Prototype</h1>
+<p class="sub">Schema-per-entity isolation · Switch users &amp; entities · Watch who granted access to whom</p>
+
+<div class="layout">
+  <div>
+    <div class="card">
+      <h2>User &amp; Authorization</h2>
+
+      <div id="userCard" class="user-card">
+        <div class="avatar" style="background:#e91e63">AM</div>
+        <div class="info">
+          <div class="name">Aisha Mohammed</div>
+          <div class="detail">aisha@bigdrops.ng</div>
+        </div>
+        <span id="userRoleBadge" class="role-badge super-admin">Super Admin</span>
+      </div>
+
+      <div class="controls">
+        <label>User:</label>
+        <select id="userSelect"></select>
+        <label>Active entity:</label>
+        <select id="entitySelect"></select>
+      </div>
+
+      <div id="searchPathIndicator" class="search-path public">
+        <span class="arrow">🌐</span>
+        <span>search_path = <strong id="searchPathValue">public</strong></span>
+      </div>
+
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Entity memberships &amp; how they were granted:</div>
+      <div id="membershipList"></div>
+
+      <div style="margin-top:12px">
+        <div style="font-size:12px;font-weight:500;margin-bottom:4px">SQL that runs on query:</div>
+        <div class="sql-pane" id="sqlPane">
+          <span class="comment">-- search_path determines target schema</span><br>
+          <span class="keyword">SET</span> search_path <span class="keyword">TO</span> <span class="string" id="sqlSchema">'public'</span>;<br>
+          <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span id="sqlTable">invoices</span>;
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Activity Trail</h2>
+      <ul class="activity" id="activityLog">
+        <li><span class="highlight">System</span> initialized — <strong>BIGDROPS HQ</strong> created as default entity</li>
+      </ul>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Database Schemas</h2>
+      <div class="schema public">
+        <div class="header">
+          <span>public (shared registry)</span>
+          <span style="font-weight:400;font-size:11px;opacity:.8">auth · entities · members</span>
+        </div>
+        <div class="tables">
+          <span>entities</span>
+          <span>entity_members</span>
+          <span>profiles</span>
+          <span>devices</span>
+          <span style="opacity:.5;text-decoration:line-through;position:relative">settings</span>
+        </div>
+      </div>
+      <div id="entitySchemas"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Data Preview: invoices</h2>
+      <div style="font-size:11px;color:#888;margin-bottom:4px">
+        Showing data from <strong id="dataSourceLabel">public</strong> schema
+      </div>
+      <table class="data-table" id="dataTable">
+        <thead><tr><th>#</th><th>Number</th><th>Client</th><th>Amount</th></tr></thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <span><span class="dot public"></span> public schema (shared)</span>
+  <span><span class="dot entity"></span> entity schema (isolated)</span>
+  <span class="role-badge super-admin" style="font-size:10px">Super Admin</span>
+  <span class="role-badge entity-admin" style="font-size:10px">Entity Admin</span>
+  <span class="role-badge engineer" style="font-size:10px">Engineer</span>
+  <span class="role-badge viewer" style="font-size:10px">Viewer</span>
+</div>
+
+<script>
+// ========================
+// DATA LAYER
+// ========================
+// Entities: each company managed in the system
+const entities = [
+  { id: 'ent_001', slug: 'bigdrops-hq', name: 'BIGDROPS HQ', schema: 'public', type: 'default' },
+  { id: 'ent_002', slug: 'acme', name: 'Acme Corp', schema: 'entity_acme', type: 'client' },
+  { id: 'ent_003', slug: 'beta', name: 'Beta Industries', schema: 'entity_beta', type: 'client' },
+]
+
+// Invitations: who invited whom to which entity with what role
+// Only entity_admins and super_admins can invite
+const invitations = [
+  // BIGDROPS HQ created by system
+  { entity: 'ent_001', invitedUser: 'system', targetUser: 0, role: 'super_admin', note: 'System — co-founder of BIGDROPS' },
+  { entity: 'ent_001', invitedUser: 0, targetUser: 1, role: 'entity_admin', note: 'Aisha invited Chidi to manage HQ' },
+  { entity: 'ent_001', invitedUser: 0, targetUser: 2, role: 'viewer', note: 'Aisha invited Bola as HQ viewer' },
+
+  // Acme Corp — created by Aisha (super admin), she invites herself as admin
+  { entity: 'ent_002', invitedUser: 'system_approval', targetUser: 0, role: 'entity_admin', note: 'Aisha created Acme Corp — auto-granted admin' },
+  { entity: 'ent_002', invitedUser: 0, targetUser: 1, role: 'engineer', note: 'Aisha (Acme admin) invited Chidi as engineer' },
+
+  // Beta Industries — created by Aisha, she manages it too
+  { entity: 'ent_003', invitedUser: 'system_approval', targetUser: 0, role: 'entity_admin', note: 'Aisha created Beta Industries — auto-granted admin' },
+]
+
+const mockData = {
+  public: {
+    invoices: [
+      { id: 'INV-001', client: 'Legacy Client A', amount: '₦150,000' },
+      { id: 'INV-002', client: 'Legacy Client B', amount: '₦89,500' },
+    ],
+  },
+  entity_acme: {
+    invoices: [
+      { id: 'INV-001', client: 'Acme Client X', amount: '₦2,400,000' },
+      { id: 'INV-002', client: 'Acme Client Y', amount: '₦875,000' },
+      { id: 'INV-003', client: 'Acme Client Z', amount: '₦1,200,000' },
+    ],
+  },
+  entity_beta: {
+    invoices: [
+      { id: 'INV-001', client: 'Beta Pharma', amount: '₦5,600,000' },
+      { id: 'INV-002', client: 'Beta Logistics', amount: '₦3,200,000' },
+    ],
+  },
+}
+
+const users = [
+  { name: 'Aisha Mohammed', initials: 'AM', color: '#e91e63', systemRole: 'super_admin' },
+  { name: 'Chidi Okonkwo', initials: 'CO', color: '#2196f3', systemRole: 'standard' },
+  { name: 'Bola Adeyemi', initials: 'BA', color: '#ff9800', systemRole: 'standard' },
+]
+
+// ========================
+// DERIVED
+// ========================
+function getMemberships(userIdx) {
+  return invitations
+    .filter(inv => inv.targetUser === userIdx)
+    .map(inv => ({
+      entity: entities.find(e => e.id === inv.entity),
+      role: inv.role,
+      invitedBy: inv.invitedUser === 'system' ? 'System' :
+                 inv.invitedUser === 'system_approval' ? 'System (auto)' :
+                 users[inv.invitedUser]?.name || 'Unknown',
+      note: inv.note,
+    }))
+}
+
+function getUserEntityIds(userIdx) {
+  return getMemberships(userIdx).map(m => m.entity.id)
+}
+
+function getUserDefaultEntity(userIdx) {
+  const m = getMemberships(userIdx)
+  // Prefer entity_admin role, otherwise first
+  const admin = m.find(m => m.role === 'entity_admin' || m.role === 'super_admin')
+  return admin ? admin.entity.id : m[0]?.entity.id || 'ent_001'
+}
+
+function getEntityAdmin(entityId) {
+  // Find who has entity_admin or super_admin role for this entity
+  const admins = invitations.filter(inv =>
+    inv.entity === entityId &&
+    (inv.role === 'entity_admin' || inv.role === 'super_admin')
+  )
+  return admins.map(a => a.targetUser === 'system' ? 'System' : users[a.targetUser].name).join(', ')
+}
+
+// ========================
+// STATE
+// ========================
+let currentUserId = 0
+let currentEntityId = getUserDefaultEntity(0)
+
+function getCurrentUser() { return users[currentUserId] }
+function getCurrentEntity() { return entities.find(e => e.id === currentEntityId) }
+
+// ========================
+// RENDER
+// ========================
+function renderSchemaBlocks() {
+  const container = document.getElementById('entitySchemas')
+  const activeEntity = getCurrentEntity()
+  container.innerHTML = entities.filter(e => e.id !== 'ent_001').map(e => {
+    const isActive = e.id === activeEntity.id
+    const hasUser = getUserEntityIds(currentUserId).includes(e.id)
+    const admin = getEntityAdmin(e.id)
+    return `<div class="schema entity" style="opacity:${hasUser ? 1 : 0.35}">
+      <div class="header">
+        <span>${e.schema} ${isActive ? '← active' : ''}</span>
+        <span style="font-weight:400;font-size:11px;opacity:.8">${e.name}</span>
+      </div>
+      <div class="tables">
+        <span>settings</span>
+        <span>invoices</span>
+        <span>clients</span>
+        <span>waybills</span>
+        <span>payments</span>
+        <span>item_catalog</span>
+        <span>audit_logs</span>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function renderMemberships() {
+  const container = document.getElementById('membershipList')
+  const ms = getMemberships(currentUserId)
+  if (ms.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:#999;padding:8px">No entity memberships</div>'
+    return
+  }
+  container.innerHTML = ms.map(m => `
+    <div class="invite-chain">
+      <strong>${m.entity.name}</strong>
+      <span style="display:inline-block;margin:0 4px">·</span>
+      <span class="role-badge ${roleClass(m.role)}">${m.role}</span>
+      <br>
+      <span style="color:#888">Granted by:</span> ${m.invitedBy}
+      <br>
+      <span style="font-size:11px;color:#888;font-style:italic">${m.note}</span>
+    </div>
+  `).join('')
+}
+
+function renderEntityChips() {
+  const container = document.getElementById('entitySelect')
+  const ids = getUserEntityIds(currentUserId) 
+  container.innerHTML = ids.map(eid => {
+    const ent = entities.find(e => e.id === eid)
+    return `<option value="${eid}" ${eid === currentEntityId ? 'selected' : ''}>${ent.name}</option>`
+  }).join('')
+}
+
+function renderUserSelector() {
+  const sel = document.getElementById('userSelect')
+  sel.innerHTML = users.map((u, i) =>
+    `<option value="${i}" ${i === currentUserId ? 'selected' : ''}>${u.name}</option>`
+  ).join('')
+}
+
+function renderSearchPath() {
+  const ent = getCurrentEntity()
+  const indicator = document.getElementById('searchPathIndicator')
+  const value = document.getElementById('searchPathValue')
+  const isPublic = ent.schema === 'public'
+  indicator.className = `search-path ${isPublic ? 'public' : 'entity'}`
+  indicator.querySelector('.arrow').textContent = isPublic ? '🌐' : '🔒'
+  value.textContent = ent.schema
+  document.getElementById('sqlSchema').textContent = `'${ent.schema}'`
+}
+
+function renderUserCard() {
+  const user = getCurrentUser()
+  document.querySelector('#userCard .avatar').textContent = user.initials
+  document.querySelector('#userCard .avatar').style.background = user.color
+  document.querySelector('#userCard .name').textContent = user.name
+  const badge = document.getElementById('userRoleBadge')
+  if (user.systemRole === 'super_admin') {
+    badge.textContent = 'Super Admin'
+    badge.className = 'role-badge super-admin'
+  } else {
+    badge.textContent = 'Standard User'
+    badge.className = 'role-badge viewer'
+  }
+}
+
+function renderDataTable() {
+  const ent = getCurrentEntity()
+  const data = mockData[ent.schema]
+  const rows = data.invoices || []
+  const tbody = document.getElementById('dataBody')
+  document.getElementById('dataSourceLabel').textContent = ent.schema
+  tbody.innerHTML = rows.map((r, i) => `<tr>
+    <td>${i + 1}</td>
+    <td>${r.id}</td>
+    <td>${r.client}</td>
+    <td>${r.amount}</td>
+  </tr>`).join('')
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:#999;text-align:center;padding:16px">No invoices yet</td></tr>`
+  }
+}
+
+function roleClass(r) {
+  if (r === 'super_admin') return 'super-admin'
+  if (r === 'entity_admin') return 'entity-admin'
+  if (r === 'engineer') return 'engineer'
+  return 'viewer'
+}
+
+let activityCount = 0
+function renderActivity(msg) {
+  const log = document.getElementById('activityLog')
+  const li = document.createElement('li')
+  li.innerHTML = msg
+  log.insertBefore(li, log.firstChild)
+  activityCount++
+  if (activityCount > 20) log.removeChild(log.lastChild)
+}
+
+function renderUI() {
+  renderUserCard()
+  renderUserSelector()
+  renderEntityChips()
+  renderMemberships()
+  renderSchemaBlocks()
+  renderSearchPath()
+  renderDataTable()
+}
+
+// ========================
+// ACTIONS
+// ========================
+function switchEntity(eid) {
+  const ent = entities.find(e => e.id === eid)
+  if (!ent) return
+  if (!getUserEntityIds(currentUserId).includes(eid)) return
+  currentEntityId = eid
+  renderUI()
+  const user = getCurrentUser()
+  const m = getMemberships(currentUserId).find(m => m.entity.id === eid)
+  renderActivity(`<span class="highlight">${user.name}</span> switched to <strong>${ent.name}</strong> (${m?.role || 'member'})`)
+}
+
+function switchUser(idx) {
+  currentUserId = idx
+  currentEntityId = getUserDefaultEntity(idx)
+  renderUI()
+  const user = getCurrentUser()
+  renderActivity(`<span class="highlight">${user.name}</span> logged in (${user.systemRole === 'super_admin' ? 'Super Admin' : 'Standard User'})`)
+  renderActivity(`Default entity: <strong>${entities.find(e => e.id === currentEntityId).name}</strong>`)
+}
+
+// ========================
+// INIT
+// ========================
+document.getElementById('userSelect').addEventListener('change', (e) => switchUser(parseInt(e.target.value)))
+document.getElementById('entitySelect').addEventListener('change', (e) => switchEntity(e.target.value))
+
+switchUser(0)
+</script>
+</body>
+</html>

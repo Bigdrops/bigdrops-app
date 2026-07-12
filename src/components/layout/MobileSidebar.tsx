@@ -47,7 +47,7 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px]" showCloseButton={false}>
+      <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px] overflow-y-auto bd-custom-scrollbar" showCloseButton={false}>
         <button
           type="button"
           onClick={() => onOpenChange(false)}

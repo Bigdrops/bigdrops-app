@@ -4,12 +4,7 @@
   
   /* Base Triplets (Defaults to shadcn) */
   --bd-app-bg: var(--background);
-  --bd-surface: var(--card);
-  --bd-surface-muted: var(--muted);
-  --bd-border: var(--border);
   --bd-border-strong: var(--border);
-  --bd-text: var(--foreground);
-  --bd-text-muted: var(--muted-foreground);
   --bd-text-soft: var(--muted-foreground);
   --bd-input-bg: var(--background);
   --bd-input-border: var(--input);

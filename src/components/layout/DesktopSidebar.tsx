@@ -35,7 +35,7 @@ export function DesktopSidebar({
     <aside 
       className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex"
     >
-      <div className="flex flex-col h-full bd-custom-scrollbar">
+      <div className="flex flex-col h-full">
         <div className="px-5 py-6">
           <div className="text-[13px] font-black tracking-tight text-bd-text">
             {APP_NAME}
@@ -50,7 +50,7 @@ export function DesktopSidebar({
           ) : null}
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-[var(--bd-section-gap)] px-4 pb-10">
+        <div className="flex-1 overflow-y-auto space-y-[var(--bd-section-gap)] px-4 pb-10 bd-custom-scrollbar">
           <div>
             <div className="mb-2.5 px-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-bd-text-muted">
               Navigation
