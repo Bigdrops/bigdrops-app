@@ -117,6 +117,7 @@ export default function Layout({
     }
 
     const pathByKey: Record<string, string> = {
+      letters: '/letters',
       rfqs: '/rfqs',
       boqs: '/boqs',
       reports: '/reports',
