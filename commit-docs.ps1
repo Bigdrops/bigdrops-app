@@ -8,9 +8,9 @@ $docsChanged = $changed -match '^docs/'
 
 if ($docsChanged) {
     $summary = ($docsChanged | ForEach-Object { "- $_" }) -join "`n"
-    $msg = "📝 docs: update documentation`n`n$summary"
+    $msg = "📝 docs(standard): update documentation workflow`n`n$summary"
 } else {
-    $msg = "📝 chore: update project files"
+    $msg = "📝 chore(project): update project files"
 }
 
 git commit -m $msg
