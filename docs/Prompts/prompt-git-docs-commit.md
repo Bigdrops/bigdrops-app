@@ -27,9 +27,7 @@ No repository modifications except Git operations.
 
 # OBJECTIVE
 
-Commit and push the current repository state.
-
-The commit message must primarily describe the documentation work inside the `docs/` directory while still committing **every** modified file in the repository.
+Commit and push the current repository state. The commit message MUST ALWAYS follow Gitmoji + Conventional Commits format, regardless of what changed.
 
 ---
 
@@ -52,13 +50,15 @@ Understand:
 - added files
 - deleted files
 
-Determine what changed inside:
+Identify the PRIMARY change type:
 
-```
-docs/
-```
-
-This directory should drive the commit message whenever applicable.
+| Files changed | Scope |
+|---------------|-------|
+| `docs/**` only | `docs` |
+| `src/**` + `docs/**` | Primary source module (e.g., `csr`, `waybill`, `invoice`) |
+| `src/**` only | Primary source module |
+| Config files, `.github/`, `.githooks/` | `config` |
+| Multiple unrelated modules | `project` |
 
 ---
 
@@ -192,11 +192,17 @@ Examples:
 
 ## Commit Message Rules
 
+**HARD RULE: Every commit message MUST start with a gitmoji. No exceptions.**
+
 Choose the Gitmoji that best represents the primary change.
 
 Use Conventional Commit syntax immediately after the emoji.
 
-The **subject must primarily describe the documentation work under `docs/` whenever documentation was modified**, even if other repository files are included in the commit.
+The scope should reflect WHAT changed:
+- `docs` for documentation-only changes
+- Source module name (e.g., `csr`, `waybill`, `invoice`) for code changes
+- `config` for configuration/tooling changes
+- `project` for mixed unrelated changes
 
 Guidelines:
 

@@ -21,7 +21,7 @@ This is a deterministic recurring commit-and-push workflow. No code generation. 
 
 # OBJECTIVE
 
-Commit and push the current repository state with a message primarily describing the docs changes.
+Commit and push the current repository state. The commit message MUST ALWAYS follow Gitmoji + Conventional Commits format, regardless of what changed.
 
 # WORKFLOW
 
@@ -35,7 +35,11 @@ git status
 git diff --stat
 ```
 
-Note what changed inside `docs/` — this drives the commit message.
+Note what changed. Identify:
+- `docs/` changes → use `docs` scope
+- Source code changes → determine the module (e.g., `csr`, `waybill`, `invoice`, `ui`)
+- Config/tooling changes → use `chore` type
+- If multiple categories, pick the primary one
 
 ## 2. Secret scan (MANDATORY)
 
@@ -49,9 +53,11 @@ If `git status` shows clean: STOP, reply "No changes to commit."
 
 ## 4. Compose commit message
 
+**HARD RULE: Every commit message MUST start with a gitmoji. No exceptions.**
+
 Format: `<gitmoji> <type>(<scope>): <subject>`
 
-Primary gitmoji reference:
+Step 1 — Pick the gitmoji based on PRIMARY change type:
 
 | Gitmoji | Meaning | Type |
 |---------|---------|------|
@@ -70,7 +76,19 @@ Primary gitmoji reference:
 | 🔥 | Remove code | chore |
 | 🗃️ | Database | feat or chore |
 
-Rules: lowercase subject, max 72 chars, no trailing period. Optional body summarizing docs files changed.
+Step 2 — Pick the scope based on WHAT changed:
+
+| Files changed | Scope |
+|---------------|-------|
+| `docs/**` only | `docs` |
+| `src/**` + `docs/**` | Primary source module (e.g., `csr`, `waybill`, `invoice`) |
+| `src/**` only | Primary source module |
+| Config files, `.github/`, `.githooks/` | `chore` or `config` |
+| Multiple unrelated modules | `project` |
+
+Step 3 — Write subject: lowercase, max 72 chars, no trailing period.
+
+**NEVER generate a message without the gitmoji prefix.** If you cannot determine the right gitmoji, default to `📝 docs` or `🔧 chore` — but ALWAYS include it.
 
 ## 5. Stage everything
 
@@ -83,6 +101,8 @@ git add -A
 ```bash
 git commit -m "<message>"
 ```
+
+**VALIDATE before committing:** Does the message start with a gitmoji? If not, STOP and fix it.
 
 Do not amend. Do not rewrite history.
 

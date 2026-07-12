@@ -5,6 +5,8 @@ import { SignalBandsTemplate } from './SignalBands'
 import { ZincTemplate } from './Zinc'
 import { CrimsonTemplate } from './Crimson'
 import { MinimalTemplate } from './Minimal'
+import { IndustryCsrTemplate } from './IndustryCsr'
+import { ExecutiveCsrTemplate } from './ExecutiveCsr'
 import { registerPdfFillableFonts } from '../../../lib/pdfFontRegistry'
 import type { CsrPdfProps } from './types'
 
@@ -27,11 +29,21 @@ export function Template6({ csr, comments, branding = {}, designPreset }: CsrPdf
   return <MinimalTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
+export function Template7({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <IndustryCsrTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
+}
+
+export function Template8({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <ExecutiveCsrTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
+}
+
 export function getCsrPdfDocument({ csr, comments, branding = {}, template = '4', designPreset }: CsrPdfProps) {
   const variant = getCsrTemplateVariant(template)
 
   if (variant === 'signalbands') return <Template2 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'zinc') return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'minimal') return <Template6 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'industry') return <Template7 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'executive') return <Template8 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   return <Template4 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
 }

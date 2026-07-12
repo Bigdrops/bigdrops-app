@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSR Executive Template Verification</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', Helvetica, Arial, sans-serif; }
+    .exec-header { background: #1e3a5f; }
+    .exec-header-dark { background: #0f2440; }
+    .exec-accent { background: #2563eb; }
+    .exec-border { border-color: #bfdbfe; }
+    .exec-muted { background: #eff6ff; }
+    .exec-hero { background: #eff6ff; border-color: #2563eb; }
+    .exec-field-label { color: #64748b; }
+    .exec-field-value { color: #1e293b; }
+    .exec-section-title { background: #2563eb; color: white; }
+    .exec-status-active { background: #2563eb; border-color: #2563eb; }
+    .exec-footer { color: #64748b; border-top-color: #bfdbfe; }
+  </style>
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="max-w-[595px] mx-auto bg-white p-2.5 shadow-lg">
+    <!-- Header -->
+    <div class="exec-header rounded-md overflow-hidden mb-1.5">
+      <div class="flex justify-between items-start gap-2 p-2">
+        <div class="flex gap-2 items-start flex-1">
+          <div class="w-11 h-11 bg-white rounded flex items-center justify-center">
+            <span class="exec-accent text-white font-bold text-xs">E</span>
+          </div>
+          <div class="flex-1">
+            <h1 class="text-white font-bold text-[11px] uppercase tracking-wide">BIGDROPS ENERGY</h1>
+            <p class="text-[#93c5fd] text-[5.5px] uppercase mt-0.5">Power Solutions Provider</p>
+            <p class="text-[#93c5fd] text-[5.4px] mt-0.5 leading-tight">Lagos, Nigeria | +234 801 234 5678</p>
+          </div>
+        </div>
+        <div class="exec-header-dark w-[132px] border border-[#2563eb] rounded p-1.5 items-end flex flex-col">
+          <span class="text-[#93c5fd] text-[5.8px] uppercase font-bold">Service Report Number</span>
+          <span class="text-white font-bold text-[11px] mt-0.5">CSR-2026-00142</span>
+          <span class="text-[#93c5fd] text-[6.5px] mt-0.5 font-bold">12 Jul 2026</span>
+        </div>
+      </div>
+      <div class="flex justify-between bg-[#0f2440] border-t border-[#2563eb] py-1 px-2">
+        <span class="text-white font-bold text-[9px] uppercase tracking-wide">Customer Service Report</span>
+      </div>
+    </div>
+
+    <!-- Customer & Job Details -->
+    <div class="mb-1">
+      <div class="exec-section-title py-0.5 px-1.5 mb-0.75 text-[6.8px] uppercase font-bold tracking-wide">Customer & Job Details</div>
+      <div class="flex gap-1.25 flex-wrap">
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Client Name</p>
+          <p class="exec-field-value font-bold text-[6.8px] leading-tight">Chidi Okonkwo</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-[2] min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Address</p>
+          <p class="exec-field-value font-bold text-[6.8px] leading-tight">14 Admiralty Way, Lekki Phase 1, Lagos</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Service Start</p>
+          <p class="exec-field-value font-bold text-[6.8px]">10 Jul 2026 / 09:15</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Service End</p>
+          <p class="exec-field-value font-bold text-[6.8px]">10 Jul 2026 / 14:30</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Call Type</p>
+          <p class="exec-field-value font-bold text-[6.8px]">Preventive Maintenance</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem Reported -->
+    <div class="mb-1">
+      <div class="exec-section-title py-0.5 px-1.5 mb-0.75 text-[6.8px] uppercase font-bold tracking-wide">Problem Reported</div>
+      <div class="exec-hero border rounded p-1">
+        <p class="text-[#1e293b] text-[6.3px] leading-relaxed">Client reports intermittent power fluctuations during peak hours. Generator trips occasionally under heavy load. Requesting thorough inspection and maintenance.</p>
+      </div>
+    </div>
+
+    <!-- Equipment Details -->
+    <div class="mb-1">
+      <div class="exec-section-title py-0.5 px-1.5 mb-0.75 text-[6.8px] uppercase font-bold tracking-wide">Equipment Details</div>
+      <div class="flex gap-1.25 flex-wrap">
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Equipment Type</p>
+          <p class="exec-field-value font-bold text-[6.8px]">Diesel Generator</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Make</p>
+          <p class="exec-field-value font-bold text-[6.8px]">Caterpillar</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Model</p>
+          <p class="exec-field-value font-bold text-[6.8px]">CAT C9.3</p>
+        </div>
+        <div class="exec-muted border exec-border rounded p-0.75 flex-1 min-w-0">
+          <p class="exec-field-label text-[5.4px] uppercase font-bold mb-0.5">Capacity</p>
+          <p class="exec-field-value font-bold text-[6.8px]">500 kVA</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="mb-1">
+      <div class="exec-section-title py-0.5 px-1.5 mb-0.75 text-[6.8px] uppercase font-bold tracking-wide">Status</div>
+      <div class="flex gap-1 flex-wrap">
+        <div class="exec-status-active border rounded p-1 flex-1 min-w-[18%] text-center">
+          <span class="text-white text-[6.2px] uppercase font-bold">Complete</span>
+        </div>
+        <div class="exec-muted border exec-border rounded p-1 flex-1 min-w-[18%] text-center">
+          <span class="exec-field-label text-[6.2px] uppercase font-bold">Incomplete</span>
+        </div>
+        <div class="exec-muted border exec-border rounded p-1 flex-1 min-w-[18%] text-center">
+          <span class="exec-field-label text-[6.2px] uppercase font-bold">Pending</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="exec-footer mt-1.5 pt-1 border-t text-center text-[5.5px] uppercase">
+      BIGDROPS ENERGY — Customer Service Report
+    </div>
+  </div>
+</body>
+</html>

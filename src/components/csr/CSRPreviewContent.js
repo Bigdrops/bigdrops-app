@@ -113,6 +113,52 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
     previewShell: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
   },
+  industry: {
+    headerBg: '#1a4d2e',
+    headerFg: '#ffffff',
+    accent: '#1a4d2e',
+    border: '#d4d3c8',
+    mutedBg: '#f0efe8',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#1a4d2e',
+    sectionTitleFg: '#ffffff',
+    pageBg: '#f8f7f4',
+    pageFg: '#1a1a1a',
+    pagePadding: 10,
+    fontSize: 7.5,
+    titleSize: 9.5,
+    headerNameSize: 12,
+    sectionTitleSize: 7,
+    valueSize: 7.8,
+    compact: true,
+    headerMode: 'industry',
+    statusStyle: 'checks',
+    previewSurface: 'linear-gradient(180deg, #f8f7f4 0%, #f0efe8 100%)',
+    previewShell: 'linear-gradient(180deg, #F0EFE8 0%, #E5E4D8 100%)',
+  },
+  executive: {
+    headerBg: '#1e3a5f',
+    headerFg: '#ffffff',
+    accent: '#2563eb',
+    border: '#bfdbfe',
+    mutedBg: '#eff6ff',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#2563eb',
+    sectionTitleFg: '#ffffff',
+    pageBg: '#ffffff',
+    pageFg: '#1e293b',
+    pagePadding: 10,
+    fontSize: 7.5,
+    titleSize: 9.5,
+    headerNameSize: 12,
+    sectionTitleSize: 7,
+    valueSize: 7.8,
+    compact: true,
+    headerMode: 'executive',
+    statusStyle: 'pills',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #eff6ff 100%)',
+    previewShell: 'linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%)',
+  },
 }
 
 export const CSR_TEMPLATE_OPTIONS = [
@@ -140,11 +186,25 @@ export const CSR_TEMPLATE_OPTIONS = [
     blurb: 'Monochrome industrial report with dense table-driven layout and strong borders.',
     accent: '#111827',
   },
+  {
+    key: '7',
+    label: 'Industry',
+    blurb: 'Industrial information-dense report with customization support for accent color and fonts.',
+    accent: '#1a4d2e',
+  },
+  {
+    key: '8',
+    label: 'Executive',
+    blurb: 'Corporate-blue executive report with fixed color system and clean professional layout.',
+    accent: '#2563eb',
+  },
 ]
 
 export function getCsrTemplateVariant(template = '4') {
   if (template === '2') return 'signalbands'
   if (template === '3') return 'zinc'
   if (template === '6') return 'minimal'
+  if (template === '7') return 'industry'
+  if (template === '8') return 'executive'
   return 'crimson'
 }

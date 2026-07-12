@@ -19,6 +19,7 @@ The old `docs/Prompts/prompt-git-docs-commit.md` required manual invocation. Thi
 | **CI** | `.github/workflows/docs-commit.yml` | Push/PR to `main` affecting `docs/` | Server-side validation |
 
 All five enforce the same rules:
+- **HARD RULE: Every commit message MUST start with a gitmoji. No exceptions.**
 - Commit format: `<gitmoji> <type>(<scope>): <subject>` (≤72 chars)
 - No secrets in diffs (keys, PEMs, credentials)
 
@@ -42,11 +43,14 @@ git commit-docs
 
 What it does:
 1. Stages all changes (`git add -A`)
-2. Detects which `docs/` files changed
-3. Generates a commit message: `📝 docs: update documentation` + file list
+2. Detects what type of files changed (docs, source code, config)
+3. Determines appropriate gitmoji + type + scope:
+   - `docs/` only → `📝 docs(standard)`
+   - Source code → `🐛 fix(module)` or `✨ feat(module)` based on change type
+   - Config files → `🔧 chore(config)`
 4. Commits and pushes to `main`
 
-**Tradeoff:** The message is basic — it lists changed files but doesn't explain *what* the changes are about. For smarter messages, use the agent or slash command.
+**Tradeoff:** The message is auto-generated from file patterns — it won't explain *what* the changes are about. For smarter messages, use the agent or slash command.
 
 **Setup:** Already configured. The git alias `commit-docs` runs `pwsh -File commit-docs.ps1`.
 
@@ -89,8 +93,9 @@ It validates the same rules server-side. If a push's commit message fails valida
 ```
 You run pwsh ./commit-docs.ps1 (or git commit-docs)
   → git add -A
-  → git diff --cached --name-only (detect docs/ changes)
-  → Generates message: 📝 docs: update documentation + file list
+  → git diff --cached --name-only (detect file types)
+  → Determine gitmoji + type + scope based on change type
+  → Generate message: <gitmoji> <type>(<scope>): update files + file list
   → git commit -m "<generated message>"
   → git push origin main
 ```
