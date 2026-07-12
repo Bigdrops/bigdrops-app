@@ -41,19 +41,21 @@ export function PdfSignatureCard({ styles, label, name = '', signatureUrl = '' }
 }
 
 export function PdfField({ styles, label, value, span }: any) {
+  if (!hasText(value)) return null
   return (
     <View style={[styles.fieldCard, span ? { width: `${span * 25}%` } : null]}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <Text style={styles.fieldValue}>{hasText(value) ? value : ' '}</Text>
+      <Text style={styles.fieldValue}>{value}</Text>
     </View>
   )
 }
 
 export function PdfTextBlock({ styles, label, value, minHeight = 34 }: any) {
+  if (!hasText(value)) return null
   return (
     <View style={[styles.blockCard, { minHeight }]}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <Text style={styles.blockText}>{hasText(value) ? value : ' '}</Text>
+      <Text style={styles.blockText}>{value}</Text>
     </View>
   )
 }

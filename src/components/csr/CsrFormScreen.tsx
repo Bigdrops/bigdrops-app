@@ -408,7 +408,7 @@ export default function CsrFormScreen({
                 value={String(csr.call_type || '')}
                 onChange={(value) => onUpdate('call_type', value)}
                 options={CALL_TYPE_OPTIONS}
-                placeholder="Select"
+                placeholder="Select..."
               />
             </div>
             <div>
@@ -417,7 +417,7 @@ export default function CsrFormScreen({
                 value={String(csr.service_basis || '')}
                 onChange={(value) => onUpdate('service_basis', value)}
                 options={SERVICE_BASIS_OPTIONS}
-                placeholder="Select"
+                placeholder="Select..."
               />
             </div>
             <div>

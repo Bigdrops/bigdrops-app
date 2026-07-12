@@ -54,7 +54,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
   const type = searchParams.get('type')
   const isField = type === 'field'
-  const routeState = (isCreate ? location.state : {}) as any
+  const routeState = (isCreate ? (location.state || {}) : {}) as any
   const duplicateState = routeState.duplicateState || null
   const sourceInvoice = routeState.sourceInvoice || null
   const projectPrefill = isCreate ? {

@@ -108,19 +108,30 @@ function safeString(value: unknown): string {
   return String(value).trim()
 }
 
-function resolveCallTypeDisplay(raw: string): CallTypeDisplay {
+const SERVICE_BASIS_VALUES = new Set(['PAID SERVICE', 'AMC', 'WARRANTY'])
+
+function resolveCallTypeDisplay(raw: string): string {
   if (!raw) return ''
-  const upper = raw.toUpperCase()
+  const upper = raw.toUpperCase().trim()
+  if (SERVICE_BASIS_VALUES.has(upper)) return ''
   if (upper === 'BREAKDOWN' || upper === 'BD') return 'BREAKDOWN'
   if (upper === 'MAINTENANCE' || upper === 'MNT') return 'MAINTENANCE'
   if (upper === 'INSTALLATION' || upper === 'INST') return 'INSTALLATION'
+  if (upper === 'COMMISSIONING') return 'COMMISSIONING'
+  if (upper === 'INSPECTION') return 'INSPECTION'
+  if (upper === 'EMERGENCY REPAIR') return 'EMERGENCY REPAIR'
   if (upper === 'OTHER') return 'OTHER'
   return raw
 }
 
-function resolveServiceBasisDisplay(raw: string): CallTypeDisplay {
-  if (!raw) return ''
-  return raw
+function resolveServiceBasisDisplay(raw: string, callTypeRaw: string = ''): string {
+  if (raw) return raw
+  if (!callTypeRaw) return ''
+  const upper = callTypeRaw.toUpperCase().trim()
+  if (upper === 'PAID SERVICE') return 'Paid Service'
+  if (upper === 'AMC') return 'AMC'
+  if (upper === 'WARRANTY') return 'Warranty'
+  return ''
 }
 
 function resolveSystemDownDisplay(raw: string): SystemDownDisplay {
@@ -177,7 +188,7 @@ export function buildCsrRenderModel(csr: CsrObject): CsrRenderModel {
     call_type: rawCallType,
     callTypeDisplay: resolveCallTypeDisplay(rawCallType),
     service_basis: rawServiceBasis,
-    serviceBasisDisplay: resolveServiceBasisDisplay(rawServiceBasis),
+    serviceBasisDisplay: resolveServiceBasisDisplay(rawServiceBasis, rawCallType),
     system_down: rawSystemDown,
     systemDownDisplay: resolveSystemDownDisplay(rawSystemDown),
 

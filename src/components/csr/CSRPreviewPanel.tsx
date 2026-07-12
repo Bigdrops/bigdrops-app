@@ -375,27 +375,27 @@ export default function CSRPreviewPanel({
             {csr.serviceBasisDisplay ? <div><span style={lbl}>Service Basis</span><span style={val}>{csr.serviceBasisDisplay}</span></div> : null}
             {csr.systemDownDisplay ? <div><span style={lbl}>System Status</span><span style={val}>{csr.systemDownDisplay}</span></div> : null}
             {csr.show_po && String(csr.po_number || '').trim() ? <div><span style={lbl}>PO No.</span><span style={val}>{String(csr.po_number || '').trim()}</span></div> : null}
-            <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div>
+            {hasText(csr.address) ? <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div> : null}
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '12px' : '16px' }}>
-          <div style={sec}>
+          {hasText(csr.problem_reported) ? <div style={sec}>
             <div style={secH}>Nature of Problem</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
               <span style={lbl}>Problem Reported</span>
               <p style={{ ...val, lineHeight: compact ? '1.45' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.problem_reported}</p>
             </div>
-          </div>
+          </div> : null}
           <div style={sec}>
             <div style={secH}>Equipment Details</div>
             <div style={{ padding: compact ? '14px' : '16px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: compact ? '10px' : '12px' }}>
-              <div><span style={lbl}>Type</span><span style={val}>{csr.equipment_type}</span></div>
-              <div><span style={lbl}>Capacity</span><span style={val}>{csr.capacity}</span></div>
-              <div><span style={lbl}>Make</span><span style={val}>{csr.make}</span></div>
-              <div><span style={lbl}>{csr.modelLabel}</span><span style={val}>{csr.model}</span></div>
-              <div><span style={lbl}>{csr.serialLabel}</span><span style={val}>{csr.serial_no}</span></div>
-              <div><span style={lbl}>Location</span><span style={val}>{csr.equipment_location}</span></div>
+              {hasText(csr.equipment_type) ? <div><span style={lbl}>Type</span><span style={val}>{csr.equipment_type}</span></div> : null}
+              {hasText(csr.capacity) ? <div><span style={lbl}>Capacity</span><span style={val}>{csr.capacity}</span></div> : null}
+              {hasText(csr.make) ? <div><span style={lbl}>Make</span><span style={val}>{csr.make}</span></div> : null}
+              {hasText(csr.model) ? <div><span style={lbl}>{csr.modelLabel}</span><span style={val}>{csr.model}</span></div> : null}
+              {hasText(csr.serial_no) ? <div><span style={lbl}>{csr.serialLabel}</span><span style={val}>{csr.serial_no}</span></div> : null}
+              {hasText(csr.equipment_location) ? <div><span style={lbl}>Location</span><span style={val}>{csr.equipment_location}</span></div> : null}
               {csr.engineNo ? <div><span style={lbl}>Engine No.</span><span style={val}>{csr.engineNo}</span></div> : null}
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function CSRPreviewPanel({
           <div style={sec}>
             <div style={secH}>Service Execution</div>
             <div style={{ padding: compact ? '14px' : '16px' }}>
-              <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.service_rendered}</p></div>
+              {hasText(csr.service_rendered) ? <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Service Rendered</span><p style={{ ...val, lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.service_rendered}</p></div> : null}
               {hasTechnicianSection ? (
                 <div style={{ marginBottom: compact ? '10px' : '14px' }}>
                   <span style={lbl}>Technician</span>
@@ -447,11 +447,13 @@ export default function CSRPreviewPanel({
                   {technicianRole ? <div style={{ marginTop: '4px', fontSize: compact ? '11px' : '12px', color: '#64748B' }}>{technicianRole}</div> : null}
                 </div>
               ) : null}
-              <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.technicianRemarks || '-'}</p></div>
+              {hasText(csr.technicianRemarks) ? <div style={{ marginBottom: compact ? '8px' : '14px' }}><span style={lbl}>Technician Remarks</span><p style={{ ...val, color: '#555', lineHeight: compact ? '1.4' : '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>{csr.technicianRemarks}</p></div> : null}
+              {hasText(csr.start_date) || hasText(csr.start_time) || hasText(csr.end_date) || hasText(csr.end_time) ? (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: compact ? '12px' : '16px', marginBottom: compact ? '12px' : '16px' }}>
-                <div><span style={lbl}>Start of Service</span><span style={val}>{[csr.start_date, csr.start_time].filter(Boolean).join(' ') || '-'}</span></div>
-                <div><span style={lbl}>End of Service</span><span style={val}>{[csr.end_date, csr.end_time].filter(Boolean).join(' ') || '-'}</span></div>
+                {hasText(csr.start_date) || hasText(csr.start_time) ? <div><span style={lbl}>Start of Service</span><span style={val}>{[csr.start_date, csr.start_time].filter(Boolean).join(' ')}</span></div> : null}
+                {hasText(csr.end_date) || hasText(csr.end_time) ? <div><span style={lbl}>End of Service</span><span style={val}>{[csr.end_date, csr.end_time].filter(Boolean).join(' ')}</span></div> : null}
               </div>
+              ) : null}
               <div style={{ fontWeight: '700', fontSize: compact ? '11px' : '12px', marginBottom: '10px' }}>Status</div>
               {(CSR_STATUS_OPTIONS as string[]).map((option) => {
                 const active = csr.status === option
