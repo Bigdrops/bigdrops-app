@@ -19,7 +19,7 @@ import type {
   PdfTemplateDefaults,
   ResolvedPdfCustomization,
 } from './types'
-import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
 import { getDefaultPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { resolveFull } from './resolver'
 
@@ -87,9 +87,13 @@ export function bridgeToCommercialDesignPreset(
  *
  * Invoice and Quotation share the same 'commercial' customization family.
  * If both are provided, invoice takes precedence (they use the same engine).
+ *
+ * Accepts the broader PdfDesignPresetDocument (which includes 'receipt') so
+ * that callers can pass a PdfDesignPresetDocument directly. 'receipt' and
+ * any other non-quotation family falls through to 'invoice'.
  */
 export function resolveCommercialDocumentFamily(
-  documentType?: PdfCustomizationDocumentFamily,
+  documentType?: PdfDesignPresetDocument,
 ): PdfCustomizationDocumentFamily {
   if (documentType === 'quotation') return 'quotation'
   return 'invoice'

@@ -1,4 +1,9 @@
-# CLAUDE.md
+---
+name: karpathy
+description: Coding discipline — think before coding, simplicity first, surgical changes only, goal-driven execution with verifiable success criteria. Use when you need to apply rigorous engineering discipline, avoid over-engineering, or ensure changes are minimal and verified.
+---
+
+# Karpathy Coding Discipline
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 

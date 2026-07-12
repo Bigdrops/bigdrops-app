@@ -126,7 +126,7 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | awesome-claude-skills | .claude/skills/awesome-claude-skills/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\awesome-claude-skills\SKILL.md | Collection of 30+ sub-skills — artifacts-builder, brand-guidelines, canvas-design, changelog-generator, webapp-testing, and more |
-| 2 | Karpathy | .claude/skills/Karpathy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\Karpathy\SKILL.md | Coding discipline — think before coding, simplicity first, surgical changes only, goal-driven execution with verifiable success criteria |
+| 2 | karpathy | .claude/skills/karpathy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\karpathy\SKILL.md | Coding discipline — think before coding, simplicity first, surgical changes only, goal-driven execution with verifiable success criteria |
 | 3 | skill-creator | .claude/skills/skill-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\skill-creator\SKILL.md | Meta-skill — SKILL.md structure, bundled resources (scripts/references/assets), packaging & validation |
 | 4 | ui-ux-pro-max | .claude/skills/ui-ux-pro-max/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\ui-ux-pro-max\SKILL.md | UI/UX design intelligence — 67 styles, 96 color palettes, 57 font pairings, 25 chart types, searchable design system generator |
 | 5 | webapp-testing | .claude/skills/webapp-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\webapp-testing\SKILL.md | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery |
@@ -182,7 +182,7 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 ├── .claude/
 │   └── skills/
 │       ├── awesome-claude-skills/   ← ~30 bundled sub-skills
-│       ├── Karpathy/                ← LIVE: Thinking discipline engine
+│       ├── karpathy/                 ← LIVE: Thinking discipline engine
 │       ├── skill-creator/
 │       ├── ui-ux-pro-max/
 │       ├── using-superpowers/
