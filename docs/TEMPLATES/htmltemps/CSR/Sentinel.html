@@ -1,0 +1,462 @@
+# ROLE
+
+You are a senior enterprise document designer specializing in engineering service documentation, print layouts, and HTML-to-PDF document design.
+
+# GOAL
+
+Create a **single self-contained HTML document** representing a **Golden Sample Customer Service Report (CSR)**.
+
+This is **NOT** a web application.
+
+It is a premium engineering document prototype whose purpose is to stress-test future HTML-to-PDF templates and printed service reports.
+
+The document should look like it was produced by a large industrial engineering company.
+
+---
+
+# OUTPUT REQUIREMENT
+
+Return **ONLY** the HTML source code.
+
+Wrap the entire response inside **ONE** Markdown `html` code block.
+
+Do not explain anything.
+
+Do not include markdown outside the code block.
+
+Do not include notes before or after the HTML.
+
+---
+
+# ABSOLUTE PAGE REQUIREMENT
+
+The completed document **MUST print on EXACTLY ONE A4 page in Portrait orientation.**
+
+This requirement has the highest priority.
+
+If printing or converting to PDF creates a second page, the task has failed.
+
+Do NOT solve this by shrinking fonts to unreadable sizes.
+
+Instead:
+
+- use intelligent layouts
+- use balanced spacing
+- use multi-column sections where appropriate
+- reduce unnecessary whitespace
+- group related information
+- optimize information density
+
+The page should feel professionally engineered rather than compressed.
+
+---
+
+# DESIGN STYLE
+
+Avoid:
+
+- Minimalist layouts
+- Bootstrap-looking forms
+- Generic AI invoice styling
+- Large empty boxes
+- Plain black-and-white forms
+- Excessive whitespace
+
+Instead create something worthy of an enterprise engineering company.
+
+The document should feel:
+
+- premium
+- polished
+- structured
+- technical
+- refined
+- information-rich
+
+---
+
+# PRINT COLOURS
+
+Use tasteful print-friendly colours.
+
+Black must NOT be the only colour.
+
+Use combinations of colours such as:
+
+- Navy
+- Steel Blue
+- Slate
+- Deep Teal
+- Forest Green
+- Burgundy
+- Indigo
+- Warm Gray
+- Muted Gold accents
+
+Avoid:
+
+- gradients
+- glowing effects
+- neon colours
+- dark page backgrounds
+
+Everything should remain economical for printing.
+
+---
+
+# PAGE STRUCTURE
+
+Design an intelligent document hierarchy.
+
+Suggested flow:
+
+Header
+
+↓
+
+Document Summary
+
+↓
+
+Client Information + Equipment Information
+
+↓
+
+Operational Readings
+
+↓
+
+Problem Reported
+
+↓
+
+Defects Found
+
+↓
+
+Service Rendered
+
+↓
+
+Materials Used
+
+↓
+
+Engineer Remarks
+
+↓
+
+Customer Feedback
+
+↓
+
+Service Timing + System Status
+
+↓
+
+Technician & Customer Signatures
+
+↓
+
+Footer
+
+Use side-by-side layouts wherever appropriate to conserve vertical space.
+
+---
+
+# DOCUMENT CONTENT
+
+Populate EVERY optional field with realistic industrial sample data.
+
+## 1. Document Information
+
+- CSR Number
+- Date
+- PO Number
+- Call Type
+- Service Basis
+- Status
+
+---
+
+## 2. Client Information
+
+- Client Name
+- Long realistic company address
+
+---
+
+## 3. Equipment Information
+
+- Equipment Type
+- Equipment Location
+- Make
+- Model
+- Serial Number
+- Engine Number
+- Capacity
+
+---
+
+## 4. Operational Readings
+
+Populate:
+
+- Voltage
+- Frequency
+- Battery
+- Temperature
+- Pressure
+- Hours Run
+
+---
+
+## 5. Problem Reported
+
+Write a realistic engineering report of approximately 80–100 words.
+
+---
+
+## 6. Defects Found
+
+Write another realistic technical report of approximately 70–90 words.
+
+---
+
+## 7. Service Rendered
+
+Write a realistic engineering service report describing diagnosis, repairs, testing and commissioning.
+
+Approximately 100–120 words.
+
+---
+
+## 8. Materials Used
+
+This section is one of the primary layout stress tests.
+
+Generate between **18 and 21 realistic maintenance materials.**
+
+Each material contains only:
+
+- Item Number
+- Quantity
+- Description
+
+Do NOT add unnecessary columns.
+
+### IMPORTANT LAYOUT RULE
+
+To conserve vertical space while remaining readable, the material list may automatically split into multiple parallel lists.
+
+For example, if there are 21 materials, the numbering can flow like this:
+
+1      8      15
+
+2      9      16
+
+3     10      17
+
+4     11      18
+
+5     12      19
+
+6     13      20
+
+7     14      21
+
+Each column is simply a continuation of the same material list.
+
+Every material still contains only:
+
+- Number
+- Quantity
+- Description
+
+This is purely a print-layout optimisation.
+
+It is **NOT** additional data.
+
+The objective is to fit many materials on a single page without making the document excessively tall.
+
+Use whichever number of parallel material columns best fits the available page width.
+
+---
+
+## 9. Engineer Remarks
+
+Write approximately 70–90 words containing maintenance recommendations.
+
+---
+
+## 10. Service Timing
+
+Include:
+
+- Start Date
+- Start Time
+- End Date
+- End Time
+- Calculated Duration
+
+---
+
+## 11. System Status
+
+Display:
+
+System Down
+
+YES
+
+using a tasteful coloured status badge.
+
+---
+
+## 12. Customer Feedback
+
+Write a realistic customer comment of approximately 50–70 words.
+
+---
+
+## 13. Technician
+
+Include:
+
+- Technician Name
+- Signature
+
+Use an elegant inline SVG handwritten-style signature placeholder.
+
+---
+
+## 14. Customer Acknowledgement
+
+Include:
+
+- Recipient Name
+- Recipient Title
+- Customer Signature
+
+Again use an elegant SVG handwritten-style signature placeholder.
+
+---
+
+## 15. Footer
+
+Include:
+
+- Company Name
+- Address
+- Phone
+- Email
+- Website
+
+---
+
+## 16. Metadata
+
+Include:
+
+- Project
+- Company Logo placeholder
+- Generated Date
+- Document Title
+- Page 1 of 1
+
+---
+
+# TYPOGRAPHY
+
+Use professional system fonts only.
+
+Examples:
+
+- Inter
+- Segoe UI
+- Source Sans
+- Helvetica
+- Arial
+
+Build hierarchy using:
+
+- spacing
+- borders
+- colour
+- font weight
+- typography
+
+Avoid oversized headings.
+
+---
+
+# PRINT CSS
+
+Include proper print styles.
+
+Requirements:
+
+- A4 Portrait
+- Print-friendly margins
+- Preserve colours
+- Prevent awkward section breaks
+- Keep related content together
+- Optimised for browser printing and HTML-to-PDF conversion
+
+---
+
+# SAMPLE DATA
+
+Do NOT use placeholder content.
+
+Avoid:
+
+- Lorem Ipsum
+- ABC Company
+- John Doe
+
+Generate believable industrial information including:
+
+- client names
+- equipment
+- serial numbers
+- addresses
+- engineers
+- technicians
+- maintenance reports
+- service remarks
+- operational readings
+- realistic spare parts
+
+---
+
+# CODE REQUIREMENTS
+
+Produce:
+
+- ONE HTML file
+- Embedded CSS
+- No external assets
+- No external fonts
+- No frameworks
+- No Bootstrap
+- No Tailwind
+- No CDN
+
+Use JavaScript only if absolutely necessary for simple calculated values.
+
+Everything must work by simply opening the HTML file.
+
+---
+
+# SUCCESS CRITERIA
+
+The final document should:
+
+- Fit on exactly one printed A4 page.
+- Look like a premium enterprise engineering service report.
+- Be information-dense without looking crowded.
+- Be suitable for HTML-to-PDF conversion.
+- Expose spacing, overflow, typography, and layout issues during template testing.
+
+If the document produces two pages, redesign the layout until it fits on exactly one page while maintaining professional readability.
