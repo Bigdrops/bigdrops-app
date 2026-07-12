@@ -8,16 +8,17 @@ Defines the automated pipeline for committing, validating, and pushing documenta
 
 ## Overview
 
-The old `docs/Prompts/prompt-git-docs-commit.md` required manual invocation. This standard replaces it with a 4-layer automated system:
+The old `docs/Prompts/prompt-git-docs-commit.md` required manual invocation. This standard replaces it with a 5-layer automated system:
 
 | Layer | File | Trigger | What it does |
 |-------|------|---------|-------------|
+| **Shell Script** | `commit-docs.ps1` | `pwsh ./commit-docs.ps1` or `git commit-docs` | Quick stage + commit + push from terminal |
 | **Agent** | `.opencode/agents/git-workflow-master.md` | `@git-workflow-master` mention | Full commit + push with secret scan |
 | **Command** | `.opencode/commands/commit-docs.md` | `/commit-docs` in chat | Delegates to the agent above |
 | **Hook** | `.githooks/pre-push` | `git push` (local) | Validates commit message format + secrets |
 | **CI** | `.github/workflows/docs-commit.yml` | Push/PR to `main` affecting `docs/` | Server-side validation |
 
-All four enforce the same rules:
+All five enforce the same rules:
 - Commit format: `<gitmoji> <type>(<scope>): <subject>` (≤72 chars)
 - No secrets in diffs (keys, PEMs, credentials)
 
@@ -25,15 +26,39 @@ All four enforce the same rules:
 
 ## How to trigger each layer
 
-### 1. Agent (`@git-workflow-master`)
+### 1. Shell Script (`commit-docs.ps1`)
+
+The fastest way to commit and push from any terminal. Two options:
+
+**Option A — Direct PowerShell:**
+```powershell
+pwsh ./commit-docs.ps1
+```
+
+**Option B — Git alias (registered in this repo):**
+```bash
+git commit-docs
+```
+
+What it does:
+1. Stages all changes (`git add -A`)
+2. Detects which `docs/` files changed
+3. Generates a commit message: `📝 docs: update documentation` + file list
+4. Commits and pushes to `main`
+
+**Tradeoff:** The message is basic — it lists changed files but doesn't explain *what* the changes are about. For smarter messages, use the agent or slash command.
+
+**Setup:** Already configured. The git alias `commit-docs` runs `pwsh -File commit-docs.ps1`.
+
+### 2. Agent (`@git-workflow-master`)
 
 Type `@git-workflow-master` followed by your request in any OpenCode conversation. The agent reads its persona from `.opencode/agents/git-workflow-master.md` and runs the full workflow: inspect → secret scan → stage → commit → push.
 
-### 2. Slash Command (`/commit-docs`)
+### 3. Slash Command (`/commit-docs`)
 
 Type `/commit-docs` in an OpenCode conversation. This dispatches the commit workflow to the `git-workflow-master` subagent automatically. No arguments needed — it commits everything.
 
-### 3. Pre-push Hook (automatic on `git push`)
+### 4. Pre-push Hook (automatic on `git push`)
 
 Every `git push` runs `.githooks/pre-push` locally. It checks:
 - The commit message matches `<gitmoji> <type>(<scope>): <subject>` format
@@ -48,7 +73,7 @@ git config core.hooksPath .githooks
 ```
 This is already configured for this repo.
 
-### 4. CI Workflow (automatic on GitHub)
+### 5. CI Workflow (automatic on GitHub)
 
 `.github/workflows/docs-commit.yml` runs on GitHub when:
 - **Push** to `main` that touches `docs/**`
@@ -59,6 +84,16 @@ It validates the same rules server-side. If a push's commit message fails valida
 ---
 
 ## What happens when it runs
+
+**Shell script flow:**
+```
+You run pwsh ./commit-docs.ps1 (or git commit-docs)
+  → git add -A
+  → git diff --cached --name-only (detect docs/ changes)
+  → Generates message: 📝 docs: update documentation + file list
+  → git commit -m "<generated message>"
+  → git push origin main
+```
 
 **Agent / Command flow:**
 ```
@@ -101,7 +136,8 @@ Push to main (docs/ changed)
 
 | Action | Method | Automation |
 |--------|--------|-----------|
-| Commit + push docs changes | `/commit-docs` or `@git-workflow-master` | Agent-driven |
+| Quick commit + push (shell) | `pwsh ./commit-docs.ps1` or `git commit-docs` | Terminal |
+| Smart commit + push (agent) | `/commit-docs` or `@git-workflow-master` | Agent-driven |
 | Validate message locally | `git push` | Automatic (hook) |
 | Validate message in CI | Push to `main` | Automatic (GitHub) |
 | Scan for secrets locally | `git push` | Automatic (hook) |
@@ -110,6 +146,11 @@ Push to main (docs/ changed)
 ---
 
 ## Troubleshooting
+
+**Shell script not working:**
+- Ensure PowerShell is installed: `pwsh --version`
+- Run from repo root: `pwsh ./commit-docs.ps1`
+- Or use the git alias: `git commit-docs`
 
 **Hook rejects my push:**
 - Run `git log -1` to see your last commit message
@@ -134,17 +175,18 @@ Only for emergencies — it bypasses secret scanning too.
 
 ## Tool compatibility
 
-All four layers live in the repo and work regardless of which coding agent tool you use. The **hook** and **CI** layers run automatically. The **agent** and **command** layers are tool-specific.
+All five layers live in the repo and work regardless of which coding agent tool you use. The **shell script** works in any terminal with PowerShell. The **hook** and **CI** layers run automatically. The **agent** and **command** layers are tool-specific.
 
-| Tool | Agent file location | Command file location | Compatible? |
-|------|-------------------|---------------------|-------------|
-| **OpenCode** | `.opencode/agents/git-workflow-master.md` | `.opencode/commands/commit-docs.md` | ✅ Full — designed for this |
-| **Claude Code** | `.claude/agents/` | `.claude/commands/` | ✅ Copy agent `.md` into `.claude/agents/` and command into `.claude/commands/` for native `@git-workflow-master` and `/commit-docs` |
-| **MiMo Code** | `.mimocode/agents/` (MD frontmatter) | `.mimocode/commands/commit-docs.md` | ✅ Copy command file; MiMo agents use Markdown frontmatter format (`name`, `description`, `mode`) — adjust header if needed |
-| **Codex CLI** | `.codex/config.toml` + `AGENTS.md` | N/A | ⚠️ Requires registering the agent in `config.toml` and/or `AGENTS.md`; no native slash commands. The hook + CI layers still cover you. |
-| **Antigravity CLI** | `.agents/agents/` (JSON or MD frontmatter) | `.agents/commands/` | ⚠️ Copy agent with format conversion to JSON if needed; hook + CI remain active. |
-| **Kiro CLI** | Built-in guide agent | Built-in slash commands | ⚠️ No custom agent file loading — use `/commit-docs` in Kiro's own format if supported, else rely on hook + CI. |
-| **VS Code** | N/A | `.vscode/tasks.json` | ⚠️ No agent system. Hook + CI are the primary layers. Can define a `tasks.json` terminal task that runs `git add -A && git commit -m` with a prompt for the message. |
-| **Freebuff** | Unknown | Unknown | ⚠️ Hook + CI layers work for anyone. Agent/command layers need Freebuff-specific config files — consult Freebuff docs. |
+| Tool | Shell script | Agent file location | Command file location | Compatible? |
+|------|-------------|-------------------|---------------------|-------------|
+| **Any terminal** | `pwsh ./commit-docs.ps1` or `git commit-docs` | N/A | N/A | ✅ Works everywhere |
+| **OpenCode** | ✅ | `.opencode/agents/git-workflow-master.md` | `.opencode/commands/commit-docs.md` | ✅ Full — designed for this |
+| **Claude Code** | ✅ | `.claude/agents/` | `.claude/commands/` | ✅ Copy agent `.md` into `.claude/agents/` and command into `.claude/commands/` for native `@git-workflow-master` and `/commit-docs` |
+| **MiMo Code** | ✅ | `.mimocode/agents/` (MD frontmatter) | `.mimocode/commands/commit-docs.md` | ✅ Copy command file; MiMo agents use Markdown frontmatter format (`name`, `description`, `mode`) — adjust header if needed |
+| **Codex CLI** | ✅ | `.codex/config.toml` + `AGENTS.md` | N/A | ⚠️ Requires registering the agent in `config.toml` and/or `AGENTS.md`; no native slash commands. The hook + CI layers still cover you. |
+| **Antigravity CLI** | ✅ | `.agents/agents/` (JSON or MD frontmatter) | `.agents/commands/` | ⚠️ Copy agent with format conversion to JSON if needed; hook + CI remain active. |
+| **Kiro CLI** | ✅ | Built-in guide agent | Built-in slash commands | ⚠️ No custom agent file loading — use `/commit-docs` in Kiro's own format if supported, else rely on hook + CI. |
+| **VS Code** | ✅ | N/A | `.vscode/tasks.json` | ⚠️ No agent system. Shell script + hook + CI are the primary layers. Can also define a `tasks.json` terminal task. |
+| **Freebuff** | ✅ | Unknown | Unknown | ⚠️ Hook + CI layers work for anyone. Shell script works in any PowerShell terminal. Agent/command layers need Freebuff-specific config files. |
 
-**Bottom line:** The `.githooks/pre-push` hook and `.github/workflows/docs-commit.yml` CI workflow protect every push from any tool. The agent + command convenience layers only matter for tools that read `.opencode/` (OpenCode), `.claude/` (Claude Code), or `.mimocode/` (MiMo Code).
+**Bottom line:** `pwsh ./commit-docs.ps1` (or `git commit-docs`) works in any terminal. The `.githooks/pre-push` hook and `.github/workflows/docs-commit.yml` CI workflow protect every push from any tool. The agent + command convenience layers only matter for tools that read `.opencode/` (OpenCode), `.claude/` (Claude Code), or `.mimocode/` (MiMo Code).
