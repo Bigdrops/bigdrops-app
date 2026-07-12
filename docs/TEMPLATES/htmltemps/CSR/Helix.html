@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Golden Sample Customer Service Report</title>
+<style>
+@page{size:A4 portrait;margin:9mm}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#28323a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px;line-height:1.28}
+body{padding:0}
+.page{border:1px solid #97a6b4}
+.header{display:grid;grid-template-columns:70px 1fr 220px;background:#1d4262;color:#fff}
+.logo{display:flex;align-items:center;justify-content:center;padding:8px}
+.logo svg{width:52px;height:52px}
+.title{padding:8px 10px}
+.title h1{margin:0;font-size:18px;letter-spacing:.5px}
+.title div{font-size:9px;opacity:.9}
+.meta{padding:8px 10px;border-left:1px solid rgba(255,255,255,.25);font-size:9px}
+.meta table{width:100%;border-collapse:collapse}
+.meta td{padding:1px 0}
+.band{display:grid;grid-template-columns:repeat(6,1fr);background:#e8eef3;border-bottom:2px solid #4f6f87}
+.band div{padding:5px 6px;border-right:1px solid #c7d2db}
+.band b{display:block;color:#30506b;font-size:8px;text-transform:uppercase}
+.section{border-bottom:1px solid #cfd7de}
+.sec-title{background:#5b7284;color:#fff;padding:3px 6px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.grid2{display:grid;grid-template-columns:1fr 1fr}
+.box{padding:5px 7px;border-right:1px solid #d8e0e6}
+.grid2 .box:last-child{border-right:none}
+.tbl{width:100%;border-collapse:collapse}
+.tbl td{padding:2px 3px;border-bottom:1px dotted #d8dde2;vertical-align:top}
+.tbl td:first-child{width:88px;color:#476073;font-weight:600}
+.readings{display:grid;grid-template-columns:repeat(6,1fr)}
+.readings div{padding:4px;border-right:1px solid #d8dde2;text-align:center}
+.readings div:last-child{border-right:none}
+.readings b{display:block;color:#46657d;font-size:8px;text-transform:uppercase}
+.p{padding:6px 7px;text-align:justify}
+.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:5px 7px}
+.mtbl{width:100%;border-collapse:collapse}
+.mtbl td{padding:1px 2px;border-bottom:1px dotted #d8dde2;font-size:8.5px}
+.mtbl td:nth-child(1){width:14px;font-weight:700;color:#1d4262}
+.mtbl td:nth-child(2){width:22px;text-align:center}
+.bottom{display:grid;grid-template-columns:1.3fr .9fr}
+.left,.right{border-right:1px solid #d8dde2}
+.bottom .right{border-right:none}
+.timing{padding:5px 7px}
+.timing table{width:100%;border-collapse:collapse}
+.timing td{padding:2px}
+.badge{display:inline-block;background:#8b2332;color:#fff;padding:3px 8px;border-radius:12px;font-weight:700}
+.signs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #d8dde2}
+.sig{padding:5px 7px;border-right:1px solid #d8dde2}
+.sig:last-child{border-right:none}
+.sig svg{width:130px;height:28px}
+.footer{display:flex;justify-content:space-between;align-items:center;background:#eef2f5;padding:5px 8px;font-size:8.5px;color:#4a5a66}
+.small{font-size:8px;color:#5f6f7b}
+@media print{
+.page{border:1px solid #97a6b4}
+.section,.box,.sig,.left,.right{break-inside:avoid;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+<div class="logo">
+<svg viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="42" fill="#d9b44a"/>
+<path d="M28 68 L50 22 L72 68 Z" fill="#1d4262"/>
+</svg>
+</div>
+<div class="title">
+<h1>Customer Service Report</h1>
+<div>Industrial Field Maintenance • Mechanical & Electrical Engineering Division</div>
+</div>
+<div class="meta">
+<table>
+<tr><td><b>Project</b></td><td>North Gas Compression Upgrade</td></tr>
+<tr><td><b>Generated</b></td><td>16 May 2026 17:40</td></tr>
+<tr><td><b>Document</b></td><td>Golden Sample CSR</td></tr>
+<tr><td><b>Page</b></td><td>1 of 1</td></tr>
+</table>
+</div>
+</div>
+
+<div class="band">
+<div><b>CSR No.</b>CSR-26-0516-1487</div>
+<div><b>Date</b>16 May 2026</div>
+<div><b>PO No.</b>PO-784155-GC</div>
+<div><b>Call Type</b>Breakdown</div>
+<div><b>Service Basis</b>Annual Contract</div>
+<div><b>Status</b>Completed</div>
+</div>
+
+<div class="section">
+<div class="grid2">
+<div class="box">
+<div class="sec-title">Client Information</div>
+<table class="tbl">
+<tr><td>Client</td><td>Riverside Petrochemical Manufacturing Limited</td></tr>
+<tr><td>Address</td><td>Plot 84 Industrial Crescent, Eastern Logistics Park, Port Harcourt, Rivers State, Nigeria.</td></tr>
+</table>
+</div>
+<div class="box">
+<div class="sec-title">Equipment Information</div>
+<table class="tbl">
+<tr><td>Equipment</td><td>Diesel Generator Set</td></tr>
+<tr><td>Location</td><td>Utility Plant Room B</td></tr>
+<tr><td>Make</td><td>Cummins</td></tr>
+<tr><td>Model</td><td>C275D5</td></tr>
+<tr><td>Serial</td><td>CMN-C275-498271</td></tr>
+<tr><td>Engine</td><td>QSX15-6119052</td></tr>
+<tr><td>Capacity</td><td>275 kVA</td></tr>
+</table>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-title">Operational Readings</div>
+<div class="readings">
+<div><b>Voltage</b>415 V</div>
+<div><b>Frequency</b>49.9 Hz</div>
+<div><b>Battery</b>25.6 V</div>
+<div><b>Temperature</b>84°C</div>
+<div><b>Pressure</b>4.8 bar</div>
+<div><b>Hours Run</b>12,648 h</div>
+</div>
+</div>
+
+<div class="section">
+<div class="grid2">
+<div class="box">
+<div class="sec-title">Problem Reported</div>
+<div class="p">Operations reported repeated generator shutdowns during transfer under peak process loading. Alarm history indicated unstable charging voltage, intermittent low oil pressure warnings and delayed governor response after automatic start requests. Unit occasionally recovered after manual restart but experienced erratic engine speed and abnormal exhaust smoke. Maintenance support was requested to restore dependable standby power while avoiding disruption to continuous production activities and scheduled utility switching.</div>
+</div>
+<div class="box">
+<div class="sec-title">Defects Found</div>
+<div class="p">Inspection confirmed contaminated fuel filters, weakened alternator drive belt tension, oxidized battery terminals and partially obstructed radiator fins restricting airflow. Governor linkage required calibration while engine oil showed reduced viscosity beyond maintenance tolerance. Minor coolant seepage was detected around an upper hose clamp although no structural damage to the cooling assembly or engine block was observed.</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-title">Service Rendered</div>
+<div class="p">Isolation procedures were completed before comprehensive inspection, diagnostic scanning and operational verification. Fuel and lubrication systems were serviced, worn consumables replaced, electrical connections cleaned and tightened, charging output confirmed and governor calibration adjusted to specification. Cooling passages were cleaned, belt tension corrected and coolant leak rectified with new clamp hardware. Functional testing included manual and automatic starts, staged load acceptance, voltage stability checks, frequency validation and sixty-minute monitored operation. Final commissioning confirmed reliable performance without recurring alarms or abnormal operating behaviour.</div>
+</div>
+
+<div class="section">
+<div class="sec-title">Materials Used</div>
+<div class="cols">
+<table class="mtbl">
+<tr><td>1</td><td>2</td><td>Fuel Filter</td></tr>
+<tr><td>2</td><td>1</td><td>Oil Filter</td></tr>
+<tr><td>3</td><td>18L</td><td>15W-40 Engine Oil</td></tr>
+<tr><td>4</td><td>1</td><td>Air Filter Element</td></tr>
+<tr><td>5</td><td>1</td><td>Drive Belt</td></tr>
+<tr><td>6</td><td>2</td><td>Battery Terminal</td></tr>
+<tr><td>7</td><td>4</td><td>Hose Clamp</td></tr>
+</table>
+<table class="mtbl">
+<tr><td>8</td><td>2L</td><td>Coolant</td></tr>
+<tr><td>9</td><td>1</td><td>Sealant Tube</td></tr>
+<tr><td>10</td><td>1</td><td>Contact Cleaner</td></tr>
+<tr><td>11</td><td>1</td><td>Grease Cartridge</td></tr>
+<tr><td>12</td><td>6</td><td>Cable Tie</td></tr>
+<tr><td>13</td><td>2</td><td>Fuse 10A</td></tr>
+<tr><td>14</td><td>1</td><td>Absorbent Pad</td></tr>
+</table>
+<table class="mtbl">
+<tr><td>15</td><td>1</td><td>Radiator Cap</td></tr>
+<tr><td>16</td><td>1</td><td>Breather Filter</td></tr>
+<tr><td>17</td><td>4</td><td>M8 Washer</td></tr>
+<tr><td>18</td><td>2</td><td>M8 Bolt</td></tr>
+<tr><td>19</td><td>1</td><td>Inspection Tag</td></tr>
+<tr><td>20</td><td>1</td><td>Cleaning Cloth Pack</td></tr>
+<tr><td>21</td><td>1</td><td>Maintenance Label</td></tr>
+</table>
+</div>
+</div>
+
+<div class="bottom">
+<div class="left">
+<div class="sec-title">Engineer Remarks</div>
+<div class="p">Generator performance has been restored to acceptable operating limits. Recommend quarterly oil analysis, monthly battery load testing, radiator cleaning after dusty operating periods and replacement of fuel filters at scheduled intervals irrespective of apparent condition. Review transfer switch event logs during preventive maintenance to identify early electrical abnormalities before operational impact.</div>
+<div class="sec-title">Customer Feedback</div>
+<div class="p">Service team responded promptly, communicated findings clearly and completed repairs within the agreed maintenance window. Equipment returned to production without further interruptions during monitored operation. Documentation and housekeeping met site expectations and recommendations will be incorporated into the preventive maintenance programme.</div>
+</div>
+<div class="right">
+<div class="sec-title">Service Timing & Status</div>
+<div class="timing">
+<table>
+<tr><td>Start Date</td><td>16 May 2026</td></tr>
+<tr><td>Start Time</td><td>08:15</td></tr>
+<tr><td>End Date</td><td>16 May 2026</td></tr>
+<tr><td>End Time</td><td>15:45</td></tr>
+<tr><td>Duration</td><td>7h 30m</td></tr>
+<tr><td>System Down</td><td><span class="badge">YES</span></td></tr>
+</table>
+</div>
+</div>
+</div>
+
+<div class="signs">
+<div class="sig">
+<b>Technician</b><br>
+Michael Adekunle<br>
+<svg viewBox="0 0 220 50">
+<path d="M8 36 C26 6,45 48,60 20 S92 30,110 18 S140 40,158 16 S192 30,210 14" fill="none" stroke="#173b5a" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
+</div>
+<div class="sig">
+<b>Customer Acknowledgement</b><br>
+Grace Nwosu — Utilities Supervisor<br>
+<svg viewBox="0 0 220 50">
+<path d="M10 32 C28 12,42 42,62 16 S98 40,118 20 S150 32,170 14 S196 28,210 18" fill="none" stroke="#6d2433" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
+</div>
+</div>
+
+<div class="footer">
+<div><b>Prime Industrial Engineering Services Ltd.</b> • 42 Dockyard Road, Port Harcourt • +234 803 555 0188</div>
+<div>service@primeindustrial.ng • www.primeindustrial.ng</div>
+</div>
+
+</div>
+</body>
+</html>
