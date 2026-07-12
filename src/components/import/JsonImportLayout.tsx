@@ -348,7 +348,7 @@ export function JsonImportLayout({
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
           isMobile
-            ? "max-h-[94vh] rounded-t-[var(--bd-overlay-radius)] bg-bd-overlay-bg p-0 border-none select-none overflow-y-auto"
+            ? "max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[var(--bd-overlay-radius)] bg-bd-overlay-bg p-0 border-none select-none overflow-y-auto"
             : "w-full max-w-2xl rounded-none bg-bd-overlay-bg p-0 select-none overflow-y-auto",
           className
         )}

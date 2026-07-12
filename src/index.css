@@ -579,6 +579,14 @@ html[data-keyboard-open="true"] .app-ambient::after {
   animation-play-state: paused;
 }
 
+/* Keyboard-aware overlay max-height variables.
+   --app-keyboard-inset is set by KeyboardAwareness.tsx on every keyboard event.
+   When keyboard is closed, inset is 0px so these resolve to normal viewport heights. */
+:root {
+  --bd-overlay-sheet-max-height: calc(100dvh - var(--app-keyboard-inset, 0px));
+  --bd-overlay-dialog-max-height: calc(100dvh - var(--app-keyboard-inset, 0px));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

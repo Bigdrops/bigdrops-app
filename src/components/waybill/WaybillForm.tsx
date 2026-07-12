@@ -717,7 +717,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 <h3 className="text-[16px] font-bold text-[var(--bd-text)]">More Settings</h3>
                 <button onClick={() => setShowTableSettings(false)} className="text-[var(--bd-text-muted)] hover:text-[var(--bd-text)]"><X className="h-5 w-5" /></button>
               </div>
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[var(--bd-overlay-sheet-max-height)] overflow-y-auto pr-2">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"

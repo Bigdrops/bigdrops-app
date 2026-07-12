@@ -218,14 +218,14 @@ export default function AttachExistingDocumentSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="max-h-[min(78vh,700px)] rounded-t-[26px] px-0 pb-5">
+        <SheetContent side="bottom" className="max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[26px] px-0 pb-5">
           <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200" />
           <SheetHeader className="border-b border-border px-4 pb-3 pt-3 text-left">
             <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
             {description ? <SheetDescription>{description}</SheetDescription> : null}
           </SheetHeader>
 
-          <div className="max-h-[calc(min(78vh,700px)-92px)] overflow-y-auto px-4 pt-4">
+          <div className="max-h-[calc(var(--bd-overlay-sheet-max-height)-92px)] overflow-y-auto px-4 pt-4">
             <div className="mb-4 flex items-center gap-2 rounded-[14px] border border-border bg-background px-3 py-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input

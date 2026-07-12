@@ -56,14 +56,14 @@ export default function LinkedDocumentsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[min(76vh,680px)] rounded-t-[26px] px-0 pb-5">
+      <SheetContent side="bottom" className="max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[26px] px-0 pb-5">
         <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200" />
         <SheetHeader className="border-b border-border px-4 pb-3 pt-3 text-left">
           <SheetTitle className="text-base font-extrabold text-foreground">{title}</SheetTitle>
           {subtitle ? <SheetDescription>{subtitle}</SheetDescription> : null}
         </SheetHeader>
 
-        <div className="max-h-[calc(min(76vh,680px)-88px)] overflow-y-auto px-3 pt-3">
+        <div className="max-h-[calc(var(--bd-overlay-sheet-max-height)-88px)] overflow-y-auto px-3 pt-3">
           {visibleSections.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
               <div className="text-sm font-semibold text-foreground">{emptyTitle}</div>

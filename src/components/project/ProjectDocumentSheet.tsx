@@ -228,7 +228,7 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[94vh] rounded-t-[28px] bg-slate-50 p-0 border-none sm:mx-auto sm:max-w-3xl overflow-y-auto [&>[data-slot=sheet-close]]:hidden">
+      <SheetContent side="bottom" className="max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[28px] bg-slate-50 p-0 border-none sm:mx-auto sm:max-w-3xl overflow-y-auto [&>[data-slot=sheet-close]]:hidden">
         <SheetHeader className="p-4 border-b bg-bd-surface rounded-t-[28px] flex flex-row items-center justify-between text-left shrink-0">
           <div className="space-y-0.5">
             <SheetTitle className="text-base font-black text-slate-900 flex items-center gap-1.5 leading-tight">

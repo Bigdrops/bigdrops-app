@@ -101,7 +101,7 @@ function ComboboxPanel({
 
       <div
         className={cn(
-          "max-h-[min(18rem,calc(100vh-12rem))] overflow-y-auto rounded-[var(--bd-radius-md)] border border-border bg-card p-1 shadow-sm bd-custom-scrollbar",
+          "max-h-[min(18rem,calc(var(--bd-overlay-sheet-max-height)-12rem))] overflow-y-auto rounded-[var(--bd-radius-md)] border border-border bg-card p-1 shadow-sm bd-custom-scrollbar",
           listClassName,
         )}
       >

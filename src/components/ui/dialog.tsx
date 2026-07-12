@@ -62,7 +62,10 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-[250] grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[var(--bd-overlay-radius)] bg-bd-overlay-bg text-bd-overlay-text p-4 text-xs/relaxed border border-bd-overlay-border duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed inset-0 z-[250] flex items-center justify-center p-4 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          /* content box — centered by parent flex, not translate */
+          /* max-height respects keyboard inset via CSS variable from KeyboardAwareness */
+          "pointer-events-auto w-full max-w-[calc(100%-2rem)] sm:max-w-sm max-h-[var(--bd-overlay-dialog-max-height,100dvh)] overflow-y-auto overscroll-contain rounded-[var(--bd-overlay-radius)] bg-bd-overlay-bg text-bd-overlay-text p-4 text-xs/relaxed border border-bd-overlay-border data-open:zoom-in-95 data-closed:zoom-out-95",
           className
         )}
         {...props}

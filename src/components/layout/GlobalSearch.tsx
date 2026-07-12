@@ -159,7 +159,7 @@ export function GlobalSearch() {
           </div>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto overscroll-contain px-2 pb-3">
+        <div className="max-h-[var(--bd-overlay-sheet-max-height)] overflow-y-auto overscroll-contain px-2 pb-3">
           {!query && (
             <div className="space-y-4 py-2">
               <div className="px-3">

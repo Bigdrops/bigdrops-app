@@ -164,7 +164,7 @@ export default function ClientSelector({
     <>
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent className="max-w-2xl border-bd-border bg-bd-surface p-0 sm:max-w-2xl">
-          <div className="max-h-[85vh] overflow-y-auto p-6">
+          <div className="max-h-[var(--bd-overlay-dialog-max-height)] overflow-y-auto p-6">
             <DialogHeader className="mb-4">
               <DialogTitle>Add New Client</DialogTitle>
             </DialogHeader>

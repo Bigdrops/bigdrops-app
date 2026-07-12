@@ -1,3 +1,8 @@
+---
+name: pdf-rendering-correctness
+description: Invoice PDF pipeline — parent invoice as single source of truth, prevents data mutation in render layers, advance invoice rules, waybill template rules. Use when working with invoice PDFs, preview models, or document rendering.
+---
+
 # SKILL: PDF Rendering Correctness & Invoice Pipeline Architecture
 
 ## 1. Core Architectural Principle (Absolute Truth)

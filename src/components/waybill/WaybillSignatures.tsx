@@ -113,7 +113,7 @@ function PickSignatorySheet({
           </div>
         </div>
 
-        <div className="mt-3 space-y-2 pb-4 max-h-[55vh] overflow-y-auto">
+        <div className="mt-3 space-y-2 pb-4 max-h-[var(--bd-overlay-sheet-max-height)] overflow-y-auto">
           {loading && (
             <p className="text-[13px] text-[var(--bd-text-muted)] text-center py-6">Loading…</p>
           )}

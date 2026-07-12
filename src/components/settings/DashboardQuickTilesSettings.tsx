@@ -182,7 +182,7 @@ export default function DashboardQuickTilesSettings({
             </Button>
           </SheetHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto px-4 pb-2">
+          <div className="max-h-[var(--bd-overlay-sheet-max-height)] overflow-y-auto px-4 pb-2">
             <div className="space-y-2">
               {optionIds.map((optionId) => {
                 const option = registry[optionId]

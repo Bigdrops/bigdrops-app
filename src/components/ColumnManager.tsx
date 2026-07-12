@@ -506,11 +506,11 @@ export default function ColumnManager({
       <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
         <SheetContent
           side="bottom"
-          className="max-h-[90dvh] rounded-t-[30px] border border-[var(--bd-border)] bg-[linear-gradient(180deg,var(--bd-surface)_0%,var(--bd-bg)_100%)] p-0 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] sm:mx-auto sm:max-w-[620px] [&>[data-slot=sheet-close]]:hidden"
+          className="max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[30px] border border-[var(--bd-border)] bg-[linear-gradient(180deg,var(--bd-surface)_0%,var(--bd-bg)_100%)] p-0 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] sm:mx-auto sm:max-w-[620px] [&>[data-slot=sheet-close]]:hidden"
         >
           <div className="mx-auto mt-3 h-[5px] w-12 rounded-full bg-[var(--bd-border)]" />
 
-          <div className="flex max-h-[90dvh] flex-col overflow-hidden">
+          <div className="flex max-h-[var(--bd-overlay-sheet-max-height)] flex-col overflow-hidden">
             {/* ── Header ── */}
             <div className="flex items-start justify-between border-b border-[var(--bd-border-soft)] px-6 pb-4 pt-3">
               <div>

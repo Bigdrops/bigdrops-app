@@ -38,7 +38,7 @@ export default function WaybillFormOverlay({ open, title, children, onClose }: W
       }}
     >
       <div
-        className={`flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl bg-[var(--bd-bg-card)] shadow-2xl transition-all duration-200 ${
+        className={`flex max-h-[var(--bd-overlay-sheet-max-height)] w-full max-w-lg flex-col rounded-t-3xl bg-[var(--bd-bg-card)] shadow-2xl transition-all duration-200 ${
           visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
         }`}
       >

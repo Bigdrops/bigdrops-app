@@ -121,7 +121,7 @@ export default function InvoiceAdvanceSheet({
           showCloseButton={false}
           className={
             isMobile
-              ? 'flex h-auto max-h-[88vh] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-bd-border bg-bd-card-bg p-0'
+              ? 'flex h-auto max-h-[var(--bd-overlay-sheet-max-height)] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-bd-border bg-bd-card-bg p-0'
               : 'flex h-full w-full max-w-full flex-col overflow-hidden border-bd-border bg-bd-card-bg p-0 sm:max-w-xl'
           }
         >

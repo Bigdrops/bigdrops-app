@@ -190,7 +190,7 @@ export function UnifiedActionSheet({
         className={cn(
           "overflow-hidden border-x-0 border-b-0 border-t border-bd-overlay-border bg-bd-overlay-bg p-0 shadow-2xl transition-all duration-300",
           "rounded-t-[var(--bd-overlay-radius)]",
-          "h-auto max-h-[75vh]",
+          "h-auto max-h-[var(--bd-overlay-sheet-max-height)]",
           className
         )}
       >
