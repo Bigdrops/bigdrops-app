@@ -22,13 +22,13 @@ if ($docsChanged -and -not $srcChanged) {
 } elseif ($srcChanged) {
     # Detect primary module from changed src files
     $modules = $srcChanged | ForEach-Object {
-        if ($_ -match 'csr') { "csr" }
-        elseif ($_ -match 'waybill') { "waybill" }
-        elseif ($_ -match 'invoice') { "invoice" }
-        elseif ($_ -match 'letter') { "letter" }
-        elseif ($_ -match 'quotation') { "quotation" }
-        elseif ($_ -match 'pdf') { "pdf" }
-        elseif ($_ -match 'ui') { "ui" }
+        if ($_ -match '/csr/') { "csr" }
+        elseif ($_ -match '/waybill/') { "waybill" }
+        elseif ($_ -match '/invoice/') { "invoice" }
+        elseif ($_ -match '/letter/') { "letter" }
+        elseif ($_ -match '/quotation/') { "quotation" }
+        elseif ($_ -match '/pdf/') { "pdf" }
+        elseif ($_ -match '/ui/') { "ui" }
         else { "project" }
     } | Sort-Object -Unique
     $scope = $modules[0]
