@@ -239,6 +239,9 @@ export function ZincTemplate({ csr, comments, branding, designPreset }: CsrPdfPr
             {hasText(csr.callTypeDisplay) ? (
               <PdfField styles={styles} label="Call Type" value={csr.callTypeDisplay} />
             ) : null}
+            {hasText(csr.serviceBasisDisplay) ? (
+              <PdfField styles={styles} label="Service Basis" value={csr.serviceBasisDisplay} />
+            ) : null}
             {hasText(csr.systemDownDisplay) ? (
               <PdfField styles={styles} label="System Status" value={csr.systemDownDisplay} />
             ) : null}

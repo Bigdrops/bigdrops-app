@@ -253,6 +253,12 @@ export function SignalBandsTemplate({ csr, comments, branding, designPreset }: C
               <Text style={styles.metaValue}>{safe(csr.callTypeDisplay)}</Text>
             </View>
           ) : null}
+          {hasText(csr.serviceBasisDisplay) ? (
+            <View style={styles.identityFull}>
+              <Text style={styles.metaLabel}>Service Basis</Text>
+              <Text style={styles.metaValue}>{safe(csr.serviceBasisDisplay)}</Text>
+            </View>
+          ) : null}
           {hasText(csr.systemDownDisplay) ? (
             <View style={styles.identityFull}>
               <Text style={styles.metaLabel}>System Status</Text>

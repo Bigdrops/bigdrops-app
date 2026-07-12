@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS csrs (
     defects_found text,
     system_down boolean DEFAULT false,
     technician_signatory_id uuid,
-    call_type text
+    call_type text,
+    service_basis text
 );
 
 CREATE TABLE IF NOT EXISTS waybills (

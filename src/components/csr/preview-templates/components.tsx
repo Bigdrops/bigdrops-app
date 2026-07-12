@@ -317,10 +317,16 @@ export function StructuredTopIdentity({ styles, csr, branding }: { styles: any; 
               </View>
             ) : null}
             {hasText(csr.callTypeDisplay) ? (
-              <View style={styles.identityFull}>
+              <>
                 <Text style={styles.metaLabel}>Call Type</Text>
                 <Text style={styles.metaValue}>{safe(csr.callTypeDisplay)}</Text>
-              </View>
+              </>
+            ) : null}
+            {hasText(csr.serviceBasisDisplay) ? (
+              <>
+                <Text style={styles.metaLabel}>Service Basis</Text>
+                <Text style={styles.metaValue}>{safe(csr.serviceBasisDisplay)}</Text>
+              </>
             ) : null}
             {hasText(csr.systemDownDisplay) ? (
               <View style={styles.identityFull}>

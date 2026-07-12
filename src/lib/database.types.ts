@@ -373,6 +373,7 @@ export type Database = {
           archived_at: string | null
           battery: string | null
           call_type: string | null
+          service_basis: string | null
           capacity: string | null
           client_id: string | null
           client_name: string | null
@@ -414,6 +415,7 @@ export type Database = {
           archived_at?: string | null
           battery?: string | null
           call_type?: string | null
+          service_basis?: string | null
           capacity?: string | null
           client_id?: string | null
           client_name?: string | null
@@ -455,6 +457,7 @@ export type Database = {
           archived_at?: string | null
           battery?: string | null
           call_type?: string | null
+          service_basis?: string | null
           capacity?: string | null
           client_id?: string | null
           client_name?: string | null

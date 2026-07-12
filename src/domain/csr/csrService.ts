@@ -71,7 +71,7 @@ const CSR_TABLE_COLUMNS = new Set([
   'customer_feedback', 'acknowledgement_name', 'linked_invoice_id',
   'created_at', 'start_time', 'end_time', 'po_number', 'show_po',
   'archived_at', 'project_id', 'defects_found', 'system_down',
-  'technician_signatory_id', 'call_type',
+  'technician_signatory_id', 'call_type', 'service_basis',
 ])
 
 /**

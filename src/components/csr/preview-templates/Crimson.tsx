@@ -311,6 +311,12 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
                 <Text style={styles.fieldValue}>{safe(csr.callTypeDisplay)}</Text>
               </View>
             ) : null}
+            {hasText(csr.serviceBasisDisplay) ? (
+              <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
+                <Text style={styles.fieldLabel}>Service Basis</Text>
+                <Text style={styles.fieldValue}>{safe(csr.serviceBasisDisplay)}</Text>
+              </View>
+            ) : null}
             {hasText(csr.systemDownDisplay) ? (
               <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
                 <Text style={styles.fieldLabel}>System Status</Text>

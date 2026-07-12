@@ -66,7 +66,8 @@ const STATUS_OPTIONS = [
   'Working solution provided',
 ]
 
-const CALL_TYPE_OPTIONS = ['Warranty', 'AMC', 'Paid Service']
+const CALL_TYPE_OPTIONS = ['Breakdown', 'Preventive Maintenance', 'Installation', 'Commissioning', 'Inspection', 'Emergency Repair', 'Other']
+const SERVICE_BASIS_OPTIONS = ['Paid Service', 'AMC', 'Warranty']
 const YES_NO_OPTIONS = ['Yes', 'No']
 
 function Section({
@@ -407,6 +408,15 @@ export default function CsrFormScreen({
                 value={String(csr.call_type || '')}
                 onChange={(value) => onUpdate('call_type', value)}
                 options={CALL_TYPE_OPTIONS}
+                placeholder="Select"
+              />
+            </div>
+            <div>
+              <FieldLabel>Service Basis</FieldLabel>
+              <SelectField
+                value={String(csr.service_basis || '')}
+                onChange={(value) => onUpdate('service_basis', value)}
+                options={SERVICE_BASIS_OPTIONS}
                 placeholder="Select"
               />
             </div>

@@ -372,6 +372,7 @@ export default function CSRPreviewPanel({
             <div><span style={lbl}>Date</span><span style={val}>{csr.date}</span></div>
             <div><span style={lbl}>Customer</span><span style={val}>{csr.client_name}</span></div>
             {csr.callTypeDisplay ? <div><span style={lbl}>Call Type</span><span style={val}>{csr.callTypeDisplay}</span></div> : null}
+            {csr.serviceBasisDisplay ? <div><span style={lbl}>Service Basis</span><span style={val}>{csr.serviceBasisDisplay}</span></div> : null}
             {csr.systemDownDisplay ? <div><span style={lbl}>System Status</span><span style={val}>{csr.systemDownDisplay}</span></div> : null}
             {csr.show_po && String(csr.po_number || '').trim() ? <div><span style={lbl}>PO No.</span><span style={val}>{String(csr.po_number || '').trim()}</span></div> : null}
             <div style={{ gridColumn: '1 / -1' }}><span style={lbl}>Address</span><span style={val}>{csr.address}</span></div>

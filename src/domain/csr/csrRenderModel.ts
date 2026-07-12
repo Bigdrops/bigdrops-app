@@ -27,6 +27,8 @@ export interface CsrRenderModel {
   // Call info (newly surfaced — was missing from all output)
   call_type: string
   callTypeDisplay: CallTypeDisplay
+  service_basis: string
+  serviceBasisDisplay: CallTypeDisplay
   system_down: string
   systemDownDisplay: SystemDownDisplay
 
@@ -116,6 +118,11 @@ function resolveCallTypeDisplay(raw: string): CallTypeDisplay {
   return raw
 }
 
+function resolveServiceBasisDisplay(raw: string): CallTypeDisplay {
+  if (!raw) return ''
+  return raw
+}
+
 function resolveSystemDownDisplay(raw: string): SystemDownDisplay {
   if (!raw) return ''
   const normalized = raw.toLowerCase().trim()
@@ -147,6 +154,7 @@ function computeLayoutDensity(csr: CsrObject): LayoutDensity {
 export function buildCsrRenderModel(csr: CsrObject): CsrRenderModel {
   const address = safeString(csr.address)
   const rawCallType = safeString(csr.call_type)
+  const rawServiceBasis = safeString(csr.service_basis)
   const rawSystemDown = safeString(csr.system_down)
   const rawBattery = safeString(csr.battery)
   const rawEngineNo = safeString(csr.engine_no)
@@ -168,6 +176,8 @@ export function buildCsrRenderModel(csr: CsrObject): CsrRenderModel {
     // Call info — newly surfaced
     call_type: rawCallType,
     callTypeDisplay: resolveCallTypeDisplay(rawCallType),
+    service_basis: rawServiceBasis,
+    serviceBasisDisplay: resolveServiceBasisDisplay(rawServiceBasis),
     system_down: rawSystemDown,
     systemDownDisplay: resolveSystemDownDisplay(rawSystemDown),
 

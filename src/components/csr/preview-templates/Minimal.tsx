@@ -428,6 +428,7 @@ function renderHeaderIdTable(styles: any, csr: CsrRenderModel) {
     ['Report Date', csr.date],
   ]
   if (hasText(csr.callTypeDisplay)) items.push(['Call Type', csr.callTypeDisplay])
+  if (hasText(csr.serviceBasisDisplay)) items.push(['Service Basis', csr.serviceBasisDisplay])
   if (hasText(csr.systemDownDisplay)) items.push(['System Status', csr.systemDownDisplay])
 
   return (

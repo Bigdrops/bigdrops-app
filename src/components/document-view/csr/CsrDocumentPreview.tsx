@@ -42,6 +42,7 @@ export default function CsrDocumentPreview({
 
   const statusLabel = csrData.status ? String(csrData.status).toUpperCase() : ''
   const callType = csrData.callTypeDisplay && csrData.callTypeDisplay !== 'NOT SPECIFIED' ? csrData.callTypeDisplay : null
+  const serviceBasis = csrData.serviceBasisDisplay && csrData.serviceBasisDisplay !== 'NOT SPECIFIED' ? csrData.serviceBasisDisplay : null
   const systemStatus = csrData.systemDownDisplay && csrData.systemDownDisplay !== 'NOT SPECIFIED' ? csrData.systemDownDisplay : null
 
   return (
@@ -102,6 +103,12 @@ export default function CsrDocumentPreview({
             <div className="doc-meta-value">
               {[callType, systemStatus].filter(Boolean).join(' · ')}
             </div>
+          </div>
+        )}
+        {serviceBasis && (
+          <div className="doc-meta-cell" style={{ gridColumn: '1 / -1' }}>
+            <div className="doc-meta-label">Service Basis</div>
+            <div className="doc-meta-value">{serviceBasis}</div>
           </div>
         )}
         {equipmentLines.length > 0 && (

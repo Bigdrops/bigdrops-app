@@ -15,6 +15,7 @@ export type CreateOfflineCsrInput = {
   client_id?: string | null;
   client_name?: string | null;
   call_type?: string | null;
+  service_basis?: string | null;
   system_down?: string | null;
   address?: string | null;
   problem_reported?: string | null;
@@ -132,6 +133,7 @@ export async function bootstrapCsrOffline(): Promise<void> {
               client_id TEXT,
               client_name TEXT,
               call_type TEXT,
+              service_basis TEXT,
               system_down TEXT,
               address TEXT,
               problem_reported TEXT,
@@ -230,6 +232,7 @@ export async function createOfflineCsrDraft(
         client_id,
         client_name,
         call_type,
+        service_basis,
         system_down,
         address,
         problem_reported,
@@ -266,7 +269,7 @@ export async function createOfflineCsrDraft(
         created_at,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', ?, ?);
     `,
     [
       id,
@@ -275,6 +278,7 @@ export async function createOfflineCsrDraft(
       input.client_id ?? null,
       input.client_name ?? null,
       input.call_type ?? null,
+      input.service_basis ?? null,
       input.system_down ?? null,
       input.address ?? null,
       input.problem_reported ?? null,

@@ -33,6 +33,7 @@ type LocalCsrRow = {
   client_id: string | null;
   client_name: string | null;
   call_type: string | null;
+  service_basis: string | null;
   system_down: string | null;
   address: string | null;
   problem_reported: string | null;
@@ -192,6 +193,7 @@ async function processCsrCreateQueueRow(
           client_id: localCsr.client_id,
           client_name: localCsr.client_name,
           call_type: localCsr.call_type,
+          service_basis: localCsr.service_basis,
           system_down: localCsr.system_down,
           address: localCsr.address,
           problem_reported: localCsr.problem_reported,

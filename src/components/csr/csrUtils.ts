@@ -65,6 +65,7 @@ export interface CsrObject {
   client_id: any
   client_name: string
   call_type: string
+  service_basis: string
   system_down: string
   address: string
   problem_reported: string
@@ -107,6 +108,7 @@ export function createDefaultCsr(isField = false): CsrObject {
     client_id: '',
     client_name: '',
     call_type: '',
+    service_basis: '',
     system_down: '',
     address: '',
     problem_reported: '',
@@ -362,6 +364,7 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
     technicianSignatureUrl: renderModel.technicianSignatureUrl,
     materialsOutputStyle: renderModel.materialsOutputStyle,
     callTypeDisplay: renderModel.callTypeDisplay,
+    serviceBasisDisplay: renderModel.serviceBasisDisplay,
     systemDownDisplay: renderModel.systemDownDisplay,
     engineNo: renderModel.engineNo,
     defectsFound: renderModel.defectsFound,
