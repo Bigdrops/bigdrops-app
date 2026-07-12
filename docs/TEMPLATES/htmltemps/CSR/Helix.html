@@ -2,226 +2,371 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Golden Sample Customer Service Report</title>
+<title>Customer Service Report — CSR-2026-04871</title>
 <style>
-@page{size:A4 portrait;margin:9mm}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#28323a;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:10px;line-height:1.28}
-body{padding:0}
-.page{border:1px solid #97a6b4}
-.header{display:grid;grid-template-columns:70px 1fr 220px;background:#1d4262;color:#fff}
-.logo{display:flex;align-items:center;justify-content:center;padding:8px}
-.logo svg{width:52px;height:52px}
-.title{padding:8px 10px}
-.title h1{margin:0;font-size:18px;letter-spacing:.5px}
-.title div{font-size:9px;opacity:.9}
-.meta{padding:8px 10px;border-left:1px solid rgba(255,255,255,.25);font-size:9px}
-.meta table{width:100%;border-collapse:collapse}
-.meta td{padding:1px 0}
-.band{display:grid;grid-template-columns:repeat(6,1fr);background:#e8eef3;border-bottom:2px solid #4f6f87}
-.band div{padding:5px 6px;border-right:1px solid #c7d2db}
-.band b{display:block;color:#30506b;font-size:8px;text-transform:uppercase}
-.section{border-bottom:1px solid #cfd7de}
-.sec-title{background:#5b7284;color:#fff;padding:3px 6px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
-.grid2{display:grid;grid-template-columns:1fr 1fr}
-.box{padding:5px 7px;border-right:1px solid #d8e0e6}
-.grid2 .box:last-child{border-right:none}
-.tbl{width:100%;border-collapse:collapse}
-.tbl td{padding:2px 3px;border-bottom:1px dotted #d8dde2;vertical-align:top}
-.tbl td:first-child{width:88px;color:#476073;font-weight:600}
-.readings{display:grid;grid-template-columns:repeat(6,1fr)}
-.readings div{padding:4px;border-right:1px solid #d8dde2;text-align:center}
-.readings div:last-child{border-right:none}
-.readings b{display:block;color:#46657d;font-size:8px;text-transform:uppercase}
-.p{padding:6px 7px;text-align:justify}
-.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:5px 7px}
-.mtbl{width:100%;border-collapse:collapse}
-.mtbl td{padding:1px 2px;border-bottom:1px dotted #d8dde2;font-size:8.5px}
-.mtbl td:nth-child(1){width:14px;font-weight:700;color:#1d4262}
-.mtbl td:nth-child(2){width:22px;text-align:center}
-.bottom{display:grid;grid-template-columns:1.3fr .9fr}
-.left,.right{border-right:1px solid #d8dde2}
-.bottom .right{border-right:none}
-.timing{padding:5px 7px}
-.timing table{width:100%;border-collapse:collapse}
-.timing td{padding:2px}
-.badge{display:inline-block;background:#8b2332;color:#fff;padding:3px 8px;border-radius:12px;font-weight:700}
-.signs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #d8dde2}
-.sig{padding:5px 7px;border-right:1px solid #d8dde2}
-.sig:last-child{border-right:none}
-.sig svg{width:130px;height:28px}
-.footer{display:flex;justify-content:space-between;align-items:center;background:#eef2f5;padding:5px 8px;font-size:8.5px;color:#4a5a66}
-.small{font-size:8px;color:#5f6f7b}
-@media print{
-.page{border:1px solid #97a6b4}
-.section,.box,.sig,.left,.right{break-inside:avoid;page-break-inside:avoid}
-}
+  :root{
+    --navy:#0f2a47;
+    --steel:#3d6c90;
+    --slate:#525c66;
+    --gold:#a5813a;
+    --burgundy:#7a2530;
+    --paper:#fdfcfa;
+    --panel:#f4f2ed;
+    --line:#c9c2b4;
+    --ink:#20242a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    width:210mm;
+    background:#e9e7e1;
+    font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .sheet{
+    width:210mm;
+    height:297mm;
+    margin:0 auto;
+    background:var(--paper);
+    padding:9mm 10mm 7mm 10mm;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ===== HEADER ===== */
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:2.4pt solid var(--navy);
+    padding-bottom:4pt;
+    margin-bottom:5pt;
+  }
+  .brand{display:flex;align-items:center;gap:8pt;}
+  .logo{
+    width:34pt;height:34pt;border-radius:3pt;
+    background:linear-gradient(180deg,var(--navy),var(--steel));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:13pt;letter-spacing:.5pt;
+    flex-shrink:0;
+  }
+  .brand-text .company{font-size:12.5pt;font-weight:700;color:var(--navy);letter-spacing:.3pt;}
+  .brand-text .tagline{font-size:6.6pt;color:var(--slate);text-transform:uppercase;letter-spacing:1.2pt;margin-top:1pt;}
+  .doc-title{text-align:right;}
+  .doc-title .title{font-size:11pt;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6pt;}
+  .doc-title .sub{font-size:7pt;color:var(--slate);margin-top:1pt;}
+  .doc-title .csrnum{
+    font-family:"Consolas","Courier New",monospace;
+    font-size:9pt;font-weight:700;color:var(--gold);margin-top:2pt;
+  }
+
+  /* ===== DOC INFO STRIP ===== */
+  .info-strip{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    background:var(--navy);
+    color:#fff;
+    border-radius:2pt;
+    margin-bottom:6pt;
+    overflow:hidden;
+  }
+  .info-strip div{
+    padding:3.5pt 6pt;
+    border-right:0.6pt solid rgba(255,255,255,.18);
+  }
+  .info-strip div:last-child{border-right:none;}
+  .info-strip .k{font-size:5.8pt;text-transform:uppercase;letter-spacing:.6pt;color:#c9d7e4;}
+  .info-strip .v{font-size:7.6pt;font-weight:700;margin-top:1pt;}
+  .status-pill{color:var(--gold)!important;}
+
+  /* ===== SECTION LABEL ===== */
+  .sec-label{
+    font-size:7.3pt;
+    font-weight:700;
+    color:var(--navy);
+    text-transform:uppercase;
+    letter-spacing:.8pt;
+    border-left:2.6pt solid var(--gold);
+    padding-left:4pt;
+    margin-bottom:2.5pt;
+  }
+
+  /* ===== TWO COLUMN: CLIENT / EQUIPMENT ===== */
+  .row-2col{display:grid;grid-template-columns:1fr 1fr;gap:7pt;margin-bottom:5pt;}
+  .panel{background:var(--panel);border:0.6pt solid var(--line);border-radius:2pt;padding:5pt 7pt;}
+  .kv-grid{display:grid;grid-template-columns:auto 1fr;column-gap:5pt;row-gap:1.6pt;font-size:7.4pt;}
+  .kv-grid .k{color:var(--slate);white-space:nowrap;}
+  .kv-grid .v{font-weight:600;color:var(--ink);}
+
+  /* ===== OPERATIONAL READINGS ===== */
+  .readings{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:5pt;margin-bottom:6pt;
+  }
+  .reading{
+    background:var(--panel);border:0.6pt solid var(--line);border-radius:2pt;
+    padding:3.5pt 4pt;text-align:center;
+  }
+  .reading .lab{font-size:5.6pt;text-transform:uppercase;color:var(--slate);letter-spacing:.5pt;}
+  .reading .val{font-size:8.6pt;font-weight:700;color:var(--steel);margin-top:1pt;font-family:"Consolas",monospace;}
+
+  /* ===== NARRATIVE BLOCKS ===== */
+  .narrative{margin-bottom:5pt;}
+  .narrative p{font-size:7.5pt;line-height:1.42;color:#2b2f35;text-align:justify;}
+  .narr-grid{display:grid;grid-template-columns:1fr 1fr;gap:7pt;margin-bottom:5pt;}
+
+  /* ===== MATERIALS ===== */
+  .materials-wrap{background:var(--panel);border:0.6pt solid var(--line);border-radius:2pt;padding:5pt 7pt;margin-bottom:5pt;}
+  .materials-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5pt;}
+  .mat-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:0 8pt;}
+  .mat-col table{width:100%;border-collapse:collapse;font-size:6.9pt;}
+  .mat-col th{
+    text-align:left;font-size:5.7pt;text-transform:uppercase;letter-spacing:.4pt;
+    color:#fff;background:var(--steel);padding:2pt 3pt;
+  }
+  .mat-col th.qty{text-align:center;width:20%;}
+  .mat-col th.no{width:12%;text-align:center;}
+  .mat-col td{padding:1.7pt 3pt;border-bottom:0.4pt solid var(--line);}
+  .mat-col td.no{text-align:center;color:var(--slate);font-family:"Consolas",monospace;}
+  .mat-col td.qty{text-align:center;font-weight:600;}
+
+  /* ===== REMARKS / FEEDBACK / TIMING SPLIT ===== */
+  .bottom-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:7pt;margin-bottom:5pt;}
+  .timing-status{display:grid;grid-template-columns:1fr 1fr;gap:5pt;}
+  .timing-tbl{font-size:7.2pt;}
+  .timing-tbl .kv-grid .k{width:44pt;}
+  .status-box{
+    background:var(--burgundy);color:#fff;border-radius:2pt;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:4pt;text-align:center;
+  }
+  .status-box .lab{font-size:6pt;text-transform:uppercase;letter-spacing:.6pt;opacity:.85;}
+  .status-box .badge{
+    margin-top:2pt;font-size:11pt;font-weight:800;letter-spacing:1pt;
+  }
+
+  /* ===== SIGNATURES ===== */
+  .sign-row{display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-top:auto;padding-top:5pt;}
+  .sign-block{border-top:0.6pt solid var(--line);padding-top:3pt;}
+  .sign-block .role{font-size:5.7pt;text-transform:uppercase;letter-spacing:.6pt;color:var(--slate);}
+  .sign-block .name{font-size:8pt;font-weight:700;color:var(--navy);margin-top:1pt;}
+  .sign-block .title2{font-size:6.6pt;color:var(--slate);}
+  .sig-svg{height:22pt;margin:2pt 0 1pt 0;}
+
+  /* ===== FOOTER ===== */
+  .footer{
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:1.4pt solid var(--navy);margin-top:5pt;padding-top:3pt;
+  }
+  .footer .fco{font-size:6.6pt;font-weight:700;color:var(--navy);}
+  .footer .fdetails{font-size:6.1pt;color:var(--slate);}
+  .footer .fmeta{font-size:5.8pt;color:var(--slate);text-align:right;}
+
+  @page{
+    size:A4 portrait;
+    margin:0;
+  }
+  @media print{
+    html,body{background:#fff;width:auto;}
+    .sheet{
+      width:210mm;height:297mm;margin:0;
+      box-shadow:none;
+      page-break-after:avoid;
+    }
+    .row-2col, .narr-grid, .bottom-grid, .readings, .mat-cols, .sign-row{
+      break-inside:avoid;
+    }
+  }
 </style>
 </head>
 <body>
-<div class="page">
+<div class="sheet">
 
-<div class="header">
-<div class="logo">
-<svg viewBox="0 0 100 100">
-<circle cx="50" cy="50" r="42" fill="#d9b44a"/>
-<path d="M28 68 L50 22 L72 68 Z" fill="#1d4262"/>
-</svg>
-</div>
-<div class="title">
-<h1>Customer Service Report</h1>
-<div>Industrial Field Maintenance • Mechanical & Electrical Engineering Division</div>
-</div>
-<div class="meta">
-<table>
-<tr><td><b>Project</b></td><td>North Gas Compression Upgrade</td></tr>
-<tr><td><b>Generated</b></td><td>16 May 2026 17:40</td></tr>
-<tr><td><b>Document</b></td><td>Golden Sample CSR</td></tr>
-<tr><td><b>Page</b></td><td>1 of 1</td></tr>
-</table>
-</div>
-</div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <div class="logo">BD</div>
+      <div class="brand-text">
+        <div class="company">BIGDROPS ENGINEERING SERVICES LTD.</div>
+        <div class="tagline">Power &amp; Industrial Systems Maintenance</div>
+      </div>
+    </div>
+    <div class="doc-title">
+      <div class="title">Customer Service Report</div>
+      <div class="sub">Field Service &amp; Maintenance Division</div>
+      <div class="csrnum">CSR-2026-04871</div>
+    </div>
+  </div>
 
-<div class="band">
-<div><b>CSR No.</b>CSR-26-0516-1487</div>
-<div><b>Date</b>16 May 2026</div>
-<div><b>PO No.</b>PO-784155-GC</div>
-<div><b>Call Type</b>Breakdown</div>
-<div><b>Service Basis</b>Annual Contract</div>
-<div><b>Status</b>Completed</div>
-</div>
+  <!-- DOC INFO STRIP -->
+  <div class="info-strip">
+    <div><div class="k">Date</div><div class="v">10 Jul 2026</div></div>
+    <div><div class="k">PO Number</div><div class="v">PO-BD-113420</div></div>
+    <div><div class="k">Call Type</div><div class="v">Breakdown</div></div>
+    <div><div class="k">Service Basis</div><div class="v">AMC — Annual</div></div>
+    <div><div class="k">Priority</div><div class="v">High</div></div>
+    <div><div class="k">Status</div><div class="v status-pill">Completed</div></div>
+  </div>
 
-<div class="section">
-<div class="grid2">
-<div class="box">
-<div class="sec-title">Client Information</div>
-<table class="tbl">
-<tr><td>Client</td><td>Riverside Petrochemical Manufacturing Limited</td></tr>
-<tr><td>Address</td><td>Plot 84 Industrial Crescent, Eastern Logistics Park, Port Harcourt, Rivers State, Nigeria.</td></tr>
-</table>
-</div>
-<div class="box">
-<div class="sec-title">Equipment Information</div>
-<table class="tbl">
-<tr><td>Equipment</td><td>Diesel Generator Set</td></tr>
-<tr><td>Location</td><td>Utility Plant Room B</td></tr>
-<tr><td>Make</td><td>Cummins</td></tr>
-<tr><td>Model</td><td>C275D5</td></tr>
-<tr><td>Serial</td><td>CMN-C275-498271</td></tr>
-<tr><td>Engine</td><td>QSX15-6119052</td></tr>
-<tr><td>Capacity</td><td>275 kVA</td></tr>
-</table>
-</div>
-</div>
-</div>
+  <!-- CLIENT + EQUIPMENT -->
+  <div class="row-2col">
+    <div class="panel">
+      <div class="sec-label">Client Information</div>
+      <div class="kv-grid">
+        <div class="k">Client</div><div class="v">Sun &amp; Shield Power Solutions Ltd.</div>
+        <div class="k">Address</div><div class="v">Plot 24, Adeniyi Jones Avenue, Ikeja, Lagos State, Nigeria</div>
+        <div class="k">Contact</div><div class="v">Mrs. Folake Bankole — Facilities Manager</div>
+        <div class="k">Phone</div><div class="v">+234 802 314 7756</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="sec-label">Equipment Information</div>
+      <div class="kv-grid">
+        <div class="k">Type</div><div class="v">Standby Diesel Generator</div>
+        <div class="k">Location</div><div class="v">Rear Service Yard, Building B</div>
+        <div class="k">Make / Model</div><div class="v">Caterpillar C15 ACERT</div>
+        <div class="k">Serial No.</div><div class="v">CAT-C15-88471023</div>
+        <div class="k">Engine No.</div><div class="v">ENG-77234198</div>
+        <div class="k">Capacity</div><div class="v">500 kVA / 400 kW</div>
+      </div>
+    </div>
+  </div>
 
-<div class="section">
-<div class="sec-title">Operational Readings</div>
-<div class="readings">
-<div><b>Voltage</b>415 V</div>
-<div><b>Frequency</b>49.9 Hz</div>
-<div><b>Battery</b>25.6 V</div>
-<div><b>Temperature</b>84°C</div>
-<div><b>Pressure</b>4.8 bar</div>
-<div><b>Hours Run</b>12,648 h</div>
-</div>
-</div>
+  <!-- OPERATIONAL READINGS -->
+  <div class="sec-label">Operational Readings</div>
+  <div class="readings">
+    <div class="reading"><div class="lab">Voltage</div><div class="val">415V 3∅</div></div>
+    <div class="reading"><div class="lab">Frequency</div><div class="val">50.2 Hz</div></div>
+    <div class="reading"><div class="lab">Battery</div><div class="val">24.6 VDC</div></div>
+    <div class="reading"><div class="lab">Temperature</div><div class="val">88 °C</div></div>
+    <div class="reading"><div class="lab">Oil Pressure</div><div class="val">42 PSI</div></div>
+    <div class="reading"><div class="lab">Hours Run</div><div class="val">8,412 hrs</div></div>
+  </div>
 
-<div class="section">
-<div class="grid2">
-<div class="box">
-<div class="sec-title">Problem Reported</div>
-<div class="p">Operations reported repeated generator shutdowns during transfer under peak process loading. Alarm history indicated unstable charging voltage, intermittent low oil pressure warnings and delayed governor response after automatic start requests. Unit occasionally recovered after manual restart but experienced erratic engine speed and abnormal exhaust smoke. Maintenance support was requested to restore dependable standby power while avoiding disruption to continuous production activities and scheduled utility switching.</div>
-</div>
-<div class="box">
-<div class="sec-title">Defects Found</div>
-<div class="p">Inspection confirmed contaminated fuel filters, weakened alternator drive belt tension, oxidized battery terminals and partially obstructed radiator fins restricting airflow. Governor linkage required calibration while engine oil showed reduced viscosity beyond maintenance tolerance. Minor coolant seepage was detected around an upper hose clamp although no structural damage to the cooling assembly or engine block was observed.</div>
-</div>
-</div>
-</div>
+  <!-- PROBLEM + DEFECTS -->
+  <div class="narr-grid">
+    <div class="narrative">
+      <div class="sec-label">Problem Reported</div>
+      <p>Client reported intermittent tripping of the standby generator under load during scheduled test runs. Operations staff observed dense black exhaust smoke within the first ten minutes of operation, accompanied by an irregular knocking sound from the engine bay and a noticeable drop in output voltage under partial load. The unit had also failed to reach rated frequency on two prior start attempts, prompting an emergency service call ahead of the facility's planned power-outage window later that week.</p>
+    </div>
+    <div class="narrative">
+      <div class="sec-label">Defects Found</div>
+      <p>Inspection revealed heavily clogged primary and secondary fuel filters restricting flow to the injection pump, along with one partially seized fuel injector on cylinder four. The alternator drive belt was worn and under-tensioned, contributing to voltage instability. Coolant was found below the minimum mark with visible discolouration, and the air filter element showed significant dust loading consistent with the extended interval since last service.</p>
+    </div>
+  </div>
 
-<div class="section">
-<div class="sec-title">Service Rendered</div>
-<div class="p">Isolation procedures were completed before comprehensive inspection, diagnostic scanning and operational verification. Fuel and lubrication systems were serviced, worn consumables replaced, electrical connections cleaned and tightened, charging output confirmed and governor calibration adjusted to specification. Cooling passages were cleaned, belt tension corrected and coolant leak rectified with new clamp hardware. Functional testing included manual and automatic starts, staged load acceptance, voltage stability checks, frequency validation and sixty-minute monitored operation. Final commissioning confirmed reliable performance without recurring alarms or abnormal operating behaviour.</div>
-</div>
+  <!-- SERVICE RENDERED -->
+  <div class="narrative">
+    <div class="sec-label">Service Rendered</div>
+    <p>Engine was isolated and locked out prior to intervention. Both fuel filters were removed and replaced, and the fuel system was bled and primed. The affected injector was removed, ultrasonically cleaned, bench-tested against factory spray-pattern tolerances, and reinstalled with new copper sealing washers. The alternator belt was replaced and tensioned to OEM specification. Coolant system was drained, flushed, and refilled with the correct concentration of long-life coolant, and the air filter element was replaced. The unit was then started, run under a resistive load bank at 25%, 50%, 75%, and 100% rated load for 20 minutes each, with all readings logged and verified stable before being returned to automatic standby duty.</p>
+  </div>
 
-<div class="section">
-<div class="sec-title">Materials Used</div>
-<div class="cols">
-<table class="mtbl">
-<tr><td>1</td><td>2</td><td>Fuel Filter</td></tr>
-<tr><td>2</td><td>1</td><td>Oil Filter</td></tr>
-<tr><td>3</td><td>18L</td><td>15W-40 Engine Oil</td></tr>
-<tr><td>4</td><td>1</td><td>Air Filter Element</td></tr>
-<tr><td>5</td><td>1</td><td>Drive Belt</td></tr>
-<tr><td>6</td><td>2</td><td>Battery Terminal</td></tr>
-<tr><td>7</td><td>4</td><td>Hose Clamp</td></tr>
-</table>
-<table class="mtbl">
-<tr><td>8</td><td>2L</td><td>Coolant</td></tr>
-<tr><td>9</td><td>1</td><td>Sealant Tube</td></tr>
-<tr><td>10</td><td>1</td><td>Contact Cleaner</td></tr>
-<tr><td>11</td><td>1</td><td>Grease Cartridge</td></tr>
-<tr><td>12</td><td>6</td><td>Cable Tie</td></tr>
-<tr><td>13</td><td>2</td><td>Fuse 10A</td></tr>
-<tr><td>14</td><td>1</td><td>Absorbent Pad</td></tr>
-</table>
-<table class="mtbl">
-<tr><td>15</td><td>1</td><td>Radiator Cap</td></tr>
-<tr><td>16</td><td>1</td><td>Breather Filter</td></tr>
-<tr><td>17</td><td>4</td><td>M8 Washer</td></tr>
-<tr><td>18</td><td>2</td><td>M8 Bolt</td></tr>
-<tr><td>19</td><td>1</td><td>Inspection Tag</td></tr>
-<tr><td>20</td><td>1</td><td>Cleaning Cloth Pack</td></tr>
-<tr><td>21</td><td>1</td><td>Maintenance Label</td></tr>
-</table>
-</div>
-</div>
+  <!-- MATERIALS USED -->
+  <div class="materials-wrap">
+    <div class="materials-head">
+      <div class="sec-label" style="margin-bottom:0;">Materials Used</div>
+    </div>
+    <div class="mat-cols">
+      <div class="mat-col">
+        <table>
+          <tr><th class="no">#</th><th>Description</th><th class="qty">Qty</th></tr>
+          <tr><td class="no">1</td><td>Primary fuel filter element</td><td class="qty">1</td></tr>
+          <tr><td class="no">2</td><td>Secondary fuel filter, spin-on</td><td class="qty">1</td></tr>
+          <tr><td class="no">3</td><td>Engine oil filter, heavy duty</td><td class="qty">1</td></tr>
+          <tr><td class="no">4</td><td>Air filter element, primary</td><td class="qty">1</td></tr>
+          <tr><td class="no">5</td><td>Air filter element, secondary</td><td class="qty">1</td></tr>
+          <tr><td class="no">6</td><td>15W-40 diesel engine oil (litre)</td><td class="qty">18</td></tr>
+          <tr><td class="no">7</td><td>Long-life coolant concentrate (litre)</td><td class="qty">10</td></tr>
+        </table>
+      </div>
+      <div class="mat-col">
+        <table>
+          <tr><th class="no">#</th><th>Description</th><th class="qty">Qty</th></tr>
+          <tr><td class="no">8</td><td>Alternator drive belt, V-type</td><td class="qty">1</td></tr>
+          <tr><td class="no">9</td><td>Injector copper sealing washer</td><td class="qty">4</td></tr>
+          <tr><td class="no">10</td><td>Fuel line hose clamp, 16mm</td><td class="qty">6</td></tr>
+          <tr><td class="no">11</td><td>Battery terminal cleaner spray</td><td class="qty">1</td></tr>
+          <tr><td class="no">12</td><td>Contact cleaner, electrical</td><td class="qty">2</td></tr>
+          <tr><td class="no">13</td><td>Anti-seize compound (tube)</td><td class="qty">1</td></tr>
+          <tr><td class="no">14</td><td>Silicone gasket sealant (tube)</td><td class="qty">2</td></tr>
+        </table>
+      </div>
+      <div class="mat-col">
+        <table>
+          <tr><th class="no">#</th><th>Description</th><th class="qty">Qty</th></tr>
+          <tr><td class="no">15</td><td>Radiator hose clamp assembly</td><td class="qty">3</td></tr>
+          <tr><td class="no">16</td><td>Cleaning rags, industrial (pack)</td><td class="qty">2</td></tr>
+          <tr><td class="no">17</td><td>Fuel/water separator bowl seal</td><td class="qty">1</td></tr>
+          <tr><td class="no">18</td><td>Grease, lithium multi-purpose (kg)</td><td class="qty">1</td></tr>
+          <tr><td class="no">19</td><td>Cable ties, heavy duty (pack)</td><td class="qty">1</td></tr>
+          <tr><td class="no">20</td><td>Nitrile gloves (pair, service use)</td><td class="qty">4</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
 
-<div class="bottom">
-<div class="left">
-<div class="sec-title">Engineer Remarks</div>
-<div class="p">Generator performance has been restored to acceptable operating limits. Recommend quarterly oil analysis, monthly battery load testing, radiator cleaning after dusty operating periods and replacement of fuel filters at scheduled intervals irrespective of apparent condition. Review transfer switch event logs during preventive maintenance to identify early electrical abnormalities before operational impact.</div>
-<div class="sec-title">Customer Feedback</div>
-<div class="p">Service team responded promptly, communicated findings clearly and completed repairs within the agreed maintenance window. Equipment returned to production without further interruptions during monitored operation. Documentation and housekeeping met site expectations and recommendations will be incorporated into the preventive maintenance programme.</div>
-</div>
-<div class="right">
-<div class="sec-title">Service Timing & Status</div>
-<div class="timing">
-<table>
-<tr><td>Start Date</td><td>16 May 2026</td></tr>
-<tr><td>Start Time</td><td>08:15</td></tr>
-<tr><td>End Date</td><td>16 May 2026</td></tr>
-<tr><td>End Time</td><td>15:45</td></tr>
-<tr><td>Duration</td><td>7h 30m</td></tr>
-<tr><td>System Down</td><td><span class="badge">YES</span></td></tr>
-</table>
-</div>
-</div>
-</div>
+  <!-- REMARKS / FEEDBACK -->
+  <div class="bottom-grid">
+    <div class="narrative">
+      <div class="sec-label">Engineer Remarks</div>
+      <p>Unit is now performing within OEM tolerances across all tested load bands. Recommend reducing the fuel filter replacement interval to 250 hours given the site's fuel storage conditions, and scheduling a full injector service for the remaining cylinders within the next two visits. Coolant levels should be checked monthly by site personnel between scheduled visits to avoid recurrence of low-coolant conditions observed during this call.</p>
+    </div>
+    <div class="narrative">
+      <div class="sec-label">Customer Feedback</div>
+      <p>The BIGDROPS engineer arrived promptly and explained the diagnosis clearly before starting work. The generator now runs noticeably smoother and quieter than before, and the load-bank testing gave us confidence in its readiness for the upcoming outage. We appreciate the practical maintenance advice provided and will follow up on the recommended filter schedule.</p>
+    </div>
+  </div>
 
-<div class="signs">
-<div class="sig">
-<b>Technician</b><br>
-Michael Adekunle<br>
-<svg viewBox="0 0 220 50">
-<path d="M8 36 C26 6,45 48,60 20 S92 30,110 18 S140 40,158 16 S192 30,210 14" fill="none" stroke="#173b5a" stroke-width="2.4" stroke-linecap="round"/>
-</svg>
-</div>
-<div class="sig">
-<b>Customer Acknowledgement</b><br>
-Grace Nwosu — Utilities Supervisor<br>
-<svg viewBox="0 0 220 50">
-<path d="M10 32 C28 12,42 42,62 16 S98 40,118 20 S150 32,170 14 S196 28,210 18" fill="none" stroke="#6d2433" stroke-width="2.4" stroke-linecap="round"/>
-</svg>
-</div>
-</div>
+  <!-- TIMING + STATUS -->
+  <div class="timing-status" style="margin-bottom:6pt;">
+    <div class="panel timing-tbl">
+      <div class="sec-label">Service Timing</div>
+      <div class="kv-grid">
+        <div class="k">Start</div><div class="v">10 Jul 2026 · 08:15 hrs</div>
+        <div class="k">End</div><div class="v">10 Jul 2026 · 14:40 hrs</div>
+        <div class="k">Duration</div><div class="v">6 hrs 25 mins</div>
+      </div>
+    </div>
+    <div class="status-box">
+      <div class="lab">System Down</div>
+      <div class="badge">YES</div>
+    </div>
+  </div>
 
-<div class="footer">
-<div><b>Prime Industrial Engineering Services Ltd.</b> • 42 Dockyard Road, Port Harcourt • +234 803 555 0188</div>
-<div>service@primeindustrial.ng • www.primeindustrial.ng</div>
-</div>
+  <!-- SIGNATURES -->
+  <div class="sign-row">
+    <div class="sign-block">
+      <div class="role">Service Technician</div>
+      <svg class="sig-svg" viewBox="0 0 220 50" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8,38 C18,18 26,45 34,28 C40,15 44,40 52,32 C60,24 66,38 76,26 C84,16 90,36 100,30 C112,23 118,40 132,28 C142,20 150,34 162,24 C170,17 176,32 188,25"
+          fill="none" stroke="#0f2a47" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div class="name">Engr. Tunde Adebayo</div>
+      <div class="title2">Field Service Engineer, License No. FSE-2291</div>
+    </div>
+    <div class="sign-block">
+      <div class="role">Customer Acknowledgement</div>
+      <svg class="sig-svg" viewBox="0 0 220 50" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10,30 C20,42 28,12 38,26 C46,37 52,20 62,30 C70,38 78,18 90,28 C100,36 108,22 120,30 C130,37 138,20 150,28 C160,34 168,22 180,29"
+          fill="none" stroke="#0f2a47" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div class="name">Mrs. Folake Bankole</div>
+      <div class="title2">Facilities Manager, Sun &amp; Shield Power Solutions Ltd.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>
+      <div class="fco">BIGDROPS Engineering Services Ltd.</div>
+      <div class="fdetails">12B Ogunlana Drive, Surulere, Lagos, Nigeria · +234 701 220 9944 · service@bigdrops.ng · www.bigdrops.ng</div>
+    </div>
+    <div class="fmeta">
+      Project: Sun &amp; Shield Power Solutions — AMC 2026<br>
+      Generated 10 Jul 2026 · Page 1 of 1
+    </div>
+  </div>
 
 </div>
 </body>
