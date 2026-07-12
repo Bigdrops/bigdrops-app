@@ -20,13 +20,13 @@ export async function duplicateCSRRecord(id: string) {
   if (fetchError || !original) throw new Error(fetchError?.message || 'CSR not found')
 
   const { getNextCsrNumber } = await import('@/components/csr/csrUtils')
-  const { data: all } = await supabase.from('csrs').select('csr_number').order('created_at', { ascending: false })
-  const latestNumber = (all || []).reduce<string | null>((latest, row) => {
-    const num = row.csr_number
-    if (!num) return latest
-    if (!latest || num > latest) return num
-    return latest
-  }, null)
+  // Use created_at order to reliably get the most recent CSR number
+  const { data: latestRows } = await supabase
+    .from('csrs')
+    .select('csr_number')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const latestNumber = latestRows?.[0]?.csr_number || null
   const nextNumber = getNextCsrNumber(latestNumber)
 
   // ponytail: identity fields cleared per Law 2 — preserve equipment details only

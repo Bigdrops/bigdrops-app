@@ -29,156 +29,193 @@ function createIndustryStyles(density = 'comfortable', designPreset: any) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
   const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
-  const accent = designPreset?.accent || '#1a4d2e'
+  const accent = designPreset?.accent || '#7D8A88'
   return StyleSheet.create({
     page: {
-      paddingTop: tight ? 8 : 10,
-      paddingBottom: tight ? 8 : 10,
-      paddingHorizontal: tight ? 8 : 10,
-      backgroundColor: '#f8f7f4',
-      color: '#1a1a1a',
+      paddingTop: tight ? 6 : 8,
+      paddingBottom: tight ? 6 : 8,
+      paddingHorizontal: tight ? 6 : 8,
+      backgroundColor: '#ffffff',
+      color: '#374151',
       fontFamily: 'Helvetica',
       fontSize: tight ? 7.2 : compact ? 7.5 : 7.8,
     },
+
+    // ── Header ──────────────────────────────────────────
     header: {
-      backgroundColor: accent,
-      borderRadius: 6,
-      overflow: 'hidden',
       marginBottom: tight ? 4 : compact ? 5 : 6,
     },
     headerTop: {
+      backgroundColor: accent,
+      paddingVertical: tight ? 8 : 10,
+      paddingHorizontal: tight ? 10 : 12,
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: compact ? 6 : 8,
-      paddingVertical: tight ? 5 : 6,
-      paddingHorizontal: tight ? 7 : 8,
+      alignItems: 'center',
+      gap: 10,
     },
-    headerBottom: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: compact ? 5 : 6,
-      backgroundColor: '#f0efe8',
-      paddingVertical: tight ? 4 : 5,
-      paddingHorizontal: tight ? 7 : 8,
-      borderTopWidth: 1,
-      borderTopColor: '#2d6b45',
-    },
-    brandBox: { flexDirection: 'row', gap: 6, alignItems: 'flex-start', flex: 1 },
     logoSlot: {
-      width: 44,
-      height: 44,
+      width: 48,
+      height: 48,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    logoImage: { width: 44, height: 'auto', objectFit: 'contain' },
-    logoSlotText: { color: '#ffffff', fontSize: 12, fontFamily: 'Helvetica-Bold' },
+    logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
+    logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: tight ? 10 : 11, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.3 },
-    companyTagline: { fontSize: tight ? 5.5 : 6.2, color: '#d4e8dc', textTransform: 'uppercase', marginTop: 2 },
-    contactLine: { fontSize: tight ? 5.4 : 6.1, color: '#c2d9cc', marginTop: 2, lineHeight: tight ? 1.1 : 1.3 },
-    idBox: {
-      width: tight ? 120 : 132,
-      backgroundColor: '#0d3a1f',
-      borderWidth: 1,
-      borderColor: '#2d6b45',
-      borderRadius: 5,
-      paddingVertical: tight ? 5 : 6,
-      paddingHorizontal: tight ? 6 : 7,
+    companyName: {
+      fontSize: tight ? 12 : 14,
+      color: '#ffffff',
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    companyTagline: {
+      fontSize: tight ? 5.5 : 6.2,
+      color: '#dce5e2',
+      textTransform: 'uppercase',
+      marginTop: 2,
+    },
+    contactLine: {
+      fontSize: tight ? 5.4 : 6.1,
+      color: '#c8d4d0',
+      marginTop: 2,
+      lineHeight: tight ? 1.1 : 1.3,
+    },
+    docIdRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: tight ? 4 : 5,
+      paddingHorizontal: tight ? 10 : 12,
+      borderBottomWidth: 2,
+      borderBottomColor: accent,
+      marginBottom: tight ? 4 : compact ? 5 : 6,
+    },
+    docTitle: {
+      fontSize: tight ? 9 : 10,
+      color: '#374151',
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    docNumberBlock: {
       alignItems: 'flex-end',
     },
-    idLabel: { fontSize: 5.8, color: '#a3c4b0', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    idValue: { fontSize: 11, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
-    idDate: { fontSize: 6.5, color: '#c2d9cc', marginTop: 2, fontFamily: 'Helvetica-Bold' },
-    docTitle: { fontSize: tight ? 9 : 10, color: '#1a1a1a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    section: { marginBottom: tight ? 3 : compact ? 4 : 5 },
-    sectionTitle: {
-      fontSize: 6.8,
-      color: '#ffffff',
-      backgroundColor: accent,
-      borderLeftWidth: 3,
-      borderLeftColor: '#2d6b45',
-      paddingVertical: 2.5,
-      paddingHorizontal: 6,
-      marginBottom: 3,
+    docNumberLabel: {
+      fontSize: 5.5,
+      color: '#9CA3AF',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
       letterSpacing: 0.3,
     },
+    docNumberValue: {
+      fontSize: 10,
+      color: fillableColor,
+      fontFamily: fillableBold,
+      marginTop: 1,
+    },
+    docDate: {
+      fontSize: 6,
+      color: '#9CA3AF',
+      marginTop: 1,
+    },
 
-    fieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#6b7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+    // ── Sections ────────────────────────────────────────
+    section: { marginBottom: tight ? 3 : compact ? 4 : 5 },
+    sectionTitle: {
+      fontSize: 6.8,
+      color: accent,
+      textTransform: 'uppercase',
+      fontFamily: 'Helvetica-Bold',
+      letterSpacing: 0.4,
+      paddingBottom: tight ? 1.5 : 2,
+      borderBottomWidth: 1,
+      borderBottomColor: accent,
+      marginBottom: tight ? 3 : compact ? 4 : 5,
+    },
+
+    // ── Fields ──────────────────────────────────────────
+    fieldLabel: { fontSize: tight ? 5.2 : 5.6, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
     fieldValue: { fontSize: tight ? 6.8 : compact ? 7.4 : 7.8, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.1 },
     blockText: { fontSize: tight ? 6.3 : compact ? 6.8 : 7.2, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.1 : 1.25 },
 
-    grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 3 : 4 },
-    fieldCard: {
-      width: '24%',
-      backgroundColor: '#f0efe8',
-      borderWidth: 1,
-      borderColor: '#d4d3c8',
-      borderRadius: 4,
-      paddingVertical: tight ? 2.5 : 4,
-      paddingHorizontal: tight ? 3 : 5,
-      minHeight: tight ? 22 : compact ? 28 : 32,
+    fieldRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: compact ? 3 : 4,
       marginBottom: tight ? 2 : compact ? 2.5 : 3,
     },
+    fieldCard: {
+      width: '24%',
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
+      paddingVertical: tight ? 2.5 : 4,
+      paddingHorizontal: tight ? 3 : 5,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
+    },
     blockCard: {
-      backgroundColor: '#ffffff',
-      borderWidth: 1,
-      borderColor: '#d4d3c8',
-      borderRadius: 4,
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
       paddingVertical: tight ? 3.5 : 5,
       paddingHorizontal: tight ? 4.5 : 6,
       minHeight: tight ? 22 : compact ? 28 : 32,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     heroBlockCard: {
-      backgroundColor: '#fdf8ed',
-      borderColor: '#d4c98a',
+      backgroundColor: '#EFF6F3',
+      borderBottomColor: accent,
     },
     mutedBlockCard: {
-      backgroundColor: '#f0efe8',
-      borderColor: '#d4d3c8',
+      backgroundColor: '#F7F9F8',
+      borderBottomColor: '#E5E9E8',
     },
 
+    // ── Readings ────────────────────────────────────────
     readingsSection: {
-      backgroundColor: accent,
-      borderRadius: 4,
-      paddingVertical: tight ? 3.5 : 5,
-      paddingHorizontal: tight ? 3.5 : 5,
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
+      paddingVertical: tight ? 3 : 4,
+      paddingHorizontal: tight ? 3 : 4,
       marginTop: 2,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     readingStrip: { flexDirection: 'row' },
     readingStripCell: {
       flex: 1,
       alignItems: 'center',
       borderRightWidth: 1,
-      borderRightColor: '#ffffff20',
-      paddingVertical: 4,
+      borderRightColor: '#E5E9E8',
+      paddingVertical: 3,
     },
     readingStripCellLast: { borderRightWidth: 0 },
-    readingLabel: { fontSize: 5.4, color: '#c2d9cc', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
-    readingValue: { fontSize: 8.2, color: '#ffffff', fontFamily: fillableBold },
+    readingLabel: { fontSize: 5.2, color: '#9CA3AF', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
+    readingValue: { fontSize: 8.2, color: fillableColor, fontFamily: fillableBold },
 
+    // ── Table ───────────────────────────────────────────
     tableHeaderRow: {
       flexDirection: 'row',
-      backgroundColor: '#e8e7df',
-      borderBottomWidth: 1.5,
-      borderBottomColor: '#d4d3c8',
+      backgroundColor: '#F1F4F3',
+      borderBottomWidth: 1,
+      borderBottomColor: '#D1D5D4',
       marginTop: 2,
     },
     tableHead: {
       fontSize: tight ? 5.4 : 6,
-      color: '#6b7280',
+      color: '#9CA3AF',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
       paddingVertical: tight ? 2.5 : 4,
       paddingHorizontal: tight ? 3.5 : 5,
       borderRightWidth: 1,
-      borderRightColor: '#d4d3c8',
+      borderRightColor: '#E5E9E8',
     },
     tableRow: {
       flexDirection: 'row',
       borderBottomWidth: 1,
-      borderBottomColor: '#e8e7df',
+      borderBottomColor: '#F1F4F3',
     },
     tableCell: {
       fontSize: tight ? 6.5 : 7.2,
@@ -187,9 +224,10 @@ function createIndustryStyles(density = 'comfortable', designPreset: any) {
       paddingVertical: tight ? 2.5 : 4,
       paddingHorizontal: tight ? 3.5 : 5,
       borderRightWidth: 1,
-      borderRightColor: '#e8e7df',
+      borderRightColor: '#F1F4F3',
     },
 
+    // ── Status ──────────────────────────────────────────
     statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 3.5 : 4, marginTop: 2 },
     statusItem: {
       flex: 1,
@@ -197,53 +235,55 @@ function createIndustryStyles(density = 'comfortable', designPreset: any) {
       paddingVertical: tight ? 3.5 : 4.5,
       paddingHorizontal: 4.5,
       borderWidth: 1,
-      borderColor: '#d4d3c8',
-      borderRadius: 4,
+      borderColor: '#D1D5D4',
+      borderRadius: 3,
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: tight ? 16 : 22,
-      backgroundColor: '#f0efe8',
     },
     statusItemActive: {
-      backgroundColor: '#15803d',
-      borderColor: '#15803d',
+      backgroundColor: accent,
+      borderColor: accent,
     },
-    statusText: { fontSize: 6.2, color: '#6b7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', textAlign: 'center' },
+    statusText: { fontSize: 6.2, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', textAlign: 'center' },
     statusTextActive: { color: '#ffffff' },
 
+    // ── Acknowledgement ─────────────────────────────────
     textAreaOnly: {},
     ackGrid: { flexDirection: 'row', gap: tight ? 3.5 : compact ? 5 : 6, marginTop: tight ? 3.5 : compact ? 5 : 6 },
     signRow: { display: 'none' },
     signCard: {
       flex: 1,
-      borderWidth: 1,
-      borderColor: '#d4d3c8',
-      borderRadius: 4,
+      borderRadius: 3,
       paddingVertical: tight ? 3.5 : 5,
       paddingHorizontal: tight ? 4.5 : 6,
-      backgroundColor: '#f0efe8',
+      backgroundColor: '#F7F9F8',
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     signSpace: {
       height: tight ? 8 : 14,
       marginBottom: 3,
     },
-    signLabel: { fontSize: 6, color: '#6b7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    ackContainer: { borderWidth: 1, borderColor: '#d4d3c8', borderRadius: 4, overflow: 'hidden' },
-    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#d4d3c8' },
-    ackTopHalf: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 1, borderRightColor: '#d4d3c8' },
+    signLabel: { fontSize: 6, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackContainer: { borderWidth: 1, borderColor: '#D1D5D4', borderRadius: 3, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#D1D5D4' },
+    ackTopHalf: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 1, borderRightColor: '#D1D5D4' },
     ackTopHalfLast: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5 },
     ackBottomRow: { flexDirection: 'row', minHeight: tight ? 45 : compact ? 55 : 65 },
-    ackRecipientSig: { width: '40%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: '#9ca3af' },
-    ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: '#9ca3af' },
+    ackRecipientSig: { width: '40%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: accent },
+    ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: accent },
     ackTechName: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5 },
-    ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#6b7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+
+    // ── Footer ──────────────────────────────────────────
     footer: {
       marginTop: compact ? 5 : 6,
       paddingTop: 4,
       borderTopWidth: 1,
-      borderTopColor: '#d4d3c8',
+      borderTopColor: '#E5E9E8',
       fontSize: 5.5,
-      color: '#6b7280',
+      color: '#9CA3AF',
       textAlign: 'center',
       textTransform: 'uppercase',
     },
@@ -265,25 +305,25 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* ── Header ─────────────────────────────────── */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View style={styles.brandBox}>
-              <PdfLogoSlot styles={styles} branding={branding} fallback="I" />
-              <PdfBrandBlock styles={styles} branding={branding} />
-            </View>
-            <View style={styles.idBox}>
-              <Text style={styles.idLabel}>Service Report Number</Text>
-              <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
-              <Text style={styles.idDate}>{safe(csr.date)}</Text>
-            </View>
+            <PdfLogoSlot styles={styles} branding={branding} fallback="I" />
+            <PdfBrandBlock styles={styles} branding={branding} />
           </View>
-          <View style={styles.headerBottom}>
+          <View style={styles.docIdRow}>
             <Text style={styles.docTitle}>Customer Service Report</Text>
+            <View style={styles.docNumberBlock}>
+              <Text style={styles.docNumberLabel}>Report No.</Text>
+              <Text style={styles.docNumberValue}>{safe(csr.csr_number)}</Text>
+              <Text style={styles.docDate}>{safe(csr.date)}</Text>
+            </View>
           </View>
         </View>
 
+        {/* ── Customer & Job Details ─────────────────── */}
         <PdfSection styles={styles} title="Customer & Job Details">
-          <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+          <View style={styles.fieldRow}>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
               <Text style={styles.fieldLabel}>Client Name</Text>
               <Text style={styles.fieldValue}>{safe(csr.client_name)}</Text>
@@ -294,16 +334,16 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
             </View>
             {csr.show_po && hasText(csr.po_number) ? (
               <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-                <Text style={styles.fieldLabel}>Purchase Order (P.O.) Number</Text>
+                <Text style={styles.fieldLabel}>P.O. Number</Text>
                 <Text style={styles.fieldValue}>{safe(csr.po_number)}</Text>
               </View>
             ) : null}
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-              <Text style={styles.fieldLabel}>Service Start (Date/Time)</Text>
+              <Text style={styles.fieldLabel}>Service Start</Text>
               <Text style={styles.fieldValue}>{serviceStart || 'Not recorded'}</Text>
             </View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-              <Text style={styles.fieldLabel}>Service End (Date/Time)</Text>
+              <Text style={styles.fieldLabel}>Service End</Text>
               <Text style={styles.fieldValue}>{serviceEnd || 'Not recorded'}</Text>
             </View>
             {hasText(csr.callTypeDisplay) ? (
@@ -327,14 +367,16 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
           </View>
         </PdfSection>
 
+        {/* ── Problem Reported ───────────────────────── */}
         <PdfSection styles={styles} title="Problem Reported">
           <View style={[styles.blockCard, styles.heroBlockCard]}>
             <Text style={styles.blockText}>{safe(csr.problem_reported) || ' '}</Text>
           </View>
         </PdfSection>
 
+        {/* ── Equipment Details ──────────────────────── */}
         <PdfSection styles={styles} title="Equipment Details">
-          <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+          <View style={styles.fieldRow}>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.modelLabel) || 'Model'}</Text><Text style={styles.fieldValue}>{safe(csr.model)}</Text></View>
@@ -351,6 +393,7 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
           ) : null}
         </PdfSection>
 
+        {/* ── Service Rendered ───────────────────────── */}
         <PdfSection styles={styles} title="Service Rendered">
           <View style={styles.blockCard}>
             <Text style={styles.blockText}>{safe(csr.service_rendered) || ' '}</Text>
@@ -377,6 +420,7 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
           <MaterialsSection styles={styles} csr={csr} templateId="industry" preferredStyle={tightLayout ? 'comma' : 'list'} />
         ) : null}
 
+        {/* ── Status ─────────────────────────────────── */}
         <PdfSection styles={styles} title="Status">
           <View style={styles.statusGrid}>
             {CSR_STATUS_OPTIONS_PDF.map((option) => {
@@ -390,6 +434,7 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
           </View>
         </PdfSection>
 
+        {/* ── Acknowledgement ────────────────────────── */}
         {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
           <PdfSection styles={styles} title="Acknowledgement">
             <View style={{ padding: tightLayout ? 2.5 : compact ? 3.5 : 4.5 }}>

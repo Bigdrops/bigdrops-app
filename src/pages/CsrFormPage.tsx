@@ -362,6 +362,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         client_id: csr.client_id || null,
         linked_invoice_id: csr.linked_invoice_id || null,
         show_po: Boolean(String(csr.po_number || '').trim()),
+        system_down: csr.system_down === '' ? null : csr.system_down,
         materials_used: serializeCsrMaterials(materialsRows, csrMeta as any),
       })
 
@@ -452,6 +453,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         client_id: csr.client_id || null,
         linked_invoice_id: csr.linked_invoice_id || null,
         show_po: Boolean(String(csr.po_number || '').trim()),
+        system_down: csr.system_down === '' ? null : csr.system_down,
         materials_used: serializeCsrMaterials(materialsRows, csrMeta),
       })
 
@@ -498,7 +500,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         csrMeta={csrMeta as any}
         materialsRows={materialsRows}
         saving={saving}
-        csrNumberReady={csrNumberPopulated.current && Boolean(String(csr.csr_number || '').trim())}
+        csrNumberReady={isEdit ? Boolean(String(csr.csr_number || '').trim()) : (csrNumberPopulated.current && Boolean(String(csr.csr_number || '').trim()))}
         onUpdate={guardedUpdate}
         onUpdateMeta={updateMeta}
         onUpdateMaterialRow={updateMaterialRow}

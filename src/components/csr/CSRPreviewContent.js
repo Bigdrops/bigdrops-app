@@ -113,7 +113,7 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
     previewShell: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
   },
-  industry: {
+  foundation: {
     headerBg: '#1a4d2e',
     headerFg: '#ffffff',
     accent: '#1a4d2e',
@@ -136,17 +136,40 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #f8f7f4 0%, #f0efe8 100%)',
     previewShell: 'linear-gradient(180deg, #F0EFE8 0%, #E5E4D8 100%)',
   },
+  industry: {
+    headerBg: '#1f3a68',
+    headerFg: '#ffffff',
+    accent: '#7D8A88',
+    border: '#c5cfd9',
+    mutedBg: '#F7F9F8',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#ffffff',
+    sectionTitleFg: '#1f3a68',
+    pageBg: '#ffffff',
+    pageFg: '#1f3a68',
+    pagePadding: 12,
+    fontSize: 7.8,
+    titleSize: 9.5,
+    headerNameSize: 14,
+    sectionTitleSize: 7.5,
+    valueSize: 8.2,
+    compact: true,
+    headerMode: 'industry',
+    statusStyle: 'pills',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #F7F9F8 100%)',
+    previewShell: 'linear-gradient(180deg, #F7F9F8 0%, #EDF2F7 100%)',
+  },
   executive: {
     headerBg: '#1e3a5f',
     headerFg: '#ffffff',
-    accent: '#2563eb',
+    accent: '#DC2626',
     border: '#bfdbfe',
-    mutedBg: '#eff6ff',
-    sectionBg: '#ffffff',
-    sectionTitleBg: '#2563eb',
+    mutedBg: '#F0F5FA',
+    sectionBg: '#1f3a68',
     sectionTitleFg: '#ffffff',
+    sectionTitleBg: '#1f3a68',
     pageBg: '#ffffff',
-    pageFg: '#1e293b',
+    pageFg: '#1E293B',
     pagePadding: 10,
     fontSize: 7.5,
     titleSize: 9.5,
@@ -156,7 +179,7 @@ export const CSR_TEMPLATE_VARIANTS = {
     compact: true,
     headerMode: 'executive',
     statusStyle: 'pills',
-    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #eff6ff 100%)',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #EFF6FF 100%)',
     previewShell: 'linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%)',
   },
 }
@@ -188,15 +211,21 @@ export const CSR_TEMPLATE_OPTIONS = [
   },
   {
     key: '7',
-    label: 'Industry',
-    blurb: 'Industrial information-dense report with customization support for accent color and fonts.',
-    accent: '#1a4d2e',
+    label: 'Foundation',
+    blurb: 'Warm-toned industrial report with customization support for accent color and fonts.',
+    accent: '#554D56',
   },
   {
     key: '8',
+    label: 'Industry',
+    blurb: 'Slate-inspired industrial report with distinct layout and customization support.',
+    accent: '#7D8A88',
+  },
+  {
+    key: '9',
     label: 'Executive',
-    blurb: 'Corporate-blue executive report with fixed color system and clean professional layout.',
-    accent: '#2563eb',
+    blurb: 'Navy corporate executive report with fixed color system and clean professional layout.',
+    accent: '#DC2626',
   },
 ]
 
@@ -204,7 +233,8 @@ export function getCsrTemplateVariant(template = '4') {
   if (template === '2') return 'signalbands'
   if (template === '3') return 'zinc'
   if (template === '6') return 'minimal'
-  if (template === '7') return 'industry'
-  if (template === '8') return 'executive'
+  if (template === '7') return 'foundation'
+  if (template === '8') return 'industry'
+  if (template === '9') return 'executive'
   return 'crimson'
 }
