@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sun &amp; Shield Power Solutions — Service Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #1f3a68;
+            --navy-deep: #16294a;
+            --navy-soft: #2c4a7c;
+            --red: #d6213b;
+            --red-dark: #b9182f;
+            --blue-band: #dde4f1;
+            --blue-band-2: #eaf0f9;
+            --blue-head: #2c4a7c;
+            --label: #2c4a7c;
+            --label-mute: #6e7d99;
+            --field-bg: #f3f5fa;
+            --field-bg-2: #eef2f9;
+            --hairline: #c8d2e3;
+            --hairline-2: #d4dce9;
+            --findings-bg: #fff7ec;
+            --findings-bd: #f1c891;
+            --work-bg: #eaf3ec;
+            --work-bd: #bcd6c1;
+            --complete: #1f8b3d;
+            --complete-bg: #e7f3eb;
+            --dash-bracket: #5a6b8a;
+            --text: #1c2540;
+            --text-soft: #3a4866;
+            --muted: #6b7790;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text);
+            background: #e8ecf3;
+            -webkit-font-smoothing: antialiased;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        /* PAGE — A4 portrait */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 24px auto;
+            background: #ffffff;
+            box-shadow: 0 12px 40px rgba(20, 30, 60, 0.18);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ====================== TOP HEADER (replaces sidebar) ====================== */
+        .top-header {
+            background: var(--navy);
+            color: #fff;
+            padding: 6mm 9mm 5mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4mm 8mm;
+            border-bottom: 4px solid var(--red);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 5mm;
+            flex-shrink: 0;
+        }
+
+        .logo-circle-sm {
+            width: 28mm;
+            height: 28mm;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--navy);
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            font-size: 9pt;
+            line-height: 1.2;
+            letter-spacing: 0.4px;
+            padding: 0 2mm;
+            flex-shrink: 0;
+        }
+
+        .header-brand {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            font-size: 13pt;
+            line-height: 1.3;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+        .header-brand span {
+            display: block;
+            font-weight: 700;
+            font-size: 9pt;
+            letter-spacing: 0.8px;
+            color: #b8cbe5;
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+        }
+
+        .header-services {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2mm 5mm;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 8.5pt;
+            color: #c8d9f0;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .header-services li::after {
+            content: '·';
+            margin-left: 5mm;
+            color: #4a6e9a;
+        }
+        .header-services li:last-child::after {
+            display: none;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 5mm;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .report-flag-top {
+            background: var(--red);
+            color: #fff;
+            font-weight: 700;
+            font-size: 10pt;
+            letter-spacing: 1.2px;
+            text-align: center;
+            padding: 2mm 6mm;
+            border-radius: 2px;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+        .serial-pill-top {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 4px;
+            padding: 2mm 4mm;
+            font-size: 8.5pt;
+            color: #c8d9f0;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .contact-top {
+            font-size: 8.5pt;
+            color: #c8d9f0;
+            line-height: 1.5;
+            text-align: right;
+            white-space: nowrap;
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            padding-left: 5mm;
+        }
+        .contact-top strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ====================== MAIN ====================== */
+        main.content {
+            padding: 7mm 9mm 8mm 9mm;
+            display: flex;
+            flex-direction: column;
+            gap: 4mm;
+            flex: 1;
+        }
+
+        /* ---- Top row: Report Date / Customer / Location ---- */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 3mm;
+        }
+        .field-card {
+            border-top: 2px solid var(--red);
+            background: #fff;
+            padding: 3mm 4mm 3.5mm;
+            border: 1px solid var(--hairline);
+            border-top-width: 2px;
+        }
+        .field-card .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.5mm;
+        }
+        .field-card .value {
+            color: var(--text);
+            font-size: 12pt;
+            font-weight: 500;
+        }
+
+        /* ---- Generic section card ---- */
+        .section {
+            border: 1px solid var(--hairline);
+            background: #fff;
+        }
+        .section-head {
+            background: var(--blue-band);
+            color: var(--navy);
+            font-weight: 700;
+            font-size: 9.5pt;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+            padding: 2.8mm 5mm;
+            border-left: 4px solid var(--navy);
+        }
+        .section-body {
+            padding: 5mm 6mm;
+        }
+
+        /* ---- Customer info ---- */
+        .field {
+            margin-bottom: 1mm;
+        }
+        .field .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+        .field .input {
+            background: var(--field-bg);
+            border: 1px solid var(--hairline-2);
+            border-radius: 2px;
+            padding: 2.4mm 3mm;
+            color: var(--text);
+            font-size: 10.5pt;
+        }
+
+        /* ---- Nature of problem (callout) ---- */
+        .callout {
+            background: var(--findings-bg);
+            border: 1px solid var(--findings-bd);
+            border-radius: 2px;
+            padding: 5mm 6mm;
+            font-size: 10.5pt;
+            line-height: 1.65;
+            color: var(--text);
+        }
+        .callout b {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* ---- Equipment specs grid ---- */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 3mm;
+            margin-bottom: 4mm;
+        }
+        .spec .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+        .spec .input {
+            background: var(--field-bg);
+            border: 1px solid var(--hairline-2);
+            border-radius: 2px;
+            padding: 2.4mm 3mm;
+            font-size: 10.5pt;
+        }
+        .specs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3mm;
+        }
+        .spec-wide .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+        .spec-wide .input {
+            background: var(--field-bg);
+            border: 1px solid var(--hairline-2);
+            border-radius: 2px;
+            padding: 2.4mm 3mm;
+            font-size: 10.5pt;
+        }
+
+        /* ---- Operational readings table ---- */
+        .op-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2mm;
+        }
+        .op-table thead th {
+            background: var(--navy);
+            color: #fff;
+            font-weight: 500;
+            font-size: 9pt;
+            padding: 3mm 2mm;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .op-table thead th:last-child {
+            border-right: none;
+        }
+        .op-table tbody td {
+            height: 11mm;
+            border: 1px solid var(--hairline);
+            border-top: none;
+            background: #fff;
+        }
+        .op-table tbody td:not(:last-child) {
+            border-right: 1px solid var(--hairline);
+        }
+
+        /* ---- Parts + Timeline row ---- */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 3mm;
+        }
+        .parts-used .chip {
+            display: inline-block;
+            background: #e8eef8;
+            border: 1px solid #c5d3e8;
+            color: var(--text);
+            font-size: 10pt;
+            padding: 2mm 4mm;
+            border-radius: 2px;
+        }
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4mm;
+        }
+        .timeline-grid .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+        .timeline-grid .input {
+            background: var(--field-bg);
+            border: 1px solid var(--hairline-2);
+            border-radius: 2px;
+            padding: 2.4mm 3mm;
+            font-size: 10.5pt;
+        }
+
+        /* ---- Service rendered + status ---- */
+        .render-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 5mm;
+        }
+        .work-box {
+            background: var(--work-bg);
+            border: 1px solid var(--work-bd);
+            border-radius: 2px;
+            padding: 4mm 5mm;
+            font-size: 10.5pt;
+            line-height: 1.55;
+        }
+        .remarks-box {
+            margin-top: 4mm;
+            border: 1px dashed var(--dash-bracket);
+            border-radius: 2px;
+            height: 14mm;
+        }
+        .remarks-label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+
+        .status-card {
+            border: 1px solid var(--navy);
+            border-radius: 2px;
+            padding: 0;
+        }
+        .status-head {
+            text-align: center;
+            color: var(--navy);
+            font-weight: 700;
+            font-size: 10pt;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 2.4mm 0 1.5mm;
+            border-bottom: 1px solid var(--navy);
+        }
+        .status-list {
+            list-style: none;
+            margin: 0;
+            padding: 2.5mm 0 3mm;
+        }
+        .status-list li {
+            display: flex;
+            align-items: center;
+            gap: 2.5mm;
+            padding: 1.4mm 4mm;
+            font-size: 9.5pt;
+            color: var(--text);
+        }
+        .check-box {
+            width: 4mm;
+            height: 4mm;
+            border: 1.5px solid var(--navy);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            flex: 0 0 auto;
+        }
+        .check-box.checked {
+            background: var(--complete-bg);
+            border-color: var(--complete);
+        }
+        .check-box.checked::after {
+            content: '✓';
+            color: var(--complete);
+            font-weight: 800;
+            font-size: 9pt;
+            line-height: 1;
+        }
+
+        /* ---- Customer acknowledgment ---- */
+        .ack-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5mm;
+        }
+        .ack-col .label {
+            color: var(--label);
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 1.8mm;
+        }
+        .ack-col .remarks-box {
+            height: 18mm;
+            margin-bottom: 4mm;
+        }
+        .ack-col .sign-box {
+            height: 18mm;
+            border: 1px solid var(--hairline-2);
+            background: #fff;
+            position: relative;
+        }
+        .ack-col .sign-hint {
+            position: absolute;
+            bottom: 2mm;
+            left: 3mm;
+            font-size: 9pt;
+            color: var(--muted);
+        }
+        .ack-col .print-input {
+            background: var(--field-bg);
+            border: 1px solid var(--hairline-2);
+            border-radius: 2px;
+            height: 9mm;
+        }
+
+        /* ---- Footer band ---- */
+        .footer-band {
+            margin-top: 4mm;
+            background: var(--navy);
+            color: #fff;
+            text-align: center;
+            font-size: 9.5pt;
+            padding: 3mm 4mm;
+            letter-spacing: 0.3px;
+        }
+
+        /* ---- Responsive tweaks ---- */
+        @media (max-width: 800px) {
+            .top-header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 4mm 5mm;
+            }
+            .header-left {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .header-right {
+                margin-left: 0;
+                justify-content: center;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 3mm;
+            }
+            .contact-top {
+                border-left: none;
+                padding-left: 0;
+                text-align: center;
+            }
+            .top-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            .specs-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+            .render-grid {
+                grid-template-columns: 1fr;
+            }
+            .ack-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+            }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+
+        <!-- ============ TOP HEADER (sidebar content moved here) ============ -->
+        <header class="top-header">
+            <div class="header-left">
+                <div class="logo-circle-sm">SUN &amp;<br>SHIELD</div>
+                <div class="header-brand">
+                    Sun &amp; Shield<br>Power Solutions
+                    <span>Generator Sales · Maintenance · Installation · Rental · Facility Mgmt</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="report-flag-top">SERVICE<br>REPORT</div>
+                <div class="serial-pill-top">Sasi-6347ty6v-B169</div>
+                <div class="contact-top">
+                    <strong>43, Oshola Street</strong><br>
+                    Ifako Ijaiye, Lagos<br>
+                    08066190685
+                </div>
+            </div>
+        </header>
+
+        <!-- ============ MAIN ============ -->
+        <main class="content">
+
+            <!-- Top row: Report Date / Customer / Location -->
+            <section class="top-row">
+                <div class="field-card">
+                    <div class="label">Report Date</div>
+                    <div class="value">Feb 28, 2026</div>
+                </div>
+                <div class="field-card">
+                    <div class="label">Customer</div>
+                    <div class="value">Inspire Sports Academy</div>
+                </div>
+                <div class="field-card">
+                    <div class="label">Location</div>
+                    <div class="value">Oshodi, Lagos</div>
+                </div>
+            </section>
+
+            <!-- Customer Information -->
+            <section class="section">
+                <div class="section-head">Customer Information</div>
+                <div class="section-body">
+                    <div class="field">
+                        <div class="label">Full Address</div>
+                        <div class="input">No 1, Old Nitel Road, Oshodi, Lagos State, Nigeria</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nature of Problem -->
+            <section class="section">
+                <div class="section-head">Nature of Problem</div>
+                <div class="section-body">
+                    <div class="callout">
+                        <b>Reported Issue:</b> Genset failure investigated.<br>
+                        <b>Findings:</b> Control module failure detected.<br>
+                        <b>Recommendation:</b> Replace control module.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Equipment Specifications -->
+            <section class="section">
+                <div class="section-head">Equipment Specifications</div>
+                <div class="section-body">
+                    <div class="specs-grid">
+                        <div class="spec">
+                            <div class="label">Type</div>
+                            <div class="input">Generator</div>
+                        </div>
+                        <div class="spec">
+                            <div class="label">Make</div>
+                            <div class="input">Kirloskar</div>
+                        </div>
+                        <div class="spec">
+                            <div class="label">Model</div>
+                            <div class="input">2R1040</div>
+                        </div>
+                        <div class="spec">
+                            <div class="label">Capacity</div>
+                            <div class="input">20 KVA</div>
+                        </div>
+                    </div>
+                    <div class="specs-row">
+                        <div class="spec-wide">
+                            <div class="label">Serial Number</div>
+                            <div class="input">2H.9275/2120092</div>
+                        </div>
+                        <div class="spec-wide">
+                            <div class="label">Equipment Location</div>
+                            <div class="input">No 1, Old Nitel Road, Oshodi</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Operational Readings -->
+            <section class="section">
+                <div class="section-head">Operational Readings</div>
+                <div class="section-body">
+                    <table class="op-table">
+                        <thead>
+                            <tr>
+                                <th>Voltage (V)</th>
+                                <th>Frequency (Hz)</th>
+                                <th>Battery (V)</th>
+                                <th>Temp (°C)</th>
+                                <th>Pressure (bar)</th>
+                                <th>Running Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td></td><td></td><td></td><td></td><td></td><td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Parts Used + Service Timeline -->
+            <section class="two-col">
+                <div class="section">
+                    <div class="section-head">Parts Used</div>
+                    <div class="section-body">
+                        <span class="chip">Control Module</span>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-head">Service Timeline</div>
+                    <div class="section-body">
+                        <div class="timeline-grid">
+                            <div>
+                                <div class="label">Service Start</div>
+                                <div class="input">Feb 28, 2026</div>
+                            </div>
+                            <div>
+                                <div class="label">Service End</div>
+                                <div class="input">Feb 28, 2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Service Rendered & Status -->
+            <section class="section">
+                <div class="section-head">Service Rendered &amp; Status</div>
+                <div class="section-body">
+                    <div class="render-grid">
+                        <div>
+                            <div class="remarks-label">Work Performed</div>
+                            <div class="work-box">
+                                Replaced control module. Tested genset for proper operation
+                                and verified functionality across all load conditions.
+                            </div>
+                            <div class="remarks-label" style="margin-top:4mm;">Engineer's Remarks</div>
+                            <div class="remarks-box"></div>
+                        </div>
+                        <div class="status-card">
+                            <div class="status-head">Service Status</div>
+                            <ul class="status-list">
+                                <li><span class="check-box checked"></span>Complete</li>
+                                <li><span class="check-box"></span>Incomplete</li>
+                                <li><span class="check-box"></span>Pending Spares</li>
+                                <li><span class="check-box"></span>Under Observation</li>
+                                <li><span class="check-box"></span>Temp Solution</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Customer Acknowledgment -->
+            <section class="section">
+                <div class="section-head">Customer Acknowledgment</div>
+                <div class="section-body">
+                    <div class="ack-grid">
+                        <div class="ack-col">
+                            <div class="label">Customer Remarks</div>
+                            <div class="remarks-box"></div>
+                            <div class="label">Print Name</div>
+                            <div class="print-input"></div>
+                        </div>
+                        <div class="ack-col">
+                            <div class="label">Authorized Signature</div>
+                            <div class="sign-box">
+                                <span class="sign-hint">Sign here</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer band -->
+            <div class="footer-band">
+                This document serves as official record of service performed by Sun &amp; Shield Power Solutions | TIN: 10530485G8
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>
