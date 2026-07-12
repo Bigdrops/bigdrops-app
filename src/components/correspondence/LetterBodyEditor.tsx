@@ -1,8 +1,10 @@
 import type { LetterBody } from '@/domain/correspondence/letter/types'
+import RichTextEditor from '@/components/RichTextEditor'
 
 interface LetterBodyEditorProps {
   value: string
   onChange: (value: string) => void
+  disabled?: boolean
 }
 
 export function textToBodyBlocks(text: string): LetterBody {
@@ -20,14 +22,28 @@ export function bodyBlocksToText(body: LetterBody): string {
     .join('\n')
 }
 
-export default function LetterBodyEditor({ value, onChange }: LetterBodyEditorProps) {
-  return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="Enter letter body..."
-      rows={12}
-      className="w-full resize-y rounded-xl border border-bd-border bg-bd-surface p-4 text-sm text-bd-text placeholder:text-bd-text-muted focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg"
-    />
-  )
+// ponytail: wraps RichTextEditor; formatting not persisted to LetterBody blocks.
+// Full TipTap→LetterBody serializer when formatting persistence is needed.
+function htmlToText(html: string): string {
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return el.textContent || el.innerText || ''
+}
+
+function textToHtml(text: string): string {
+  return text
+    .split('\n')
+    .map((l) => (l ? `<p>${l}</p>` : '<p><br></p>'))
+    .join('')
+}
+
+export default function LetterBodyEditor({ value, onChange, disabled }: LetterBodyEditorProps) {
+  if (disabled) {
+    return (
+      <div className="w-full rounded-xl border border-bd-border bg-bd-surface-muted p-4 text-sm text-bd-text-muted leading-relaxed whitespace-pre-wrap min-h-[150px]">
+        {value || 'No content'}
+      </div>
+    )
+  }
+  return <RichTextEditor value={textToHtml(value)} onChange={(html) => onChange(htmlToText(html))} placeholder="Enter letter body..." />
 }

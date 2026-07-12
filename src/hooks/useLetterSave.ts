@@ -7,9 +7,17 @@ import type { LetterBody, CreateLetterInput } from '@/domain/correspondence/lett
 export interface LetterFormFields {
   subject: string
   date: string
+  recipientType: 'client' | 'manual'
   recipientId: string
   recipientName: string
+  recipientAddress: string
+  recipientEmail: string
+  recipientPhone: string
+  senderType: 'profile' | 'manual'
   senderName: string
+  senderAddress: string
+  senderEmail: string
+  senderPhone: string
   bodyText: string
 }
 
@@ -31,13 +39,17 @@ function bodyBlocksFromText(text: string): LetterBody {
 
 const letterStrategy: DocumentSaveStrategy<UseLetterSaveParams> = {
   validate(input) {
-    if (!input.fields.subject?.trim()) {
+    const { fields } = input
+    if (!fields.subject?.trim()) {
       return { valid: false, error: 'Validation Error', errorDescription: 'Subject is required' }
     }
-    if (!input.fields.recipientId) {
+    if (fields.recipientType === 'client' && !fields.recipientId) {
       return { valid: false, error: 'Validation Error', errorDescription: 'Select a recipient' }
     }
-    if (!input.fields.date) {
+    if (fields.recipientType === 'manual' && !fields.recipientName?.trim()) {
+      return { valid: false, error: 'Validation Error', errorDescription: 'Recipient name is required' }
+    }
+    if (!fields.date) {
       return { valid: false, error: 'Validation Error', errorDescription: 'Date is required' }
     }
     return { valid: true }
@@ -48,31 +60,30 @@ const letterStrategy: DocumentSaveStrategy<UseLetterSaveParams> = {
   },
 
   async persist(input, _payload, { isCreate, id }) {
-    const body = bodyBlocksFromText(input.fields.bodyText)
+    const { fields } = input
+    const body = bodyBlocksFromText(fields.bodyText)
+
+    const recipient = {
+      companyName: fields.recipientName,
+      clientId: fields.recipientType === 'client' ? (fields.recipientId || undefined) : undefined,
+      address: fields.recipientAddress || undefined,
+      email: fields.recipientEmail || undefined,
+      phone: fields.recipientPhone || undefined,
+    }
+
+    const sender = {
+      companyName: fields.senderName,
+      address: fields.senderAddress || undefined,
+      email: fields.senderEmail || undefined,
+      phone: fields.senderPhone || undefined,
+    }
 
     if (isCreate) {
-      const createInput: CreateLetterInput = {
-        recipient: {
-          companyName: input.fields.recipientName,
-          clientId: input.fields.recipientId || undefined,
-        },
-        sender: { companyName: input.fields.senderName || input.fields.recipientName },
-        subject: input.fields.subject,
-        date: input.fields.date,
-        body,
-      }
-      const doc = await createLetter(createInput)
+      const doc = await createLetter({ recipient, sender, subject: fields.subject, date: fields.date, body })
       return { data: { id: doc.identity.id }, error: null }
     }
 
-    await updateLetter(id!, {
-      recipient: { companyName: input.fields.recipientName, clientId: input.fields.recipientId || undefined },
-      sender: { companyName: input.fields.senderName },
-      subject: input.fields.subject,
-      date: input.fields.date,
-      body,
-      status: 'draft',
-    })
+    await updateLetter(id!, { recipient, sender, subject: fields.subject, date: fields.date, body, status: 'draft' })
     return { data: null, error: null }
   },
 

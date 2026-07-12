@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FileText } from "lucide-react"
 import Layout from "../components/Layout"
+import MobileFab from '@/components/layout/MobileFab'
 import ModuleShell from "@/components/layout/ModuleShell"
 import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import { listLetters } from "@/domain/correspondence/letter/letterRepository"
@@ -42,6 +43,8 @@ export default function Letters() {
         title="Official Letters"
         summary={`${letters.length} letter${letters.length !== 1 ? "s" : ""}`}
         tone="violet"
+        primaryActionLabel="New Letter"
+        onPrimaryAction={() => navigate('/letters/new')}
         searchValue={search}
         onSearchChange={(v) => setSearch(v as string)}
         searchPlaceholder="Search by number, recipient or subject..."
@@ -69,6 +72,7 @@ export default function Letters() {
           </div>
         }
       />
+      <MobileFab onClick={() => navigate('/letters/new')} ariaLabel="Create letter" />
     </Layout>
   )
 }

@@ -54,11 +54,22 @@ export function useDocumentSave<TInput>(options: {
 
       const payload = strategy.buildPayload(input, { status })
 
-      const { data, error } = await strategy.persist(input, payload, {
-        isCreate,
-        isEdit,
-        id,
-      })
+      let persistResult: { data: any; error: any }
+      try {
+        persistResult = await strategy.persist(input, payload, {
+          isCreate,
+          isEdit,
+          id,
+        })
+      } catch (err) {
+        feedback.error('Save failed', {
+          description: getUserFacingMutationMessage(err, { action: 'save' }),
+        })
+        setSaving(false)
+        return
+      }
+
+      const { data, error } = persistResult
 
       if (error || (isCreate && !data)) {
         feedback.error('Save failed', {
