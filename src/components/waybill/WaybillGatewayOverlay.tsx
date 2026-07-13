@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { X, ArrowRight } from 'lucide-react'
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { ArrowRight, FileText } from 'lucide-react'
 import type { WaybillType } from './waybillUtils'
 
 interface WaybillGatewayOverlayProps {
@@ -11,137 +15,95 @@ interface WaybillGatewayOverlayProps {
   onDownloadBlank: (type: WaybillType) => void
 }
 
+const OPTIONS: { type: WaybillType; label: string; description: string; badge: string }[] = [
+  {
+    type: 'external',
+    label: 'External Delivery Note',
+    description: 'Outbound shipment to clients and vendors. Links to invoice on record.',
+    badge: 'Type 01 / Outbound',
+  },
+  {
+    type: 'internal',
+    label: 'Internal Transfer Note',
+    description: 'Stock movement between depots, workshops, and service centers.',
+    badge: 'Type 02 / Internal',
+  },
+]
+
 export default function WaybillGatewayOverlay({ open, onClose, onSelect, onDownloadBlank }: WaybillGatewayOverlayProps) {
-  const [mounted, setMounted] = useState(false)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true))
-      })
-    } else {
-      setVisible(false)
-      const timer = setTimeout(() => setMounted(false), 200)
-      return () => clearTimeout(timer)
-    }
-  }, [open])
-
-  if (!mounted) return null
-
-  return createPortal(
-    <div
-      className={`fixed inset-0 z-[999] flex items-center justify-center p-4 transition-all duration-200 ${
-        visible ? 'bg-[var(--bd-overlay-scrim,rgba(0,0,0,0.4))]' : 'bg-transparent'
-      }`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div
-        className={`relative flex w-full max-w-[420px] flex-col gap-[12px] rounded-[var(--bd-overlay-radius,28px)] bg-[var(--bd-overlay-bg,var(--bd-bg,#FFFFFF))] p-6 shadow-[var(--bd-shadow-lg)] transition-all duration-200 ${
-          visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-5 top-5 grid h-8 w-8 place-items-center rounded-full bg-[var(--bd-overlay-close-bg,var(--bd-surface-muted,#F1F5F9))] text-[var(--bd-overlay-close-text,var(--bd-text-muted,#64748B))] transition-colors hover:text-[var(--bd-overlay-text,var(--bd-text,#0F172A))]"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        <div className="mb-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--bd-primary,#2563EB)]">
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
+      <DialogContent className="sm:max-w-lg gap-5 p-6">
+        <DialogHeader>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-bd-accent font-mono">
             Create Document
-          </div>
-          <h2 className="mb-1.5 mt-1 font-sans text-[32px] font-bold leading-[1.1] text-[var(--bd-overlay-text,var(--bd-text,#0F172A))]">
-            New <span className="text-[var(--bd-warning,#D97706)]">Waybill</span>
-          </h2>
-          <div className="font-mono text-[11px] tracking-[0.1em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
+          </span>
+          <DialogTitle className="text-[32px] font-bold leading-[1.1]">
+            New <span className="text-bd-accent">Waybill</span>
+          </DialogTitle>
+          <DialogDescription className="text-xs tracking-wider">
             Select document type
-          </div>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {OPTIONS.map((opt) => (
+            <button
+              key={opt.type}
+              type="button"
+              onClick={() => onSelect(opt.type)}
+              className="group flex cursor-pointer flex-col gap-2 rounded-[var(--bd-radius-md)] border border-bd-overlay-border bg-bd-overlay-section-bg p-4 text-left transition-all duration-200 hover:border-bd-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-focus-ring"
+            >
+              <span className="text-[9px] uppercase tracking-[0.2em] text-bd-overlay-muted font-mono">
+                {opt.badge}
+              </span>
+              <span className="text-base font-semibold text-bd-overlay-text">
+                {opt.label}
+              </span>
+              <span className="text-xs leading-relaxed text-bd-overlay-muted">
+                {opt.description}
+              </span>
+              <span className="flex justify-end mt-1">
+                <ArrowRight className="h-4 w-4 text-bd-overlay-muted transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-bd-accent" />
+              </span>
+            </button>
+          ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => onSelect('external')}
-          className="group flex w-full cursor-pointer items-center gap-[18px] rounded-[var(--bd-radius-md,4px)] border border-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))] bg-[var(--bd-overlay-section-bg,var(--bd-surface,#F8FAFC))] p-[22px_20px] text-left transition-all duration-200 hover:border-[var(--bd-border-hover,var(--bd-primary,#2563EB))] hover:bg-[var(--bd-surface-hover,#F1F5F9)]"
-        >
-          <div className="h-[48px] w-[3px] shrink-0 rounded-[2px] bg-[var(--bd-primary,#2563EB)]" />
-          <div className="flex-1">
-            <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
-              Type 01 / Outbound
-            </div>
-            <div className="mb-1 font-sans text-[18px] font-semibold text-[var(--bd-overlay-text,var(--bd-text,#0F172A))]">
-              External Delivery Note
-            </div>
-            <div className="font-sans text-[13px] leading-[1.5] text-[var(--bd-overlay-muted,var(--bd-text-muted,#64748B))]">
-              Outbound shipment to clients and vendors. Links to invoice on record.
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-[var(--bd-text-subtle,var(--bd-text-muted,#CBD5E1))] transition-all duration-200 group-hover:translate-x-1 group-hover:text-[var(--bd-primary,#2563EB)]" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onSelect('internal')}
-          className="group flex w-full cursor-pointer items-center gap-[18px] rounded-[var(--bd-radius-md,4px)] border border-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))] bg-[var(--bd-overlay-section-bg,var(--bd-surface,#F8FAFC))] p-[22px_20px] text-left transition-all duration-200 hover:border-[var(--bd-border-hover,var(--bd-primary,#2563EB))] hover:bg-[var(--bd-surface-hover,#F1F5F9)]"
-        >
-          <div className="h-[48px] w-[3px] shrink-0 rounded-[2px] bg-[var(--bd-warning,#D97706)]" />
-          <div className="flex-1">
-            <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
-              Type 02 / Internal
-            </div>
-            <div className="mb-1 font-sans text-[18px] font-semibold text-[var(--bd-overlay-text,var(--bd-text,#0F172A))]">
-              Internal Transfer Note
-            </div>
-            <div className="font-sans text-[13px] leading-[1.5] text-[var(--bd-overlay-muted,var(--bd-text-muted,#64748B))]">
-              Stock movement between depots, workshops, and service centers.
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-[var(--bd-text-subtle,var(--bd-text-muted,#CBD5E1))] transition-all duration-200 group-hover:translate-x-1 group-hover:text-[var(--bd-primary,#2563EB)]" />
-        </button>
-
-        <div className="my-1.5 flex items-center gap-[12px]">
-          <div className="h-px flex-1 bg-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))]" />
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-bd-overlay-border" />
+          <span className="text-[9px] uppercase tracking-[0.2em] text-bd-overlay-muted font-mono shrink-0">
             or download blank
-          </div>
-          <div className="h-px flex-1 bg-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))]" />
+          </span>
+          <div className="h-px flex-1 bg-bd-overlay-border" />
         </div>
 
-        <div className="flex gap-[10px]">
-          <button
-            type="button"
-            onClick={() => onDownloadBlank('external')}
-            className="flex-1 cursor-pointer rounded-[var(--bd-radius-md,4px)] border border-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))] bg-transparent p-[14px] text-left transition-all duration-200 hover:border-[var(--bd-border-hover,#94A3B8)] hover:bg-[var(--bd-overlay-section-bg,var(--bd-surface,#F8FAFC))]"
-          >
-            <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
-              Blank Template
-            </div>
-            <div className="font-sans text-[13px] font-semibold text-[var(--bd-overlay-muted,var(--bd-text-muted,#64748B))]">
-              External (PDF)
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => onDownloadBlank('internal')}
-            className="flex-1 cursor-pointer rounded-[var(--bd-radius-md,4px)] border border-[var(--bd-overlay-border,var(--bd-border,#E2E8F0))] bg-transparent p-[14px] text-left transition-all duration-200 hover:border-[var(--bd-border-hover,#94A3B8)] hover:bg-[var(--bd-overlay-section-bg,var(--bd-surface,#F8FAFC))]"
-          >
-            <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--bd-overlay-muted,var(--bd-text-muted,#94A3B8))]">
-              Blank Template
-            </div>
-            <div className="font-sans text-[13px] font-semibold text-[var(--bd-overlay-muted,var(--bd-text-muted,#64748B))]">
-              Internal (PDF)
-            </div>
-          </button>
+        <div className="grid grid-cols-2 gap-3">
+          {(['external', 'internal'] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onDownloadBlank(type)}
+              className="flex cursor-pointer flex-col gap-1 rounded-[var(--bd-radius-md)] border border-bd-overlay-border bg-transparent p-3 text-left transition-all duration-200 hover:border-bd-overlay-section-border hover:bg-bd-overlay-section-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-focus-ring"
+            >
+              <span className="text-[9px] uppercase tracking-[0.2em] text-bd-overlay-muted font-mono">
+                Blank Template
+              </span>
+              <span className="text-xs font-semibold text-bd-overlay-muted">
+                {type === 'external' ? 'External (PDF)' : 'Internal (PDF)'}
+              </span>
+            </button>
+          ))}
         </div>
-      </div>
-    </div>,
-    document.body
+
+        <div className="flex items-start gap-2 rounded-[var(--bd-radius-md)] bg-bd-surface p-3">
+          <FileText className="h-3.5 w-3.5 text-bd-overlay-muted mt-0.5 shrink-0" />
+          <span className="text-[11px] leading-relaxed text-bd-overlay-muted">
+            Waybill numbering follows <span className="text-bd-overlay-text font-medium">WB-{'{'}6-digit serial{'}'}</span> — auto-generated on creation.
+          </span>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

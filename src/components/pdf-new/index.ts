@@ -1,6 +1,10 @@
 import React from 'react'
 import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
 import { registerPdfFonts } from '@/lib/pdfFontRegistry'
+import {
+  DefaultPdfGenerator, CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
+  type PdfDocumentType,
+} from '@/lib/pdf'
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
@@ -17,17 +21,6 @@ type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   compact?: boolean
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const anchor = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  document.body.removeChild(anchor)
-  URL.revokeObjectURL(url)
-}
-
 function sanitizeFilename(value: string) {
   return value.replace(/[^a-zA-Z0-9-_]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
 }
@@ -39,7 +32,6 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
   const [
-    { pdf },
     { PdfRenderer },
     IndustryModule,
     LedgerModule,
@@ -49,7 +41,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     BoltModule,
     EmberModule,
   ] = await Promise.all([
-    import('@react-pdf/renderer'),
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/Ledger'),
@@ -73,46 +64,62 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
 
   let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
-  let templateData: unknown = adaptCommercialDocumentData(request.model)
 
   switch (activeTemplateId) {
     case 'ledger':
       Template = Ledger
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'crest':
       Template = Crest
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'minimal':
       Template = Minimal
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'ember':
       Template = Ember
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'bolt':
       Template = Bolt
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'evergreen':
       Template = Evergreen
-      templateData = adaptCommercialDocumentData(request.model)
       break
     case 'industry':
     default:
       Template = Industry
-      templateData = adaptCommercialDocumentData(request.model)
       break
   }
 
-  const blob = await pdf(
-    React.createElement(PdfRenderer, { data: templateData, Template, compact: request.compact }) as any
-  ).toBlob()
-
   const filename = resolveFilename(request.model, request.documentNumber)
-  downloadBlob(blob, filename)
+  const docType = request.model.identity.kind as PdfDocumentType
+
+  const generator = new DefaultPdfGenerator(
+    (model) => React.createElement(PdfRenderer, {
+      data: adaptCommercialDocumentData(model as PdfDocumentModel),
+      Template,
+      compact: request.compact,
+    }) as any,
+  )
+
+  const asset = await generator.generate({
+    template: activeTemplateId,
+    model: request.model,
+    filename,
+    documentType: docType,
+    options: { compact: request.compact },
+  })
+
+  const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
+  const result = await delivery.deliver({ asset, mode: 'download' })
+
+  const feedbackBus = new DefaultFeedbackBus()
+  if (!result.success) {
+    feedbackBus.emit({ kind: 'failed', documentType: docType, timestamp: Date.now(), fileName: filename, error: result.error })
+    throw new Error(result.error ?? 'PDF delivery failed')
+  }
+
+  feedbackBus.emit({ kind: 'downloaded', documentType: docType, timestamp: Date.now(), fileName: filename })
+
   return { status: 'generated', filename }
 }
 

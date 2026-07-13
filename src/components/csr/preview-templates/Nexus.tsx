@@ -33,7 +33,7 @@ function createStyles(density = 'comfortable', designPreset: any) {
   const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
     page: { paddingTop: tight ? 10 : 12, paddingBottom: tight ? 10 : 12, paddingHorizontal: tight ? 10 : 12, backgroundColor: CREAM, color: '#1a1a1a', fontFamily: 'Helvetica', fontSize: tight ? 7.4 : compact ? 7.8 : 8 },
-    header: { backgroundColor: PLUM, color: '#ffffff', paddingVertical: tight ? 10 : 12, paddingHorizontal: tight ? 10 : 12, marginBottom: compact ? 5 : 6 },
+    header: { backgroundColor: PLUM, color: '#ffffff', paddingTop: tight ? 6 : 8, paddingBottom: tight ? 3 : 4, paddingHorizontal: tight ? 10 : 12, marginBottom: compact ? 5 : 6 },
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     brandBlock: { flex: 1 },
@@ -132,7 +132,7 @@ function createStyles(density = 'comfortable', designPreset: any) {
     ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: PLUM },
     ackTechName: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5 },
     ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#6B7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
+    logoImage: { width: 38, height: 'auto', objectFit: 'contain' },
   })
 }
 

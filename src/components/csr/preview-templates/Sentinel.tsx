@@ -36,17 +36,17 @@ function createStyles(density = 'comfortable', designPreset: any) {
   return StyleSheet.create({
     page: { paddingTop: tight ? 10 : 12, paddingBottom: tight ? 8 : 10, paddingHorizontal: tight ? 10 : 12, backgroundColor: '#FFFAF5', color: '#3A2E20', fontFamily: 'Helvetica', fontSize: tight ? 7.4 : compact ? 7.8 : 8 },
     headerOuter: { marginBottom: compact ? 6 : 8, borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' },
-    headerBg: { backgroundColor: TEAL, paddingVertical: tight ? 12 : 16, paddingHorizontal: tight ? 14 : 17 },
+    headerBg: { backgroundColor: TEAL, paddingTop: tight ? 6 : 8, paddingBottom: tight ? 3 : 4, paddingHorizontal: tight ? 14 : 17 },
     headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     brandBlock: { flex: 1 },
     companyName: { fontSize: 16, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    companyTagline: { fontSize: 6.5, color: '#BDD8D9', marginTop: 2, textTransform: 'uppercase' },
-    contactLine: { fontSize: 6.5, color: '#BDD8D9', marginTop: 2 },
+    companyTagline: { fontSize: 6.5, color: '#BDD8D9', marginTop: 1, textTransform: 'uppercase' },
+    contactLine: { fontSize: 6.5, color: '#BDD8D9', marginTop: 1 },
     idBlock: { alignItems: 'flex-end' },
     idLabel: { fontSize: 6, color: '#BDD8D9', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 11, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 1 },
     idDate: { fontSize: 7, color: '#BDD8D9', marginTop: 2 },
-    logoSlot: { width: 44, height: 44, borderRadius: 99, backgroundColor: GOLD, justifyContent: 'center', alignItems: 'center' },
+    logoSlot: { width: 36, height: 36, borderRadius: 99, backgroundColor: GOLD, justifyContent: 'center', alignItems: 'center' },
     logoSlotText: { color: '#ffffff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
     goldBar: { height: 2, backgroundColor: GOLD },
     summaryBar: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: CREAM, borderRadius: 6, paddingVertical: tight ? 5 : 6, paddingHorizontal: tight ? 6 : 8, marginBottom: compact ? 6 : 8, borderLeftWidth: 3, borderLeftColor: GOLD },
@@ -103,7 +103,7 @@ function createStyles(density = 'comfortable', designPreset: any) {
     footer: { backgroundColor: DARK, paddingVertical: 8, paddingHorizontal: 12, borderTopWidth: 2, borderTopColor: GOLD },
     footerText: { fontSize: 6, color: '#8B8B9E', textAlign: 'center', textTransform: 'uppercase' },
     footerCompany: { fontSize: 6.5, color: '#ffffff', textAlign: 'center', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
+    logoImage: { width: 38, height: 'auto', objectFit: 'contain' },
   })
 }
 
