@@ -244,6 +244,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         duplicateState: {
           csr: {
             ...JSON.parse(JSON.stringify(csr)),
+            id: null,
             client_id: '',
             client_name: '',
             csr_number: '',

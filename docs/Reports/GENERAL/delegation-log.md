@@ -23,3 +23,4 @@
 [DELEGATION] task="Fix 5 CSR regressions: duplicate withUniqueRetry, boolean validation, identity dialog, listing order, save button" | domain="csr" | subagent="NONE" | justification="Surgical bug fixes across CSR-specific files only; no matching SUBAGENTS.md entry covers the multi-file regression fix scope; primary agent executed directly" | harness="MiMoCode" | date="2026-07-12"
 
 [DELEGATION] task="Explore PDF download flow" | domain="android" | subagent="explore" | source="built-in" | harness="Local Runner"
+[DELEGATION] task="Fix CSR duplicate csrs_pkey violation — clear id in handleDuplicateFromEditable" | domain="csr" | subagent="NONE" | justification="Surgical one-line fix in CSR duplicate flow; no matching SUBAGENTS.md entry for CSR duplicate bug; debugging-capacitor skill loaded for trace methodology" | harness="MiMoCode" | date="2026-07-13"

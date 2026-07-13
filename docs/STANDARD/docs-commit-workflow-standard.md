@@ -50,7 +50,7 @@ What it does:
    - Config files → `🔧 chore(config)`
 4. Commits and pushes to `main`
 
-**Tradeoff:** The message is auto-generated from file patterns — it won't explain *what* the changes are about. For smarter messages, use the agent or slash command.
+**Updated (Jul 2026):** The script now generates **descriptive subject lines** by analyzing file additions, modifications, and deletions. It extracts meaningful nouns from file paths (stripping component suffixes like `Page`, `Service`, `Form`) and uses the right verb (`add`, `remove`, `replace`, `update`) based on the dominant operation type. Scope detection uses a scoring system (most-affected module wins) instead of alphabetical-first.
 
 **Setup:** Already configured. The git alias `commit-docs` runs `pwsh -File commit-docs.ps1`.
 

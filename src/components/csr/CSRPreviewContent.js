@@ -21,29 +21,6 @@ export const CSR_STATUS_OPTIONS_PDF = CSR_STATUS_OPTIONS.filter(
 )
 
 export const CSR_TEMPLATE_VARIANTS = {
-  signalbands: {
-    headerBg: '#7F1D1D',
-    headerFg: '#ffffff',
-    accent: '#DC2626',
-    border: '#E7D7C8',
-    mutedBg: '#FFF7ED',
-    sectionBg: '#FFFDFA',
-    sectionTitleBg: '#7F1D1D',
-    sectionTitleFg: '#ffffff',
-    pageBg: '#FFFDFA',
-    pageFg: '#231F20',
-    pagePadding: 16,
-    fontSize: 8.6,
-    titleSize: 10,
-    headerNameSize: 16,
-    sectionTitleSize: 7.8,
-    valueSize: 8.6,
-    compact: true,
-    headerMode: 'signalbands',
-    statusStyle: 'checks',
-    previewSurface: 'linear-gradient(180deg, #fffdfa 0%, #fff7ed 100%)',
-    previewShell: 'linear-gradient(180deg, #FFF7ED 0%, #FDEDDC 100%)',
-  },
   zinc: {
     headerBg: '#18181B',
     headerFg: '#ffffff',
@@ -67,28 +44,28 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
     previewShell: 'linear-gradient(180deg, #FAFAFA 0%, #F4F4F5 100%)',
   },
-  crimson: {
-    headerBg: '#0F172A',
+  industry: {
+    headerBg: '#1f3a68',
     headerFg: '#ffffff',
-    accent: '#B91C1C',
-    border: '#E2E8F0',
-    mutedBg: '#F8FAFC',
+    accent: '#7D8A88',
+    border: '#c5cfd9',
+    mutedBg: '#F7F9F8',
     sectionBg: '#ffffff',
-    sectionTitleBg: '#0F172A',
-    sectionTitleFg: '#ffffff',
+    sectionTitleBg: '#ffffff',
+    sectionTitleFg: '#1f3a68',
     pageBg: '#ffffff',
-    pageFg: '#0F172A',
-    pagePadding: 14,
-    fontSize: 8.2,
-    titleSize: 9.8,
+    pageFg: '#1f3a68',
+    pagePadding: 12,
+    fontSize: 7.8,
+    titleSize: 9.5,
     headerNameSize: 14,
-    sectionTitleSize: 7.2,
-    valueSize: 8.4,
+    sectionTitleSize: 7.5,
+    valueSize: 8.2,
     compact: true,
-    headerMode: 'crimson',
+    headerMode: 'industry',
     statusStyle: 'pills',
-    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-    previewShell: 'linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%)',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #F7F9F8 100%)',
+    previewShell: 'linear-gradient(180deg, #F7F9F8 0%, #EDF2F7 100%)',
   },
   minimal: {
     headerBg: '#111827',
@@ -117,22 +94,10 @@ export const CSR_TEMPLATE_VARIANTS = {
 
 export const CSR_TEMPLATE_OPTIONS = [
   {
-    key: '2',
-    label: 'SignalBands',
-    blurb: 'Banded report with narrative rails and strong section identity.',
-    accent: '#DC2626',
-  },
-  {
     key: '3',
     label: 'Zinc Light',
     blurb: 'Compact technical report with minimal editorial styling.',
     accent: '#18181B',
-  },
-  {
-    key: '4',
-    label: 'Crimson System',
-    blurb: 'Formal enterprise report with dense structure and strong print discipline.',
-    accent: '#B91C1C',
   },
   {
     key: '6',
@@ -140,11 +105,17 @@ export const CSR_TEMPLATE_OPTIONS = [
     blurb: 'Monochrome industrial report with dense table-driven layout and strong borders.',
     accent: '#111827',
   },
+  {
+    key: '8',
+    label: 'Industry',
+    blurb: 'Slate-inspired industrial report with distinct layout and customization support.',
+    accent: '#7D8A88',
+  },
 ]
 
-export function getCsrTemplateVariant(template = '4') {
-  if (template === '2') return 'signalbands'
+export function getCsrTemplateVariant(template = '3') {
   if (template === '3') return 'zinc'
   if (template === '6') return 'minimal'
-  return 'crimson'
+  if (template === '8') return 'industry'
+  return 'zinc'
 }

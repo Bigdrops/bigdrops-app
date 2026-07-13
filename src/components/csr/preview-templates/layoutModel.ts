@@ -2,6 +2,7 @@ export const MATERIALS_MAX_ROWS_PER_COLUMN: Record<string, number> = {
   signalbands: 5,
   zinc: 6,
   crimson: 6,
+  industry: 6,
   minimal: 8,
 }
 

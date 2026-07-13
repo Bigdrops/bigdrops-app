@@ -25,44 +25,34 @@ import {
 import { ClientNotesBlock } from './ClientNotesBlock'
 import type { CsrPdfProps } from './types'
 
-function createCrimsonStyles(density = 'comfortable', designPreset: any) {
+function createIndustryStyles(density = 'comfortable', designPreset: any) {
   const compact = density !== 'comfortable'
   const tight = density === 'tight'
   const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
+  const accent = designPreset?.accent || '#7D8A88'
   return StyleSheet.create({
     page: {
-      paddingTop: tight ? 8 : 12,
-      paddingBottom: tight ? 8 : 12,
-      paddingHorizontal: tight ? 8 : 12,
+      paddingTop: tight ? 6 : 8,
+      paddingBottom: tight ? 6 : 8,
+      paddingHorizontal: tight ? 6 : 8,
       backgroundColor: '#ffffff',
-      color: '#0f172a',
+      color: '#374151',
       fontFamily: 'Helvetica',
-      fontSize: tight ? 7.2 : compact ? 7.6 : 7.9,
+      fontSize: tight ? 7.2 : compact ? 7.5 : 7.8,
     },
+
+    // ── Header ──────────────────────────────────────────
     header: {
-      backgroundColor: '#0f172a',
-      borderRadius: 10,
-      overflow: 'hidden',
-      marginBottom: tight ? 4 : compact ? 6 : 8,
+      marginBottom: tight ? 4 : compact ? 5 : 6,
     },
     headerTop: {
+      backgroundColor: accent,
+      paddingVertical: tight ? 8 : 10,
+      paddingHorizontal: tight ? 10 : 12,
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: compact ? 8 : 10,
-      paddingVertical: tight ? 6 : 8,
-      paddingHorizontal: tight ? 8 : 10,
+      alignItems: 'center',
+      gap: 10,
     },
-    headerBottom: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: compact ? 6 : 8,
-      backgroundColor: '#f8fafc',
-      paddingVertical: tight ? 5 : 7,
-      paddingHorizontal: tight ? 8 : 10,
-      borderTopWidth: 1,
-      borderTopColor: '#1e293b',
-    },
-    brandBox: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', flex: 1 },
     logoSlot: {
       width: 48,
       height: 48,
@@ -70,191 +60,242 @@ function createCrimsonStyles(density = 'comfortable', designPreset: any) {
       alignItems: 'center',
     },
     logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
-    logoSlotText: { color: '#b91c1c', fontSize: 14, fontFamily: 'Helvetica-Bold' },
+    logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: tight ? 11 : 12.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.4 },
-    companyTagline: { fontSize: tight ? 5.8 : 6.8, color: '#e2e8f0', textTransform: 'uppercase', marginTop: 2 },
-    contactLine: { fontSize: tight ? 5.7 : 6.7, color: '#cbd5e1', marginTop: 3, lineHeight: tight ? 1.1 : 1.35 },
-    idBox: {
-      width: tight ? 134 : 148,
-      backgroundColor: '#111827',
-      borderWidth: 1,
-      borderColor: '#334155',
-      borderRadius: 8,
-      paddingVertical: tight ? 6 : 8,
-      paddingHorizontal: tight ? 7 : 9,
+    companyName: {
+      fontSize: tight ? 12 : 14,
+      color: '#ffffff',
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    companyTagline: {
+      fontSize: tight ? 5.5 : 6.2,
+      color: '#dce5e2',
+      textTransform: 'uppercase',
+      marginTop: 2,
+    },
+    contactLine: {
+      fontSize: tight ? 5.4 : 6.1,
+      color: '#c8d4d0',
+      marginTop: 2,
+      lineHeight: tight ? 1.1 : 1.3,
+    },
+    docIdRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: tight ? 4 : 5,
+      paddingHorizontal: tight ? 10 : 12,
+      borderBottomWidth: 2,
+      borderBottomColor: accent,
+      marginBottom: tight ? 4 : compact ? 5 : 6,
+    },
+    docTitle: {
+      fontSize: tight ? 9 : 10,
+      color: '#374151',
+      fontFamily: 'Helvetica-Bold',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    docNumberBlock: {
       alignItems: 'flex-end',
     },
-    idLabel: { fontSize: 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    idValue: { fontSize: 12.2, color: '#ffffff', fontFamily: fillableBold, marginTop: 2 },
-    idDate: { fontSize: 7, color: '#e2e8f0', marginTop: 3, fontFamily: 'Helvetica-Bold' },
-    docTitle: { fontSize: tight ? 10 : 11.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    section: { marginBottom: tight ? 4 : compact ? 6 : 8 },
+    docNumberLabel: {
+      fontSize: 5.5,
+      color: '#9CA3AF',
+      textTransform: 'uppercase',
+      fontFamily: 'Helvetica-Bold',
+      letterSpacing: 0.3,
+    },
+    docNumberValue: {
+      fontSize: 10,
+      color: fillableColor,
+      fontFamily: fillableBold,
+      marginTop: 1,
+    },
+    docDate: {
+      fontSize: 6,
+      color: '#9CA3AF',
+      marginTop: 1,
+    },
+
+    // ── Sections ────────────────────────────────────────
+    section: { marginBottom: tight ? 3 : compact ? 4 : 5 },
     sectionTitle: {
-      fontSize: 7.2,
-      color: '#ffffff',
-      backgroundColor: '#0f172a',
-      borderLeftWidth: 4,
-      borderLeftColor: '#b91c1c',
-      paddingVertical: 3,
-      paddingHorizontal: 7,
-      marginBottom: 4,
+      fontSize: 6.8,
+      color: accent,
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
       letterSpacing: 0.4,
+      paddingBottom: tight ? 1.5 : 2,
+      borderBottomWidth: 1,
+      borderBottomColor: accent,
+      marginBottom: tight ? 3 : compact ? 4 : 5,
     },
 
-    fieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    fieldValue: { fontSize: tight ? 7.1 : compact ? 7.9 : 8.2, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.1 },
-    blockText: { fontSize: tight ? 6.5 : compact ? 7.2 : 7.5, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.12 : 1.26 },
+    // ── Fields ──────────────────────────────────────────
+    fieldLabel: { fontSize: tight ? 5.2 : 5.6, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+    fieldValue: { fontSize: tight ? 6.8 : compact ? 7.4 : 7.8, color: fillableColor, fontFamily: fillableBold, lineHeight: 1.1 },
+    blockText: { fontSize: tight ? 6.3 : compact ? 6.8 : 7.2, color: fillableColor, fontFamily: fillableRegular, lineHeight: tight ? 1.1 : 1.25 },
 
-    grid4: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 6 },
+    fieldRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: compact ? 3 : 4,
+      marginBottom: tight ? 2 : compact ? 2.5 : 3,
+    },
     fieldCard: {
       width: '24%',
-      backgroundColor: '#f8fafc',
-      borderWidth: 1,
-      borderColor: '#e2e8f0',
-      borderRadius: 6,
-      paddingVertical: tight ? 3 : 5,
-      paddingHorizontal: tight ? 4 : 6,
-      minHeight: tight ? 24 : compact ? 30 : 34,
-      marginBottom: tight ? 2 : compact ? 3 : 4,
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
+      paddingVertical: tight ? 2.5 : 4,
+      paddingHorizontal: tight ? 3 : 5,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     blockCard: {
-      backgroundColor: '#ffffff',
-      borderWidth: 1,
-      borderColor: '#e2e8f0',
-      borderRadius: 6,
-      paddingVertical: tight ? 4 : 6,
-      paddingHorizontal: tight ? 5 : 7,
-      minHeight: tight ? 24 : compact ? 30 : 34,
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
+      paddingVertical: tight ? 3.5 : 5,
+      paddingHorizontal: tight ? 4.5 : 6,
+      minHeight: tight ? 22 : compact ? 28 : 32,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     heroBlockCard: {
-      backgroundColor: '#fff7ed',
-      borderColor: '#fdba74',
+      backgroundColor: '#EFF6F3',
+      borderBottomColor: accent,
     },
     mutedBlockCard: {
-      backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0',
+      backgroundColor: '#F7F9F8',
+      borderBottomColor: '#E5E9E8',
     },
 
+    // ── Readings ────────────────────────────────────────
     readingsSection: {
-      backgroundColor: '#0f172a',
-      borderRadius: 6,
-      paddingVertical: tight ? 4 : 6,
-      paddingHorizontal: tight ? 4 : 6,
+      backgroundColor: '#F7F9F8',
+      borderRadius: 3,
+      paddingVertical: tight ? 3 : 4,
+      paddingHorizontal: tight ? 3 : 4,
       marginTop: 2,
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     readingStrip: { flexDirection: 'row' },
     readingStripCell: {
       flex: 1,
       alignItems: 'center',
       borderRightWidth: 1,
-      borderRightColor: '#ffffff20',
-      paddingVertical: 5,
+      borderRightColor: '#E5E9E8',
+      paddingVertical: 3,
     },
     readingStripCellLast: { borderRightWidth: 0 },
-    readingLabel: { fontSize: 5.7, color: '#cbd5e1', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
-    readingValue: { fontSize: 8.8, color: '#ffffff', fontFamily: fillableBold },
+    readingLabel: { fontSize: 5.2, color: '#9CA3AF', textTransform: 'uppercase', marginTop: 2, fontFamily: 'Helvetica-Bold' },
+    readingValue: { fontSize: 8.2, color: fillableColor, fontFamily: fillableBold },
 
+    // ── Table ───────────────────────────────────────────
     tableHeaderRow: {
       flexDirection: 'row',
-      backgroundColor: '#f1f5f9',
-      borderBottomWidth: 1.5,
-      borderBottomColor: '#e2e8f0',
-      marginTop: 3,
+      backgroundColor: '#F1F4F3',
+      borderBottomWidth: 1,
+      borderBottomColor: '#D1D5D4',
+      marginTop: 2,
     },
     tableHead: {
-      fontSize: tight ? 5.7 : 6.3,
-      color: '#64748b',
+      fontSize: tight ? 5.4 : 6,
+      color: '#9CA3AF',
       textTransform: 'uppercase',
       fontFamily: 'Helvetica-Bold',
-      paddingVertical: tight ? 3 : 5,
-      paddingHorizontal: tight ? 4 : 6,
+      paddingVertical: tight ? 2.5 : 4,
+      paddingHorizontal: tight ? 3.5 : 5,
       borderRightWidth: 1,
-      borderRightColor: '#e2e8f0',
+      borderRightColor: '#E5E9E8',
     },
     tableRow: {
       flexDirection: 'row',
       borderBottomWidth: 1,
-      borderBottomColor: '#f1f5f9',
+      borderBottomColor: '#F1F4F3',
     },
     tableCell: {
-      fontSize: tight ? 6.9 : 7.8,
+      fontSize: tight ? 6.5 : 7.2,
       color: fillableColor,
       fontFamily: fillableBold,
-      paddingVertical: tight ? 3 : 5,
-      paddingHorizontal: tight ? 4 : 6,
+      paddingVertical: tight ? 2.5 : 4,
+      paddingHorizontal: tight ? 3.5 : 5,
       borderRightWidth: 1,
-      borderRightColor: '#f1f5f9',
+      borderRightColor: '#F1F4F3',
     },
 
-    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 4 : 5, marginTop: 2 },
+    // ── Status ──────────────────────────────────────────
+    statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: compact ? 3.5 : 4, marginTop: 2 },
     statusItem: {
       flex: 1,
       minWidth: '18%',
-      paddingVertical: tight ? 4 : 5,
-      paddingHorizontal: 5,
-      borderWidth: 1.2,
-      borderColor: '#e2e8f0',
-      borderRadius: 6,
+      paddingVertical: tight ? 3.5 : 4.5,
+      paddingHorizontal: 4.5,
+      borderWidth: 1,
+      borderColor: '#D1D5D4',
+      borderRadius: 3,
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: tight ? 18 : 24,
-      backgroundColor: '#f8fafc',
+      minHeight: tight ? 16 : 22,
     },
     statusItemActive: {
-      backgroundColor: '#15803d',
-      borderColor: '#15803d',
+      backgroundColor: accent,
+      borderColor: accent,
     },
-    statusText: { fontSize: 6.5, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', textAlign: 'center' },
+    statusText: { fontSize: 6.2, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', textAlign: 'center' },
     statusTextActive: { color: '#ffffff' },
 
+    // ── Acknowledgement ─────────────────────────────────
     textAreaOnly: {},
-    ackGrid: { flexDirection: 'row', gap: tight ? 4 : compact ? 6 : 8, marginTop: tight ? 4 : compact ? 6 : 8 },
+    ackGrid: { flexDirection: 'row', gap: tight ? 3.5 : compact ? 5 : 6, marginTop: tight ? 3.5 : compact ? 5 : 6 },
     signRow: { display: 'none' },
     signCard: {
       flex: 1,
-      borderWidth: 1,
-      borderColor: '#e2e8f0',
-      borderRadius: 6,
-      paddingVertical: tight ? 4 : 6,
-      paddingHorizontal: tight ? 5 : 7,
-      backgroundColor: '#f8fafc',
+      borderRadius: 3,
+      paddingVertical: tight ? 3.5 : 5,
+      paddingHorizontal: tight ? 4.5 : 6,
+      backgroundColor: '#F7F9F8',
+      borderBottomWidth: 1.5,
+      borderBottomColor: '#E5E9E8',
     },
     signSpace: {
-      height: tight ? 10 : 18,
-      marginBottom: 4,
+      height: tight ? 8 : 14,
+      marginBottom: 3,
     },
-    signLabel: { fontSize: 6.3, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    ackContainer: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 6, overflow: 'hidden' },
-    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
-    ackTopHalf: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 1, borderRightColor: '#e2e8f0' },
-    ackTopHalfLast: { flex: 1, paddingTop: tight ? 3 : 4, paddingBottom: tight ? 20 : 24, paddingHorizontal: tight ? 5 : 6 },
-    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 50 : compact ? 60 : 70 },
-    ackRecipientSig: { width: '40%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#cbd5e1' },
-    ackTechSig: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6, borderRightWidth: 2, borderRightColor: '#cbd5e1' },
-    ackTechName: { width: '30%', paddingTop: tight ? 3 : 4, paddingBottom: tight ? 14 : 18, paddingHorizontal: tight ? 5 : 6 },
-    ackFieldLabel: { fontSize: tight ? 5.6 : 6.1, color: '#94a3b8', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    signLabel: { fontSize: 6, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+    ackContainer: { borderWidth: 1, borderColor: '#D1D5D4', borderRadius: 3, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#D1D5D4' },
+    ackTopHalf: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 1, borderRightColor: '#D1D5D4' },
+    ackTopHalfLast: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5 },
+    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 45 : compact ? 55 : 65 },
+    ackRecipientSig: { width: '40%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: accent },
+    ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: accent },
+    ackTechName: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5 },
+    ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
+
+    // ── Footer ──────────────────────────────────────────
     footer: {
-      marginTop: compact ? 6 : 8,
-      paddingTop: 5,
+      marginTop: compact ? 5 : 6,
+      paddingTop: 4,
       borderTopWidth: 1,
-      borderTopColor: '#e2e8f0',
-      fontSize: 5.8,
-      color: '#94a3b8',
+      borderTopColor: '#E5E9E8',
+      fontSize: 5.5,
+      color: '#9CA3AF',
       textAlign: 'center',
       textTransform: 'uppercase',
     },
   })
 }
 
-export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
+export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const layoutDensity = getLayoutDensity(csr)
   const tightLayout = layoutDensity === 'tight'
   const compact = layoutDensity !== 'comfortable'
-  const styles = createCrimsonStyles(layoutDensity, designPreset)
+  const styles = createIndustryStyles(layoutDensity, designPreset)
   const status = getStatusValue(csr)
   const serviceStart = [safe(csr.start_date), safe(csr.start_time)].filter(Boolean).join(' / ')
   const serviceEnd = [safe(csr.end_date), safe(csr.end_time)].filter(Boolean).join(' / ')
@@ -264,25 +305,25 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* ── Header ─────────────────────────────────── */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View style={styles.brandBox}>
-              <PdfLogoSlot styles={styles} branding={branding} fallback="L" />
-              <PdfBrandBlock styles={styles} branding={branding} />
-            </View>
-            <View style={styles.idBox}>
-              <Text style={styles.idLabel}>Service Report Number</Text>
-              <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
-              <Text style={styles.idDate}>{safe(csr.date)}</Text>
-            </View>
+            <PdfLogoSlot styles={styles} branding={branding} fallback="I" />
+            <PdfBrandBlock styles={styles} branding={branding} />
           </View>
-          <View style={styles.headerBottom}>
+          <View style={styles.docIdRow}>
             <Text style={styles.docTitle}>Customer Service Report</Text>
+            <View style={styles.docNumberBlock}>
+              <Text style={styles.docNumberLabel}>Report No.</Text>
+              <Text style={styles.docNumberValue}>{safe(csr.csr_number)}</Text>
+              <Text style={styles.docDate}>{safe(csr.date)}</Text>
+            </View>
           </View>
         </View>
 
+        {/* ── Customer & Job Details ─────────────────── */}
         <PdfSection styles={styles} title="Customer & Job Details">
-          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+          <View style={styles.fieldRow}>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
               <Text style={styles.fieldLabel}>Client Name</Text>
               <Text style={styles.fieldValue}>{safe(csr.client_name)}</Text>
@@ -293,16 +334,16 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
             </View>
             {csr.show_po && hasText(csr.po_number) ? (
               <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-                <Text style={styles.fieldLabel}>Purchase Order (P.O.) Number</Text>
+                <Text style={styles.fieldLabel}>P.O. Number</Text>
                 <Text style={styles.fieldValue}>{safe(csr.po_number)}</Text>
               </View>
             ) : null}
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-              <Text style={styles.fieldLabel}>Service Start (Date/Time)</Text>
+              <Text style={styles.fieldLabel}>Service Start</Text>
               <Text style={styles.fieldValue}>{serviceStart || 'Not recorded'}</Text>
             </View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}>
-              <Text style={styles.fieldLabel}>Service End (Date/Time)</Text>
+              <Text style={styles.fieldLabel}>Service End</Text>
               <Text style={styles.fieldValue}>{serviceEnd || 'Not recorded'}</Text>
             </View>
             {hasText(csr.callTypeDisplay) ? (
@@ -326,14 +367,16 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
           </View>
         </PdfSection>
 
+        {/* ── Problem Reported ───────────────────────── */}
         <PdfSection styles={styles} title="Problem Reported">
           <View style={[styles.blockCard, styles.heroBlockCard]}>
             <Text style={styles.blockText}>{safe(csr.problem_reported) || ' '}</Text>
           </View>
         </PdfSection>
 
+        {/* ── Equipment Details ──────────────────────── */}
         <PdfSection styles={styles} title="Equipment Details">
-          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+          <View style={styles.fieldRow}>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Equipment Type</Text><Text style={styles.fieldValue}>{safe(csr.equipment_type)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>Make</Text><Text style={styles.fieldValue}>{safe(csr.make)}</Text></View>
             <View style={[styles.fieldCard, { flex: 1, width: undefined }]}><Text style={styles.fieldLabel}>{safe(csr.modelLabel) || 'Model'}</Text><Text style={styles.fieldValue}>{safe(csr.model)}</Text></View>
@@ -350,12 +393,13 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
           ) : null}
         </PdfSection>
 
-      <PdfSection styles={styles} title="Service Rendered">
+        {/* ── Service Rendered ───────────────────────── */}
+        <PdfSection styles={styles} title="Service Rendered">
           <View style={styles.blockCard}>
             <Text style={styles.blockText}>{safe(csr.service_rendered) || ' '}</Text>
           </View>
           {shouldRender(true, csr.defects_found) ? (
-            <View style={{ marginTop: 8 }}>
+            <View style={{ marginTop: 6 }}>
               <Text style={styles.fieldLabel}>Defects Found</Text>
               <View style={[styles.blockCard, styles.heroBlockCard]}>
                 <Text style={styles.blockText}>{safe(csr.defectsFound)}</Text>
@@ -363,7 +407,7 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
             </View>
           ) : null}
           {shouldRender(true, csr.technicianRemarks) ? (
-            <View style={{ marginTop: 8 }}>
+            <View style={{ marginTop: 6 }}>
               <Text style={styles.fieldLabel}>Technician Remarks</Text>
               <View style={[styles.blockCard, styles.mutedBlockCard]}>
                 <Text style={styles.blockText}>{safe(csr.technicianRemarks)}</Text>
@@ -373,9 +417,10 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
         </PdfSection>
 
         {hasMaterials(csr) ? (
-          <MaterialsSection styles={styles} csr={csr} templateId="crimson" preferredStyle={tightLayout ? 'comma' : 'list'} />
+          <MaterialsSection styles={styles} csr={csr} templateId="industry" preferredStyle={tightLayout ? 'comma' : 'list'} />
         ) : null}
 
+        {/* ── Status ─────────────────────────────────── */}
         <PdfSection styles={styles} title="Status">
           <View style={styles.statusGrid}>
             {CSR_STATUS_OPTIONS_PDF.map((option) => {
@@ -389,22 +434,23 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
           </View>
         </PdfSection>
 
+        {/* ── Acknowledgement ────────────────────────── */}
         {csr.showTechnicianSignLine || csr.showAcknowledgement ? (
           <PdfSection styles={styles} title="Acknowledgement">
-            <View style={{ padding: tightLayout ? 3 : compact ? 4 : 5 }}>
+            <View style={{ padding: tightLayout ? 2.5 : compact ? 3.5 : 4.5 }}>
               <View style={styles.ackContainer}>
                 {csr.showAcknowledgement ? (
                   <View style={styles.ackTopRow}>
                     <View style={styles.ackTopHalf}>
                       <Text style={styles.ackFieldLabel}>Recipient Name</Text>
-                      <Text style={[styles.fieldValue, { marginTop: 6 }]}>
+                      <Text style={[styles.fieldValue, { marginTop: 5 }]}>
                         {hasText(csr.acknowledgement_name) ? csr.acknowledgement_name : ' '}
                       </Text>
                     </View>
                     <View style={styles.ackTopHalfLast}>
                       <Text style={styles.ackFieldLabel}>Comment</Text>
                       {hasText(csr.customer_feedback) ? (
-                        <Text style={[styles.blockText, { marginTop: 6 }]}>{csr.customer_feedback}</Text>
+                        <Text style={[styles.blockText, { marginTop: 5 }]}>{csr.customer_feedback}</Text>
                       ) : null}
                     </View>
                   </View>
@@ -426,7 +472,7 @@ export function CrimsonTemplate({ csr, comments, branding, designPreset }: CsrPd
                           {technicianSignatureUrl ? (
                             <Image
                               src={technicianSignatureUrl}
-                              style={{ maxHeight: 56, maxWidth: 96, objectFit: 'contain' }}
+                              style={{ maxHeight: 50, maxWidth: 88, objectFit: 'contain' }}
                             />
                           ) : null}
                         </View>
