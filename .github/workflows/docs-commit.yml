@@ -20,10 +20,17 @@ jobs:
         run: |
           MSG=$(git log -1 --format="%s")
           echo "Checking: $MSG"
-          if ! echo "$MSG" | grep -qE '^[^a-zA-Z0-9] [a-z]+\([a-z\-]+\): .+$'; then
+          # Accept any non-ASCII character(s) at start (emoji) followed by conventional commits format
+          if ! echo "$MSG" | grep -qP '^[^\x00-\x7F]+ [a-z]+\([a-z\-]+\): .+$'; then
             echo "ERROR: Commit must follow Gitmoji + Conventional Commits format:"
             echo "  <gitmoji> <type>(<scope>): <subject>"
             echo "  Example: 📝 docs(prompts): update git workflow instructions"
+            exit 1
+          fi
+          # Check subject length (max 72 chars)
+          SUBJECT=$(echo "$MSG" | head -c 72)
+          if [ "$MSG" != "$SUBJECT" ] && [ "$(echo "$MSG" | head -c 73 | tail -c 1)" != "" ]; then
+            echo "ERROR: Commit subject must be max 72 characters (got $(echo -n "$MSG" | wc -c))."
             exit 1
           fi
 

@@ -19,8 +19,8 @@ if [ -f "$COMMIT_MSG_FILE" ]; then
         exit 1
     fi
 
-    # Check subject length
-    LEN=$(echo "$SUBJECT" | wc -c | tr -d ' ')
+    # Check subject length (max 72 characters, not bytes)
+    LEN=$(echo "$SUBJECT" | wc -m | tr -d ' ')
     if [ "$LEN" -gt 72 ]; then
         echo "ERROR: Commit subject must be max 72 characters (got $LEN)."
         exit 1
