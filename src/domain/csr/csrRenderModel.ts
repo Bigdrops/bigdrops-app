@@ -83,7 +83,6 @@ export interface CsrRenderModel {
   // Materials (parsed from materials_used)
   materialsRows: MaterialRow[]
   materialsText: string
-  materialsOutputStyle: 'list' | 'comma'
   meta: Record<string, unknown>
 
   // Display controls
@@ -237,13 +236,12 @@ export function buildCsrRenderModel(csr: CsrObject): CsrRenderModel {
     technicianName: safeString(csr.technicianName || normalizeSignatory(csr.technician_signatory_id)?.name || ''),
     technicianRole: normalizeSignatory(csr.technicianSignatory)?.role ?? '',
     technicianSignatureUrl: normalizeSignatory(csr.technicianSignatory)?.signatureUrl ?? '',
-    showTechnicianSignLine: false,
+    showTechnicianSignLine: true,
     technicianSignatory: normalizeSignatory(csr.technicianSignatory),
 
     // Materials
     materialsRows: Array.isArray(csr.materialsRows) ? csr.materialsRows : [],
     materialsText: safeString(csr.materialsText || csr.materials_used),
-    materialsOutputStyle: 'list',
     meta: {},
 
     // Display controls

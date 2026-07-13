@@ -417,7 +417,7 @@ export function IndustryCsrTemplate({ csr, comments, branding, designPreset }: C
         </PdfSection>
 
         {hasMaterials(csr) ? (
-          <MaterialsSection styles={styles} csr={csr} templateId="industry" preferredStyle={tightLayout ? 'comma' : 'list'} />
+          <MaterialsSection styles={styles} csr={csr} templateId="industry"  />
         ) : null}
 
         {/* ── Status ─────────────────────────────────── */}

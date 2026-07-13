@@ -10,7 +10,7 @@ export function formatCommaMaterialsText(rows: any[]) {
   return rows
     .map((row: any) => {
       const qtyUnit = [safeText(row?.quantity), safeText(row?.unit)].filter(Boolean).join(' ')
-      return `${safeText(row?.item)}${qtyUnit ? ` ${qtyUnit}` : ''}`
+      return `${safeText(row?.item)}${qtyUnit ? ` ×${qtyUnit}` : ''}`
     })
     .filter(Boolean)
     .join('  │  ')
@@ -19,7 +19,7 @@ export function formatCommaMaterialsText(rows: any[]) {
 export function resolveMaterialColumnBlocks(itemCount: number, templateId = '') {
   const maxRowsPerColumn = MATERIALS_MAX_ROWS_PER_COLUMN[templateId] || 6
   const blocks = Math.ceil(itemCount / maxRowsPerColumn)
-  return blocks > 3 ? 0 : Math.max(blocks, 1)
+  return blocks > 4 ? 0 : Math.max(blocks, 1)
 }
 
 export function resolveZincLifecycleStages(status: any) {

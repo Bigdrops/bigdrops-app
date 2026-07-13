@@ -9,13 +9,11 @@ import {
   getTechnicianSignatureUrl,
   shouldRender,
   hasOperationalReadings,
-  getMaterialsRows,
-  hasMaterials,
   hasText,
   safe,
   getPopulatedReadingRows,
 } from './utils'
-import { PdfBrandBlock, PdfSection, StatusListChecks } from './components'
+import { PdfBrandBlock, PdfSection, StatusListChecks, MaterialsSection } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import { CSR_STATUS_OPTIONS_PDF } from '../CSRPreviewContent'
 import type { CsrPdfProps } from './types'
@@ -383,30 +381,6 @@ function renderStatusChecks(styles: any, status: string) {
   )
 }
 
-function renderMaterialsTable(styles: any, csr: CsrRenderModel) {
-  if (!hasMaterials(csr)) return null
-  const rows = getMaterialsRows(csr)
-  if (rows.length === 0) return null
-
-  return (
-    <View>
-      <View style={styles.matHeader}>
-        <Text style={[styles.matHeaderCell, { width: '70%' }]}>Item Description / Part Number</Text>
-        <Text style={[styles.matHeaderCell, { width: '30%', textAlign: 'center' }]}>Quantity / Volume</Text>
-      </View>
-      {rows.map((row: any, idx: number) => {
-        const qtyUnit = [safe(row.quantity), safe(row.unit)].filter(Boolean).join(' ')
-        return (
-          <View key={idx} style={styles.matRow}>
-            <Text style={[styles.matCell, { width: '70%' }]}>{safe(row.item) || ' '}</Text>
-            <Text style={[styles.matCell, { width: '30%', textAlign: 'center' }]}>{qtyUnit || ' '}</Text>
-          </View>
-        )
-      })}
-    </View>
-  )
-}
-
 function renderServiceTime(styles: any, w: { startDate: string; startTime: string; endDate: string; endTime: string }) {
   return (
     <View style={styles.timeGrid}>
@@ -564,12 +538,7 @@ export function MinimalTemplate({ csr, comments, branding, designPreset }: CsrPd
           </View>
         </View>
 
-        {hasMaterials(csr) ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Materials Used</Text>
-            {renderMaterialsTable(styles, csr)}
-          </View>
-        ) : null}
+        <MaterialsSection styles={styles} csr={csr} templateId="minimal" />
 
         <View style={[styles.section, { flexDirection: 'row' }]}>
           <View style={[styles.sidePanel, { borderRightWidth: 2, borderRightColor: '#111827' }]}>

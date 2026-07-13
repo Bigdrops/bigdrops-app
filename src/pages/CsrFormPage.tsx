@@ -239,12 +239,12 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   }, [])
 
   const handleDuplicateFromEditable = useCallback(() => {
+    const { id: _origId, ...csrWithoutId } = JSON.parse(JSON.stringify(csr))
     navigate('/csr/new', {
       state: {
         duplicateState: {
           csr: {
-            ...JSON.parse(JSON.stringify(csr)),
-            id: null,
+            ...csrWithoutId,
             client_id: '',
             client_name: '',
             csr_number: '',
@@ -365,8 +365,9 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         return
       }
 
+      const { id: _id, ...csrFields } = csr
       const csrData = sanitizeCsrInsertPayload({
-        ...csr,
+        ...csrFields,
         project_id: validatedProject?.id || null,
         client_id: csr.client_id || null,
         linked_invoice_id: csr.linked_invoice_id || null,

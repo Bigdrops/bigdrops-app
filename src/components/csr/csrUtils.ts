@@ -27,7 +27,6 @@ export interface CsrMeta {
   recipientRole: string
   technicianName: string
   showTechnicianSignLine: boolean
-  materialsOutputStyle: 'list' | 'comma'
 }
 
 export const DEFAULT_CSR_META: CsrMeta = {
@@ -38,8 +37,7 @@ export const DEFAULT_CSR_META: CsrMeta = {
   recipientTitle: 'Received By / Witness',
   recipientRole: '',
   technicianName: '',
-  showTechnicianSignLine: false,
-  materialsOutputStyle: 'list',
+  showTechnicianSignLine: true,
 }
 
 export interface CsrSignatory {
@@ -192,18 +190,17 @@ export function getNextCsrNumber(
   return `${lastValue}-1`
 }
 
-export function formatMaterialsRows(rows: MaterialRow[], outputStyle: 'list' | 'comma' = 'list'): string {
+export function formatMaterialsRows(rows: MaterialRow[]): string {
   const cleanedRows = (rows || []).filter((row) => row.item || row.quantity || row.unit)
   if (cleanedRows.length === 0) return ''
 
-  const parts = cleanedRows.map((row, index) => {
-    const quantityPart = [row.quantity, row.unit].filter(Boolean).join(' ').trim()
-    const body = [row.item, quantityPart ? `(${quantityPart})` : ''].filter(Boolean).join(' ').trim()
-    if (outputStyle === 'comma') return body
-    return `${index + 1}. ${body}`
-  })
-
-  return outputStyle === 'comma' ? parts.join(', ') : parts.join('\n')
+  return cleanedRows
+    .map((row, index) => {
+      const quantityPart = [row.quantity, row.unit].filter(Boolean).join(' ').trim()
+      const body = [row.item, quantityPart ? `(${quantityPart})` : ''].filter(Boolean).join(' ').trim()
+      return `${index + 1}. ${body}`
+    })
+    .join('\n')
 }
 
 export interface ParsedCsrMaterials {
@@ -240,7 +237,7 @@ export function parseCsrMaterials(rawValue: string | null | undefined, csr: Part
       ? parsed.materialsRows.map((row: any) => ({ ...DEFAULT_MATERIAL_ROW, ...row }))
       : [{ ...DEFAULT_MATERIAL_ROW }]
     const meta = { ...DEFAULT_CSR_META, ...(parsed.meta || {}) }
-    const materialsText = parsed.materialsText || formatMaterialsRows(materialsRows, meta.materialsOutputStyle)
+    const materialsText = parsed.materialsText || formatMaterialsRows(materialsRows)
 
     return {
       materialsRows,
@@ -270,7 +267,7 @@ export function serializeCsrMaterials(rows: MaterialRow[], meta: Partial<CsrMeta
     }))
     .filter((row) => row.item || row.quantity || row.unit)
 
-  const materialsText = formatMaterialsRows(materialsRows, normalizedMeta.materialsOutputStyle)
+  const materialsText = formatMaterialsRows(materialsRows)
 
   return CSR_META_PREFIX + JSON.stringify({
     version: 1,
@@ -303,7 +300,7 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
   const materialsText =
     options.materialsText ||
     parsed.materialsText ||
-    formatMaterialsRows(parsed.materialsRows, parsed.meta.materialsOutputStyle)
+    formatMaterialsRows(parsed.materialsRows)
   const signatories = Array.isArray(options.signatories) ? options.signatories : []
   const resolvedTechnicianSignatory =
     normalizeSignatory(options.technicianSignatory) ||
@@ -362,7 +359,6 @@ export function buildCsrPreviewData(csr: CsrObject, options: CsrPreviewOptions =
     layoutDensity,
     technicianRole: renderModel.technicianRole,
     technicianSignatureUrl: renderModel.technicianSignatureUrl,
-    materialsOutputStyle: renderModel.materialsOutputStyle,
     callTypeDisplay: renderModel.callTypeDisplay,
     serviceBasisDisplay: renderModel.serviceBasisDisplay,
     systemDownDisplay: renderModel.systemDownDisplay,

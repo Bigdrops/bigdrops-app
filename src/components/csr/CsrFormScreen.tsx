@@ -35,7 +35,6 @@ type CsrMeta = {
   recipientRole?: string
   technicianName?: string
   showTechnicianSignLine?: boolean
-  materialsOutputStyle?: 'list' | 'comma'
 }
 
 type CsrRecord = Record<string, any>
@@ -382,22 +381,13 @@ export default function CsrFormScreen({
         </Section>
 
         <Section title="Item Controls" dotClassName="bg-slate-700">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setImportSheetOpen(true)}
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text"
-            >
-              Import
-            </button>
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-[42px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text opacity-70"
-            >
-              Settings
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setImportSheetOpen(true)}
+            className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text"
+          >
+            Import
+          </button>
         </Section>
 
         <Section title="Main Details" dotClassName="bg-bd-violet">
@@ -643,27 +633,6 @@ export default function CsrFormScreen({
           }
         >
           <div className="space-y-3">
-            <div className="flex gap-[3px] rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted p-[3px]">
-              <button
-                type="button"
-                onClick={() => onUpdateMeta('materialsOutputStyle', 'comma')}
-                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle === 'comma' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted'
-                }`}
-              >
-                Comma
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdateMeta('materialsOutputStyle', 'list')}
-                className={`h-9 flex-1 rounded-[9px] px-3 text-[12px] font-extrabold ${
-                  csrMeta.materialsOutputStyle !== 'comma' ? 'bg-bd-button-primary-bg text-bd-button-primary-text' : 'text-bd-text-muted'
-                }`}
-              >
-                Tabulate
-              </button>
-            </div>
-
             <div className="space-y-3">
               {materialsRows.map((row, index) => (
                 <div key={index} className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">

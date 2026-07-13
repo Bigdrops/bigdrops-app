@@ -175,19 +175,15 @@ export function ReadingsStrip({ styles, csr }: { styles: any; csr: CsrRenderMode
   )
 }
 
-export function MaterialsSection({ styles, csr, preferredStyle, noSection, templateId }: { styles: any; csr: CsrRenderModel; preferredStyle?: string; noSection?: boolean; templateId?: string }) {
+export function MaterialsSection({ styles, csr, noSection, templateId }: { styles: any; csr: CsrRenderModel; noSection?: boolean; templateId?: string }) {
   csr = csr || ({} as CsrRenderModel)
   if (!hasMaterials(csr)) return null
 
   const rows = getMaterialsRows(csr)
   if (rows.length === 0) return null
 
-  const metaStyle = csr.meta?.materialsOutputStyle || ''
-  const resolvedStyle = preferredStyle || (metaStyle === 'comma' ? 'comma' : 'list')
   const numBlocks = resolveMaterialColumnBlocks(rows.length, templateId)
-  const activeStyle = numBlocks === 0 ? 'comma' : resolvedStyle
-
-  const content = activeStyle === 'comma'
+  const content = numBlocks === 0
     ? renderCommaMaterials(rows)
     : renderTabulateMaterials(rows, numBlocks)
 
