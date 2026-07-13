@@ -510,6 +510,10 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
     q = applyDateFilter(q, query.dateRange);
     q = applySortOrder(q, query.sortBy, query.sortDirection);
+    // Secondary sort by csr_number for deterministic ordering when created_at ties
+    if (query.sortBy === "created_at") {
+      q = q.order("csr_number", { ascending: query.sortDirection === "asc" });
+    }
 
     const { data, error } = await q;
     if (error) throw error;

@@ -33,6 +33,14 @@ const EMPTY_BRANDING = {
   footerText: '',
 }
 
+/** Convert string booleans ('Yes'/'No'/''/etc.) to actual booleans for DB columns */
+function toDbBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value
+  if (value === 'Yes' || value === 'true') return true
+  if (value === 'No' || value === 'false') return false
+  return null
+}
+
 const hasInvoicePrefillDetails = (invoice: any) =>
   Boolean(invoice?.invoiceNumber || invoice?.clientId || invoice?.clientName || invoice?.poNumber)
 
@@ -362,7 +370,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         client_id: csr.client_id || null,
         linked_invoice_id: csr.linked_invoice_id || null,
         show_po: Boolean(String(csr.po_number || '').trim()),
-        system_down: csr.system_down === '' ? null : csr.system_down,
+        system_down: toDbBoolean(csr.system_down),
         materials_used: serializeCsrMaterials(materialsRows, csrMeta as any),
       })
 
@@ -453,7 +461,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         client_id: csr.client_id || null,
         linked_invoice_id: csr.linked_invoice_id || null,
         show_po: Boolean(String(csr.po_number || '').trim()),
-        system_down: csr.system_down === '' ? null : csr.system_down,
+        system_down: toDbBoolean(csr.system_down),
         materials_used: serializeCsrMaterials(materialsRows, csrMeta),
       })
 
