@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=210mm">
+    <title>Bigdrop Engineering — CSR</title>
+    <style>
+        /* ── reset & base ── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            background: #e8e4df;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, 'Source Sans 3', 'Source Sans', sans-serif;
+            font-size: 7pt;
+            line-height: 1.35;
+            color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+        /* ── new color palette: plum + burnt orange + sage ── */
+        :root {
+            --primary: #4A2C5A;
+            --primary-dark: #352140;
+            --primary-light: rgba(74, 44, 90, 0.07);
+            --primary-border: rgba(74, 44, 90, 0.18);
+            --primary-double: rgba(74, 44, 90, 0.14);
+
+            --amber: #C87A2C;
+            --amber-light: rgba(200, 122, 44, 0.10);
+            --amber-border: rgba(200, 122, 44, 0.20);
+
+            --sage: #8A9B6E;
+            --sage-light: rgba(138, 155, 110, 0.08);
+            --sage-border: rgba(138, 155, 110, 0.15);
+
+            --cream: #FDF8F3;
+            --cream-dark: #F5EDE4;
+            --white: #FFFFFF;
+            --grey: #6B7280;
+            --light-grey: #E5E7EB;
+            --black: #0F1722;
+        }
+
+        .document {
+            width: 210mm;
+            max-width: 210mm;
+            min-height: 297mm;
+            background: var(--white);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── header ── */
+        .header {
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6mm 5mm 5mm 5mm;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 3mm;
+        }
+        .logo-placeholder {
+            width: 38px;
+            height: 38px;
+            border: 1.5px dashed rgba(255, 255, 255, .4);
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            gap: 0;
+        }
+        .logo-placeholder .lp-icon {
+            font-size: 14pt;
+            font-weight: 700;
+            color: rgba(255, 255, 255, .6);
+            line-height: 1;
+        }
+        .logo-placeholder .lp-text {
+            font-size: 4.5pt;
+            color: rgba(255, 255, 255, .35);
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .header-company {
+            font-size: 11pt;
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+        .header-sub {
+            font-size: 7pt;
+            font-weight: 400;
+            opacity: .85;
+            letter-spacing: .3px;
+        }
+        .header-center {
+            text-align: center;
+        }
+        .header-title {
+            font-size: 9.5pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+        .header-divider {
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, .5);
+            margin: 2px auto 0;
+        }
+        .header-right {
+            text-align: right;
+        }
+        /* removed .header-badge (Golden Sample) */
+        .header-ref {
+            font-size: 7pt;
+            font-weight: 500;
+            opacity: .85;
+            letter-spacing: .4px;
+            background: rgba(255, 255, 255, .10);
+            padding: 2px 10px;
+            border-radius: 2px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, .15);
+        }
+
+        /* ── sections ── */
+        .section {
+            padding: 3.2mm 4mm;
+            border-top: 3px double var(--primary-double);
+        }
+        .section:first-of-type {
+            border-top: none;
+        }
+        .bg-cream {
+            background: var(--cream);
+        }
+        .bg-white {
+            background: var(--white);
+        }
+
+        /* ── section titles ── */
+        .section-title {
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            margin-bottom: 2.5px;
+            position: relative;
+            padding-bottom: 1.5px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 24px;
+            height: 1.5px;
+            border-radius: 1px;
+        }
+        .title-primary::after {
+            background: var(--primary);
+        }
+        .title-amber::after {
+            background: var(--amber);
+        }
+        .title-sage::after {
+            background: var(--sage);
+        }
+
+        /* ── summary grid ── */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px 6px;
+        }
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            border-left: 2.5px solid var(--primary);
+            padding: 2.5px 5px;
+            border-radius: 1.5px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .summary-label {
+            font-size: 5.8pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--grey);
+            margin-bottom: .5px;
+        }
+        .summary-value {
+            font-size: 8pt;
+            font-weight: 600;
+            color: var(--black);
+            line-height: 1.2;
+        }
+
+        /* ── two-col ── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .two-col .col {
+            border: 1px solid var(--light-grey);
+            border-radius: 1.5px;
+            padding: 3px 5px;
+            background: var(--white);
+        }
+        .info-row {
+            display: flex;
+            padding: .8px 0;
+            font-size: 7pt;
+            border-bottom: 1px dashed rgba(0, 0, 0, .06);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            width: 72px;
+            font-weight: 600;
+            color: var(--sage);
+            flex-shrink: 0;
+            font-size: 6.5pt;
+            text-transform: uppercase;
+            letter-spacing: .2px;
+        }
+        .info-value {
+            flex: 1;
+        }
+
+        /* ── op row ── */
+        .op-row {
+            display: flex;
+            gap: 1px;
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            border-radius: 1.5px;
+            overflow: hidden;
+        }
+        .op-item {
+            flex: 1;
+            text-align: center;
+            padding: 2.5px 3px;
+            border-right: 1px solid var(--light-grey);
+        }
+        .op-item:last-child {
+            border-right: none;
+            background: var(--primary-light);
+        }
+        .op-label {
+            font-size: 5.5pt;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: var(--grey);
+            font-weight: 600;
+        }
+        .op-value {
+            font-size: 7.5pt;
+            font-weight: 700;
+            color: var(--black);
+            line-height: 1.2;
+        }
+        .op-unit {
+            font-size: 5.5pt;
+            color: var(--grey);
+            font-weight: 400;
+        }
+
+        /* ── text block ── */
+        .text-block {
+            font-size: 7pt;
+            line-height: 1.4;
+            color: #2a2a2a;
+            text-align: justify;
+        }
+
+        /* ── defect list ── */
+        .defect-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .defect-list li {
+            padding: 1.2px 0 1.2px 14px;
+            position: relative;
+            font-size: 7pt;
+            line-height: 1.35;
+            border-bottom: 1px dashed rgba(0, 0, 0, .05);
+        }
+        .defect-list li:last-child {
+            border-bottom: none;
+        }
+        .defect-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--amber);
+        }
+        .defect-num {
+            font-weight: 700;
+            color: var(--amber);
+            margin-right: 2px;
+        }
+
+        /* ── materials ── */
+        .materials-row {
+            display: flex;
+            gap: 5px;
+        }
+        .mat-col {
+            flex: 1;
+            min-width: 0;
+        }
+        .mat-header {
+            display: flex;
+            font-size: 5.8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: var(--sage);
+            padding: 1.5px 0 1px;
+            border-bottom: 1.5px solid var(--sage);
+            margin-bottom: 1px;
+        }
+        .mat-h-num {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .mat-h-desc {
+            flex: 1;
+            padding-left: 2px;
+        }
+        .mat-h-qty {
+            width: 32px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .mat-item {
+            display: flex;
+            font-size: 6.5pt;
+            padding: .8px 0;
+            line-height: 1.3;
+            border-bottom: 1px dashed rgba(0, 0, 0, .05);
+            align-items: center;
+        }
+        .mat-item:last-child {
+            border-bottom: none;
+        }
+        .mat-num {
+            width: 18px;
+            text-align: center;
+            color: var(--amber);
+            font-weight: 600;
+            font-size: 6pt;
+            flex-shrink: 0;
+        }
+        .mat-desc {
+            flex: 1;
+            padding: 0 2px;
+        }
+        .mat-qty {
+            width: 32px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--black);
+            font-size: 6.5pt;
+            flex-shrink: 0;
+        }
+
+        /* ── remarks grid ── */
+        .remarks-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 6px;
+        }
+        .remarks-box,
+        .feedback-box {
+            border: 1px solid var(--light-grey);
+            border-radius: 1.5px;
+            padding: 3px 5px;
+            background: var(--white);
+        }
+        .box-title {
+            font-size: 6.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-bottom: 2px;
+        }
+        .box-title.primary {
+            color: var(--primary);
+        }
+        .box-title.amber {
+            color: var(--amber);
+        }
+
+        /* ── timing row ── */
+        .timing-row {
+            display: flex;
+            gap: 1px;
+            background: var(--white);
+            border: 1px solid var(--light-grey);
+            border-radius: 1.5px;
+            overflow: hidden;
+        }
+        .timing-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+            gap: 4px;
+            border-right: 1px solid var(--light-grey);
+        }
+        .timing-item:last-child {
+            border-right: none;
+        }
+        .timing-icon {
+            font-size: 6pt;
+            color: var(--sage);
+            font-weight: 700;
+        }
+        .timing-label {
+            font-size: 5.8pt;
+            text-transform: uppercase;
+            letter-spacing: .2px;
+            color: var(--grey);
+            font-weight: 600;
+        }
+        .timing-value {
+            font-size: 7pt;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        /* ── SIGNATURES — vertical line full height ── */
+        .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .sig-box {
+            border: 1px solid var(--light-grey);
+            border-radius: 1.5px;
+            padding: 3px 6px 3px 6px;
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+        }
+        .sig-label {
+            font-size: 5.8pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: var(--grey);
+            margin-bottom: 2px;
+        }
+
+        .sig-row {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            flex: 1;
+            min-height: 38px;
+        }
+        .sig-name-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            padding-right: 6px;
+            min-width: 0;
+        }
+        .sig-name {
+            font-size: 7pt;
+            font-weight: 600;
+            color: var(--black);
+            line-height: 1.2;
+        }
+        .sig-title {
+            font-size: 6pt;
+            color: var(--grey);
+            line-height: 1.2;
+        }
+        .sig-date {
+            font-size: 6pt;
+            color: var(--grey);
+            margin-top: 1px;
+        }
+
+        /* vertical divider — full height */
+        .sig-divider {
+            width: 1px;
+            background: var(--primary);
+            flex-shrink: 0;
+            margin: 0;
+            opacity: .45;
+            align-self: stretch;
+        }
+
+        .sig-svg-col {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 6px;
+            flex: 0 0 auto;
+            min-width: 70px;
+            max-width: 120px;
+        }
+        .sig-svg-col svg {
+            height: 30px;
+            width: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* ── footer ── */
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            padding: 3.5mm 4mm;
+            font-size: 5.8pt;
+            text-align: center;
+            line-height: 1.5;
+            letter-spacing: .2px;
+        }
+        .footer-main {
+            font-weight: 600;
+            font-size: 6.5pt;
+            letter-spacing: .3px;
+        }
+        .footer-detail {
+            opacity: .8;
+        }
+        .footer-divider {
+            width: 60px;
+            height: 1px;
+            background: rgba(255, 255, 255, .25);
+            margin: 2px auto;
+        }
+
+        /* ── print ── */
+        @media print {
+            html {
+                background: white;
+                padding: 0;
+            }
+            body {
+                padding: 0;
+                display: block;
+            }
+            .document {
+                width: 100%;
+                max-width: 100%;
+                min-height: auto;
+                box-shadow: none;
+                margin: 0;
+                overflow: visible;
+                height: auto;
+            }
+            .print-btn {
+                display: none !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 7mm 8mm;
+            }
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(74, 44, 90, .35);
+            font-family: inherit;
+            letter-spacing: .3px;
+        }
+        .print-btn:hover {
+            background: var(--primary-dark);
+        }
+        @media print {
+            .print-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="document">
+
+        <!-- ─── HEADER — removed Golden Sample badge ─── -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo-placeholder">
+                    <span class="lp-icon">B</span>
+                    <span class="lp-text">[ LOGO ]</span>
+                </div>
+                <div class="header-brand">
+                    <div class="header-company">Bigdrop Engineering Nigeria Ltd</div>
+                    <div class="header-sub">42 Industrial Layout &middot; Port Harcourt &middot; Rivers State</div>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="header-title">Customer Service Report</div>
+                <div class="header-divider"></div>
+            </div>
+            <div class="header-right">
+                <div class="header-ref">CSR-2026-0042</div>
+            </div>
+        </div>
+
+        <!-- ─── SUMMARY ─── -->
+        <div class="section bg-cream" style="padding:3mm 4mm">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <span class="summary-label">CSR Number</span>
+                    <span class="summary-value">CSR-2026-0042</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Date of Service</span>
+                    <span class="summary-value">13 July 2026</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">PO Reference</span>
+                    <span class="summary-value">DPC/PO-2026/871</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Call Type</span>
+                    <span class="summary-value">Emergency Breakdown</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Service Basis</span>
+                    <span class="summary-value">On-site Maintenance</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Status</span>
+                    <span class="summary-value">Completed / Signed-off</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── CLIENT & EQUIPMENT ─── -->
+        <div class="section bg-white">
+            <div class="two-col">
+                <div class="col">
+                    <div class="section-title title-sage" style="margin-bottom:2px">Client Information</div>
+                    <div class="info-row"><span class="info-label">Company</span><span class="info-value">Delta Petrochemicals Plc</span></div>
+                    <div class="info-row"><span class="info-label">Address</span><span class="info-value">23 Refinery Road, Warri, Delta State</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span><span class="info-value">+234-803-987-6543</span></div>
+                    <div class="info-row"><span class="info-label">Attention</span><span class="info-value">Eng. Funmilayo Akinwande &mdash; Plant Manager</span></div>
+                </div>
+                <div class="col">
+                    <div class="section-title title-sage" style="margin-bottom:2px">Equipment Information</div>
+                    <div class="info-row"><span class="info-label">Equipment</span><span class="info-value">Industrial Boiler (Steam)</span></div>
+                    <div class="info-row"><span class="info-label">Make/Model</span><span class="info-value">Bosch Universal UL-S</span></div>
+                    <div class="info-row"><span class="info-label">Serial No.</span><span class="info-value" style="font-family:'Cascadia Code','Fira Code','Consolas','Courier New',monospace;font-size:6.5pt">BSH-UL-2319</span></div>
+                    <div class="info-row"><span class="info-label">Engine No.</span><span class="info-value" style="font-family:'Cascadia Code','Fira Code','Consolas','Courier New',monospace;font-size:6.5pt">BSH-8847</span></div>
+                    <div class="info-row"><span class="info-label">Capacity</span><span class="info-value">6,500 kg/h &middot; 10.5 bar max</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── OPERATIONAL READINGS ─── -->
+        <div class="section bg-cream" style="padding:2.5mm 4mm">
+            <div class="section-title title-primary" style="margin-bottom:1.5px">Operational Readings</div>
+            <div class="op-row">
+                <div class="op-item"><div class="op-label">Voltage</div><div class="op-value">220<span class="op-unit"> V</span></div></div>
+                <div class="op-item"><div class="op-label">Frequency</div><div class="op-value">50<span class="op-unit"> Hz</span></div></div>
+                <div class="op-item"><div class="op-label">Battery</div><div class="op-value" style="color:var(--grey)">N/A</div></div>
+                <div class="op-item"><div class="op-label">Temperature</div><div class="op-value">184<span class="op-unit">&deg;C</span></div></div>
+                <div class="op-item"><div class="op-label">Pressure</div><div class="op-value">10.5<span class="op-unit"> bar</span></div></div>
+                <div class="op-item" style="background:var(--primary-light)"><div class="op-label">Run Hours</div><div class="op-value">22,413<span class="op-unit"> h</span></div></div>
+            </div>
+        </div>
+
+        <!-- ─── PROBLEM REPORTED ─── -->
+        <div class="section bg-white">
+            <div class="section-title title-amber" style="margin-bottom:2px">Problem Reported</div>
+            <div class="text-block">
+                &ldquo;Steam pressure fluctuations and burner instability during high-demand cycles. Boiler experiencing repeated flame-out events and inconsistent steam output, affecting downstream production throughput. Plant operations curtailed to 55% capacity awaiting resolution.&rdquo;
+            </div>
+        </div>
+
+        <!-- ─── DEFECTS FOUND ─── -->
+        <div class="section bg-cream">
+            <div class="section-title title-amber" style="margin-bottom:2px">Defects Found</div>
+            <ul class="defect-list">
+                <li><span class="defect-num">01.</span> Defective flame scanner sensor &mdash; intermittent signal loss causing burner lockout under modulation.</li>
+                <li><span class="defect-num">02.</span> Clogged fuel nozzle assembly &mdash; carbon deposits disrupting fuel atomisation; flame pattern distorted.</li>
+                <li><span class="defect-num">03.</span> Worn-out gasket on steam drum manhole &mdash; minor steam weep at operating pressure (10.5 bar).</li>
+                <li><span class="defect-num">04.</span> Calibration drift on pressure controller &mdash; indicated reading offset by +0.8 bar vs. reference standard.</li>
+            </ul>
+        </div>
+
+        <!-- ─── SERVICE RENDERED ─── -->
+        <div class="section bg-white">
+            <div class="section-title title-primary" style="margin-bottom:2px">Service Rendered</div>
+            <div class="text-block">
+                Conducted full diagnostic assessment of boiler control system and burner management controller (BMC). Replaced defective flame scanner sensor and recalibrated BMC modulation parameters. Dismantled, cleaned, and serviced fuel nozzle assembly; decarbonised all burner components. Replaced worn steam drum manhole gasket and pressure controller. Flushed fuel supply lines and replaced both primary and secondary fuel filter elements. Performed combustion efficiency test across firing range; adjusted air-to-fuel ratio for optimal combustion (&lambda; = 1.18). Conducted hydrostatic pressure test at 11.5 bar &mdash; zero leakage observed. Full recommissioning test run completed across 30%&ndash;100% load range. Steam output stabilised at 6,450 kg/h &plusmn;50 kg/h. System handed over in full operational condition.
+            </div>
+        </div>
+
+        <!-- ─── MATERIALS USED ─── -->
+        <div class="section bg-cream">
+            <div class="section-title title-primary" style="margin-bottom:2px">Materials Used</div>
+            <div class="materials-row">
+                <div class="mat-col">
+                    <div class="mat-header"><span class="mat-h-num">No.</span><span class="mat-h-desc">Description</span><span class="mat-h-qty">Qty</span></div>
+                    <div class="mat-item"><span class="mat-num">01</span><span class="mat-desc">Flame Scanner Sensor</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">02</span><span class="mat-desc">Fuel Nozzle Assembly</span><span class="mat-qty">1 set</span></div>
+                    <div class="mat-item"><span class="mat-num">03</span><span class="mat-desc">Steam Drum Gasket</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">04</span><span class="mat-desc">Pressure Controller</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">05</span><span class="mat-desc">Burner Control Relay</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">06</span><span class="mat-desc">High-pressure Hose (&frac12;&Prime;)</span><span class="mat-qty">2 m</span></div>
+                    <div class="mat-item"><span class="mat-num">07</span><span class="mat-desc">Solenoid Valve (24 VDC)</span><span class="mat-qty">1 pc</span></div>
+                </div>
+                <div class="mat-col">
+                    <div class="mat-header"><span class="mat-h-num">No.</span><span class="mat-h-desc">Description</span><span class="mat-h-qty">Qty</span></div>
+                    <div class="mat-item"><span class="mat-num">08</span><span class="mat-desc">Temperature Sensor PT100</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">09</span><span class="mat-desc">Water Level Probe</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">10</span><span class="mat-desc">Safety Valve (10 bar)</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">11</span><span class="mat-desc">O-ring Kit (Assorted)</span><span class="mat-qty">1 set</span></div>
+                    <div class="mat-item"><span class="mat-num">12</span><span class="mat-desc">Gasket Sealant (Hi-temp)</span><span class="mat-qty">1 tube</span></div>
+                    <div class="mat-item"><span class="mat-num">13</span><span class="mat-desc">Fuel Filter Element</span><span class="mat-qty">2 pcs</span></div>
+                    <div class="mat-item"><span class="mat-num">14</span><span class="mat-desc">Air Filter (Burner)</span><span class="mat-qty">1 pc</span></div>
+                </div>
+                <div class="mat-col">
+                    <div class="mat-header"><span class="mat-h-num">No.</span><span class="mat-h-desc">Description</span><span class="mat-h-qty">Qty</span></div>
+                    <div class="mat-item"><span class="mat-num">15</span><span class="mat-desc">Ignition Electrode Set</span><span class="mat-qty">1 set</span></div>
+                    <div class="mat-item"><span class="mat-num">16</span><span class="mat-desc">Control Cable (4-core)</span><span class="mat-qty">5 m</span></div>
+                    <div class="mat-item"><span class="mat-num">17</span><span class="mat-desc">Cable Gland (PG16)</span><span class="mat-qty">4 pcs</span></div>
+                    <div class="mat-item"><span class="mat-num">18</span><span class="mat-desc">Terminal Block (12-way)</span><span class="mat-qty">1 pc</span></div>
+                    <div class="mat-item"><span class="mat-num">19</span><span class="mat-desc">Thread Seal Tape (PTFE)</span><span class="mat-qty">1 roll</span></div>
+                    <div class="mat-item"><span class="mat-num">20</span><span class="mat-desc">Anti-seize Compound</span><span class="mat-qty">1 tin</span></div>
+                    <div class="mat-item"><span class="mat-num">21</span><span class="mat-desc">Calibration Gas (Propane)</span><span class="mat-qty">1 can</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── REMARKS & FEEDBACK ─── -->
+        <div class="section bg-white">
+            <div class="remarks-grid">
+                <div class="remarks-box">
+                    <div class="box-title primary">Engineer Remarks</div>
+                    <div class="text-block" style="font-size:6.8pt;line-height:1.35">
+                        Root cause traced to flame scanner sensor degradation compounded by carbon fouling in the fuel nozzle assembly. Both primary defects contributed to the instability and flame-out events. We recommend implementing a <strong>quarterly preventive maintenance</strong> programme covering burner component inspection, nozzle cleaning, and sensor verification. Additionally, feedwater hardness was measured at 8.2 ppm (target: &lt;2 ppm). A water softener system evaluation is advised to forestall future scale accumulation on heat exchange surfaces.
+                    </div>
+                </div>
+                <div class="feedback-box">
+                    <div class="box-title amber">Customer Feedback</div>
+                    <div class="text-block" style="font-size:6.8pt;line-height:1.35;font-style:italic">
+                        &ldquo;Bigdrop resolved a persistent issue that three other vendors could not fix. The team was professional, thorough, and completed the job within the promised window. We particularly valued the detailed diagnostic methodology and the comprehensive post-service commissioning report. This is the standard of service we expect from our engineering partners.&rdquo;
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── TIMING ─── -->
+        <div class="section bg-cream" style="padding:2.5mm 4mm">
+            <div class="timing-row">
+                <div class="timing-item"><span class="timing-icon">&#9654;</span><span class="timing-label">Start Time</span><span class="timing-value">08:15</span></div>
+                <div class="timing-item"><span class="timing-icon">&#9632;</span><span class="timing-label">End Time</span><span class="timing-value">16:45</span></div>
+                <div class="timing-item"><span class="timing-icon">&#9200;</span><span class="timing-label">Duration</span><span class="timing-value">8.5 hrs (incl. 1 hr lunch)</span></div>
+                <div class="timing-item" style="background:var(--primary-light)"><span class="timing-icon" style="color:var(--primary)">&#10004;</span><span class="timing-label">System Status</span><span class="timing-value" style="color:var(--primary)">Operational &mdash; Fully Recommissioned</span></div>
+            </div>
+        </div>
+
+        <!-- ─── SIGNATURES — vertical line full height ─── -->
+        <div class="section bg-white">
+            <div class="signatures">
+                <!-- Technician -->
+                <div class="sig-box">
+                    <div class="sig-label">Technician</div>
+                    <div class="sig-row">
+                        <div class="sig-name-col">
+                            <div class="sig-name">Eng. Nnamdi Okafor</div>
+                            <div class="sig-title">Service Technician &mdash; Bigdrop Engineering</div>
+                            <div class="sig-date">Signed: 13 July 2026</div>
+                        </div>
+                        <div class="sig-divider"></div>
+                        <div class="sig-svg-col">
+                            <svg viewBox="0 0 180 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12,24 C16,10 24,6 30,16 C34,22 28,26 22,22 C16,18 14,12 22,8
+                                         C30,4 40,16 36,24 C32,30 26,26 32,18 C38,12 50,6 56,16
+                                         C60,22 54,28 48,26 C42,24 48,16 56,14 C66,10 72,22 66,28
+                                         C60,32 56,26 62,18 C68,12 80,6 88,16 C94,24 88,30 80,28
+                                         C74,26 78,18 86,14 C98,8 106,20 100,28 C94,34 88,28 96,18
+                                         L104,22 M116,18 C120,8 130,4 136,14 C140,20 134,26 128,24 C122,22 126,14 134,12"
+                                    stroke="#4A2C5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipient -->
+                <div class="sig-box">
+                    <div class="sig-label">Recipient</div>
+                    <div class="sig-row">
+                        <div class="sig-name-col">
+                            <div class="sig-name">Eng. Funmilayo Akinwande</div>
+                            <div class="sig-title">Plant Manager &mdash; Delta Petrochemicals Plc</div>
+                            <div class="sig-date">Received: 13 July 2026</div>
+                        </div>
+                        <div class="sig-divider"></div>
+                        <div class="sig-svg-col">
+                            <svg viewBox="0 0 200 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10,22 C16,10 26,6 32,18 C36,26 28,30 22,24 C16,18 20,10 28,8
+                                         C38,4 48,18 42,26 C36,32 30,26 38,18 C46,10 58,6 64,18
+                                         C68,26 60,30 54,26 C48,22 54,12 62,10 C72,8 80,20 74,28
+                                         C68,36 62,30 70,20 C78,10 90,6 96,18 C100,26 94,30 86,28
+                                         C80,26 84,16 92,12 C102,8 112,20 106,30 C100,38 94,30 100,20
+                                         C106,12 118,6 126,18 C132,26 126,32 118,28 C112,24 116,16 124,12
+                                         C136,6 146,18 140,28 C134,36 128,30 136,20 L146,24
+                                         M156,20 C160,10 170,6 176,16 C180,22 174,28 168,24 C162,20 166,12 174,10"
+                                    stroke="#C87A2C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── FOOTER ─── -->
+        <div class="footer">
+            <div class="footer-main">Bigdrop Engineering Nigeria Ltd</div>
+            <div>42 Industrial Layout, Port Harcourt, Rivers State, Nigeria</div>
+            <div class="footer-divider"></div>
+            <div class="footer-detail">+234-803-456-7890 &nbsp;|&nbsp; info@bigdropengineering.ng &nbsp;|&nbsp; www.bigdropengineering.ng</div>
+            <div class="footer-detail" style="margin-top:1px;font-size:5.5pt;opacity:.6">Document: CSR &nbsp;|&nbsp; Generated: 13 July 2026 &nbsp;|&nbsp; Classification: Official &mdash; Client Confidential</div>
+        </div>
+
+    </div>
+
+    <button class="print-btn" onclick="window.print()">&#9654; Print / Save PDF</button>
+
+</body>
+</html>
