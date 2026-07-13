@@ -1,462 +1,519 @@
-# ROLE
-
-You are a senior enterprise document designer specializing in engineering service documentation, print layouts, and HTML-to-PDF document design.
-
-# GOAL
-
-Create a **single self-contained HTML document** representing a **Golden Sample Customer Service Report (CSR)**.
-
-This is **NOT** a web application.
-
-It is a premium engineering document prototype whose purpose is to stress-test future HTML-to-PDF templates and printed service reports.
-
-The document should look like it was produced by a large industrial engineering company.
-
----
-
-# OUTPUT REQUIREMENT
-
-Return **ONLY** the HTML source code.
-
-Wrap the entire response inside **ONE** Markdown `html` code block.
-
-Do not explain anything.
-
-Do not include markdown outside the code block.
-
-Do not include notes before or after the HTML.
-
----
-
-# ABSOLUTE PAGE REQUIREMENT
-
-The completed document **MUST print on EXACTLY ONE A4 page in Portrait orientation.**
-
-This requirement has the highest priority.
-
-If printing or converting to PDF creates a second page, the task has failed.
-
-Do NOT solve this by shrinking fonts to unreadable sizes.
-
-Instead:
-
-- use intelligent layouts
-- use balanced spacing
-- use multi-column sections where appropriate
-- reduce unnecessary whitespace
-- group related information
-- optimize information density
-
-The page should feel professionally engineered rather than compressed.
-
----
-
-# DESIGN STYLE
-
-Avoid:
-
-- Minimalist layouts
-- Bootstrap-looking forms
-- Generic AI invoice styling
-- Large empty boxes
-- Plain black-and-white forms
-- Excessive whitespace
-
-Instead create something worthy of an enterprise engineering company.
-
-The document should feel:
-
-- premium
-- polished
-- structured
-- technical
-- refined
-- information-rich
-
----
-
-# PRINT COLOURS
-
-Use tasteful print-friendly colours.
-
-Black must NOT be the only colour.
-
-Use combinations of colours such as:
-
-- Navy
-- Steel Blue
-- Slate
-- Deep Teal
-- Forest Green
-- Burgundy
-- Indigo
-- Warm Gray
-- Muted Gold accents
-
-Avoid:
-
-- gradients
-- glowing effects
-- neon colours
-- dark page backgrounds
-
-Everything should remain economical for printing.
-
----
-
-# PAGE STRUCTURE
-
-Design an intelligent document hierarchy.
-
-Suggested flow:
-
-Header
-
-↓
-
-Document Summary
-
-↓
-
-Client Information + Equipment Information
-
-↓
-
-Operational Readings
-
-↓
-
-Problem Reported
-
-↓
-
-Defects Found
-
-↓
-
-Service Rendered
-
-↓
-
-Materials Used
-
-↓
-
-Engineer Remarks
-
-↓
-
-Customer Feedback
-
-↓
-
-Service Timing + System Status
-
-↓
-
-Technician & Customer Signatures
-
-↓
-
-Footer
-
-Use side-by-side layouts wherever appropriate to conserve vertical space.
-
----
-
-# DOCUMENT CONTENT
-
-Populate EVERY optional field with realistic industrial sample data.
-
-## 1. Document Information
-
-- CSR Number
-- Date
-- PO Number
-- Call Type
-- Service Basis
-- Status
-
----
-
-## 2. Client Information
-
-- Client Name
-- Long realistic company address
-
----
-
-## 3. Equipment Information
-
-- Equipment Type
-- Equipment Location
-- Make
-- Model
-- Serial Number
-- Engine Number
-- Capacity
-
----
-
-## 4. Operational Readings
-
-Populate:
-
-- Voltage
-- Frequency
-- Battery
-- Temperature
-- Pressure
-- Hours Run
-
----
-
-## 5. Problem Reported
-
-Write a realistic engineering report of approximately 80–100 words.
-
----
-
-## 6. Defects Found
-
-Write another realistic technical report of approximately 70–90 words.
-
----
-
-## 7. Service Rendered
-
-Write a realistic engineering service report describing diagnosis, repairs, testing and commissioning.
-
-Approximately 100–120 words.
-
----
-
-## 8. Materials Used
-
-This section is one of the primary layout stress tests.
-
-Generate between **18 and 21 realistic maintenance materials.**
-
-Each material contains only:
-
-- Item Number
-- Quantity
-- Description
-
-Do NOT add unnecessary columns.
-
-### IMPORTANT LAYOUT RULE
-
-To conserve vertical space while remaining readable, the material list may automatically split into multiple parallel lists.
-
-For example, if there are 21 materials, the numbering can flow like this:
-
-1      8      15
-
-2      9      16
-
-3     10      17
-
-4     11      18
-
-5     12      19
-
-6     13      20
-
-7     14      21
-
-Each column is simply a continuation of the same material list.
-
-Every material still contains only:
-
-- Number
-- Quantity
-- Description
-
-This is purely a print-layout optimisation.
-
-It is **NOT** additional data.
-
-The objective is to fit many materials on a single page without making the document excessively tall.
-
-Use whichever number of parallel material columns best fits the available page width.
-
----
-
-## 9. Engineer Remarks
-
-Write approximately 70–90 words containing maintenance recommendations.
-
----
-
-## 10. Service Timing
-
-Include:
-
-- Start Date
-- Start Time
-- End Date
-- End Time
-- Calculated Duration
-
----
-
-## 11. System Status
-
-Display:
-
-System Down
-
-YES
-
-using a tasteful coloured status badge.
-
----
-
-## 12. Customer Feedback
-
-Write a realistic customer comment of approximately 50–70 words.
-
----
-
-## 13. Technician
-
-Include:
-
-- Technician Name
-- Signature
-
-Use an elegant inline SVG handwritten-style signature placeholder.
-
----
-
-## 14. Customer Acknowledgement
-
-Include:
-
-- Recipient Name
-- Recipient Title
-- Customer Signature
-
-Again use an elegant SVG handwritten-style signature placeholder.
-
----
-
-## 15. Footer
-
-Include:
-
-- Company Name
-- Address
-- Phone
-- Email
-- Website
-
----
-
-## 16. Metadata
-
-Include:
-
-- Project
-- Company Logo placeholder
-- Generated Date
-- Document Title
-- Page 1 of 1
-
----
-
-# TYPOGRAPHY
-
-Use professional system fonts only.
-
-Examples:
-
-- Inter
-- Segoe UI
-- Source Sans
-- Helvetica
-- Arial
-
-Build hierarchy using:
-
-- spacing
-- borders
-- colour
-- font weight
-- typography
-
-Avoid oversized headings.
-
----
-
-# PRINT CSS
-
-Include proper print styles.
-
-Requirements:
-
-- A4 Portrait
-- Print-friendly margins
-- Preserve colours
-- Prevent awkward section breaks
-- Keep related content together
-- Optimised for browser printing and HTML-to-PDF conversion
-
----
-
-# SAMPLE DATA
-
-Do NOT use placeholder content.
-
-Avoid:
-
-- Lorem Ipsum
-- ABC Company
-- John Doe
-
-Generate believable industrial information including:
-
-- client names
-- equipment
-- serial numbers
-- addresses
-- engineers
-- technicians
-- maintenance reports
-- service remarks
-- operational readings
-- realistic spare parts
-
----
-
-# CODE REQUIREMENTS
-
-Produce:
-
-- ONE HTML file
-- Embedded CSS
-- No external assets
-- No external fonts
-- No frameworks
-- No Bootstrap
-- No Tailwind
-- No CDN
-
-Use JavaScript only if absolutely necessary for simple calculated values.
-
-Everything must work by simply opening the HTML file.
-
----
-
-# SUCCESS CRITERIA
-
-The final document should:
-
-- Fit on exactly one printed A4 page.
-- Look like a premium enterprise engineering service report.
-- Be information-dense without looking crowded.
-- Be suitable for HTML-to-PDF conversion.
-- Expose spacing, overflow, typography, and layout issues during template testing.
-
-If the document produces two pages, redesign the layout until it fits on exactly one page while maintaining professional readability.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Service Report — Bigdrop Engineering Nigeria Ltd</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  html, body {
+    background: #ffffff;
+    font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, 'Source Sans Pro', sans-serif;
+    font-size: 7.5pt;
+    line-height: 1.35;
+    color: #1A1A2E;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 186mm;
+    min-height: 277mm;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #0D7377 0%, #0a5c5f 100%);
+    color: #ffffff;
+    padding: 5.5mm 6mm 4mm 6mm;
+    border-radius: 3px 3px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+  }
+  .header-left { display: flex; flex-direction: column; justify-content: center; }
+  .header-logo-area { display: flex; align-items: center; gap: 3mm; }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18pt; font-weight: 700; letter-spacing: -1px;
+    color: #D4A857; border: 1.5px solid rgba(212,168,87,0.4);
+    flex-shrink: 0;
+  }
+  .logo-placeholder {
+    position: absolute;
+    font-size: 5.5pt;
+    color: rgba(212,168,87,0.5);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 30px;
+  }
+  .header-company { line-height: 1.2; }
+  .header-company .cname { font-size: 13pt; font-weight: 700; letter-spacing: 0.3px; }
+  .header-company .ctag { font-size: 6.5pt; opacity: 0.85; letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+  .header-right { text-align: right; display: flex; flex-direction: column; justify-content: center; }
+  .header-right .doctitle { font-size: 14pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.15; }
+  .header-right .docsub { font-size: 6.5pt; opacity: 0.8; letter-spacing: 3px; text-transform: uppercase; }
+  .header-right .docref { font-size: 7pt; margin-top: 2mm; background: rgba(255,255,255,0.12); padding: 1mm 2mm; border-radius: 2px; display: inline-block; }
+
+  .section-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #0D7377;
+    margin-bottom: 1.5mm;
+    padding-bottom: 0.8mm;
+    border-bottom: 1.5px solid #0D7377;
+    display: flex; align-items: center; gap: 2mm;
+  }
+  .section-title .title-accent { display: inline-block; width: 3mm; height: 1.5px; background: #B85C3A; }
+  .section-title .title-accent-gold { display: inline-block; width: 3mm; height: 1.5px; background: #D4A857; }
+  .section-card {
+    background: #F5F0EB;
+    border: 1px solid #e5ddd5;
+    border-radius: 2.5px;
+    padding: 2mm 2.5mm;
+    margin-bottom: 2mm;
+  }
+  .section-card-white {
+    background: #ffffff;
+    border: 1px solid #e5ddd5;
+    border-radius: 2.5px;
+    padding: 2mm 2.5mm;
+    margin-bottom: 2mm;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2mm; }
+
+  .summary-bar {
+    background: #ffffff;
+    border: 1px solid #e5ddd5;
+    border-top: none;
+    border-radius: 0 0 2.5px 2.5px;
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 2mm;
+  }
+  .summary-item {
+    flex: 1 0 0;
+    padding: 1.8mm 2mm;
+    border-right: 1px solid #efe9e2;
+    text-align: center;
+    min-width: 0;
+  }
+  .summary-item:last-child { border-right: none; }
+  .summary-item .label { font-size: 6pt; text-transform: uppercase; letter-spacing: 0.8px; color: #888; font-weight: 600; }
+  .summary-item .value { font-size: 7.5pt; font-weight: 600; color: #1A1A2E; margin-top: 0.3mm; }
+  .summary-item .value.highlight { color: #0D7377; }
+  .summary-item .value.copper { color: #B85C3A; }
+  .summary-item .value .status-badge {
+    display: inline-block;
+    background: #0D7377;
+    color: #fff;
+    font-size: 6pt;
+    font-weight: 700;
+    padding: 0.5mm 2mm;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .data-row { display: flex; margin-bottom: 0.8mm; }
+  .data-row .dl { font-weight: 600; color: #555; min-width: 28mm; font-size: 7pt; }
+  .data-row .dd { flex: 1; color: #1A1A2E; font-weight: 500; }
+  .data-row .dd strong { color: #1A1A2E; }
+
+  .readings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1mm; }
+  .reading-item {
+    background: #ffffff;
+    border: 1px solid #e5ddd5;
+    border-radius: 2px;
+    padding: 1.2mm 1.5mm;
+    text-align: center;
+  }
+  .reading-item .rlabel { font-size: 6pt; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 600; }
+  .reading-item .rvalue { font-size: 9pt; font-weight: 700; color: #0D7377; margin-top: 0.3mm; }
+  .reading-item .rvalue.copper { color: #B85C3A; }
+
+  .defect-list { list-style: none; padding: 0; }
+  .defect-list li {
+    padding: 0.6mm 0 0.6mm 3mm;
+    position: relative;
+    font-size: 7pt;
+    border-bottom: 1px dotted #e5ddd5;
+  }
+  .defect-list li:last-child { border-bottom: none; }
+  .defect-list li::before {
+    content: "";
+    position: absolute; left: 0; top: 2mm;
+    width: 1.8mm; height: 1.8mm;
+    background: #B85C3A;
+    border-radius: 50%;
+  }
+  .defect-list li .defect-label { font-weight: 700; color: #1A1A2E; }
+  .defect-list li .defect-desc { color: #555; }
+
+  .service-text { font-size: 7pt; line-height: 1.5; color: #333; }
+  .service-text strong { color: #0D7377; }
+
+  .materials-section .section-card { padding: 1.5mm 2mm; }
+  .mat-header {
+    display: flex; font-weight: 700; font-size: 6pt;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #0D7377; padding-bottom: 0.5mm;
+    border-bottom: 1px solid #0D7377; margin-bottom: 0.5mm;
+  }
+  .mat-header .mat-no { width: 5mm; }
+  .mat-header .mat-desc { flex: 1; }
+  .mat-header .mat-qty { width: 8mm; text-align: center; }
+  .mat-row {
+    display: flex; font-size: 6.5pt; padding: 0.5mm 0;
+    border-bottom: 1px dotted #ece6df;
+    align-items: center;
+  }
+  .mat-row:last-child { border-bottom: none; }
+  .mat-row .mat-no { width: 5mm; color: #999; font-weight: 600; }
+  .mat-row .mat-desc { flex: 1; color: #333; }
+  .mat-row .mat-qty { width: 8mm; text-align: center; font-weight: 600; color: #1A1A2E; }
+
+  .remarks-text { font-size: 7pt; line-height: 1.5; color: #333; }
+  .feedback-text { font-size: 7pt; line-height: 1.5; color: #333; font-style: italic; }
+
+  .timing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1mm; }
+  .timing-item { text-align: center; }
+  .timing-item .tlabel { font-size: 6pt; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 600; }
+  .timing-item .tvalue { font-size: 7pt; font-weight: 600; color: #1A1A2E; }
+  .status-down {
+    display: inline-block;
+    background: #B85C3A;
+    color: #fff;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 0.8mm 3mm;
+    border-radius: 2px;
+    letter-spacing: 1.5px;
+  }
+
+  .sig-area { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; margin-bottom: 2mm; }
+  .sig-block {
+    border: 1px solid #e5ddd5;
+    border-radius: 2.5px;
+    padding: 2mm 2.5mm 1.5mm;
+    background: #ffffff;
+  }
+  .sig-block .sig-title { font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #0D7377; margin-bottom: 1mm; }
+  .sig-block .sig-line { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.5mm; }
+  .sig-block .sig-label { font-size: 6.5pt; color: #888; }
+  .sig-block .sig-name { font-size: 7.5pt; font-weight: 600; color: #1A1A2E; }
+  .sig-block .sig-title-text { font-size: 6.5pt; color: #666; }
+  .sig-svg-wrap { text-align: right; line-height: 0; }
+  .sig-svg-wrap svg { width: 45mm; height: 10mm; }
+
+  .footer {
+    background: #1A1A2E;
+    color: rgba(255,255,255,0.85);
+    padding: 2.5mm 4mm;
+    border-radius: 0 0 3px 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 6.5pt;
+    line-height: 1.4;
+    gap: 1mm 3mm;
+  }
+  .footer .fcol { display: flex; align-items: center; gap: 1.5mm; }
+  .footer .fcol .fdivider { width: 1px; height: 8mm; background: rgba(255,255,255,0.2); }
+  .footer .fcol strong { color: #D4A857; font-weight: 600; }
+  .footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  .footer a:hover { color: #D4A857; }
+
+  .metadata {
+    text-align: center;
+    font-size: 6pt;
+    color: #aaa;
+    margin-top: 1mm;
+    letter-spacing: 0.5px;
+  }
+
+  @media print {
+    html, body {
+      width: 210mm;
+      height: 297mm;
+      background: #ffffff;
+      font-size: 7.5pt;
+    }
+    .page {
+      width: 186mm;
+      min-height: 277mm;
+      margin: 0 auto;
+    }
+    .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .reading-item { break-inside: avoid; }
+    .status-down { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .summary-item .value .status-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  .mt-0 { margin-top: 0 !important; }
+  .mb-0 { margin-bottom: 0 !important; }
+  .pb-0 { padding-bottom: 0 !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo-area" style="position:relative">
+        <div class="logo-icon">B⚡</div>
+        <div class="logo-placeholder">[ LOGO PLACEHOLDER ]</div>
+        <div class="header-company">
+          <div class="cname">Bigdrop Engineering Nigeria Ltd</div>
+          <div class="ctag">Mechanical · Electrical · Civil · Instrumentation</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="doctitle">Customer Service Report</div>
+      <div class="docsub">Golden Sample — Technical Service Record</div>
+      <div class="docref">CSR-REF: BEND/CSR/2026/GSC-001</div>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="label">CSR Number</div>
+      <div class="value highlight">BEND-CSR-00842</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Service Date</div>
+      <div class="value">07 Jul 2026</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">PO Reference</div>
+      <div class="value">PO-NPC/2026/117</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Call Type</div>
+      <div class="value">Emergency — Breakdown</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Service Basis</div>
+      <div class="value">On-Site / Warranty</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Overall Status</div>
+      <div class="value"><span class="status-badge">Completed</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="section-card-white">
+      <div class="section-title"><span class="title-accent"></span> Client Information</div>
+      <div class="data-row"><span class="dl">Company</span><span class="dd"><strong>NigerPipes Construction Ltd</strong></span></div>
+      <div class="data-row"><span class="dl">Address</span><span class="dd">17 Trans-Amadi Industrial Layout, Port Harcourt, Rivers State</span></div>
+      <div class="data-row"><span class="dl">Contact Person</span><span class="dd">Eng. Adewale Bello — Maintenance Manager</span></div>
+      <div class="data-row"><span class="dl">Contact</span><span class="dd">+234-803-456-7891 | adewale.bello@nigerpipes.ng</span></div>
+    </div>
+    <div class="section-card-white">
+      <div class="section-title"><span class="title-accent"></span> Equipment Information</div>
+      <div class="data-row"><span class="dl">Equipment Type</span><span class="dd"><strong>Diesel Generator</strong></span></div>
+      <div class="data-row"><span class="dl">Make / Model</span><span class="dd">Caterpillar C15 — 500kVA</span></div>
+      <div class="data-row"><span class="dl">Serial Number</span><span class="dd">CAT15G-8492</span></div>
+      <div class="data-row"><span class="dl">Engine Number</span><span class="dd">3E-8492</span></div>
+      <div class="data-row"><span class="dl">Rated Capacity</span><span class="dd">500 kVA / 400 kW — 415V, 3-Phase, 50Hz</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="section-card">
+      <div class="section-title"><span class="title-accent-gold"></span> Operational Readings</div>
+      <div class="readings-grid">
+        <div class="reading-item"><div class="rlabel">Voltage (L-L)</div><div class="rvalue">415 V</div></div>
+        <div class="reading-item"><div class="rlabel">Frequency</div><div class="rvalue">50.0 Hz</div></div>
+        <div class="reading-item"><div class="rlabel">Battery Voltage</div><div class="rvalue">12.6 V</div></div>
+        <div class="reading-item"><div class="rlabel">Coolant Temp</div><div class="rvalue">89 °C</div></div>
+        <div class="reading-item"><div class="rlabel">Oil Pressure</div><div class="rvalue">45 PSI</div></div>
+        <div class="reading-item"><div class="rlabel">Service Hours</div><div class="rvalue copper">12,847 hrs</div></div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title"><span class="title-accent"></span> Problem Reported</div>
+      <div class="service-text">
+        <strong>Intermittent shutdown during peak load periods</strong> over the preceding two weeks. The generator trips on <strong>emergency stop</strong> without warning, particularly when load exceeds 380&thinsp;kVA. Client reports <strong>voltage fluctuations</strong> prior to shutdown and occasional <strong>black smoke</strong> from exhaust during restart attempts.
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-title"><span class="title-accent"></span> Defects Found</div>
+    <ol class="defect-list">
+      <li><span class="defect-label">Faulty Automatic Voltage Regulator (AVR):</span> <span class="defect-desc">The AVR module (Caterpillar OEM # 123-4567) exhibits erratic output — measured 185V at excitation coil under load, well below the 220V specification, causing voltage sag and eventual under-voltage trip.</span></li>
+      <li><span class="defect-label">Worn Fuel Injectors (Cylinders #3 &amp; #5):</span> <span class="defect-desc">Injectors showed excessive back-leakage of 18% and 22% respectively (spec &lt; 8%), causing incomplete combustion, black smoke, and load-dependent misfiring.</span></li>
+      <li><span class="defect-label">Clogged Primary Fuel Filter / Water Separator:</span> <span class="defect-desc">Element heavily contaminated with sludge and water ingress — fuel sample tested positive for microbial growth (diesel bug), restricting flow and starving the injection pump at high demand.</span></li>
+      <li><span class="defect-label">Loose Exhaust Manifold Bolts (Bank A):</span> <span class="defect-desc">Three manifold bolts found torqued to approximately 25&thinsp;Nm instead of the required 65&thinsp;Nm, resulting in an exhaust gas leak, turbocharger whistle, and elevated under-hood temperature.</span></li>
+    </ol>
+  </div>
+
+  <div class="section-card">
+    <div class="section-title"><span class="title-accent"></span> Service Rendered</div>
+    <div class="service-text">
+      <strong>1. Diagnostics &amp; Load Testing:</strong> Conducted full load-bank test up to 450&thinsp;kVA. Monitored voltage, frequency, and temperature profiles. Identified AVR instability above 60% load &mdash; confirmed faulty regulation. &nbsp;
+      <strong>2. AVR Replacement:</strong> Removed and replaced the defective AVR module with a new Caterpillar OEM unit (P/N 123-4567). Recalibrated voltage setpoint to 415V&thinsp;±&thinsp;1% at no-load and full-load conditions. &nbsp;
+      <strong>3. Injector Service:</strong> Replaced fuel injectors on cylinders #3 and #5 with OEM C15 units. Installed new injector seal kits and torqued hold-down bolts to 55&thinsp;Nm per specification. &nbsp;
+      <strong>4. Fuel System Overhaul:</strong> Replaced both primary and secondary fuel filters. Drained and cleaned the water separator bowl. Dosed the fuel tank with a diesel biocide treatment. Ran fuel polishing cycle for 30 minutes. &nbsp;
+      <strong>5. Exhaust Manifold Rectification:</strong> Re-torqued all Bank A exhaust manifold bolts to 65&thinsp;Nm. Replaced two manifold gaskets showing signs of blow-by. &nbsp;
+      <strong>6. Final Verification:</strong> Full-load test at 450&thinsp;kVA for 60 minutes. All parameters stable: Voltage 415&thinsp;V&thinsp;±&thinsp;1.2%, Frequency 50&thinsp;Hz&thinsp;±&thinsp;0.3&thinsp;Hz, Temperature 87&thinsp;°C, Oil Pressure 46&thinsp;PSI. Unit handed over in satisfactory condition.
+    </div>
+  </div>
+
+  <div class="materials-section">
+    <div class="section-card" style="padding:1.5mm 2mm 1mm 2mm;">
+      <div class="section-title" style="margin-bottom:1mm;"><span class="title-accent"></span> Materials Used</div>
+      <div class="grid-3" style="gap:1.5mm;">
+        <div>
+          <div class="mat-header"><span class="mat-no">No.</span><span class="mat-desc">Description</span><span class="mat-qty">Qty</span></div>
+          <div class="mat-row"><span class="mat-no">1</span><span class="mat-desc">Engine Oil SAE 40 (20L)</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">2</span><span class="mat-desc">Coolant — Antifreeze Concentrate (5L)</span><span class="mat-qty">5</span></div>
+          <div class="mat-row"><span class="mat-no">3</span><span class="mat-desc">Fuel Filter — Primary (Racor 1000)</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">4</span><span class="mat-desc">Fuel Filter — Secondary (OEM)</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">5</span><span class="mat-desc">Oil Filter — Full Flow (OEM C15)</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">6</span><span class="mat-desc">Air Filter — Primary Element</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">7</span><span class="mat-desc">Water Separator Element — Racor</span><span class="mat-qty">1</span></div>
+        </div>
+        <div>
+          <div class="mat-header"><span class="mat-no">No.</span><span class="mat-desc">Description</span><span class="mat-qty">Qty</span></div>
+          <div class="mat-row"><span class="mat-no">8</span><span class="mat-desc">Fuel Injector — C15 OEM (Cyl #3)</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">9</span><span class="mat-desc">Fuel Injector — C15 OEM (Cyl #5)</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">10</span><span class="mat-desc">Injector Seal Kit — C15 OEM</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">11</span><span class="mat-desc">Automatic Voltage Regulator — OEM</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">12</span><span class="mat-desc">Exhaust Manifold Gasket — C15</span><span class="mat-qty">2</span></div>
+          <div class="mat-row"><span class="mat-no">13</span><span class="mat-desc">Turbocharger Gasket Set</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">14</span><span class="mat-desc">Drive Belt — Alternator (C15)</span><span class="mat-qty">1</span></div>
+        </div>
+        <div>
+          <div class="mat-header"><span class="mat-no">No.</span><span class="mat-desc">Description</span><span class="mat-qty">Qty</span></div>
+          <div class="mat-row"><span class="mat-no">15</span><span class="mat-desc">Coolant Hose — Upper Radiator</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">16</span><span class="mat-desc">Coolant Hose — Lower Radiator</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">17</span><span class="mat-desc">Diesel Biocide Treatment (250 mL)</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">18</span><span class="mat-desc">Gasket Sealant — High-Temp (RTV)</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">19</span><span class="mat-desc">Thread Lock Compound — Medium</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">20</span><span class="mat-desc">Lint-Free Wipes — Industrial Pack</span><span class="mat-qty">1</span></div>
+          <div class="mat-row"><span class="mat-no">21</span><span class="mat-desc">Safety Gloves — Heavy Duty (Pair)</span><span class="mat-qty">2</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="section-card">
+      <div class="section-title"><span class="title-accent"></span> Engineer Remarks</div>
+      <div class="remarks-text">
+        The generator has been returned to service in satisfactory condition. The root cause of the intermittent shutdown was traced to the <strong>failing AVR</strong> combined with <strong>clogged fuel delivery components</strong>. It is recommended that the fuel storage tanks be inspected and cleaned within the next 30 days to prevent recurrence of microbial contamination. Additionally, a <strong>predictive maintenance schedule</strong> should be adopted — including quarterly fuel analysis and annual injector back-leak testing — to maximise service life. The unit should be re-tested under full load after 50 operational hours to confirm injector seating and AVR stability.
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-title"><span class="title-accent-gold"></span> Customer Feedback</div>
+      <div class="feedback-text">
+        &ldquo;The Bigdrop team arrived on site within two hours of the call-out and completed the repairs efficiently despite the complexity of the fault. The engineers were professional, communicated clearly throughout the process, and took the time to explain the root cause and preventative measures. We are satisfied with the quality of work and the restored performance of the generator. The recommendation for fuel tank cleaning has been noted and will be scheduled.&rdquo;
+        <div style="margin-top:0.8mm;font-weight:600;font-style:normal;color:#1A1A2E;font-size:6.5pt;">— Eng. Adewale Bello, Maintenance Manager, NigerPipes Construction Ltd</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:2mm;">
+    <div class="section-card-white" style="margin-bottom:0;">
+      <div class="section-title"><span class="title-accent"></span> Service Timing</div>
+      <div class="timing-grid">
+        <div class="timing-item"><div class="tlabel">Start Date</div><div class="tvalue">07 Jul 2026</div></div>
+        <div class="timing-item"><div class="tlabel">Start Time</div><div class="tvalue">09:17 hrs</div></div>
+        <div class="timing-item"><div class="tlabel">End Date</div><div class="tvalue">07 Jul 2026</div></div>
+        <div class="timing-item"><div class="tlabel">End Time</div><div class="tvalue">15:42 hrs</div></div>
+        <div class="timing-item"><div class="tlabel">Duration</div><div class="tvalue" style="color:#0D7377;font-weight:700;">6 hrs 25 min</div></div>
+        <div class="timing-item"><div class="tlabel">Travel Time</div><div class="tvalue">0 hrs 45 min</div></div>
+      </div>
+    </div>
+    <div class="section-card-white" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+      <div style="font-size:6.5pt;text-transform:uppercase;letter-spacing:1px;color:#888;font-weight:600;margin-bottom:0.5mm;">System Status at Handover</div>
+      <div><span class="status-down">SYSTEM DOWN — YES</span></div>
+      <div style="font-size:6pt;color:#B85C3A;margin-top:0.5mm;font-weight:600;">Rectified — Returned to Service</div>
+    </div>
+  </div>
+
+  <div class="sig-area">
+    <div class="sig-block">
+      <div class="sig-title">Technician / Engineer</div>
+      <div class="sig-line">
+        <div>
+          <div class="sig-name">Eng. Chibueze Okonkwo</div>
+          <div class="sig-title-text">Senior Service Engineer — Bigdrop Engineering</div>
+          <div style="font-size:6pt;color:#999;margin-top:0.3mm;">Licence: COREN R-17,245 | NSE Member</div>
+        </div>
+        <div class="sig-svg-wrap">
+          <svg viewBox="0 0 240 50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 40 Q 30 10, 50 20 Q 70 30, 85 15 Q 100 0, 110 20 Q 120 40, 135 25 Q 150 10, 160 30 Q 170 50, 180 15 Q 190 -5, 200 25 Q 210 45, 220 20 Q 230 5, 235 25"
+                  fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M30 45 Q 40 30, 55 40 Q 70 50, 80 35 Q 90 20, 100 40"
+                  fill="none" stroke="#0D7377" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+            <circle cx="235" cy="25" r="2.5" fill="#B85C3A" opacity="0.6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-title">Customer / Recipient</div>
+      <div class="sig-line">
+        <div>
+          <div class="sig-name">Eng. Adewale Bello</div>
+          <div class="sig-title-text">Maintenance Manager — NigerPipes Construction Ltd</div>
+          <div style="font-size:6pt;color:#999;margin-top:0.3mm;">COREN R-21,098 | FIMC</div>
+        </div>
+        <div class="sig-svg-wrap">
+          <svg viewBox="0 0 240 50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 38 Q 35 12, 55 28 Q 75 42, 90 18 Q 105 -2, 115 25 Q 125 48, 140 20 Q 155 -5, 165 30 Q 175 55, 190 22 Q 205 -8, 215 28 Q 225 50, 230 18"
+                  fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 45 Q 40 35, 60 45 Q 75 52, 85 40 Q 95 30, 110 48"
+                  fill="none" stroke="#0D7377" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+            <path d="M195 30 Q 200 20, 210 25 Q 220 30, 225 20"
+                  fill="none" stroke="#B85C3A" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="fcol">
+      <strong style="font-size:8pt;">BIGDROP ENGINEERING</strong>
+    </div>
+    <div class="fcol">
+      42 Industrial Layout, Port Harcourt, Rivers State, Nigeria
+    </div>
+    <div class="fcol">
+      <span>+234-803-456-7890</span>
+      <span class="fdivider"></span>
+      <a href="mailto:info@bigdropengineering.ng">info@bigdropengineering.ng</a>
+      <span class="fdivider"></span>
+      <a href="http://www.bigdropengineering.ng">www.bigdropengineering.ng</a>
+    </div>
+  </div>
+
+  <div class="metadata">
+    Document generated: 13 Jul 2026 &nbsp;·&nbsp; Project: Golden Sample CSR &nbsp;·&nbsp; Classification: Technical Service Record &nbsp;·&nbsp; ISO 9001:2015 Compliant &nbsp;·&nbsp; Page 1 of 1
+  </div>
+
+</div>
+</body>
+</html>
