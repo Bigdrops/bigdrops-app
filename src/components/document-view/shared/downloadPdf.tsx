@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 
-import { exportPdfToDevice } from '@/lib/native/pdfexport'
+import { exportPdfToDevice, openExportedPdf, shareExportedPdf } from '@/lib/native/pdfexport'
+import { isNativePlatform } from '@/lib/native/capacitor'
 import { emitFeedback } from '@/lib/NativeFeedbackBus'
 
 type DownloadPdfFromElementOptions = {
@@ -25,6 +26,18 @@ export async function downloadPdfFromElement({
         return pdf(element).toBlob()
       },
     })
+
+    if (isNativePlatform()) {
+      try {
+        await openExportedPdf(result)
+      } catch {
+        try {
+          await shareExportedPdf(result)
+        } catch {
+          // both open and share failed — file is still saved
+        }
+      }
+    }
 
     emitFeedback({
       type: 'download:success',
