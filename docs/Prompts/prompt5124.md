@@ -1,270 +1,148 @@
 You are working on the BIGDROPS business platform.
 
 Stack:
-- React 19
-- Vite 7
-- TypeScript 5.9
-- Tailwind CSS 3.4
-- Capacitor
-- Android WebView
-- Bun runtime
+React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime: Bun only.
 
 ====================================================================
-CRITICAL: READ AGENTS.md
+CRITICAL
 ====================================================================
 
-This is a STRICTLY READ-ONLY INVESTIGATION.
+Read AGENTS.md first.
 
-DO NOT modify any code.
-DO NOT create patches.
-DO NOT implement fixes.
-DO NOT change CSS.
-DO NOT change TypeScript.
-DO NOT run bun run build.
-DO NOT run bun run typecheck.
+Load the following skills:
 
-This is an evidence-gathering architecture audit only.
+- Karpathy
+- typescript-advanced-types
+- capacitor-best-practices
 
-====================================================================
-BACKGROUND
-====================================================================
+This is an INVESTIGATION ONLY.
 
-Two mobile-only rendering problems have been observed.
+Do NOT modify any source files.
 
-They may share a root cause, or they may be completely independent.
+Do NOT implement any changes.
 
-Do NOT assume they are related.
-
-Your task is to determine the actual root cause(s) using evidence only.
+Do NOT generate patches.
 
 ====================================================================
-ISSUE A — FORM BACKGROUND TURNS WHITE
+OBJECTIVE
 ====================================================================
 
-Observed behaviour:
+Perform a complete architectural audit of the PDF generation and delivery system.
 
-- On Android APK, document forms render correctly.
-- When an input gains focus and the software keyboard appears, part of the active form becomes white.
-- The application theme is no longer respected in that focused region.
-- The issue is visible on document forms.
+The goal is to determine whether BIGDROPS should adopt a single unified PDF pipeline where:
 
-Investigate whether this originates from:
-
-• shared Input component
-• shared Textarea component
-• shared Select component
-• global form CSS
-• theme variables
-• Tailwind utilities
-• color-scheme
-• appearance
-• accent-color
-• :-webkit-autofill
-• browser default styling
-• Android WebView behaviour
-• parent form container backgrounds
-
-Determine exactly which layer owns the white background.
-
-If the browser is painting a native layer instead of CSS, state that explicitly.
+- Every document generates a common PDF asset (Blob or equivalent).
+- Delivery (download, native open, share, upload, email, print, preview) is handled by a separate layer.
+- Generation and delivery become completely decoupled.
 
 ====================================================================
-ISSUE B — POPUP / DIALOG KEYBOARD GLITCH
+INSPECTION SCOPE
 ====================================================================
 
-Observed behaviour:
+Inspect every PDF-related path in the project.
 
-When the Android keyboard opens while interacting with dialogs containing inputs, the popup becomes unstable.
+Include, but do not limit yourself to:
 
-Examples include:
+- src/components/pdf-new/
+- src/components/document-view/
+- src/lib/native/pdfexport.ts
+- downloadPdf.tsx
+- Invoice
+- Quotation
+- CSR
+- RFQ
+- Waybill
+- BOQ
+- Receipt
 
-- Import dialog
-- Table Settings dialog
-- Document View Customisation dialog
-- Hex colour input dialog
-- Any large popup containing text inputs
+Identify any additional PDF generation or delivery code not previously discussed.
 
-Observed pattern:
+====================================================================
+ANALYZE
+====================================================================
 
-- Small dialogs jump once then stabilise.
-- Larger dialogs continuously jump while the keyboard is open.
+For every document type, identify:
 
-Investigate the shared overlay architecture.
+1. Entry point
+2. Generation pipeline
+3. Rendering engine
+4. Blob creation
+5. Download mechanism
+6. Native save mechanism
+7. Sharing mechanism
+8. Preview mechanism
+9. File opening mechanism
 
-Locate every reusable implementation for:
+Produce a comparison table showing every document's current pipeline.
 
-- Dialog
-- Modal
-- Sheet
-- Drawer
-- Popover
-- Portal
+====================================================================
+ARCHITECTURE ANALYSIS
+====================================================================
 
 Determine:
 
-- positioning strategy
-- centering logic
-- scroll locking
-- viewport calculations
-- resize listeners
-- visualViewport usage
-- window resize handling
-- overflow handling
-- body locking
-- fixed positioning
-- transform positioning
-
-Search for:
-
-- 100vh
-- h-screen
-- min-h-screen
-- max-h-screen
-- 100dvh
-- 100svh
-- visualViewport
-- env(safe-area-inset-*)
-- overflow:hidden
-- position: fixed
-
-Determine whether keyboard viewport changes can explain the observed instability.
+- How many distinct PDF pipelines currently exist.
+- Which responsibilities belong to generation.
+- Which belong to delivery.
+- Which logic is duplicated.
+- Which logic should become shared.
+- Which abstractions already exist and can be reused.
+- Whether introducing a common PdfAsset abstraction would simplify the architecture.
+- Whether a Delivery Strategy layer would reduce duplication.
+- Whether existing public APIs should remain stable.
 
 ====================================================================
-SHARED ARCHITECTURE REVIEW
+MIGRATION ANALYSIS
 ====================================================================
 
-Investigate whether both issues originate from the same shared infrastructure.
+If the architecture is unified:
 
-Specifically determine whether they converge inside:
+Estimate:
 
-- Layout
-- Theme system
-- Shared Input primitives
-- Shared Dialog system
-- Mobile shell
-- Global CSS
-- Browser/WebView behaviour
+- Number of files affected.
+- Public APIs that would change.
+- Backward compatibility impact.
+- Migration complexity.
+- Risks.
+- Benefits.
+- Recommended implementation order.
 
-Do NOT assume they are connected.
-
-Provide evidence either way.
+Identify the smallest safe migration path.
 
 ====================================================================
-REQUIRED OUTPUT
+DELIVERABLE
 ====================================================================
 
-Write a markdown report to:
+Produce a Markdown architecture report only.
 
-docs/Reports/GENERAL/mobile-keyboard-rendering-investigation.md
+Include:
 
-The report must contain:
-
-# Executive Summary
-
-State whether the two issues are:
-
-- Same root cause
-- Related but independent
-- Completely independent
-
-Explain why.
-
----
-
-# Issue A Investigation
-
-Root cause candidates.
-
-Evidence.
-
-File paths.
-
-Line numbers.
-
-Confidence ranking:
-
-HIGH
-
-MEDIUM
-
-LOW
-
----
-
-# Issue B Investigation
-
-Root cause candidates.
-
-Evidence.
-
-File paths.
-
-Line numbers.
-
-Confidence ranking.
-
----
-
-# Shared Component Inventory
-
-List every shared component involved.
-
-Examples:
-
-- Input
-- Textarea
-- Dialog
-- Sheet
-- Popover
-- Layout
-- Theme
-
-Explain their role.
-
----
-
-# Architectural Findings
-
-Explain:
-
-- how keyboard appearance changes the rendering pipeline
-
-- whether Android WebView behaves differently from Chrome
-
-- whether Capacitor changes behaviour
-
-- whether viewport resizing contributes
-
-- whether browser-native styling contributes
-
-Support every conclusion with evidence.
-
----
-
-# Recommended Fix Strategy
-
-DO NOT implement fixes.
-
-Recommend the safest architectural approach for each issue.
-
-If they should be fixed separately, state that.
-
-If they share infrastructure, explain which component should be corrected first.
+1. Executive Summary
+2. Current Architecture
+3. Pipeline Inventory
+4. Duplication Analysis
+5. Proposed Unified Architecture
+6. Migration Strategy
+7. Risk Assessment
+8. Recommendation
+9. Suggested implementation phases
 
 ====================================================================
 VERIFICATION
 ====================================================================
 
-Before investigation:
+This is a read-only audit.
 
-Run git status.
+Run only:
 
-After investigation:
+- git status (before)
+- git status (after)
 
-Run git status again.
+Verify that ZERO application source files were modified.
 
-The working tree must remain unchanged except for the generated markdown report.
+Do NOT run:
 
-No application source files may be modified.
-
-This is a zero-code architectural investigation.
+- bun run build
+- bun run typecheck
+- lint
