@@ -74,6 +74,7 @@ Every normative standard in `docs/STANDARD/` is catalogued here so agents can lo
 | `docs/STANDARD/document-save-orchestration.md` | Generic save lifecycle for all document types (Invoice, Quotation, Waybill, CSR, BOQ, RFQ). |
 | `docs/STANDARD/lifecycle-ownership-standard.md` | Canonical ownership boundaries for the lifecycle of all business documents. |
 | `docs/STANDARD/pdf-customization-extension-standard.md` | Canonical PDF customization/extension architecture; all future document families MUST conform. |
+| `docs/STANDARD/pdf-migration-standard.md` | Mandatory PDF generation pipeline (`DefaultPdfGenerator` + `CompositePdfDelivery` + `DefaultFeedbackBus`) for all document families. |
 
 *Note: `docs/STANDARD/receipt-standard.md` exists but is intentionally excluded from the active registry pending review.*
 

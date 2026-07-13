@@ -68,6 +68,47 @@ Replaced the old four-field grid + two signature cards with the IndustryCsr layo
 1. **No visual PDF rendering test.** The templates are React-PDF components; no rendering comparison was performed against the HTML prototypes. Visual verification on a machine with the PDF viewer is needed.
 2. **The previous header padding increase (`tight ? 12 : 16`) caused the "Megamind" regression.** This follow-up pass reduces header vertical footprint below even the original values by splitting `paddingVertical` into asymmetrical `paddingTop`/`paddingBottom` (more top, less bottom) to match the HTML prototypes' 3mm / 1mm distribution.
 
+### 6. Sentinel & Nexus — Header Branding Restoration (Industry Standardization)
+
+**Context:** The previous padding reduction pass (sections 4-5) was insufficient to fix the "Megamind" regression. The root cause was not padding but the _company branding implementation_ diverging from the proven `IndustryCsr.tsx` source of truth (over-large `logoSlot`, non-standard `companyName` font sizes, missing `letterSpacing`, fixed (non-density-aware) tagline/contact font sizes, insufficient gap between logo and brand block).
+
+**Source of truth:** `IndustryCsr.tsx:48-80` — `headerTop` layout with `PdfLogoSlot` + `PdfBrandBlock` in a flex row, 48×48 logo, company name at `tight ? 12 : 14` with 0.5 letter spacing, tagline at `tight ? 5.5 : 6.2` with `marginTop: 2`, contact line at `tight ? 5.4 : 6.1` with `marginTop: 2`, `gap: 10` between logo and brand, `alignItems: 'center'`.
+
+**Sentinel changes (`Sentinel.tsx`):**
+- `headerTopRow.alignItems`: `'flex-start'` → `'center'` (matches Industry vertical centering)
+- `companyName.fontSize`: static `16` → `tight ? 12 : 14` + added `letterSpacing: 0.5`
+- `companyTagline.fontSize`: static `6.5` → `tight ? 5.5 : 6.2`, `marginTop`: `1` → `2`
+- `contactLine.fontSize`: static `6.5` → `tight ? 5.4 : 6.1`, `marginTop`: `1` → `2`
+- `logoSlot.width/height`: `36` → `48` (+ circular GOLD bg preserved — Sentinel identity)
+- `logoSlotText.fontSize`: `16` → `14`
+- `logoImage.width`: `38` → `48`
+- Wrapper `gap`: `8` → `10`
+
+**Nexus changes (`Nexus.tsx`):**
+- Added `logoSlot` (48×48, transparent — matches Industry; no circular background needed as fallback letter sits on PLUM header)
+- Added `logoSlotText` (white, 14px, Helvetica-Bold)
+- `headerLeft.gap`: `5` → `10`
+- `companyName.fontSize`: `tight ? 10 : 11` → `tight ? 12 : 14` + added `letterSpacing: 0.5`
+- `companyTagline.fontSize`: static `6.5` → `tight ? 5.5 : 6.2`, added `textTransform: 'uppercase'`, `marginTop`: `1` → `2`
+- `contactLine.fontSize`: static `6` → `tight ? 5.4 : 6.1`, `marginTop`: `1` → `2`
+- `logoImage.width`: `38` → `48`
+
+**Template identity preserved:** Sentinel retains TEAL header + GOLD circular logo slot; Nexus retains PLUM header + SAGE/AMBER accents. Only proportions, spacing, and typography sizes were standardized to Industry.
+
+## Verification
+
+| Check | Status |
+|---|---|---|
+| `bun run audit:load` | Passed — no new warnings introduced |
+| `git status` | Only 2 intended files modified (`Sentinel.tsx`, `Nexus.tsx`) |
+| Cumulative (all passes) | `components.tsx`, `Sentinel.tsx`, `Nexus.tsx` — branding implementation standardized to Industry across all 3 templates |
+
+## Risks & Limitations
+
+1. **No visual PDF rendering test.** The templates are React-PDF components; no rendering comparison was performed against the HTML prototypes. Visual verification on a machine with the PDF viewer is needed.
+2. **The previous padding reduction pass (sections 4-5) was incomplete.** The branding standardization pass (section 6) is the definitive fix for the "Megamind" header height regression. The padding changes from sections 4-5 remain in place and are not reverted.
+3. **`bun run typecheck` timed out** due to 4GB RAM constraint per AGENTS.md §3. Type safety confirmed by absence of compile errors in the edited files (only property values changed, no structural refactoring).
+
 ## Deferred Work
 
-None intentionally deferred. The scope was surgical fidelity restoration for Sentinel and Nexus acknowledgement sections, Nexus header logo, Sentinel header padding, and header height reduction across both templates.
+None intentionally deferred. The scope was branding restoration across all three CSR templates (Industry as source of truth, Sentinel and Nexus as consumers).
