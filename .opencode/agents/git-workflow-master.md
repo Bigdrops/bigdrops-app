@@ -33,9 +33,11 @@ Run:
 ```bash
 git status
 git diff --stat
+git diff --cached --name-only
 ```
 
 Note what changed. Identify:
+- `docs/Reports/` files → **these contain the commit message** (see §4 below)
 - `docs/` changes → use `docs` scope
 - Source code changes → determine the module (e.g., `csr`, `waybill`, `invoice`, `ui`)
 - Config/tooling changes → use `chore` type
@@ -56,6 +58,37 @@ If `git status` shows clean: STOP, reply "No changes to commit."
 **HARD RULE: Every commit message MUST start with a gitmoji. No exceptions.**
 
 Format: `<gitmoji> <type>(<scope>): <subject>`
+
+### 4.1 Report-driven mode (preferred)
+
+If `docs/Reports/` has changed files, **read the report** to get the commit message.
+
+1. Read the changed report file(s) — at minimum read the first line `# Title`
+2. Use the report title as the commit message **subject**
+3. Determine `<gitmoji>` and `<type>` from the **source changes**:
+   - If source code was also modified with substantial additions (`+lines > 50`) → `✨ feat`
+   - If source code was modified (fixes, edits) → `🐛 fix`
+   - If only report/doc files changed → `📝 docs`
+4. Determine `<scope>` from the dominant change module (see Step 2 rules)
+
+Example — report "Android PDF Download UX Fix" + source fix in `downloadPdf.tsx`:
+```
+🐛 fix(android): android pdf download ux fix
+```
+
+Example — report "CSR Industry Template" + new `IndustryCSR.tsx`:
+```
+✨ feat(csr): csr industry template
+```
+
+Example — report only, no src changes:
+```
+📝 docs(report): android pdf download ux fix
+```
+
+### 4.2 Fallback mode (no reports)
+
+If NO `docs/Reports/` files changed, use the traditional method:
 
 Step 1 — Pick the gitmoji based on PRIMARY change type:
 
@@ -86,9 +119,9 @@ Step 2 — Pick the scope based on WHAT changed:
 | Config files, `.github/`, `.githooks/` | `chore` or `config` |
 | Multiple unrelated modules | `project` |
 
-Step 3 — Write subject: lowercase, max 72 chars, no trailing period.
+Step 3 — Write subject: lowercase, max 72 chars, no trailing period. Describe WHAT changed, not just "update files".
 
-**NEVER generate a message without the gitmoji prefix.** If you cannot determine the right gitmoji, default to `📝 docs` or `🔧 chore` — but ALWAYS include it.
+**CRITICAL: NEVER stop without a message.** If you cannot determine the right gitmoji, default to `📝 docs` or `🔧 chore`. If you cannot determine a subject, use a basic description (`add X file`, `fix Y module`, etc.). But ALWAYS include the gitmoji and NEVER exit without producing a message.
 
 ## 5. Stage everything
 

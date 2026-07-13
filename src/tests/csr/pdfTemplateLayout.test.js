@@ -19,8 +19,8 @@ test('formatCommaMaterialsText renders one paragraph with thick pipe separators'
 })
 
 test('resolveMaterialColumnBlocks preserves template row ceilings before comma fallback', () => {
-  assert.equal(resolveMaterialColumnBlocks(5, 'signalbands'), 1)
-  assert.equal(resolveMaterialColumnBlocks(6, 'signalbands'), 2)
+  assert.equal(resolveMaterialColumnBlocks(5, 'industry'), 1)
+  assert.equal(resolveMaterialColumnBlocks(6, 'industry'), 2)
   assert.equal(resolveMaterialColumnBlocks(18, 'zinc'), 3)
   assert.equal(resolveMaterialColumnBlocks(19, 'zinc'), 0)
 })

@@ -22,11 +22,10 @@ type TemplateTheme = {
 }
 
 function getCsrVariantKey(key: string) {
-  if (key === '2') return 'signalbands'
   if (key === '3') return 'zinc'
   if (key === '6') return 'minimal'
   if (key === '8') return 'industry'
-  return 'crimson'
+  return 'zinc'
 }
 
 function MiniTemplatePreview({ theme }: { theme: TemplateTheme }) {

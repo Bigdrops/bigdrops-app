@@ -1,9 +1,7 @@
 import React from 'react'
 import { getCsrTemplateVariant } from '../CSRPreviewContent'
 import { getBranding } from './utils'
-import { SignalBandsTemplate } from './SignalBands'
 import { ZincTemplate } from './Zinc'
-import { CrimsonTemplate } from './Crimson'
 import { MinimalTemplate } from './Minimal'
 import { IndustryCsrTemplate } from './IndustryCsr'
 import { registerPdfFillableFonts } from '../../../lib/pdfFontRegistry'
@@ -12,16 +10,8 @@ import type { CsrPdfProps } from './types'
 // Ensure fonts are registered once
 registerPdfFillableFonts()
 
-export function Template2({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
-  return <SignalBandsTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
-}
-
 export function Template3({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
   return <ZincTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
-}
-
-export function Template4({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
-  return <CrimsonTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
 export function Template6({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
@@ -32,12 +22,11 @@ export function Template8({ csr, comments, branding = {}, designPreset }: CsrPdf
   return <IndustryCsrTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
-export function getCsrPdfDocument({ csr, comments, branding = {}, template = '4', designPreset }: CsrPdfProps) {
+export function getCsrPdfDocument({ csr, comments, branding = {}, template = '3', designPreset }: CsrPdfProps) {
   const variant = getCsrTemplateVariant(template)
 
-  if (variant === 'signalbands') return <Template2 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'zinc') return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'minimal') return <Template6 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'industry') return <Template8 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
-  return <Template4 csr={csr} comments={comments} branding={branding} designPreset={designPreset} /> // crimson
+  return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} /> // zinc default
 }

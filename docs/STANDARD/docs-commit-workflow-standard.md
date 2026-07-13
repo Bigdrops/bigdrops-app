@@ -50,7 +50,7 @@ What it does:
    - Config files → `🔧 chore(config)`
 4. Commits and pushes to `main`
 
-**Updated (Jul 2026):** The script now generates **descriptive subject lines** by analyzing file additions, modifications, and deletions. It extracts meaningful nouns from file paths (stripping component suffixes like `Page`, `Service`, `Form`) and uses the right verb (`add`, `remove`, `replace`, `update`) based on the dominant operation type. Scope detection uses a scoring system (most-affected module wins) instead of alphabetical-first.
+**Design philosophy:** The script checks if `docs/Reports/*.md` files changed. If yes, it reads the `# Title` heading from the report and uses it as the commit message subject. This is the *easy way out* — reports are human-written descriptions of the work, so the title is the perfect message. If no report changed, it falls back to a basic file-change summary. It never stops without producing a message.
 
 **Setup:** Already configured. The git alias `commit-docs` runs `pwsh -File commit-docs.ps1`.
 
