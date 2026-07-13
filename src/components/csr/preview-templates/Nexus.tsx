@@ -35,11 +35,13 @@ function createStyles(density = 'comfortable', designPreset: any) {
     page: { paddingTop: tight ? 10 : 12, paddingBottom: tight ? 10 : 12, paddingHorizontal: tight ? 10 : 12, backgroundColor: CREAM, color: '#1a1a1a', fontFamily: 'Helvetica', fontSize: tight ? 7.4 : compact ? 7.8 : 8 },
     header: { backgroundColor: PLUM, color: '#ffffff', paddingTop: tight ? 6 : 8, paddingBottom: tight ? 3 : 4, paddingHorizontal: tight ? 10 : 12, marginBottom: compact ? 5 : 6 },
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     brandBlock: { flex: 1 },
-    companyName: { fontSize: tight ? 10 : 11, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
-    companyTagline: { fontSize: 6.5, color: '#c9b8d4', marginTop: 1 },
-    contactLine: { fontSize: 6, color: '#c9b8d4', marginTop: 1 },
+    companyName: { fontSize: tight ? 12 : 14, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.5 },
+    companyTagline: { fontSize: tight ? 5.5 : 6.2, color: '#c9b8d4', textTransform: 'uppercase', marginTop: 2 },
+    contactLine: { fontSize: tight ? 5.4 : 6.1, color: '#c9b8d4', marginTop: 2 },
+    logoSlot: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+    logoSlotText: { color: '#ffffff', fontSize: 14, fontFamily: 'Helvetica-Bold' },
     headerCenter: { alignItems: 'center' },
     headerTitle: { fontSize: tight ? 8.5 : 9.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1.2 },
     headerDivider: { width: 40, height: 2, backgroundColor: 'rgba(255,255,255,0.5)', marginTop: 2 },
@@ -132,7 +134,7 @@ function createStyles(density = 'comfortable', designPreset: any) {
     ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: PLUM },
     ackTechName: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5 },
     ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#6B7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
-    logoImage: { width: 38, height: 'auto', objectFit: 'contain' },
+    logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
   })
 }
 

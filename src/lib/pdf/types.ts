@@ -1,4 +1,4 @@
-export type PdfDocumentType = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq' | 'rfq'
+export type PdfDocumentType = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq' | 'rfq' | 'receipt'
 
 export type PdfDeliveryMode = 'download' | 'save' | 'open' | 'save-open' | 'share' | 'print'
 

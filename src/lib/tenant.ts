@@ -1,10 +1,12 @@
+import { supabase } from '@/supabase'
+
 let _cachedTenantId: string | null = null
 
 export async function getCurrentTenantId(): Promise<string> {
   if (_cachedTenantId) return _cachedTenantId
 
-  const id = import.meta.env.VITE_TENANT_ID
-  if (!id) throw new Error("VITE_TENANT_ID is not set — add it to .env (single-tenant UUID)")
-  _cachedTenantId = id
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('getCurrentTenantId: not authenticated')
+  _cachedTenantId = user.id
   return _cachedTenantId
 }

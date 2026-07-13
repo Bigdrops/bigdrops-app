@@ -6,7 +6,9 @@ import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
 import ReceiptPdf from "@/components/pdf-new/ReceiptPdf"
 import { registerPdfFonts } from "@/lib/pdfFontRegistry"
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset"
-import { downloadPdfFromElement } from "@/components/document-view/shared/downloadPdf"
+import {
+  DefaultPdfGenerator, CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
+} from "@/lib/pdf"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
 import { CenteredSpinner } from "@/components/loading/AppLoadingStates"
@@ -46,12 +48,26 @@ export default function ViewReceipt() {
     if (!receipt) return
     registerPdfFonts()
     const model = buildReceiptPreviewData(receipt)
-    const element = <ReceiptPdf model={model} designPreset={designPreset} />
-    await downloadPdfFromElement({
-      element,
-      fileName: `receipt-${receipt.receipt_number}.pdf`,
+    const fileName = `receipt-${receipt.receipt_number}.pdf`
+
+    const generator = new DefaultPdfGenerator(
+      () => <ReceiptPdf model={model} designPreset={designPreset} />,
+    )
+
+    const asset = await generator.generate({
+      template: 'receipt', model, filename: fileName, documentType: 'receipt',
     })
-  }, [receipt])
+
+    const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
+    const result = await delivery.deliver({ asset, mode: 'download' })
+
+    const feedbackBus = new DefaultFeedbackBus()
+    if (!result.success) {
+      feedbackBus.emit({ kind: 'failed', documentType: 'receipt', timestamp: Date.now(), fileName, error: result.error })
+      throw new Error(result.error ?? 'PDF delivery failed')
+    }
+    feedbackBus.emit({ kind: 'downloaded', documentType: 'receipt', timestamp: Date.now(), fileName })
+  }, [receipt, designPreset])
 
   if (loading) return <CenteredSpinner />
 
