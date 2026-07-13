@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
-import { BellRing, Send, MessageSquare, Smartphone, Mail, Calendar, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Send, MessageSquare, Smartphone, Mail, Calendar, AlertCircle, Loader2 } from 'lucide-react'
 import { NotificationChannelToggles } from './NotificationChannelToggles'
 import { ReminderThresholdSelector } from './ReminderThresholdSelector'
 import { SettingsLoadingState } from '@/pages/settings/SettingsLoadingState'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
-import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
 import { feedback } from '@/lib/feedback'
 import {
@@ -16,13 +14,6 @@ import {
   parseCustomThresholdDay,
 } from '@/domain/notifications/notificationPreferences'
 import { sendPushForNotification } from '@/domain/notifications/sendPushForNotification'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
 
@@ -45,7 +36,7 @@ export function NotificationSettingsPanel({
   const [overdueCustomError, setOverdueCustomError] = useState<string | null>(null)
   const [testingPush, setTestingPush] = useState(false)
   
-  const [activeSheet, setActiveSheet] = useState<'channels' | 'schedules' | null>(null)
+  const [expandedSection, setExpandedSection] = useState<'channels' | 'schedules' | null>(null)
 
   const unpaidOptions = useMemo(
     () =>
@@ -127,7 +118,7 @@ export function NotificationSettingsPanel({
     try {
       await save(preferences)
       feedback.success('Preferences saved')
-      setActiveSheet(null)
+      setExpandedSection(null)
     } catch (saveError) {
       feedback.error(saveError instanceof Error ? saveError.message : 'Failed to save')
     }
@@ -165,59 +156,216 @@ export function NotificationSettingsPanel({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="grid gap-6">
-        {/* Delivery Channels Summary */}
-        <SettingsSummaryCard 
-          title="Delivery Channels"
-          description="Control how you receive alerts and reports."
-          action={
-            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('channels')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
-              Edit Channels
-            </Button>
-          }
-        >
-          <SettingsSummaryRow 
-            label="In-App Notifications" 
-            value={preferences.channels.in_app ? "Enabled" : "Disabled"} 
-            icon={<MessageSquare size={16} />}
-          />
-          <SettingsSummaryRow 
-            label="Push Notifications" 
-            value={preferences.channels.push ? "Enabled" : "Disabled"} 
-            icon={<Smartphone size={16} />}
-          />
-          <SettingsSummaryRow 
-            label="Monthly Reports" 
-            value={preferences.monthlyReportEnabled ? "Enabled" : "Disabled"} 
-            icon={<Mail size={16} />}
-          />
-        </SettingsSummaryCard>
+        {/* Delivery Channels */}
+        {expandedSection === 'channels' ? (
+          <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-6 space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-bd-text">Delivery Channels</h3>
+              <p className="text-xs text-bd-text-muted mt-1">Toggle preferred communication methods for workspace activity.</p>
+            </div>
 
-        {/* Reminder Thresholds Summary */}
-        <SettingsSummaryCard 
-          title="Reminder Schedules"
-          description="Automated alerts for pending and overdue invoices."
-          action={
-            <Button variant="ghost" size="sm" onClick={() => setActiveSheet('schedules')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
-              Edit Schedules
-            </Button>
-          }
-        >
-          <SettingsSummaryRow 
-            label="Unpaid Reminders" 
-            value={`${preferences.invoiceUnpaidAfterDays.length} active triggers`} 
-            icon={<Calendar size={16} />}
-          />
-          <SettingsSummaryRow 
-            label="Due Date Alerts" 
-            value={`${preferences.invoiceDueBeforeDays.length + (preferences.invoiceDueToday ? 1 : 0)} active triggers`} 
-            icon={<AlertCircle size={16} />}
-          />
-          <SettingsSummaryRow 
-            label="Overdue Reminders" 
-            value={`${preferences.invoiceOverdueAfterDays.length} active triggers`} 
-            icon={<Calendar size={16} />}
-          />
-        </SettingsSummaryCard>
+            <NotificationChannelToggles
+              items={[
+                {
+                  key: 'in_app',
+                  label: 'In-app notifications',
+                  description: 'Alerts shown inside the application bell menu.',
+                  checked: preferences.channels.in_app,
+                  onCheckedChange: (checked) =>
+                    setPreferences((current) => ({
+                      ...current,
+                      channels: { ...current.channels, in_app: checked },
+                    })),
+                },
+                {
+                  key: 'push',
+                  label: 'Push notifications',
+                  description: 'Direct alerts to your mobile or desktop device.',
+                  checked: preferences.channels.push,
+                  onCheckedChange: (checked) =>
+                    setPreferences((current) => ({
+                      ...current,
+                      channels: { ...current.channels, push: checked },
+                    })),
+                },
+                {
+                  key: 'monthly_report',
+                  label: 'Monthly email reports',
+                  description: 'A summary of your performance delivered via email.',
+                  checked: preferences.monthlyReportEnabled,
+                  onCheckedChange: (checked) =>
+                    setPreferences((current) => ({
+                      ...current,
+                      monthlyReportEnabled: checked,
+                    })),
+                },
+              ]}
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[hsl(var(--bd-border)/0.5)]">
+              <Button
+                variant="ghost"
+                onClick={() => setExpandedSection(null)}
+                disabled={saving}
+                className="text-bd-text-muted hover:text-bd-text"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="min-w-[100px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
+              >
+                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <SettingsSummaryCard 
+            title="Delivery Channels"
+            description="Control how you receive alerts and reports."
+            action={
+              <Button variant="ghost" size="sm" onClick={() => setExpandedSection('channels')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
+                Edit Channels
+              </Button>
+            }
+          >
+            <SettingsSummaryRow 
+              label="In-App Notifications" 
+              value={preferences.channels.in_app ? "Enabled" : "Disabled"} 
+              icon={<MessageSquare size={16} />}
+            />
+            <SettingsSummaryRow 
+              label="Push Notifications" 
+              value={preferences.channels.push ? "Enabled" : "Disabled"} 
+              icon={<Smartphone size={16} />}
+            />
+            <SettingsSummaryRow 
+              label="Monthly Reports" 
+              value={preferences.monthlyReportEnabled ? "Enabled" : "Disabled"} 
+              icon={<Mail size={16} />}
+            />
+          </SettingsSummaryCard>
+        )}
+
+        {/* Reminder Schedules */}
+        {expandedSection === 'schedules' ? (
+          <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-6 space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-bd-text">Reminder Schedules</h3>
+              <p className="text-xs text-bd-text-muted mt-1">Configure when automated reminders are sent for your documents.</p>
+            </div>
+
+            <ReminderThresholdSelector
+              title="Unpaid Reminders"
+              options={unpaidOptions}
+              selectedDays={preferences.invoiceUnpaidAfterDays}
+              onToggleDay={(day) => updateThresholdList('invoiceUnpaidAfterDays', day)}
+              customValue={unpaidCustomDay}
+              onCustomValueChange={(value) => {
+                setUnpaidCustomDay(value)
+                setUnpaidCustomError(null)
+              }}
+              onAddCustomDay={() =>
+                addCustomDay(
+                  unpaidCustomDay,
+                  'invoiceUnpaidAfterDays',
+                  () => setUnpaidCustomDay(''),
+                  setUnpaidCustomError,
+                )
+              }
+              customError={unpaidCustomError}
+            />
+
+            <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+            <ReminderThresholdSelector
+              title="Due Date Reminders"
+              options={dueBeforeOptions}
+              selectedDays={[
+                ...preferences.invoiceDueBeforeDays,
+                ...(preferences.invoiceDueToday ? [0] : []),
+              ]}
+              onToggleDay={(day) => {
+                if (day === 0) {
+                  setPreferences((current) => ({
+                    ...current,
+                    invoiceDueToday: !current.invoiceDueToday,
+                  }))
+                  return
+                }
+                updateThresholdList('invoiceDueBeforeDays', day)
+              }}
+            />
+
+            <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+            <ReminderThresholdSelector
+              title="Overdue Reminders"
+              options={overdueOptions}
+              selectedDays={preferences.invoiceOverdueAfterDays}
+              onToggleDay={(day) => updateThresholdList('invoiceOverdueAfterDays', day)}
+              customValue={overdueCustomDay}
+              onCustomValueChange={(value) => {
+                setOverdueCustomDay(value)
+                setOverdueCustomError(null)
+              }}
+              onAddCustomDay={() =>
+                addCustomDay(
+                  overdueCustomDay,
+                  'invoiceOverdueAfterDays',
+                  () => setOverdueCustomDay(''),
+                  setOverdueCustomError,
+                )
+              }
+              customError={overdueCustomError}
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[hsl(var(--bd-border)/0.5)]">
+              <Button
+                variant="ghost"
+                onClick={() => setExpandedSection(null)}
+                disabled={saving}
+                className="text-bd-text-muted hover:text-bd-text"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="min-w-[100px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
+              >
+                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <SettingsSummaryCard 
+            title="Reminder Schedules"
+            description="Automated alerts for pending and overdue invoices."
+            action={
+              <Button variant="ghost" size="sm" onClick={() => setExpandedSection('schedules')} className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg">
+                Edit Schedules
+              </Button>
+            }
+          >
+            <SettingsSummaryRow 
+              label="Unpaid Reminders" 
+              value={`${preferences.invoiceUnpaidAfterDays.length} active triggers`} 
+              icon={<Calendar size={16} />}
+            />
+            <SettingsSummaryRow 
+              label="Due Date Alerts" 
+              value={`${preferences.invoiceDueBeforeDays.length + (preferences.invoiceDueToday ? 1 : 0)} active triggers`} 
+              icon={<AlertCircle size={16} />}
+            />
+            <SettingsSummaryRow 
+              label="Overdue Reminders" 
+              value={`${preferences.invoiceOverdueAfterDays.length} active triggers`} 
+              icon={<Calendar size={16} />}
+            />
+          </SettingsSummaryCard>
+        )}
 
         {/* Diagnostics Card */}
         <SettingsSummaryCard 
@@ -250,153 +398,6 @@ export function NotificationSettingsPanel({
           </div>
         </SettingsSummaryCard>
       </div>
-
-      {/* Delivery Channels Editor */}
-      <Sheet open={activeSheet === 'channels'} onOpenChange={(open) => !open && setActiveSheet(null)}>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
-          <SheetHeader className="p-6 pb-2">
-            <SheetTitle>Delivery Channels</SheetTitle>
-            <SheetDescription>
-              Toggle preferred communication methods for workspace activity.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6">
-            <div className="py-6">
-              <NotificationChannelToggles
-                items={[
-                  {
-                    key: 'in_app',
-                    label: 'In-app notifications',
-                    description: 'Alerts shown inside the application bell menu.',
-                    checked: preferences.channels.in_app,
-                    onCheckedChange: (checked) =>
-                      setPreferences((current) => ({
-                        ...current,
-                        channels: { ...current.channels, in_app: checked },
-                      })),
-                  },
-                  {
-                    key: 'push',
-                    label: 'Push notifications',
-                    description: 'Direct alerts to your mobile or desktop device.',
-                    checked: preferences.channels.push,
-                    onCheckedChange: (checked) =>
-                      setPreferences((current) => ({
-                        ...current,
-                        channels: { ...current.channels, push: checked },
-                      })),
-                  },
-                  {
-                    key: 'monthly_report',
-                    label: 'Monthly email reports',
-                    description: 'A summary of your performance delivered via email.',
-                    checked: preferences.monthlyReportEnabled,
-                    onCheckedChange: (checked) =>
-                      setPreferences((current) => ({
-                        ...current,
-                        monthlyReportEnabled: checked,
-                      })),
-                  },
-                ]}
-              />
-            </div>
-          </div>
-
-          <SettingsActionFooter 
-            onSave={handleSave}
-            onCancel={() => setActiveSheet(null)}
-            saving={saving}
-          />
-        </SheetContent>
-      </Sheet>
-
-      {/* Reminder Schedules Editor */}
-      <Sheet open={activeSheet === 'schedules'} onOpenChange={(open) => !open && setActiveSheet(null)}>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
-          <SheetHeader className="p-6 pb-2">
-            <SheetTitle>Reminder Schedules</SheetTitle>
-            <SheetDescription>
-              Configure when automated reminders are sent for your documents.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6">
-            <div className="space-y-8 py-6">
-              <ReminderThresholdSelector
-                title="Unpaid Reminders"
-                options={unpaidOptions}
-                selectedDays={preferences.invoiceUnpaidAfterDays}
-                onToggleDay={(day) => updateThresholdList('invoiceUnpaidAfterDays', day)}
-                customValue={unpaidCustomDay}
-                onCustomValueChange={(value) => {
-                  setUnpaidCustomDay(value)
-                  setUnpaidCustomError(null)
-                }}
-                onAddCustomDay={() =>
-                  addCustomDay(
-                    unpaidCustomDay,
-                    'invoiceUnpaidAfterDays',
-                    () => setUnpaidCustomDay(''),
-                    setUnpaidCustomError,
-                  )
-                }
-                customError={unpaidCustomError}
-              />
-
-              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-
-              <ReminderThresholdSelector
-                title="Due Date Reminders"
-                options={dueBeforeOptions}
-                selectedDays={[
-                  ...preferences.invoiceDueBeforeDays,
-                  ...(preferences.invoiceDueToday ? [0] : []),
-                ]}
-                onToggleDay={(day) => {
-                  if (day === 0) {
-                    setPreferences((current) => ({
-                      ...current,
-                      invoiceDueToday: !current.invoiceDueToday,
-                    }))
-                    return
-                  }
-                  updateThresholdList('invoiceDueBeforeDays', day)
-                }}
-              />
-
-              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-
-              <ReminderThresholdSelector
-                title="Overdue Reminders"
-                options={overdueOptions}
-                selectedDays={preferences.invoiceOverdueAfterDays}
-                onToggleDay={(day) => updateThresholdList('invoiceOverdueAfterDays', day)}
-                customValue={overdueCustomDay}
-                onCustomValueChange={(value) => {
-                  setOverdueCustomDay(value)
-                  setOverdueCustomError(null)
-                }}
-                onAddCustomDay={() =>
-                  addCustomDay(
-                    overdueCustomDay,
-                    'invoiceOverdueAfterDays',
-                    () => setOverdueCustomDay(''),
-                    setOverdueCustomError,
-                  )
-                }
-                customError={overdueCustomError}
-              />
-            </div>
-          </div>
-
-          <SettingsActionFooter 
-            onSave={handleSave}
-            onCancel={() => setActiveSheet(null)}
-            saving={saving}
-          />
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }

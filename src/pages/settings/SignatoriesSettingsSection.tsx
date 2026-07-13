@@ -8,16 +8,8 @@ import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { feedback } from '@/lib/feedback'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
-import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
 
 type Signatory = {
   id: string
@@ -180,189 +172,202 @@ export function SignatoriesSettingsSection() {
             Authorized Signers
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={openAdd}
-          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
-        >
-          <Plus className="mr-2 h-3.5 w-3.5" />
-          Add Signatory
-        </Button>
-      </div>
-
-      <div className="grid gap-6">
-        {items.length === 0 ? (
-          <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] py-12 text-center">
-            <UserCheck className="mx-auto h-8 w-8 text-bd-text-muted opacity-20" />
-            <p className="mt-3 text-sm text-bd-text-muted">No signatories added yet.</p>
-          </div>
-        ) : (
-          items.map((item) => (
-            <SettingsSummaryCard 
-              key={item.id}
-              title={item.name || 'Untitled Signatory'}
-              description={item.role || 'No role defined'}
-              action={
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEdit(item)}
-                    className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeSignatory(item.id)}
-                    disabled={deletingId === item.id}
-                    className="h-8 rounded-full text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
-                  >
-                    {deletingId === item.id ? '...' : 'Delete'}
-                  </Button>
-                </div>
-              }
-            >
-              <div className="flex items-center gap-4 px-5 py-4">
-                <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg">
-                  {item.signature_url ? (
-                    <img
-                      src={item.signature_url}
-                      alt={`${item.name} signature`}
-                      className="h-full w-full object-contain p-1"
-                    />
-                  ) : (
-                    <ShieldCheck className="h-6 w-6 text-bd-text-muted opacity-30" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
-                    Active Signature
-                  </p>
-                  <p className="mt-1 text-xs text-bd-text-muted">
-                    {item.signature_url ? 'Digital signature uploaded' : 'Missing signature image'}
-                  </p>
-                </div>
-              </div>
-            </SettingsSummaryCard>
-          ))
+        {!isEditorOpen && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={openAdd}
+            className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
+          >
+            <Plus className="mr-2 h-3.5 w-3.5" />
+            Add Signatory
+          </Button>
         )}
       </div>
 
-      <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
-          <SheetHeader className="p-6 pb-2">
-            <SheetTitle>{editingId ? 'Edit Signatory' : 'Add Signatory'}</SheetTitle>
-            <SheetDescription>
-              Manage signatory details and their digital signature image.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6">
-            <div className="space-y-8 py-6">
-              <div className="grid gap-4">
-                <SettingsField label="Full Name">
-                  <SettingsInput
-                    value={form.name}
-                    onChange={(value) => updateForm('name', value)}
-                    placeholder="Adewale Musa"
-                  />
-                </SettingsField>
-
-                <SettingsField label="Role / Designation">
-                  <SettingsInput
-                    value={form.role}
-                    onChange={(value) => updateForm('role', value)}
-                    placeholder="Finance Director"
-                  />
-                </SettingsField>
-              </div>
-
-              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-
-              <SettingsField label="Signature Image">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept={IMAGE_ACCEPT_ATTRIBUTE}
-                  className="hidden"
-                  onChange={(event) => handleUpload(event.target.files?.[0] || null)}
-                />
-
-                {form.signature_url ? (
-                  <div className="space-y-4">
-                    <div className="flex flex-col items-center rounded-xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
-                      <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg shadow-sm">
-                        <img
-                          src={form.signature_url}
-                          alt="Signature preview"
-                          className="h-full w-full object-contain p-2"
-                        />
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => fileRef.current?.click()}
-                          className="rounded-full text-xs font-bold"
-                        >
-                          Replace
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setUploadError(null)
-                            updateForm('signature_url', '')
-                          }}
-                          className="rounded-full text-xs font-bold text-red-500 hover:bg-red-50"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => fileRef.current?.click()}
-                    className="group cursor-pointer rounded-xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)]"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bd-card-bg shadow-sm">
-                        {uploading ? (
-                          <Loader2 size={18} className="animate-spin text-bd-text-muted" />
-                        ) : (
-                          <Upload size={18} className="text-bd-button-primary-bg" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-bd-text">
-                          {uploading ? 'Uploading...' : 'Upload Signature'}
-                        </p>
-                        <p className="mt-1 text-xs text-bd-text-muted">
-                          Transparent PNG recommended
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {uploadError && (
-                  <p className="mt-2 text-xs font-medium text-red-500">{uploadError}</p>
-                )}
-              </SettingsField>
-            </div>
+      {isEditorOpen ? (
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-6 space-y-6">
+          <div>
+            <h3 className="text-lg font-bold text-bd-text">{editingId ? 'Edit Signatory' : 'Add Signatory'}</h3>
+            <p className="text-xs text-bd-text-muted mt-1">Manage signatory details and their digital signature image.</p>
           </div>
 
-          <SettingsActionFooter 
-            onSave={saveSignatory}
-            onCancel={handleCancel}
-            saving={saving}
-          />
-        </SheetContent>
-      </Sheet>
+          <div className="grid gap-4">
+            <SettingsField label="Full Name">
+              <SettingsInput
+                value={form.name}
+                onChange={(value) => updateForm('name', value)}
+                placeholder="Adewale Musa"
+              />
+            </SettingsField>
+
+            <SettingsField label="Role / Designation">
+              <SettingsInput
+                value={form.role}
+                onChange={(value) => updateForm('role', value)}
+                placeholder="Finance Director"
+              />
+            </SettingsField>
+          </div>
+
+          <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+          <SettingsField label="Signature Image">
+            <input
+              ref={fileRef}
+              type="file"
+              accept={IMAGE_ACCEPT_ATTRIBUTE}
+              className="hidden"
+              onChange={(event) => handleUpload(event.target.files?.[0] || null)}
+            />
+
+            {form.signature_url ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center rounded-xl border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-6 text-center">
+                  <div className="flex h-24 w-48 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg shadow-sm">
+                    <img
+                      src={form.signature_url}
+                      alt="Signature preview"
+                      className="h-full w-full object-contain p-2"
+                    />
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileRef.current?.click()}
+                      className="rounded-full text-xs font-bold"
+                    >
+                      Replace
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUploadError(null)
+                        updateForm('signature_url', '')
+                      }}
+                      className="rounded-full text-xs font-bold text-red-500 hover:bg-red-50"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="group cursor-pointer rounded-xl border-2 border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] p-8 text-center transition-all hover:border-[hsl(var(--bd-button-primary-bg)/0.5)]"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bd-card-bg shadow-sm">
+                    {uploading ? (
+                      <Loader2 size={18} className="animate-spin text-bd-text-muted" />
+                    ) : (
+                      <Upload size={18} className="text-bd-button-primary-bg" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-bd-text">
+                      {uploading ? 'Uploading...' : 'Upload Signature'}
+                    </p>
+                    <p className="mt-1 text-xs text-bd-text-muted">
+                      Transparent PNG recommended
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {uploadError && (
+              <p className="mt-2 text-xs font-medium text-red-500">{uploadError}</p>
+            )}
+          </SettingsField>
+
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[hsl(var(--bd-border)/0.5)]">
+            <Button
+              variant="ghost"
+              onClick={handleCancel}
+              disabled={saving}
+              className="text-bd-text-muted hover:text-bd-text"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveSignatory}
+              disabled={saving}
+              className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
+            >
+              {saving ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+              ) : (
+                editingId ? 'Update Signatory' : 'Add Signatory'
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {items.length === 0 ? (
+            <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-surface-muted))/0.2] py-12 text-center">
+              <UserCheck className="mx-auto h-8 w-8 text-bd-text-muted opacity-20" />
+              <p className="mt-3 text-sm text-bd-text-muted">No signatories added yet.</p>
+            </div>
+          ) : (
+            items.map((item) => (
+              <SettingsSummaryCard 
+                key={item.id}
+                title={item.name || 'Untitled Signatory'}
+                description={item.role || 'No role defined'}
+                action={
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEdit(item)}
+                      className="h-8 rounded-full text-xs font-bold text-bd-button-primary-bg"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSignatory(item.id)}
+                      disabled={deletingId === item.id}
+                      className="h-8 rounded-full text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                    >
+                      {deletingId === item.id ? '...' : 'Delete'}
+                    </Button>
+                  </div>
+                }
+              >
+                <div className="flex items-center gap-4 px-5 py-4">
+                  <div className="flex h-14 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-bd-border bg-bd-card-bg">
+                    {item.signature_url ? (
+                      <img
+                        src={item.signature_url}
+                        alt={`${item.name} signature`}
+                        className="h-full w-full object-contain p-1"
+                      />
+                    ) : (
+                      <ShieldCheck className="h-6 w-6 text-bd-text-muted opacity-30" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-bd-text-muted opacity-70">
+                      Active Signature
+                    </p>
+                    <p className="mt-1 text-xs text-bd-text-muted">
+                      {item.signature_url ? 'Digital signature uploaded' : 'Missing signature image'}
+                    </p>
+                  </div>
+                </div>
+              </SettingsSummaryCard>
+            ))
+          )}
+        </div>
+      )}
+
     </div>
   )
 }

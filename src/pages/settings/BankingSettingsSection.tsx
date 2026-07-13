@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Landmark, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Landmark, Pencil, Plus, Trash2, Loader2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
-import { SettingsActionFooter } from '@/components/settings/SettingsActionFooter'
 import { feedback } from '@/lib/feedback'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
 type BankAccount = {
@@ -206,159 +198,171 @@ export function BankingSettingsSection() {
             Payment Destinantions
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={openAdd}
-          className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
-        >
-          <Plus className="mr-2 h-3.5 w-3.5" />
-          Add Account
-        </Button>
-      </div>
-
-      <div className="grid gap-6">
-        {accounts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center px-6 rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-card-bg))/0.3]">
-            <div className="rounded-full bg-bd-surface-muted p-4 mb-4">
-              <Landmark size={28} className="text-bd-text-muted opacity-30" />
-            </div>
-            <h4 className="text-sm font-bold text-bd-text">No bank accounts</h4>
-            <p className="mt-1 text-xs text-bd-text-muted">Add accounts to receive payments on your documents.</p>
-          </div>
-        ) : (
-          accounts.map((account) => (
-            <SettingsSummaryCard 
-              key={account.id}
-              title={account.bank_name || 'Unnamed Bank'}
-              description={account.account_name || 'No account name'}
-              action={
-                <div className="flex items-center gap-2">
-                  {!account.is_default && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDefault(account.id)}
-                      disabled={actionId === `default:${account.id}`}
-                      className="h-8 rounded-full text-[10px] font-black uppercase tracking-wider text-bd-text-muted hover:text-bd-text"
-                    >
-                      Set Default
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(account)}
-                    className="h-8 w-8 text-bd-text-muted hover:text-bd-text"
-                  >
-                    <Pencil size={14} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeAccount(account.id)}
-                    disabled={actionId === `delete:${account.id}`}
-                    className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              }
-            >
-              <SettingsSummaryRow 
-                label="Account Details" 
-                value={
-                  <div className="flex items-center gap-3">
-                    <span>{account.account_number}</span>
-                    <span className="opacity-30">•</span>
-                    <span>{account.sort_code}</span>
-                  </div>
-                } 
-                icon={<Landmark size={16} />}
-              />
-              {account.is_default && (
-                <div className="px-5 py-2 bg-emerald-50/50 border-t border-[hsl(var(--bd-border)/0.3)]">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Primary Account</span>
-                </div>
-              )}
-            </SettingsSummaryCard>
-          ))
+        {!isEditorOpen && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={openAdd}
+            className="rounded-full border-bd-border bg-bd-card-bg text-xs font-bold shadow-sm hover:bg-bd-surface-muted"
+          >
+            <Plus className="mr-2 h-3.5 w-3.5" />
+            Add Account
+          </Button>
         )}
       </div>
 
-      <Sheet open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-lg">
-          <SheetHeader className="p-6 pb-2">
-            <SheetTitle>{editingId ? 'Edit Bank Account' : 'Add Bank Account'}</SheetTitle>
-            <SheetDescription>
-              Manage account details for receiving payments.
-            </SheetDescription>
-          </SheetHeader>
+      {isEditorOpen ? (
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-card-bg))] p-6 space-y-6">
+          <div>
+            <h3 className="text-lg font-bold text-bd-text">{editingId ? 'Edit Bank Account' : 'Add Bank Account'}</h3>
+            <p className="text-xs text-bd-text-muted mt-1">Manage account details for receiving payments.</p>
+          </div>
 
-          <div className="flex-1 overflow-y-auto px-6">
-            <div className="space-y-6 py-6">
-              <div className="grid gap-4">
-                <SettingsField label="Bank Name">
-                  <SettingsInput
-                    value={form.bank_name}
-                    onChange={(value) => updateForm('bank_name', value)}
-                    placeholder="First Bank"
-                  />
-                </SettingsField>
+          <div className="grid gap-4">
+            <SettingsField label="Bank Name">
+              <SettingsInput
+                value={form.bank_name}
+                onChange={(value) => updateForm('bank_name', value)}
+                placeholder="First Bank"
+              />
+            </SettingsField>
 
-                <SettingsField label="Account Name">
-                  <SettingsInput
-                    value={form.account_name}
-                    onChange={(value) => updateForm('account_name', value)}
-                    placeholder="Sun & Shield Power Solutions"
-                  />
-                </SettingsField>
+            <SettingsField label="Account Name">
+              <SettingsInput
+                value={form.account_name}
+                onChange={(value) => updateForm('account_name', value)}
+                placeholder="Sun & Shield Power Solutions"
+              />
+            </SettingsField>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <SettingsField label="Account Number">
-                    <SettingsInput
-                      value={form.account_number}
-                      onChange={(value) => updateForm('account_number', value)}
-                      placeholder="0123456789"
-                    />
-                  </SettingsField>
-
-                  <SettingsField label="Sort Code">
-                    <SettingsInput
-                      value={form.sort_code}
-                      onChange={(value) => updateForm('sort_code', value)}
-                      placeholder="011"
-                    />
-                  </SettingsField>
-                </div>
-              </div>
-
-              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-bd-text">Set as default</div>
-                  <div className="mt-0.5 text-xs text-bd-text-muted">
-                    Primary destination for new documents.
-                  </div>
-                </div>
-
-                <Switch
-                  checked={!!form.is_default}
-                  onCheckedChange={(value) => updateForm('is_default', value)}
-                  className="data-[state=checked]:bg-bd-button-primary-bg"
+            <div className="grid grid-cols-2 gap-4">
+              <SettingsField label="Account Number">
+                <SettingsInput
+                  value={form.account_number}
+                  onChange={(value) => updateForm('account_number', value)}
+                  placeholder="0123456789"
                 />
-              </div>
+              </SettingsField>
+
+              <SettingsField label="Sort Code">
+                <SettingsInput
+                  value={form.sort_code}
+                  onChange={(value) => updateForm('sort_code', value)}
+                  placeholder="011"
+                />
+              </SettingsField>
             </div>
           </div>
 
-          <SettingsActionFooter 
-            onSave={saveAccount}
-            onCancel={closeForm}
-            saving={saving}
-          />
-        </SheetContent>
-      </Sheet>
+          <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.3)] px-4 py-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-bd-text">Set as default</div>
+              <div className="mt-0.5 text-xs text-bd-text-muted">
+                Primary destination for new documents.
+              </div>
+            </div>
+
+            <Switch
+              checked={!!form.is_default}
+              onCheckedChange={(value) => updateForm('is_default', value)}
+              className="data-[state=checked]:bg-bd-button-primary-bg"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[hsl(var(--bd-border)/0.5)]">
+            <Button
+              variant="ghost"
+              onClick={closeForm}
+              disabled={saving}
+              className="text-bd-text-muted hover:text-bd-text"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveAccount}
+              disabled={saving}
+              className="min-w-[120px] bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90"
+            >
+              {saving ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+              ) : (
+                editingId ? 'Update Account' : 'Add Account'
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {accounts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center px-6 rounded-[var(--bd-radius-xl)] border border-dashed border-bd-border bg-[hsl(var(--bd-card-bg))/0.3]">
+              <div className="rounded-full bg-bd-surface-muted p-4 mb-4">
+                <Landmark size={28} className="text-bd-text-muted opacity-30" />
+              </div>
+              <h4 className="text-sm font-bold text-bd-text">No bank accounts</h4>
+              <p className="mt-1 text-xs text-bd-text-muted">Add accounts to receive payments on your documents.</p>
+            </div>
+          ) : (
+            accounts.map((account) => (
+              <SettingsSummaryCard 
+                key={account.id}
+                title={account.bank_name || 'Unnamed Bank'}
+                description={account.account_name || 'No account name'}
+                action={
+                  <div className="flex items-center gap-2">
+                    {!account.is_default && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDefault(account.id)}
+                        disabled={actionId === `default:${account.id}`}
+                        className="h-8 rounded-full text-[10px] font-black uppercase tracking-wider text-bd-text-muted hover:text-bd-text"
+                      >
+                        Set Default
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEdit(account)}
+                      className="h-8 w-8 text-bd-text-muted hover:text-bd-text"
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeAccount(account.id)}
+                      disabled={actionId === `delete:${account.id}`}
+                      className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                }
+              >
+                <SettingsSummaryRow 
+                  label="Account Details" 
+                  value={
+                    <div className="flex items-center gap-3">
+                      <span>{account.account_number}</span>
+                      <span className="opacity-30">•</span>
+                      <span>{account.sort_code}</span>
+                    </div>
+                  } 
+                  icon={<Landmark size={16} />}
+                />
+                {account.is_default && (
+                  <div className="px-5 py-2 bg-emerald-50/50 border-t border-[hsl(var(--bd-border)/0.3)]">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Primary Account</span>
+                  </div>
+                )}
+              </SettingsSummaryCard>
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }
