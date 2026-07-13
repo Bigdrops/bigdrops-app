@@ -5,8 +5,6 @@ import {
   getLayoutDensity,
   getFillablePdfTheme,
   getStatusValue,
-  getTechnicianName,
-  getTechnicianSignatureUrl,
   shouldRender,
   hasOperationalReadings,
   hasMaterials,
@@ -14,6 +12,11 @@ import {
   safe,
 } from './utils'
 
+import {
+  PdfLogoSlot,
+  PdfBrandBlock,
+  AcknowledgementBlock,
+} from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
 import { getMaterialsRows } from './utils'
 import type { CsrPdfProps } from './types'
@@ -119,6 +122,16 @@ function createStyles(density = 'comfortable', designPreset: any) {
     footerText: { fontSize: tight ? 5.5 : 6, color: '#c9b8d4', textAlign: 'center', lineHeight: 1.5 },
     footerMain: { fontSize: tight ? 6 : 6.5, color: '#ffffff', textAlign: 'center', fontFamily: 'Helvetica-Bold', letterSpacing: 0.3, marginBottom: 1 },
     footerDivider: { width: 60, height: 1, backgroundColor: 'rgba(255,255,255,0.25)', marginVertical: 2, alignSelf: 'center' },
+    blockText: { fontSize: tight ? 6.8 : 7.2, color: '#2a2a2a', lineHeight: 1.4, fontFamily: fillableRegular },
+    ackContainer: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 1.5, overflow: 'hidden' },
+    ackTopRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+    ackTopHalf: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 1, borderRightColor: '#E5E7EB' },
+    ackTopHalfLast: { flex: 1, paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 18 : 22, paddingHorizontal: tight ? 4.5 : 5.5 },
+    ackBottomRow: { flexDirection: 'row', minHeight: tight ? 45 : compact ? 55 : 65 },
+    ackRecipientSig: { width: '40%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: PLUM },
+    ackTechSig: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5, borderRightWidth: 2, borderRightColor: PLUM },
+    ackTechName: { width: '30%', paddingTop: tight ? 2.5 : 3.5, paddingBottom: tight ? 12 : 16, paddingHorizontal: tight ? 4.5 : 5.5 },
+    ackFieldLabel: { fontSize: tight ? 5.4 : 5.8, color: '#6B7280', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     logoImage: { width: 48, height: 'auto', objectFit: 'contain' },
   })
 }
@@ -260,54 +273,6 @@ function renderTimingRow(styles: any, csr: CsrRenderModel, status: string, tight
   )
 }
 
-function renderSignatureNexus(styles: any, csr: CsrRenderModel, tight: boolean) {
-  const techName = getTechnicianName(csr)
-  const techSigUrl = getTechnicianSignatureUrl(csr)
-  const hasTech = csr.showTechnicianSignLine
-  const hasClient = csr.showAcknowledgement && hasText(csr.acknowledgement_name)
-  if (!hasTech && !hasClient) return null
-  return (
-    <View style={styles.signSection}>
-      <Text style={styles.signTitle}>Signatures</Text>
-      <View style={styles.signBody}>
-        <View style={styles.signGrid}>
-          {hasTech ? (
-            <View style={styles.signBox}>
-              <Text style={styles.signLabel}>Technician</Text>
-              <View style={styles.signRow}>
-                <View style={styles.signPanelLeft}>
-                  <Text style={styles.signName}>{techName || techSigUrl ? ' ' : '—'}</Text>
-                </View>
-                <View style={styles.signDivider} />
-                <View style={styles.signPanelRight}>
-                  {techSigUrl ? (
-                    <Image src={techSigUrl} style={styles.signImage} />
-                  ) : null}
-                </View>
-              </View>
-            </View>
-          ) : null}
-          {hasClient ? (
-            <View style={styles.signBox}>
-              <Text style={styles.signLabel}>Recipient</Text>
-              <View style={styles.signRow}>
-                <View style={styles.signPanelLeft}>
-                  <Text style={styles.signName}>{safe(csr.acknowledgement_name)}</Text>
-                  {hasText(csr.recipientRole) ? <Text style={styles.signRole}>{safe(csr.recipientRole)}</Text> : null}
-                </View>
-                <View style={styles.signDivider} />
-                <View style={styles.signPanelRight}>
-                  <Text style={{ fontSize: tight ? 6 : 6.5, color: '#6B7280', fontFamily: 'Helvetica' }}>—</Text>
-                </View>
-              </View>
-            </View>
-          ) : null}
-        </View>
-      </View>
-    </View>
-  )
-}
-
 export function NexusTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const density = getLayoutDensity(csr)
@@ -323,7 +288,8 @@ export function NexusTemplate({ csr, comments, branding, designPreset }: CsrPdfP
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
-              <Text style={styles.companyName}>{safe(branding.companyName) || 'Nexus'}</Text>
+              <PdfLogoSlot styles={styles} branding={branding} fallback="N" />
+              <PdfBrandBlock styles={styles} branding={branding} />
             </View>
             <View style={styles.headerCenter}>
               <Text style={styles.headerTitle}>Customer Service Report</Text>
@@ -443,7 +409,7 @@ export function NexusTemplate({ csr, comments, branding, designPreset }: CsrPdfP
         ) : null}
 
         {/* Signatures */}
-        {renderSignatureNexus(styles, csr, tight)}
+        <AcknowledgementBlock styles={styles} csr={csr} />
 
         <ClientNotesBlock comments={comments} />
 

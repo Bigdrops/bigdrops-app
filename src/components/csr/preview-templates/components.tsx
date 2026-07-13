@@ -2,6 +2,7 @@ import React from 'react'
 import { Text, View, Image } from '@react-pdf/renderer'
 import { CSR_STATUS_OPTIONS_PDF } from '../CSRPreviewContent'
 import {
+  getLayoutDensity,
   getPopulatedReadingRows,
   hasOperationalReadings,
   getMaterialsRows,
@@ -252,35 +253,61 @@ export function AcknowledgementBlock({ styles, csr }: { styles: any; csr: CsrRen
   if (!csr.showAcknowledgement && !csr.showTechnicianSignLine) return null
   const technicianName = getTechnicianName(csr)
   const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
+  const density = getLayoutDensity(csr)
+  const tight = density === 'tight'
+  const compact = density !== 'comfortable'
 
   return (
     <PdfSection styles={styles} title="Acknowledgement">
-      {csr.showAcknowledgement ? (
-        <View style={styles.ackGrid}>
-          <PdfField styles={styles} label="Customer Name" value={csr.acknowledgement_name} />
-          <PdfField styles={styles} label="Recipient Title" value={csr.recipientTitle} />
-          <PdfField styles={styles} label="Recipient Role" value={csr.recipientRole} />
-          <PdfField styles={styles} label="Signature" value="________________" />
+      <View style={{ padding: tight ? 2.5 : compact ? 3.5 : 4.5 }}>
+        <View style={styles.ackContainer}>
+          {csr.showAcknowledgement ? (
+            <View style={styles.ackTopRow}>
+              <View style={styles.ackTopHalf}>
+                <Text style={styles.ackFieldLabel}>Recipient Name</Text>
+                <Text style={[styles.fieldValue, { marginTop: 5 }]}>
+                  {hasText(csr.acknowledgement_name) ? csr.acknowledgement_name : ' '}
+                </Text>
+              </View>
+              <View style={styles.ackTopHalfLast}>
+                <Text style={styles.ackFieldLabel}>Comment</Text>
+                {hasText(csr.customer_feedback) ? (
+                  <Text style={[styles.blockText, { marginTop: 5 }]}>{csr.customer_feedback}</Text>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.ackBottomRow}>
+            {csr.showAcknowledgement ? (
+              <View style={styles.ackRecipientSig}>
+                <Text style={styles.ackFieldLabel}>Recipient Signature</Text>
+                <View style={{ flex: 1, width: '100%' }} />
+              </View>
+            ) : null}
+
+            {csr.showTechnicianSignLine ? (
+              <>
+                <View style={styles.ackTechSig}>
+                  <Text style={styles.ackFieldLabel}>Technician Signature</Text>
+                  <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                    {technicianSignatureUrl ? (
+                      <Image src={technicianSignatureUrl} style={{ maxHeight: 50, maxWidth: 88, objectFit: 'contain' }} />
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.ackTechName}>
+                  <Text style={styles.ackFieldLabel}>Technician Name</Text>
+                  <View style={{ flex: 1, width: '100%', justifyContent: 'center' }}>
+                    {hasText(technicianName) ? (
+                      <Text style={styles.fieldValue}>{technicianName}</Text>
+                    ) : null}
+                  </View>
+                </View>
+              </>
+            ) : null}
+          </View>
         </View>
-      ) : null}
-
-      <View style={styles.signRow}>
-        {csr.showTechnicianSignLine ? (
-          <PdfSignatureCard
-            styles={styles}
-            label="Signature"
-            name={technicianName}
-            signatureUrl={technicianSignatureUrl}
-          />
-        ) : null}
-
-        {csr.showAcknowledgement ? (
-          <PdfSignatureCard
-            styles={styles}
-            label="Signature"
-            name={safe(csr.acknowledgement_name)}
-          />
-        ) : null}
       </View>
     </PdfSection>
   )
