@@ -94,6 +94,16 @@ export function sanitizeCsrInsertPayload<T extends Record<string, unknown>>(payl
 
 export async function createCsr(csrData: Record<string, unknown>): Promise<CreatedCsr> {
   const safeData = sanitizeCsrInsertPayload(csrData)
+
+  // ── VERIFY: id must never appear in the INSERT payload ──
+  const keys = Object.keys(safeData)
+  const hasId = 'id' in safeData
+  console.log('[createCsr] safeData keys:', keys)
+  console.log('[createCsr] safeData has id:', hasId, '| id value:', hasId ? safeData.id : '(absent)')
+  if (hasId) {
+    console.error('[createCsr] BLOCKED: id property found in INSERT payload — this will cause a constraint violation')
+  }
+
   const { data, error } = await withRetry(
     async () =>
       supabase

@@ -90,6 +90,52 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
     previewShell: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
   },
+  sentinel: {
+    headerBg: '#0D7377',
+    headerFg: '#ffffff',
+    accent: '#D4A857',
+    border: '#E2E8F0',
+    mutedBg: '#FFF8F0',
+    sectionBg: '#FFF8F0',
+    sectionTitleBg: '#0D7377',
+    sectionTitleFg: '#D4A857',
+    pageBg: '#FDF6EE',
+    pageFg: '#1A1A2E',
+    pagePadding: 12,
+    fontSize: 7.8,
+    titleSize: 9,
+    headerNameSize: 14,
+    sectionTitleSize: 7,
+    valueSize: 7.8,
+    compact: true,
+    headerMode: 'sentinel',
+    statusStyle: 'checks',
+    previewSurface: 'linear-gradient(180deg, #FFF8F0 0%, #FDF6EE 100%)',
+    previewShell: 'linear-gradient(180deg, #FFF8F0 0%, #F5EDE0 100%)',
+  },
+  nexus: {
+    headerBg: '#4A2C5A',
+    headerFg: '#ffffff',
+    accent: '#C87A2C',
+    border: '#E5E7EB',
+    mutedBg: '#F5EDE4',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#4A2C5A',
+    sectionTitleFg: '#ffffff',
+    pageBg: '#FDF8F3',
+    pageFg: '#1a1a1a',
+    pagePadding: 12,
+    fontSize: 7.8,
+    titleSize: 9,
+    headerNameSize: 14,
+    sectionTitleSize: 7.2,
+    valueSize: 8,
+    compact: true,
+    headerMode: 'nexus',
+    statusStyle: 'checks',
+    previewSurface: 'linear-gradient(180deg, #FDF8F3 0%, #F5EDE4 100%)',
+    previewShell: 'linear-gradient(180deg, #FDF8F3 0%, #EDE0D0 100%)',
+  },
 }
 
 export const CSR_TEMPLATE_OPTIONS = [
@@ -106,6 +152,18 @@ export const CSR_TEMPLATE_OPTIONS = [
     accent: '#111827',
   },
   {
+    key: '4',
+    label: 'Sentinel',
+    blurb: 'Teal-accented report with warm card sections and numbered materials grid.',
+    accent: '#0D7377',
+  },
+  {
+    key: '5',
+    label: 'Nexus',
+    blurb: 'Plum-themed premium report with cream backgrounds and bordered summary cards.',
+    accent: '#4A2C5A',
+  },
+  {
     key: '8',
     label: 'Industry',
     blurb: 'Slate-inspired industrial report with distinct layout and customization support.',
@@ -115,6 +173,8 @@ export const CSR_TEMPLATE_OPTIONS = [
 
 export function getCsrTemplateVariant(template = '3') {
   if (template === '3') return 'zinc'
+  if (template === '4') return 'sentinel'
+  if (template === '5') return 'nexus'
   if (template === '6') return 'minimal'
   if (template === '8') return 'industry'
   return 'zinc'

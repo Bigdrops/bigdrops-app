@@ -87,12 +87,16 @@ function renderTemplateThumb(option: CsrTemplateOption, active: boolean) {
 
   if (isClassicCompact) {
     return (
-      <div style={{ height: 42, borderRadius: 8, overflow: 'hidden', backgroundColor: active ? '#F8FAFC' : '#ffffff', border: `1px solid ${active ? '#BFDBFE' : '#E2E8F0'}` }}>
-        <div style={{ height: 10, backgroundColor: '#B42318' }} />
-        <div style={{ padding: '5px 7px' }}>
-          <div style={{ height: 4, width: '42%', borderRadius: 999, backgroundColor: '#0B4AA8', marginBottom: 4 }} />
-          <div style={{ height: 3, borderRadius: 999, backgroundColor: '#DBEAFE', marginBottom: 3 }} />
-          <div style={{ height: 3, width: '70%', borderRadius: 999, backgroundColor: '#BFDBFE' }} />
+      <div style={{ height: 42, borderRadius: 8, overflow: 'hidden', backgroundColor: active ? '#FDF6EE' : '#FFF8F0', border: `1px solid ${active ? '#D4A857' : '#E2E8F0'}` }}>
+        <div style={{ height: 10, background: 'linear-gradient(90deg, #0D7377, #0a5c5f)' }} />
+        <div style={{ display: 'flex', height: 'calc(100% - 10px)' }}>
+          <div style={{ flex: 1, padding: '5px 7px' }}>
+            <div style={{ height: 3, width: '50%', borderRadius: 999, backgroundColor: '#D4A857', marginBottom: 3 }} />
+            <div style={{ height: 2.5, borderRadius: 999, backgroundColor: '#F5EDE0', marginBottom: 2 }} />
+            <div style={{ height: 2.5, width: '70%', borderRadius: 999, backgroundColor: '#F5EDE0', marginBottom: 2 }} />
+            <div style={{ height: 2, width: '40%', borderRadius: 999, backgroundColor: '#EDE0D0' }} />
+          </div>
+          <div style={{ width: 14, backgroundColor: '#1A1A2E', borderTopWidth: 1.5, borderTopColor: '#D4A857' }} />
         </div>
       </div>
     )
@@ -100,14 +104,18 @@ function renderTemplateThumb(option: CsrTemplateOption, active: boolean) {
 
   if (isEditorialCompact) {
     return (
-      <div style={{ height: 42, borderRadius: 8, overflow: 'hidden', backgroundColor: '#0F172A', border: `1px solid ${active ? '#334155' : '#1E293B'}` }}>
+      <div style={{ height: 42, borderRadius: 8, overflow: 'hidden', backgroundColor: '#FDF8F3', border: `1px solid ${active ? '#4A2C5A' : '#E5E7EB'}` }}>
         <div style={{ display: 'flex', height: '100%' }}>
-          <div style={{ flex: 1.2, padding: '6px 7px' }}>
-            <div style={{ height: 4, width: '58%', borderRadius: 999, backgroundColor: '#F8FAFC', marginBottom: 4 }} />
-            <div style={{ height: 3, borderRadius: 999, backgroundColor: '#475569', marginBottom: 3 }} />
-            <div style={{ height: 3, width: '65%', borderRadius: 999, backgroundColor: '#475569' }} />
+          <div style={{ width: 18, backgroundColor: '#4A2C5A' }} />
+          <div style={{ flex: 1, padding: '5px 7px' }}>
+            <div style={{ height: 3.5, width: '55%', borderRadius: 999, backgroundColor: '#4A2C5A', marginBottom: 3 }} />
+            <div style={{ height: 2.5, borderRadius: 999, backgroundColor: '#F5EDE4', marginBottom: 2.5 }} />
+            <div style={{ height: 2.5, width: '65%', borderRadius: 999, backgroundColor: '#F5EDE4', marginBottom: 2 }} />
+            <div style={{ display: 'flex', gap: 2 }}>
+              <div style={{ height: 2, flex: 1, borderRadius: 999, backgroundColor: '#8A9B6E', opacity: 0.6 }} />
+              <div style={{ height: 2, flex: 1, borderRadius: 999, backgroundColor: '#C87A2C', opacity: 0.5 }} />
+            </div>
           </div>
-          <div style={{ width: 20, backgroundColor: '#C2410C' }} />
         </div>
       </div>
     )

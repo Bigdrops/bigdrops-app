@@ -4,6 +4,8 @@ import { getBranding } from './utils'
 import { ZincTemplate } from './Zinc'
 import { MinimalTemplate } from './Minimal'
 import { IndustryCsrTemplate } from './IndustryCsr'
+import { SentinelTemplate } from './Sentinel'
+import { NexusTemplate } from './Nexus'
 import { registerPdfFillableFonts } from '../../../lib/pdfFontRegistry'
 import type { CsrPdfProps } from './types'
 
@@ -18,6 +20,14 @@ export function Template6({ csr, comments, branding = {}, designPreset }: CsrPdf
   return <MinimalTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
 
+export function Template4({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <SentinelTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
+}
+
+export function Template5({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
+  return <NexusTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
+}
+
 export function Template8({ csr, comments, branding = {}, designPreset }: CsrPdfProps) {
   return <IndustryCsrTemplate csr={csr} comments={comments} branding={getBranding(branding)} designPreset={designPreset} />
 }
@@ -26,6 +36,8 @@ export function getCsrPdfDocument({ csr, comments, branding = {}, template = '3'
   const variant = getCsrTemplateVariant(template)
 
   if (variant === 'zinc') return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'sentinel') return <Template4 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
+  if (variant === 'nexus') return <Template5 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'minimal') return <Template6 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   if (variant === 'industry') return <Template8 csr={csr} comments={comments} branding={branding} designPreset={designPreset} />
   return <Template3 csr={csr} comments={comments} branding={branding} designPreset={designPreset} /> // zinc default
