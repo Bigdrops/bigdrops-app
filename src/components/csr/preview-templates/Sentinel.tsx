@@ -1,12 +1,10 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 import {
   getLayoutDensity,
   getFillablePdfTheme,
   getStatusValue,
-  getTechnicianName,
-  getTechnicianSignatureUrl,
   shouldRender,
   hasOperationalReadings,
   hasMaterials,
@@ -17,6 +15,8 @@ import {
   PdfBrandBlock,
   PdfField,
   PdfTextBlock,
+  PdfLogoSlot,
+  AcknowledgementBlock,
   ReadingsStrip,
 } from './components'
 import { ClientNotesBlock } from './ClientNotesBlock'
@@ -34,7 +34,7 @@ function createStyles(density = 'comfortable', designPreset: any) {
   const tight = density === 'tight'
   const { fillableColor, fillableBold, fillableRegular } = getFillablePdfTheme(designPreset)
   return StyleSheet.create({
-    page: { paddingTop: tight ? 10 : 12, paddingBottom: tight ? 10 : 12, paddingHorizontal: tight ? 10 : 12, backgroundColor: '#FFFAF5', color: '#3A2E20', fontFamily: 'Helvetica', fontSize: tight ? 7.4 : compact ? 7.8 : 8 },
+    page: { paddingTop: tight ? 10 : 12, paddingBottom: tight ? 8 : 10, paddingHorizontal: tight ? 10 : 12, backgroundColor: '#FFFAF5', color: '#3A2E20', fontFamily: 'Helvetica', fontSize: tight ? 7.4 : compact ? 7.8 : 8 },
     headerOuter: { marginBottom: compact ? 6 : 8, borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' },
     headerBg: { backgroundColor: TEAL, paddingVertical: tight ? 8 : 10, paddingHorizontal: tight ? 10 : 12 },
     headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -46,6 +46,8 @@ function createStyles(density = 'comfortable', designPreset: any) {
     idLabel: { fontSize: 6, color: '#BDD8D9', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold' },
     idValue: { fontSize: 11, color: '#ffffff', fontFamily: 'Helvetica-Bold', marginTop: 1 },
     idDate: { fontSize: 7, color: '#BDD8D9', marginTop: 2 },
+    logoSlot: { width: 44, height: 44, borderRadius: 99, backgroundColor: GOLD, justifyContent: 'center', alignItems: 'center' },
+    logoSlotText: { color: '#ffffff', fontSize: 16, fontFamily: 'Helvetica-Bold' },
     goldBar: { height: 2, backgroundColor: GOLD },
     summaryBar: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: CREAM, borderRadius: 6, paddingVertical: tight ? 5 : 6, paddingHorizontal: tight ? 6 : 8, marginBottom: compact ? 6 : 8, borderLeftWidth: 3, borderLeftColor: GOLD },
     summaryItem: { flexDirection: 'row', alignItems: 'center', marginRight: compact ? 6 : 8, marginVertical: 1 },
@@ -84,15 +86,11 @@ function createStyles(density = 'comfortable', designPreset: any) {
     materialNumText: { fontSize: 8, color: '#ffffff', fontFamily: 'Helvetica-Bold' },
     materialName: { fontSize: tight ? 7 : compact ? 7.3 : 7.7, color: fillableColor, fontFamily: fillableBold, flex: 1 },
     materialQty: { fontSize: 6.5, color: '#8B7355', fontFamily: 'Helvetica' },
-    signSection: { backgroundColor: CREAM, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#F0E6D3', marginBottom: compact ? 5 : 7 },
-    signTitle: { fontSize: 7.2, color: COPPER, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.5, paddingVertical: 6, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#F0E6D3' },
-    signBody: { padding: tight ? 6 : 8 },
-    signRow: { flexDirection: 'row', alignItems: 'stretch', minHeight: tight ? 28 : 34, borderBottomWidth: 1, borderBottomColor: '#F0E6D3' },
-    signRowLast: { borderBottomWidth: 0 },
+    signRow: { flexDirection: 'row', gap: compact ? 4 : 6, marginTop: compact ? 4 : 6 },
+    signCard: { flex: 1, borderWidth: 1, borderColor: '#F0E6D3', borderRadius: 6, padding: 4 },
+    ackGrid: { flexDirection: 'row', flexWrap: 'wrap' },
     signLabel: { fontSize: 6.5, color: '#8B7355', textTransform: 'uppercase', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
-    signPanel: { flex: 1, paddingVertical: tight ? 3 : 4, paddingHorizontal: compact ? 5 : 6, justifyContent: 'center' },
-    signDivider: { width: 1, backgroundColor: '#E6D9C7' },
-    footerOuter: { marginTop: compact ? 6 : 8, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, overflow: 'hidden' },
+    footerOuter: { marginTop: compact ? 4 : 6, borderBottomLeftRadius: 10, borderBottomRightRadius: 10, overflow: 'hidden' },
     footer: { backgroundColor: DARK, paddingVertical: 8, paddingHorizontal: 12, borderTopWidth: 2, borderTopColor: GOLD },
     footerText: { fontSize: 6, color: '#8B8B9E', textAlign: 'center', textTransform: 'uppercase' },
     footerCompany: { fontSize: 6.5, color: '#ffffff', textAlign: 'center', fontFamily: 'Helvetica-Bold', marginBottom: 2 },
@@ -165,51 +163,6 @@ function renderStatusDots(styles: any, status: string) {
   )
 }
 
-function renderSignatureBlock(styles: any, csr: CsrRenderModel, compact: boolean) {
-  const technicianName = getTechnicianName(csr)
-  const technicianSignatureUrl = getTechnicianSignatureUrl(csr)
-  const hasTech = csr.showTechnicianSignLine
-  const hasClient = csr.showAcknowledgement && hasText(csr.acknowledgement_name)
-  if (!hasTech && !hasClient) return null
-  return (
-    <View style={styles.signSection}>
-      <Text style={styles.signTitle}>Acknowledgement</Text>
-      <View style={styles.signBody}>
-        {hasClient ? (
-          <View style={[styles.signRow, !hasTech ? styles.signRowLast : null]}>
-            <View style={styles.signPanel}>
-              <Text style={styles.signLabel}>Client Name</Text>
-              <Text style={styles.fieldValue}>{safe(csr.acknowledgement_name)}</Text>
-            </View>
-            <View style={styles.signDivider} />
-            <View style={styles.signPanel}>
-              <Text style={styles.signLabel}>Signature</Text>
-              <Text style={[styles.fieldValue, { color: '#E6D9C7' }]}>—</Text>
-            </View>
-          </View>
-        ) : null}
-        {hasTech ? (
-          <View style={[styles.signRow, styles.signRowLast]}>
-            <View style={styles.signPanel}>
-              <Text style={styles.signLabel}>Technician Signature</Text>
-              {technicianSignatureUrl ? (
-                <Image src={technicianSignatureUrl} style={{ maxHeight: 30, maxWidth: 96, objectFit: 'contain' }} />
-              ) : (
-                <Text style={[styles.fieldValue, { color: '#E6D9C7' }]}>—</Text>
-              )}
-            </View>
-            <View style={styles.signDivider} />
-            <View style={styles.signPanel}>
-              <Text style={styles.signLabel}>Technician Name</Text>
-              <Text style={styles.fieldValue}>{technicianName || ' '}</Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  )
-}
-
 export function SentinelTemplate({ csr, comments, branding, designPreset }: CsrPdfProps) {
   csr = csr || {} as CsrRenderModel
   const density = getLayoutDensity(csr)
@@ -225,7 +178,10 @@ export function SentinelTemplate({ csr, comments, branding, designPreset }: CsrP
         <View style={styles.headerOuter}>
           <View style={styles.headerBg}>
             <View style={styles.headerTopRow}>
-              <PdfBrandBlock styles={styles} branding={branding} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <PdfLogoSlot styles={styles} branding={branding} fallback="S" />
+                <PdfBrandBlock styles={styles} branding={branding} />
+              </View>
               <View style={styles.idBlock}>
                 <Text style={styles.idLabel}>Service Report</Text>
                 <Text style={styles.idValue}>{safe(csr.csr_number)}</Text>
@@ -332,7 +288,7 @@ export function SentinelTemplate({ csr, comments, branding, designPreset }: CsrP
           </View>
         ) : null}
 
-        {renderSignatureBlock(styles, csr, compact)}
+        <AcknowledgementBlock styles={styles} csr={csr} />
         <ClientNotesBlock comments={comments} />
 
         {/* Footer */}

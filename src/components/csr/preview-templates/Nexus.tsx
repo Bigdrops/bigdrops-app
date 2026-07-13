@@ -13,12 +13,7 @@ import {
   hasText,
   safe,
 } from './utils'
-import {
-  PdfBrandBlock,
-  PdfField,
-  PdfTextBlock,
-  ReadingsStrip,
-} from './components'
+
 import { ClientNotesBlock } from './ClientNotesBlock'
 import { getMaterialsRows } from './utils'
 import type { CsrPdfProps } from './types'
@@ -45,8 +40,8 @@ function createStyles(density = 'comfortable', designPreset: any) {
     headerCenter: { alignItems: 'center' },
     headerTitle: { fontSize: tight ? 8.5 : 9.5, color: '#ffffff', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1.2 },
     headerDivider: { width: 40, height: 2, backgroundColor: 'rgba(255,255,255,0.5)', marginTop: 2 },
-    headerRef: { fontSize: tight ? 6.5 : 7, color: '#c9b8d4', backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 2, paddingHorizontal: 8, borderRadius: 2, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
-    section: { paddingVertical: tight ? 4 : 5, paddingHorizontal: 0, borderTopWidth: 3, borderTopColor: 'rgba(74,44,90,0.14)', borderStyle: 'double' },
+    headerRef: { fontSize: tight ? 6.5 : 7, color: '#c9b8d4' },
+    section: { paddingVertical: tight ? 4 : 5, paddingHorizontal: 0, borderTopWidth: 3, borderTopColor: 'rgba(74,44,90,0.14)' },
     sectionFirst: { borderTopWidth: 0 },
     sectionTitle: { fontSize: tight ? 6.8 : 7.2, color: PLUM, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2.5, paddingBottom: 1.5 },
     sectionTitleAmber: { fontSize: tight ? 6.8 : 7.2, color: AMBER, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2.5, paddingBottom: 1.5 },
@@ -328,7 +323,7 @@ export function NexusTemplate({ csr, comments, branding, designPreset }: CsrPdfP
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
-              <PdfBrandBlock styles={styles} branding={branding} />
+              <Text style={styles.companyName}>{safe(branding.companyName) || 'Nexus'}</Text>
             </View>
             <View style={styles.headerCenter}>
               <Text style={styles.headerTitle}>Customer Service Report</Text>
@@ -455,7 +450,6 @@ export function NexusTemplate({ csr, comments, branding, designPreset }: CsrPdfP
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerMain}>{safe(branding.companyName) || 'Nexus Report'}</Text>
-          {branding.contactLine ? <Text style={styles.footerText}>{branding.contactLine}</Text> : null}
           {branding.footerText ? <Text style={styles.footerText}>{branding.footerText}</Text> : null}
         </View>
       </Page>

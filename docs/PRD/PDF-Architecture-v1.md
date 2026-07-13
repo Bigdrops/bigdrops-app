@@ -518,7 +518,185 @@ Once every caller has migrated:
 
 ---
 
-# 16. Future Extensions
+# 16. Architecture Invariants
+
+The following rules are mandatory boundaries of the PDF subsystem.
+
+Any future implementation, migration, or refactor must preserve these invariants.
+
+---
+
+## Invariant 1 — Single PDF Blob Creation Point
+
+There must be exactly one infrastructure location responsible for creating PDF Blobs.
+
+Forbidden:
+
+```ts
+pdf(element).toBlob()
+```
+
+inside:
+
+- View pages
+- Domain actions
+- Document modules
+- Template components
+
+Allowed only inside the PDF generation infrastructure.
+
+---
+
+## Invariant 2 — PdfAsset Is the Universal Boundary
+
+Every generated PDF must become a PdfAsset before delivery.
+
+The flow must always be:
+
+Document Data
+      ↓
+Renderer
+      ↓
+PdfAsset
+      ↓
+Delivery
+
+No direct:
+
+Renderer
+      ↓
+Download
+
+or:
+
+Renderer
+      ↓
+Filesystem
+
+is allowed.
+
+---
+
+## Invariant 3 — Generation and Delivery Are Independent
+
+PDF generation answers:
+"How do we create this document?"
+
+PDF delivery answers:
+"What should happen with this finished PDF?"
+
+Generation must never:
+- save files
+- open files
+- share files
+- trigger downloads
+- access Capacitor APIs
+
+---
+
+## Invariant 4 — Delivery Owns Platform Behaviour
+
+All platform-specific operations belong to the delivery layer.
+
+Examples:
+- Android: Filesystem.writeFile, FileOpener, Share intents
+- Web: Blob URLs, Browser downloads, Web Share API
+- iOS: Document preview, Native share sheet
+
+These must not appear in document modules.
+
+---
+
+## Invariant 5 — Document Modules Own Business Meaning
+
+Document modules are responsible for:
+- data preparation
+- calculations
+- preview models
+- template selection
+
+Document modules are not responsible for:
+- storage
+- downloading
+- sharing
+- printing
+- device APIs
+
+---
+
+## Invariant 6 — Templates Are Presentation Only
+
+Templates should only describe layout.
+
+Templates must not:
+- create files
+- trigger downloads
+- access databases
+- call APIs
+- handle platform logic
+
+---
+
+## Invariant 7 — New Documents Inherit Infrastructure
+
+Adding a new document type should require only:
+1. Document data model.
+2. Preview/render model.
+3. PDF template.
+
+It should automatically receive:
+- Android open picker
+- native saving
+- sharing
+- web download
+- feedback handling
+- future print/email support
+
+---
+
+## Invariant 8 — No Parallel PDF Pipelines
+
+A new PDF generation path must not be introduced without updating this architecture document.
+
+Temporary migration wrappers are allowed.
+Permanent duplicate pipelines are not.
+
+---
+
+## Invariant 9 — Backward Compatibility During Migration
+
+Migration must happen incrementally.
+
+Existing public APIs may remain temporarily as adapters.
+
+Example:
+Old API
+   ↓
+Adapter
+   ↓
+New PDF Infrastructure
+
+Breaking changes should only occur after all consumers migrate.
+
+---
+
+## Invariant 10 — Delivery Events Are Centralized
+
+PDF-related feedback events must originate from the delivery layer.
+
+Examples:
+- generation started
+- save started
+- file saved
+- open failed
+- share started
+- delivery failed
+
+Individual document modules must not create their own PDF delivery notifications.
+
+---
+
+# 17. Future Extensions
 
 The architecture intentionally supports future additions including:
 
