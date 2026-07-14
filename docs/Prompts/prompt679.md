@@ -1,298 +1,174 @@
-You are working on the BIGDROPS business platform.
+# Corrections Required — Multi-Tenancy Gap Analysis Report
 
-Stack: React 19 + Vite 7 + TypeScript 5.9 + Tailwind CSS 3.4 + Supabase + Vercel.
-Runtime: Bun. Never use npm or yarn.
+Before proceeding to Round 2, correct the following issues in the existing Round 1 gap analysis report. Follow AGENTS.md, load the appropriate project skills, and route work to the relevant sub-agent(s) where appropriate.
 
-==================================================
-BEFORE YOU BEGIN — READ AGENTS.md
-==================================================
-
-You have full file access. Immediately read AGENTS.md.
-
-It contains:
-
-- Skill loading protocol (with failsafe)
-- Reporting protocol (save to docs/Reports/{domain}/)
-- Report quality standards
-- Hard architecture rules, no-touch zones, and business behaviour preservation rules
-- Standards hierarchy (AGENTS.md > docs/STANDARD/* > module documentation)
-
-All of these apply to this task. Do not ask for them to be repeated.
-
-Immediately load the appropriate skills:
-
-- Karpathy
-- typescript-advanced-types
-- frontend-design
-
-Run:
-
-`bun run audit:load`
-
-before implementation.
+This is a targeted correction pass. Do not repeat the completed Round 1 repository inventory unless one of the corrections below explicitly requires re-validation.
 
 ---
 
-# CONTEXT
+# 0. Version Reference Verification
 
-Invoice normalization is complete.
+The report cites **PRD v2.2** throughout (including Sections 2.1, 3, and 6). The authoritative source document is:
 
-The Document Transformation Standard is authoritative.
+`docs/PRD/multi-tenancy-prd.md` (PRD v2.1)
 
-The Edit Law requires document identity to remain immutable after creation.
+Determine whether:
 
-The Invoice module already contains the Domain invariant:
+- the analysis itself was performed against PRD v2.1 and only the report labels are incorrect; or
+- the analysis actually relied on a different revision.
 
-`src/domain/invoice/assertIdentityImmutable.ts`
+If only the version references are incorrect, simply update them throughout the report.
 
-However, the Invoice module is not yet fully aligned with the standard:
+Only re-validate findings whose correctness depends on requirements that differ between PRD v2.1 and any later draft.
 
-- the existing invariant no longer reflects the current Invoice identity contract
-- the invariant is not invoked
-- the edit UI currently allows client identity to be modified
+Document:
 
-This task completes Edit Law compliance.
-
-Do not redesign the Invoice architecture.
-
----
-
-# OBJECTIVE
-
-Bring the Invoice module into full compliance with the Edit Law by:
-
-1. Reconciling the existing `assertIdentityImmutable` invariant with the current Invoice identity contract.
-2. Preventing identity mutation through the edit UI.
-3. Invoking the existing invariant from one canonical enforcement point before persistence.
-
-Do not create new validators.
-
-Do not introduce new abstractions.
+- which PRD was actually used;
+- whether any findings required re-validation;
+- which sections changed as a result.
 
 ---
 
-# SCOPE
+# 1. Remove Gap G8
 
-Work only on the Invoice module.
+Gap G8 currently states:
 
-Do not modify:
+> No workspace_id column exists on business tables.
 
-- Quotation
-- Waybill
-- CSR
-- RFQ
-- BOQ
+This is **not a valid gap** and must be removed entirely.
 
-Only make compatibility fixes outside Invoice if required for compilation.
+Business tables inside an entity schema **must not** contain a `workspace_id` column.
 
----
+The schema itself already represents exactly one entity, while ownership is recorded once in:
 
-# REQUIREMENTS
+`public.entities.workspace_id`
 
-## 1. Reconcile the Existing Domain Invariant
+Duplicating `workspace_id` onto every business row would reintroduce the row-level tenancy model that the schema-per-entity architecture intentionally replaces.
 
-Review:
+Therefore:
 
-- `docs/STANDARD/document-transformation-standard.md`
-- `src/domain/invoice/assertIdentityImmutable.ts`
+- Remove G8 completely.
+- Renumber subsequent gaps.
+- Update blocker counts.
+- Update summaries.
+- Update conclusions.
+- Update cross references.
+- Remove every downstream reference to G8.
 
-Update the existing invariant to match the current Invoice identity contract.
-
-Do not duplicate logic.
-
-Do not create a second identity validator.
-
-If Invoice-specific identity differs from the generic Transformation Standard terminology, document the mapping.
+Do not replace it with another equivalent recommendation.
 
 ---
 
-## 2. Enforce Identity in the UI
+# 2. Correct the Target Architecture Diagram
 
-Saved invoices must not allow identity mutation.
+Section 6 currently depicts one entity being split into multiple schemas such as:
 
-Ensure:
+- acme_invoices
+- acme_projects
+- acme_waybills
 
-- client identity cannot be changed in edit mode
-- client remains selectable during creation
-- existing client information remains visible
+This architecture is incorrect.
 
-Keep the user experience consistent with the rest of the application.
+The approved architecture defines:
 
----
+**Exactly one dedicated schema per entity.**
 
-## 3. Wire the Canonical Enforcement Point
+Example:
 
-Identify the correct lifecycle boundary for identity validation.
+```
+entity_mrc_acme
+    invoices
+    invoice_items
+    quotations
+    projects
+    project_documents
+    waybills
+    clients
+    csrs
+    boqs
+    rfqs
+    receipts
+    payments
+    letters
+    settings
+    bank_accounts
+    signatories
+    tax_settings
+    audit_logs
+    device_sequences
+    ...
+```
 
-Invoke the existing Domain invariant from exactly one canonical location.
+Redraw Section 6 accordingly.
 
-The invariant must execute before persistence.
+Do not depict or recommend module-specific schemas anywhere in the report.
 
-Do not invoke it from multiple locations.
-
----
-
-## 4. Preserve Architectural Ownership
-
-Maintain ownership boundaries.
-
-Domain:
-
-- identity rules
-- immutable identity invariant
-
-InvoiceFormPage:
-
-- validation coordination
-- save orchestration
-- user feedback
-
-Services:
-
-- persistence
-
-UI:
-
-- presentation
-- interaction
-
-Do not move business rules into UI components or React hooks.
+The corrected diagram must clearly communicate that all business tables belonging to an entity live inside the same dedicated schema.
 
 ---
 
-## 5. Preserve Existing Behaviour
+# 3. Correct Schema Naming Convention
 
-Outside Edit Law enforcement, preserve:
+Replace every schema naming example that implies:
 
-- calculations
-- validation
-- duplicate
-- revert
-- conversion
-- import
-- attachments
-- PDF generation
-- audit behaviour
-- navigation
-- save pipeline
+```
+<prefix>_<entity_slug>
+```
 
-No behavioural regression is acceptable.
+with the locked convention defined by PRD v2.1:
 
----
+```
+entity_<workspace_slug>_<entity_slug>
+```
 
-## 6. Preserve Audit Behaviour
+Examples:
 
-Do not modify:
+```
+entity_mrc_acme
+entity_xyz_construction
+```
 
-- audit events
-- execution order
-- payloads
-- timing
+The `workspace_slug` segment is mandatory to prevent collisions between entities belonging to different workspaces.
 
-Identity validation must occur before persistence and before any audit event that would otherwise commit an invalid mutation.
+Update:
 
----
-
-# CONSTRAINTS
-
-- No Invoice redesign.
-- No further normalization.
-- No generic validation framework.
-- No duplicate validation logic.
-- Preserve backward compatibility.
-- Preserve existing business behaviour.
+- report text;
+- diagrams;
+- examples;
+- migration planning notes;
+- pseudocode;
+- naming recommendations;
+- architectural references.
 
 ---
 
-# REQUIRED VERIFICATION
+# Deliverables
 
-Run:
+Produce corrected versions of:
 
-1. `bun run audit:load`
-2. `bun run typecheck`
-3. `bun run build`
+- Section 2.1
+- Section 3
+- Section 6
+- every other section affected by the removal of G8 or the corrected architecture
 
-Manually verify:
+Carry forward unchanged:
 
-### Edit Law
+- Section 2.3
+- Section 2.4
+- existing repository inventory
+- risk analysis
+- assumptions
+- call-site inventory
 
-- Saved client identity cannot change.
-- Valid edits continue to succeed.
+unless one of the corrections above explicitly requires modification.
 
-### Duplicate Law
+Include a final **Corrections Applied** section listing:
 
-- No regression.
+- each modified section;
+- what changed;
+- why it changed;
+- whether the architectural conclusion changed.
 
-### Revert Law
+After these corrections are complete, continue directly with the planned **Round 2 architectural gap analysis** using **PRD v2.1** as the sole source of truth.
 
-- No regression.
-
-### Audit
-
-Verify:
-
-- Invoice creation
-- Invoice update
-- Duplicate
-- Convert
-- Revert
-
-Confirm audit behaviour is unchanged.
-
----
-
-# OUTPUT
-
-Save the implementation report to:
-
-`docs/Reports/invoice-quote/invoice-edit-law-compliance.md`
-
-Include:
-
-1. Executive Summary
-2. Files Modified
-3. Identity Contract Mapping
-4. Canonical Enforcement Point
-5. UI Changes
-6. Domain Changes
-7. Behaviour Verification
-8. Transformation Standard Verification
-9. Audit Verification
-10. Risks
-11. Deferred Work
-
----
-
-# STOP CONDITION
-
-Stop immediately after:
-
-- updating the existing invariant
-- enforcing identity immutability in the UI
-- wiring the canonical enforcement point
-- completing verification
-- writing the implementation report
-
-Do not begin:
-
-- Quotation work
-- additional Invoice normalization
-- lifecycle redesign
-- cross-document consolidation
-
----
-
-# SUCCESS CRITERIA
-
-Done when:
-
-- The Invoice module fully complies with the Edit Law.
-- The existing `assertIdentityImmutable` invariant reflects the current Invoice identity contract.
-- Client identity cannot be modified after invoice creation.
-- The invariant is invoked from one canonical enforcement point.
-- Domain remains the authoritative owner of identity rules.
-- No duplicate validation logic exists.
-- Existing behaviour is preserved outside Edit Law enforcement.
-- `bun run typecheck` passes.
-- `bun run build` passes.
-- Verification confirms no regressions.
+Do **not** repeat the Round 1 repository inventory or perform a fresh repository-wide audit unless required by one of the corrections above.
