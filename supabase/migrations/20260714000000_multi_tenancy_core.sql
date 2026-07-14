@@ -28,9 +28,20 @@ CREATE TABLE IF NOT EXISTS public.workspace_members (
     UNIQUE (workspace_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS public.entities (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id  uuid NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
+    slug          text NOT NULL,
+    display_name  text NOT NULL,
+    entity_type   text NOT NULL,
+    is_active     boolean NOT NULL DEFAULT true,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, slug)
+);
+
 CREATE TABLE IF NOT EXISTS public.entity_permissions (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    entity_id   uuid NOT NULL,
+    entity_id   uuid NOT NULL REFERENCES public.entities(id) ON DELETE CASCADE,
     user_id     uuid NOT NULL,
     resource    text NOT NULL,
     action      text NOT NULL,
@@ -71,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.workspace_invitations (
 CREATE TABLE IF NOT EXISTS public.workspace_invitation_entity_grants (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     invite_id   uuid NOT NULL REFERENCES public.workspace_invitations(id) ON DELETE CASCADE,
-    entity_id   uuid NOT NULL,
+    entity_id   uuid NOT NULL REFERENCES public.entities(id) ON DELETE CASCADE,
     resource    text NOT NULL,
     action      text NOT NULL
 );
@@ -92,6 +103,9 @@ CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace_id
     ON public.workspace_members USING btree (workspace_id);
 CREATE INDEX IF NOT EXISTS idx_workspace_members_user_id
     ON public.workspace_members USING btree (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_entities_workspace_id
+    ON public.entities USING btree (workspace_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_permissions_unique
     ON public.entity_permissions USING btree (entity_id, user_id, resource, action);
@@ -120,6 +134,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_pending_workspace_per_creator
 
 ALTER TABLE public.workspaces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workspace_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.entities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.entity_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.permission_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.permission_template_items ENABLE ROW LEVEL SECURITY;
@@ -196,6 +211,11 @@ BEGIN
             USING HINT = 'invite_id=' || p_invite_id;
     END IF;
 
+    IF lower(auth.jwt() ->> 'email') != lower(v_invite.email) THEN
+        RAISE EXCEPTION 'Email does not match invitation';
+    END IF;
+    END IF;
+
     INSERT INTO public.workspace_members (workspace_id, user_id, role, permissions)
     VALUES (v_invite.workspace_id, auth.uid(), v_invite.workspace_role, v_invite.workspace_permissions);
 
@@ -230,7 +250,7 @@ BEGIN
     END IF;
 
     INSERT INTO public.workspace_members (workspace_id, user_id, role, permissions)
-    VALUES (p_workspace_id, p_creator_user_id, 'owner', '["*"]'::jsonb)
+    VALUES (p_workspace_id, p_creator_user_id, 'owner', '{}'::jsonb)
     ON CONFLICT (workspace_id, user_id) DO NOTHING;
 END;
 $function$;
