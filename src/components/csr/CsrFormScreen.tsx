@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Download, Hash, Lock, MoreHorizontal, Save } from 'lucide-react'
+import { Download, Hash, Lock, Loader2, MoreHorizontal, Save } from 'lucide-react'
 
 import { supabase } from '@/supabase'
 import ClientSelector from '@/components/ClientSelector'
@@ -828,14 +828,14 @@ export default function CsrFormScreen({
           disabled={saveDisabled}
           className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
         >
-          <Save className="h-6 w-6" />
+          {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
         </button>
       </div>
 
       <div className="sm:hidden">
         <MobileFab 
           onClick={onSave} 
-          icon={Save} 
+          icon={saving ? Loader2 : Save} 
           ariaLabel="Save CSR" 
           disabled={saveDisabled}
         />

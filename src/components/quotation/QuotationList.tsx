@@ -440,6 +440,7 @@ export default function QuotationList() {
         description="You can restore it later from Settings > Archives."
         confirmLabel="Archive Quotation"
         variant="default"
+        loading={activeQuotationIsArchiving}
         onConfirm={() => {
           if (archiveId) void handleArchive(archiveId)
         }}
@@ -452,6 +453,7 @@ export default function QuotationList() {
         title="Delete this quotation?"
         description="Deleting this quotation is permanent and cannot be undone."
         confirmLabel="Delete Quotation"
+        loading={activeQuotationIsDeleting}
         onConfirm={() => {
           if (deleteId) void handleDelete(deleteId)
         }}

@@ -48,6 +48,9 @@ export function useInvoiceActions({
   const [downloading, setDownloading] = useState(false);
   const [projectLinkOpen, setProjectLinkOpen] = useState(false);
   const [reverting, setReverting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [advanceSheetMode, setAdvanceSheetMode] = useState<any>("create");
   const [selectedAdvanceInvoice, setSelectedAdvanceInvoice] = useState<any>(null);
   const [advanceSaving, setAdvanceSaving] = useState(false);
@@ -91,24 +94,30 @@ export function useInvoiceActions({
   };
 
   const handleArchive = async () => {
-    if (!invoice?.id) return;
+    if (!invoice?.id || archiving) return;
+    setArchiving(true);
     try {
       const result = await archiveInvoice(invoice.id);
       if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
       showToast("Archive failed", error?.message || "Could not archive.");
+    } finally {
+      setArchiving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!invoice?.id) return;
+    if (!invoice?.id || deleting) return;
+    setDeleting(true);
     try {
       const result = await deleteInvoice(invoice.id);
       if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
       showToast("Delete failed", error?.message || "Could not delete.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -127,12 +136,15 @@ export function useInvoiceActions({
   };
 
   const handleDuplicate = async () => {
-    if (!invoice) return;
+    if (!invoice || duplicating) return;
+    setDuplicating(true);
     try {
       const { prefill, prefillItems } = await duplicateInvoice({ invoice, items: Array.isArray(items) ? items : [] });
       navigate("/invoices/new", { state: { prefill, prefillItems } });
     } catch (error: any) {
       showToast("Clone failed", error?.message || "Could not duplicate.");
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -334,6 +346,7 @@ export function useInvoiceActions({
     advanceSuffixValue, setAdvanceSuffixValue, advancePrimaryLabel, setAdvancePrimaryLabel,
     advanceSecondaryLabel, setAdvanceSecondaryLabel, handleAdvanceSave, handleAdvanceDownload,
     handleAdvanceDelete, openAdvanceDetails, openCreateAdvanceSheet, openRevertFlow,
-    handleRevertToQuotation, reverting, handleShare
+    handleRevertToQuotation, reverting, handleShare,
+    archiving, deleting, duplicating
   };
 }

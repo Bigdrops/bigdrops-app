@@ -44,6 +44,11 @@ export default function ViewRfq() {
   const [downloading, setDownloading] = useState(false)
   const [savingCustomization, setSavingCustomization] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [converting, setConverting] = useState(false)
 
   useEffect(() => {
     const loadRfq = async () => {
@@ -153,7 +158,8 @@ export default function ViewRfq() {
   }
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {
-    if (!id) return
+    if (!id || updatingStatus) return
+    setUpdatingStatus(true)
     try {
       await updateRFQStatus(id, status)
       setRfq((curr: any) => ({ ...curr, status }))
@@ -161,42 +167,54 @@ export default function ViewRfq() {
       ui.closeModal()
     } catch (error) {
       showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
   const handleDuplicate = async () => {
-    if (!id) return
+    if (!id || duplicating) return
+    setDuplicating(true)
     try {
       const created = await duplicateRFQRecord(id)
       navigate(`/rfqs/${created.id}`)
       showToast('RFQ Cloned', 'A new open RFQ has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    } finally {
+      setDuplicating(false)
     }
   }
 
   const handleArchive = async () => {
-    if (!id) return
+    if (!id || archiving) return
+    setArchiving(true)
     try {
       await archiveRFQRecord(id)
       navigate('/rfqs')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    } finally {
+      setArchiving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!id) return
+    if (!id || deleting) return
+    setDeleting(true)
     try {
       await deleteRFQRecord(id)
       navigate('/rfqs')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    } finally {
+      setDeleting(false)
     }
   }
 
   const handleConvertToQuotation = async () => {
-    if (!rfq) return
+    if (!rfq || converting) return
+    setConverting(true)
     try {
       const created = await convertRFQToQuotation({ rfq, items: rfq.table_rows, prefixes: settings?.document_prefixes })
       navigate(`/quotations/${created.id}`)
@@ -205,6 +223,7 @@ export default function ViewRfq() {
       showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
     } finally {
       ui.closeModal()
+      setConverting(false)
     }
   }
 
@@ -340,7 +359,8 @@ export default function ViewRfq() {
               title="Generate Quotation?"
               description="This will generate a new open quotation supplying these requested items."
               cancelLabel="Cancel"
-              confirmLabel="Generate Quotation"
+              confirmLabel={converting ? "Converting..." : "Generate Quotation"}
+              loading={converting}
               onConfirm={() => void handleConvertToQuotation()}
               onCancel={ui.closeModal}
             />
@@ -350,7 +370,8 @@ export default function ViewRfq() {
               title="Archive RFQ?"
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
-              confirmLabel="Archive"
+              confirmLabel={archiving ? "Archiving..." : "Archive"}
+              loading={archiving}
               onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
@@ -360,7 +381,8 @@ export default function ViewRfq() {
               title="Delete RFQ?"
               description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
-              confirmLabel="Delete"
+              confirmLabel={deleting ? "Deleting..." : "Delete"}
+              loading={deleting}
               destructive
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}

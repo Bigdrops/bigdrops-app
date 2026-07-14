@@ -38,6 +38,10 @@ export function useQuotationActions(input: {
   const { settings } = useSettings();
   const [downloading, setDownloading] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const showToast = (title: string, description: string, tone: "info" | "success" = "info") => {
     const options = { description };
@@ -101,23 +105,29 @@ export function useQuotationActions(input: {
   };
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {
-    if (!id) return;
+    if (!id || updatingStatus) return;
+    setUpdatingStatus(true);
     try {
       await updateQuotationStatus(id, status);
       await refreshQuotation();
       showToast(successLabel, `Quotation marked as ${status}.`, "success");
     } catch (error) {
       showToast("Update failed", error instanceof Error ? error.message : "Could not update status.");
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
   const handleDuplicate = async () => {
-    if (!quotation) return;
+    if (!quotation || duplicating) return;
+    setDuplicating(true);
     try {
       const createdQuotation = await duplicateQuotationRecord({ quotation, items, prefixes: settings?.document_prefixes });
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error) {
       showToast("Clone failed", error instanceof Error ? error.message : "Could not duplicate this quotation.");
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -136,22 +146,28 @@ export function useQuotationActions(input: {
   };
 
   const handleArchive = async () => {
-    if (!id) return;
+    if (!id || archiving) return;
+    setArchiving(true);
     try {
       await archiveQuotationRecord(id);
       navigate("/quotations");
     } catch (error) {
       showToast("Archive failed", error instanceof Error ? error.message : "Could not archive this quotation.");
+    } finally {
+      setArchiving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || deleting) return;
+    setDeleting(true);
     try {
       await deleteQuotationRecord(id);
       navigate("/quotations");
     } catch (error) {
       showToast("Delete failed", error instanceof Error ? error.message : "Could not delete this quotation.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -159,6 +175,10 @@ export function useQuotationActions(input: {
     downloading,
     setDownloading,
     converting,
+    archiving,
+    deleting,
+    duplicating,
+    updatingStatus,
     showToast,
     handleCopyNumber,
     handleShare,

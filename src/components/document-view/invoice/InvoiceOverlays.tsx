@@ -63,6 +63,10 @@ interface InvoiceOverlaysProps {
   pendingVoidPaymentId: string | null;
   setPendingVoidPaymentId: (id: string | null) => void;
   handleSaveCustomization: (v: any, p: any, t: any) => void;
+  archiving: boolean;
+  deleting: boolean;
+  reverting: boolean;
+  duplicating: boolean;
 }
 
 const SHEET_CUSTOMIZE = "customize-output";
@@ -124,6 +128,10 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
   pendingVoidPaymentId,
   setPendingVoidPaymentId,
   handleSaveCustomization,
+  archiving = false,
+  deleting = false,
+  reverting = false,
+  duplicating = false,
 }) => {
   const navigate = useNavigate();
 
@@ -219,7 +227,8 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
         title="Revert to Quotation?"
         description={`${invoice.invoice_number} will be converted back to an open quotation. Existing payment records will be deleted and cannot be recovered.`}
         cancelLabel="Cancel"
-        confirmLabel="Revert"
+        confirmLabel={reverting ? "Reverting..." : "Revert"}
+        loading={reverting}
         onConfirm={handleRevertToQuotation}
         onCancel={ui.closeModal}
       />
@@ -229,7 +238,8 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
         title="Archive Invoice?"
         description={`${invoice.invoice_number} will be moved to your archive.`}
         cancelLabel="Cancel"
-        confirmLabel="Archive"
+        confirmLabel={archiving ? "Archiving..." : "Archive"}
+        loading={archiving}
         onConfirm={handleArchive}
         onCancel={ui.closeModal}
       />
@@ -239,7 +249,8 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
         title="Delete Invoice?"
         description={`${invoice.invoice_number} will be permanently deleted.`}
         cancelLabel="Cancel"
-        confirmLabel="Delete"
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
+        loading={deleting}
         destructive
         onConfirm={handleDelete}
         onCancel={ui.closeModal}

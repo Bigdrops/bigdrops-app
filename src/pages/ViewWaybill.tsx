@@ -89,6 +89,10 @@ export default function ViewWaybill() {
   const [waybill, setWaybill] = useState<any>(null)
   const [rawWaybill, setRawWaybill] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
   const [template, setTemplate] = useState<'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'>(() => {
     if (typeof window === 'undefined') return 'classic'
     return (window.localStorage.getItem(WAYBILL_TEMPLATE_KEY) as any) || 'classic'
@@ -285,7 +289,8 @@ export default function ViewWaybill() {
   }
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {
-    if (!id) return
+    if (!id || updatingStatus) return
+    setUpdatingStatus(true)
     try {
       await updateWaybillStatus(id, status)
       setWaybill((curr: any) => ({ ...curr, status }))
@@ -293,37 +298,48 @@ export default function ViewWaybill() {
       ui.closeModal()
     } catch (error) {
       showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
   const handleDuplicate = async () => {
-    if (!id) return
+    if (!id || duplicating) return
+    setDuplicating(true)
     try {
       const created = await duplicateWaybillRecord(id)
       navigate(`/waybills/${created.id}`)
       showToast('Waybill Cloned', 'A new waybill has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    } finally {
+      setDuplicating(false)
     }
   }
 
   const handleArchive = async () => {
-    if (!id) return
+    if (!id || archiving) return
+    setArchiving(true)
     try {
       await archiveWaybillRecord(id)
       navigate('/waybills')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    } finally {
+      setArchiving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!id) return
+    if (!id || deleting) return
+    setDeleting(true)
     try {
       await deleteWaybillRecord(id)
       navigate('/waybills')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -619,7 +635,8 @@ export default function ViewWaybill() {
               title="Confirm Delivery?"
               description="This will lock the Waybill route status as successfully delivered."
               cancelLabel="Cancel"
-              confirmLabel="Confirm"
+              confirmLabel={updatingStatus ? "Updating..." : "Confirm"}
+              loading={updatingStatus}
               onConfirm={() => void handleUpdateStatus('delivered', 'Waybill Delivered')}
               onCancel={ui.closeModal}
             />
@@ -629,7 +646,8 @@ export default function ViewWaybill() {
               title="Archive Waybill?"
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
-              confirmLabel="Archive"
+              confirmLabel={archiving ? "Archiving..." : "Archive"}
+              loading={archiving}
               onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
@@ -639,7 +657,8 @@ export default function ViewWaybill() {
               title="Delete Waybill?"
               description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
-              confirmLabel="Delete"
+              confirmLabel={deleting ? "Deleting..." : "Delete"}
+              loading={deleting}
               destructive
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}

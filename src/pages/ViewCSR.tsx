@@ -92,6 +92,10 @@ export default function ViewCSR() {
   const [signatories, setSignatories] = useState<any[]>([])
   const [client, setClient] = useState<any>(null)
   const [downloading, setDownloading] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
   const [template, setTemplate] = useState(getStoredTemplate)
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
@@ -246,7 +250,8 @@ export default function ViewCSR() {
   }
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {
-    if (!id) return
+    if (!id || updatingStatus) return
+    setUpdatingStatus(true)
     try {
       await updateCSRStatus(id, status)
       setCsr((curr: any) => ({ ...curr, status }))
@@ -254,37 +259,48 @@ export default function ViewCSR() {
       ui.closeModal()
     } catch (error) {
       showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
   const handleDuplicate = async () => {
-    if (!id) return
+    if (!id || duplicating) return
+    setDuplicating(true)
     try {
       const created = await duplicateCSRRecord(id)
       navigate(`/csr/${created.id}`)
       showToast('Record Cloned', 'A new service report has been created.', 'success')
     } catch (error) {
       showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
+    } finally {
+      setDuplicating(false)
     }
   }
 
   const handleArchive = async () => {
-    if (!id) return
+    if (!id || archiving) return
+    setArchiving(true)
     try {
       await archiveCSRRecord(id)
       navigate('/csr')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
+    } finally {
+      setArchiving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!id) return
+    if (!id || deleting) return
+    setDeleting(true)
     try {
       await deleteCSRRecord(id)
       navigate('/csr')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -514,7 +530,8 @@ export default function ViewCSR() {
               title="Close Service Record?"
               description="This will mark the service record as completed."
               cancelLabel="Cancel"
-              confirmLabel="Mark as Completed"
+              confirmLabel={updatingStatus ? "Updating..." : "Mark as Completed"}
+              loading={updatingStatus}
               onConfirm={() => void handleUpdateStatus('completed', 'Record Completed')}
               onCancel={ui.closeModal}
             />
@@ -524,7 +541,8 @@ export default function ViewCSR() {
               title="Archive CSR?"
               description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
               cancelLabel="Cancel"
-              confirmLabel="Archive"
+              confirmLabel={archiving ? "Archiving..." : "Archive"}
+              loading={archiving}
               onConfirm={() => void handleArchive()}
               onCancel={ui.closeModal}
             />
@@ -534,7 +552,8 @@ export default function ViewCSR() {
               title="Delete CSR?"
               description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
               cancelLabel="Cancel"
-              confirmLabel="Delete"
+              confirmLabel={deleting ? "Deleting..." : "Delete"}
+              loading={deleting}
               destructive
               onConfirm={() => void handleDelete()}
               onCancel={ui.closeModal}

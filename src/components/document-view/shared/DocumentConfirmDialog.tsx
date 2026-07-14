@@ -9,6 +9,7 @@ interface DocumentConfirmDialogProps {
   cancelLabel?: string
   destructive?: boolean
   confirmDisabled?: boolean
+  loading?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -21,6 +22,7 @@ export default function DocumentConfirmDialog({
   cancelLabel = 'Cancel',
   destructive,
   confirmDisabled = false,
+  loading = false,
   onConfirm,
   onCancel,
 }: DocumentConfirmDialogProps) {
@@ -43,13 +45,15 @@ export default function DocumentConfirmDialog({
             type="button"
             variant="outline"
             onClick={onCancel}
+            disabled={loading}
             className={cancelButtonClass}
           >
             {cancelLabel}
           </Button>
           <Button
             type="button"
-            disabled={confirmDisabled}
+            loading={loading}
+            disabled={confirmDisabled || loading}
             onClick={() => {
               onConfirm()
               onCancel()

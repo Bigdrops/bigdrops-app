@@ -40,10 +40,10 @@ Map all single-tenant patterns in the BIGDROPS codebase against the PRD v2.1 tar
 **File:** `src/lib/tenant.ts`
 **Mechanism:** `getCurrentTenantId()` returns `supabase.auth.getUser().then(u => u.user?.id ?? '')`
 
-This conflates **user identity** with **tenant identity**. Under PRD v2.2's architecture:
+This conflates **user identity** with **tenant identity**. Under PRD v2.1's architecture:
 - `workspace_id` identifies the workspace scope
-- `entity_slug` (from `{prefix}_{sanitized_entity_slug}`) identifies the entity schema
-- Schema name is derived as `{prefix}_{sanitized_entity_slug}` — not user-based
+- `entity_slug` identifies the entity within a workspace
+- Schema name is derived as `entity_{workspace_slug}_{entity_slug}` — not user-based
 
 **Impact:** Every call site that uses `getCurrentTenantId()` for row-level scoping uses the wrong identifier.
 
@@ -196,7 +196,7 @@ These tables are **always** queried without any tenant filter:
 - `supabase.from('bank_accounts').select('*')` — no tenant filter
 - `supabase.from('signatories').select('*')` — no tenant filter
 
-Under PRD v2.2, these could be:
+Under PRD v2.1, these could be:
 - Platform metadata (stay in `public`) — shared across workspaces
 - Per-entity configuration (move to entity schema) — if each entity needs separate bank accounts/signatories
 
@@ -204,7 +204,7 @@ Under PRD v2.2, these could be:
 
 **Current usage:** `zero` — no `supabase.channel()` or `.subscribe()` calls exist anywhere.
 
-**PRD v2.2 target:** Realtime subscriptions for live document updates, scoped per entity. This is a clean slate — no migration needed, but the architecture must be designed from scratch with per-schema Realtime channels.
+**PRD v2.1 target:** Realtime subscriptions for live document updates, scoped per entity. This is a clean slate — no migration needed, but the architecture must be designed from scratch with per-schema Realtime channels.
 
 ### 2.11 Edge Functions
 
@@ -231,16 +231,16 @@ The `auditTypes.ts` domain model includes `scope_type?: string | null`.
 | Column | Status |
 |--------|--------|
 | `tenant_id` | Only on `letters` table |
-| `workspace_id` | **Does not exist** anywhere |
-| `entity_slug` | **Does not exist** anywhere |
+| `workspace_id` | Belongs on `public.entities` only — must **not** exist on entity-schema business tables |
+| `entity_slug` | Does not exist — needs to be resolved from the current `search_path` |
 | `scope_type` | Exists on invoices, notifications, audit_logs, activity_events — but never set to a real value |
 | `scope_id` | Exists on notifications — but never filtered by |
 
 ---
 
-## 3. Gap Assessment by PRD v2.2 Requirement
+## 3. Gap Assessment by PRD v2.1 Requirement
 
-### Requirement: Per-entity schemas named `{prefix}_{sanitized_entity_slug}`
+### Requirement: Per-entity schemas named `entity_{workspace_slug}_{entity_slug}`
 
 | # | Gap | Severity | Files Affected |
 |---|-----|----------|---------------|
@@ -256,23 +256,22 @@ The `auditTypes.ts` domain model includes `scope_type?: string | null`.
 
 | # | Gap | Severity | Files Affected |
 |---|-----|----------|---------------|
-| G8 | No `workspace_id` column on any business table | **BLOCKER** | All DB migration scripts needed |
-| G9 | Cache keys are global (`:all` suffix), no workspace prefix | **HIGH** | `src/config/moduleAdapters.ts` |
-| G10 | Settings/bank_accounts/signatories have no workspace owner | **HIGH** | `src/hooks/useInvoiceReferenceData.ts` + 3 others |
+| G8 | Cache keys are global (`:all` suffix), no workspace prefix | **HIGH** | `src/config/moduleAdapters.ts` |
+| G9 | Settings/bank_accounts/signatories have no workspace owner | **HIGH** | `src/hooks/useInvoiceReferenceData.ts` + 3 others |
 
 ### Requirement: Entity-scoped Realtime subscriptions
 
 | # | Gap | Severity | Files Affected |
 |---|-----|----------|---------------|
-| G11 | Zero Realtime subscriptions currently exist | **MEDIUM** | Clean slate — no migration needed |
+| G10 | Zero Realtime subscriptions currently exist | **MEDIUM** | Clean slate — no migration needed |
 
 ### Requirement: Cross-entity data sharing via schema-qualified queries
 
 | # | Gap | Severity | Files Affected |
 |---|-----|----------|---------------|
-| G12 | Global search (`useGlobalSearch.ts`) queries all business tables without workspace filter | **HIGH** | `src/hooks/useGlobalSearch.ts` |
-| G13 | Dashboard (`useDashboardData.ts`) queries 7 business tables without workspace filter | **HIGH** | `src/hooks/useDashboardData.ts` |
-| G14 | `useProjectDocumentFetch.ts` queries project-scoped data but via public schema | **MEDIUM** | `src/hooks/useProjectDocumentFetch.ts` |
+| G11 | Global search (`useGlobalSearch.ts`) queries all business tables without workspace filter | **HIGH** | `src/hooks/useGlobalSearch.ts` |
+| G12 | Dashboard (`useDashboardData.ts`) queries 7 business tables without workspace filter | **HIGH** | `src/hooks/useDashboardData.ts` |
+| G13 | `useProjectDocumentFetch.ts` queries project-scoped data but via public schema | **MEDIUM** | `src/hooks/useProjectDocumentFetch.ts` |
 
 ### Requirement: Platform metadata stays in `public`
 
@@ -334,33 +333,52 @@ The `auditTypes.ts` domain model includes `scope_type?: string | null`.
 ## 6. Migration Target Architecture (Recommended)
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  public schema                        │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │
-│  │workspaces│ │profiles  │ │settings  │ │bank_    │  │
-│  │          │ │(users)   │ │(global)  │ │accounts │  │
-│  └──────────┘ └──────────┘ └──────────┘ └────────┘  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐     │
-│  │signatories│ │notific-  │ │audit_logs        │     │
-│  │          │ │ations    │ │activity_events   │     │
-│  └──────────┘ └──────────┘ └──────────────────┘     │
-└─────────────────────────────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          │               │               │
-┌─────────▼────┐ ┌───────▼──────┐ ┌──────▼────────┐
-│ acme_invoices │ │ acme_projects│ │ acme_waybills  │
-│  invoices     │ │  projects    │ │  waybills      │
-│  invoice_items│ │  project_doc │ │  waybill_items │
-│  receipts     │ │  csrs        │ │  ...           │
-│  payments     │ │  boqs        │ │                │
-│  quotations   │ │  rfqs        │ │                │
-│  clients      │ │  letters     │ │                │
-│  ...          │ │  ...         │ │                │
-└───────────────┘ └──────────────┘ └────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                     public schema                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────┐  │
+│  │ entities │ │ profiles │ │settings  │ │ entity_     │  │
+│  │ (tenant  │ │ (users)  │ │(deprec.) │ │ members     │  │
+│  │ registry)│ │          │ │          │ │             │  │
+│  └──────────┘ └──────────┘ └──────────┘ └─────────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐         │
+│  │notific-  │ │ devices  │ │ push_device_     │         │
+│  │ations    │ │          │ │ tokens            │         │
+│  └──────────┘ └──────────┘ └──────────────────┘         │
+└──────────────────────────────────────────────────────────┘
+                           │
+           ┌───────────────┴───────────────┐
+           │                               │
+┌──────────▼──────────────────┐ ┌──────────▼──────────────────┐
+│    entity_mrc_acme          │ │    entity_xyz_construction   │
+│  ┌──────────────────────┐   │ │  ┌──────────────────────┐   │
+│  │ settings    (1 row)  │   │ │  │ settings    (1 row)  │   │
+│  │ clients              │   │ │  │ clients              │   │
+│  │ invoices             │   │ │  │ invoices             │   │
+│  │ invoice_items        │   │ │  │ invoice_items        │   │
+│  │ payments             │   │ │  │ payments             │   │
+│  │ quotations           │   │ │  │ quotations           │   │
+│  │ quotation_items      │   │ │  │ quotation_items      │   │
+│  │ waybills             │   │ │  │ waybills             │   │
+│  │ blank_waybill_logs   │   │ │  │ blank_waybill_logs   │   │
+│  │ projects             │   │ │  │ projects             │   │
+│  │ project_documents    │   │ │  │ project_documents    │   │
+│  │ csrs                 │   │ │  │ csrs                 │   │
+│  │ blank_csr_logs       │   │ │  │ blank_csr_logs       │   │
+│  │ receipts             │   │ │  │ receipts             │   │
+│  │ letters              │   │ │  │ letters              │   │
+│  │ boqs & rfqs          │   │ │  │ boqs & rfqs          │   │
+│  │ item_catalog         │   │ │  │ item_catalog         │   │
+│  │ signatories          │   │ │  │ signatories          │   │
+│  │ bank_accounts        │   │ │  │ bank_accounts        │   │
+│  │ tax_settings         │   │ │  │ tax_settings         │   │
+│  │ audit_logs           │   │ │  │ audit_logs           │   │
+│  │ activity_events      │   │ │  │ activity_events      │   │
+│  │ device_sequences     │   │ │  │ device_sequences     │   │
+│  └──────────────────────┘   │ │  └──────────────────────┘   │
+└─────────────────────────────┘ └─────────────────────────────┘
 ```
 
-Each entity schema (`{prefix}_{entity_slug}`) gets a complete copy of the business tables. Cross-entity queries use fully-qualified `schema.table` references.
+Each entity schema (`entity_{workspace_slug}_{entity_slug}`) gets a complete copy of every business table. Cross-entity queries use fully-qualified `schema.table` references. The schema itself represents exactly one entity — no `workspace_id` column is needed on any business table inside an entity schema.
 
 ---
 

@@ -218,17 +218,19 @@ export default function ViewQuotation() {
               open={ui.isModalOpen(MODAL_CONVERT)} title="Convert to Invoice?"
               description="This will generate a new unpaid invoice based on this quotation. The quotation will be marked as converted."
               cancelLabel="Cancel" confirmLabel={actions.converting ? "Converting..." : "Convert to Invoice"}
-              confirmDisabled={actions.converting} onConfirm={() => void actions.handleConvertToInvoice()} onCancel={ui.closeModal}
+              loading={actions.converting} onConfirm={() => void actions.handleConvertToInvoice()} onCancel={ui.closeModal}
             />
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_ARCHIVE)} title="Archive Quotation?"
               description={`${docProps.number} will be moved to your archive. It won't appear in your active list but remains accessible.`}
-              cancelLabel="Cancel" confirmLabel="Archive" onConfirm={() => void actions.handleArchive()} onCancel={ui.closeModal}
+              cancelLabel="Cancel" confirmLabel={actions.archiving ? "Archiving..." : "Archive"}
+              loading={actions.archiving} onConfirm={() => void actions.handleArchive()} onCancel={ui.closeModal}
             />
             <DocumentConfirmDialog
               open={ui.isModalOpen(MODAL_DELETE)} title="Delete Quotation?"
               description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
-              cancelLabel="Cancel" confirmLabel="Delete" destructive
+              cancelLabel="Cancel" confirmLabel={actions.deleting ? "Deleting..." : "Delete"}
+              loading={actions.deleting} destructive
               onConfirm={() => void actions.handleDelete()} onCancel={ui.closeModal}
             />
             <ProjectLinkDialog
