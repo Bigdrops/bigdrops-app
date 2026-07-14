@@ -106,7 +106,7 @@ src/
 ### 4.4 Migration Strategy
 
 **Phase 1 — Schema + Client Layer:**
-1. Add `workspaces` and `entity_workspace_members` tables to public schema
+1. Add `workspaces`, `workspace_members`, and `entity_permissions` tables to public schema
 2. Create a `schemaRouter.ts` utility that resolves `entity_workspace_slug` + `entity_slug` to schema name
 3. Wrap `supabase` client with a schema-aware proxy: `getEntityClient(schemaName)` or `supabase.from("schema.table")`
 
@@ -131,7 +131,7 @@ src/
 |------|----------------|------------|
 | `src/supabase.ts` | Add schema routing wrapper | Medium |
 | `src/lib/tenant.ts` | Add workspace resolution | High |
-| `src/lib/audit.ts` | Add workspace_id / schema scope | Medium |
+| `src/lib/audit.ts` | Route writes to entity schema or public.activity_events | Medium |
 | `src/config/moduleAdapters.ts` | 8 adapters need schema param | High (769 lines) |
 | `src/hooks/useDocumentSave.ts` | Pass schema to persist | Low |
 | `src/hooks/useInvoiceSave.ts` | Use schema in FROM clause | Low |
@@ -187,7 +187,7 @@ Schema isolation replaces row-level tenant ID.
 | Foreign keys | Within public only | Within entity schema only | MEDIUM |
 | Indexes | Primary keys only | Add entity-scoped indexes | LOW |
 | settings | Single row (id=1) | Per-entity settings | MEDIUM |
-| audit_activity | No workspace_id | Add workspace_id column | MEDIUM |
+| audit_activity | No workspace_id | Replace with two-tier: entity-local activity_events + public.activity_events | MEDIUM |
 | signatories | Public | Entity-scoped signatories | MEDIUM |
 
 ### 5.4 Key Finding: `scope_type` on invoices
@@ -210,8 +210,8 @@ could be repurposed or its usage pattern verified before removal.
 - Use `LIKE public.tablename INCLUDING ALL` for structural copy
 - Use `INSERT ... SELECT` for data migration (batch if large)
 - After migration, drop public tables that moved to entity schemas
-- Keep `public.clients` as cross-entity reference (shared address book)
-- Keep `public.items_catalog` as shared product catalog (PRD v2.1 specifies shared catalog)
+- **Do NOT keep `public.clients` or `public.item_catalog` shared.** Per PRD v1.0 Appendix A, both are "Per entity schema" with "COPY TO entity schema" as their migration pattern.
+- Every business table listed in Appendix A moves into entity schemas — nothing stays in public except auth, profiles, notifications, devices, entity registry, and cross-entity activity events.
 
 ---
 
@@ -229,63 +229,242 @@ could be repurposed or its usage pattern verified before removal.
 | Audit trail | `audit_activity` table, per-document operations | Present |
 | Tenant isolation | **NONE** | **CRITICAL GAP** |
 
-### 6.2 PRD v2.1 Security Requirements
+### 6.2 PRD v2.1 Authorization Model (Canonical)
 
-- Schema-per-entity = schema-level isolation at Postgres level
-- RLS per-schema: user must be member of workspace to access schema
-- Cross-entity access denied even at connection level
-- Audit trail must include workspace/entity context
+PRD v2.1 §3 defines two independent authorization layers:
 
-### 6.3 Gap Analysis
+1. **Workspace-level permissions** — govern the workspace itself (inviting,
+   revoking, entity creation, billing). Toggle-based, held on
+   `workspace_members.permissions` jsonb.
+2. **Entity-level permissions** — govern access to a specific company's
+   documents. Action-based, held on `entity_permissions`. Independent per
+   entity — Jane can have full invoice control in Acme and read-only in Beta.
+
+**Workspace roles** — exactly two hard-coded values:
+
+| Role | Meaning |
+|------|---------|
+| **owner** | All workspace powers, always, including `delete_workspace`. Exactly one per workspace (unique index). Non-revocable except via ownership transfer. |
+| **member** | Powers determined by `workspace_members.permissions` jsonb toggles (`invite_members`, `revoke_members`, `assign_permissions`, `create_entity`, `archive_entity`, `manage_billing`, ...). Can be granted every toggle except `delete_workspace`. |
+
+**No `admin/member/viewer` role enum exists.** There is no three-tier role
+system. Workspace powers come from `role + permissions jsonb`; entity access
+comes from explicit `entity_permissions` rows.
+
+### 6.3 Entity Permissions — Action-Based (not CRUD)
+
+```sql
+CREATE TABLE public.entity_permissions (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_id   uuid NOT NULL REFERENCES public.entities(id),
+    user_id     uuid NOT NULL REFERENCES auth.users(id),
+    resource    text NOT NULL,      -- 'invoice','waybill','quotation','*', ...
+    action      text NOT NULL,      -- 'view','create','edit','delete','approve','post','email','export','reverse','archive', ...
+    granted_by  uuid NOT NULL REFERENCES auth.users(id),
+    granted_at  timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (entity_id, user_id, resource, action)
+);
+```
+
+A permission is a `(resource, action)` pair — not limited to CRUD.
+`('invoice','approve')`, `('payment','reverse')`, `('invoice','email')` are all
+first-class rows. No boolean columns, no schema change for new action types.
+
+**Wildcard resource:** `resource = '*'` grants the action across every document
+type. Example: `('*','view')` + `('invoice','edit')` = "read everything, edit
+invoices specifically."
+
+### 6.4 Permission Resolution Algorithm
+
+For a check of `(entity_id, user_id, resource, action)`:
+
+1. **Exact row**: `resource = <resource> AND action = <action>` → **allow**
+2. **Wildcard**: `resource = '*' AND action = <action>` → **allow**
+3. **Default: deny** — no implicit access from workspace membership alone
+
+```sql
+CREATE OR REPLACE FUNCTION public.has_entity_permission(
+    p_entity_id uuid, p_user_id uuid, p_resource text, p_action text
+) RETURNS boolean LANGUAGE sql STABLE AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.entity_permissions
+        WHERE entity_id = p_entity_id AND user_id = p_user_id
+          AND action = p_action
+          AND resource IN (p_resource, '*')
+    );
+$$;
+```
+
+### 6.5 RLS Policies — Per-Action, Using has_entity_permission()
+
+RLS policies inside entity schemas call `has_entity_permission()` per action.
+There is **no single membership check** — each action type has its own policy:
+
+```sql
+-- inside entity_mrc_acme, on invoices
+CREATE POLICY invoice_view ON invoices FOR SELECT TO authenticated
+    USING (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'view'));
+CREATE POLICY invoice_create ON invoices FOR INSERT TO authenticated
+    WITH CHECK (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'create'));
+CREATE POLICY invoice_edit ON invoices FOR UPDATE TO authenticated
+    USING (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'edit'))
+    WITH CHECK (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'edit'));
+CREATE POLICY invoice_delete ON invoices FOR DELETE TO authenticated
+    USING (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'delete'));
+CREATE POLICY invoice_approve ON invoices FOR UPDATE TO authenticated
+    USING (public.has_entity_permission('<entity_id>', auth.uid(), 'invoice', 'approve'));
+-- etc. per action
+```
+
+### 6.6 Permission Templates — Convenience Only, Zero Authority
+
+```sql
+CREATE TABLE public.permission_templates (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id uuid NOT NULL REFERENCES public.workspaces(id),
+    name         text NOT NULL,        -- "Engineer", "Accountant" — not reserved
+    description  text,
+    created_by   uuid NOT NULL REFERENCES auth.users(id),
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, name)
+);
+
+CREATE TABLE public.permission_template_items (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_id uuid NOT NULL REFERENCES public.permission_templates(id) ON DELETE CASCADE,
+    resource    text NOT NULL,
+    action      text NOT NULL,
+    UNIQUE (template_id, resource, action)
+);
+```
+
+**No `template_id` is ever stored on `entity_permissions`.** Applying a
+template is a one-time COPY:
+
+```sql
+CREATE OR REPLACE FUNCTION public.apply_permission_template(
+    p_template_id uuid, p_entity_id uuid, p_user_id uuid
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+    INSERT INTO public.entity_permissions (entity_id, user_id, resource, action, granted_by)
+    SELECT p_entity_id, p_user_id, ti.resource, ti.action, auth.uid()
+    FROM public.permission_template_items ti
+    WHERE ti.template_id = p_template_id
+    ON CONFLICT (entity_id, user_id, resource, action) DO NOTHING;
+END;
+$$;
+```
+
+Editing or deleting a template **never** retroactively changes anyone's
+permissions. "Reapply" is a distinct, explicit, opt-in action.
+
+### 6.7 Invite Grants
+
+```sql
+CREATE TABLE public.workspace_invitation_entity_grants (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    invite_id   uuid NOT NULL REFERENCES public.workspace_invitations(id) ON DELETE CASCADE,
+    entity_id   uuid NOT NULL REFERENCES public.entities(id),
+    resource    text NOT NULL,
+    action      text NOT NULL,
+    UNIQUE (invite_id, entity_id, resource, action)
+);
+```
+
+Same shape as `entity_permissions` minus `granted_by`/`granted_at` (populated
+at acceptance time). Accepting an invite becomes a straight row copy.
+
+### 6.8 Core Tables
+
+```sql
+CREATE TABLE public.workspaces (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug        text NOT NULL UNIQUE,
+    name        text NOT NULL,
+    status      text NOT NULL DEFAULT 'pending_approval'
+                CHECK (status IN ('pending_approval','active','suspended','archived')),
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+-- NOTE: owner_id intentionally removed. Ownership is workspace_members.role = 'owner'
+
+CREATE TABLE public.workspace_members (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id uuid NOT NULL REFERENCES public.workspaces(id),
+    user_id      uuid NOT NULL REFERENCES auth.users(id),
+    role         text NOT NULL DEFAULT 'member' CHECK (role IN ('owner','member')),
+    permissions  jsonb NOT NULL DEFAULT '{}'::jsonb,
+    joined_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, user_id)
+);
+
+CREATE UNIQUE INDEX one_owner_per_workspace
+    ON public.workspace_members (workspace_id) WHERE role = 'owner';
+
+CREATE TABLE public.workspace_invitations (
+    id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id          uuid NOT NULL REFERENCES public.workspaces(id),
+    email                 text NOT NULL,
+    workspace_role        text NOT NULL DEFAULT 'member' CHECK (workspace_role IN ('owner','member')),
+    workspace_permissions jsonb NOT NULL DEFAULT '{}'::jsonb,
+    status                text NOT NULL DEFAULT 'pending'
+                          CHECK (status IN ('pending','accepted','revoked','expired')),
+    invited_by            uuid NOT NULL REFERENCES auth.users(id),
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    expires_at            timestamptz NOT NULL DEFAULT (now() + interval '7 days')
+);
+```
+
+### 6.9 Audit Trail — Two-Tier Model (PRD v1.0 §6.6)
+
+Not a single `public.audit_activity` table with `workspace_id`. Instead:
+
+- **Entity-local events** (invoice created, payment recorded, document edited)
+  → `entity_{xxx}.activity_events`
+- **Cross-entity events** (user login, entity switch, device registration)
+  → `public.activity_events`
+
+The `record_activity_event()` function uses `current_schema` to determine the
+target.
+
+PRD v2.1 §3.8 adds a separate `public.entity_permission_audit` table
+(reserved for Phase 2+, not built in v2.1) for tracking granted/revoked
+permission changes via trigger on `entity_permissions`.
+
+### 6.10 Gap Analysis Summary
 
 | Requirement | Current State | Gap |
 |-------------|--------------|-----|
-| Schema-level isolation | None. All tables in public | Need CREATE SCHEMA + grant per user |
-| Workspace membership | No membership concept | Need entity_workspace_members table |
-| Per-schema RLS | None | Need trigger/function per schema |
-| Cross-entity access control | No mechanism | Schema routing prevents cross-entity reads |
-| Audit scoping | No workspace_id | Add workspace_id column + populate |
-| Document number security | Global prefix/sequence | Per-entity prefix + sequence |
-| Data export isolation | None | Schema dump per entity |
+| Workspace membership | None | Need `workspaces`, `workspace_members` tables |
+| Action-based permissions | None | Need `entity_permissions` table + `has_entity_permission()` |
+| Per-action RLS per schema | None | Need RLS policy per action type per entity schema |
+| Permission templates | None | Need `permission_templates` + `template_items` |
+| Wildcard resolution | None | Built into `has_entity_permission()` |
+| Invite grants | None | Need `workspace_invitations` + `entity_grants` |
+| Entity-local audit | None | Each entity schema gets `activity_events` |
+| Cross-entity audit | None | `public.activity_events` for login/switch/device events |
+| Permission change audit | Not built (Phase 2+) | Schema reserved, implementation deferred |
 
-### 6.4 Security Migration Path
+### 6.11 Security Migration Path
 
-**Phase 1 — Membership Infrastructure:**
-```sql
-CREATE TABLE public.entity_workspace_members (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  workspace_id UUID NOT NULL REFERENCES public.workspaces(id),
-  user_id UUID NOT NULL REFERENCES auth.users(id),
-  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member', 'viewer')),
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-CREATE INDEX idx_ewm_user ON public.entity_workspace_members(user_id);
-```
+**Phase 1 — Infrastructure:**
+1. Create `public.workspaces`, `public.workspace_members` tables
+2. Create `public.entity_permissions` table with UNIQUE constraint
+3. Create `public.has_entity_permission()` function
+4. Create `public.permission_templates` + `permission_template_items`
+5. Create `public.workspace_invitations` + `workspace_invitation_entity_grants`
 
-**Phase 2 — Per-Schema RLS:**
-```sql
--- Applied to each entity schema
-CREATE OR REPLACE FUNCTION entity_{slug}.check_member()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.entity_workspace_members
-    WHERE user_id = auth.uid()
-    AND workspace_id = <workspace_id_for_schema>
-  )
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+**Phase 2 — RLS per Entity Schema:**
+1. For each entity schema, enable RLS on every business table
+2. Create per-action policies calling `has_entity_permission(entity_id, ...)`
+3. Verify: user with `('invoice','view')` can view but not create/edit/delete
 
-ALTER TABLE entity_{slug}.invoices ENABLE ROW LEVEL SECURITY;
-CREATE POLICY member_access ON entity_{slug}.invoices
-  FOR ALL USING (entity_{slug}.check_member());
-```
+**Phase 3 — Audit Trail:**
+1. Add `activity_events` table to each entity schema
+2. Create `public.activity_events` for cross-entity events
+3. Create `record_activity_event()` that routes to correct schema based on event type
 
-**Phase 3 — Audit Trail Enhancement:**
-```sql
-ALTER TABLE public.audit_activity ADD COLUMN workspace_id UUID REFERENCES public.workspaces(id);
-ALTER TABLE public.audit_activity ADD COLUMN entity_schema TEXT;
-```
-
-### 6.5 Risk Assessment
+### 6.12 Risk Assessment
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -473,7 +652,7 @@ Items intentionally deferred to future rounds:
 ### Phase 3 — Persistence (1-2 weeks)
 1. Update useDocumentSave to pass schema to persist
 2. Update all concrete save hooks (invoice, quotation, waybill, etc.)
-3. Update audit trail with workspace_id
+3. Update audit trail to two-tier model (entity-local + cross-entity)
 4. Verify: all CRUD operations write to correct entity schema
 
 ### Phase 4 — Route + UI (2-3 weeks)
