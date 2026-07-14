@@ -16,21 +16,19 @@
 /** All lifecycle states a correspondence document can occupy. */
 export type CorrespondenceLifecycleState =
   | 'draft'
-  | 'approved'
   | 'issued'
   | 'archived'
-  | 'cancelled'
 
 /** States that represent an editable document (before finalisation). */
 export type CorrespondenceEditableState = Extract<
   CorrespondenceLifecycleState,
-  'draft' | 'approved'
+  'draft'
 >
 
 /** States that represent a read-only / terminal document. */
 export type CorrespondenceTerminalState = Extract<
   CorrespondenceLifecycleState,
-  'issued' | 'archived' | 'cancelled'
+  'issued' | 'archived'
 >
 
 /** Allowed transitions: from → to[]. */
@@ -38,11 +36,9 @@ export const CORRESPONDENCE_TRANSITIONS: Record<
   CorrespondenceLifecycleState,
   readonly CorrespondenceLifecycleState[]
 > = {
-  draft: ['approved', 'cancelled'],
-  approved: ['issued', 'cancelled', 'draft'],
+  draft: ['issued'],
   issued: ['archived'],
   archived: [],
-  cancelled: [],
 } as const
 
 // ---------------------------------------------------------------------------

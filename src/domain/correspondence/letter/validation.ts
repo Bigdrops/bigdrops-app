@@ -274,9 +274,7 @@ export function isValidLifecycleState(
 ): state is CorrespondenceLifecycleState {
   return (
     state === 'draft' ||
-    state === 'approved' ||
     state === 'issued' ||
-    state === 'archived' ||
-    state === 'cancelled'
+    state === 'archived'
   )
 }
