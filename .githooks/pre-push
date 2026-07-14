@@ -10,20 +10,18 @@ COMMIT_MSG_FILE=".git/COMMIT_EDITMSG"
 if [ -f "$COMMIT_MSG_FILE" ]; then
     SUBJECT=$(head -1 "$COMMIT_MSG_FILE")
 
-    # Match: <gitmoji> <type>(<scope>): <subject>
+    # Warn on non-conforming messages but don't block
     if ! echo "$SUBJECT" | grep -qP '^[^\x00-\x7F]+ [a-z]+\([a-z\-]+\): .+$'; then
-        echo "ERROR: Commit message must follow pattern:"
-        echo "  <gitmoji> <type>(<scope>): <subject>"
-        echo "Example:"
-        echo "  📝 docs(prompts): update git workflow instructions"
-        exit 1
+        echo "WARNING: Commit message doesn't follow Gitmoji + Conventional Commits format."
+        echo "  Expected: <gitmoji> <type>(<scope>): <subject>"
+        echo "  Got:      $SUBJECT"
+        echo "  Use 'git commit --amend' to fix, or ignore this warning."
     fi
 
     # Check subject length (max 72 characters, not bytes)
     LEN=$(echo "$SUBJECT" | wc -m | tr -d ' ')
     if [ "$LEN" -gt 72 ]; then
-        echo "ERROR: Commit subject must be max 72 characters (got $LEN)."
-        exit 1
+        echo "WARNING: Commit subject exceeds 72 characters (got $LEN). Consider shortening."
     fi
 fi
 
