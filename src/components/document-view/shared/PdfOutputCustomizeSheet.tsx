@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
@@ -299,7 +299,7 @@ export default function PdfOutputCustomizeSheet({
           disabled={saving}
           onClick={() => void handleSave()}
         >
-          {saving ? 'Saving...' : 'Save Settings'}
+          {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Settings'}
         </button>
       </div>
     </DocumentSheet>

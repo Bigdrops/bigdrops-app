@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Info, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Info, Loader2, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSettings, saveSettings } from '@/hooks/useSettings'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -278,7 +278,7 @@ export function DocumentPrefixesSettingsSection() {
               disabled={saving}
               className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Saving...</> : 'Save Changes'}
             </Button>
           </div>
         </div>

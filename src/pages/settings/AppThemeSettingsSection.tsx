@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Palette, RotateCcw, Sparkles, Check } from 'lucide-react'
+import { Loader2, Palette, RotateCcw, Sparkles, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor } from '@/lib/colorTheme'
 import { BASE_THEME_MODE, THEME_PRESETS, type FixedThemePresetId, type ThemeMode, resolveThemeMode } from '@/lib/themePresets'
@@ -339,7 +339,7 @@ export function AppThemeSettingsSection() {
                   disabled={saving}
                   className="w-full h-12 rounded-xl bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90 text-xs font-black uppercase tracking-widest"
                 >
-                  {saving ? 'Saving...' : 'Apply Custom Colors'}
+                  {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Apply Custom Colors'}
                 </Button>
              </div>
           </div>

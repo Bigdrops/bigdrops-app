@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Rows3, Trash2 } from 'lucide-react'
+import { Loader2, Rows3, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -246,7 +246,7 @@ export function ProjectDocumentStep3Review({
           onClick={onSave} 
           disabled={saving}
         >
-          {saving ? 'Saving...' : 'Save Document'}
+          {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Document'}
         </Button>
       </div>
     </div>

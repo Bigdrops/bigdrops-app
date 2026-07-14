@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, ChevronLeft, ChevronRight, LockKeyhole, X } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, Loader2, LockKeyhole, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/supabase'
 import { SettingsField, SettingsSummaryField } from './SettingsFormPrimitives'
@@ -327,7 +327,7 @@ export function UserSettingsSection({
                   }
                   className={`flex-1 rounded-xl ${pageFormPrimaryActionClassName} px-4 py-3 text-sm font-bold transition-colors disabled:opacity-50`}
                 >
-                  {saving ? 'Saving...' : 'Save'}
+                  {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save'}
                 </button>
               </div>
             </div>

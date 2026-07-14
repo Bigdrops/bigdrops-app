@@ -1,4 +1,4 @@
-import { Save } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import { pageCardCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 
 interface FormFooterProps {
@@ -46,7 +46,7 @@ export function FormFooter({
                 disabled={saving}
                 className="h-11 rounded-[var(--bd-radius)] border border-transparent bg-bd-button-primary-bg text-[14px] font-black text-bd-button-primary-text shadow-sm transition-all active:scale-[0.98] disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100"
               >
-                {saving ? 'Saving…' : primaryLabel}
+                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : primaryLabel}
               </button>
             </div>
           </div>
@@ -59,7 +59,7 @@ export function FormFooter({
         disabled={saving}
         className="fixed bottom-[calc(var(--bd-app-bottom-nav-offset,72px)+env(safe-area-inset-bottom,0px)+16px)] right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-2xl border border-transparent bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg animate-in fade-in slide-in-from-bottom-4 sm:right-8 transition-transform active:scale-95 disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100"
       >
-        <Save className="h-5 w-5" />
+        {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
       </button>
     </>
   )

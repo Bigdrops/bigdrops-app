@@ -8,6 +8,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Loader2 } from 'lucide-react'
 import { pageFormCardClassName, pageFormFieldClassName, pageFormLabelClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { createProjectWithGeneratedCode } from '@/domain/projects'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -214,7 +215,7 @@ export default function NewProject() {
             type="button"
             className={`${pageFormPrimaryActionClassName} flex-[2] hover:opacity-90`}
             onClick={() => void handleSave()}
-            disabled={saving}
+            loading={saving}
           >
             {saving ? 'Creating...' : 'Create Project'}
           </Button>
