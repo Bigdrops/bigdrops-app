@@ -170,7 +170,7 @@ public.settings          → global settings (single row)
 ### 5.2 PRD v2.1 Schema Requirements
 
 ```
-public.* → auth + profiles + membership + cross-entity refs (clients, shared catalog)
+public.* → auth, profiles, workspace metadata, membership, invitations, permission tables, notifications, devices, cross-entity activity_events
 entity_{workspace}_{entity_slug}.* → invoices, invoice_items, quotes, items, settings, etc.
 ```
 
@@ -638,7 +638,7 @@ Items intentionally deferred to future rounds:
 ## 9. Implementation Plan Summary
 
 ### Phase 1 — Infrastructure (1-2 weeks)
-1. Create workspace/entity membership tables in public schema
+1. Create canonical tables in public schema: workspaces, workspace_members, entity_permissions, permission_templates, workspace_invitations, workspace_invitation_entity_grants
 2. Add schema routing wrapper to Supabase client
 3. Create EntityWorkspaceProvider React context
 4. Implement entity-scoped prefix config
@@ -677,7 +677,7 @@ Items intentionally deferred to future rounds:
 - `bun run typecheck` — must pass with zero errors
 - `bun run audit:load` — must pass (query pattern check)
 - `git status` — confirm no unintended files modified
-- `bun run build` — SKIPPED per AGENTS.md (4GB RAM constraint)
+
 
 ---
 
