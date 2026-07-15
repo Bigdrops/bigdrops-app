@@ -65,24 +65,30 @@ CREATE POLICY entities_select_member ON entities FOR SELECT TO public
     )
   );
 
-CREATE POLICY entities_insert_owner ON entities FOR INSERT TO authenticated
+CREATE POLICY entities_insert_member ON entities FOR INSERT TO authenticated
   WITH CHECK (
     workspace_id IN (
-      SELECT wm2.workspace_id FROM workspace_members wm2 WHERE wm2.user_id = auth.uid() AND wm2.role = 'owner'
+      SELECT wm2.workspace_id FROM workspace_members wm2
+        WHERE wm2.user_id = auth.uid()
+          AND (wm2.role = 'owner' OR (wm2.permissions->>'create_entity')::boolean = true)
     )
   );
 
-CREATE POLICY entities_update_owner ON entities FOR UPDATE TO authenticated
+CREATE POLICY entities_update_member ON entities FOR UPDATE TO authenticated
   USING (
     workspace_id IN (
-      SELECT wm2.workspace_id FROM workspace_members wm2 WHERE wm2.user_id = auth.uid() AND wm2.role = 'owner'
+      SELECT wm2.workspace_id FROM workspace_members wm2
+        WHERE wm2.user_id = auth.uid()
+          AND (wm2.role = 'owner' OR (wm2.permissions->>'create_entity')::boolean = true)
     )
   );
 
-CREATE POLICY entities_delete_owner ON entities FOR DELETE TO authenticated
+CREATE POLICY entities_delete_member ON entities FOR DELETE TO authenticated
   USING (
     workspace_id IN (
-      SELECT wm2.workspace_id FROM workspace_members wm2 WHERE wm2.user_id = auth.uid() AND wm2.role = 'owner'
+      SELECT wm2.workspace_id FROM workspace_members wm2
+        WHERE wm2.user_id = auth.uid()
+          AND (wm2.role = 'owner' OR (wm2.permissions->>'create_entity')::boolean = true)
     )
   );
 

@@ -214,7 +214,6 @@ BEGIN
     IF lower(auth.jwt() ->> 'email') != lower(v_invite.email) THEN
         RAISE EXCEPTION 'Email does not match invitation';
     END IF;
-    END IF;
 
     INSERT INTO public.workspace_members (workspace_id, user_id, role, permissions)
     VALUES (v_invite.workspace_id, auth.uid(), v_invite.workspace_role, v_invite.workspace_permissions);
