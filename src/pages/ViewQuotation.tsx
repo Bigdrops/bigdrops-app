@@ -144,7 +144,7 @@ export default function ViewQuotation() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Quotations" onBack={() => navigate("/quotations")} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Opening Quotation..." backLabel="Quotations" onBack={() => navigate("/quotations")} />}>
         <CenteredSpinner />
       </DocumentPage>
     );

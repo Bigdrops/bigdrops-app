@@ -111,7 +111,7 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
   if (isEdit && loading) {
     return (
       <Layout title="Edit Letter" hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
-        <div className="px-4 py-20 text-center text-sm text-bd-text-muted">Loading...</div>
+        <div className="px-4 py-20 text-center text-sm text-bd-text-muted">Loading letter...</div>
       </Layout>
     )
   }

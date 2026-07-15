@@ -345,7 +345,7 @@ export default function ViewWaybill() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Waybills" onBack={() => navigate('/waybills')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Opening Waybill..." backLabel="Waybills" onBack={() => navigate('/waybills')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )

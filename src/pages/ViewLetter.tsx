@@ -80,7 +80,7 @@ export default function ViewLetter() {
   if (loading) {
     return (
       <DocumentPage
-        topNav={<DocumentTopNav title="Official Letter" subtitle="Loading..." onBack={() => navigate("/letters")} />}
+        topNav={<DocumentTopNav title="Opening Letter..." subtitle="Loading letter content" onBack={() => navigate("/letters")} />}
       >
         <div className="px-4 py-20 text-center text-sm text-bd-text-muted">Loading letter...</div>
       </DocumentPage>

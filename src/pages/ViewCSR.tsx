@@ -306,7 +306,7 @@ export default function ViewCSR() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="Service Reports" onBack={() => navigate('/csr')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Opening Service Report..." backLabel="Service Reports" onBack={() => navigate('/csr')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )

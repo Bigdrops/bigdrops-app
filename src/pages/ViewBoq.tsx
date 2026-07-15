@@ -200,7 +200,7 @@ export default function ViewBoq() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="BOQs" onBack={() => navigate('/boqs')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Opening BOQ..." backLabel="BOQs" onBack={() => navigate('/boqs')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )

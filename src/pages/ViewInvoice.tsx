@@ -121,7 +121,7 @@ export default function ViewInvoice() {
 
   const previewBankAccounts = useMemo(() => buildBankAccountsProjection(bankAccounts || []), [bankAccounts]);
 
-  if (loading) return <DocumentPage topNav={<DocumentTopNav title="Loading..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
+  if (loading) return <DocumentPage topNav={<DocumentTopNav title="Opening Invoice..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
   if (!invoice) return null;
 
   return (

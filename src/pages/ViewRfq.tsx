@@ -264,7 +264,7 @@ export default function ViewRfq() {
 
   if (loading) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Loading..." backLabel="RFQs" onBack={() => navigate('/rfqs')} />}>
+      <DocumentPage topNav={<DocumentTopNav title="Opening RFQ..." backLabel="RFQs" onBack={() => navigate('/rfqs')} />}>
         <CenteredSpinner />
       </DocumentPage>
     )
