@@ -54,10 +54,7 @@ export default function DocumentConfirmDialog({
             type="button"
             loading={loading}
             disabled={confirmDisabled || loading}
-            onClick={() => {
-              onConfirm()
-              onCancel()
-            }}
+            onClick={onConfirm}
             className={confirmButtonClass}
           >
             {confirmLabel}
