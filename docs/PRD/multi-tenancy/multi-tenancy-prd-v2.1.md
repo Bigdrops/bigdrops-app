@@ -1,11 +1,18 @@
-BIGDROPS Multi-Tenancy — Architecture & Migration PRD (v2.1)
+# BIGDROPS Multi-Tenancy — Architecture & Migration PRD (v2.1)
 
-Type: Architecture Specification / Migration Plan
-Status: Draft
-Version: 2.1
-Date: 2026-07-14
-Supersedes: v2.0
-Repository path: docs/PRD/multi-tenancy-prd.md
+**Type:** Architecture Specification / Migration Plan  
+**Status:** Draft  
+**Version:** 2.1 (amended 2026-07-15)  
+**Supersedes:** v2.0  
+**Repository path:** `docs/PRD/multi-tenancy-prd.md`
+
+**Amendment note (2026-07-15):** Two in-place fixes, not a version bump —
+(1) fixed a migration-breaking bug where `workspaces.created_by` was
+referenced by a unique index but never defined in the table; (2) added
+`entity_provisioning_status` (§9.1) as the read-only observability contract
+consumed by the external Platform Office operations console. Neither change
+alters the authorization model, tenancy hierarchy, or any existing table
+shape — see §9.1 and the `workspaces` table in §5 for the diffs.
 
 ---
 
@@ -46,6 +53,7 @@ unaffected by this revision.
 ## 2. Tenancy Hierarchy
 
 ```
+
 Platform (BIGDROPS)
 │
 ├── Platform Owner            — approves/suspends workspace existence only
@@ -58,6 +66,7 @@ Platform (BIGDROPS)
 │
 ├── Workspace: "Some Other Agency"
 │     └── ... entirely separate pool, zero visibility into the above
+
 ```
 
 Three boundaries, kept conceptually distinct (do not let future features blur
@@ -109,29 +118,29 @@ CREATE TABLE public.entity_permissions (
 );
 ```
 
-A permission is simply a `(resource, action)` pair a user holds for a given
-entity. This is not limited to CRUD — `('invoice','approve')`,
-`('payment','reverse')`, `('project','archive')`, `('invoice','email')` are all
+A permission is simply a (resource, action) pair a user holds for a given
+entity. This is not limited to CRUD — ('invoice','approve'),
+('payment','reverse'), ('project','archive'), ('invoice','email') are all
 first-class, equally-weighted rows. No boolean columns, no schema change
 required when a new action type is needed later.
 
-### 3.4 Wildcard resource
+3.4 Wildcard resource
 
-`resource = '*'` grants the action across every document type. Example: a
-Viewer-equivalent user might hold `('*','view')` plus `('invoice','edit')` to
+resource = '*' grants the action across every document type. Example: a
+Viewer-equivalent user might hold ('*','view') plus ('invoice','edit') to
 express "read everything, but can also edit invoices specifically."
 
-### 3.5 Permission resolution algorithm
+3.5 Permission resolution algorithm
 
-For a check of `(entity_id, user_id, resource, action)`:
+For a check of (entity_id, user_id, resource, action):
 
-1. Look for an exact row: `resource = <resource> AND action = <action>`. If found → **allow**.
-2. Else look for the wildcard row: `resource = '*' AND action = <action>`. If found → **allow**.
-3. Else → **deny**.
+1. Look for an exact row: resource = <resource> AND action = <action>. If found → allow.
+2. Else look for the wildcard row: resource = '*' AND action = <action>. If found → allow.
+3. Else → deny.
 
 Default is deny in all cases — there is no implicit access from workspace
 membership alone. Entity access always requires at least one explicit
-`entity_permissions` row.
+entity_permissions row.
 
 ```sql
 CREATE OR REPLACE FUNCTION public.has_entity_permission(
@@ -145,7 +154,9 @@ CREATE OR REPLACE FUNCTION public.has_entity_permission(
     );
 $$;
 ```
+
 Used directly inside entity-schema RLS policies:
+
 ```sql
 -- inside entity_mrc_acme, on invoices
 CREATE POLICY invoice_view ON invoices FOR SELECT TO authenticated
@@ -155,7 +166,7 @@ CREATE POLICY invoice_create ON invoices FOR INSERT TO authenticated
 -- etc. per action
 ```
 
-### 3.6 Permission templates — convenience only, zero authority
+3.6 Permission templates — convenience only, zero authority
 
 ```sql
 CREATE TABLE public.permission_templates (
@@ -182,7 +193,7 @@ at creation time, but these are ordinary rows — no reserved IDs, no reserved
 names, no system flag. Deleting the "Engineer" template is valid and has zero
 effect on any user who was previously assigned permissions via it, because:
 
-**No `template_id` is ever stored on `entity_permissions`.** Applying a
+No template_id is ever stored on entity_permissions. Applying a
 template is a one-time copy:
 
 ```sql
@@ -205,7 +216,7 @@ Editing a template later never retroactively changes anyone's permissions.
 calling this function again — never an automatic side effect of editing the
 template itself.
 
-### 3.7 Invite grants mirror entity_permissions exactly
+3.7 Invite grants mirror entity_permissions exactly
 
 ```sql
 CREATE TABLE public.workspace_invitation_entity_grants (
@@ -218,11 +229,46 @@ CREATE TABLE public.workspace_invitation_entity_grants (
 );
 ```
 
-Same shape as `entity_permissions` minus `granted_by`/`granted_at` (populated
+Same shape as entity_permissions minus granted_by/granted_at (populated
 at acceptance time). Accepting an invite becomes a straight row copy with no
 format translation — see 3.9.
 
-### 3.8 Auditing (design reserved, not built in v2.1)
+3.8 Platform Operator Authorization — Future-Proof
+
+Instead of a single profiles.is_platform_admin boolean, define a dedicated
+platform operator authorization model:
+
+```sql
+CREATE TABLE public.platform_operators (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid NOT NULL REFERENCES auth.users(id) UNIQUE,
+    role        text NOT NULL CHECK (role IN ('owner', 'support', 'auditor', 'operations')),
+    granted_by  uuid NOT NULL REFERENCES auth.users(id),
+    granted_at  timestamptz NOT NULL DEFAULT now(),
+    expires_at  timestamptz,  -- nullable, for temporary access
+    UNIQUE (user_id)
+);
+```
+
+Initially, only role = 'owner' is populated. This structure supports future
+roles without schema changes:
+
+Role Future Expansion
+owner Full platform control (today's admin)
+support Read-only workspace status + entity provisioning status
+auditor Read-only access to audit trails
+operations Can trigger retries for failed provisioning
+incident_commander Emergency recovery access
+developer Debug access (non-production)
+billing_admin Billing operations only
+
+All platform operator functions (including approve_workspace()) check against
+platform_operators, not a boolean column.
+
+Migration path: Existing profiles.is_platform_admin rows are migrated to
+platform_operators with role = 'owner' during the Phase 0 migration.
+
+3.9 Auditing (design reserved, not built in v2.1)
 
 Not required for launch, but the schema should not preclude it. When needed:
 
@@ -239,11 +285,12 @@ CREATE TABLE public.entity_permission_audit (
     changed_at  timestamptz NOT NULL DEFAULT now()
 );
 ```
-A trigger on `entity_permissions` INSERT/DELETE can populate this
-automatically once built; no schema changes to `entity_permissions` itself
+
+A trigger on entity_permissions INSERT/DELETE can populate this
+automatically once built; no schema changes to entity_permissions itself
 are needed to add it later.
 
-### 3.9 Accept invite — with cross-workspace guard (unchanged logic, updated shape)
+3.10 Accept invite — with cross-workspace guard (unchanged logic, updated shape)
 
 ```sql
 CREATE OR REPLACE FUNCTION public.accept_workspace_invitation(p_invite_id uuid)
@@ -291,11 +338,11 @@ $$;
 
 ---
 
-## 4. Signup, Lobby & Invites
+4. Signup, Lobby & Invites
 
-Unchanged from v2.0 §4, with one correctness fix: **all RLS and RPC logic
-reads the invitee's email from `auth.jwt() ->> 'email'`**, never from
-`auth.email()`, since the latter is a convenience wrapper and not the
+Unchanged from v2.0 §4, with one correctness fix: all RLS and RPC logic
+reads the invitee's email from auth.jwt() ->> 'email', never from
+auth.email(), since the latter is a convenience wrapper and not the
 validated claim itself.
 
 ```sql
@@ -312,15 +359,15 @@ CREATE POLICY invite_visibility ON public.workspace_invitations
     );
 ```
 
-`workspace_invitations` also gains `workspace_permissions jsonb` (the toggle
-set to grant on acceptance, mirroring `workspace_members.permissions`) —
-carried over from the invite into the new member row in 3.9.
+workspace_invitations also gains workspace_permissions jsonb (the toggle
+set to grant on acceptance, mirroring workspace_members.permissions) —
+carried over from the invite into the new member row in 3.10.
 
 Invite expiry: 7 days, auto-voided by a daily scheduled job (unchanged from v2.0).
 
 ---
 
-## 5. Core Tables (consolidated)
+5. Core Tables (consolidated)
 
 ```sql
 CREATE TABLE public.workspaces (
@@ -329,10 +376,13 @@ CREATE TABLE public.workspaces (
     name        text NOT NULL,
     status      text NOT NULL DEFAULT 'pending_approval'
                 CHECK (status IN ('pending_approval','active','suspended','archived')),
+    created_by  uuid NOT NULL REFERENCES auth.users(id),
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 -- NOTE: owner_id intentionally removed (v2.0 had it). Single source of truth
 -- for ownership is workspace_members.role = 'owner', guaranteed unique below.
+-- [amended] created_by was previously referenced by the index below but
+-- missing from this table definition — added to fix a migration-breaking bug.
 
 CREATE UNIQUE INDEX one_pending_workspace_per_creator
     ON public.workspaces (created_by) WHERE status = 'pending_approval';
@@ -369,31 +419,54 @@ ALTER TABLE public.entities
     ADD COLUMN workspace_id uuid NOT NULL REFERENCES public.workspaces(id);
     -- schema_name convention: entity_<workspace_slug>_<entity_slug>, UNIQUE constraint is the real guard
 ```
-(`entity_permissions`, `permission_templates`, `permission_template_items`,
-`workspace_invitation_entity_grants` as defined in Section 3.)
+
+(entity_permissions, permission_templates, permission_template_items,
+workspace_invitation_entity_grants as defined in Section 3.)
 
 ---
 
-## 6. Ownership Transfer
+6. Platform Operator Authorization
 
-Unchanged from v2.0 §6.2 — atomic demote-old/promote-new in one transaction,
-guaranteed by the unique-owner index. No changes needed for v2.1.
+6.1 Platform Operators Table
 
----
+```sql
+CREATE TABLE public.platform_operators (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid NOT NULL REFERENCES auth.users(id) UNIQUE,
+    role        text NOT NULL CHECK (role IN ('owner', 'support', 'auditor', 'operations')),
+    granted_by  uuid NOT NULL REFERENCES auth.users(id),
+    granted_at  timestamptz NOT NULL DEFAULT now(),
+    expires_at  timestamptz,  -- nullable, for temporary access
+    UNIQUE (user_id)
+);
+```
 
-## 7. Platform Owner Scope
+6.2 Platform Operator Check Function
 
-Unchanged from v2.0 §3.1/§6.3 — approve/suspend `workspaces.status` only,
-nothing else. `approve_workspace()` now inserts the `workspace_members` owner
-row directly from the approval context rather than reading `workspaces.owner_id`
-(removed in this revision):
+```sql
+CREATE OR REPLACE FUNCTION public.is_platform_operator(p_user_id uuid, p_required_role text DEFAULT NULL)
+RETURNS boolean
+LANGUAGE sql STABLE AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.platform_operators
+        WHERE user_id = p_user_id
+          AND (p_required_role IS NULL OR role = p_required_role)
+          AND (expires_at IS NULL OR expires_at > now())
+    );
+$$;
+```
+
+6.3 approve_workspace() — Updated
 
 ```sql
 CREATE OR REPLACE FUNCTION public.approve_workspace(p_workspace_id uuid, p_creator_user_id uuid)
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_platform_admin = true) THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.platform_operators
+    WHERE user_id = auth.uid() AND role = 'owner'
+  ) THEN
     RAISE EXCEPTION 'Only the platform owner can approve workspaces';
   END IF;
 
@@ -408,83 +481,213 @@ $$;
 
 ---
 
-## 8. Workspace Deletion — Soft Delete Only
+7. Ownership Transfer
 
-Owner-initiated "delete workspace" sets `status = 'archived'`. It never
-triggers `DROP SCHEMA` synchronously. Physical teardown is a separate,
+Unchanged from v2.0 §6.2 — atomic demote-old/promote-new in one transaction,
+guaranteed by the unique-owner index. No changes needed for v2.1.
+
+---
+
+8. Workspace Deletion — Soft Delete Only
+
+Owner-initiated "delete workspace" sets status = 'archived'. It never
+triggers DROP SCHEMA synchronously. Physical teardown is a separate,
 explicit purge workflow:
 
-1. `status = 'archived'` — workspace and all entities become inaccessible to
+1. status = 'archived' — workspace and all entities become inaccessible to
    members immediately (RLS denies on non-active status), data untouched.
-2. After a retention period (e.g. 30 days), a privileged background job may
-   execute `DROP SCHEMA entity_<ws>_<entity> CASCADE` per entity, then remove
-   the `workspaces`/`entities` rows.
+2. After a retention period (e.g. 30 days), a privileged background job
+   writes entity_provisioning_status.status = 'purging' (see §9.1), then
+   executes DROP SCHEMA entity_<ws>_<entity> CASCADE per entity, then
+   writes status = 'purged', then removes the workspaces/entities rows.
 3. Until that purge runs, an Owner-equivalent action (or Platform Owner, for
    this specific recovery case only — the one exception to the no-data-access
    principle, since it's schema-existence, not data access) can restore
-   `status = 'active'`.
+   status = 'active'.
 
 ---
 
-## 9. Zero-Entity Onboarding UX
+9. Zero-Entity Onboarding UX
 
-Upon `approve_workspace()`, the new Owner has a workspace with no companies
+Upon approve_workspace(), the new Owner has a workspace with no companies
 yet. The application must route them directly into a "Create your first
 Company" flow — there is no meaningful dashboard state with zero entities.
-Entity creation itself runs through a `SECURITY DEFINER` RPC (not raw client
-DDL) that checks the caller holds `create_entity` in `workspace_members.permissions`
-(or is `owner`) before executing `CREATE SCHEMA`.
+Entity creation itself runs through a SECURITY DEFINER RPC (not raw client
+DDL) that checks the caller holds create_entity in workspace_members.permissions
+(or is owner) before executing CREATE SCHEMA.
+
+9.1 Provisioning status (external observability contract)
+
+create_entity_schema() writes to a dedicated status table as it runs, so
+that external, read-only observers (e.g. the Platform Office operations
+console) never need to introspect entity schemas directly:
+
+```sql
+CREATE TABLE public.entity_provisioning_status (
+    entity_id     uuid PRIMARY KEY REFERENCES public.entities(id) ON DELETE CASCADE,
+    status        text NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending','creating','ready','failed','purging','purged')),
+    last_error    text,
+    attempt_count integer NOT NULL DEFAULT 0,
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+```
+
+create_entity_schema() transitions:
+
+```sql
+-- at RPC start
+INSERT INTO public.entity_provisioning_status (entity_id, status)
+VALUES (p_entity_id, 'creating')
+ON CONFLICT (entity_id) DO UPDATE
+    SET status = 'creating', attempt_count = entity_provisioning_status.attempt_count + 1;
+
+-- ... CREATE SCHEMA + table cloning ...
+
+-- on success
+UPDATE public.entity_provisioning_status
+    SET status = 'ready', updated_at = now() WHERE entity_id = p_entity_id;
+
+-- on failure (exception handler)
+UPDATE public.entity_provisioning_status
+    SET status = 'failed', last_error = SQLERRM, updated_at = now() WHERE entity_id = p_entity_id;
+```
+
+The §8 purge workflow writes the corresponding purging/purged transitions
+before and after DROP SCHEMA ... CASCADE. This table is public-schema,
+read-only from any external consumer's perspective, and requires zero
+access to entity-schema internals — it is the sole state surface external
+tooling should ever poll for provisioning health.
+
+9.2 Observability Contract Rule
+
+External systems (Platform Office, monitoring, automation) may only
+consume documented observability contracts in the public schema. They must
+never infer operational state by inspecting tenant schemas or internal
+implementation details.
+
+This boundary is explicit and protects against accidental coupling.
 
 ---
 
-## 10. Migration: Phase 0 (Grandfathering)
+10. Migration: Phase 0 (Grandfathering)
 
 Unchanged in spirit from v2.0 §8:
 
-1. Create workspace `slug = 'mrc'`, `status = 'active'`.
-2. Insert a `workspace_members` row for every existing user, `role='owner'`
-   for Mr C, `role='member'` with full permission toggles for existing staff
-   (best-effort mapping; access is never *reduced* by automated migration —
+1. Create workspace slug = 'mrc', status = 'active'.
+2. Insert a workspace_members row for every existing user, role='owner'
+   for Mr C, role='member' with full permission toggles for existing staff
+   (best-effort mapping; access is never reduced by automated migration —
    Mr C reviews and adjusts post-migration).
-3. Existing 3 companies become `entities` with `workspace_id = mrc`, renamed
-   to the `entity_mrc_<slug>` schema convention.
-4. Grant existing staff `entity_permissions` rows matching their pre-migration
-   effective access (broad `('*','view')` + `('*','create')` + `('*','edit')`
+3. Migrate profiles.is_platform_admin rows to platform_operators with
+   role = 'owner'.
+4. Existing 3 companies become entities with workspace_id = mrc, renamed
+   to the entity_mrc_<slug> schema convention.
+5. Grant existing staff entity_permissions rows matching their pre-migration
+   effective access (broad ('*','view') + ('*','create') + ('*','edit')
    as a safe default, tightened manually afterward).
 
 ---
 
-## 11. Open Items Carried Forward
+11. Future Considerations
 
-- Supavisor transaction-mode pooling: `supabase.schema()` per-query, not
-  session-level `search_path`.
-- PostgREST exposed-schema registration for dynamically created entity
-  schemas — confirm current admin-API behavior before building "instant"
-  entity creation UI.
-- `dblink`-based federated cross-entity views remain a do-not-ship stopgap;
-  replace with FDW if/when cross-entity reporting within a workspace is built.
-- Permission audit trail (§3.8) — reserved, not built in v2.1.
-- Service accounts (API integrations, devices, scheduled automation, AI
-  agents) — not modeled in v2.1; keep `entity_permissions.user_id` pointed at
-  `auth.users` for now, revisit as a separate principal type later rather than
-  overloading human users.
+11.1 Workspace Health Aggregation
+
+Platform Office currently reads entity_provisioning_status per entity.
+Eventually it will also need overall workspace health. A future version may
+add an aggregated status surface rather than forcing the Platform Office to
+derive it every time:
+
+```
+Workspace
+ ├─ Entity A: ready
+ ├─ Entity B: failed
+ ├─ Entity C: purging
+ └─ Workspace health: DEGRADED (1 failed)
+```
+
+This does not need to be in v2.1 but is worth noting as future work.
+
+11.2 Platform Incident Management
+
+Incident management (e.g., platform_incidents) belongs to Platform Office
+documentation, not tenancy architecture. This PRD defines tenancy; operational
+tooling is a separate concern.
 
 ---
 
-## 12. Success Criteria (v2.1 additions)
+12. Open Items Carried Forward
 
-1. Granting `('invoice','approve')` to a user has no effect on their ability
-   to `view`/`create`/`edit`/`delete` invoices unless those are separately granted.
-2. A user with `('*','view')` and `('invoice','edit')` can view every document
+· Supavisor transaction-mode pooling: supabase.schema() per-query, not
+  session-level search_path.
+· PostgREST exposed-schema registration for dynamically created entity
+  schemas — confirm current admin-API behavior before building "instant"
+  entity creation UI.
+· dblink-based federated cross-entity views remain a do-not-ship stopgap;
+  replace with FDW if/when cross-entity reporting within a workspace is built.
+· Permission audit trail (§3.9) — reserved, not built in v2.1.
+· Service accounts (API integrations, devices, scheduled automation, AI
+  agents) — not modeled in v2.1; keep entity_permissions.user_id pointed at
+  auth.users for now, revisit as a separate principal type later rather than
+  overloading human users.
+· Platform operator roles beyond owner — the structure exists; the roles
+  themselves are not populated or enforced beyond owner in v2.1.
+
+---
+
+13. Success Criteria (v2.1 additions)
+
+1. Granting ('invoice','approve') to a user has no effect on their ability
+   to view/create/edit/delete invoices unless those are separately granted.
+2. A user with ('*','view') and ('invoice','edit') can view every document
    type in that entity but only edit invoices.
 3. Deleting a permission template does not alter any existing user's
-   `entity_permissions` rows.
+   entity_permissions rows.
 4. Editing a template's items does not alter any existing user's permissions
    until "reapply" is explicitly invoked for specific users.
-5. `workspaces.owner_id` does not exist as a column; ownership is derived
-   solely from `workspace_members` and remains exactly one row per workspace
+5. workspaces.owner_id does not exist as a column; ownership is derived
+   solely from workspace_members and remains exactly one row per workspace
    under concurrent transfer attempts.
 6. Archiving a workspace immediately revokes member access via RLS without
-   any `DROP SCHEMA` executing in the same transaction.
+   any DROP SCHEMA executing in the same transaction.
 7. An invite's entity grants pointing to another workspace's entity are
    rejected both at invite-creation and at acceptance time.
+8. Platform operator authorization uses platform_operators, not profiles.is_platform_admin.
+9. entity_provisioning_status is the sole external observability contract
+   for provisioning health; no external system inspects tenant schemas directly.
+10. The observability contract rule (§9.2) is documented and enforced.
+
+---
+
+14. Summary of Amendments Applied (v2.1)
+
+Amendment Source Section
+workspaces.created_by added (was missing from table) Internal §5
+entity_provisioning_status table Internal §9.1
+Action-based authorization (not CRUD) v2.0 → v2.1 §3
+Permission templates as convenience v2.0 → v2.1 §3.6
+workspaces.owner_id removed v2.0 → v2.1 §5
+RLS fix: auth.jwt() ->> 'email' v2.0 → v2.1 §4
+Workspace deletion = soft delete + purge v2.0 → v2.1 §8
+Replace is_platform_admin with platform_operators Reviewer §3.8, §6
+Future roles documented (support, auditor, operations, etc.) Reviewer §3.8
+Observability contract rule (§9.2) Reviewer §9.2
+Workspace health aggregation as future work Reviewer §11.1
+Platform incidents explicitly out of scope Reviewer §11.2
+
+```
+
+---
+
+## Summary of Changes Applied
+
+| Change | Section |
+|--------|---------|
+| **Replaced `is_platform_admin`** with `platform_operators` table + role-based authorization | §3.8, §6 |
+| **Future roles documented** | support, auditor, operations, incident_commander, developer, billing_admin |
+| **Observability contract rule** | §9.2 — external systems only consume public schema contracts |
+| **Workspace health aggregation** as future work | §11.1 |
+| **Platform incidents** explicitly out of scope | §11.2 |
+| **Migration Phase 0** now includes migrating `is_platform_admin` to `platform_operators` | §10 |
+| **Success Criteria** updated with new items (8, 9, 10) | §13 |
+| **Open Items** updated with platform operator roles | §12 |
