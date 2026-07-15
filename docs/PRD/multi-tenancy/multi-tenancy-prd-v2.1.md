@@ -1,3 +1,4 @@
+
 # BIGDROPS Multi-Tenancy — Architecture & Migration PRD (v2.1)
 
 **Type:** Architecture Specification / Migration Plan  
@@ -233,40 +234,28 @@ Same shape as entity_permissions minus granted_by/granted_at (populated
 at acceptance time). Accepting an invite becomes a straight row copy with no
 format translation — see 3.9.
 
-3.8 Platform Operator Authorization — Future-Proof
+3.8 Platform Operator Authorization — Scope Constraint
 
-Instead of a single profiles.is_platform_admin boolean, define a dedicated
-platform operator authorization model:
+Platform Operators are platform-level staff who may perform operations on
+workspaces and entities. Their authority is strictly limited to:
 
-```sql
-CREATE TABLE public.platform_operators (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     uuid NOT NULL REFERENCES auth.users(id) UNIQUE,
-    role        text NOT NULL CHECK (role IN ('owner', 'support', 'auditor', 'operations')),
-    granted_by  uuid NOT NULL REFERENCES auth.users(id),
-    granted_at  timestamptz NOT NULL DEFAULT now(),
-    expires_at  timestamptz,  -- nullable, for temporary access
-    UNIQUE (user_id)
-);
-```
+· public-schema observability tables (entity_provisioning_status, etc.)
+· Workspace existence operations (approve, suspend, archive)
 
-Initially, only role = 'owner' is populated. This structure supports future
-roles without schema changes:
+Platform Operators may never:
 
-Role Future Expansion
-owner Full platform control (today's admin)
-support Read-only workspace status + entity provisioning status
-auditor Read-only access to audit trails
-operations Can trigger retries for failed provisioning
-incident_commander Emergency recovery access
-developer Debug access (non-production)
-billing_admin Billing operations only
+· Read or write entity-schema data (invoices, waybills, quotations, payments, etc.)
+· Become workspace members without a separate, explicit invite
 
-All platform operator functions (including approve_workspace()) check against
-platform_operators, not a boolean column.
+Future roles (support, auditor, operations, etc.) may only grant access to
+public-schema observability tables. They may never grant read/write access to
+entity-schema data. This is the single-power model preserved.
 
-Migration path: Existing profiles.is_platform_admin rows are migrated to
-platform_operators with role = 'owner' during the Phase 0 migration.
+The Platform Owner role (role = 'owner') has exactly one power: approve/
+suspend workspace existence, defined in §6.3. No future role may expand this
+to include data access.
+
+See §6 for the full table definition.
 
 3.9 Auditing (design reserved, not built in v2.1)
 
@@ -450,13 +439,20 @@ LANGUAGE sql STABLE AS $$
     SELECT EXISTS (
         SELECT 1 FROM public.platform_operators
         WHERE user_id = p_user_id
-          AND (p_required_role IS NULL OR role = p_required_role)
+          AND (p_required_role IS NULL OR 
+               -- Role hierarchy: owner implicitly has all lower roles
+               CASE p_required_role
+                   WHEN 'owner' THEN role = 'owner'
+                   ELSE role IN ('owner', p_required_role)
+               END)
           AND (expires_at IS NULL OR expires_at > now())
     );
 $$;
 ```
 
-6.3 approve_workspace() — Updated
+Role hierarchy: owner implicitly has all lower roles (support, auditor, operations). This matches the intent that Platform Owner can perform any platform-level operation without needing multiple rows.
+
+6.3 approve_workspace() — Platform Owner's Single Power
 
 ```sql
 CREATE OR REPLACE FUNCTION public.approve_workspace(p_workspace_id uuid, p_creator_user_id uuid)
@@ -478,6 +474,14 @@ BEGIN
 END;
 $$;
 ```
+
+Platform Owner has exactly one power: approve/suspend workspace existence.
+No data access. No workspace membership. No entity introspection beyond
+entity_provisioning_status.
+
+Future roles (support, auditor, operations) are defined only in the table
+shape and are reserved for future use. They must be explicitly scoped to
+public-schema observability only — never to entity-schema data access.
 
 ---
 
@@ -581,9 +585,13 @@ Unchanged in spirit from v2.0 §8:
    Mr C reviews and adjusts post-migration).
 3. Migrate profiles.is_platform_admin rows to platform_operators with
    role = 'owner'.
-4. Existing 3 companies become entities with workspace_id = mrc, renamed
+4. Drop profiles.is_platform_admin after migration completes. This
+   removes the old authority path entirely, preventing drift between two
+   live mechanisms. Code paths checking this column must be updated to use
+   is_platform_operator() during migration.
+5. Existing 3 companies become entities with workspace_id = mrc, renamed
    to the entity_mrc_<slug> schema convention.
-5. Grant existing staff entity_permissions rows matching their pre-migration
+6. Grant existing staff entity_permissions rows matching their pre-migration
    effective access (broad ('*','view') + ('*','create') + ('*','edit')
    as a safe default, tightened manually afterward).
 
@@ -614,6 +622,20 @@ Incident management (e.g., platform_incidents) belongs to Platform Office
 documentation, not tenancy architecture. This PRD defines tenancy; operational
 tooling is a separate concern.
 
+11.3 Future Platform Operator Roles
+
+Future roles (support, auditor, operations) are defined in the table
+shape but not populated or enforced in v2.1. When they are activated, they
+must be explicitly scoped as follows:
+
+Role Permitted Scope Prohibited Scope
+support Read entity_provisioning_status only Entity-schema data access
+auditor Read public-schema audit trails only Entity-schema data access
+operations Trigger retries on failed provisioning; read status Entity-schema data access
+
+The Platform Owner (role = 'owner') has exactly one power: approve/suspend
+workspace existence. No role has entity-schema data access.
+
 ---
 
 12. Open Items Carried Forward
@@ -632,6 +654,8 @@ tooling is a separate concern.
   overloading human users.
 · Platform operator roles beyond owner — the structure exists; the roles
   themselves are not populated or enforced beyond owner in v2.1.
+· Removal of profiles.is_platform_admin — Phase 0 migration includes
+  dropping this column to prevent dual authority paths.
 
 ---
 
@@ -653,9 +677,15 @@ tooling is a separate concern.
 7. An invite's entity grants pointing to another workspace's entity are
    rejected both at invite-creation and at acceptance time.
 8. Platform operator authorization uses platform_operators, not profiles.is_platform_admin.
-9. entity_provisioning_status is the sole external observability contract
-   for provisioning health; no external system inspects tenant schemas directly.
-10. The observability contract rule (§9.2) is documented and enforced.
+9. profiles.is_platform_admin is dropped during Phase 0 migration; no code
+   path checks the old column post-migration.
+10. is_platform_operator() correctly handles role hierarchy: owner implicitly
+    has all lower roles.
+11. entity_provisioning_status is the sole external observability contract
+    for provisioning health; no external system inspects tenant schemas directly.
+12. The observability contract rule (§9.2) is documented and enforced.
+13. Platform operators may never read or write entity-schema data. This is
+    explicitly stated in §3.8 and §11.3.
 
 ---
 
@@ -670,24 +700,18 @@ workspaces.owner_id removed v2.0 → v2.1 §5
 RLS fix: auth.jwt() ->> 'email' v2.0 → v2.1 §4
 Workspace deletion = soft delete + purge v2.0 → v2.1 §8
 Replace is_platform_admin with platform_operators Reviewer §3.8, §6
-Future roles documented (support, auditor, operations, etc.) Reviewer §3.8
+Future roles explicitly scoped to public-schema observability only Reviewer §3.8, §11.3
 Observability contract rule (§9.2) Reviewer §9.2
-Workspace health aggregation as future work Reviewer §11.1
 Platform incidents explicitly out of scope Reviewer §11.2
+profiles.is_platform_admin dropped in migration Reviewer §10
+is_platform_operator() role hierarchy fix Reviewer §6.2
+Removed duplicated table definitions (one copy in §6 only) Reviewer §3.8 → §6
+Workspace health aggregation as future work Reviewer §11.1
+Platform Owner single-power model explicitly preserved Reviewer §3.8, §6.3
+Success Criteria updated with new items (8–13) Reviewer §13
+Open Items updated with column drop Reviewer §12
 
 ```
 
 ---
 
-## Summary of Changes Applied
-
-| Change | Section |
-|--------|---------|
-| **Replaced `is_platform_admin`** with `platform_operators` table + role-based authorization | §3.8, §6 |
-| **Future roles documented** | support, auditor, operations, incident_commander, developer, billing_admin |
-| **Observability contract rule** | §9.2 — external systems only consume public schema contracts |
-| **Workspace health aggregation** as future work | §11.1 |
-| **Platform incidents** explicitly out of scope | §11.2 |
-| **Migration Phase 0** now includes migrating `is_platform_admin` to `platform_operators` | §10 |
-| **Success Criteria** updated with new items (8, 9, 10) | §13 |
-| **Open Items** updated with platform operator roles | §12 |
