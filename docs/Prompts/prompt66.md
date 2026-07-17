@@ -1,355 +1,344 @@
-You are working on the BIGDROPS business platform.
+====================================================================
+PRECONDITION
 
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
-Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+Read AGENTS.md before commencing this task. All applicable protocols and standards defined therein must be observed throughout this work.
 
 ====================================================================
-CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-====================================================================
 
-OpenCode has full repository access.
+# Round 6 — Entity Provisioning Engine
 
-Read AGENTS.md immediately.
+Create a new append-only migration:
 
-Load all relevant skills from docs/PROJECTSKILLINDEX.md before making changes.
+supabase/migrations/20260717000000_entity_provisioning_engine.sql
 
-This task requires at minimum:
+Do NOT modify any existing migration. Migration history is immutable.
 
-- using-superpowers
+Before implementation, load the appropriate implementation skills from
+docs/PROJECTSKILLINDEX.md. At minimum, load the skills covering:
+
+- PostgreSQL / Supabase
+- Database architecture
+- Row Level Security (RLS)
+- PL/pgSQL
+- Transactions & error handling
+- Concurrency / locking
 - Karpathy
-- frontend-design
-- typescript-advanced-types
-- pdf-rendering-correctness
 
-Follow the Report Protocol defined in AGENTS.md.
+If additional skills are relevant, load them before coding.
 
-====================================================================
-PHASE 2.1 — WAYBILL UX RESTORATION
-====================================================================
+---
 
-The PDF Customization Engine introduced in Phase 1 is correct.
+## Objective
 
-The current Waybill integration is not.
+Implement the complete Entity Provisioning Engine described by PRD v2.1.
 
-The implementation changed the application's UX instead of changing the implementation underneath the existing UX.
+This is the production provisioning pipeline responsible for creating
+new business entities safely, atomically, idempotently, and with proper
+failure recovery.
 
-This task restores the original Waybill customization experience while keeping the new engine.
+The engine must become the single provisioning entry point for entity
+creation.
 
-The engine is now the backend.
+---
 
-The existing Waybill customization sheet remains the frontend.
+## Architectural Requirements
 
-The engine owns:
+Do NOT implement one large monolithic PL/pgSQL function.
 
-- state
-- persistence
-- resolver
-- capabilities
-- policy
-- font registration
+Instead implement:
 
-Waybill owns:
+• One public orchestration function
 
-- layout
-- interaction
-- presentation
-- user experience
+    provision_entity(...)
 
-The engine must adapt to the application.
+that coordinates the complete workflow.
 
-The application must NOT adapt to the engine.
+Behind it, implement small internal helper functions for each concern.
 
-====================================================================
-MANDATORY AUDIT
-====================================================================
+Typical decomposition:
 
-Before writing any code, audit these implementations completely.
+- validate permissions
+- idempotency check
+- metadata creation/update
+- create schema
+- clone template
+- install RLS
+- finalize provisioning
+- cleanup/error handling
 
-Current Waybill:
+The orchestration function owns the transaction and workflow.
 
-- src/pages/ViewWaybill.tsx
-- src/components/waybill/WaybillTemplateSelector.tsx
+Helper functions should each have one clear responsibility.
 
-Reference UX implementations:
+---
 
-- src/pages/ViewCSR.tsx
-- src/components/document-view/shared/PdfOutputCustomizeSheet.tsx
+## Functional Requirements
 
-Engine:
+### 1. Authorization
 
-- src/domain/pdf/customization/
-- src/components/pdf-customization/
+Caller must:
 
-Study:
+- own the workspace
 
-- layout
-- spacing
-- save flow
-- scrolling
-- interaction model
-- font picker UX
-- colour picker UX
-- switch behaviour
-- swatch behaviour
+OR
 
-Use the existing application UX as the source of truth.
+- possess create_entity permission.
 
-====================================================================
-PROBLEM TO FIX
-====================================================================
+Reject all other callers.
 
-The previous implementation introduced a separate PdfCustomizationPanel
-Sheet/Drawer.
+---
 
-This caused severe UX regressions.
+### 2. Concurrency Protection
 
-Specifically:
+Before provisioning begins:
 
-• The template picker became shorter.
+Acquire a PostgreSQL advisory lock (or equivalent safe locking mechanism)
+using a deterministic key derived from either:
 
-• A second drawer immediately opens from the right before the template
-picker finishes opening.
+- entity_id
 
-• The second drawer overlays the template picker.
+or
 
-• Users cannot properly interact with template cards.
+- (workspace_id, slug)
 
-• Save lives on one panel while customization lives on another.
+This prevents concurrent provisioning of the same logical entity.
 
-• Closing one panel closes the other.
+The lock must automatically release when the transaction completes.
 
-• The original colour swatches disappeared.
+---
 
-• Toggle switches disappeared.
+### 3. Idempotency
 
-• The workflow became fragmented.
+Provisioning must be safely repeatable.
 
-This behaviour is rejected.
+If an entity already exists:
 
-====================================================================
-REQUIRED USER EXPERIENCE
-====================================================================
+READY
+- immediately return success
+- perform no work
 
-When the user taps 🎨
+CREATING
+- either safely resume
+OR
+- return a clear "Provisioning already in progress" response.
 
-ONLY ONE customization sheet opens.
+Choose one approach and document why.
 
-Inside that SAME sheet must be:
+FAILED
+- never silently retry.
+- require explicit retry workflow.
 
-1. Template picker
+Document the idempotency strategy.
 
-2. Custom Font
+---
 
-3. Ink Font
+### 4. Metadata
 
-4. Ink Colour
+Insert entity metadata when necessary.
 
-5. Save button
+Respect all existing uniqueness constraints.
 
-Everything must live inside one continuous scrollable customization sheet exactly as before.
+---
 
-No nested sheets.
+### 5. Provisioning Status
 
-No second drawer.
+Create or update:
 
-No overlay.
+entity_provisioning_status
 
-No competing panels.
+Transition:
 
-====================================================================
-CUSTOMIZATION CONTROLS
-====================================================================
+creating
 
-Restore the original Waybill interaction model.
+↓
 
-Do NOT invent a new one.
+ready
 
-Use the engine underneath the existing controls.
+or
 
-If the previous UI contained:
+failed
 
-- switches
-- font chips
-- colour swatches
-- live colour preview
-- hex editor
+Update:
 
-restore those interactions.
+- last_error
+- updated_at
+- attempt_count
 
-Do NOT replace them with generic controls simply because the engine exposes different data.
+---
 
-====================================================================
-PDFCUSTOMIZATIONPANEL
-====================================================================
+### 6. Schema Creation
 
-PdfCustomizationPanel must no longer dictate presentation.
+Create the entity schema using the PRD naming convention.
 
-Treat it as reusable customization controls.
+Use existing uniqueness guarantees.
 
-NOT as a mandatory Sheet.
+---
 
-NOT as a mandatory Drawer.
+### 7. Template Clone
 
-If necessary:
+Clone the complete template schema.
 
-Refactor PdfCustomizationPanel into reusable presentation components so existing document customization sheets can embed those controls naturally.
+Do not clone only a subset.
 
-The engine provides behaviour.
+Follow the PRD exactly.
 
-The document page provides layout.
+---
 
-====================================================================
-WAYBILL PAGE
-====================================================================
+### 8. Dynamic RLS Installation
 
-Keep:
+Install all required policies onto every cloned table.
 
-- existing template selector
-- existing scrolling
-- existing Save button
-- existing workflow
+Policies must follow the existing
 
-Embed the engine-powered customization controls into that existing sheet.
+has_entity_permission()
 
-Do NOT create another popup.
+authorization model.
 
-Do NOT create another sheet.
+Hard requirement:
 
-Do NOT create another drawer.
+NO generated policy may query the same protected table using a raw
+subquery.
 
-====================================================================
-FONT REGISTRY
-====================================================================
+Whenever same-table lookups are required they MUST use
+SECURITY DEFINER helper functions.
 
-Future font expansion must require ONLY updating the shared font registry.
+Audit every generated policy against the Round 5 recursion issue before
+considering implementation complete.
 
-Adding a new font must NOT require modifying:
+---
 
-- Waybill
-- CSR
-- Invoice
-- Quotation
+### 9. Success
 
-The UI should automatically display newly available fonts from the shared registry according to the document's capability and policy.
+On successful completion:
 
-====================================================================
-COLOUR PICKER
-====================================================================
+status = ready
 
-Restore the previous Waybill colour picker UX.
+Return success.
 
-Use the existing swatch interaction.
+---
 
-Maintain:
+### 10. Failure
 
-- preset swatches
-- live/custom swatch
-- hex editing
+If any stage fails:
 
-Do NOT replace this with a single rectangular colour selector.
+Catch the exception.
 
-====================================================================
-SAVE FLOW
-====================================================================
+Drop any partially-created schema.
 
-There must be ONE Save button.
+Leave the entities row intact.
 
-That button saves:
+Update:
 
-- selected template
-- customization settings
-- existing persistence
-- existing database updates
+status = failed
 
-There must never be separate save flows.
+Populate:
 
-====================================================================
-PRESERVE
-====================================================================
+last_error
 
-Keep all successful Phase 2 architectural work.
+Increment:
 
-Do NOT remove:
+attempt_count
 
-- customization engine
-- resolver
-- bridgeToDesignPreset()
-- capabilities
-- policy
-- font registry wrapper
+Never delete entity metadata.
 
-These are now the foundation.
+---
 
-Only the presentation layer should change.
+### 11. Retry Policy
 
-====================================================================
-DO NOT
-====================================================================
+Do NOT hardcode retry limits.
 
-Do NOT modify:
+Expose the retry limit via an explicit configuration mechanism.
 
-- Invoice
-- Quotation
-- CSR
+Examples:
 
-Do NOT change:
+- configuration table
 
-- Waybill render engine
-- pagination
-- PDF generation
-- template routing
-- template rendering
+or
 
-Do NOT introduce additional dialogs.
+- helper function
 
-Do NOT introduce nested Sheets.
+Document the chosen design.
 
-Do NOT introduce overlay Drawers.
+When retry limit is exceeded:
 
-Do NOT run:
+Return a clear
 
-bun run build
+Manual Intervention Required
 
-====================================================================
-REQUIRED VERIFICATION
-====================================================================
+state.
 
-Run only:
+Do not retry forever.
 
-bun run typecheck
+---
 
-git status
+## Verification
 
-Manual verification:
+Run only safe verification.
 
-✓ Clicking 🎨 opens exactly one customization sheet.
+Never run bun build.
 
-✓ Template picker is fully usable.
+Required:
 
-✓ Custom Font is inside the same sheet.
+- bun run typecheck
+- bun run audit:load
+- git status
 
-✓ Ink Font is inside the same sheet.
+If practical, execute lifecycle verification against a disposable
+database.
 
-✓ Ink Colour is inside the same sheet.
+Run all tests using a NON-SUPERUSER role.
 
-✓ Colour swatches are restored.
+Verify:
 
-✓ Existing interaction model is preserved.
+1.
+Successful provisioning.
 
-✓ Save persists template and customization together.
+2.
+Injected failure.
 
-✓ No overlapping panels exist.
+Confirm:
 
-✓ PDF output remains unchanged.
+- schema removed
+- entities row preserved
+- status failed
+- error captured
 
-✓ No regressions occur.
+3.
+Repeated successful provisioning.
 
-====================================================================
-ACCEPTANCE CRITERIA
-====================================================================
+Confirm:
 
-The user should not feel that the UI changed.
+- no duplicate schema
+- no duplicate metadata
+- safe idempotent behavior
 
-Only the implementation underneath it should have changed.
+4.
+Concurrent provisioning.
 
-The Waybill customization experience should feel identical to the pre-engine version while now being fully powered by the shared PDF Customization Engine.
+Attempt simultaneous provisioning.
+
+Confirm advisory locking prevents duplicate execution.
+
+5.
+Retry policy.
+
+Confirm retry ceiling behaves correctly.
+
+6.
+Cross-workspace isolation.
+
+Workspace A cannot access Workspace B entity schema.
+
+---
+
+## Deliverables
+
+Provide:
+
+- migration summary
+- helper function summary
+- orchestration workflow summary
+- lifecycle verification results
+- git diff summary
+
+No existing migration files may be modified.
