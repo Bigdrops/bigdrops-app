@@ -1,250 +1,45 @@
-You are working on the BIGDROPS business platform.
-
-Stack:
-- React 19
-- Vite 7
-- TypeScript 5.9
-- Tailwind CSS 3.4
-- Supabase
-- Vercel
-
-Runtime Environment:
-Bun only.
-Never use npm, yarn or pnpm.
-
-====================================================================
-CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-====================================================================
-
-OpenCode has full repository access.
-
-Read AGENTS.md before modifying anything.
-
-Follow all repository standards, audit workflow, skills registry and architectural rules.
-
-====================================================================
-
-OBJECTIVE
-
-Execute Phase 3 of the Correspondence module.
-
-This phase ONLY integrates the Letter document family into the existing BIGDROPS audit infrastructure.
-
-Do NOT implement repositories.
-Do NOT implement save orchestration.
-Do NOT build UI.
-Do NOT build renderers.
-
-The goal is that once Phase 4 begins, every create/update/status transition automatically has audit support available.
-
-====================================================================
-SCOPE
-
-Implement ONLY:
-
-1.
-Audit entity registration
-
-Register
-
-letter
-
-as a first-class audited entity everywhere required.
-
-This includes every whitelist, enum, union or validator used by the audit system.
-
-Follow the existing Invoice, CSR and Receipt implementations exactly.
-
---------------------------------------------------
-
-2.
-Tracked Fields
-
-Create
-
-LETTER_TRACKED_FIELDS
-
-following existing document families.
-
-Track at minimum:
-
-letter_number
-
-recipient_id
-
-recipient_name
-
-subject
-
-status
-
-attachments
-
-custom_fields
-
-Do NOT track timestamps.
-
---------------------------------------------------
-
-3.
-Letter Audit Helpers
-
-Create helper functions similar to the existing document helpers.
-
-Examples:
-
-recordLetterCreated()
-
-recordLetterUpdated()
-
-recordLetterStatusChanged()
-
-recordLetterDuplicated()
-
-recordLetterArchived()
-
-These helpers must wrap the existing audit infrastructure.
-
-No duplicated audit logic.
-
---------------------------------------------------
-
-4.
-Status Transition Support
-
-Audit entries must correctly identify transitions:
-
-Draft
-
-Approved
-
-Issued
-
-Archived
-
-Cancelled
-
-Include both previous and next state.
-
---------------------------------------------------
-
-5.
-SQL
-
-Update any SQL whitelist or CHECK constraint required for:
-
-entity_type='letter'
-
-Do NOT alter unrelated audit behaviour.
-
-====================================================================
-CONSTRAINTS
-
-No UI.
-
-No React.
-
-No repository.
-
-No save hook.
-
-No rendering.
-
-No business logic changes.
-
-No refactoring existing audit architecture.
-
-Reuse existing audit helper patterns exactly.
-
-Letter audit must behave identically to Invoice/CSR audit.
-
-====================================================================
-SKILLS
-
-Load relevant skills from:
-
-docs/PROJECTSKILLINDEX.md
-
-Especially:
-
-audit-first-workflow
-
-typescript-advanced-types
-
-database-schema
-
-====================================================================
-VERIFICATION
-
-Do NOT run:
-
-bun run build
-
-Required:
-
-bun run typecheck
-
-Run git status before finishing.
-
-Confirm only intended audit-related files changed.
-
-====================================================================
-ACCEPTANCE CRITERIA
-
-✓ Letter is a valid audit entity everywhere.
-
-✓ Audit helpers exist.
-
-✓ Letter tracked fields defined.
-
-✓ Status transition auditing supports:
-
-Draft
-Approved
-Issued
-Archived
-Cancelled
-
-✓ SQL accepts entity_type='letter'.
-
-✓ Existing audit functionality remains unchanged.
-
-✓ Typecheck passes.
-
-✓ git status shows only intended audit-related modifications.
-
-====================================================================
-OUT OF SCOPE
-
-Repository
-
-CRUD
-
-Save orchestration
-
-Pages
-
-Forms
-
-Editors
-
-PDF
-
-React Email
-
-Notifications
-
-====================================================================
-NEXT PHASE
-
-Phase 4
-
-Save Orchestration
-
-- useLetterSave()
-- withUniqueRetry()
-- Repository layer
-- Prefix allocation
-- Edit Law enforcement
-- Duplicate Law support
-- Audit helper invocation
+# Round 5 — Fix Confirmed RLS Recursion + Sweep for Other Instances
+
+Two recursion bugs are CONFIRMED, not suspected — reproduced by running all
+three existing migrations against real Postgres 16 as a non-superuser role.
+Do not re-verify these two; implement the fixes directly:
+
+1. workspace_members_select_self (20260714000001_multi_tenancy_rls.sql)
+   self-queries workspace_members from within its own SELECT policy.
+   Confirmed via "infinite recursion detected in policy for relation
+   workspace_members" on direct execution.
+
+2. is_platform_operator() (20260716000000_..._platform_operators.sql) is
+   not SECURITY DEFINER, and platform_operators_select_owner's USING clause
+   calls it — so its internal SELECT against platform_operators is itself
+   subject to that same policy. Confirmed via "stack depth limit exceeded"
+   showing repeated recursive calls into is_platform_operator() in the
+   error trace.
+
+Required fixes, in a new append-only migration (do not modify the three
+existing files):
+
+A. Add public.is_workspace_member(p_workspace_id uuid, p_user_id uuid)
+   as SECURITY DEFINER, STABLE, SET search_path = public. Rewrite
+   workspace_members_select_self to call it instead of self-querying.
+
+B. Add SECURITY DEFINER and SET search_path = public to
+   is_platform_operator()'s definition (CREATE OR REPLACE, in the new file).
+
+C. Sweep every other RLS policy across all three existing files for the
+   same pattern — a policy that queries its own table, or a non-
+   SECURITY-DEFINER function called from a policy on the table that
+   function queries. My own test run only exercised the six lifecycle
+   steps; it did not exhaustively trigger every policy path. Report any
+   additional instance found, fixed or not, before proceeding.
+
+D. Re-run the full six-step lifecycle test AS A NON-SUPERUSER ROLE
+   (not postgres/table owner — RLS is bypassed for those regardless of
+   policy correctness). Report actual pass/fail per step, not a summary.
+
+E. git diff summary of the new migration file only.
+
+Do not modify workspace_members_select_self or is_platform_operator()
+in their original files — CREATE OR REPLACE FUNCTION and DROP POLICY /
+CREATE POLICY in the new migration file achieve the same runtime effect
+without touching migration history.
