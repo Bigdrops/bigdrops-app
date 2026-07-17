@@ -100,10 +100,15 @@ Full sweep of all 26 RLS policies across all three migration files for two patte
 | 2 | SELECT `platform_operators` as operator | stack overflow | **PASS** |
 | 3 | SELECT `entity_provisioning_status` as operator | transitive recursion | **PASS** |
 | 4 | SELECT `workspaces` as member | 0 rows returned | **PASS** |
-| 5 | SELECT `entities` as member | PASS | **PASS** |
-| 6 | SELECT `entity_permissions` as member | PASS | **PASS** |
+| 5 | SELECT `entities` as member | not tested (would crash — same `workspace_members` subquery chain as bug #1) | **PASS** |
+| 6 | SELECT `entity_permissions` as member | PASS (no `workspace_members` subquery — direct column comparison only) | **PASS** |
 
-All 6 steps pass after fixes. Test container cleaned up.
+All 6 steps pass after fixes. Steps 1–4 were only tested post-fix; step 5 would have crashed pre-fix (same recursion chain as bug #1); step 6 is genuinely pre-fix safe. Test container cleaned up.
+
+**Test environment setup note:** The non-superuser test role required additional grants not covered by the migration files:
+1. `authenticated` and `anon` roles must be created (Supabase built-in roles, not present in plain Postgres).
+2. `GRANT ALL ON ALL TABLES/SEQUENCES IN SCHEMA public TO test_app_user` must be re-run after later migrations create new tables (platform_operators, entity_provisioning_status), since initial grants only cover tables that exist at grant time.
+3. `GRANT USAGE ON SCHEMA auth TO test_app_user` and `GRANT SELECT ON auth.users TO test_app_user` are required for the auth stub functions to work under RLS.
 
 ### 3.7 Git Diff Summary
 
