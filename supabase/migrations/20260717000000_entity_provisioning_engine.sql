@@ -159,7 +159,7 @@ BEGIN
         IF v_attempt_count >= v_retry_limit THEN
             RAISE EXCEPTION 'Retry limit exceeded (%/%). Manual intervention required.',
                 v_attempt_count, v_retry_limit
-                USING ERRCODE = 'error_during_execution';
+                USING ERRCODE = 'P0001';
         END IF;
         RETURN 'failed';
     END IF;
@@ -236,7 +236,7 @@ DECLARE
 BEGIN
     -- Clone table structure with all attributes
     EXECUTE format(
-        'CREATE TABLE %I.%I LIKE %I.%I INCLUDING ALL',
+        'CREATE TABLE %I.%I (LIKE %I.%I INCLUDING ALL)',
         p_target_schema, p_table_name,
         p_source_schema, p_table_name
     );
@@ -317,8 +317,6 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $function$
-DECLARE
-    v_fq_table text := p_schema_name || '.' || p_table_name;
 BEGIN
     -- Enable RLS
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', p_schema_name, p_table_name);
@@ -328,27 +326,31 @@ BEGIN
 
     -- SELECT policy
     EXECUTE format(
-        'CREATE POLICY %I ON %I.%I FOR SELECT TO public USING (has_entity_permission($1, auth.uid(), $2, $3))',
-        p_table_name || '_select', p_schema_name, p_table_name
-    ) USING (p_entity_id, p_resource, 'view');
+        'CREATE POLICY %I ON %I.%I FOR SELECT TO public USING (has_entity_permission(%L::uuid, auth.uid(), %L, %L))',
+        p_table_name || '_select', p_schema_name, p_table_name,
+        p_entity_id, p_resource, 'view'
+    );
 
     -- INSERT policy
     EXECUTE format(
-        'CREATE POLICY %I ON %I.%I FOR INSERT TO authenticated WITH CHECK (has_entity_permission($1, auth.uid(), $2, $3))',
-        p_table_name || '_insert', p_schema_name, p_table_name
-    ) USING (p_entity_id, p_resource, 'create');
+        'CREATE POLICY %I ON %I.%I FOR INSERT TO authenticated WITH CHECK (has_entity_permission(%L::uuid, auth.uid(), %L, %L))',
+        p_table_name || '_insert', p_schema_name, p_table_name,
+        p_entity_id, p_resource, 'create'
+    );
 
     -- UPDATE policy
     EXECUTE format(
-        'CREATE POLICY %I ON %I.%I FOR UPDATE TO authenticated USING (has_entity_permission($1, auth.uid(), $2, $3))',
-        p_table_name || '_update', p_schema_name, p_table_name
-    ) USING (p_entity_id, p_resource, 'edit');
+        'CREATE POLICY %I ON %I.%I FOR UPDATE TO authenticated USING (has_entity_permission(%L::uuid, auth.uid(), %L, %L))',
+        p_table_name || '_update', p_schema_name, p_table_name,
+        p_entity_id, p_resource, 'edit'
+    );
 
     -- DELETE policy
     EXECUTE format(
-        'CREATE POLICY %I ON %I.%I FOR DELETE TO authenticated USING (has_entity_permission($1, auth.uid(), $2, $3))',
-        p_table_name || '_delete', p_schema_name, p_table_name
-    ) USING (p_entity_id, p_resource, 'delete');
+        'CREATE POLICY %I ON %I.%I FOR DELETE TO authenticated USING (has_entity_permission(%L::uuid, auth.uid(), %L, %L))',
+        p_table_name || '_delete', p_schema_name, p_table_name,
+        p_entity_id, p_resource, 'delete'
+    );
 END;
 $function$;
 
@@ -374,6 +376,10 @@ $function$;
 
 -- provision_entity() — the single provisioning entry point
 -- Coordinates: permissions → idempotency → lock → status → schema → clone → RLS → finalize
+--
+-- Uses nested blocks to enforce separation:
+--   Outer block: pre-flight checks (NO exception handler — errors propagate to caller)
+--   Inner block: provisioning steps (WITH exception handler — only provisioning failures caught)
 CREATE OR REPLACE FUNCTION public.provision_entity(p_entity_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -388,6 +394,10 @@ DECLARE
     v_tables text[];
     v_lock_key bigint;
 BEGIN
+    -- ============================================================
+    -- PRE-FLIGHT — NO exception handler, errors propagate to caller
+    -- ============================================================
+
     -- 1. Validate permissions
     PERFORM public._prov_validate_permissions(p_entity_id);
 
@@ -410,56 +420,60 @@ BEGIN
         );
     END IF;
 
-    -- 3. Acquire advisory lock (transaction-scoped, auto-released on commit/rollback)
-    v_lock_key := hashtext(p_entity_id::text);
-    PERFORM pg_advisory_xact_lock(v_lock_key);
+    -- ============================================================
+    -- PROVISIONING — nested block WITH exception handler
+    -- Only provisioning failures (steps 3+) trigger cleanup + failed status
+    -- ============================================================
 
-    -- 4. Get schema name
-    v_schema_name := public._prov_get_schema_name(p_entity_id);
+    BEGIN
+        -- 3. Acquire advisory lock (transaction-scoped)
+        v_lock_key := hashtext(p_entity_id::text);
+        PERFORM pg_advisory_xact_lock(v_lock_key);
 
-    -- 5. Update status to 'creating'
-    PERFORM public._prov_update_status(p_entity_id, 'creating');
+        -- 4. Get schema name
+        v_schema_name := public._prov_get_schema_name(p_entity_id);
 
-    -- 6. Create schema
-    PERFORM public._prov_create_schema(v_schema_name);
+        -- 5. Update status to 'creating'
+        PERFORM public._prov_update_status(p_entity_id, 'creating');
 
-    -- 7. Clone template tables
-    v_tables := public._prov_get_template_tables();
+        -- 6. Create schema
+        PERFORM public._prov_create_schema(v_schema_name);
 
-    FOREACH v_table IN ARRAY v_tables
-    LOOP
-        -- Clone table structure
-        PERFORM public._prov_clone_table('public', v_schema_name, v_table);
+        -- 7. Clone template tables
+        v_tables := public._prov_get_template_tables();
 
-        -- Install RLS policies
-        v_resource := public._prov_table_to_resource(v_table);
-        PERFORM public._prov_install_rls(v_schema_name, v_table, p_entity_id, v_resource);
-    END LOOP;
+        FOREACH v_table IN ARRAY v_tables
+        LOOP
+            PERFORM public._prov_clone_table('public', v_schema_name, v_table);
+            v_resource := public._prov_table_to_resource(v_table);
+            PERFORM public._prov_install_rls(v_schema_name, v_table, p_entity_id, v_resource);
+        END LOOP;
 
-    -- 8. Re-add foreign keys (all tables now exist in target schema)
-    FOREACH v_table IN ARRAY v_tables
-    LOOP
-        PERFORM public._prov_readd_foreign_keys('public', v_schema_name, v_table);
-    END LOOP;
+        -- 8. Re-add foreign keys
+        FOREACH v_table IN ARRAY v_tables
+        LOOP
+            PERFORM public._prov_readd_foreign_keys('public', v_schema_name, v_table);
+        END LOOP;
 
-    -- 9. Finalize — update status to 'ready'
-    PERFORM public._prov_update_status(p_entity_id, 'ready');
+        -- 9. Finalize
+        PERFORM public._prov_update_status(p_entity_id, 'ready');
 
-    RETURN jsonb_build_object(
-        'status', 'ready',
-        'schema_name', v_schema_name,
-        'message', 'Entity provisioned successfully'
-    );
+        RETURN jsonb_build_object(
+            'status', 'ready',
+            'schema_name', v_schema_name,
+            'message', 'Entity provisioned successfully'
+        );
 
-EXCEPTION WHEN OTHERS THEN
-    -- 10. Error handling — drop partial schema, update status to 'failed'
-    PERFORM public._prov_cleanup_on_error(v_schema_name);
-    PERFORM public._prov_update_status(p_entity_id, 'failed', SQLERRM);
+    EXCEPTION WHEN OTHERS THEN
+        -- 10. Provisioning failure only — cleanup + mark failed
+        PERFORM public._prov_cleanup_on_error(v_schema_name);
+        PERFORM public._prov_update_status(p_entity_id, 'failed', SQLERRM);
 
-    RETURN jsonb_build_object(
-        'status', 'failed',
-        'error', SQLERRM,
-        'schema_name', v_schema_name
-    );
+        RETURN jsonb_build_object(
+            'status', 'failed',
+            'error', SQLERRM,
+            'schema_name', v_schema_name
+        );
+    END;
 END;
 $function$;
