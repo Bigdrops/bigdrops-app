@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ThemeProvider } from '@/components/theme-provider'
+import { OperationProvider } from '@/context/OperationContext'
+import OperationOverlay from '@/components/ui/OperationOverlay'
 import '@fontsource-variable/inter'
 import '@fontsource/roboto/400.css'
 import '@fontsource/roboto/700.css'
@@ -49,7 +51,10 @@ if (rootElement) {
         enableSystem
         disableTransitionOnChange
       >
-        <App />
+        <OperationProvider>
+          <App />
+          <OperationOverlay />
+        </OperationProvider>
       </ThemeProvider>
     </StrictMode>,
   )

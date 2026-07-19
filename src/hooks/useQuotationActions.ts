@@ -4,6 +4,7 @@ import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { normalizeInvoicePdfTemplateId } from "@/domain/invoice";
 import type { InvoicePdfTemplateId } from "@/domain/invoice/types";
 import { shareDocument } from "@/components/document-view/shared/shareDocument";
+import { useOperation } from "@/context/OperationContext";
 import { feedback } from "@/lib/feedback";
 import { supabase } from "@/supabase";
 import {
@@ -36,6 +37,7 @@ export function useQuotationActions(input: {
 
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const operation = useOperation();
   const [downloading, setDownloading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [archiving, setArchiving] = useState(false);
@@ -107,11 +109,14 @@ export function useQuotationActions(input: {
   const handleUpdateStatus = async (status: string, successLabel: string) => {
     if (!id || updatingStatus) return;
     setUpdatingStatus(true);
+    operation.start("update-status", "Updating Status", "Updating quotation status...");
     try {
       await updateQuotationStatus(id, status);
       await refreshQuotation();
+      operation.finish("success");
       showToast(successLabel, `Quotation marked as ${status}.`, "success");
     } catch (error) {
+      operation.finish("error");
       showToast("Update failed", error instanceof Error ? error.message : "Could not update status.");
     } finally {
       setUpdatingStatus(false);
@@ -121,10 +126,13 @@ export function useQuotationActions(input: {
   const handleDuplicate = async () => {
     if (!quotation || duplicating) return;
     setDuplicating(true);
+    operation.start("duplicate-quotation", "Duplicating Quotation", "Creating copy...");
     try {
       const createdQuotation = await duplicateQuotationRecord({ quotation, items, prefixes: settings?.document_prefixes });
+      operation.finish("success");
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error) {
+      operation.finish("error");
       showToast("Clone failed", error instanceof Error ? error.message : "Could not duplicate this quotation.");
     } finally {
       setDuplicating(false);
@@ -134,10 +142,13 @@ export function useQuotationActions(input: {
   const handleConvertToInvoice = async () => {
     if (!quotation || converting || !id) return;
     setConverting(true);
+    operation.start("convert-quotation", "Creating Invoice", "Transferring quotation information...");
     try {
       const createdInvoice = await convertQuotationToInvoice({ id, quotation, items, prefixes: settings?.document_prefixes });
+      operation.finish("success");
       navigate(`/invoices/${createdInvoice.id}`);
     } catch (error) {
+      operation.finish("error");
       showToast("Conversion failed", error instanceof Error ? error.message : "Could not convert this quotation.");
     } finally {
       ui.closeModal();
@@ -148,10 +159,13 @@ export function useQuotationActions(input: {
   const handleArchive = async () => {
     if (!id || archiving) return;
     setArchiving(true);
+    operation.start("archive-quotation", "Archiving Document", "Updating company records...");
     try {
       await archiveQuotationRecord(id);
+      operation.finish("success");
       navigate("/quotations");
     } catch (error) {
+      operation.finish("error");
       showToast("Archive failed", error instanceof Error ? error.message : "Could not archive this quotation.");
     } finally {
       setArchiving(false);
@@ -161,10 +175,13 @@ export function useQuotationActions(input: {
   const handleDelete = async () => {
     if (!id || deleting) return;
     setDeleting(true);
+    operation.start("delete-quotation", "Deleting Document", "Removing from records...");
     try {
       await deleteQuotationRecord(id);
+      operation.finish("success");
       navigate("/quotations");
     } catch (error) {
+      operation.finish("error");
       showToast("Delete failed", error instanceof Error ? error.message : "Could not delete this quotation.");
     } finally {
       setDeleting(false);
