@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test \"src/tests/critical/*.test.js\"",
+    "test": "node --experimental-loader ./src/tests/resolve-alias.js --test \"src/tests/critical/*.test.js\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
