@@ -36,3 +36,9 @@
 [DELEGATION] task="Round 6 Entity Provisioning Engine — migration, 4 bug fixes (LIKE syntax, bind params, ERRCODE, nested exception blocks), 7-scenario lifecycle test all pass" | domain="architecture" | subagent="NONE" | justification="PL/pgSQL function design, dynamic SQL, RLS policy generation, Postgres container testing; no matching SUBAGENTS.md entry for provisioning engine" | harness="MiMoCode" | date="2026-07-17"
 [DELEGATION] task="docs commit and push" | domain="git-workflow" | subagent="git-workflow-master" | source=".opencode/agents/git-workflow-master.md" | harness="opencode"
 [DELEGATION] task="Global Operation Experience — premium overlay, quotation actions migration" | domain="ui-overlay" | subagent="NONE" | justification="No matching SUBAGENTS.md entry for global operation UX; frontend-developer + minimal-change-engineer scope but in-house execution was faster for this focused overlay task" | harness="OpenCode" | date="2026-07-19"
+[DELEGATION] task=\
+commit
+and
+push
+repository
+state\ | domain=\git\ | subagent=\git-workflow-master\ | source=\docs/SUBAGENTS.md\ | harness=\opencode\
