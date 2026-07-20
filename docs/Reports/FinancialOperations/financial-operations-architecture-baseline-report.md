@@ -6,7 +6,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 ## 1. Objective & Scope
 
-**Objective:** Document every existing Financial Operations capability in the BIGDROPS repository, map ownership, identify gaps against `docs/PRD/financial-operations-prd.md`, and produce the definitive implementation baseline for all future phases.
+**Objective:** Document every existing Financial Operations capability in the BIGDROPS repository, map ownership, identify gaps against `docs/prd/financial-operations-prd.md`, and produce the definitive implementation baseline for all future phases.
 
 **Scope:**
 - Invoice module (creation, editing, status, lifecycle)
@@ -684,7 +684,7 @@ Domain function (e.g., changeInvoiceStatus)
 | `supabase/migrations/20260520090008_audit_activity.sql` | 1-227 | Audit schema |
 | `supabase/migrations/20260520090010_views.sql` | 1-154 | Financial views |
 | `supabase/migrations/20260703000000_record_payment_voided.sql` | 1-49 | Payment voided RPC |
-| `docs/PRD/financial-operations-prd.md` | 1-514 | Target architecture PRD |
+| `docs/prd/financial-operations-prd.md` | 1-514 | Target architecture PRD |
 
 ### 17.2 Key Line References
 

@@ -8,7 +8,7 @@ This report was written by OpenCode on 2026-07-06 via Local Runner.
 
 Extract the invoice save orchestration lifecycle from `useInvoiceSave` into a generic, reusable `useDocumentSave` hook using the strategy pattern. The new hook must contain zero invoice-specific logic so that other document types (quotation, CSR, BOQ, RFQ, waybill) can reuse the same save lifecycle without duplication.
 
-**In scope:** `useDocumentSave` creation, `useInvoiceSave` refactoring, `docs/STANDARD/document-save-orchestration.md` standard.
+**In scope:** `useDocumentSave` creation, `useInvoiceSave` refactoring, `docs/standard/document-save-orchestration.md` standard.
 
 **Out of scope:** Refactoring quotation, CSR, BOQ, RFQ, or waybill save hooks; changes to `Calculations.ts`; changes to `InvoiceFormPage.tsx`.
 
@@ -21,7 +21,7 @@ Extract the invoice save orchestration lifecycle from `useInvoiceSave` into a ge
 | File | Lines | Purpose |
 |------|-------|---------|
 | `src/hooks/useDocumentSave.ts` | 90 | Generic save orchestration hook |
-| `docs/STANDARD/document-save-orchestration.md` | 203 | Standard documenting the strategy pattern for all document types |
+| `docs/standard/document-save-orchestration.md` | 203 | Standard documenting the strategy pattern for all document types |
 
 ### Files modified
 

@@ -2,7 +2,7 @@
 
 This report was written by OpenCode on 2026-07-07 via Local Runner.
 
-**Scope:** Service Layer, UI Layer, and Audit Trail implementation across Invoice, Quotation, CSR, and Waybill documents — evaluated against `docs/STANDARD/document-transformation-standard.md` (v1.1, "The 3 Laws System").
+**Scope:** Service Layer, UI Layer, and Audit Trail implementation across Invoice, Quotation, CSR, and Waybill documents — evaluated against `docs/standard/document-transformation-standard.md` (v1.1, "The 3 Laws System").
 
 **Out of scope:** BOQ, RFQ, and any module not named above. No code was modified.
 

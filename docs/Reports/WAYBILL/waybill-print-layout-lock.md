@@ -1,7 +1,7 @@
 # Waybill Print Layout Lock — Execution Report
 
 **Date:** 2026-06-17  
-**Task:** Execute `docs/STANDARD/waybill contract.md`  
+**Task:** Execute `docs/standard/waybill contract.md`  
 **Files Modified:**
 - `src/components/waybill/waybillMinimalStyles.ts`
 - `src/components/waybill/blankWaybillTemplate.tsx`

@@ -6,7 +6,7 @@ This report was written by OpenCode on 2026-07-13 via Local Runner.
 
 ## Objective
 
-Audit `/docs/TEMPLATES/htmltemps/waybill/pop.html` as a design prototype for the "Where's this shipment headed?" waybill-type selection overlay. Produce a read-only renovation blueprint mapping every element onto the BIGDROPS Clinical design system (`src/index.css`, `src/styles/formTheme.css`, `tailwind.config.js`) and the existing Radix Dialog primitive (`src/components/ui/dialog.tsx`).
+Audit `/docs/templates/htmltemps/waybill/pop.html` as a design prototype for the "Where's this shipment headed?" waybill-type selection overlay. Produce a read-only renovation blueprint mapping every element onto the BIGDROPS Clinical design system (`src/index.css`, `src/styles/formTheme.css`, `tailwind.config.js`) and the existing Radix Dialog primitive (`src/components/ui/dialog.tsx`).
 
 **Strictly read-only:** No code written, no files modified.
 

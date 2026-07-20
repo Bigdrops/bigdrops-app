@@ -22,7 +22,7 @@ This report determines whether runtime invocation of the existing `assertIdentit
 
 ### 1. Document Transformation Standard Identity Fields
 
-Source: `docs/STANDARD/document-transformation-standard.md`
+Source: `docs/standard/document-transformation-standard.md`
 
 The Edit Law defines identity fields as:
 - `client_id`

@@ -96,7 +96,7 @@ Import | Settings | Clear All (ml-auto)
 
 ### Comparison with Template
 
-The reference template at `docs/TEMPLATES/React-temps/sortable.tsx` uses `@/components/reui/sortable` which does not exist in this project. The current implementation correctly uses the `@dnd-kit` stack instead — this is the correct architectural choice given the template doesn't apply.
+The reference template at `docs/templates/React-temps/sortable.tsx` uses `@/components/reui/sortable` which does not exist in this project. The current implementation correctly uses the `@dnd-kit` stack instead — this is the correct architectural choice given the template doesn't apply.
 
 ---
 

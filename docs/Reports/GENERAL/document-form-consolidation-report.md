@@ -8,7 +8,7 @@ Consolidate NewCSR/EditCSR → CsrFormPage and NewLetter/EditLetter → LetterFo
 - CSR: orchestration extraction (number generation, prefills, offline drafts, identity lock, duplicate) into CsrFormPage
 - Letter: orchestration extraction (settings prefill, DB load, field lock, save) into LetterFormPage
 - Thin delegator preservation in NewCSR/EditCSR/NewLetter/EditLetter
-- Normative standard document at docs/STANDARD/document-form-consolidation-standard.md
+- Normative standard document at docs/standard/document-form-consolidation-standard.md
 
 Explicitly excluded: QuotationFormPage consolidation (already exists but not part of this task), BOQ/RFQ/Waybill form pages (future work).
 
@@ -16,7 +16,7 @@ Explicitly excluded: QuotationFormPage consolidation (already exists but not par
 
 - `src/pages/CsrFormPage.tsx` — 200 lines. Create mode: CSR number generation, invoice/project/blank-download prefills, offline+Sentry+uniqueRetry save. Edit mode: load by ID, field unlock for draft, identity lock for non-draft, guarded save. Delegates form rendering to existing CsrFormScreen.
 - `src/pages/LetterFormPage.tsx` — 230 lines. Create mode: prefill sender from settings. Edit mode: load from letterRepository, lock fields if not draft. Form UI inline (no shared form component exists for Letter).
-- `docs/STANDARD/document-form-consolidation-standard.md` — normative standard mandating the single *FormPage pattern for all document modules. Covers file layout, component interface, route registration, mode responsibilities, and conformance rules.
+- `docs/standard/document-form-consolidation-standard.md` — normative standard mandating the single *FormPage pattern for all document modules. Covers file layout, component interface, route registration, mode responsibilities, and conformance rules.
 
 ## Files Modified
 

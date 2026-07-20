@@ -4,13 +4,13 @@ This report was written by OpenCode on 2026-07-08 via Local Runner.
 
 ## Objective
 
-Create the PDF Customization Extension Standard at `docs/STANDARD/pdf-customization-extension-standard.md` to canonically document the validated production architecture after the Waybill PDF customization rollout (Phases 1–2.4). This standard serves as the implementation guide for all future document families (quotation, invoice, BOQ, RFQ, etc.).
+Create the PDF Customization Extension Standard at `docs/standard/pdf-customization-extension-standard.md` to canonically document the validated production architecture after the Waybill PDF customization rollout (Phases 1–2.4). This standard serves as the implementation guide for all future document families (quotation, invoice, BOQ, RFQ, etc.).
 
 ## Scope
 
 **In scope:**
 - Reading all source engine files, the locked PRD, and all five implementation reports covering the waybill adoption cycle
-- Creating a single `docs/STANDARD/pdf-customization-extension-standard.md` file
+- Creating a single `docs/standard/pdf-customization-extension-standard.md` file
 - Verifying no source code files were touched via `git status`
 
 **Excluded:**
@@ -24,7 +24,7 @@ Create the PDF Customization Extension Standard at `docs/STANDARD/pdf-customizat
 
 | File | Role |
 |------|------|
-| `docs/PRD/pdf-customization-extension-system.md` | Locked product requirements — section 18 specifies standard creation rule |
+| `docs/prd/pdf-customization-extension-system.md` | Locked product requirements — section 18 specifies standard creation rule |
 | `docs/Reports/PDF/pdf-customization-engine-implementation.md` | Engine creation report — confirms three-layer architecture |
 | `docs/Reports/PDF/phase-1.5-audit-report.md` | Resolver audit — confirmed `handwritingFont`/`handwritingColor` naming |
 | `docs/Reports/PDF/waybill-pdf-customization-engine-adoption.md` | Waybill bridge adoption — documents `bridgeToDesignPreset()` pattern |
@@ -72,7 +72,7 @@ All 13 required architecture points from the task specification are incorporated
 
 ## Verification
 
-- `git status` confirms `docs/STANDARD/pdf-customization-extension-standard.md` is the only new untracked file
+- `git status` confirms `docs/standard/pdf-customization-extension-standard.md` is the only new untracked file
 - No `.ts`, `.tsx`, `.js`, or `.css` files were modified
 - `git diff --stat` shows zero changes to application source code
 - Build/typecheck skipped per AGENTS.md hardware policy (standard-only doc task)

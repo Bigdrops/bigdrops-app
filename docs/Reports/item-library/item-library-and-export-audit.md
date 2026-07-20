@@ -78,7 +78,7 @@ The Item Library has its **own separate export/import** mechanism specifically f
 - **Export:** `domain/cleanupExportPayload.ts` + `domain/itemCleanupExchange.ts` — serializes flagged items and aliases into a JSON payload (`CatalogCleanupBatchExportPayload`)
 - **Import:** `domain/itemCleanupExchange.ts` — deserializes batches, maps aliases, validates structure
 - **Not connected** to the shared `ContextualExportDropdown` or the generic import domain pipeline (`domain/import/*`)
-- Uses a bespoke exchange format (not the JSON Import Standard from `docs/STANDARD/json-import-standard.md`)
+- Uses a bespoke exchange format (not the JSON Import Standard from `docs/standard/json-import-standard.md`)
 
 ---
 
@@ -204,7 +204,7 @@ Each adapter exports:
 
 The Waybill module has **two separate adapters** for External vs Internal waybills, as prescribed by the JSON Import Standard.
 
-### 3.4 JSON Import Standard (`docs/STANDARD/json-import-standard.md`)
+### 3.4 JSON Import Standard (`docs/standard/json-import-standard.md`)
 
 Key requirements:
 1. Global AI prompt discipline block (verbatim preamble)
@@ -336,7 +336,7 @@ CSR (`client_service_records`) is registered in `TABLE_MAP` but:
 | Domain Pipeline | 8 | `types.ts`, `schema.ts`, `parse.ts`, `normalize.ts`, `validate.ts`, `resolve.ts`, `overwrite.ts`, `apply.ts` |
 | Domain Support | 2+ | `promptGenerator.ts`, `tableState.ts`, `utils.ts` |
 | Module Adapters | 5 | `invoice/importAdapter.ts`, `quotation/importAdapter.ts`, `rfq/importAdapter.ts`, `waybill/externalWaybillImportAdapter.ts`, `waybill/internalWaybillImportAdapter.ts` |
-| Standard | 1 | `docs/STANDARD/json-import-standard.md` |
+| Standard | 1 | `docs/standard/json-import-standard.md` |
 
 ### Query Platform
 

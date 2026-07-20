@@ -1,6 +1,6 @@
 -- Domain: Receipts (Payment Acknowledgement)
 -- Created: 2026-07-06
--- Spec: docs/STANDARD/receipt-standard.md
+-- Spec: docs/standard/receipt-standard.md
 
 -- ============================================================
 -- TABLE

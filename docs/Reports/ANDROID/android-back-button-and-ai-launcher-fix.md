@@ -18,7 +18,7 @@ Pressing Back inside the app does nothing. No navigation, no overlay dismissal, 
 
 ### ADB Log Evidence
 
-`docs/Tickets/Try.txt` contains a full `adb logcat Capacitor/Console:I` capture. The filter `findstr "[BACK]"` returned zero matches (line 5). The `[BACK]` log prefix is emitted by `AndroidBackHandler.tsx` lines 177-183 whenever the Capacitor `backButton` event fires. Zero matches proves the event never reaches JavaScript.
+`docs/tickets/Try.txt` contains a full `adb logcat Capacitor/Console:I` capture. The filter `findstr "[BACK]"` returned zero matches (line 5). The `[BACK]` log prefix is emitted by `AndroidBackHandler.tsx` lines 177-183 whenever the Capacitor `backButton` event fires. Zero matches proves the event never reaches JavaScript.
 
 ### Pipeline Trace
 

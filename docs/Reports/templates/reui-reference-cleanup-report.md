@@ -4,11 +4,11 @@ This report was written by Buffy on 2026-07-14 via Freebuff.
 
 ## Objective
 
-Prune the downloaded ReUI reference repository at `docs/TEMPLATES/React-temps/reui` so it functions as a clean, local design reference library for future UI/UX work. Remove repository metadata, development artifacts, and other unnecessary files while preserving everything useful for browsing components, layouts, styling patterns, and implementation examples.
+Prune the downloaded ReUI reference repository at `docs/templates/React-temps/reui` so it functions as a clean, local design reference library for future UI/UX work. Remove repository metadata, development artifacts, and other unnecessary files while preserving everything useful for browsing components, layouts, styling patterns, and implementation examples.
 
 ## Scope
 
-Only files within `docs/TEMPLATES/React-temps/reui/` were evaluated. No component source code, stylesheets, documentation, or asset files were modified. No files were renamed or reorganized.
+Only files within `docs/templates/React-temps/reui/` were evaluated. No component source code, stylesheets, documentation, or asset files were modified. No files were renamed or reorganized.
 
 ## Removed Items
 
@@ -69,7 +69,7 @@ No items were found to be of uncertain value. Every preserved item serves either
 
 ## Verification
 
-- `git status` confirms only the `docs/TEMPLATES/React-temps/reui/` cleaned directory remains as untracked content
+- `git status` confirms only the `docs/templates/React-temps/reui/` cleaned directory remains as untracked content
 - No existing tracked files in the main project were modified by this cleanup
 - No `bun run build` was executed (per project policy)
 - No application tests or type checking were run (not required for cleanup)

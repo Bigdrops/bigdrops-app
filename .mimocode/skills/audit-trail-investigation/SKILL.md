@@ -11,7 +11,7 @@ This skill guides the systematic investigation of audit trail wiring for any BIG
 
 Before starting, read:
 1. `AGENTS.md` — project rules (especially §2 Hard Architecture Rules, §3 Workflow)
-2. `docs/STANDARD/audit-trail-standard.md` — canonical audit trail standard
+2. `docs/standard/audit-trail-standard.md` — canonical audit trail standard
 3. `src/lib/audit.ts` — core audit utility functions
 
 ## Architecture Context
@@ -139,7 +139,7 @@ For each mutation path, verify end-to-end:
 ## Report Format
 
 After completing the investigation, save a report to:
-`docs/Reports/<MODULE>/audit-trail-investigation.md`
+`docs/reports/<MODULE>/audit-trail-investigation.md`
 
 Include:
 1. **Module inventory**: All mutation points found

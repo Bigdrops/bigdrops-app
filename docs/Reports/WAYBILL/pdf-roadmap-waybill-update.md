@@ -32,7 +32,7 @@ Phase 1 → Phase 2A → Phase 2B → Phase 3A (Invoice/Quotation) → Phase 3B 
 
 | File | Change |
 |------|--------|
-| `docs/PRD/pdf-rendering-roadmap.md` | Added Phase 3B, renumbered old 3B → 3C, updated execution order |
+| `docs/prd/pdf-rendering-roadmap.md` | Added Phase 3B, renumbered old 3B → 3C, updated execution order |
 
 ## Files NOT Modified
 

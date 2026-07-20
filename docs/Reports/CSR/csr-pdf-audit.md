@@ -295,7 +295,7 @@
 | `src/components/csr/preview-templates/Crimson.tsx` | Template 4 — strip readings, status checks, no acknowledgement |
 | `src/pages/NewCSR.tsx` | Page wiring — calls `buildCsrPreviewData` and `getCsrPdfDocument` |
 | `src/components/document-view/csr/CsrDocumentPreview.tsx` | Embedded document preview |
-| `docs/PRD/pdf-rendering-roadmap.md` | Roadmap — Phase 2.8 CSR entry |
+| `docs/prd/pdf-rendering-roadmap.md` | Roadmap — Phase 2.8 CSR entry |
 
 ---
 
@@ -386,7 +386,7 @@ To port Invoice landscape capability to CSR, the following steps are required:
 
 ## 9. Memo Issue Verification
 
-Verified the 10 issues listed in the task prompt (`docs/Prompts/prompt6i5.md`) against actual code:
+Verified the 10 issues listed in the task prompt (`docs/prompts/prompt6i5.md`) against actual code:
 
 ### 9.1 Geometry & Elasticity
 

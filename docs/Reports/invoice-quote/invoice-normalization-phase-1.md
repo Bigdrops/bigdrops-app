@@ -44,7 +44,7 @@ Consolidated `NewInvoice.tsx` (878 lines) and `EditInvoice.tsx` (848 lines) into
 
 ## Behavioral Verification
 
-Verified against `docs/STANDARD/document-transformation-standard.md`:
+Verified against `docs/standard/document-transformation-standard.md`:
 - **Edit Law**: Identity immutability unchanged (domain/service layer, not page)
 - **Duplicate Law**: Unchanged (handled in document-view layer)
 - **Revert Law**: Unchanged (handled in document-view layer)

@@ -1,7 +1,7 @@
 # JSON Import Standard Update Report
 
 **Date:** 2026-06-19
-**File:** `docs/STANDARD/json-import-standard.md`
+**File:** `docs/standard/json-import-standard.md`
 **Version:** 1.0 → 1.1
 **Scope:** Correct column auto-creation specification based on forensic pipeline inspection
 
@@ -55,7 +55,7 @@ JSON → normalize.ts → resolve.ts → apply.ts → setColumns() → Schema Fr
 
 ## Files Modified
 
-- `docs/STANDARD/json-import-standard.md` — all changes applied
+- `docs/standard/json-import-standard.md` — all changes applied
 
 ## Verification
 

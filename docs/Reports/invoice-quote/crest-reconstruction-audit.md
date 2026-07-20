@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-28  
 **Status:** Complete  
-**Scope:** Read-only engineering audit for recreating `docs/TEMPLATES/htmltemps/crest.html` as a first-class React-PDF presentation template.
+**Scope:** Read-only engineering audit for recreating `docs/templates/htmltemps/crest.html` as a first-class React-PDF presentation template.
 
 ## 1. Executive Summary
 

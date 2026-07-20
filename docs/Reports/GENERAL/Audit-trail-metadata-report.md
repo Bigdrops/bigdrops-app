@@ -3,7 +3,7 @@
 This report was written by OpenCode on 2026-07-06 via Local Runner.
 
 ## 1. Objective & Scope
-The objective of this task was to resolve three issues outlined in `docs/Tickets/Audit-trail-metadata.md`:
+The objective of this task was to resolve three issues outlined in `docs/tickets/Audit-trail-metadata.md`:
 1. Include missing metadata (`payment_mode`, `account_paid_to`, `running_balance_after`, `wht_amount`) in the payment audit trail event displays.
 2. Fix the audit display formatting so that empty/null fields do not render a trailing dash (`—`).
 3. Distinctly label Advance Invoice creation events as "created an advance invoice" instead of falling back to "created this invoice" or grammatical inconsistencies.

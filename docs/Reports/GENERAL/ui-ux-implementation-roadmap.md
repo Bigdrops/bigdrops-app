@@ -19,22 +19,22 @@ This report consolidates findings from 20+ PRD documents, governance validation,
 
 | # | Document | Path | Focus |
 |---|----------|------|-------|
-| 1 | PRD Master Index | `docs/PRD/ui-ux-consolidation/README.md` | Document inventory, methodology |
-| 2 | Architecture Inspection | `docs/PRD/ui-ux-consolidation/architecture-inspection.md` | Component architecture, dead code, bloat |
-| 3 | Product Inspection | `docs/PRD/ui-ux-consolidation/product-inspection.md` | UX feel assessment, navigation, forms |
-| 4 | Component Inventory | `docs/PRD/ui-ux-consolidation/component-inventory.md` | Full component catalog |
-| 5 | Issue Tracker | `docs/PRD/ui-ux-consolidation/issue-tracker.md` | 16 issues tracked |
-| 6 | Design System Roadmap | `docs/PRD/ui-ux-consolidation/design-system-roadmap.md` | Token system, CSS architecture |
-| 7 | Migration Plan | `docs/PRD/ui-ux-consolidation/migration-plan.md` | Phased migration strategy |
-| 8 | Priority Matrix | `docs/PRD/ui-ux-consolidation/priority-matrix.md` | Prioritized action items |
-| 9 | Recommendations | `docs/PRD/ui-ux-consolidation/02-recommendations.md` | R1-R9 consolidation recommendations |
-| 10 | Target Architecture | `docs/PRD/ui-ux-consolidation/04-architecture.md` | Post-consolidation architecture |
-| 11 | Testing Checklist | `docs/PRD/ui-ux-consolidation/07-testing-checklist.md` | Testing matrix |
-| 12 | Decisions (ADRs) | `docs/PRD/ui-ux-consolidation/08-decisions.md` | D-001 through D-015 |
-| 13 | REUI Library Inspection | `docs/PRD/UI-UX-Consolidation/reui-library-inspection.md` | REUI inventory (55 components) |
-| 14 | REUI Adoption Matrix | `docs/PRD/UI-UX-Consolidation/reui-adoption-matrix.md` | Cross-source scoring |
-| 15 | REUI Migration Opportunities | `docs/PRD/UI-UX-Consolidation/reui-migration-opportunities.md` | Migration paths |
-| 16 | Platform Component Recommendations | `docs/PRD/UI-UX-Consolidation/platform-component-recommendations.md` | Final winners per family |
+| 1 | PRD Master Index | `docs/prd/ui-ux-consolidation/README.md` | Document inventory, methodology |
+| 2 | Architecture Inspection | `docs/prd/ui-ux-consolidation/architecture-inspection.md` | Component architecture, dead code, bloat |
+| 3 | Product Inspection | `docs/prd/ui-ux-consolidation/product-inspection.md` | UX feel assessment, navigation, forms |
+| 4 | Component Inventory | `docs/prd/ui-ux-consolidation/component-inventory.md` | Full component catalog |
+| 5 | Issue Tracker | `docs/prd/ui-ux-consolidation/issue-tracker.md` | 16 issues tracked |
+| 6 | Design System Roadmap | `docs/prd/ui-ux-consolidation/design-system-roadmap.md` | Token system, CSS architecture |
+| 7 | Migration Plan | `docs/prd/ui-ux-consolidation/migration-plan.md` | Phased migration strategy |
+| 8 | Priority Matrix | `docs/prd/ui-ux-consolidation/priority-matrix.md` | Prioritized action items |
+| 9 | Recommendations | `docs/prd/ui-ux-consolidation/02-recommendations.md` | R1-R9 consolidation recommendations |
+| 10 | Target Architecture | `docs/prd/ui-ux-consolidation/04-architecture.md` | Post-consolidation architecture |
+| 11 | Testing Checklist | `docs/prd/ui-ux-consolidation/07-testing-checklist.md` | Testing matrix |
+| 12 | Decisions (ADRs) | `docs/prd/ui-ux-consolidation/08-decisions.md` | D-001 through D-015 |
+| 13 | REUI Library Inspection | `docs/prd/UI-UX-Consolidation/reui-library-inspection.md` | REUI inventory (55 components) |
+| 14 | REUI Adoption Matrix | `docs/prd/UI-UX-Consolidation/reui-adoption-matrix.md` | Cross-source scoring |
+| 15 | REUI Migration Opportunities | `docs/prd/UI-UX-Consolidation/reui-migration-opportunities.md` | Migration paths |
+| 16 | Platform Component Recommendations | `docs/prd/UI-UX-Consolidation/platform-component-recommendations.md` | Final winners per family |
 | 17 | Governance Validation | `docs/Reports/reui-standard-validation.md` | 7-criteria governance check |
 | 18 | AGENTS.md | `AGENTS.md` | Project hard rules, conventions |
 

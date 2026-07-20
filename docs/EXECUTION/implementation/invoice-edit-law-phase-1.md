@@ -3,7 +3,7 @@
 **Date:** 2026-07-08
 **Author:** OpenCode
 **Tool Harness:** Local Runner (opencode CLI)
-**Prompt:** `docs/Prompts/prompt705.md`
+**Prompt:** `docs/prompts/prompt705.md`
 
 ---
 

@@ -4,7 +4,7 @@ This report was written by OpenCode on 2026-07-06 via Local Runner.
 
 ## Objective
 
-Fix a regression in `PaymentAttachmentUploader.tsx` where `isSupportedImageFile` was imported but never called. The component used a broken custom regex MIME matcher instead of the shared validation policy, violating `docs/STANDARD/document-image-upload-policy.md`.
+Fix a regression in `PaymentAttachmentUploader.tsx` where `isSupportedImageFile` was imported but never called. The component used a broken custom regex MIME matcher instead of the shared validation policy, violating `docs/standard/document-image-upload-policy.md`.
 
 ## Root Cause
 
@@ -45,7 +45,7 @@ No other consumers affected — verified all 8 existing policy consumers use `is
 
 ## Standard Conformance
 
-`PaymentAttachmentUploader.tsx` now fully conforms to `docs/STANDARD/document-image-upload-policy.md`.
+`PaymentAttachmentUploader.tsx` now fully conforms to `docs/standard/document-image-upload-policy.md`.
 
 ## Verification
 

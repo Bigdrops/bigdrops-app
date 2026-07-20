@@ -4,7 +4,7 @@ This report was written by OpenCode on 2026-07-08 via Local Runner.
 
 ## Objective
 
-Implement runtime UX enforcement of the 1st Law of Document Transformation (Identity Immutability) for Invoice and Quotation forms, as specified in `docs/Prompts/prompt66.md`. Covers Parts B–F.
+Implement runtime UX enforcement of the 1st Law of Document Transformation (Identity Immutability) for Invoice and Quotation forms, as specified in `docs/prompts/prompt66.md`. Covers Parts B–F.
 
 ## Scope
 

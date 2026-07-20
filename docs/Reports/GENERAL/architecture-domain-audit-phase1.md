@@ -21,7 +21,7 @@ Audit the Big Drops codebase across five targeted areas to assess architecture c
 - Project pages (`src/pages/Projects.tsx`, `ProjectDetail.tsx`, `NewProject.tsx`, `ProjectDocumentView.tsx`)
 - Project hook (`src/hooks/useProjectDocumentFetch.ts`)
 - Migration files (`supabase/migrations/20260520090003_invoices.sql`, `20260520090004_csrs.sql`, `20260520090001_projects.sql`)
-- Governance files (`AGENTS.md`, `docs/STANDARD/*`)
+- Governance files (`AGENTS.md`, `docs/standard/*`)
 
 ### Excluded
 - PDF render engines (`src/components/pdf/`, `src/components/pdf-new/`, `src/components/waybill/pdf/`) — scoped to data architecture, not rendering
@@ -39,7 +39,7 @@ Audit the Big Drops codebase across five targeted areas to assess architecture c
 - **File inventory**: All `.ts`/`.tsx`/`.js` files in `src/domain/` were listed with line counts
 - **Content reading**: Every key implementation file in the 5 audit areas was read in full
 - **Schema analysis**: The 3 migration files for invoices, CSRs/waybills, and projects were read
-- **Standard comparison**: Each finding was cross-referenced against `AGENTS.md` rules and `docs/STANDARD/*` documents
+- **Standard comparison**: Each finding was cross-referenced against `AGENTS.md` rules and `docs/standard/*` documents
 - **No code was modified** during this audit
 
 ---
@@ -200,7 +200,7 @@ Document lineage is encoded in `custom_fields` as a `conversionTrail` object. Th
 |---------|----------|--------|
 | Traversal helpers exist | `documentRelationships.js` | `getConversionTrail()`, `getInvoiceSourceDocument()`, `fetchInvoiceChildDocuments()` provide structured access to conversion metadata. |
 | Invoice-to-waybill spawn strips monetary values | AGENTS.md §11 | Enforced by AGENTS.md rule — any code that spawns a waybill from invoice items must strip `unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`. |
-| Prefix is never hardcoded | `src/domain/prefixConstants.ts` | `resolvePrefix()` is the canonical source for all document type prefixes. Compliant with `docs/STANDARD/prefix-engine-settings-standard.md`. |
+| Prefix is never hardcoded | `src/domain/prefixConstants.ts` | `resolvePrefix()` is the canonical source for all document type prefixes. Compliant with `docs/standard/prefix-engine-settings-standard.md`. |
 
 #### 3.5.3 Concerns
 

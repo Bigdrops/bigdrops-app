@@ -199,4 +199,4 @@ This conforms to the project's established pattern (31 of 32 usages across `inde
 | `src/components/ui/circuit-board.tsx` | Uses `motion.path` correctly with `initial` + `animate` |
 | `node_modules/motion/package.json` | Confirms `motion/react` export path |
 | `node_modules/motion/dist/react.d.ts` | Confirms re-export from `framer-motion` |
-| `docs/TEMPLATES/React-temps/sidebaricon.tsx` | Template file — contains same bug |
+| `docs/templates/React-temps/sidebaricon.tsx` | Template file — contains same bug |

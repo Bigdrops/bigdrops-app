@@ -23,7 +23,7 @@ No PDF rendering, grouping mechanics, database schema, update-mode architecture,
 - `.agents/skills/typescript-advanced-types/SKILL.md`
 - `.agents/skills/frontend-design/SKILL.md`
 - `.agents/skills/supabase-postgres-best-practices/SKILL.md`
-- `docs/STANDARD/json-import-standard.md`
+- `docs/standard/json-import-standard.md`
 - `src/domain/import/promptGenerator.ts`
 - `src/domain/import/schema.ts`
 - `src/domain/import/normalize.ts`

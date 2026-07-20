@@ -3,7 +3,7 @@
 **Date:** 2026-07-02
 **Author:** OpenCode via Local Runner
 **Scope:** Law 2 enforcement across Invoice, Quotation, CSR, Waybill duplicate functions
-**Standard:** `docs/STANDARD/document-transformation-standard.md` v1.1
+**Standard:** `docs/standard/document-transformation-standard.md` v1.1
 
 ---
 

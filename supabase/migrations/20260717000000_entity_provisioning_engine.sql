@@ -1,7 +1,7 @@
 -- Domain: Entity Provisioning Engine
 -- Round 6: Production provisioning pipeline for creating new business entities
 -- Created: 2026-07-17
--- Source: docs/Prompts/prompt66.md, PRD v2.1 §§9, 9.1
+-- Source: docs/prompts/prompt66.md, PRD v2.1 §§9, 9.1
 --
 -- Architecture:
 --   One public orchestration function: provision_entity()

@@ -1,7 +1,7 @@
 -- Domain: Multi-Tenancy RLS Recursion Fixes
 -- Round 5: Fix confirmed RLS recursion bugs + additional instances found via sweep
 -- Created: 2026-07-16
--- Source: docs/Prompts/prompt6i5.md
+-- Source: docs/prompts/prompt6i5.md
 --
 -- Confirmed bugs (not re-verified per prompt instruction):
 --   BUG #1: workspace_members_select_self self-queries workspace_members → infinite recursion

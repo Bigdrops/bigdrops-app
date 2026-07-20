@@ -29,7 +29,7 @@ Only the strategy object differs.
 |------|--------|
 | `src/hooks/useQuotationSave.ts` | Created — quotation strategy + hook wrapper |
 | `src/pages/QuotationFormPage.tsx` | Modified — replaced inline `handleSave` with `useQuotationSave` hook |
-| `docs/STANDARD/document-save-orchestration.md` | Updated — documented Invoice + Quotation compliance |
+| `docs/standard/document-save-orchestration.md` | Updated — documented Invoice + Quotation compliance |
 
 ## What Moved Into quotationStrategy
 

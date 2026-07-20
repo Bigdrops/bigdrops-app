@@ -50,7 +50,7 @@ Each major document type has an isolated domain with its own:
 - Storage layer (`src/domain/<module>/storage.ts`)
 - Calculations (shared via `src/lib/Calculations.ts`)
 - PDF preview model (`src/domain/<module>/previewModel.ts`)
-- Import adapter (per `docs/STANDARD/json-import-standard.md`)
+- Import adapter (per `docs/standard/json-import-standard.md`)
 
 **Evidence:** `src/domain/invoice/` (26 files including `contracts.ts`, `projections.ts`, `previewModel.ts`, `advanceProjection.rules.ts`, `advanceChildFlow.ts`, `financialState.ts`). `src/domain/waybill/` includes `contracts.ts`, `engine.ts`, `mutations.ts`.
 
@@ -416,7 +416,7 @@ Elasticsearch would become valuable when:
 | 4 | **Custom Supabase client with safeguards** | `src/supabase.ts` — retry, timeout, service_role rejection, logging |
 | 5 | **Client-side caching with TTL** | `src/lib/cache/dashboardCache.ts`, `listCache.ts` — version-gated, with cache-bypass detection |
 | 6 | **Centralized document query platform** | `src/config/moduleAdapters.ts` — 712 lines of shared query/filter/cache logic across all modules |
-| 7 | **JSON import standard is well-defined** | `docs/STANDARD/json-import-standard.md` — prescriptive prompt discipline, Zod validation, adapter pattern |
+| 7 | **JSON import standard is well-defined** | `docs/standard/json-import-standard.md` — prescriptive prompt discipline, Zod validation, adapter pattern |
 | 8 | **DB constraints enforce business rules** | CHECK constraints: `check_waybill_type`, `check_waybill_purpose_conditional`, `check_items_json_structure` — data integrity at the database level |
 | 9 | **Audit trail is consistent across modules** | `src/lib/audit.ts` — centralized `recordAuditLog()`, tracked fields per entity, used by invoices, quotations, and projects |
 | 10 | **Offline support via Capacitor SQLite** | `src/lib/native/invoiceCache.ts` — SQLite fallback cache for offline usage (via Capacitor native bridge) |

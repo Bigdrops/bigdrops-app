@@ -1,7 +1,7 @@
 # Document Transformation Standard — Edit Law UX Update Report
 
 **Date:** 2026-07-03  
-**Scope:** Update `docs/STANDARD/document-transformation-standard.md` to strengthen Edit Law with required UX behaviour for immutable identity fields  
+**Scope:** Update `docs/standard/document-transformation-standard.md` to strengthen Edit Law with required UX behaviour for immutable identity fields  
 **Status:** ✅ Complete
 
 ---
@@ -125,7 +125,7 @@ The document now has 14 sections with consistent numbering:
 
 ## Deliverables
 
-- [x] Updated `docs/STANDARD/document-transformation-standard.md` (431 lines, 14 sections)
+- [x] Updated `docs/standard/document-transformation-standard.md` (431 lines, 14 sections)
 - [x] This report
 
 ---

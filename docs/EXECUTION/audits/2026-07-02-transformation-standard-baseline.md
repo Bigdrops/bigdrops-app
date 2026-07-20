@@ -2,7 +2,7 @@
 
 This report was written by OpenCode on 2026-07-07 via Local Runner.
 
-**Standard:** `docs/STANDARD/document-transformation-standard.md` v1.1
+**Standard:** `docs/standard/document-transformation-standard.md` v1.1
 **Date:** 2026-07-02
 **Scope:** Invoice, Quotation, CSR, Waybill
 **Out of Scope:** BOQ, RFQ
@@ -48,7 +48,7 @@ This is the first authoritative compliance audit against the Document Transforma
 
 | Standard | Version | Location |
 |----------|---------|----------|
-| Document Transformation Standard | v1.1 | `docs/STANDARD/document-transformation-standard.md` |
+| Document Transformation Standard | v1.1 | `docs/standard/document-transformation-standard.md` |
 
 ---
 

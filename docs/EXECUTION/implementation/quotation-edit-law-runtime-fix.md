@@ -3,7 +3,7 @@
 **Date:** 2026-07-09
 **Author:** OpenCode
 **Tool Harness:** Local Runner (opencode CLI)
-**Prompt:** Manual debug session for `docs/Tickets/quote-edit-crash.md`
+**Prompt:** Manual debug session for `docs/tickets/quote-edit-crash.md`
 
 ---
 
@@ -42,7 +42,7 @@ const handleDuplicateFromEditable = useCallback(...)
 
 When `loading=true` (initial render), the component returned at line 535 (after move). Hooks at lines 455-533 were **not called**. When `loading=false` (data loaded), those same hooks **were called**. React detected hook index 87 transitioning from `undefined` → `useCallback` between renders, triggering error #310.
 
-**Console evidence** from `docs/Tickets/quote-edit-crash.md`:
+**Console evidence** from `docs/tickets/quote-edit-crash.md`:
 
 ```
 Hook index 87: [previous render: undefined] → [next render: useCallback]

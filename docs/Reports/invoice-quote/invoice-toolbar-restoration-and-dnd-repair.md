@@ -25,7 +25,7 @@ The `ml-auto` on Clear All pushed it to the right edge, but Settings appeared af
 
 ### Drag-and-Drop Not Working
 
-The `GripVertical` icon was rendered in `MobileItemCard` but was purely decorative — no drag handler was attached. No dnd-kit packages were installed. The sortable template at `docs/TEMPLATES/React-temps/sortable.tsx` referenced `@/components/reui/sortable` which does not exist in the project. The implementation was never completed.
+The `GripVertical` icon was rendered in `MobileItemCard` but was purely decorative — no drag handler was attached. No dnd-kit packages were installed. The sortable template at `docs/templates/React-temps/sortable.tsx` referenced `@/components/reui/sortable` which does not exist in the project. The implementation was never completed.
 
 ---
 
@@ -40,8 +40,8 @@ The `GripVertical` icon was rendered in `MobileItemCard` but was purely decorati
 | `src/pages/NewInvoice.tsx` | New invoice page (uses handleClearAll) |
 | `src/pages/EditInvoice.tsx` | Edit invoice page (uses handleClearAll) |
 | `src/components/quotation/QuotationForm.tsx` | Quotation form (uses handleClearAll) |
-| `docs/TEMPLATES/React-temps/sortable.tsx` | Reference sortable pattern (not live code) |
-| `docs/PRD/form-stabilization.md` | PRD for form architecture (reference commit) |
+| `docs/templates/React-temps/sortable.tsx` | Reference sortable pattern (not live code) |
+| `docs/prd/form-stabilization.md` | PRD for form architecture (reference commit) |
 
 ---
 

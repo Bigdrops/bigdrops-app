@@ -2,7 +2,7 @@
 
 ## Top.html — Data-Centric Dashboard Style
 
-**Source:** `docs/TEMPLATES/htmltemps/CSR/Top.html`
+**Source:** `docs/templates/htmltemps/CSR/Top.html`
 **Format:** ~430 lines, 24000 chars, dashboard hybrid (UI nav + print report)
 **Grade:** C (not suitable as-is)
 
@@ -27,7 +27,7 @@
 
 ## minimal.html — Print-First Table Layout
 
-**Source:** `docs/TEMPLATES/htmltemps/CSR/minimal.html`
+**Source:** `docs/templates/htmltemps/CSR/minimal.html`
 **Format:** ~230 lines, 10000 chars, print-optimised one-pager
 **Grade:** B (feasible with moderate effort)
 

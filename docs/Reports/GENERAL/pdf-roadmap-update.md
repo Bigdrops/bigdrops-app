@@ -2,7 +2,7 @@
 
 **Task:** prompt86i — Update PDF Rendering Roadmap with Blank Document Integration
 **Date:** 2026-06-16
-**File Modified:** `docs/PRD/pdf-rendering-roadmap.md`
+**File Modified:** `docs/prd/pdf-rendering-roadmap.md`
 
 ---
 
@@ -38,7 +38,7 @@ Added after "Deferred from JSON Import Roadmap" section. Documents:
 - Blank document numbers use `resolvePrefix()`
 - `blank_waybill_logs` and `blank_csr_logs` tables are live
 - `withUniqueRetry` protects blank number assignments
-- Links to `docs/STANDARD/prefix-engine-settings-standard.md`
+- Links to `docs/standard/prefix-engine-settings-standard.md`
 
 ---
 
@@ -46,7 +46,7 @@ Added after "Deferred from JSON Import Roadmap" section. Documents:
 
 | File | Change |
 |---|---|
-| `docs/PRD/pdf-rendering-roadmap.md` | 4 edits (Phase 4, Phase 3 audit list, execution order, dependency note) |
+| `docs/prd/pdf-rendering-roadmap.md` | 4 edits (Phase 4, Phase 3 audit list, execution order, dependency note) |
 
 ## Source Code
 

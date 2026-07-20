@@ -341,6 +341,6 @@ To confirm the root cause, the following verification is needed:
 | `src/domain/quotation/previewModel.ts` | 143-209 | Quotation preview |
 | `src/domain/quotation/quotationFormUtils.ts` | 45-117, 190-194 | `normalizeQuotationGrouping`, `toQuotationItem` |
 | `src/hooks/useInvoiceDetailData.js` | 140-155 | View page data fetch |
-| `docs/STANDARD/json-import-standard.md` | 1-201 | Import contract |
+| `docs/standard/json-import-standard.md` | 1-201 | Import contract |
 | `supabase/migrations/20260520090003_invoices.sql` | 48-73 | `invoice_items` schema |
 | `supabase/migrations/20260520090002_quotations.sql` | 42-68 | `quotation_items` schema |

@@ -10,7 +10,7 @@
 ### Covered
 - Full financial obligation graph: origin (Calculation Engine), ownership boundaries (Invoice → Payment → Financial State → Compliance), tax architecture (VAT and WHT), cross-document rules (Invoice, Quotation, Waybill, BOQ/RFQ), reporting architecture, audit architecture.
 - 7 architectural questions answered with codebase evidence.
-- Rewrite of `docs/PRD/financial-operations-prd.md` as a forward-looking business architecture specification.
+- Rewrite of `docs/prd/financial-operations-prd.md` as a forward-looking business architecture specification.
 
 ### Intentionally Excluded
 - UI component hierarchies (except where they reveal architecture violations).

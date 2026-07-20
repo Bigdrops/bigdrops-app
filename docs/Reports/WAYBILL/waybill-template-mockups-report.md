@@ -10,8 +10,8 @@
 
 | File | Path |
 |---|---|
-| Classic mockup | `docs/TEMPLATES/htmltemps/waybill/classic-mockup.html` |
-| Minimal mockup | `docs/TEMPLATES/htmltemps/waybill/minimal-mockup.html` |
+| Classic mockup | `docs/templates/htmltemps/waybill/classic-mockup.html` |
+| Minimal mockup | `docs/templates/htmltemps/waybill/minimal-mockup.html` |
 
 ---
 
@@ -76,7 +76,7 @@ Both mockups contain exactly **2 `.page` divs** with `page-break-after: always`:
 
 **No source files were modified.**
 - Input files read-only: `WaybillPDF.tsx`, `blankWaybillTemplate.tsx`, `waybillMinimalStyles.ts`
-- Output files are entirely new HTML files in `docs/TEMPLATES/htmltemps/waybill/`
+- Output files are entirely new HTML files in `docs/templates/htmltemps/waybill/`
 - No React components, domain logic, or configuration was altered
 
 ---
@@ -86,14 +86,14 @@ Both mockups contain exactly **2 `.page` divs** with `page-break-after: always`:
 - `src/components/waybill/WaybillPDF.tsx`
 - `src/components/waybill/blankWaybillTemplate.tsx`
 - `src/components/waybill/waybillMinimalStyles.ts`
-- `docs/TEMPLATES/htmltemps/waybill/wblbarebones.html`
+- `docs/templates/htmltemps/waybill/wblbarebones.html`
 - `AGENTS.md`
 
 ---
 
 ## Confirmation of Completion
 
-- [x] 2 HTML files created in `docs/TEMPLATES/htmltemps/waybill/`
+- [x] 2 HTML files created in `docs/templates/htmltemps/waybill/`
 - [x] Visually faithful layout approximation of both templates
 - [x] All fields placed according to current React-PDF structure
 - [x] No engine logic or data transformation used

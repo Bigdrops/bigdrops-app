@@ -85,4 +85,4 @@ Phase 2 extracted ALL editable document state and mutation handlers from `Invoic
 - `src/hooks/useInvoiceForm.js` — pre-existing utility file (unchanged)
 - `src/components/useInvoiceColumns.tsx` — exports item/group factories, `ensureUiKey`, calculation builders, columns hook
 - `src/domain/invoice/` — domain types, calculations, identity, factories, normalize, columns
-- `docs/STANDARD/document-transformation-standard.md` — behavioral rules (unchanged)
+- `docs/standard/document-transformation-standard.md` — behavioral rules (unchanged)

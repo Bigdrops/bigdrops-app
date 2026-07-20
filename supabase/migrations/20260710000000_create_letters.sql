@@ -1,6 +1,6 @@
 -- Domain: Letters (Official Correspondence)
 -- Created: 2026-07-10
--- Spec: docs/PRD/Correspondence-module.md
+-- Spec: docs/prd/Correspondence-module.md
 
 -- ============================================================
 -- TABLE

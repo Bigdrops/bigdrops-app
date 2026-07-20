@@ -9,8 +9,8 @@ Restore Sentinel and Nexus CSR PDF acknowledgement sections to match their appro
 ## Evidence
 
 All findings are based on direct comparison of:
-- `docs/TEMPLATES/htmltemps/CSR/Sentinel.html` — the Sentinel spec
-- `docs/TEMPLATES/htmltemps/CSR/Nexus.html` — the Nexus spec
+- `docs/templates/htmltemps/CSR/Sentinel.html` — the Sentinel spec
+- `docs/templates/htmltemps/CSR/Nexus.html` — the Nexus spec
 - `src/components/csr/preview-templates/Sentinel.tsx` — React-PDF target
 - `src/components/csr/preview-templates/Nexus.tsx` — React-PDF target
 - `src/components/csr/preview-templates/IndustryCsr.tsx` — layout source of truth for acknowledgement block

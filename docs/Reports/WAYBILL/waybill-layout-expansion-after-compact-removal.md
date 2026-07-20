@@ -89,7 +89,7 @@ Every `<PartyCard ... compact />` call in all 6 waybill templates had the `compa
 
 ## 6. Deferred Work
 
-1. **Visual regression testing:** Render test PDFs for each of the 6 templates and compare against the regression screenshots in `docs/Tickets/Waybill PDFs regression/` to confirm overflow/overlap is resolved.
+1. **Visual regression testing:** Render test PDFs for each of the 6 templates and compare against the regression screenshots in `docs/tickets/Waybill PDFs regression/` to confirm overflow/overlap is resolved.
 2. **Invoice/Quotation sanity check:** Verify PartyCard renders correctly in IndustryTemplate without the compact prop (should be unaffected — verify).
 3. **Further layout tuning:** If visual testing reveals remaining overflow, individual template padding/minHeight values may need additional increases.
 

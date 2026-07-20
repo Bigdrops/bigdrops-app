@@ -1,6 +1,6 @@
 # commit-docs.ps1 — Stage, commit, push with report-driven commit messages
 #
-# If docs/Reports/*.md files changed → reads the # Title from the report
+# If docs/reports/*.md files changed → reads the # Title from the report
 # and uses it as the commit message subject. This is the "easy way out" —
 # the report title IS the message, because reports describe the work.
 #
@@ -58,10 +58,10 @@ function Get-Scope {
     $docsP = @($Paths | Where-Object { $_ -match '^docs/' })
     if ($docsP.Count -gt 0 -and $docsP.Count -ge ($Paths.Count * 0.5)) {
         foreach ($p in $docsP) {
-            if      ($p -match 'docs/STANDARD/') { return 'docs(standard)' }
-            elseif  ($p -match 'docs/Reports/')  { return 'docs(report)'   }
-            elseif  ($p -match 'docs/Prompts/')  { return 'docs(prompts)'  }
-            elseif  ($p -match 'docs/TEMPLATES/'){ return 'docs(templates)'}
+            if      ($p -match 'docs/standard/') { return 'docs(standard)' }
+            elseif  ($p -match 'docs/reports/')  { return 'docs(report)'   }
+            elseif  ($p -match 'docs/prompts/')  { return 'docs(prompts)'  }
+            elseif  ($p -match 'docs/templates/'){ return 'docs(templates)'}
         }
         return 'docs'
     }
@@ -86,12 +86,12 @@ $usedReportTitle = $false
 
 # Look for added/modified report files
 $reportFiles = @($changed | Where-Object {
-    $_ -match '^docs/Reports/' -and $_ -match '\.md$'
+    $_ -match '^docs/reports/' -and $_ -match '\.md$'
 })
 
 # Also check untracked report files (they'll be staged by git add -A)
 if ($reportFiles.Count -eq 0) {
-    $reportFiles = @($reportFiles + (git ls-files --others --exclude-standard 'docs/Reports/*.md'))
+    $reportFiles = @($reportFiles + (git ls-files --others --exclude-standard 'docs/reports/*.md'))
 }
 
 if ($reportFiles.Count -gt 0) {

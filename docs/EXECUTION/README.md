@@ -1,4 +1,4 @@
-# docs/EXECUTION/ — Transformation Standard Enforcement Workspace
+# docs/execution/ — Transformation Standard Enforcement Workspace
 
 > Permanent execution workspace for Document Transformation Standard compliance.
 
@@ -15,7 +15,7 @@ EXECUTION/
 
 ## Workflow
 
-1. **Audit** — Read-only compliance evaluation against `docs/STANDARD/document-transformation-standard.md`
+1. **Audit** — Read-only compliance evaluation against `docs/standard/document-transformation-standard.md`
 2. **Findings** — Each failed rule gets a unique Action ID (e.g., `EDIT-INV-001`)
 3. **Implementation** — Tasks resolve audit findings (one finding → one task)
 4. **Verification** — Confirm compliance after implementation
@@ -32,9 +32,9 @@ EXECUTION/
 ```
 AGENTS.md
     ↓
-docs/STANDARD/*
+docs/standard/*
     ↓
-docs/EXECUTION/*
+docs/execution/*
     ↓
 Implementation
 ```

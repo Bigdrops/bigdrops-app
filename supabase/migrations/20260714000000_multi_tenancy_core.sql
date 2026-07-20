@@ -1,7 +1,7 @@
 -- Domain: Multi-Tenancy Core
 -- Phase 1: Public schema authorization tables, indexes, and RPC functions
 -- Created: 2026-07-14
--- Source: docs/Reports/architecture/multi-tenancy-round-2-analysis.md
+-- Source: docs/reports/architecture/multi-tenancy-round-2-analysis.md
 
 -- ============================================================
 -- TABLES

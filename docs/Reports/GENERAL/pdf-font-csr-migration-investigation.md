@@ -148,7 +148,7 @@ No missing fonts. No orphaned font definitions. No fonts registered but never ex
 
 ### Engine Architecture (Compliant)
 
-Per `docs/STANDARD/pdf-customization-extension-standard.md`:
+Per `docs/standard/pdf-customization-extension-standard.md`:
 
 | Layer | Status | Files |
 |---|---|---|

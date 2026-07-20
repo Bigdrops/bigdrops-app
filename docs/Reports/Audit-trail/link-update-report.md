@@ -8,7 +8,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 **Objective:** Verify that no relative links are broken by the manual file move from `docs/Reports/invoice-quote/` to `docs/Reports/Audit-trail/`, and fix any broken references found.
 
-**Scope:** All files under `docs/STANDARD/`, `docs/PRD/`, and `docs/Reports/Audit-trail/` that reference the old path `docs/Reports/invoice-quote/`.
+**Scope:** All files under `docs/standard/`, `docs/prd/`, and `docs/Reports/Audit-trail/` that reference the old path `docs/Reports/invoice-quote/`.
 
 ---
 
@@ -16,8 +16,8 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 | # | File | Line | Old Path | Status |
 |---|------|------|----------|--------|
-| 1 | `docs/STANDARD/audit-trail-standard.md` | 17 | `docs/Reports/invoice-quote/` | Fixed |
-| 2 | `docs/PRD/audit-trail-integrity-prd.md` | 8 | `docs/Reports/invoice-quote/` | Fixed |
+| 1 | `docs/standard/audit-trail-standard.md` | 17 | `docs/Reports/invoice-quote/` | Fixed |
+| 2 | `docs/prd/audit-trail-integrity-prd.md` | 8 | `docs/Reports/invoice-quote/` | Fixed |
 | 3 | `docs/Reports/Audit-trail/payment-audit-trail-implementation.md` | 101 | `docs/Reports/invoice-quote/third-audit-trail-financial-lineage.md` | Fixed |
 
 ---
@@ -26,20 +26,20 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 | # | File | Line | Path | Reason |
 |---|------|------|------|--------|
-| 1 | `docs/Prompts/prompt679.md` | 248 | `docs/Reports/invoice-quote/invoice-edit-law-compliance.md` | File still exists at old location — not moved |
+| 1 | `docs/prompts/prompt679.md` | 248 | `docs/Reports/invoice-quote/invoice-edit-law-compliance.md` | File still exists at old location — not moved |
 
 ---
 
 ## 4. Changes Made
 
-### Change 1: `docs/STANDARD/audit-trail-standard.md:17`
+### Change 1: `docs/standard/audit-trail-standard.md:17`
 
 **Before:** `- \`docs/Reports/invoice-quote/\` — three audit rounds + implementation +`
 **After:** `- \`docs/Reports/Audit-trail/\` — three audit rounds + implementation +`
 
 **Reason:** The audit-trail reports (payment-record-audit-report.md, third-audit-trail-financial-lineage.md, payment-audit-trail-implementation.md, payment-audit-trail-verification.md) were moved to `docs/Reports/Audit-trail/`. The standard's evidence basis reference should point to the new location.
 
-### Change 2: `docs/PRD/audit-trail-integrity-prd.md:8`
+### Change 2: `docs/prd/audit-trail-integrity-prd.md:8`
 
 **Before:** `**Evidence basis:** \`docs/Reports/invoice-quote/\` — three prior audit rounds:`
 **After:** `**Evidence basis:** \`docs/Reports/Audit-trail/\` — three prior audit rounds:`
@@ -63,7 +63,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 grep -r "docs/Reports/invoice-quote/" docs/
 ```
 
-**Result:** 1 match remaining — `docs/Prompts/prompt679.md:248` referencing `invoice-edit-law-compliance.md`, which still exists at the old location. This is a valid reference, not a broken link.
+**Result:** 1 match remaining — `docs/prompts/prompt679.md:248` referencing `invoice-edit-law-compliance.md`, which still exists at the old location. This is a valid reference, not a broken link.
 
 ### Confirmation
 

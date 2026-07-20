@@ -1,7 +1,7 @@
 # Waybill Render Engine — Docs Update Report
 
 **Date:** 2026-06-21
-**Source:** `docs/Prompts/prompt86i.md`
+**Source:** `docs/prompts/prompt86i.md`
 **Status:** All corrections applied
 
 ---
@@ -18,7 +18,7 @@
 | 3 — Section 11 resolve | 11 Open Decisions | 190–192 | Resolved continuation page header decision; strikethrough + RESOLVED status |
 | 3 — Audit reference | 11 (sub-section) | 194–197 | Added Industry.tsx audit reference block (footer, continuation headers, page numbering) |
 
-### 2. `docs/EXECUTION/Waybill-Render-Engine-Developer-Implementation`
+### 2. `docs/execution/Waybill-Render-Engine-Developer-Implementation`
 
 | Correction | Section | Lines | Change |
 |---|---|---|---|

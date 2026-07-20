@@ -77,7 +77,7 @@ BIGDROPS has a rigorous audit trail system (`activity_events`, `audit_logs`) tha
 - No ability to prove file integrity (Telegram could modify/resample images)
 - No way to enforce immutability (files could be deleted from the Telegram chat)
 
-This directly violates the audit trail standard at `docs/STANDARD/audit-trail-standard.md` §4.
+This directly violates the audit trail standard at `docs/standard/audit-trail-standard.md` §4.
 
 ---
 
@@ -247,7 +247,7 @@ If the team proceeds with payment attachments, here is the minimal approach:
 | `src/components/compliance/WhtReceiptMatcherAction.tsx` | Existing file picker UI pattern for financial documents |
 | `src/components/ItemImageUpload.tsx` | Cloudinary upload pattern (for public images, not financial evidence) |
 | `supabase/migrations/20260520090003_invoices.sql:75-95` | Current `payments` table schema — no attachment column |
-| `docs/STANDARD/audit-trail-standard.md` | Audit trail requirements — Telegram storage violates §4 |
+| `docs/standard/audit-trail-standard.md` | Audit trail requirements — Telegram storage violates §4 |
 | `AGENTS.md` §2 | Architecture rules — single source of truth, domain segregation |
 
 ### External References

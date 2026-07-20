@@ -191,7 +191,7 @@ Aging is computed client-side in the UI layer, not in SQL or a domain service. S
 - WHT Receipt CRUD with file upload to Supabase Storage (`compliance` bucket)
 - Tax filing CRUD with status transitions (draft → submitted → filed)
 - VAT input entry management
-- JSON import support (WHT receipts, VAT inputs, tax filings) per `docs/STANDARD/json-import-standard.md`
+- JSON import support (WHT receipts, VAT inputs, tax filings) per `docs/standard/json-import-standard.md`
 - Fire-and-forget WHT receipt creation on the WHT Receipts panel
 - Compliance overview using RPC `get_compliance_summary`
 
@@ -452,7 +452,7 @@ The following were identified as out of scope for this audit but should be addre
 
 ## 12. Standards Gaps
 
-The following should be added to `docs/STANDARD/`:
+The following should be added to `docs/standard/`:
 1. **Financial Operations Standard** — Defines WHT lifecycle, payment recording invariants, financial state derivation rules
 2. **Audit Trail Standard** — Defines what must be audited (all financial events), what is excluded, and retention policy
 3. **Compliance Module Standard** — Defines compliance record lifecycle, required fields for Nigerian tax compliance, and audit integration requirements

@@ -14,7 +14,7 @@ Updated the prefix engine PRD and created an execution plan based on audit findi
 
 ## Files Changed
 
-### Modified: `docs/PRD/PREFIX_ENGINE_SETTINGS.md`
+### Modified: `docs/prd/PREFIX_ENGINE_SETTINGS.md`
 
 | Section | Change |
 |---|---|
@@ -24,7 +24,7 @@ Updated the prefix engine PRD and created an execution plan based on audit findi
 | Section 9 — Implementation Order | Replaced 8 steps (org-table based) with 13 steps (settings-table based). |
 | Section 10 — Out of Scope | New. Documents offline modules, blank template PDF rendering as deferred/deprecated. |
 
-### Created: `docs/EXECUTION/prefix-engine.md`
+### Created: `docs/execution/prefix-engine.md`
 
 New execution plan covering:
 - Key design decisions (settings table, useSettings, offline out of scope)
@@ -39,8 +39,8 @@ New execution plan covering:
 
 | Prompt Reference | Actual Path |
 |---|---|
-| `docs/PREFIX_ENGINE_SETTINGS.md` | `docs/PRD/PREFIX_ENGINE_SETTINGS.md` |
-| `docs/execution` (no file) | Created `docs/EXECUTION/prefix-engine.md` |
+| `docs/PREFIX_ENGINE_SETTINGS.md` | `docs/prd/PREFIX_ENGINE_SETTINGS.md` |
+| `docs/execution` (no file) | Created `docs/execution/prefix-engine.md` |
 | `Reports/settings-table-audit.md` | Does not exist — skipped |
 | `Reports/...` (lowercase r) | `Reports/...` (uppercase R) |
 

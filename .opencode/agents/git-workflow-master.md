@@ -37,7 +37,7 @@ git diff --cached --name-only
 ```
 
 Note what changed. Identify:
-- `docs/Reports/` files → **these contain the commit message** (see §4 below)
+- `docs/reports/` files → **these contain the commit message** (see §4 below)
 - `docs/` changes → use `docs` scope
 - Source code changes → determine the module (e.g., `csr`, `waybill`, `invoice`, `ui`)
 - Config/tooling changes → use `chore` type
@@ -61,7 +61,7 @@ Format: `<gitmoji> <type>(<scope>): <subject>`
 
 ### 4.1 Report-driven mode (preferred)
 
-If `docs/Reports/` has changed files, **read the report** to get the commit message.
+If `docs/reports/` has changed files, **read the report** to get the commit message.
 
 1. Read the changed report file(s) — at minimum read the first line `# Title`
 2. Use the report title as the commit message **subject**
@@ -88,7 +88,7 @@ Example — report only, no src changes:
 
 ### 4.2 Fallback mode (no reports)
 
-If NO `docs/Reports/` files changed, use the traditional method:
+If NO `docs/reports/` files changed, use the traditional method:
 
 Step 1 — Pick the gitmoji based on PRIMARY change type:
 

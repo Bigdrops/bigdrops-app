@@ -10,7 +10,7 @@ The earlier investigation (Phase 2.6C forensic report) concluded that the Vercel
 
 **This conclusion is retracted.** It was based on a compressed mobile screenshot that obscured the actual variable names.
 
-**Corrective evidence:** `docs/Tickets/Telegram-payment-attachment-upload/desktop vercel.png` (the desktop screenshot) shows the Vercel Environment Variables ledger for `bigdrops-app` with:
+**Corrective evidence:** `docs/tickets/Telegram-payment-attachment-upload/desktop vercel.png` (the desktop screenshot) shows the Vercel Environment Variables ledger for `bigdrops-app` with:
 
 | Variable | Status | Scope | Last Updated |
 |----------|--------|-------|--------------|

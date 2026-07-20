@@ -2,7 +2,7 @@
 
 **This report was written by OpenCode on 2026-07-08 via Local Runner.**
 
-**Prompt:** `docs/Prompts/prompt003.md`
+**Prompt:** `docs/prompts/prompt003.md`
 **Execution Date:** 2026-07-08
 **Verification Gate:** `bun run typecheck` ✅ (only pre-existing errors), `bun run audit:load` ✅ (only pre-existing warnings), `bun run build` skipped (4GB hardware constraint)
 

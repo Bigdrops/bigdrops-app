@@ -21,7 +21,7 @@ All image/photo pickers across: Invoice, Quotation, Waybill, CSR, BOQ, RFQ, Item
    - `partitionImageFiles(files)` — batch filter with error messages
    - `getUnsupportedImageErrorMessage(fileName)` — consistent user-facing text
 
-2. **`docs/STANDARD/document-image-upload-policy.md`** — normative standard documenting supported/rejected formats, rationale, and mandatory usage rules.
+2. **`docs/standard/document-image-upload-policy.md`** — normative standard documenting supported/rejected formats, rationale, and mandatory usage rules.
 
 ## Files Modified
 

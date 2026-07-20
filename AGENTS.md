@@ -24,10 +24,10 @@
 The following rules and codebase boundaries are strictly enforced. Rules marked **[LOCKED]** represent single sources of truth or critical constraints that must never be modified without explicit, written user instruction.
 
 * **[LOCKED] Financial Source of Truth:** `src/lib/Calculations.ts` handles all financial calculations. The `calcTotals()` and `resolveRowVat()` functions are core pipelines; changing them affects every financial document.
-* **[LOCKED] Document Numbering Engine:** `src/domain/prefixConstants.ts` (`DEFAULT_PREFIXES`, `resolvePrefix()`) is the canonical prefix engine. All document numbering MUST follow `docs/STANDARD/prefix-engine-settings-standard.md`. Format: `{resolvedPrefix}-{routingToken?}-{6-digit serial}`. Never hardcode a prefix string.
+* **[LOCKED] Document Numbering Engine:** `src/domain/prefixConstants.ts` (`DEFAULT_PREFIXES`, `resolvePrefix()`) is the canonical prefix engine. All document numbering MUST follow `docs/standard/prefix-engine-settings-standard.md`. Format: `{resolvedPrefix}-{routingToken?}-{6-digit serial}`. Never hardcode a prefix string.
 * **[LOCKED] Waybill Number Generation:** `generateWaybillSequenceNumber()` format must not be changed, and consumed `blank_waybill_logs` tokens are permanently locked and cannot be recycled.
 * **Domain Segregation:** PDFs are dumb renderers that receive shaped data via preview functions; they never compute prices, taxes, or totals. Quotations must reuse the invoice domain layer; never duplicate financial logic. When transforming invoice items to waybills, all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`) must be stripped.
-* **Document Lifecycle Operations:** Edit, duplicate, and revert operations MUST follow `docs/STANDARD/document-transformation-standard.md`. 
+* **Document Lifecycle Operations:** Edit, duplicate, and revert operations MUST follow `docs/standard/document-transformation-standard.md`. 
 * **UI Constraints:** No framer-motion components in production.
 * **Linting:** `android/` and `dist/` must be excluded via `.eslintignore` or `eslint.config.js` `ignores`.
 
@@ -54,29 +54,29 @@ All coding agents must follow this strict execution methodology to prevent regre
 When multiple standards apply, the following precedence order is enforced:
 
 1. `AGENTS.md` (This file)
-2. `docs/STANDARD/*`
+2. `docs/standard/*`
 3. Module-specific documentation
 4. Task instructions
 
-* **Strict Conformity:** Standards under `docs/STANDARD/` are normative. Both existing code modifications and new modules must strictly conform to them. If an implementation conflicts with a standard, you must either update the implementation to match the standard, or explicitly halt and ask to revise the standard. **Never silently diverge.**
-* **New Module Requirements:** New document modules MUST fully conform to `docs/STANDARD/json-import-standard.md` (for JSON imports) and `docs/STANDARD/document-column-standard.md` (for configurable columns).
-* **No Duplication:** Extend existing standards in `docs/STANDARD/` before creating new ones—never duplicate a concept an existing standard already covers.
+* **Strict Conformity:** Standards under `docs/standard/` are normative. Both existing code modifications and new modules must strictly conform to them. If an implementation conflicts with a standard, you must either update the implementation to match the standard, or explicitly halt and ask to revise the standard. **Never silently diverge.**
+* **New Module Requirements:** New document modules MUST fully conform to `docs/standard/json-import-standard.md` (for JSON imports) and `docs/standard/document-column-standard.md` (for configurable columns).
+* **No Duplication:** Extend existing standards in `docs/standard/` before creating new ones—never duplicate a concept an existing standard already covers.
 
 ### 4.1 Indexed Standards Registry
 
-Every normative standard in `docs/STANDARD/` is catalogued here so agents can locate the correct authority without scanning the directory. Beyond the two already cited inline above (`prefix-engine-settings-standard.md` in §2, and `document-transformation-standard.md` + `json-import-standard.md` + `document-column-standard.md` in §4), the following are in force:
+Every normative standard in `docs/standard/` is catalogued here so agents can locate the correct authority without scanning the directory. Beyond the two already cited inline above (`prefix-engine-settings-standard.md` in §2, and `document-transformation-standard.md` + `json-import-standard.md` + `document-column-standard.md` in §4), the following are in force:
 
 | Standard file | Governs |
 | --- | --- |
-| `docs/STANDARD/audit-trail-standard.md` | Activity & audit trail log (CREATE, UPDATE, STATUS_CHANGE, LINK, DUPLICATE, PAYMENT_RECORDED) for all documents. |
-| `docs/STANDARD/Commercial Party Architecture Standard.md` | Commercial party (customer/supplier) data model and architecture. **Placeholder — status "coming soon"; treat as not-yet-authoritative.** |
-| `docs/STANDARD/document-image-upload-policy.md` | Normative rules all document image pickers MUST conform to (supported formats, upload policy). |
-| `docs/STANDARD/document-save-orchestration.md` | Generic save lifecycle for all document types (Invoice, Quotation, Waybill, CSR, BOQ, RFQ). |
-| `docs/STANDARD/lifecycle-ownership-standard.md` | Canonical ownership boundaries for the lifecycle of all business documents. |
-| `docs/STANDARD/pdf-customization-extension-standard.md` | Canonical PDF customization/extension architecture; all future document families MUST conform. |
-| `docs/STANDARD/pdf-migration-standard.md` | Mandatory PDF generation pipeline (`DefaultPdfGenerator` + `CompositePdfDelivery` + `DefaultFeedbackBus`) for all document families. |
+| `docs/standard/audit-trail-standard.md` | Activity & audit trail log (CREATE, UPDATE, STATUS_CHANGE, LINK, DUPLICATE, PAYMENT_RECORDED) for all documents. |
+| `docs/standard/Commercial Party Architecture Standard.md` | Commercial party (customer/supplier) data model and architecture. **Placeholder — status "coming soon"; treat as not-yet-authoritative.** |
+| `docs/standard/document-image-upload-policy.md` | Normative rules all document image pickers MUST conform to (supported formats, upload policy). |
+| `docs/standard/document-save-orchestration.md` | Generic save lifecycle for all document types (Invoice, Quotation, Waybill, CSR, BOQ, RFQ). |
+| `docs/standard/lifecycle-ownership-standard.md` | Canonical ownership boundaries for the lifecycle of all business documents. |
+| `docs/standard/pdf-customization-extension-standard.md` | Canonical PDF customization/extension architecture; all future document families MUST conform. |
+| `docs/standard/pdf-migration-standard.md` | Mandatory PDF generation pipeline (`DefaultPdfGenerator` + `CompositePdfDelivery` + `DefaultFeedbackBus`) for all document families. |
 
-*Note: `docs/STANDARD/receipt-standard.md` exists but is intentionally excluded from the active registry pending review.*
+*Note: `docs/standard/receipt-standard.md` exists but is intentionally excluded from the active registry pending review.*
 
 ---
 
@@ -94,7 +94,7 @@ The skill index (skills only) is located at: **`docs/PROJECTSKILLINDEX.md`**. Th
 
 ## 6. Documentation & Reporting Rules
 
-Every completed task requires a rigorous report saved under `docs/Reports/` in the matching domain folder (e.g., `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`). Never place reports in the repository root.
+Every completed task requires a rigorous report saved under `docs/reports/` in the matching domain folder (e.g., `invoice-quote`, `GENERAL`, `WAYBILL`, `boq-rfq`, `CSR`, `ANDROID`, `TOAST`, `item-library`, `json-import`). Never place reports in the repository root.
 
 **Report Identity Standard:**
 Every report MUST begin with an identity line immediately after the title stating the real name of the AI, the date, and the tool harness.
@@ -165,7 +165,7 @@ No-match:
 [DELEGATION] task="<short description>" | domain="<module>" | subagent="NONE" | justification="<why no SUBAGENTS.md entry matches>" | harness="<runner>"
 ```
 
-Recorded in: (a) the agent's response for the task, AND (b) appended to `docs/Reports/GENERAL/delegation-log.md` (one line per task).
+Recorded in: (a) the agent's response for the task, AND (b) appended to `docs/reports/GENERAL/delegation-log.md` (one line per task).
 
 ### 8.6 Routing Quick Reference
 
@@ -180,7 +180,7 @@ Recorded in: (a) the agent's response for the task, AND (b) appended to `docs/Re
 | Waybill module (form, list, print) | `frontend-developer` + `code-reviewer` | numbering [LOCKED] in-house |
 | BOQ-RFQ | `backend-architect` (API) + `frontend-developer` (UI) | |
 | CSR / item-library / toast UI features | `frontend-developer` | |
-| json-import | `backend-architect` | must conform to `docs/STANDARD/json-import-standard.md` |
+| json-import | `backend-architect` | must conform to `docs/standard/json-import-standard.md` |
 | Security / secrets / RLS hardening / pentest | `senior-secops-engineer` | |
 | Documentation / reports / AGENTS.md edits | `technical-writer` | |
 | Git / branch / PR / commit hygiene | `git-workflow-master` | |
@@ -188,3 +188,62 @@ Recorded in: (a) the agent's response for the task, AND (b) appended to `docs/Re
 | Code review / change audit | `code-reviewer` | |
 | Multi-step pipeline orchestration | `agents-orchestrator` | |
 | LOCKED financial / prefix engine change (`Calculations.ts`, `prefixConstants.ts`) | `NONE` (in-house) + `code-reviewer` | log `subagent=NONE`, justification "LOCKED financial engine, in-house only" |
+
+---
+
+## 9. Documentation Writing Standard
+
+This project adopts **ADS-STE100 Simplified Technical English** as the required writing standard for all technical documentation.
+
+### 9.1 Applicability
+
+This requirement applies to:
+
+- Architecture documents
+- Design documents
+- Pattern documents
+- READMEs
+- Specifications
+- API documentation
+- Developer guides
+- Contribution guides
+- AI-generated documentation
+- Any future documentation added to the repository
+
+### 9.2 Writing Rules
+
+When writing documentation, agents must follow these rules:
+
+- Use ADS-STE100 Simplified Technical English.
+- Use short, direct sentences.
+- Use active voice.
+- Use consistent terminology throughout the repository.
+- Define technical terms before using them.
+- Explain concepts before implementation details.
+- Use one idea per paragraph.
+- Prefer bullet lists and tables over long prose.
+- Remove unnecessary adjectives and filler.
+- Do not use marketing language.
+- Do not use conversational language.
+- Do not use AI-style phrases or hedging.
+- Avoid repetition.
+- Make documents easy to scan.
+- Write for engineers, designers, and product teams.
+
+Documentation should read like professional engineering documentation, not AI-generated content.
+
+**This standard is mandatory for every agent working in this repository.**
+
+### 9.3 Documentation Workflow
+
+Before creating or modifying documentation, agents must:
+
+1. Inspect the existing documentation.
+2. Identify the authoritative source document.
+3. Extend existing documentation before creating a new document.
+4. Cross-reference related documents instead of duplicating information.
+5. Keep terminology consistent across the repository.
+6. Update links when files move.
+7. Preserve the Architecture → Designs → Masonry-yard → Patterns separation of responsibilities.
+
+Duplicate documentation is considered a defect.

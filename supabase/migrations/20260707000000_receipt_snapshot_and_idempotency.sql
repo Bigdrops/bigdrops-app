@@ -1,6 +1,6 @@
 -- Receipt snapshot columns + prefix engine + audit constraint updates
 -- Created: 2026-07-07
--- Spec: docs/STANDARD/receipt-standard.md
+-- Spec: docs/standard/receipt-standard.md
 
 -- ============================================================
 -- 1. ADD SNAPSHOT COLUMNS TO receipts TABLE

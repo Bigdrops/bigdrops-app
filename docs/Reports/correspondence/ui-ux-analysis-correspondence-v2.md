@@ -8,7 +8,7 @@
 
 ## Objective & Scope
 
-Evaluate all UX/UI decisions of the Correspondence Module against the PRD (`docs/Prompts/prompt-letter.md` — an architecture investigation, not a product spec) and the existing implementation (`LetterFormPage`, `Letters` list, `ViewLetter`, `LetterBodyEditor`). Covers screen-by-screen UX, component hierarchy, interaction patterns, mobile adaptation, visual consistency, accessibility, missing flows, and recommended mockups.
+Evaluate all UX/UI decisions of the Correspondence Module against the PRD (`docs/prompts/prompt-letter.md` — an architecture investigation, not a product spec) and the existing implementation (`LetterFormPage`, `Letters` list, `ViewLetter`, `LetterBodyEditor`). Covers screen-by-screen UX, component hierarchy, interaction patterns, mobile adaptation, visual consistency, accessibility, missing flows, and recommended mockups.
 
 **Explicitly excluded:** PDF rendering architecture (covered by `official-letter-architecture-investigation.md`), backend domain logic beyond component contract, database schema, and non-visual infrastructure.
 
@@ -126,7 +126,7 @@ Four key screen states were described in full wireframe detail in the conversati
 
 1. **PRD is not a design spec** — `prompt-letter.md` is an architecture investigation. No screen mockups or user flows were provided. This analysis extrapolates design decisions from described requirements.
 2. **No user research** — Recommendations are based on UI design best practices and consistency with existing BIGDROPS patterns, not on user testing of the letter module.
-3. **Image upload policy** (`docs/STANDARD/document-image-upload-policy.md`) was referenced but applies only to image MIME types. Non-image attachments need separate validation (not covered by the standard).
+3. **Image upload policy** (`docs/standard/document-image-upload-policy.md`) was referenced but applies only to image MIME types. Non-image attachments need separate validation (not covered by the standard).
 
 ---
 

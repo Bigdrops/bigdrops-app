@@ -41,7 +41,7 @@ This is the identical pattern used by every other consumer in the project: `tail
 
 ## Bonus Fix
 
-**`docs/TEMPLATES/React-temps/sidebaricon.tsx:54`** — Same bug, same fix. Prevents propagation to new components built from this template.
+**`docs/templates/React-temps/sidebaricon.tsx:54`** — Same bug, same fix. Prevents propagation to new components built from this template.
 
 ## Verification
 
@@ -55,4 +55,4 @@ This is the identical pattern used by every other consumer in the project: `tail
 | File | Change |
 |---|---|
 | `src/components/unlumen-ui/sidebar-toggle-icon.tsx:54` | `"var(--background)"` → `"hsl(var(--background))"` |
-| `docs/TEMPLATES/React-temps/sidebaricon.tsx:54` | Same |
+| `docs/templates/React-temps/sidebaricon.tsx:54` | Same |

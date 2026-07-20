@@ -3,7 +3,7 @@
 This report was written by OpenCode on 2026-07-08 via Local Runner.
 
 **Date:** 2026-07-08
-**Prompt:** `docs/Prompts/prompt6i5.md`
+**Prompt:** `docs/prompts/prompt6i5.md`
 **Status:** Complete — bug fixed, tests created, conventions documented.
 
 ---

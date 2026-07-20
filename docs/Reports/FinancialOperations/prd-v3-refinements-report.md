@@ -6,7 +6,7 @@
 
 ## Summary
 
-Applied ten architectural refinements to `docs/PRD/financial-operations-prd.md`, transforming it from v2.0 to v3.0 — the canonical Financial Operations Platform Architecture Specification. The document grew from 459 lines to 599 lines (well under the 800-line constraint). No production code was modified.
+Applied ten architectural refinements to `docs/prd/financial-operations-prd.md`, transforming it from v2.0 to v3.0 — the canonical Financial Operations Platform Architecture Specification. The document grew from 459 lines to 599 lines (well under the 800-line constraint). No production code was modified.
 
 ---
 

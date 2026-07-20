@@ -134,7 +134,7 @@ export const DEFAULT_PREFIXES: Record<DocumentPrefixKey, string> = {
 2. Update `DocumentPrefixKey` type union — `src/domain/prefixConstants.ts`
 3. Update DB CHECK constraint on `settings.document_prefixes` — new migration required
 4. Update settings default JSONB — new migration required
-5. Follow `docs/STANDARD/prefix-engine-settings-standard.md` format: `{resolvedPrefix}-{routingToken?}-{6-digit serial}`
+5. Follow `docs/standard/prefix-engine-settings-standard.md` format: `{resolvedPrefix}-{routingToken?}-{6-digit serial}`
 
 ### Existing receipt numbering (WHT only)
 
@@ -146,7 +146,7 @@ The `wht_receipts` table has a `receipt_number text` column, but this is for WHT
 
 **Source:** Grep returned no results for `generateDocumentNumber` in any `.ts` file.
 
-The function referenced in `docs/STANDARD/prefix-engine-settings-standard.md` does not exist in the codebase as a named export. The prefix engine standard describes the pattern but the implementation may be inline or named differently. This needs investigation during implementation.
+The function referenced in `docs/standard/prefix-engine-settings-standard.md` does not exist in the codebase as a named export. The prefix engine standard describes the pattern but the implementation may be inline or named differently. This needs investigation during implementation.
 
 ---
 
@@ -178,7 +178,7 @@ The function referenced in `docs/STANDARD/prefix-engine-settings-standard.md` do
 
 ### PRD target (§7.4)
 
-**Source:** `docs/PRD/financial-operations-prd.md` (referenced in summary)
+**Source:** `docs/prd/financial-operations-prd.md` (referenced in summary)
 
 - §7.4.3: "Payment receipt snapshots are generated at the point of payment recording" — **NOT IMPLEMENTED**
 - §7.4.6: "Payment receipt data is immutable and independent of invoice state changes" — **NOT IMPLEMENTED**
@@ -277,7 +277,7 @@ This view recalculates on every query. If a payment is voided, the view's `settl
 
 ### Document transformation standard (§Law 1)
 
-**Source:** `docs/STANDARD/document-transformation-standard.md`
+**Source:** `docs/standard/document-transformation-standard.md`
 
 > Law 1: Identity Immutability — `client_id`, `document_number`, `type`, `lineage` are locked after save.
 

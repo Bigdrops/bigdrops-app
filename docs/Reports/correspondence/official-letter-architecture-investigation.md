@@ -3,7 +3,7 @@
 **Status:** Investigation & Architecture Design (No Immediate Feature Implementation)
 **Date:** 2026-07-10
 **Harness:** MiMoCode via Local Runner
-**PRD Source:** `docs/Prompts/prompt-letter.md`
+**PRD Source:** `docs/prompts/prompt-letter.md`
 
 ---
 
@@ -52,13 +52,13 @@ BIGDROPS provides 8 document families with prefix keys:
 ### 2.2 Existing Standards Conformed To
 
 All financial document families conform to:
-- Prefix Engine (`docs/STANDARD/prefix-engine-settings-standard.md`)
-- Save Orchestration (`docs/STANDARD/document-save-orchestration.md`)
-- Lifecycle Ownership (`docs/STANDARD/lifecycle-ownership-standard.md`)
-- Audit Trail (`docs/STANDARD/audit-trail-standard.md`)
-- PDF Customization Extension (`docs/STANDARD/pdf-customization-extension-standard.md`)
-- Document Columns (`docs/STANDARD/document-column-standard.md`)
-- Document Transformation (`docs/STANDARD/document-transformation-standard.md`)
+- Prefix Engine (`docs/standard/prefix-engine-settings-standard.md`)
+- Save Orchestration (`docs/standard/document-save-orchestration.md`)
+- Lifecycle Ownership (`docs/standard/lifecycle-ownership-standard.md`)
+- Audit Trail (`docs/standard/audit-trail-standard.md`)
+- PDF Customization Extension (`docs/standard/pdf-customization-extension-standard.md`)
+- Document Columns (`docs/standard/document-column-standard.md`)
+- Document Transformation (`docs/standard/document-transformation-standard.md`)
 
 ### 2.3 No Existing Correspondence Infrastructure
 
@@ -77,7 +77,7 @@ A thorough codebase search confirms:
 **Classification: FULLY APPLICABLE**
 
 Official Letter MUST participate in the existing prefix engine. Justification:
-- The prefix engine is designed for all auto-numbered document types (`docs/STANDARD/prefix-engine-settings-standard.md` §1)
+- The prefix engine is designed for all auto-numbered document types (`docs/standard/prefix-engine-settings-standard.md` §1)
 - The `DocumentPrefixKey` type is derived from `DEFAULT_PREFIXES` keys — adding `letter: 'LTR'` (or similar) is a one-line change
 - The `resolvePrefix()` function accepts any key in the union type
 - Settings UI at `DocumentPrefixesSettingsSection.tsx` iterates `DEFAULT_PREFIXES` dynamically — new keys appear automatically
@@ -449,7 +449,7 @@ Official Letter SHOULD participate in the existing prefix engine.
 
 ### 7.3 Implementation Requirements
 
-Per `docs/STANDARD/prefix-engine-settings-standard.md` Appendix B:
+Per `docs/standard/prefix-engine-settings-standard.md` Appendix B:
 
 - [ ] Add `letter: 'LTR'` to `DEFAULT_PREFIXES` in `src/domain/prefixConstants.ts`
 - [ ] `DocumentPrefixKey` auto-extends via `keyof typeof DEFAULT_PREFIXES`

@@ -164,7 +164,7 @@ Other views (Waybill, BOQ, CSR, RFQ) follow a simpler pattern — a `<div classN
 
 ### F8: PRD Implementation Status
 
-**PRD file:** `docs/PRD/ui-ux-consolidation/`
+**PRD file:** `docs/prd/ui-ux-consolidation/`
 
 | Recommendation | Status | Notes |
 |---------------|--------|-------|

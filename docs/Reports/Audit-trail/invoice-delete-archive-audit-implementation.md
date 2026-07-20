@@ -125,7 +125,7 @@ try {
 
 ## 4. Coverage Matrix Update
 
-Updated from `docs/STANDARD/audit-trail-standard.md` §6:
+Updated from `docs/standard/audit-trail-standard.md` §6:
 
 | Entity | Action | `audit_logs` | `activity_events` | Verified live? |
 |---|---|---|---|---|

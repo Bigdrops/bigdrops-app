@@ -8,7 +8,7 @@
 
 ## Deliverables
 
-### 1. `docs/STANDARD/document-column-standard.md` (new)
+### 1. `docs/standard/document-column-standard.md` (new)
 
 Canonical standard for user-configurable column ordering across business document modules. Covers:
 
@@ -27,17 +27,17 @@ Canonical standard for user-configurable column ordering across business documen
 Added three new permanent sections:
 
 - **Section 3 — Project Workflow Rules:** Audit-first, find-skills before new domains, explicit assumptions, minimum code, surgical changes, verify with tests.
-- **Section 4 — Documentation Rules:** No root reports, standards in `docs/STANDARD/`, extend-before-create, documentation-only tasks must not modify production code.
+- **Section 4 — Documentation Rules:** No root reports, standards in `docs/standard/`, extend-before-create, documentation-only tasks must not modify production code.
 - **Section 5 — Architecture Discipline:** PDFs-as-dumb-renderers, quotation reuse, column architecture standard reference, extend-before-abstract, Karpathy discipline.
 
 Also fixed:
-- JSON import standard path reference: `docs/json-import-standard.md` → `docs/STANDARD/json-import-standard.md`
+- JSON import standard path reference: `docs/json-import-standard.md` → `docs/standard/json-import-standard.md`
 - Added document-column-standard reference in Hard Architecture Rules.
 - Renumbered sections 3→6 to maintain sequential order.
 
 ### 3. No Production Code Modified
 
-Zero changes to `src/` files. All work was restricted to AGENTS.md and `docs/STANDARD/`.
+Zero changes to `src/` files. All work was restricted to AGENTS.md and `docs/standard/`.
 
 ---
 
@@ -46,7 +46,7 @@ Zero changes to `src/` files. All work was restricted to AGENTS.md and `docs/STA
 | File | Action | Lines |
 |---|---|---|
 | `AGENTS.md` | Updated | +3 sections, +2 hard rules, renumbered 3 sections |
-| `docs/STANDARD/document-column-standard.md` | Created | ~280 lines |
+| `docs/standard/document-column-standard.md` | Created | ~280 lines |
 
 ---
 

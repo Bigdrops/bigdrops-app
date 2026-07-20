@@ -74,7 +74,7 @@ No architectural changes needed. Each template's advance summary rendering is st
 
 ### 2.1 HTML Structure Analysis
 
-The Crest HTML template (`docs/TEMPLATES/htmltemps/crest.html`, 466 lines) uses a clean semantic structure:
+The Crest HTML template (`docs/templates/htmltemps/crest.html`, 466 lines) uses a clean semantic structure:
 
 ```
 <div class="invoice">                    ← outer wrapper

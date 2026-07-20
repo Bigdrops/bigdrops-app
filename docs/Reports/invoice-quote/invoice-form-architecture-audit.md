@@ -417,7 +417,7 @@ interface SharedDocumentFormProps {
 
 ## 8. Target Architecture
 
-Based on the PRD (`docs/PRD/ui-ux-consolidation/`) and this audit:
+Based on the PRD (`docs/prd/ui-ux-consolidation/`) and this audit:
 
 ```
 InvoiceFormPage.tsx

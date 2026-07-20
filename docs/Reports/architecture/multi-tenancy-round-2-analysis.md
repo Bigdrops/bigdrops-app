@@ -8,7 +8,7 @@ This report was written by OpenCode on 2026-07-14 via Local Runner.
 
 This document provides a comprehensive technical analysis of the BIGDROPS codebase
 for migrating from a single-tenant to a schema-per-entity multi-tenant architecture,
-as specified in `docs/PRD/multi-tenancy/multi-tenancy-prd-v2.1.md` (PRD v2.1).
+as specified in `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` (PRD v2.1).
 
 **Covered:**
 - Five analysis angles: Backend Architecture, Database Optimization, Security Architecture,
@@ -29,7 +29,7 @@ as specified in `docs/PRD/multi-tenancy/multi-tenancy-prd-v2.1.md` (PRD v2.1).
 
 | Document | Path | Status |
 |----------|------|--------|
-| PRD v2.1 (authoritative) | `docs/PRD/multi-tenancy/multi-tenancy-prd-v2.1.md` | Final |
+| PRD v2.1 (authoritative) | `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` | Final |
 | Round 1 report (corrected) | `docs/Reports/architecture/multi-tenancy-gap-analysis.md` | Corrected |
 | PRD report (supplementary) | `docs/Reports/GENERAL/multi-tenancy-prd-report.md` | Supplementary |
 | Frontend audit (supplementary) | `docs/Reports/GENERAL/multi-tenancy-frontend-audit.md` | Supplementary |

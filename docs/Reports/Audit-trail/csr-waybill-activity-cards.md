@@ -36,7 +36,7 @@ Added `csr` and `waybill` entries to `ACTION_LABELS` so audit log actions (CREAT
 
 ## Risks & Limitations
 
-- **Existing audit coverage:** If no audit data exists for a given CSR or Waybill (as noted in `docs/STANDARD/audit-trail-standard.md`), the card will show "No history recorded yet." This is by design — the component is a transparent view into existing data.
+- **Existing audit coverage:** If no audit data exists for a given CSR or Waybill (as noted in `docs/standard/audit-trail-standard.md`), the card will show "No history recorded yet." This is by design — the component is a transparent view into existing data.
 - **Performance:** The `useAuditTrail` hook only queries data when the accordion is expanded (`enabled: isOpen`). No loading cost on initial page render.
 - **Action labels for future actions:** If new action types (beyond CREATE/UPDATE/DELETE/STATUS_CHANGE/LINK/UNLINK) are added for CSR/Waybill, they'll fall back to "updated this record" unless `ACTION_LABELS` entries are added in `auditFormatters.ts`.
 

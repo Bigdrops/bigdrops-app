@@ -6,7 +6,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 ## 1. Objective & Scope
 
-**Objective:** Add audit trail (audit_logs + activity_events dual-write) for CSR and Waybill state-mutating actions using the exact proven pattern from `docs/STANDARD/audit-trail-standard.md` §3–4.
+**Objective:** Add audit trail (audit_logs + activity_events dual-write) for CSR and Waybill state-mutating actions using the exact proven pattern from `docs/standard/audit-trail-standard.md` §3–4.
 
 **Scope:**
 - `src/lib/audit.ts` — tracked fields + 5 new audit functions

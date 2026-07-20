@@ -6,7 +6,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 ## 1. Objective & Scope
 
-**Objective:** Identify all state-mutating actions in CSR and Waybill modules, map the service-layer structure for each, and propose which actions should be audited using the proven Invoice/Quotation pattern from `docs/STANDARD/audit-trail-standard.md`.
+**Objective:** Identify all state-mutating actions in CSR and Waybill modules, map the service-layer structure for each, and propose which actions should be audited using the proven Invoice/Quotation pattern from `docs/standard/audit-trail-standard.md`.
 
 **Scope:**
 - `src/domain/csr/` and CSR-related pages
@@ -66,7 +66,7 @@ CSR Module Architecture:
 
 ### 2.4 Audit Proposal
 
-Per `docs/STANDARD/audit-trail-standard.md`, the proven pattern requires:
+Per `docs/standard/audit-trail-standard.md`, the proven pattern requires:
 
 | Action | audit_logs (dual-write) | activity_events (domain event) | New RPC Needed? |
 |--------|------------------------|-------------------------------|-----------------|
@@ -312,4 +312,4 @@ This report is investigation-only. All findings are observations from source cod
 |------|-------|---------|
 | `src/lib/audit.ts` | 1-282 | Existing audit functions |
 | `supabase/migrations/20260520090008_audit_activity.sql` | 79-135 | `record_activity_event()` with entity whitelist |
-| `docs/STANDARD/audit-trail-standard.md` | 1-229 | Audit trail standard |
+| `docs/standard/audit-trail-standard.md` | 1-229 | Audit trail standard |

@@ -4,7 +4,7 @@ This report was written by OpenCode on 2026-07-12 via Local Runner.
 
 ## Objective & Scope
 
-Consolidate `NewWaybill.tsx` (133 lines) and `EditWaybill.tsx` (79 lines) into a single `WaybillFormPage.tsx` component following the pattern established by `CsrFormPage` and `LetterFormPage`. Conforms to `docs/STANDARD/document-form-consolidation-standard.md`.
+Consolidate `NewWaybill.tsx` (133 lines) and `EditWaybill.tsx` (79 lines) into a single `WaybillFormPage.tsx` component following the pattern established by `CsrFormPage` and `LetterFormPage`. Conforms to `docs/standard/document-form-consolidation-standard.md`.
 
 **In scope:** Create `WaybillFormPage.tsx`, replace `NewWaybill.tsx` and `EditWaybill.tsx` with thin delegators.
 

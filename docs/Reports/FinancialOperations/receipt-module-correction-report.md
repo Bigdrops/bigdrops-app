@@ -6,7 +6,7 @@ This report was written by OpenCode on 2026-07-08 via Local Runner.
 
 ## Objective
 
-Bring the Receipt module into full compliance with `docs/STANDARD/receipt-standard.md`, making each receipt a legally durable, immutable proof-of-payment with complete data snapshots, correct prefix engine integration, `withUniqueRetry` idempotency, and a dumb-renderer PDF.
+Bring the Receipt module into full compliance with `docs/standard/receipt-standard.md`, making each receipt a legally durable, immutable proof-of-payment with complete data snapshots, correct prefix engine integration, `withUniqueRetry` idempotency, and a dumb-renderer PDF.
 
 ## Scope
 

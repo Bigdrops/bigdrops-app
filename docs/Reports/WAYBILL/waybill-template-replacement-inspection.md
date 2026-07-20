@@ -1,7 +1,7 @@
 # Waybill Template Replacement Inspection Report
 
 **Date:** Sun Jun 21 2026
-**Scope:** Read-only analysis of 13 HTML template mockups in `docs/TEMPLATES/htmltemps/waybill/` + CSR fillable-writing-font audit
+**Scope:** Read-only analysis of 13 HTML template mockups in `docs/templates/htmltemps/waybill/` + CSR fillable-writing-font audit
 **Status:** FACTS ONLY — no recommendations
 
 ---

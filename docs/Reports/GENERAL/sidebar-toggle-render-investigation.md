@@ -120,4 +120,4 @@ Since only the outer shape renders, the user sees a fully filled rounded rectang
 - `src/components/ui/circuit-board.tsx` — other motion user (framer-motion, no path morph)
 - `src/components/unlumen-ui/glowing-badge.tsx` — other motion user (motion/react, no path morph)
 - `src/index.css` — defines `--background` CSS variable
-- `docs/TEMPLATES/React-temps/sidebaricon.tsx` — reference template (identical to production)
+- `docs/templates/React-temps/sidebaricon.tsx` — reference template (identical to production)

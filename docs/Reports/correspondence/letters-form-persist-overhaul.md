@@ -60,7 +60,7 @@ Implementation of 7 fixes for the Letters module: save hang, recipient/sender to
 
 ## Risks & Limitations
 
-- **TipTap serializer:** LetterBody blocks still store flat text; rich formatting (bold, lists) not persisted. Full serializer deferred — requires `docs/STANDARD/document-save-orchestration.md` compliance work.
+- **TipTap serializer:** LetterBody blocks still store flat text; rich formatting (bold, lists) not persisted. Full serializer deferred — requires `docs/standard/document-save-orchestration.md` compliance work.
 - **Edit mode non-draft:** Summary cards show but aren't editable; this matches the existing document pattern (Transform only) but could confuse users expecting inline editing.
 - **ClientSelector** has a pre-existing ARCH warning for direct Supabase calls — unrelated but noted.
 

@@ -64,4 +64,4 @@ No font sizes were changed. No content was removed. No business logic was touche
 
 ## Deferred Work
 
-- Signatory improvements intentionally deferred. See `docs/Tickets/signatory-management-system.md`.
+- Signatory improvements intentionally deferred. See `docs/tickets/signatory-management-system.md`.

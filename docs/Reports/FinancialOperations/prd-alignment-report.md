@@ -6,7 +6,7 @@ This report was written by DeepSeek on 2026-07-03 via OpenCode.
 
 ## 1. Objective & Scope
 
-**Objective:** Compare every substantive claim in `docs/PRD/financial-operations-prd.md` against the actual implementation, classify each by conformance level, and identify the highest-impact gaps for remediation.
+**Objective:** Compare every substantive claim in `docs/prd/financial-operations-prd.md` against the actual implementation, classify each by conformance level, and identify the highest-impact gaps for remediation.
 
 **Scope:**
 - All 23 sections of the PRD (Vision, Goals, Principles, Obligations, Architecture, Core Domains, Settlement, Events, Payment Lifecycle, Status, WHT, VAT, Receipts, Projections, Audit, Nigerian Ops, Non-Goals, Invariants, Ownership, Roadmap, Success Criteria)
@@ -502,7 +502,7 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 | `bun run typecheck` | ✅ Passed (0 errors) |
 | `bun run build` | ⏱️ Timed out (no errors before timeout) |
 
-**Code modified:** `docs/PRD/financial-operations-prd.md` (corrected), this report (new). No production code changed.
+**Code modified:** `docs/prd/financial-operations-prd.md` (corrected), this report (new). No production code changed.
 
 ---
 
@@ -539,11 +539,11 @@ These are low-effort fixes with high impact, suitable for immediate implementati
 | `supabase/migrations/20260520090003_invoices.sql` | Invoice/payment schema |
 | `supabase/migrations/20260520090009_tax.sql` | Tax compliance schema |
 | `supabase/migrations/20260520090010_views.sql` | Financial views |
-| `docs/STANDARD/audit-trail-standard.md` | Audit trail standard |
-| `docs/STANDARD/document-transformation-standard.md` | Document transformation standard |
+| `docs/standard/audit-trail-standard.md` | Audit trail standard |
+| `docs/standard/document-transformation-standard.md` | Document transformation standard |
 
 ### B. Related Standards
 
-- `docs/STANDARD/audit-trail-standard.md` — defines the verified direct-call audit pattern
-- `docs/STANDARD/document-transformation-standard.md` — defines state-aware edit locking, duplication, revert
-- `docs/STANDARD/prefix-engine-settings-standard.md` — defines runtime prefix resolution pattern
+- `docs/standard/audit-trail-standard.md` — defines the verified direct-call audit pattern
+- `docs/standard/document-transformation-standard.md` — defines state-aware edit locking, duplication, revert
+- `docs/standard/prefix-engine-settings-standard.md` — defines runtime prefix resolution pattern

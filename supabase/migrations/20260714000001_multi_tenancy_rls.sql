@@ -1,7 +1,7 @@
 -- Domain: Multi-Tenancy Core
 -- Phase 2: RLS policies for Phase 1 authorization tables
 -- Created: 2026-07-14
--- Source: docs/Reports/architecture/multi-tenancy-round-2-analysis.md §6.5
+-- Source: docs/reports/architecture/multi-tenancy-round-2-analysis.md §6.5
 
 -- ============================================================
 -- workspaces

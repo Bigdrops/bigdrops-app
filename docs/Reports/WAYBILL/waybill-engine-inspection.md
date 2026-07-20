@@ -30,7 +30,7 @@ No `engine/` subdirectory or any file with `engine` in its name is present.
 
 ## 2. Search for named exports: `WaybillPdfRenderEngine`, `WaybillPrintModel`, `WaybillPrintItem`
 
-**Zero matches in any source file.** All three names exist only in the prompt file itself (`docs/Prompts/prompt705.md`, lines 16 and 22). No source file under `src/` or anywhere else in the repository exports, imports, or references these symbols.
+**Zero matches in any source file.** All three names exist only in the prompt file itself (`docs/prompts/prompt705.md`, lines 16 and 22). No source file under `src/` or anywhere else in the repository exports, imports, or references these symbols.
 
 ---
 

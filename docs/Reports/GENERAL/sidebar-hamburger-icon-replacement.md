@@ -4,7 +4,7 @@
 
 ## Objective
 
-Replace the static lucide-react `Menu` sidebar/hamburger icon with the animated, path-morphing `SidebarToggleIcon` component from the template (`docs/TEMPLATES/React-temps/sidebaricon.tsx`), ensuring all usage locations use theme-safe `bd-*` CSS variable tokens.
+Replace the static lucide-react `Menu` sidebar/hamburger icon with the animated, path-morphing `SidebarToggleIcon` component from the template (`docs/templates/React-temps/sidebaricon.tsx`), ensuring all usage locations use theme-safe `bd-*` CSS variable tokens.
 
 ## Changes
 

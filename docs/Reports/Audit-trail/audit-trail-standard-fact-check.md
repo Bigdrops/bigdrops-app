@@ -6,7 +6,7 @@ This report was written by MiMo Code Agent on 2026-07-03.
 
 ## 1. Objective & Scope
 
-**Objective:** Verify every factual claim in `docs/STANDARD/audit-trail-standard.md` against the actual current source code and migrations, producing a verdict (CONFIRMED/CONTRADICTED/UNVERIFIABLE) for each claim with file:line evidence.
+**Objective:** Verify every factual claim in `docs/standard/audit-trail-standard.md` against the actual current source code and migrations, producing a verdict (CONFIRMED/CONTRADICTED/UNVERIFIABLE) for each claim with file:line evidence.
 
 **Scope:** All factual claims in the standard document — coverage matrix, mechanism descriptions, function signatures, whitelist status, redundancy claims, and the §7 open question.
 

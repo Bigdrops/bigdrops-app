@@ -10,7 +10,7 @@
 
 ### 1. Added Phase 3D — BOQ & RFQ Overhaul
 
-Inserted after Phase 3C (PDF Quality Audit — Remaining Types) in `docs/PRD/pdf-rendering-roadmap.md`.
+Inserted after Phase 3C (PDF Quality Audit — Remaining Types) in `docs/prd/pdf-rendering-roadmap.md`.
 
 **Phase 3D includes:**
 - Critical bug documentation: BOQ storage split (localStorage create vs Supabase view)
@@ -61,7 +61,7 @@ All changes were documentation-only.
 
 | File | Change |
 |---|---|
-| `docs/PRD/pdf-rendering-roadmap.md` | Added Phase 3D section, updated execution order |
+| `docs/prd/pdf-rendering-roadmap.md` | Added Phase 3D section, updated execution order |
 
 ## Files Created
 

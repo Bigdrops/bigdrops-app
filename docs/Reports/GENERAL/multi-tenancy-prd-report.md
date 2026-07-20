@@ -118,4 +118,4 @@ The following were identified but intentionally left for subsequent phases:
 
 ## 7. Deliverables
 
-- **`docs/PRD/multi-tenancy-prd.md`** — Full PRD with architecture, migration plan, table inventory, and change list
+- **`docs/prd/multi-tenancy-prd.md`** — Full PRD with architecture, migration plan, table inventory, and change list

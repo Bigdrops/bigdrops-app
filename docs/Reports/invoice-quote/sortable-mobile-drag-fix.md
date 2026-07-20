@@ -9,7 +9,7 @@
 
 ## 1. Sortable Template System Role
 
-The canonical sortable pattern is defined in `docs/TEMPLATES/React-temps/sortable.tsx`. It demonstrates the intended API using REUI components (`Sortable`, `SortableItem`, `SortableItemHandle` from `@/components/reui/sortable`).
+The canonical sortable pattern is defined in `docs/templates/React-temps/sortable.tsx`. It demonstrates the intended API using REUI components (`Sortable`, `SortableItem`, `SortableItemHandle` from `@/components/reui/sortable`).
 
 **Reality:** The REUI sortable abstraction does NOT exist in the codebase (`src/components/reui/sortable*` — no files found). Production code uses `@dnd-kit/core` and `@dnd-kit/sortable` directly.
 

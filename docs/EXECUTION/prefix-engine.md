@@ -1,8 +1,8 @@
 # Prefix Engine — Execution Plan
 
-**Document:** `docs/EXECUTION/prefix-engine.md`
+**Document:** `docs/execution/prefix-engine.md`
 **Status:** Execution Ready (Spec Defined)
-**PRD Source:** `docs/PRD/PREFIX_ENGINE_SETTINGS.md`
+**PRD Source:** `docs/prd/prefix-engine-settings.md`
 
 ---
 
