@@ -95,6 +95,7 @@ export async function handleDownloadQuotationPdf(input: {
           id: String(item.id || item._uiKey || index),
           rowType: item.row_type === "group_header" ? "group_header" : "line",
           groupLabel: item.group_name || null,
+          groupId: item.group_id || null,
           description: item.description || "",
           subDescription: item.sub_description || "",
           make: item.make || "",
@@ -113,7 +114,12 @@ export async function handleDownloadQuotationPdf(input: {
                   mergeQtyUnit: resolvedTable.mergeQtyUnit,
                   configuredColumns: resolvedTable.configuredColumns,
                 }),
-          customData: item.custom_data || {},
+          customData: {
+            ...(item.custom_data || {}),
+            ...(item.row_type === "group_header" ? {
+              showSubtotal: customFields?.groupMeta?.[item.group_id || ""]?.showSubtotal === true,
+            } : {}),
+          },
         })),
         totals: {
           mode: "standard",

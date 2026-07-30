@@ -58,3 +58,8 @@ export type RfqConversionPrefillState = ProjectPrefillState & {
     }>
   }
 }
+
+export interface DuplicateQuotationPrefillState {
+  duplicatePrefill?: Record<string, unknown>
+  duplicatePrefillItems?: import('@/domain/invoice').InvoiceItem[]
+}

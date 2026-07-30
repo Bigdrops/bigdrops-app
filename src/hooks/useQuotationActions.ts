@@ -128,9 +128,11 @@ export function useQuotationActions(input: {
     setDuplicating(true);
     operation.start("duplicate-quotation", "Duplicating Quotation", "Creating copy...");
     try {
-      const createdQuotation = await duplicateQuotationRecord({ quotation, items, prefixes: settings?.document_prefixes });
+      const { prefill, prefillItems } = await duplicateQuotationRecord({ quotation, items });
       operation.finish("success");
-      navigate(`/quotations/${createdQuotation.id}`);
+      navigate('/quotations/new', {
+        state: { duplicatePrefill: prefill, duplicatePrefillItems: prefillItems },
+      });
     } catch (error) {
       operation.finish("error");
       showToast("Clone failed", error instanceof Error ? error.message : "Could not duplicate this quotation.");

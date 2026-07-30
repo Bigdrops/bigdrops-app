@@ -13,6 +13,7 @@ import {
   useInvoiceColumns,
 } from '@/components/useInvoiceColumns.jsx'
 import type { ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoice'
+import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import {
   buildQuotationFormState,
   type DbQuotation,
@@ -32,6 +33,7 @@ import { resolvePrefix } from '@/domain/prefixConstants'
 import { formatQuotationStatus } from '../components/quotation/quotationStatus'
 import type {
   BankAccountRow,
+  DuplicateQuotationPrefillState,
   PdfOutputState,
   QuotationEditorState,
   QuotationGroupState,
@@ -55,7 +57,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const navigate = useNavigate()
   const location = useLocation()
   const { id: quotationId } = useParams<{ id: string }>()
-  const prefill = (location.state || {}) as RfqConversionPrefillState
+  const prefill = (location.state || {}) as RfqConversionPrefillState & DuplicateQuotationPrefillState
   const { isMobile } = useLayoutMode()
   const { settings } = useSettings()
   const isEdit = mode === 'edit'
@@ -271,6 +273,82 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           return
         }
 
+        /* ── Duplicate prefill: restore full editable state from prefill payload ── */
+        if (isCreate && prefill.duplicatePrefill) {
+          const dupPrefill = prefill.duplicatePrefill
+          const dupPrefillItems = prefill.duplicatePrefillItems || []
+
+          // Parse custom_fields from the prefill (may be string or object)
+          let parsedCf: Record<string, unknown> = {}
+          try {
+            parsedCf = typeof dupPrefill.custom_fields === 'string'
+              ? JSON.parse(dupPrefill.custom_fields)
+              : (dupPrefill.custom_fields as Record<string, unknown> || {})
+          } catch { /* empty */ }
+
+          const groupMeta = parseGroupMeta(parsedCf?.groupMeta)
+          const normalizedGrouping = normalizeQuotationGrouping(dupPrefillItems, groupMeta)
+
+          setQuotation({
+            ...dupPrefill as unknown as QuotationEditorState,
+            quotation_number: '',
+            quotation_title: String(dupPrefill.quotation_title || (parsedCf?.quotationTitle as string) || ''),
+            client_id: '',
+            client_name: '',
+            project_id: '',
+            status: 'open',
+            notes: String(dupPrefill.notes || (parsedCf?.notesHtml as string) || ''),
+            terms: String(dupPrefill.terms || (parsedCf?.termsHtml as string) || ''),
+            workmanship: Number(dupPrefill.workmanship || 0),
+            transportation: Number(dupPrefill.transportation || 0),
+            shipping: Number(dupPrefill.shipping || 0),
+            discount: Number(dupPrefill.discount || 0),
+            vat: Number(
+              (parsedCf?.calculationInputs as any)?.vatPercent
+                ?? (parsedCf?.calculationInputs as any)?.vatRate
+                ?? dupPrefill.vat
+                ?? 7.5
+            ),
+            wht: Number(dupPrefill.wht || 0),
+            payment_terms: String((parsedCf?.payment_terms as string) || (dupPrefill as any)?.payment_terms || 'Custom'),
+            custom_payment_terms: String((parsedCf?.custom_payment_terms as string) || (dupPrefill as any)?.custom_payment_terms || ''),
+            subtotal: 0,
+            install_rate_total: 0,
+            total: 0,
+            amount_in_words: '',
+          })
+
+          setItems(normalizedGrouping.items)
+          setColumns(resolveFinancialColumns(Array.isArray(parsedCf?.columnConfig) ? parsedCf.columnConfig as any[] : []))
+          setHeaderFields(Array.isArray(parsedCf?.header) ? parsedCf.header as InvoiceFieldEntry[] : [])
+          setAdditionalFields(Array.isArray(parsedCf?.additionalFields) ? parsedCf.additionalFields as InvoiceFieldEntry[] : [])
+          setDiscountType((parsedCf?.discountType as 'fixed' | 'percent') || 'fixed')
+          setDiscountTiming((parsedCf?.discountTiming as 'before' | 'after') || 'after')
+          setWhtType((parsedCf?.whtType as 'fixed' | 'percent') || 'percent')
+          setNotesTitle(String(parsedCf?.notesTitle || 'Notes'))
+          setTermsTitle(String(parsedCf?.termsTitle || 'Terms and Conditions'))
+          setMergeQtyUnit(parsedCf?.mergeQtyUnit !== false)
+          setShowItemImages(Boolean(parsedCf?.showItemImages))
+          setAttachments(Array.isArray(parsedCf?.attachments) ? parsedCf.attachments as Array<Record<string, unknown>> : [])
+          setExtraCharges(normalizeExtraCharges(Array.isArray(parsedCf?.extraCharges) ? parsedCf.extraCharges as ExtraCharge[] : []))
+
+          setChargeLabels((current) => ({
+            ...current,
+            ...parseChargeLabels(parsedCf?.chargeLabels),
+          }))
+
+          setSignatoryId(typeof parsedCf?.signatoryId === 'string' ? parsedCf.signatoryId as string : null)
+          setPdfOutput(
+            parsedCf?.pdfOutput && typeof parsedCf.pdfOutput === 'object'
+              ? { ...defaultPdfOutput, ...(parsedCf.pdfOutput as Partial<PdfOutputState>) }
+              : defaultPdfOutput,
+          )
+          setGroups(normalizedGrouping.groups)
+          setLoading(false)
+          return
+        }
+
+        /* ── Normal create mode: generate next number, blank form ── */
         const { data } = await supabase.from('quotations').select('quotation_number')
         const nums = (data || []).map((q: { quotation_number?: string | null }) => {
           const match = q.quotation_number?.match(/(\d+)$/)
@@ -514,23 +592,50 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   })), [signatories])
 
   const handleDuplicateFromEditable = useCallback(() => {
-    const clonedItems = JSON.parse(JSON.stringify(items))
+    const clonedQuotation = JSON.parse(JSON.stringify(quotation))
+    const clonedItems = items.map((item: InvoiceItem) => ({ ...JSON.parse(JSON.stringify(item)), id: null }))
+
+    const prefillCustomFields = buildCustomFields({
+      quotation,
+      columns,
+      headerFields,
+      additionalFields,
+      discountType,
+      discountTiming,
+      whtType,
+      notesTitle,
+      termsTitle,
+      mergeQtyUnit,
+      showItemImages,
+      groups: normalizedGroups,
+      attachments,
+      extraCharges,
+      chargeLabels,
+      signatoryId,
+      pdfOutput,
+    })
+
     navigate('/quotations/new', {
       state: {
-        clientId: quotation.client_id || '',
-        clientName: quotation.client_name || '',
-        projectId: quotation.project_id || '',
-        sourceRfq: {
-          items: clonedItems.map((item: InvoiceItem) => ({
-            description: item.description || '',
-            quantity: item.quantity || 1,
-            unit: item.unit || '',
-            specification: item.sub_description || '',
-          })),
+        duplicatePrefill: {
+          ...clonedQuotation,
+          quotation_number: '',
+          client_id: '',
+          client_name: '',
+          project_id: '',
+          status: 'open',
+          issue_date: new Date().toISOString().split('T')[0],
+          valid_until: '',
+          subtotal: 0,
+          install_rate_total: 0,
+          total: 0,
+          amount_in_words: '',
+          custom_fields: JSON.stringify(prefillCustomFields),
         },
+        duplicatePrefillItems: clonedItems,
       },
     })
-  }, [items, quotation, navigate])
+  }, [items, normalizedGroups, quotation, navigate, columns, headerFields, additionalFields, discountType, discountTiming, whtType, notesTitle, termsTitle, mergeQtyUnit, showItemImages, attachments, extraCharges, chargeLabels, signatoryId, pdfOutput])
 
   if (loading) {
     return (

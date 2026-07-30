@@ -1,8 +1,8 @@
 import { supabase } from '@/supabase'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { normalizeSettings } from '@/hooks/useSettings'
-import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, toQuotationItemRow, withSourceTrail } from '@/domain/documentConversion'
-import { buildQuotationFormState, getNextQuotationNumber, type DbQuotation, type DbQuotationItem } from '@/domain/quotation'
+import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, withSourceTrail } from '@/domain/documentConversion'
+import { buildQuotationFormState, type DbQuotation, type DbQuotationItem } from '@/domain/quotation'
 import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '@/domain/invoice'
 import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { computeDocument } from '@/lib/Calculations'
@@ -79,28 +79,23 @@ export function downloadQuotationCsvFile({
 export async function duplicateQuotationRecord({
   quotation,
   items,
-  prefixes,
 }: {
   quotation: any
   items: any[]
-  prefixes?: DocumentPrefixes | null
 }) {
-  const { data: quotationRows } = await supabase.from('quotations').select('quotation_number')
-  const nextQuotationNumber = getNextQuotationNumber(
-    (quotationRows || []) as Array<{ quotation_number?: string | null }>,
-    resolvePrefix(prefixes, 'quotation'),
-  )
   const cleanCustomFields = parseDocumentCustomFields(quotation.custom_fields || {})
   const { conversionTrail: _ignoredTrail, ...restCustomFields } = cleanCustomFields
-  const payload = {
-    quotation_number: nextQuotationNumber,
-    po_number: quotation.po_number || null,
-    quotation_title: quotation.quotation_title || null,
-    client_id: null,
+
+  // Build prefill payload — no DB persistence. Law 2: Duplicate = clean draft.
+  const prefill = {
+    quotation_number: '',
+    po_number: quotation.po_number || '',
+    quotation_title: quotation.quotation_title || '',
+    client_id: '',
     client_name: '',
-    project_id: null,
+    project_id: '',
     issue_date: new Date().toISOString().split('T')[0],
-    valid_until: quotation.valid_until || null,
+    valid_until: '',
     status: 'open',
     notes: quotation.notes || '',
     terms: quotation.terms || '',
@@ -110,10 +105,10 @@ export async function duplicateQuotationRecord({
     discount: Number(quotation.discount || 0),
     vat: Number(quotation.vat || 0),
     wht: Number(quotation.wht || 0),
-    subtotal: Number(quotation.subtotal || 0),
-    install_rate_total: Number(quotation.install_rate_total || 0),
-    total: Number(quotation.total || 0),
-    amount_in_words: quotation.amount_in_words || '',
+    subtotal: 0,
+    install_rate_total: 0,
+    total: 0,
+    amount_in_words: '',
     custom_fields: JSON.stringify({
       ...restCustomFields,
       quotationTitle: quotation.quotation_title || '',
@@ -122,33 +117,15 @@ export async function duplicateQuotationRecord({
       termsHtml: quotation.terms || '',
     }),
   }
-  const { data: createdQuotation, error } = await supabase.from('quotations').insert([payload]).select().single()
-  if (error || !createdQuotation) throw new Error(error?.message || 'Failed to clone quotation')
 
-  // Audit Trail
-  try {
-    const { recordQuotationCreated, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
-    await recordQuotationCreated(createdQuotation.id)
-    await recordAuditLog({
-      entityType: 'quotation',
-      recordId: createdQuotation.id,
-      entityLabel: createdQuotation.quotation_number,
-      action: 'CREATE',
-      oldData: null,
-      newData: createdQuotation,
-      trackedFields: QUOTATION_TRACKED_FIELDS,
-    })
-  } catch (auditErr) {
-    console.error('Audit trail failed:', auditErr)
-  }
-  const itemRows = items
-    .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-    .map((item, index) => toQuotationItemRow(item, String(createdQuotation.id), index))
-  if (itemRows.length > 0) {
-    const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
-    if (itemError) throw itemError
-  }
-  return createdQuotation
+  const prefillItems = items
+    .filter((item: any) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+    .map((item: any) => ({
+      ...JSON.parse(JSON.stringify(item)),
+      id: null,
+    }))
+
+  return { prefill, prefillItems }
 }
 
 export async function convertQuotationToInvoice({
