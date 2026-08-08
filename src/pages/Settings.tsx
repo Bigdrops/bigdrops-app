@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import {
@@ -28,13 +29,35 @@ const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
 export default function Settings() {
   const [active, setActive] = useState<ActiveSectionId | null>(null)
   const [session, setSession] = useState<SettingsSession>(null)
+  const [isOperator, setIsOperator] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
   }, [])
 
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) return
+    let cancelled = false
+
+    async function probeOperator() {
+      try {
+        const { data } = await supabase.rpc('is_platform_operator', { p_user_id: userId })
+        if (!cancelled && data === true) setIsOperator(true)
+      } catch {
+        // Fail closed: leave isOperator false on any error.
+      }
+    }
+
+    void probeOperator()
+    return () => {
+      cancelled = true
+    }
+  }, [session?.user?.id])
+
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
-  const groups = buildGroups(isAdmin)
+  const groups = buildGroups(isAdmin, isOperator)
 
   const showToast = useCallback((msg: string) => {
     feedback.success(msg)
@@ -66,10 +89,20 @@ export default function Settings() {
         return <ArchivesSettingsSection />
       case 'admin':
         return <AdminSettingsSection session={session} />
+      case 'tenant-debug':
+        return null
       default:
         return null
     }
   }
+
+  const handleSelectSection = useCallback((id: ActiveSectionId) => {
+    if (id === 'tenant-debug') {
+      navigate('/debug/tenant')
+      return
+    }
+    setActive(id)
+  }, [navigate])
 
   return (
     <Layout 
@@ -81,7 +114,7 @@ export default function Settings() {
       <SettingsShell
         groups={groups}
         activeSection={active}
-        setActiveSection={setActive}
+        setActiveSection={handleSelectSection}
         renderContent={renderSection}
         isAdmin={isAdmin}
       />

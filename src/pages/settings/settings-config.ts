@@ -11,6 +11,7 @@ import {
   Shield,
   UserCheck,
   Bell,
+  Terminal,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -27,6 +28,7 @@ export type ActiveSectionId =
   | 'dashboard'
   | 'archives'
   | 'admin'
+  | 'tenant-debug'
 
 export type SettingsItem = {
   id: ActiveSectionId
@@ -34,6 +36,7 @@ export type SettingsItem = {
   icon: LucideIcon
   desc: string
   adminOnly?: boolean
+  operatorOnly?: boolean
 }
 
 export type GroupId = 'account' | 'workspace' | 'preferences' | 'system'
@@ -144,13 +147,23 @@ export const SYSTEM_GROUP: SettingsGroup = {
       desc: 'Users, devices, and admin controls',
       adminOnly: true,
     },
+    {
+      id: 'tenant-debug',
+      label: 'Tenant Debug',
+      icon: Terminal,
+      desc: 'Platform operator diagnostics',
+      adminOnly: true,
+      operatorOnly: true,
+    },
   ],
 }
 
-export function buildGroups(isAdmin: boolean): SettingsGroup[] {
-  const systemItems = SYSTEM_GROUP.items.filter((item) =>
-    item.adminOnly ? isAdmin : true
-  )
+export function buildGroups(isAdmin: boolean, isOperator: boolean): SettingsGroup[] {
+  const systemItems = SYSTEM_GROUP.items.filter((item) => {
+    if (item.operatorOnly) return isOperator
+    if (item.adminOnly) return isAdmin
+    return true
+  })
 
   return [
     ...SETTINGS_GROUPS,
