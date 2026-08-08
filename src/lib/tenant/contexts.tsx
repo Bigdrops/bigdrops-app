@@ -23,6 +23,21 @@ export interface ActiveEntity {
 
 export type ProvisioningStatus = 'pending' | 'creating' | 'ready' | 'failed' | 'purging' | 'purged'
 
+const VALID_PROVISIONING_STATES = new Set<ProvisioningStatus>([
+  'pending',
+  'creating',
+  'ready',
+  'failed',
+  'purging',
+  'purged',
+])
+
+export function isProvisioningStatus(value: unknown): value is ProvisioningStatus {
+  return typeof value === 'string' && VALID_PROVISIONING_STATES.has(value as ProvisioningStatus)
+}
+
+export type SchemaResolutionSource = 'startup' | 'cache' | 'refresh' | 'workspace-change' | 'entity-change'
+
 /* ------------------------------------------------------------------ */
 /* Workspace Provider                                                 */
 /* ------------------------------------------------------------------ */
@@ -125,6 +140,7 @@ type EntityContextValue = {
   error: string | null
   expectedSchema: string | null
   schemaName: string | null
+  schemaSource: SchemaResolutionSource | null
   provisioningStatus: ProvisioningStatus | null
   provisioningError: string | null
   tenantClient: TenantClient
@@ -141,6 +157,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [provisioningStatus, setProvisioningStatus] = useState<ProvisioningStatus | null>(null)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const [schemaSource, setSchemaSource] = useState<SchemaResolutionSource | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -202,7 +219,14 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
     const status = (row as { status?: string } | undefined)?.status
     const lastError = (row as { last_error?: string | null } | undefined)?.last_error
 
-    if (status) setProvisioningStatus(status as ProvisioningStatus)
+    if (status) {
+      if (isProvisioningStatus(status)) {
+        setProvisioningStatus(status)
+      } else {
+        setProvisioningStatus(null)
+        setProvisioningError(`Invalid backend provisioning status: ${status}`)
+      }
+    }
     if (lastError) setProvisioningError(lastError)
   }, [])
 
@@ -221,6 +245,13 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
 
   const tenantClient = useMemo(() => createTenantClient(supabase, schemaName), [schemaName])
 
+  // Phase 1 resolves the schema exactly once, at provider start. The source is
+  // recorded on that first resolution and later phases (cache/refresh re-checks,
+  // workspace/entity switching) will record their own source values.
+  useEffect(() => {
+    if (schemaName) setSchemaSource('startup')
+  }, [schemaName])
+
   const value = useMemo<EntityContextValue>(
     () => ({
       entity,
@@ -229,6 +260,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       error,
       expectedSchema,
       schemaName,
+      schemaSource,
       provisioningStatus,
       provisioningError,
       tenantClient,
@@ -241,6 +273,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       error,
       expectedSchema,
       schemaName,
+      schemaSource,
       provisioningStatus,
       provisioningError,
       tenantClient,

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/supabase'
 import {
@@ -6,10 +7,23 @@ import {
   useEntity,
   useAuthorization,
   TENANT_RESOLUTION_STARTED,
+  type SchemaResolutionSource,
 } from '@/lib/tenant/contexts'
 
 const PLATFORM_ROLES = ['owner', 'support', 'auditor', 'operations'] as const
 type PlatformRole = (typeof PLATFORM_ROLES)[number]
+
+const SOURCE_DISPLAY: Record<SchemaResolutionSource, string> = {
+  startup: 'Startup',
+  cache: 'Cache',
+  refresh: 'Refresh',
+  'workspace-change': 'Workspace Change',
+  'entity-change': 'Entity Change',
+}
+
+function displaySource(source: SchemaResolutionSource) {
+  return SOURCE_DISPLAY[source]
+}
 
 type PlatformProbe = {
   isOperator: boolean | null
@@ -101,6 +115,24 @@ export default function TenantDebug({ session }: { session: Session }) {
     return Math.max(0, Date.now() - TENANT_RESOLUTION_STARTED)
   }, [workspace.isLoading, entity.isLoading])
 
+  // PRD §14: the diagnostic page is restricted to platform operators only.
+  // Fail closed — render no diagnostic data until operator status is confirmed.
+  if (platformProbe.isOperator === false) {
+    return <Navigate to="/" replace />
+  }
+
+  if (platformProbe.isOperator !== true) {
+    return (
+      <div className="min-h-screen w-full bg-white text-black p-4 flex items-center justify-center">
+        <div className="text-xs text-center opacity-60 max-w-md">
+          {platformProbe.error
+            ? `Access verification failed: ${platformProbe.error}`
+            : 'Verifying platform operator access…'}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen w-full bg-white text-black p-4">
       <div className="max-w-3xl mx-auto">
@@ -167,7 +199,7 @@ export default function TenantDebug({ session }: { session: Session }) {
             <Row label="Entity Name" value={entity.entity?.name} />
             <Row label="Schema Name" value={entity.schemaName} />
             <Row label="Expected Schema" value={entity.expectedSchema} />
-            <Row label="Schema Resolution Source" value={entity.schemaName ? 'Startup' : '—'} />
+            <Row label="Schema Resolution Source" value={entity.schemaSource ? displaySource(entity.schemaSource) : '—'} />
             <Row label="Active Count" value={`${entity.entityCount}${entity.entityCount > 1 ? ' (selector deferred)' : ''}`} />
             {entity.error && <Row label="Error" value={entity.error} />}
           </Section>
