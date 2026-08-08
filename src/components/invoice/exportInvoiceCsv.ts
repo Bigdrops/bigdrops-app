@@ -1,13 +1,9 @@
 import type { InvoiceItem } from '@/domain/invoice'
-
-type InvoiceCsvTotals = {
-  rawSubtotal?: number
-  installRateTotal?: number
-  vatAmount?: number
-  discountAmount?: number
-  whtAmount?: number
-  totalPayable?: number
-} | null
+import {
+  buildDocumentSummaryCsvRows,
+  resolveDocumentTextSection,
+  type DocumentCsvTotals,
+} from '@/utils/csvDocumentSummary'
 
 type InvoiceCsvInvoice = {
   invoice_number?: string
@@ -18,6 +14,8 @@ type InvoiceCsvInvoice = {
   client_name?: string | null
   issue_date?: string | null
   due_date?: string | null
+  notes?: string | null
+  terms?: string | null
 }
 
 function escapeCsv(value: unknown): string {
@@ -31,9 +29,10 @@ function escapeCsv(value: unknown): string {
 export function buildInvoiceCsv(params: {
   invoice: InvoiceCsvInvoice
   items: InvoiceItem[]
-  totals?: InvoiceCsvTotals
+  totals?: DocumentCsvTotals
+  customFields?: Record<string, any>
 }) {
-  const { invoice, items, totals } = params
+  const { invoice, items, totals, customFields } = params
   const rows: string[][] = [
     ['Invoice Number', invoice.invoice_number || ''],
     ['P.O. Number', invoice.po_number || ''],
@@ -82,12 +81,19 @@ export function buildInvoiceCsv(params: {
 
   if (totals) {
     rows.push([])
-    rows.push(['Subtotal', String(Number(totals.rawSubtotal || 0))])
-    rows.push(['Install Rate Total', String(Number(totals.installRateTotal || 0))])
-    rows.push(['VAT', String(Number(totals.vatAmount || 0))])
-    rows.push(['Discount', String(Number(totals.discountAmount || 0))])
-    rows.push(['WHT', String(Number(totals.whtAmount || 0))])
-    rows.push(['Total Payable', String(Number(totals.totalPayable || 0))])
+    rows.push(...buildDocumentSummaryCsvRows({ document: invoice, totals, customFields }))
+  }
+
+  const notes = resolveDocumentTextSection(invoice, customFields, 'notes', 'notesHtml')
+  const terms = resolveDocumentTextSection(invoice, customFields, 'terms', 'termsHtml')
+
+  if (notes) {
+    rows.push([])
+    rows.push([customFields?.notesTitle || 'Notes', notes])
+  }
+  if (terms) {
+    rows.push([])
+    rows.push([customFields?.termsTitle || 'Terms and Conditions', terms])
   }
 
   return rows.map((row) => row.map(escapeCsv).join(',')).join('\n')

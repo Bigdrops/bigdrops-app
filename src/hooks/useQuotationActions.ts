@@ -102,7 +102,7 @@ export function useQuotationActions(input: {
 
   const handleDownloadCsv = () => {
     if (!quotation) return;
-    downloadQuotationCsvFile({ quotation, items, totals });
+    downloadQuotationCsvFile({ quotation, items, totals, customFields });
     showToast("CSV downloaded", "Quotation CSV exported.", "success");
   };
 

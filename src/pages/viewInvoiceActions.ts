@@ -1,5 +1,7 @@
 import { supabase } from '@/supabase'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
+import { computeDocument } from '@/lib/Calculations'
+import { parseCustomFields, BUILTIN_COLUMNS } from '@/domain/invoice'
 import { voidInvoicePayment as voidPaymentService } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
 import {
@@ -200,17 +202,34 @@ export function downloadInvoiceCsvFile({
   items: any[]
   invoiceTotal: number
 }) {
+  const customFields = parseCustomFields(invoice?.custom_fields)
+  const columns = Array.isArray(customFields?.columnConfig)
+    ? customFields.columnConfig
+    : BUILTIN_COLUMNS
+
+  // Recompute the full financial breakdown from the canonical calculation
+  // engine (same source as the View page and PDF export). Persisted columns
+  // can be stale (imported/legacy documents), so they are never trusted here.
+  const documentTotals = computeDocument({
+    items: Array.isArray(items) ? items : [],
+    document: invoice || {},
+    cf: customFields || {},
+    columns,
+  })
+
   const csv = buildInvoiceCsv({
     invoice,
     items,
     totals: {
-      rawSubtotal: Number(invoice.subtotal || 0),
-      installRateTotal: Number(invoice.install_rate_total || 0),
-      vatAmount: Number(invoice.vat || 0),
-      discountAmount: Number(invoice.discount || 0),
-      whtAmount: Number(invoice.wht || 0),
-      totalPayable: invoiceTotal,
+      subtotal: documentTotals.subtotal,
+      installRateTotal: documentTotals.installRateTotal,
+      vat: documentTotals.vat,
+      discount: documentTotals.discount,
+      wht: documentTotals.wht,
+      grandTotal: documentTotals.grandTotal,
+      totalPayable: documentTotals.totalPayable ?? invoiceTotal,
     },
+    customFields,
   })
   downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
 }

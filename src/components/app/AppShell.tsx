@@ -13,6 +13,11 @@ import {
   normalizeThemeTokenBundle,
   type ThemeTokenBundle,
 } from '@/lib/themeTokens'
+import {
+  WorkspaceProvider,
+  EntityProvider,
+  AuthorizationProvider,
+} from '@/lib/tenant/contexts'
 
 const AndroidSystemBars = lazy(() => import('@/components/app/AndroidSystemBars'))
 const AndroidFoldAwareness = lazy(() => import('@/components/app/AndroidFoldAwareness'))
@@ -62,6 +67,7 @@ const EditLetter = lazy(() => import('@/pages/EditLetter'))
 const ViewLetter = lazy(() => import('@/pages/ViewLetter'))
 const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
+const TenantDebug = lazy(() => import('@/pages/debug/TenantDebug'))
 
 type Profile = {
   id: string
@@ -165,8 +171,11 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
+        <WorkspaceProvider userId={session.user.id}>
+          <EntityProvider>
+            <AuthorizationProvider userId={session.user.id}>
+              <Routes>
+                <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
           <Route path="/invoices" element={withBoundary(<Invoices />)} />
           <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
           <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
@@ -213,7 +222,11 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/letters/new" element={withBoundary(<NewLetter />)} />
           <Route path="/letters/edit/:id" element={withBoundary(<EditLetter />)} />
           <Route path="/letters/:id" element={withBoundary(<ViewLetter />)} />
-        </Routes>
+          <Route path="/debug/tenant" element={withBoundary(<TenantDebug session={session} />)} />
+              </Routes>
+            </AuthorizationProvider>
+          </EntityProvider>
+        </WorkspaceProvider>
       </Suspense>
     </>
   )

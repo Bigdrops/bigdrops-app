@@ -67,12 +67,24 @@ export function downloadQuotationCsvFile({
   quotation,
   items,
   totals,
+  customFields,
 }: {
   quotation: any
   items: any[]
   totals: any
+  customFields?: Record<string, any>
 }) {
-  const csv = buildQuotationCsv({ quotation, items, totals })
+  const quotationCustomFields =
+    quotation?.custom_fields && typeof quotation.custom_fields === 'object'
+      ? (quotation.custom_fields as Record<string, any>)
+      : undefined
+
+  const csv = buildQuotationCsv({
+    quotation,
+    items,
+    totals,
+    customFields: customFields || quotationCustomFields,
+  })
   downloadQuotationCsv(`${quotation.quotation_number || 'quotation'}.csv`, csv)
 }
 

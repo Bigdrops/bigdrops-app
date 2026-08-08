@@ -1,5 +1,10 @@
 import type { InvoiceItem } from '@/domain/invoice'
 import type { Quotation } from '@/domain/quotation'
+import {
+  buildDocumentSummaryCsvRows,
+  resolveDocumentTextSection,
+  type DocumentCsvTotals,
+} from '@/utils/csvDocumentSummary'
 
 function escapeCsv(value: unknown): string {
   const text = value === null || value === undefined ? '' : String(value)
@@ -12,16 +17,10 @@ function escapeCsv(value: unknown): string {
 export function buildQuotationCsv(params: {
   quotation: Quotation
   items: InvoiceItem[]
-  totals?: {
-    rawSubtotal?: number
-    installRateTotal?: number
-    vatAmount?: number
-    discountAmount?: number
-    whtAmount?: number
-    totalPayable?: number
-  } | null
+  totals?: DocumentCsvTotals
+  customFields?: Record<string, any>
 }) {
-  const { quotation, items, totals } = params
+  const { quotation, items, totals, customFields } = params
   const rows: string[][] = [
     ['Quotation Number', quotation.quotation_number || ''],
     ['P.O. Number', quotation.po_number || ''],
@@ -64,12 +63,19 @@ export function buildQuotationCsv(params: {
 
   if (totals) {
     rows.push([])
-    rows.push(['Subtotal', String(Number(totals.rawSubtotal || 0))])
-    rows.push(['Install Rate Total', String(Number(totals.installRateTotal || 0))])
-    rows.push(['VAT', String(Number(totals.vatAmount || 0))])
-    rows.push(['Discount', String(Number(totals.discountAmount || 0))])
-    rows.push(['WHT', String(Number(totals.whtAmount || 0))])
-    rows.push(['Total', String(Number(totals.totalPayable || 0))])
+    rows.push(...buildDocumentSummaryCsvRows({ document: quotation, totals, customFields }))
+  }
+
+  const notes = resolveDocumentTextSection(quotation, customFields, 'notes', 'notesHtml')
+  const terms = resolveDocumentTextSection(quotation, customFields, 'terms', 'termsHtml')
+
+  if (notes) {
+    rows.push([])
+    rows.push([customFields?.notesTitle || 'Notes', notes])
+  }
+  if (terms) {
+    rows.push([])
+    rows.push([customFields?.termsTitle || 'Terms and Conditions', terms])
   }
 
   return rows.map((row) => row.map(escapeCsv).join(',')).join('\n')
