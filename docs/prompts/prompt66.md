@@ -1,344 +1,163 @@
+You are working on the BIGDROPS business platform.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+
 ====================================================================
-PRECONDITION
-
-Read AGENTS.md before commencing this task. All applicable protocols and standards defined therein must be observed throughout this work.
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access. Read AGENTS.md immediately.
+It strictly enforces project fundamentals, locked math/rules, audit-first workflow,
+skills registry, and standards conformity. Follow it completely.
 
 ====================================================================
-
-# Round 6 — Entity Provisioning Engine
-
-Create a new append-only migration:
-
-supabase/migrations/20260717000000_entity_provisioning_engine.sql
-
-Do NOT modify any existing migration. Migration history is immutable.
-
-Before implementation, load the appropriate implementation skills from
-docs/PROJECTSKILLINDEX.md. At minimum, load the skills covering:
-
-- PostgreSQL / Supabase
-- Database architecture
-- Row Level Security (RLS)
-- PL/pgSQL
-- Transactions & error handling
-- Concurrency / locking
-- Karpathy
-
-If additional skills are relevant, load them before coding.
-
----
-
-## Objective
-
-Implement the complete Entity Provisioning Engine described by PRD v2.1.
-
-This is the production provisioning pipeline responsible for creating
-new business entities safely, atomically, idempotently, and with proper
-failure recovery.
-
-The engine must become the single provisioning entry point for entity
-creation.
-
----
-
-## Architectural Requirements
-
-Do NOT implement one large monolithic PL/pgSQL function.
-
-Instead implement:
-
-• One public orchestration function
-
-    provision_entity(...)
-
-that coordinates the complete workflow.
-
-Behind it, implement small internal helper functions for each concern.
-
-Typical decomposition:
-
-- validate permissions
-- idempotency check
-- metadata creation/update
-- create schema
-- clone template
-- install RLS
-- finalize provisioning
-- cleanup/error handling
-
-The orchestration function owns the transaction and workflow.
-
-Helper functions should each have one clear responsibility.
-
----
-
-## Functional Requirements
-
-### 1. Authorization
-
-Caller must:
-
-- own the workspace
-
-OR
-
-- possess create_entity permission.
-
-Reject all other callers.
-
----
-
-### 2. Concurrency Protection
-
-Before provisioning begins:
-
-Acquire a PostgreSQL advisory lock (or equivalent safe locking mechanism)
-using a deterministic key derived from either:
-
-- entity_id
-
-or
-
-- (workspace_id, slug)
-
-This prevents concurrent provisioning of the same logical entity.
-
-The lock must automatically release when the transaction completes.
-
----
-
-### 3. Idempotency
-
-Provisioning must be safely repeatable.
-
-If an entity already exists:
-
-READY
-- immediately return success
-- perform no work
-
-CREATING
-- either safely resume
-OR
-- return a clear "Provisioning already in progress" response.
-
-Choose one approach and document why.
-
-FAILED
-- never silently retry.
-- require explicit retry workflow.
-
-Document the idempotency strategy.
-
----
-
-### 4. Metadata
-
-Insert entity metadata when necessary.
-
-Respect all existing uniqueness constraints.
-
----
-
-### 5. Provisioning Status
-
-Create or update:
-
-entity_provisioning_status
-
-Transition:
-
-creating
-
-↓
-
-ready
-
-or
-
-failed
-
-Update:
-
-- last_error
-- updated_at
-- attempt_count
-
----
-
-### 6. Schema Creation
-
-Create the entity schema using the PRD naming convention.
-
-Use existing uniqueness guarantees.
-
----
-
-### 7. Template Clone
-
-Clone the complete template schema.
-
-Do not clone only a subset.
-
-Follow the PRD exactly.
-
----
-
-### 8. Dynamic RLS Installation
-
-Install all required policies onto every cloned table.
-
-Policies must follow the existing
-
-has_entity_permission()
-
-authorization model.
-
-Hard requirement:
-
-NO generated policy may query the same protected table using a raw
-subquery.
-
-Whenever same-table lookups are required they MUST use
-SECURITY DEFINER helper functions.
-
-Audit every generated policy against the Round 5 recursion issue before
-considering implementation complete.
-
----
-
-### 9. Success
-
-On successful completion:
-
-status = ready
-
-Return success.
-
----
-
-### 10. Failure
-
-If any stage fails:
-
-Catch the exception.
-
-Drop any partially-created schema.
-
-Leave the entities row intact.
-
-Update:
-
-status = failed
-
-Populate:
-
-last_error
-
-Increment:
-
-attempt_count
-
-Never delete entity metadata.
-
----
-
-### 11. Retry Policy
-
-Do NOT hardcode retry limits.
-
-Expose the retry limit via an explicit configuration mechanism.
-
-Examples:
-
-- configuration table
-
-or
-
-- helper function
-
-Document the chosen design.
-
-When retry limit is exceeded:
-
-Return a clear
-
-Manual Intervention Required
-
-state.
-
-Do not retry forever.
-
----
-
-## Verification
-
-Run only safe verification.
-
-Never run bun build.
-
-Required:
-
-- bun run typecheck
-- bun run audit:load
-- git status
-
-If practical, execute lifecycle verification against a disposable
-database.
-
-Run all tests using a NON-SUPERUSER role.
-
-Verify:
-
-1.
-Successful provisioning.
-
-2.
-Injected failure.
-
-Confirm:
-
-- schema removed
-- entities row preserved
-- status failed
-- error captured
-
-3.
-Repeated successful provisioning.
-
-Confirm:
-
-- no duplicate schema
-- no duplicate metadata
-- safe idempotent behavior
-
-4.
-Concurrent provisioning.
-
-Attempt simultaneous provisioning.
-
-Confirm advisory locking prevents duplicate execution.
-
-5.
-Retry policy.
-
-Confirm retry ceiling behaves correctly.
-
-6.
-Cross-workspace isolation.
-
-Workspace A cannot access Workspace B entity schema.
-
----
-
-## Deliverables
-
-Provide:
-
-- migration summary
-- helper function summary
-- orchestration workflow summary
-- lifecycle verification results
-- git diff summary
-
-No existing migration files may be modified.
+CONTEXT
+====================================================================
+Phase 1 multi‑tenant frontend infrastructure is COMPLETE and verified live
+in production:
+- WorkspaceProvider → EntityProvider → AuthorizationProvider → Tenant Client
+- /debug/tenant diagnostic page
+- Tenant schema: entity_bigdrops-main_main
+- Provisioning status: ready
+- Entity permissions seeded: ('setting','view') and ('client','view')
+- Entity settings row: id=1, company_name='BIGDROPS', default prefixes
+
+This is Phase 2: read‑only migration for Settings and Clients.
+The objective is to route all existing read paths for these two modules
+through the Tenant Client, so they read from the entity schema instead
+of the public schema. Writes remain on the public schema for now.
+No new permission checks are added in this phase; authorization is
+enforced by the tenant schema's RLS (requires 'view' on resource).
+
+====================================================================
+TARGET FILES & CURRENT STATE
+====================================================================
+All reads currently use the unscoped `supabase` client (public schema).
+
+Settings reads:
+- src/hooks/useSettings.js:196  – SELECT * FROM settings WHERE id=1 .single()
+- src/hooks/useInvoiceReferenceData.ts:18 – SELECT company_tagline, footer_text FROM settings id=1
+- src/hooks/useInvoiceDetailData.js:188 – SELECT settings
+- src/pages/viewQuotationActions.ts:16 – SELECT settings id=1
+- src/pages/QuotationFormPage.tsx:206 – SELECT brand columns from settings
+- src/modules/invoices/services/paymentService.ts:116,146 – SELECT settings + prefix
+
+Clients reads:
+- src/pages/Clients.tsx:74,133 – SELECT list; DELETE (only reads are in scope)
+- src/pages/ClientDetail.tsx:150 – SELECT client by id
+- src/components/ClientSelector.tsx:72 – SELECT list
+- src/hooks/useInvoiceDetailData.js:80 – SELECT client by id
+- src/hooks/useGlobalSearch.ts:41 – SELECT clients ilike
+- src/pages/ViewWaybill.tsx:179 – SELECT client
+- src/pages/ViewCSR.tsx:182 – SELECT client
+- src/pages/viewQuotationActions.ts:51 – SELECT client
+- src/modules/invoices/services/paymentService.ts:115 – SELECT client
+
+The Tenant Client is already implemented and ready:
+- src/lib/tenantClient.ts exports createTenantClient(supabase, schemaName)
+- EntityProvider exposes the resolved schema and tenantClient via context
+- The useTenantClient() hook is available
+
+====================================================================
+REQUIRED CHANGES
+====================================================================
+Before modifying any call site, inspect the existing Tenant Client and
+EntityProvider APIs and the calling chain for that file. Reuse the
+existing Phase-1 access pattern wherever one exists. Do not invent a
+second tenant resolution mechanism.
+
+For each read site listed above, route the read through the existing
+Tenant Client architecture:
+
+1. From React components and custom hooks, use useTenantClient() (or the
+   equivalent Phase-1 hook) to obtain the resolved tenant client.
+2. From non-React services, utility modules, or action/data-layer functions
+   where React hooks cannot be called, use the existing project's supported
+   tenant-client injection/access pattern (e.g., receiving the tenant client
+   as a parameter from the calling component). Do NOT call a React hook from
+   a service or utility function, and do NOT invent a new global Supabase
+   client, singleton, or alternate tenant-resolution mechanism. The resolved
+   tenant client must ultimately come from the Phase-1 EntityProvider/Tenant
+   Client architecture.
+3. Replace supabase.from('settings') with tenantClient.from('settings') for
+   read queries only.
+4. Replace supabase.from('clients') with tenantClient.from('clients') for
+   read queries only.
+5. Do NOT change the query structure (filters, .single(), .select(), etc.)
+   except the client instance.
+6. Do NOT change any write operations (INSERT, UPDATE, DELETE, upsert) –
+   they must continue using the public-schema supabase client.
+7. Do NOT add hasAuthorization() checks or any other permission gating
+   beyond what RLS already provides.
+8. Do NOT modify src/supabase.ts.
+9. Do NOT introduce dual‑source fallback (e.g., "try tenant, fall back to public").
+   The tenant client is the sole data source for these reads after migration.
+
+SCOPE GUARD: Some Settings/Clients reads are embedded inside Invoice,
+Quotation, Waybill, CSR, search, and payment flows. Migrate ONLY the
+specific settings/clients READ query identified in the inventory above.
+Do NOT migrate any other table, query, write operation, or module data
+access merely because it appears in the same file.
+
+Keep changes minimal and localized to the existing data-access path.
+Small parameter/signature plumbing changes are permitted when required
+to pass the existing Phase-1 Tenant Client into non-React services or
+utilities. Do not restructure modules or introduce new architecture.
+
+Special handling for useSettings.js:
+- Line 196 performs a SELECT (read) – migrate to tenantClient.
+- Line 110 performs an upsert (write) – must remain on the public-schema
+  supabase client.
+- If the hook's read and write paths share the same client reference
+  internally, split them so the read uses tenantClient and the write
+  continues using the public supabase client. Do not let the read
+  migration accidentally move the write path.
+
+Special handling for Clients.tsx:
+- Line 74 performs a SELECT (read) – migrate to tenantClient.
+- Line 133 performs a DELETE (write) – must remain on the public-schema
+  supabase client.
+- Ensure the two operations use different client instances after migration.
+
+Clients empty-state expectation:
+- The entity‑schema clients table is empty. The UI must handle an empty
+  list gracefully (no rows, no error). Do NOT add backfill logic; empty is
+  the correct Phase 2 starting state.
+
+====================================================================
+CONSTRAINTS
+====================================================================
+- Read‑only migration ONLY. Do NOT migrate writes, deletes, or upserts.
+- No dual‑source fallback (no public schema read as backup).
+- No new permission checks or authorization UI.
+- Do NOT run bun run build.
+- Do NOT start Docker or Supabase local development.
+
+====================================================================
+VERIFICATION (HARD GATES)
+====================================================================
+After all changes, run:
+bun run typecheck
+bun run audit:load
+
+Both must pass with zero new errors.
+
+Manual verification (if a production browser session is available):
+- Load the Settings page and confirm company_name and document prefixes
+  are displayed (reading from tenant schema).
+- Load the Clients list and confirm it loads without error (empty list
+  is acceptable).
+- Reload /debug/tenant and confirm Tenant Client Ready is 'yes' and
+  Schema Name is entity_bigdrops-main_main.
+
+If manual verification cannot be performed, state this explicitly in
+the report.
+
+====================================================================
+OUTPUT
+====================================================================
+Report exactly:
+- Files modified and the nature of each change.
+- Typecheck result.
+- Audit result.
+- Whether manual verification was performed and the result.
+- Any remaining blockers.
