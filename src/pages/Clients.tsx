@@ -84,7 +84,9 @@ export default function Clients() {
 
       const nextRows = (data as Client[]) || []
       setClients(nextRows)
-      writeListCache(CLIENTS_LIST_CACHE_KEY, nextRows)
+      if (nextRows.length > 0) {
+        writeListCache(CLIENTS_LIST_CACHE_KEY, nextRows)
+      }
       setLoading(false)
     }
 
@@ -94,7 +96,7 @@ export default function Clients() {
       setClients(cachedEntry.rows)
       setLoading(false)
 
-      if (!isListCacheFresh(cachedEntry, CLIENTS_LIST_CACHE_TTL_MS) && tenantClient.isReady) {
+      if (tenantClient.isReady && (!isListCacheFresh(cachedEntry, CLIENTS_LIST_CACHE_TTL_MS) || cachedEntry.rows.length === 0)) {
         void fetchClients({ background: true })
       }
     } else if (tenantClient.isReady) {
@@ -104,7 +106,7 @@ export default function Clients() {
     return () => {
       mounted = false
     }
-  }, [tenantClient.isReady])
+  }, [tenantClient.isReady, tenantClient.schemaName])
 
   const categories = useMemo(() => {
     const set = new Set<string>()
@@ -132,7 +134,7 @@ export default function Clients() {
   const handleDelete = async (clientId: string | number): Promise<void> => {
     try {
       setIsDeleting(true)
-      const { error } = await supabase.from("clients").delete().eq("id", clientId)
+      const { error } = await tenantClient.from("clients").delete().eq("id", clientId)
       if (error) throw error
       const nextClients = clients.filter((client) => client.id !== clientId)
       setClients(nextClients)
