@@ -84,11 +84,10 @@ type AppShellProps = {
 
 const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
-export default function AppShell({ session, profile, onProfileUpdate }: AppShellProps) {
+// Theme application consumes useSettings(), which resolves the tenant client
+// through useEntity(). It must therefore render inside EntityProvider.
+function AppThemeManager() {
   const { settings } = useSettings()
-  const provider = session?.user?.app_metadata?.provider
-  const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
-  const showAndroidBackHandler = isAndroidNative()
 
   useEffect(() => {
     const bgSetting = settings?.app_background_color
@@ -152,6 +151,14 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
     (settings as any)?.app_theme_tokens,
   ])
 
+  return null
+}
+
+export default function AppShell({ session, profile, onProfileUpdate }: AppShellProps) {
+  const provider = session?.user?.app_metadata?.provider
+  const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
+  const showAndroidBackHandler = isAndroidNative()
+
   return (
     <>
       <Suspense fallback={null}>
@@ -173,6 +180,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
       <Suspense fallback={<PageLoader />}>
         <WorkspaceProvider userId={session.user.id}>
           <EntityProvider>
+            <AppThemeManager />
             <AuthorizationProvider userId={session.user.id}>
               <Routes>
                 <Route path="/" element={withBoundary(<Dashboard session={session} />)} />

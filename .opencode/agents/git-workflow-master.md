@@ -57,14 +57,18 @@ If `git status` shows clean: STOP, reply "No changes to commit."
 
 **HARD RULE: Every commit message MUST start with a gitmoji. No exceptions.**
 
+**HARD RULE: The complete commit message MUST be 72 bytes or fewer** (including the gitmoji and the `<type>(<scope>):` prefix). The GitHub `docs-commit` validate check fails any commit that is over 72 bytes or does not match the gitmoji + conventional format — a failed check shows a red ✗ next to the commit on GitHub instead of a green ✅.
+
 Format: `<gitmoji> <type>(<scope>): <subject>`
+
+Before committing, count the message with `printf '%s' "<message>" | wc -c`. If the count is 73 or more, shorten the subject until it fits (drop non-essential words from the report title first). Never exceed 72 bytes. Note the gitmoji itself consumes 3 bytes, so a message with a gitmoji can hold roughly 69 ASCII characters.
 
 ### 4.1 Report-driven mode (preferred)
 
 If `docs/reports/` has changed files, **read the report** to get the commit message.
 
 1. Read the changed report file(s) — at minimum read the first line `# Title`
-2. Use the report title as the commit message **subject**
+2. Use the report title as the commit message **subject**, then shorten it to fit the 72-byte limit (see §4)
 3. Determine `<gitmoji>` and `<type>` from the **source changes**:
    - If source code was also modified with substantial additions (`+lines > 50`) → `✨ feat`
    - If source code was modified (fixes, edits) → `🐛 fix`
@@ -119,7 +123,7 @@ Step 2 — Pick the scope based on WHAT changed:
 | Config files, `.github/`, `.githooks/` | `chore` or `config` |
 | Multiple unrelated modules | `project` |
 
-Step 3 — Write subject: lowercase, max 72 chars, no trailing period. Describe WHAT changed, not just "update files".
+Step 3 — Write subject: lowercase, no trailing period, and the FULL message (gitmoji + `type(scope):` + subject) must be 72 bytes or fewer. Describe WHAT changed, not just "update files". If the subject is too long, shorten it — never push a message over 72 bytes.
 
 **CRITICAL: NEVER stop without a message.** If you cannot determine the right gitmoji, default to `📝 docs` or `🔧 chore`. If you cannot determine a subject, use a basic description (`add X file`, `fix Y module`, etc.). But ALWAYS include the gitmoji and NEVER exit without producing a message.
 
@@ -135,7 +139,9 @@ git add -A
 git commit -m "<message>"
 ```
 
-**VALIDATE before committing:** Does the message start with a gitmoji? If not, STOP and fix it.
+**VALIDATE before committing (the GitHub `docs-commit` check fails otherwise → red ✗ on GitHub instead of ✅):**
+1. Does the message start with a gitmoji and match `<gitmoji> <type>(<scope>): <subject>`? If not, STOP and fix it.
+2. Is the full message 72 bytes or fewer? Run `printf '%s' "<message>" | wc -c`. If the count is 73 or more, STOP and shorten the subject before committing.
 
 Do not amend. Do not rewrite history.
 

@@ -1,6 +1,8 @@
 #!/bin/sh
-# pre-push hook — validates commit messages against Gitmoji + Conventional Commits
-# and scans staged diff for secrets.
+# pre-push hook — blocks pushes whose latest commit would fail the GitHub
+# docs-commit validate check (Gitmoji + Conventional Commits, max 72 bytes),
+# then scans the staged diff for secrets. Keeping the local rules identical to
+# the GitHub check keeps GitHub green (✅) instead of showing a failed check (✗).
 
 REMOTE="$1"
 URL="$2"
@@ -10,18 +12,22 @@ COMMIT_MSG_FILE=".git/COMMIT_EDITMSG"
 if [ -f "$COMMIT_MSG_FILE" ]; then
     SUBJECT=$(head -1 "$COMMIT_MSG_FILE")
 
-    # Warn on non-conforming messages but don't block
-    if ! echo "$SUBJECT" | grep -qP '^[^\x00-\x7F]+ [a-z]+\([a-z\-]+\): .+$'; then
-        echo "WARNING: Commit message doesn't follow Gitmoji + Conventional Commits format."
-        echo "  Expected: <gitmoji> <type>(<scope>): <subject>"
-        echo "  Got:      $SUBJECT"
-        echo "  Use 'git commit --amend' to fix, or ignore this warning."
+    # Hard block: must match Gitmoji + Conventional Commits (mirrors .github/workflows/docs-commit.yml).
+    # LC_ALL=C.UTF-8 is required: grep -P only handles the [^\x00-\x7F] class correctly in a UTF-8 locale.
+    if ! echo "$SUBJECT" | LC_ALL=C.UTF-8 grep -qP '^[^\x00-\x7F]+ [a-z]+\([a-z\-]+\): .+$'; then
+        echo "ERROR: Commit message must follow Gitmoji + Conventional Commits format." >&2
+        echo "  Expected: <gitmoji> <type>(<scope>): <subject>" >&2
+        echo "  Example:  📝 docs(prompts): update git workflow instructions" >&2
+        echo "  Got:      $SUBJECT" >&2
+        exit 1
     fi
 
-    # Check subject length (max 72 characters, not bytes)
-    LEN=$(echo "$SUBJECT" | wc -m | tr -d ' ')
+    # Hard block: max 72 bytes (same byte semantics as docs-commit.yml)
+    LEN=$(printf '%s' "$SUBJECT" | wc -c | tr -d ' ')
     if [ "$LEN" -gt 72 ]; then
-        echo "WARNING: Commit subject exceeds 72 characters (got $LEN). Consider shortening."
+        echo "ERROR: Commit subject exceeds 72 bytes (got $LEN)." >&2
+        echo "  Shorten the subject so the GitHub validate check passes (✅)." >&2
+        exit 1
     fi
 fi
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { useEntity } from '../lib/tenant/contexts'
 import { useSafeAsyncTask } from './useSafeAsyncTask'
 
 let cachedSettings = null
@@ -188,12 +189,13 @@ export function normalizeSettings(data) {
   return nextData
 }
 
-export async function fetchSettings(options = {}) {
+export async function fetchSettings(options = {}, tenantClient) {
   const { force = false } = options
   const requestStartedAt = Date.now()
   console.log('[useSettings] fetchSettings start (force:', force, ')')
   
-  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single()
+  // READ path: schema-aware tenant client (Phase 2). Writes stay on public supabase.
+  const { data, error } = await tenantClient.from('settings').select('*').eq('id', 1).single()
   
   if (error) {
     console.error('[useSettings] Fetch error from Supabase:', error)
@@ -229,7 +231,10 @@ export async function fetchSettings(options = {}) {
   return cachedSettings
 }
 
+// Requires EntityProvider (useEntity). Reads resolve through the tenant schema;
+// writes (persistSettings/saveSettings) intentionally stay on public supabase.
 export function useSettings() {
+  const { tenantClient } = useEntity()
   const [settings, setSettings] = useState(cachedSettings || {})
   const [loading, setLoading] = useState(!cachedSettings)
   const { runLatest, cancel } = useSafeAsyncTask()
@@ -239,8 +244,8 @@ export function useSettings() {
     if (cachedSettings) {
       setSettings(cachedSettings)
       setLoading(false)
-    } else {
-      void runLatest(() => fetchSettings(), {
+    } else if (tenantClient.isReady) {
+      void runLatest(() => fetchSettings({}, tenantClient), {
         onSuccess: (nextSettings) => setSettings(nextSettings),
         onError: () => setSettings(cachedSettings || {}),
         onSettled: () => setLoading(false),
@@ -251,7 +256,7 @@ export function useSettings() {
       cancel()
       listeners = listeners.filter(fn => fn !== setSettings)
     }
-  }, [runLatest, cancel])
+  }, [runLatest, cancel, tenantClient])
 
   return { settings, loading }
 }

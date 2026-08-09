@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { resolveDocumentSignatory } from "@/domain/invoice/previewModel";
 import { fetchProjectSummary } from "@/domain/documentRelationships";
+import { useEntity } from "@/lib/tenant/contexts";
 import { loadQuotationViewData } from "../pages/viewQuotationActions";
 
 export const defaultPdfOutput: PdfOutputSettingsValue = {
@@ -21,6 +22,7 @@ export const defaultPdfOutput: PdfOutputSettingsValue = {
 export function useQuotationViewData() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { tenantClient } = useEntity();
 
   const [loading, setLoading] = useState(true);
   const [quotation, setQuotation] = useState<any>(null);
@@ -40,11 +42,13 @@ export function useQuotationViewData() {
   } | null>(null);
 
   useEffect(() => {
+    if (!tenantClient.isReady) return;
+
     const loadQuotation = async () => {
       if (!id) return;
       setLoading(true);
       try {
-        const data = await loadQuotationViewData(id);
+        const data = await loadQuotationViewData(id, tenantClient);
         if (!data) {
           navigate("/quotations");
           return;
@@ -76,11 +80,11 @@ export function useQuotationViewData() {
     };
 
     void loadQuotation();
-  }, [id, navigate]);
+  }, [id, navigate, tenantClient]);
 
   const refreshQuotation = async () => {
     if (!id) return;
-    const data = await loadQuotationViewData(id);
+    const data = await loadQuotationViewData(id, tenantClient);
     if (!data) return;
     setQuotation(data.quotation);
     setItems(data.items);

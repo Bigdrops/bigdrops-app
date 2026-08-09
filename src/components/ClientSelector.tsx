@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 
 type ClientSelectorClient = ClientRecord
@@ -42,6 +43,7 @@ export default function ClientSelector({
   allowClear = true,
 }: ClientSelectorProps) {
   const { isMobile } = useLayoutMode()
+  const { tenantClient } = useEntity()
   const [clients, setClients] = useState<ClientSelectorClient[]>([])
   const [selectedClient, setSelectedClient] = useState<ClientSelectorClient | null>(null)
   const [internalOpen, setInternalOpen] = useState<boolean>(false)
@@ -50,8 +52,9 @@ export default function ClientSelector({
   void dense
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     void fetchClients()
-  }, [])
+  }, [tenantClient.isReady])
 
   const open = controlledOpen ?? internalOpen
   const setOpen = (nextOpen: boolean) => {
@@ -69,7 +72,7 @@ export default function ClientSelector({
   }, [clientId, clients])
 
   const fetchClients = async (): Promise<void> => {
-    const { data } = await supabase.from('clients').select('*').order('name')
+    const { data } = await tenantClient.from('clients').select('*').order('name')
     setClients((data || []) as ClientSelectorClient[])
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, Upload, Image as ImageIcon } from 'lucide-react'
 import { fetchSettings, saveSettings, uploadFile, useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { feedback } from '@/lib/feedback'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
@@ -16,6 +17,7 @@ type LogoState = 'idle' | 'uploading' | 'uploaded-unsaved' | 'saved' | 'error'
 
 export function BrandingSettingsSection() {
   const { settings, loading } = useSettings()
+  const { tenantClient } = useEntity()
   const [form, setForm] = useState<BrandingForm>({
     company_logo_url: '',
     footer_text: '',
@@ -132,7 +134,7 @@ export function BrandingSettingsSection() {
         footer_text: form.footer_text,
       })
 
-      await fetchSettings({ force: true })
+      await fetchSettings({ force: true }, tenantClient)
       setLogoState(form.company_logo_url ? 'saved' : 'idle')
       if (localLogoPreview) URL.revokeObjectURL(localLogoPreview)
       setLocalLogoPreview('')

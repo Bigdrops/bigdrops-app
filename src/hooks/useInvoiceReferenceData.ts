@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 
 export function useInvoiceReferenceData() {
+  const { tenantClient } = useEntity()
   const [signatories, setSignatories] = useState<any[]>([])
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const [settingsData, setSettingsData] = useState<any>(null)
@@ -15,7 +17,7 @@ export function useInvoiceReferenceData() {
       const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
         supabase.from('signatories').select('*').order('name'),
         supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-        supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+        tenantClient.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
       ])
       setSignatories(signatoriesResult.data || [])
       setBankAccounts(bankAccountsResult.data || [])
@@ -25,11 +27,11 @@ export function useInvoiceReferenceData() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [tenantClient])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    if (tenantClient.isReady) void load()
+  }, [load, tenantClient.isReady])
 
   return { signatories, bankAccounts, settingsData, loading, error, refresh: load }
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { canUseNativeSqlite } from '@/lib/native/capacitor'
 import {
   cacheInvoiceDetail,
@@ -46,6 +47,7 @@ function buildCachedInvoiceFinancials(invoiceRow, paymentRows) {
 }
 
 export function useInvoiceDetailData(id) {
+  const { tenantClient } = useEntity()
   const [invoice, setInvoice] = useState(null)
   const [items, setItems] = useState([])
   const [payments, setPayments] = useState([])
@@ -77,7 +79,7 @@ export function useInvoiceDetailData(id) {
     setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id) : null)
     const [clientResponse, creatorResponse] = await Promise.all([
       data?.client_id
-        ? supabase.from('clients').select('*').eq('id', data.client_id).single()
+        ? tenantClient.from('clients').select('*').eq('id', data.client_id).single()
         : Promise.resolve({ data: null }),
       data?.created_by
         ? supabase.from('profiles').select('*').eq('id', data.created_by).single()
@@ -85,7 +87,7 @@ export function useInvoiceDetailData(id) {
     ])
     setClient(clientResponse.data || null)
     setCreatorProfile(creatorResponse.data || null)
-  }, [id])
+  }, [id, tenantClient])
 
   const fetchInvoiceRelationships = useCallback(async () => {
     const related = await fetchInvoiceChildDocuments(id)
@@ -184,7 +186,7 @@ export function useInvoiceDetailData(id) {
             if (bankAccountsError) throw bankAccountsError
             setBankAccounts(data || [])
           }),
-        supabase
+        tenantClient
           .from('settings')
           .select('*')
           .eq('id', 1)
@@ -242,7 +244,7 @@ export function useInvoiceDetailData(id) {
     } finally {
       setLoading(false)
     }
-  }, [fetchInvoice, fetchInvoiceFinancials, fetchInvoiceRelationships, fetchItems, fetchPayments, id])
+  }, [fetchInvoice, fetchInvoiceFinancials, fetchInvoiceRelationships, fetchItems, fetchPayments, id, tenantClient])
 
   useEffect(() => {
     if (loading || !invoice?.id || !canWriteInvoiceCache()) return
@@ -260,6 +262,9 @@ export function useInvoiceDetailData(id) {
     })
   }, [error, id, loading, payments])
 
+  // refresh identity changes when tenantClient resolves, so the effect re-runs
+  // once the tenant schema becomes ready. When the tenant is not ready the
+  // targeted reads throw and the existing error/offline-cache fallback applies.
   useEffect(() => {
     void refresh()
   }, [refresh])

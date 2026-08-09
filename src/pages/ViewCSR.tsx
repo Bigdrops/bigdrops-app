@@ -30,6 +30,7 @@ import {
 import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
@@ -86,6 +87,7 @@ export default function ViewCSR() {
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
 
   const [loading, setLoading] = useState(true)
   const [csr, setCsr] = useState<any>(null)
@@ -161,6 +163,8 @@ export default function ViewCSR() {
   }, [template])
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
+
     const loadCsr = async () => {
       if (!id) return
       setLoading(true)
@@ -178,7 +182,7 @@ export default function ViewCSR() {
         setSignatories(signatories || [])
 
         if (data.client_id) {
-          const { data: clientRecord } = await supabase
+          const { data: clientRecord } = await tenantClient
             .from('clients')
             .select('address, city, state')
             .eq('id', data.client_id)
@@ -193,7 +197,7 @@ export default function ViewCSR() {
     }
 
     void loadCsr()
-  }, [id, navigate])
+  }, [id, navigate, tenantClient.isReady])
 
   const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
     const options = { description }

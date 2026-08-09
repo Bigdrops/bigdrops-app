@@ -13,6 +13,7 @@ import {
   validatePaymentEntry,
 } from '@/components/invoice/paymentEntryHelpers'
 import { loadPaymentSheetData, recordInvoicePayment } from '@/modules/invoices/services/paymentService'
+import { useEntity } from '@/lib/tenant/contexts'
 import type { BankAccountSummary } from '@/modules/invoices/types/paymentTypes'
 import type { PaymentMethod } from '@/modules/invoices/types/paymentTypes'
 
@@ -57,6 +58,7 @@ export default function InvoiceRecordPaymentSheet({
   onSaved,
   invoice,
 }: InvoiceRecordPaymentSheetProps) {
+  const { tenantClient } = useEntity()
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [currentBalance, setCurrentBalance] = useState(0)
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
@@ -183,7 +185,7 @@ export default function InvoiceRecordPaymentSheet({
         attachments: attachments.length > 0 ? attachments : undefined,
         invoiceNumber: invoice.invoice_number,
         clientName: invoice.client_name,
-      })
+      }, tenantClient)
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to record payment')

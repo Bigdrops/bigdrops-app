@@ -13,6 +13,7 @@ import { recordPaymentRecorded, recordPaymentVoided, recordReceiptVoided } from 
 import { insertReceipt, fetchReceiptByPaymentId, voidReceipt } from "@/domain/receipt/receiptRepository"
 import { autoCreateWhtReceiptDraft } from "@/modules/compliance/services/complianceService"
 import { supabase } from "@/supabase"
+import type { TenantClient } from "@/lib/tenantClient"
 import type { PaymentAttachment } from "@/lib/attachmentTypes"
 import { getNextReceiptNumber } from "@/domain/receipt/receiptNumber"
 import type { DocumentPrefixes } from '@/domain/prefixConstants'
@@ -70,7 +71,8 @@ export function normalizePaymentInput(
 }
 
 export async function recordInvoicePayment(
-  input: PaymentRecordInput
+  input: PaymentRecordInput,
+  tenantClient: TenantClient
 ): Promise<PaymentRecordResult> {
   try {
     const payload = normalizePaymentInput(input)
@@ -112,8 +114,8 @@ export async function recordInvoicePayment(
     try {
       const [invoiceResult, clientResult, companyResult, bankResult, signatoryResult] = await Promise.all([
         supabase.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
-        supabase.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await supabase.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
-        supabase.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
+        tenantClient.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await supabase.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
+        tenantClient.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
         payload.bank_account_id ? supabase.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
         supabase.from('signatories').select('name, role, signature_url').limit(1).single(),
       ])
@@ -143,7 +145,7 @@ export async function recordInvoicePayment(
         })
 
         const { withUniqueRetry } = await import('@/lib/withUniqueRetry')
-        const { data: settings } = await supabase.from('settings').select('document_prefixes').limit(1).single()
+        const { data: settings } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
 
         const receiptPayload = {
           ...snapshot,

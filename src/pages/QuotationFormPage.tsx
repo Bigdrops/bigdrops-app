@@ -29,6 +29,7 @@ import {
 import { feedback } from '@/lib/feedback'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { formatQuotationStatus } from '../components/quotation/quotationStatus'
 import type {
@@ -60,6 +61,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const prefill = (location.state || {}) as RfqConversionPrefillState & DuplicateQuotationPrefillState
   const { isMobile } = useLayoutMode()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const isEdit = mode === 'edit'
   const isCreate = mode === 'create'
   const [loading, setLoading] = useState(isEdit)
@@ -200,10 +202,13 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
           return
         }
 
+        // The settings brand-column read is tenant-scoped; wait for the tenant schema.
+        if (!tenantClient.isReady) return
+
         const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
           supabase.from('signatories').select('*').order('name'),
           supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-          supabase.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
+          tenantClient.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
         ])
 
         setSignatories((signatoriesResult.data || []) as SignatoryRow[])
@@ -377,7 +382,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     }
 
     void load()
-  }, [isEdit, navigate, quotationId, setColumns, settings?.document_prefixes])
+  }, [isEdit, navigate, quotationId, setColumns, settings?.document_prefixes, tenantClient.isReady])
 
   const lineItemsHandlers = useQuotationLineItems({ items, setItems, groups, setGroups })
   const {

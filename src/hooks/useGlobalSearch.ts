@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/supabase'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
+import { useEntity } from '@/lib/tenant/contexts'
 
 export type SearchResult = {
   id: string
@@ -13,6 +14,7 @@ export type SearchResult = {
 }
 
 export function useGlobalSearch(query: string) {
+  const { tenantClient } = useEntity()
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const { runLatest } = useSafeAsyncTask()
@@ -20,6 +22,8 @@ export function useGlobalSearch(query: string) {
   const cleanQuery = useMemo(() => query.trim().toLowerCase(), [query])
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
+
     if (!cleanQuery || cleanQuery.length < 2) {
       setResults([])
       setLoading(false)
@@ -38,7 +42,7 @@ export function useGlobalSearch(query: string) {
           csrs,
           waybills
         ] = await Promise.all([
-          supabase.from('clients').select('id, name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
+          tenantClient.from('clients').select('id, name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           supabase.from('projects').select('id, name, client_name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           supabase.from('invoices').select('id, invoice_number, client_name, total, status, created_at').ilike('invoice_number', `%${cleanQuery}%`).is('archived_at', null).limit(3).abortSignal(signal),
           supabase.from('quotations').select('id, quotation_number, client_name, total, status, created_at').ilike('quotation_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
@@ -109,7 +113,7 @@ export function useGlobalSearch(query: string) {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [cleanQuery, runLatest])
+  }, [cleanQuery, runLatest, tenantClient.isReady])
 
   return { results, loading }
 }

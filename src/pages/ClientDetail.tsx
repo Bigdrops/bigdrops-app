@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { feedback } from '@/lib/feedback'
 
@@ -45,6 +46,7 @@ function padActivityCount(activity: UnifiedActivityEvent[], totalCount: number) 
 export default function ClientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const [tab, setTab] = useState<ClientWorkspaceTab>('overview')
 
   const [client, setClient] = useState<ClientRecord | null>(null)
@@ -134,6 +136,8 @@ export default function ClientDetail() {
     setLoading((current) => ({ ...current, overview: true }))
     setError((current) => ({ ...current, overview: '' }))
 
+    if (!tenantClient.isReady) return
+
     try {
       const [
         clientRes,
@@ -147,7 +151,7 @@ export default function ClientDetail() {
         waybillRecentRes,
         projectRecentRes,
       ] = await Promise.all([
-        supabase.from('clients').select('*').eq('id', id).single(),
+        tenantClient.from('clients').select('*').eq('id', id).single(),
         supabase
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, document_type, custom_fields')
@@ -268,7 +272,7 @@ export default function ClientDetail() {
       feedback.error('Error', { description: 'Could not load client details' })
       setLoading((current) => ({ ...current, overview: false }))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   const loadProjects = useCallback(async () => {
     if (!id) return

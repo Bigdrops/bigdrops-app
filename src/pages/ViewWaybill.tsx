@@ -23,6 +23,7 @@ import { feedback } from '@/lib/feedback'
 import { getPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
@@ -84,6 +85,7 @@ export default function ViewWaybill() {
   const { id } = useParams<{ id: string }>()
   const ui = useDocumentUIState()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
 
   const [loading, setLoading] = useState(true)
   const [waybill, setWaybill] = useState<any>(null)
@@ -160,6 +162,8 @@ export default function ViewWaybill() {
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
+
     const loadWaybill = async () => {
       if (!id) return
       setLoading(true)
@@ -175,7 +179,7 @@ export default function ViewWaybill() {
         setWaybill(mapDbWaybill(data))
 
         if (data.client_id) {
-          const { data: clientData } = await supabase
+          const { data: clientData } = await tenantClient
             .from('clients')
             .select('address, city, state, phone, email')
             .eq('id', data.client_id)
@@ -203,7 +207,7 @@ export default function ViewWaybill() {
     }
 
     void loadWaybill()
-  }, [id, navigate])
+  }, [id, navigate, tenantClient.isReady])
 
 
 

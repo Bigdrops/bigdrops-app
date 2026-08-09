@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { normalizeSettings } from '@/hooks/useSettings'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, withSourceTrail } from '@/domain/documentConversion'
@@ -9,11 +10,11 @@ import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
-export async function loadQuotationViewData(id: string) {
+export async function loadQuotationViewData(id: string, tenantClient: TenantClient) {
   const [quoRes, itemsRes, settingsRes, bankAccountsRes, signatoriesRes] = await Promise.all([
     supabase.from('quotations').select('*').eq('id', id).single(),
     supabase.from('quotation_items').select('*').eq('quotation_id', id).order('sort_order'),
-    supabase.from('settings').select('*').eq('id', 1).single(),
+    tenantClient.from('settings').select('*').eq('id', 1).single(),
     supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
     supabase.from('signatories').select('id, name, role, signature_url').order('name'),
   ])
@@ -48,7 +49,7 @@ export async function loadQuotationViewData(id: string) {
     },
   })
   const clientRes = data.client_id
-    ? await supabase.from('clients').select('*').eq('id', data.client_id).single()
+    ? await tenantClient.from('clients').select('*').eq('id', data.client_id).single()
     : { data: null }
 
   return {

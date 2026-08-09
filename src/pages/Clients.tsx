@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../supabase"
+import { useEntity } from "../lib/tenant/contexts"
 import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { feedback } from "../lib/feedback"
@@ -52,6 +53,7 @@ function getClientCategoryLabel(cat?: string | null) {
 }
 
 export default function Clients() {
+  const { tenantClient } = useEntity()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [query, setQuery] = useState<string>("")
@@ -71,7 +73,7 @@ export default function Clients() {
         setLoading(true)
       }
 
-      const { data, error } = await supabase.from("clients").select("id, name, phone, city, state, category").order("name")
+      const { data, error } = await tenantClient.from("clients").select("id, name, phone, city, state, category").order("name")
 
       if (!mounted) return
       if (error) {
@@ -92,17 +94,17 @@ export default function Clients() {
       setClients(cachedEntry.rows)
       setLoading(false)
 
-      if (!isListCacheFresh(cachedEntry, CLIENTS_LIST_CACHE_TTL_MS)) {
+      if (!isListCacheFresh(cachedEntry, CLIENTS_LIST_CACHE_TTL_MS) && tenantClient.isReady) {
         void fetchClients({ background: true })
       }
-    } else {
+    } else if (tenantClient.isReady) {
       void fetchClients()
     }
 
     return () => {
       mounted = false
     }
-  }, [])
+  }, [tenantClient.isReady])
 
   const categories = useMemo(() => {
     const set = new Set<string>()
