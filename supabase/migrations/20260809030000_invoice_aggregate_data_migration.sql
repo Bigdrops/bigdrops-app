@@ -50,6 +50,11 @@ DECLARE
     v_mismatch    bigint;
     v_issues      text := '';
 BEGIN
+    -- Dependency guard
+    IF to_regproc('public._prov_install_triggers') IS NULL THEN
+        RAISE EXCEPTION 'Dependency missing: public._prov_install_triggers() must exist. Apply migration 20260809010000 before this one.';
+    END IF;
+
     RAISE NOTICE '=== Invoice aggregate data migration for schema % ===', v_schema;
 
     -- ============================================================
@@ -140,7 +145,7 @@ BEGIN
         EXECUTE format('SELECT count(*) FROM %I.%I', v_schema, v_tbl) INTO v_cnt_dst;
         RAISE NOTICE 'Copied %: public=% %, tenant=% %', v_tbl, v_cnt_src, (v_cnt_src = v_cnt_dst), v_cnt_dst, (v_cnt_src = v_cnt_dst);
         IF v_cnt_src <> v_cnt_dst THEN
-            v_issues := v_issues || format('count mismatch %: public=% tenant=%; ', v_tbl, v_cnt_src, v_cnt_dst);
+            v_issues := v_issues || format('count mismatch %s: public=%s tenant=%s; ', v_tbl, v_cnt_src, v_cnt_dst);
         END IF;
     END LOOP;
 
@@ -165,7 +170,7 @@ BEGIN
          WHERE t.id IS NULL OR t.invoice_number IS DISTINCT FROM p.invoice_number',
         v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('invoice id/number mismatch: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('invoice id/number mismatch: %s; ', v_mismatch); END IF;
 
     -- 6.2 No orphan invoice_items (invoice_id missing in tenant invoices)
     EXECUTE format(
@@ -174,7 +179,7 @@ BEGIN
          WHERE ii.invoice_id IS NOT NULL AND i.id IS NULL',
         v_schema, v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan invoice_items: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan invoice_items: %s; ', v_mismatch); END IF;
 
     -- 6.3 No orphan payments
     EXECUTE format(
@@ -183,7 +188,7 @@ BEGIN
          WHERE p.invoice_id IS NOT NULL AND i.id IS NULL',
         v_schema, v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan payments: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan payments: %s; ', v_mismatch); END IF;
 
     -- 6.4 No orphan receipts (payment + invoice must resolve)
     EXECUTE format(
@@ -193,7 +198,7 @@ BEGIN
          WHERE p.id IS NULL OR i.id IS NULL',
         v_schema, v_schema, v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan receipts: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan receipts: %s; ', v_mismatch); END IF;
 
     -- 6.5 No orphan wht_receipts
     EXECUTE format(
@@ -203,21 +208,21 @@ BEGIN
          WHERE p.id IS NULL OR i.id IS NULL',
         v_schema, v_schema, v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan wht_receipts: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan wht_receipts: %s; ', v_mismatch); END IF;
 
     -- 6.6 No regenerated IDs (compare id sets, not just counts)
     EXECUTE format(
         'SELECT count(*) FROM (SELECT id FROM public.invoices EXCEPT SELECT id FROM %I.invoices) x',
         v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('public invoice ids missing in tenant: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('public invoice ids missing in tenant: %s; ', v_mismatch); END IF;
 
     -- 6.7 Existing IDs remain stable across copy (idempotency guard)
     EXECUTE format(
         'SELECT count(*) FROM (SELECT id FROM public.payments EXCEPT SELECT id FROM %I.payments) x',
         v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('public payment ids missing in tenant: %; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN v_issues := v_issues || format('public payment ids missing in tenant: %s; ', v_mismatch); END IF;
 
     IF v_issues <> '' THEN
         RAISE EXCEPTION 'Invoice aggregate data migration FAILED validation: %', v_issues;
