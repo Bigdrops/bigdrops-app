@@ -13,3 +13,4 @@ Per AGENTS.md §8.5, every task records which subagent executed or reviewed the 
 
 [DELEGATION] task="Phase 1 multi-tenant frontend infrastructure completion and report" | domain="auth" | subagent="NONE" | justification="Infrastructure-only tenant context layer work; routing table has no dedicated multi-tenancy persona and frontend-developer is UI-scoped" | harness="Local Runner"
 [DELEGATION] task="Create unified .opencode/Small-drops.md persona synthesizing 7 source personas" | domain="docs" | subagent="NONE" | justification="Persona synthesis executed by primary agent per explicit user instruction; synthesis requires full cross-persona context held by the primary agent, no specialist subagent match" | harness="Freebuff"
+[DELEGATION] task="read-only entity authorization inventory for phase-2 seeding decision" | domain="auth" | subagent="NONE" | justification="No SUBAGENTS.md index matches a read-only frontend permission inventory audit" | harness="opencode local"
