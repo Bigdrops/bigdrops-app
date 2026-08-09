@@ -33,6 +33,8 @@ import notoSansBold from '@fontsource/noto-sans/files/noto-sans-latin-ext-700-no
 import cormorantGaramondRegular from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-normal.woff'
 import cormorantGaramondBold from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff'
 import cormorantGaramondItalic from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-italic.woff'
+import dejavuSansRegular from '@fontsource/dejavu-sans/files/dejavu-sans-latin-400-normal.woff'
+import dejavuSansBold from '@fontsource/dejavu-sans/files/dejavu-sans-latin-700-normal.woff'
 import type { PdfFontChoice } from '@/lib/pdfDesignPreset'
 
 export type RegisteredSharedFontConfig = {
@@ -46,6 +48,18 @@ export type RegisteredSharedFontConfig = {
 
 export const PDF_CURRENCY_FONT_FAMILY = 'Noto Sans'
 export const CREST_FONT_FAMILY = 'Cormorant Garamond'
+
+/**
+ * Supplementary glyph-coverage font.
+ *
+ * The registered shared fonts ship Latin-subset files and therefore lack
+ * glyphs such as Number Forms (⅘ U+2158). react-pdf falls back to Helvetica
+ * for missing glyphs, which corrupts any character outside WinAnsi (it is
+ * encoded as its low byte). DejaVu Sans Latin covers those characters, so
+ * glyph-safe text runs use this family for characters the primary fonts
+ * cannot render faithfully.
+ */
+export const PDF_GLYPH_FONT_FAMILY = 'DejaVu Sans'
 
 export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
@@ -146,6 +160,14 @@ export const REGISTERED_LOCKED_SHARED_FONTS: Record<string, RegisteredSharedFont
     boldSrc: cormorantGaramondBold,
     italicSrc: cormorantGaramondItalic,
     boldItalicSrc: cormorantGaramondBold,
+  },
+  [PDF_GLYPH_FONT_FAMILY]: {
+    family: PDF_GLYPH_FONT_FAMILY,
+    webFamily: PDF_GLYPH_FONT_FAMILY,
+    regularSrc: dejavuSansRegular,
+    boldSrc: dejavuSansBold,
+    italicSrc: dejavuSansRegular,
+    boldItalicSrc: dejavuSansBold,
   },
 }
 

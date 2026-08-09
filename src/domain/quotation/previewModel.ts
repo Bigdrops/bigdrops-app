@@ -63,13 +63,13 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       summaryLabels: previewSummaryLabels,
     }).map((row) => ({
       label: row.label,
-      value: formatNaira(row.amount || 0),
+      value: formatNaira(row.amount || 0, { preserveFraction: true }),
       emphasis: false,
       valueClassName: row.tone === "danger" ? "text-[hsl(var(--bd-status-danger-text))]" : undefined,
     })),
     {
       label: "Total",
-      value: formatNaira(totals?.totalPayable || 0),
+      value: formatNaira(totals?.totalPayable || 0, { preserveFraction: true }),
       emphasis: true,
       valueClassName: "text-[hsl(var(--bd-text))]",
     },

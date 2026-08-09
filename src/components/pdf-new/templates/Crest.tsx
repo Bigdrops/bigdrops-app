@@ -3,6 +3,7 @@ import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
 import { styles, INK, ACCENT, ACCENT_DIM, PAPER, LIGHT_RULE, MUTED_TEXT, WHITE, CREST_SERIF, CREST_SANS } from './CrestStyles'
 import { renderPdfRichText } from '../core/pdfRichText'
+import { PdfGlyphText } from '../core/PdfGlyphText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { safeText } from '../core/safeText'
 import { getDescriptionMain, getDescriptionSub } from '../core/description'
@@ -338,9 +339,9 @@ export default function Crest({ data }: { data: CommercialDocumentData }) {
                     >
                       {isDescription ? (
                         <>
-                          <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
+                          <PdfGlyphText value={getDescriptionMain(cell)} style={[styles.descriptionMain, c.text]} />
                           {getDescriptionSub(cell) ? (
-                            <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
+                            <PdfGlyphText value={getDescriptionSub(cell)} style={[styles.descriptionSub, c.muted]} />
                           ) : null}
                           {row.imageUrl ? (
                             <>

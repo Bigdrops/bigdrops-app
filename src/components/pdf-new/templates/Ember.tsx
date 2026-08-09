@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, Link } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
 import { styles } from './EmberStyles'
 import { renderPdfRichText } from '../core/pdfRichText'
+import { PdfGlyphText } from '../core/PdfGlyphText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { safeText } from '../core/safeText'
 import { getDescriptionMain, getDescriptionSub } from '../core/description'
@@ -213,9 +214,9 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
                       <View key={`cell-${rowIdx}-${colIdx}`} style={[styles.tableCell, ...colStyle, alignStyle]}>
                         {isDescription ? (
                           <>
-                            <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
+                            <PdfGlyphText value={getDescriptionMain(cell)} style={[styles.descriptionMain, c.text]} />
                             {getDescriptionSub(cell) ? (
-                              <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
+                              <PdfGlyphText value={getDescriptionSub(cell)} style={[styles.descriptionSub, c.muted]} />
                             ) : null}
                             {row.imageUrl ? (
                               <>
@@ -225,9 +226,7 @@ export default function Ember({ data }: { data: CommercialDocumentData }) {
                             ) : null}
                           </>
                         ) : isTightSingleLineCell ? (
-                          <Text style={[styles.tightCellText, styles.qtyUnitToken, c.muted, alignStyle || { textAlign: 'center' }]} wrap={false} hyphenationCallback={keepWholePdfWord}>
-                            {safeText(cell)}
-                          </Text>
+                          <PdfGlyphText value={safeText(cell)} style={[styles.tightCellText, styles.qtyUnitToken, c.muted, alignStyle || { textAlign: 'center' }]} wrap={false} hyphenationCallback={keepWholePdfWord} />
                         ) : (
                           <PdfCurrencyText value={safeText(cell)} style={alignStyle || undefined} />
                         )}

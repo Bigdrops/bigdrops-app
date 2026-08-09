@@ -6,9 +6,11 @@ import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } 
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { type InvoicePdfTemplateId } from '@/domain/invoice/types'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
-import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, bridgeToCommercialDesignPreset, resolveCommercialDocumentFamily } from '@/domain/pdf/customization/commercial'
+import type { ResolvedPdfCustomization } from '@/domain/pdf/customization/types'
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, bridgeToCommercialDesignPreset, loadEngineSettings, resolveCommercialDocumentFamily } from '@/domain/pdf/customization/commercial'
+import type { PdfCustomizationDocumentFamily } from '@/domain/pdf/customization/types'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
-import { getDefaultPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, hasSavedPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 
 import DocumentSheet from './DocumentSheet'
 
@@ -87,6 +89,32 @@ const INVOICE_PDF_TEMPLATE_OPTIONS = [
   columns: readonly string[]
 }>
 
+/**
+ * Resolve the initial draft preset when the customization sheet opens.
+ *
+ * The persisted design preset is the single source of truth for the
+ * Custom Colors / Custom Fonts toggles. When the engine store holds
+ * saved accent/font values, they take precedence over the preset's
+ * (the engine is updated on every edit inside this sheet).
+ *
+ * Legacy default: engine-saved customizations show the toggles ON until the
+ * user explicitly saves a preset (matching the historical always-ON modal).
+ */
+function resolveInitialDraftPreset(
+  documentType: PdfDesignPresetDocument,
+  docFamily: PdfCustomizationDocumentFamily,
+  customization: ResolvedPdfCustomization,
+): PdfDesignPreset {
+  const persisted = getPdfDesignPreset(documentType)
+  if (!loadEngineSettings(docFamily)) return persisted
+  const preset = bridgeToCommercialDesignPreset(persisted, customization)
+  if (!hasSavedPdfDesignPreset(documentType)) {
+    preset.useCustomColors = true
+    preset.useCustomFonts = true
+  }
+  return preset
+}
+
 interface PdfOutputCustomizeSheetProps {
   open: boolean
   onClose: () => void
@@ -130,17 +158,25 @@ export default function PdfOutputCustomizeSheet({
     policy: COMMERCIAL_POLICY,
   })
 
-  const basePreset = getDefaultPdfDesignPreset(documentType)
-  const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(
-    () => bridgeToCommercialDesignPreset(basePreset, customization),
+  /**
+   * Draft preset is initialized from the PERSISTED design preset so the
+   * explicitly saved Custom Colors / Custom Fonts toggles survive reopen.
+   * Engine-saved accent/font values are merged on top when present (the
+   * engine store is kept in sync by handlePresetChange on every edit).
+   */
+  const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(() =>
+    resolveInitialDraftPreset(documentType, docFamily, customization),
   )
 
   useEffect(() => {
     if (!open) return
     setDraftValue(value)
     setDraftTemplateId(templateId)
-    setDraftPreset(bridgeToCommercialDesignPreset(getDefaultPdfDesignPreset(documentType), customization))
-  }, [documentType, open, templateId, value, customization])
+    setDraftPreset(resolveInitialDraftPreset(documentType, docFamily, customization))
+    // Intentional: rebuild the draft only when the sheet opens so in-progress
+    // edits are never clobbered by engine-store updates while the user edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const handlePresetChange = (next: PdfDesignPreset) => {
     if (next.accentColor !== draftPreset.accentColor) setAccentColor(next.accentColor)
@@ -153,6 +189,9 @@ export default function PdfOutputCustomizeSheet({
   const handleSave = async () => {
     setSaving(true)
     try {
+      // Persist the full preset (including useCustomColors / useCustomFonts)
+      // so an explicitly saved OFF state survives save → reopen → PDF generation.
+      setPdfDesignPreset(documentType, draftPreset)
       await onSave(draftValue, draftPreset, draftTemplateId)
       onClose()
     } finally {

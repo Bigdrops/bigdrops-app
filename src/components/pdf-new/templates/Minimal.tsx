@@ -3,6 +3,7 @@ import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../industryAdapter'
 import { styles, INK, PAPER, RULE, GRAY_TEXT } from './MinimalStyles'
 import { renderPdfRichText } from '../core/pdfRichText'
+import { PdfGlyphText } from '../core/PdfGlyphText'
 import { resolveDesignTokens } from '../designTokens'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { safeText } from '../core/safeText'
@@ -222,9 +223,9 @@ export default function Minimal({ data }: { data: CommercialDocumentData }) {
                     <View key={`cell-${rowIdx}-${colIdx}`} style={[widthStyle as any, alignStyle]}>
                       {isDescription ? (
                         <>
-                          <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
+                          <PdfGlyphText value={getDescriptionMain(cell)} style={[styles.descriptionMain, c.text]} />
                           {getDescriptionSub(cell) ? (
-                            <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
+                            <PdfGlyphText value={getDescriptionSub(cell)} style={[styles.descriptionSub, c.muted]} />
                           ) : null}
                           {row.imageUrl ? (
                             <>

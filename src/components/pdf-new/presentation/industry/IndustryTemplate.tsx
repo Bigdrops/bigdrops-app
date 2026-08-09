@@ -1,6 +1,7 @@
 import { Image, Link, Page, Text, View } from '@react-pdf/renderer'
 import type { CommercialDocumentData } from '../../industryAdapter'
 import { renderPdfRichText } from '../../core/pdfRichText'
+import { PdfGlyphText } from '../../core/PdfGlyphText'
 import { PdfCurrencyText } from '../../pdfCurrency'
 import { lightenHex } from '@/lib/pdfDesignPreset'
 import { compactCommercialDocument } from './compact'
@@ -347,9 +348,9 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
                     >
                       {isDescription ? (
                         <>
-                          <Text style={styles.descriptionMain}>{getDescriptionMain(cell)}</Text>
+                          <PdfGlyphText value={getDescriptionMain(cell)} style={styles.descriptionMain} />
                           {getDescriptionSub(cell) ? (
-                            <Text style={styles.descriptionSub}>{getDescriptionSub(cell)}</Text>
+                            <PdfGlyphText value={getDescriptionSub(cell)} style={styles.descriptionSub} />
                           ) : null}
                           {row.imageUrl ? (
                             <>
@@ -361,15 +362,14 @@ export default function IndustryTemplate({ data, compact }: TemplateProps) {
                           ) : null}
                         </>
                       ) : isMake ? (
-                          <Text style={styles.makeText}>{getCellText(cell)}</Text>
+                          <PdfGlyphText value={getCellText(cell)} style={styles.makeText} />
                       ) : isTightSingleLineCell ? (
-                        <Text
+                        <PdfGlyphText
+                          value={getCellText(cell)}
                           style={[styles.tightCellText, styles.qtyUnitToken, alignStyle]}
                           wrap={false}
                           hyphenationCallback={keepWholePdfWord}
-                        >
-                          {getCellText(cell)}
-                        </Text>
+                        />
                       ) : (
                         <PdfCurrencyText value={getCellText(cell)} style={alignStyle} />
                       )}

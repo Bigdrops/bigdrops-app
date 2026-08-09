@@ -2,6 +2,7 @@ import React from 'react'
 import { Text, View } from '@react-pdf/renderer'
 
 import { parseRichText, richTextToPlainText, type RichTextSegment } from './richText'
+import { PdfGlyphText } from './PdfGlyphText'
 
 type RenderPdfRichTextOptions = {
   containerStyle?: any
@@ -15,9 +16,10 @@ type RenderPdfRichTextOptions = {
 
 function renderInlineSegments(segments: RichTextSegment[], baseStyle: any, keyPrefix: string) {
   return segments.map((segment, index) => React.createElement(
-    Text,
+    PdfGlyphText,
     {
       key: `${keyPrefix}-${index}`,
+      value: segment.text,
       style: [
         baseStyle,
         segment.bold ? { fontFamily: 'Helvetica-Bold' } : null,
@@ -25,7 +27,6 @@ function renderInlineSegments(segments: RichTextSegment[], baseStyle: any, keyPr
         segment.underline ? { textDecoration: 'underline' } : null,
       ],
     },
-    segment.text,
   ))
 }
 
@@ -82,6 +83,6 @@ export function renderPdfRichText(value: unknown, options: RenderPdfRichTextOpti
   } catch {
     const fallbackText = richTextToPlainText(value)
     if (!fallbackText) return null
-    return React.createElement(Text, { style: options.fallbackTextStyle }, fallbackText)
+    return React.createElement(PdfGlyphText, { value: fallbackText, style: options.fallbackTextStyle })
   }
 }

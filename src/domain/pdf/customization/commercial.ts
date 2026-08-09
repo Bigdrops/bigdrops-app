@@ -20,12 +20,17 @@ import type {
   ResolvedPdfCustomization,
 } from './types'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
-import { getDefaultPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, hasSavedPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { resolveFull } from './resolver'
 
 const STORAGE_PREFIX = 'bigdrops_pdf_customization_'
 
-function loadEngineSettings(family: PdfCustomizationDocumentFamily): PdfCustomizationSettings | undefined {
+/**
+ * Load the engine's saved settings for a document family.
+ * Used by consumers that need to know whether engine values exist
+ * before merging them onto the persisted design preset.
+ */
+export function loadEngineSettings(family: PdfCustomizationDocumentFamily): PdfCustomizationSettings | undefined {
   if (typeof window === 'undefined') return undefined
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${family}`)
@@ -65,8 +70,9 @@ export const COMMERCIAL_TEMPLATE_DEFAULTS: PdfTemplateDefaults = {
  * Commercial PDF templates consume the full PdfDesignPreset. This function
  * maps engine output onto the existing preset shape so templates render identically.
  *
- * Non-customization fields (textColor, borderColor, etc.) are preserved
- * from the base preset unchanged.
+ * The base preset's explicit toggle state (useCustomColors / useCustomFonts)
+ * is preserved: an explicitly saved OFF must never be re-enabled here.
+ * Non-customization fields (textColor, borderColor, etc.) are also preserved.
  */
 export function bridgeToCommercialDesignPreset(
   base: PdfDesignPreset,
@@ -74,8 +80,6 @@ export function bridgeToCommercialDesignPreset(
 ): PdfDesignPreset {
   return {
     ...base,
-    useCustomColors: true,
-    useCustomFonts: true,
     accentColor: customization.accentColor,
     headerFont: customization.documentFont as PdfDesignPreset['headerFont'],
     bodyFont: customization.documentFont as PdfDesignPreset['bodyFont'],
@@ -100,16 +104,25 @@ export function resolveCommercialDocumentFamily(
 }
 
 /**
- * Standalone resolver: reads engine localStorage → bridges to PdfDesignPreset.
+ * Standalone resolver: reads persisted design preset + engine localStorage → bridges to PdfDesignPreset.
  *
  * Use this in PDF download actions (invoicePdfActions, pdfDownloadHandler)
- * where the React hook is not available. Falls back to the legacy preset
- * shape when the engine has no saved settings.
+ * where the React hook is not available.
+ *
+ * The persisted design preset is the source of truth for the Custom Colors /
+ * Custom Fonts toggles. Engine-saved accent/font values are applied on top
+ * when present (the customization modal keeps them in sync).
+ *
+ * Legacy default: when the engine holds saved accent/font values but the user
+ * has never explicitly saved a design preset, the toggles default ON (the
+ * historical behavior before presets were persisted). Once a preset is saved,
+ * its explicit toggle state is honored — including an intentionally saved OFF.
  */
 export function resolveCommercialDesignPreset(
   documentType: PdfCustomizationDocumentFamily,
 ): PdfDesignPreset {
-  const base = getDefaultPdfDesignPreset(documentType === 'quotation' ? 'quotation' : 'invoice')
+  const docType: PdfDesignPresetDocument = documentType === 'quotation' ? 'quotation' : 'invoice'
+  const base = getPdfDesignPreset(docType)
   const engineSettings = loadEngineSettings(documentType)
   if (!engineSettings) return base
   const { customization } = resolveFull(
@@ -118,5 +131,10 @@ export function resolveCommercialDesignPreset(
     COMMERCIAL_POLICY,
     engineSettings,
   )
-  return bridgeToCommercialDesignPreset(base, customization)
+  const preset = bridgeToCommercialDesignPreset(base, customization)
+  if (!hasSavedPdfDesignPreset(docType)) {
+    preset.useCustomColors = true
+    preset.useCustomFonts = true
+  }
+  return preset
 }

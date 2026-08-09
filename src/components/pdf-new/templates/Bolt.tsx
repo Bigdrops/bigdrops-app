@@ -15,6 +15,7 @@ import {
   BOLT_SANS,
 } from './BoltStyles'
 import { renderPdfRichText } from '../core/pdfRichText'
+import { PdfGlyphText } from '../core/PdfGlyphText'
 import { PdfCurrencyText } from '../pdfCurrency'
 import { safeText } from '../core/safeText'
 import { getDescriptionMain, getDescriptionSub } from '../core/description'
@@ -352,9 +353,9 @@ export default function Bolt({ data }: { data: CommercialDocumentData }) {
                     >
                       {isDescription ? (
                         <>
-                          <Text style={[styles.descriptionMain, c.text]}>{getDescriptionMain(cell)}</Text>
+                          <PdfGlyphText value={getDescriptionMain(cell)} style={[styles.descriptionMain, c.text]} />
                           {getDescriptionSub(cell) ? (
-                            <Text style={[styles.descriptionSub, c.muted]}>{getDescriptionSub(cell)}</Text>
+                            <PdfGlyphText value={getDescriptionSub(cell)} style={[styles.descriptionSub, c.muted]} />
                           ) : null}
                           {row.imageUrl ? (
                             <>

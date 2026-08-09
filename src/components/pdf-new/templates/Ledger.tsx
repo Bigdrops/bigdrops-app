@@ -4,6 +4,7 @@ import type { CommercialDocumentData } from '../industryAdapter';
 import { PdfCurrencyText } from '../pdfCurrency';
 import { styles } from './LedgerStyles';
 import { renderPdfRichText } from '../core/pdfRichText';
+import { PdfGlyphText } from '../core/PdfGlyphText';
 import { safeText } from '../core/safeText';
 import { getDescriptionMain, getDescriptionSub } from '../core/description';
 import {
@@ -218,11 +219,9 @@ export default function Ledger({ data }: { data: CommercialDocumentData }) {
                     <View key={cIndex} style={[widthStyle as any, alignStyle]}>
                       {isDescriptionCol ? (
                         <>
-                          <Text style={[styles.itemDesc, c.text]}>
-                            {getDescriptionMain(row.cells)}
-                          </Text>
+                          <PdfGlyphText value={getDescriptionMain(row.cells)} style={[styles.itemDesc, c.text]} />
                           {getDescriptionSub(row.cells) ? (
-                            <Text style={[styles.itemSub, c.muted]}>{getDescriptionSub(row.cells)}</Text>
+                            <PdfGlyphText value={getDescriptionSub(row.cells)} style={[styles.itemSub, c.muted]} />
                           ) : null}
                           
                           {row.imageUrl ? (

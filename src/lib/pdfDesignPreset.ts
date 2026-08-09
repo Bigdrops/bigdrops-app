@@ -265,6 +265,20 @@ export function setPdfDesignPreset(documentType: PdfDesignPresetDocument, preset
   }
 }
 
+/**
+ * True when the user has explicitly saved a design preset for this document
+ * type. Distinguishes an intentionally saved `false` toggle from the
+ * never-configured default, which consumers use to preserve legacy defaults.
+ */
+export function hasSavedPdfDesignPreset(documentType: PdfDesignPresetDocument): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return Boolean(window.localStorage.getItem(DESIGN_PRESET_KEYS[documentType]))
+  } catch {
+    return false
+  }
+}
+
 export function getEffectiveFillableFont(preset: PdfDesignPreset): PdfFillableFontChoice {
   return preset.fillableFontMode === 'custom' ? preset.fillableFont : preset.bodyFont
 }
