@@ -1,11 +1,16 @@
 import * as React from 'react'
 import { Building2, ChevronDown, X, Check } from 'lucide-react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { useSettings } from '@/hooks/useSettings'
 
 export function BusinessSwitcher() {
+  const { entity } = useEntity()
   const { settings } = useSettings()
   const [open, setOpen] = React.useState(false)
-  const activeName = settings?.company_name || 'Unnamed business'
+  // Business identity is the resolved tenant entity (public.entities.display_name
+  // exposed as entity.name by EntityProvider). settings.company_name is a legacy
+  // fallback while the entity is resolving; never an alias of the DB column.
+  const activeName = entity?.name || settings?.company_name || 'Unnamed business'
 
   return (
     <>
@@ -47,7 +52,7 @@ export function BusinessSwitcher() {
               <div className="rounded-2xl border border-border bg-muted/50 p-4">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-2xl surface-strong">
-                    {(settings?.company_name || 'B').charAt(0)}
+                    {(activeName || 'B').charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-foreground">{activeName}</div>
