@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/supabase";
+import { useEntity } from "@/lib/tenant/contexts";
 import { feedback } from "@/lib/feedback";
 import { parseCustomFields } from "@/domain/invoice";
 import {
@@ -44,6 +45,8 @@ export function useInvoiceActions({
 }: any) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { tenantClient, entity } = useEntity();
+  const entityId = entity?.id ?? null;
 
   const [downloading, setDownloading] = useState(false);
   const [projectLinkOpen, setProjectLinkOpen] = useState(false);
@@ -97,7 +100,7 @@ export function useInvoiceActions({
     if (!invoice?.id || archiving) return;
     setArchiving(true);
     try {
-      const result = await archiveInvoice(invoice.id);
+      const result = await archiveInvoice(invoice.id, tenantClient);
       if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
@@ -111,7 +114,7 @@ export function useInvoiceActions({
     if (!invoice?.id || deleting) return;
     setDeleting(true);
     try {
-      const result = await deleteInvoice(invoice.id);
+      const result = await deleteInvoice(invoice.id, tenantClient, entityId);
       if (!result.success) throw new Error(result.error);
       navigate("/invoices");
     } catch (error: any) {
@@ -125,7 +128,7 @@ export function useInvoiceActions({
     if (!invoice?.id || reverting) return;
     setReverting(true);
     try {
-      const createdQuotation = await revertInvoiceToQuotationService({ invoice, items, customFields, prefixes: settings?.document_prefixes });
+      const createdQuotation = await revertInvoiceToQuotationService({ invoice, items, customFields, prefixes: settings?.document_prefixes }, tenantClient, entityId);
       navigate(`/quotations/${createdQuotation.id}`);
     } catch (error: any) {
       showToast("Revert failed", error?.message || "Could not revert.");
@@ -139,7 +142,7 @@ export function useInvoiceActions({
     if (!invoice || duplicating) return;
     setDuplicating(true);
     try {
-      const { prefill, prefillItems } = await duplicateInvoice({ invoice, items: Array.isArray(items) ? items : [] });
+      const { prefill, prefillItems } = await duplicateInvoice({ invoice, items: Array.isArray(items) ? items : [] }, tenantClient);
       navigate("/invoices/new", { state: { prefill, prefillItems } });
     } catch (error: any) {
       showToast("Clone failed", error?.message || "Could not duplicate.");
@@ -168,7 +171,7 @@ export function useInvoiceActions({
     if (!invoice?.id) return;
     try {
       const nextCustomFields = { ...customFields, mergeQtyUnit: customFields?.mergeQtyUnit !== true };
-      const { error } = await supabase.from("invoices").update({ custom_fields: JSON.stringify(nextCustomFields) }).eq("id", invoice.id);
+      const { error } = await tenantClient.from("invoices").update({ custom_fields: JSON.stringify(nextCustomFields) }).eq("id", invoice.id);
       if (error) throw error;
       await refresh();
       showToast("Table setting updated", "Qty + Unit merge updated.", "success");
@@ -183,7 +186,7 @@ export function useInvoiceActions({
     setPdfOutput(nextPdfOutput);
     try {
       const nextCustomFields = { ...(customFields || {}), pdfOutput: nextPdfOutput, pdfTemplateId: nextTemplateId || pdfTemplateId };
-      const { error } = await supabase.from("invoices").update({ custom_fields: JSON.stringify(nextCustomFields) }).eq("id", invoice.id);
+      const { error } = await tenantClient.from("invoices").update({ custom_fields: JSON.stringify(nextCustomFields) }).eq("id", invoice.id);
       if (error) throw error;
       await refresh();
       showToast("Settings saved", "PDF settings updated.", "success");
@@ -202,9 +205,9 @@ export function useInvoiceActions({
     if (!pendingVoidPaymentId || !invoice?.id || voiding) return;
     setVoiding(true);
     try {
-      const result = await voidInvoicePayment({ paymentId: pendingVoidPaymentId, invoiceId: invoice.id, reason });
+      const result = await voidInvoicePayment({ paymentId: pendingVoidPaymentId, invoiceId: invoice.id, reason }, tenantClient);
       if (!result.success) throw new Error(result.error);
-      await syncInvoiceStatus(invoice.id);
+      await syncInvoiceStatus(invoice.id, tenantClient);
       await refresh();
       showToast("Payment voided", "Reversed and status updated.", "success");
       ui.closeModal();
@@ -216,8 +219,8 @@ export function useInvoiceActions({
     }
   };
 
-  const syncInvoiceStatus = async (invoiceId: string) => {
-    const result = await syncAndGetInvoiceStatus(invoiceId);
+  const syncInvoiceStatus = async (invoiceId: string, client: any) => {
+    const result = await syncAndGetInvoiceStatus(invoiceId, client);
     if (!result.success) throw new Error(result.error);
     return result.status;
   };
@@ -245,11 +248,11 @@ export function useInvoiceActions({
             advanceInvoiceId: selectedAdvanceInvoice?.id || null,
             parentInvoice: invoice, mode: advanceMode, inputValue: advanceInputValue, suffix: advanceSuffixValue,
             primaryLabel: advancePrimaryLabel, secondaryLabel: advanceSecondaryLabel 
-          })
+          }, tenantClient)
         : await createAdvanceInvoiceRecord({
             parentInvoice: invoice, mode: advanceMode, inputValue: advanceInputValue, suffix: advanceSuffixValue,
             primaryLabel: advancePrimaryLabel, secondaryLabel: advanceSecondaryLabel
-          });
+          }, tenantClient);
       
       const saved = (result as any)?.invoice || result;
       if (!saved) throw new Error("Save failed");
@@ -297,7 +300,7 @@ export function useInvoiceActions({
       await deleteAdvanceInvoiceRecord({ 
         parentInvoiceId: String(invoice.id), parentInvoiceNumber: invoice.invoice_number ?? undefined, 
         parentCustomFields: invoice.custom_fields 
-      });
+      }, tenantClient);
       await refresh();
       setAdvanceDeleteConfirmOpen(false);
       ui.closeSheet();

@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type {
+  AdapterFetchContext,
   DocumentAdapter,
   DocumentQueryState,
   FinancialQueryState,
@@ -13,6 +14,13 @@ import type {
 } from "@/types/queryPlatform";
 import { supabase } from "@/supabase";
 import { readListCache, writeListCache, isListCacheFresh } from "@/lib/cache/listCache";
+
+// Phase 3: invoices/receipts are part of the invoice aggregate. When the
+// caller supplies the resolved tenant client (post-cutover), list fetches
+// target the tenant schema. Falls back to public for pre-cutover callers.
+function resolveFetchClient(ctx?: AdapterFetchContext) {
+  return ctx?.tenantClient?.isReady ? ctx.tenantClient : null;
+}
 
 // --- Shared Helpers ---
 
@@ -117,14 +125,17 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
   cacheKey: "bd:list:invoices:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     // Bypass cache when any filter/sort is active — go network-direct
     const cached = readListCache<any>(invoicesAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, invoicesAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    const tenantClient = resolveFetchClient(ctx);
+    const client = tenantClient ?? supabase;
+
+    let q = client
       .from("invoices")
       .select("id, invoice_number, client_name, issue_date, due_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
       .is("archived_at", null);
@@ -580,13 +591,16 @@ const receiptsAdapter: DocumentAdapter<FinancialQueryState, any> = {
   cacheKey: "bd:list:receipts:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(receiptsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, receiptsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    const tenantClient = resolveFetchClient(ctx);
+    const client = tenantClient ?? supabase;
+
+    let q = client
       .from("receipts")
       .select("*");
 

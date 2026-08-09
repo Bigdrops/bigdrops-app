@@ -79,8 +79,14 @@ export type ModuleTypeMap = {
 
 // --- Adapter Interface ---
 
+import type { TenantClient } from "@/lib/tenantClient";
+
+export interface AdapterFetchContext {
+  tenantClient?: TenantClient | null;
+}
+
 export interface DocumentAdapter<T extends DocumentQueryState = DocumentQueryState, R = any> {
-  fetcher: (query: T) => Promise<R[]>;
+  fetcher: (query: T, ctx?: AdapterFetchContext) => Promise<R[]>;
   initialSortBy: string;
   statusOptions: string[];
   cacheKey: string;

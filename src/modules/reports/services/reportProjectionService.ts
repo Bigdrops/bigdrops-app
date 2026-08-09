@@ -1,20 +1,22 @@
+import type { TenantClient } from '@/lib/tenantClient'
 import type { BankAccountLookupRow, CollectionRow, InvoiceFinancialRow, ProjectFinancialRow, TaxInvoiceRow } from '@/components/reports/reportTypes'
 import { fetchInvoiceFinancials, fetchProjectFinancials, fetchTaxInvoices, fetchPayments, fetchBankAccounts } from '../repositories/reportRepository'
 
-export async function loadReceivables(start?: string | null, end?: string | null): Promise<InvoiceFinancialRow[]> {
-  return fetchInvoiceFinancials(start, end)
+// Phase 3: invoice aggregate reads target the tenant schema.
+export async function loadReceivables(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<InvoiceFinancialRow[]> {
+  return fetchInvoiceFinancials(tenantClient, start, end)
 }
 
 export async function loadProjects(): Promise<ProjectFinancialRow[]> {
   return fetchProjectFinancials()
 }
 
-export async function loadTaxInvoices(start?: string | null, end?: string | null): Promise<TaxInvoiceRow[]> {
-  return fetchTaxInvoices(start, end)
+export async function loadTaxInvoices(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<TaxInvoiceRow[]> {
+  return fetchTaxInvoices(tenantClient, start, end)
 }
 
-export async function loadEnrichedCollections(start?: string | null, end?: string | null): Promise<CollectionRow[]> {
-  const payments = await fetchPayments(start, end)
+export async function loadEnrichedCollections(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<CollectionRow[]> {
+  const payments = await fetchPayments(tenantClient, start, end)
   const bankAccountIds = Array.from(new Set(payments.map((p) => p.bank_account_id).filter((id): id is string => Boolean(id))))
   const bankAccounts = await fetchBankAccounts(bankAccountIds)
   const bankMap = new Map<string, BankAccountLookupRow>(bankAccounts.map((b) => [b.id, b]))
@@ -30,12 +32,12 @@ export async function loadEnrichedCollections(start?: string | null, end?: strin
   })
 }
 
-export async function loadOverviewData(start?: string | null, end?: string | null) {
+export async function loadOverviewData(tenantClient: TenantClient, start?: string | null, end?: string | null) {
   const [receivables, projects, taxInvoices, collections] = await Promise.all([
-    loadReceivables(start, end),
+    loadReceivables(tenantClient, start, end),
     loadProjects(),
-    loadTaxInvoices(start, end),
-    loadEnrichedCollections(start, end),
+    loadTaxInvoices(tenantClient, start, end),
+    loadEnrichedCollections(tenantClient, start, end),
   ])
   return { receivables, projects, taxInvoices, collections }
 }

@@ -7,6 +7,7 @@ import { shareDocument } from "@/components/document-view/shared/shareDocument";
 import { useOperation } from "@/context/OperationContext";
 import { feedback } from "@/lib/feedback";
 import { supabase } from "@/supabase";
+import { useEntity } from "@/lib/tenant/contexts";
 import {
   archiveQuotationRecord,
   convertQuotationToInvoice,
@@ -37,6 +38,8 @@ export function useQuotationActions(input: {
 
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { tenantClient, entity } = useEntity();
+  const entityId = entity?.id ?? null;
   const operation = useOperation();
   const [downloading, setDownloading] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -146,7 +149,7 @@ export function useQuotationActions(input: {
     setConverting(true);
     operation.start("convert-quotation", "Creating Invoice", "Transferring quotation information...");
     try {
-      const createdInvoice = await convertQuotationToInvoice({ id, quotation, items, prefixes: settings?.document_prefixes });
+      const createdInvoice = await convertQuotationToInvoice({ id, quotation, items, prefixes: settings?.document_prefixes }, tenantClient, entityId);
       operation.finish("success");
       navigate(`/invoices/${createdInvoice.id}`);
     } catch (error) {

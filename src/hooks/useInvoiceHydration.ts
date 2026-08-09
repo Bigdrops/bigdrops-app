@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import type {
   DiscountTiming,
@@ -50,6 +51,7 @@ export function useInvoiceHydration(
   targets: HydrationTargets,
   onNotFound: () => void,
 ) {
+  const { tenantClient } = useEntity()
   const [loading, setLoading] = useState(isEdit)
   const [initialInvoiceSnapshot, setInitialInvoiceSnapshot] = useState<any>(null)
   const [baseCustomFields, setBaseCustomFields] = useState<InvoiceCustomFields | Record<string, never>>({})
@@ -64,7 +66,7 @@ export function useInvoiceHydration(
     if (!isEdit || !id) return
 
     const load = async () => {
-      const invoiceResult = await supabase.from('invoices').select('*').eq('id', id).single()
+      const invoiceResult = await tenantClient.from('invoices').select('*').eq('id', id).single()
       const data = invoiceResult.data
 
       if (!data) {
@@ -104,7 +106,7 @@ export function useInvoiceHydration(
 
       if (data.invoice_title) targetsRef.current.setInvoiceTitle(data.invoice_title)
 
-      const { data: itemRows } = await supabase.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
+      const { data: itemRows } = await tenantClient.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
       const legacyCalculationState = inferLegacyCalculationState({
         invoice: data,
         items: itemRows || [],
@@ -146,7 +148,7 @@ export function useInvoiceHydration(
     }
 
     void load()
-  }, [isEdit, id])
+  }, [isEdit, id, tenantClient])
 
   return { loading, initialInvoiceSnapshot, baseCustomFields }
 }

@@ -141,19 +141,25 @@ export async function duplicateQuotationRecord({
   return { prefill, prefillItems }
 }
 
-export async function convertQuotationToInvoice({
-  id,
-  quotation,
-  items,
-  prefixes,
-}: {
-  id: string
-  quotation: any
-  items: any[]
-  prefixes?: DocumentPrefixes | null
-}) {
+export async function convertQuotationToInvoice(
+  {
+    id,
+    quotation,
+    items,
+    prefixes,
+  }: {
+    id: string
+    quotation: any
+    items: any[]
+    prefixes?: DocumentPrefixes | null
+  },
+  tenantClient: TenantClient,
+  entityId?: string | null,
+) {
+  // Phase 3: invoices/invoice_items are aggregate → tenant. The quotation
+  // read/write remains public (quotations are not in the aggregate).
   const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
-    supabase.from('invoices').select('invoice_number'),
+    tenantClient.from('invoices').select('invoice_number'),
     supabase.from('quotations').select('custom_fields').eq('id', id).single(),
   ])
   const nextInvoiceNumber = getNextInvoiceNumber(
@@ -194,15 +200,32 @@ export async function convertQuotationToInvoice({
     amount_in_words: quotation.amount_in_words || '',
     custom_fields: JSON.stringify(withSourceTrail(quotationCustomFields, sourceLink)),
   }
-  const { data: createdInvoice, error } = await supabase.from('invoices').insert([invoicePayload]).select().single()
-  if (error || !createdInvoice) throw new Error(error?.message || 'Failed to create invoice')
+  // Phase 3: composite create (invoice + items) is atomic via the tenant RPC
+  // when the entity id is available; otherwise sequential tenant writes.
+  let createdInvoice: any = null
+  if (entityId) {
+    const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
+      p_entity_id: entityId,
+      p_invoice_payload: invoicePayload,
+      p_items: items
+        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+        .map((item, index) => toDbItem(item, null, index)),
+      p_mode: 'create',
+    })
+    if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
+    createdInvoice = data?.invoice ?? data
+  } else {
+    const { data, error } = await tenantClient.from('invoices').insert([invoicePayload]).select().single()
+    if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
+    createdInvoice = data
 
-  const itemRows = items
-    .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-    .map((item, index) => toDbItem(item, createdInvoice.id, index))
-  if (itemRows.length > 0) {
-    const { error: itemError } = await supabase.from('invoice_items').insert(itemRows)
-    if (itemError) throw itemError
+    const itemRows = items
+      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+      .map((item, index) => toDbItem(item, createdInvoice.id, index))
+    if (itemRows.length > 0) {
+      const { error: itemError } = await tenantClient.from('invoice_items').insert(itemRows)
+      if (itemError) throw itemError
+    }
   }
   const derivedLink = buildTrailLink({
     id: createdInvoice.id,

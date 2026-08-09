@@ -24,6 +24,7 @@ export interface InvoicePayment {
 export interface InvoiceFinancialsRow {
   id: string
   computed_status: string | null
+  persisted_status: string | null
   balance_due: number | null
   total_paid: number | null
 }

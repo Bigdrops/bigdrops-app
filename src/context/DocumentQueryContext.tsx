@@ -22,6 +22,7 @@ import type {
   ModuleTypeMap,
 } from "@/types/queryPlatform";
 import { getAdapter } from "@/config/moduleAdapters";
+import { useEntity } from "@/lib/tenant/contexts";
 
 // --- Module → Type discriminator resolution ---
 
@@ -107,6 +108,7 @@ interface DocumentQueryProviderProps {
 }
 
 export function DocumentQueryProvider({ module, children }: DocumentQueryProviderProps) {
+  const { tenantClient } = useEntity();
   const initialState = useMemo(() => getInitialState(module), [module]);
   const [state, rawDispatch] = useReducer(queryReducer, initialState);
   const [results, setResults] = useState<any[]>([]);
@@ -140,7 +142,7 @@ export function DocumentQueryProvider({ module, children }: DocumentQueryProvide
       setError(null);
 
       try {
-        const data = await adapter.fetcher(state);
+        const data = await adapter.fetcher(state, { tenantClient });
         if (cancelled || id !== fetchIdRef.current) return;
 
         // Referential stability: only update if data actually changed
@@ -171,7 +173,7 @@ export function DocumentQueryProvider({ module, children }: DocumentQueryProvide
     return () => {
       cancelled = true;
     };
-  }, [state, module]);
+  }, [state, module, tenantClient]);
 
   const value = useMemo<DocumentQueryContextValue>(
     () => ({ state, dispatch, results, loading, error, module }),

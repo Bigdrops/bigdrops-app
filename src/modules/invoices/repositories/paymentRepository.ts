@@ -1,8 +1,13 @@
 import { supabase } from "@/supabase"
+import type { TenantClient } from "@/lib/tenantClient"
 import type { InvoicePayment, InvoiceFinancialsRow, BankAccountSummary, PaymentInput } from "../types/paymentTypes"
 
-export async function fetchInvoiceIdForPayment(paymentId: string): Promise<string | null> {
-  const { data, error } = await supabase
+// Phase 3: invoice aggregate reads/writes now target the tenant schema via
+// the caller-supplied TenantClient. Out-of-aggregate reads (bank_accounts)
+// remain on the public client until their own migration phase.
+
+export async function fetchInvoiceIdForPayment(paymentId: string, client: TenantClient): Promise<string | null> {
+  const { data, error } = await client
     .from("payments")
     .select("invoice_id")
     .eq("id", paymentId)
@@ -12,7 +17,7 @@ export async function fetchInvoiceIdForPayment(paymentId: string): Promise<strin
   return data.invoice_id
 }
 
-export async function insertPayment(payload: PaymentInput): Promise<InvoicePayment> {
+export async function insertPayment(payload: PaymentInput, client: TenantClient): Promise<InvoicePayment> {
   const insertPayload = {
     invoice_id: payload.invoice_id,
     cash_amount: payload.cash_amount,
@@ -28,7 +33,7 @@ export async function insertPayment(payload: PaymentInput): Promise<InvoicePayme
     wht_type: payload.wht_type ?? null,
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("payments")
     .insert(insertPayload)
     .select()
@@ -41,8 +46,8 @@ export async function insertPayment(payload: PaymentInput): Promise<InvoicePayme
   return data as InvoicePayment
 }
 
-export async function fetchPaymentsForInvoice(invoiceId: string): Promise<InvoicePayment[]> {
-  const { data, error } = await supabase
+export async function fetchPaymentsForInvoice(invoiceId: string, client: TenantClient): Promise<InvoicePayment[]> {
+  const { data, error } = await client
     .from("payments")
     .select("cash_amount,wht_amount")
     .eq("invoice_id", invoiceId)
@@ -55,10 +60,10 @@ export async function fetchPaymentsForInvoice(invoiceId: string): Promise<Invoic
   return (data || []) as InvoicePayment[]
 }
 
-export async function fetchInvoiceFinancials(invoiceId: string): Promise<InvoiceFinancialsRow | null> {
-  const { data, error } = await supabase
+export async function fetchInvoiceFinancials(invoiceId: string, client: TenantClient): Promise<InvoiceFinancialsRow | null> {
+  const { data, error } = await client
     .from("invoice_financials_v")
-    .select("computed_status")
+    .select("computed_status, persisted_status")
     .eq("id", invoiceId)
     .single()
 
@@ -69,8 +74,8 @@ export async function fetchInvoiceFinancials(invoiceId: string): Promise<Invoice
   return data as InvoiceFinancialsRow | null
 }
 
-export async function updateInvoiceStatus(invoiceId: string, status: string): Promise<void> {
-  const { error } = await supabase
+export async function updateInvoiceStatus(invoiceId: string, status: string, client: TenantClient): Promise<void> {
+  const { error } = await client
     .from("invoices")
     .update({ status })
     .eq("id", invoiceId)
@@ -81,6 +86,8 @@ export async function updateInvoiceStatus(invoiceId: string, status: string): Pr
 }
 
 export async function fetchBankAccounts(): Promise<BankAccountSummary[]> {
+  // bank_accounts is NOT part of the Phase 3 invoice aggregate — stays public
+  // until its own migration phase.
   const { data, error } = await supabase
     .from("bank_accounts")
     .select("*")
@@ -93,8 +100,8 @@ export async function fetchBankAccounts(): Promise<BankAccountSummary[]> {
   return (data || []) as BankAccountSummary[]
 }
 
-export async function voidPayment(paymentId: string, reason?: string): Promise<InvoicePayment | null> {
-  const { data, error } = await supabase
+export async function voidPayment(paymentId: string, reason: string | undefined, client: TenantClient): Promise<InvoicePayment | null> {
+  const { data, error } = await client
     .from("payments")
     .update({
       voided_at: new Date().toISOString(),
@@ -112,8 +119,8 @@ export async function voidPayment(paymentId: string, reason?: string): Promise<I
   return data as InvoicePayment | null
 }
 
-export async function fetchPaymentById(paymentId: string): Promise<InvoicePayment | null> {
-  const { data, error } = await supabase
+export async function fetchPaymentById(paymentId: string, client: TenantClient): Promise<InvoicePayment | null> {
+  const { data, error } = await client
     .from("payments")
     .select("*")
     .eq("id", paymentId)
@@ -123,8 +130,8 @@ export async function fetchPaymentById(paymentId: string): Promise<InvoicePaymen
   return data as InvoicePayment
 }
 
-export async function updatePaymentAttachments(paymentId: string, attachments: unknown[]): Promise<void> {
-  const { error } = await supabase
+export async function updatePaymentAttachments(paymentId: string, attachments: unknown[], client: TenantClient): Promise<void> {
+  const { error } = await client
     .from("payments")
     .update({ attachments: JSON.stringify(attachments) })
     .eq("id", paymentId)
@@ -132,10 +139,10 @@ export async function updatePaymentAttachments(paymentId: string, attachments: u
   if (error) throw error
 }
 
-export async function syncInvoiceStatusFromFinancials(invoiceId: string): Promise<string> {
-  const { data, error } = await supabase
+export async function syncInvoiceStatusFromFinancials(invoiceId: string, client: TenantClient): Promise<string> {
+  const { data, error } = await client
     .from("invoice_financials_v")
-    .select("computed_status")
+    .select("computed_status, persisted_status")
     .eq("id", invoiceId)
     .single()
 
@@ -143,10 +150,15 @@ export async function syncInvoiceStatusFromFinancials(invoiceId: string): Promis
     throw error
   }
 
-  if (data?.computed_status) {
-    const { error: updateError } = await supabase
+  // Phase 3 (financial computation): write the PERSISTED-safe status
+  // (paid | partially_paid | unpaid) — never the presentation-only
+  // partial/overdue values, which the invoices.status CHECK rejects.
+  const safeStatus = data?.persisted_status || data?.computed_status || "unpaid"
+
+  if (safeStatus) {
+    const { error: updateError } = await client
       .from("invoices")
-      .update({ status: data.computed_status })
+      .update({ status: safeStatus })
       .eq("id", invoiceId)
 
     if (updateError) {
@@ -154,5 +166,5 @@ export async function syncInvoiceStatusFromFinancials(invoiceId: string): Promis
     }
   }
 
-  return data?.computed_status || "unpaid"
+  return safeStatus
 }

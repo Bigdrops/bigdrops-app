@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { supabase } from "../supabase"
+import { useEntity } from "@/lib/tenant/contexts"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
 import { invalidateListCache } from '@/lib/cache/listCache'
@@ -41,6 +42,8 @@ import { ContextualExportDropdown } from "@/components/export/ContextualExportDr
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
+  const { tenantClient, entity } = useEntity()
+  const entityId = entity?.id ?? null
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("invoices")
   const { settings } = useSettings()
 
@@ -99,12 +102,12 @@ function InvoicesContent() {
     closeSheet()
     if (!inv) return;
     try {
-      const invoiceDetail = await loadInvoiceById(inv.id)
+      const invoiceDetail = await loadInvoiceById(inv.id, tenantClient)
       if (!invoiceDetail) throw new Error("Invoice not found")
-      const { data: all } = await supabase
+      const { data: all } = await tenantClient
         .from("invoices").select("invoice_number").order("created_at", { ascending: false })
       const newNumber = getNextInvoiceNumber(all || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
-      const srcItems = await loadInvoiceItems(inv.id)
+      const srcItems = await loadInvoiceItems(inv.id, tenantClient)
       invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {
         state: {
@@ -132,7 +135,7 @@ function InvoicesContent() {
     if (!inv) return;
     try {
       setIsArchiving(true)
-      const { error } = await supabase.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
+      const { error } = await tenantClient.from("invoices").update({ archived_at: new Date().toISOString() }).eq("id", inv.id)
       if (error) throw error
       invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice archived')
@@ -152,9 +155,18 @@ function InvoicesContent() {
     if (!inv) return;
     try {
       setIsDeleting(true)
-      await supabase.from("invoice_items").delete().eq("invoice_id", inv.id)
-      const { error } = await supabase.from("invoices").delete().eq("id", inv.id)
-      if (error) throw error
+      // Phase 3: composite delete (invoice + items) is atomic via the tenant RPC.
+      if (entityId) {
+        const { error } = await supabase.rpc("delete_invoice_with_items_transaction", {
+          p_entity_id: entityId,
+          p_invoice_id: inv.id,
+        })
+        if (error) throw error
+      } else {
+        await tenantClient.from("invoice_items").delete().eq("invoice_id", inv.id)
+        const { error } = await tenantClient.from("invoices").delete().eq("id", inv.id)
+        if (error) throw error
+      }
       invalidateListCache(INVOICE_CACHE_KEY)
       feedback.success('Invoice deleted permanentely')
       closeSheet()
@@ -179,7 +191,7 @@ function InvoicesContent() {
       const [relatedDocs, project, customFields] = await Promise.all([
         fetchInvoiceChildDocuments(activeInvoice.id),
         activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
-        loadInvoiceCustomFields(activeInvoice.id),
+        loadInvoiceCustomFields(activeInvoice.id, tenantClient),
       ])
       if (cancelled) return
       setActiveInvoiceRelatedDocs(relatedDocs)
@@ -188,7 +200,7 @@ function InvoicesContent() {
     }
     void loadActiveInvoiceRelationships()
     return () => { cancelled = true }
-  }, [activeInvoice?.id, activeInvoice?.project_id])
+  }, [activeInvoice?.id, activeInvoice?.project_id, tenantClient])
 
   const activeInvoiceSource = activeInvoice ? getInvoiceSourceDocument({ custom_fields: activeInvoiceCustomFields }) : null
   const isStandalone = Boolean(activeInvoice) && !activeInvoiceSource

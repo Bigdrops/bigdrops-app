@@ -10,6 +10,7 @@ import {
   markReceiptVerified,
   uploadReceiptFile,
 } from '@/modules/compliance/services/complianceService'
+import { useEntity } from '@/lib/tenant/contexts'
 import type { WhtReceipt } from '@/domain/compliance/types'
 import type { WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
 
@@ -19,6 +20,7 @@ interface WhtReceiptMatcherActionProps {
 }
 
 export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceiptMatcherActionProps) {
+  const { tenantClient } = useEntity()
   const [receiptNumber, setReceiptNumber] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -56,7 +58,7 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
         receipt_file_url: fileUrl,
         receipt_status: fileUrl ? 'received' : 'received',
         received_at: new Date().toISOString(),
-      })
+      }, tenantClient)
 
       feedback.success('Certificate submitted successfully')
       onComplete(receipt)
@@ -72,7 +74,7 @@ export default function WhtReceiptMatcherAction({ entry, onComplete }: WhtReceip
 
     setSubmitting(true)
     try {
-      const updated = await markReceiptVerified(entry.receipt.id)
+      const updated = await markReceiptVerified(entry.receipt.id, tenantClient)
       feedback.success('Receipt marked as verified')
       onComplete(updated)
     } catch (error) {

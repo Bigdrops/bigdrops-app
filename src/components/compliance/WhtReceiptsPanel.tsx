@@ -26,6 +26,7 @@ import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { feedback } from '@/lib/feedback'
 import { WhtReceipt, WhtReceiptStatus } from '@/domain/compliance/types'
 import { insertInlineWhtReceipt, updateInlineWhtReceipt } from '@/modules/compliance/services/complianceService'
+import { useEntity } from '@/lib/tenant/contexts'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import WhtReceiptStatusStrip from './WhtReceiptStatusStrip'
 import WhtReceiptQueueRow, { type WhtPaymentRecord, type WhtReceiptQueueEntry } from './WhtReceiptQueueRow'
@@ -47,6 +48,7 @@ const statusRank: Record<'untracked' | WhtReceiptStatus, number> = {
 }
 
 export default function WhtReceiptsPanel({ payments, receipts, loading, onReceiptsChanged }: WhtReceiptsPanelProps) {
+  const { tenantClient } = useEntity()
   const { isMobile } = useLayoutMode()
   const [localReceipts, setLocalReceipts] = useState<WhtReceipt[]>(receipts)
   const [processingId, setProcessingId] = useState<string | null>(null)
@@ -186,7 +188,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
         client_name: payment.client_name,
         wht_amount: Number.isFinite(nextWhtAmount) ? nextWhtAmount : null,
         receipt_status: 'pending',
-      })
+      }, tenantClient)
       setLocalReceipts((current) => [...current, data])
       onReceiptsChanged?.()
       feedback.success('WHT tracking initialized')
@@ -203,7 +205,7 @@ export default function WhtReceiptsPanel({ payments, receipts, loading, onReceip
   async function updateRecord(receipt: WhtReceipt, updates: Partial<WhtReceipt>) {
     try {
       setProcessingId(receipt.payment_id)
-      const data = await updateInlineWhtReceipt(receipt.id, updates)
+      const data = await updateInlineWhtReceipt(receipt.id, updates, tenantClient)
       setLocalReceipts((current) => current.map((row) => (row.id === data.id ? data : row)))
       onReceiptsChanged?.()
       feedback.success('Receipt updated')

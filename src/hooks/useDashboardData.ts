@@ -4,6 +4,7 @@ import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { listBoqs } from '@/domain/boq/storage'
 import {
   readDashboardCache,
@@ -299,6 +300,7 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
 
 export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
   const { variant = 'overview' } = options
+  const { tenantClient } = useEntity()
   const cacheKey = `bd:dashboard:${variant}:v1`
 
   const [loading, setLoading] = React.useState(() => {
@@ -351,7 +353,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setHours(23, 59, 59, 999)
 
         const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialsRes, projectsRes] = await Promise.all([
-          supabase
+          tenantClient
             .from('invoices')
             .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
             .is('archived_at', null)
@@ -361,7 +363,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
           supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
-          supabase.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
+          tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
           supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
 
@@ -466,7 +468,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes] = await Promise.all([
-        supabase
+        tenantClient
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
           .is('archived_at', null)
@@ -541,7 +543,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     } finally {
       setLoading(false)
     }
-  }, [variant, cacheKey])
+  }, [variant, cacheKey, tenantClient])
 
   React.useEffect(() => {
     void load()

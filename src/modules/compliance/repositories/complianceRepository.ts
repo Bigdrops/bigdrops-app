@@ -1,26 +1,32 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import type { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder, TaxSettings } from '@/domain/compliance/types'
 
-export async function fetchWhtReceipts(): Promise<WhtReceipt[]> {
-  const { data, error } = await supabase.from('wht_receipts').select('*')
+// Phase 3: wht_receipts is part of the invoice aggregate — reads/writes target
+// the tenant schema via the caller-supplied TenantClient. Tax tables
+// (tax_input_entries, tax_filings, tax_reminders, tax_settings) are NOT part
+// of the invoice aggregate and remain on the public client.
+
+export async function fetchWhtReceipts(client: TenantClient): Promise<WhtReceipt[]> {
+  const { data, error } = await client.from('wht_receipts').select('*')
   if (error) throw error
   return (data || []) as WhtReceipt[]
 }
 
-export async function insertWhtReceipt(record: Partial<WhtReceipt>): Promise<WhtReceipt> {
-  const { data, error } = await supabase.from('wht_receipts').insert([record]).select().single()
+export async function insertWhtReceipt(record: Partial<WhtReceipt>, client: TenantClient): Promise<WhtReceipt> {
+  const { data, error } = await client.from('wht_receipts').insert([record]).select().single()
   if (error) throw error
   return data as WhtReceipt
 }
 
-export async function updateWhtReceipt(id: string, updates: Partial<WhtReceipt>): Promise<WhtReceipt> {
-  const { data, error } = await supabase.from('wht_receipts').update(updates).eq('id', id).select().single()
+export async function updateWhtReceipt(id: string, updates: Partial<WhtReceipt>, client: TenantClient): Promise<WhtReceipt> {
+  const { data, error } = await client.from('wht_receipts').update(updates).eq('id', id).select().single()
   if (error) throw error
   return data as WhtReceipt
 }
 
-export async function deleteWhtReceipt(id: string): Promise<void> {
-  const { error } = await supabase.from('wht_receipts').delete().eq('id', id)
+export async function deleteWhtReceipt(id: string, client: TenantClient): Promise<void> {
+  const { error } = await client.from('wht_receipts').delete().eq('id', id)
   if (error) throw error
 }
 

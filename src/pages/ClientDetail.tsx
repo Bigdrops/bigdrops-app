@@ -152,7 +152,7 @@ export default function ClientDetail() {
         projectRecentRes,
       ] = await Promise.all([
         tenantClient.from('clients').select('*').eq('id', id).single(),
-        supabase
+        tenantClient
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, document_type, custom_fields')
           .eq('client_id', id)
@@ -215,7 +215,7 @@ export default function ClientDetail() {
 
       let invoiceFinancialsById: Record<string, any> = {}
       if (invoiceIds.length > 0) {
-        const { data: financials } = await supabase
+        const { data: financials } = await tenantClient
           .from('invoice_financials_v')
           .select('id, balance_due, computed_status, cash_received')
           .in('id', invoiceIds)

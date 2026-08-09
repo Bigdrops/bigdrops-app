@@ -80,7 +80,7 @@ export default function InvoiceRecordPaymentSheet({
     let cancelled = false
     const loadData = async () => {
       setLoadingData(true)
-      const result = await loadPaymentSheetData(invoice.id, invoice.total)
+      const result = await loadPaymentSheetData(invoice.id, invoice.total, tenantClient)
 
       if (cancelled) return
 

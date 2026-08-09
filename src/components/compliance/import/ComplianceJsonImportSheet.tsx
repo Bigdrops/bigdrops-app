@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { COMPLIANCE_IMPORT_CONTRACTS, ComplianceRecordType } from '@/domain/compliance/import/contracts'
 import { parseJsonObject, validateRequiredFields, normalizeDate, normalizeNumber } from '@/domain/compliance/import/parse'
 import { importRecord } from '@/modules/compliance/services/complianceService'
+import { useEntity } from '@/lib/tenant/contexts'
 import ComplianceJsonPreviewCard from './ComplianceJsonPreviewCard'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 
@@ -26,6 +27,7 @@ interface ImportSheetProps {
 }
 
 export default function ComplianceJsonImportSheet({ open, onOpenChange, type, onSuccess, payments = [] }: ImportSheetProps) {
+  const { tenantClient } = useEntity()
   const [rawInput, setRawInput] = useState('')
   const [parsedData, setParsedData] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +139,9 @@ export default function ComplianceJsonImportSheet({ open, onOpenChange, type, on
         }
       }
 
-      await importRecord(type, record)
+      // Phase 3: wht_receipt imports target the tenant schema (aggregate).
+      // Tax-table imports remain public.
+      await importRecord(type, record, tenantClient)
 
       feedback.success(`${contract.label} created successfully`)
       onSuccess()

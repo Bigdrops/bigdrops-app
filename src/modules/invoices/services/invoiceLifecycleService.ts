@@ -1,4 +1,5 @@
 import { supabase } from "@/supabase"
+import type { TenantClient } from "@/lib/tenantClient"
 import type { DuplicateInvoicePrefill } from "../types/invoiceTypes"
 import { syncInvoiceStatusFromFinancials as repositorySyncStatus } from "../repositories/paymentRepository"
 import { attachChildDocument } from "./invoiceChildDocService"
@@ -15,15 +16,15 @@ export interface ChangeInvoiceStatusResult {
   error?: string
 }
 
-export async function archiveInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
+export async function archiveInvoice(invoiceId: string, tenantClient: TenantClient): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data: previousInvoice } = await supabase
+    const { data: previousInvoice } = await tenantClient
       .from("invoices")
       .select("*")
       .eq("id", invoiceId)
       .maybeSingle()
 
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from("invoices")
       .update({ archived_at: new Date().toISOString() })
       .eq("id", invoiceId)
@@ -34,7 +35,7 @@ export async function archiveInvoice(invoiceId: string): Promise<{ success: bool
 
     try {
       const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import("@/lib/audit")
-      const { data: updatedInvoice } = await supabase
+      const { data: updatedInvoice } = await tenantClient
         .from("invoices")
         .select("*")
         .eq("id", invoiceId)
@@ -59,15 +60,36 @@ export async function archiveInvoice(invoiceId: string): Promise<{ success: bool
   }
 }
 
-export async function deleteInvoice(invoiceId: string): Promise<{ success: boolean; error?: string }> {
+// Phase 3: deletion is a composite operation (invoice + items) and MUST be
+// atomic — routed through the transactional RPC when the entity id is
+// available. Legacy fallback (sequential tenant deletes) is retained only for
+// pre-cutover callers that cannot supply an entity id.
+export async function deleteInvoice(
+  invoiceId: string,
+  tenantClient: TenantClient,
+  entityId?: string | null,
+): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data: invoice } = await supabase
+    if (entityId) {
+      const { error } = await supabase.rpc("delete_invoice_with_items_transaction", {
+        p_entity_id: entityId,
+        p_invoice_id: invoiceId,
+      })
+      if (error) {
+        return { success: false, error: error.message }
+      }
+      return { success: true }
+    }
+
+    const { data: invoice } = await tenantClient
       .from("invoices")
       .select("*")
       .eq("id", invoiceId)
       .maybeSingle()
 
-    const { error } = await supabase
+    await tenantClient.from("invoice_items").delete().eq("invoice_id", invoiceId)
+
+    const { error } = await tenantClient
       .from("invoices")
       .delete()
       .eq("id", invoiceId)
@@ -100,19 +122,20 @@ export async function changeInvoiceStatus({
   invoiceId,
   oldStatus,
   newStatus,
-}: ChangeInvoiceStatusInput): Promise<ChangeInvoiceStatusResult> {
+  tenantClient,
+}: ChangeInvoiceStatusInput & { tenantClient: TenantClient }): Promise<ChangeInvoiceStatusResult> {
   if (newStatus === oldStatus) {
     return { success: true, status: newStatus }
   }
 
   try {
-    const { data: previousInvoice } = await supabase
+    const { data: previousInvoice } = await tenantClient
       .from("invoices")
       .select("*")
       .eq("id", invoiceId)
       .single()
 
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from("invoices")
       .update({ status: newStatus })
       .eq("id", invoiceId)
@@ -123,7 +146,7 @@ export async function changeInvoiceStatus({
 
     try {
       const { recordInvoiceStatusChanged, recordAuditLog } = await import("@/lib/audit")
-      const { data: updatedInvoice } = await supabase
+      const { data: updatedInvoice } = await tenantClient
         .from("invoices")
         .select("*")
         .eq("id", invoiceId)
@@ -149,9 +172,9 @@ export async function changeInvoiceStatus({
   }
 }
 
-export async function syncAndGetInvoiceStatus(invoiceId: string): Promise<ChangeInvoiceStatusResult> {
+export async function syncAndGetInvoiceStatus(invoiceId: string, tenantClient: TenantClient): Promise<ChangeInvoiceStatusResult> {
   try {
-    const result = await repositorySyncStatus(invoiceId)
+    const result = await repositorySyncStatus(invoiceId, tenantClient)
     return { success: true, status: result }
   } catch (err) {
     return { success: false, error: String(err) }
@@ -180,11 +203,11 @@ export interface DuplicateInvoiceInput {
   items: any[]
 }
 
-export async function duplicateInvoice({
-  invoice,
-  items,
-}: DuplicateInvoiceInput): Promise<DuplicateInvoicePrefill> {
-  const { data: all } = await supabase
+export async function duplicateInvoice(
+  { invoice, items }: DuplicateInvoiceInput,
+  tenantClient: TenantClient,
+): Promise<DuplicateInvoicePrefill> {
+  const { data: all } = await tenantClient
     .from("invoices")
     .select("invoice_number")
     .like("invoice_number", "SASINV-B%")

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 
 export interface Project {
@@ -95,6 +96,7 @@ export interface UseProjectDocumentFetchResult {
 }
 
 export function useProjectDocumentFetch(projectId: string | undefined): UseProjectDocumentFetchResult {
+  const { tenantClient } = useEntity()
   const [project, setProject] = useState<Project | null>(null)
   const [financials, setFinancials] = useState<Financials | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -114,7 +116,7 @@ export function useProjectDocumentFetch(projectId: string | undefined): UseProje
     try {
       const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
         supabase.from('projects').select('*').eq('id', projectId).single(),
-        supabase
+        tenantClient
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('project_id', projectId)
@@ -145,7 +147,7 @@ export function useProjectDocumentFetch(projectId: string | undefined): UseProje
 
       let invoiceFinancialsById: Record<string, any> = {}
       if (invoiceIds.length > 0) {
-        const { data: invoiceFinancialsRows } = await supabase
+        const { data: invoiceFinancialsRows } = await tenantClient
           .from('invoice_financials_v')
           .select('id, balance_due, computed_status, cash_received')
           .in('id', invoiceIds)
@@ -177,7 +179,7 @@ export function useProjectDocumentFetch(projectId: string | undefined): UseProje
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, tenantClient])
 
   useEffect(() => {
     if (projectId) {

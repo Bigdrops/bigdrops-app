@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
 import { computeDocument } from '@/lib/Calculations'
 import { parseCustomFields, BUILTIN_COLUMNS } from '@/domain/invoice'
@@ -153,18 +154,21 @@ function buildAdvanceMetadataBackedRecord({
   }
 }
 
+// Phase 3: parent invoice custom_fields live in the tenant schema (aggregate).
 async function saveParentAdvanceInvoiceConfig({
   parentInvoiceId,
   parentCustomFields,
   advanceMetadata,
+  tenantClient,
 }: {
   parentInvoiceId: string
   parentCustomFields: unknown
   advanceMetadata: any
+  tenantClient: TenantClient
 }) {
   const nextCustomFields = mergeAdvanceInvoiceMetadata(parentCustomFields, advanceMetadata)
 
-  const { error } = await supabase
+  const { error } = await tenantClient
     .from('invoices')
     .update({ custom_fields: JSON.stringify(nextCustomFields) })
     .eq('id', parentInvoiceId)
@@ -177,13 +181,15 @@ async function saveParentAdvanceInvoiceConfig({
 async function clearParentAdvanceInvoiceConfig({
   parentInvoiceId,
   parentCustomFields,
+  tenantClient,
 }: {
   parentInvoiceId: string
   parentCustomFields: unknown
+  tenantClient: TenantClient
 }) {
   const nextCustomFields = clearAdvanceInvoiceMetadata(parentCustomFields)
 
-  const { error } = await supabase
+  const { error } = await tenantClient
     .from('invoices')
     .update({ custom_fields: JSON.stringify(nextCustomFields) })
     .eq('id', parentInvoiceId)
@@ -246,34 +252,37 @@ export function buildWaybillPrefill(invoice: any) {
   }
 }
 
-export async function voidInvoicePayment({ paymentId, reason }: { paymentId: string; reason: string }) {
-  const invoiceId = await fetchInvoiceIdForPayment(paymentId)
+export async function voidInvoicePayment({ paymentId, reason }: { paymentId: string; reason: string }, tenantClient: TenantClient) {
+  const invoiceId = await fetchInvoiceIdForPayment(paymentId, tenantClient)
   if (!invoiceId) {
     throw new Error('Could not find invoice for payment')
   }
 
-  const result = await voidPaymentService({ paymentId, invoiceId, reason })
+  const result = await voidPaymentService({ paymentId, invoiceId, reason }, tenantClient)
   if (!result.success) {
     throw new Error(result.error || 'Failed to void payment')
   }
   return result
 }
 
-export async function createAdvanceInvoiceRecord({
-  parentInvoice,
-  mode,
-  inputValue,
-  suffix,
-  primaryLabel,
-  secondaryLabel,
-}: {
-  parentInvoice: any
-  mode: 'percent' | 'fixed'
-  inputValue: number | string
-  suffix: string | undefined
-  primaryLabel: string
-  secondaryLabel: string
-}) {
+export async function createAdvanceInvoiceRecord(
+  {
+    parentInvoice,
+    mode,
+    inputValue,
+    suffix,
+    primaryLabel,
+    secondaryLabel,
+  }: {
+    parentInvoice: any
+    mode: 'percent' | 'fixed'
+    inputValue: number | string
+    suffix: string | undefined
+    primaryLabel: string
+    secondaryLabel: string
+  },
+  tenantClient: TenantClient,
+) {
   const existingMetadata = getAdvanceInvoiceMetadata(parentInvoice)
   const metadata = buildAdvanceParentInvoiceMetadata({
     parentInvoice,
@@ -295,6 +304,7 @@ export async function createAdvanceInvoiceRecord({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
     advanceMetadata: metadata,
+    tenantClient,
   })
 
   if (existingMetadata) {
@@ -321,24 +331,27 @@ export async function createAdvanceInvoiceRecord({
   }
 }
 
-export async function updateAdvanceInvoiceRecord({
-  advanceInvoiceId,
-  parentInvoice,
-  mode,
-  inputValue,
-  suffix,
-  primaryLabel,
-  secondaryLabel,
-}: {
-  advanceInvoiceId?: string | null
-  parentInvoice: any
-  mode: 'percent' | 'fixed'
-  inputValue: number | string
-  suffix: string | undefined
-  primaryLabel: string
-  secondaryLabel: string
-  threadPosition?: number
-}) {
+export async function updateAdvanceInvoiceRecord(
+  {
+    advanceInvoiceId,
+    parentInvoice,
+    mode,
+    inputValue,
+    suffix,
+    primaryLabel,
+    secondaryLabel,
+  }: {
+    advanceInvoiceId?: string | null
+    parentInvoice: any
+    mode: 'percent' | 'fixed'
+    inputValue: number | string
+    suffix: string | undefined
+    primaryLabel: string
+    secondaryLabel: string
+    threadPosition?: number
+  },
+  tenantClient: TenantClient,
+) {
   const existingMetadata = getAdvanceInvoiceMetadata(parentInvoice)
   const metadata = buildAdvanceParentInvoiceMetadata({
     parentInvoice,
@@ -360,6 +373,7 @@ export async function updateAdvanceInvoiceRecord({
     parentInvoiceId: String(parentInvoice.id),
     parentCustomFields: parentInvoice.custom_fields,
     advanceMetadata: metadata,
+    tenantClient,
   })
 
   await recordAdvanceUpdated({
@@ -375,20 +389,24 @@ export async function updateAdvanceInvoiceRecord({
   })
 }
 
-export async function deleteAdvanceInvoiceRecord({
-  parentInvoiceId,
-  parentInvoiceNumber,
-  parentCustomFields,
-}: {
-  parentInvoiceId: string
-  parentInvoiceNumber?: string | null
-  parentCustomFields: unknown
-}) {
+export async function deleteAdvanceInvoiceRecord(
+  {
+    parentInvoiceId,
+    parentInvoiceNumber,
+    parentCustomFields,
+  }: {
+    parentInvoiceId: string
+    parentInvoiceNumber?: string | null
+    parentCustomFields: unknown
+  },
+  tenantClient: TenantClient,
+) {
   const existingMetadata = getAdvanceInvoiceMetadata(parentCustomFields as any)
 
   await clearParentAdvanceInvoiceConfig({
     parentInvoiceId,
     parentCustomFields,
+    tenantClient,
   })
 
   if (existingMetadata) {

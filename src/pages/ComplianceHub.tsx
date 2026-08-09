@@ -11,6 +11,7 @@ import {
 
 import Layout from '../components/Layout'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { fetchWhtReceipts, fetchTaxInputEntries, fetchTaxFilings, fetchTaxReminders } from '@/modules/compliance/services/complianceService'
 import { Button } from '@/components/ui/button'
 import PageLoader from '@/components/app/PageLoader'
@@ -61,6 +62,7 @@ const sectionMeta: Record<
 }
 
 export default function ComplianceHub() {
+  const { tenantClient } = useEntity()
   const [section, setSection] = useState<ComplianceSection>('today')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
@@ -80,20 +82,22 @@ export default function ComplianceHub() {
       setError('')
 
       try {
+        // Phase 3: invoices/payments are part of the invoice aggregate → tenant.
+        // Tax tables (tax_input_entries, tax_filings, tax_reminders) remain public.
         const [invoicesResult, paymentsResult] = await Promise.all([
-          supabase
+          tenantClient
             .from('invoices')
             .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
             .neq('status', 'archived')
             .order('issue_date', { ascending: false }),
-          supabase
+          tenantClient
             .from('payments')
             .select('*, invoices(invoice_number, client_name)')
             .is('voided_at', null)
             .order('date', { ascending: false }),
         ])
         const [receiptsData, taxInputsData, filingsData, remindersData] = await Promise.all([
-          fetchWhtReceipts(),
+          fetchWhtReceipts(tenantClient),
           fetchTaxInputEntries(),
           fetchTaxFilings(),
           fetchTaxReminders(),
@@ -136,7 +140,7 @@ export default function ComplianceHub() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [tenantClient])
 
   const activeSection = sectionMeta[section]
   const ActiveSectionIcon = activeSection.icon
@@ -180,7 +184,7 @@ export default function ComplianceHub() {
             receipts={receipts}
             loading={loading}
             onReceiptsChanged={() => {
-              supabase.from('wht_receipts').select('*')
+              tenantClient.from('wht_receipts').select('*')
                 .then(({ data }) => { if (data) setReceipts(data) })
             }}
           />

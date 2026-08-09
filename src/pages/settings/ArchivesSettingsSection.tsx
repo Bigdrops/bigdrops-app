@@ -13,6 +13,7 @@ import {
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { SettingsSummaryCard } from '@/components/settings/SettingsSummaryCard'
 import { feedback } from '@/lib/feedback'
 import { Input } from '@/components/ui/input'
@@ -52,6 +53,7 @@ const docTypeConfig: Record<ArchiveDocType, { label: string; icon: typeof FileTe
 const allTypes = Object.keys(docTypeConfig) as ArchiveDocType[]
 
 export function ArchivesSettingsSection() {
+  const { tenantClient } = useEntity()
   const [loading, setLoading] = useState(true)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [selectedTypes, setSelectedTypes] = useState<Set<ArchiveDocType>>(new Set())
@@ -84,7 +86,8 @@ export function ArchivesSettingsSection() {
       { data: waybills },
       { data: boqs },
     ] = await Promise.all([
-      supabase.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      // Phase 3: invoices are part of the invoice aggregate → tenant.
+      tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('quotations').select('id, quotation_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('projects').select('id, name, client_name, status, start_date, project_value, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
@@ -104,7 +107,7 @@ export function ArchivesSettingsSection() {
     })
 
     setLoading(false)
-  }, [])
+  }, [tenantClient])
 
   useEffect(() => { loadArchives() }, [loadArchives])
 
@@ -170,7 +173,9 @@ export function ArchivesSettingsSection() {
   const restoreRecord = async (type: ArchiveDocType, id: string) => {
     setRestoringId(`${type}:${id}`)
 
-    const { error } = await supabase.from(type).update({ archived_at: null }).eq('id', id)
+    // Phase 3: invoice restores target the tenant schema.
+    const client = type === 'invoices' ? tenantClient : supabase
+    const { error } = await client.from(type).update({ archived_at: null }).eq('id', id)
 
     if (error) {
       feedback.error(`Restore failed: ${error.message}`)

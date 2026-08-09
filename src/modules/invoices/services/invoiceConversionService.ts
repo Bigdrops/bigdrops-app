@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow } from '@/domain/documentConversion'
 import { buildInvoiceTrailLink, withInvoiceSourceTrail } from '../domain/invoiceConversionTrail'
@@ -11,15 +12,21 @@ export interface RevertToQuotationInput {
   prefixes?: DocumentPrefixes | null
 }
 
-export async function revertInvoiceToQuotationService({
-  invoice,
-  items,
-  customFields,
-  prefixes,
-}: RevertToQuotationInput) {
+export async function revertInvoiceToQuotationService(
+  {
+    invoice,
+    items,
+    customFields,
+    prefixes,
+  }: RevertToQuotationInput,
+  tenantClient: TenantClient,
+  entityId?: string | null,
+) {
+  // Phase 3: quotations remain public; the invoice source read targets the
+  // tenant schema (invoices is part of the aggregate).
   const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
     supabase.from('quotations').select('quotation_number'),
-    supabase.from('invoices').select('custom_fields').eq('id', invoice.id).single(),
+    tenantClient.from('invoices').select('custom_fields').eq('id', invoice.id).single(),
   ])
 
   const prefix = resolvePrefix(prefixes, 'quotation')
@@ -76,6 +83,7 @@ export async function revertInvoiceToQuotationService({
     p_invoice_id: invoice.id,
     p_quotation_payload: quotationPayload,
     p_quotation_items_payload: itemRows,
+    p_entity_id: entityId ?? null,
   })
 
   if (error || !createdQuotation) {

@@ -1,4 +1,6 @@
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
+import type { TenantClient } from '@/lib/tenantClient'
 import { toDbItem } from '@/domain/invoice'
 import type {
   InvoiceAttachment,
@@ -71,6 +73,8 @@ interface DocumentTotals {
 }
 
 interface UseInvoiceSaveParams {
+  tenantClient: TenantClient
+  entityId: string | null
   invoice: InvoiceFormFields
   invoiceTitle: string
   items: InvoiceItem[]
@@ -264,44 +268,89 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
   },
 
   async persist(input, payload, { isCreate, id }) {
-    if (isCreate) {
+    const { tenantClient, entityId } = input
+    const itemsToSave = input.items.map((item, index) => toDbItem(item, null, index))
+
+    // Phase 3: composite save (invoice + items) is atomic via the tenant
+    // transaction RPC when the entity id is available (post-cutover).
+    if (entityId && isCreate) {
       return withUniqueRetry(
         async (candidateNumber: string) => {
           payload.invoice_number = candidateNumber
-          return (supabase.from('invoices') as any).insert([payload]).select().single() as Promise<{ data: any; error: any }>
+          const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
+            p_entity_id: entityId,
+            p_invoice_payload: payload,
+            p_items: itemsToSave,
+            p_mode: 'create',
+          })
+          if (error) return { data: null, error }
+          return {
+            data: {
+              id: (data as any)?.id,
+              invoice_number: (data as any)?.invoice?.invoice_number ?? payload.invoice_number,
+            },
+            error: null,
+          }
         },
         async () => {
-          const { data: rows } = await supabase.from('invoices').select('invoice_number')
+          const { data: rows } = await tenantClient.from('invoices').select('invoice_number')
           return getNextInvoiceNumber(rows || [], resolvePrefix(input.documentPrefixes, 'invoice'))
         },
       )
     }
-    const { error } = await (supabase.from('invoices') as any).update(payload).eq('id', id)
+
+    if (entityId && !isCreate) {
+      const { error } = await supabase.rpc('save_invoice_with_items_transaction', {
+        p_entity_id: entityId,
+        p_invoice_payload: payload,
+        p_items: itemsToSave,
+        p_mode: 'update',
+      })
+      return { data: null, error }
+    }
+
+    // Pre-cutover fallback: sequential tenant writes (no entity id available).
+    if (isCreate) {
+      return withUniqueRetry(
+        async (candidateNumber: string) => {
+          payload.invoice_number = candidateNumber
+          return (tenantClient.from('invoices') as any).insert([payload]).select().single() as Promise<{ data: any; error: any }>
+        },
+        async () => {
+          const { data: rows } = await tenantClient.from('invoices').select('invoice_number')
+          return getNextInvoiceNumber(rows || [], resolvePrefix(input.documentPrefixes, 'invoice'))
+        },
+      )
+    }
+    const { error } = await (tenantClient.from('invoices') as any).update(payload).eq('id', id)
     return { data: null, error }
   },
 
   async afterSave(input, { effectiveId, isCreate, createResult }) {
-    const { items, isEdit, initialInvoiceSnapshot } = input
+    const { items, isEdit, initialInvoiceSnapshot, tenantClient, entityId } = input
 
-    const itemsToSave = items.map((item, index) => toDbItem(item, effectiveId, index))
+    // When the composite RPC persisted items, skip the separate item writes.
+    if (!entityId) {
+      const itemsToSave = items.map((item, index) => toDbItem(item, effectiveId, index))
 
-    if (isEdit) {
-      const { error: deleteError } = await supabase.from('invoice_items').delete().eq('invoice_id', effectiveId)
-      if (deleteError) {
-        feedback.error('Save failed', {
-          description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
-        })
-        throw deleteError
+      if (isEdit) {
+        const { error: deleteError } = await tenantClient.from('invoice_items').delete().eq('invoice_id', effectiveId)
+        if (deleteError) {
+          feedback.error('Save failed', {
+            description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
+          })
+          throw deleteError
+        }
       }
-    }
 
-    if (itemsToSave.length > 0) {
-      const { error: insertError } = await supabase.from('invoice_items').insert(itemsToSave)
-      if (insertError) {
-        feedback.error('Save failed', {
-          description: getUserFacingMutationMessage(insertError, { action: 'save' }),
-        })
-        throw insertError
+      if (itemsToSave.length > 0) {
+        const { error: insertError } = await tenantClient.from('invoice_items').insert(itemsToSave)
+        if (insertError) {
+          feedback.error('Save failed', {
+            description: getUserFacingMutationMessage(insertError, { action: 'save' }),
+          })
+          throw insertError
+        }
       }
     }
 
@@ -340,9 +389,16 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
   },
 }
 
-export function useInvoiceSave(params: UseInvoiceSaveParams) {
+export function useInvoiceSave(params: Omit<UseInvoiceSaveParams, 'tenantClient' | 'entityId'>) {
+  const { tenantClient, entity } = useEntity()
+  const input = {
+    ...params,
+    tenantClient,
+    entityId: entity?.id ?? null,
+  } satisfies UseInvoiceSaveParams
+
   return useDocumentSave({
-    input: params,
+    input,
     strategy: invoiceStrategy,
     isCreate: params.isCreate,
     isEdit: params.isEdit,

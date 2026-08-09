@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import type { BankAccountLookupRow, CollectionRow, InvoiceFinancialRow, ProjectFinancialRow, TaxInvoiceRow } from '@/components/reports/reportTypes'
 
 export type PaymentWithInvoice = {
@@ -14,8 +15,10 @@ export type PaymentWithInvoice = {
   invoices?: { invoice_number?: string | null; client_name?: string | null } | { invoice_number?: string | null; client_name?: string | null }[] | null
 }
 
-export async function fetchInvoiceFinancials(start?: string | null, end?: string | null): Promise<InvoiceFinancialRow[]> {
-  let query = supabase.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
+// Phase 3: invoices/payments/invoice_financials_v are aggregate → tenant.
+// bank_accounts and project_financials_v remain public.
+export async function fetchInvoiceFinancials(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<InvoiceFinancialRow[]> {
+  let query = tenantClient.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
   if (start) query = query.gte('issue_date', start)
   if (end) query = query.lte('issue_date', end)
   const result = await query
@@ -28,8 +31,8 @@ export async function fetchProjectFinancials(): Promise<ProjectFinancialRow[]> {
   return (result.data || []) as ProjectFinancialRow[]
 }
 
-export async function fetchTaxInvoices(start?: string | null, end?: string | null): Promise<TaxInvoiceRow[]> {
-  let query = supabase
+export async function fetchTaxInvoices(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<TaxInvoiceRow[]> {
+  let query = tenantClient
     .from('invoices')
     .select('id, invoice_number, client_name, issue_date, vat, wht, total, status')
     .not('status', 'eq', 'archived')
@@ -41,8 +44,8 @@ export async function fetchTaxInvoices(start?: string | null, end?: string | nul
   return (result.data || []) as TaxInvoiceRow[]
 }
 
-export async function fetchPayments(start?: string | null, end?: string | null): Promise<PaymentWithInvoice[]> {
-  let query = supabase
+export async function fetchPayments(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<PaymentWithInvoice[]> {
+  let query = tenantClient
     .from('payments')
     .select('*, invoices(invoice_number, client_name)')
     .is('voided_at', null)

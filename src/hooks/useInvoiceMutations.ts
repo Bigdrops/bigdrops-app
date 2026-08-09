@@ -1,4 +1,4 @@
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import { voidInvoicePayment } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
@@ -117,10 +117,12 @@ export function useInvoiceMutations({
   setAttachKind,
   setShowAttachSheet,
 }: UseInvoiceMutationsArgs) {
+  const { tenantClient, entity } = useEntity()
+  const entityId = entity?.id ?? null
   const { settings } = useSettings()
   const handleAttachExisting = async (item: { id?: string }) => {
     if (!item?.id || !attachKind) return
-    await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind })
+    await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind }, tenantClient)
     setShowAttachSheet(false)
     setAttachKind(null)
     await refresh()
@@ -160,7 +162,7 @@ export function useInvoiceMutations({
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === invoice.status) return
     const oldStatus = invoice.status || 'unpaid'
-    const result = await changeInvoiceStatus({ invoiceId: id, oldStatus, newStatus })
+    const result = await changeInvoiceStatus({ invoiceId: id, oldStatus, newStatus, tenantClient })
     if (!result.success) throw new Error(result.error)
     await refresh()
   }
@@ -168,7 +170,7 @@ export function useInvoiceMutations({
   const handleClone = async () => {
     setShowMore(false)
     try {
-      const result = await duplicateInvoice({ invoice, items })
+      const result = await duplicateInvoice({ invoice, items }, tenantClient)
       navigate('/invoices/new', {
         state: result,
       })
@@ -187,7 +189,7 @@ export function useInvoiceMutations({
         items,
         customFields: customFieldObject,
         prefixes: settings?.document_prefixes,
-      })
+      }, tenantClient, entityId)
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err: any) {
       feedback.error('Revert to quotation failed', {
@@ -205,8 +207,7 @@ export function useInvoiceMutations({
 
   const confirmDelete = async () => {
     setShowDeleteConfirm(false)
-    await supabase.from('invoice_items').delete().eq('invoice_id', id)
-    const result = await deleteInvoice(id)
+    const result = await deleteInvoice(id, tenantClient, entityId)
     if (!result.success) {
       feedback.error('Delete failed', { description: result.error || 'Could not delete invoice' })
       return
@@ -221,7 +222,7 @@ export function useInvoiceMutations({
 
   const confirmArchive = async () => {
     setShowArchiveConfirm(false)
-    const result = await archiveInvoice(id)
+    const result = await archiveInvoice(id, tenantClient)
     if (!result.success) {
       feedback.error('Archive failed', { description: result.error || 'Could not archive invoice' })
       return
@@ -242,7 +243,7 @@ export function useInvoiceMutations({
 
     setVoidingPaymentId(pendingVoidPaymentId)
 
-    const invoiceId = await fetchInvoiceIdForPayment(String(pendingVoidPaymentId))
+    const invoiceId = await fetchInvoiceIdForPayment(String(pendingVoidPaymentId), tenantClient)
     if (!invoiceId) {
       feedback.error('Void failed', { description: 'Could not find invoice for payment' })
       setVoidingPaymentId(null)
@@ -253,7 +254,7 @@ export function useInvoiceMutations({
       paymentId: String(pendingVoidPaymentId),
       invoiceId,
       reason,
-    })
+    }, tenantClient)
 
     if (!result.success) {
       feedback.error('Void failed', { description: result.error || 'Unknown error' })

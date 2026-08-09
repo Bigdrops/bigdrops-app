@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import type { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder, TaxSettings, WhtReceiptStatus } from '@/domain/compliance/types'
 import * as repo from '../repositories/complianceRepository'
 
@@ -34,7 +35,7 @@ export interface SubmitCertificateInput {
   received_at: string
 }
 
-export async function createWhtReceipt(input: CreateWhtReceiptInput): Promise<WhtReceipt> {
+export async function createWhtReceipt(input: CreateWhtReceiptInput, tenantClient: TenantClient): Promise<WhtReceipt> {
   const timestamp = now()
   return repo.insertWhtReceipt({
     payment_id: input.payment_id,
@@ -47,14 +48,14 @@ export async function createWhtReceipt(input: CreateWhtReceiptInput): Promise<Wh
     receipt_file_url: input.receipt_file_url,
     created_at: timestamp,
     updated_at: timestamp,
-  } as Partial<WhtReceipt>)
+  } as Partial<WhtReceipt>, tenantClient)
 }
 
-export async function updateWhtReceipt(receiptId: string, updates: UpdateWhtReceiptInput): Promise<WhtReceipt> {
-  return repo.updateWhtReceipt(receiptId, { ...updates, updated_at: now() } as Partial<WhtReceipt>)
+export async function updateWhtReceipt(receiptId: string, updates: UpdateWhtReceiptInput, tenantClient: TenantClient): Promise<WhtReceipt> {
+  return repo.updateWhtReceipt(receiptId, { ...updates, updated_at: now() } as Partial<WhtReceipt>, tenantClient)
 }
 
-export async function submitCertificate(input: SubmitCertificateInput): Promise<WhtReceipt> {
+export async function submitCertificate(input: SubmitCertificateInput, tenantClient: TenantClient): Promise<WhtReceipt> {
   return createWhtReceipt({
     payment_id: input.payment_id,
     invoice_id: input.invoice_id,
@@ -64,11 +65,11 @@ export async function submitCertificate(input: SubmitCertificateInput): Promise<
     receipt_status: input.receipt_status,
     received_at: input.received_at,
     receipt_file_url: input.receipt_file_url,
-  })
+  }, tenantClient)
 }
 
-export async function markReceiptVerified(receiptId: string): Promise<WhtReceipt> {
-  return updateWhtReceipt(receiptId, { receipt_status: 'verified' })
+export async function markReceiptVerified(receiptId: string, tenantClient: TenantClient): Promise<WhtReceipt> {
+  return updateWhtReceipt(receiptId, { receipt_status: 'verified' }, tenantClient)
 }
 
 export async function uploadReceiptFile(file: File): Promise<string> {
@@ -81,8 +82,8 @@ export async function uploadReceiptFile(file: File): Promise<string> {
   return data.publicUrl
 }
 
-export async function fetchWhtReceipts(): Promise<WhtReceipt[]> {
-  return repo.fetchWhtReceipts()
+export async function fetchWhtReceipts(tenantClient: TenantClient): Promise<WhtReceipt[]> {
+  return repo.fetchWhtReceipts(tenantClient)
 }
 
 export async function autoCreateWhtReceiptDraft(params: {
@@ -91,8 +92,8 @@ export async function autoCreateWhtReceiptDraft(params: {
   whtAmount: number
   whtRate: number | null
   whtType: string | null
-}): Promise<void> {
-  const { data: existing } = await supabase
+}, tenantClient: TenantClient): Promise<void> {
+  const { data: existing } = await tenantClient
     .from('wht_receipts')
     .select('id')
     .eq('payment_id', params.paymentId)
@@ -100,7 +101,7 @@ export async function autoCreateWhtReceiptDraft(params: {
 
   if (existing) return
 
-  const { data: invoice } = await supabase
+  const { data: invoice } = await tenantClient
     .from('invoices')
     .select('client_name')
     .eq('id', params.invoiceId)
@@ -117,15 +118,15 @@ export async function autoCreateWhtReceiptDraft(params: {
     receipt_status: 'pending',
     created_at: timestamp,
     updated_at: timestamp,
-  } as Partial<WhtReceipt>)
+  } as Partial<WhtReceipt>, tenantClient)
 }
 
-export async function insertInlineWhtReceipt(record: Partial<WhtReceipt>): Promise<WhtReceipt> {
-  return repo.insertWhtReceipt({ ...record, created_at: now(), updated_at: now() } as Partial<WhtReceipt>)
+export async function insertInlineWhtReceipt(record: Partial<WhtReceipt>, tenantClient: TenantClient): Promise<WhtReceipt> {
+  return repo.insertWhtReceipt({ ...record, created_at: now(), updated_at: now() } as Partial<WhtReceipt>, tenantClient)
 }
 
-export async function updateInlineWhtReceipt(id: string, updates: Partial<WhtReceipt>): Promise<WhtReceipt> {
-  return repo.updateWhtReceipt(id, { ...updates, updated_at: now() } as Partial<WhtReceipt>)
+export async function updateInlineWhtReceipt(id: string, updates: Partial<WhtReceipt>, tenantClient: TenantClient): Promise<WhtReceipt> {
+  return repo.updateWhtReceipt(id, { ...updates, updated_at: now() } as Partial<WhtReceipt>, tenantClient)
 }
 
 export async function fetchTaxInputEntries(): Promise<TaxInputEntry[]> {
@@ -187,6 +188,7 @@ export async function upsertTaxSettings(record: Partial<TaxSettings>): Promise<v
 export async function importRecord(
   type: string,
   record: Record<string, unknown>,
+  tenantClient?: TenantClient,
 ): Promise<void> {
   const timestamp = now()
   const table = type === 'vat_input' ? 'tax_input_entries'
@@ -194,6 +196,9 @@ export async function importRecord(
     : type === 'wht_receipt' ? 'wht_receipts'
     : null
   if (!table) throw new Error(`Unknown import type: ${type}`)
-  const { error } = await supabase.from(table).insert([{ ...record, created_at: timestamp, updated_at: timestamp }])
+  // Phase 3: wht_receipts is part of the invoice aggregate → tenant client.
+  // Tax tables remain public.
+  const client = type === 'wht_receipt' && tenantClient ? tenantClient : supabase
+  const { error } = await client.from(table).insert([{ ...record, created_at: timestamp, updated_at: timestamp }])
   if (error) throw error
 }

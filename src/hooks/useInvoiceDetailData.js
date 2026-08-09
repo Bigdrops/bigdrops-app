@@ -66,7 +66,7 @@ export function useInvoiceDetailData(id) {
   const advanceInvoiceProjection = useMemo(() => deriveAdvanceInvoiceProjection(invoice), [invoice])
 
   const fetchInvoice = useCallback(async () => {
-    const { data, error: invoiceError } = await supabase.from('invoices').select('*').eq('id', id).single()
+    const { data, error: invoiceError } = await tenantClient.from('invoices').select('*').eq('id', id).single()
     if (invoiceError) {
       setError(invoiceError)
       setInvoice(null)
@@ -100,13 +100,13 @@ export function useInvoiceDetailData(id) {
       { data: activePayments, error: activePaymentsError },
       { data: voidedPayments, error: voidedPaymentsError },
     ] = await Promise.all([
-      supabase
+      tenantClient
         .from('payments')
         .select('*')
         .eq('invoice_id', id)
         .is('voided_at', null)
         .order('date', { ascending: true }),
-      supabase
+      tenantClient
         .from('payments')
         .select('*')
         .eq('invoice_id', id)
@@ -125,10 +125,10 @@ export function useInvoiceDetailData(id) {
       return String(a.created_at || '').localeCompare(String(b.created_at || ''))
     })
     setPayments(mergedPayments)
-  }, [id])
+  }, [id, tenantClient])
 
   const fetchInvoiceFinancials = useCallback(async () => {
-    const { data } = await supabase
+    const { data } = await tenantClient
       .from('invoice_financials_v')
       .select('*')
       .eq('id', id)
@@ -137,10 +137,10 @@ export function useInvoiceDetailData(id) {
     if (data?.computed_status) {
       setInvoice((current) => (current ? { ...current, status: data.computed_status } : current))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   const fetchItems = useCallback(async () => {
-    const { data, error: itemsError } = await supabase
+    const { data, error: itemsError } = await tenantClient
       .from('invoice_items')
       .select('*')
       .eq('invoice_id', id)
@@ -154,7 +154,7 @@ export function useInvoiceDetailData(id) {
       ...mapDbInvoiceItem(item),
     }))
     setItems(loaded)
-  }, [id])
+  }, [id, tenantClient])
 
   const refresh = useCallback(async () => {
     if (!id) return

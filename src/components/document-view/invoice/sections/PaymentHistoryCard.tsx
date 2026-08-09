@@ -3,7 +3,7 @@ import { ChevronDown, Receipt, FileText, Image, ExternalLink } from "lucide-reac
 import { formatNaira } from "@/lib/formatters/money";
 import { buildPaymentSummaryProjection } from "@/domain/invoice/projections/financialProjection";
 import { buildPaymentHistoryRowViewModels, type AttachmentPreview } from "./paymentHistoryViewModel";
-import { supabase } from "@/supabase";
+import { useEntity } from "@/lib/tenant/contexts";
 import { useNavigate } from "react-router-dom";
 
 interface PaymentHistoryCardProps {
@@ -24,18 +24,19 @@ export const PaymentHistoryCard: React.FC<PaymentHistoryCardProps> = ({
   onVoidPayment,
 }) => {
   const navigate = useNavigate();
+  const { tenantClient } = useEntity();
   const [isOpen, setIsOpen] = useState(true);
   const [receiptsByPayment, setReceiptsByPayment] = useState<Record<string, { id: string; number: string }>>({});
 
   useEffect(() => {
     if (!invoiceId) return;
-    supabase.from('receipts').select('id, receipt_number, payment_id').eq('invoice_id', invoiceId)
+    tenantClient.from('receipts').select('id, receipt_number, payment_id').eq('invoice_id', invoiceId)
       .then(({ data }) => {
         const map: Record<string, { id: string; number: string }> = {};
         if (data) data.forEach(r => { map[r.payment_id] = { id: r.id, number: r.receipt_number } });
         setReceiptsByPayment(map);
       });
-  }, [invoiceId]);
+  }, [invoiceId, tenantClient]);
 
   const paymentSummary = useMemo(
     () => buildPaymentSummaryProjection(invoiceTotal, payments || [], (v) => formatNaira(v)),

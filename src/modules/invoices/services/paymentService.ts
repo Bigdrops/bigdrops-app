@@ -77,12 +77,13 @@ export async function recordInvoicePayment(
   try {
     const payload = normalizePaymentInput(input)
 
-    const paymentRow = await insertPayment(payload)
+    const paymentRow = await insertPayment(payload, tenantClient)
 
-    const financialsRow = await fetchInvoiceFinancials(input.invoiceId)
-    const newStatus = financialsRow?.computed_status || "unpaid"
+    const financialsRow = await fetchInvoiceFinancials(input.invoiceId, tenantClient)
+    // Phase 3: persist the SAFE status (never partial/overdue presentation states)
+    const newStatus = financialsRow?.persisted_status || financialsRow?.computed_status || "unpaid"
 
-    await updateInvoiceStatus(input.invoiceId, newStatus)
+    await updateInvoiceStatus(input.invoiceId, newStatus, tenantClient)
 
     try {
       const bankAccountName = input.bankAccountId
@@ -105,7 +106,7 @@ export async function recordInvoicePayment(
         whtAmount: payload.wht_amount,
         whtRate: payload.wht_rate ?? null,
         whtType: payload.wht_type ?? null,
-      }).catch((err) => {
+      }, tenantClient).catch((err) => {
         console.error('Auto WHT receipt draft failed:', err)
       })
     }
@@ -113,8 +114,8 @@ export async function recordInvoicePayment(
     // Auto-create payment acknowledgement receipt with snapshot
     try {
       const [invoiceResult, clientResult, companyResult, bankResult, signatoryResult] = await Promise.all([
-        supabase.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
-        tenantClient.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await supabase.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
+        tenantClient.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
+        tenantClient.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await tenantClient.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
         tenantClient.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
         payload.bank_account_id ? supabase.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
         supabase.from('signatories').select('name, role, signature_url').limit(1).single(),
@@ -157,10 +158,10 @@ export async function recordInvoicePayment(
         const { data: receiptRow, error: receiptError } = await withUniqueRetry(
           async (candidateNumber: string) => {
             receiptPayload.receipt_number = candidateNumber
-            return supabase.from('receipts').insert([receiptPayload]).select().single()
+            return tenantClient.from('receipts').insert([receiptPayload]).select().single()
           },
           async () => {
-            const { data: rows } = await supabase.from('receipts').select('receipt_number')
+            const { data: rows } = await tenantClient.from('receipts').select('receipt_number')
             return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null)
           },
         )
@@ -260,8 +261,8 @@ export async function recordInvoicePayment(
   }
 }
 
-export async function calculatePreviousSettled(invoiceId: string): Promise<number> {
-  const payments = await fetchPaymentsForInvoice(invoiceId)
+export async function calculatePreviousSettled(invoiceId: string, tenantClient: TenantClient): Promise<number> {
+  const payments = await fetchPaymentsForInvoice(invoiceId, tenantClient)
   return payments.reduce(
     (sum, row) => sum + normalizeAmount(row.cash_amount) + normalizeAmount(row.wht_amount),
     0
@@ -279,10 +280,11 @@ export interface PaymentSheetLoadResult {
 
 export async function loadPaymentSheetData(
   invoiceId: string,
-  invoiceTotal: number
+  invoiceTotal: number,
+  tenantClient: TenantClient
 ): Promise<PaymentSheetLoadResult> {
   const [previousSettled, bankAccounts] = await Promise.all([
-    calculatePreviousSettled(invoiceId),
+    calculatePreviousSettled(invoiceId, tenantClient),
     loadBankAccountsList(),
   ])
   return {
@@ -312,13 +314,13 @@ async function editVoidCaptions(paymentId: string): Promise<void> {
   }
 }
 
-export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ success: boolean; error?: string }> {
+export async function voidInvoicePayment(input: VoidPaymentInput, tenantClient: TenantClient): Promise<{ success: boolean; error?: string }> {
   try {
-    const payment = await fetchPaymentById(input.paymentId)
+    const payment = await fetchPaymentById(input.paymentId, tenantClient)
     const amount = payment ? payment.cash_amount + payment.wht_amount : 0
 
-    const voided = await repositoryVoidPayment(input.paymentId, input.reason)
-    await repositorySyncStatus(input.invoiceId)
+    const voided = await repositoryVoidPayment(input.paymentId, input.reason, tenantClient)
+    await repositorySyncStatus(input.invoiceId, tenantClient)
 
     try {
       await recordPaymentVoided(input.paymentId, input.invoiceId, amount, input.reason || null)
@@ -331,9 +333,9 @@ export async function voidInvoicePayment(input: VoidPaymentInput): Promise<{ suc
     }
 
     try {
-      const receipt = await fetchReceiptByPaymentId(input.paymentId)
+      const receipt = await fetchReceiptByPaymentId(input.paymentId, tenantClient)
       if (receipt) {
-        await voidReceipt(receipt.id, input.reason || null)
+        await voidReceipt(receipt.id, input.reason || null, tenantClient)
         await recordReceiptVoided(receipt.id, receipt.receipt_number, input.reason || null, input.paymentId)
       }
     } catch (receiptVoidErr) {
