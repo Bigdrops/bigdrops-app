@@ -5,6 +5,7 @@ import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 import { recordAuditLog, recordWaybillCreated, recordWaybillStatusChanged, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
+import type { TenantClient } from '@/lib/tenantClient'
 
 export async function saveWaybill(params: {
   waybill: Waybill;
@@ -13,8 +14,10 @@ export async function saveWaybill(params: {
   mode: 'new' | 'edit';
   waybillId?: string;
   prefixes?: DocumentPrefixes | null;
+  tenantClient?: TenantClient;
 }) {
-  const { waybill, items, custom_fields, mode, waybillId, prefixes } = params;
+  const { waybill, items, custom_fields, mode, waybillId, prefixes, tenantClient: tc } = params
+  const db = tc?.isReady ? tc : supabase;
 
   const errors: string[] = []
   if (waybill.type === 'external' && !waybill.client_id) {
@@ -40,7 +43,7 @@ export async function saveWaybill(params: {
 
   let waybillNumber = waybill.waybill_number || ''
   if (mode === 'new' && !waybillNumber) {
-    const { data: existingWaybills } = await supabase
+    const { data: existingWaybills } = await db
       .from('waybills')
       .select('waybill_number')
       .order('created_at', { ascending: false })
@@ -84,10 +87,10 @@ export async function saveWaybill(params: {
     const { data, error } = await withUniqueRetry(
       async (candidateNumber: string) => {
         payload.waybill_number = candidateNumber
-        return supabase.from('waybills').insert([payload]).select('id').single()
+        return db.from('waybills').insert([payload]).select('id').single()
       },
       async () => {
-        const { data: rows } = await supabase
+        const { data: rows } = await db
           .from('waybills')
           .select('waybill_number')
           .order('created_at', { ascending: false })
@@ -120,10 +123,10 @@ export async function saveWaybill(params: {
     // Fetch old status before update for audit
     let oldWaybillStatus: string | null = null
     try {
-      const { data } = await supabase.from('waybills').select('status').eq('id', waybillId).single()
+      const { data } = await db.from('waybills').select('status').eq('id', waybillId).single()
       oldWaybillStatus = data?.status ?? null
     } catch { /* ponytail: best-effort old status */ }
-    const { error } = await supabase.from('waybills').update(payload).eq('id', waybillId)
+    const { error } = await db.from('waybills').update(payload).eq('id', waybillId)
     if (error) {
       console.error('Waybill update error:', error)
       throw new Error(`Failed to update waybill: ${error.message}`)

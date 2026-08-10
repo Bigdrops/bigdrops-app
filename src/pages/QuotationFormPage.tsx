@@ -217,8 +217,8 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
 
         if (isEdit && quotationId) {
           const [{ data: quotationRow, error }, { data: itemRows }] = await Promise.all([
-            supabase.from('quotations').select('*').eq('id', quotationId).single(),
-            supabase.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
+            tenantClient.from('quotations').select('*').eq('id', quotationId).single(),
+            tenantClient.from('quotation_items').select('*').eq('quotation_id', quotationId).order('sort_order'),
           ])
 
           if (error || !quotationRow) {
@@ -354,7 +354,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
         }
 
         /* ── Normal create mode: generate next number, blank form ── */
-        const { data } = await supabase.from('quotations').select('quotation_number')
+        const { data } = await tenantClient.from('quotations').select('quotation_number')
         const nums = (data || []).map((q: { quotation_number?: string | null }) => {
           const match = q.quotation_number?.match(/(\d+)$/)
           return match ? parseInt(match[1], 10) : 0

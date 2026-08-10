@@ -388,13 +388,16 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
   cacheKey: "bd:list:waybills:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(waybillsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, waybillsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    const tenantClient = resolveFetchClient(ctx);
+    const client = tenantClient ?? supabase;
+
+    let q = client
       .from("waybills")
       .select("id, waybill_number, type, client_name, date, created_at, status, project_id, invoice_id, vehicle_plate, delivery_location")
       .is("archived_at", null);

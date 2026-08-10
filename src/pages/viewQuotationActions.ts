@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { normalizeSettings } from '@/hooks/useSettings'
@@ -12,8 +11,8 @@ import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function loadQuotationViewData(id: string, tenantClient: TenantClient) {
   const [quoRes, itemsRes, settingsRes, bankAccountsRes, signatoriesRes] = await Promise.all([
-    supabase.from('quotations').select('*').eq('id', id).single(),
-    supabase.from('quotation_items').select('*').eq('quotation_id', id).order('sort_order'),
+    tenantClient.from('quotations').select('*').eq('id', id).single(),
+    tenantClient.from('quotation_items').select('*').eq('quotation_id', id).order('sort_order'),
     tenantClient.from('settings').select('*').eq('id', 1).single(),
     supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
     supabase.from('signatories').select('id, name, role, signature_url').order('name'),
@@ -160,7 +159,7 @@ export async function convertQuotationToInvoice(
   // read/write remains public (quotations are not in the aggregate).
   const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
     tenantClient.from('invoices').select('invoice_number'),
-    supabase.from('quotations').select('custom_fields').eq('id', id).single(),
+    tenantClient.from('quotations').select('custom_fields').eq('id', id).single(),
   ])
   const nextInvoiceNumber = getNextInvoiceNumber(
     (invoiceRows || []) as Array<{ invoice_number?: string | null }>,
@@ -204,7 +203,7 @@ export async function convertQuotationToInvoice(
   // when the entity id is available; otherwise sequential tenant writes.
   let createdInvoice: any = null
   if (entityId) {
-    const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
+    const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
       p_entity_id: entityId,
       p_invoice_payload: invoicePayload,
       p_items: items
@@ -239,7 +238,7 @@ export async function convertQuotationToInvoice(
     ...quotation,
     status: quotation.status || 'open',
   }
-  const { error: trailError } = await supabase
+  const { error: trailError } = await tenantClient
     .from('quotations')
     .update({ status: 'converted', custom_fields: JSON.stringify(updatedQuotationFields) })
     .eq('id', id)
@@ -259,7 +258,7 @@ export async function convertQuotationToInvoice(
       trackedFields: INVOICE_TRACKED_FIELDS,
     })
 
-    const { data: updatedQuotation } = await supabase.from('quotations').select('*').eq('id', id).single()
+    const { data: updatedQuotation } = await tenantClient.from('quotations').select('*').eq('id', id).single()
     await recordAuditLog({
       entityType: 'quotation',
       recordId: id,
@@ -275,27 +274,27 @@ export async function convertQuotationToInvoice(
   return createdInvoice
 }
 
-export async function deleteQuotationRecord(id: string) {
-  const { error: itemError } = await supabase.from('quotation_items').delete().eq('quotation_id', id)
+export async function deleteQuotationRecord(id: string, tenantClient: TenantClient) {
+  const { error: itemError } = await tenantClient.from('quotation_items').delete().eq('quotation_id', id)
   if (itemError) throw itemError
-  const { error } = await supabase.from('quotations').delete().eq('id', id)
+  const { error } = await tenantClient.from('quotations').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function archiveQuotationRecord(id: string) {
-  const { error } = await supabase.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
+export async function archiveQuotationRecord(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('quotations').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 
-export async function updateQuotationStatus(id: string, status: string) {
-  const { data: oldQuo } = await supabase.from('quotations').select('*').eq('id', id).single()
-  const { error } = await supabase.from('quotations').update({ status }).eq('id', id)
+export async function updateQuotationStatus(id: string, status: string, tenantClient: TenantClient) {
+  const { data: oldQuo } = await tenantClient.from('quotations').select('*').eq('id', id).single()
+  const { error } = await tenantClient.from('quotations').update({ status }).eq('id', id)
   if (error) throw error
 
   // Audit Trail
   try {
     const { recordQuotationStatusChanged, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
-    const { data: updatedQuotation } = await supabase.from('quotations').select('*').eq('id', id).single()
+    const { data: updatedQuotation } = await tenantClient.from('quotations').select('*').eq('id', id).single()
     await recordQuotationStatusChanged(id, oldQuo?.status || 'unknown', status)
     await recordAuditLog({
       entityType: 'quotation',

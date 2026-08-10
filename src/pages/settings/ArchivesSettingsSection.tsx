@@ -88,7 +88,7 @@ export function ArchivesSettingsSection() {
     ] = await Promise.all([
       // Phase 3: invoices are part of the invoice aggregate → tenant.
       tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('quotations').select('id, quotation_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('quotations').select('id, quotation_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('projects').select('id, name, client_name, status, start_date, project_value, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('csrs').select('id, csr_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
@@ -174,7 +174,7 @@ export function ArchivesSettingsSection() {
     setRestoringId(`${type}:${id}`)
 
     // Phase 3: invoice restores target the tenant schema.
-    const client = type === 'invoices' ? tenantClient : supabase
+    const client = type === 'invoices' || type === 'quotations' ? tenantClient : supabase
     const { error } = await client.from(type).update({ archived_at: null }).eq('id', id)
 
     if (error) {

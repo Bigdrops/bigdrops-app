@@ -359,9 +359,9 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
             .is('archived_at', null)
             .order('created_at', { ascending: false })
             .limit(8),
-          supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
+          tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
           supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
-          supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+          tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
           supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
@@ -476,7 +476,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           .limit(20),
         supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(8),
-        supabase.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
+        tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
         supabase.rpc('get_dashboard_financial_metrics', {
           p_now: nowIso,

@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function archiveRFQRecord(id: string) {
@@ -49,13 +50,15 @@ export async function convertRFQToQuotation({
   rfq,
   items,
   prefixes,
+  tenantClient,
 }: {
   rfq: any
   items: any[]
   prefixes?: DocumentPrefixes | null
+  tenantClient: TenantClient
 }) {
   const [{ data: quotationRows }] = await Promise.all([
-    supabase.from('quotations').select('quotation_number'),
+    tenantClient.from('quotations').select('quotation_number'),
   ])
   
   const { getNextQuotationNumber } = await import('@/domain/quotation')
@@ -88,7 +91,7 @@ export async function convertRFQToQuotation({
     ),
   }
 
-  const { data: createdQuotation, error } = await supabase.from('quotations').insert([payload]).select().single()
+  const { data: createdQuotation, error } = await tenantClient.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')
 
   const itemRows = items
@@ -100,7 +103,7 @@ export async function convertRFQToQuotation({
     } as any, String(createdQuotation.id), index))
 
   if (itemRows.length > 0) {
-    const { error: itemError } = await supabase.from('quotation_items').insert(itemRows)
+    const { error: itemError } = await tenantClient.from('quotation_items').insert(itemRows)
     if (itemError) throw itemError
   }
 

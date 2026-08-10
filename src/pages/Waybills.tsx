@@ -24,11 +24,13 @@ import { feedback } from '@/lib/feedback'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
+import { useEntity } from '@/lib/tenant/contexts'
 
 type FilterTab = 'all' | 'internal' | 'external'
 
 function WaybillsContent() {
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
 
   const { state, patchUpdate, reset, results } = useDocumentQuery("waybills")
 
@@ -85,7 +87,8 @@ function WaybillsContent() {
   const handleArchiveWaybill = async () => {
     if (!archiveId) return
     setIsArchiving(true)
-    const { error } = await supabase.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
+    const db = tenantClient?.isReady ? tenantClient : supabase
+    const { error } = await db.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
     setIsArchiving(false)
     if (error) {
       feedback.error('Archive failed', { description: error.message })
@@ -100,7 +103,8 @@ function WaybillsContent() {
   const handleDeleteWaybill = async () => {
     if (!deleteId) return
     setIsDeleting(true)
-    const { error } = await supabase.from('waybills').delete().eq('id', deleteId)
+    const db = tenantClient?.isReady ? tenantClient : supabase
+    const { error } = await db.from('waybills').delete().eq('id', deleteId)
     setIsDeleting(false)
     if (error) {
       feedback.error('Delete failed', { description: error.message })
@@ -131,10 +135,11 @@ function WaybillsContent() {
 
   const attachInvoice = async (invoice: { id: string }) => {
     if (!activeWaybill?.id || !invoice?.id) return
-    await supabase.from('waybills').update({ invoice_id: invoice.id }).eq('id', activeWaybill.id)
+    const db = tenantClient?.isReady ? tenantClient : supabase
+    await db.from('waybills').update({ invoice_id: invoice.id }).eq('id', activeWaybill.id)
     patchUpdate({ search: state.search } as any)
     if (activeWaybill?.id) {
-      const { data } = await supabase.from('waybills').select('*').eq('id', activeWaybill.id).single()
+      const { data } = await db.from('waybills').select('*').eq('id', activeWaybill.id).single()
       if (data) {
         setActiveWaybill(mapDbWaybill(data))
         setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id) : null)

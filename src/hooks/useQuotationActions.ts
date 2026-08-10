@@ -6,7 +6,6 @@ import type { InvoicePdfTemplateId } from "@/domain/invoice/types";
 import { shareDocument } from "@/components/document-view/shared/shareDocument";
 import { useOperation } from "@/context/OperationContext";
 import { feedback } from "@/lib/feedback";
-import { supabase } from "@/supabase";
 import { useEntity } from "@/lib/tenant/contexts";
 import {
   archiveQuotationRecord,
@@ -89,7 +88,7 @@ export function useQuotationActions(input: {
     const currentTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry";
     const targetTemplateId = nextTemplateId || currentTemplateId;
     const nextCustomFields = { ...customFields, pdfOutput: nextPdfOutput, pdfTemplateId: targetTemplateId };
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from("quotations").update({ custom_fields: JSON.stringify(nextCustomFields) }).eq("id", id);
     if (error) throw error;
     setCustomFields(nextCustomFields);
@@ -114,7 +113,7 @@ export function useQuotationActions(input: {
     setUpdatingStatus(true);
     operation.start("update-status", "Updating Status", "Updating quotation status...");
     try {
-      await updateQuotationStatus(id, status);
+      await updateQuotationStatus(id, status, tenantClient);
       await refreshQuotation();
       operation.finish("success");
       showToast(successLabel, `Quotation marked as ${status}.`, "success");
@@ -166,7 +165,7 @@ export function useQuotationActions(input: {
     setArchiving(true);
     operation.start("archive-quotation", "Archiving Document", "Updating company records...");
     try {
-      await archiveQuotationRecord(id);
+      await archiveQuotationRecord(id, tenantClient);
       operation.finish("success");
       navigate("/quotations");
     } catch (error) {
@@ -182,7 +181,7 @@ export function useQuotationActions(input: {
     setDeleting(true);
     operation.start("delete-quotation", "Deleting Document", "Removing from records...");
     try {
-      await deleteQuotationRecord(id);
+      await deleteQuotationRecord(id, tenantClient);
       operation.finish("success");
       navigate("/quotations");
     } catch (error) {

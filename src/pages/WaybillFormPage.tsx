@@ -11,6 +11,7 @@ import { feedback } from '../lib/feedback'
 import { supabase } from '../supabase'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { useEntity } from '@/lib/tenant/contexts'
 
 interface WaybillFormPageProps {
   mode: 'create' | 'edit'
@@ -19,6 +20,7 @@ interface WaybillFormPageProps {
 export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
   const navigate = useNavigate()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const { id } = useParams<{ id: string }>()
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
@@ -38,7 +40,8 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
     const generate = async () => {
       setLoadingNumber(true)
       try {
-        const { data: existingWaybills } = await supabase
+        const db = tenantClient?.isReady ? tenantClient : supabase
+        const { data: existingWaybills } = await db
           .from('waybills')
           .select('waybill_number')
           .order('created_at', { ascending: false })
@@ -59,7 +62,8 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
     if (!isEdit || !id) return
     const loadWaybill = async () => {
       try {
-        const { data, error } = await supabase.from('waybills').select('*').eq('id', id).single()
+        const db = tenantClient?.isReady ? tenantClient : supabase
+        const { data, error } = await db.from('waybills').select('*').eq('id', id).single()
         if (error || !data) { navigate('/waybills'); return }
         const wb: Waybill = mapDbWaybill(data)
         setEditType(wb.type)
@@ -80,15 +84,16 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
   const handleBlankDownload = async (blankType: WaybillType) => {
     try {
       const prefix = resolvePrefix(settings?.document_prefixes, 'waybill')
+      const db = tenantClient?.isReady ? tenantClient : supabase
 
       for (let attempt = 0; attempt <= 3; attempt++) {
         const [existingWaybills, existingBlanks] = await Promise.all([
-          supabase
+          db
             .from('waybills')
             .select('waybill_number')
             .order('created_at', { ascending: false })
             .limit(1000),
-          supabase
+          db
             .from('blank_waybill_logs')
             .select('assigned_waybill_number')
             .order('downloaded_at', { ascending: false })
@@ -100,7 +105,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         ].filter(Boolean)
         const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, prefix, 'blank')
 
-        const { error: logError } = await supabase.from('blank_waybill_logs').insert([{
+        const { error: logError } = await db.from('blank_waybill_logs').insert([{
           assigned_waybill_number: waybillNumber,
           type: blankType,
         }])
@@ -158,6 +163,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         custom_fields: data.customFields,
         mode: 'new',
         prefixes: settings?.document_prefixes,
+        tenantClient,
       })
       feedback.success('Waybill created')
       navigate(`/waybills/${result.waybillId}`)
@@ -169,6 +175,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         mode: 'edit',
         waybillId: id,
         prefixes: settings?.document_prefixes,
+        tenantClient,
       })
       feedback.success('Waybill updated')
       navigate(`/waybills/${result.waybillId}`)

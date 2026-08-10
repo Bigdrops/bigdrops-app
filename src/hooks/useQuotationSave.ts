@@ -1,4 +1,4 @@
-import { supabase } from '../supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import type {
   InvoiceItem,
   InvoiceFieldEntry,
@@ -50,6 +50,7 @@ interface DocumentTotals {
 }
 
 interface UseQuotationSaveParams {
+  tenantClient: TenantClient
   quotation: QuotationEditorState
   quotationTitle: string
   items: InvoiceItem[]
@@ -90,7 +91,7 @@ let _savedQuotation: any = null
 
 const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   async validate(input) {
-    const { quotation, items, isEdit, initialQuotationSnapshot } = input
+    const { quotation, items, isEdit, initialQuotationSnapshot, tenantClient } = input
 
     if (isEdit) {
       try {
@@ -128,7 +129,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
       }
     }
 
-    const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+    const { project, error: projectError } = await validateProjectAssignment(tenantClient as any, {
       projectId: quotation.project_id,
       documentClientId: quotation.client_id,
       documentClientName: quotation.client_name,
@@ -206,7 +207,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   },
 
   async persist(input, payload, { isCreate, id }) {
-    const { documentPrefixes, setQuotationNumber } = input
+    const { documentPrefixes, setQuotationNumber, tenantClient } = input
 
     if (isCreate && canUseOfflineQuotationDrafts()) {
       const offlineItems = input.normalizedItems.map((item, index) => ({
@@ -235,28 +236,28 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
       return withUniqueRetry(
         async (candidateNumber: string) => {
           payload.quotation_number = candidateNumber
-          const result = await (supabase.from('quotations') as any).insert([payload]).select().single()
+          const result = await (tenantClient.from('quotations') as any).insert([payload]).select().single()
           _savedQuotation = result.data
           return result
         },
         async () => {
-          const { data: rows } = await supabase.from('quotations').select('quotation_number')
+          const { data: rows } = await tenantClient.from('quotations').select('quotation_number')
           return getNextQuotationNumber(rows || [], resolvePrefix(documentPrefixes, 'quotation'))
         },
       )
     }
-    const { data: updated, error } = await (supabase.from('quotations') as any).update(payload).eq('id', id).select().single()
+    const { data: updated, error } = await (tenantClient.from('quotations') as any).update(payload).eq('id', id).select().single()
     _savedQuotation = updated
     return { data: updated, error }
   },
 
   async afterSave(input, { effectiveId, isCreate, createResult }) {
-    const { normalizedItems, isEdit, initialQuotationSnapshot } = input
+    const { normalizedItems, isEdit, initialQuotationSnapshot, tenantClient } = input
 
     const itemRows = normalizedItems.map((item, index) => toQuotationItem(item, effectiveId, index))
 
     if (isEdit) {
-      const { error: deleteError } = await supabase.from('quotation_items').delete().eq('quotation_id', effectiveId)
+      const { error: deleteError } = await tenantClient.from('quotation_items').delete().eq('quotation_id', effectiveId)
       if (deleteError) {
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
@@ -266,7 +267,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
     }
 
     if (itemRows.length > 0) {
-      const { error: insertError } = await supabase.from('quotation_items').insert(itemRows)
+      const { error: insertError } = await tenantClient.from('quotation_items').insert(itemRows)
       if (insertError) {
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(insertError, { action: 'save' }),

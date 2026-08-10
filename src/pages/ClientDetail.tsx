@@ -158,7 +158,7 @@ export default function ClientDetail() {
           .eq('client_id', id)
           .is('archived_at', null)
           .order('issue_date', { ascending: false }),
-        supabase
+        tenantClient
           .from('quotations')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
@@ -174,7 +174,7 @@ export default function ClientDetail() {
           .from('projects')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
-        supabase
+        tenantClient
           .from('quotations')
           .select('id, quotation_number, status, total, issue_date')
           .eq('client_id', id)

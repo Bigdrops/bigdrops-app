@@ -1,8 +1,10 @@
 import { supabase } from '@/supabase'
 import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
+import type { TenantClient } from '@/lib/tenantClient'
 
-export async function archiveWaybillRecord(id: string) {
-  const { error } = await supabase.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', id)
+export async function archiveWaybillRecord(id: string, client?: TenantClient) {
+  const db = client?.isReady ? client : supabase
+  const { error } = await db.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
   // ponytail: audit inline, no refactoring
   try {
@@ -17,8 +19,9 @@ export async function archiveWaybillRecord(id: string) {
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function deleteWaybillRecord(id: string) {
-  const { error } = await supabase.from('waybills').delete().eq('id', id)
+export async function deleteWaybillRecord(id: string, client?: TenantClient) {
+  const db = client?.isReady ? client : supabase
+  const { error } = await db.from('waybills').delete().eq('id', id)
   if (error) throw error
   // ponytail: audit inline, no refactoring
   try {
@@ -33,15 +36,16 @@ export async function deleteWaybillRecord(id: string) {
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function updateWaybillStatus(id: string, status: string) {
+export async function updateWaybillStatus(id: string, status: string, client?: TenantClient) {
+  const db = client?.isReady ? client : supabase
   // Fetch old status before update for activity_events
   let oldStatus: string | null = null
   try {
-    const { data } = await supabase.from('waybills').select('status').eq('id', id).single()
+    const { data } = await db.from('waybills').select('status').eq('id', id).single()
     oldStatus = data?.status ?? null
   } catch { /* ponytail: best-effort old status */ }
 
-  const { error } = await supabase.from('waybills').update({ status }).eq('id', id)
+  const { error } = await db.from('waybills').update({ status }).eq('id', id)
   if (error) throw error
 
   // ponytail: audit inline, no refactoring
@@ -60,8 +64,9 @@ export async function updateWaybillStatus(id: string, status: string) {
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function duplicateWaybillRecord(id: string) {
-  const { data: original, error: fetchError } = await supabase.from('waybills').select('*').eq('id', id).single()
+export async function duplicateWaybillRecord(id: string, client?: TenantClient) {
+  const db = client?.isReady ? client : supabase
+  const { data: original, error: fetchError } = await db.from('waybills').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'Waybill not found')
 
   // ponytail: identity fields cleared per Law 2 — preserve items, routes, vehicle only
@@ -70,7 +75,7 @@ export async function duplicateWaybillRecord(id: string) {
     ...rest } = original
 
   const prefix = original.type === 'internal' ? 'AWB-I-' : 'AWB-E-'
-  const { data: all } = await supabase.from('waybills').select('waybill_number').like('waybill_number', `${prefix}%`).order('created_at', { ascending: false })
+  const { data: all } = await db.from('waybills').select('waybill_number').like('waybill_number', `${prefix}%`).order('created_at', { ascending: false })
   let nextNum = 1
   if (all && all.length > 0) {
     const nums = all
@@ -79,7 +84,7 @@ export async function duplicateWaybillRecord(id: string) {
     nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
   }
 
-  const { data: created, error: insertError } = await supabase.from('waybills').insert([{
+  const { data: created, error: insertError } = await db.from('waybills').insert([{
     ...rest,
     waybill_number: `${prefix}${String(nextNum).padStart(4, '0')}`,
     status: 'dispatched',
