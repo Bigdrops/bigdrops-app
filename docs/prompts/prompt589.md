@@ -1,365 +1,650 @@
-You are working on the BIGDROPS business platform.
+Tenant Settings — Document Identity Architecture Decision Investigation
 
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
-Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+This is a READ-ONLY ARCHITECTURAL INVESTIGATION.
 
-====================================================================
-CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
-====================================================================
-OpenCode has full repository access. Read AGENTS.md immediately.
-It strictly enforces project fundamentals, locked math/rules, audit-first workflow, skills registry, and standards conformity. Follow it completely.
-====================================================================
+Do NOT modify application code.
+Do NOT modify SQL migrations.
+Do NOT execute UPDATE, INSERT, DELETE, UPSERT, ALTER, or any other write SQL against production.
+Do NOT apply migrations.
+Do NOT run "bun run build".
+Do NOT run "bun run typecheck".
+Do NOT run lint.
+Do NOT run Docker.
 
-A. CONTEXT & OBJECTIVE
+The purpose of this investigation is to determine the intended source of truth for company/document identity in the BIGDROPS multi-tenant architecture before any permanent fix is implemented.
 
-Conduct a comprehensive architectural audit of the existing Reports & Compliance Hub within BIGDROPS.
+---
 
-Determine what reusable reporting infrastructure already exists, identify architectural gaps, and design the minimum additional Report Generation Engine and Export Framework required to support Statement of Account and future reports.
+1. CURRENT PRODUCTION FACTS
 
-Statement of Account must be treated as the first consumer of the reporting framework—not as a standalone module or independent implementation.
+The confirmed production entity is:
 
-Produce a rigorous, evidence-based architectural audit without modifying any application source code.
+- Entity ID: "eca34515-0b30-482c-b12e-3963df164322"
+- Workspace ID: "eb30b64b-7f95-464f-be1a-805cf2c0fedc"
+- Workspace slug: "bigdrops-main"
+- Entity slug: "main"
+- Entity display name: "Sun & Shield Power Solutions"
+- Tenant schema: "entity_bigdrops-main_main"
 
-====================================================================
+Current production state:
 
-B. TARGET COMPONENTS / FILES
+"public.settings"
 
-Mandatory Deliverable:
-- docs/reports/GENERAL/reports-compliance-hub-audit.md
+- "company_name" = "Sun & Shield Power Solutions " (trailing space)
+- "company_address" = "43 oshola street , Ifako-ijaiye"
+- "company_city" = "Lagos State"
+- "company_phone" = "+2348066190685"
+- "company_email" = "Sunshieldpowersolutions@gmail.com"
+- "bank_name" = "U.B.A"
+- "bank_account_name" = "Sun and shield power solutions"
+- "bank_account_number" = "1024829598"
+- "custom_info" contains TIN "1063045858"
+- "company_logo_url" is populated
+- "app_theme_preset_id" = "glassline"
+- document prefixes are populated
 
-Optional Deliverable (only if justified by audit findings):
-- docs/reports/GENERAL/report-generation-engine-proposal.md
+"entity_bigdrops-main_main.settings"
 
-Audit all existing report-related files including but not limited to:
+After the previous targeted company-name remediation:
 
-- Report pages
-- Report components
-- Report hooks
-- Report services
-- Report utilities
-- Report routing
-- Report filters
-- Data querying layer
-- Rendering layer
-- Existing export utilities
-- Permission model
-- Shared UI components
+- "company_name" = "Sun & Shield Power Solutions"
+- "company_tagline" = NULL
+- "company_address" = NULL
+- "company_city" = NULL
+- "company_phone" = NULL
+- "company_email" = NULL
+- "company_website" = NULL
+- "bank_name" = NULL
+- "bank_account_name" = NULL
+- "bank_account_number" = NULL
+- "company_logo_url" = NULL
+- "custom_info" = "[]"
+- document prefixes remain tenant-specific values
 
-Do not assume directory names.
-Discover the architecture from the repository.
+Therefore the company name is now correct, but document issuer information remains incomplete.
 
-====================================================================
+---
 
-C. CONSTRAINTS (EXECUTION-SAFE ONLY)
+2. CORE QUESTION
 
-ZERO APPLICATION CODE MODIFICATIONS.
+Determine which data store is SUPPOSED to be authoritative for document issuer/company identity in the final BIGDROPS multi-tenant architecture.
 
-Do not modify:
+Specifically determine whether the intended architecture is:
 
-- src/
-- database/
-- supabase/
-- packages/
-- configuration
-- tests
+Model A — Tenant Settings Authority
 
-Do not create:
+public.entities.display_name
+        ↓
+tenant.settings
+        ↓
+Invoices / Quotations / PDFs
 
-- Statement of Account implementation
-- Statement of Account PRD
-- Report implementation
-- Export implementation
+with settings UI writing to the active tenant's settings.
 
-Only documentation under:
+OR:
 
-docs/reports/GENERAL/
+Model B — Public Settings Authority
 
-may be created or modified.
+public.settings
+        ↓
+Invoices / Quotations / PDFs
 
-No build execution responsibilities assigned to OpenCode.
+with tenant settings being unnecessary/derived for document identity.
 
-Skills Injection Rule:
+OR:
 
-Read docs/PROJECTSKILLINDEX.md and load every relevant skill required for:
+Model C — Hybrid Architecture
 
-- architecture review
-- technical writing
-- frontend architecture
-- reporting systems
-- TypeScript architecture
-- code auditing
+For example:
 
-====================================================================
+public.entities.display_name
+        ↓
+tenant.settings.company_name
 
-D. AUDIT SCOPE
+public.settings
+        ↓
+tenant.settings operational fields
+        ↓
+documents
 
-The audit must investigate and document:
+If Model C is intended, identify exactly which fields belong to which authority and why.
 
-1. REPORT INVENTORY
+Do NOT choose an architecture merely because it is convenient.
 
-Catalogue every existing report.
+Establish the answer from repository design, existing code, migrations, database structure, documentation, and historical implementation intent.
 
-For each report document:
+---
 
-- Purpose
-- Route
-- Entry point
-- Data source
-- Filters
-- Rendering method
-- Shared components
-- Current limitations
+3. INVESTIGATE ENTITY VS WORKSPACE OWNERSHIP
 
-2. CURRENT ARCHITECTURE
+Trace the data model for:
 
-Document the complete report architecture including:
+- workspaces
+- entities
+- entity provisioning
+- tenant schemas
+- public settings
+- tenant settings
 
-- navigation
-- routing
-- registration
-- rendering
-- querying
-- permissions
-- filtering
-- lifecycle
+Inspect:
 
-3. REPORT PIPELINE
-
-Determine how reports currently flow from:
-
-User Request
-
-↓
-
-Filters
-
-↓
-
-Data Retrieval
-
-↓
-
-Transformation
-
-↓
-
-Rendering
-
-Identify missing stages.
-
-4. FILTER FRAMEWORK
-
-Audit:
-
-- date filters
-- workspace filters
-- client filters
-- project filters
-- custom filters
-
-Determine whether they are reusable.
-
-5. DATA LAYER
-
-Audit:
-
-- hooks
-- services
-- domain layer
-- Supabase queries
-- RPC usage
-
-Identify duplicated querying logic.
-
-6. RENDERING LAYER
+- "public.workspaces"
+- "public.entities"
+- "public.settings"
+- "entity_provisioning_status"
+- tenant schema creation
+- settings table creation/cloning
+- entity creation code
+- workspace settings code
+- entity settings code
+- tenant context/provider code
 
 Determine:
 
-- generic rendering
-- report-specific rendering
-- reusable tables
-- summary cards
-- charts
-- print layouts
+1. Is "settings" conceptually workspace-level or entity-level?
+2. Why does every tenant schema contain a "settings" table?
+3. Why does "public.settings" also exist?
+4. Was the tenant "settings" table intended to be a copy, cache, snapshot, override layer, or authoritative store?
+5. Is there any explicit documentation defining this ownership?
+6. Is there any entity-specific settings mechanism outside the tenant schema?
 
-7. EXPORT READINESS
+Do not infer ownership merely from table names.
 
-Audit support for:
+---
 
-- PDF
-- CSV
-- HTML
-- Markdown
-- Excel
+4. TRACE SETTINGS WRITE PATHS
+
+Search the entire repository for every write to settings.
+
+Search for:
+
+- ".from('settings')"
+- ".from("settings")"
+- "INSERT INTO settings"
+- "INSERT INTO public.settings"
+- "UPDATE settings"
+- "UPDATE public.settings"
+- "UPSERT"
+- "upsert("
+- "company_name"
+- "company_address"
+- "company_phone"
+- "company_email"
+- "bank_name"
+- "custom_info"
+- "document_prefixes"
+
+For every write path, record:
+
+- file
+- function
+- client used
+- schema targeted
+- fields written
+- whether entity context is available
+- whether workspace context is available
+
+Pay particular attention to:
+
+"src/hooks/useSettings.js"
+
+and:
+
+"persistSettings()"
+"saveSettings()"
+"fetchSettings()"
+
+Determine whether the public-settings write path is intentionally workspace-scoped or merely historical/legacy behavior.
+
+---
+
+5. TRACE DOCUMENT READ PATHS
+
+Trace settings reads for:
+
+- quotations
+- invoices
+- receipts
+- waybills
+- BOQs
+- RFQs
+- document previews
+- document PDFs
+- exports where applicable
 
 Determine:
 
-- existing capabilities
-- reusable infrastructure
-- missing infrastructure
-- ideal extension point
+1. Which documents read tenant settings?
+2. Which documents read public settings?
+3. Whether any documents use different sources.
+4. Whether "tenantClient" is consistently used.
+5. Whether "normalizeSettings()" changes or merges data.
+6. Whether any fallback from tenant settings to public settings exists.
+7. Whether issuer identity is intentionally entity-specific.
 
-Do NOT implement exports.
+Inspect at minimum:
 
-8. PERMISSIONS
+- "src/hooks/useSettings.js"
+- "src/lib/tenantClient.ts"
+- "src/lib/tenant/contexts.tsx"
+- quotation document settings loading
+- invoice document settings loading
+- PDF projection/build functions
+- document preview models
 
-Audit:
+Do NOT modify any of these files.
 
-- report access
-- workspace restrictions
-- role enforcement
+---
 
-9. DUPLICATION ANALYSIS
+6. TRACE THE PROVISIONING CONTRACT
 
-Identify:
+Inspect the final production/repository definitions of:
 
-- duplicated report logic
-- duplicated filtering
-- duplicated rendering
-- duplicated querying
+- "provision_entity()"
+- "_prov_seed_settings()"
+- "_prov_clone_table()"
+- any entity creation trigger
+- any provisioning helper
+- settings-related migrations
 
-Recommend consolidation opportunities.
+Determine exactly what provisioning promises.
 
-10. GAP ANALYSIS
+Current known behavior:
 
-Compare the current reporting architecture against the requirements of Statement of Account.
+INSERT INTO {tenant_schema}.settings
+    (id, company_name)
+VALUES
+    (1, public.entities.display_name)
+ON CONFLICT (id) DO NOTHING;
 
-Identify the minimum architectural additions required.
+Do not assume this is the complete intended contract.
 
-11. REPORT GENERATION ENGINE
+Determine whether historical migrations or documentation indicate that tenant settings were supposed to contain:
 
-Design (without implementation) a reusable engine supporting:
+- address
+- phone
+- email
+- bank details
+- TIN
+- logo
+- theme
+- document prefixes
+- other issuer metadata
 
-- report registration
-- report metadata
-- filters
-- querying
-- transformations
-- calculations
-- rendering
-- exports
-- audit logging
+If these were intentionally excluded, explain why.
 
-The engine must support future reports, not only Statement of Account.
+---
 
-====================================================================
+7. INVESTIGATE DOCUMENT PREFIX OWNERSHIP
 
-E. DESIGN PRINCIPLES
+The production comparison shows:
 
-Do NOT assume missing infrastructure should be created.
+"public.settings.document_prefixes"
 
-First determine whether equivalent functionality already exists elsewhere in the repository.
+and
 
-Prefer extending existing abstractions over introducing new ones.
+"tenant.settings.document_prefixes"
 
-Preserve existing architecture wherever practical.
+are different.
 
-Every recommendation must include:
+Determine:
 
-- supporting evidence
-- affected files/components
-- rationale
-- expected benefit
-- migration impact
-- implementation risk
+1. Which one is actually used when creating quotations/invoices?
+2. Which one is used when displaying documents?
+3. Which one is written by the settings UI?
+4. Why are the values different?
+5. Is "document_prefixes" intentionally entity-specific?
+6. Does this provide evidence that tenant settings are intended to be the entity-level document configuration?
 
-Avoid speculative architecture.
+This is important evidence for determining the correct architecture.
 
-Base every conclusion on repository evidence.
+Do not modify prefixes.
 
-====================================================================
+---
 
-F. REQUIRED VERIFICATION (HARD HARDWARE GATE)
+8. INVESTIGATE ENTITY-SPECIFIC BUSINESS DATA
 
-DO NOT RUN:
+Search for other examples where workspace-level and entity-level data coexist.
 
-- bun run build
-- bun run typecheck
-- lint
+Look for:
 
-This is a documentation-only audit.
+- customers
+- suppliers
+- warehouses
+- payment accounts
+- tax information
+- numbering
+- branding
+- business identity
+- company profile
+- document configuration
 
-Immediately before beginning:
+Determine whether BIGDROPS generally follows:
 
-Run:
+workspace = container
+entity = business/tenant
 
-git status
+and whether business-specific configuration is expected to live at entity level.
 
-Immediately before completion:
+Use actual repository evidence.
 
-Run:
+---
 
-git status
+9. INVESTIGATE "public.settings" SEMANTICS
 
-Verify:
+Determine what "public.settings" actually represents.
 
-- only documentation under docs/reports/GENERAL/ changed
-- zero application source files modified
+Specifically investigate:
 
-====================================================================
+- creation migration
+- schema
+- RLS/policies
+- ownership
+- workspace relationships
+- settings UI
+- comments/documentation
+- historical usage
 
-G. REQUIRED BEHAVIOUR
+Answer:
 
-Produce a comprehensive architectural audit.
+«Is "public.settings" a workspace/application settings table, or was it originally intended to represent the active business entity?»
 
-The report must include:
+Do not assume that because the current UI edits "public.settings", that this is architecturally correct.
 
-1. Executive Summary
+---
 
-2. Current Architecture Overview
+10. INVESTIGATE "company_state" AND "company_vat"
 
-3. Report Inventory
+The previous investigation found that document code references:
 
-4. Report Lifecycle
+- "settings.company_state"
+- "settings.company_vat"
 
-5. Data Flow
+but the current settings table does not contain those columns.
 
-6. Current Strengths
+Determine:
 
-7. Current Weaknesses
+1. Where these fields originated.
+2. Whether they existed historically.
+3. Whether they were renamed.
+4. Whether the document code is stale.
+5. Whether TIN is now represented through "custom_info".
+6. Whether this is a separate bug or part of the settings architecture problem.
 
-8. Existing Reusable Infrastructure
+Do NOT fix these fields during this investigation.
 
-9. Export Readiness Assessment
+---
 
-10. Duplication Analysis
+11. INVESTIGATE HISTORICAL INTENT
 
-11. Gap Analysis
+Search git history and migration history if available.
 
-12. Report Generation Engine Proposal
+Look for commits/messages/docs containing:
 
-13. Statement of Account Integration Strategy
+- settings
+- tenant settings
+- workspace settings
+- entity settings
+- company profile
+- business profile
+- provisioning
+- multi-tenancy
+- document identity
+- document issuer
+- branding
 
-14. Migration Roadmap
+Determine whether there was an earlier intended architecture that was later partially migrated.
 
-15. Risks
+If historical evidence is unavailable, explicitly say so.
 
-16. Recommendations
+Do not invent historical intent.
 
-====================================================================
+---
 
-H. ACCEPTANCE CRITERIA
+12. LIVE DATABASE — READ ONLY
 
-✓ Zero application source files modified.
+Use the existing Supabase production connection available to Command Code.
 
-✓ git status confirms only documentation files changed.
+Do NOT require Docker.
 
-✓ Every existing report inventoried.
+Do NOT modify the database.
 
-✓ Current report lifecycle documented.
+Only perform read operations.
 
-✓ Existing reusable infrastructure identified.
+Inspect, where possible:
 
-✓ Export readiness thoroughly assessed.
+- "public.entities"
+- "public.workspaces"
+- "public.settings"
+- "public.entity_provisioning_status"
+- tenant settings
+- relevant metadata/views available through the existing Supabase connection
 
-✓ Evidence-based recommendations throughout.
+If direct PostgreSQL catalog access is unavailable, use the existing Supabase REST/API mechanism and repository migrations as evidence.
 
-✓ Generic Report Generation Engine proposed.
+Do NOT claim catalog/function definitions were queried if they were not.
 
-✓ Generic Export Framework proposed.
+Do NOT execute any write SQL.
 
-✓ Statement of Account integrated as a report within the Reports & Compliance Hub rather than a standalone module.
+---
 
-✓ Clear phased migration roadmap provided.
+13. CRITICAL: DO NOT "FIX" THE DATA
 
-✓ Documentation is sufficiently detailed to serve as the architectural foundation for the subsequent Reports Enhancement PRD and Statement of Account PRD.
+Do NOT:
+
+- UPDATE tenant settings
+- INSERT tenant settings
+- copy public settings into tenant settings
+- synchronize fields
+- alter provisioning
+- alter settings schema
+- change document code
+- change "persistSettings()"
+- change "fetchSettings()"
+- change PDF rendering
+
+This investigation exists specifically to decide what should eventually be changed.
+
+---
+
+14. REQUIRED ARCHITECTURAL CONCLUSION
+
+The final report MUST answer these questions explicitly:
+
+Question 1
+
+What is the authoritative source for:
+
+- business/company name
+- address
+- phone
+- email
+- TIN/tax identity
+- bank details
+- logo
+- document prefixes
+- document branding/theme
+
+For each field, identify:
+
+"public.entities"
+OR
+"public.settings"
+OR
+"tenant.settings"
+OR
+"other"
+
+Do not group fields together unless evidence supports it.
+
+Question 2
+
+Why does the system currently write to "public.settings" but read from tenant settings?
+
+Classify this as:
+
+- intentional architecture
+- incomplete migration
+- legacy architecture
+- accidental divergence
+- unknown
+
+Provide evidence.
+
+Question 3
+
+Should the settings UI write to tenant settings?
+
+Answer YES/NO/UNKNOWN and explain.
+
+Question 4
+
+Should documents read tenant settings?
+
+Answer YES/NO/UNKNOWN and explain.
+
+Question 5
+
+Should provisioning populate the complete tenant settings row?
+
+Answer YES/NO/UNKNOWN.
+
+If YES, specify exactly which fields.
+
+Question 6
+
+Should tenant settings synchronize from "public.settings"?
+
+Answer:
+
+- YES
+- NO
+- FIELD-BY-FIELD
+- UNKNOWN
+
+Explain the multi-tenant consequences.
+
+Question 7
+
+What is the smallest safe permanent fix?
+
+Do NOT provide implementation code unless the architecture is sufficiently proven.
+
+---
+
+15. REQUIRED REPORT FORMAT
+
+Return exactly these sections:
+
+1. EXECUTIVE CONCLUSION
+
+One concise paragraph stating the proven architectural conclusion.
+
+2. SOURCE-OF-TRUTH MATRIX
+
+Field| Authoritative Source| Evidence| Confidence
+company_name| | | 
+company_address| | | 
+company_city/state| | | 
+company_phone| | | 
+company_email| | | 
+TIN/tax identity| | | 
+bank_name| | | 
+bank_account_name| | | 
+bank_account_number| | | 
+company_logo_url| | | 
+document_prefixes| | | 
+document branding/theme| | | 
+
+3. WORKSPACE VS ENTITY MODEL
+
+Explain what workspace represents and what entity represents.
+
+4. SETTINGS WRITE PATH
+
+Document every relevant settings write path.
+
+5. SETTINGS READ PATH
+
+Document every relevant document read path.
+
+6. PROVISIONING CONTRACT
+
+Explain exactly what provisioning creates and what it does not create.
+
+7. HISTORICAL INTENT
+
+State what historical evidence proves.
+
+Separate:
+
+- PROVEN
+- INFERRED
+- UNKNOWN
+
+8. ROOT CAUSE OF CURRENT DOCUMENT IDENTITY GAP
+
+Explain why the expected company information exists in "public.settings" but not in tenant settings.
+
+9. RECOMMENDED ARCHITECTURE
+
+Choose the safest evidence-backed model:
+
+- Tenant authority
+- Public authority
+- Hybrid
+
+Explain why.
+
+10. SMALLEST SAFE PERMANENT FIX
+
+Describe the minimum change required.
+
+Do not implement it.
+
+Separate:
+
+- immediate data remediation
+- application fix
+- provisioning fix
+- future architectural debt
+
+11. RISKS
+
+List multi-tenant risks of the proposed architecture.
+
+12. VERIFICATION
+
+Confirm:
+
+- read-only investigation
+- no production writes
+- no migrations applied
+- no application files modified
+- no migration files modified
+- no Docker used
+- no build executed
+- no typecheck executed
+- no lint executed
+
+13. GIT STATUS
+
+Show git status before and after investigation and confirm that this investigation introduced no unintended changes.
+
+---
+
+FINAL RULE
+
+Do not recommend copying "public.settings" into tenant settings merely because the public row currently contains the desired company information.
+
+Do not recommend changing "persistSettings()" merely because it writes to "public.settings".
+
+Do not recommend changing document reads merely because they currently use tenant settings.
+
+First establish the intended ownership model from evidence.
+
+The goal is NOT to make today's quotation look correct.
+
+The goal is to determine the architecture that will remain correct when BIGDROPS has multiple workspaces and multiple business entities.
+
+Return evidence first, recommendation second.
