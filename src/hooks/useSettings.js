@@ -89,7 +89,11 @@ function getPersistableUpdates(updates) {
   return nextUpdates
 }
 
-async function persistSettings(updates) {
+async function persistSettings(updates, tenantClient) {
+  if (!tenantClient || !tenantClient.isReady) {
+    throw new Error('Tenant settings are not available yet. Cannot save settings.')
+  }
+
   const persistableUpdates = getPersistableUpdates(updates)
   
   // If we are saving company_logo_url, we also try to CLEAR the legacy logo_url column
@@ -107,7 +111,9 @@ async function persistSettings(updates) {
   const finalPayload = { id: 1, ...persistableUpdates }
   console.log('>>> [useSettings:persistSettings] FINAL PAYLOAD:', JSON.stringify(finalPayload, null, 2))
 
-  const { data: upsertData, error, status, statusText } = await supabase
+  // WRITE path: schema-aware tenant client (Phase 3). Writes land in the
+  // active entity's settings row (id=1). public.settings is no longer written.
+  const { data: upsertData, error, status, statusText } = await tenantClient
     .from('settings')
     .upsert(finalPayload, { onConflict: 'id' })
     .select()
@@ -149,7 +155,7 @@ async function persistSettings(updates) {
       delete fallbackUpdates[column]
       
       try {
-        await persistSettings(fallbackUpdates)
+        await persistSettings(fallbackUpdates, tenantClient)
         return
       } catch (retryError) {
         throw retryError
@@ -194,7 +200,7 @@ export async function fetchSettings(options = {}, tenantClient) {
   const requestStartedAt = Date.now()
   console.log('[useSettings] fetchSettings start (force:', force, ')')
   
-  // READ path: schema-aware tenant client (Phase 2). Writes stay on public supabase.
+  // READ path: schema-aware tenant client (Phase 2).
   const { data, error } = await tenantClient.from('settings').select('*').eq('id', 1).single()
   
   if (error) {
@@ -231,8 +237,9 @@ export async function fetchSettings(options = {}, tenantClient) {
   return cachedSettings
 }
 
-// Requires EntityProvider (useEntity). Reads resolve through the tenant schema;
-// writes (persistSettings/saveSettings) intentionally stay on public supabase.
+// Requires EntityProvider (useEntity). Both reads and writes resolve through
+// the active entity's tenant schema (Phase 3). persistSettings/saveSettings
+// require the caller to pass the tenantClient from useEntity().
 export function useSettings() {
   const { tenantClient } = useEntity()
   const [settings, setSettings] = useState(cachedSettings || {})
@@ -280,7 +287,7 @@ export async function uploadFile(bucket, path, file) {
   return data.publicUrl
 }
 
-export async function saveSettings(updates) {
+export async function saveSettings(updates, tenantClient) {
   console.log('>>> [useSettings:saveSettings] START:', JSON.stringify(updates, null, 2))
   const previousSettings = cachedSettings || {}
   
@@ -289,7 +296,7 @@ export async function saveSettings(updates) {
 
   try {
     console.log('>>> [useSettings:saveSettings] Attempting persistence...')
-    await persistSettings(updates)
+    await persistSettings(updates, tenantClient)
     console.log('>>> [useSettings:saveSettings] Persistence confirmed. Updating local state.')
     
     const nextSettings = normalizeSettings({ ...previousSettings, ...updates })

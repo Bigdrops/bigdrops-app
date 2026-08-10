@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Building2, Pencil, Plus, Trash2, Mail, Phone, Globe, MapPin, Fingerprint, X, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { normalizeCompanyCustomInfo } from '@/domain/invoice/normalize'
 import {
@@ -30,6 +31,7 @@ type CustomInfoItem = {
 
 export function CompanySettingsSection() {
   const { settings, loading } = useSettings()
+  const { tenantClient } = useEntity()
   const [form, setForm] = useState<CompanyForm>({
     company_name: '',
     company_tagline: '',
@@ -77,7 +79,7 @@ export function CompanySettingsSection() {
       await saveSettings({
         ...form,
         custom_info: JSON.stringify(customInfo.filter((item) => item.label || item.value)),
-      })
+      }, tenantClient)
 
       feedback.success('Company info updated')
       setIsEditing(false)

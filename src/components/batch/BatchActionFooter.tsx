@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Check, Loader2, X, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/supabase";
 import { feedback } from "@/lib/feedback";
+import type { TenantClient } from "@/lib/tenantClient";
 
 export type BatchAction = {
   key: string;
@@ -97,6 +97,7 @@ export default function BatchActionFooter({
 // ─── PRE-BUILT BATCH MUTATIONS ───────────────────────────────────────────
 
 export function createInvoiceBatchActions(
+  tenantClient: TenantClient,
   onRefresh: () => void
 ): BatchAction[] {
   return [
@@ -104,7 +105,7 @@ export function createInvoiceBatchActions(
       key: "mark-paid",
       label: "Mark Paid",
       mutation: async (ids) => {
-        const { error } = await supabase
+        const { error } = await tenantClient
           .from("invoices")
           .update({ status: "paid" })
           .in("id", ids);
@@ -115,7 +116,7 @@ export function createInvoiceBatchActions(
       key: "mark-unpaid",
       label: "Mark Unpaid",
       mutation: async (ids) => {
-        const { error } = await supabase
+        const { error } = await tenantClient
           .from("invoices")
           .update({ status: "unpaid" })
           .in("id", ids);
@@ -127,7 +128,7 @@ export function createInvoiceBatchActions(
       label: "Archive",
       variant: "destructive",
       mutation: async (ids) => {
-        const { error } = await supabase
+        const { error } = await tenantClient
           .from("invoices")
           .update({ archived_at: new Date().toISOString() })
           .in("id", ids);
@@ -139,7 +140,7 @@ export function createInvoiceBatchActions(
       label: "Delete",
       variant: "destructive",
       mutation: async (ids) => {
-        const { error } = await supabase
+        const { error } = await tenantClient
           .from("invoices")
           .delete()
           .in("id", ids);
@@ -150,6 +151,7 @@ export function createInvoiceBatchActions(
 }
 
 export function createArchiveBatchAction(
+  tenantClient: TenantClient,
   table: string
 ): BatchAction {
   return {
@@ -157,7 +159,7 @@ export function createArchiveBatchAction(
     label: "Archive",
     variant: "destructive",
     mutation: async (ids) => {
-      const { error } = await supabase
+      const { error } = await tenantClient
         .from(table)
         .update({ archived_at: new Date().toISOString() })
         .in("id", ids);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Palette, RotateCcw, Sparkles, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { normalizeHexColor } from '@/lib/colorTheme'
 import { BASE_THEME_MODE, THEME_PRESETS, type FixedThemePresetId, type ThemeMode, resolveThemeMode } from '@/lib/themePresets'
 import { Badge } from '@/components/ui/badge'
@@ -85,6 +86,7 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
 
 export function AppThemeSettingsSection() {
   const { settings, loading } = useSettings()
+  const { tenantClient } = useEntity()
   const [selectedMode, setSelectedMode] = useState<ThemeMode>(BASE_THEME_MODE)
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
@@ -108,15 +110,15 @@ export function AppThemeSettingsSection() {
           app_background_color: null,
           app_card_color: null,
           app_theme_tokens: null,
-        })
+        }, tenantClient)
         setBackground('')
         setCard('')
         feedback.success('Default Bigdrops theme restored')
       } else if (presetId === 'custom') {
-        await saveSettings({ app_theme_preset_id: 'custom' })
+        await saveSettings({ app_theme_preset_id: 'custom' }, tenantClient)
         feedback.success('Custom mode active')
       } else {
-        await saveSettings({ app_theme_preset_id: presetId })
+        await saveSettings({ app_theme_preset_id: presetId }, tenantClient)
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
         feedback.success(`${label ?? 'Theme preset'} applied`)
       }
@@ -148,7 +150,7 @@ export function AppThemeSettingsSection() {
         app_background_color: normBg,
         app_card_color: normCard,
         app_theme_tokens: null,
-      })
+      }, tenantClient)
       feedback.success('Custom theme updated')
     } catch (error) {
       feedback.error(getErrorMessage(error))
@@ -164,7 +166,7 @@ export function AppThemeSettingsSection() {
         app_background_color: null,
         app_card_color: null,
         app_theme_tokens: null,
-      })
+      }, tenantClient)
       setSelectedMode(BASE_THEME_MODE)
       setBackground('')
       setCard('')

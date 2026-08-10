@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Info, Loader2, RotateCcw, AlertTriangle } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useSettings, saveSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { SettingsSummaryCard } from '@/components/settings/SettingsSummaryCard'
@@ -126,6 +127,7 @@ type PendingAction =
 
 export function DocumentPrefixesSettingsSection() {
   const { settings, loading } = useSettings()
+  const { tenantClient } = useEntity()
   const [draft, setDraft] = useState<DocumentPrefixes>({ ...DEFAULT_PREFIXES })
   const [saving, setSaving] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
@@ -168,37 +170,37 @@ export function DocumentPrefixesSettingsSection() {
       const updated = { ...draft, [key]: defaultVal }
       setDraft(updated)
       setSaving(true)
-      saveSettings({ document_prefixes: updated })
+      saveSettings({ document_prefixes: updated }, tenantClient)
         .then(() => feedback.success(`${LABELS[key]} prefix reset to ${defaultVal}`))
         .catch((err) =>
           feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
         )
         .finally(() => setSaving(false))
     },
-    [draft],
+    [draft, tenantClient],
   )
 
   const executeFullReset = useCallback(() => {
     const defaults = { ...DEFAULT_PREFIXES }
     setDraft(defaults)
     setSaving(true)
-    saveSettings({ document_prefixes: defaults })
+    saveSettings({ document_prefixes: defaults }, tenantClient)
       .then(() => feedback.success('All prefixes reset to defaults'))
       .catch((err) =>
         feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
       )
       .finally(() => setSaving(false))
-  }, [])
+  }, [tenantClient])
 
   const executeSave = useCallback(() => {
     setSaving(true)
-    saveSettings({ document_prefixes: draft })
+    saveSettings({ document_prefixes: draft }, tenantClient)
       .then(() => feedback.success('Prefixes updated'))
       .catch((err) =>
         feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
       )
       .finally(() => setSaving(false))
-  }, [draft])
+  }, [draft, tenantClient])
 
   const handleConfirm = useCallback(() => {
     if (!pendingAction) return

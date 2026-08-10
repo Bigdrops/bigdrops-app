@@ -70,9 +70,9 @@ function InvoicesContent() {
   const multiSelect = useMultiSelect()
 
   // ─── Batch actions for invoices ───
-  const batchActions = useMemo(() => createInvoiceBatchActions(() => {
+  const batchActions = useMemo(() => createInvoiceBatchActions(tenantClient, () => {
     patchUpdate({ search: state.search } as any)
-  }), [patchUpdate, state.search])
+  }), [tenantClient, patchUpdate, state.search])
 
   const closeSheet = () => {
     setActiveInvoice(null)

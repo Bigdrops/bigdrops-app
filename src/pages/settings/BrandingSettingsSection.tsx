@@ -132,7 +132,7 @@ export function BrandingSettingsSection() {
       await saveSettings({
         company_logo_url: form.company_logo_url,
         footer_text: form.footer_text,
-      })
+      }, tenantClient)
 
       await fetchSettings({ force: true }, tenantClient)
       setLogoState(form.company_logo_url ? 'saved' : 'idle')

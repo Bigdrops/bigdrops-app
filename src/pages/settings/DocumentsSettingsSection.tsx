@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FileEdit, Pencil, Check } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { useSettings, saveSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 import {
   normalizeDocumentFillableSettings,
   serializeDocumentFillableSettings,
@@ -47,6 +48,7 @@ const rows = [
 
 export function DocumentsSettingsSection() {
   const { settings, loading } = useSettings()
+  const { tenantClient } = useEntity()
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [fillableSettings, setFillableSettings] = useState<FillableSettings>(() =>
     normalizeDocumentFillableSettings(null) as FillableSettings,
@@ -85,7 +87,7 @@ export function DocumentsSettingsSection() {
     try {
       await saveSettings({
         document_fillable_settings: serializeDocumentFillableSettings(draftSettings),
-      })
+      }, tenantClient)
       setFillableSettings(draftSettings)
       feedback.success('Document controls updated')
       setIsEditorOpen(false)

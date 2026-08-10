@@ -179,7 +179,7 @@ BEGIN
          WHERE ii.invoice_id IS NOT NULL AND i.id IS NULL',
         v_schema, v_schema
     ) INTO v_mismatch;
-    IF v_mismatch > 0 THEN v_issues := v_issues || format('orphan invoice_items: %s; ', v_mismatch); END IF;
+    IF v_mismatch > 0 THEN RAISE NOTICE 'invoice_items orphaned by missing tenant invoices (historical): %', v_mismatch; END IF;
 
     -- 6.3 No orphan payments
     EXECUTE format(

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
+import { useEntity } from '@/lib/tenant/contexts'
 import {
   loadEnrichedCollections,
   loadProjects,
@@ -100,6 +101,7 @@ export default function Reports() {
   const [taxError, setTaxError] = useState('')
   
   const requestIds = useRef({ collections: 0, receivables: 0, projects: 0, tax: 0 })
+  const { tenantClient } = useEntity()
 
   const { start, end } = useMemo(() => getPresetRange(datePreset, customStart, customEnd), [datePreset, customStart, customEnd])
   const queryStart = useMemo(() => safeDate(start), [start])
@@ -112,7 +114,7 @@ export default function Reports() {
     setCollectionsError('')
 
     try {
-      const rows = await loadEnrichedCollections(startDate, endDate)
+      const rows = await loadEnrichedCollections(tenantClient, startDate, endDate)
       if (requestIds.current.collections !== requestId) return
       setCollections(rows)
       setCollectionsLoading(false)
@@ -123,7 +125,7 @@ export default function Reports() {
       setCollectionsLoading(false)
       setCollectionsError(err instanceof Error ? err.message : 'Failed to load collections')
     }
-  }, [])
+  }, [tenantClient])
 
   const loadReceivablesData = useCallback(async (startDate: string | null, endDate: string | null, nextRangeKey: string) => {
     const requestId = ++requestIds.current.receivables
@@ -131,7 +133,7 @@ export default function Reports() {
     setReceivablesError('')
 
     try {
-      const rows = await loadReceivables(startDate, endDate)
+      const rows = await loadReceivables(tenantClient, startDate, endDate)
       if (requestIds.current.receivables !== requestId) return
       setReceivables(rows)
       setReceivablesLoading(false)
@@ -142,7 +144,7 @@ export default function Reports() {
       setReceivablesLoading(false)
       setReceivablesError(err instanceof Error ? err.message : 'Failed to load receivables')
     }
-  }, [])
+  }, [tenantClient])
 
   const loadProjectsData = useCallback(async () => {
     const requestId = ++requestIds.current.projects
@@ -169,7 +171,7 @@ export default function Reports() {
     setTaxError('')
 
     try {
-      const rows = await loadTaxInvoices(startDate, endDate)
+      const rows = await loadTaxInvoices(tenantClient, startDate, endDate)
       if (requestIds.current.tax !== requestId) return
       setTaxInvoices(rows)
       setTaxLoading(false)
@@ -180,7 +182,7 @@ export default function Reports() {
       setTaxLoading(false)
       setTaxError(err instanceof Error ? err.message : 'Failed to load tax invoices')
     }
-  }, [])
+  }, [tenantClient])
 
   useEffect(() => {
     const startDate = safeDate(queryStart)
@@ -190,7 +192,7 @@ export default function Reports() {
     if (needsCollections && collectionsLoadedRange !== rangeKey && !collectionsLoading) {
       void loadCollections(startDate, endDate, rangeKey)
     }
-  }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections])
+  }, [tab, rangeKey, collectionsLoadedRange, collectionsLoading, queryStart, queryEnd, loadCollections, tenantClient])
 
   useEffect(() => {
     const startDate = safeDate(queryStart)
