@@ -1,89 +1,40 @@
 You are working on the BIGDROPS business platform.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
 
-TASK: READ-ONLY ENTITY AUTHORIZATION INVENTORY
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE GENERATING REPORT
+====================================================================
+Read AGENTS.md immediately. Follow project standards and reporting protocols.
+This is a READ-ONLY review task. Do NOT edit or modify any files.
+====================================================================
 
-Context:
-Phase 1 multi-tenant frontend infrastructure is now live and has been manually
-verified in production. Confirmed production state:
-- Workspace: BIGDROPS
-- Workspace role: owner
-- Entity: BIGDROPS
-- Entity schema: entity_bigdrops-main_main
-- Provisioning: ready
-- Tenant Client: ready
-- Effective entity permission count: 0
+### OBJECTIVE
+Perform an independent comparative review and gap analysis between:
+1. Target Template: `docs/TEMPLATES/React-temps/Golden-dashboard.tsx`
+2. Current Application Dashboard: Locate the primary app dashboard route (e.g., `src/pages/Dashboard.tsx` or equivalent main dashboard view).
 
-This zero-permission state is intentional under the current deny-by-default
-authorization architecture. DO NOT seed or modify production permissions
-during this task.
+Generate a detailed Audit & Gap Analysis Report in your response.
 
-OBJECTIVE:
-Determine exactly which entity-level permission resources/actions are
-currently referenced by the frontend codebase, so the architecture council
-can make an evidence-based decision about permission seeding before Phase 2.
+### MANDATE: SINGLE THEME PRESET DIRECTION
+- The platform is eliminating multiple semantic theme presets (e.g., Ivory Ledger, Industrial Fog, Brutalist Concrete, Sage Retreat, Glassline) in favor of ONE single, unified theme preset across the app.
+- Do NOT critique or compare the template against the main app's multi-preset theme engine, theme switchers, or preset selection architecture. Evaluate visual and structural layout assuming a single unified theme styling model.
 
-READ-ONLY HARD CONSTRAINTS:
-- Do NOT modify application code.
-- Do NOT modify migrations.
-- Do NOT create migrations.
-- Do NOT insert/update/delete any database records.
-- Do NOT run SQL against production.
-- Do NOT migrate any business module.
-- Do NOT run bun run build.
-- Do NOT start Docker or Supabase local development.
-- This is an investigation only.
+### REPORT REQUIREMENTS
+Write a structured report covering:
 
-FIRST:
-Read AGENTS.md and load any relevant skills from
-docs/PROJECTSKILLINDEX.md for codebase investigation/audit work.
+1. Architectural & Component Gaps:
+   - What real data bindings, state hooks, or backend integrations are missing in `Golden-dashboard.tsx` compared to the current dashboard?
+   - What key operational cards, metrics, or functional widgets from the live dashboard are omitted in the template?
 
-SEARCH THE ENTIRE FRONTEND FOR:
-1. hasAuthorization(
-2. has_entity_permission
-3. entity_permissions
-4. permission/action constants
-5. Permission-related hooks/providers/utilities
-6. Literal action strings including:
-   view create edit delete approve post email export reverse archive
-7. Any equivalent authorization checks that do not use the exact function
-   names above.
-8. Resource names associated with those checks.
+2. Layout & UX Opportunities:
+   - What structural, visual, or layout improvements does `Golden-dashboard.tsx` offer over the current dashboard?
+   - What mobile vs. desktop responsiveness or spacing bottlenecks exist in the template?
 
-IMPORTANT: Do not treat the PRD's example action list as an authoritative
-permission list. Determine actual usage from the current repository.
+3. Recommended Upgrades & Action Plan:
+   - Prioritized list of functional upgrades required to make `Golden-dashboard.tsx` the production-ready primary dashboard.
+   - Clean-up recommendations for removing multi-preset theme abstractions if present.
 
-ADDITIONAL: Specifically check usage within:
-- useEntity() / EntityProvider
-- Tenant Client call sites
-- The diagnostic page (/debug/tenant) which currently calls
-  hasAuthorization('invoice','read') as a probe. Classify this explicitly:
-  is it evidence of a real business dependency, or is it itself a
-  placeholder probe with no downstream consumer?
-
-DISTINGUISH:
-- Existing executable authorization checks
-- Defined but currently unused permission constants/types
-- Comments/documentation only
-- Dead/unreachable code
-- Future/placeholder code
-
-REPORT:
-A. Exact resource/action pairs currently exercised by executable frontend code.
-B. Exact files and line references containing those checks.
-C. Whether any current business module actually depends on entity_permissions.
-D. Whether hasAuthorization() currently has any production call sites.
-E. Whether there is enough evidence to justify seeding permissions now.
-   Important: explicitly consider that "not yet migrated" and
-   "will never need permissions" are different conclusions. Phase 2/3 will
-   introduce real consumers of hasAuthorization() that don't exist yet.
-   Do not conflate "no current usage" with "no future need."
-F. If no active permission consumers exist, explicitly state:
-   "No current frontend permission dependency identified."
-
-VERIFICATION:
-Use only safe read-only/static inspection commands. Do not modify the
-working tree.
-
-FINAL OUTPUT:
-Return a concise investigation report only. No implementation.
-No permission SQL. No production changes.
+### CONSTRAINTS
+- Read-only task. Do NOT modify any code or files in the repository.
+- Do NOT run `bun run build` or `bun run typecheck`.
+- Run `git status` at the end to confirm zero modified files.
