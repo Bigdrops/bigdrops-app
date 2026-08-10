@@ -1,0 +1,66 @@
+
+You are working on the BIGDROPS business platform.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+OpenCode / Replit has full repository access. Read AGENTS.md immediately.
+It strictly enforces project fundamentals, locked math/rules, audit-first workflow, skills registry, and standards conformity. Follow it completely.
+A. CONTEXT & OBJECTIVE
+ * Target File: docs/TEMPLATES/React-temps/Golden-dashboard.tsx
+ * Objective: Modify docs/TEMPLATES/React-temps/Golden-dashboard.tsx to adopt three functional mechanics from the main application dashboard (src/pages/Dashboard.tsx or equivalent):
+   * Floating + Action Button: Make the + button float fixed over the viewport rather than staying static inside the mobile nav bar. Do NOT add any popup dialogs.
+   * Notification Bell & Badge: Add the notification bell icon and badge indicator to the header of Golden-dashboard.tsx, configured to toggle the side drawer open on click.
+   * Side Drawer Content Swap: Replace the placeholder menu buttons inside the side drawer of Golden-dashboard.tsx with the exact menu buttons and actions from the main app dashboard.
+ * Design Token Mandate: Both the template (Golden-dashboard.tsx) and the main app retain their respective design tokens. Ported elements must adapt to Golden-dashboard.tsx styling classes.
+B. DISCOVERY & ORIENTATION
+ * Inspect AGENTS.md before making edits.
+ * Open and inspect docs/TEMPLATES/React-temps/Golden-dashboard.tsx.
+ * Locate the main application dashboard source file (e.g., src/pages/Dashboard.tsx) to identify:
+   * Notification bell badge state and drawer toggle handler.
+   * Side drawer action buttons and menu items array.
+ * Confirm exact component boundaries in Golden-dashboard.tsx before editing and state established facts.
+C. TARGET COMPONENTS / FILES
+ * File to Modify: docs/TEMPLATES/React-temps/Golden-dashboard.tsx
+ * Reference File (Read-Only): Main app dashboard (src/pages/Dashboard.tsx or corresponding dashboard route).
+ * Do NOT alter: Main app source files, global theme configurations, or underlying API layers.
+D. WORKFLOW, HANDOFFS & FAILURE MODES
+ * 1. Floating + Button:
+   * Locate the + button currently rendered inside the mobile navigation area of Golden-dashboard.tsx.
+   * Remove it from static flow in the mobile nav container.
+   * Position it as a floating fixed element (fixed bottom-6 right-6 z-50 or matching template spacing tokens) visible across viewports above mobile navigation.
+   * Preserve any pre-existing click handlers on the button; do not add new popup dialogs.
+ * 2. Notification Bell & Side Drawer Trigger:
+   * Add the Notification Bell icon and badge count element to the header of Golden-dashboard.tsx.
+   * Bind the bell's onClick action to toggle the template's side drawer state (setIsDrawerOpen(true) or equivalent).
+ * 3. Side Drawer Content Graft:
+   * Keep the template's side drawer container, backdrop overlay, slide animations, and close buttons intact in Golden-dashboard.tsx.
+   * Clear the template's default placeholder drawer menu options.
+   * Import or map the menu items/buttons from the main app dashboard, applying Golden-dashboard.tsx typography and button styling tokens.
+E. CONSTRAINTS (EXECUTION-SAFE ONLY)
+ * Modify ONLY docs/TEMPLATES/React-temps/Golden-dashboard.tsx (unless a localized sub-component is directly imported by it).
+ * Maintain minimal viable diff discipline; do not perform unrelated code refactoring or cleanup.
+ * Preserve all existing design tokens in Golden-dashboard.tsx.
+ * Do NOT run bun run build.
+F. REQUIRED IMPLEMENTATION BEHAVIOR
+ * Ensure the floating + button has appropriate z-index so it does not hide behind mobile navigation bars or content cards.
+ * If main app drawer buttons require router hooks (e.g., useNavigate or Link), adapt them to the routing mechanism used inside Golden-dashboard.tsx.
+ * Maintain clean React state for side drawer visibility and notification badge counters.
+G. REQUIRED VERIFICATION (HARD GATE)
+ * Run git status immediately before and after edits to confirm changes are strictly restricted to docs/TEMPLATES/React-temps/Golden-dashboard.tsx.
+ * Run bun run typecheck to verify no broken imports, missing prop types, or syntax errors were introduced.
+H. ACCEPTANCE CRITERIA
+ * Floating + Button: The + button in docs/TEMPLATES/React-temps/Golden-dashboard.tsx uses fixed floating positioning and is detached from static inline mobile nav placement without adding popup dialogs.
+ * Notification Bell: Header in Golden-dashboard.tsx includes the notification bell icon with badge count, and clicking it opens the side drawer.
+ * Side Drawer Content: The side drawer in Golden-dashboard.tsx renders the main app's menu items/buttons inside the template's original drawer container shell.
+ * Token Preservation: Visual styling and design tokens of Golden-dashboard.tsx remain preserved.
+I. DIFF SELF-CHECK & HANDOFF
+ * Confirm only docs/TEMPLATES/React-temps/Golden-dashboard.tsx was modified.
+ * Verify line-by-line that no global CSS or main app files were touched.
+ * Report static verification (typecheck) status and assumptions made.
+[5] Optional Notes & Risk Matrix
+| Risk | Trigger | Impact | Likelihood | Mitigation | Owner |
+|---|---|---|---|---|---|
+| Z-Index / Viewport Collision | Floating + button overlapping mobile bottom navigation bar | Med | Med | Apply explicit z-50 and offset spacing (bottom-20 on mobile viewports if bottom nav exists) | Downstream Agent |
+| Router Hook Mismatch | App drawer buttons using different router hooks than template | Low | Med | Re-bind navigation actions using Golden-dashboard.tsx routing patterns | Downstream Agent |
+| Theme Class Leakage | Direct copy-paste of raw Tailwind color utilities from app dashboard | Med | Low | Map all ported drawer buttons to use template design token classes | Downstream Agent |
