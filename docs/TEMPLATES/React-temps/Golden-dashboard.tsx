@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Menu,
   Search,
@@ -25,6 +25,9 @@ import {
   Building2,
   ChevronRight,
   Wallet,
+  FilePlus,
+  HeartHandshake,
+  FolderPlus,
   Users,
   FileSignature,
   ClipboardCheck,
@@ -33,6 +36,7 @@ import {
   LogOut,
   Truck,
   FileWarning,
+  CheckCheck
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -258,8 +262,15 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
+  const [notifications, setNotifications] = useState(NOTIFICATION_LIST);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'home' | 'sales' | 'projects' | 'analytics' | 'more'>('home');
+
+  const [badgePulseKey, setBadgePulseKey] = useState(0);
+  const prevUnreadRef = useRef<number | null>(null);
+  const pulseTimeoutRef = useRef<number | null>(null);
 
   const toggleTheme = () => {
     setDarkMode((prev) => !prev);
@@ -271,6 +282,7 @@ export default function App() {
   };
 
   const handleStartFlow = (flowName: string) => {
+    setQuickCreateOpen(false);
     alert(`Starting: ${flowName}`);
   };
 
@@ -279,7 +291,40 @@ export default function App() {
     window.location.assign(path);
   };
 
-  const unreadCount = NOTIFICATION_LIST.filter((notification) => !notification.read).length;
+  const markAllNotifsRead = () => {
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+  };
+
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+  useEffect(() => {
+    if (prevUnreadRef.current === null) {
+      prevUnreadRef.current = unreadCount;
+      return;
+    }
+
+    if (prevUnreadRef.current !== unreadCount) {
+      prevUnreadRef.current = unreadCount;
+      setBadgePulseKey((key) => key + 1);
+
+      if (pulseTimeoutRef.current !== null) {
+        window.clearTimeout(pulseTimeoutRef.current);
+      }
+
+      pulseTimeoutRef.current = window.setTimeout(() => {
+        setBadgePulseKey((key) => key + 1);
+      }, 750);
+    }
+  }, [unreadCount]);
+
+  useEffect(() => {
+    return () => {
+      if (pulseTimeoutRef.current !== null) {
+        window.clearTimeout(pulseTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const badgeLabel = unreadCount > 9 ? '9+' : String(unreadCount);
 
   return (
@@ -295,6 +340,10 @@ export default function App() {
         @keyframes slideDown {
           from { transform: translateY(-100%); opacity: 0; }
           to   { transform: translateY(0);     opacity: 1; }
+        }
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0); opacity: 1; }
         }
         @keyframes scaleUp {
           from { transform: scale(0.92) translateY(8px); opacity: 0; }
@@ -327,6 +376,7 @@ export default function App() {
         }
 
         .animate-slideDown { animation: slideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-slideInRight { animation: slideInRight 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
         .animate-scaleUp   { animation: scaleUp   0.22s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: bottom right; }
         .animate-fadeIn    { animation: fadeIn    0.18s ease-out; }
 
@@ -336,6 +386,7 @@ export default function App() {
 
         @media (prefers-reduced-motion: reduce) {
           .animate-slideDown,
+          .animate-slideInRight,
           .animate-scaleUp,
           .animate-fadeIn,
           .animate-badgePop,
@@ -402,11 +453,11 @@ export default function App() {
 
             {/* NOTIFICATION BELL */}
             <button
-              onClick={() => setSidebarOpen((prev) => !prev)}
+              onClick={() => setNotifDrawerOpen((prev) => !prev)}
               className="px-2.5 h-8 rounded-full bg-[#EFE6D5] dark:bg-neutral-800/90 border border-[#DFCFA8] dark:border-neutral-700/80 flex items-center text-amber-900 dark:text-amber-200 hover:text-amber-600 transition shadow-sm font-bold"
-              aria-label={unreadCount > 0 ? `Open navigation drawer, ${unreadCount} unread notifications` : 'Open navigation drawer'}
+              aria-label={unreadCount > 0 ? `Open notifications, ${unreadCount} unread` : 'Open notifications'}
             >
-              <span className="inline-flex">
+              <span key={`bell-${badgePulseKey}`} className="inline-flex">
                 <Bell
                   className={`w-3.5 h-3.5 stroke-[2.2] ${
                     unreadCount > 0 ? 'animate-bellShake' : ''
@@ -415,7 +466,9 @@ export default function App() {
               </span>
 
               {unreadCount > 0 && (
-                <sup className={`
+                <sup
+                  key={`badge-${badgePulseKey}`}
+                  className={`
                     ml-px text-[9px] font-extrabold leading-none
                     text-[#8B6508] dark:text-amber-400
                     inline-flex items-center justify-center
@@ -436,6 +489,101 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* RIGHT-SIDE NOTIFICATION DRAWER */}
+        {notifDrawerOpen && (
+          <div className="fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm transition-opacity"
+              onClick={() => setNotifDrawerOpen(false)}
+            />
+
+            <aside className="absolute right-0 top-0 h-full w-full max-w-[380px] bg-[#FAF6EF]/98 dark:bg-neutral-900/98 backdrop-blur-2xl border-l border-[#EADBB8] dark:border-neutral-800 p-4 shadow-2xl space-y-3 animate-slideInRight">
+              <div className="flex items-center justify-between pb-2 border-b border-[#EADBB8]/80 dark:border-neutral-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-[#E2BF7D]/30 border border-[#B8860B]/40 flex items-center justify-center text-[#8B6508] dark:text-amber-300">
+                    <Bell className="w-3.5 h-3.5 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-sm text-slate-900 dark:text-white leading-tight">Notification Center</h3>
+                    <p className="text-[10px] text-amber-900/60 dark:text-amber-400 font-medium">{unreadCount} Unread Messages</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={markAllNotifsRead}
+                    className="text-[10px] font-bold text-[#8B6508] dark:text-amber-300 flex items-center gap-1 hover:underline"
+                  >
+                    <CheckCheck className="w-3 h-3" /> Mark read
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotifDrawerOpen(false)}
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                    aria-label="Close notifications"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[calc(100vh-150px)] overflow-y-auto scrollbar-none pr-1">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-2.5 rounded-xl border text-xs flex items-start gap-2.5 transition ${
+                      notification.read
+                        ? 'bg-[#FAF5EC]/50 dark:bg-neutral-800/40 border-[#EADBB8]/50 dark:border-neutral-800 opacity-75'
+                        : 'bg-[#FFFDFA] dark:bg-neutral-800/90 border-[#E0D0AB] dark:border-neutral-700 shadow-sm'
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-lg shrink-0 ${
+                      notification.type === 'alert' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                      notification.type === 'warning' ? 'bg-[#E2BF7D]/30 text-[#8B6508] dark:text-amber-300' :
+                      'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    }`}>
+                      {notification.type === 'alert' ? <AlertTriangle className="w-3.5 h-3.5" /> :
+                       notification.type === 'warning' ? <Clock className="w-3.5 h-3.5" /> :
+                       <CheckCircle2 className="w-3.5 h-3.5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-bold text-slate-900 dark:text-white truncate">{notification.title}</p>
+                        <span className="text-[9px] font-medium text-slate-400 shrink-0">{notification.time}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{notification.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t border-[#EADBB8]/60 dark:border-neutral-800 flex justify-between items-center text-[10px]">
+                <span className="text-slate-400 font-medium">Showing latest system logs</span>
+                <button
+                  type="button"
+                  className="px-2 py-1 rounded-md font-bold text-[#8B6508] dark:text-amber-300 hover:bg-[#F2E8D5] dark:hover:bg-neutral-800 transition"
+                  onClick={() => {
+                    setNotifications((prev) => [
+                      {
+                        id: `live-${Date.now()}`,
+                        title: 'Live Update Arrived',
+                        detail: 'A new event just came in to verify the badge animation.',
+                        time: 'Just now',
+                        type: 'warning',
+                        read: false
+                      },
+                      ...prev
+                    ]);
+                  }}
+                >
+                  Simulate incoming
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
 
         {/* SEARCH OVERLAY BAR */}
         {searchOpen && (
@@ -784,11 +932,53 @@ export default function App() {
         {/* FLOATING ACTION BUTTON */}
         <button
           type="button"
+          onClick={() => setQuickCreateOpen((prev) => !prev)}
           className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gradient-to-tr from-[#9A6B1F] via-[#B8860B] to-[#D4A843] text-white flex items-center justify-center text-xl font-bold shadow-2xl shadow-amber-900/50 active:scale-90 transition-all transform border-2 border-amber-200/50"
           aria-label="Quick Create"
         >
-          <Plus className="w-6 h-6 stroke-[2.5]" />
+          <Plus className={`w-6 h-6 stroke-[2.5] transition-transform duration-300 ${quickCreateOpen ? 'rotate-45' : ''}`} />
         </button>
+
+        {/* QUICK-CREATE POPOVER */}
+        {quickCreateOpen && (
+          <>
+            <div
+              className="absolute inset-0 z-40 bg-slate-950/30 backdrop-blur-sm transition-opacity"
+              onClick={() => setQuickCreateOpen(false)}
+            />
+            <div className="absolute bottom-[8rem] right-4 z-50 w-64 bg-[#FAF6EF]/98 dark:bg-neutral-900/98 backdrop-blur-xl rounded-2xl border border-[#D4A843]/40 dark:border-neutral-700 p-2.5 shadow-2xl space-y-1 animate-scaleUp">
+              <div className="px-2.5 py-1 border-b border-[#EADBB8]/80 dark:border-neutral-800 mb-1 flex items-center justify-between">
+                <p className="text-[10px] font-extrabold text-[#8B6508] dark:text-amber-400 uppercase tracking-wider">Quick Create</p>
+                <button
+                  type="button"
+                  onClick={() => setQuickCreateOpen(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                  aria-label="Close quick create"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {[
+                { label: 'New Invoice', icon: Receipt },
+                { label: 'New Quotation', icon: FilePlus },
+                { label: 'New CSR', icon: HeartHandshake },
+                { label: 'New Waybill', icon: Truck },
+                { label: 'New Project', icon: FolderPlus }
+              ].map(({ label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => handleStartFlow(label)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#FFFDFA] dark:bg-neutral-800/90 border border-[#EADBB8]/70 dark:border-neutral-700/80 flex items-center gap-2.5 hover:border-[#B8860B] transition active:scale-[0.97]"
+                >
+                  <Icon className="w-4 h-4 text-[#8B6508] dark:text-amber-300 shrink-0" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">{label}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
       </div>
     </div>
