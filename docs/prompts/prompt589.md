@@ -1,3 +1,86 @@
+Read the existing tenant-settings investigation reports in docs/Reports/multi-tenancy/, especially:
+
+- tenant-settings-live-db-investigation.md
+- tenant-settings-final-provisioning-verification.md
+- provisioning-settings-seed.md
+- any other tenant-settings/provisioning reports relevant to this issue
+
+Also read AGENTS.md and the relevant skills index before making any recommendation.
+
+Do NOT repeat the investigation from scratch.
+
+Use the existing reports as the evidence base and reconcile them.
+
+Current confirmed production state:
+- public.entities.display_name = "Sun & Shield Power Solutions"
+- tenant schema = "entity_bigdrops-main_main"
+- tenant.settings.id = 1
+- tenant.settings.company_name = "Sun & Shield Power Solutions"
+- public.settings contains the complete company information:
+  address, phone, email, bank details, TIN/custom_info, logo, etc.
+- tenant.settings contains only the seeded company_name plus defaults/nulls.
+- Documents read from tenant.settings.
+- Settings UI writes to public.settings.
+- The provisioning seed currently seeds only company_name from public.entities.display_name.
+- All migrations through 20260809070000 are confirmed applied in production.
+- The previous company_name-only SQL correction has already been performed.
+
+The new problem is therefore:
+
+Quotation/invoice documents now show the correct company name, but they do NOT show the rest of the company's identity information that exists in public.settings, such as:
+
+- address
+- city/state
+- phone
+- email
+- TIN/custom_info
+- bank details
+- logo
+- other document-relevant settings
+
+Determine the safest permanent architecture for this.
+
+IMPORTANT:
+Do not immediately assume that public.settings should simply be copied wholesale into tenant.settings.
+
+We need to determine:
+1. Which settings are workspace-level versus entity-level.
+2. Which fields documents actually require from tenant.settings.
+3. Whether the existing data model provides an entity-specific source for those fields.
+4. Whether tenant settings should be fully provisioned from public.settings, selectively synchronized, or whether the document read path should instead use the appropriate workspace/entity settings source.
+5. How this should behave when a workspace eventually has multiple entities.
+6. How existing tenant settings and intentional overrides should be preserved.
+7. Whether document_prefixes and theme settings should remain tenant-specific.
+8. Whether the current architecture has another authoritative source for address/contact/bank/TIN information that we have not yet identified.
+
+This is an ARCHITECTURAL INVESTIGATION first.
+
+Do not modify code or migrations yet.
+
+Do not execute production SQL.
+
+Do not run bun run build.
+
+Do not blindly recommend copying public.settings into tenant.settings.
+
+Return a concise evidence-based report containing:
+
+1. CURRENT ARCHITECTURE
+2. FIELD OWNERSHIP / AUTHORITATIVE SOURCE MATRIX
+3. MULTI-TENANT RISK ANALYSIS
+4. OPTIONS CONSIDERED
+5. RECOMMENDED ARCHITECTURE
+6. EXISTING-DATA REMEDIATION STRATEGY
+7. FUTURE PROVISIONING STRATEGY
+8. REQUIRED CODE/MIGRATION CHANGES
+9. OPEN QUESTIONS / RISKS
+10. FINAL RECOMMENDATION
+
+Clearly distinguish PROVEN facts from INFERENCES and DESIGN RECOMMENDATIONS.
+
+The goal is not merely to make the current quotation look correct. The goal is to establish the correct entity-aware document identity architecture for BIGDROPS before implementation.
+
+
 Tenant Settings — Document Identity Architecture Decision Investigation
 
 This is a READ-ONLY ARCHITECTURAL INVESTIGATION.
