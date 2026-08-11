@@ -30,6 +30,10 @@ DECLARE
 BEGIN
   SELECT entity_id::text INTO v_entity_id FROM _migration_context;
 
+  IF v_entity_id IS NULL THEN
+    RAISE EXCEPTION 'Production entity not found';
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = v_entity_id) THEN
     EXECUTE format('CREATE SCHEMA %I', v_entity_id);
   END IF;

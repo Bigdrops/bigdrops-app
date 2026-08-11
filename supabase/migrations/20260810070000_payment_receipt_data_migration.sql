@@ -53,33 +53,33 @@ END $$;
 -- ============================================================
 
 -- payments: drop FK to public.invoices
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.payments
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
   DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.payments
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
   DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey_clone;
 
 -- receipts: drop FKs to public.payments, public.invoices, public.clients
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey_clone;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey_clone;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_client_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
   DROP CONSTRAINT IF EXISTS receipts_client_id_fkey_clone;
 
 -- wht_receipts: drop FKs to public.payments, public.invoices
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.wht_receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
   DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.wht_receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
   DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey_clone;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.wht_receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
   DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey;
-ALTER TABLE IF EXISTS entity_bigdrops-main_main.wht_receipts
+ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
   DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey_clone;
 
 -- ============================================================
@@ -87,7 +87,7 @@ ALTER TABLE IF EXISTS entity_bigdrops-main_main.wht_receipts
 -- ============================================================
 
 -- Payments first (receipts depend on payments)
-INSERT INTO entity_bigdrops-main_main.payments
+INSERT INTO "entity_bigdrops-main_main".payments
   (id, invoice_id, amount, date, method, reference, notes, created_at,
    cash_amount, wht_amount, currency_code, wht_rate, wht_type,
    wht_certificate_ref, recorded_by, voided_at, void_reason, source,
@@ -101,7 +101,7 @@ FROM public.payments
 ON CONFLICT (id) DO NOTHING;
 
 -- WHT receipts
-INSERT INTO entity_bigdrops-main_main.wht_receipts
+INSERT INTO "entity_bigdrops-main_main".wht_receipts
   (id, payment_id, invoice_id, client_name, gross_base_amount,
    wht_rate, wht_amount, receipt_status, receipt_number,
    receipt_file_url, received_at, notes, created_at, updated_at)
@@ -113,7 +113,7 @@ FROM public.wht_receipts
 ON CONFLICT (id) DO NOTHING;
 
 -- Receipts last (depends on payments)
-INSERT INTO entity_bigdrops-main_main.receipts
+INSERT INTO "entity_bigdrops-main_main".receipts
   (id, receipt_number, payment_id, invoice_id, client_id, client_name,
    amount, currency_code, payment_date, payment_method, payment_ref,
    notes, created_by, updated_by, created_at, updated_at, archived_at,
@@ -148,23 +148,23 @@ ON CONFLICT (id) DO NOTHING;
 -- 5. Re-enable triggers on tenant side
 -- ============================================================
 
-ALTER TABLE entity_bigdrops-main_main.payments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE entity_bigdrops-main_main.payments
+ALTER TABLE "entity_bigdrops-main_main".payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "entity_bigdrops-main_main".payments
   FORCE ROW LEVEL SECURITY;
 
-ALTER TABLE entity_bigdrops-main_main.wht_receipts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE entity_bigdrops-main_main.wht_receipts
+ALTER TABLE "entity_bigdrops-main_main".wht_receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "entity_bigdrops-main_main".wht_receipts
   FORCE ROW LEVEL SECURITY;
 
-ALTER TABLE entity_bigdrops-main_main.receipts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE entity_bigdrops-main_main.receipts
+ALTER TABLE "entity_bigdrops-main_main".receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "entity_bigdrops-main_main".receipts
   FORCE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  PERFORM _prov_install_triggers('entity_bigdrops-main_main'::regclass, 'payments');
-  PERFORM _prov_install_triggers('entity_bigdrops-main_main'::regclass, 'wht_receipts');
-  PERFORM _prov_install_triggers('entity_bigdrops-main_main'::regclass, 'receipts');
+  PERFORM _prov_install_triggers('"entity_bigdrops-main_main"'::regclass, 'payments');
+  PERFORM _prov_install_triggers('"entity_bigdrops-main_main"'::regclass, 'wht_receipts');
+  PERFORM _prov_install_triggers('"entity_bigdrops-main_main"'::regclass, 'receipts');
 END $$;
 
 -- ============================================================
@@ -172,34 +172,34 @@ END $$;
 -- ============================================================
 
 -- payments → tenant invoices
-ALTER TABLE entity_bigdrops-main_main.payments
+ALTER TABLE "entity_bigdrops-main_main".payments
   ADD CONSTRAINT payments_invoice_id_fkey
   FOREIGN KEY (invoice_id)
-  REFERENCES entity_bigdrops-main_main.invoices(id);
+  REFERENCES "entity_bigdrops-main_main".invoices(id);
 
 -- wht_receipts → tenant payments
-ALTER TABLE entity_bigdrops-main_main.wht_receipts
+ALTER TABLE "entity_bigdrops-main_main".wht_receipts
   ADD CONSTRAINT wht_receipts_payment_id_fkey
   FOREIGN KEY (payment_id)
-  REFERENCES entity_bigdrops-main_main.payments(id);
+  REFERENCES "entity_bigdrops-main_main".payments(id);
 
 -- wht_receipts → tenant invoices
-ALTER TABLE entity_bigdrops-main_main.wht_receipts
+ALTER TABLE "entity_bigdrops-main_main".wht_receipts
   ADD CONSTRAINT wht_receipts_invoice_id_fkey
   FOREIGN KEY (invoice_id)
-  REFERENCES entity_bigdrops-main_main.invoices(id);
+  REFERENCES "entity_bigdrops-main_main".invoices(id);
 
 -- receipts → tenant payments
-ALTER TABLE entity_bigdrops-main_main.receipts
+ALTER TABLE "entity_bigdrops-main_main".receipts
   ADD CONSTRAINT receipts_payment_id_fkey
   FOREIGN KEY (payment_id)
-  REFERENCES entity_bigdrops-main_main.payments(id);
+  REFERENCES "entity_bigdrops-main_main".payments(id);
 
 -- receipts → tenant invoices
-ALTER TABLE entity_bigdrops-main_main.receipts
+ALTER TABLE "entity_bigdrops-main_main".receipts
   ADD CONSTRAINT receipts_invoice_id_fkey
   FOREIGN KEY (invoice_id)
-  REFERENCES entity_bigdrops-main_main.invoices(id);
+  REFERENCES "entity_bigdrops-main_main".invoices(id);
 
 -- NOTE: receipts.client_id FK intentionally omitted — clients stay in public schema.
 
@@ -220,29 +220,29 @@ DECLARE
   v_orphaned_receipts  INT;
 BEGIN
   SELECT count(*) INTO v_public_payments FROM public.payments;
-  SELECT count(*) INTO v_tenant_payments FROM entity_bigdrops-main_main.payments;
+  SELECT count(*) INTO v_tenant_payments FROM "entity_bigdrops-main_main".payments;
   SELECT count(*) INTO v_public_wht FROM public.wht_receipts;
-  SELECT count(*) INTO v_tenant_wht FROM entity_bigdrops-main_main.wht_receipts;
+  SELECT count(*) INTO v_tenant_wht FROM "entity_bigdrops-main_main".wht_receipts;
   SELECT count(*) INTO v_public_receipts FROM public.receipts;
-  SELECT count(*) INTO v_tenant_receipts FROM entity_bigdrops-main_main.receipts;
+  SELECT count(*) INTO v_tenant_receipts FROM "entity_bigdrops-main_main".receipts;
 
   -- Check for payments referencing non-existent tenant invoices
   SELECT count(*) INTO v_orphaned_payments
-  FROM entity_bigdrops-main_main.payments p
-  LEFT JOIN entity_bigdrops-main_main.invoices i ON i.id = p.invoice_id
+  FROM "entity_bigdrops-main_main".payments p
+  LEFT JOIN "entity_bigdrops-main_main".invoices i ON i.id = p.invoice_id
   WHERE i.id IS NULL;
 
   -- Check for wht_receipts referencing non-existent tenant payments
   SELECT count(*) INTO v_orphaned_wht
-  FROM entity_bigdrops-main_main.wht_receipts w
-  LEFT JOIN entity_bigdrops-main_main.payments p ON p.id = w.payment_id
+  FROM "entity_bigdrops-main_main".wht_receipts w
+  LEFT JOIN "entity_bigdrops-main_main".payments p ON p.id = w.payment_id
   WHERE p.id IS NULL;
 
   -- Check for receipts referencing non-existent tenant payments or invoices
   SELECT count(*) INTO v_orphaned_receipts
-  FROM entity_bigdrops-main_main.receipts r
-  LEFT JOIN entity_bigdrops-main_main.payments p ON p.id = r.payment_id
-  LEFT JOIN entity_bigdrops-main_main.invoices i ON i.id = r.invoice_id
+  FROM "entity_bigdrops-main_main".receipts r
+  LEFT JOIN "entity_bigdrops-main_main".payments p ON p.id = r.payment_id
+  LEFT JOIN "entity_bigdrops-main_main".invoices i ON i.id = r.invoice_id
   WHERE p.id IS NULL OR i.id IS NULL;
 
   RAISE NOTICE ' payments: public=% tenant=%', v_public_payments, v_tenant_payments;
