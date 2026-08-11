@@ -21,7 +21,7 @@ BEGIN
   FROM public.entities e
   JOIN public.workspaces w ON w.id = e.workspace_id
   WHERE w.slug = 'bigdrops-main'
-    AND e.entity_type = 'main'
+    AND e.slug = 'main'
   LIMIT 1;
 
   IF v_entity_id IS NULL THEN

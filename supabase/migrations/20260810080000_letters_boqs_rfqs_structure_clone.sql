@@ -22,7 +22,7 @@ BEGIN
   FROM public.entities e
   JOIN public.workspaces w ON w.id = e.workspace_id
   WHERE w.slug = 'bigdrops-main'
-    AND e.entity_type = 'main'
+    AND e.slug = 'main'
   LIMIT 1;
 
   IF v_entity_id IS NULL THEN
@@ -58,7 +58,7 @@ BEGIN
   FROM public.entities e
   JOIN public.workspaces w ON w.id = e.workspace_id
   WHERE w.slug = 'bigdrops-main'
-    AND e.entity_type = 'main'
+    AND e.slug = 'main'
   LIMIT 1;
 
   EXECUTE format(
@@ -87,7 +87,7 @@ BEGIN
   FROM public.entities e
   JOIN public.workspaces w ON w.id = e.workspace_id
   WHERE w.slug = 'bigdrops-main'
-    AND e.entity_type = 'main'
+    AND e.slug = 'main'
   LIMIT 1;
 
   FOR v_table IN
@@ -115,7 +115,7 @@ BEGIN
   FROM public.entities e
   JOIN public.workspaces w ON w.id = e.workspace_id
   WHERE w.slug = 'bigdrops-main'
-    AND e.entity_type = 'main'
+    AND e.slug = 'main'
   LIMIT 1;
 
   EXECUTE format('SELECT count(*) FROM %I.letters', v_entity_id) INTO v_letters;
