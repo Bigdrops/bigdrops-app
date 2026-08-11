@@ -33,3 +33,7 @@ Per AGENTS.md §8.5, every task records which subagent executed or reviewed the 
 
 [DELEGATION] task="Quotation migration readiness audit + verification script" | domain="quotation-quote" | subagent="NONE" | justification="Read-only database audit and verification script creation; no SUBAGENTS.md persona matches multi-tenancy data migration verification" | harness="opencode local"
 [DELEGATION] task="Quotation data migration SQL (preserved-ID copy)" | domain="quotation-quote" | subagent="NONE" | justification="Migration SQL following invoice aggregate pattern; executed in-house per AGENTS.md 8.5" | harness="opencode local"
+
+[DELEGATION] task="Live DB object inventory + migration drift audit (read-only REST introspection)" | domain="db" | subagent="NONE" | justification="Read-only evidence collection via PostgREST; database-optimizer persona targets schema/SQL/RLS optimization, not read-only object inventory. Precedent in this log for read-only audits." | harness="opencode local"
+[DELEGATION] task="CSR aggregate provisioning + data migration" | domain="db" | subagent="NONE" | justification="DB migration following existing invoice/waybill aggregate pattern; no matching SUBAGENTS.md persona for provisioning engine SQL" | harness="opencode local"
+[DELEGATION] task="Payment/receipt data migration + letters/boqs/rfqs structure clone" | domain="db" | subagent="NONE" | justification="DB migration following existing aggregate pattern; no matching SUBAGENTS.md persona for provisioning engine SQL" | harness="opencode local"
