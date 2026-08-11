@@ -1,45 +1,385 @@
-# Round 5 — Fix Confirmed RLS Recursion + Sweep for Other Instances
+You are taking over the BIGDROPS Invoice/Quotation investigation.
 
-Two recursion bugs are CONFIRMED, not suspected — reproduced by running all
-three existing migrations against real Postgres 16 as a non-superuser role.
-Do not re-verify these two; implement the fixes directly:
+IMPORTANT: The previous recovery work has ALREADY fixed the earlier Invoice problems. Do NOT reopen or re-investigate those unless evidence from the current edit investigation directly requires it.
 
-1. workspace_members_select_self (20260714000001_multi_tenancy_rls.sql)
-   self-queries workspace_members from within its own SELECT policy.
-   Confirmed via "infinite recursion detected in policy for relation
-   workspace_members" on direct execution.
+REQUIRED SKILLS
 
-2. is_platform_operator() (20260716000000_..._platform_operators.sql) is
-   not SECURITY DEFINER, and platform_operators_select_owner's USING clause
-   calls it — so its internal SELECT against platform_operators is itself
-   subject to that same policy. Confirmed via "stack depth limit exceeded"
-   showing repeated recursive calls into is_platform_operator() in the
-   error trace.
+Before investigating, read and actively use:
 
-Required fixes, in a new append-only migration (do not modify the three
-existing files):
+- ".agents/skills/supabase/SKILL.md"
+- ".agents/skills/supabase-postgres-best-practices/SKILL.md"
+- Relevant references from those skills.
 
-A. Add public.is_workspace_member(p_workspace_id uuid, p_user_id uuid)
-   as SECURITY DEFINER, STABLE, SET search_path = public. Rewrite
-   workspace_members_select_self to call it instead of self-querying.
+Also read "AGENTS.md" and "docs/PROJECTSKILLINDEX.md".
 
-B. Add SECURITY DEFINER and SET search_path = public to
-   is_platform_operator()'s definition (CREATE OR REPLACE, in the new file).
+Use the Supabase skills for all live database/RPC/schema/RLS investigation.
 
-C. Sweep every other RLS policy across all three existing files for the
-   same pattern — a policy that queries its own table, or a non-
-   SECURITY-DEFINER function called from a policy on the table that
-   function queries. My own test run only exercised the six lifecycle
-   steps; it did not exhaustively trigger every policy path. Report any
-   additional instance found, fixed or not, before proceeding.
+---
 
-D. Re-run the full six-step lifecycle test AS A NON-SUPERUSER ROLE
-   (not postgres/table owner — RLS is bypassed for those regardless of
-   policy correctness). Report actual pass/fail per step, not a summary.
+CURRENT SITUATION
 
-E. git diff summary of the new migration file only.
+The BIGDROPS Invoice system previously had two major problems:
 
-Do not modify workspace_members_select_self or is_platform_operator()
-in their original files — CREATE OR REPLACE FUNCTION and DROP POLICY /
-CREATE POLICY in the new migration file achieve the same runtime effect
-without touching migration history.
+1. Existing invoices displayed without their line items.
+2. Invoice creation/save failed with:
+   "column "p_schema_name" does not exist"
+
+Those issues have ALREADY been investigated and fixed.
+
+Confirmed recovered
+
+- Existing invoice data and line items are present in the tenant schema.
+- Invoice line items now display correctly.
+- Invoice images/data have returned.
+- The broken "save_invoice_with_items_transaction()" schema-variable defect was corrected.
+- New invoice creation now works.
+- Invoice saving is no longer failing with the original "p_schema_name" error.
+
+DO NOT spend time trying to fix those problems again.
+
+---
+
+THE ONLY ACTIVE PROBLEM
+
+EDIT INVOICE DOES NOT PERSIST
+
+The controlled test invoice is:
+
+"SASINV077"
+
+Invoice ID:
+
+"1def13cc-18b5-4c01-b62d-18be0bffae85"
+
+Current persisted tenant state is:
+
+Invoice
+
+- subtotal: "110000"
+- vat: "8250"
+- total: "128250"
+
+Item
+
+- description: "12V 75Ah Battery"
+- quantity: "1"
+- unit: "nos"
+- unit price: "110000"
+- amount: "110000"
+
+The live tenant database currently still contains exactly those original values.
+
+Tenant schema:
+
+"entity_bigdrops-main_main"
+
+---
+
+WHAT THE USER DID
+
+The user opened Edit Invoice for SASINV077 and made changes.
+
+The UI/audit system recorded multiple UPDATE events.
+
+One recorded:
+
+- subtotal: "110000 → 190000"
+- VAT: "8250 → 14250"
+- total: "128250 → 214250"
+
+Another recorded:
+
+- subtotal: "110000 → 110001"
+- VAT: "8250 → 8250.075"
+- total: "128250 → 128251.075"
+
+So the application clearly believes an invoice update occurred.
+
+However, when we inspect the actual tenant database afterward:
+
+"invoices" still says:
+
+"110000 / 8250 / 128250"
+
+and "invoice_items" still says:
+
+"12V 75Ah Battery / 1 / 110000 / 110000"
+
+The View Invoice page therefore correctly continues showing the original saved invoice.
+
+---
+
+IMPORTANT AUDIT EVIDENCE
+
+The relevant "public.audit_logs" records exist.
+
+Columns are:
+
+- id
+- entity_type
+- entity_id
+- entity_label
+- action
+- actor_id
+- actor_label
+- source
+- scope_type
+- created_at
+- changes
+- reason
+
+For SASINV077 the audit trail contains UPDATE records such as:
+
+"entity_type = invoice"
+
+"entity_id = 1def13cc-18b5-4c01-b62d-18be0bffae85"
+
+"entity_label = SASINV077"
+
+"actor_label = jaiyewisdom@gmail.com"
+
+"source = web"
+
+"scope_type = app"
+
+The audit records are NOT the source of truth for whether the invoice actually persisted.
+
+The tenant database is the source of truth.
+
+---
+
+WHAT WE NEED TO FIND
+
+We need to trace ONLY this path:
+
+"Edit Invoice"
+→ "Save"
+→ actual frontend mutation
+→ actual RPC/service/query
+→ tenant invoice UPDATE
+→ tenant invoice_items replacement
+→ returned result
+→ audit generation
+
+We need to identify exactly where the edited values disappear.
+
+---
+
+FIRST INVESTIGATION
+
+Inspect the repository and identify the exact Edit Invoice save path.
+
+Find:
+
+- Edit Invoice component
+- save handler
+- save hook/service
+- Supabase call/RPC
+- payload construction
+- item payload construction
+- audit call
+
+Do NOT assume the save path is correct merely because "save_invoice_with_items_transaction()" was fixed previously.
+
+Prove the actual call chain from source code.
+
+---
+
+CRITICAL QUESTIONS
+
+Answer these in order.
+
+1. What exact function is called when the user presses Save?
+
+Identify the source file and function.
+
+2. What exact Supabase client is used?
+
+Determine whether the save operation uses:
+
+- "supabase"
+- "tenantClient"
+- another database abstraction
+- RPC
+
+Show the chain.
+
+3. What exact invoice ID is sent?
+
+Verify whether Edit Invoice sends:
+
+"1def13cc-18b5-4c01-b62d-18be0bffae85"
+
+Do not assume.
+
+4. What exact values are sent?
+
+Determine whether the values:
+
+"190000 subtotal"
+"14250 VAT"
+"214250 total"
+
+actually reach the mutation.
+
+Also inspect the edited line items.
+
+5. Does the actual UPDATE affect a row?
+
+The current RPC's UPDATE uses:
+
+"WHERE id = (p_invoice_payload->>'id')::uuid"
+
+Determine whether the update can silently affect zero rows.
+
+6. Are invoice items replaced?
+
+The RPC deletes existing tenant invoice items and reinserts "p_items".
+
+Determine whether this happens during the edit.
+
+7. Is another operation overwriting the update?
+
+Look for:
+
+- duplicate saves
+- stale state
+- automatic recalculation
+- post-save writes
+- effects triggered after Save
+- multiple RPC calls
+- refetch/synchronization logic
+- another invoice update immediately after the successful edit
+
+This is especially important because the audit trail records multiple updates while the final database state remains unchanged.
+
+8. Why does the audit trail record the edited values?
+
+Find exactly where the audit record is generated.
+
+Determine whether audit logging happens:
+
+- before mutation
+- after mutation
+- independently from mutation
+- from frontend state
+- from a database trigger
+- through another RPC
+
+---
+
+VERY IMPORTANT
+
+Do NOT conclude:
+
+"the RPC is broken"
+
+just because the database remains unchanged.
+
+The RPC was already fixed for the previous "p_schema_name" issue, and CREATE now works.
+
+We now need to establish whether the EDIT path:
+
+- calls the RPC incorrectly,
+- sends the wrong ID,
+- sends stale payload,
+- calls another mutation,
+- updates the wrong schema,
+- performs a zero-row UPDATE,
+- gets overwritten afterward,
+- or has a frontend state problem.
+
+---
+
+LIVE DATABASE FACTS
+
+Entity:
+
+"eca34515-0b30-482c-b12e-3963df164322"
+
+Resolved schema:
+
+"entity_bigdrops-main_main"
+
+Resolver:
+
+"public._prov_get_schema_name(p_entity_id)"
+
+Current resolver correctly returns:
+
+"entity_bigdrops-main_main"
+
+Do not modify provisioning or schema resolution unless the current evidence proves it is involved.
+
+---
+
+DO NOT TOUCH
+
+Until the edit root cause is proven, do NOT:
+
+- modify quotation
+- rewrite invoice architecture
+- rerun provisioning
+- recreate tenant schema
+- delete SASINV077
+- delete invoice data
+- rewrite RLS
+- rewrite permissions
+- change calculation logic
+- change PDF rendering
+- modify payment systems
+- perform broad migrations
+- alter public invoice template tables
+- refactor unrelated code
+
+---
+
+REQUIRED RESULT
+
+Return a forensic finding with exactly:
+
+1. Actual Edit Save Chain
+
+"Edit Invoice → ... → ... → database"
+
+2. Actual Payload
+
+Show the invoice ID, header totals, and item values reaching the mutation.
+
+3. Actual Database Mutation
+
+Identify the exact RPC/query and whether it affects the tenant row.
+
+4. Audit Mechanism
+
+Explain exactly how the UPDATE audit record is generated.
+
+5. Root Cause
+
+Explain why the UI/audit says the invoice changed while:
+
+"entity_bigdrops-main_main.invoices"
+
+and
+
+"entity_bigdrops-main_main.invoice_items"
+
+remain unchanged.
+
+6. Minimal Fix
+
+Only after the root cause is proven, propose the smallest targeted fix.
+
+7. Verification
+
+Define a controlled edit test using SASINV077 that proves:
+
+Edit → Save → database → View
+
+all contain the same new values.
+
+This is NOT an investigation into Invoice creation or the previous missing-items problem.
+
+Those are recovered.
+
+The sole active incident is: existing Invoice Edit changes do not persist.
