@@ -1,40 +1,68 @@
-You are working on the BIGDROPS business platform.
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+You are working on the BIGDROPS repository.
 
-====================================================================
-CRITICAL: READ AGENTS.md BEFORE GENERATING REPORT
-====================================================================
-Read AGENTS.md immediately. Follow project standards and reporting protocols.
-This is a READ-ONLY review task. Do NOT edit or modify any files.
-====================================================================
+This is a Supabase connectivity test only. Do not investigate Audit Trail, migrations, application code, or database architecture yet.
 
-### OBJECTIVE
-Perform an independent comparative review and gap analysis between:
-1. Target Template: `docs/TEMPLATES/React-temps/Golden-dashboard.tsx`
-2. Current Application Dashboard: Locate the primary app dashboard route (e.g., `src/pages/Dashboard.tsx` or equivalent main dashboard view).
+Objective
 
-Generate a detailed Audit & Gap Analysis Report in your response.
+Determine whether OpenCode can establish direct access to the LIVE Supabase PostgreSQL database from the current Windows/PowerShell environment, without Docker.
 
-### MANDATE: SINGLE THEME PRESET DIRECTION
-- The platform is eliminating multiple semantic theme presets (e.g., Ivory Ledger, Industrial Fog, Brutalist Concrete, Sage Retreat, Glassline) in favor of ONE single, unified theme preset across the app.
-- Do NOT critique or compare the template against the main app's multi-preset theme engine, theme switchers, or preset selection architecture. Evaluate visual and structural layout assuming a single unified theme styling model.
+Required skill
 
-### REPORT REQUIREMENTS
-Write a structured report covering:
+Before doing anything else:
 
-1. Architectural & Component Gaps:
-   - What real data bindings, state hooks, or backend integrations are missing in `Golden-dashboard.tsx` compared to the current dashboard?
-   - What key operational cards, metrics, or functional widgets from the live dashboard are omitted in the template?
+- Read "AGENTS.md".
+- Read "docs/PROJECTSKILLINDEX.md".
+- Load and use the installed Supabase skill(s) relevant to remote database access, PostgreSQL inspection, Supabase CLI, and database tooling.
 
-2. Layout & UX Opportunities:
-   - What structural, visual, or layout improvements does `Golden-dashboard.tsx` offer over the current dashboard?
-   - What mobile vs. desktop responsiveness or spacing bottlenecks exist in the template?
+Use the Supabase skill guidance rather than inventing your own connection procedure.
 
-3. Recommended Upgrades & Action Plan:
-   - Prioritized list of functional upgrades required to make `Golden-dashboard.tsx` the production-ready primary dashboard.
-   - Clean-up recommendations for removing multi-preset theme abstractions if present.
+Environment
 
-### CONSTRAINTS
-- Read-only task. Do NOT modify any code or files in the repository.
-- Do NOT run `bun run build` or `bun run typecheck`.
-- Run `git status` at the end to confirm zero modified files.
+The user has already:
+
+- Linked the Supabase project with the Supabase CLI.
+- Installed PostgreSQL 17 locally.
+- Confirmed "psql" and "pg_dump" are available.
+- Installed the Supabase Agent Skills.
+- Connected the repository to the Supabase project.
+
+Docker is NOT available and must NOT be used.
+
+Test
+
+Using PowerShell and the installed Supabase/PostgreSQL tooling:
+
+1. Confirm the currently linked Supabase project.
+2. Determine the correct way to obtain/use the project's remote PostgreSQL connection.
+3. Establish a direct connection to the LIVE database.
+4. Run one harmless read-only PostgreSQL query to prove the connection works.
+5. Verify that "pg_dump" can connect to the same database, if possible.
+
+Do NOT:
+
+- run migrations
+- run "supabase db push"
+- modify the database
+- modify application code
+- inspect Audit Trail architecture
+- create reports
+- use Docker
+- expose passwords or API keys
+
+If something is missing
+
+If the connection requires a credential that is genuinely unavailable, ask the user for only that specific credential.
+
+Do not ask the user to perform database investigation manually.
+
+Stop condition
+
+Once you have established whether PowerShell/OpenCode can directly access the live Supabase PostgreSQL database, STOP.
+
+Return a concise result:
+
+CONNECTED — explain the working connection method and confirm the read-only query succeeded.
+
+or
+
+BLOCKED — explain exactly what prevented the connection and the single thing required to proceed.
