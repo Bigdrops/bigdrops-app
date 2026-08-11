@@ -5,42 +5,30 @@
 -- receipts also depends on clients (stays public) → drop that FK.
 -- wht_receipts are part of the payment aggregate.
 --
--- Run: bun run db:migrate
+-- Compatible with SQL editor (each DO block is self-contained).
 
 BEGIN;
 
 -- ============================================================
--- 1. Resolve tenant
+-- 1. Resolve tenant + create schema if missing
 -- ============================================================
-
-CREATE TEMP TABLE _migration_context AS
-SELECT e.id AS entity_id
-FROM public.entities e
-JOIN public.workspaces w ON w.id = e.workspace_id
-WHERE w.slug = 'bigdrops-main'
-  AND e.entity_type = 'main'
-LIMIT 1;
 
 DO $$
 DECLARE
   v_entity_id UUID;
 BEGIN
-  SELECT entity_id INTO v_entity_id FROM _migration_context;
+  SELECT e.id INTO v_entity_id
+  FROM public.entities e
+  JOIN public.workspaces w ON w.id = e.workspace_id
+  WHERE w.slug = 'bigdrops-main'
+    AND e.entity_type = 'main'
+  LIMIT 1;
+
   IF v_entity_id IS NULL THEN
     RAISE EXCEPTION 'Production entity not found';
   END IF;
+
   RAISE NOTICE 'Tenant entity: %', v_entity_id;
-END $$;
-
--- ============================================================
--- 2. Create tenant schemas if missing
--- ============================================================
-
-DO $$
-DECLARE
-  v_entity_id UUID;
-BEGIN
-  SELECT entity_id INTO v_entity_id FROM _migration_context;
 
   IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = v_entity_id::text) THEN
     EXECUTE format('CREATE SCHEMA %I', v_entity_id::text);
@@ -49,41 +37,46 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 3. Drop cross-schema FKs on tenant side
+-- 2. Drop cross-schema FKs on tenant side
 -- ============================================================
 
--- payments: drop FK to public.invoices
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
-  DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
-  DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey_clone;
+DO $$
+BEGIN
+  -- payments: drop FK to public.invoices
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
+    DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".payments
+    DROP CONSTRAINT IF EXISTS payments_invoice_id_fkey_clone;
 
--- receipts: drop FKs to public.payments, public.invoices, public.clients
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey_clone;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey_clone;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_client_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
-  DROP CONSTRAINT IF EXISTS receipts_client_id_fkey_clone;
+  -- receipts: drop FKs to public.payments, public.invoices, public.clients
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_payment_id_fkey_clone;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_invoice_id_fkey_clone;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_client_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".receipts
+    DROP CONSTRAINT IF EXISTS receipts_client_id_fkey_clone;
 
--- wht_receipts: drop FKs to public.payments, public.invoices
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
-  DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
-  DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey_clone;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
-  DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey;
-ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
-  DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey_clone;
+  -- wht_receipts: drop FKs to public.payments, public.invoices
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
+    DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
+    DROP CONSTRAINT IF EXISTS wht_receipts_payment_id_fkey_clone;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
+    DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey;
+  ALTER TABLE IF EXISTS "entity_bigdrops-main_main".wht_receipts
+    DROP CONSTRAINT IF EXISTS wht_receipts_invoice_id_fkey_clone;
+
+  RAISE NOTICE 'Dropped cross-schema FKs on tenant side';
+END $$;
 
 -- ============================================================
--- 4. Copy data (preserved UUIDs)
+-- 3. Copy data (preserved UUIDs)
 -- ============================================================
 
 -- Payments first (receipts depend on payments)
@@ -145,7 +138,7 @@ FROM public.receipts
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 5. Re-enable triggers on tenant side
+-- 4. Re-enable triggers on tenant side
 -- ============================================================
 
 ALTER TABLE "entity_bigdrops-main_main".payments ENABLE ROW LEVEL SECURITY;
@@ -168,43 +161,48 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 6. Re-add FK constraints on tenant side
+-- 5. Re-add FK constraints on tenant side
 -- ============================================================
 
--- payments → tenant invoices
-ALTER TABLE "entity_bigdrops-main_main".payments
-  ADD CONSTRAINT payments_invoice_id_fkey
-  FOREIGN KEY (invoice_id)
-  REFERENCES "entity_bigdrops-main_main".invoices(id);
+DO $$
+BEGIN
+  -- payments → tenant invoices
+  ALTER TABLE "entity_bigdrops-main_main".payments
+    ADD CONSTRAINT payments_invoice_id_fkey
+    FOREIGN KEY (invoice_id)
+    REFERENCES "entity_bigdrops-main_main".invoices(id);
 
--- wht_receipts → tenant payments
-ALTER TABLE "entity_bigdrops-main_main".wht_receipts
-  ADD CONSTRAINT wht_receipts_payment_id_fkey
-  FOREIGN KEY (payment_id)
-  REFERENCES "entity_bigdrops-main_main".payments(id);
+  -- wht_receipts → tenant payments
+  ALTER TABLE "entity_bigdrops-main_main".wht_receipts
+    ADD CONSTRAINT wht_receipts_payment_id_fkey
+    FOREIGN KEY (payment_id)
+    REFERENCES "entity_bigdrops-main_main".payments(id);
 
--- wht_receipts → tenant invoices
-ALTER TABLE "entity_bigdrops-main_main".wht_receipts
-  ADD CONSTRAINT wht_receipts_invoice_id_fkey
-  FOREIGN KEY (invoice_id)
-  REFERENCES "entity_bigdrops-main_main".invoices(id);
+  -- wht_receipts → tenant invoices
+  ALTER TABLE "entity_bigdrops-main_main".wht_receipts
+    ADD CONSTRAINT wht_receipts_invoice_id_fkey
+    FOREIGN KEY (invoice_id)
+    REFERENCES "entity_bigdrops-main_main".invoices(id);
 
--- receipts → tenant payments
-ALTER TABLE "entity_bigdrops-main_main".receipts
-  ADD CONSTRAINT receipts_payment_id_fkey
-  FOREIGN KEY (payment_id)
-  REFERENCES "entity_bigdrops-main_main".payments(id);
+  -- receipts → tenant payments
+  ALTER TABLE "entity_bigdrops-main_main".receipts
+    ADD CONSTRAINT receipts_payment_id_fkey
+    FOREIGN KEY (payment_id)
+    REFERENCES "entity_bigdrops-main_main".payments(id);
 
--- receipts → tenant invoices
-ALTER TABLE "entity_bigdrops-main_main".receipts
-  ADD CONSTRAINT receipts_invoice_id_fkey
-  FOREIGN KEY (invoice_id)
-  REFERENCES "entity_bigdrops-main_main".invoices(id);
+  -- receipts → tenant invoices
+  ALTER TABLE "entity_bigdrops-main_main".receipts
+    ADD CONSTRAINT receipts_invoice_id_fkey
+    FOREIGN KEY (invoice_id)
+    REFERENCES "entity_bigdrops-main_main".invoices(id);
 
--- NOTE: receipts.client_id FK intentionally omitted — clients stay in public schema.
+  -- NOTE: receipts.client_id FK intentionally omitted — clients stay in public schema.
+
+  RAISE NOTICE 'Re-added FK constraints on tenant side';
+END $$;
 
 -- ============================================================
--- 7. Validate
+-- 6. Validate
 -- ============================================================
 
 DO $$
