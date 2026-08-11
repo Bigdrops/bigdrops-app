@@ -76,7 +76,7 @@ export function useInvoiceDetailData(id) {
       return
     }
     setInvoice(data)
-    setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id) : null)
+    setLinkedProject(data?.project_id ? await fetchProjectSummary(data.project_id, tenantClient) : null)
     const [clientResponse, creatorResponse] = await Promise.all([
       data?.client_id
         ? tenantClient.from('clients').select('*').eq('id', data.client_id).single()

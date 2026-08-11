@@ -47,9 +47,9 @@ export function hasWaybillRelatedDocuments(waybill) {
   return Boolean(waybill?.invoice_id)
 }
 
-export async function fetchProjectSummary(projectId) {
+export async function fetchProjectSummary(projectId, client = supabase) {
   if (!projectId) return null
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('projects')
     .select('id, name')
     .eq('id', projectId)

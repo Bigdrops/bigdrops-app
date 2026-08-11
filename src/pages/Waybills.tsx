@@ -66,7 +66,7 @@ function WaybillsContent() {
 
       const [invoice, project] = await Promise.all([
         activeWaybill.invoice_id ? fetchInvoiceSummary(activeWaybill.invoice_id) : Promise.resolve(null),
-        activeWaybill.project_id ? fetchProjectSummary(activeWaybill.project_id) : Promise.resolve(null),
+        activeWaybill.project_id ? fetchProjectSummary(activeWaybill.project_id, tenantClient) : Promise.resolve(null),
       ])
 
       if (cancelled) return

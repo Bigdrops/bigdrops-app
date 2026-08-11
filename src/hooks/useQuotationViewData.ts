@@ -69,7 +69,7 @@ export function useQuotationViewData() {
         });
         setLinkedProject(
           data.quotation?.project_id
-            ? await fetchProjectSummary(data.quotation.project_id)
+            ? await fetchProjectSummary(data.quotation.project_id, tenantClient)
             : null,
         );
       } catch (err) {
@@ -96,7 +96,7 @@ export function useQuotationViewData() {
     setCustomFields(data.customFields);
     setLinkedProject(
       data.quotation?.project_id
-        ? await fetchProjectSummary(data.quotation.project_id)
+        ? await fetchProjectSummary(data.quotation.project_id, tenantClient)
         : null,
     );
   };

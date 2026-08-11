@@ -14,7 +14,7 @@ import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import type { ProjectRecord } from '@/domain/clientWorkspace'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
@@ -36,6 +36,7 @@ type StatusKey = keyof typeof STATUS_CONFIG
 
 function ProjectsContent() {
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
 
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("projects")
@@ -55,7 +56,7 @@ function ProjectsContent() {
   const handleDelete = async (project: ProjectRow): Promise<void> => {
     try {
       setIsDeleting(true)
-      const { error } = await supabase.from('projects').delete().eq('id', project.id)
+      const { error } = await tenantClient.from('projects').delete().eq('id', project.id)
       if (error) throw error
       invalidateListCache('bd:list:projects:v1:all')
       feedback.success('Project deleted')
@@ -73,7 +74,7 @@ function ProjectsContent() {
   const handleArchive = async (project: ProjectRow): Promise<void> => {
     try {
       setIsArchiving(true)
-      const { error } = await supabase.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
+      const { error } = await tenantClient.from('projects').update({ archived_at: new Date().toISOString() }).eq('id', project.id)
       if (error) throw error
       invalidateListCache('bd:list:projects:v1:all')
       feedback.success('Project archived')

@@ -11,6 +11,7 @@ import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { feedback } from '@/lib/feedback'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
 import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 
 import { useProjectDocumentFetch } from '@/hooks/useProjectDocumentFetch'
 
@@ -35,6 +36,7 @@ import {
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
 
   const {
     project,
@@ -104,7 +106,7 @@ export default function ProjectDetail() {
     // Audit Trail
     try {
       const { recordProjectUpdated, recordProjectNoteAdded, recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
-      const { data: updatedProject } = await supabase.from('projects').select('*').eq('id', id).single()
+      const { data: updatedProject } = await tenantClient.from('projects').select('*').eq('id', id).single()
       
       await recordProjectUpdated(id!)
       
@@ -146,7 +148,7 @@ export default function ProjectDetail() {
       waybill: { table: 'waybills', numberField: 'waybill_number' },
     }
     const selectedConfig = linkConfig[linkType]
-    const { data, error } = (await supabase
+    const { data, error } = (await tenantClient
       .from(selectedConfig.table)
       .select(`id, ${selectedConfig.numberField}, client_id, client_name, project_id` as any)
       .ilike(selectedConfig.numberField, val)
@@ -232,7 +234,7 @@ export default function ProjectDetail() {
       }
       
       // Update audit log for the linked document
-      const { data: updatedDoc } = await supabase.from(selectedConfig.table).select('*').eq('id', data.id).single()
+      const { data: updatedDoc } = await tenantClient.from(selectedConfig.table).select('*').eq('id', data.id).single()
       const fields = selectedConfig.table === 'invoices' ? INVOICE_TRACKED_FIELDS : selectedConfig.table === 'quotations' ? QUOTATION_TRACKED_FIELDS : []
       if (fields.length > 0) {
         await recordAuditLog({
@@ -259,7 +261,7 @@ export default function ProjectDetail() {
   }
 
   const handleDeleteProjectDocument = async (docId: string) => {
-    const { error } = await supabase.from('project_documents').delete().eq('id', docId)
+    const { error } = await tenantClient.from('project_documents').delete().eq('id', docId)
     if (error) {
       feedback.error('Delete failed', { description: error.message })
       return

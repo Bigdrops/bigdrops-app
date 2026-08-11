@@ -21,11 +21,13 @@ import {
 import { feedback } from '@/lib/feedback'
 import { useSettings } from '@/hooks/useSettings'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 
 export default function ProjectDocumentView() {
   const { projectId, documentId } = useParams<{ projectId: string; documentId: string }>()
   const navigate = useNavigate()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const [projectName, setProjectName] = useState('')
   const [documentRecord, setDocumentRecord] = useState<ProjectDocumentRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,8 +38,8 @@ export default function ProjectDocumentView() {
     const load = async () => {
       setLoading(true)
       const [projectResponse, documentResponse] = await Promise.all([
-        supabase.from('projects').select('id, name').eq('id', projectId).single(),
-        supabase.from('project_documents').select('*').eq('id', documentId).eq('project_id', projectId).single(),
+        tenantClient.from('projects').select('id, name').eq('id', projectId).single(),
+        tenantClient.from('project_documents').select('*').eq('id', documentId).eq('project_id', projectId).single(),
       ])
 
       setProjectName(String(projectResponse.data?.name || ''))

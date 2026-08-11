@@ -364,7 +364,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
-          supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
+          tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
 
         const invoices = (invoiceRes.data || [])
@@ -483,7 +483,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           p_end_of_week: endOfWeekIso,
           p_start_of_month: startOfMonthIso,
         }),
-        supabase.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
+        tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
       const invoices = (invoiceRes.data || [])

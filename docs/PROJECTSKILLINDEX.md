@@ -10,12 +10,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 89 skills | General-purpose dev, UI, infra, and Capacitor skills (48 base + 41 from `softaworks/agent-toolkit`) |
+| `.agents/skills/` | 91 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit`) |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
-| `.mimocode/skills/` | 1 skill | Waybill template debugging and investigation |
+| `.mimocode/skills/` | 2 skills | Audit trail investigation and waybill template debugging |
 | `.mimocode/commands/` | 1 command | Type checking verification |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **105 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **106 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 ---
 ## `.agents/skills/`
@@ -69,55 +69,57 @@ General engineering and frontend skills used by coding agents during development
 | 44 | skill-creator | .agents/skills/skill-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\skill-creator\SKILL.md | Author and validate agent skills — metadata, references, packaging, eval preparation |
 | 45 | sqlite-to-fast-sql | .agents/skills/sqlite-to-fast-sql/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\sqlite-to-fast-sql\SKILL.md | Migrate SQLite/Capacitor SQL plugins to @capgo/capacitor-fast-sql — encryption, transactions |
 | 46 | subscription-app-revenue | .agents/skills/subscription-app-revenue/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\subscription-app-revenue\SKILL.md | Revenue playbook for subscription apps — $1K MRR, monetization, ASO, growth loops, pricing |
-| 47 | tailwind-capacitor | .agents/skills/tailwind-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\tailwind-capacitor\SKILL.md | Tailwind CSS in Capacitor apps — mobile-first design, touch targets, safe areas, dark mode, performance |
-| 48 | webapp-to-capacitor | .agents/skills/webapp-to-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\webapp-to-capacitor\SKILL.md | Migrate web app/PWA/SPA to store-ready Capacitor iOS/Android app |
+| 47 | supabase | .agents/skills/supabase/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\supabase\SKILL.md | Supabase platform — Database, Auth, Edge Functions, Realtime, Storage, Vectors, migrations, RLS |
+| 48 | tailwind-capacitor | .agents/skills/tailwind-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\tailwind-capacitor\SKILL.md | Tailwind CSS in Capacitor apps — mobile-first design, touch targets, safe areas, dark mode, performance |
+| 49 | webapp-to-capacitor | .agents/skills/webapp-to-capacitor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\webapp-to-capacitor\SKILL.md | Migrate web app/PWA/SPA to store-ready Capacitor iOS/Android app |
+| 50 | valyu-best-practices | .agents/skills/valyu-best-practices/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\valyu-best-practices\SKILL.md | Complete Valyu API toolkit — real-time search, content extraction, AI-powered answers with citations |
 
 ### Added via `softaworks/agent-toolkit`
 41 net-new skills installed from the toolkit. Duplicates already present elsewhere were skipped: `humanizer` (global `~/.agents/skills/`) and `domain-name-brainstormer` (`.claude/skills/awesome-claude-skills/`).
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
-| 49 | agent-md-refactor | .agents/skills/agent-md-refactor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\agent-md-refactor\SKILL.md | Refactor bloated AGENTS.md/CLAUDE.md instruction files via progressive disclosure — split monoliths into organized, linked docs |
-| 50 | backend-to-frontend-handoff-docs | .agents/skills/backend-to-frontend-handoff-docs/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\backend-to-frontend-handoff-docs\SKILL.md | Create API handoff documentation for frontend integration when backend work is complete |
-| 51 | c4-architecture | .agents/skills/c4-architecture/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\c4-architecture\SKILL.md | Generate C4-model architecture docs as Mermaid diagrams — context, container, component, deployment |
-| 52 | codex | .agents/skills/codex/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\codex\SKILL.md | Run OpenAI Codex CLI (codex exec/resume) for code analysis, refactoring, automated editing (GPT-5.2 default) |
-| 53 | command-creator | .agents/skills/command-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\command-creator\SKILL.md | Create optimized Claude Code slash commands with proper structure and best practices |
-| 54 | commit-work | .agents/skills/commit-work/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\commit-work\SKILL.md | Create high-quality git commits — stage intended changes, split into logical commits, Conventional Commits messages |
-| 55 | crafting-effective-readmes | .agents/skills/crafting-effective-readmes/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\crafting-effective-readmes\SKILL.md | Write/improve README files with templates matched to audience and project type |
-| 56 | daily-meeting-update | .agents/skills/daily-meeting-update/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\daily-meeting-update\SKILL.md | Interactive daily standup generator — pulls GitHub/Jira/session activity, 4-question interview, Markdown update |
-| 57 | database-schema-designer | .agents/skills/database-schema-designer/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\database-schema-designer\SKILL.md | Design scalable SQL/NoSQL schemas — normalization, indexing, migrations, constraints, performance |
-| 58 | datadog-cli | .agents/skills/datadog-cli/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\datadog-cli\SKILL.md | Datadog CLI — search logs, query metrics, trace requests, manage dashboards for production debugging |
-| 59 | dependency-updater | .agents/skills/dependency-updater/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\dependency-updater\SKILL.md | Smart dependency management — auto-detect project type, safe updates, major-version prompts, fix issues |
-| 60 | design-system-starter | .agents/skills/design-system-starter/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\design-system-starter\SKILL.md | Create/evolve design systems — tokens, component architecture, a11y guidelines, documentation |
-| 61 | difficult-workplace-conversations | .agents/skills/difficult-workplace-conversations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\difficult-workplace-conversations\SKILL.md | Structured approach to workplace conflicts and critical feedback — preparation-delivery-followup |
-| 62 | draw-io | .agents/skills/draw-io/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\draw-io\SKILL.md | draw.io diagram creation/editing — .drawio XML, PNG conversion, layout, AWS icons |
-| 63 | excalidraw | .agents/skills/excalidraw/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\excalidraw\SKILL.md | Excalidraw diagram/flowchart operations delegated to subagents to avoid context exhaustion from verbose JSON |
-| 64 | feedback-mastery | .agents/skills/feedback-mastery/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\feedback-mastery\SKILL.md | Deliver constructive feedback — Preparation-Delivery-Follow-up + Situation-Behavior-Impact (SBI) |
-| 65 | frontend-to-backend-requirements | .agents/skills/frontend-to-backend-requirements/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\frontend-to-backend-requirements\SKILL.md | Document frontend data needs / API requirements for backend developers |
-| 66 | game-changing-features | .agents/skills/game-changing-features/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\game-changing-features\SKILL.md | Find 10x product opportunities and high-leverage improvements — strategic product thinking |
-| 67 | gemini | .agents/skills/gemini/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\gemini\SKILL.md | Run Gemini CLI for code/plan review and big-context (>200k) processing (Gemini 3 Pro default) |
-| 68 | gepetto | .agents/skills/gepetto/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\gepetto\SKILL.md | Create sectionized implementation plans via research, interviews, multi-LLM review |
-| 69 | jira | .agents/skills/jira/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\jira\SKILL.md | Jira workflow — create/view/update issues, sprint status, backlog (triggers on issue keys like PROJ-123) |
-| 70 | lesson-learned | .agents/skills/lesson-learned/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\lesson-learned\SKILL.md | Analyze git history to extract software engineering lessons and principles from recent work |
-| 71 | marp-slide | .agents/skills/marp-slide/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marp-slide\SKILL.md | Create Marp presentation slides — 7 themes, custom layouts, image handling, quality improvements |
-| 72 | meme-factory | .agents/skills/meme-factory/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\meme-factory\SKILL.md | Generate memes via memegen.link API — 100+ templates, custom text |
-| 73 | mermaid-diagrams | .agents/skills/mermaid-diagrams/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mermaid-diagrams\SKILL.md | Create software diagrams in Mermaid — class, sequence, flowchart, ERD, C4, state, gantt |
-| 74 | mui | .agents/skills/mui/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mui\SKILL.md | Material-UI v7 patterns — sx prop styling, theme integration, responsive design, MUI hooks |
-| 75 | naming-analyzer | .agents/skills/naming-analyzer/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\naming-analyzer\SKILL.md | Suggest better variable/function/class names based on context and conventions |
-| 76 | openapi-to-typescript | .agents/skills/openapi-to-typescript/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\openapi-to-typescript\SKILL.md | Convert OpenAPI 3.0 JSON/YAML to TypeScript interfaces and type guards |
-| 77 | perplexity | .agents/skills/perplexity/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\perplexity\SKILL.md | Web search/research via Perplexity AI for generic queries (not library docs or workspace questions) |
-| 78 | plugin-forge | .agents/skills/plugin-forge/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\plugin-forge\SKILL.md | Create/manage Claude Code plugins — manifests, components, versioning, marketplace integration |
-| 79 | professional-communication | .agents/skills/professional-communication/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\professional-communication\SKILL.md | Technical communication — email structure, team messaging, meeting agendas, audience adaptation |
-| 80 | qa-test-planner | .agents/skills/qa-test-planner/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\qa-test-planner\SKILL.md | Generate test plans, manual test cases, regression suites, bug reports (Figma MCP integration) |
-| 81 | react-dev | .agents/skills/react-dev/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-dev\SKILL.md | Build React components with TypeScript — type-safe hooks, events, React 18-19, Server Components, routing |
-| 82 | react-useeffect | .agents/skills/react-useeffect/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-useeffect\SKILL.md | useEffect best practices — when NOT to use Effect, derived state, data fetching, synchronization |
-| 83 | reducing-entropy | .agents/skills/reducing-entropy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\reducing-entropy\SKILL.md | Manual-only: minimize total codebase size — bias toward deletion (activate only when requested) |
-| 84 | requirements-clarity | .agents/skills/requirements-clarity/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\requirements-clarity\SKILL.md | Clarify ambiguous requirements before coding — Why? (YAGNI) and Simpler? (KISS) checks |
-| 85 | session-handoff | .agents/skills/session-handoff/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\session-handoff\SKILL.md | Create handoff documents for AI session transfers — solves context exhaustion on long tasks |
-| 86 | ship-learn-next | .agents/skills/ship-learn-next/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ship-learn-next\SKILL.md | Turn learning content (transcripts, articles) into actionable implementation plans |
-| 87 | skill-judge | .agents/skills/skill-judge/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\skill-judge\SKILL.md | Evaluate Agent Skill design quality vs. spec — multi-dimensional scoring, improvement suggestions |
-| 88 | web-to-markdown | .agents/skills/web-to-markdown/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\web-to-markdown\SKILL.md | Convert webpage URLs to clean Markdown via local web2md CLI (explicit-invocation only) |
-| 89 | writing-clearly-and-concisely | .agents/skills/writing-clearly-and-concisely/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\writing-clearly-and-concisely\SKILL.md | Apply Strunk's rules for clearer prose — docs, commits, error messages, UI text |
+| 51 | agent-md-refactor | .agents/skills/agent-md-refactor/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\agent-md-refactor\SKILL.md | Refactor bloated AGENTS.md/CLAUDE.md instruction files via progressive disclosure — split monoliths into organized, linked docs |
+| 52 | backend-to-frontend-handoff-docs | .agents/skills/backend-to-frontend-handoff-docs/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\backend-to-frontend-handoff-docs\SKILL.md | Create API handoff documentation for frontend integration when backend work is complete |
+| 53 | c4-architecture | .agents/skills/c4-architecture/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\c4-architecture\SKILL.md | Generate C4-model architecture docs as Mermaid diagrams — context, container, component, deployment |
+| 54 | codex | .agents/skills/codex/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\codex\SKILL.md | Run OpenAI Codex CLI (codex exec/resume) for code analysis, refactoring, automated editing (GPT-5.2 default) |
+| 55 | command-creator | .agents/skills/command-creator/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\command-creator\SKILL.md | Create optimized Claude Code slash commands with proper structure and best practices |
+| 56 | commit-work | .agents/skills/commit-work/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\commit-work\SKILL.md | Create high-quality git commits — stage intended changes, split into logical commits, Conventional Commits messages |
+| 57 | crafting-effective-readmes | .agents/skills/crafting-effective-readmes/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\crafting-effective-readmes\SKILL.md | Write/improve README files with templates matched to audience and project type |
+| 58 | daily-meeting-update | .agents/skills/daily-meeting-update/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\daily-meeting-update\SKILL.md | Interactive daily standup generator — pulls GitHub/Jira/session activity, 4-question interview, Markdown update |
+| 59 | database-schema-designer | .agents/skills/database-schema-designer/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\database-schema-designer\SKILL.md | Design scalable SQL/NoSQL schemas — normalization, indexing, migrations, constraints, performance |
+| 60 | datadog-cli | .agents/skills/datadog-cli/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\datadog-cli\SKILL.md | Datadog CLI — search logs, query metrics, trace requests, manage dashboards for production debugging |
+| 61 | dependency-updater | .agents/skills/dependency-updater/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\dependency-updater\SKILL.md | Smart dependency management — auto-detect project type, safe updates, major-version prompts, fix issues |
+| 62 | design-system-starter | .agents/skills/design-system-starter/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\design-system-starter\SKILL.md | Create/evolve design systems — tokens, component architecture, a11y guidelines, documentation |
+| 63 | difficult-workplace-conversations | .agents/skills/difficult-workplace-conversations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\difficult-workplace-conversations\SKILL.md | Structured approach to workplace conflicts and critical feedback — preparation-delivery-followup |
+| 64 | draw-io | .agents/skills/draw-io/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\draw-io\SKILL.md | draw.io diagram creation/editing — .drawio XML, PNG conversion, layout, AWS icons |
+| 65 | excalidraw | .agents/skills/excalidraw/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\excalidraw\SKILL.md | Excalidraw diagram/flowchart operations delegated to subagents to avoid context exhaustion from verbose JSON |
+| 66 | feedback-mastery | .agents/skills/feedback-mastery/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\feedback-mastery\SKILL.md | Deliver constructive feedback — Preparation-Delivery-Follow-up + Situation-Behavior-Impact (SBI) |
+| 67 | frontend-to-backend-requirements | .agents/skills/frontend-to-backend-requirements/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\frontend-to-backend-requirements\SKILL.md | Document frontend data needs / API requirements for backend developers |
+| 68 | game-changing-features | .agents/skills/game-changing-features/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\game-changing-features\SKILL.md | Find 10x product opportunities and high-leverage improvements — strategic product thinking |
+| 69 | gemini | .agents/skills/gemini/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\gemini\SKILL.md | Run Gemini CLI for code/plan review and big-context (>200k) processing (Gemini 3 Pro default) |
+| 70 | gepetto | .agents/skills/gepetto/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\gepetto\SKILL.md | Create sectionized implementation plans via research, interviews, multi-LLM review |
+| 71 | jira | .agents/skills/jira/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\jira\SKILL.md | Jira workflow — create/view/update issues, sprint status, backlog (triggers on issue keys like PROJ-123) |
+| 72 | lesson-learned | .agents/skills/lesson-learned/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\lesson-learned\SKILL.md | Analyze git history to extract software engineering lessons and principles from recent work |
+| 73 | marp-slide | .agents/skills/marp-slide/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marp-slide\SKILL.md | Create Marp presentation slides — 7 themes, custom layouts, image handling, quality improvements |
+| 74 | meme-factory | .agents/skills/meme-factory/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\meme-factory\SKILL.md | Generate memes via memegen.link API — 100+ templates, custom text |
+| 75 | mermaid-diagrams | .agents/skills/mermaid-diagrams/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mermaid-diagrams\SKILL.md | Create software diagrams in Mermaid — class, sequence, flowchart, ERD, C4, state, gantt |
+| 76 | mui | .agents/skills/mui/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mui\SKILL.md | Material-UI v7 patterns — sx prop styling, theme integration, responsive design, MUI hooks |
+| 77 | naming-analyzer | .agents/skills/naming-analyzer/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\naming-analyzer\SKILL.md | Suggest better variable/function/class names based on context and conventions |
+| 78 | openapi-to-typescript | .agents/skills/openapi-to-typescript/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\openapi-to-typescript\SKILL.md | Convert OpenAPI 3.0 JSON/YAML to TypeScript interfaces and type guards |
+| 79 | perplexity | .agents/skills/perplexity/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\perplexity\SKILL.md | Web search/research via Perplexity AI for generic queries (not library docs or workspace questions) |
+| 80 | plugin-forge | .agents/skills/plugin-forge/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\plugin-forge\SKILL.md | Create/manage Claude Code plugins — manifests, components, versioning, marketplace integration |
+| 81 | professional-communication | .agents/skills/professional-communication/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\professional-communication\SKILL.md | Technical communication — email structure, team messaging, meeting agendas, audience adaptation |
+| 82 | qa-test-planner | .agents/skills/qa-test-planner/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\qa-test-planner\SKILL.md | Generate test plans, manual test cases, regression suites, bug reports (Figma MCP integration) |
+| 83 | react-dev | .agents/skills/react-dev/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-dev\SKILL.md | Build React components with TypeScript — type-safe hooks, events, React 18-19, Server Components, routing |
+| 84 | react-useeffect | .agents/skills/react-useeffect/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\react-useeffect\SKILL.md | useEffect best practices — when NOT to use Effect, derived state, data fetching, synchronization |
+| 85 | reducing-entropy | .agents/skills/reducing-entropy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\reducing-entropy\SKILL.md | Manual-only: minimize total codebase size — bias toward deletion (activate only when requested) |
+| 86 | requirements-clarity | .agents/skills/requirements-clarity/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\requirements-clarity\SKILL.md | Clarify ambiguous requirements before coding — Why? (YAGNI) and Simpler? (KISS) checks |
+| 87 | session-handoff | .agents/skills/session-handoff/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\session-handoff\SKILL.md | Create handoff documents for AI session transfers — solves context exhaustion on long tasks |
+| 88 | ship-learn-next | .agents/skills/ship-learn-next/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ship-learn-next\SKILL.md | Turn learning content (transcripts, articles) into actionable implementation plans |
+| 89 | skill-judge | .agents/skills/skill-judge/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\skill-judge\SKILL.md | Evaluate Agent Skill design quality vs. spec — multi-dimensional scoring, improvement suggestions |
+| 90 | web-to-markdown | .agents/skills/web-to-markdown/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\web-to-markdown\SKILL.md | Convert webpage URLs to clean Markdown via local web2md CLI (explicit-invocation only) |
+| 91 | writing-clearly-and-concisely | .agents/skills/writing-clearly-and-concisely/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\writing-clearly-and-concisely\SKILL.md | Apply Strunk's rules for clearer prose — docs, commits, error messages, UI text |
 
 ---
 ## `.claude/skills/`
@@ -139,7 +141,8 @@ Specialized agent skills for targeted debugging workflows.
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
+| 1 | audit-trail-investigation | .mimocode/skills/audit-trail-investigation/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\audit-trail-investigation\SKILL.md | Systematically trace audit trail call paths for any BIGDROPS document module — audit gap investigation, wiring verification, silent failure debugging, entity_type whitelist auditing |
+| 2 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
 
 ---
 ## `.opencode/agents/`
@@ -172,10 +175,12 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── redesign-existing-projects/
 │       ├── seo/
 │       ├── shadcn/
+│       ├── supabase/
 │       ├── supabase-postgres-best-practices/
 │       ├── tailwind-css-patterns/
 │       ├── tailwind-v4-shadcn/
 │       ├── typescript-advanced-types/
+│       ├── valyu-best-practices/
 │       ├── vercel-composition-patterns/
 │       ├── vercel-react-best-practices/
 │       └── vite/
@@ -192,6 +197,7 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │   ├── commands/
 │   │   └── typecheck.md
 │   └── skills/
+│       ├── audit-trail-investigation/
 │       └── waybill-template-debug/
 ├── .opencode/
 │   └── agents/          ← 232 subagents → canonical index: docs/SUBAGENTS.md
@@ -200,5 +206,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: July 9, 2026 — added 41 skills from `softaworks/agent-toolkit` (2 duplicates skipped)*
+*Last updated: August 11, 2026 — added `supabase`, `valyu-best-practices`, and `audit-trail-investigation`*
 ```

@@ -190,7 +190,7 @@ function InvoicesContent() {
       }
       const [relatedDocs, project, customFields] = await Promise.all([
         fetchInvoiceChildDocuments(activeInvoice.id),
-        activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id) : Promise.resolve(null),
+        activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id, tenantClient) : Promise.resolve(null),
         loadInvoiceCustomFields(activeInvoice.id, tenantClient),
       ])
       if (cancelled) return

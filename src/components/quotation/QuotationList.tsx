@@ -17,6 +17,7 @@ import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { loadQuotations as fetchQuotationsFromService, loadQuotationById, loadQuotationNumbers, loadQuotationItems, archiveQuotation, deleteQuotation, cloneQuotation } from '@/modules/quotations/services/quotationService'
 import { useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 
 const QUOTATION_CACHE_KEY = 'bd:list:quotations:v1:all'
 const QUOTATION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -51,6 +52,7 @@ import ModuleRowCard from '@/components/layout/ModuleRowCard'
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
 export default function QuotationList() {
+  const { tenantClient } = useEntity()
   const navigate = useNavigate()
   const { settings } = useSettings()
   const { state, patchUpdate, reset, results: quotations, loading } = useDocumentQuery()
@@ -89,7 +91,7 @@ export default function QuotationList() {
         return
       }
 
-      const project = await fetchProjectSummary(activeQuotation.project_id)
+      const project = await fetchProjectSummary(activeQuotation.project_id, tenantClient)
       if (!cancelled) setActiveQuotationProject(project)
     }
 

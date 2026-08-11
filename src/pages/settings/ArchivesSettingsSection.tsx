@@ -89,7 +89,7 @@ export function ArchivesSettingsSection() {
       // Phase 3: invoices are part of the invoice aggregate → tenant.
       tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       tenantClient.from('quotations').select('id, quotation_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('projects').select('id, name, client_name, status, start_date, project_value, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('projects').select('id, name, client_name, status, start_date, project_value, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('csrs').select('id, csr_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       supabase.from('waybills').select('id, waybill_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),

@@ -115,30 +115,30 @@ export function useProjectDocumentFetch(projectId: string | undefined): UseProje
 
     try {
       const [projectRes, invoiceRes, csrRes, quotationRes, waybillRes, financialsRes, projectDocsRes] = await Promise.all([
-        supabase.from('projects').select('*').eq('id', projectId).single(),
+        tenantClient.from('projects').select('*').eq('id', projectId).single(),
         tenantClient
           .from('invoices')
           .select('id, invoice_number, invoice_title, status, total, issue_date, document_type, custom_fields')
           .eq('project_id', projectId)
           .is('archived_at', null)
           .order('issue_date', { ascending: false }),
-        supabase
+        tenantClient
           .from('csrs')
           .select('id, csr_number, title, status, created_at')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false }),
-        supabase
+        tenantClient
           .from('quotations')
           .select('id, quotation_number, status, total, issue_date')
           .eq('project_id', projectId)
           .order('issue_date', { ascending: false }),
-        supabase
+        tenantClient
           .from('waybills')
           .select('id, waybill_number, status, date, created_at, type')
           .eq('project_id', projectId)
           .order('created_at', { ascending: false }),
-        supabase.from('project_financials_v').select('*').eq('project_id', projectId).single(),
-        supabase.from('project_documents').select('*').eq('project_id', projectId).order('created_at', { ascending: false }),
+        tenantClient.from('project_financials_v').select('*').eq('project_id', projectId).single(),
+        tenantClient.from('project_documents').select('*').eq('project_id', projectId).order('created_at', { ascending: false }),
       ])
 
       const projectData = projectRes.data
