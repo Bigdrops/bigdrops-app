@@ -1,0 +1,456 @@
+[1] CORE ARCHITECTURE SUMMARY
+
+Investigate the regression in Invoice global-discount persistence by comparing the current implementation against the repository state approximately 300 commits before HEAD.
+
+IMPORTANT: Do NOT implement another fix yet.
+
+The current situation is:
+
+- General Invoice Edit save persistence is already fixed.
+- The remaining defect is specifically GLOBAL DISCOUNT persistence during Invoice Edit.
+- A user can enter a global discount in the Edit Invoice form.
+- Saving does not reliably preserve/apply that global discount.
+- The discount only started working after the user manually went into Column Manager, enabled the discount column, and entered a row-level discount value.
+- This behavior was NOT how the system previously worked.
+- Therefore the current implementation may contain a regression in the relationship between:
+  - global discount state
+  - column configuration
+  - row-level discount_rate
+  - edit hydration
+  - save payload
+  - invoice item persistence
+  - calculation normalization
+
+The previous forensic investigation concluded that NULL item discount_rate values were being converted to 0 by the invoice save RPC. A migration was created to preserve NULL.
+
+However, that change did NOT restore the historical behavior.
+
+DO NOT assume the previous forensic conclusion is the complete root cause.
+
+The new objective is to identify what changed between the historical implementation and the current implementation.
+
+[2] DECISIONS & RATIONALE
+
+1. Historical behavior is the reference.
+
+The user explicitly reports that global discount worked previously without requiring the Discount column to be enabled or populated through Column Manager.
+
+Therefore current behavior must be compared against historical code rather than repeatedly patching the current implementation based on assumptions.
+
+2. Use approximately 300 commits before HEAD as the historical comparison point.
+
+First determine the repository's current HEAD and commit history.
+
+Use git history to identify the commit approximately 300 commits before HEAD.
+
+Do NOT arbitrarily choose a date or commit message.
+
+Use commit ancestry/count to identify the actual historical commit.
+
+3. Do not modify application code during this investigation.
+
+This is a regression investigation only.
+
+4. Do not modify the database.
+
+Do not apply migrations, backfills, UPDATE statements, or other persistent database changes.
+
+5. Do not reset, rebase, or force-move the user's current branch.
+
+The working tree must remain intact.
+
+If inspecting historical files, use git show / git diff / temporary read-only comparison methods rather than destructive checkout operations.
+
+6. Compare behavior, not merely filenames.
+
+Identify exactly how global discount worked historically and what changed.
+
+7. Treat Column Manager as a major investigation target.
+
+The current behavior strongly suggests that the discount calculation may now depend incorrectly on column configuration.
+
+Determine whether approximately 300 commits ago:
+
+- global discount existed independently of column visibility
+- discount_rate was purely a row-level override
+- NULL represented "inherit global discount"
+- Column Manager only controlled row-level discount-column display/input
+- global discount was stored separately
+- edit hydration populated global discount independently of discount_rate visibility
+- save serialization preserved the distinction between global discount and row-level discount
+
+8. Do not assume the previous RPC fix is sufficient.
+
+Verify the complete chain.
+
+[3] RESOLVED CONFLICTS
+
+There is a conflict between the current implementation's observed behavior and the expected historical product behavior.
+
+Current observed behavior:
+
+- Global discount does not reliably persist/apply unless the discount column is enabled and populated through Column Manager.
+
+Expected historical behavior:
+
+- Global discount should work independently of whether the discount column is enabled.
+- Column Manager's discount column is for per-row discount rates/overrides, not a master switch for the global discount.
+
+The previous investigation focused on NULL → 0 in the RPC.
+
+That explanation is incomplete because preserving NULL did not restore historical behavior.
+
+Therefore the historical implementation must be treated as the authoritative reference for determining the regression.
+
+Do not declare a root cause until the historical/current diff proves the changed behavior.
+
+[4] FINAL CODING PROMPT (EXECUTION-READY)
+
+You are working on the BIGDROPS business platform.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
+
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access. Read AGENTS.md immediately.
+It strictly enforces project fundamentals, locked math/rules, audit-first workflow, skills registry, and standards conformity. Follow it completely.
+====================================================================
+
+A. CONTEXT & OBJECTIVE
+
+Investigate a suspected regression in Invoice global-discount behavior.
+
+The current Invoice Edit flow saves the invoice itself correctly, but a newly entered GLOBAL discount does not reliably persist/apply.
+
+Observed behavior:
+
+1. Open an existing Invoice in Edit mode.
+2. Enter a global discount.
+3. Save.
+4. Reload/view the invoice.
+5. The global discount is missing or not applied.
+
+Unexpected workaround:
+
+- Open Column Manager.
+- Turn the discount column ON.
+- Enter a row-level discount value.
+- Save.
+- The discount then works.
+
+This is NOT expected historical behavior.
+
+The product semantics are:
+
+GLOBAL DISCOUNT:
+- Applies to the invoice/document globally.
+- Must work independently of whether the discount column is enabled.
+- Is not controlled by Column Manager visibility.
+
+ROW-LEVEL DISCOUNT:
+- Uses invoice item.discount_rate.
+- Allows different rows to have different discount rates.
+- Column Manager controls the availability/display of this row-level discount column.
+- A row-level discount value is an override, not the master switch for global discount.
+
+The purpose of this investigation is to determine why the current system requires Column Manager interaction when historically it did not.
+
+DO NOT implement a fix until the historical comparison identifies the regression.
+
+B. REQUIRED HISTORICAL COMPARISON
+
+1. Read AGENTS.md.
+
+2. Load the relevant skills from:
+   docs/PROJECTSKILLINDEX.md
+
+At minimum load the relevant:
+- Supabase skill
+- Supabase Postgres best-practices skill
+- audit/investigation skill
+- relevant TypeScript/financial-calculation skill if listed
+
+3. Determine current HEAD:
+
+git rev-parse HEAD
+
+4. Determine the commit approximately 300 commits before HEAD.
+
+Use git ancestry, for example:
+
+git rev-list --count HEAD
+git rev-list --first-parent HEAD | sed -n '300p'
+
+Do NOT blindly use a timestamp.
+
+Record:
+- current HEAD SHA
+- historical SHA approximately 300 commits before HEAD
+- commit date
+- commit subject
+
+5. Do NOT checkout/reset the branch.
+
+Inspect the historical state read-only using git show, git diff, and equivalent commands.
+
+C. TRACE BOTH VERSIONS
+
+Compare CURRENT HEAD against the historical commit for every part of the global-discount path.
+
+At minimum inspect:
+
+- Invoice Edit form
+- Invoice calculation input state
+- global discount state
+- Column Manager
+- discount column configuration
+- invoice item discount_rate
+- invoice normalization
+- invoice calculation normalization
+- calculation engine
+- invoice hydration
+- invoice save payload
+- invoice save RPC
+- invoice item persistence
+- Invoice View
+- PDF calculation path
+
+Likely files include, but are not limited to:
+
+- src/domain/invoice/calculations.ts
+- src/domain/invoice/normalize.ts
+- src/domain/invoice/columns.ts
+- src/lib/Calculations.ts
+- src/hooks/useInvoiceHydration.ts
+- src/hooks/useInvoiceSave.ts
+- Invoice Edit/Form components
+- Column Manager components
+- invoice save migrations/functions
+- relevant tests
+
+Do not assume these are the only relevant files.
+
+D. REQUIRED QUESTIONS
+
+Answer these questions with code evidence.
+
+1. Approximately 300 commits ago, how was the global discount represented?
+
+2. Approximately 300 commits ago, was global discount independent from Column Manager?
+
+3. Approximately 300 commits ago, what did NULL item.discount_rate mean?
+
+4. Approximately 300 commits ago, what did item.discount_rate = 0 mean?
+
+5. Did the historical save path preserve NULL?
+
+6. Did the historical edit hydration derive global discount from:
+   - persisted invoice.discount
+   - custom_fields.calculationInputs
+   - row-level discount_rate
+   - columnConfig
+   - some combination?
+
+7. Did historical Column Manager state affect whether global discount was calculated?
+
+8. What changed between the historical commit and HEAD that introduced the dependency?
+
+9. Identify the FIRST meaningful commit/change that caused the behavior if possible.
+
+10. Check git history for the relevant symbols/logic, including:
+
+- discountValue
+- discount_rate
+- useGlobalDiscountInput
+- calculationInputs
+- columnConfig
+- visibilityMode
+- hide_full
+- normalizeDocumentInput
+- buildEditableCalculationInputs
+- save_invoice_with_items_transaction
+
+Use git log -S and/or git log -G where useful.
+
+Do not claim a historical mechanism existed unless it is actually present in the repository history.
+
+E. SUPABASE INVESTIGATION
+
+Use the Supabase skills and existing project workflow.
+
+Inspect, read-only:
+
+- deployed save_invoice_with_items_transaction definition
+- relevant invoice table columns
+- relevant invoice_items columns
+- custom_fields
+- calculationInputs
+- discount
+- discount_rate
+
+Use the live database only to establish current persisted behavior.
+
+Do NOT modify live data.
+
+Specifically determine whether the current deployed RPC differs from the repository migration history.
+
+Do not assume the repository migration is the deployed function.
+
+F. TEST CASES
+
+Use these conceptual cases during the comparison:
+
+CASE 1 — Global discount only
+
+- Global discount: 2%
+- Discount column disabled
+- No row-level discount
+- Expected: global 2% discount applies.
+
+CASE 2 — Global discount + row override
+
+- Global discount: 2%
+- Discount column enabled
+- Row A: no override / NULL
+- Row B: explicit row discount
+- Expected: Row A inherits global discount.
+- Row B uses its explicit override.
+
+CASE 3 — Explicit zero override
+
+- Global discount: 2%
+- Row discount_rate = 0
+- Expected: only that row receives 0% if this is the documented engine semantic.
+
+CASE 4 — Global discount edited on an existing invoice
+
+- Existing invoice
+- Enter new global discount
+- Save
+- Reload
+- Expected: global discount remains and applies.
+
+CASE 5 — Column Manager interaction
+
+- Global discount entered.
+- Discount column remains disabled.
+- Save.
+- Expected: global discount still applies.
+
+The critical regression is CASE 5.
+
+G. REQUIRED OUTPUT
+
+Create ONLY a forensic report.
+
+Do not modify application code.
+
+Do not modify migrations.
+
+Do not modify database data.
+
+Report path:
+
+docs/Reports/invoice/edit-invoice-discount-historical-regression.md
+
+The report MUST contain:
+
+1. Objective
+2. Current behavior
+3. Expected historical behavior
+4. Current code path
+5. Historical code path
+6. Historical commit selected
+7. Current vs historical comparison
+8. Exact changed logic
+9. Git commits responsible for the change
+10. Supabase persistence comparison
+11. Root cause
+12. Why Column Manager currently affects global discount
+13. Why the previous NULL → 0 fix was insufficient, if applicable
+14. Minimal recommended fix
+15. Risks
+16. Verification plan
+17. Files inspected
+18. Skills used
+19. Confirmation that no code/database changes were made
+
+The root cause must be expressed as a concrete code-level regression.
+
+Do NOT write a generic statement such as "Column Manager changed the discount behavior."
+
+Identify the exact condition, transformation, or commit that introduced the dependency.
+
+H. VERIFICATION
+
+Because this is an investigation-only task:
+
+- Do NOT run bun run build.
+- Do NOT run database writes.
+- Do NOT run migrations.
+- Do NOT run UPDATE/INSERT/DELETE against Supabase.
+- Do NOT modify application source.
+- Do NOT modify migration files.
+
+Run only safe static investigation commands.
+
+At the end:
+
+- git status before investigation
+- git status after investigation
+- confirm only the requested forensic report was created/modified
+- confirm application source files were not changed
+- confirm no database writes occurred
+
+Do not claim runtime behavior was fixed.
+
+I. REQUIRED BEHAVIOR
+
+Be forensic.
+
+Do not accept the previous report as truth.
+
+Do not accept the current code as correct merely because tests pass.
+
+The user's observed behavior is evidence.
+
+Historical behavior is evidence.
+
+The goal is to identify the regression between the two.
+
+Most importantly:
+
+DO NOT "fix" this by requiring the user to enable the discount column.
+
+DO NOT redefine the Column Manager discount switch as a global-discount switch.
+
+DO NOT remove global discount functionality.
+
+DO NOT modify the calculation engine's explicit row override semantics without historical evidence.
+
+DO NOT make SASINV079/SASINV080-specific changes.
+
+DO NOT perform a data backfill during this investigation.
+
+[5] OPTIONAL NOTES FOR DOWNSTREAM AGENT
+
+Suggested investigation order:
+
+1. Read AGENTS.md.
+2. Load project skills.
+3. Record current HEAD.
+4. Identify the exact ancestor approximately 300 commits back.
+5. Compare global-discount and discount_rate code between the two states.
+6. Search git history for the first introduction of the relevant logic.
+7. Compare Column Manager behavior.
+8. Compare hydration.
+9. Compare save payload.
+10. Compare RPC persistence.
+11. Inspect live Supabase function definition read-only.
+12. Reconstruct the historical and current behavior.
+13. Identify the exact regression commit.
+14. Write the forensic report.
+15. Verify git status and scope.
+
+Do not implement the fix in this task.
