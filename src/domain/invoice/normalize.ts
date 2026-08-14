@@ -269,17 +269,23 @@ export function mapDbInvoice(row: DbInvoice): Invoice {
  * for `vat_rate` / `discount_rate` predates the row-level mechanism, so 0
  * means "inherit" and is healed to null (mirrors `buildQuotationFormState`).
  *
- * Case 2 - documents WITH persisted calculation inputs and a non-zero
- * persisted global discount: rows stored as 0 were corrupted by the Aug 2026
- * invoice save RPC COALESCE, which coerced NULL to 0 for inheriting rows.
- * The 0 is healed to null so the row inherits the global discount. Documents
- * without a persisted global discount keep explicit 0 (0 stays a deliberate
- * row override).
+ * Case 2 - documents WITH persisted calculation inputs: rows stored as 0
+ * were corrupted by the Aug 2026 invoice save RPC COALESCE, which coerced
+ * NULL to 0 for inheriting rows. The coercion applied to every inheriting
+ * row regardless of the persisted global discount value, so the 0 is healed
+ * to null unconditionally and the row inherits the global discount. The
+ * global discount field must work independently of row-level values, so
+ * healing cannot depend on the persisted discount being non-zero: a user may
+ * type a discount in Edit on an invoice that was saved without one.
+ *
+ * Explicit non-zero row overrides are always preserved. Explicit 0 can only
+ * be distinguished from RPC corruption on invoices saved outside the
+ * composite RPC; the discount_rate column is hidden by default, so deliberate
+ * 0 overrides are rare and re-settable.
  */
 export function healLegacyCalculationOverrides(
   item: InvoiceItem,
   hasSavedCalculationInputs: boolean,
-  persistedGlobalDiscount?: number | null,
 ): InvoiceItem {
   if (!hasSavedCalculationInputs) {
     return {
@@ -288,17 +294,10 @@ export function healLegacyCalculationOverrides(
       discount_rate: item.discount_rate === 0 ? null : item.discount_rate,
     }
   }
-  if (
-    persistedGlobalDiscount !== undefined &&
-    persistedGlobalDiscount !== null &&
-    Number(persistedGlobalDiscount) > 0
-  ) {
-    return {
-      ...item,
-      discount_rate: item.discount_rate === 0 ? null : item.discount_rate,
-    }
+  return {
+    ...item,
+    discount_rate: item.discount_rate === 0 ? null : item.discount_rate,
   }
-  return item
 }
 
 export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {

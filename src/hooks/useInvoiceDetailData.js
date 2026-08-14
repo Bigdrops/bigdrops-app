@@ -11,7 +11,7 @@ import {
 } from '@/lib/native/invoiceCache'
 import { fetchInvoiceChildDocuments, fetchProjectSummary } from '@/domain/documentRelationships'
 import { fetchSettings, normalizeSettings } from '@/hooks/useSettings'
-import { mapDbInvoiceItem } from '@/domain/invoice'
+import { healLegacyCalculationOverrides, mapDbInvoiceItem } from '@/domain/invoice'
 import { deriveAdvanceInvoiceProjection } from '@/domain/invoice/advanceProjection.rules'
 import { calculateInvoiceFinancialState } from '@/domain/invoice/financialState'
 
@@ -150,8 +150,13 @@ export function useInvoiceDetailData(id) {
       throw itemsError
     }
 
+    // Heal rows stored as discount_rate 0, mirroring the edit-form hydration
+    // (healLegacyCalculationOverrides). Invoices saved through the composite
+    // RPC before 2026-08-14 coerced NULL to 0 for inheriting rows, which the
+    // engine reads as explicit zero overrides. Healing makes the rows inherit
+    // the global discount so the view, PDF, and CSV match the quotation path.
     const loaded = (data || []).map((item) => ({
-      ...mapDbInvoiceItem(item),
+      ...healLegacyCalculationOverrides(mapDbInvoiceItem(item), true),
     }))
     setItems(loaded)
   }, [id, tenantClient])

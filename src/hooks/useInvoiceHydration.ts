@@ -112,18 +112,16 @@ export function useInvoiceHydration(
       // as 0 are healed to null so they inherit the global discount:
       // 1. Legacy documents without persisted calculation inputs heal both
       //    vat_rate and discount_rate.
-      // 2. Documents with a persisted non-zero global discount heal rows whose
-      //    discount_rate 0 was written by the Aug 2026 save RPC COALESCE.
-      // Explicit 0 is kept when no global discount is persisted.
+      // 2. Documents with persisted calculation inputs heal discount_rate 0
+      //    rows written by the Aug 2026 save RPC COALESCE. The heal does not
+      //    depend on the persisted global discount value: the global discount
+      //    field must work independently of row-level values, and a user may
+      //    type a discount in Edit on an invoice that was saved without one.
       const hasSavedCalculationInputs = Boolean(
         parsedCustomFields && !Array.isArray(parsedCustomFields) && parsedCustomFields.calculationInputs,
       )
-      const persistedGlobalDiscount =
-        parsedCustomFields && !Array.isArray(parsedCustomFields)
-          ? (parsedCustomFields.calculationInputs as { discountValue?: unknown } | undefined)?.discountValue as number | undefined
-          : undefined
       const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) =>
-        healLegacyCalculationOverrides(mapDbInvoiceItem(item), hasSavedCalculationInputs, persistedGlobalDiscount),
+        healLegacyCalculationOverrides(mapDbInvoiceItem(item), hasSavedCalculationInputs),
       )
       const legacyCalculationState = inferLegacyCalculationState({
         invoice: data,
