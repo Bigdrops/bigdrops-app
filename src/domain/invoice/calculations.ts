@@ -168,9 +168,18 @@ export function inferLegacyCalculationState({
   const useGlobalVatInput = standardItems.some(
     (item) => item.vat_rate === null || item.vat_rate === undefined,
   )
-  const useGlobalDiscountInput = standardItems.some(
-    (item) => item.discount_rate === null || item.discount_rate === undefined,
-  )
+  // The global discount is independent of row-level discount overrides.
+  // When the document persisted calculation inputs, calculationInputs.discountValue
+  // is the authoritative global discount and must hydrate regardless of row rates.
+  // Only documents without persisted calculation inputs fall back to the legacy
+  // row heuristic, because rate inference from totals is unreliable there.
+  const savedDiscountValue = customFields?.calculationInputs?.discountValue
+  const useGlobalDiscountInput =
+    savedDiscountValue !== undefined && savedDiscountValue !== null
+      ? true
+      : standardItems.some(
+          (item) => item.discount_rate === null || item.discount_rate === undefined,
+        )
 
   return {
     calculationInputs,
