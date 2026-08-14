@@ -2,33 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Reprise — Catalog Royalty Bond</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<title>BIGDROPS — Business Operations Terminal</title>
 
-<!-- ============================================================
-     REPRISE — GOLDEN-HOUR FINANCE DASHBOARD (standalone showcase)
-     Spec: docs/TEMPLATES/Designsdotmds/reprise.md
-     Light warm-paper theme by default. Dark mode is an optional
-     bonus toggle (top bar, moon icon) that swaps the CSS tokens.
-     ============================================================ -->
-
-<!-- Real Google Fonts: JetBrains Mono (brand/data voice) + Inter (UI/body voice) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
-/* ============================================================
-   1. TOKENS — copied verbatim from reprise.md "Quick Start"
-   ============================================================ */
+/* ============ BIGDROPS DESIGN SYSTEM TOKENS ============ */
 :root {
-  /* Colors */
   --color-canvas: #FAFAF9;
   --color-surface-card: #FFFFFF;
-  --color-surface-inset: #F7F5F1;
-  --color-border-subtle: #E8E5DF;
-  --color-border-strong: #DBD7CF;
-  --color-divider-dashed: #E4E1DA;
+  --color-surface-inset: #F4F2EE;
+  --color-border-subtle: #E6E3DC;
+  --color-border-strong: #D8D4CC;
+  --color-divider-dashed: #E2DFD7;
   --color-ink-900: #18181B;
   --color-ink-600: #5C5A55;
   --color-ink-500: #71717A;
@@ -36,1067 +25,39 @@
   --color-gold-700: #B4770F;
   --color-gold-500: #D9962B;
   --color-gold-400: #E8B33C;
+  --color-gold-300: #F3BD48;
   --color-ink-button: #18181B;
   --color-success-500: #22C55E;
   --color-success-600: #16A34A;
-  --color-lime-500: #84CC16;
   --color-danger-500: #EF4444;
-  --color-chart-neutral: #E5E7EB;
-  --color-chip-bg: #EFEDE8;
-
-  /* Typography */
-  --font-sans: "Inter", "SF Pro", "Geist", system-ui, sans-serif;
+  --color-chip-bg: #EFECE6;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "Space Mono", "IBM Plex Mono", ui-monospace, monospace;
-  --text-hero: 700 28px/1.15 var(--font-mono);
-  --text-metric-xl: 700 26px/1.1 var(--font-mono);
-  --text-metric-l: 700 22px/1.15 var(--font-mono);
-  --text-title: 600 15px/1.4 var(--font-sans);
-  --text-nav: 500 14px/1.4 var(--font-sans);
-  --text-body: 400 13px/1.45 var(--font-sans);
-  --text-caption: 400 12px/1.5 var(--font-sans);
-  --text-micro: 500 11px/1.2 var(--font-mono);
-
-  /* Spacing (base 4px) */
-  --spacing-1: 4px; --spacing-2: 8px; --spacing-3: 12px;
-  --spacing-4: 16px; --spacing-5: 20px; --spacing-6: 24px;
-  --spacing-8: 32px; --spacing-10: 40px;
-
-  /* Radius */
-  --radius-frame: 22px; --radius-hero: 18px; --radius-card: 16px;
-  --radius-panel: 11px; --radius-control: 9px; --radius-chip: 6px;
+  --radius-frame: 18px;
+  --radius-hero: 14px;
+  --radius-card: 14px;
+  --radius-panel: 10px;
+  --radius-control: 8px;
+  --radius-chip: 5px;
   --radius-full: 999px;
-
-  /* Effects */
   --gradient-gold-tile: linear-gradient(135deg, #F3BD48, #D9962B);
-  --gradient-hero: linear-gradient(90deg, #B4770F 0%, #D9962B 45%, rgba(217,150,43,0) 100%);
-  --micro-tracking: .06em;
+  --shadow-card: 0 1px 3px rgba(24, 24, 27, 0.04), 0 4px 12px rgba(24, 24, 27, 0.02);
+  --shadow-frame: 0 16px 40px rgba(24, 24, 27, 0.08);
 
-  /* Soft elevation (hairline-first, per spec) */
-  --shadow-card: 0 1px 2px rgba(24, 24, 27, .04), 0 4px 14px rgba(24, 24, 27, .04);
-  --shadow-frame: 0 24px 60px rgba(90, 60, 10, .28), 0 4px 16px rgba(90, 60, 10, .12);
-
-  /* Dark-mode overrides (warm dark paper; wallpaper stays photographic) */
-  --dark-canvas: #1B1A18;
-  --dark-card: #24221F;
-  --dark-inset: #2A2824;
-  --dark-border-subtle: #35332E;
-  --dark-border-strong: #47443D;
-  --dark-dash: #3A3731;
+  /* Dark Mode */
+  --dark-canvas: #161514;
+  --dark-card: #1E1D1B;
+  --dark-inset: #262421;
+  --dark-border-subtle: #312E2A;
+  --dark-border-strong: #423E38;
+  --dark-dash: #36332E;
   --dark-ink-900: #F4F1EA;
   --dark-ink-600: #B8B2A6;
   --dark-ink-500: #948E82;
   --dark-ink-400: #6F6A60;
-  --dark-chip-bg: #302E29;
-  --dark-chart-neutral: #37342F;
+  --dark-chip-bg: #2B2925;
 }
 
-/* ============================================================
-   2. BASE
-   ============================================================ */
-*, *::before, *::after { box-sizing: border-box; }
-
-html, body { margin: 0; padding: 0; }
-
-body {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-ink-600);
-  background: #B97A2E; /* warm fallback beneath the wallpaper photo */
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-a { color: inherit; text-decoration: none; }
-
-ul { list-style: none; margin: 0; padding: 0; }
-
-button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-
-/* The `hidden` attribute must win over any class-set display */
-[hidden] { display: none !important; }
-
-/* Keyboard focus — visible ring on every interactive element */
-:focus-visible {
-  outline: 2px solid var(--color-gold-500);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-body.dark :focus-visible { outline-color: var(--color-gold-400); }
-
-.visually-hidden {
-  position: absolute; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-}
-
-/* ============================================================
-   3. WALLPAPER — full-bleed golden-hour photographic canvas
-   ============================================================ */
-.wallpaper {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  /* PLACEHOLDER: swap the Unsplash golden-hour field photo for the brand's
-     painterly golden field-and-sky illustration. The gradient layers
-     keep the warm ambience if the image is unreachable offline. */
-  background:
-    linear-gradient(180deg, rgba(232, 179, 60, .34) 0%, rgba(217, 150, 43, .18) 45%, rgba(120, 70, 12, .40) 100%),
-    url("https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=1800&q=80") center / cover no-repeat,
-    linear-gradient(135deg, #E8B33C 0%, #B4770F 60%, #7A4A08 100%);
-}
-
-body.dark .wallpaper { filter: brightness(.72) saturate(1.05); }
-
-/* ============================================================
-   4. APP FRAME — rounded white panel floating over the wallpaper
-   ============================================================ */
-.app-frame {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  width: calc(100% - 48px);
-  max-width: 1480px;
-  height: calc(100vh - 48px);
-  min-height: 640px;
-  margin: 24px auto;
-  border-radius: var(--radius-frame);
-  background: linear-gradient(180deg, var(--color-canvas) 0%, #F8F7F4 100%);
-  border: 1px solid rgba(255, 255, 255, .55);
-  box-shadow: var(--shadow-frame);
-  overflow: hidden;
-}
-
-/* ---- Sidebar ---- */
-.sidebar {
-  width: 264px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-  border-right: 1px solid var(--color-border-subtle);
-  transition: width .22s ease;
-}
-
-.app-frame.collapsed .sidebar { width: 76px; }
-
-.sidebar-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 20px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-/* Brand row */
-.brand-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 4px;
-}
-.brand-orb {
-  width: 30px; height: 30px;
-  border-radius: 9px;
-  background: var(--gradient-gold-tile);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
-}
-.brand-orb::after {
-  content: "";
-  width: 12px; height: 12px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, .92);
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-}
-.brand-wordmark {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 18px;
-  line-height: 1.2;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-}
-.brand-collapse {
-  margin-left: auto;
-  width: 32px; height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-panel);
-  color: var(--color-ink-500);
-  transition: background .15s ease, color .15s ease;
-}
-.brand-collapse:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
-.app-frame.collapsed .brand-wordmark { display: none; }
-.app-frame.collapsed .brand-row { justify-content: center; }
-.app-frame.collapsed .brand-collapse { margin-left: 0; transform: rotate(180deg); }
-
-/* Search */
-.sidebar-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 10px;
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-panel);
-  color: var(--color-ink-400);
-  transition: border-color .15s ease;
-}
-.sidebar-search:focus-within { border-color: var(--color-border-strong); }
-.sidebar-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--color-ink-900);
-}
-.sidebar-search input::placeholder { color: var(--color-ink-400); }
-.keycap {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: .02em;
-  color: var(--color-ink-500);
-  background: var(--color-chip-bg);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-chip);
-  padding: 2px 5px;
-  white-space: nowrap;
-}
-.app-frame.collapsed .sidebar-search { justify-content: center; padding: 0; border: 0; background: transparent; }
-.app-frame.collapsed .sidebar-search input,
-.app-frame.collapsed .sidebar-search .keycap { display: none; }
-
-/* Nav */
-.nav-list { display: flex; flex-direction: column; gap: 2px; }
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: var(--radius-control);
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-ink-600);
-  text-align: left;
-  transition: background .15s ease, color .15s ease;
-}
-.nav-item:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
-.nav-item .nav-icon {
-  width: 20px; height: 20px;
-  flex-shrink: 0;
-  color: var(--color-ink-500);
-  transition: color .15s ease;
-}
-.nav-item:hover .nav-icon { color: var(--color-ink-900); }
-
-/* Active nav item: dark filled rounded-square icon, inverted icon */
-.nav-item.active {
-  color: var(--color-ink-900);
-  background: var(--color-surface-inset);
-}
-.nav-item.active .nav-icon {
-  width: 34px; height: 34px;
-  margin: -7px -2px -7px -7px;
-  padding: 7px;
-  border-radius: 9px;
-  background: var(--color-ink-button);
-  color: #FFFFFF;
-}
-
-.nav-badge {
-  margin-left: auto;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-full);
-  background: var(--color-chip-bg);
-  color: var(--color-ink-600);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-}
-
-/* Expanded sub-tree (Markets → Equities / Bonds) */
-.nav-subtree {
-  margin: 2px 0 2px 23px;
-  padding-left: 14px;
-  border-left: 1px solid var(--color-border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.nav-subitem {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: var(--radius-control);
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--color-ink-500);
-  text-align: left;
-  transition: background .15s ease, color .15s ease;
-}
-.nav-subitem::before {
-  content: "";
-  position: absolute;
-  left: -14px;
-  top: 50%;
-  width: 7px; height: 7px;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  background: var(--color-border-strong);
-  transition: background .15s ease;
-}
-.nav-subitem:hover { color: var(--color-ink-900); }
-.nav-subitem:hover::before { background: var(--color-gold-500); }
-.nav-subitem.active { color: var(--color-ink-900); }
-.nav-subitem.active::before { background: var(--color-gold-500); }
-
-.app-frame.collapsed .nav-item span,
-.app-frame.collapsed .nav-item .nav-badge,
-.app-frame.collapsed .nav-subtree { display: none; }
-.app-frame.collapsed .nav-item { justify-content: center; padding: 8px 0; }
-.app-frame.collapsed .nav-item.active .nav-icon { margin: 0; width: 34px; height: 34px; padding: 7px; }
-
-/* Trial / upgrade card */
-.trial-card {
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: var(--color-surface-card);
-}
-.trial-top { display: flex; align-items: center; gap: 10px; }
-.trial-tile {
-  width: 34px; height: 34px;
-  border-radius: 10px;
-  background: var(--gradient-gold-tile);
-  display: grid;
-  place-items: center;
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
-}
-/* thin gold waveform ornament */
-.waveform { display: flex; align-items: center; gap: 3px; height: 18px; margin-left: auto; }
-.waveform i {
-  display: block;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--gradient-gold-tile);
-}
-.trial-title {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-ink-900);
-}
-.trial-copy {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--color-ink-500);
-}
-.btn-dark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: var(--radius-control);
-  background: var(--color-ink-button);
-  color: #FFFFFF;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  transition: opacity .15s ease, transform .15s ease;
-}
-.btn-dark:hover { opacity: .9; }
-.btn-dark:active { transform: translateY(1px); }
-.app-frame.collapsed .trial-card { display: none; }
-
-/* Sidebar footer: settings / help / user */
-.sidebar-footer { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
-.app-frame.collapsed .sidebar-footer { align-items: center; }
-.app-frame.collapsed .sidebar-footer .nav-item span { display: none; }
-
-.user-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  padding: 10px 8px;
-  border-top: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-panel);
-}
-.avatar {
-  width: 32px; height: 32px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-gold-tile);
-  color: #FFFFFF;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 12px;
-  flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
-}
-.user-meta { min-width: 0; }
-.user-name {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-email {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  color: var(--color-ink-400);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-row svg { margin-left: auto; color: var(--color-ink-400); flex-shrink: 0; }
-.app-frame.collapsed .user-meta, .app-frame.collapsed .user-row svg { display: none; }
-.app-frame.collapsed .user-row { justify-content: center; border-top: 0; }
-
-/* ============================================================
-   5. MAIN — top bar + workspace
-   ============================================================ */
-.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-
-.topbar {
-  height: 56px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
-  backdrop-filter: blur(6px);
-}
-
-/* Breadcrumb: mono uppercase, current page in a bordered pill */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: var(--micro-tracking);
-  text-transform: uppercase;
-  color: var(--color-ink-400);
-  white-space: nowrap;
-}
-.breadcrumb .crumb-pill {
-  padding: 4px 10px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-full);
-  color: var(--color-ink-900);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.topbar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.icon-btn {
-  position: relative;
-  width: 34px; height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-panel);
-  color: var(--color-ink-500);
-  transition: background .15s ease, color .15s ease;
-}
-.icon-btn:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
-.icon-btn .pip {
-  position: absolute;
-  top: 8px; right: 8px;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--color-danger-500);
-  border: 1.5px solid var(--color-canvas);
-}
-.menu-btn { display: none; } /* shown < 1024px */
-
-/* "Ask ReprAI" — signature near-black pill, sparkle icon */
-.btn-ai {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 14px;
-  margin-left: 4px;
-  border-radius: var(--radius-full);
-  background: var(--color-ink-button);
-  color: #FFFFFF;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  white-space: nowrap;
-  transition: opacity .15s ease, transform .15s ease;
-}
-.btn-ai:hover { opacity: .9; }
-.btn-ai:active { transform: translateY(1px); }
-
-/* ============================================================
-   6. WORKSPACE — center column + right insight rail
-   ============================================================ */
-.workspace {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 316px;
-  gap: 20px;
-  padding: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-strong) transparent;
-}
-.workspace::-webkit-scrollbar { width: 8px; }
-.workspace::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
-.workspace::-webkit-scrollbar-track { background: transparent; }
-
-.content-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.rail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-
-/* Generic card shell */
-.card {
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-}
-.card-pad { padding: 20px; }
-
-/* Micro-header: mono uppercase with optional leading icon */
-.micro-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: var(--micro-tracking);
-  text-transform: uppercase;
-  color: var(--color-ink-900);
-}
-.micro-header svg { color: var(--color-ink-500); }
-
-/* Card title (sans, semibold) */
-.card-title {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--color-ink-900);
-}
-
-/* ============================================================
-   7. HERO BANNER
-   ============================================================ */
-.hero {
-  position: relative;
-  height: 232px;
-  border-radius: var(--radius-hero);
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.35);
-  box-shadow: var(--shadow-card);
-  isolation: isolate;
-}
-/* PLACEHOLDER: right-anchored golden-hour portrait. Swap the URL for
-   the brand's amber-washed artist portrait. The warm wash layers keep
-   the amber ambience if the photo is unreachable offline. */
-.hero-photo {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(214,148,51,.18), rgba(120,70,12,.28)),
-    url("https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1000&q=80") center / cover no-repeat,
-    linear-gradient(120deg, #E8B33C, #B4770F);
-}
-/* Left-to-right gold gradient overlay for text legibility */
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-hero);
-  z-index: 1;
-}
-.hero-content {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  padding: 28px 32px;
-  max-width: 58%;
-}
-.hero-title {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 28px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: #FFFFFF;
-  margin: 0;
-}
-.hero-subtitle {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 11px;
-  letter-spacing: var(--micro-tracking);
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, .88);
-}
-/* Glass tag pills — translucent white, white stroke, backdrop blur */
-.hero-tags {
-  position: absolute;
-  left: 28px;
-  bottom: 18px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 78%;
-}
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, .14);
-  border: 1px solid rgba(255, 255, 255, .35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: #FFFFFF;
-  white-space: nowrap;
-}
-.tag-pill svg { color: rgba(255, 255, 255, .85); }
-
-/* ============================================================
-   8. KPI STRIP
-   ============================================================ */
-.kpi-strip {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-}
-.kpi {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.kpi + .kpi { border-left: 1px solid var(--color-border-subtle); }
-.kpi-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: var(--micro-tracking);
-  text-transform: uppercase;
-  color: var(--color-ink-400);
-}
-.kpi-value {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-}
-.kpi-status { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
-.status-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--color-success-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success-500) 18%, transparent);
-}
-
-/* ============================================================
-   9. 2-UP ROWS
-   ============================================================ */
-.pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-}
-
-/* --- Royalty calendar --- */
-.royalty-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-.metric-l {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--color-ink-900);
-}
-.micro-muted {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: var(--micro-tracking);
-  text-transform: uppercase;
-  color: var(--color-ink-400);
-  white-space: nowrap;
-}
-.tile-grid {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.tile {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface-card);
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.tile:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-card); }
-.tile-icon {
-  width: 36px; height: 36px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  background: var(--gradient-gold-tile);
-  display: grid;
-  place-items: center;
-  color: #FFFFFF;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
-}
-.tile-label {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tile-pct {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-ink-600);
-  white-space: nowrap;
-}
-
-/* --- Upcoming coupons --- */
-.coupon-list { margin-top: 8px; }
-.coupon-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  padding: 8px 4px;
-  border-bottom: 1px dashed var(--color-divider-dashed);
-  transition: background .15s ease;
-}
-.coupon-row:hover { background: var(--color-surface-inset); }
-.coupon-row:last-child { border-bottom: 0; }
-.coupon-date {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--color-ink-600);
-}
-.coupon-date .year { color: var(--color-ink-400); font-weight: 400; }
-.coupon-amount {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: -0.01em;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-}
-
-/* --- Catalog performance chart --- */
-.perf-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.trend-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 9px;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-lime-500) 14%, transparent);
-  color: var(--color-success-600);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-}
-.histogram {
-  margin-top: 22px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  height: 108px;
-}
-.hist-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-}
-.hist-bar {
-  width: 100%;
-  max-width: 44px;
-  border-radius: 6px 6px 3px 3px;
-  background: var(--color-chart-neutral);
-  transition: filter .15s ease;
-}
-.hist-col:hover .hist-bar { filter: brightness(.96); }
-.hist-bar.featured {
-  background: linear-gradient(180deg, #F3BD48, #D9962B);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
-}
-.hist-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--color-ink-400);
-}
-.hist-col.featured .hist-label { color: var(--color-gold-700); }
-
-/* --- Use of funds --- */
-.funds-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.allocation-bar {
-  display: flex;
-  gap: 3px;
-  height: 12px;
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-.allocation-bar i { display: block; height: 100%; }
-.legend { margin-top: 16px; display: flex; flex-direction: column; }
-.legend-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 34px;
-  border-bottom: 1px dashed var(--color-divider-dashed);
-}
-.legend-row:last-child { border-bottom: 0; }
-.legend-dot { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
-.legend-label {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--color-ink-600);
-}
-.legend-pct {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-ink-900);
-  white-space: nowrap;
-}
-
-/* ============================================================
-   10. RIGHT INSIGHT RAIL
-   ============================================================ */
-/* Tab bar */
-.tabbar {
-  display: flex;
-  gap: 2px;
-  padding: 4px;
-  background: var(--color-surface-inset);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-panel);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabbar::-webkit-scrollbar { display: none; }
-.tab {
-  flex: 1;
-  min-width: max-content;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--color-ink-500);
-  transition: background .15s ease, color .15s ease;
-}
-.tab:hover { color: var(--color-ink-900); }
-.tab.active {
-  background: var(--color-surface-card);
-  color: var(--color-ink-900);
-  box-shadow: 0 1px 2px rgba(24,24,27,.06);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1.5px;
-}
-
-/* Bond details / risk overview — key-value grids */
-.kv-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  column-gap: 16px;
-  row-gap: 11px;
-  margin-top: 14px;
-}
-.kv-key {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--color-ink-500);
-}
-.kv-value {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-ink-900);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.risk-headline {
-  margin-top: 14px;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--color-ink-900);
-}
-
-/* AI credit signal */
-.ai-score {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 14px;
-}
-.ai-score .micro-muted { font-size: 10px; }
-.ai-bar {
-  margin-top: 10px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-inset);
-  border: 1px solid var(--color-border-subtle);
-  overflow: hidden;
-}
-.ai-bar i {
-  display: block;
-  height: 100%;
-  width: 82%;
-  border-radius: inherit;
-  background: var(--color-lime-500);
-}
-.driver-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-chip-bg);
-  border: 1px solid var(--color-border-subtle);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-ink-600);
-  white-space: nowrap;
-}
-
-/* Est. annual income CTA */
-.cta-card { padding: 20px; }
-.cta-metric {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-.cta-metric .metric-xl { font-size: 26px; }
-.btn-row { display: flex; gap: 10px; margin-top: 16px; }
-.btn-row .btn-dark { width: auto; flex: 1; }
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  flex: 1;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-border-strong);
-  color: var(--color-ink-900);
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 13px;
-  white-space: nowrap;
-  transition: background .15s ease, border-color .15s ease;
-}
-.btn-outline:hover { background: var(--color-surface-inset); border-color: var(--color-ink-400); }
-.btn-outline svg { color: var(--color-gold-500); }
-
-/* Tab panels for non-Overview tabs */
-.rail-panel-note {
-  margin-top: 14px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--color-ink-500);
-  line-height: 1.5;
-}
-
-/* ============================================================
-   11. DARK MODE — optional; swaps tokens to warm dark paper
-   ============================================================ */
 body.dark {
   --color-canvas: var(--dark-canvas);
   --color-surface-card: var(--dark-card);
@@ -1109,586 +70,1232 @@ body.dark {
   --color-ink-500: var(--dark-ink-500);
   --color-ink-400: var(--dark-ink-400);
   --color-chip-bg: var(--dark-chip-bg);
-  --color-chart-neutral: var(--dark-chart-neutral);
-  --shadow-card: 0 1px 2px rgba(0,0,0,.4);
-  --shadow-frame: 0 24px 60px rgba(0,0,0,.55);
-}
-body.dark .app-frame { border-color: rgba(255,255,255,.06); }
-body.dark .tab.active { box-shadow: 0 1px 2px rgba(0,0,0,.5); }
-
-/* ============================================================
-   12. RESPONSIVE
-   ============================================================ */
-@media (max-width: 1220px) {
-  .workspace { grid-template-columns: minmax(0, 1fr) 292px; }
-  .kpi-strip { grid-template-columns: repeat(3, 1fr); }
-  .kpi:nth-child(4) { border-left: 0; }
-  .kpi:nth-child(n+4) { border-top: 1px solid var(--color-border-subtle); }
 }
 
-@media (max-width: 1024px) {
-  .menu-btn { display: grid; }
+/* ============ BASE & RESET ============ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink-600);
+  background: #ECE8E1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+  position: relative;
+  transition: background 0.25s ease;
+}
+body.dark { background: #0E0D0C; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+[hidden] { display: none !important; }
+
+/* ============ APP FRAME ============ */
+.app-frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: calc(100% - 24px);
+  max-width: 1540px;
+  height: calc(100vh - 24px);
+  margin: 12px auto;
+  border-radius: var(--radius-frame);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-frame);
+  overflow: hidden;
+}
+.sidebar-backdrop {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(18, 18, 20, 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.sidebar-backdrop.active { opacity: 1; pointer-events: auto; }
+
+/* ============ SIDEBAR ============ */
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border-subtle);
+  background: var(--color-canvas);
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s ease;
+  z-index: 85;
+}
+.app-frame.collapsed .sidebar { width: 72px; }
+.sidebar-header {
+  padding: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 56px;
+}
+.brand-block { display: flex; align-items: center; gap: 10px; }
+.brand-orb {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--gradient-gold-tile);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.brand-orb::after {
+  content: "";
+  width: 11px; height: 11px;
+  border-radius: 2px;
+  background: #FFFFFF;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.brand-wordmark {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--color-ink-900);
+}
+.app-frame.collapsed .brand-wordmark { display: none; }
+.collapse-btn {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-panel);
+  color: var(--color-ink-500);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.collapse-btn:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.app-frame.collapsed .collapse-btn { transform: rotate(180deg); margin: 0 auto; }
+
+.sidebar-scroll {
+  flex: 1; overflow-y: auto;
+  padding: 0 12px 14px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--color-border-subtle); border-radius: 4px; }
+
+.sidebar-search {
+  display: flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 10px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  color: var(--color-ink-400);
+}
+.sidebar-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0;
+  background: transparent;
+  font-family: var(--font-sans); font-size: 12.5px;
+  color: var(--color-ink-900);
+}
+.keycap {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  color: var(--color-ink-500); background: var(--color-chip-bg);
+  border: 1px solid var(--color-border-subtle); border-radius: var(--radius-chip);
+  padding: 2px 5px;
+}
+.app-frame.collapsed .sidebar-search { padding: 0; border: 0; background: transparent; justify-content: center; }
+.app-frame.collapsed .sidebar-search input, .app-frame.collapsed .keycap { display: none; }
+
+/* Company Switcher */
+.company-switcher {
+  position: relative;
+  margin-top: 2px;
+}
+.company-switcher-trigger {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 10px;
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-ink-900);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+.company-switcher-trigger:hover {
+  background: var(--color-surface-inset);
+  border-color: var(--color-border-strong);
+}
+.company-switcher-trigger .company-code {
+  font-family: var(--font-mono); font-weight: 700; font-size: 11.5px;
+  background: var(--gradient-gold-tile); color: #fff;
+  padding: 3px 6px; border-radius: 5px; flex-shrink: 0;
+}
+.company-switcher-trigger .company-name {
+  flex: 1; font-size: 12.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.company-switcher-menu {
+  position: absolute; top: 100%; left: 0; right: 0;
+  margin-top: 4px; background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  z-index: 50; padding: 4px; display: none;
+}
+.company-switcher-menu.open { display: block; }
+.company-switcher-option {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 10px;
+  border-radius: var(--radius-control);
+  font-size: 12.5px; font-weight: 500;
+  color: var(--color-ink-600); text-align: left;
+  cursor: pointer; transition: background 0.15s ease;
+}
+.company-switcher-option:hover { background: var(--color-surface-inset); }
+.company-switcher-option.active {
+  background: var(--color-surface-inset);
+  font-weight: 600; color: var(--color-ink-900);
+}
+.app-frame.collapsed .company-switcher-trigger .company-name,
+.app-frame.collapsed .company-switcher-menu { display: none; }
+
+.nav-group-label {
+  padding: 0 8px 6px;
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.app-frame.collapsed .nav-group-label { display: none; }
+.nav-list { display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; min-height: 36px; padding: 6px 10px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans); font-weight: 500; font-size: 13px;
+  color: var(--color-ink-600);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.nav-item:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.nav-item.active { background: var(--color-surface-inset); color: var(--color-ink-900); font-weight: 600; }
+.nav-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--color-ink-500); }
+.nav-item.active .nav-icon {
+  width: 28px; height: 28px;
+  margin: -5px -2px -5px -5px;
+  padding: 5px; border-radius: 6px;
+  background: var(--color-ink-button);
+  color: #FFFFFF;
+}
+.app-frame.collapsed .nav-item span:not(.nav-icon) { display: none; }
+
+.user-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 8px; border-top: 1px solid var(--color-border-subtle);
+  margin-top: auto;
+}
+.avatar {
+  width: 32px; height: 32px; border-radius: var(--radius-full);
+  background: var(--gradient-gold-tile); color: #FFFFFF;
+  display: grid; place-items: center;
+  font-family: var(--font-sans); font-weight: 600; font-size: 12px; flex-shrink: 0;
+}
+.user-meta { min-width: 0; }
+.user-name { font-family: var(--font-sans); font-weight: 600; font-size: 12.5px; color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-email { font-family: var(--font-sans); font-size: 11px; color: var(--color-ink-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-frame.collapsed .user-meta { display: none; }
+
+/* ============ MAIN WRAPPER ============ */
+.main-wrapper {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.topbar {
+  height: 56px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--color-canvas);
+  position: relative;
+}
+.topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mobile-menu-btn {
+  display: none; width: 36px; height: 36px;
+  place-items: center; border-radius: var(--radius-panel); color: var(--color-ink-900);
+}
+.breadcrumb-pill {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em; color: var(--color-ink-500);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.breadcrumb-tag {
+  padding: 3px 8px; border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control); background: var(--color-surface-card);
+  color: var(--color-ink-900); font-weight: 600;
+}
+.topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.icon-btn {
+  position: relative; width: 36px; height: 36px;
+  display: grid; place-items: center; border-radius: var(--radius-panel);
+  color: var(--color-ink-500); transition: background 0.15s ease, color 0.15s ease;
+}
+.icon-btn:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+
+/* Notification Pip Badge */
+.notif-pip {
+  position: absolute; top: 6px; right: 6px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--color-danger-500);
+  border: 1.5px solid var(--color-canvas);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.notif-pip.hidden { opacity: 0; transform: scale(0); }
+
+.btn-ai-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink-button);
+  color: #FFFFFF;
+  font-family: var(--font-sans); font-weight: 600; font-size: 12.5px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 6px rgba(24, 24, 27, 0.12);
+  white-space: nowrap;
+}
+.btn-ai-pill:hover { opacity: 0.92; }
+.btn-ai-pill:active { transform: scale(0.98); }
+.sparkle-icon { color: var(--color-gold-400); flex-shrink: 0; }
+
+.workspace {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; gap: 16px; -webkit-overflow-scrolling: touch;
+}
+.workspace::-webkit-scrollbar { width: 6px; }
+.workspace::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 6px; }
+
+.center-column {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.insight-rail {
+  width: 300px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* ============ REDESIGNED COMPACT TIPS & TRICKS CARD ============ */
+.tips-card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.tips-content {
+  display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;
+}
+.tips-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--color-gold-500) 12%, transparent);
+  color: var(--color-gold-700); font-family: var(--font-mono);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tips-text {
+  font-family: var(--font-sans); font-size: 12.5px; font-weight: 500;
+  color: var(--color-ink-900); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tips-controls {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.tip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-border-strong); cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.tip-dot.active {
+  background: var(--color-gold-500); transform: scale(1.2);
+}
+
+/* ============ KPI STRIP ============ */
+.kpi-strip {
+  background: var(--color-surface-card); border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+  padding: 14px 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.kpi-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.kpi-label {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-400);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kpi-value {
+  font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+  color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ============ ACTIVITY SCROLL ============ */
+.activity-scroll {
+  display: flex; gap: 12px; overflow-x: auto;
+  padding-bottom: 6px; margin-top: 8px;
+  scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent;
+}
+.activity-scroll::-webkit-scrollbar { height: 5px; }
+.activity-scroll::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 5px; }
+.activity-stub {
+  flex: 0 0 220px; min-width: 220px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-card);
+  padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.activity-stub:hover { border-color: var(--color-border-strong); background: var(--color-surface-inset); }
+.activity-stub .notif-title { font-weight: 600; font-size: 13px; color: var(--color-ink-900); line-height: 1.3; }
+.activity-stub .notif-detail { font-size: 11.5px; color: var(--color-ink-500); line-height: 1.4; }
+.activity-stub .notif-time { font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-400); margin-top: auto; }
+
+/* ============ NOTIFICATION POPOVER ============ */
+.notif-popover {
+  position: absolute; top: 56px; right: 16px;
+  width: 360px; max-width: calc(100vw - 32px);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: 0 16px 36px rgba(24, 24, 27, 0.15);
+  z-index: 95; display: flex; flex-direction: column;
+  overflow: hidden; opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.notif-popover.open {
+  opacity: 1; transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.notif-head {
+  padding: 12px 16px; border-bottom: 1px solid var(--color-border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--color-surface-inset);
+}
+.notif-head-title {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-900);
+  display: flex; align-items: center; gap: 6px;
+}
+.notif-head-action {
+  font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+  color: var(--color-gold-700); cursor: pointer; text-decoration: underline;
+}
+.notif-head-action:hover { color: var(--color-gold-500); }
+
+.notif-list {
+  display: flex; flex-direction: column;
+  max-height: 320px; overflow-y: auto;
+}
+.notif-list::-webkit-scrollbar { width: 4px; }
+.notif-list::-webkit-scrollbar-thumb { background: var(--color-border-subtle); border-radius: 4px; }
+
+.notif-item {
+  padding: 12px 16px; border-bottom: 1px dashed var(--color-divider-dashed);
+  display: flex; flex-direction: column; gap: 4px;
+  cursor: pointer; transition: background 0.15s ease;
+  position: relative;
+}
+.notif-item:hover { background: var(--color-surface-inset); }
+.notif-item:last-child { border-bottom: 0; }
+.notif-item.unread {
+  background: color-mix(in srgb, var(--color-gold-500) 6%, var(--color-surface-card));
+}
+.notif-item.unread::before {
+  content: ""; position: absolute; left: 6px; top: 16px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--color-gold-500);
+}
+.notif-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.notif-item-title { font-family: var(--font-sans); font-size: 12.5px; font-weight: 600; color: var(--color-ink-900); }
+.notif-item-time { font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-400); white-space: nowrap; }
+.notif-item-desc { font-family: var(--font-sans); font-size: 11.5px; color: var(--color-ink-600); line-height: 1.4; }
+
+.notif-foot {
+  padding: 10px 16px; border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-inset); text-align: center;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  color: var(--color-ink-500);
+}
+
+/* ============ DOCUMENT LIST ============ */
+.dashed-list { display: flex; flex-direction: column; }
+.dashed-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 48px; padding: 8px 4px;
+  border-bottom: 1px dashed var(--color-divider-dashed);
+  transition: background 0.15s ease; cursor: pointer;
+}
+.dashed-row:hover { background: var(--color-surface-inset); }
+.dashed-row:last-child { border-bottom: 0; }
+.doc-badge {
+  padding: 2px 6px; border-radius: var(--radius-chip);
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.03em; text-transform: uppercase; flex-shrink: 0;
+}
+.doc-badge.inv { background: #FEF3C7; color: #92400E; }
+.doc-badge.wbl-e { background: #E0E7FF; color: #3730A3; }
+.doc-badge.wbl-me { background: #F3E8FF; color: #6B21A8; }
+.doc-badge.csr { background: #D1FAE5; color: #065F46; }
+.doc-badge.quo { background: #E0F2FE; color: #075985; }
+.doc-badge.let { background: #FCE7F3; color: #9D174D; }
+.doc-ref { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--color-ink-900); }
+.doc-client { font-family: var(--font-sans); font-size: 12px; color: var(--color-ink-600); }
+.doc-meta { font-family: var(--font-sans); font-size: 11px; color: var(--color-ink-400); }
+.doc-amount { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--color-ink-900); text-align: right; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: var(--radius-full);
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600; text-transform: uppercase;
+}
+.status-pill.paid { background: #DCFCE7; color: #166534; }
+.status-pill.pending { background: #FEF3C7; color: #92400E; }
+.status-pill.draft { background: #F3F4F6; color: #4B5563; }
+
+/* ============ RIGHT RAIL ============ */
+.card {
+  background: var(--color-surface-card); border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.micro-header {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-900);
+}
+
+.btn-primary-dark {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 38px; border-radius: var(--radius-control);
+  background: var(--color-ink-button); color: #FFFFFF;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  transition: opacity 0.15s ease;
+}
+.btn-primary-dark:hover { opacity: 0.9; }
+
+/* ============ FAB & CLEAN QUICK MENU ============ */
+.fab-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 90;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+}
+.fab-btn {
+  width: 48px; height: 48px; border-radius: var(--radius-full);
+  background: var(--color-ink-button); color: #FFFFFF;
+  display: grid; place-items: center;
+  box-shadow: 0 8px 20px rgba(24, 24, 27, 0.25);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fab-btn.open { transform: rotate(45deg); background: var(--color-gold-500); }
+.quick-menu {
+  width: 220px; background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-card);
+  box-shadow: 0 16px 36px rgba(24, 24, 27, 0.15); padding: 8px;
+  display: flex; flex-direction: column; gap: 2px;
+  opacity: 0; transform: translateY(10px) scale(0.95); pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.quick-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.quick-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius-control);
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--color-ink-900); transition: background 0.15s ease;
+}
+.quick-menu-item:hover { background: var(--color-surface-inset); }
+
+/* ============ DRAWERS ============ */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(24, 24, 27, 0.35); backdrop-filter: blur(4px);
+  display: flex; justify-content: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  width: 440px; max-width: 100vw; height: 100%;
+  background: var(--color-surface-card); border-left: 1px solid var(--color-border-strong);
+  box-shadow: -12px 0 36px rgba(24, 24, 27, 0.15);
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-overlay.open .drawer { transform: translateX(0); }
+.drawer-head {
+  padding: 16px; border-bottom: 1px solid var(--color-border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.ai-msg {
+  padding: 12px; border-radius: var(--radius-card);
+  background: var(--color-surface-inset); border: 1px solid var(--color-border-subtle);
+  font-size: 12.5px; color: var(--color-ink-900); line-height: 1.5;
+}
+.ai-prompt-chip {
+  padding: 8px 12px; border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border-subtle); background: var(--color-surface-card);
+  font-size: 12px; color: var(--color-ink-600); text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.ai-prompt-chip:hover { border-color: var(--color-gold-500); background: var(--color-surface-inset); }
+.drawer-input-row {
+  padding: 14px 16px; border-top: 1px solid var(--color-border-subtle);
+  display: flex; gap: 8px;
+}
+.drawer-input {
+  flex: 1; height: 40px; padding: 0 12px;
+  border-radius: var(--radius-panel); border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-inset); font-family: var(--font-sans);
+  font-size: 13px; color: var(--color-ink-900); outline: none;
+}
+.drawer-input:focus { border-color: var(--color-gold-500); }
+
+.agent-codex-note {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--color-ink-500);
+  background: var(--color-surface-inset); border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel); padding: 10px 12px; line-height: 1.45;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1100px) {
+  .workspace { flex-direction: column; }
+  .insight-rail { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+@media (max-width: 768px) {
+  .app-frame { width: 100%; height: 100vh; margin: 0; border-radius: 0; border: none; }
+  .mobile-menu-btn { display: grid; }
   .sidebar {
-    position: absolute;
-    top: 0; left: 0; bottom: 0;
-    z-index: 40;
-    width: 264px !important;
-    transform: translateX(-102%);
-    transition: transform .24s ease;
-    background: var(--color-canvas);
-    box-shadow: 24px 0 60px rgba(90, 60, 10, .2);
+    position: fixed; top: 0; bottom: 0; left: 0; width: 250px !important;
+    transform: translateX(-100%); box-shadow: 12px 0 32px rgba(0,0,0,0.2);
   }
   .app-frame.sidebar-open .sidebar { transform: translateX(0); }
-  .sidebar-backdrop {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    background: rgba(24, 24, 27, .32);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .24s ease;
-  }
   .app-frame.sidebar-open .sidebar-backdrop { opacity: 1; pointer-events: auto; }
-  /* collapse state is meaningless on mobile */
-  .app-frame.collapsed .sidebar { width: 264px !important; }
-  .app-frame.collapsed .brand-wordmark,
-  .app-frame.collapsed .brand-collapse,
-  .app-frame.collapsed .brand-row,
-  .app-frame.collapsed .sidebar-search input,
-  .app-frame.collapsed .sidebar-search .keycap,
-  .app-frame.collapsed .nav-item span,
-  .app-frame.collapsed .nav-item .nav-badge,
-  .app-frame.collapsed .nav-subtree,
-  .app-frame.collapsed .trial-card,
-  .app-frame.collapsed .user-meta,
-  .app-frame.collapsed .user-row svg { display: initial; }
-  .app-frame.collapsed .trial-card { display: block; }
-  .app-frame.collapsed .brand-row { justify-content: flex-start; }
-  .app-frame.collapsed .brand-collapse { margin-left: auto; transform: none; display: grid; }
-  .app-frame.collapsed .sidebar-search { justify-content: flex-start; padding: 0 10px; border: 1px solid var(--color-border-subtle); background: var(--color-surface-card); }
-  .app-frame.collapsed .nav-item { justify-content: flex-start; padding: 8px 10px; }
-  .app-frame.collapsed .nav-item .nav-icon { margin: 0; width: 20px; height: 20px; padding: 0; background: transparent; color: var(--color-ink-500); }
-  .app-frame.collapsed .nav-item.active .nav-icon { width: 34px; height: 34px; padding: 7px; margin: -7px -2px -7px -7px; background: var(--color-ink-button); color: #fff; }
-  .app-frame.collapsed .sidebar-footer { align-items: stretch; }
-  .app-frame.collapsed .user-row { justify-content: flex-start; border-top: 1px solid var(--color-border-subtle); }
-}
-
-@media (max-width: 900px) {
-  .workspace { grid-template-columns: minmax(0, 1fr); }
-  .rail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .rail .tabbar { grid-column: 1 / -1; }
-}
-
-@media (max-width: 720px) {
-  .app-frame { width: calc(100% - 20px); height: calc(100vh - 20px); min-height: 0; margin: 10px; border-radius: 16px; }
-  .topbar { padding: 0 12px; }
-  .breadcrumb { max-width: 44vw; }
-  .workspace { padding: 12px; gap: 12px; }
-  .pair { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .content-col { gap: 12px; }
-  .hero { height: 300px; }
-  .hero-content { max-width: 100%; padding: 20px; }
-  .hero-title { font-size: 24px; }
-  .hero-tags { left: 20px; bottom: 16px; max-width: calc(100% - 40px); }
-  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
-  .kpi:nth-child(odd) { border-left: 0; }
-  .kpi:nth-child(n+3) { border-top: 1px solid var(--color-border-subtle); }
-  .rail { grid-template-columns: minmax(0, 1fr); }
-  .topbar-actions .btn-ai span { display: none; }
-  .topbar-actions .btn-ai { padding: 0 12px; }
-}
-
-/* ============================================================
-   13. MOTION — subtle staggered entrance, reduced-motion safe
-   ============================================================ */
-@media (prefers-reduced-motion: no-preference) {
-  .app-frame > * { animation: rise .5s ease both; }
-  .app-frame .main { animation-delay: .05s; }
-  /* sidebar + backdrop use transform for positioning (off-canvas) —
-     exclude them so the entrance animation cannot override translateX */
-  .app-frame > .sidebar,
-  .app-frame > .sidebar-backdrop { animation: none; }
-}
-@keyframes rise {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .insight-rail { grid-template-columns: 1fr; }
+  .fab-container { bottom: 16px; right: 16px; }
+  .drawer { width: 100vw; }
+  .notif-popover { right: 10px; width: 320px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Full-bleed golden-hour wallpaper (fixed behind the floating frame) -->
-<div class="wallpaper" aria-hidden="true"></div>
-
+<!-- App Frame -->
 <div class="app-frame" id="appFrame">
 
-  <!-- ================= SIDEBAR ================= -->
-  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-  <aside class="sidebar" aria-label="Primary">
-    <div class="sidebar-scroll">
-
-      <!-- Brand row -->
-      <div class="brand-row">
+  <!-- Sidebar Nav -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-block">
         <div class="brand-orb" aria-hidden="true"></div>
-        <span class="brand-wordmark">Reprise</span>
-        <button class="brand-collapse" id="collapseBtn" type="button" aria-label="Collapse sidebar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/><path d="m8 9-3 3 3 3"/></svg>
+        <span class="brand-wordmark">BIGDROPS</span>
+      </div>
+      <button class="collapse-btn" id="collapseToggle" title="Toggle Sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-scroll">
+      <!-- Company Switcher -->
+      <div class="company-switcher" id="companySwitcher">
+        <button class="company-switcher-trigger" id="companyTrigger">
+          <span class="company-code" id="currentCompanyCode">SSP</span>
+          <span class="company-name" id="currentCompanyName">Sun & Shield Power</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
         </button>
-      </div>
-
-      <!-- Search -->
-      <div class="sidebar-search" role="search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" placeholder="Search bonds, artists…" aria-label="Search" />
-        <span class="keycap" aria-hidden="true">⌘F</span>
-      </div>
-
-      <!-- Navigation -->
-      <nav aria-label="Main navigation">
-        <ul class="nav-list">
-          <li><button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Home</span></button></li>
-          <li><button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span><span>Portfolios</span></button></li>
-          <li>
-            <button class="nav-item active" type="button" aria-expanded="true">
-              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
-              <span>Markets</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.6"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <ul class="nav-subtree">
-              <li><button class="nav-subitem" type="button">Equities</button></li>
-              <li><button class="nav-subitem active" type="button">Bonds</button></li>
-            </ul>
-          </li>
-          <li><button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span>Chats</span><span class="nav-badge">3</span></button></li>
-          <li><button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span><span>News</span></button></li>
-        </ul>
-      </nav>
-
-      <!-- Trial / upgrade card -->
-      <div class="trial-card">
-        <div class="trial-top">
-          <div class="trial-tile" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-          </div>
-          <div class="waveform" aria-hidden="true"><i style="height:8px"></i><i style="height:13px"></i><i style="height:17px"></i><i style="height:11px"></i><i style="height:15px"></i><i style="height:9px"></i></div>
-        </div>
-        <div>
-          <p class="trial-title" style="margin:0 0 2px">7-days free trial</p>
-          <p class="trial-copy" style="margin:0">Unlock ReprAI signals and full portfolio analytics.</p>
-        </div>
-        <button class="btn-dark" type="button">Upgrade</button>
-      </div>
-
-      <!-- Footer: settings / help / user -->
-      <div class="sidebar-footer">
-        <button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Settings</span></button>
-        <button class="nav-item" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span>Help</span></button>
-
-        <div class="user-row">
-          <div class="avatar" aria-hidden="true">AO</div>
-          <div class="user-meta">
-            <div class="user-name">Amara Obi</div>
-            <div class="user-email">amara@reprise.fm</div>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="company-switcher-menu" id="companyMenu">
+          <!-- Injected by JS -->
         </div>
       </div>
 
+      <div class="sidebar-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search docs, items..." />
+        <span class="keycap">⌘F</span>
+      </div>
+
+      <div>
+        <div class="nav-group-label">DOCUMENT ENGINE</div>
+        <div class="nav-list">
+          <a href="#" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            <span>Invoices</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Quotations</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/><path d="M7 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M17 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+            <span>Waybills</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>
+            <span>Letters</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            <span>CSR Reports</span>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="nav-group-label">OPERATIONS & AGGREGATION</div>
+        <div class="nav-list">
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Projects</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>Compliance Hub</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Item Library</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="user-row">
+        <div class="avatar">MA</div>
+        <div class="user-meta">
+          <div class="user-name">Milad A.</div>
+          <div class="user-email">Operations Operator</div>
+        </div>
+      </div>
     </div>
   </aside>
 
-  <!-- ================= MAIN ================= -->
-  <div class="main">
-
-    <!-- Top bar -->
+  <!-- Main Wrapper -->
+  <div class="main-wrapper">
     <header class="topbar">
-      <div class="breadcrumb">
-        <button class="menu-btn icon-btn" id="menuBtn" type="button" aria-label="Open navigation">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <span>MARKETS&nbsp;/</span>
-        <span class="crumb-pill">CATALOG ROYALTY BOND</span>
+        <div class="breadcrumb-pill">
+          <span>BIGDROPS TERMINAL</span>
+          <span>/</span>
+          <span class="breadcrumb-tag">OPERATIONS OVERVIEW</span>
+        </div>
       </div>
 
       <div class="topbar-actions">
-        <!-- Optional dark-mode toggle (light is the default theme) -->
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode" aria-pressed="false">
-          <svg id="iconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-          <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <button class="icon-btn" id="themeToggle" title="Toggle Theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         </button>
-        <button class="icon-btn" type="button" aria-label="Notifications">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          <span class="pip" aria-hidden="true"></span>
+        
+        <!-- Notifications Button with Badge -->
+        <button class="icon-btn" id="notifBtn" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-pip" id="notifPip"></span>
         </button>
-        <button class="icon-btn" type="button" aria-label="Help">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+
+        <button class="btn-ai-pill" id="askAiBtn">
+          <svg class="sparkle-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+          Ask BIGDROPS
         </button>
-        <button class="btn-ai" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
-          <span>Ask ReprAI</span>
-        </button>
+      </div>
+
+      <!-- Notifications Popover -->
+      <div class="notif-popover" id="notifPopover">
+        <div class="notif-head">
+          <div class="notif-head-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            System Audit Feed
+          </div>
+          <span class="notif-head-action" id="markAllReadBtn">Mark all read</span>
+        </div>
+        <div class="notif-list" id="notifList">
+          <!-- Injected by JS -->
+        </div>
+        <div class="notif-foot">
+          LIVE DOCUMENT EVENTS & AUDIT LOGS
+        </div>
       </div>
     </header>
 
     <!-- Workspace -->
-    <div class="workspace" id="workspace">
-
-      <!-- ============ CENTER COLUMN ============ -->
-      <section class="content-col">
-
-        <!-- Hero banner -->
-        <div class="hero">
-          <div class="hero-photo" aria-hidden="true"></div>
-          <div class="hero-overlay" aria-hidden="true"></div>
-          <div class="hero-content">
-            <h1 class="hero-title">Aurora Lane</h1>
-            <p class="hero-subtitle">Debut master royalty bond 2030</p>
+    <main class="workspace">
+      <div class="center-column">
+        
+        <!-- Refined Compact Tips & Tricks Card -->
+        <div class="tips-card">
+          <div class="tips-content">
+            <span class="tips-badge">DID YOU KNOW?</span>
+            <span class="tips-text" id="tipText">You can create an invoice from any quotation with one click.</span>
           </div>
-          <div class="hero-tags">
-            <span class="tag-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Artist catalog</span>
-            <span class="tag-pill">Debut era [2018–2023]</span>
-            <span class="tag-pill">Issued May 2025</span>
+          <div class="tips-controls" id="tipDots">
+            <!-- Tip dots injected by JS -->
           </div>
         </div>
 
-        <!-- KPI strip -->
-        <div class="card kpi-strip" role="group" aria-label="Bond key figures">
-          <div class="kpi"><span class="kpi-label">Yield</span><span class="kpi-value">5.2%</span></div>
-          <div class="kpi"><span class="kpi-label">Rating</span><span class="kpi-value">A+</span></div>
-          <div class="kpi"><span class="kpi-label">Coupon</span><span class="kpi-value">8.5%</span></div>
-          <div class="kpi"><span class="kpi-label">Maturity</span><span class="kpi-value">2030</span></div>
-          <div class="kpi"><span class="kpi-label">Min. investment</span><span class="kpi-value">$5,000</span></div>
-          <div class="kpi">
-            <span class="kpi-label">Bond status</span>
-            <span class="kpi-value kpi-status"><span class="status-dot" aria-hidden="true"></span>Open</span>
+        <!-- KPI Strip -->
+        <section class="kpi-strip">
+          <div class="kpi-col">
+            <span class="kpi-label">Active Invoices</span>
+            <span class="kpi-value">₦42,850,000</span>
           </div>
-        </div>
-
-        <!-- Row 1: Royalty calendar + Upcoming coupons -->
-        <div class="pair">
-          <div class="card card-pad">
-            <h2 class="card-title" style="margin:0">Royalty calendar</h2>
-            <div class="royalty-head" style="margin-top:10px">
-              <span class="metric-l">$172.50</span>
-              <span class="micro-muted">Per $5,000 invested</span>
-            </div>
-            <div class="tile-grid">
-              <div class="tile">
-                <div class="tile-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-                <span class="tile-label">Streaming</span><span class="tile-pct">38%</span>
-              </div>
-              <div class="tile">
-                <div class="tile-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></div>
-                <span class="tile-label">Downloads</span><span class="tile-pct">24%</span>
-              </div>
-              <div class="tile">
-                <div class="tile-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9"/><path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 4.8c2 2 2.6 5.1 1.8 7.5"/><path d="M19.1 1.9c3.9 3.9 3.9 10.3 0 14.2"/></svg></div>
-                <span class="tile-label">Sync licensing</span><span class="tile-pct">21%</span>
-              </div>
-              <div class="tile">
-                <div class="tile-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a9 9 0 1 0-9-9 7 7 0 0 0 9 9z"/><path d="M9 9v4l3 2"/></svg></div>
-                <span class="tile-label">Live &amp; other</span><span class="tile-pct">17%</span>
-              </div>
-            </div>
+          <div class="kpi-col">
+            <span class="kpi-label">Pending Quotations</span>
+            <span class="kpi-value">3 Awaiting Sign-off</span>
           </div>
+          <div class="kpi-col">
+            <span class="kpi-label">Unpaid Receivables</span>
+            <span class="kpi-value">₦14,200,000</span>
+          </div>
+          <div class="kpi-col">
+            <span class="kpi-label">Letters Drafted</span>
+            <span class="kpi-value">2 This Week</span>
+          </div>
+        </section>
 
-          <div class="card card-pad">
+        <!-- Activity Horizontal Scroll -->
+        <div class="card">
+          <div class="card-header">
             <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-              Upcoming coupons
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Recent Activity Feed
             </div>
-            <ul class="coupon-list">
-              <li class="coupon-row"><span class="coupon-date">Aug 15, 2025 <span class="year">· next</span></span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">Nov 15, 2025</span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">Feb 15, 2026</span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">May 15, 2026</span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">Aug 15, 2026</span><span class="coupon-amount">$172.50</span></li>
-            </ul>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--color-ink-400)">LIVE AUDIT</span>
+          </div>
+          <div class="activity-scroll" id="activityScroll">
+            <!-- Activity cards injected by JS -->
           </div>
         </div>
 
-        <!-- Row 2: Catalog performance + Use of funds -->
-        <div class="pair">
-          <div class="card card-pad">
-            <div class="perf-head">
-              <h2 class="card-title" style="margin:0">Catalog performance</h2>
-              <span class="trend-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>18.6%</span>
-            </div>
-            <div style="margin-top:10px;display:flex;align-items:baseline;gap:10px">
-              <span class="metric-xl" style="font-size:26px">$12.4M</span>
-              <span class="micro-muted">Lifetime royalties</span>
-            </div>
-            <div class="histogram" role="img" aria-label="Histogram of catalog royalties by year, 2019 to 2023, with 2023 featured at the highest value">
-              <div class="hist-col"><div class="hist-bar" style="height:42%"></div><span class="hist-label">2019</span></div>
-              <div class="hist-col"><div class="hist-bar" style="height:58%"></div><span class="hist-label">2020</span></div>
-              <div class="hist-col"><div class="hist-bar" style="height:36%"></div><span class="hist-label">2021</span></div>
-              <div class="hist-col"><div class="hist-bar" style="height:74%"></div><span class="hist-label">2022</span></div>
-              <div class="hist-col featured"><div class="hist-bar featured" style="height:100%"></div><span class="hist-label">2023</span></div>
-            </div>
-          </div>
-
-          <div class="card card-pad">
-            <div class="funds-head">
-              <h2 class="card-title" style="margin:0">Use of funds</h2>
-              <span class="micro-muted">Allocation 100%</span>
-            </div>
-            <div class="allocation-bar" role="img" aria-label="Allocation: catalog acquisition 40 percent, marketing and playlist 25 percent, touring 15 percent, sync licensing 12 percent, reserve 8 percent">
-              <i style="width:40%;background:linear-gradient(180deg,#F3BD48,#E8A232)"></i>
-              <i style="width:25%;background:linear-gradient(180deg,#E8B33C,#D9962B)"></i>
-              <i style="width:15%;background:linear-gradient(180deg,#D9962B,#C98A1E)"></i>
-              <i style="width:12%;background:linear-gradient(180deg,#C08418,#B4770F)"></i>
-              <i style="width:8%;background:linear-gradient(180deg,#A86E12,#8A5A0B)"></i>
-            </div>
-            <ul class="legend">
-              <li class="legend-row"><span class="legend-dot" style="background:#F3BD48" aria-hidden="true"></span><span class="legend-label">Catalog acquisition</span><span class="legend-pct">40%</span></li>
-              <li class="legend-row"><span class="legend-dot" style="background:#D9962B" aria-hidden="true"></span><span class="legend-label">Marketing &amp; playlist</span><span class="legend-pct">25%</span></li>
-              <li class="legend-row"><span class="legend-dot" style="background:#C98A1E" aria-hidden="true"></span><span class="legend-label">Touring</span><span class="legend-pct">15%</span></li>
-              <li class="legend-row"><span class="legend-dot" style="background:#B4770F" aria-hidden="true"></span><span class="legend-label">Sync licensing</span><span class="legend-pct">12%</span></li>
-              <li class="legend-row"><span class="legend-dot" style="background:#8A5A0B" aria-hidden="true"></span><span class="legend-label">Reserve</span><span class="legend-pct">8%</span></li>
-            </ul>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ============ RIGHT INSIGHT RAIL ============ -->
-      <aside class="rail" aria-label="Bond insights">
-
-        <!-- Tab bar -->
-        <div class="tabbar" role="tablist" aria-label="Bond insights">
-          <button class="tab active" role="tab" id="tab-overview" aria-selected="true" aria-controls="panel-overview" data-tab="overview" type="button">Overview</button>
-          <button class="tab" role="tab" id="tab-cashflow" aria-selected="false" aria-controls="panel-cashflow" data-tab="cashflow" type="button">Cashflow</button>
-          <button class="tab" role="tab" id="tab-financials" aria-selected="false" aria-controls="panel-financials" data-tab="financials" type="button">Financials</button>
-          <button class="tab" role="tab" id="tab-risks" aria-selected="false" aria-controls="panel-risks" data-tab="risks" type="button">Risks</button>
-          <button class="tab" role="tab" id="tab-documents" aria-selected="false" aria-controls="panel-documents" data-tab="documents" type="button">Documents</button>
-        </div>
-
-        <!-- Overview -->
-        <div class="rail-tabpanel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
-
-          <div class="card card-pad">
+        <!-- Recent Documents -->
+        <div class="card">
+          <div class="card-header">
             <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-              Bond details
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+              5 Recent Operations Documents
             </div>
-            <dl class="kv-grid" style="margin:0">
-              <dt class="kv-key">Issuer</dt><dd class="kv-value" style="margin:0">Aurora Lane IP Ltd.</dd>
-              <dt class="kv-key">Bond type</dt><dd class="kv-value" style="margin:0">Catalog royalty</dd>
-              <dt class="kv-key">Seniority</dt><dd class="kv-value" style="margin:0">Senior secured</dd>
-              <dt class="kv-key">Payment freq.</dt><dd class="kv-value" style="margin:0">Semi-annual</dd>
-              <dt class="kv-key">Day count</dt><dd class="kv-value" style="margin:0">30/360</dd>
-              <dt class="kv-key">Governing law</dt><dd class="kv-value" style="margin:0">England &amp; Wales</dd>
-            </dl>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--color-ink-400)">LIVE OPERATIONS LOG</span>
           </div>
-
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
-              Risk overview
-            </div>
-            <p class="risk-headline" style="margin-bottom:0">Low-medium risk</p>
-            <dl class="kv-grid" style="margin:0">
-              <dt class="kv-key">Default risk</dt><dd class="kv-value" style="margin:0">Low</dd>
-              <dt class="kv-key">Market risk</dt><dd class="kv-value" style="margin:0">Medium</dd>
-              <dt class="kv-key">Liquidity risk</dt><dd class="kv-value" style="margin:0">Medium</dd>
-              <dt class="kv-key">Volatility</dt><dd class="kv-value" style="margin:0">Low</dd>
-            </dl>
-          </div>
-
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-              AI credit signal
-            </div>
-            <div class="ai-score">
-              <span class="micro-muted">Very strong</span>
-              <span class="metric-l" style="font-size:18px">82%</span>
-            </div>
-            <div class="ai-bar"><i aria-hidden="true"></i></div>
-            <span class="micro-muted" style="display:block;margin-top:14px">Key drivers</span>
-            <div class="driver-chips">
-              <span class="chip">Royalty quality</span>
-              <span class="chip">Diversification</span>
-              <span class="chip">Growth</span>
-              <span class="chip">Management</span>
-            </div>
-          </div>
-
-          <div class="card cta-card">
-            <span class="micro-muted">Streaming royalties (last 5 years)</span>
-            <div class="cta-metric">
-              <span class="metric-xl">$360</span>
-              <span class="micro-muted">of $5,000</span>
-            </div>
-            <div class="btn-row">
-              <button class="btn-dark" type="button">Buy bond</button>
-              <button class="btn-outline" type="button">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                Add to watchlist
-              </button>
-            </div>
-          </div>
-
+          <div class="dashed-list" id="recentDocsList"></div>
         </div>
+      </div>
 
-        <!-- Cashflow -->
-        <div class="rail-tabpanel" id="panel-cashflow" role="tabpanel" aria-labelledby="tab-cashflow" data-panel="cashflow" hidden>
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-              Coupon schedule
-            </div>
-            <ul class="coupon-list">
-              <li class="coupon-row"><span class="coupon-date">Aug 15, 2025 <span class="year">· next</span></span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">Nov 15, 2025</span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">Feb 15, 2026</span><span class="coupon-amount">$172.50</span></li>
-              <li class="coupon-row"><span class="coupon-date">May 15, 2026</span><span class="coupon-amount">$172.50</span></li>
-            </ul>
+      <!-- Right Insight Rail -->
+      <aside class="insight-rail">
+        <div class="card">
+          <div class="micro-header">QUICK ACTIONS</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn-primary-dark" onclick="createNewDoc('Invoice')">Create Invoice</button>
+            <button class="btn-primary-dark" onclick="createNewDoc('Quotation')">Create Quotation</button>
+            <button class="btn-primary-dark" onclick="createNewDoc('Letter')">Create Letter</button>
           </div>
         </div>
 
-        <!-- Financials -->
-        <div class="rail-tabpanel" id="panel-financials" role="tabpanel" aria-labelledby="tab-financials" data-panel="financials" hidden>
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 13v-3"/><path d="M12 16V9"/><path d="M17 11V7"/></svg>
-              Key metrics
-            </div>
-            <dl class="kv-grid" style="margin:0">
-              <dt class="kv-key">Royalty revenue</dt><dd class="kv-value" style="margin:0">$2.4M</dd>
-              <dt class="kv-key">Operating margin</dt><dd class="kv-value" style="margin:0">41%</dd>
-              <dt class="kv-key">Net income</dt><dd class="kv-value" style="margin:0">$612K</dd>
-              <dt class="kv-key">Leverage</dt><dd class="kv-value" style="margin:0">2.1x</dd>
-            </dl>
-          </div>
+        <div class="agent-codex-note">
+          🤖 <strong>Assistant Note:</strong> I can create invoices, quotations, letters, and help you find documents. Just ask me.
         </div>
-
-        <!-- Risks -->
-        <div class="rail-tabpanel" id="panel-risks" role="tabpanel" aria-labelledby="tab-risks" data-panel="risks" hidden>
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
-              Risk overview
-            </div>
-            <p class="risk-headline" style="margin-bottom:0">Low-medium risk</p>
-            <dl class="kv-grid" style="margin:0">
-              <dt class="kv-key">Default risk</dt><dd class="kv-value" style="margin:0">Low</dd>
-              <dt class="kv-key">Market risk</dt><dd class="kv-value" style="margin:0">Medium</dd>
-              <dt class="kv-key">Liquidity risk</dt><dd class="kv-value" style="margin:0">Medium</dd>
-              <dt class="kv-key">Volatility</dt><dd class="kv-value" style="margin:0">Low</dd>
-            </dl>
-          </div>
-        </div>
-
-        <!-- Documents -->
-        <div class="rail-tabpanel" id="panel-documents" role="tabpanel" aria-labelledby="tab-documents" data-panel="documents" hidden>
-          <div class="card card-pad">
-            <div class="micro-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-              Documents
-            </div>
-            <ul class="coupon-list">
-              <li class="coupon-row"><span class="coupon-date">Offering circular</span><span class="coupon-amount" style="font-weight:500;font-size:12px;color:var(--color-ink-400)">PDF</span></li>
-              <li class="coupon-row"><span class="coupon-date">Trust deed</span><span class="coupon-amount" style="font-weight:500;font-size:12px;color:var(--color-ink-400)">PDF</span></li>
-              <li class="coupon-row"><span class="coupon-date">Financial statements</span><span class="coupon-amount" style="font-weight:500;font-size:12px;color:var(--color-ink-400)">PDF</span></li>
-              <li class="coupon-row"><span class="coupon-date">Due diligence report</span><span class="coupon-amount" style="font-weight:500;font-size:12px;color:var(--color-ink-400)">PDF</span></li>
-            </ul>
-          </div>
-        </div>
-
       </aside>
+    </main>
+  </div>
+</div>
+
+<!-- FAB + Clean Quick Menu -->
+<div class="fab-container">
+  <div class="quick-menu" id="quickMenu">
+    <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--color-ink-400);padding:4px 8px;text-transform:uppercase;">Create Operations Document</div>
+    <a href="#" class="quick-menu-item" onclick="createNewDoc('Invoice')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      <span>Invoice</span>
+    </a>
+    <a href="#" class="quick-menu-item" onclick="createNewDoc('Quotation')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Quotation</span>
+    </a>
+    <a href="#" class="quick-menu-item" onclick="createNewDoc('Waybill')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/><path d="M7 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M17 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+      <span>Waybill</span>
+    </a>
+    <a href="#" class="quick-menu-item" onclick="createNewDoc('CSR Report')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>
+      <span>CSR Report</span>
+    </a>
+    <a href="#" class="quick-menu-item" onclick="createNewDoc('Letter')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      <span>Letter</span>
+    </a>
+  </div>
+  <button class="fab-btn" id="fabBtn" title="Quick Create Document">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- Slide-Over Inspection Drawer -->
+<div class="drawer-overlay" id="drawerOverlay">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="doc-badge inv" id="drawerBadge">INV</span>
+        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--color-ink-900);" id="drawerRef">INV-000842</span>
+      </div>
+      <button class="icon-btn" id="closeDrawerBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div>
+        <div style="font-size:11px;color:var(--color-ink-400);text-transform:uppercase;font-family:var(--font-mono)">Client Engagement</div>
+        <div style="font-size:15px;font-weight:600;color:var(--color-ink-900)" id="drawerClient">Lagos Solar Grid Project</div>
+      </div>
+      <div style="background:var(--color-surface-inset);padding:12px;border-radius:var(--radius-panel);">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--color-ink-400);text-transform:uppercase;">Document Totals</div>
+        <div style="font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--color-ink-900);margin-top:2px;" id="drawerAmount">₦5,251,375</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--color-ink-400);text-transform:uppercase;margin-bottom:8px;">Line Items</div>
+        <div id="drawerItems" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto;">
+        <button class="btn-primary-dark" onclick="alert('Opening letter composer for this document...')">Create Letter from Document</button>
+        <button class="btn-primary-dark" style="background:var(--color-surface-card);color:var(--color-ink-900);border:1px solid var(--color-border-strong);" onclick="alert('Exporting PDF output...')">Generate PDF Output</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Assistant Drawer -->
+<div class="drawer-overlay" id="aiDrawerOverlay">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg class="sparkle-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+        <span style="font-family:var(--font-sans);font-weight:600;font-size:15px;color:var(--color-ink-900);">Ask BIGDROPS Assistant</span>
+      </div>
+      <button class="icon-btn" id="closeAiDrawerBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div class="ai-msg">
+        Hello! I can help you <strong>create invoices</strong>, <strong>quotations</strong>, <strong>letters</strong>, and <strong>find documents</strong>. What would you like to do?
+      </div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--color-ink-400);text-transform:uppercase;">Quick Operations</div>
+      <button class="ai-prompt-chip" data-ask="Find invoice INV-000842">🔍 Find invoice INV-000842</button>
+      <button class="ai-prompt-chip" data-ask="Create quotation for Lagos Solar Grid Project">🧾 Create quotation for Lagos Solar Grid Project</button>
+      <button class="ai-prompt-chip" data-ask="Draft a payment reminder letter for Eko Atlantic Hub">✉️ Draft a payment reminder letter for Eko Atlantic Hub</button>
+      <div id="aiChatHistory" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+    <div class="drawer-input-row">
+      <input class="drawer-input" id="aiDrawerInput" type="text" placeholder="Ask about documents..." />
+      <button class="btn-primary-dark" id="sendAiBtn" style="width: auto; padding: 0 16px;">Ask</button>
     </div>
   </div>
 </div>
 
 <script>
-(function () {
-  "use strict";
+(function() {
+  'use strict';
 
-  var frame = document.getElementById("appFrame");
-  var desktop = window.matchMedia("(min-width: 1025px)");
+  // ---------- Company Data ----------
+  const companies = [
+    { code: 'SSP', name: 'Sun & Shield Power' },
+    { code: 'PYG', name: 'Pygar Logistics & Trade' },
+    { code: 'CMC', name: 'Century Mining Co.' }
+  ];
+  let currentCompanyIndex = 0;
 
-  /* ---------- Sidebar: collapse (desktop) / off-canvas (mobile) ---------- */
-  var collapseBtn = document.getElementById("collapseBtn");
-  var menuBtn = document.getElementById("menuBtn");
-  var backdrop = document.getElementById("sidebarBackdrop");
+  // ---------- Tips Data ----------
+  const tips = [
+    'You can create an invoice from any quotation with one click.',
+    'Use the Quick Actions panel to generate letters and reports instantly.',
+    'Search for documents by client name or reference code using the sidebar search.',
+    'Click any document row to open the full inspection drawer.',
+    'The Assistant can draft payment reminders and follow-up letters automatically.'
+  ];
+  let currentTipIndex = 0;
+  let tipInterval;
 
-  collapseBtn.addEventListener("click", function () {
-    if (!desktop.matches) { openMobile(); return; }
-    frame.classList.toggle("collapsed");
-    collapseBtn.setAttribute("aria-label",
-      frame.classList.contains("collapsed") ? "Expand sidebar" : "Collapse sidebar");
-  });
+  // ---------- Notifications Feed Data ----------
+  const notificationsData = [
+    { id: 1, title: 'Invoice INV-000842 Cleared', desc: 'Payment of ₦5,251,375 confirmed for Lagos Solar Grid Project.', time: '2 min ago', unread: true, docIndex: 0 },
+    { id: 2, title: 'Waybill WBL-E-000194 Sign-off', desc: 'Eko Atlantic Hub customs clearance awaiting custody signature.', time: '18 min ago', unread: true, docIndex: 1 },
+    { id: 3, title: 'Quotation QUO-000318 Created', desc: 'Lekki Free Zone Ltd requested BOQ for solar array expansion.', time: '1 hour ago', unread: true, docIndex: 3 },
+    { id: 4, title: 'Letter Draft LET-000111', desc: 'Payment reminder letter for Zenith Logix stored in drafts.', time: '3 hours ago', unread: false, docIndex: 4 },
+    { id: 5, title: 'CSR Report CSR-000412 Submitted', desc: 'Apapa Container Terminal service log completed.', time: 'Yesterday', unread: false, docIndex: 2 }
+  ];
 
-  menuBtn.addEventListener("click", function () {
-    if (desktop.matches) { frame.classList.toggle("collapsed"); return; }
-    openMobile();
-  });
+  // ---------- Recent Documents Data ----------
+  const recentDocs = [
+    { ref: 'INV-000842', type: 'inv', badge: 'INV', client: 'Lagos Solar Grid Project', amount: '₦5,251,375', status: 'paid', date: 'Today, 14:20', items: ['500W Monocrystalline Panels (x250)', '3-Phase Inverter System (x4)', 'Installation Hardware Kit'] },
+    { ref: 'WBL-E-000194', type: 'wbl-e', badge: 'WBL-E', client: 'Eko Atlantic Hub', amount: 'Custody Signoff', status: 'pending', date: 'Today, 11:45', items: ['Substation Transformer Unit', 'High Voltage Cabling (500m)'] },
+    { ref: 'CSR-000412', type: 'csr', badge: 'CSR', client: 'Apapa Container Terminal', amount: 'Service Log', status: 'paid', date: 'Yesterday, 16:30', items: ['Crane Hydraulic Maintenance', 'Technician Remark: Seal replaced'] },
+    { ref: 'QUO-000318', type: 'quo', badge: 'QUO', client: 'Lekki Free Zone Ltd', amount: '₦18,500,000', status: 'pending', date: '10 Aug 2026', items: ['Industrial Solar Array BOQ', 'Grid Tie System Architecture'] },
+    { ref: 'LET-000111', type: 'let', badge: 'LET', client: 'Zenith Logix', amount: 'Reminder Letter', status: 'draft', date: '9 Aug 2026', items: ['Payment Reminder', 'Outstanding Balance: ₦8,500,000'] }
+  ];
 
-  backdrop.addEventListener("click", closeMobile);
+  // ---------- DOM Elements ----------
+  const appFrame = document.getElementById('appFrame');
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  const collapseToggle = document.getElementById('collapseToggle');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const themeToggle = document.getElementById('themeToggle');
+  const fabBtn = document.getElementById('fabBtn');
+  const quickMenu = document.getElementById('quickMenu');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+  const askAiBtn = document.getElementById('askAiBtn');
+  const aiDrawerOverlay = document.getElementById('aiDrawerOverlay');
+  const closeAiDrawerBtn = document.getElementById('closeAiDrawerBtn');
+  const sendAiBtn = document.getElementById('sendAiBtn');
+  const aiDrawerInput = document.getElementById('aiDrawerInput');
+  const aiChatHistory = document.getElementById('aiChatHistory');
+  const tipText = document.getElementById('tipText');
+  const tipDots = document.getElementById('tipDots');
+  const activityScroll = document.getElementById('activityScroll');
+  const recentDocsList = document.getElementById('recentDocsList');
+  const companyTrigger = document.getElementById('companyTrigger');
+  const companyMenu = document.getElementById('companyMenu');
+  const currentCompanyCode = document.getElementById('currentCompanyCode');
+  const currentCompanyName = document.getElementById('currentCompanyName');
 
-  function openMobile() {
-    frame.classList.add("sidebar-open");
+  const notifBtn = document.getElementById('notifBtn');
+  const notifPopover = document.getElementById('notifPopover');
+  const notifPip = document.getElementById('notifPip');
+  const notifList = document.getElementById('notifList');
+  const markAllReadBtn = document.getElementById('markAllReadBtn');
+
+  // ---------- Company Switcher ----------
+  function initCompanySwitcher() {
+    companyMenu.innerHTML = companies.map((comp, idx) => `
+      <button class="company-switcher-option ${idx === currentCompanyIndex ? 'active' : ''}" data-index="${idx}">
+        <span class="company-code">${comp.code}</span>
+        <span>${comp.name}</span>
+      </button>
+    `).join('');
+    updateCompanyDisplay();
   }
-  function closeMobile() {
-    frame.classList.remove("sidebar-open");
-  }
-  window.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeMobile();
-  });
 
-  /* ---------- Right-rail tabs ---------- */
-  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
-  var panels = Array.prototype.slice.call(document.querySelectorAll(".rail-tabpanel"));
-
-  function activateTab(tab) {
-    tabs.forEach(function (t) {
-      var on = t === tab;
-      t.classList.toggle("active", on);
-      t.setAttribute("aria-selected", on ? "true" : "false");
-      t.setAttribute("tabindex", on ? "0" : "-1");
-    });
-    panels.forEach(function (p) {
-      p.hidden = p.getAttribute("data-panel") !== tab.getAttribute("data-tab");
-    });
+  function updateCompanyDisplay() {
+    const comp = companies[currentCompanyIndex];
+    currentCompanyCode.textContent = comp.code;
+    currentCompanyName.textContent = comp.name;
   }
 
-  tabs.forEach(function (tab, i) {
-    tab.addEventListener("click", function () { activateTab(tab); });
-    tab.addEventListener("keydown", function (e) {
-      var next = null;
-      if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
-      if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
-      if (next) {
-        e.preventDefault();
-        activateTab(next);
-        next.focus();
-      }
+  companyTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    companyMenu.classList.toggle('open');
+  });
+
+  companyMenu.addEventListener('click', (e) => {
+    const option = e.target.closest('.company-switcher-option');
+    if (option) {
+      currentCompanyIndex = parseInt(option.dataset.index, 10);
+      updateCompanyDisplay();
+      companyMenu.classList.remove('open');
+      initCompanySwitcher();
+    }
+  });
+
+  // ---------- Notifications System ----------
+  function renderNotifications() {
+    const unreadCount = notificationsData.filter(n => n.unread).length;
+    if (unreadCount > 0) {
+      notifPip.classList.remove('hidden');
+    } else {
+      notifPip.classList.add('hidden');
+    }
+
+    notifList.innerHTML = notificationsData.map(notif => `
+      <div class="notif-item ${notif.unread ? 'unread' : ''}" onclick="onNotifClick(${notif.id}, ${notif.docIndex})">
+        <div class="notif-item-top">
+          <span class="notif-item-title">${notif.title}</span>
+          <span class="notif-item-time">${notif.time}</span>
+        </div>
+        <div class="notif-item-desc">${notif.desc}</div>
+      </div>
+    `).join('');
+  }
+
+  notifBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifPopover.classList.toggle('open');
+  });
+
+  markAllReadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notificationsData.forEach(n => n.unread = false);
+    renderNotifications();
+  });
+
+  window.onNotifClick = (notifId, docIndex) => {
+    const notif = notificationsData.find(n => n.id === notifId);
+    if (notif) notif.unread = false;
+    renderNotifications();
+    notifPopover.classList.remove('open');
+    if (typeof docIndex === 'number' && recentDocs[docIndex]) {
+      inspectDoc(docIndex);
+    }
+  };
+
+  // Close menus on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#companySwitcher')) {
+      companyMenu.classList.remove('open');
+    }
+    if (!e.target.closest('#notifPopover') && !e.target.closest('#notifBtn')) {
+      notifPopover.classList.remove('open');
+    }
+  });
+
+  // ---------- Tips Carousel (Compact & Redesigned) ----------
+  function renderTipDots() {
+    tipDots.innerHTML = tips.map((_, i) => `
+      <span class="tip-dot ${i === currentTipIndex ? 'active' : ''}" data-index="${i}"></span>
+    `).join('');
+    tipText.textContent = tips[currentTipIndex];
+    tipDots.querySelectorAll('.tip-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        currentTipIndex = parseInt(dot.dataset.index, 10);
+        renderTipDots();
+        resetTipInterval();
+      });
     });
-  });
-  activateTab(tabs[0]);
+  }
 
-  /* ---------- Optional dark-mode toggle (light is default) ---------- */
-  var themeBtn = document.getElementById("themeBtn");
-  var iconSun = document.getElementById("iconSun");
-  var iconMoon = document.getElementById("iconMoon");
+  function nextTip() {
+    currentTipIndex = (currentTipIndex + 1) % tips.length;
+    renderTipDots();
+  }
 
-  themeBtn.addEventListener("click", function () {
-    var dark = document.body.classList.toggle("dark");
-    themeBtn.setAttribute("aria-pressed", dark ? "true" : "false");
-    themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
-    iconSun.style.display = dark ? "none" : "block";
-    iconMoon.style.display = dark ? "block" : "none";
+  function resetTipInterval() {
+    clearInterval(tipInterval);
+    tipInterval = setInterval(nextTip, 5000);
+  }
+
+  // ---------- Activity Cards ----------
+  function renderActivity() {
+    activityScroll.innerHTML = notificationsData.map(notif => `
+      <div class="activity-stub">
+        <div class="notif-title">${notif.title}</div>
+        <div class="notif-detail">${notif.desc}</div>
+        <div class="notif-time">${notif.time}</div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Recent Documents ----------
+  function renderRecentDocs() {
+    recentDocsList.innerHTML = recentDocs.map((doc, i) => `
+      <div class="dashed-row" onclick="inspectDoc(${i})">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <span class="doc-badge ${doc.type}">${doc.badge}</span>
+          <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="doc-ref">${doc.ref}</span>
+              <span class="status-pill ${doc.status}">${doc.status}</span>
+            </div>
+            <div class="doc-client">${doc.client}</div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div class="doc-amount">${doc.amount}</div>
+          <div class="doc-meta">${doc.date}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Dark Mode Toggle ----------
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
   });
+
+  // ---------- Sidebar & Mobile ----------
+  collapseToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+      appFrame.classList.remove('sidebar-open');
+    } else {
+      appFrame.classList.toggle('collapsed');
+    }
+  });
+  mobileMenuBtn.addEventListener('click', () => appFrame.classList.add('sidebar-open'));
+  sidebarBackdrop.addEventListener('click', () => appFrame.classList.remove('sidebar-open'));
+
+  // ---------- FAB ----------
+  fabBtn.addEventListener('click', () => {
+    fabBtn.classList.toggle('open');
+    quickMenu.classList.toggle('open');
+  });
+
+  window.createNewDoc = (docType) => {
+    fabBtn.classList.remove('open');
+    quickMenu.classList.remove('open');
+    alert(`Initializing ${docType} creation... Select client and items to continue.`);
+  };
+
+  // ---------- Document Inspect Drawer ----------
+  window.inspectDoc = (index) => {
+    const doc = recentDocs[index];
+    document.getElementById('drawerBadge').textContent = doc.badge;
+    document.getElementById('drawerBadge').className = `doc-badge ${doc.type}`;
+    document.getElementById('drawerRef').textContent = doc.ref;
+    document.getElementById('drawerClient').textContent = doc.client;
+    document.getElementById('drawerAmount').textContent = doc.amount;
+    document.getElementById('drawerItems').innerHTML = doc.items.map(item => `
+      <div style="font-size:12px;padding:6px 8px;background:var(--color-surface-inset);border-radius:var(--radius-chip);color:var(--color-ink-900);">• ${item}</div>
+    `).join('');
+    drawerOverlay.classList.add('open');
+  };
+  closeDrawerBtn.addEventListener('click', () => drawerOverlay.classList.remove('open'));
+  drawerOverlay.addEventListener('click', (e) => {
+    if (e.target === drawerOverlay) drawerOverlay.classList.remove('open');
+  });
+
+  // ---------- AI Assistant Drawer ----------
+  askAiBtn.addEventListener('click', () => aiDrawerOverlay.classList.add('open'));
+  closeAiDrawerBtn.addEventListener('click', () => aiDrawerOverlay.classList.remove('open'));
+  aiDrawerOverlay.addEventListener('click', (e) => {
+    if (e.target === aiDrawerOverlay) aiDrawerOverlay.classList.remove('open');
+  });
+
+  const handleAiQuestion = (query) => {
+    if (!query.trim()) return;
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-msg';
+    userMsg.style.background = 'var(--color-surface-card)';
+    userMsg.style.border = '1px solid var(--color-border-strong)';
+    userMsg.innerHTML = `<strong>You:</strong> ${query}`;
+    aiChatHistory.appendChild(userMsg);
+    setTimeout(() => {
+      const botMsg = document.createElement('div');
+      botMsg.className = 'ai-msg';
+      botMsg.innerHTML = `<strong>Assistant:</strong> I found the related operation for "<em>${query}</em>". You can inspect or edit this document directly from the recent documents list.`;
+      aiChatHistory.appendChild(botMsg);
+      aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+    }, 450);
+    aiDrawerInput.value = '';
+  };
+
+  sendAiBtn.addEventListener('click', () => handleAiQuestion(aiDrawerInput.value));
+  aiDrawerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleAiQuestion(aiDrawerInput.value);
+  });
+  document.querySelectorAll('[data-ask]').forEach(btn => {
+    btn.addEventListener('click', () => handleAiQuestion(btn.getAttribute('data-ask')));
+  });
+
+  // ---------- Start ----------
+  initCompanySwitcher();
+  renderTipDots();
+  resetTipInterval();
+  renderNotifications();
+  renderActivity();
+  renderRecentDocs();
 })();
 </script>
 </body>
 </html>
+
