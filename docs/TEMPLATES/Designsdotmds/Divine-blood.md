@@ -1,614 +1,1095 @@
-Divine Blood
+# Divine Blood — Responsive & Adaptive Design System
 
-«Golden light meets sacred crimson. Two modes, one visual bloodline.»
+> Golden light meets sacred crimson. One visual bloodline, adaptive across every screen.
 
-1. Design Philosophy
+## 1. Core Responsive Principle
 
-Divine Blood is a warm editorial financial interface built around two visual modes:
+Divine Blood is one adaptive interface, not separate mobile, tablet,
+foldable, and desktop designs.
 
-- Gold Light — luminous, paper-like, golden-hour warmth.
-- Crimson Dark — deep, dramatic, near-black crimson depth.
+The visual identity remains consistent while the layout architecture
+responds to available viewport space.
 
-The modes share the same visual vocabulary rather than being completely isolated palettes.
+The system must support:
 
-The defining rule is:
+- Mobile phones
+- Flip phones
+- Foldable phones
+- Tablets
+- Desktop laptops
+- Desktop monitors
+- Wide / ultrawide displays
+- Portrait orientation
+- Landscape orientation
 
-«One color leads. The other whispers.»
+The interface responds primarily to:
 
-Gold Light is predominantly white and gold with restrained crimson details.
+- Viewport width
+- Viewport height
+- Aspect ratio
+- Orientation
+- Touch/pointer capability
+- Safe-area insets
+- Fold/hinge geometry where available
 
-Crimson Dark is predominantly black and crimson with restrained gold details.
-
-The secondary color may appear throughout the interface, but it must never overpower the dominant mode.
-
----
-
-2. Color Hierarchy
-
-Gold Light
-
-Primary foundation
-
-- Warm white
-- Paper white
-- Soft warm neutrals
-
-Dominant accent
-
-- Gold
-- Amber
-- Honey
-
-Secondary accent
-
-- Crimson
-
-Recommended visual distribution:
-
-- 70–80% white / warm neutral surfaces
-- 15–20% gold
-- ~5% crimson
-
-Crimson should feel intentional and precious rather than ubiquitous.
-
-Appropriate uses:
-
-- Risk indicators
-- Premium labels
-- Small status dots
-- Selected chart details
-- Warning borders
-- Small decorative marks
-- Occasional emphasized metrics
-- Micro-interactions
-
-Crimson should not become the primary background, primary button, or dominant large-scale surface in Gold Light.
+Never design exclusively around a specific device brand or model.
 
 ---
 
-Crimson Dark
+# 2. Responsive Breakpoints
 
-Primary foundation
+```css
+--breakpoint-mobile: 0px;
+--breakpoint-tablet: 640px;
+--breakpoint-desktop: 1024px;
+--breakpoint-wide: 1440px;
 
-- Near-black
-- Black
-- Deep crimson-black
+Mobile
 
-Dominant accent
+0–639px
 
-- Crimson
-- Burgundy
-- Deep red
+Target:
 
-Secondary accent
+Phones
 
-- Gold
+Flip cover displays
 
-Recommended visual distribution:
+Small foldable outer displays
 
-- 70–80% black / crimson-black surfaces
-- 15–20% crimson
-- ~5% gold
 
-Gold should feel like an ember or precious-metal highlight.
+Tablet / Fold Inner Portrait
 
-Appropriate uses:
+640–1023px
 
-- Featured metrics
-- Premium indicators
-- Selected chart bars
-- Small icon highlights
-- Navigation details
-- Focus states
-- Micro-interactions
-- Important data emphasis
+Target:
 
-Gold should not become the dominant background or primary surface in Crimson Dark.
+Tablets
 
----
+Foldables opened in portrait
 
-3. Dominance Rule
+Small landscape devices
 
-Every component should answer two questions:
 
-What belongs to the mode?
+Desktop
 
-This determines the dominant visual treatment.
+1024–1439px
 
-Gold Light:
+Target:
 
-«White + Gold»
+Laptops
 
-Crimson Dark:
+Desktop monitors
 
-«Black + Crimson»
+Foldables opened in landscape
 
-What provides contrast or character?
 
-This determines where the secondary color may appear.
+Wide
 
-Gold Light:
+1440px+
 
-«Crimson»
+Target:
 
-Crimson Dark:
+Large monitors
 
-«Gold»
+Ultrawide displays
 
-The secondary color is allowed, but it should generally occupy a smaller visual area, have lower frequency, or carry greater semantic importance.
+
+Breakpoints describe available space rather than device identity.
+
 
 ---
 
-4. Color Tokens
+3. Device Architecture
 
-Gold Light
+Device	Frame	Navigation	Main Content	Right Rail
 
-:root {
-  --color-canvas: #FAFAF9;
-  --color-surface: #FFFFFF;
-  --color-surface-inset: #F7F5F1;
+Mobile	Edge-to-edge	Bottom nav / drawer	1 column	Bottom sheet
+Flip Cover	Edge-to-edge	Bottom nav / compact rail	1 column	Bottom sheet
+Flip Open	Adaptive	Bottom nav or compact rail	1–2 columns	Collapsible
+Fold Cover	Edge-to-edge	Bottom nav / icon rail	1 column	Bottom sheet
+Fold Inner Portrait	8–12px inset	Icon rail / collapsible sidebar	1–2 columns	Narrow/collapsible
+Fold Inner Landscape	8–16px inset	Sidebar / icon rail	2 columns	Narrow rail
+Tablet	8–16px inset	Collapsible sidebar	1–2 columns	Toggle/narrow panel
+Desktop	16–24px inset	Full sidebar	2–3 columns	320–360px
+Wide	24px+ inset	Full sidebar	Expanded 3-column	360px+
 
-  --color-ink: #18181B;
-  --color-ink-secondary: #5C5A55;
-  --color-ink-muted: #71717A;
 
-  --color-primary: #D9962B;
-  --color-primary-deep: #B4770F;
-  --color-primary-highlight: #E8B33C;
-
-  --color-secondary: #8B0000;
-  --color-secondary-soft: #A52A2A;
-  --color-secondary-wash: rgba(139, 0, 0, 0.07);
-
-  --color-border: #E8E5DF;
-  --color-border-strong: #DBD7CF;
-
-  --color-button: #18181B;
-  --color-button-text: #FFFFFF;
-}
-
-Crimson Dark
-
-[data-theme="dark"] {
-  --color-canvas: #0F0A0A;
-  --color-surface: #1A1111;
-  --color-surface-inset: #241818;
-
-  --color-ink: #F5F0EB;
-  --color-ink-secondary: #B8A89C;
-  --color-ink-muted: #9A8B80;
-
-  --color-primary: #C43E3E;
-  --color-primary-deep: #8B0000;
-  --color-primary-highlight: #A52A2A;
-
-  --color-secondary: #E8B33C;
-  --color-secondary-soft: #F3BD48;
-  --color-secondary-wash: rgba(232, 179, 60, 0.08);
-
-  --color-border: #3D2525;
-  --color-border-strong: #4A2E2E;
-
-  --color-button: #F5F0EB;
-  --color-button-text: #18181B;
-}
 
 ---
 
-5. Accent Usage Rules
+4. Mobile
 
-Gold Light
+Width
 
-Gold owns:
+0–639px
 
-- Primary actions
-- Active navigation
-- Featured data
-- Icon tiles
-- Progress indicators
-- Hero treatment
-- Selected states
+Frame
 
-Crimson supports:
+Full viewport width
 
-- Risk
-- Warnings
-- Premium details
-- Occasional emphasis
-- Secondary chart series
-- Small decorative moments
+No wallpaper margin
 
-Crimson Dark
+border-radius: 0
 
-Crimson owns:
+No desktop floating-frame treatment
 
-- Primary actions
-- Active navigation
-- Featured data
-- Hero treatment
-- Risk states
-- Progress indicators
-- Selected states
 
-Gold supports:
+The wallpaper may remain visually present through the app background, but the application itself should occupy the full viewport.
 
-- Premium details
-- Featured metrics
-- Icon highlights
-- Secondary chart series
-- Important data points
-- Small decorative moments
+Navigation
+
+Desktop sidebar becomes:
+
+1. Bottom navigation, or
+
+
+2. Hamburger drawer
+
+
+
+Bottom navigation:
+
+56–64px height
+
+Minimum 44×44px touch targets
+
+4–5 primary destinations
+
+Secondary destinations move into the drawer
+
+
+Top Bar
+
+Sticky
+
+Compact
+
+Breadcrumb truncates
+
+Theme toggle remains accessible
+
+Search may become an icon/button
+
+"Ask ReprAI" becomes a 56px FAB
+
+
+Content
+
+Single-column layout.
+
+Cards:
+
+padding: 12px–16px;
+
+Grid gap:
+
+8px–12px;
+
+Section gap:
+
+12px–16px;
+
+Hero
+
+Stack vertically:
+
+1. Image / atmosphere
+
+
+2. Tags
+
+
+3. Title
+
+
+4. Supporting information
+
+
+5. CTA
+
+
+
+KPI
+
+Use either:
+
+Horizontal scrolling strip, or
+
+2×3 grid
+
+
+Do not force six narrow columns onto a phone.
+
+Right Rail
+
+Convert to:
+
+Bottom sheet
+
+Accordion
+
+Expandable card
+
+
+Never squeeze the desktop right rail into the mobile viewport.
+
 
 ---
 
-6. The 80/20 Principle
+5. Flip Phones
 
-The secondary color should generally occupy no more than approximately 20% of a component's visual emphasis.
+Flip devices must support both the cover display and the unfolded display.
 
-This is not a strict pixel measurement.
+Closed / Cover Display
 
-It is a hierarchy rule.
-
-A crimson badge on a Gold Light card is acceptable.
-
-A crimson hero background with gold text in Gold Light is not.
-
-A gold metric highlight in Crimson Dark is acceptable.
-
-A gold-dominated dashboard in Crimson Dark is not.
-
-When uncertain, ask:
-
-«"Which color does my eye notice first?"»
-
-The answer should always be the mode's dominant color.
-
----
-
-7. Photography
-
-Gold Light
-
-Use warm golden-hour photography.
+Treat the cover display as a compact mobile device.
 
 Characteristics:
 
-- Wheat
-- Sunlight
-- Amber atmosphere
-- Cream highlights
-- Warm skin tones
-- Soft shadows
+Edge-to-edge
 
-Gold should naturally emerge from the photography.
+Bottom navigation
 
-Small amounts of crimson may appear naturally in:
+Compact top bar
 
-- Clothing
-- Architecture
-- Editorial props
-- Decorative details
+Single-column cards
 
-Do not artificially tint the entire photograph crimson.
+Horizontal KPI scrolling
 
-Crimson Dark
+FAB for ReprAI
 
-Use the same photographic subject matter only when useful, but transform it substantially.
+Reduced typography scale
 
-Characteristics:
 
-- Crushed blacks
-- Deep crimson shadows
-- Burgundy atmosphere
-- Controlled highlights
-- Dramatic contrast
+Do not attempt to render the desktop sidebar.
 
-Gold may appear as a restrained highlight.
+Open Flip
 
-The dark mode should feel like the same world after sunset, not a completely unrelated product.
+Use available viewport width.
 
----
+If the unfolded viewport remains below 640px:
 
-8. Hero Treatment
+Mobile architecture
 
-Gold Light
+If it reaches tablet width:
 
-Primary gradient:
+Tablet architecture
 
-linear-gradient(
-  90deg,
-  #B4770F 0%,
-  #D9962B 45%,
-  rgba(217, 150, 43, 0) 100%
-);
+If it reaches desktop width:
 
-Optional crimson detail:
+Desktop architecture
 
-- Small premium badge
-- Fine decorative line
-- Tiny status indicator
+The device itself must never dictate a fixed layout.
 
-Crimson Dark
-
-Primary gradient:
-
-linear-gradient(
-  90deg,
-  #8B0000 0%,
-  #A52A2A 50%,
-  rgba(15, 10, 10, 0) 100%
-);
-
-Optional gold detail:
-
-- Featured metric
-- Tiny icon
-- Premium indicator
-- Fine highlight line
 
 ---
 
-9. Data Visualization
+6. Foldable Devices
 
-Charts should follow the dominant/supporting relationship.
+Foldables have two fundamentally different layouts.
 
-Gold Light
+Fold Cover
 
-- Neutral bars: warm gray
-- Primary series: gold
-- Secondary series: restrained crimson
-- Featured bar: bright gold
-- Risk markers: crimson
+Treat as mobile.
 
-Crimson Dark
+Edge-to-edge
 
-- Neutral bars: dark crimson
-- Primary series: crimson
-- Secondary series: restrained gold
-- Featured bar: bright crimson
-- Premium/highlight markers: gold
+Bottom navigation
 
-Avoid introducing unrelated colors merely to make charts colorful.
+Single column
 
----
+Compact hero
 
-10. Interaction States
+Horizontal KPI scrolling
 
-Interaction states inherit the dominant color.
+Bottom-sheet right rail
 
-Gold Light
 
-Hover:
+Fold Inner Portrait
 
-- Slightly brighter gold
-- Warm surface lift
+Treat as compact tablet.
 
-Active:
+Recommended:
 
-- Deeper gold
+8–12px frame inset
 
-Focus:
+16–20px frame radius
 
-- Gold outline
+64–72px collapsible navigation rail
 
-Secondary crimson elements:
+1–2 content columns
 
-- May brighten slightly on interaction
+2×3 KPI grid
 
-Crimson Dark
+Narrow/collapsible right rail
 
-Hover:
+Hero may become horizontal
 
-- Brighter crimson
-- Slight crimson glow
 
-Active:
+Fold Inner Landscape
 
-- Deeper/brighter crimson depending on surface
+Treat as compact desktop.
 
-Focus:
+Recommended:
 
-- Bright crimson outline
+8–16px frame inset
 
-Secondary gold elements:
+16–20px radius
 
-- May brighten slightly on interaction
+Sidebar or icon rail
 
-No blue browser-style visual language should appear in the designed interface.
+Main content + right rail
+
+2-column primary content
+
+Horizontal hero
+
+KPI grid may return to six columns when space permits
+
+
 
 ---
 
-11. Semantic Color Principle
+7. Hinge / Fold Awareness
 
-Semantic information does not require introducing unrelated colors.
+Foldable interfaces must not place important controls underneath a hinge or unsafe display region.
+
+Where supported, use viewport segment information.
+
+Conceptually:
+
+/* Pseudocode / progressive enhancement */
+
+@media (horizontal-viewport-segments: 2) {
+  /* Treat each display segment as a layout region. */
+}
+
+When hinge information is unavailable:
+
+Prefer generous gutters
+
+Avoid placing critical controls exactly at the visual center
+
+Allow the layout to gracefully collapse into a single-column mode
+
+Never assume a foldable has a perfectly usable rectangular canvas
+
+
+Important content should remain accessible even when the device is partially folded.
+
+
+---
+
+8. Tablet
+
+Width
+
+640–1023px
+
+Tablet uses a hybrid architecture.
+
+Navigation
+
+Either:
+
+64–72px icon rail, or
+
+Collapsible sidebar
+
+
+Main Content
 
 Use:
 
-- Color
-- Label
-- Icon
-- Border
-- Pattern
-- Typography
-- Position
+1 column
 
-together to communicate meaning.
+when space is constrained.
 
-For example:
+Use:
 
-HIGH RISK
-[crimson indicator]
+2 columns
 
-is stronger than relying exclusively on a red color change.
+when enough horizontal space exists.
 
-Similarly:
+Right Rail
 
-PREMIUM
-[gold indicator]
+The desktop 320–360px rail becomes:
 
-can communicate importance in Crimson Dark without making gold the dominant palette.
+240–280px narrow panel
+
+Tab toggle
+
+Collapsible section
+
+Bottom sheet when necessary
+
+
+Hero
+
+Prefer horizontal layout when width allows.
+
+KPI
+
+Use:
+
+3 × 2
+
+rather than six narrow columns.
+
 
 ---
 
-12. Surface & Elevation
+9. Desktop
+
+Width
+
+1024–1439px
+
+Use the full Divine Blood terminal architecture.
+
+┌───────────────────────────────────────────────────────────┐
+│                       TOP BAR                              │
+├──────────────┬──────────────────────────────┬───────────────┤
+│              │                              │               │
+│   SIDEBAR    │        MAIN CONTENT          │   RIGHT RAIL  │
+│  260–280px   │                              │   320–360px   │
+│              │                              │               │
+│              │                              │               │
+└──────────────┴──────────────────────────────┴───────────────┘
+
+Frame
+
+16–24px viewport inset
+
+20–24px radius
+
+Wallpaper visible around the frame
+
+Soft atmospheric elevation
+
+
+Sidebar
+
+Approximately:
+
+width: 260px–280px;
+
+Right Rail
+
+Approximately:
+
+width: 320px–360px;
+
+Main Content
+
+Flexible.
+
+Use CSS Grid rather than fixed pixel positioning.
+
+
+---
+
+10. Wide Desktop
+
+Width
+
+1440px+
+
+Do not allow the application to become excessively stretched.
+
+Recommended:
+
+max-width: 1800px;
+margin-inline: auto;
+
+The wallpaper remains visible around the frame.
+
+The right rail may grow slightly:
+
+320px–380px;
+
+Main content receives additional breathing room rather than indefinitely increasing card widths.
+
+
+---
+
+11. Orientation
+
+Orientation must be handled independently from breakpoint.
+
+Portrait
+
+Prioritize:
+
+Vertical hierarchy
+
+Single/dual column layouts
+
+Bottom navigation
+
+Compact headers
+
+
+Landscape
+
+Prioritize:
+
+Horizontal hero layouts
+
+Additional columns
+
+Side navigation
+
+Right rail
+
+Wider KPI layouts
+
+
+Example:
+
+@media (orientation: landscape) {
+  .hero {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+Do not simply rotate the portrait layout.
+
+
+---
+
+12. Touch Adaptation
+
+When a coarse pointer is detected:
+
+@media (pointer: coarse) {
+  button,
+  a,
+  input,
+  [role="button"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+Touch targets:
+
+Mobile: 44–48px
+
+Fold cover: 44–48px
+
+Fold inner: 40–44px
+
+Tablet: 40–44px
+
+Desktop: minimum 40px
+
+
+Increase spacing between adjacent interactive controls on touch devices.
+
+
+---
+
+13. Safe Areas
+
+Support devices with camera cutouts, rounded corners, and gesture navigation.
+
+.app {
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+
+For mobile bottom navigation:
+
+.bottom-nav {
+  padding-bottom: max(
+    8px,
+    env(safe-area-inset-bottom)
+  );
+}
+
+Never position essential controls flush against unsafe viewport edges.
+
+
+---
+
+14. Responsive Typography
+
+Typography scales smoothly rather than jumping dramatically.
+
+Mobile
+
+Hero: 22–24px
+
+Metric XL: 20–22px
+
+Metric L: 18–20px
+
+Card title: 14px
+
+Body: 13px
+
+Caption: 11px
+
+
+Tablet / Fold Inner
+
+Hero: 24–26px
+
+Metric XL: 22–24px
+
+Metric L: 20–22px
+
+Card title: 15px
+
+Body: 13–14px
+
+Caption: 12px
+
+
+Desktop
+
+Hero: 28–30px
+
+Metric XL: 26–28px
+
+Metric L: 22–24px
+
+Card title: 15–16px
+
+Body: 13–14px
+
+Caption: 12px
+
+
+Typography remains visually consistent across modes.
+
+Only scale changes.
+
+
+---
+
+15. Responsive Spacing
+
+Mobile
+
+--frame-padding: 0px;
+--card-padding: 12px–16px;
+--section-gap: 12px–16px;
+--grid-gap: 8px–12px;
+
+Tablet / Fold
+
+--frame-padding: 8px–12px;
+--card-padding: 16px–20px;
+--section-gap: 16px–20px;
+--grid-gap: 12px–16px;
+
+Desktop
+
+--frame-padding: 16px–24px;
+--card-padding: 20px–24px;
+--section-gap: 20px–24px;
+--grid-gap: 16px–24px;
+
+
+---
+
+16. Responsive Component Rules
+
+Every component must have a defined compact state.
+
+Sidebar
+
+Desktop:
+
+Full sidebar
+
+Tablet:
+
+Icon rail / drawer
+
+Mobile:
+
+Bottom navigation / drawer
+
+Hero
+
+Desktop:
+
+Horizontal
+
+Tablet:
+
+Horizontal when space allows
+
+Mobile:
+
+Vertical
+
+KPI
+
+Desktop:
+
+6 columns
+
+Tablet:
+
+3 × 2
+
+Mobile:
+
+2 × 3 or horizontal scroll
+
+Right Rail
+
+Desktop:
+
+Fixed 320–360px
+
+Tablet:
+
+240–280px / toggle
+
+Mobile:
+
+Bottom sheet / accordion
+
+Ask ReprAI
+
+Desktop:
+
+Top-bar pill
+
+Tablet:
+
+Top-bar pill
+
+Mobile:
+
+56px FAB
+
+Fold cover:
+
+56px FAB
+
+Fold inner:
+
+Pill when space permits
+
+
+---
+
+17. Grid Architecture
+
+Use CSS Grid and flexible tracks.
+
+Preferred:
+
+.dashboard {
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 280px)
+    minmax(0, 1fr)
+    minmax(300px, 360px);
+}
+
+Tablet:
+
+@media (max-width: 1023px) {
+  .dashboard {
+    grid-template-columns:
+      minmax(64px, 72px)
+      minmax(0, 1fr);
+  }
+
+  .right-rail {
+    display: none;
+  }
+}
+
+Mobile:
+
+@media (max-width: 639px) {
+  .dashboard {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
+
+Avoid fixed absolute positioning for primary layout regions.
+
+
+---
+
+18. Desktop Floating Frame
+
+Desktop:
+
+Wallpaper
+    ↓
+┌──────────────────────────────────────┐
+│        Divine Blood App Frame        │
+│                                      │
+│  Sidebar   Main Content   Right Rail │
+│                                      │
+└──────────────────────────────────────┘
+
+Mobile:
+
+┌─────────────────────┐
+│ Divine Blood        │
+│                     │
+│ Main Content        │
+│                     │
+│                     │
+├─────────────────────┤
+│ Bottom Navigation   │
+└─────────────────────┘
+
+The floating frame progressively disappears as viewport width decreases.
+
+
+---
+
+19. Mode + Responsive Behavior
+
+Responsive behavior must never change the color hierarchy.
 
 Gold Light
 
-Elevation is communicated primarily through lightness.
+Always:
 
-Golden wallpaper
-      ↓
-Warm-white frame
-      ↓
-White card
-      ↓
-Warm-white inset
+WHITE / WARM NEUTRAL
+        ↓
+       GOLD
+        ↓
+     CRIMSON
 
-Use:
+Gold remains dominant.
 
-- Very soft shadows
-- Hairline borders
-- Subtle surface changes
+Crimson remains supporting.
 
 Crimson Dark
 
-Elevation is communicated primarily through depth.
+Always:
 
-Crimson atmosphere
-      ↓
-Near-black frame
-      ↓
-Crimson-black card
-      ↓
-Deep inset
+BLACK / CRIMSON-BLACK
+        ↓
+     CRIMSON
+        ↓
+       GOLD
 
-Use:
+Crimson remains dominant.
 
-- Surface tinting
-- Crimson hairlines
-- Extremely restrained glow
-- Minimal shadows
+Gold remains supporting.
 
----
+This hierarchy remains true on:
 
-13. Theme Transition
+Mobile
 
-Switching between modes should feel like the same financial instrument changing atmosphere.
+Flip
 
-Duration:
-300ms
+Fold
 
-Transition:
-ease-in-out
+Tablet
 
-Animate:
+Desktop
 
-- Background
-- Surface
-- Border
-- Text
-- Accent
-- Shadow
-- Glow
+Wide desktop
 
-The layout must not move.
 
-Typography must not change.
-
-Component geometry must not change.
-
-Only the visual atmosphere changes.
 
 ---
 
-14. Responsive Principle
+20. Motion Across Devices
 
-The color hierarchy remains unchanged at every breakpoint.
+Desktop:
 
-Mobile does not become more crimson.
+Hover interactions enabled
 
-Desktop does not become more gold.
+Subtle card lift
 
-The dominant/supporting relationship remains consistent.
+Chart animation
 
-Only:
+Theme transition
 
-- Density
-- Layout
-- Navigation
-- Component stacking
-- Typography scale
 
-change responsively.
+Touch:
 
----
+Remove hover-dependent functionality
 
-15. Palette Contamination Test
+Use pressed states
 
-Gold Light review
+Shorter feedback animations
 
-Ask:
 
-- Is white/warm neutral visually dominant?
-- Is gold the first accent the eye notices?
-- Is crimson restrained?
-- Does any crimson surface overpower the gold system?
-- Are large surfaces still predominantly white?
-- Could removing crimson leave the mode visually coherent?
+Theme transition:
 
-Crimson Dark review
+transition:
+  background-color 300ms ease-in-out,
+  color 300ms ease-in-out,
+  border-color 300ms ease-in-out,
+  box-shadow 300ms ease-in-out;
 
-Ask:
+Respect:
 
-- Is black/crimson-black visually dominant?
-- Is crimson the first accent the eye notices?
-- Is gold restrained?
-- Does any gold surface overpower the crimson system?
-- Are large surfaces still predominantly dark?
-- Could removing gold leave the mode visually coherent?
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
-A mode passes when the secondary color feels intentional but non-essential to the overall identity.
 
 ---
 
-16. Brand Expression
+21. Accessibility
 
-Divine Blood should feel:
+Responsive design must remain accessible.
 
-- Editorial
-- Wealth-oriented
-- Atmospheric
-- Precise
-- Mature
-- Slightly mysterious
-- Warm
-- Premium
+Requirements:
 
-It should not feel:
+Minimum 44×44px touch targets
 
-- Generic fintech
-- Neon
-- Cyberpunk
-- Luxury-fashion cliché
-- Overly corporate
-- Overly colorful
+Keyboard navigation on desktop
 
-The interface should feel like a financial terminal designed by an editorial art director.
+Visible focus states
 
-Gold Light: daylight, paper, wealth, clarity.
+Screen-reader labels
 
-Crimson Dark: night, depth, power, intensity.
+Charts accompanied by text summaries
 
-Both belong to the same world.
+Status communicated through text and iconography, not color alone
+
+Sufficient contrast
+
+Reduced-motion support
+
+Safe-area support
+
+No essential information hidden exclusively behind hover
+
+No critical action dependent on precise pointer positioning
+
+
 
 ---
 
-17. Final Design Rule
+22. Responsive QA Matrix
 
-«White and gold lead in Gold Light.
+Every release must be checked at minimum at:
 
-Crimson and black lead in Crimson Dark.
+Mobile
 
-The opposing accent is always permitted, but always subordinate.
+320×568
 
-The mode determines what dominates; the brand determines what connects them.»
+375×667
+
+390×844
+
+430×932
+
+
+Flip / Fold Cover
+
+Narrow cover viewport
+
+Portrait cover
+
+Landscape cover where supported
+
+
+Fold Inner
+
+Portrait
+
+Landscape
+
+Dual-segment / hinge configuration where available
+
+
+Tablet
+
+768×1024
+
+820×1180
+
+1024×768
+
+
+Desktop
+
+1280×720
+
+1366×768
+
+1440×900
+
+1920×1080
+
+
+Wide
+
+2560×1440
+
+Ultrawide aspect ratios
+
+
+
+---
+
+23. Final Adaptive Rule
+
+Divine Blood is not:
+
+Desktop design
++
+smaller desktop design
++
+mobile design
+
+It is:
+
+ONE DESIGN SYSTEM
+       ↓
+AVAILABLE SPACE
+       ↓
+LAYOUT RESOLUTION
+       ↓
+Mobile / Flip / Fold / Tablet / Desktop / Wide
+
+The interface should feel native to every form factor while remaining recognizably Divine Blood.
+
+The layout adapts.
+
+The typography scales.
+
+The navigation transforms.
+
+The columns collapse.
+
+The right rail relocates.
+
+The hero reflows.
+
+The cards resize.
+
+The wallpaper/frame treatment changes with available space.
+
+But the brand language never breaks:
+
+Gold Light → White + Gold lead, Crimson supports.
+
+Crimson Dark → Black + Crimson lead, Gold supports.
+
+One Divine Blood system across every screen.
