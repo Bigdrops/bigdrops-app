@@ -112,7 +112,7 @@ function CsrContent() {
       }
       const [invoice, project] = await Promise.all([
         activeCsr.linked_invoice_id ? fetchInvoiceSummary(activeCsr.linked_invoice_id) : Promise.resolve(null),
-        activeCsr.project_id ? fetchProjectSummary(activeCsr.project_id, tenantClient) : Promise.resolve(null),
+        activeCsr.project_id ? fetchProjectSummary(activeCsr.project_id) : Promise.resolve(null),
       ])
       if (cancelled) return
       setActiveCsrInvoice(invoice)

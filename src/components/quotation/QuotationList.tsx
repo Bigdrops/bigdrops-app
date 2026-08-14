@@ -106,7 +106,7 @@ export default function QuotationList() {
     setArchiveId(null)
     setBusyAction(`archive:${id}`)
     try {
-      await archiveQuotation(id)
+      await archiveQuotation(id, tenantClient)
     } catch (error: any) {
       setBusyAction(null)
       feedback.error('Archive failed', { description: error.message })
@@ -121,7 +121,7 @@ export default function QuotationList() {
     setDeleteId(null)
     setBusyAction(`delete:${id}`)
     try {
-      await deleteQuotation(id)
+      await deleteQuotation(id, tenantClient)
     } catch (error: any) {
       setBusyAction(null)
       feedback.error('Delete failed', { description: error.message })
@@ -134,7 +134,7 @@ export default function QuotationList() {
   const handleClone = async (id: string) => {
     setBusyAction(`clone:${id}`)
     try {
-      const createdQuotation = await cloneQuotation(id, settings?.document_prefixes)
+      const createdQuotation = await cloneQuotation(id, tenantClient, settings?.document_prefixes)
       setBusyAction(null)
       setActiveQuotation(null)
       invalidateListCache(QUOTATION_CACHE_KEY)

@@ -1,4 +1,5 @@
 import type { TenantClient } from '@/lib/tenantClient'
+import { supabase } from '@/supabase'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { normalizeSettings } from '@/hooks/useSettings'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, withSourceTrail } from '@/domain/documentConversion'

@@ -1,4 +1,5 @@
 import type { TenantClient } from '@/lib/tenantClient'
+import { useEntity } from '@/lib/tenant/contexts'
 import type {
   InvoiceItem,
   InvoiceFieldEntry,
@@ -311,9 +312,15 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   },
 }
 
-export function useQuotationSave(params: UseQuotationSaveParams) {
+export function useQuotationSave(params: Omit<UseQuotationSaveParams, 'tenantClient'>) {
+  const { tenantClient } = useEntity()
+  const input = {
+    ...params,
+    tenantClient,
+  } satisfies UseQuotationSaveParams
+
   return useDocumentSave({
-    input: params,
+    input,
     strategy: quotationStrategy,
     isCreate: params.isCreate,
     isEdit: params.isEdit,

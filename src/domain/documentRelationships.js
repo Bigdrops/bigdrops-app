@@ -47,6 +47,10 @@ export function hasWaybillRelatedDocuments(waybill) {
   return Boolean(waybill?.invoice_id)
 }
 
+/**
+ * @param {string} projectId
+ * @param {any} client
+ */
 export async function fetchProjectSummary(projectId, client = supabase) {
   if (!projectId) return null
   const { data, error } = await client
