@@ -260,15 +260,24 @@ function legacyItem(overrides = {}) {
 
 // TEST 7 — The helper mirrors the quotation hydration.
 // Without saved calculation inputs, explicit 0 is healed to null. With saved
-// calculation inputs, explicit 0 stays a deliberate zero override.
-test('healLegacyCalculationOverrides heals 0 only without saved calculationInputs', () => {
+// calculation inputs and no persisted global discount, explicit 0 stays a
+// deliberate zero override. With a persisted non-zero global discount, 0 is
+// the Aug 2026 RPC corruption signature and heals to null.
+test('healLegacyCalculationOverrides heals corrupted 0 and keeps deliberate 0', () => {
+  // Legacy document (no calculationInputs): heal vat and discount.
   const healed = healLegacyCalculationOverrides(legacyItem(), false)
   assert.equal(healed.vat_rate, null)
   assert.equal(healed.discount_rate, null)
 
-  const kept = healLegacyCalculationOverrides(legacyItem(), true)
+  // Document with calculationInputs and NO global discount: keep explicit 0.
+  const kept = healLegacyCalculationOverrides(legacyItem(), true, 0)
   assert.equal(kept.vat_rate, 0)
   assert.equal(kept.discount_rate, 0)
+
+  // Document with a persisted global discount: 0 rows heal to inherit.
+  const corrupted = healLegacyCalculationOverrides(legacyItem(), true, 24918.66)
+  assert.equal(corrupted.discount_rate, null)
+  assert.equal(corrupted.vat_rate, 0) // vat was never corrupted by the RPC
 
   const nonZero = healLegacyCalculationOverrides(legacyItem({ vat_rate: 7.5, discount_rate: 5 }), false)
   assert.equal(nonZero.vat_rate, 7.5)
@@ -321,4 +330,53 @@ test('healed rows serialize back as NULL discount_rate', () => {
     discount_rate: healed.discount_rate ?? null,
   }
   assert.equal(dbRow.discount_rate, null)
+})
+
+// TEST 10 — SASINV079-profile end to end.
+// An invoice WITH persisted calculationInputs and a fixed global discount,
+// whose rows were corrupted to 0 by the Aug 2026 RPC COALESCE, must now
+// hydrate the global discount and apply it to the total.
+test('corrupted RPC rows heal and the persisted fixed global discount applies', () => {
+  const rawItems = [legacyItem({ quantity: 2, unit_price: 635680 })]
+  const hasSavedCalculationInputs = true
+  const persistedGlobalDiscount = 24918.66
+  const loadedItems = rawItems.map((item) =>
+    healLegacyCalculationOverrides(item, hasSavedCalculationInputs, persistedGlobalDiscount),
+  )
+
+  const state = inferLegacyCalculationState({
+    invoice: { discount: 0, vat: 7.5, wht: 0 },
+    items: loadedItems,
+    customFields: {
+      calculationInputs: {
+        discountValue: 24918.66,
+        discountType: 'fixed',
+        discountTiming: 'before',
+        vatPercent: 7.5,
+        whtValue: 0,
+        whtType: 'percent',
+      },
+    },
+  })
+
+  assert.equal(state.editableInputs.discountValue, 24918.66)
+  assert.equal(loadedItems[0].discount_rate, null)
+
+  const calculationInputs = buildCalculationInputs({
+    invoice: { discount: 30000, vat: 7.5, wht: 0 },
+    discountType: state.calculationInputs.discountType,
+    discountTiming: state.calculationInputs.discountTiming,
+    whtType: state.calculationInputs.whtType,
+  })
+
+  const result = computeDocument({
+    items: loadedItems,
+    columns: [{ key: 'discount_rate', visibilityMode: 'hide_display' }],
+    document: { discount: 30000, vat: 7.5, wht: 0 },
+    cf: { extraCharges: [], calculationInputs },
+  })
+
+  // The typed 30000 global discount now changes the total.
+  assert.equal(result.discount, 30000)
+  assert.equal(result.items[0].inherits_global_discount, true)
 })

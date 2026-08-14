@@ -59,15 +59,6 @@ export type SummaryStats = {
   pendingFollowUp: number
 }
 
-type DashboardFinancialMetrics = {
-  overdue: number | string | null
-  due_this_week: number | string | null
-  this_month_collections: number | string | null
-  pending_follow_up: number | string | null
-  awaiting_payment_count: number | string | null
-  has_past_due: boolean | null
-}
-
 type UseDashboardDataOptions = {
   variant?: 'overview' | 'classic'
 }
@@ -95,10 +86,6 @@ const defaultSummary: SummaryStats = {
   dueThisWeek: 0,
   thisMonthCollections: 0,
   pendingFollowUp: 0,
-}
-
-function toNumber(value: number | string | null | undefined) {
-  return Number(value || 0)
 }
 
 function formatDashboardAmount(amount: number | string | null | undefined) {
@@ -457,14 +444,11 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
-    const startOfMonthIso = startOfMonth.toISOString()
 
     const now = new Date()
     const endOfWeek = new Date(now)
     endOfWeek.setDate(now.getDate() + 7)
     endOfWeek.setHours(23, 59, 59, 999)
-    const nowIso = now.toISOString()
-    const endOfWeekIso = endOfWeek.toISOString()
 
     try {
       const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes] = await Promise.all([
@@ -474,15 +458,11 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(20),
-        supabase.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
+        tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
         supabase.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(8),
         tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         supabase.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
-        supabase.rpc('get_dashboard_financial_metrics', {
-          p_now: nowIso,
-          p_end_of_week: endOfWeekIso,
-          p_start_of_month: startOfMonthIso,
-        }),
+        tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
         tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
       ])
 
@@ -493,19 +473,54 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const rfqs = rfqRes.data || []
       const boqs = listBoqs()
       const projects = (projectsRes.data || []) as RecentProject[]
-      const financialMetrics = Array.isArray(financialMetricsRes.data)
-        ? (financialMetricsRes.data[0] as DashboardFinancialMetrics | undefined)
-        : (financialMetricsRes.data as DashboardFinancialMetrics | null)
+      const invoiceFinancials = financialMetricsRes.data || []
 
-      const pastDue = toNumber(financialMetrics?.overdue)
-      const dueThisWeek = toNumber(financialMetrics?.due_this_week)
-      const thisMonthCollections = toNumber(financialMetrics?.this_month_collections)
-      const pendingFollowUp = toNumber(financialMetrics?.pending_follow_up)
-      const awaitingPaymentCount = toNumber(financialMetrics?.awaiting_payment_count)
+      const isPastDue = (row: any) => {
+        const balance = Number(row.balance_due || 0)
+        if (balance <= 0 || !row.due_date) return false
+        const dueDate = new Date(row.due_date)
+        if (Number.isNaN(dueDate.getTime())) return false
+        dueDate.setHours(0, 0, 0, 0)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return dueDate < today
+      }
+
+      const overdue = invoiceFinancials.reduce(
+        (sum: number, row: any) => (isPastDue(row) ? sum + Number(row.balance_due || 0) : sum),
+        0,
+      )
+
+      const dueThisWeek = invoiceFinancials.reduce((sum: number, row: any) => {
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        const balance = Number(row.balance_due || 0)
+        if (!dueDate || Number.isNaN(dueDate.getTime()) || balance <= 0) return sum
+        if (dueDate < now || dueDate > endOfWeek) return sum
+        return sum + balance
+      }, 0)
+
+      const thisMonthCollections = invoiceFinancials.reduce((sum: number, row: any) => {
+        const issueDate = row.issue_date ? new Date(row.issue_date) : null
+        if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
+        return sum + Number(row.cash_received || 0)
+      }, 0)
+
+      const pendingFollowUp = invoiceFinancials.filter((row: any) => {
+        const balance = Number(row.balance_due || 0)
+        if (balance <= 0) return false
+        if (isPastDue(row)) return true
+        const dueDate = row.due_date ? new Date(row.due_date) : null
+        if (!dueDate || Number.isNaN(dueDate.getTime())) return false
+        return dueDate >= now && dueDate <= endOfWeek
+      }).length
+
+      const awaitingPaymentCount = invoiceFinancials.filter((row: any) => Number(row.balance_due || 0) > 0).length
+
+      const hasPastDue = invoiceFinancials.some((row: any) => isPastDue(row))
       const inTransitWaybills = waybills.filter(
         (row: any) => String(row.status || '').toLowerCase() === 'dispatched',
       ).length
-      const reminders = buildOverviewPriorityItems(projects, quotations, Boolean(financialMetrics?.has_past_due))
+      const reminders = buildOverviewPriorityItems(projects, quotations, hasPastDue)
 
       const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: false })
       const nextHeroStats = {
@@ -515,8 +530,8 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         inTransitWaybills,
       }
       const nextSummary = {
-        overdue: pastDue,
-        pastDue,
+        overdue,
+        pastDue: overdue,
         dueThisWeek,
         thisMonthCollections,
         pendingFollowUp,

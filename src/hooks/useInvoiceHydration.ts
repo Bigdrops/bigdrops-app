@@ -108,16 +108,22 @@ export function useInvoiceHydration(
       if (data.invoice_title) targetsRef.current.setInvoiceTitle(data.invoice_title)
 
       const { data: itemRows } = await tenantClient.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
-      // Mirrors the quotation hydration (buildQuotationFormState): legacy rows
-      // stored explicit 0 for vat_rate / discount_rate. Without persisted
-      // calculation inputs there is no global rate to override, so 0 means
-      // "inherit" and is healed to null before the calculation state is
-      // inferred. Documents with saved calculation inputs keep explicit 0.
+      // Mirrors the quotation hydration (buildQuotationFormState). Rows stored
+      // as 0 are healed to null so they inherit the global discount:
+      // 1. Legacy documents without persisted calculation inputs heal both
+      //    vat_rate and discount_rate.
+      // 2. Documents with a persisted non-zero global discount heal rows whose
+      //    discount_rate 0 was written by the Aug 2026 save RPC COALESCE.
+      // Explicit 0 is kept when no global discount is persisted.
       const hasSavedCalculationInputs = Boolean(
         parsedCustomFields && !Array.isArray(parsedCustomFields) && parsedCustomFields.calculationInputs,
       )
+      const persistedGlobalDiscount =
+        parsedCustomFields && !Array.isArray(parsedCustomFields)
+          ? (parsedCustomFields.calculationInputs as { discountValue?: unknown } | undefined)?.discountValue as number | undefined
+          : undefined
       const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) =>
-        healLegacyCalculationOverrides(mapDbInvoiceItem(item), hasSavedCalculationInputs),
+        healLegacyCalculationOverrides(mapDbInvoiceItem(item), hasSavedCalculationInputs, persistedGlobalDiscount),
       )
       const legacyCalculationState = inferLegacyCalculationState({
         invoice: data,
