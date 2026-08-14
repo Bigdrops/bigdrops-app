@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS — Operations Dashboard</title>
+
+<!-- ============================================================
+     BIGDROPS OPERATIONS DASHBOARD — rebuilt in the Reprise design
+     language (docs/TEMPLATES/Designsdotmds/reprise.md).
+     Content/features preserved from Golden-dashboard.tsx:
+     workspaces, companies, KPI metrics, action items, ledger
+     documents, activity trail, company switcher, workspace settings
+     modal, quick-create menu, five sections, sidebar nav, notifications.
+     Light warm-paper theme by default; optional dark toggle.
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   1. TOKENS — reprise.md "Quick Start" (verbatim)
+   ============================================================ */
+:root {
+  --color-canvas: #FAFAF9;
+  --color-surface-card: #FFFFFF;
+  --color-surface-inset: #F7F5F1;
+  --color-border-subtle: #E8E5DF;
+  --color-border-strong: #DBD7CF;
+  --color-divider-dashed: #E4E1DA;
+  --color-ink-900: #18181B;
+  --color-ink-600: #5C5A55;
+  --color-ink-500: #71717A;
+  --color-ink-400: #8B8781;
+  --color-gold-700: #B4770F;
+  --color-gold-500: #D9962B;
+  --color-gold-400: #E8B33C;
+  --color-ink-button: #18181B;
+  --color-success-500: #22C55E;
+  --color-success-600: #16A34A;
+  --color-lime-500: #84CC16;
+  --color-danger-500: #EF4444;
+  --color-chart-neutral: #E5E7EB;
+  --color-chip-bg: #EFEDE8;
+
+  --font-sans: "Inter", "SF Pro", "Geist", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Space Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --text-micro: 500 11px/1.2 var(--font-mono);
+
+  --spacing-1: 4px; --spacing-2: 8px; --spacing-3: 12px;
+  --spacing-4: 16px; --spacing-5: 20px; --spacing-6: 24px;
+  --spacing-8: 32px; --spacing-10: 40px;
+
+  --radius-frame: 22px; --radius-hero: 18px; --radius-card: 16px;
+  --radius-panel: 11px; --radius-control: 9px; --radius-chip: 6px;
+  --radius-full: 999px;
+
+  --gradient-gold-tile: linear-gradient(135deg, #F3BD48, #D9962B);
+  --gradient-hero: linear-gradient(90deg, #B4770F 0%, #D9962B 45%, rgba(217,150,43,0) 100%);
+  --micro-tracking: .06em;
+
+  --shadow-card: 0 1px 2px rgba(24, 24, 27, .04), 0 4px 14px rgba(24, 24, 27, .04);
+  --shadow-frame: 0 24px 60px rgba(90, 60, 10, .28), 0 4px 16px rgba(90, 60, 10, .12);
+
+  /* dark paper overrides (optional dark mode) */
+  --dark-canvas: #1B1A18;
+  --dark-card: #24221F;
+  --dark-inset: #2A2824;
+  --dark-border-subtle: #35332E;
+  --dark-border-strong: #47443D;
+  --dark-dash: #3A3731;
+  --dark-ink-900: #F4F1EA;
+  --dark-ink-600: #B8B2A6;
+  --dark-ink-500: #948E82;
+  --dark-ink-400: #6F6A60;
+  --dark-chip-bg: #302E29;
+  --dark-chart-neutral: #37342F;
+}
+
+/* ============================================================
+   2. BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink-600);
+  background: #B97A2E;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; margin: 0; padding: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+/* The `hidden` attribute must win over any class-set display (e.g. .overlay flex) */
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--color-gold-500); outline-offset: 2px; border-radius: 4px; }
+body.dark :focus-visible { outline-color: var(--color-gold-400); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ============================================================
+   3. WALLPAPER
+   ============================================================ */
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  /* PLACEHOLDER: swap for the brand's painterly golden field-and-sky
+     artwork. Warm gradient layers keep the ambience if offline. */
+  background:
+    linear-gradient(180deg, rgba(232, 179, 60, .34) 0%, rgba(217, 150, 43, .18) 45%, rgba(120, 70, 12, .40) 100%),
+    url("https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=1800&q=80") center / cover no-repeat,
+    linear-gradient(135deg, #E8B33C 0%, #B4770F 60%, #7A4A08 100%);
+}
+body.dark .wallpaper { filter: brightness(.72) saturate(1.05); }
+
+/* ============================================================
+   4. APP FRAME
+   ============================================================ */
+.app-frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: calc(100% - 48px);
+  max-width: 1480px;
+  height: calc(100vh - 48px);
+  min-height: 640px;
+  margin: 24px auto;
+  border-radius: var(--radius-frame);
+  background: linear-gradient(180deg, var(--color-canvas) 0%, #F8F7F4 100%);
+  border: 1px solid rgba(255, 255, 255, .55);
+  box-shadow: var(--shadow-frame);
+  overflow: hidden;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 264px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border-subtle);
+  transition: width .22s ease;
+}
+.app-frame.collapsed .sidebar { width: 76px; }
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+.brand-row { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+.brand-orb {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  background: var(--gradient-gold-tile);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.brand-orb::after {
+  content: "";
+  width: 12px; height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .92);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.brand-wordmark {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: .02em;
+  color: var(--color-ink-900);
+  white-space: nowrap;
+}
+.brand-collapse {
+  margin-left: auto;
+  width: 32px; height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-panel);
+  color: var(--color-ink-500);
+  transition: background .15s ease, color .15s ease;
+}
+.brand-collapse:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.app-frame.collapsed .brand-wordmark { display: none; }
+.app-frame.collapsed .brand-row { justify-content: center; }
+.app-frame.collapsed .brand-collapse { margin-left: 0; transform: rotate(180deg); }
+
+/* Sidebar search */
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  color: var(--color-ink-400);
+  transition: border-color .15s ease;
+}
+.sidebar-search:focus-within { border-color: var(--color-border-strong); }
+.sidebar-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0;
+  background: transparent;
+  font-family: var(--font-sans); font-size: 13px;
+  color: var(--color-ink-900);
+}
+.sidebar-search input::placeholder { color: var(--color-ink-400); }
+.keycap {
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500; letter-spacing: .02em;
+  color: var(--color-ink-500);
+  background: var(--color-chip-bg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-chip);
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+.app-frame.collapsed .sidebar-search { justify-content: center; padding: 0; border: 0; background: transparent; }
+.app-frame.collapsed .sidebar-search input,
+.app-frame.collapsed .sidebar-search .keycap { display: none; }
+
+/* Nav groups */
+.nav-group-label {
+  padding: 0 10px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.nav-list { display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 8px 10px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans); font-weight: 500; font-size: 14px; line-height: 1.4;
+  color: var(--color-ink-600);
+  text-align: left;
+  transition: background .15s ease, color .15s ease;
+}
+.nav-item:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.nav-item .nav-icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--color-ink-500); transition: color .15s ease; }
+.nav-item:hover .nav-icon { color: var(--color-ink-900); }
+.nav-item.active { color: var(--color-ink-900); background: var(--color-surface-inset); }
+.nav-item.active .nav-icon {
+  width: 34px; height: 34px;
+  margin: -7px -2px -7px -7px;
+  padding: 7px;
+  border-radius: 9px;
+  background: var(--color-ink-button);
+  color: #FFFFFF;
+}
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-chip-bg);
+  color: var(--color-ink-600);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+}
+.nav-subtree {
+  margin: 2px 0 2px 23px;
+  padding-left: 14px;
+  border-left: 1px solid var(--color-border-subtle);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nav-subitem {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 6px 8px;
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans); font-weight: 500; font-size: 13px;
+  color: var(--color-ink-500);
+  text-align: left;
+  transition: background .15s ease, color .15s ease;
+}
+.nav-subitem::before {
+  content: "";
+  position: absolute; left: -14px; top: 50%;
+  width: 7px; height: 7px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--color-border-strong);
+  transition: background .15s ease;
+}
+.nav-subitem:hover { color: var(--color-ink-900); }
+.nav-subitem:hover::before { background: var(--color-gold-500); }
+.nav-subitem.active { color: var(--color-ink-900); }
+.nav-subitem.active::before { background: var(--color-gold-500); }
+
+.app-frame.collapsed .nav-group-label,
+.app-frame.collapsed .nav-item span,
+.app-frame.collapsed .nav-item .nav-badge,
+.app-frame.collapsed .nav-subtree { display: none; }
+.app-frame.collapsed .nav-item { justify-content: center; padding: 8px 0; }
+.app-frame.collapsed .nav-item.active .nav-icon { margin: 0; }
+
+/* Workspace context card (sidebar footer) */
+.context-card {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  background: var(--color-surface-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.context-tile {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: var(--gradient-gold-tile);
+  display: grid; place-items: center;
+  color: #FFFFFF;
+  font-family: var(--font-mono); font-weight: 600; font-size: 11px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.context-title { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); }
+.context-copy { font-family: var(--font-sans); font-size: 12px; line-height: 1.5; color: var(--color-ink-500); }
+.context-card .btn-dark { height: 36px; }
+.app-frame.collapsed .context-card { display: none; }
+
+.btn-dark {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 40px; padding: 0 16px;
+  border-radius: var(--radius-control);
+  background: var(--color-ink-button); color: #FFFFFF;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.btn-dark:hover { opacity: .9; }
+.btn-dark:active { transform: translateY(1px); }
+
+.sidebar-footer { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
+.app-frame.collapsed .sidebar-footer { align-items: center; }
+.app-frame.collapsed .sidebar-footer .nav-item span { display: none; }
+.user-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 8px; padding: 10px 8px;
+  border-top: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+}
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-gold-tile);
+  color: #FFFFFF;
+  display: grid; place-items: center;
+  font-family: var(--font-sans); font-weight: 600; font-size: 12px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.user-meta { min-width: 0; }
+.user-name { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-email { font-family: var(--font-sans); font-size: 11px; color: var(--color-ink-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-row svg { margin-left: auto; color: var(--color-ink-400); flex-shrink: 0; }
+.app-frame.collapsed .user-meta, .app-frame.collapsed .user-row svg { display: none; }
+.app-frame.collapsed .user-row { justify-content: center; border-top: 0; }
+
+/* ============================================================
+   5. MAIN / TOP BAR
+   ============================================================ */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+.menu-btn { display: none; }
+.topbar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.icon-btn {
+  position: relative;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-panel);
+  color: var(--color-ink-500);
+  transition: background .15s ease, color .15s ease;
+}
+.icon-btn:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.icon-btn .badge {
+  position: absolute; top: -3px; right: -3px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-gold-500);
+  color: #FFFFFF;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  border: 1.5px solid var(--color-canvas);
+}
+.icon-btn .pip {
+  position: absolute; top: 8px; right: 8px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-danger-500);
+  border: 1.5px solid var(--color-canvas);
+}
+
+/* Company switcher chip in top bar */
+.company-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--radius-panel);
+  min-width: 0;
+  transition: background .15s ease;
+}
+.company-chip:hover { background: var(--color-surface-inset); }
+.company-code-tile {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: var(--gradient-gold-tile);
+  color: #FFFFFF;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: 11px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.company-chip-meta { min-width: 0; }
+.company-chip-name {
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--color-ink-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.company-chip-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px; font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+  margin-top: 1px;
+}
+
+.btn-ai {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px; margin-left: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink-button); color: #FFFFFF;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  white-space: nowrap;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.btn-ai:hover { opacity: .9; }
+.btn-ai:active { transform: translateY(1px); }
+
+/* Search overlay */
+.search-overlay {
+  padding: 10px 20px;
+  background: var(--color-surface-card);
+  border-bottom: 1px solid var(--color-border-subtle);
+  display: flex; align-items: center; gap: 10px;
+}
+.search-overlay input {
+  flex: 1; min-width: 0;
+  border: 0; outline: 0; background: transparent;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  color: var(--color-ink-900);
+}
+.search-overlay input::placeholder { color: var(--color-ink-400); }
+
+/* ============================================================
+   6. WORKSPACE GRID
+   ============================================================ */
+.workspace {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 316px;
+  gap: 20px;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.workspace::-webkit-scrollbar { width: 8px; }
+.workspace::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
+.workspace::-webkit-scrollbar-track { background: transparent; }
+.workspace.full { grid-template-columns: minmax(0, 1fr); }
+
+.content-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.rail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.card-pad { padding: 20px; }
+
+.micro-header {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  color: var(--color-ink-900);
+}
+.micro-header svg { color: var(--color-ink-500); }
+.micro-muted {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.card-title {
+  font-family: var(--font-sans); font-weight: 600; font-size: 15px; line-height: 1.4;
+  color: var(--color-ink-900);
+}
+
+/* ============================================================
+   7. COMPANY HERO
+   ============================================================ */
+.hero {
+  position: relative;
+  height: 208px;
+  border-radius: var(--radius-hero);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: var(--shadow-card);
+  isolation: isolate;
+}
+/* PLACEHOLDER: right-anchored golden-hour photograph for the active
+   operating company. Swap for the brand's own imagery. */
+.hero-photo {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(214,148,51,.16), rgba(120,70,12,.30)),
+    url("https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1000&q=80") center / cover no-repeat,
+    linear-gradient(120deg, #E8B33C, #B4770F);
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: var(--gradient-hero);
+  z-index: 1;
+}
+.hero-content {
+  position: relative; z-index: 2;
+  height: 100%;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  padding: 26px 32px;
+  max-width: 62%;
+}
+.hero-title {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin: 0;
+}
+.hero-subtitle {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .88);
+}
+.hero-tags {
+  position: absolute; left: 28px; bottom: 16px; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  max-width: 80%;
+}
+.tag-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, .14);
+  border: 1px solid rgba(255, 255, 255, .35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   8. KPI STRIP (4 metrics)
+   ============================================================ */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); }
+.kpi { padding: 16px 20px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--color-border-subtle); }
+.kpi-label {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: var(--micro-tracking);
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.kpi-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-ink-900);
+  white-space: nowrap;
+}
+.kpi-sub { font-family: var(--font-sans); font-size: 11px; font-weight: 500; color: var(--color-ink-500); }
+.kpi-sub .pos { color: var(--color-success-600); }
+.kpi-sub .warn { color: var(--color-gold-700); }
+.kpi-sub .bad { color: var(--color-danger-500); }
+
+/* ============================================================
+   9. PAIRS / LISTS / CHARTS
+   ============================================================ */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+/* Dashed data rows (coupon-style) */
+.dashed-list { margin-top: 8px; }
+.dashed-row {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 44px; padding: 8px 4px;
+  border-bottom: 1px dashed var(--color-divider-dashed);
+  transition: background .15s ease;
+}
+.dashed-row:hover { background: var(--color-surface-inset); }
+.dashed-row:last-child { border-bottom: 0; }
+
+.icon-tile {
+  width: 36px; height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--gradient-gold-tile);
+  display: grid; place-items: center;
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.icon-tile.warn { background: linear-gradient(135deg, #E8A232, #B4770F); }
+.icon-tile.bad { background: linear-gradient(135deg, #F87171, #B91C1C); }
+
+.status-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.status-pill.paid { background: color-mix(in srgb, var(--color-success-500) 14%, transparent); color: var(--color-success-600); }
+.status-pill.pending { background: color-mix(in srgb, var(--color-gold-500) 16%, transparent); color: var(--color-gold-700); }
+.status-pill.overdue { background: color-mix(in srgb, var(--color-danger-500) 12%, transparent); color: var(--color-danger-500); }
+
+.list-main { min-width: 0; }
+.list-title { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-sub { font-family: var(--font-sans); font-size: 11.5px; color: var(--color-ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.list-right { margin-left: auto; text-align: right; flex-shrink: 0; }
+.mono-amount { font-family: var(--font-mono); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; color: var(--color-ink-900); white-space: nowrap; }
+.mono-time { font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--color-ink-400); white-space: nowrap; }
+
+.link-action {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 11px;
+  color: var(--color-gold-700);
+  white-space: nowrap;
+  transition: color .15s ease;
+}
+.link-action:hover { color: var(--color-ink-900); }
+
+.count-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--color-chip-bg);
+  border: 1px solid var(--color-border-subtle);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  color: var(--color-ink-600);
+  white-space: nowrap;
+}
+
+/* Timeline (activity trail) */
+.timeline { margin-top: 12px; position: relative; padding-left: 18px; }
+.timeline::before {
+  content: "";
+  position: absolute; left: 4px; top: 6px; bottom: 6px;
+  width: 1px;
+  background: var(--color-border-subtle);
+}
+.tl-item { position: relative; padding-bottom: 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-item::before {
+  content: "";
+  position: absolute; left: -18px; top: 4px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--color-gold-500);
+  box-shadow: 0 0 0 3px var(--color-surface-card);
+}
+.tl-head { display: flex; align-items: center; gap: 8px; }
+.tl-chip {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-chip);
+  background: var(--color-chip-bg);
+  font-family: var(--font-mono);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--color-gold-700);
+}
+.tl-title { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); margin-top: 5px; }
+.tl-desc { font-family: var(--font-sans); font-size: 12px; color: var(--color-ink-500); margin-top: 2px; line-height: 1.5; }
+
+/* Revenue bars */
+.bar-row { margin-top: 16px; }
+.bar-label { display: flex; justify-content: space-between; font-family: var(--font-sans); font-size: 12px; color: var(--color-ink-600); margin-bottom: 6px; }
+.bar-label .pct { font-family: var(--font-mono); font-weight: 600; color: var(--color-ink-900); }
+.bar-track { height: 10px; border-radius: var(--radius-full); background: var(--color-surface-inset); border: 1px solid var(--color-border-subtle); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: inherit; }
+.bar-fill.gold { background: linear-gradient(90deg, #F3BD48, #D9962B); }
+.bar-fill.neutral { background: var(--color-chart-neutral); }
+
+/* Task rows (projects) */
+.task-card { padding: 16px; }
+.task-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.task-title { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); }
+.progress-track { margin-top: 12px; height: 8px; border-radius: var(--radius-full); background: var(--color-surface-inset); border: 1px solid var(--color-border-subtle); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #F3BD48, #D9962B); }
+.progress-meta { display: flex; justify-content: space-between; margin-top: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-400); }
+
+/* Section headers for non-dashboard tabs */
+.section-head { margin-bottom: 4px; }
+.section-title { font-family: var(--font-mono); font-weight: 700; font-size: 20px; letter-spacing: -0.01em; color: var(--color-ink-900); margin: 0; }
+.section-sub { font-family: var(--font-sans); font-size: 12.5px; color: var(--color-ink-500); margin-top: 3px; }
+
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 38px; padding: 0 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease;
+}
+.btn-outline:hover { background: var(--color-surface-inset); border-color: var(--color-ink-400); }
+.btn-outline svg { color: var(--color-gold-500); }
+
+/* ============================================================
+   10. RIGHT RAIL — TAB BAR + PANELS
+   ============================================================ */
+.tabbar {
+  display: flex; gap: 2px;
+  padding: 4px;
+  background: var(--color-surface-inset);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabbar::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 1;
+  min-width: max-content;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--color-ink-500);
+  transition: background .15s ease, color .15s ease;
+}
+.tab:hover { color: var(--color-ink-900); }
+.tab.active {
+  background: var(--color-surface-card);
+  color: var(--color-ink-900);
+  box-shadow: 0 1px 2px rgba(24,24,27,.06);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+.kv-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 16px; row-gap: 11px;
+  margin-top: 14px;
+}
+.kv-key { font-family: var(--font-sans); font-size: 13px; color: var(--color-ink-500); }
+.kv-value { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); text-align: right; white-space: nowrap; }
+
+.rail .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+.rail .btn-row .btn-dark { width: auto; flex: 1; }
+
+/* ============================================================
+   11. MODALS / POPOVERS / TOAST
+   ============================================================ */
+.overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(24, 24, 27, .38);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 48px 16px 16px;
+  animation: fadeIn .16s ease-out;
+}
+.overlay.center { align-items: center; padding: 16px; }
+.modal {
+  position: relative;
+  width: 100%; max-width: 400px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 60px rgba(24,24,27,.22);
+  padding: 20px;
+  animation: scaleUp .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border-subtle); }
+.modal-title { font-family: var(--font-sans); font-weight: 600; font-size: 15px; color: var(--color-ink-900); display: flex; align-items: center; gap: 8px; }
+.modal-title svg { color: var(--color-gold-500); }
+.modal-sub { font-family: var(--font-sans); font-size: 12px; color: var(--color-ink-500); margin-top: 3px; }
+.modal-close { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-panel); color: var(--color-ink-400); transition: background .15s ease, color .15s ease; }
+.modal-close:hover { background: var(--color-surface-inset); color: var(--color-ink-900); }
+.modal-body { padding-top: 14px; }
+
+.selectable-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-card);
+  text-align: left;
+  margin-bottom: 8px;
+  transition: border-color .15s ease, background .15s ease;
+}
+.selectable-row:hover { border-color: var(--color-border-strong); background: var(--color-surface-inset); }
+.selectable-row.selected { border-color: var(--color-gold-500); background: color-mix(in srgb, var(--color-gold-500) 8%, transparent); }
+.code-tile {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: var(--gradient-gold-tile);
+  color: #FFFFFF;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 600; font-size: 11px;
+  flex-shrink: 0;
+}
+.selectable-meta { min-width: 0; }
+.selectable-name { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.selectable-sub { font-family: var(--font-sans); font-size: 11.5px; color: var(--color-ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.active-chip {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink-button);
+  color: #FFFFFF;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.modal-note {
+  padding: 10px 12px;
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-inset);
+  border: 1px solid var(--color-border-subtle);
+  font-family: var(--font-sans); font-size: 12px;
+  color: var(--color-ink-600);
+}
+
+.field { margin-bottom: 12px; }
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.field-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-card);
+  font-family: var(--font-sans); font-size: 13px;
+  color: var(--color-ink-900);
+  transition: border-color .15s ease;
+}
+.field-input:focus { outline: none; border-color: var(--color-gold-500); }
+.field-input::placeholder { color: var(--color-ink-400); }
+
+/* Notifications popover + quick-create popover */
+.popover {
+  position: absolute;
+  right: 16px; top: 58px;
+  z-index: 50;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 60px rgba(24,24,27,.18);
+  padding: 14px;
+  animation: scaleUp .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.popover-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--color-border-subtle); }
+.popover-title { font-family: var(--font-sans); font-weight: 600; font-size: 13px; color: var(--color-ink-900); display: flex; align-items: center; gap: 7px; }
+.popover-title svg { color: var(--color-gold-500); }
+.notif-item { padding: 10px; border-radius: var(--radius-panel); border: 1px solid var(--color-border-subtle); margin-top: 8px; }
+.notif-item.unread { border-color: var(--color-gold-500); background: color-mix(in srgb, var(--color-gold-500) 7%, transparent); }
+.notif-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.notif-title { font-family: var(--font-sans); font-weight: 600; font-size: 12.5px; color: var(--color-ink-900); line-height: 1.35; }
+.notif-time { font-family: var(--font-mono); font-size: 9.5px; color: var(--color-ink-400); white-space: nowrap; }
+.notif-detail { font-family: var(--font-sans); font-size: 11.5px; color: var(--color-ink-500); margin-top: 3px; line-height: 1.45; }
+
+.quick-create {
+  position: absolute;
+  right: 16px; top: 58px;
+  z-index: 50;
+  width: 260px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 60px rgba(24,24,27,.18);
+  padding: 14px;
+  animation: scaleUp .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.quick-head { padding-bottom: 10px; border-bottom: 1px solid var(--color-border-subtle); }
+.quick-entity { font-family: var(--font-sans); font-weight: 600; font-size: 12.5px; color: var(--color-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quick-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  margin-top: 6px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border-subtle);
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--color-ink-900);
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+.quick-item:hover { border-color: var(--color-gold-500); background: var(--color-surface-inset); }
+.quick-item svg { color: var(--color-gold-500); flex-shrink: 0; }
+
+/* Mobile FAB (quick-create) */
+.fab {
+  position: absolute;
+  right: 16px; bottom: 16px;
+  z-index: 45;
+  width: 48px; height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-gold-tile);
+  color: #FFFFFF;
+  display: none;
+  place-items: center;
+  box-shadow: 0 12px 28px rgba(180, 119, 15, .4), inset 0 1px 0 rgba(255,255,255,.5);
+  transition: transform .15s ease;
+}
+.fab:active { transform: scale(.92); }
+.fab .fab-icon { transition: transform .2s ease; }
+.fab.open .fab-icon { transform: rotate(45deg); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 16px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink-button);
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 12px; font-weight: 500;
+  box-shadow: 0 12px 32px rgba(24,24,27,.3);
+  animation: fadeIn .18s ease-out;
+  max-width: calc(100vw - 32px);
+}
+.toast svg { color: var(--color-gold-400); flex-shrink: 0; }
+
+/* Mobile drawer */
+.sidebar-backdrop {
+  position: absolute; inset: 0; z-index: 30;
+  background: rgba(24, 24, 27, .32);
+  opacity: 0; pointer-events: none;
+  transition: opacity .24s ease;
+}
+.app-frame.sidebar-open .sidebar-backdrop { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   12. DARK MODE
+   ============================================================ */
+body.dark {
+  --color-canvas: var(--dark-canvas);
+  --color-surface-card: var(--dark-card);
+  --color-surface-inset: var(--dark-inset);
+  --color-border-subtle: var(--dark-border-subtle);
+  --color-border-strong: var(--dark-border-strong);
+  --color-divider-dashed: var(--dark-dash);
+  --color-ink-900: var(--dark-ink-900);
+  --color-ink-600: var(--dark-ink-600);
+  --color-ink-500: var(--dark-ink-500);
+  --color-ink-400: var(--dark-ink-400);
+  --color-chip-bg: var(--dark-chip-bg);
+  --color-chart-neutral: var(--dark-chart-neutral);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-frame: 0 24px 60px rgba(0,0,0,.55);
+}
+body.dark .app-frame { border-color: rgba(255,255,255,.06); }
+
+/* ============================================================
+   13. RESPONSIVE
+   ============================================================ */
+@media (max-width: 1220px) {
+  .workspace { grid-template-columns: minmax(0, 1fr) 292px; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .kpi:nth-child(3), .kpi:nth-child(4) { border-top: 1px solid var(--color-border-subtle); }
+  .kpi:nth-child(odd) { border-left: 0; }
+}
+
+@media (max-width: 1024px) {
+  .menu-btn { display: grid; }
+  .sidebar {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    z-index: 40;
+    width: 264px !important;
+    transform: translateX(-102%);
+    transition: transform .24s ease;
+    background: var(--color-canvas);
+    box-shadow: 24px 0 60px rgba(90, 60, 10, .2);
+  }
+  .app-frame.sidebar-open .sidebar { transform: translateX(0); }
+  .app-frame.collapsed .sidebar { width: 264px !important; }
+  .app-frame.collapsed .brand-wordmark,
+  .app-frame.collapsed .brand-collapse,
+  .app-frame.collapsed .brand-row,
+  .app-frame.collapsed .sidebar-search input,
+  .app-frame.collapsed .sidebar-search .keycap,
+  .app-frame.collapsed .nav-group-label,
+  .app-frame.collapsed .nav-item span,
+  .app-frame.collapsed .nav-item .nav-badge,
+  .app-frame.collapsed .nav-subtree,
+  .app-frame.collapsed .context-card,
+  .app-frame.collapsed .user-meta,
+  .app-frame.collapsed .user-row svg { display: initial; }
+  .app-frame.collapsed .context-card { display: block; }
+  .app-frame.collapsed .sidebar-search { justify-content: flex-start; padding: 0 10px; border: 1px solid var(--color-border-subtle); background: var(--color-surface-card); }
+  .app-frame.collapsed .nav-item { justify-content: flex-start; padding: 8px 10px; }
+  .app-frame.collapsed .nav-item .nav-icon { margin: 0; width: 20px; height: 20px; padding: 0; background: transparent; color: var(--color-ink-500); }
+  .app-frame.collapsed .nav-item.active .nav-icon { width: 34px; height: 34px; padding: 7px; margin: -7px -2px -7px -7px; background: var(--color-ink-button); color: #fff; }
+  .app-frame.collapsed .sidebar-footer { align-items: stretch; }
+  .app-frame.collapsed .user-row { justify-content: flex-start; border-top: 1px solid var(--color-border-subtle); }
+  .fab { display: grid; }
+}
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .rail .tabbar { grid-column: 1 / -1; }
+}
+
+@media (max-width: 720px) {
+  .app-frame { width: calc(100% - 20px); height: calc(100vh - 20px); min-height: 0; margin: 10px; border-radius: 16px; }
+  .topbar { padding: 0 12px; }
+  .workspace { padding: 12px; gap: 12px; }
+  .pair { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .content-col { gap: 12px; }
+  .hero { height: 264px; }
+  .hero-content { max-width: 100%; padding: 20px; }
+  .hero-title { font-size: 23px; }
+  .hero-tags { left: 20px; bottom: 14px; max-width: calc(100% - 40px); }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--color-border-subtle); }
+  .kpi:nth-child(odd) { border-left: 0; }
+  .rail { grid-template-columns: minmax(0, 1fr); }
+  .topbar-actions .btn-ai span { display: none; }
+  .topbar-actions .btn-ai { padding: 0 12px; }
+  .company-chip-sub { display: none; }
+  .popover, .quick-create { right: 12px; }
+}
+
+/* ============================================================
+   14. MOTION
+   ============================================================ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleUp { from { opacity: 0; transform: scale(.97) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .app-frame > * { animation: rise .5s ease both; }
+  .app-frame .main { animation-delay: .05s; }
+  .app-frame > .sidebar,
+  .app-frame > .sidebar-backdrop { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     MOCK DATA (mirrors Golden-dashboard.tsx exactly)
+     ============================================================ -->
+<script>
+window.BD = {
+  workspaces: [
+    { id: 'w1', name: 'Big Drops Enterprise Group', code: 'BDE', plan: 'Enterprise', region: 'NG-Lagos (HQ)', membersCount: 42, companiesCount: 3 },
+    { id: 'w2', name: 'Apex Syndicate Holdings', code: 'ASH', plan: 'Professional', region: 'UK-London', membersCount: 14, companiesCount: 2 }
+  ],
+  companies: [
+    { id: 'c11', workspaceId: 'w1', name: 'Sun & Shield Power', code: 'SSP', type: 'Energy & Renewables', currency: '₦', taxId: 'TIN-9042811-SSP', activeStatus: 'Active Operational' },
+    { id: 'c12', workspaceId: 'w1', name: 'Pygar Logistics & Trade', code: 'PYG', type: 'Freight & Supply Chain', currency: '₦', taxId: 'TIN-4019283-PYG', activeStatus: 'Active Operational' },
+    { id: 'c13', workspaceId: 'w1', name: 'Century Mining Co.', code: 'CMC', type: 'Heavy Resources & Extraction', currency: '₦', taxId: 'TIN-1102934-CMC', activeStatus: 'Active Operational' },
+    { id: 'c21', workspaceId: 'w2', name: 'Helios Clean Energy UK', code: 'HCE', type: 'Solar Infrastructure', currency: '£', taxId: 'GB-9920192-HCE', activeStatus: 'Active Operational' },
+    { id: 'c22', workspaceId: 'w2', name: 'Zenith Global Shipping', code: 'ZGS', type: 'Maritime Freight', currency: '$', taxId: 'US-8819201-ZGS', activeStatus: 'Active Operational' }
+  ],
+  kpis: {
+    c11: { cashReceived: '14.2M', cashReceivedTrend: 'Cleared Today', outstanding: '8.5M', unpaidCount: 2, createdTodayCount: 3, overdueQuotesAmount: '12.5M', overdueQuotesCount: 3 },
+    c12: { cashReceived: '38.9M', cashReceivedTrend: 'Cleared This Week', outstanding: '19.4M', unpaidCount: 5, createdTodayCount: 6, overdueQuotesAmount: '4.2M', overdueQuotesCount: 1 },
+    c13: { cashReceived: '84.0M', cashReceivedTrend: 'Cleared Today', outstanding: '42.5M', unpaidCount: 8, createdTodayCount: 2, overdueQuotesAmount: '18.0M', overdueQuotesCount: 4 },
+    c21: { cashReceived: '1.25M', cashReceivedTrend: 'Wire Confirmed', outstanding: '420K', unpaidCount: 1, createdTodayCount: 4, overdueQuotesAmount: '150K', overdueQuotesCount: 2 },
+    c22: { cashReceived: '3.80M', cashReceivedTrend: 'L/C Settled', outstanding: '1.10M', unpaidCount: 3, createdTodayCount: 5, overdueQuotesAmount: '680K', overdueQuotesCount: 1 }
+  },
+  alerts: [
+    { id: 'a0', companyId: 'c11', type: 'reminder', title: "Have you recorded today's customer payments?", subtitle: 'Sun & Shield Power • Cash Ledger', time: 'Payment Action', actionText: 'Record Payment' },
+    { id: 'a1', companyId: 'c11', type: 'amber', title: 'Invoice INV-204 has not received payment for 30 days', subtitle: 'Sun & Shield Power • ₦14,200,000 overdue', time: '30d Overdue' },
+    { id: 'a2', companyId: 'c11', type: 'red', title: 'Payment of ₦8.5M from Zenith Logix is overdue', subtitle: 'SSP Legal notice generated & ready for dispatch', time: 'Action Req.' },
+    { id: 'a3', companyId: 'c12', type: 'amber', title: 'Waybill #WAY-902 unconfirmed at Port Harcourt terminal', subtitle: 'Pygar Logistics • Customs clearance pending', time: 'Port Delay' },
+    { id: 'a4', companyId: 'c12', type: 'red', title: 'Freight Invoice #PYG-881 unpaid (₦19.4M)', subtitle: 'Dangote Sub-contractor billing hold', time: 'Action Req.' }
+  ],
+  notifications: [
+    { id: 'n1', title: 'Invoice INV-204 Payment Warning', detail: 'Overdue by 30 days. Client notified via automated email.', time: '10m ago', read: false },
+    { id: 'n2', title: 'New Quote Approved', detail: 'Lagos Solar Grid approved SASQUO-322 for ₦3,923,750.', time: '45m ago', read: false },
+    { id: 'n3', title: 'Workspace Backup Completed', detail: 'BDE Enterprise Group database state synced safely.', time: '2h ago', read: true }
+  ],
+  documents: [
+    { id: 'd1', companyId: 'c11', ref: 'SASQUO-322', client: 'Lagos Solar Grid Project', date: '8 Aug 2026', amount: '3,923,750', currency: '₦', status: 'pending' },
+    { id: 'd2', companyId: 'c11', ref: 'SASINV076', client: 'Eko Atlantic Power Hub', date: '7 Aug 2026', amount: '5,251,375', currency: '₦', status: 'paid' },
+    { id: 'd3', companyId: 'c11', ref: 'SASQUO-321', client: 'Ikeja Industrial Zone', date: '7 Aug 2026', amount: '145,125', currency: '₦', status: 'pending' },
+    { id: 'd4', companyId: 'c11', ref: 'SASINV075', client: 'Lekki Free Zone Ltd', date: '7 Aug 2026', amount: '948,150', currency: '₦', status: 'paid' },
+    { id: 'd5', companyId: 'c12', ref: 'PYGINV-801', client: 'Apapa Container Terminal', date: '8 Aug 2026', amount: '18,500,000', currency: '₦', status: 'overdue' },
+    { id: 'd6', companyId: 'c12', ref: 'PYGQUO-119', client: 'Bags & Cargo Logistics', date: '6 Aug 2026', amount: '4,200,000', currency: '₦', status: 'pending' },
+    { id: 'd7', companyId: 'c13', ref: 'CMCINV-004', client: 'Plateau Quarry Operator', date: '8 Aug 2026', amount: '42,500,000', currency: '₦', status: 'overdue' }
+  ],
+  audit: [
+    { id: 'e0', workspaceId: 'w1', scope: 'workspace', companyCode: '', title: 'New Company Provisioned in Workspace', desc: 'Century Mining Co. (CMC) added to Big Drops Enterprise Group.', time: '2h ago', actor: 'Workspace Admin (Milad A.)' },
+    { id: 'e1', workspaceId: 'w1', companyId: 'c11', scope: 'company', companyCode: 'SSP', title: 'Invoice #SASINV076 Payment Cleared', desc: '₦5,251,375 wire confirmed via FirstBank Merchant portal for Sun & Shield Power.', time: '12m ago', actor: 'Sola Adebayo' },
+    { id: 'e2', workspaceId: 'w1', companyId: 'c12', scope: 'company', companyCode: 'PYG', title: 'Waybill #WAY-902 Dispatched', desc: 'Container release notes authorized for Pygar Logistics at Port Harcourt.', time: '45m ago', actor: 'Tunde Bakare' }
+  ],
+  projects: [
+    { title: 'Grid Substation Upgrade Phase 2', status: 'In Progress', progress: '68%' },
+    { title: 'Port Harcourt Terminal Customs Clearance', status: 'Pending Review', progress: '30%' },
+    { title: 'Quarry Machinery Procurement Sign-off', status: 'Completed', progress: '100%' }
+  ],
+  companyTypes: ['Logistics & Services', 'Energy & Renewables', 'Freight & Supply Chain', 'Heavy Resources & Extraction', 'Solar Infrastructure', 'Maritime Freight', 'Agriculture & Processing', 'Technology & Media']
+};
+</script>
+
+<div class="wallpaper" aria-hidden="true"></div>
+
+<div class="app-frame" id="appFrame">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <div class="sidebar-scroll">
+
+      <div class="brand-row">
+        <div class="brand-orb" aria-hidden="true"></div>
+        <span class="brand-wordmark">BIGDROPS</span>
+        <button class="brand-collapse" id="collapseBtn" type="button" aria-label="Collapse sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/><path d="m8 9-3 3 3 3"/></svg>
+        </button>
+      </div>
+
+      <div class="sidebar-search" role="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" placeholder="Search docs, clients…" aria-label="Search" />
+        <span class="keycap" aria-hidden="true">⌘F</span>
+      </div>
+
+      <!-- OPERATIONS NAV -->
+      <nav aria-label="Main navigation">
+        <p class="nav-group-label">Operations</p>
+        <ul class="nav-list">
+          <li>
+            <button class="nav-item active" data-nav="home" type="button" aria-expanded="true">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+              <span>Dashboard</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.6"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="nav-subtree">
+              <li><button class="nav-subitem" data-nav="home" type="button">Client Directory</button></li>
+            </ul>
+          </li>
+          <li>
+            <button class="nav-item" data-nav="invoices" type="button">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></span>
+              <span>Invoices</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.6"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="nav-subtree" hidden>
+              <li><button class="nav-subitem" data-nav="invoices" type="button">Quotations &amp; BOQ</button></li>
+            </ul>
+          </li>
+          <li>
+            <button class="nav-item" data-nav="projects" type="button">
+              <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg></span>
+              <span>Projects</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;opacity:.6"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="nav-subtree" hidden>
+              <li><button class="nav-subitem" data-nav="projects" type="button">Waybills &amp; Shipping</button></li>
+            </ul>
+          </li>
+          <li><button class="nav-item" data-nav="analytics" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span><span>Analytics</span></button></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="System navigation">
+        <p class="nav-group-label">System</p>
+        <ul class="nav-list">
+          <li><button class="nav-item" data-nav="settings" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Settings</span></button></li>
+        </ul>
+      </nav>
+
+      <!-- Workspace context card -->
+      <div class="context-card" id="contextCard">
+        <div class="trial-top" style="display:flex;align-items:center;gap:10px">
+          <div class="context-tile" id="contextTile">BDE</div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:auto;color:var(--color-ink-400)"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div>
+          <p class="context-title" id="contextName" style="margin:0 0 2px">Big Drops Enterprise Group</p>
+          <p class="context-copy" id="contextMeta" style="margin:0">Enterprise • NG-Lagos (HQ) • 42 members</p>
+        </div>
+        <button class="btn-dark" id="manageWorkspaceBtn" type="button">Manage workspace</button>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" data-nav="settings" type="button"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Preferences</span></button>
+        <div class="user-row">
+          <div class="avatar" aria-hidden="true">MA</div>
+          <div class="user-meta">
+            <div class="user-name">Milad A.</div>
+            <div class="user-email">Workspace Admin</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <button class="menu-btn icon-btn" id="menuBtn" type="button" aria-label="Open navigation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+
+        <!-- COMPANY SWITCHER (primary context) -->
+        <button class="company-chip" id="companyChip" type="button" aria-label="Switch operating company">
+          <span class="company-code-tile" id="chipTile">SSP</span>
+          <span class="company-chip-meta">
+            <span class="company-chip-name" id="chipName">Sun &amp; Shield Power</span>
+            <span class="company-chip-sub" id="chipSub">BDE Workspace</span>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-ink-400);flex-shrink:0"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="refreshBtn" type="button" aria-label="Refresh data" title="Refresh data">
+          <svg class="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+        </button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg id="iconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+        <button class="icon-btn" id="searchToggle" type="button" aria-label="Search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button class="icon-btn" id="notifBtn" type="button" aria-label="Notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="badge" id="notifBadge" aria-hidden="true">2</span>
+        </button>
+        <button class="btn-ai" id="quickCreateBtn" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          <span>New document</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- SEARCH OVERLAY -->
+    <div class="search-overlay" id="searchOverlay" hidden>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-ink-400)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search in Sun &amp; Shield Power…" aria-label="Search" />
+      <button class="modal-close" id="searchClose" type="button" aria-label="Close search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace" id="workspace"></div>
+  </div>
+
+  <!-- MOBILE FAB (quick-create) -->
+  <button class="fab" id="fab" type="button" aria-label="Create new item">
+    <span class="fab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+  </button>
+
+  <!-- NOTIFICATIONS POPOVER -->
+  <div class="popover" id="notifPopover" hidden>
+    <div class="popover-head">
+      <span class="popover-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Notifications</span>
+      <button class="link-action" id="clearNotifs" type="button">Clear unread</button>
+    </div>
+    <div id="notifList"></div>
+  </div>
+
+  <!-- QUICK-CREATE POPOVER -->
+  <div class="quick-create" id="quickCreatePopover" hidden>
+    <div class="quick-head">
+      <p class="micro-muted" style="margin:0 0 4px">Action entity</p>
+      <p class="quick-entity" id="quickEntity">Sun &amp; Shield Power (SSP)</p>
+    </div>
+    <button class="quick-item" data-create="Invoice" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+      New Invoice
+    </button>
+    <button class="quick-item" data-create="Quotation" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h5"/><path d="M8 9h1"/></svg>
+      New Quotation
+    </button>
+    <button class="quick-item" data-create="Waybill" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+      New Waybill
+    </button>
+    <button class="quick-item" data-create="CSR Record" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      New CSR Record
+    </button>
+  </div>
+
+  <!-- COMPANY SWITCHER MODAL -->
+  <div class="overlay" id="companyModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 class="modal-title" style="margin:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+            Switch operating entity
+          </h3>
+          <p class="modal-sub" style="margin:2px 0 0">Workspace: <strong id="companyModalWs">Big Drops Enterprise Group</strong></p>
+        </div>
+        <button class="modal-close" data-close="companyModal" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="companyList"></div>
+      <div style="padding-top:6px;border-top:1px solid var(--color-border-subtle)">
+        <button class="link-action" id="newCompanyBtn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Provision new company
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE SETTINGS MODAL -->
+  <div class="overlay center" id="settingsModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 class="modal-title" style="margin:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Workspace configuration
+          </h3>
+          <p class="modal-sub" style="margin:2px 0 0">Select an active organizational workspace context.</p>
+        </div>
+        <button class="modal-close" data-close="settingsModal" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note">Select an active organizational workspace context. Switching updates the operating entities available below.</div>
+        <div style="margin-top:12px" id="workspaceList"></div>
+      </div>
+      <div style="padding-top:14px">
+        <button class="btn-dark" data-close="settingsModal" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW COMPANY MODAL (completes the half-wired feature from Golden-dashboard) -->
+  <div class="overlay center" id="newCompanyModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 class="modal-title" style="margin:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Provision new company
+          </h3>
+          <p class="modal-sub" style="margin:2px 0 0">Added to <strong id="newCompanyWs">Big Drops Enterprise Group</strong></p>
+        </div>
+        <button class="modal-close" data-close="newCompanyModal" type="button" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <form class="modal-body" id="newCompanyForm">
+        <div class="field">
+          <label class="field-label" for="ncName">Company name</label>
+          <input class="field-input" id="ncName" type="text" placeholder="e.g. Sahara Freight Co." required />
+        </div>
+        <div class="field">
+          <label class="field-label" for="ncCode">Company code</label>
+          <input class="field-input" id="ncCode" type="text" placeholder="e.g. SFC" maxlength="5" required />
+        </div>
+        <div class="field">
+          <label class="field-label" for="ncType">Company type</label>
+          <select class="field-input" id="ncType"></select>
+        </div>
+        <button class="btn-dark" type="submit">Create company</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast" hidden>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <span id="toastMsg"></span>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var D = window.BD;
+  var frame = document.getElementById("appFrame");
+  var workspace = document.getElementById("workspace");
+  var desktop = window.matchMedia("(min-width: 1025px)");
+
+  /* ---------- STATE ---------- */
+  var state = {
+    activeWorkspace: D.workspaces[0],
+    activeCompany: D.companies[0],
+    activeTab: "home",
+    railTab: "overview",
+    notifications: D.notifications.map(function (n) { return Object.assign({}, n); }),
+    companies: D.companies.slice(),
+    dark: false
+  };
+
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    document.getElementById("toastMsg").textContent = msg;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.hidden = true; }, 2800);
+  }
+
+  function scopedCompanies() {
+    return state.companies.filter(function (c) { return c.workspaceId === state.activeWorkspace.id; });
+  }
+  function scopedAlerts() {
+    return D.alerts.filter(function (a) { return a.companyId === state.activeCompany.id; });
+  }
+  function scopedDocuments() {
+    return D.documents.filter(function (d) { return d.companyId === state.activeCompany.id; });
+  }
+  function scopedAudit() {
+    return D.audit.filter(function (e) { return e.companyId === state.activeCompany.id || e.workspaceId === state.activeWorkspace.id; });
+  }
+  function currentKPIs() {
+    return D.kpis[state.activeCompany.id] || { cashReceived: "0.00", cashReceivedTrend: "No records", outstanding: "0.00", unpaidCount: 0, createdTodayCount: 0, overdueQuotesAmount: "0.00", overdueQuotesCount: 0 };
+  }
+  function unreadCount() {
+    return state.notifications.filter(function (n) { return !n.read; }).length;
+  }
+
+  var ICONS = {
+    wallet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>',
+    alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    doc: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>',
+    history: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+    building: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>',
+    pie: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>',
+    bell: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    receipt: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>',
+    fileplus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>',
+    truck: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>',
+    csr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+    check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+    chevron: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    arrow: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>'
+  };
+
+  /* ---------- RENDER ---------- */
+  function render() {
+    renderWorkspace();
+    renderChrome();
+    renderCompanyList();
+    renderWorkspaceList();
+    renderNotifications();
+    renderQuickEntity();
+  }
+
+  function renderChrome() {
+    var c = state.activeCompany;
+    var w = state.activeWorkspace;
+    document.getElementById("chipTile").textContent = c.code;
+    document.getElementById("chipName").textContent = c.name;
+    document.getElementById("chipSub").textContent = w.code + " Workspace";
+    document.getElementById("contextTile").textContent = w.code;
+    document.getElementById("contextName").textContent = w.name;
+    document.getElementById("contextMeta").textContent = w.plan + " • " + w.region + " • " + w.membersCount + " members";
+    document.getElementById("companyModalWs").innerHTML = w.name;
+    document.getElementById("newCompanyWs").innerHTML = w.name;
+    document.getElementById("quickEntity").textContent = c.name + " (" + c.code + ")";
+    var badge = document.getElementById("notifBadge");
+    var n = unreadCount();
+    badge.textContent = n;
+    badge.style.display = n > 0 ? "grid" : "none";
+    document.getElementById("searchInput").placeholder = "Search in " + c.name + "…";
+    document.querySelectorAll("[data-nav]").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-nav") === state.activeTab);
+    });
+  }
+
+  function renderWorkspace() {
+    var html = "";
+    var isHome = state.activeTab === "home";
+    workspace.className = "workspace" + (isHome ? "" : " full");
+    if (isHome) {
+      html += '<section class="content-col">' + hero() + kpiStrip() + pairTop() + pairBottom() + "</section>";
+      html += '<aside class="rail" aria-label="Company insights">' + railTabs() + railPanel() + "</aside>";
+    } else {
+      html += '<section class="content-col">' + sectionForTab() + "</section>";
+    }
+    workspace.innerHTML = html;
+    workspace.scrollTop = 0;
+  }
+
+  function hero() {
+    var c = state.activeCompany;
+    return (
+      '<div class="hero">' +
+        '<div class="hero-photo" aria-hidden="true"></div>' +
+        '<div class="hero-overlay" aria-hidden="true"></div>' +
+        '<div class="hero-content">' +
+          '<h1 class="hero-title">' + esc(c.name) + "</h1>" +
+          '<p class="hero-subtitle">' + esc(c.type) + " · " + esc(state.activeWorkspace.name) + "</p>" +
+        "</div>" +
+        '<div class="hero-tags">' +
+          '<span class="tag-pill">' + esc(c.activeStatus) + "</span>" +
+          '<span class="tag-pill">' + esc(c.taxId) + "</span>" +
+          '<span class="tag-pill">Currency ' + esc(c.currency) + "</span>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function kpiStrip() {
+    var k = currentKPIs();
+    var cur = esc(state.activeCompany.currency);
+    return (
+      '<div class="card kpi-strip" role="group" aria-label="Company key figures">' +
+        kpi("Cash received", cur + k.cashReceived, '<span class="pos">' + esc(k.cashReceivedTrend) + "</span>") +
+        kpi("Outstanding", cur + k.outstanding, '<span class="bad">' + k.unpaidCount + ' unpaid invoices</span>') +
+        kpi("Created today", k.createdTodayCount + " docs", esc(state.activeCompany.code) + " invoices &amp; quotes") +
+        kpi("Expired quotes", cur + k.overdueQuotesAmount, '<span class="warn">' + k.overdueQuotesCount + " pending sign-off</span>") +
+      "</div>"
+    );
+  }
+  function kpi(label, value, sub) {
+    return '<div class="kpi"><span class="kpi-label">' + label + "</span><span class=\"kpi-value\">" + value + "</span><span class=\"kpi-sub\">" + sub + "</span></div>";
+  }
+
+  function pairTop() {
+    return '<div class="pair">' + actionCard() + documentsCard() + "</div>";
+  }
+
+  function actionCard() {
+    var alerts = scopedAlerts();
+    var rows = "";
+    if (alerts.length === 0) {
+      rows = '<p class="list-sub" style="padding:14px 4px;margin:0">No pending action items for ' + esc(state.activeCompany.name) + ".</p>";
+    } else {
+      rows = alerts.map(function (a) {
+        var tile = a.type === "reminder" ? "icon-tile" : a.type === "red" ? "icon-tile bad" : "icon-tile warn";
+        var icon = a.type === "reminder" ? ICONS.wallet : ICONS.alert;
+        return (
+          '<div class="dashed-row">' +
+            '<span class="' + tile + '" aria-hidden="true">' + icon + "</span>" +
+            '<div class="list-main">' +
+              '<div class="list-title">' + esc(a.title) + "</div>" +
+              '<div class="list-sub">' + esc(a.subtitle) + "</div>" +
+            "</div>" +
+            '<div class="list-right">' +
+              '<div class="mono-time">' + esc(a.time) + "</div>" +
+              '<button class="link-action" type="button" style="margin-top:4px">' + esc(a.actionText || "Review") + " " + ICONS.arrow + "</button>" +
+            "</div>" +
+          "</div>"
+        );
+      }).join("");
+    }
+    return (
+      '<div class="card card-pad">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div class="micro-header">' + ICONS.alert + "Action items</div>" +
+          '<span class="count-chip">' + alerts.length + " active</span>" +
+        "</div>" +
+        '<div class="dashed-list">' + rows + "</div>" +
+      "</div>"
+    );
+  }
+
+  function documentsCard() {
+    var docs = scopedDocuments();
+    var rows = docs.length === 0
+      ? '<p class="list-sub" style="padding:14px 4px;margin:0">No recent documents for ' + esc(state.activeCompany.code) + ".</p>"
+      : docs.map(function (d) {
+          return (
+            '<div class="dashed-row">' +
+              '<div class="list-main">' +
+                '<div style="display:flex;align-items:center;gap:8px"><span class="list-title">' + esc(d.ref) + '</span><span class="status-pill ' + d.status + '">' + d.status + "</span></div>" +
+                '<div class="list-sub">' + esc(d.client) + " • " + esc(d.date) + "</div>" +
+              "</div>" +
+              '<div class="list-right"><span class="mono-amount">' + esc(d.currency) + d.amount + "</span></div>" +
+            "</div>"
+          );
+        }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div class="micro-header">' + ICONS.doc + "Recent ledger documents</div>" +
+          '<button class="link-action" data-viewall type="button">View all</button>' +
+        "</div>" +
+        '<div class="dashed-list">' + rows + "</div>" +
+      "</div>"
+    );
+  }
+
+  function pairBottom() {
+    return (
+      '<div class="pair">' +
+        activityCard() +
+        revenueCard() +
+      "</div>"
+    );
+  }
+
+  function activityCard() {
+    var events = scopedAudit().slice(0, 3);
+    var items = events.map(function (e) {
+      var code = e.companyCode || state.activeCompany.code;
+      return (
+        '<div class="tl-item">' +
+          '<div class="tl-head"><span class="tl-chip">' + esc(code) + "</span><span class=\"mono-time\">" + esc(e.time) + "</span></div>" +
+          '<div class="tl-title">' + esc(e.title) + "</div>" +
+          '<div class="tl-desc">' + esc(e.desc) + "</div>" +
+        "</div>"
+      );
+    }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div class="micro-header">' + ICONS.history + "Activity trail</div>" +
+          '<span class="micro-muted">' + esc(state.activeCompany.code) + " log</span>" +
+        "</div>" +
+        '<div class="timeline">' + items + "</div>" +
+      "</div>"
+    );
+  }
+
+  function revenueCard() {
+    return (
+      '<div class="card card-pad">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div class="micro-header">' + ICONS.pie + "Revenue distribution</div>" +
+          '<span class="micro-muted">' + esc(state.activeCompany.code) + "</span>" +
+        "</div>" +
+        barRow("Cash inflow", "82%", "gold") +
+        barRow("Pending receivables", "18%", "neutral") +
+      "</div>"
+    );
+  }
+  function barRow(label, pct, tone) {
+    return (
+      '<div class="bar-row">' +
+        '<div class="bar-label"><span>' + label + '</span><span class="pct">' + pct + "</span></div>" +
+        '<div class="bar-track"><div class="bar-fill ' + tone + '" style="width:' + pct + '"></div></div>' +
+      "</div>"
+    );
+  }
+
+  /* ---------- RAIL ---------- */
+  function railTabs() {
+    var tabs = ["Overview", "Ledger", "Analytics", "Activity", "Alerts"];
+    return (
+      '<div class="tabbar" role="tablist" aria-label="Company insights">' +
+        tabs.map(function (t) {
+          return '<button class="tab' + (state.railTab === t.toLowerCase() ? " active" : "") + '" role="tab" data-tab="' + t.toLowerCase() + '" type="button" aria-selected="' + (state.railTab === t.toLowerCase()) + '">' + t + "</button>";
+        }).join("") +
+      "</div>"
+    );
+  }
+
+  function railPanel() {
+    var t = state.railTab;
+    if (t === "overview") return railOverview();
+    if (t === "ledger") return railLedger();
+    if (t === "analytics") return railAnalytics();
+    if (t === "activity") return railActivity();
+    return railAlerts();
+  }
+
+  function kvCard(title, icon, rows) {
+    var body = rows.map(function (r) {
+      return "<dt class=\"kv-key\">" + r[0] + "</dt><dd class=\"kv-value\">" + r[1] + "</dd>";
+    }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div class="micro-header">' + icon + esc(title) + "</div>" +
+        '<dl class="kv-grid">' + body + "</dl>" +
+      "</div>"
+    );
+  }
+
+  function railOverview() {
+    var w = state.activeWorkspace;
+    var c = state.activeCompany;
+    return (
+      '<div class="flex-col gap-4" style="display:flex;flex-direction:column;gap:16px">' +
+        kvCard("Workspace context", ICONS.building, [
+          ["Workspace", esc(w.name)],
+          ["Code", esc(w.code)],
+          ["Plan", esc(w.plan)],
+          ["Region", esc(w.region)],
+          ["Members", String(w.membersCount)],
+          ["Companies", String(w.companiesCount)]
+        ]) +
+        kvCard("Operating entity", ICONS.building, [
+          ["Company", esc(c.name)],
+          ["Code", esc(c.code)],
+          ["Type", esc(c.type)],
+          ["Currency", esc(c.currency)],
+          ["Tax ID", esc(c.taxId)],
+          ["Status", esc(c.activeStatus)]
+        ]) +
+        '<div class="card card-pad">' +
+          '<div class="btn-row">' +
+            '<button class="btn-dark" id="railCreateBtn" type="button">' + ICONS.fileplus + "Create document</button>" +
+            '<button class="btn-outline" id="railProvisionBtn" type="button">' + ICONS.building + "New company</button>" +
+          "</div>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function railLedger() {
+    var docs = scopedDocuments();
+    var rows = docs.length === 0
+      ? '<p class="list-sub" style="padding:14px 4px;margin:0">No recent documents for ' + esc(state.activeCompany.code) + ".</p>"
+      : docs.map(function (d) {
+          return (
+            '<div class="dashed-row">' +
+              '<div class="list-main">' +
+                '<div style="display:flex;align-items:center;gap:8px"><span class="list-title">' + esc(d.ref) + '</span><span class="status-pill ' + d.status + '">' + d.status + "</span></div>" +
+                '<div class="list-sub">' + esc(d.client) + " • " + esc(d.date) + "</div>" +
+              "</div>" +
+              '<div class="list-right"><span class="mono-amount">' + esc(d.currency) + d.amount + "</span></div>" +
+            "</div>"
+          );
+        }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div class="micro-header">' + ICONS.doc + "Recent ledger documents</div>" +
+        '<div class="dashed-list">' + rows + "</div>" +
+      "</div>"
+    );
+  }
+
+  function railAnalytics() {
+    var k = currentKPIs();
+    var cur = esc(state.activeCompany.currency);
+    return (
+      '<div class="card card-pad">' +
+        '<div class="micro-header">' + ICONS.pie + "Financial analytics</div>" +
+        '<div class="kv-grid">' +
+          "<dt class=\"kv-key\">Cash received</dt><dd class=\"kv-value\">" + cur + k.cashReceived + "</dd>" +
+          "<dt class=\"kv-key\">Outstanding</dt><dd class=\"kv-value\">" + cur + k.outstanding + "</dd>" +
+          "<dt class=\"kv-key\">Created today</dt><dd class=\"kv-value\">" + k.createdTodayCount + " docs</dd>" +
+          "<dt class=\"kv-key\">Expired quotes</dt><dd class=\"kv-value\">" + cur + k.overdueQuotesAmount + "</dd>" +
+        "</div>" +
+        barRow("Cash inflow", "82%", "gold") +
+        barRow("Pending receivables", "18%", "neutral") +
+      "</div>"
+    );
+  }
+
+  function railActivity() {
+    var events = scopedAudit().slice(0, 3);
+    var items = events.map(function (e) {
+      var code = e.companyCode || state.activeCompany.code;
+      return (
+        '<div class="tl-item">' +
+          '<div class="tl-head"><span class="tl-chip">' + esc(code) + "</span><span class=\"mono-time\">" + esc(e.time) + "</span></div>" +
+          '<div class="tl-title">' + esc(e.title) + "</div>" +
+          '<div class="tl-desc">' + esc(e.desc) + "</div>" +
+        "</div>"
+      );
+    }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div class="micro-header">' + ICONS.history + "Activity trail</div>" +
+        '<div class="timeline">' + items + "</div>" +
+      "</div>"
+    );
+  }
+
+  function railAlerts() {
+    var items = state.notifications.length === 0
+      ? '<p class="list-sub" style="padding:14px 4px;margin:0">No notifications right now.</p>'
+      : state.notifications.map(function (n) {
+          return (
+            '<div class="notif-item' + (n.read ? "" : " unread") + '">' +
+              '<div class="notif-top"><span class="notif-title">' + esc(n.title) + '</span><span class="notif-time">' + esc(n.time) + "</span></div>" +
+              '<div class="notif-detail">' + esc(n.detail) + "</div>" +
+            "</div>"
+          );
+        }).join("");
+    return (
+      '<div class="card card-pad">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div class="micro-header">' + ICONS.bell + "Alerts &amp; notifications</div>" +
+          '<button class="link-action" data-clear-notifs type="button">Clear unread</button>' +
+        "</div>" +
+        "<div>" + items + "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------- NON-HOME TABS ---------- */
+  function sectionForTab() {
+    if (state.activeTab === "invoices") return invoicesSection();
+    if (state.activeTab === "projects") return projectsSection();
+    if (state.activeTab === "analytics") return analyticsSection();
+    return settingsSection();
+  }
+
+  function sectionHead(title, sub) {
+    return '<div class="section-head"><h2 class="section-title">' + title + '</h2><p class="section-sub">' + sub + "</p></div>";
+  }
+
+  function invoicesSection() {
+    var docs = scopedDocuments();
+    var rows = docs.length === 0
+      ? '<div class="card card-pad"><p class="list-sub" style="margin:0">No recent documents for ' + esc(state.activeCompany.code) + ".</p></div>"
+      : '<div class="card card-pad"><div class="dashed-list">' + docs.map(function (d) {
+          return (
+            '<div class="dashed-row">' +
+              '<div class="icon-tile" aria-hidden="true">' + ICONS.receipt + "</div>" +
+              '<div class="list-main">' +
+                '<div style="display:flex;align-items:center;gap:8px"><span class="list-title">' + esc(d.ref) + '</span><span class="status-pill ' + d.status + '">' + d.status + "</span></div>" +
+                '<div class="list-sub">' + esc(d.client) + " • " + esc(d.date) + "</div>" +
+              "</div>" +
+              '<div class="list-right"><span class="mono-amount">' + esc(d.currency) + d.amount + "</span></div>" +
+            "</div>"
+          );
+        }).join("") + "</div></div>";
+    return (
+      sectionHead("Invoices &amp; billing", "Scoped to " + esc(state.activeCompany.name)) +
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:12px">' +
+        '<button class="btn-outline" data-new-invoice type="button">' + ICONS.fileplus + "New invoice</button>" +
+      "</div>" +
+      rows
+    );
+  }
+
+  function projectsSection() {
+    var cards = D.projects.map(function (p) {
+      return (
+        '<div class="card task-card">' +
+          '<div class="task-top"><span class="task-title">' + esc(p.title) + '</span><span class="status-pill pending">' + esc(p.status) + "</span></div>" +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + p.progress + '"></div></div>' +
+          '<div class="progress-meta"><span>Progress</span><span>' + p.progress + "</span></div>" +
+        "</div>"
+      );
+    }).join("");
+    return (
+      sectionHead("Projects &amp; tasks", esc(state.activeCompany.name) + " operations") +
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:12px">' +
+        '<button class="btn-outline" data-add-task type="button">' + ICONS.fileplus + "Add task</button>" +
+      "</div>" +
+      '<div style="display:flex;flex-direction:column;gap:12px">' + cards + "</div>"
+    );
+  }
+
+  function analyticsSection() {
+    var k = currentKPIs();
+    var cur = esc(state.activeCompany.currency);
+    return (
+      sectionHead("Financial analytics", "Company overview for " + esc(state.activeCompany.code)) +
+      '<div class="card card-pad">' +
+        '<div class="micro-header">' + ICONS.pie + "Revenue distribution</div>" +
+        barRow("Cash inflow", "82%", "gold") +
+        barRow("Pending receivables", "18%", "neutral") +
+        '<div class="kv-grid">' +
+          "<dt class=\"kv-key\">Cash received</dt><dd class=\"kv-value\">" + cur + k.cashReceived + "</dd>" +
+          "<dt class=\"kv-key\">Outstanding</dt><dd class=\"kv-value\">" + cur + k.outstanding + "</dd>" +
+          "<dt class=\"kv-key\">Created today</dt><dd class=\"kv-value\">" + k.createdTodayCount + " docs</dd>" +
+          "<dt class=\"kv-key\">Expired quotes</dt><dd class=\"kv-value\">" + cur + k.overdueQuotesAmount + "</dd>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function settingsSection() {
+    return (
+      sectionHead("Workspace &amp; preferences", "System configuration") +
+      '<div class="card card-pad">' +
+        '<div class="dashed-row">' +
+          "<div class=\"list-main\"><div class=\"list-title\">Current workspace</div><div class=\"list-sub\">" + esc(state.activeWorkspace.name) + " (" + esc(state.activeWorkspace.code) + ")</div></div>" +
+          '<button class="btn-outline" id="settingsManageBtn" type="button" style="height:34px">Manage</button>' +
+        "</div>" +
+        '<div class="dashed-row">' +
+          '<div class="list-main"><div class="list-title">Theme</div><div class="list-sub">' + (state.dark ? "Dark mode" : "Light mode") + "</div></div>" +
+          '<button class="btn-outline" id="settingsThemeBtn" type="button" style="height:34px">Toggle</button>' +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------- MODALS ---------- */
+  function renderCompanyList() {
+    var comps = scopedCompanies();
+    var html = comps.map(function (c) {
+      var sel = c.id === state.activeCompany.id;
+      return (
+        '<button class="selectable-row' + (sel ? " selected" : "") + '" data-company="' + c.id + '" type="button">' +
+          '<span class="code-tile">' + esc(c.code) + "</span>" +
+          '<span class="selectable-meta">' +
+            '<span class="selectable-name">' + esc(c.name) + "</span>" +
+            '<span class="selectable-sub">' + esc(c.type) + " • Currency: " + esc(c.currency) + "</span>" +
+          "</span>" +
+          (sel ? '<span class="active-chip">Active</span>' : ICONS.chevron) +
+        "</button>"
+      );
+    }).join("");
+    document.getElementById("companyList").innerHTML = html;
+  }
+
+  function renderWorkspaceList() {
+    var list = D.workspaces.map(function (ws) {
+      var sel = ws.id === state.activeWorkspace.id;
+      var count = state.companies.filter(function (c) { return c.workspaceId === ws.id; }).length;
+      return (
+        '<button class="selectable-row' + (sel ? " selected" : "") + '" data-workspace="' + ws.id + '" type="button">' +
+          '<span class="code-tile">' + esc(ws.code) + "</span>" +
+          '<span class="selectable-meta">' +
+            '<span class="selectable-name">' + esc(ws.name) + "</span>" +
+            '<span class="selectable-sub">' + esc(ws.plan) + " • " + esc(ws.region) + " • " + count + " companies</span>" +
+          "</span>" +
+          (sel ? ICONS.check : ICONS.chevron) +
+        "</button>"
+      );
+    }).join("");
+    document.getElementById("workspaceList").innerHTML = list;
+  }
+
+  function renderNotifications() {
+    var html = state.notifications.map(function (n) {
+      return (
+        '<div class="notif-item' + (n.read ? "" : " unread") + '">' +
+          '<div class="notif-top"><span class="notif-title">' + esc(n.title) + '</span><span class="notif-time">' + esc(n.time) + "</span></div>" +
+          '<div class="notif-detail">' + esc(n.detail) + "</div>" +
+        "</div>"
+      );
+    }).join("");
+    document.getElementById("notifList").innerHTML = html || '<p class="list-sub" style="padding:12px 4px;margin:0">No notifications right now.</p>';
+  }
+
+  function renderQuickEntity() {
+    // bound via renderChrome already; nothing extra needed
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+    });
+  }
+
+  /* ---------- ACTIONS ---------- */
+  function selectCompany(id) {
+    var comp = state.companies.find(function (c) { return c.id === id; });
+    if (!comp) return;
+    state.activeCompany = comp;
+    closeModal("companyModal");
+    toast("Switched operating company to: " + comp.name + " [" + comp.code + "]");
+    render();
+  }
+
+  function selectWorkspace(id) {
+    var ws = D.workspaces.find(function (w) { return w.id === id; });
+    if (!ws) return;
+    state.activeWorkspace = ws;
+    var first = state.companies.find(function (c) { return c.workspaceId === ws.id; });
+    if (first) state.activeCompany = first;
+    toast("Active workspace updated to: " + ws.name);
+    render();
+  }
+
+  function openModal(id) { document.getElementById(id).hidden = false; }
+  function closeModal(id) { document.getElementById(id).hidden = true; }
+
+  function togglePopover(id) {
+    var el = document.getElementById(id);
+    var wasHidden = el.hidden;
+    // close the sibling popovers
+    ["notifPopover", "quickCreatePopover"].forEach(function (p) {
+      document.getElementById(p).hidden = true;
+    });
+    el.hidden = !wasHidden;
+  }
+
+  function setTab(tab) {
+    state.activeTab = tab;
+    closePopovers();
+    render();
+  }
+
+  function closePopovers() {
+    document.getElementById("notifPopover").hidden = true;
+    document.getElementById("quickCreatePopover").hidden = true;
+    document.getElementById("searchOverlay").hidden = true;
+    document.getElementById("fab").classList.remove("open");
+  }
+
+  function refreshData() {
+    var icon = document.querySelector(".refresh-icon");
+    icon.classList.add("refresh-spin");
+    setTimeout(function () {
+      icon.classList.remove("refresh-spin");
+      toast("Data synchronized with cloud workspace");
+    }, 600);
+  }
+
+  /* ---------- EVENTS ---------- */
+  // Sidebar collapse / mobile drawer
+  document.getElementById("collapseBtn").addEventListener("click", function () {
+    if (!desktop.matches) { frame.classList.toggle("sidebar-open"); return; }
+    frame.classList.toggle("collapsed");
+    this.setAttribute("aria-label", frame.classList.contains("collapsed") ? "Expand sidebar" : "Collapse sidebar");
+  });
+  document.getElementById("menuBtn").addEventListener("click", function () {
+    frame.classList.toggle("sidebar-open");
+  });
+  document.getElementById("sidebarBackdrop").addEventListener("click", function () {
+    frame.classList.remove("sidebar-open");
+  });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      frame.classList.remove("sidebar-open");
+      closePopovers();
+      ["companyModal", "settingsModal", "newCompanyModal"].forEach(closeModal);
+    }
+  });
+
+  // Theme
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    state.dark = !state.dark;
+    document.body.classList.toggle("dark", state.dark);
+    this.setAttribute("aria-pressed", state.dark ? "true" : "false");
+    this.setAttribute("aria-label", state.dark ? "Switch to light mode" : "Switch to dark mode");
+    document.getElementById("iconSun").style.display = state.dark ? "none" : "block";
+    document.getElementById("iconMoon").style.display = state.dark ? "block" : "none";
+    renderChrome();
+  });
+
+  // Refresh
+  document.getElementById("refreshBtn").addEventListener("click", refreshData);
+
+  // Search overlay
+  document.getElementById("searchToggle").addEventListener("click", function () {
+    var el = document.getElementById("searchOverlay");
+    el.hidden = !el.hidden;
+    if (!el.hidden) document.getElementById("searchInput").focus();
+  });
+  document.getElementById("searchClose").addEventListener("click", function () {
+    document.getElementById("searchOverlay").hidden = true;
+  });
+
+  // Notifications + quick create popovers
+  document.getElementById("notifBtn").addEventListener("click", function () { togglePopover("notifPopover"); });
+  document.getElementById("quickCreateBtn").addEventListener("click", function () { togglePopover("quickCreatePopover"); });
+  document.getElementById("fab").addEventListener("click", function () {
+    var pop = document.getElementById("quickCreatePopover");
+    var wasHidden = pop.hidden;
+    closePopovers();
+    pop.hidden = !wasHidden;
+    this.classList.toggle("open", pop.hidden === false);
+  });
+
+  document.getElementById("clearNotifs").addEventListener("click", function () {
+    state.notifications.forEach(function (n) { n.read = true; });
+    toast("Marked all notifications as read");
+    renderNotifications();
+    renderChrome();
+  });
+
+  document.querySelectorAll("[data-create]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var label = this.getAttribute("data-create");
+      closePopovers();
+      toast("Generating " + label + " for " + state.activeCompany.name);
+    });
+  });
+
+  // Company switcher
+  document.getElementById("companyChip").addEventListener("click", function () {
+    closePopovers();
+    openModal("companyModal");
+  });
+  document.getElementById("newCompanyBtn").addEventListener("click", function () {
+    closeModal("companyModal");
+    openModal("newCompanyModal");
+  });
+
+  // Workspace settings
+  document.getElementById("manageWorkspaceBtn").addEventListener("click", function () {
+    openModal("settingsModal");
+  });
+
+  // Modal close buttons + backdrop
+  document.querySelectorAll("[data-close]").forEach(function (btn) {
+    btn.addEventListener("click", function () { closeModal(this.getAttribute("data-close")); });
+  });
+  document.querySelectorAll(".overlay").forEach(function (ov) {
+    ov.addEventListener("click", function (e) {
+      if (e.target === ov) ov.hidden = true;
+    });
+  });
+
+  // New company form
+  var typeSelect = document.getElementById("ncType");
+  D.companyTypes.forEach(function (t) {
+    var opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  });
+  typeSelect.value = "Logistics & Services";
+
+  document.getElementById("newCompanyForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = document.getElementById("ncName").value.trim();
+    var code = document.getElementById("ncCode").value.trim().toUpperCase();
+    if (!name || !code) return;
+    var created = {
+      id: "c_" + Date.now(),
+      workspaceId: state.activeWorkspace.id,
+      name: name,
+      code: code,
+      type: typeSelect.value,
+      currency: "₦",
+      taxId: "TIN-" + Math.floor(100000 + Math.random() * 900000) + "-" + code,
+      activeStatus: "Active Operational"
+    };
+    state.companies.push(created);
+    state.activeCompany = created;
+    closeModal("newCompanyModal");
+    document.getElementById("ncName").value = "";
+    document.getElementById("ncCode").value = "";
+    toast('Company "' + created.name + '" created under ' + state.activeWorkspace.code);
+    render();
+  });
+
+  // Delegated clicks inside the workspace (nav, tabs, rows, section buttons)
+  workspace.addEventListener("click", function (e) {
+    var navBtn = e.target.closest("[data-nav]");
+    if (navBtn) {
+      var label = navBtn.textContent.trim();
+      setTab(navBtn.getAttribute("data-nav"));
+      toast("Navigated to " + label);
+      frame.classList.remove("sidebar-open");
+      return;
+    }
+    var tabBtn = e.target.closest("[data-tab]");
+    if (tabBtn) {
+      state.railTab = tabBtn.getAttribute("data-tab");
+      renderWorkspace();
+      return;
+    }
+    var clearBtn = e.target.closest("[data-clear-notifs]");
+    if (clearBtn) {
+      state.notifications.forEach(function (n) { n.read = true; });
+      toast("Marked all notifications as read");
+      renderWorkspace();
+      renderNotifications();
+      renderChrome();
+      return;
+    }
+    var viewAll = e.target.closest("[data-viewall]");
+    if (viewAll) {
+      setTab("invoices");
+      return;
+    }
+    var newInv = e.target.closest("[data-new-invoice]");
+    if (newInv) {
+      toast("Creating new invoice for " + state.activeCompany.name);
+      return;
+    }
+    var addTask = e.target.closest("[data-add-task]");
+    if (addTask) {
+      toast("Creating new project for " + state.activeCompany.name);
+      return;
+    }
+    var railCreate = e.target.closest("#railCreateBtn");
+    if (railCreate) {
+      togglePopover("quickCreatePopover");
+      return;
+    }
+    var railProvision = e.target.closest("#railProvisionBtn");
+    if (railProvision) {
+      openModal("newCompanyModal");
+      return;
+    }
+    var settingsManage = e.target.closest("#settingsManageBtn");
+    if (settingsManage) {
+      openModal("settingsModal");
+      return;
+    }
+    var settingsTheme = e.target.closest("#settingsThemeBtn");
+    if (settingsTheme) {
+      document.getElementById("themeBtn").click();
+      return;
+    }
+    var companyBtn = e.target.closest("[data-company]");
+    if (companyBtn) {
+      selectCompany(companyBtn.getAttribute("data-company"));
+      return;
+    }
+    var wsBtn = e.target.closest("[data-workspace]");
+    if (wsBtn) {
+      selectWorkspace(wsBtn.getAttribute("data-workspace"));
+    }
+  });
+
+  // Sidebar nav + modal-internal selections live outside #workspace; listen at document level.
+  document.addEventListener("click", function (e) {
+    var navBtn = e.target.closest("[data-nav]");
+    if (navBtn) {
+      var label = navBtn.textContent.trim();
+      setTab(navBtn.getAttribute("data-nav"));
+      toast("Navigated to " + label);
+      frame.classList.remove("sidebar-open");
+      return;
+    }
+    var companyBtn = e.target.closest("[data-company]");
+    if (companyBtn) {
+      selectCompany(companyBtn.getAttribute("data-company"));
+      return;
+    }
+    var wsBtn = e.target.closest("[data-workspace]");
+    if (wsBtn) {
+      selectWorkspace(wsBtn.getAttribute("data-workspace"));
+    }
+  });
+
+  /* ---------- INIT ---------- */
+  var style = document.createElement("style");
+  style.textContent = "@keyframes refresh-spin { to { transform: rotate(360deg); } } .refresh-spin { animation: refresh-spin .6s linear; }";
+  document.head.appendChild(style);
+
+  render();
+})();
+</script>
+</body>
+</html>
