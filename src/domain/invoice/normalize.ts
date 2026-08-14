@@ -261,6 +261,28 @@ export function mapDbInvoice(row: DbInvoice): Invoice {
   }
 }
 
+/**
+ * Heal legacy row overrides for documents that never persisted calculation
+ * inputs. Mirrors the quotation hydration (`buildQuotationFormState`).
+ *
+ * Legacy documents stored explicit 0 for `vat_rate` / `discount_rate`, which
+ * the calculation engine reads as deliberate zero overrides. For documents
+ * without persisted calculation inputs there is no global rate to override,
+ * so 0 means "inherit" and is healed to null. Documents with saved
+ * calculation inputs keep their explicit 0 (0 stays a deliberate override).
+ */
+export function healLegacyCalculationOverrides(
+  item: InvoiceItem,
+  hasSavedCalculationInputs: boolean,
+): InvoiceItem {
+  if (hasSavedCalculationInputs) return item
+  return {
+    ...item,
+    vat_rate: item.vat_rate === 0 ? null : item.vat_rate,
+    discount_rate: item.discount_rate === 0 ? null : item.discount_rate,
+  }
+}
+
 export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {
   const customData = parseCustomData(row.custom_data)
   const installRate = row.install_rate === null || row.install_rate === undefined || row.install_rate === ''

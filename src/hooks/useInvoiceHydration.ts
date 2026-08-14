@@ -16,6 +16,7 @@ import type {
 import {
   getInvoicePdfOutput,
   getInvoiceSignatoryId,
+  healLegacyCalculationOverrides,
   inferLegacyCalculationState,
   makeEmptyItem,
   mapDbInvoiceItem,
@@ -107,13 +108,22 @@ export function useInvoiceHydration(
       if (data.invoice_title) targetsRef.current.setInvoiceTitle(data.invoice_title)
 
       const { data: itemRows } = await tenantClient.from('invoice_items').select('*').eq('invoice_id', id).order('sort_order')
+      // Mirrors the quotation hydration (buildQuotationFormState): legacy rows
+      // stored explicit 0 for vat_rate / discount_rate. Without persisted
+      // calculation inputs there is no global rate to override, so 0 means
+      // "inherit" and is healed to null before the calculation state is
+      // inferred. Documents with saved calculation inputs keep explicit 0.
+      const hasSavedCalculationInputs = Boolean(
+        parsedCustomFields && !Array.isArray(parsedCustomFields) && parsedCustomFields.calculationInputs,
+      )
+      const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) =>
+        healLegacyCalculationOverrides(mapDbInvoiceItem(item), hasSavedCalculationInputs),
+      )
       const legacyCalculationState = inferLegacyCalculationState({
         invoice: data,
-        items: itemRows || [],
+        items: loadedItems,
         customFields: parsedCustomFields && !Array.isArray(parsedCustomFields) ? parsedCustomFields : {},
       })
-
-      const loadedItems = (itemRows && itemRows.length > 0 ? itemRows : [makeEmptyItem()]).map((item) => mapDbInvoiceItem(item))
 
       targetsRef.current.setItems(loadedItems)
       setInitialInvoiceSnapshot(data)

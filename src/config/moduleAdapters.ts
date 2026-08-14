@@ -311,13 +311,16 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
   cacheKey: "bd:list:quotations:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(quotationsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, quotationsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    const tenantClient = resolveFetchClient(ctx);
+    const client = tenantClient ?? supabase;
+
+    let q = client
       .from("quotations")
       .select("id, quotation_number, client_name, issue_date, valid_until, created_at, total, status, project_id")
       .is("archived_at", null);

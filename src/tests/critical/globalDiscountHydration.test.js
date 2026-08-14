@@ -6,6 +6,7 @@ import {
   buildCalculationInputs,
   inferLegacyCalculationState,
 } from '../../domain/invoice/calculations.ts'
+import { healLegacyCalculationOverrides } from '../../domain/invoice/normalize.ts'
 
 function calcInputs(overrides = {}) {
   return {
@@ -227,4 +228,97 @@ test('save calculationInputs carries the edited global discount value', () => {
   })
 
   assert.equal(calculationInputs.discountValue, 12)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy healing — the missing invoice step that the quotation hydration has
+// ─────────────────────────────────────────────────────────────────────────────
+
+function legacyItem(overrides = {}) {
+  return {
+    id: null,
+    item_id: null,
+    description: 'A',
+    quantity: 1,
+    unit_price: 100000,
+    amount: 100000,
+    install_rate: null,
+    install_rate_override: false,
+    vat_rate: 0,
+    discount_rate: 0,
+    row_type: 'standard',
+    group_id: null,
+    group_name: '',
+    sort_order: 0,
+    image_url: null,
+    custom_data: {},
+    created_at: null,
+    updated_at: null,
+    ...overrides,
+  }
+}
+
+// TEST 7 — The helper mirrors the quotation hydration.
+// Without saved calculation inputs, explicit 0 is healed to null. With saved
+// calculation inputs, explicit 0 stays a deliberate zero override.
+test('healLegacyCalculationOverrides heals 0 only without saved calculationInputs', () => {
+  const healed = healLegacyCalculationOverrides(legacyItem(), false)
+  assert.equal(healed.vat_rate, null)
+  assert.equal(healed.discount_rate, null)
+
+  const kept = healLegacyCalculationOverrides(legacyItem(), true)
+  assert.equal(kept.vat_rate, 0)
+  assert.equal(kept.discount_rate, 0)
+
+  const nonZero = healLegacyCalculationOverrides(legacyItem({ vat_rate: 7.5, discount_rate: 5 }), false)
+  assert.equal(nonZero.vat_rate, 7.5)
+  assert.equal(nonZero.discount_rate, 5)
+
+  const nulls = healLegacyCalculationOverrides(legacyItem({ vat_rate: null, discount_rate: null }), false)
+  assert.equal(nulls.vat_rate, null)
+  assert.equal(nulls.discount_rate, null)
+})
+
+// TEST 8 — End-to-end legacy scenario.
+// A legacy invoice (no persisted calculationInputs) with rows stored as 0 must
+// hydrate the global discount and apply it, exactly like the quotation path.
+test('legacy invoice rows heal to inherit and the global discount applies', () => {
+  const rawItems = [legacyItem()]
+  const hasSavedCalculationInputs = false
+  const loadedItems = rawItems.map((item) =>
+    healLegacyCalculationOverrides(item, hasSavedCalculationInputs),
+  )
+
+  // Legacy documents store discountType at the top level of custom_fields.
+  const state = inferLegacyCalculationState({
+    invoice: { discount: 10000, vat: 7.5, wht: 0 },
+    items: loadedItems,
+    customFields: { discountType: 'fixed', discountTiming: 'before' },
+  })
+
+  assert.equal(state.useGlobalDiscountInput, true)
+  assert.equal(state.editableInputs.discountValue, 10000)
+
+  const result = computeDocument({
+    items: loadedItems,
+    columns: [{ key: 'discount_rate', visibilityMode: 'hide_display' }],
+    document: { discount: 10000, vat: 7.5, wht: 0 },
+    cf: { extraCharges: [], calculationInputs: state.calculationInputs },
+  })
+
+  // Row heals to NULL, inherits the fixed 10000 discount.
+  assert.equal(result.discount, 10000)
+  assert.equal(result.items[0].inherits_global_discount, true)
+})
+
+// TEST 9 — The healed legacy row is written back as NULL on the next save.
+// The save serializer must persist NULL (inherit) so the corruption does not
+// re-occur. toDbItem already does this; assert the contract.
+test('healed rows serialize back as NULL discount_rate', () => {
+  const healed = healLegacyCalculationOverrides(legacyItem(), false)
+  const dbRow = {
+    ...healed,
+    discount_rate: healed.discount_rate ?? null,
+  }
+  assert.equal(dbRow.discount_rate, null)
 })
