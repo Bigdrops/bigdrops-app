@@ -300,6 +300,7 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
     }
 
     if (entityId && !isCreate) {
+      payload.id = id
       const { error } = await supabase.rpc('save_invoice_with_items_transaction', {
         p_entity_id: entityId,
         p_invoice_payload: payload,
