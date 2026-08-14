@@ -234,6 +234,37 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
     }
   }
 
+  // ── 1b. Fixed-discount fallback for non-taxable documents ────────────────
+  //
+  // A fixed before_tax discount is normally allocated across taxable rows
+  // (effectiveVatRate > 0). When no row is taxable (a no-VAT invoice or rows
+  // that are all exempt), the allocation pool is empty and the fixed discount
+  // would be dropped entirely. In that case distribute it across every row
+  // that inherits the global discount and has a positive base, restoring the
+  // historical behavior where a fixed discount applies to the whole invoice.
+  // Mixed documents keep the existing rule: exempt rows are still excluded
+  // from the allocation when taxable rows exist.
+  const hasInheritingBase = pass1.some(
+    (p) => p.inheritsGlobal && p.preDiscountVatBase.greaterThan(0),
+  )
+  const useFallbackAllocation =
+    discountType === 'fixed' &&
+    discountTiming === 'before_tax' &&
+    eligibleVatBase.lessThanOrEqualTo(0) &&
+    hasInheritingBase
+
+  if (useFallbackAllocation) {
+    for (const p of pass1) {
+      p.fixedDiscountEligible =
+        p.inheritsGlobal && p.preDiscountVatBase.greaterThan(0)
+    }
+    eligibleVatBase = pass1.reduce(
+      (sum, p) =>
+        p.fixedDiscountEligible ? sum.plus(p.preDiscountVatBase) : sum,
+      new Decimal(0),
+    )
+  }
+
   // ── 2. Resolve fixed discount total ──────────────────────────────────────
 
   // Percent discount is applied per-row in pass 2.

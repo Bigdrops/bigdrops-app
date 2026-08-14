@@ -256,6 +256,41 @@ test('Block 5c: row with explicit discount override not eligible for fixed alloc
   assert.equal(result.items[1].line_discount, 35)
 })
 
+test('Block 5d: fixed discount applies on a no-VAT invoice (NULL rows inherit)', () => {
+  const result = calculateDocument(doc([
+    item({ quantity: 1, unit_price: 100000 }),
+  ], {
+    vatPercent: 0,
+    discountType: 'fixed',
+    discountTiming: 'before_tax',
+    discountValue: 10000,
+  }))
+  // No taxable rows exist, so the fallback distributes the fixed discount
+  // across all inheriting rows instead of dropping it.
+  assert.equal(result.discount, 10000)
+  assert.equal(result.items[0].line_discount, 10000)
+  assert.equal(result.grandTotal, 90000)
+})
+
+test('Block 5e: fixed discount applies when every row is explicitly exempt (vat_rate 0)', () => {
+  const result = calculateDocument(doc([
+    item({ quantity: 1, unit_price: 60000, vat_rate: 0 }),
+    item({ quantity: 1, unit_price: 40000, vat_rate: 0 }),
+  ], {
+    vatPercent: 7.5,
+    discountType: 'fixed',
+    discountTiming: 'before_tax',
+    discountValue: 10000,
+  }))
+  // Every row is exempt, so the fallback distributes the fixed discount
+  // proportionally over all inheriting rows (60000/100000 and 40000/100000).
+  assert.equal(result.discount, 10000)
+  assert.equal(result.items[0].line_discount, 6000)
+  assert.equal(result.items[1].line_discount, 4000)
+  assert.equal(result.items[0].line_vat, 0)
+  assert.equal(result.items[1].line_vat, 0)
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Block 6 — Fixed discount after_tax
 // ─────────────────────────────────────────────────────────────────────────────
