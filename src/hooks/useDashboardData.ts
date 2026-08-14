@@ -9,11 +9,8 @@ import { listBoqs } from '@/domain/boq/storage'
 import {
   readDashboardCache,
   writeDashboardCache,
-  isDashboardCacheFresh,
   DashboardCacheData,
 } from '@/lib/cache/dashboardCache'
-
-const DASHBOARD_CACHE_TTL = 2 * 60 * 1000 // 2 minutes
 
 export type RecentDoc = {
   id: string
@@ -318,10 +315,6 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
   const load = React.useCallback(async () => {
     const cached = readDashboardCache(cacheKey)
-    if (cached && isDashboardCacheFresh(cached, DASHBOARD_CACHE_TTL)) {
-      setLoading(false)
-      return
-    }
 
     // Only show loading if we don't have ANY data to show (including stale)
     if (!cached) {
