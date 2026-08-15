@@ -163,39 +163,39 @@ shadcn/ui reads.
 
 ```
 :root {
-  --db-canvas: #FCFBF8;
+  --db-canvas: #FFFFFF;
   --db-surface: #FFFFFF;
   --db-surface-raised: #FFFFFF;
-  --db-surface-soft: #F7F4EC;
+  --db-surface-soft: #F5F5F5;
 
-  --db-border: #E8E2D6;
-  --db-border-strong: #D8CEBD;
+  --db-border: #E5E5E5;
+  --db-border-strong: #D4D4D4;
 
   --db-ink: #171614;
-  --db-ink-secondary: #55514A;
-  --db-ink-muted: #777168;
-  --db-ink-faint: #9A9489;
+  --db-ink-secondary: #525252;
+  --db-ink-muted: #737373;
+  --db-ink-faint: #A3A3A3;
 
-  --db-gold-100: #FFF5D7;
-  --db-gold-200: #F9E5A9;
-  --db-gold-300: #F2CF70;
-  --db-gold-400: #E8B33C;
-  --db-gold-500: #D99A24;
-  --db-gold-600: #B9790F;
-  --db-gold-700: #8E5A08;
+  --db-gold-100: #FEF9E7;
+  --db-gold-200: #FDE68A;
+  --db-gold-300: #FCD34D;
+  --db-gold-400: #FBBF24;
+  --db-gold-500: #F59E0B;
+  --db-gold-600: #D97706;
+  --db-gold-700: #B45309;
 
-  --db-crimson-100: #F8E9E9;
-  --db-crimson-200: #EFCACA;
-  --db-crimson-300: #DFA0A0;
-  --db-crimson-400: #C95B5B;
-  --db-crimson-500: #A52A2A;
-  --db-crimson-600: #8B0000;
-  --db-crimson-700: #650000;
+  --db-crimson-100: #FEE2E2;
+  --db-crimson-200: #FECACA;
+  --db-crimson-300: #FCA5A5;
+  --db-crimson-400: #F87171;
+  --db-crimson-500: #DC2626;
+  --db-crimson-600: #B91C1C;
+  --db-crimson-700: #991B1B;
 
-  --db-success: #218A45;
-  --db-warning: #A66A00;
-  --db-danger: #8B0000;
-  --db-focus: #C98A16;
+  --db-success: #16A34A;
+  --db-warning: #D97706;
+  --db-danger: #DC2626;
+  --db-focus: #D97706;
 }
 ```
 
@@ -203,39 +203,39 @@ shadcn/ui reads.
 
 ```
 [data-theme="dark"] {
-  --db-canvas: #090707;
-  --db-surface: #120B0B;
-  --db-surface-raised: #1A1010;
-  --db-surface-soft: #211414;
+  --db-canvas: #0A0A0A;
+  --db-surface: #141010;
+  --db-surface-raised: #1C1414;
+  --db-surface-soft: #261A1A;
 
-  --db-border: #382222;
-  --db-border-strong: #543131;
+  --db-border: #3D2222;
+  --db-border-strong: #5C3333;
 
-  --db-ink: #F5F0EA;
-  --db-ink-secondary: #C0B1A8;
-  --db-ink-muted: #988A82;
-  --db-ink-faint: #6F625D;
+  --db-ink: #FAF5F0;
+  --db-ink-secondary: #D4C4B8;
+  --db-ink-muted: #A89888;
+  --db-ink-faint: #706058;
 
-  --db-gold-100: #FFF4CF;
-  --db-gold-200: #F7DF9A;
-  --db-gold-300: #F3D37A;
-  --db-gold-400: #E8B33C;
-  --db-gold-500: #D9962B;
-  --db-gold-600: #B4770F;
-  --db-gold-700: #8A5707;
+  --db-gold-100: #FEF3C7;
+  --db-gold-200: #FDE68A;
+  --db-gold-300: #FCD34D;
+  --db-gold-400: #FBBF24;
+  --db-gold-500: #F59E0B;
+  --db-gold-600: #D97706;
+  --db-gold-700: #B45309;
 
-  --db-crimson-100: #4A1717;
-  --db-crimson-200: #621C1C;
-  --db-crimson-300: #842727;
-  --db-crimson-400: #C43E3E;
-  --db-crimson-500: #A52A2A;
-  --db-crimson-600: #8B0000;
-  --db-crimson-700: #5E0000;
+  --db-crimson-100: #450A0A;
+  --db-crimson-200: #7F1D1D;
+  --db-crimson-300: #991B1B;
+  --db-crimson-400: #DC2626;
+  --db-crimson-500: #B91C1C;
+  --db-crimson-600: #991B1B;
+  --db-crimson-700: #7F1D1D;
 
   --db-success: #4ADE80;
-  --db-warning: #F0B84B;
+  --db-warning: #FBBF24;
   --db-danger: #F87171;
-  --db-focus: #F3C45D;
+  --db-focus: #FBBF24;
 }
 ```
 
@@ -251,47 +251,47 @@ components and graphics.
 | Token | Value | Ratio | AA normal text | Use |
 | --- | --- | --- | --- | --- |
 | ink | #171614 | 18.1:1 | pass | primary text |
-| ink-secondary | #55514A | 7.9:1 | pass | secondary text |
-| ink-muted | #777168 | 4.8:1 | pass | captions, metadata |
-| ink-faint | #9A9489 | 3.0:1 | fail | large text, non-text only |
-| gold-700 | #8E5A08 | 5.8:1 | pass | gold text on white |
-| gold-600 | #B9790F | 3.6:1 | fail | large text, non-text only |
-| gold-500 | #D99A24 | 2.4:1 | fail | decorative fill only |
-| crimson-500 | #A52A2A | 7.1:1 | pass | secondary risk text |
-| crimson-600 | #8B0000 | 10.0:1 | pass | risk text, danger |
-| success | #218A45 | 4.4:1 | fail | large text, or paired with icon + text |
-| warning | #A66A00 | 4.5:1 | pass | warning text (borderline; keep weight >= 500) |
-| focus | #C98A16 | 2.9:1 | fail | see Focus section |
+| ink-secondary | #525252 | 7.4:1 | pass | secondary text |
+| ink-muted | #737373 | 4.6:1 | pass | captions, metadata |
+| ink-faint | #A3A3A3 | 2.8:1 | fail | large text, non-text only |
+| gold-700 | #B45309 | 5.2:1 | pass | gold text on white |
+| gold-600 | #D97706 | 3.8:1 | fail | large text, non-text only |
+| gold-500 | #F59E0B | 2.6:1 | fail | decorative fill only |
+| crimson-500 | #DC2626 | 5.5:1 | pass | risk text |
+| crimson-600 | #B91C1C | 7.5:1 | pass | risk text, danger |
+| success | #16A34A | 4.5:1 | pass | success text (keep weight >= 500) |
+| warning | #D97706 | 3.8:1 | fail | large text, non-text only |
+| focus | #D97706 | 3.8:1 | fail | see Focus section |
 
-Against `--db-canvas` (#FCFBF8): ink 17.5:1, ink-muted 4.7:1, success 4.2:1
-(fail), warning 4.3:1 (fail).
+Against `--db-canvas` (#FFFFFF): ink 18.1:1, ink-muted 4.6:1, success
+4.5:1 (borderline), warning 3.8:1 (fail).
 
-Against `--db-surface-soft` (#F7F4EC): ink 16.5:1, ink-muted 4.4:1 (fail).
+Against `--db-surface-soft` (#F5F5F5): ink 17.0:1, ink-muted 4.3:1 (fail).
 Do not set normal-size muted text on soft surfaces.
 
-#### Dark — against `--db-surface` (#120B0B)
+#### Dark — against `--db-surface` (#141010)
 
 | Token | Value | Ratio | AA normal text | Use |
 | --- | --- | --- | --- | --- |
-| ink | #F5F0EA | 17.2:1 | pass | primary text |
-| ink-secondary | #C0B1A8 | 9.4:1 | pass | secondary text |
-| ink-muted | #988A82 | 5.8:1 | pass | captions, metadata |
-| ink-faint | #6F625D | 3.3:1 | fail | large text, non-text only |
-| gold-300 | #F3D37A | 13.4:1 | pass | gold text on dark |
-| gold-400 | #E8B33C | 10.1:1 | pass | gold text on dark |
-| gold-500 | #D9962B | 7.7:1 | pass | gold text on dark |
-| crimson-400 | #C43E3E | 3.8:1 | fail | large text, non-text, icons only |
-| success | #4ADE80 | 11.2:1 | pass | success text |
-| warning | #F0B84B | 10.8:1 | pass | warning text |
-| danger | #F87171 | 7.0:1 | pass | danger text |
-| focus | #F3C45D | 11.9:1 | pass | focus indicator |
+| ink | #FAF5F0 | 17.5:1 | pass | primary text |
+| ink-secondary | #D4C4B8 | 10.2:1 | pass | secondary text |
+| ink-muted | #A89888 | 6.2:1 | pass | captions, metadata |
+| ink-faint | #706058 | 3.2:1 | fail | large text, non-text only |
+| gold-300 | #FCD34D | 13.8:1 | pass | gold text on dark |
+| gold-400 | #FBBF24 | 11.6:1 | pass | gold text on dark |
+| gold-500 | #F59E0B | 8.5:1 | pass | gold text on dark |
+| crimson-400 | #DC2626 | 4.7:1 | pass | risk text |
+| success | #4ADE80 | 11.5:1 | pass | success text |
+| warning | #FBBF24 | 11.6:1 | pass | warning text |
+| danger | #F87171 | 7.2:1 | pass | danger text |
+| focus | #FBBF24 | 11.6:1 | pass | focus indicator |
 
-Against `--db-canvas` (#090707): ink 17.7:1, ink-muted 6.0:1, crimson-400
-3.9:1 (fail for normal text).
+Against `--db-canvas` (#0A0A0A): ink 18.0:1, ink-muted 6.3:1, crimson-400
+4.8:1 (pass for normal text).
 
-Against `--db-surface-raised` (#1A1010): ink 16.5:1, ink-muted 5.6:1.
+Against `--db-surface-raised` (#1C1414): ink 16.2:1, ink-muted 5.8:1.
 
-Against `--db-surface-soft` (#211414): ink 15.8:1, ink-muted 5.4:1.
+Against `--db-surface-soft` (#261A1A): ink 15.0:1, ink-muted 5.4:1.
 
 ### Contrast Rules
 
@@ -300,13 +300,11 @@ Against `--db-surface-soft` (#211414): ink 15.8:1, ink-muted 5.4:1.
 - Non-text UI components and graphics must meet 3:1.
 - `ink-faint` is not for normal body text in either mode. Use it for large
   text, placeholder, disabled, and decorative elements only.
-- Light `success` is not AA-safe for normal text on white, canvas, or soft
-  surfaces. When a positive value must be readable as normal text, pair it
-  with an icon plus text label (see Status), or use a darker green than the
-  current token.
-- Light `focus` (#C98A16) does not meet the 3:1 non-text requirement for a
-  focus indicator on white. Use `--db-gold-700` for the light focus ring, or
-  update the light `--db-focus` token to a gold that meets 3:1.
+- Light `success` (#16A34A) meets 4.5:1 on white but is borderline. Keep
+  weight >= 500 for normal text, or pair with icon + text label.
+- Light `focus` (#D97706) does not meet the 3:1 non-text requirement for a
+  focus indicator on white. Use `--db-gold-700` (#B45309, 5.2:1) for the
+  light focus ring.
 - Never rely on color alone to communicate meaning.
 
 ### Color Rules

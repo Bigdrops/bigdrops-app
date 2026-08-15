@@ -17,36 +17,36 @@
   --db-canvas:#FFFFFF;
   --db-surface:#FFFFFF;
   --db-surface-raised:#FFFFFF;
-  --db-surface-soft:#FDFBF6;
+  --db-surface-soft:#F5F5F5;
 
-  --db-border:#EAE4D9;
-  --db-border-strong:#D9D0BF;
+  --db-border:#E5E5E5;
+  --db-border-strong:#D4D4D4;
 
   --db-ink:#171614;
-  --db-ink-secondary:#55514A;
-  --db-ink-muted:#777168;
-  --db-ink-faint:#9A9489;
+  --db-ink-secondary:#525252;
+  --db-ink-muted:#737373;
+  --db-ink-faint:#A3A3A3;
 
-  --db-gold-100:#FFF5D7;
-  --db-gold-200:#F9E5A9;
-  --db-gold-300:#F2CF70;
-  --db-gold-400:#E8B33C;
-  --db-gold-500:#D99A24;
-  --db-gold-600:#B9790F;
-  --db-gold-700:#8E5A08;
+  --db-gold-100:#FEF9E7;
+  --db-gold-200:#FDE68A;
+  --db-gold-300:#FCD34D;
+  --db-gold-400:#FBBF24;
+  --db-gold-500:#F59E0B;
+  --db-gold-600:#D97706;
+  --db-gold-700:#B45309;
 
-  --db-crimson-100:#F8E9E9;
-  --db-crimson-200:#EFCACA;
-  --db-crimson-300:#DFA0A0;
-  --db-crimson-400:#C95B5B;
-  --db-crimson-500:#A52A2A;
-  --db-crimson-600:#8B0000;
-  --db-crimson-700:#650000;
+  --db-crimson-100:#FEE2E2;
+  --db-crimson-200:#FECACA;
+  --db-crimson-300:#FCA5A5;
+  --db-crimson-400:#F87171;
+  --db-crimson-500:#DC2626;
+  --db-crimson-600:#B91C1C;
+  --db-crimson-700:#991B1B;
 
-  --db-success:#1E7A3E;
-  --db-warning:#A66A00;
-  --db-danger:#8B0000;
-  --db-focus:#8E5A08;
+  --db-success:#16A34A;
+  --db-warning:#D97706;
+  --db-danger:#DC2626;
+  --db-focus:#D97706;
 
   --focus-ring:var(--db-gold-700);
   --font-sans:"Instrument Sans", system-ui, -apple-system, sans-serif;
@@ -67,39 +67,39 @@
 
 /* ============ Tokens — Dark ============ */
 [data-theme="dark"]{
-  --db-canvas:#0A0606;
-  --db-surface:#120B0B;
-  --db-surface-raised:#1A1010;
-  --db-surface-soft:#211414;
+  --db-canvas:#0A0A0A;
+  --db-surface:#141010;
+  --db-surface-raised:#1C1414;
+  --db-surface-soft:#261A1A;
 
-  --db-border:#3A2323;
-  --db-border-strong:#573333;
+  --db-border:#3D2222;
+  --db-border-strong:#5C3333;
 
-  --db-ink:#F5F0EA;
-  --db-ink-secondary:#C0B1A8;
-  --db-ink-muted:#988A82;
-  --db-ink-faint:#6F625D;
+  --db-ink:#FAF5F0;
+  --db-ink-secondary:#D4C4B8;
+  --db-ink-muted:#A89888;
+  --db-ink-faint:#706058;
 
-  --db-gold-100:#FFF4CF;
-  --db-gold-200:#F7DF9A;
-  --db-gold-300:#F3D37A;
-  --db-gold-400:#E8B33C;
-  --db-gold-500:#D9962B;
-  --db-gold-600:#B4770F;
-  --db-gold-700:#8A5707;
+  --db-gold-100:#FEF3C7;
+  --db-gold-200:#FDE68A;
+  --db-gold-300:#FCD34D;
+  --db-gold-400:#FBBF24;
+  --db-gold-500:#F59E0B;
+  --db-gold-600:#D97706;
+  --db-gold-700:#B45309;
 
-  --db-crimson-100:#4A1717;
-  --db-crimson-200:#621C1C;
-  --db-crimson-300:#842727;
-  --db-crimson-400:#C43E3E;
-  --db-crimson-500:#A52A2A;
-  --db-crimson-600:#8B0000;
-  --db-crimson-700:#5E0000;
+  --db-crimson-100:#450A0A;
+  --db-crimson-200:#7F1D1D;
+  --db-crimson-300:#991B1B;
+  --db-crimson-400:#DC2626;
+  --db-crimson-500:#B91C1C;
+  --db-crimson-600:#991B1B;
+  --db-crimson-700:#7F1D1D;
 
   --db-success:#4ADE80;
-  --db-warning:#F0B84B;
+  --db-warning:#FBBF24;
   --db-danger:#F87171;
-  --db-focus:#F3C45D;
+  --db-focus:#FBBF24;
 
   --focus-ring:var(--db-focus);
   --shadow-1:0 1px 2px rgba(0,0,0,.4);
@@ -162,7 +162,7 @@ ul{list-style:none}
 .brand-mark{
   width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
   background:var(--db-gold-500);color:#171614;flex:none;
-  box-shadow:0 6px 18px rgba(217,154,36,.35);
+  box-shadow:0 6px 18px rgba(245,158,11,.35);
 }
 .brand-name{font-weight:700;font-size:15px;letter-spacing:.02em}
 .brand-sub{font-size:11px;color:var(--db-ink-muted)}
@@ -268,7 +268,7 @@ ul{list-style:none}
 .btn-primary:hover{opacity:.9}
 .btn-ghost{border:1px solid var(--db-border-strong);color:var(--db-ink-secondary);background:var(--db-surface)}
 .btn-ghost:hover{border-color:var(--db-gold-500);color:var(--db-ink)}
-.btn-crimson{background:var(--db-crimson-500);color:#FFF;box-shadow:0 6px 18px rgba(165,42,42,.28)}
+.btn-crimson{background:var(--db-crimson-500);color:#FFF;box-shadow:0 6px 18px rgba(185,28,28,.28)}
 .btn-crimson:hover{background:var(--db-crimson-600)}
 
 /* ============ KPI cards ============ */
