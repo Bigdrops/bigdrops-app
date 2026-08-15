@@ -1,5 +1,5 @@
 # BIGDROPS ERP Multi-Tenant Frontend Architecture & Migration PRD  
-**Version:** 1.1 (Approved for Implementation)  
+**Version:** 1.2 (Amended)  
 **Status:** Approved  
 **Authors:** BIGDROPS Architecture Council  
 **Applies To:** BIGDROPS ERP Frontend  
@@ -8,6 +8,9 @@
 - Entity Provisioning Engine PRD
 - Platform Office PRD
 - AGENTS.md
+
+**Amendment Record:**
+- **v1.2 (2026-08-15):** Moved workspace creation and company creation into ERP frontend scope. The ERP now creates workspaces (status `pending_approval`) and companies (entity provisioning) from inside the app. Workspace approval stays with the Platform Office. Added switcher UI placement rules: workspace switching is settings-level; company switching appears in the side drawer of the hamburger menu (LHS) on mobile. See sections 2, 8, 9, 10.7, 12, 15, 16, 19, and 20.
 
 ---
 
@@ -31,19 +34,28 @@ The migration must not disrupt existing business functions.
 
 # 2. Deployment Prerequisites
 The ERP frontend requires these items before it can operate in multi-tenant mode:
-- At least one active Workspace must exist.
-- At least one active Entity must exist.
-- The Entity provisioning status must be `ready`.
-- The tenant schema must exist.
+- The multi-tenant backend infrastructure must be deployed.
+- A schema template must exist.
+- At least one platform operator must exist.
 
-These tasks are outside the ERP frontend:
+Workspace creation now happens inside the ERP:
+- An authenticated user without a workspace creates one in the app.
+- The new workspace has status `pending_approval`.
+- A platform operator approves the workspace in the Platform Office.
+- The workspace creator becomes the workspace owner.
+
+Company creation now happens inside the ERP:
+- A workspace owner creates a company in the app.
+- The app inserts the entity and calls the provisioning RPC.
+- The provisioning RPC creates the tenant schema.
+- The provisioning status changes to `ready`.
+
+These tasks stay outside the ERP frontend:
 - Initial platform bootstrap
-- Workspace creation
 - Workspace approval
-- Entity provisioning
+- Provisioning implementation details (schema cloning, RLS generation)
 
-They belong to the deployment/bootstrap process and the Platform Office.
-The ERP assumes these backend contracts already exist.
+The ERP assumes the backend contracts for these flows already exist.
 
 ---
 
@@ -202,24 +214,28 @@ Workspace Found?
 │
 No          Yes
 │             │
-Workspace Required   Resolve Entities
-│
-▼
-Entity Count?
-┌────┼─────────┐
-│    │         │
-0    1         >1
-│    │         │
-Empty State  Auto Select  Future Entity Selector
-│
-▼
-Check Provisioning Status
-│
-┌────┼────────────┐
-│    │            │
-Ready  Creating    Failed
-│    │            │
-ERP  Loading  Error Screen
+Create Workspace   Resolve Entities
+│                  │
+▼                  ▼
+Pending Approval   Entity Count?
+(Screen)           ┌────┼─────────┐
+│                  │    │         │
+(approved)         0    1         >1
+│                  │    │         │
+▼                  ▼    │         │
+Resolve         Create your  Auto Select  Future Entity Selector
+Workspace        first Company
+│                  │          │
+│                  ▼          │
+│             Check Provisioning Status
+│                  │          │
+│              ┌───┼────┐     │
+│              │   │    │     │
+│           Ready Creating Failed
+│              │   │    │     │
+│             ERP Loading Error
+└────────────────┴───┴────┴─────┘
+        (all paths continue)
 
 ```
 
@@ -227,6 +243,12 @@ ERP  Loading  Error Screen
 
 # 9. Backend Dependencies
 The frontend depends only on stable backend contracts.
+The frontend calls these creation contracts:
+- Insert into `workspaces` (new workspace, status `pending_approval`)
+- Insert into `entities` (new company)
+- `provision_entity` / `create_entity_schema` RPC (provisions the tenant schema)
+- `get_entity_provisioning_status` (polls provisioning status)
+
 The frontend must never depend on:
 - Bootstrap workflow
 - Workspace approval workflow
@@ -336,6 +358,21 @@ It is not an architectural limitation.
 
 ---
 
+10.7 Switcher UI Placement
+
+Workspace switching is a settings-level concern.
+The workspace switch entry point belongs in the Settings area.
+It is not exposed in the primary navigation.
+
+Company switching is a navigation concern.
+At least on mobile, the company switcher must be exposed in the side drawer of the hamburger menu on the left-hand side (LHS).
+On larger screens, the company switcher placement may use the equivalent navigation surface.
+
+These placements apply to the future switcher UIs in section 20.
+They do not affect Phase 1 creation flows.
+
+---
+
 11. Workspace & Entity Lifecycle States
 
 Workspace Lifecycle
@@ -393,7 +430,8 @@ creating
 
 Show a provisioning progress screen.
 Phase 1 checks the provisioning status once during startup.
-Realtime subscriptions and polling are out of scope.
+After an in-app company creation, the frontend polls `get_entity_provisioning_status` until the status is `ready` or `failed`.
+Realtime subscriptions are out of scope.
 
 ---
 
@@ -420,6 +458,52 @@ Block application access.
 purged
 
 Show a tenant unavailable page.
+
+---
+
+12.1 In-App Workspace Creation
+
+Trigger: An authenticated user has no active workspace.
+
+Flow:
+
+1. The user submits a workspace name and slug.
+2. The app inserts a row into `public.workspaces`.
+3. The new workspace has status `pending_approval`.
+4. The app shows the Pending Approval Screen.
+5. A platform operator approves the workspace in the Platform Office.
+6. The `approve_workspace` RPC inserts the owner membership.
+7. The app detects the workspace is `active` and resolves it.
+8. The app routes the user to the Company Creation Flow.
+
+Notes:
+
+- The app does not call `approve_workspace`.
+- The app does not set workspace status to `active`.
+- The `idx_one_pending_workspace_per_creator` constraint allows one pending workspace per creator.
+
+---
+
+12.2 In-App Company Creation
+
+Trigger: A workspace owner has an active workspace and zero entities.
+
+Flow:
+
+1. The app shows the "Create your first Company" flow.
+2. The user submits a company name, slug, and type.
+3. The app inserts a row into `public.entities`.
+4. The app calls `provision_entity` with the new entity id.
+5. The provisioning RPC creates the tenant schema and clones the template.
+6. The app polls `get_entity_provisioning_status` until the status is `ready` or `failed`.
+7. On `ready`, the app resolves the entity and continues application startup.
+8. On `failed`, the app shows the provisioning failure page.
+
+Notes:
+
+- The app never constructs schema names.
+- The app never executes schema DDL.
+- The provisioning RPC enforces the `create_entity` permission.
 
 ---
 
@@ -547,6 +631,10 @@ Infrastructure Deliverables:
 · Authorization Provider
 · Tenant Client
 · Diagnostic Page
+· Workspace Creation Flow
+· Company Creation Flow (zero-entity onboarding)
+· Pending Approval Screen
+· Provisioning Progress Screen
 
 No business modules migrated.
 
@@ -610,12 +698,13 @@ Phase 1 does NOT:
 
 · Modify existing document hooks.
 · Modify module adapters.
-· Add workspace switch UI.
-· Add entity switch UI.
+· Add workspace switch UI (switching between existing workspaces).
+· Add entity switch UI (switching between existing companies).
+· Add workspace approval UI (approval stays in the Platform Office).
 · Delete public tables.
 · Migrate business data.
 · Remove the existing Supabase client.
-· Change application routing.
+· Change existing application routing for migrated modules.
 
 ---
 
@@ -743,6 +832,11 @@ Phase 1 is complete when:
 · Authorization Provider resolves effective authorizations.
 · Tenant Client targets the correct tenant schema.
 · Diagnostic page shows complete tenant context.
+· User can create a workspace in the app.
+· Pending workspace shows the Pending Approval Screen.
+· Owner can create a first company in the app.
+· Company creation provisions the tenant schema.
+· Provisioning progress is visible until `ready` or `failed`.
 · Existing ERP functionality stays operational.
 · No business module has been migrated prematurely.
 · No runtime code performs dual-schema reads.
@@ -756,9 +850,10 @@ Phase 1 is complete when:
 
 These capabilities are deferred:
 
-· Workspace switcher UI
-· Entity switcher UI
-· Live provisioning updates via Realtime or polling
+· Workspace switcher UI (entry point: Settings)
+· Entity switcher UI (entry point: side drawer of the hamburger menu, LHS, on mobile)
+· Live provisioning updates via Realtime (startup-time status check remains in scope)
+· General-purpose provisioning polling (polling after in-app company creation remains in scope)
 · Multi-workspace user experience
 · Multi-entity navigation
 · Tenant-aware caching optimizations
@@ -769,4 +864,21 @@ These capabilities are deferred:
 · Advanced authorization management UI
 · Cross-tenant analytics and reporting
 
-```
+---
+
+21. Standards Conformance
+
+The PRD conforms to the active standards under `docs/standard/`.
+
+- `lifecycle-ownership-standard.md` (binding):
+  Business rules must live in the domain layer.
+  Pages, forms, components, and hooks own presentation only.
+  This applies to tenant resolution, provisioning orchestration, and the workspace and company creation flows.
+- `docs-commit-workflow-standard.md` (process):
+  The commit format is `<gitmoji> <type>(<scope>): <subject>`, maximum 72 characters.
+  Applies when committing this document.
+
+The remaining standards govern document modules (invoice, quotation, waybill, BOQ, RFQ, receipt, CSR, PDF) and prefix and JSON import behaviour.
+They do not bind Phase 1.
+Phase 1 migrates no business modules.
+These standards bind the later phases in which business modules migrate.
