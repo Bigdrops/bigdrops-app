@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Divine Blood — Invoice View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Tokens — Light ============ */
+:root{
+  --db-canvas:#FFFFFF;
+  --db-surface:#FFFFFF;
+  --db-surface-raised:#FFFFFF;
+  --db-surface-soft:#F5F5F5;
+  --db-border:#E5E5E5;
+  --db-border-strong:#D4D4D4;
+  --db-ink:#171614;
+  --db-ink-secondary:#525252;
+  --db-ink-muted:#737373;
+  --db-ink-faint:#A3A3A3;
+  --db-gold-100:#FEF9E7;
+  --db-gold-200:#FDE68A;
+  --db-gold-300:#FCD34D;
+  --db-gold-400:#FBBF24;
+  --db-gold-500:#F59E0B;
+  --db-gold-600:#D97706;
+  --db-gold-700:#B45309;
+  --db-crimson-100:#F8E9E9;
+  --db-crimson-200:#EFCACA;
+  --db-crimson-300:#DFA0A0;
+  --db-crimson-400:#C95B5B;
+  --db-crimson-500:#A52A2A;
+  --db-crimson-600:#8B0000;
+  --db-crimson-700:#650000;
+  --db-success:#16A34A;
+  --db-warning:#D97706;
+  --db-danger:#8B0000;
+  --db-focus:#D97706;
+  --focus-ring:var(--db-gold-700);
+  --font-sans:"Instrument Sans",system-ui,-apple-system,sans-serif;
+  --font-mono:"Berkeley Mono",ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,monospace;
+  --r-shell:20px;--r-card:16px;--r-panel:12px;--r-control:9px;--r-chip:6px;--r-pill:999px;
+  --shadow-1:0 1px 2px rgba(23,22,20,.05);
+  --shadow-2:0 10px 30px rgba(23,22,20,.08);
+  --shadow-3:0 18px 48px rgba(23,22,20,.14);
+}
+/* ============ Tokens — Dark ============ */
+[data-theme="dark"]{
+  --db-canvas:#0A0A0A;--db-surface:#141010;--db-surface-raised:#1C1414;--db-surface-soft:#261A1A;
+  --db-border:#3D2222;--db-border-strong:#5C3333;
+  --db-ink:#FAF5F0;--db-ink-secondary:#D4C4B8;--db-ink-muted:#A89888;--db-ink-faint:#706058;
+  --db-gold-100:#FEF3C7;--db-gold-200:#FDE68A;--db-gold-300:#FCD34D;--db-gold-400:#FBBF24;
+  --db-gold-500:#F59E0B;--db-gold-600:#D97706;--db-gold-700:#B45309;
+  --db-crimson-100:#4A1717;--db-crimson-200:#621C1C;--db-crimson-300:#842727;--db-crimson-400:#C43E3E;
+  --db-crimson-500:#A52A2A;--db-crimson-600:#8B0000;--db-crimson-700:#5E0000;
+  --db-success:#4ADE80;--db-warning:#FBBF24;--db-danger:#F87171;--db-focus:#FBBF24;
+  --focus-ring:var(--db-focus);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);--shadow-2:0 10px 30px rgba(0,0,0,.45);--shadow-3:0 18px 48px rgba(0,0,0,.55);
+}
+
+/* ============ Base ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--db-canvas);color:var(--db-ink);font-family:var(--font-sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .3s ease,color .3s ease}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.micro{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--db-ink-muted)}
+
+/* ============ Top Nav ============ */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px;
+  background:color-mix(in srgb,var(--db-canvas) 88%,transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--db-border);
+}
+.topnav-back{width:40px;height:40px;border-radius:var(--r-control);display:grid;place-items:center;color:var(--db-ink-secondary);flex:none;transition:background .15s ease}
+.topnav-back:hover{background:var(--db-surface-soft);color:var(--db-ink)}
+.topnav-title{flex:1;min-width:0}
+.topnav-title h1{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topnav-title small{display:block;font-size:11px;font-weight:500;color:var(--db-ink-muted);letter-spacing:.03em}
+.topnav-actions{display:flex;align-items:center;gap:2px}
+.icon-btn{width:40px;height:40px;border-radius:var(--r-control);display:grid;place-items:center;color:var(--db-ink-secondary);flex:none;transition:background .15s ease,color .15s ease}
+.icon-btn:hover{background:var(--db-surface-soft);color:var(--db-ink)}
+
+/* ============ Action Row ============ */
+.action-row{display:flex;align-items:center;gap:10px;padding:16px 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:var(--r-control);font-weight:600;font-size:13px;transition:background .15s ease,color .15s ease,opacity .15s ease}
+.btn-primary{background:var(--db-gold-500);color:#171614;box-shadow:0 4px 14px rgba(245,158,11,.3)}
+.btn-primary:hover{background:var(--db-gold-400)}
+.btn-secondary{background:var(--db-surface);border:1px solid var(--db-border);color:var(--db-ink)}
+.btn-secondary:hover{background:var(--db-surface-soft);border-color:var(--db-border-strong)}
+.btn-pill{width:40px;height:40px;border-radius:var(--r-pill);display:grid;place-items:center;background:var(--db-surface);border:1px solid var(--db-border);color:var(--db-ink-secondary);flex:none;transition:background .15s ease,color .15s ease}
+.btn-pill:hover{background:var(--db-surface-soft);color:var(--db-ink)}
+[data-theme="dark"] .btn-primary{background:var(--db-gold-500);color:#171614}
+
+/* ============ Content ============ */
+.content{max-width:720px;margin:0 auto;padding:0 20px 100px;display:flex;flex-direction:column;gap:16px}
+
+/* ============ Money Strip ============ */
+.money-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--db-border);border-radius:var(--r-card);overflow:hidden;box-shadow:var(--shadow-1)}
+.money-cell{background:var(--db-surface);padding:16px;text-align:center}
+.money-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--db-ink-muted);margin-bottom:4px}
+.money-value{font-family:var(--font-mono);font-size:18px;font-weight:700;letter-spacing:-.01em;color:var(--db-ink)}
+.money-value.is-green{color:var(--db-success)}
+.money-value.is-amber{color:var(--db-gold-600)}
+.money-hint{font-size:11px;color:var(--db-ink-faint);margin-top:2px}
+
+/* ============ Invoice Card ============ */
+.inv-card{background:var(--db-surface);border:1px solid var(--db-border);border-radius:var(--r-card);box-shadow:var(--shadow-1);overflow:hidden}
+
+/* Brand header */
+.inv-brand{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:16px}
+.inv-brand-left{display:flex;gap:14px;align-items:flex-start;min-width:0}
+.inv-logo{width:48px;height:48px;border-radius:var(--r-panel);background:var(--db-gold-500);display:grid;place-items:center;flex:none;box-shadow:0 4px 12px rgba(245,158,11,.25)}
+.inv-logo svg{width:24px;height:24px;color:#171614}
+.inv-company-name{font-weight:700;font-size:15px;line-height:1.3}
+.inv-company-sub{font-size:11px;color:var(--db-ink-muted);margin-top:1px}
+.inv-company-detail{font-size:11px;color:var(--db-ink-faint);line-height:1.5;margin-top:4px}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--r-pill);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex:none}
+.status-pill.is-partial{background:var(--db-gold-100);color:var(--db-gold-700)}
+.status-pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+[data-theme="dark"] .status-pill.is-partial{background:rgba(251,191,36,.15);color:var(--db-gold-400)}
+
+/* Invoice body */
+.inv-body{padding:20px 24px}
+.inv-title{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:12px}
+
+/* Meta chips */
+.meta-chips{display:flex;flex-wrap:wrap;gap:8px}
+.meta-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:var(--r-chip);background:var(--db-surface-soft);font-size:12px;color:var(--db-ink-secondary)}
+.meta-chip svg{width:14px;height:14px;color:var(--db-ink-faint);flex:none}
+.meta-chip strong{font-weight:600;color:var(--db-ink)}
+
+/* Info grid */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px 24px;border-top:1px solid var(--db-border)}
+.info-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--db-ink-muted);margin-bottom:6px}
+.info-value{font-size:14px;font-weight:600;color:var(--db-ink)}
+.info-sub{font-size:12px;color:var(--db-ink-muted);line-height:1.5;margin-top:4px}
+.info-row{font-size:12px;color:var(--db-ink);line-height:1.7}
+.info-row span{color:var(--db-ink-muted)}
+
+/* Items */
+.item-list{border-top:1px solid var(--db-border)}
+.item-group{padding:12px 24px 6px;font-size:12px;font-weight:700;color:var(--db-gold-600);letter-spacing:.02em;text-transform:uppercase}
+[data-theme="dark"] .item-group{color:var(--db-gold-400)}
+.item-row{display:flex;align-items:flex-start;gap:12px;padding:12px 24px;border-bottom:1px solid var(--db-border);transition:background .12s ease}
+.item-row:last-child{border-bottom:0}
+.item-row:hover{background:var(--db-surface-soft)}
+.item-num{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--db-ink-faint);min-width:20px;padding-top:2px}
+.item-body{flex:1;min-width:0}
+.item-name{font-size:13px;font-weight:600;color:var(--db-ink)}
+.item-desc{font-size:12px;color:var(--db-ink-muted);margin-top:2px;line-height:1.4}
+.item-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.item-pill{display:inline-flex;padding:2px 8px;border-radius:var(--r-pill);background:var(--db-surface-soft);font-size:11px;color:var(--db-ink-muted);font-weight:500}
+.item-amount{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--db-ink);white-space:nowrap;text-align:right;min-width:100px}
+
+/* Totals */
+.totals{border-top:1px solid var(--db-border);padding:16px 24px}
+.totals-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.totals-row .lbl{color:var(--db-ink-muted)}
+.totals-row .val{font-family:var(--font-mono);font-weight:600}
+.totals-divider{height:1px;background:var(--db-border);margin:8px 0}
+.totals-grand{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:700}
+.totals-grand .val{font-family:var(--font-mono);font-weight:700;font-size:16px}
+.totals-balance{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:600;color:var(--db-gold-600)}
+.totals-balance .val{font-family:var(--font-mono);font-weight:700}
+.amount-words{margin-top:12px;padding:12px;background:var(--db-surface-soft);border-radius:var(--r-panel);font-size:12px;color:var(--db-ink-muted);line-height:1.5;font-style:italic}
+
+/* Signatory */
+.signatory{display:flex;align-items:center;gap:14px;padding:20px 24px;border-top:1px solid var(--db-border)}
+.signatory-line{width:120px;border-bottom:1px solid var(--db-border-strong);margin-bottom:4px}
+.signatory-name{font-size:13px;font-weight:600}
+.signatory-role{font-size:11px;color:var(--db-ink-muted)}
+
+/* ============ Panels ============ */
+.panel{background:var(--db-surface);border:1px solid var(--db-border);border-radius:var(--r-card);box-shadow:var(--shadow-1);overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--db-border)}
+.panel-title{font-size:14px;font-weight:700}
+.panel-sub{font-size:11px;color:var(--db-ink-muted);margin-top:2px}
+.panel-body{padding:16px 20px}
+.panel-link{font-size:12px;font-weight:700;color:var(--db-gold-600);display:inline-flex;align-items:center;gap:4px}
+.panel-link:hover{color:var(--db-gold-500)}
+[data-theme="dark"] .panel-link{color:var(--db-gold-400)}
+
+/* Bank details */
+.bank-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--db-border);font-size:13px}
+.bank-row:last-child{border-bottom:0}
+.bank-row .k{color:var(--db-ink-muted)}
+.bank-row .v{font-weight:600}
+
+/* Options */
+.option-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--db-border)}
+.option-row:last-child{border-bottom:0}
+.option-label{font-size:13px;color:var(--db-ink-secondary)}
+.option-value{font-size:13px;font-weight:600;color:var(--db-ink)}
+.option-badge{display:inline-flex;padding:3px 8px;border-radius:var(--r-chip);background:var(--db-gold-100);font-size:11px;font-weight:600;color:var(--db-gold-700)}
+[data-theme="dark"] .option-badge{background:rgba(251,191,36,.12);color:var(--db-gold-400)}
+
+/* Payment history */
+.pay-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--db-border)}
+.pay-row:last-child{border-bottom:0}
+.pay-ico{width:34px;height:34px;border-radius:var(--r-chip);display:grid;place-items:center;flex:none;background:var(--db-gold-100);color:var(--db-gold-600)}
+.pay-ico.is-wht{background:var(--db-surface-soft);color:var(--db-ink-muted)}
+[data-theme="dark"] .pay-ico{background:rgba(251,191,36,.1);color:var(--db-gold-400)}
+.pay-body{flex:1;min-width:0}
+.pay-method{font-size:13px;font-weight:600}
+.pay-ref{font-family:var(--font-mono);font-size:11px;color:var(--db-ink-muted)}
+.pay-right{text-align:right;flex:none}
+.pay-amount{font-family:var(--font-mono);font-weight:700;font-size:13px}
+.pay-date{font-size:11px;color:var(--db-ink-faint)}
+.pay-tag{display:inline-flex;padding:2px 6px;border-radius:var(--r-chip);background:var(--db-surface-soft);font-size:10px;color:var(--db-ink-muted);margin-top:2px}
+
+/* Related docs */
+.doc-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--db-border)}
+.doc-row:last-child{border-bottom:0}
+.doc-ico{width:34px;height:34px;border-radius:var(--r-chip);display:grid;place-items:center;flex:none;background:var(--db-surface-soft);color:var(--db-ink-muted)}
+.doc-body{flex:1;min-width:0}
+.doc-type{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--db-ink-faint)}
+.doc-name{font-size:13px;font-weight:600}
+.doc-meta{font-size:11px;color:var(--db-ink-muted)}
+.doc-link{font-size:12px;font-weight:600;color:var(--db-gold-600);flex:none}
+[data-theme="dark"] .doc-link{color:var(--db-gold-400)}
+
+/* Notes */
+.notes{padding:16px 20px;font-size:12px;color:var(--db-ink-muted);line-height:1.6;border-top:1px solid var(--db-border)}
+
+/* ============ FAB ============ */
+.fab{position:fixed;right:calc(20px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));z-index:70;width:52px;height:52px;border-radius:var(--r-pill);background:var(--db-ink);color:var(--db-canvas);display:grid;place-items:center;box-shadow:0 8px 24px rgba(23,22,20,.25);transition:transform .2s ease,background .2s ease}
+.fab:hover{transform:translateY(-2px)}
+[data-theme="dark"] .fab{background:var(--db-gold-500);color:#171614;box-shadow:0 8px 24px rgba(245,158,11,.3)}
+
+/* ============ Theme Toggle ============ */
+.theme-icon{display:grid;place-items:center}
+[data-theme="light"] .theme-sun{display:none}
+[data-theme="dark"] .theme-moon{display:none}
+
+/* ============ Responsive ============ */
+@media (max-width:639px){
+  .info-grid{grid-template-columns:1fr}
+  .money-value{font-size:15px}
+  .inv-brand{flex-direction:column}
+  .item-amount{min-width:80px;font-size:12px}
+  .content{padding:0 14px 100px}
+  .topnav{padding:12px 14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<header class="topnav">
+  <button type="button" class="topnav-back" aria-label="Back to invoices">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="topnav-title">
+    <h1>Invoices</h1>
+    <small>SASINV-B047 · Tax Invoice</small>
+  </div>
+  <div class="topnav-actions">
+    <button type="button" class="icon-btn" aria-label="Share">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
+    <button type="button" class="icon-btn" aria-label="Customize output">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.97a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button type="button" class="icon-btn" aria-label="More actions">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+    <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode">
+      <span class="theme-icon theme-moon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+      <span class="theme-icon theme-sun" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+    </button>
+  </div>
+</header>
+
+<!-- Action Row -->
+<div class="action-row">
+  <button type="button" class="btn btn-primary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    Record Payment
+  </button>
+  <button type="button" class="btn btn-secondary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+    Edit
+  </button>
+  <button type="button" class="btn-pill" aria-label="Download PDF">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  </button>
+</div>
+
+<div class="content">
+
+  <!-- Money Strip -->
+  <div class="money-strip" aria-label="Invoice summary">
+    <div class="money-cell">
+      <div class="money-label">Total</div>
+      <div class="money-value">₦4,720,000</div>
+      <div class="money-hint">incl. 7.5% VAT</div>
+    </div>
+    <div class="money-cell">
+      <div class="money-label">Received</div>
+      <div class="money-value is-green">₦2,000,000</div>
+      <div class="money-hint">cash + WHT</div>
+    </div>
+    <div class="money-cell">
+      <div class="money-label">Balance Due</div>
+      <div class="money-value is-amber">₦2,720,000</div>
+      <div class="money-hint">due 30 May 25</div>
+    </div>
+  </div>
+
+  <!-- Invoice Document Card -->
+  <div class="inv-card">
+    <!-- Brand -->
+    <div class="inv-brand">
+      <div class="inv-brand-left">
+        <div class="inv-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 11v3M12 18v3"/><path d="M5 6.5h14M5 12.5h14M5 18.5h14"/></svg>
+        </div>
+        <div>
+          <div class="inv-company-name">Sun & Shield Power Solutions</div>
+          <div class="inv-company-sub">Business Suite</div>
+          <div class="inv-company-detail">15B Adeyemo Alakija St, Victoria Island, Lagos</div>
+          <div class="inv-company-detail">+234 802 000 1234 · info@sunshieldpower.com</div>
+          <div class="inv-company-detail">RC No. 1234567 · TIN: 00123456-0001</div>
+        </div>
+      </div>
+      <span class="status-pill is-partial"><span class="dot" aria-hidden="true"></span>Partial</span>
+    </div>
+
+    <!-- Body -->
+    <div class="inv-body">
+      <h2 class="inv-title">Tax Invoice</h2>
+      <div class="meta-chips">
+        <span class="meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v5"/></svg>
+          <strong>SASINV-B047</strong>
+        </span>
+        <span class="meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Issued 12 April 2025
+        </span>
+        <span class="meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Due 30 May 2025
+        </span>
+        <span class="meta-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          PO: PTO/2024/0183
+        </span>
+      </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="info-grid">
+      <div>
+        <div class="info-label">Client</div>
+        <div class="info-value">Pinnacle Towers Ltd</div>
+        <div class="info-sub">Attn: Adekunle Afolabi<br>Pinnacle Building, Ozumba Mbadiwe</div>
+      </div>
+      <div>
+        <div class="info-label">Details</div>
+        <div class="info-row"><span>Payment Terms:</span> Net 45</div>
+        <div class="info-row"><span>Currency:</span> NGN (₦)</div>
+        <div class="info-row"><span>Progress Invoice:</span> 2 of 3</div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="item-list">
+      <div class="item-group">Supply of Equipment</div>
+
+      <div class="item-row">
+        <div class="item-num">01</div>
+        <div class="item-body">
+          <div class="item-name">40KVA Soundproof Generator (FG Wilson)</div>
+          <div class="item-desc">3-phase, 415V output, with ATS panel and warranty</div>
+          <div class="item-meta"><span class="item-pill">1 unit</span></div>
+        </div>
+        <div class="item-amount">₦3,200,000</div>
+      </div>
+
+      <div class="item-row">
+        <div class="item-num">02</div>
+        <div class="item-body">
+          <div class="item-name">ATS / Changeover Panel (100A)</div>
+          <div class="item-meta"><span class="item-pill">1 set</span></div>
+        </div>
+        <div class="item-amount">₦180,000</div>
+      </div>
+
+      <div class="item-group">Installation &amp; Labour</div>
+
+      <div class="item-row">
+        <div class="item-num">03</div>
+        <div class="item-body">
+          <div class="item-name">Civil &amp; Electrical Installation</div>
+          <div class="item-desc">Concrete plinth, cabling, conduits, earthing, load testing</div>
+          <div class="item-meta"><span class="item-pill">1 lot</span></div>
+        </div>
+        <div class="item-amount">₦650,000</div>
+      </div>
+
+      <div class="item-row">
+        <div class="item-num">04</div>
+        <div class="item-body">
+          <div class="item-name">Commissioning &amp; Handover</div>
+          <div class="item-meta"><span class="item-pill">1</span></div>
+        </div>
+        <div class="item-amount">₦120,000</div>
+      </div>
+    </div>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="totals-row"><span class="lbl">Subtotal</span><span class="val">₦4,150,000</span></div>
+      <div class="totals-row"><span class="lbl">Workmanship</span><span class="val">₦120,000</span></div>
+      <div class="totals-row"><span class="lbl">Transportation</span><span class="val">₦85,000</span></div>
+      <div class="totals-row"><span class="lbl">VAT (7.5%)</span><span class="val">₦365,000</span></div>
+      <div class="totals-divider"></div>
+      <div class="totals-grand"><span class="lbl">Total Due</span><span class="val">₦4,720,000</span></div>
+      <div class="totals-balance"><span class="lbl">Balance Remaining</span><span class="val">₦2,720,000</span></div>
+      <div class="amount-words">Four million, seven hundred and twenty thousand naira only (₦4,720,000.00)</div>
+    </div>
+
+    <!-- Signatory -->
+    <div class="signatory">
+      <div>
+        <div class="signatory-line"></div>
+        <div class="signatory-name">Oluwaseun Bello</div>
+        <div class="signatory-role">Managing Director</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Details -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title">Bank Details</div><div class="panel-sub">Payment account</div></div>
+      <button type="button" class="panel-link">Change
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="bank-row"><span class="k">Bank</span><span class="v">Zenith Bank PLC</span></div>
+      <div class="bank-row"><span class="k">Account Name</span><span class="v">Sun & Shield Power Solutions</span></div>
+      <div class="bank-row"><span class="k">Account Number</span><span class="v mono">2109384756</span></div>
+    </div>
+  </div>
+
+  <!-- Document Options -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title">Output Settings</div><div class="panel-sub">PDF configuration</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="option-row">
+        <span class="option-label">PDF Template</span>
+        <span class="option-badge">Industry</span>
+      </div>
+      <div class="option-row">
+        <span class="option-label">Page Orientation</span>
+        <span class="option-value">Portrait</span>
+      </div>
+      <div class="option-row">
+        <span class="option-label">Merge Qty &amp; Unit</span>
+        <span class="option-value">Off</span>
+      </div>
+      <div class="option-row">
+        <span class="option-label">Show Bank Details</span>
+        <span class="option-value">On</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment History -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title">Payment History</div><div class="panel-sub">2 payments received</div></div>
+      <button type="button" class="panel-link">View all
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="pay-row">
+        <div class="pay-ico" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 11h18M3 7h18M3 17h10"/></svg>
+        </div>
+        <div class="pay-body">
+          <div class="pay-method">Bank Transfer</div>
+          <div class="pay-ref mono">ZEN/2025/0041938</div>
+        </div>
+        <div class="pay-right">
+          <div class="pay-amount mono">₦1,650,000</div>
+          <div class="pay-date">14 Apr 2025</div>
+        </div>
+      </div>
+      <div class="pay-row">
+        <div class="pay-ico is-wht" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 5h6M9 9h6M9 13h4M5 3h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-4 4V4a1 1 0 0 1 1-1z"/></svg>
+        </div>
+        <div class="pay-body">
+          <div class="pay-method">WHT Credit</div>
+          <div class="pay-ref mono">WHT/LAS/2025/1177</div>
+          <div class="pay-tag">5% WHT rate</div>
+        </div>
+        <div class="pay-right">
+          <div class="pay-amount mono">₦350,000</div>
+          <div class="pay-date">12 Apr 2025</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Documents -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title">Related Documents</div><div class="panel-sub">Linked to this invoice</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="doc-row">
+        <div class="doc-ico" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+        </div>
+        <div class="doc-body">
+          <div class="doc-type">Quotation</div>
+          <div class="doc-name">QT-2024-0312</div>
+          <div class="doc-meta">Pinnacle Towers Ltd · ₦4,720,000</div>
+        </div>
+        <a href="#" class="doc-link">View →</a>
+      </div>
+      <div class="doc-row">
+        <div class="doc-ico" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 8h14v9H1zM15 11h4l3 3v3h-7z"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>
+        </div>
+        <div class="doc-body">
+          <div class="doc-type">Waybill</div>
+          <div class="doc-name">WB-2024-0089</div>
+          <div class="doc-meta">Delivered 10 Apr 2025 · Signed</div>
+        </div>
+        <a href="#" class="doc-link">View →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title">Notes &amp; Terms</div></div>
+    </div>
+    <div class="notes">All equipment carries a 12-month warranty from commissioning. WHT deductions must be accompanied by a valid WHT certificate. Payment within stipulated period.</div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<button type="button" class="fab" aria-label="Download PDF">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+</button>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  var saved=null;
+  try{saved=localStorage.getItem("db-theme")}catch(e){}
+  if(!saved)saved=window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";
+  root.setAttribute("data-theme",saved);
+  var btn=document.getElementById("themeToggle");
+  btn.setAttribute("aria-label",saved==="dark"?"Switch to light mode":"Switch to dark mode");
+  btn.addEventListener("click",function(){
+    var next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+    root.setAttribute("data-theme",next);
+    btn.setAttribute("aria-label",next==="dark"?"Switch to light mode":"Switch to dark mode");
+    try{localStorage.setItem("db-theme",next)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

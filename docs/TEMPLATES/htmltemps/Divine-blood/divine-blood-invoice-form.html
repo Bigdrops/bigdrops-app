@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Divine Blood — New Invoice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--db-canvas:#FFFFFF;--db-surface:#FFFFFF;--db-surface-raised:#FFFFFF;--db-surface-soft:#F5F5F5;--db-border:#E5E5E5;--db-border-strong:#D4D4D4;--db-ink:#171614;--db-ink-secondary:#525252;--db-ink-muted:#737373;--db-ink-faint:#A3A3A3;--db-gold-100:#FEF9E7;--db-gold-200:#FDE68A;--db-gold-300:#FCD34D;--db-gold-400:#FBBF24;--db-gold-500:#F59E0B;--db-gold-600:#D97706;--db-gold-700:#B45309;--db-crimson-100:#F8E9E9;--db-crimson-200:#EFCACA;--db-crimson-300:#DFA0A0;--db-crimson-400:#C95B5B;--db-crimson-500:#A52A2A;--db-crimson-600:#8B0000;--db-crimson-700:#650000;--db-success:#16A34A;--db-warning:#D97706;--db-danger:#8B0000;--db-focus:#D97706;--focus-ring:var(--db-gold-700);--font-sans:"Instrument Sans",system-ui,-apple-system,sans-serif;--font-mono:"Berkeley Mono",ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,monospace;--r-shell:20px;--r-card:16px;--r-panel:12px;--r-control:9px;--r-chip:6px;--r-pill:999px;--shadow-1:0 1px 2px rgba(23,22,20,.05);--shadow-2:0 10px 30px rgba(23,22,20,.08)}
+[data-theme="dark"]{--db-canvas:#0A0A0A;--db-surface:#141010;--db-surface-raised:#1C1414;--db-surface-soft:#261A1A;--db-border:#3D2222;--db-border-strong:#5C3333;--db-ink:#FAF5F0;--db-ink-secondary:#D4C4B8;--db-ink-muted:#A89888;--db-ink-faint:#706058;--db-gold-100:#FEF3C7;--db-gold-200:#FDE68A;--db-gold-300:#FCD34D;--db-gold-400:#FBBF24;--db-gold-500:#F59E0B;--db-gold-600:#D97706;--db-gold-700:#B45309;--db-crimson-100:#4A1717;--db-crimson-200:#621C1C;--db-crimson-300:#842727;--db-crimson-400:#C43E3E;--db-crimson-500:#A52A2A;--db-crimson-600:#8B0000;--db-crimson-700:#5E0000;--db-success:#4ADE80;--db-warning:#FBBF24;--db-danger:#F87171;--db-focus:#FBBF24;--focus-ring:var(--db-focus);--shadow-1:0 1px 2px rgba(0,0,0,.4);--shadow-2:0 10px 30px rgba(0,0,0,.45)}
+*{box-sizing:border-box;margin:0;padding:0}html{-webkit-text-size-adjust:100%}
+body{background:var(--db-canvas);color:var(--db-ink);font-family:var(--font-sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .3s ease,color .3s ease}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+a{color:inherit;text-decoration:none}img,svg{display:block}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.micro{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--db-ink-muted)}
+
+.topnav{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;padding:14px 20px;background:color-mix(in srgb,var(--db-canvas) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--db-border)}
+.topnav-back{width:40px;height:40px;border-radius:var(--r-control);display:grid;place-items:center;color:var(--db-ink-secondary);flex:none;transition:background .15s ease}.topnav-back:hover{background:var(--db-surface-soft);color:var(--db-ink)}
+.topnav-title{flex:1;min-width:0}.topnav-title h1{font-size:16px;font-weight:700}.topnav-title small{display:block;font-size:11px;font-weight:500;color:var(--db-ink-muted)}
+.topnav-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:var(--r-control);display:grid;place-items:center;color:var(--db-ink-secondary);flex:none;transition:background .15s ease}.icon-btn:hover{background:var(--db-surface-soft);color:var(--db-ink)}
+.theme-icon{display:grid;place-items:center}[data-theme="light"] .theme-sun{display:none}[data-theme="dark"] .theme-moon{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:var(--r-control);font-weight:600;font-size:13px;transition:background .15s ease,color .15s ease}
+.btn-primary{background:var(--db-gold-500);color:#171614;box-shadow:0 4px 14px rgba(245,158,11,.3)}.btn-primary:hover{background:var(--db-gold-400)}
+.btn-secondary{background:var(--db-surface);border:1px solid var(--db-border);color:var(--db-ink)}.btn-secondary:hover{background:var(--db-surface-soft)}
+
+/* Two-column form layout */
+.form-split{display:grid;grid-template-columns:1fr 380px;gap:24px;max-width:1200px;margin:0 auto;padding:24px}
+@media(max-width:1024px){.form-split{grid-template-columns:1fr}.preview-panel{order:-1}}
+
+/* Form panel */
+.form-panel{display:flex;flex-direction:column;gap:20px}
+.form-section{background:var(--db-surface);border:1px solid var(--db-border);border-radius:var(--r-card);box-shadow:var(--shadow-1);overflow:hidden}
+.form-section-head{padding:16px 20px;border-bottom:1px solid var(--db-border);display:flex;align-items:center;justify-content:space-between}
+.form-section-title{font-size:14px;font-weight:700}
+.form-section-body{padding:20px;display:flex;flex-direction:column;gap:16px}
+
+/* Form fields */
+.field{display:flex;flex-direction:column;gap:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.field-row{grid-template-columns:1fr}}
+.field label{font-size:12px;font-weight:600;color:var(--db-ink-secondary)}
+.field input,.field select,.field textarea{height:42px;padding:0 14px;border:1px solid var(--db-border);border-radius:var(--r-control);background:var(--db-surface);color:var(--db-ink);font-family:var(--font-sans);font-size:13px;transition:border-color .2s ease,box-shadow .2s ease}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--db-gold-500);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.field input::placeholder,.field textarea::placeholder{color:var(--db-ink-faint)}
+.field textarea{height:auto;min-height:80px;padding:12px 14px;resize:vertical}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+/* Line items */
+.items-table{width:100%;border-collapse:collapse;font-size:13px}
+.items-table th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--db-ink-faint);padding:10px 12px;border-bottom:1px solid var(--db-border)}
+.items-table th.num{text-align:right}
+.items-table td{padding:10px 12px;border-bottom:1px solid var(--db-border);vertical-align:middle}
+.items-table tr:last-child td{border-bottom:0}
+.items-table input{width:100%;height:36px;padding:0 10px;border:1px solid var(--db-border);border-radius:var(--r-chip);background:var(--db-surface);color:var(--db-ink);font-size:13px;font-family:var(--font-sans)}
+.items-table input:focus{border-color:var(--db-gold-500);box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.items-table .num input{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.add-row{display:flex;align-items:center;gap:8px;padding:12px;border-top:1px solid var(--db-border);font-size:13px;font-weight:600;color:var(--db-gold-600);cursor:pointer;transition:color .15s ease}.add-row:hover{color:var(--db-gold-500)}
+[data-theme="dark"] .add-row{color:var(--db-gold-400)}
+
+/* Preview panel */
+.preview-panel{position:sticky;top:80px;height:fit-content;display:flex;flex-direction:column;gap:16px}
+.preview-card{background:var(--db-surface);border:1px solid var(--db-border);border-radius:var(--r-card);box-shadow:var(--shadow-1);overflow:hidden}
+.preview-head{padding:14px 18px;border-bottom:1px solid var(--db-border);display:flex;align-items:center;justify-content:space-between}
+.preview-title{font-size:13px;font-weight:700}
+.preview-badge{display:inline-flex;padding:3px 8px;border-radius:var(--r-chip);background:var(--db-gold-100);font-size:10px;font-weight:700;color:var(--db-gold-700)}
+[data-theme="dark"] .preview-badge{background:rgba(251,191,36,.12);color:var(--db-gold-400)}
+.preview-body{padding:18px}
+.preview-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.preview-row .k{color:var(--db-ink-muted)}
+.preview-row .v{font-family:var(--font-mono);font-weight:600}
+.preview-divider{height:1px;background:var(--db-border);margin:8px 0}
+.preview-grand{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:700}
+.preview-grand .v{font-family:var(--font-mono);font-weight:700;font-size:16px;color:var(--db-gold-600)}
+[data-theme="dark"] .preview-grand .v{color:var(--db-gold-400)}
+.preview-words{margin-top:12px;padding:12px;background:var(--db-surface-soft);border-radius:var(--r-panel);font-size:11px;color:var(--db-ink-muted);line-height:1.5;font-style:italic}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <button type="button" class="topnav-back" aria-label="Back to invoices">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="topnav-title">
+    <h1>New Invoice</h1>
+    <small>Create a new invoice for your client</small>
+  </div>
+  <div class="topnav-actions">
+    <button type="button" class="btn btn-secondary">Save Draft</button>
+    <button type="button" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      Create Invoice
+    </button>
+    <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode">
+      <span class="theme-icon theme-moon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+      <span class="theme-icon theme-sun"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+    </button>
+  </div>
+</header>
+
+<div class="form-split">
+  <!-- Left: Form -->
+  <div class="form-panel">
+    <!-- Client & Details -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="form-section-title">Client &amp; Details</span></div>
+      <div class="form-section-body">
+        <div class="field-row">
+          <div class="field"><label for="client">Client</label><select id="client"><option>Select a client…</option><option selected>Pinnacle Towers Ltd</option><option>Greenline Retail</option><option>Meridian House</option></select></div>
+          <div class="field"><label for="invoiceNum">Invoice Number</label><input type="text" id="invoiceNum" value="SASINV-B048" class="mono"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="issueDate">Issue Date</label><input type="date" id="issueDate" value="2025-08-15"></div>
+          <div class="field"><label for="dueDate">Due Date</label><input type="date" id="dueDate" value="2025-09-14"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="poNum">PO Number</label><input type="text" id="poNum" placeholder="Optional"></div>
+          <div class="field"><label for="terms">Payment Terms</label><select id="terms"><option>Net 30</option><option selected>Net 45</option><option>Net 60</option><option>Due on Receipt</option></select></div>
+        </div>
+        <div class="field"><label for="title">Invoice Title</label><input type="text" id="title" value="Tax Invoice"></div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="form-section-title">Line Items</span><button type="button" class="btn btn-secondary" style="padding:6px 12px;font-size:12px">Import</button></div>
+      <div style="overflow-x:auto">
+        <table class="items-table">
+          <thead><tr><th style="width:40px">#</th><th>Description</th><th style="width:80px">Qty</th><th style="width:80px">Unit</th><th class="num" style="width:120px">Amount</th><th style="width:40px"></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono" style="color:var(--db-ink-faint);font-size:12px">01</td>
+              <td><input type="text" value="40KVA Soundproof Generator (FG Wilson)" placeholder="Item description"></td>
+              <td class="num"><input type="text" value="1"></td>
+              <td><input type="text" value="unit"></td>
+              <td class="num"><input type="text" value="₦3,200,000" style="font-family:var(--font-mono);text-align:right"></td>
+              <td><button type="button" aria-label="Remove" style="color:var(--db-ink-faint);padding:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono" style="color:var(--db-ink-faint);font-size:12px">02</td>
+              <td><input type="text" value="ATS / Changeover Panel (100A)" placeholder="Item description"></td>
+              <td class="num"><input type="text" value="1"></td>
+              <td><input type="text" value="set"></td>
+              <td class="num"><input type="text" value="₦180,000" style="font-family:var(--font-mono);text-align:right"></td>
+              <td><button type="button" aria-label="Remove" style="color:var(--db-ink-faint);padding:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="mono" style="color:var(--db-ink-faint);font-size:12px">03</td>
+              <td><input type="text" value="Civil & Electrical Installation" placeholder="Item description"></td>
+              <td class="num"><input type="text" value="1"></td>
+              <td><input type="text" value="lot"></td>
+              <td class="num"><input type="text" value="₦650,000" style="font-family:var(--font-mono);text-align:right"></td>
+              <td><button type="button" aria-label="Remove" style="color:var(--db-ink-faint);padding:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="add-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add line item
+      </div>
+    </div>
+
+    <!-- Charges & Tax -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="form-section-title">Charges &amp; Tax</span></div>
+      <div class="form-section-body">
+        <div class="field-row">
+          <div class="field"><label for="workmanship">Workmanship</label><input type="text" id="workmanship" value="₦120,000" style="font-family:var(--font-mono)"></div>
+          <div class="field"><label for="transport">Transportation</label><input type="text" id="transport" value="₦85,000" style="font-family:var(--font-mono)"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="discount">Discount (%)</label><input type="text" id="discount" value="0" style="font-family:var(--font-mono)"></div>
+          <div class="field"><label for="vat">VAT Rate (%)</label><input type="text" id="vat" value="7.5" style="font-family:var(--font-mono)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-section">
+      <div class="form-section-head"><span class="form-section-title">Notes &amp; Terms</span></div>
+      <div class="form-section-body">
+        <div class="field"><label for="notes">Notes</label><textarea id="notes" rows="3">All equipment carries a 12-month warranty from commissioning.</textarea></div>
+        <div class="field"><label for="terms">Terms &amp; Conditions</label><textarea id="terms" rows="3">Payment within stipulated period. WHT deductions must be accompanied by a valid WHT certificate.</textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Live Preview -->
+  <div class="preview-panel">
+    <div class="preview-card">
+      <div class="preview-head"><span class="preview-title">Invoice Summary</span><span class="preview-badge">Live Preview</span></div>
+      <div class="preview-body">
+        <div class="preview-row"><span class="k">Client</span><span class="v">Pinnacle Towers Ltd</span></div>
+        <div class="preview-row"><span class="k">Invoice</span><span class="v mono">SASINV-B048</span></div>
+        <div class="preview-row"><span class="k">Issue Date</span><span class="v">15 Aug 2025</span></div>
+        <div class="preview-row"><span class="k">Due Date</span><span class="v">14 Sep 2025</span></div>
+        <div class="preview-divider"></div>
+        <div class="preview-row"><span class="k">Subtotal</span><span class="v">₦4,030,000</span></div>
+        <div class="preview-row"><span class="k">Workmanship</span><span class="v">₦120,000</span></div>
+        <div class="preview-row"><span class="k">Transportation</span><span class="v">₦85,000</span></div>
+        <div class="preview-row"><span class="k">VAT (7.5%)</span><span class="v">₦310,125</span></div>
+        <div class="preview-divider"></div>
+        <div class="preview-grand"><span class="k">Total Due</span><span class="v">₦4,545,125</span></div>
+        <div class="preview-words">Four million, five hundred and forty-five thousand, one hundred and twenty-five naira only</div>
+      </div>
+    </div>
+
+    <div class="preview-card">
+      <div class="preview-head"><span class="preview-title">Quick Actions</span></div>
+      <div class="preview-body" style="display:flex;flex-direction:column;gap:8px">
+        <button type="button" class="btn btn-secondary" style="width:100%;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF Preview
+        </button>
+        <button type="button" class="btn btn-secondary" style="width:100%;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share with Client
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var r=document.documentElement,s=null;try{s=localStorage.getItem("db-theme")}catch(e){}
+  if(!s)s=window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";
+  r.setAttribute("data-theme",s);
+  var b=document.getElementById("themeToggle");
+  b.addEventListener("click",function(){
+    var n=r.getAttribute("data-theme")==="dark"?"light":"dark";
+    r.setAttribute("data-theme",n);try{localStorage.setItem("db-theme",n)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
