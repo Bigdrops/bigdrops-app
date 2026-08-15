@@ -184,17 +184,17 @@ shadcn/ui reads.
   --db-gold-600: #D97706;
   --db-gold-700: #B45309;
 
-  --db-crimson-100: #FEE2E2;
-  --db-crimson-200: #FECACA;
-  --db-crimson-300: #FCA5A5;
-  --db-crimson-400: #F87171;
-  --db-crimson-500: #DC2626;
-  --db-crimson-600: #B91C1C;
-  --db-crimson-700: #991B1B;
+  --db-crimson-100: #F8E9E9;
+  --db-crimson-200: #EFCACA;
+  --db-crimson-300: #DFA0A0;
+  --db-crimson-400: #C95B5B;
+  --db-crimson-500: #A52A2A;
+  --db-crimson-600: #8B0000;
+  --db-crimson-700: #650000;
 
   --db-success: #16A34A;
   --db-warning: #D97706;
-  --db-danger: #DC2626;
+  --db-danger: #8B0000;
   --db-focus: #D97706;
 }
 ```
@@ -224,13 +224,13 @@ shadcn/ui reads.
   --db-gold-600: #D97706;
   --db-gold-700: #B45309;
 
-  --db-crimson-100: #450A0A;
-  --db-crimson-200: #7F1D1D;
-  --db-crimson-300: #991B1B;
-  --db-crimson-400: #DC2626;
-  --db-crimson-500: #B91C1C;
-  --db-crimson-600: #991B1B;
-  --db-crimson-700: #7F1D1D;
+  --db-crimson-100: #4A1717;
+  --db-crimson-200: #621C1C;
+  --db-crimson-300: #842727;
+  --db-crimson-400: #C43E3E;
+  --db-crimson-500: #A52A2A;
+  --db-crimson-600: #8B0000;
+  --db-crimson-700: #5E0000;
 
   --db-success: #4ADE80;
   --db-warning: #FBBF24;
@@ -257,8 +257,8 @@ components and graphics.
 | gold-700 | #B45309 | 5.2:1 | pass | gold text on white |
 | gold-600 | #D97706 | 3.8:1 | fail | large text, non-text only |
 | gold-500 | #F59E0B | 2.6:1 | fail | decorative fill only |
-| crimson-500 | #DC2626 | 5.5:1 | pass | risk text |
-| crimson-600 | #B91C1C | 7.5:1 | pass | risk text, danger |
+| crimson-500 | #A52A2A | 7.1:1 | pass | secondary risk text |
+| crimson-600 | #8B0000 | 10.0:1 | pass | risk text, danger |
 | success | #16A34A | 4.5:1 | pass | success text (keep weight >= 500) |
 | warning | #D97706 | 3.8:1 | fail | large text, non-text only |
 | focus | #D97706 | 3.8:1 | fail | see Focus section |
@@ -280,7 +280,7 @@ Do not set normal-size muted text on soft surfaces.
 | gold-300 | #FCD34D | 13.8:1 | pass | gold text on dark |
 | gold-400 | #FBBF24 | 11.6:1 | pass | gold text on dark |
 | gold-500 | #F59E0B | 8.5:1 | pass | gold text on dark |
-| crimson-400 | #DC2626 | 4.7:1 | pass | risk text |
+| crimson-400 | #C43E3E | 3.8:1 | fail | large text, non-text, icons only |
 | success | #4ADE80 | 11.5:1 | pass | success text |
 | warning | #FBBF24 | 11.6:1 | pass | warning text |
 | danger | #F87171 | 7.2:1 | pass | danger text |
