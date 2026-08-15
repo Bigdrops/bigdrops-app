@@ -1,50 +1,157 @@
- Prompt — Reprise Dashboard Templates (HTML + TSX)**
-
-**Context**
-
-Read the full design spec before writing any code: `docs/TEMPLATES/Designsdotmds/reprise.md`
-
-This is a standalone visual template, not an app feature. Do not import BIGDROPS types, Supabase clients, routing, or any app state. No wiring to the real invoice/CSR/waybill data model. Treat this exactly like a static showcase page a designer would hand off — self-contained, mock data only, demonstrating the Reprise design language end to end.
-
-A previous attempt at this (`docs/TEMPLATES/React-temps/Golden-dashboard.tsx`) drifted badly from the spec. Do not reference its structure, typography, or theme choices — it is a cautionary example, not a starting point. Specific mistakes to avoid, called out explicitly because they will be tempting defaults:
-
-1. **No floating frame + wallpaper.** Reprise is a rounded white app frame floating over a full-bleed golden-hour photographic/painterly wallpaper, with the wallpaper visible on all sides of the frame. Do not flatten this into a single-background mobile shell with no ambient canvas.
-2. **No monospace typography = wrong.** The spec's signature move is a dual typeface system: monospace (JetBrains Mono or equivalent) for brand-voice and data — hero titles, breadcrumbs, tag pills, section micro-headers, large dollar figures, tab labels, axis labels — and sans-serif (Inter or equivalent) for everything conversational — nav, body copy, card titles, buttons. Do not substitute a serif display face for the mono role. Do not set nav/body copy in mono either — the split matters both ways.
-3. **Light theme by default.** Reprise is explicitly a light, warm-paper design. Do not default to dark mode. A dark mode toggle is fine as an optional addition if it doesn't compromise the primary light experience, but the light version must be the one that actually matches the spec — don't ship dark as the default and light as an afterthought.
-4. **No hero banner = wrong.** The hero banner (right-anchored amber-washed photo, left-to-right gold gradient overlay, mono white title, glass tag pills) is a required, load-bearing component — not optional decoration.
-5. **Solid dividers instead of dashed = wrong.** Coupon/data list rows use 1px dashed separators specifically (confirmed against screenshots in the spec) — don't default to solid hairlines there.
-6. **Heavier shadows/saturated golds than spec.** Keep golds restrained and gradient-based per the token table; keep elevation to hairline borders + very soft shadows, not heavy drop shadows.
-
-Match the spec's tokens (colors, type scale, spacing, radius) precisely — they're specified as CSS custom properties in the "Quick Start" section of reprise.md. Use those values directly rather than approximating from memory.
-
-**Task**
-
-Build two versions of the same Reprise-style financial dashboard template, both representing the full desktop layout described in the spec (floating frame, sidebar, top bar, hero banner, KPI strip, royalty/coupons cards, performance/allocation cards, right insight rail with tab bar, bond details, risk overview, AI credit signal, est. income CTA) — responsive down to mobile per usual best practice, but the desktop layout in the spec is the one to build to first, not a mobile-first rebuild of it.
-
-*Version 1 — HTML*
-- Single self-contained `.html` file: inline `<style>`, no build step, no external framework.
-- Real Google Fonts links (or system-font fallback stack from the spec) for the JetBrains Mono + Inter pairing.
-- Placeholder/stock photo URL (or CSS gradient stand-in) for the wallpaper and hero portrait — clearly commented as a placeholder a designer would swap.
-- Static mock data matching the spec's own example content (Aurora Lane / Catalog Royalty Bond / ₦172.50 coupons / etc.) is fine to reuse. If in doubt, keep the spec's original example data so it's directly checkable against reprise.md.
-- Minimal vanilla JS only where needed (tab switching, sidebar collapse), inline.
-
-*Version 2 — TSX*
-- Single self-contained `.tsx` file, React functional component, default export, Tailwind utility classes (project uses Tailwind v4 — check `.agents/skills/tailwind-v4-shadcn/SKILL.md` for the `@theme` token pattern and mirror reprise.md's tokens into it rather than hardcoding raw hex everywhere).
-- No app-specific imports. No Supabase, no BIGDROPS types, no react-router. Mock data defined inline at the top of the file.
-- lucide-react icons only (pinned at 0.383.0 — verify icon names exist in that version before using them).
-- Same interactive bits via local `useState`, no external state management.
-
-**Skills to use** (read and apply, in this order):
-
-1. `.agents/skills/frontend-design/SKILL.md` — the spec already defines the distinctive direction; the skill's job here is disciplined execution of a given system, not inventing a new one. Don't let it push toward a different palette or typography than specified.
-2. `.agents/skills/tailwind-v4-shadcn/SKILL.md` — `@theme` token setup for the TSX version.
-3. `.agents/skills/tailwind-css-patterns/SKILL.md` — responsive patterns, dark-mode-optional handling, component extraction for both versions.
-4. `.agents/skills/accessibility/SKILL.md` — keyboard focus states, color contrast (check gold-on-white and white-on-gold specifically), ARIA labeling for icon-only buttons (bell, search, collapse).
-5. `.claude/skills/ui-ux-pro-max/SKILL.md` — cross-check the final type pairing, spacing rhythm, and palette usage against the design system generator's quality bar before finishing.
-6. `.claude/skills/webapp-testing/SKILL.md` — after building the TSX version, do a Playwright screenshot pass at desktop and mobile widths to self-verify against reprise.md before calling it done. Note any deviation you couldn't resolve rather than silently shipping it.
-
-**Output locations** — save exactly these two files, nothing else:
-- `docs/TEMPLATES/htmltemps/reprise-dashboard.html`
-- `docs/TEMPLATES/React-temps/reprise-dashboard.tsx`
-
-**Before finishing** — self-review against reprise.md's "Do's and Don'ts" section bullet by bullet. If anything couldn't be matched exactly (e.g. the exact wallpaper photo), say so explicitly rather than silently substituting and moving on.
+Here is the updated prompt with all GitHub links replaced by their clean file paths:
+Revised Agent Prompt
+We are revising the Divine Blood interface. Use the existing design.md as the visual source of truth. Do not dilute or redesign it.
+The previous implementation became too cream/beige and the gold essentially disappeared. This iteration must correct that.
+CRITICAL VISUAL HIERARCHY
+Light Mode Must Visibly Read:
+WHITE + GOLD + restrained CRIMSON
+ * White is the environment.
+ * Gold is a major identity color, not a tiny decorative accent.
+Dark Mode Must Visibly Read:
+BLACK + CRIMSON + restrained GOLD
+ * Do not let Light become cream-heavy.
+ * Do not let Gold disappear into pale champagne tones.
+ * Use the existing Divine Blood tokens from design.md rather than inventing a new palette.
+1. CREATE THREE HTML FILES — ALL THREE ARE DASHBOARDS
+Create exactly three complete HTML dashboard pages representing three different dashboard experiences within the same application.
+Do NOT make them:
+ * Dashboard
+ * Transactions
+ * Settings
+Instead, all three should be dashboards with different purposes/content:
+ * Dashboard 1 — Financial Overview: A primary executive/financial dashboard containing total balance, available balance, income/outflow, important financial KPIs, financial chart, recent activity, account summary, and relevant quick actions.
+ * Dashboard 2 — Invoice / Revenue Dashboard: A dashboard focused on invoices and revenue containing invoice metrics, outstanding invoices, paid invoices, overdue invoices, revenue trend, invoice activity, customer/revenue information, and an invoice list preview. The invoice list on this dashboard must actually show content (do not leave it as an empty placeholder). Show realistic sample invoices with invoice number, customer, date, amount, status, and action.
+ * Dashboard 3 — Business / Operations Dashboard: A third dashboard focused on another meaningful business view (e.g., cash flow, business performance, accounts, operational metrics, upcoming payments, recent activity, financial health, relevant charts/cards).
+Use the existing application context if the repository provides a more appropriate dashboard concept. The three dashboards should feel like three real areas of the same application, not three copies of one page with different colors.
+2. MOBILE NAVIGATION
+The mobile navigation must use the same navigation destinations the app already has.
+ * Do not invent a separate mobile navigation system.
+ * Do not worry about copying the exact desktop sidebar icons.
+ * The mobile version simply needs a proper bottom navigation bar using the app's existing navigation destinations.
+For example, if the existing app navigation contains:
+Dashboard | Invoices | Customers | Reports | More
+...then mobile should use those same destinations in a bottom navigation. The exact destinations should come from the existing application/project context.
+Mobile Nav Requirements:
+ * Fixed/sticky at the bottom
+ * 56–64px high plus safe-area padding
+ * Touch friendly (minimum 44px touch targets)
+ * Visually consistent with Divine Blood
+ * Active destination clearly indicated
+ * Accessible and usable without hover
+ * Do not replace the app's navigation with arbitrary icons just to make the prototype look different.
+3. INVOICE LIST MUST SHOW REAL CONTENT
+The invoice list page/surface must not be empty. Show an actual populated invoice list, for example:
+| Invoice | Customer | Date | Amount | Status |
+|---|---|---|---|---|
+| INV-1048 | Meridian House | Aug 14 | $12,400 | Paid |
+| INV-1047 | Northstar Group | Aug 12 | $8,750 | Pending |
+| INV-1046 | Aster & Co. | Aug 10 | $4,280 | Overdue |
+| INV-1045 | Blackwood Ltd. | Aug 08 | $16,900 | Paid |
+ * Use Berkeley Mono for appropriate financial values and identifiers.
+ * Statuses must use: icon + text + color (never color alone).
+ * The table/list must remain static and functional-looking.
+ * No living material inside the invoice table.
+4. "MORE" POP-UP MUST SHOW SOMETHING
+The More navigation item must not open an empty pop-up/drawer. When activated, show a real menu/sheet containing useful application destinations (e.g., Reports, Customers, Documents, Payments, Team, Settings, Help, Steward).
+ * Use the application's existing navigation structure where available.
+ * Must open/close properly, have keyboard support, visible focus, work on mobile, use Divine Blood surfaces, respect existing typography/spacing, and use appropriate icons if available.
+ * Do not put living material inside the More menu.
+5. HEADER CONTROLS
+The header must include:
+Search | Notification 🔔 | Sparkles ✨
+And, beside the dark-mode control:
+Refresh | Dark Mode
+Visual Relationship:
+[ Search ] [ Bell ] [ Sparkles ] [ Refresh ] [ Dark Mode ]
+ * Use the existing project's icon system when available.
+ * The Sparkles action represents Steward/intelligent assistance.
+ * Give every icon-only control an accessible label.
+6. SIDEBAR BUTTON
+Replace the current hamburger/sidebar button with the sidebar treatment from:
+docs/TEMPLATES/React-temps/sidebaricon.tsx
+Study that implementation and adapt the relevant visual/interaction behavior into the HTML implementation. If it is React-specific, translate the behavior to HTML/JavaScript. Do not simply paste React code into an HTML file. The resulting control must actually open/close the sidebar.
+7. SOUND REFERENCE
+Inspect:
+docs/TEMPLATES/Sound-temp/cuelme.md
+Determine whether its sound approach can be used in this implementation. If appropriate:
+ * Install dependencies with Bun
+ * Implement it cleanly
+ * Keep audio user-triggered (do not autoplay intrusive sound)
+ * Respect reduced-motion/accessibility expectations
+If it cannot reasonably be integrated into these HTML dashboards, explain why rather than fabricating an implementation.
+8. USE BUN
+If dependencies are required, use Bun (bun install and appropriate Bun commands). Do not default to npm. Keep dependencies minimal.
+9. THREE DASHBOARDS MUST SHARE ONE DESIGN SYSTEM
+All three HTML files must share:
+ * Divine Blood colors
+ * Typography & Spacing
+ * Sidebar & Header
+ * Theme switching
+ * Search, Notifications, Sparkles/Steward, Refresh
+ * Mobile bottom navigation & Responsive behavior
+ * Accessibility & Component language
+Content must meaningfully differ across all three pages.
+10. SHOW THE INTERFACE, DON'T LEAVE PLACEHOLDERS
+Do not produce empty states. Populate dashboards with believable sample data including financial figures, charts, invoices, activity, statuses, customers/accounts, cards, and actionable controls.
+11. DIVINE BLOOD LIGHT MODE
+Major correction: Do not make the interface cream/beige with tiny gold accents.
+It should feel:
+WHITE white white WHITE GOLD GOLD GOLD restrained CRIMSON
+Gold needs enough visual weight that a reviewer immediately recognizes it as part of the brand identity. Use stronger gold for meaningful accents rather than relying primarily on pale champagne tones (gold-100/gold-200). Maintain a serious, premium financial feel.
+12. DARK MODE
+Dark mode should visibly read:
+BLACK / NEAR BLACK ████████████████ CRIMSON ███████ GOLD ██
+Crimson provides the environmental identity; Gold provides highlights and premium emphasis.
+13. LIVING MATERIAL
+Follow design.md rules exactly. Blood and liquid gold are atmospheric.
+Do NOT put living material inside:
+ * Invoice / Financial tables
+ * Charts & KPI values
+ * Forms & Search results
+ * More menu & Notifications
+ * Steward conversation surfaces & Confirmation dialogs
+Respect Whisper / Presence / Event rarity and support reduced motion.
+14. RESPONSIVE DESIGN
+ * Desktop: Sidebar, main dashboard, optional right rail.
+ * Tablet: Collapsible sidebar, appropriate dashboard grid.
+ * Mobile: Top bar, dashboard content, fixed bottom navigation with app destinations, populated "More" menu/sheet, safe-area support, and 44px+ touch targets.
+15. FINAL CHECK BEFORE COMPLETION
+Before declaring the work finished, inspect all three HTML files:
+Three Pages
+ * [ ] Exactly three dashboard HTML files exist.
+ * [ ] All three are meaningfully different dashboards.
+ * [ ] They clearly belong to the same application.
+Light Mode
+ * [ ] White clearly dominates.
+ * [ ] Gold has obvious visual presence.
+ * [ ] Crimson remains restrained.
+ * [ ] The interface does NOT read as cream/beige.
+Dark Mode
+ * [ ] Black dominates.
+ * [ ] Crimson is clearly present.
+ * [ ] Gold is restrained but visible.
+Header
+ * [ ] Search exists.
+ * [ ] Bell exists.
+ * [ ] Sparkles exists beside Bell.
+ * [ ] Refresh exists beside Dark Mode.
+ * [ ] Dark Mode exists.
+Navigation
+ * [ ] Desktop sidebar works.
+ * [ ] Sidebar trigger uses the BigDrops reference (docs/TEMPLATES/React-temps/sidebaricon.tsx).
+ * [ ] Mobile has a bottom nav using existing application destinations.
+ * [ ] More opens a populated menu/sheet.
+Invoice
+ * [ ] Invoice list contains actual sample records.
+ * [ ] Amounts and IDs use Berkeley Mono.
+ * [ ] Statuses use icon + text + color.
+ * [ ] No living material appears inside the invoice list.
+Sound & Tech
+ * [ ] docs/TEMPLATES/Sound-temp/cuelme.md was investigated.
+ * [ ] Sound was implemented if technically appropriate.
+ * [ ] Bun was used for dependencies where needed.
+Accessibility
+ * [ ] Keyboard navigation works and focus is visible.
+ * [ ] Icon-only controls have accessible labels.
+ * [ ] Reduced motion works and mobile targets are \ge 44px.
+ * [ ] No important state is communicated by color alone.
