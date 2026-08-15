@@ -1,9 +1,10 @@
 # BIGDROPS — UI/UX Consolidation PRD
 
-> **Status:** READ-ONLY Inspection — Phase 1 Complete  
+> **Status:** Active — Divine Blood Design Language Adoption  
 > **Stack:** React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · Vite 7 · Supabase · Bun  
-> **Date:** June 2026  
-> **Scope:** Comprehensive UI/UX audit of the BIGDROPS B2B business management suite for Nigerian SMEs
+> **Date:** August 2026  
+> **Design Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`  
+> **Scope:** Replace all theme systems with Divine Blood. Reduce to 2 modes (Light + Dark).
 
 ---
 
@@ -30,6 +31,13 @@ BIGDROPS serves Nigerian SMEs with **invoices**, **quotations**, **CSRs**, **way
 ---
 
 ## Key Findings Summary
+
+### Design System (Updated August 2026)
+- **Divine Blood** is now the sole design language (Decision D-017)
+- All `--bd-*` tokens to be replaced with Divine Blood `--db-*` tokens
+- shadcn HSL tokens to be replaced with Divine Blood hex tokens
+- Exactly 2 visual modes: Light (white+gold+crimson) and Dark (black+crimson+gold)
+- All other themes deleted (Decision D-018)
 
 ### Architecture
 - **4 form architectures**: `SharedDocumentForm` (invoice/quotation), custom inline (CSR), tabbed editor (BOQ/RFQ), overlay (waybill)

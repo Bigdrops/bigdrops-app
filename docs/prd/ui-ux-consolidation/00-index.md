@@ -9,16 +9,27 @@
 
 ## Purpose
 
-Consolidate redundant patterns, eliminate code duplication, and standardize the UI/UX architecture across all document modules (Invoice, Quotation, Waybill, CSR, BOQ, RFQ). The goal is **not a visual redesign** but a **structural cleanup** that reduces maintenance cost, improves consistency, and enforces the "single source of truth" principle across the presentation layer.
+Adopt **Divine Blood** as the single design language for BIGDROPS. Replace all existing theme systems (shadcn HSL tokens, BigDrops `--bd-*` tokens, Tailwind config colors) with the Divine Blood token set defined in `docs/TEMPLATES/Designsdotmds/Divine-blood.md`. Reduce to exactly **two visual modes** (Light and Dark). Delete all other themes.
+
+Divine Blood is the source of truth for:
+- Color tokens (light + dark)
+- Typography (Instrument Sans + Berkeley Mono)
+- Spacing, radius, shadows
+- Component states (buttons, badges, status, nav)
+- Living material rules
+- Accessibility contrast requirements
 
 ## Success Criteria
 
-- [ ] New/Edit page pairs unified into single components per module (e.g., `InvoiceFormPage` replaces `NewInvoice` + `EditInvoice`)
+- [ ] All `--bd-*` tokens replaced with Divine Blood `--db-*` tokens
+- [ ] shadcn HSL color tokens replaced with Divine Blood hex tokens
+- [ ] Tailwind config colors aligned to Divine Blood palette
+- [ ] Exactly 2 visual modes: Light (white + gold + crimson) and Dark (black + crimson + gold)
+- [ ] All other themes deleted
 - [ ] CSS Module pattern files reduced from 6× identical copies to 1 shared source
-- [ ] Dead CSS tokens removed or documented
+- [ ] Dead CSS tokens removed
 - [ ] Unused `App.css` removed
-- [ ] `ui/sidebar.tsx` either adopted by Layout or removed
-- [ ] Code size reduction of at least 15% across page components
+- [ ] New/Edit page pairs unified into single components per module
 - [ ] No visual regressions — existing tests pass
 
 ## Stakeholder Impact
@@ -32,8 +43,7 @@ Consolidate redundant patterns, eliminate code duplication, and standardize the 
 
 ## Non-Goals
 
-- No visual redesign or rebranding
-- No CSS-to-Tailwind conversion of existing modules
-- No removal of existing functionality
 - No changes to `src/lib/Calculations.ts`
 - No changes to PDF rendering pipeline
+- No removal of existing functionality
+- No new CSS frameworks or libraries

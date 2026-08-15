@@ -1,19 +1,24 @@
 # Implementation Roadmap — UI/UX Consolidation
 
-> **Status:** READ-ONLY Planning  
-> **Date:** June 2026  
+> **Status:** Active — Divine Blood Design Language Adoption  
+> **Date:** August 2026 (revised)  
 > **Stack:** React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · Vite 7 · Supabase · Bun  
-> **Scope:** Master execution plan for BIGDROPS UI/UX Consolidation
+> **Design Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`  
+> **Scope:** Replace all theme systems with Divine Blood. Reduce to 2 modes.
 
 ---
 
 ## 1. Executive Summary
 
-This is the master execution plan for consolidating BIGDROPS UI/UX. It prescribes **18 days of work across 6 phases**, targeting **3 new component adoptions**, **1 component evolution**, **2-3 days of migration work**, and **~1083 lines of CSS cleanup** — while preserving all 34 existing BIGDROPS UI primitives and respecting every accepted decision (D-001 through D-015).
+This is the master execution plan for adopting Divine Blood as the BIGDROPS design language. It prescribes **11 days of work across 5 phases**, starting with token replacement and ending with polish.
 
-**Key constraint:** REUI is adoption source for 2 new components only (ButtonGroup, InputGroup). BIGDROPS remains the platform standard for all 34 existing families. No BIGDROPS component is removed.
+**Phase 1 (Days 1-3):** Replace all token systems with Divine Blood. Delete all other themes. (D-017, D-018)
+**Phase 2 (Days 4-6):** Migrate all components to Divine Blood visual language.
+**Phase 3 (Days 7-8):** Quick UX wins.
+**Phase 4 (Days 9-10):** Architecture cleanup.
+**Phase 5 (Day 11):** Polish and documentation.
 
-**Critical path:** 14 days effective (with parallel work).
+**Critical path:** 11 days sequential.
 
 **Gate:** Every batch must pass `bun run audit:load`, `bun run typecheck`, `bun run lint`, and `bun run test` before proceeding.
 
@@ -60,21 +65,37 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 
 ## 3. Implementation Phases
 
-### Phase 0: Foundation (Days 1-2)
+### Phase 0: Divine Blood Token Replacement (Days 1-3)
 
-**Goal:** Adopt 2 new REUI components + evolve Button size variants.
+**Goal:** Replace all existing token systems with Divine Blood. Delete all other themes. (D-017, D-018)
 
 | # | Task | Source | Effort | Dependencies | Completion Criteria |
 |---|---|---|---|---|---|
-| F-01 | Adopt ButtonGroup from REUI | REUI `button-group.tsx` (83L) | 0.5 day | None | ButtonGroup importable; `bun run typecheck` passes |
-| F-02 | Adopt InputGroup from REUI | REUI `input-group.tsx` (169L) | 0.5 day | None | InputGroup importable; `bun run typecheck` passes |
-| F-03 | Evolve Button size variants | REUI size system | 0.5 day | F-01 | Button has xs/icon-xs/icon-sm/icon-lg; loading state preserved |
-| F-04 | Wire InputGroup to RichText toolbar | D-002 | 0.25 day | F-02 | Toolbar renders in SharedDocumentForm |
-| F-05 | Create icon adapter (Lucide→Hugeicons) | REUI icons mapping | 0.25 day | None | Adapter exports 20+ icon mappings |
+| F-01 | Replace `--bd-*` tokens with `--db-*` Divine Blood tokens | Divine-blood.md §4 | 1 day | None | All `--bd-*` definitions replaced |
+| F-02 | Replace shadcn HSL tokens with Divine Blood hex tokens | Divine-blood.md §4 | 0.5 day | None | All HSL color tokens replaced |
+| F-03 | Update Tailwind config colors to Divine Blood palette | Divine-blood.md §4 | 0.5 day | None | Tailwind colors match Divine Blood |
+| F-04 | Delete `formTheme.css` (merge surviving rules) | design-system-roadmap.md | 0.5 day | F-01, F-02 | File deleted, no import errors |
+| F-05 | Grep + replace all `--bd-*` references in component files | All .tsx | 0.5 day | F-01 | No `--bd-*` references remain |
 
-**Gate:** `bun run audit:load` + `bun run typecheck` + `bun run lint` + `bun run test` all pass.
+**Gate:** No `--bd-*` references remain. All tokens are Divine Blood `--db-*`.
 
-### Phase 1: Quick Wins (Days 3-5)
+### Phase 1: Component Visual Migration (Days 4-6)
+
+**Goal:** Update all components to use Divine Blood visual language.
+
+| # | Task | Source | Effort | Dependencies | Completion Criteria |
+|---|---|---|---|---|---|
+| V-01 | Update button variants (primary = ink surface, gold accent) | Divine-blood.md §14 | 0.5 day | Phase 0 | Buttons match design doc |
+| V-02 | Update badge/status colors to Divine Blood palette | Divine-blood.md §15 | 0.5 day | Phase 0 | Status badges use correct colors |
+| V-03 | Update nav active state (surface-soft + gold indicator) | Divine-blood.md §18 | 0.5 day | Phase 0 | Nav matches design doc |
+| V-04 | Update form input focus states to gold | Divine-blood.md §14 | 0.5 day | Phase 0 | Focus rings use gold |
+| V-05 | Update card/panel surfaces to Divine Blood tokens | Divine-blood.md §10 | 0.5 day | Phase 0 | Surfaces match design doc |
+| V-06 | QA pass: light mode visual consistency | — | 0.5 day | V-01–V-05 | Light mode verified |
+| V-07 | QA pass: dark mode visual consistency | — | 0.5 day | V-01–V-05 | Dark mode verified |
+
+**Gate:** All components visually match Divine Blood. Light = white+gold+crimson. Dark = black+crimson+gold.
+
+### Phase 2: Quick Wins (Days 7-8)
 
 **Goal:** Address highest-impact UX issues with minimal risk.
 
@@ -84,57 +105,26 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 | Q-02 | Sticky sidebar business context | product-inspection | 0.25 day | None | BC section sticky while scrolling |
 | Q-03 | Reduced motion support | priority-matrix | 0.5 day | None | `prefers-reduced-motion` respected globally |
 | Q-04 | Mobile drag handle fix | Issue #9 | 0.25 day | None | Drag works on touch devices |
-| Q-05 | Remove dead code | architecture-inspection | 0.25 day | None | Dashboard.tsx, FormNavigationItem.tsx, FormNavigation.tsx removed |
-| Q-06 | Remove App.css | R4 | 0.1 day | None | No import errors |
-| Q-07 | Sortable columns UI wiring | Issue #7 | 0.25 day | None | Column reorder accessible in UI |
+| Q-05 | Remove dead code | architecture-inspection | 0.25 day | None | Dashboard.tsx, FormNavigation*, App.css removed |
+| Q-06 | Sortable columns UI wiring | Issue #7 | 0.25 day | None | Column reorder accessible in UI |
 
-**Gate:** Same as Phase 0 + manual verification of sign-out, sticky BC, reduced motion, mobile drag.
+**Gate:** All quick wins verified. No regressions.
 
-### Phase 2: Shared Patterns (Days 6-8)
+### Phase 3: Architecture Cleanup (Days 9-10)
 
-**Goal:** Standardize shared patterns across document modules.
-
-| # | Task | Source | Effort | Dependencies | Completion Criteria |
-|---|---|---|---|---|---|
-| P-01 | Create module-specific column hooks | R6 | 0.5 day | None | `useWaybillColumns`, `useQuotationColumns`, `useCSRColumns` exist |
-| P-02 | Extract mobile form primitives to shared | R7 | 0.25 day | None | `mobileFormPrimitives.tsx` in shared location |
-| P-03 | Standardize portal usage | R8 | 0.25 day | None | `createPortal` replaces `document.body.appendChild` |
-| P-04 | Audit SortableLineItem | R9 | 0.25 day | None | Decision documented |
-| P-05 | CSS Module consolidation | R2 | 0.5 day | None | 6× CSS files → 1× shared |
-| P-06 | Design token audit & prune | R3 | 0.5 day | None | Unused `--bd-*` tokens removed |
-
-**Gate:** Same as Phase 0 + column hooks exist + CSS files reduced.
-
-### Phase 3: Document Views (Days 9-12)
-
-**Goal:** Standardize document view patterns.
+**Goal:** Consolidate redundant patterns and clean up code.
 
 | # | Task | Source | Effort | Dependencies | Completion Criteria |
 |---|---|---|---|---|---|
-| V-01 | Unify view page layout | architecture-inspection | 1 day | P-05 | All 6 view pages use shared layout |
-| V-02 | Unify summary strip | architecture-inspection | 0.5 day | V-01 | Summary strip consistent |
-| V-03 | Unify hero meta | architecture-inspection | 0.5 day | V-01 | Hero meta consistent |
-| V-04 | Unify document preview | architecture-inspection | 0.5 day | V-01 | Preview consistent |
-| V-05 | Standardize PDF output settings | architecture-inspection | 0.5 day | None | PDF settings pattern consistent |
+| A-01 | Create module-specific column hooks | R6 | 0.5 day | None | `useWaybillColumns`, `useQuotationColumns`, `useCSRColumns` exist |
+| A-02 | Extract mobile form primitives to shared | R7 | 0.25 day | None | `mobileFormPrimitives.tsx` in shared location |
+| A-03 | Standardize portal usage | R8 | 0.25 day | None | `createPortal` replaces `document.body.appendChild` |
+| A-04 | CSS Module consolidation (6× → 1×) | R2 | 0.5 day | None | CSS files reduced |
+| A-05 | New/Edit page unification (Invoice, Waybill, Quotation) | R1 | 1 day | None | Forms unified |
 
-**Gate:** Same as Phase 0 + all 6 view pages render correctly + no visual regressions.
+**Gate:** Forms unified. CSS reduced. No dead patterns.
 
-### Phase 4: CSR Migration (Days 13-15)
-
-**Goal:** Migrate CSR form to SharedDocumentForm pattern.
-
-| # | Task | Source | Effort | Dependencies | Completion Criteria |
-|---|---|---|---|---|---|
-| C-01 | Audit CSR unique features | product-inspection | 0.25 day | None | Feature list documented |
-| C-02 | Map CSR fields to SharedDocumentForm slots | D-005 | 0.5 day | C-01 | Field mapping complete |
-| C-03 | Create useCSRForm hook | R1 | 1 day | C-02 | Hook orchestrates CSR state |
-| C-04 | Create CSRFormPage.tsx | R1 | 0.5 day | C-03 | Unified form page works |
-| C-05 | Update CSR routes | R1 | 0.25 day | C-04 | Routes point to unified page |
-| C-06 | Delete old CSR form files | R1 | 0.1 day | C-05 | No import errors |
-
-**Gate:** Same as Phase 0 + CSR form works end-to-end + CSR mobile form works + old files deleted.
-
-### Phase 5: Polish (Days 16-18)
+### Phase 4: Polish & Documentation (Day 11)
 
 **Goal:** Final polish and documentation.
 
@@ -143,13 +133,12 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 | Z-01 | Route transition animations | product-inspection | 0.5 day | Q-03 | Page transitions animated |
 | Z-02 | Safe area insets for Capacitor | product-inspection | 0.25 day | None | iOS notch handled |
 | Z-03 | `aria-live` loading regions | product-inspection | 0.25 day | None | Screen reader announcements work |
-| Z-04 | Update component documentation | post-migration | 0.5 day | All | docs reflect new components |
-| Z-05 | Final audit: `bun run audit:load` | post-migration | 0.1 day | All | Clean pass |
-| Z-06 | Final audit: `bun run typecheck` | post-migration | 0.1 day | All | Clean pass |
-| Z-07 | Final audit: `bun run lint` | post-migration | 0.1 day | All | Clean pass |
-| Z-08 | Final audit: `bun run test` | post-migration | 0.1 day | All | Critical path tests pass |
+| Z-04 | Update component documentation | post-migration | 0.5 day | All | docs reflect Divine Blood |
+| Z-05 | Final audits (audit:load, typecheck, lint, test) | post-migration | 0.5 day | All | All pass clean |
 
-**Gate:** All audits pass + documentation updated + manual testing complete.
+**Gate:** All audits pass. Documentation updated.
+
+(Phase 4 renamed to Phase 5 above — see Phase 4: Polish & Documentation)
 
 ---
 
@@ -198,36 +187,29 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 
 | Phase | Days | Tasks |
 |---|---|---|
-| Phase 0: Foundation | 2 | 5 |
-| Phase 1: Quick Wins | 3 | 7 |
-| Phase 2: Architecture | 3 | 6 |
-| Phase 3: Views | 4 | 5 |
-| Phase 4: CSR | 3 | 6 |
-| Phase 5: Polish | 3 | 8 |
-| **Total** | **18** | **34** |
+| Phase 0: Divine Blood Tokens | 3 | 5 |
+| Phase 1: Component Visual | 3 | 7 |
+| Phase 2: Quick Wins | 2 | 6 |
+| Phase 3: Architecture | 2 | 5 |
+| Phase 4: Polish | 1 | 5 |
+| **Total** | **11** | **28** |
 
 ---
 
 ## 5. Critical Path
 
 ```
-F-01 (ButtonGroup) ──→ F-03 (Button variants) ──→ [Phase 0 gate]
-F-02 (InputGroup) ───→ F-04 (RichText wire) ───→ [Phase 0 gate]
-                                                        │
-Phase 1 (Quick Wins) ──────────────────────────────────┤
-                                                        │
-Phase 2 (Architecture) ────────────────────────────────┤
-                                                        │
-V-01 (View layout) ──→ V-02/V-03/V-04 ────────────────┤
-                                                        │
-C-01→C-02→C-03→C-04→C-05→C-06 (CSR migration) ────────┤
-                                                        │
-Phase 5 (Polish) ──→ Z-05/Z-06/Z-07/Z-08 (final audits)┘
+Phase 0 (Divine Blood tokens) ──→ Phase 1 (Component visual) ──→ [Phase 1 gate]
+                                                           │
+Phase 2 (Quick Wins) ─────────────────────────────────────┤
+                                                           │
+Phase 3 (Architecture) ───────────────────────────────────┤
+                                                           │
+Phase 4 (Polish) ──→ Z-05 (final audits) ─────────────────┘
 ```
 
-**Critical path duration:** 18 days sequential  
-**With parallelism:** 14 days effective  
-**Parallel savings:** 4 days (Batch A/B independence)
+**Critical path duration:** 11 days sequential
+**Parallel savings:** Quick Wins (Phase 2) can run parallel with Component Visual (Phase 1)
 
 ---
 
@@ -492,7 +474,7 @@ Gate: All 4 audits pass clean
 
 ### 9.1 Decision Preservation
 
-All ADRs D-001 through D-015 must be preserved:
+All ADRs D-001 through D-018 must be preserved. D-017 (Divine Blood) and D-018 (Delete Themes) are the new primary drivers:
 
 | ADR | Status | Preservation |
 |---|---|---|
