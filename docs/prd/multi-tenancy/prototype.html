@@ -3,146 +3,296 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIGDROPS Multi-Tenancy Prototype</title>
+<title>BIGDROPS — Tenancy &amp; Access Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{
+  --ink:#0e1013;
+  --panel:#15181d;
+  --panel-raised:#1b1f26;
+  --line:#272c34;
+  --line-soft:#1f242b;
+  --text:#e8e6df;
+  --text-dim:#8b9099;
+  --text-faint:#565c66;
+  --copper:#c17a3d;
+  --copper-dim:#8a5a2e;
+  --copper-glow:rgba(193,122,61,.14);
+  --vault:#3f8f83;
+  --vault-dim:#2b5f57;
+  --vault-glow:rgba(63,143,131,.13);
+  --registry:#5d7290;
+  --registry-glow:rgba(93,114,144,.13);
+  --ready:#5fae72;
+  --failed:#c1573f;
+  --creating:#c19a3d;
+  --radius:3px;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,system-ui,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:24px}
-h1{font-size:22px;margin-bottom:4px;color:#16213e}
-.sub{color:#555;font-size:14px;margin-bottom:24px}
-.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}}
-.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:12px}
-.schema{margin-bottom:12px;border-radius:8px;overflow:hidden}
-.schema.public{background:#e3f2fd;border:2px solid #90caf9}
-.schema.entity{background:#f3e5f5;border:2px solid #ce93d8}
-.schema .header{padding:8px 12px;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
-.schema.public .header{background:#90caf9;color:#0d47a1}
-.schema.entity .header{background:#ce93d8;color:#4a148c}
-.schema .tables{padding:8px 12px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px}
-.schema .tables span{background:rgba(255,255,255,.8);padding:3px 8px;border-radius:4px;font-size:11px;white-space:nowrap}
-.controls{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
-.controls select{padding:6px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;background:#fff;width:200px}
-.controls .badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
-.controls label{font-size:13px;font-weight:500;color:#333}
-.data-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
-.data-table th{text-align:left;padding:6px 8px;background:#f5f5f5;font-weight:600;color:#555;border-bottom:2px solid#ddd}
-.data-table td{padding:6px 8px;border-bottom:1px solid #eee}
-.search-path{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:12px}
-.search-path.public{background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9}
-.search-path.entity{background:#f3e5f5;color:#4a148c;border:1px solid #ce93d8}
-.search-path .arrow{font-size:18px}
-.user-card{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px}
-.user-card .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
-.user-card .info{flex:1}
-.user-card .info .name{font-size:14px;font-weight:600}
-.user-card .info .detail{font-size:12px;color:#666}
-.user-card .role-badge{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600;text-transform:uppercase}
-.role-badge.super-admin{background:#ffeb3b;color:#333}
-.role-badge.entity-admin{background:#e91e63;color:#fff}
-.role-badge.engineer{background:#2196f3;color:#fff}
-.role-badge.viewer{background:#9e9e9e;color:#fff}
-.legend{display:flex;gap:16px;font-size:11px;color:#666;margin-top:8px;flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:4px}
-.legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-.dot.public{background:#90caf9}
-.dot.entity{background:#ce93d8}
-.dot.shared{background:#81c784}
-.activity{list-style:none;font-size:12px;margin-top:8px}
-.activity li{padding:5px 0;border-bottom:1px solid #f0f0f0;color:#555;line-height:1.5}
-.activity li .highlight{font-weight:600;color:#1a1a2e}
-.entity-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.entity-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:2px solid transparent;transition:all .15s}
-.entity-chip.active{border-color:#4a148c;background:#f3e5f5}
-.entity-chip.inactive{opacity:.6}
-.sql-pane{background:#1a1a2e;color:#e8e8e8;padding:12px;border-radius:8px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.6;margin-top:8px;overflow-x:auto}
-.sql-pane .keyword{color:#7ec8e3}
-.sql-pane .string{color:#a5d6a7}
-.sql-pane .comment{color:#666;font-style:italic}
-.invite-chain{font-size:12px;padding:8px 12px;background:#fff8e1;border-radius:6px;border-left:3px solid #ffc107;margin-top:8px}
-.invite-chain strong{color:#e65100}
-.entity-panel{margin-top:8px;padding:10px 12px;background:#f5f5f5;border-radius:6px;font-size:12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
-.entity-panel .label{color:#888}
-.entity-panel .value{font-weight:500}
+body{
+  font-family:'IBM Plex Sans',-apple-system,sans-serif;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(193,122,61,.05), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(63,143,131,.05), transparent 45%),
+    var(--ink);
+  color:var(--text);
+  padding:28px 24px 60px;
+  min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* header */
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.brand-mark{display:flex;align-items:baseline;gap:10px}
+.brand-mark .glyph{
+  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:2px;
+  color:var(--ink);background:var(--copper);padding:3px 7px;border-radius:2px;
+}
+h1{font-size:19px;font-weight:600;letter-spacing:.2px}
+.sub{color:var(--text-dim);font-size:13px;margin-top:6px;line-height:1.5;max-width:640px}
+.model-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);
+  border:1px solid var(--line);padding:5px 10px;border-radius:20px;white-space:nowrap;
+}
+.model-tag b{color:var(--vault);font-weight:600}
+
+hr.rule{border:none;height:1px;background:var(--line);margin:22px 0 24px}
+
+/* workspace bar */
+.workspace-bar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:12px 16px;margin-bottom:22px;
+}
+.workspace-bar .ws-id{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.workspace-bar .ws-id .slug{color:var(--copper)}
+.status-pill{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.5px;
+  padding:3px 9px;border-radius:20px;text-transform:uppercase;
+}
+.status-pill.active{background:rgba(95,174,114,.14);color:var(--ready);border:1px solid rgba(95,174,114,.3)}
+.status-bar-note{font-size:11.5px;color:var(--text-faint);margin-left:auto}
+
+/* layout */
+.layout{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
+@media(max-width:920px){.layout{grid-template-columns:1fr}}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:18px;
+}
+.card + .card{margin-top:18px}
+.card h2{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--text-faint);margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.card h2::before{content:'';width:5px;height:5px;background:var(--copper);border-radius:50%;display:inline-block}
+
+/* identity */
+.identity-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.avatar{
+  width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:14px;color:var(--ink);flex-shrink:0;font-family:'IBM Plex Mono',monospace;
+}
+.identity-row .who .name{font-size:14.5px;font-weight:600}
+.identity-row .who .role-line{font-size:11.5px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.owner-tag{color:var(--copper);font-weight:600}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.field{flex:1;min-width:150px}
+.field label{display:block;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-family:'IBM Plex Mono',monospace}
+select{
+  width:100%;padding:8px 10px;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel-raised);color:var(--text);font-size:13px;font-family:'IBM Plex Sans',sans-serif;
+}
+
+/* ledger entries = the signature element */
+.ledger-heading{font-size:11.5px;color:var(--text-dim);margin-bottom:10px;line-height:1.5}
+.ledger-heading code{font-family:'IBM Plex Mono',monospace;color:var(--vault);font-size:11px}
+.ledger-entry{
+  border-left:2px solid var(--line);padding:9px 0 9px 13px;margin-bottom:2px;position:relative;
+}
+.ledger-entry::before{
+  content:'';position:absolute;left:-3.5px;top:15px;width:5px;height:5px;border-radius:50%;background:var(--line);
+}
+.ledger-entry.granted::before{background:var(--vault)}
+.ledger-entry .grant-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.grant-chip{
+  background:var(--vault-glow);color:var(--vault);border:1px solid var(--vault-dim);
+  padding:2px 7px;border-radius:3px;font-size:11px;
+}
+.grant-chip.wildcard{background:var(--copper-glow);color:var(--copper);border-color:var(--copper-dim)}
+.ledger-entry .meta{font-size:11px;color:var(--text-faint);margin-top:4px}
+.ledger-entry .meta b{color:var(--text-dim);font-weight:500}
+.empty-ledger{font-size:12px;color:var(--text-faint);padding:14px 0;font-style:italic}
+
+/* schema vaults */
+.registry-block{
+  border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px;
+}
+.registry-block .head{
+  background:var(--registry-glow);border-bottom:1px solid var(--line);
+  padding:9px 12px;display:flex;justify-content:space-between;align-items:center;
+}
+.registry-block .head .name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--registry);font-weight:600}
+.registry-block .head .tag{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px}
+.registry-block .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
+.registry-block .tables span{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-raised);
+  padding:3px 7px;border-radius:3px;color:var(--text-dim);border:1px solid var(--line-soft);
+}
+
+.vault{
+  border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px;
+  transition:opacity .15s;
+}
+.vault.dim{opacity:.4}
+.vault .head{
+  background:var(--vault-glow);border-bottom:1px solid var(--vault-dim);
+  padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+}
+.vault.active .head{background:rgba(63,143,131,.22)}
+.vault .head .schema-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vault);font-weight:600}
+.vault .head .entity-name{font-size:10.5px;color:var(--text-faint)}
+.vault .active-flag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink);background:var(--vault);padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.4px}
+.vault .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
+.vault .tables span{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-raised);
+  padding:3px 7px;border-radius:3px;color:var(--text-dim);border:1px solid var(--line-soft);
+}
+.prov-status{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:10px;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.prov-status.ready{background:rgba(95,174,114,.16);color:var(--ready)}
+.prov-status.creating{background:rgba(193,154,61,.16);color:var(--creating)}
+.prov-status.failed{background:rgba(193,87,63,.16);color:var(--failed)}
+
+/* resolution + sql */
+.resolution-box{
+  background:var(--panel-raised);border:1px solid var(--line);border-radius:5px;
+  padding:12px 14px;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+}
+.resolution-box .step{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--text-dim)}
+.resolution-box .step .n{color:var(--text-faint)}
+.resolution-box .step.final{color:var(--vault);font-weight:600}
+.resolution-box .arrow{color:var(--text-faint);padding-left:2px}
+
+.sql-pane{
+  background:#0a0b0d;border:1px solid var(--line);color:#dcdad2;padding:13px 14px;border-radius:5px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;
+}
+.sql-pane .kw{color:#8fb8d8}
+.sql-pane .str{color:var(--vault)}
+.sql-pane .cm{color:var(--text-faint);font-style:italic}
+
+/* data preview */
+.data-source-note{font-size:11px;color:var(--text-faint);margin-bottom:8px;font-family:'IBM Plex Mono',monospace}
+.data-source-note b{color:var(--vault)}
+table.data-table{width:100%;border-collapse:collapse;font-size:12px}
+table.data-table th{
+  text-align:left;padding:7px 9px;background:var(--panel-raised);color:var(--text-faint);
+  font-weight:500;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+table.data-table td{padding:7px 9px;border-bottom:1px solid var(--line-soft);color:var(--text-dim)}
+.empty-row td{text-align:center;color:var(--text-faint);padding:18px;font-style:italic}
+
+/* activity */
+.activity-list{list-style:none;font-size:12px}
+.activity-list li{padding:7px 0;border-bottom:1px solid var(--line-soft);color:var(--text-dim);line-height:1.55}
+.activity-list li:last-child{border-bottom:none}
+.activity-list .who{font-weight:600;color:var(--text)}
+.activity-list .stamp{color:var(--text-faint);font-family:'IBM Plex Mono',monospace;font-size:10.5px;float:right}
+
+footer{margin-top:28px;font-size:11px;color:var(--text-faint);text-align:center;font-family:'IBM Plex Mono',monospace}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<h1>BIGDROPS Multi-Tenancy Prototype</h1>
-<p class="sub">Schema-per-entity isolation · Switch users &amp; entities · Watch who granted access to whom</p>
+<header>
+  <div>
+    <div class="brand-mark"><span class="glyph">BD</span><h1>Tenancy &amp; Access Ledger</h1></div>
+    <p class="sub">Workspace → Entity → Schema, resolved once. Access is never implied by role — every line below is an explicit grant someone made, to someone, for one action, on one entity.</p>
+  </div>
+  <div class="model-tag">deny-by-default · <b>action-based</b> permissions</div>
+</header>
+
+<hr class="rule">
+
+<div class="workspace-bar">
+  <span class="ws-id">workspace <span class="slug">bigdrops-main</span></span>
+  <span class="status-pill active">active</span>
+  <span class="ws-id" style="color:var(--text-faint)">created_by <span class="slug" style="color:var(--text-dim)">aisha@bigdrops.ng</span></span>
+  <span class="status-bar-note">Phase 1 — one active workspace per session</span>
+</div>
 
 <div class="layout">
+  <!-- LEFT: identity + access ledger -->
   <div>
     <div class="card">
-      <h2>User &amp; Authorization</h2>
-
-      <div id="userCard" class="user-card">
-        <div class="avatar" style="background:#e91e63">AM</div>
-        <div class="info">
-          <div class="name">Aisha Mohammed</div>
-          <div class="detail">aisha@bigdrops.ng</div>
+      <h2>Identity</h2>
+      <div class="identity-row">
+        <div id="avatar" class="avatar"></div>
+        <div class="who">
+          <div id="userName" class="name"></div>
+          <div id="userRoleLine" class="role-line"></div>
         </div>
-        <span id="userRoleBadge" class="role-badge super-admin">Super Admin</span>
       </div>
-
       <div class="controls">
-        <label>User:</label>
-        <select id="userSelect"></select>
-        <label>Active entity:</label>
-        <select id="entitySelect"></select>
-      </div>
-
-      <div id="searchPathIndicator" class="search-path public">
-        <span class="arrow">🌐</span>
-        <span>search_path = <strong id="searchPathValue">public</strong></span>
-      </div>
-
-      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Entity memberships &amp; how they were granted:</div>
-      <div id="membershipList"></div>
-
-      <div style="margin-top:12px">
-        <div style="font-size:12px;font-weight:500;margin-bottom:4px">SQL that runs on query:</div>
-        <div class="sql-pane" id="sqlPane">
-          <span class="comment">-- search_path determines target schema</span><br>
-          <span class="keyword">SET</span> search_path <span class="keyword">TO</span> <span class="string" id="sqlSchema">'public'</span>;<br>
-          <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span id="sqlTable">invoices</span>;
+        <div class="field">
+          <label>Signed in as</label>
+          <select id="userSelect"></select>
+        </div>
+        <div class="field">
+          <label>Active entity</label>
+          <select id="entitySelect"></select>
         </div>
       </div>
+      <div id="resolutionBox" class="resolution-box"></div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <h2>Activity Trail</h2>
-      <ul class="activity" id="activityLog">
-        <li><span class="highlight">System</span> initialized — <strong>BIGDROPS HQ</strong> created as default entity</li>
-      </ul>
+    <div class="card">
+      <h2>Access ledger — active entity</h2>
+      <p class="ledger-heading">Rows from <code>entity_permissions</code>. No role implies these — each was written by someone with <code>assign_permissions</code>, or copied in from a template at grant time.</p>
+      <div id="ledgerList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Activity</h2>
+      <ul id="activityLog" class="activity-list"></ul>
     </div>
   </div>
 
+  <!-- RIGHT: schemas + data -->
   <div>
     <div class="card">
-      <h2>Database Schemas</h2>
-      <div class="schema public">
-        <div class="header">
-          <span>public (shared registry)</span>
-          <span style="font-weight:400;font-size:11px;opacity:.8">auth · entities · members</span>
+      <h2>Schema registry</h2>
+      <div class="registry-block">
+        <div class="head">
+          <span class="name">public</span>
+          <span class="tag">shared registry — never business data</span>
         </div>
         <div class="tables">
-          <span>entities</span>
-          <span>entity_members</span>
-          <span>profiles</span>
-          <span>devices</span>
-          <span style="opacity:.5;text-decoration:line-through;position:relative">settings</span>
+          <span>workspaces</span><span>workspace_members</span><span>entities</span>
+          <span>entity_permissions</span><span>entity_provisioning_status</span><span>platform_operators</span>
         </div>
       </div>
-      <div id="entitySchemas"></div>
+      <div id="vaultList"></div>
     </div>
 
-    <div class="card" style="margin-top:16px">
-      <h2>Data Preview: invoices</h2>
-      <div style="font-size:11px;color:#888;margin-bottom:4px">
-        Showing data from <strong id="dataSourceLabel">public</strong> schema
-      </div>
-      <table class="data-table" id="dataTable">
+    <div class="card">
+      <h2>Query resolution</h2>
+      <div class="sql-pane" id="sqlPane"></div>
+    </div>
+
+    <div class="card">
+      <h2>Data preview — invoices</h2>
+      <div class="data-source-note">tenantClient.from('invoices') → resolves to schema <b id="dataSourceLabel"></b></div>
+      <table class="data-table">
         <thead><tr><th>#</th><th>Number</th><th>Client</th><th>Amount</th></tr></thead>
         <tbody id="dataBody"></tbody>
       </table>
@@ -150,279 +300,179 @@ h1{font-size:22px;margin-bottom:4px;color:#16213e}
   </div>
 </div>
 
-<div class="legend">
-  <span><span class="dot public"></span> public schema (shared)</span>
-  <span><span class="dot entity"></span> entity schema (isolated)</span>
-  <span class="role-badge super-admin" style="font-size:10px">Super Admin</span>
-  <span class="role-badge entity-admin" style="font-size:10px">Entity Admin</span>
-  <span class="role-badge engineer" style="font-size:10px">Engineer</span>
-  <span class="role-badge viewer" style="font-size:10px">Viewer</span>
+<footer>entity_permissions is deny-by-default · schema names follow entity_&lt;workspace_slug&gt;_&lt;entity_slug&gt; · public schema holds registry data only</footer>
 </div>
 
 <script>
-// ========================
-// DATA LAYER
-// ========================
-// Entities: each company managed in the system
+/* ===== MODEL — matches Multi-Tenancy PRD v2.1 + Frontend Migration PRD ===== */
+const workspace = { id:'ws_1', slug:'bigdrops-main', name:'BIGDROPS Main' };
+
 const entities = [
-  { id: 'ent_001', slug: 'bigdrops-hq', name: 'BIGDROPS HQ', schema: 'public', type: 'default' },
-  { id: 'ent_002', slug: 'acme', name: 'Acme Corp', schema: 'entity_acme', type: 'client' },
-  { id: 'ent_003', slug: 'beta', name: 'Beta Industries', schema: 'entity_beta', type: 'client' },
-]
-
-// Invitations: who invited whom to which entity with what role
-// Only entity_admins and super_admins can invite
-const invitations = [
-  // BIGDROPS HQ created by system
-  { entity: 'ent_001', invitedUser: 'system', targetUser: 0, role: 'super_admin', note: 'System — co-founder of BIGDROPS' },
-  { entity: 'ent_001', invitedUser: 0, targetUser: 1, role: 'entity_admin', note: 'Aisha invited Chidi to manage HQ' },
-  { entity: 'ent_001', invitedUser: 0, targetUser: 2, role: 'viewer', note: 'Aisha invited Bola as HQ viewer' },
-
-  // Acme Corp — created by Aisha (super admin), she invites herself as admin
-  { entity: 'ent_002', invitedUser: 'system_approval', targetUser: 0, role: 'entity_admin', note: 'Aisha created Acme Corp — auto-granted admin' },
-  { entity: 'ent_002', invitedUser: 0, targetUser: 1, role: 'engineer', note: 'Aisha (Acme admin) invited Chidi as engineer' },
-
-  // Beta Industries — created by Aisha, she manages it too
-  { entity: 'ent_003', invitedUser: 'system_approval', targetUser: 0, role: 'entity_admin', note: 'Aisha created Beta Industries — auto-granted admin' },
-]
-
-const mockData = {
-  public: {
-    invoices: [
-      { id: 'INV-001', client: 'Legacy Client A', amount: '₦150,000' },
-      { id: 'INV-002', client: 'Legacy Client B', amount: '₦89,500' },
-    ],
-  },
-  entity_acme: {
-    invoices: [
-      { id: 'INV-001', client: 'Acme Client X', amount: '₦2,400,000' },
-      { id: 'INV-002', client: 'Acme Client Y', amount: '₦875,000' },
-      { id: 'INV-003', client: 'Acme Client Z', amount: '₦1,200,000' },
-    ],
-  },
-  entity_beta: {
-    invoices: [
-      { id: 'INV-001', client: 'Beta Pharma', amount: '₦5,600,000' },
-      { id: 'INV-002', client: 'Beta Logistics', amount: '₦3,200,000' },
-    ],
-  },
-}
+  { id:'ent_acme',  slug:'acme',  name:'Acme Corp',        schema:'entity_bigdropsmain_acme',  status:'ready' },
+  { id:'ent_beta',  slug:'beta',  name:'Beta Industries',  schema:'entity_bigdropsmain_beta',  status:'ready' },
+  { id:'ent_nuri',  slug:'nuri',  name:'Nuri Logistics',   schema:'entity_bigdropsmain_nuri',  status:'creating' },
+];
 
 const users = [
-  { name: 'Aisha Mohammed', initials: 'AM', color: '#e91e63', systemRole: 'super_admin' },
-  { name: 'Chidi Okonkwo', initials: 'CO', color: '#2196f3', systemRole: 'standard' },
-  { name: 'Bola Adeyemi', initials: 'BA', color: '#ff9800', systemRole: 'standard' },
-]
+  { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#c17a3d', wsRole:'owner' },
+  { id:'u_chidi', name:'Chidi Okonkwo',  initials:'CO', color:'#3f8f83', wsRole:'member' },
+  { id:'u_bola',  name:'Bola Adeyemi',   initials:'BA', color:'#5d7290', wsRole:'member' },
+];
 
-// ========================
-// DERIVED
-// ========================
-function getMemberships(userIdx) {
-  return invitations
-    .filter(inv => inv.targetUser === userIdx)
-    .map(inv => ({
-      entity: entities.find(e => e.id === inv.entity),
-      role: inv.role,
-      invitedBy: inv.invitedUser === 'system' ? 'System' :
-                 inv.invitedUser === 'system_approval' ? 'System (auto)' :
-                 users[inv.invitedUser]?.name || 'Unknown',
-      note: inv.note,
-    }))
-}
+// entity_permissions rows — (entity_id, user_id, resource, action, granted_by). No roles.
+const grants = [
+  { entity:'ent_acme', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_acme', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_acme', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_acme', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
 
-function getUserEntityIds(userIdx) {
-  return getMemberships(userIdx).map(m => m.entity.id)
-}
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'view',   grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'create', grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'edit',   grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'approve', grantedBy:'Aisha Mohammed' },
 
-function getUserDefaultEntity(userIdx) {
-  const m = getMemberships(userIdx)
-  // Prefer entity_admin role, otherwise first
-  const admin = m.find(m => m.role === 'entity_admin' || m.role === 'super_admin')
-  return admin ? admin.entity.id : m[0]?.entity.id || 'ent_001'
-}
+  { entity:'ent_beta', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_beta', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_beta', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_beta', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
 
-function getEntityAdmin(entityId) {
-  // Find who has entity_admin or super_admin role for this entity
-  const admins = invitations.filter(inv =>
-    inv.entity === entityId &&
-    (inv.role === 'entity_admin' || inv.role === 'super_admin')
-  )
-  return admins.map(a => a.targetUser === 'system' ? 'System' : users[a.targetUser].name).join(', ')
-}
+  { entity:'ent_beta', user:'u_bola', resource:'*', action:'view', grantedBy:'Aisha Mohammed (via template: Viewer)' },
+];
 
-// ========================
-// STATE
-// ========================
-let currentUserId = 0
-let currentEntityId = getUserDefaultEntity(0)
+const mockData = {
+  entity_bigdropsmain_acme: [
+    { id:'INV-014', client:'Lekki Freeport Terminal', amount:'₦2,400,000' },
+    { id:'INV-015', client:'Dangote Refinery Ops',     amount:'₦875,000' },
+    { id:'INV-016', client:'Acme West Depot',          amount:'₦1,200,000' },
+  ],
+  entity_bigdropsmain_beta: [
+    { id:'INV-007', client:'Beta Pharma Distribution', amount:'₦5,600,000' },
+    { id:'INV-008', client:'Beta Logistics NG',         amount:'₦3,200,000' },
+  ],
+  entity_bigdropsmain_nuri: [],
+};
 
-function getCurrentUser() { return users[currentUserId] }
-function getCurrentEntity() { return entities.find(e => e.id === currentEntityId) }
+/* ===== STATE ===== */
+let currentUserId = 'u_aisha';
+let currentEntityId = 'ent_acme';
+let activityCount = 0;
 
-// ========================
-// RENDER
-// ========================
-function renderSchemaBlocks() {
-  const container = document.getElementById('entitySchemas')
-  const activeEntity = getCurrentEntity()
-  container.innerHTML = entities.filter(e => e.id !== 'ent_001').map(e => {
-    const isActive = e.id === activeEntity.id
-    const hasUser = getUserEntityIds(currentUserId).includes(e.id)
-    const admin = getEntityAdmin(e.id)
-    return `<div class="schema entity" style="opacity:${hasUser ? 1 : 0.35}">
-      <div class="header">
-        <span>${e.schema} ${isActive ? '← active' : ''}</span>
-        <span style="font-weight:400;font-size:11px;opacity:.8">${e.name}</span>
+const byId = (arr,id) => arr.find(x => x.id === id);
+const userGrants   = (userId, entityId) => grants.filter(g => g.user === userId && g.entity === entityId);
+const userEntities = (userId) => [...new Set(grants.filter(g => g.user === userId).map(g => g.entity))];
+
+/* ===== RENDER ===== */
+function render(){
+  const user = byId(users, currentUserId);
+  const entity = byId(entities, currentEntityId);
+  const reachable = userEntities(currentUserId);
+
+  // identity
+  const av = document.getElementById('avatar');
+  av.textContent = user.initials; av.style.background = user.color; av.style.color = '#0e1013';
+  document.getElementById('userName').textContent = user.name;
+  document.getElementById('userRoleLine').innerHTML =
+    `workspace role: <span class="${user.wsRole==='owner' ? 'owner-tag' : ''}">${user.wsRole}</span>`;
+
+  // selects
+  document.getElementById('userSelect').innerHTML = users.map(u =>
+    `<option value="${u.id}" ${u.id===currentUserId?'selected':''}>${u.name}</option>`).join('');
+  document.getElementById('entitySelect').innerHTML = reachable.map(eid => {
+    const e = byId(entities, eid);
+    return `<option value="${eid}" ${eid===currentEntityId?'selected':''}>${e.name}</option>`;
+  }).join('') || `<option>No entity access</option>`;
+
+  // resolution box
+  document.getElementById('resolutionBox').innerHTML = `
+    <div class="step"><span class="n">1</span> workspace &nbsp;→&nbsp; <span>${workspace.slug} (active)</span></div>
+    <div class="step"><span class="n">2</span> entity &nbsp;→&nbsp; <span>${entity ? entity.name : '—'}</span></div>
+    <div class="step"><span class="n">3</span> permission check &nbsp;→&nbsp; <span>${entity && userGrants(currentUserId, entity.id).length ? 'has explicit grant(s)' : 'no grant found → deny'}</span></div>
+    <div class="step final"><span class="n">4</span> resolved schema &nbsp;→&nbsp; <span>${entity ? entity.schema : 'n/a'}</span></div>
+  `;
+
+  // ledger
+  const g = entity ? userGrants(currentUserId, entity.id) : [];
+  const ledgerEl = document.getElementById('ledgerList');
+  ledgerEl.innerHTML = g.length ? g.map(row => `
+    <div class="ledger-entry granted">
+      <div class="grant-line">
+        <span class="grant-chip ${row.resource==='*'?'wildcard':''}">${row.resource}</span>
+        <span style="color:var(--text-faint)">·</span>
+        <span class="grant-chip ${row.resource==='*'?'wildcard':''}">${row.action}</span>
+      </div>
+      <div class="meta">Granted by <b>${row.grantedBy}</b></div>
+    </div>
+  `).join('') : `<div class="empty-ledger">No entity_permissions row for this user on this entity — access denied by default.</div>`;
+
+  // vaults
+  document.getElementById('vaultList').innerHTML = entities.map(e => {
+    const active = e.id === currentEntityId;
+    const dim = !reachable.includes(e.id);
+    return `<div class="vault ${active?'active':''} ${dim?'dim':''}">
+      <div class="head">
+        <span class="schema-name">${e.schema}</span>
+        <span class="entity-name">${e.name}</span>
+        <span class="prov-status ${e.status}">${e.status}</span>
+        ${active ? '<span class="active-flag">RESOLVED</span>' : ''}
       </div>
       <div class="tables">
-        <span>settings</span>
-        <span>invoices</span>
-        <span>clients</span>
-        <span>waybills</span>
-        <span>payments</span>
-        <span>item_catalog</span>
-        <span>audit_logs</span>
+        <span>settings</span><span>invoices</span><span>clients</span>
+        <span>waybills</span><span>payments</span><span>audit_logs</span>
       </div>
-    </div>`
-  }).join('')
-}
+    </div>`;
+  }).join('');
 
-function renderMemberships() {
-  const container = document.getElementById('membershipList')
-  const ms = getMemberships(currentUserId)
-  if (ms.length === 0) {
-    container.innerHTML = '<div style="font-size:12px;color:#999;padding:8px">No entity memberships</div>'
-    return
-  }
-  container.innerHTML = ms.map(m => `
-    <div class="invite-chain">
-      <strong>${m.entity.name}</strong>
-      <span style="display:inline-block;margin:0 4px">·</span>
-      <span class="role-badge ${roleClass(m.role)}">${m.role}</span>
-      <br>
-      <span style="color:#888">Granted by:</span> ${m.invitedBy}
-      <br>
-      <span style="font-size:11px;color:#888;font-style:italic">${m.note}</span>
-    </div>
-  `).join('')
-}
+  // sql
+  document.getElementById('sqlPane').innerHTML = entity ? `
+<span class="cm">// Tenant Client — routing only, no auth/authz inside it</span><br>
+<span class="kw">const</span> schema = entityProvider.resolvedSchema; <span class="cm">// "${entity.schema}"</span><br>
+<span class="kw">await</span> supabase.schema(schema).from(<span class="str">'invoices'</span>).select(<span class="str">'*'</span>)<br><br>
+<span class="cm">// RLS on invoices, inside ${entity.schema}</span><br>
+<span class="kw">USING</span> (has_entity_permission(<span class="str">'${entity.id}'</span>, auth.uid(), <span class="str">'invoice'</span>, <span class="str">'view'</span>))
+  ` : `<span class="cm">// no entity resolved</span>`;
 
-function renderEntityChips() {
-  const container = document.getElementById('entitySelect')
-  const ids = getUserEntityIds(currentUserId) 
-  container.innerHTML = ids.map(eid => {
-    const ent = entities.find(e => e.id === eid)
-    return `<option value="${eid}" ${eid === currentEntityId ? 'selected' : ''}>${ent.name}</option>`
-  }).join('')
-}
-
-function renderUserSelector() {
-  const sel = document.getElementById('userSelect')
-  sel.innerHTML = users.map((u, i) =>
-    `<option value="${i}" ${i === currentUserId ? 'selected' : ''}>${u.name}</option>`
-  ).join('')
-}
-
-function renderSearchPath() {
-  const ent = getCurrentEntity()
-  const indicator = document.getElementById('searchPathIndicator')
-  const value = document.getElementById('searchPathValue')
-  const isPublic = ent.schema === 'public'
-  indicator.className = `search-path ${isPublic ? 'public' : 'entity'}`
-  indicator.querySelector('.arrow').textContent = isPublic ? '🌐' : '🔒'
-  value.textContent = ent.schema
-  document.getElementById('sqlSchema').textContent = `'${ent.schema}'`
-}
-
-function renderUserCard() {
-  const user = getCurrentUser()
-  document.querySelector('#userCard .avatar').textContent = user.initials
-  document.querySelector('#userCard .avatar').style.background = user.color
-  document.querySelector('#userCard .name').textContent = user.name
-  const badge = document.getElementById('userRoleBadge')
-  if (user.systemRole === 'super_admin') {
-    badge.textContent = 'Super Admin'
-    badge.className = 'role-badge super-admin'
+  // data
+  document.getElementById('dataSourceLabel').textContent = entity ? entity.schema : '—';
+  const rows = entity ? (mockData[entity.schema] || []) : [];
+  const canView = entity && userGrants(currentUserId, entity.id).some(g => g.action === 'view');
+  const body = document.getElementById('dataBody');
+  if (!canView) {
+    body.innerHTML = `<tr class="empty-row"><td colspan="4">No 'view' grant on this entity — RLS returns zero rows</td></tr>`;
+  } else if (rows.length === 0) {
+    body.innerHTML = `<tr class="empty-row"><td colspan="4">Schema exists, no invoices yet (provisioning: ${entity.status})</td></tr>`;
   } else {
-    badge.textContent = 'Standard User'
-    badge.className = 'role-badge viewer'
+    body.innerHTML = rows.map((r,i) => `<tr><td>${i+1}</td><td>${r.id}</td><td>${r.client}</td><td>${r.amount}</td></tr>`).join('');
   }
 }
 
-function renderDataTable() {
-  const ent = getCurrentEntity()
-  const data = mockData[ent.schema]
-  const rows = data.invoices || []
-  const tbody = document.getElementById('dataBody')
-  document.getElementById('dataSourceLabel').textContent = ent.schema
-  tbody.innerHTML = rows.map((r, i) => `<tr>
-    <td>${i + 1}</td>
-    <td>${r.id}</td>
-    <td>${r.client}</td>
-    <td>${r.amount}</td>
-  </tr>`).join('')
-  if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="color:#999;text-align:center;padding:16px">No invoices yet</td></tr>`
-  }
+function logActivity(html){
+  const log = document.getElementById('activityLog');
+  const li = document.createElement('li');
+  const stamp = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  li.innerHTML = `<span class="stamp">${stamp}</span>${html}`;
+  log.insertBefore(li, log.firstChild);
+  activityCount++;
+  if (activityCount > 12) log.removeChild(log.lastChild);
 }
 
-function roleClass(r) {
-  if (r === 'super_admin') return 'super-admin'
-  if (r === 'entity_admin') return 'entity-admin'
-  if (r === 'engineer') return 'engineer'
-  return 'viewer'
-}
+/* ===== EVENTS ===== */
+document.getElementById('userSelect').addEventListener('change', e => {
+  currentUserId = e.target.value;
+  const reachable = userEntities(currentUserId);
+  currentEntityId = reachable[0] || null;
+  render();
+  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> resolved workspace membership (${byId(users,currentUserId).wsRole})`);
+});
+document.getElementById('entitySelect').addEventListener('change', e => {
+  currentEntityId = e.target.value;
+  render();
+  const entity = byId(entities, currentEntityId);
+  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> switched entity → resolved schema <b>${entity.schema}</b>`);
+});
 
-let activityCount = 0
-function renderActivity(msg) {
-  const log = document.getElementById('activityLog')
-  const li = document.createElement('li')
-  li.innerHTML = msg
-  log.insertBefore(li, log.firstChild)
-  activityCount++
-  if (activityCount > 20) log.removeChild(log.lastChild)
-}
-
-function renderUI() {
-  renderUserCard()
-  renderUserSelector()
-  renderEntityChips()
-  renderMemberships()
-  renderSchemaBlocks()
-  renderSearchPath()
-  renderDataTable()
-}
-
-// ========================
-// ACTIONS
-// ========================
-function switchEntity(eid) {
-  const ent = entities.find(e => e.id === eid)
-  if (!ent) return
-  if (!getUserEntityIds(currentUserId).includes(eid)) return
-  currentEntityId = eid
-  renderUI()
-  const user = getCurrentUser()
-  const m = getMemberships(currentUserId).find(m => m.entity.id === eid)
-  renderActivity(`<span class="highlight">${user.name}</span> switched to <strong>${ent.name}</strong> (${m?.role || 'member'})`)
-}
-
-function switchUser(idx) {
-  currentUserId = idx
-  currentEntityId = getUserDefaultEntity(idx)
-  renderUI()
-  const user = getCurrentUser()
-  renderActivity(`<span class="highlight">${user.name}</span> logged in (${user.systemRole === 'super_admin' ? 'Super Admin' : 'Standard User'})`)
-  renderActivity(`Default entity: <strong>${entities.find(e => e.id === currentEntityId).name}</strong>`)
-}
-
-// ========================
-// INIT
-// ========================
-document.getElementById('userSelect').addEventListener('change', (e) => switchUser(parseInt(e.target.value)))
-document.getElementById('entitySelect').addEventListener('change', (e) => switchEntity(e.target.value))
-
-switchUser(0)
+/* ===== INIT ===== */
+render();
+logActivity(`<span class="who">Aisha Mohammed</span> session start — workspace <b>bigdrops-main</b> resolved as active`);
 </script>
 </body>
 </html>
