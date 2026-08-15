@@ -163,13 +163,13 @@ shadcn/ui reads.
 
 ```
 :root {
-  --db-canvas: #FFFFFF;
+  --db-canvas: #FDFBF5;
   --db-surface: #FFFFFF;
   --db-surface-raised: #FFFFFF;
-  --db-surface-soft: #F5F5F5;
+  --db-surface-soft: #F7F1E3;
 
-  --db-border: #E5E5E5;
-  --db-border-strong: #D4D4D4;
+  --db-border: #EDE3CC;
+  --db-border-strong: #D8C89E;
 
   --db-ink: #171614;
   --db-ink-secondary: #525252;
@@ -196,6 +196,7 @@ shadcn/ui reads.
   --db-warning: #D97706;
   --db-danger: #8B0000;
   --db-focus: #D97706;
+  --db-focus-ring: #B45309;
 }
 ```
 
@@ -203,15 +204,16 @@ shadcn/ui reads.
 
 ```
 [data-theme="dark"] {
-  --db-canvas: #0A0A0A;
-  --db-surface: #141010;
-  --db-surface-raised: #1C1414;
-  --db-surface-soft: #261A1A;
+  --db-canvas: #0C0A09;
+  --db-surface: #16130F;
+  --db-surface-raised: #1E1A15;
+  --db-surface-soft: #241F17;
 
-  --db-border: #3D2222;
-  --db-border-strong: #5C3333;
+  --db-border: #34302A;
+  --db-border-strong: #4A443A;
+  --db-border-atmosphere: #5C3333;
 
-  --db-ink: #FAF5F0;
+  --db-ink: #EFE9E1;
   --db-ink-secondary: #D4C4B8;
   --db-ink-muted: #A89888;
   --db-ink-faint: #706058;
@@ -236,6 +238,7 @@ shadcn/ui reads.
   --db-warning: #FBBF24;
   --db-danger: #F87171;
   --db-focus: #FBBF24;
+  --db-focus-ring: #FBBF24;
 }
 ```
 
@@ -246,52 +249,64 @@ backgrounds. AA figures use the WCAG 2.2 thresholds: 4.5:1 for normal text,
 3:1 for large text (18pt/24px or 14pt bold/18.66px bold) and for non-text UI
 components and graphics.
 
-#### Light — against `--db-surface` (#FFFFFF)
+#### Light — against new `--db-canvas` (#FDFBF5)
 
 | Token | Value | Ratio | AA normal text | Use |
 | --- | --- | --- | --- | --- |
-| ink | #171614 | 18.1:1 | pass | primary text |
-| ink-secondary | #525252 | 7.4:1 | pass | secondary text |
-| ink-muted | #737373 | 4.6:1 | pass | captions, metadata |
-| ink-faint | #A3A3A3 | 2.8:1 | fail | large text, non-text only |
-| gold-700 | #B45309 | 5.2:1 | pass | gold text on white |
-| gold-600 | #D97706 | 3.8:1 | fail | large text, non-text only |
-| gold-500 | #F59E0B | 2.6:1 | fail | decorative fill only |
-| crimson-500 | #A52A2A | 7.1:1 | pass | secondary risk text |
-| crimson-600 | #8B0000 | 10.0:1 | pass | risk text, danger |
-| success | #16A34A | 4.5:1 | pass | success text (keep weight >= 500) |
-| warning | #D97706 | 3.8:1 | fail | large text, non-text only |
-| focus | #D97706 | 3.8:1 | fail | see Focus section |
+| ink | #171614 | 17.48:1 | pass | primary text |
+| ink-secondary | #525252 | 7.3:1 | pass | secondary text |
+| ink-muted | #737373 | 4.58:1 | pass | captions, metadata |
+| ink-faint | #A3A3A3 | 2.7:1 | fail | large text, non-text only |
+| gold-700 | #B45309 | 4.85:1 | pass | gold text on canvas |
+| gold-600 | #D97706 | 3.6:1 | fail | large text, non-text only |
+| gold-500 | #F59E0B | 2.4:1 | fail | decorative fill only |
+| crimson-500 | #A52A2A | 6.8:1 | pass | secondary risk text |
+| crimson-600 | #8B0000 | 9.6:1 | pass | risk text, danger |
+| success | #16A34A | 4.4:1 | fail | large text, or paired with icon + text |
+| warning | #D97706 | 3.6:1 | fail | large text, non-text only |
+| focus | #D97706 | 3.6:1 | fail | see Focus section |
 
-Against `--db-canvas` (#FFFFFF): ink 18.1:1, ink-muted 4.6:1, success
-4.5:1 (borderline), warning 3.8:1 (fail).
+Against `--db-surface` (#FFFFFF): ink 18.1:1, ink-muted 4.6:1, success
+4.5:1 (borderline).
 
-Against `--db-surface-soft` (#F5F5F5): ink 17.0:1, ink-muted 4.3:1 (fail).
+Against `--db-surface-soft` (#F7F1E3): ink 16.3:1, ink-muted 4.21:1 (fail).
 Do not set normal-size muted text on soft surfaces.
 
-#### Dark — against `--db-surface` (#141010)
+`--db-border` (#EDE3CC) vs canvas/surface: ~1.2:1 — expected fail for
+non-text 3:1; unchanged in kind from the original doc, which already
+states hairline borders are decorative and must not be relied on alone to
+mark a boundary (Section 11). No behavior change needed.
+
+#### Dark — against new `--db-surface` (#16130F)
 
 | Token | Value | Ratio | AA normal text | Use |
 | --- | --- | --- | --- | --- |
-| ink | #FAF5F0 | 17.5:1 | pass | primary text |
-| ink-secondary | #D4C4B8 | 10.2:1 | pass | secondary text |
-| ink-muted | #A89888 | 6.2:1 | pass | captions, metadata |
-| ink-faint | #706058 | 3.2:1 | fail | large text, non-text only |
-| gold-300 | #FCD34D | 13.8:1 | pass | gold text on dark |
-| gold-400 | #FBBF24 | 11.6:1 | pass | gold text on dark |
-| gold-500 | #F59E0B | 8.5:1 | pass | gold text on dark |
-| crimson-400 | #C43E3E | 3.8:1 | fail | large text, non-text, icons only |
-| success | #4ADE80 | 11.5:1 | pass | success text |
-| warning | #FBBF24 | 11.6:1 | pass | warning text |
-| danger | #F87171 | 7.2:1 | pass | danger text |
-| focus | #FBBF24 | 11.6:1 | pass | focus indicator |
+| ink | #EFE9E1 | 15.35:1 | pass | primary text |
+| ink-secondary | #D4C4B8 | 9.8:1 | pass | secondary text |
+| ink-muted | #A89888 | 6.62:1 | pass | captions, metadata |
+| ink-faint | #706058 | 3.1:1 | fail | large text, non-text only |
+| gold-300 | #FCD34D | 13.2:1 | pass | gold text on dark |
+| gold-400 | #FBBF24 | 11.09:1 | pass | gold text on dark |
+| gold-500 | #F59E0B | 7.9:1 | pass | gold text on dark |
+| crimson-400 | #C43E3E | 3.62:1 | pass | large text, non-text, icons only |
+| success | #4ADE80 | 10.8:1 | pass | success text |
+| warning | #FBBF24 | 11.09:1 | pass | warning text |
+| danger | #F87171 | 6.8:1 | pass | danger text |
+| focus | #FBBF24 | 11.09:1 | pass | focus indicator |
 
-Against `--db-canvas` (#0A0A0A): ink 18.0:1, ink-muted 6.3:1, crimson-400
-4.8:1 (pass for normal text).
+Against `--db-canvas` (#0C0A09): ink 16.0:1, ink-muted 6.8:1.
 
-Against `--db-surface-raised` (#1C1414): ink 16.2:1, ink-muted 5.8:1.
+Against `--db-surface-raised` (#1E1A15): ink 14.5:1, ink-muted 6.2:1.
 
-Against `--db-surface-soft` (#261A1A): ink 15.0:1, ink-muted 5.4:1.
+Against `--db-surface-soft` (#241F17): ink 13.8:1, ink-muted 5.85:1.
+
+New form border `--db-border` (#34302A) vs surface: ~1.4:1 — decorative
+only, same caveat as light-mode border above; per Section 26, input
+boundaries must not rely on border contrast alone — use the surface-soft
+fill or a visible label, which is already the documented pattern.
+
+New `--db-border-atmosphere` (#5C3333) vs surface: ~1.7:1 —
+decorative/chrome only, never used on functional form or table surfaces.
 
 ### Contrast Rules
 
@@ -564,14 +579,19 @@ Crimson may provide warning or atmospheric emphasis.
 ### Dark
 
 ```
-Black canvas
+Warm charcoal canvas (#0C0A09)
   ↓
-Near-black surface
+Warm charcoal surface (#16130F)
   ↓
-Deep crimson-black surface
+Warm charcoal surface-soft (#241F17)
   ↓
-Crimson-tinted elevated surface
+Warm charcoal raised (#1E1A15)
 ```
+
+Crimson identity lives in `--db-border-atmosphere` (#5C3333) and in
+atmospheric/living-material elements only. Functional surfaces (forms,
+tables, inputs) use neutral warm borders (`--db-border: #34302A`), never
+crimson-tinted borders, so form states are never confused with danger.
 
 Do not use pure white cards in Dark mode.
 
@@ -583,9 +603,18 @@ Do not use pure black as the only surface level.
 
 Borders are primarily hairlines: **1px**.
 
-Light: `#E8E2D6`.
+Light:
+- `#EDE3CC` — standard hairline border for cards, inputs, containers.
+- `#D8C89E` — strong border for focused controls, selected states, emphasis.
 
-Dark: `#382222`.
+Dark, functional surfaces (forms, inputs, tables, cards containing data
+entry):
+- `#34302A` (`--db-border`) — neutral warm, never crimson-tinted. Prevents
+  implying an error state at rest.
+
+Dark, atmospheric/chrome surfaces (sidebar, hero, drawers, non-data cards):
+- `#5C3333` (`--db-border-atmosphere`) — crimson-tinted, consistent with
+  dark mode's environmental identity.
 
 Stronger borders are reserved for:
 
@@ -723,7 +752,7 @@ Inputs must be:
 
 Light: white surface, warm border, dark text.
 
-Dark: near-black surface, crimson-tinted border, warm white text.
+Dark: near-black surface, `--db-border` (neutral warm, NOT crimson-tinted), warm white text. Do not use `--db-border-atmosphere` on any form control, table, or input — that token is reserved for chrome/identity surfaces only.
 
 Focused states use gold.
 
@@ -1858,6 +1887,9 @@ Before implementation begins, confirm these decisions:
    darker success token.
 4. Final product name, separate from the Divine Blood codename.
 5. shadcn/ui registry and installed component set (see Section 13).
+6. Confirm `--db-border` vs `--db-border-atmosphere` are applied correctly
+   per Section 11 — audit that no form, input, or table in dark mode uses
+   `--db-border-atmosphere`.
 
 ---
 
