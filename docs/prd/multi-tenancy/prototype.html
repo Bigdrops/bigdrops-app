@@ -3,211 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIGDROPS — Tenancy &amp; Access Ledger</title>
+<title>BIGDROPS — Three-PRD Tenancy Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0e1013;
-  --panel:#15181d;
-  --panel-raised:#1b1f26;
-  --line:#272c34;
-  --line-soft:#1f242b;
-  --text:#e8e6df;
-  --text-dim:#8b9099;
-  --text-faint:#565c66;
-  --copper:#c17a3d;
-  --copper-dim:#8a5a2e;
-  --copper-glow:rgba(193,122,61,.14);
-  --vault:#3f8f83;
-  --vault-dim:#2b5f57;
-  --vault-glow:rgba(63,143,131,.13);
-  --registry:#5d7290;
-  --registry-glow:rgba(93,114,144,.13);
-  --ready:#5fae72;
-  --failed:#c1573f;
-  --creating:#c19a3d;
-  --radius:3px;
+  --paper:#faf6ee;
+  --panel:#ffffff;
+  --panel-tint:#fbf5e8;
+  --line:#e4d9c2;
+  --line-soft:#ede4d0;
+  --ink:#231f14;
+  --dim:#726b56;
+  --faint:#a89d81;
+  --gold:#a9762c;
+  --gold-deep:#7c561f;
+  --gold-glow:rgba(169,118,44,.10);
+  --vault:#3f7d6e;
+  --vault-deep:#2b5a4e;
+  --vault-glow:rgba(63,125,110,.10);
+  --office:#7a5a9c;
+  --office-glow:rgba(122,90,156,.10);
+  --ready:#3f7d51;
+  --warn:#a9762c;
+  --danger:#a8402a;
 }
-*{margin:0;padding:0;box-sizing:border-box}
+*{box-sizing:border-box;margin:0;padding:0}
 body{
-  font-family:'IBM Plex Sans',-apple-system,sans-serif;
+  min-height:100vh;padding:30px 22px 60px;
   background:
-    radial-gradient(circle at 15% 0%, rgba(193,122,61,.05), transparent 40%),
-    radial-gradient(circle at 90% 10%, rgba(63,143,131,.05), transparent 45%),
-    var(--ink);
-  color:var(--text);
-  padding:28px 24px 60px;
-  min-height:100vh;
+    radial-gradient(circle at 10% 0%, rgba(169,118,44,.06), transparent 40%),
+    radial-gradient(circle at 92% 6%, rgba(63,125,110,.05), transparent 42%),
+    var(--paper);
+  color:var(--ink);font-family:'IBM Plex Sans',sans-serif;
 }
-.wrap{max-width:1180px;margin:0 auto}
+.wrap{max-width:1220px;margin:auto}
 
-/* header */
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:6px;flex-wrap:wrap}
-.brand-mark{display:flex;align-items:baseline;gap:10px}
-.brand-mark .glyph{
-  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:2px;
-  color:var(--ink);background:var(--copper);padding:3px 7px;border-radius:2px;
-}
-h1{font-size:19px;font-weight:600;letter-spacing:.2px}
-.sub{color:var(--text-dim);font-size:13px;margin-top:6px;line-height:1.5;max-width:640px}
-.model-tag{
-  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);
-  border:1px solid var(--line);padding:5px 10px;border-radius:20px;white-space:nowrap;
-}
-.model-tag b{color:var(--vault);font-weight:600}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:11px}
+.glyph{font:700 13px 'IBM Plex Mono';letter-spacing:2px;background:var(--gold);color:#fff;padding:3px 8px;border-radius:2px}
+h1{font-family:'Fraunces',serif;font-size:23px;font-weight:600;color:var(--ink)}
+.sub{max-width:720px;margin-top:8px;color:var(--dim);font-size:13px;line-height:1.6}
+.tag{font:600 10px 'IBM Plex Mono';color:var(--vault);border:1px solid var(--line);background:var(--panel);padding:6px 11px;border-radius:20px;white-space:nowrap}
+.rule{height:1px;border:0;background:var(--line);margin:22px 0}
 
-hr.rule{border:none;height:1px;background:var(--line);margin:22px 0 24px}
-
-/* workspace bar */
-.workspace-bar{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  background:var(--panel);border:1px solid var(--line);border-radius:6px;
-  padding:12px 16px;margin-bottom:22px;
+/* three-plane switcher — the interactive spine */
+.plane-switch{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.plane-btn{
+  flex:1;min-width:180px;text-align:left;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel);border-radius:6px;
+  padding:11px 14px;transition:border-color .15s, background .15s;
 }
-.workspace-bar .ws-id{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
-.workspace-bar .ws-id .slug{color:var(--copper)}
-.status-pill{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.5px;
-  padding:3px 9px;border-radius:20px;text-transform:uppercase;
-}
-.status-pill.active{background:rgba(95,174,114,.14);color:var(--ready);border:1px solid rgba(95,174,114,.3)}
-.status-bar-note{font-size:11.5px;color:var(--text-faint);margin-left:auto}
+.plane-btn .t{font:600 10.5px 'IBM Plex Mono';letter-spacing:1.2px;text-transform:uppercase}
+.plane-btn .d{font-size:11px;color:var(--dim);margin-top:3px;line-height:1.4}
+.plane-btn[data-plane="office"].on{border-color:var(--office);background:var(--office-glow)}
+.plane-btn[data-plane="office"] .t{color:var(--office)}
+.plane-btn[data-plane="registry"].on{border-color:var(--faint);background:var(--panel-tint)}
+.plane-btn[data-plane="registry"] .t{color:var(--dim)}
+.plane-btn[data-plane="erp"].on{border-color:var(--gold);background:var(--gold-glow)}
+.plane-btn[data-plane="erp"] .t{color:var(--gold-deep)}
+.plane-btn:not(.on){opacity:.55}
+.plane-btn:hover{opacity:1}
 
-/* layout */
-.layout{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
-@media(max-width:920px){.layout{grid-template-columns:1fr}}
-
-.card{
-  background:var(--panel);border:1px solid var(--line);border-radius:6px;
-  padding:18px;
+.plane-detail{
+  border:1px solid var(--line);background:var(--panel);border-radius:6px;
+  padding:16px 18px;margin-bottom:18px;font-size:12.5px;color:var(--dim);line-height:1.6;
 }
+.plane-detail b{color:var(--ink);font-weight:600}
+.plane-detail .pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pill{font:10px 'IBM Plex Mono';padding:3px 8px;border-radius:3px;border:1px solid var(--line-soft);background:var(--panel-tint);color:var(--dim)}
+.pill.gold{color:var(--gold-deep);border-color:rgba(169,118,44,.3);background:var(--gold-glow)}
+.pill.vault{color:var(--vault-deep);border-color:rgba(63,125,110,.3);background:var(--vault-glow)}
+.pill.office{color:var(--office);border-color:rgba(122,90,156,.3);background:var(--office-glow)}
+
+.layout{display:grid;grid-template-columns:.92fr 1.08fr;gap:18px}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.plane-switch{flex-direction:column}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:17px}
 .card + .card{margin-top:18px}
 .card h2{
-  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1.5px;
-  text-transform:uppercase;color:var(--text-faint);margin-bottom:14px;
-  display:flex;align-items:center;gap:8px;
+  font:600 11px 'IBM Plex Mono';letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--faint);margin-bottom:13px;display:flex;align-items:center;gap:8px;
 }
-.card h2::before{content:'';width:5px;height:5px;background:var(--copper);border-radius:50%;display:inline-block}
+.card h2::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold)}
 
-/* identity */
+/* identity / controls */
 .identity-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.avatar{
-  width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-weight:600;font-size:14px;color:var(--ink);flex-shrink:0;font-family:'IBM Plex Mono',monospace;
-}
-.identity-row .who .name{font-size:14.5px;font-weight:600}
-.identity-row .who .role-line{font-size:11.5px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-top:2px}
-.owner-tag{color:var(--copper);font-weight:600}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 14px 'IBM Plex Mono';color:#fff;flex-shrink:0}
+.identity-row .name{font-size:14.5px;font-weight:600}
+.identity-row .role-line{font-size:11.5px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.owner-tag{color:var(--gold-deep);font-weight:600}
 
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .field{flex:1;min-width:150px}
-.field label{display:block;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-family:'IBM Plex Mono',monospace}
+.field label{display:block;font:10px 'IBM Plex Mono';color:var(--faint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
 select{
   width:100%;padding:8px 10px;border-radius:4px;border:1px solid var(--line);
-  background:var(--panel-raised);color:var(--text);font-size:13px;font-family:'IBM Plex Sans',sans-serif;
+  background:var(--panel-tint);color:var(--ink);font-size:13px;font-family:'IBM Plex Sans',sans-serif;
 }
 
-/* ledger entries = the signature element */
-.ledger-heading{font-size:11.5px;color:var(--text-dim);margin-bottom:10px;line-height:1.5}
-.ledger-heading code{font-family:'IBM Plex Mono',monospace;color:var(--vault);font-size:11px}
-.ledger-entry{
-  border-left:2px solid var(--line);padding:9px 0 9px 13px;margin-bottom:2px;position:relative;
+/* invite banner - clickable, drives real state */
+.invite-banner{
+  border:1px solid rgba(169,118,44,.4);background:var(--gold-glow);border-radius:5px;
+  padding:11px 13px;margin-bottom:14px;font-size:12px;color:var(--gold-deep);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
 }
-.ledger-entry::before{
-  content:'';position:absolute;left:-3.5px;top:15px;width:5px;height:5px;border-radius:50%;background:var(--line);
+.invite-banner button{
+  font:600 10.5px 'IBM Plex Mono';background:var(--gold);color:#fff;border:none;
+  padding:6px 12px;border-radius:4px;cursor:pointer;letter-spacing:.3px;
 }
-.ledger-entry.granted::before{background:var(--vault)}
-.ledger-entry .grant-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12px}
-.grant-chip{
-  background:var(--vault-glow);color:var(--vault);border:1px solid var(--vault-dim);
-  padding:2px 7px;border-radius:3px;font-size:11px;
-}
-.grant-chip.wildcard{background:var(--copper-glow);color:var(--copper);border-color:var(--copper-dim)}
-.ledger-entry .meta{font-size:11px;color:var(--text-faint);margin-top:4px}
-.ledger-entry .meta b{color:var(--text-dim);font-weight:500}
-.empty-ledger{font-size:12px;color:var(--text-faint);padding:14px 0;font-style:italic}
+.invite-banner button:hover{background:var(--gold-deep)}
+.invite-banner.hidden{display:none}
 
-/* schema vaults */
-.registry-block{
-  border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px;
-}
-.registry-block .head{
-  background:var(--registry-glow);border-bottom:1px solid var(--line);
-  padding:9px 12px;display:flex;justify-content:space-between;align-items:center;
-}
-.registry-block .head .name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--registry);font-weight:600}
-.registry-block .head .tag{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px}
-.registry-block .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
-.registry-block .tables span{
-  font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-raised);
-  padding:3px 7px;border-radius:3px;color:var(--text-dim);border:1px solid var(--line-soft);
-}
-
-.vault{
-  border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px;
-  transition:opacity .15s;
-}
-.vault.dim{opacity:.4}
-.vault .head{
-  background:var(--vault-glow);border-bottom:1px solid var(--vault-dim);
-  padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
-}
-.vault.active .head{background:rgba(63,143,131,.22)}
-.vault .head .schema-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vault);font-weight:600}
-.vault .head .entity-name{font-size:10.5px;color:var(--text-faint)}
-.vault .active-flag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink);background:var(--vault);padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.4px}
-.vault .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
-.vault .tables span{
-  font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-raised);
-  padding:3px 7px;border-radius:3px;color:var(--text-dim);border:1px solid var(--line-soft);
-}
-.prov-status{
-  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:10px;
-  text-transform:uppercase;letter-spacing:.4px;
-}
-.prov-status.ready{background:rgba(95,174,114,.16);color:var(--ready)}
-.prov-status.creating{background:rgba(193,154,61,.16);color:var(--creating)}
-.prov-status.failed{background:rgba(193,87,63,.16);color:var(--failed)}
-
-/* resolution + sql */
 .resolution-box{
-  background:var(--panel-raised);border:1px solid var(--line);border-radius:5px;
+  background:var(--panel-tint);border:1px solid var(--line);border-radius:5px;
   padding:12px 14px;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;font-size:12px;
 }
-.resolution-box .step{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--text-dim)}
-.resolution-box .step .n{color:var(--text-faint)}
-.resolution-box .step.final{color:var(--vault);font-weight:600}
-.resolution-box .arrow{color:var(--text-faint);padding-left:2px}
+.resolution-box .step{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--dim)}
+.resolution-box .step .n{color:var(--faint)}
+.resolution-box .step.final{color:var(--vault-deep);font-weight:600}
 
-.sql-pane{
-  background:#0a0b0d;border:1px solid var(--line);color:#dcdad2;padding:13px 14px;border-radius:5px;
-  font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;
-}
-.sql-pane .kw{color:#8fb8d8}
-.sql-pane .str{color:var(--vault)}
-.sql-pane .cm{color:var(--text-faint);font-style:italic}
+/* access ledger */
+.ledger-heading{font-size:11.5px;color:var(--dim);margin-bottom:10px;line-height:1.5}
+.ledger-heading code{font-family:'IBM Plex Mono',monospace;color:var(--vault-deep);font-size:11px}
+.ledger-entry{border-left:2px solid var(--line);padding:9px 0 9px 13px;position:relative}
+.ledger-entry::before{content:'';position:absolute;left:-3.5px;top:15px;width:5px;height:5px;border-radius:50%;background:var(--line)}
+.ledger-entry.granted::before{background:var(--vault)}
+.ledger-entry .grant-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.grant-chip{background:var(--vault-glow);color:var(--vault-deep);border:1px solid rgba(63,125,110,.3);padding:2px 7px;border-radius:3px;font-size:11px}
+.grant-chip.wildcard{background:var(--gold-glow);color:var(--gold-deep);border-color:rgba(169,118,44,.35)}
+.ledger-entry .meta{font-size:11px;color:var(--faint);margin-top:4px}
+.ledger-entry .meta b{color:var(--dim);font-weight:500}
+.empty-ledger{font-size:12px;color:var(--faint);padding:14px 0;font-style:italic}
 
-/* data preview */
-.data-source-note{font-size:11px;color:var(--text-faint);margin-bottom:8px;font-family:'IBM Plex Mono',monospace}
-.data-source-note b{color:var(--vault)}
+/* schema vaults / registry */
+.registry-block{border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px}
+.registry-block .head{background:var(--panel-tint);border-bottom:1px solid var(--line);padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+.registry-block .head .name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);font-weight:600}
+.registry-block .head .tag2{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+.registry-block .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
+.registry-block .tables span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-tint);padding:3px 7px;border-radius:3px;color:var(--dim);border:1px solid var(--line-soft)}
+
+.vault-box{border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:12px;transition:opacity .15s;cursor:pointer}
+.vault-box.dim{opacity:.42}
+.vault-box .head{background:var(--vault-glow);border-bottom:1px solid rgba(63,125,110,.3);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.vault-box.active .head{background:rgba(63,125,110,.2)}
+.vault-box .head .schema-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--vault-deep);font-weight:600}
+.vault-box .head .entity-name{font-size:10.5px;color:var(--faint)}
+.vault-box .active-flag{font:700 9.5px 'IBM Plex Mono';color:#fff;background:var(--vault-deep);padding:2px 7px;border-radius:10px;letter-spacing:.4px}
+.vault-box .tables{padding:9px 12px;display:flex;flex-wrap:wrap;gap:5px}
+.vault-box .tables span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--panel-tint);padding:3px 7px;border-radius:3px;color:var(--dim);border:1px solid var(--line-soft)}
+.prov-status{font:600 9.5px 'IBM Plex Mono';padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px}
+.prov-status.ready{background:rgba(63,125,81,.14);color:var(--ready)}
+.prov-status.creating{background:rgba(169,118,44,.14);color:var(--warn)}
+.prov-status.failed{background:rgba(168,64,42,.14);color:var(--danger)}
+
+.sql-pane{background:#1c1710;border:1px solid var(--line);color:#efe6d3;padding:13px 14px;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.75;overflow-x:auto}
+.sql-pane .kw{color:#8fc2d8}
+.sql-pane .str{color:#8fcdb0}
+.sql-pane .cm{color:#8a8065;font-style:italic}
+.sql-pane .grant{color:#d9a25c}
+
+.data-source-note{font-size:11px;color:var(--faint);margin-bottom:8px;font-family:'IBM Plex Mono',monospace}
+.data-source-note b{color:var(--vault-deep)}
 table.data-table{width:100%;border-collapse:collapse;font-size:12px}
-table.data-table th{
-  text-align:left;padding:7px 9px;background:var(--panel-raised);color:var(--text-faint);
-  font-weight:500;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10.5px;
-  text-transform:uppercase;letter-spacing:.4px;
-}
-table.data-table td{padding:7px 9px;border-bottom:1px solid var(--line-soft);color:var(--text-dim)}
-.empty-row td{text-align:center;color:var(--text-faint);padding:18px;font-style:italic}
+table.data-table th{text-align:left;padding:7px 9px;background:var(--panel-tint);color:var(--faint);font-weight:500;border-bottom:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+table.data-table td{padding:7px 9px;border-bottom:1px solid var(--line-soft);color:var(--dim)}
+.empty-row td{text-align:center;color:var(--faint);padding:18px;font-style:italic}
 
-/* activity */
 .activity-list{list-style:none;font-size:12px}
-.activity-list li{padding:7px 0;border-bottom:1px solid var(--line-soft);color:var(--text-dim);line-height:1.55}
+.activity-list li{padding:7px 0;border-bottom:1px solid var(--line-soft);color:var(--dim);line-height:1.55}
 .activity-list li:last-child{border-bottom:none}
-.activity-list .who{font-weight:600;color:var(--text)}
-.activity-list .stamp{color:var(--text-faint);font-family:'IBM Plex Mono',monospace;font-size:10.5px;float:right}
+.activity-list .who{font-weight:600;color:var(--ink)}
+.activity-list .stamp{color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:10.5px;float:right}
 
-footer{margin-top:28px;font-size:11px;color:var(--text-faint);text-align:center;font-family:'IBM Plex Mono',monospace}
+.boundary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.boundary-grid{grid-template-columns:1fr}}
+.boundary-box{padding:12px;border-radius:5px;border:1px solid var(--line);background:var(--panel-tint)}
+.boundary-box h3{font:600 10px 'IBM Plex Mono';text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.boundary-box p{font-size:11.5px;line-height:1.55;color:var(--dim)}
+.boundary-box.good h3{color:var(--vault-deep)}
+.boundary-box.stop h3{color:var(--danger)}
+
+footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-family:'IBM Plex Mono',monospace}
 </style>
 </head>
 <body>
@@ -215,77 +193,85 @@ footer{margin-top:28px;font-size:11px;color:var(--text-faint);text-align:center;
 
 <header>
   <div>
-    <div class="brand-mark"><span class="glyph">BD</span><h1>Tenancy &amp; Access Ledger</h1></div>
-    <p class="sub">Workspace → Entity → Schema, resolved once. Access is never implied by role — every line below is an explicit grant someone made, to someone, for one action, on one entity.</p>
+    <div class="brand"><span class="glyph">BD</span><h1>Three-PRD Tenancy Ledger</h1></div>
+    <p class="sub">Platform Office governs workspace lifecycle only. The ERP owns entity creation, invite acceptance and tenant routing. Business data lives inside the resolved entity schema, protected by explicit permission grants — click through the states below.</p>
   </div>
-  <div class="model-tag">deny-by-default · <b>action-based</b> permissions</div>
+  <div class="tag">Multi-Tenancy v2.1 · Frontend v1.2 · Office v1.1</div>
 </header>
 
 <hr class="rule">
 
-<div class="workspace-bar">
-  <span class="ws-id">workspace <span class="slug">bigdrops-main</span></span>
-  <span class="status-pill active">active</span>
-  <span class="ws-id" style="color:var(--text-faint)">created_by <span class="slug" style="color:var(--text-dim)">aisha@bigdrops.ng</span></span>
-  <span class="status-bar-note">Phase 1 — one active workspace per session</span>
+<!-- interactive plane switcher -->
+<div class="plane-switch" id="planeSwitch">
+  <div class="plane-btn on" data-plane="office">
+    <div class="t">01 · Platform Office</div>
+    <div class="d">Approves &amp; suspends workspaces only</div>
+  </div>
+  <div class="plane-btn" data-plane="registry">
+    <div class="t">02 · Public Registry</div>
+    <div class="d">Shared control-plane metadata</div>
+  </div>
+  <div class="plane-btn" data-plane="erp">
+    <div class="t">03 · ERP / Tenant Layer</div>
+    <div class="d">Routing, RLS, business operations</div>
+  </div>
 </div>
+<div class="plane-detail" id="planeDetail"></div>
 
 <div class="layout">
-  <!-- LEFT: identity + access ledger -->
   <div>
     <div class="card">
-      <h2>Identity</h2>
+      <h2>Identity &amp; workspace resolution</h2>
       <div class="identity-row">
         <div id="avatar" class="avatar"></div>
-        <div class="who">
+        <div>
           <div id="userName" class="name"></div>
           <div id="userRoleLine" class="role-line"></div>
         </div>
       </div>
       <div class="controls">
-        <div class="field">
-          <label>Signed in as</label>
-          <select id="userSelect"></select>
-        </div>
-        <div class="field">
-          <label>Active entity</label>
-          <select id="entitySelect"></select>
-        </div>
+        <div class="field"><label>Signed in as</label><select id="userSelect"></select></div>
+        <div class="field"><label>Active entity</label><select id="entitySelect"></select></div>
       </div>
+
+      <div id="inviteBanner" class="invite-banner hidden">
+        <span>📩 Pending invitation to <b id="inviteWs"></b> — checked before Create Workspace, per Frontend PRD §8/§12.3</span>
+        <button id="acceptInviteBtn">accept_workspace_invitation()</button>
+      </div>
+
       <div id="resolutionBox" class="resolution-box"></div>
     </div>
 
     <div class="card">
-      <h2>Access ledger — active entity</h2>
-      <p class="ledger-heading">Rows from <code>entity_permissions</code>. No role implies these — each was written by someone with <code>assign_permissions</code>, or copied in from a template at grant time.</p>
+      <h2>Entity access ledger</h2>
+      <p class="ledger-heading">Rows from <code>entity_permissions</code>. Deny-by-default — nothing here is implied by role or workspace membership.</p>
       <div id="ledgerList"></div>
     </div>
 
     <div class="card">
-      <h2>Activity</h2>
-      <ul id="activityLog" class="activity-list"></ul>
+      <h2>Security boundary</h2>
+      <div class="boundary-grid">
+        <div class="boundary-box good"><h3>Allowed responsibility</h3><p>Platform Office: lifecycle control &amp; read-only observation. ERP: tenant routing, provisioning, invites. RLS: final authorization, always.</p></div>
+        <div class="boundary-box stop"><h3>Never implied</h3><p>Workspace membership ≠ entity access. Approval ≠ provisioning. Tenant client ≠ authorization. Platform operator ≠ tenant-data access.</p></div>
+      </div>
     </div>
   </div>
 
-  <!-- RIGHT: schemas + data -->
   <div>
     <div class="card">
       <h2>Schema registry</h2>
       <div class="registry-block">
-        <div class="head">
-          <span class="name">public</span>
-          <span class="tag">shared registry — never business data</span>
-        </div>
+        <div class="head"><span class="name">public</span><span class="tag2">shared registry — never business data</span></div>
         <div class="tables">
-          <span>workspaces</span><span>workspace_members</span><span>entities</span>
-          <span>entity_permissions</span><span>entity_provisioning_status</span><span>platform_operators</span>
+          <span>workspaces</span><span>workspace_members</span><span>workspace_invitations</span>
+          <span>entities</span><span>entity_permissions</span><span>entity_provisioning_status</span><span>platform_operators</span>
         </div>
       </div>
       <div id="vaultList"></div>
     </div>
 
     <div class="card">
-      <h2>Query resolution</h2>
+      <h2>Query resolution — click a vault to resolve</h2>
       <div class="sql-pane" id="sqlPane"></div>
     </div>
 
@@ -297,130 +283,158 @@ footer{margin-top:28px;font-size:11px;color:var(--text-faint);text-align:center;
         <tbody id="dataBody"></tbody>
       </table>
     </div>
+
+    <div class="card">
+      <h2>Activity</h2>
+      <ul id="activityLog" class="activity-list"></ul>
+    </div>
   </div>
 </div>
 
-<footer>entity_permissions is deny-by-default · schema names follow entity_&lt;workspace_slug&gt;_&lt;entity_slug&gt; · public schema holds registry data only</footer>
+<footer>Workspace lifecycle · invitation acceptance · entity provisioning · tenant routing · action-based authorization — deny by default</footer>
 </div>
 
 <script>
-/* ===== MODEL — matches Multi-Tenancy PRD v2.1 + Frontend Migration PRD ===== */
-const workspace = { id:'ws_1', slug:'bigdrops-main', name:'BIGDROPS Main' };
+/* ===== MODEL — matches all three PRDs (v2.1 backend, v1.2 frontend, v1.1 platform office) ===== */
+const workspace = { id:'ws_1', slug:'bigdrops-main', name:'BIGDROPS Main', status:'active' };
 
 const entities = [
-  { id:'ent_acme',  slug:'acme',  name:'Acme Corp',        schema:'entity_bigdropsmain_acme',  status:'ready' },
-  { id:'ent_beta',  slug:'beta',  name:'Beta Industries',  schema:'entity_bigdropsmain_beta',  status:'ready' },
-  { id:'ent_nuri',  slug:'nuri',  name:'Nuri Logistics',   schema:'entity_bigdropsmain_nuri',  status:'creating' },
+  { id:'ent_acme', slug:'acme', name:'Acme Corp', schema:'entity_bigdropsmain_acme', status:'ready' },
+  { id:'ent_beta', slug:'beta', name:'Beta Industries', schema:'entity_bigdropsmain_beta', status:'ready' },
+  { id:'ent_nuri', slug:'nuri', name:'Nuri Logistics', schema:'entity_bigdropsmain_nuri', status:'creating' },
 ];
 
 const users = [
-  { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#c17a3d', wsRole:'owner' },
-  { id:'u_chidi', name:'Chidi Okonkwo',  initials:'CO', color:'#3f8f83', wsRole:'member' },
-  { id:'u_bola',  name:'Bola Adeyemi',   initials:'BA', color:'#5d7290', wsRole:'member' },
+  { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#a9762c', wsRole:'owner', pendingInvite:null },
+  { id:'u_chidi', name:'Chidi Okonkwo',  initials:'CO', color:'#3f7d6e', wsRole:'member', pendingInvite:null },
+  { id:'u_bola',  name:'Bola Adeyemi',   initials:'BA', color:'#7a5a9c', wsRole:null,     pendingInvite:{ workspace:'bigdrops-main', invitedBy:'Aisha Mohammed', entity:'ent_beta', resource:'*', action:'view' } },
 ];
 
-// entity_permissions rows — (entity_id, user_id, resource, action, granted_by). No roles.
-const grants = [
+let grants = [
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
-
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'view',   grantedBy:'Aisha Mohammed' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'create', grantedBy:'Aisha Mohammed' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'edit',   grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'view',    grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'create',  grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'edit',    grantedBy:'Aisha Mohammed' },
   { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'approve', grantedBy:'Aisha Mohammed' },
-
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
-
-  { entity:'ent_beta', user:'u_bola', resource:'*', action:'view', grantedBy:'Aisha Mohammed (via template: Viewer)' },
 ];
 
 const mockData = {
   entity_bigdropsmain_acme: [
     { id:'INV-014', client:'Lekki Freeport Terminal', amount:'₦2,400,000' },
-    { id:'INV-015', client:'Dangote Refinery Ops',     amount:'₦875,000' },
-    { id:'INV-016', client:'Acme West Depot',          amount:'₦1,200,000' },
+    { id:'INV-015', client:'Dangote Refinery Ops', amount:'₦875,000' },
+    { id:'INV-016', client:'Acme West Depot', amount:'₦1,200,000' },
   ],
   entity_bigdropsmain_beta: [
     { id:'INV-007', client:'Beta Pharma Distribution', amount:'₦5,600,000' },
-    { id:'INV-008', client:'Beta Logistics NG',         amount:'₦3,200,000' },
+    { id:'INV-008', client:'Beta Logistics NG', amount:'₦3,200,000' },
   ],
   entity_bigdropsmain_nuri: [],
 };
 
+const planeCopy = {
+  office: `<b>Platform Office (Operations Console)</b> — a separate application, separate login, separate release cycle. Its only workspace power is <code style="font-family:'IBM Plex Mono'">approve_workspace()</code> and suspend. It never touches an entity schema, never sees an invoice, and cannot see individual workspace membership beyond the observability contract.
+  <div class="pills"><span class="pill office">approve_workspace()</span><span class="pill office">suspend</span><span class="pill">read entity_provisioning_status</span><span class="pill">read workspaces.status</span></div>`,
+  registry: `<b>Public schema — shared registry only.</b> Holds workspaces, memberships, invitations, entities, entity_permissions, and provisioning status. This is the only place the Platform Office and the ERP both read from — and neither writes business data here.
+  <div class="pills"><span class="pill">workspaces</span><span class="pill">workspace_members</span><span class="pill gold">workspace_invitations</span><span class="pill">entities</span><span class="pill">entity_permissions</span><span class="pill">entity_provisioning_status</span></div>`,
+  erp: `<b>ERP / Tenant Layer.</b> Authenticated users resolve one active workspace, one active entity, one resolved schema. The Tenant Client only routes — RLS inside the entity schema is what actually authorizes every read and write.
+  <div class="pills"><span class="pill gold">provision_entity()</span><span class="pill gold">accept_workspace_invitation()</span><span class="pill vault">tenantClient.schema()</span><span class="pill vault">RLS</span></div>`,
+};
+
 /* ===== STATE ===== */
+let currentPlane = 'office';
 let currentUserId = 'u_aisha';
 let currentEntityId = 'ent_acme';
 let activityCount = 0;
 
 const byId = (arr,id) => arr.find(x => x.id === id);
-const userGrants   = (userId, entityId) => grants.filter(g => g.user === userId && g.entity === entityId);
+const userGrants = (userId, entityId) => grants.filter(g => g.user === userId && g.entity === entityId);
 const userEntities = (userId) => [...new Set(grants.filter(g => g.user === userId).map(g => g.entity))];
 
 /* ===== RENDER ===== */
+function renderPlane(){
+  document.querySelectorAll('.plane-btn').forEach(b => b.classList.toggle('on', b.dataset.plane === currentPlane));
+  document.getElementById('planeDetail').innerHTML = planeCopy[currentPlane];
+}
+
 function render(){
   const user = byId(users, currentUserId);
-  const entity = byId(entities, currentEntityId);
   const reachable = userEntities(currentUserId);
+  if (!reachable.includes(currentEntityId)) currentEntityId = reachable[0] || null;
+  const entity = currentEntityId ? byId(entities, currentEntityId) : null;
 
-  // identity
   const av = document.getElementById('avatar');
-  av.textContent = user.initials; av.style.background = user.color; av.style.color = '#0e1013';
+  av.textContent = user.initials; av.style.background = user.color;
   document.getElementById('userName').textContent = user.name;
-  document.getElementById('userRoleLine').innerHTML =
-    `workspace role: <span class="${user.wsRole==='owner' ? 'owner-tag' : ''}">${user.wsRole}</span>`;
+  document.getElementById('userRoleLine').innerHTML = user.wsRole
+    ? `workspace role: <span class="${user.wsRole==='owner'?'owner-tag':''}">${user.wsRole}</span>`
+    : `workspace role: <span style="color:var(--faint)">none yet — pending invitation</span>`;
 
-  // selects
   document.getElementById('userSelect').innerHTML = users.map(u =>
     `<option value="${u.id}" ${u.id===currentUserId?'selected':''}>${u.name}</option>`).join('');
-  document.getElementById('entitySelect').innerHTML = reachable.map(eid => {
-    const e = byId(entities, eid);
-    return `<option value="${eid}" ${eid===currentEntityId?'selected':''}>${e.name}</option>`;
-  }).join('') || `<option>No entity access</option>`;
+  document.getElementById('entitySelect').innerHTML = reachable.length
+    ? reachable.map(eid => { const e = byId(entities, eid); return `<option value="${eid}" ${eid===currentEntityId?'selected':''}>${e.name}</option>`; }).join('')
+    : `<option>No entity access yet</option>`;
 
-  // resolution box
-  document.getElementById('resolutionBox').innerHTML = `
-    <div class="step"><span class="n">1</span> workspace &nbsp;→&nbsp; <span>${workspace.slug} (active)</span></div>
+  // invite banner
+  const banner = document.getElementById('inviteBanner');
+  if (user.pendingInvite) {
+    banner.classList.remove('hidden');
+    document.getElementById('inviteWs').textContent = user.pendingInvite.workspace;
+  } else {
+    banner.classList.add('hidden');
+  }
+
+  // resolution steps
+  document.getElementById('resolutionBox').innerHTML = user.pendingInvite ? `
+    <div class="step"><span class="n">1</span> membership? &nbsp;→&nbsp; <span>none directly</span></div>
+    <div class="step"><span class="n">2</span> pending invite? &nbsp;→&nbsp; <span style="color:var(--gold-deep)">yes — checked before Create Workspace</span></div>
+    <div class="step final"><span class="n">3</span> awaiting &nbsp;→&nbsp; <span>accept_workspace_invitation()</span></div>
+  ` : `
+    <div class="step"><span class="n">1</span> workspace &nbsp;→&nbsp; <span>${workspace.slug} (${workspace.status})</span></div>
     <div class="step"><span class="n">2</span> entity &nbsp;→&nbsp; <span>${entity ? entity.name : '—'}</span></div>
-    <div class="step"><span class="n">3</span> permission check &nbsp;→&nbsp; <span>${entity && userGrants(currentUserId, entity.id).length ? 'has explicit grant(s)' : 'no grant found → deny'}</span></div>
+    <div class="step"><span class="n">3</span> permission check &nbsp;→&nbsp; <span>${entity && userGrants(currentUserId, entity.id).length ? 'explicit grant found' : 'no grant → deny'}</span></div>
     <div class="step final"><span class="n">4</span> resolved schema &nbsp;→&nbsp; <span>${entity ? entity.schema : 'n/a'}</span></div>
   `;
 
   // ledger
   const g = entity ? userGrants(currentUserId, entity.id) : [];
-  const ledgerEl = document.getElementById('ledgerList');
-  ledgerEl.innerHTML = g.length ? g.map(row => `
+  document.getElementById('ledgerList').innerHTML = g.length ? g.map(row => `
     <div class="ledger-entry granted">
       <div class="grant-line">
         <span class="grant-chip ${row.resource==='*'?'wildcard':''}">${row.resource}</span>
-        <span style="color:var(--text-faint)">·</span>
+        <span style="color:var(--faint)">·</span>
         <span class="grant-chip ${row.resource==='*'?'wildcard':''}">${row.action}</span>
       </div>
       <div class="meta">Granted by <b>${row.grantedBy}</b></div>
-    </div>
-  `).join('') : `<div class="empty-ledger">No entity_permissions row for this user on this entity — access denied by default.</div>`;
+    </div>`).join('') : `<div class="empty-ledger">No entity_permissions row for this user on this entity — access denied by default.</div>`;
 
   // vaults
   document.getElementById('vaultList').innerHTML = entities.map(e => {
     const active = e.id === currentEntityId;
     const dim = !reachable.includes(e.id);
-    return `<div class="vault ${active?'active':''} ${dim?'dim':''}">
+    return `<div class="vault-box ${active?'active':''} ${dim?'dim':''}" data-entity="${e.id}">
       <div class="head">
         <span class="schema-name">${e.schema}</span>
         <span class="entity-name">${e.name}</span>
         <span class="prov-status ${e.status}">${e.status}</span>
         ${active ? '<span class="active-flag">RESOLVED</span>' : ''}
       </div>
-      <div class="tables">
-        <span>settings</span><span>invoices</span><span>clients</span>
-        <span>waybills</span><span>payments</span><span>audit_logs</span>
-      </div>
+      <div class="tables"><span>settings</span><span>invoices</span><span>clients</span><span>waybills</span><span>payments</span><span>audit_logs</span></div>
     </div>`;
   }).join('');
+  document.querySelectorAll('.vault-box').forEach(el => el.addEventListener('click', () => {
+    const eid = el.dataset.entity;
+    if (!reachable.includes(eid)) { logActivity(`<span class="who">${user.name}</span> tried to open <b>${byId(entities,eid).schema}</b> — no entity_permissions row, denied`); return; }
+    currentEntityId = eid; render();
+    logActivity(`<span class="who">${user.name}</span> resolved schema <b>${byId(entities,eid).schema}</b>`);
+  }));
 
   // sql
   document.getElementById('sqlPane').innerHTML = entity ? `
@@ -428,21 +442,17 @@ function render(){
 <span class="kw">const</span> schema = entityProvider.resolvedSchema; <span class="cm">// "${entity.schema}"</span><br>
 <span class="kw">await</span> supabase.schema(schema).from(<span class="str">'invoices'</span>).select(<span class="str">'*'</span>)<br><br>
 <span class="cm">// RLS on invoices, inside ${entity.schema}</span><br>
-<span class="kw">USING</span> (has_entity_permission(<span class="str">'${entity.id}'</span>, auth.uid(), <span class="str">'invoice'</span>, <span class="str">'view'</span>))
-  ` : `<span class="cm">// no entity resolved</span>`;
+<span class="kw">USING</span> (<span class="grant">has_entity_permission('${entity.id}', auth.uid(), 'invoice', 'view')</span>)
+  ` : `<span class="cm">// no entity resolved — accept invite or select an entity</span>`;
 
   // data
   document.getElementById('dataSourceLabel').textContent = entity ? entity.schema : '—';
   const rows = entity ? (mockData[entity.schema] || []) : [];
   const canView = entity && userGrants(currentUserId, entity.id).some(g => g.action === 'view');
   const body = document.getElementById('dataBody');
-  if (!canView) {
-    body.innerHTML = `<tr class="empty-row"><td colspan="4">No 'view' grant on this entity — RLS returns zero rows</td></tr>`;
-  } else if (rows.length === 0) {
-    body.innerHTML = `<tr class="empty-row"><td colspan="4">Schema exists, no invoices yet (provisioning: ${entity.status})</td></tr>`;
-  } else {
-    body.innerHTML = rows.map((r,i) => `<tr><td>${i+1}</td><td>${r.id}</td><td>${r.client}</td><td>${r.amount}</td></tr>`).join('');
-  }
+  if (!canView) body.innerHTML = `<tr class="empty-row"><td colspan="4">No 'view' grant on this entity — RLS returns zero rows</td></tr>`;
+  else if (rows.length === 0) body.innerHTML = `<tr class="empty-row"><td colspan="4">Schema exists, no invoices yet (provisioning: ${entity.status})</td></tr>`;
+  else body.innerHTML = rows.map((r,i) => `<tr><td>${i+1}</td><td>${r.id}</td><td>${r.client}</td><td>${r.amount}</td></tr>`).join('');
 }
 
 function logActivity(html){
@@ -452,25 +462,40 @@ function logActivity(html){
   li.innerHTML = `<span class="stamp">${stamp}</span>${html}`;
   log.insertBefore(li, log.firstChild);
   activityCount++;
-  if (activityCount > 12) log.removeChild(log.lastChild);
+  if (activityCount > 14) log.removeChild(log.lastChild);
 }
 
 /* ===== EVENTS ===== */
+document.getElementById('planeSwitch').addEventListener('click', e => {
+  const btn = e.target.closest('.plane-btn'); if (!btn) return;
+  currentPlane = btn.dataset.plane; renderPlane();
+});
 document.getElementById('userSelect').addEventListener('change', e => {
   currentUserId = e.target.value;
   const reachable = userEntities(currentUserId);
   currentEntityId = reachable[0] || null;
   render();
-  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> resolved workspace membership (${byId(users,currentUserId).wsRole})`);
+  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> signed in`);
 });
 document.getElementById('entitySelect').addEventListener('change', e => {
-  currentEntityId = e.target.value;
+  currentEntityId = e.target.value; render();
+  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> switched entity → <b>${byId(entities,currentEntityId).schema}</b>`);
+});
+document.getElementById('acceptInviteBtn').addEventListener('click', () => {
+  const user = byId(users, currentUserId);
+  if (!user.pendingInvite) return;
+  const inv = user.pendingInvite;
+  // simulate accept_workspace_invitation(): populate membership + entity_permissions server-side
+  user.wsRole = 'member';
+  grants.push({ entity: inv.entity, user: user.id, resource: inv.resource, action: inv.action, grantedBy: `${inv.invitedBy} (via invite)` });
+  user.pendingInvite = null;
+  currentEntityId = inv.entity;
   render();
-  const entity = byId(entities, currentEntityId);
-  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> switched entity → resolved schema <b>${entity.schema}</b>`);
+  logActivity(`<span class="who">${user.name}</span> called <b>accept_workspace_invitation()</b> — membership + entity_permissions written server-side`);
 });
 
 /* ===== INIT ===== */
+renderPlane();
 render();
 logActivity(`<span class="who">Aisha Mohammed</span> session start — workspace <b>bigdrops-main</b> resolved as active`);
 </script>
