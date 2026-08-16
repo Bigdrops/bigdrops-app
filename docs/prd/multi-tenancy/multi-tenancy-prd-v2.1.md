@@ -16,6 +16,11 @@ alters the authorization model, tenancy hierarchy, or any existing table
 shape — see §9.1 and the `workspaces` table in §5 for the diffs.
 
 ---
+**Illustration:** An interactive HTML reference illustrating this document's model
+alongside the other two PRDs in this set (workspace resolution, entity provisioning,
+action-based permissions, invite acceptance). Not a spec — if it and this document
+ever disagree, this document wins.
+https://github.com/Bigdrops/bigdrops-app/blob/main/docs/prd/multi-tenancy/three-prd-tenancy-illustration.html
 
 ## 0. What Changed From v2.0
 
