@@ -12,6 +12,11 @@
 ---
 
 ## 1. Executive Summary
+**Illustration:** An interactive HTML reference illustrating this document's model
+alongside the other two PRDs in this set (workspace resolution, entity provisioning,
+action-based permissions, invite acceptance). Not a spec — if it and this document
+ever disagree, this document wins.
+https://github.com/Bigdrops/bigdrops-app/blob/main/docs/prd/multi-tenancy/three-prd-tenancy-illustration.html
 
 The Platform Office is an independent, high-density Operations Console (NOC) designed exclusively for BIGDROPS platform operators. It is the centralized cockpit used to observe, maintain, and recover the multi-tenant BIGDROPS system.
 
