@@ -13,6 +13,11 @@
 - **v1.2 (2026-08-15):** Moved workspace creation and company creation into ERP frontend scope. The ERP now creates workspaces (status `pending_approval`) and companies (entity provisioning) from inside the app. Workspace approval stays with the Platform Office. Added switcher UI placement rules: workspace switching is settings-level; company switching appears in the side drawer of the hamburger menu (LHS) on mobile. See sections 2, 8, 9, 10.7, 12, 15, 16, 19, and 20.
 
 ---
+**Illustration:** An interactive HTML reference illustrating this document's model
+alongside the other two PRDs in this set (workspace resolution, entity provisioning,
+action-based permissions, invite acceptance). Not a spec — if it and this document
+ever disagree, this document wins.
+https://github.com/Bigdrops/bigdrops-app/blob/main/docs/prd/multi-tenancy/three-prd-tenancy-illustration.html
 
 # 1. Executive Summary
 The BIGDROPS ERP changes from a single-tenant architecture to a multi-tenant architecture. The multi-tenant architecture uses PostgreSQL schema isolation.
