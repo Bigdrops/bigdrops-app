@@ -3,6 +3,8 @@
 
 ## Project: BIGDROPS Platform Office (Operations Console)
 The Platform Office PRD at this path is a mirrored copy for context only
+my origin 
+https://github.com/Bigdrops/bigdrops-platform-office/blob/main/docs%2FPRD%2Fplatform-office-prd.md
 **Status:** Locked Architecture (Frozen)  
 **Version:** 1.3  
 **Date:** 2026-08-16  
