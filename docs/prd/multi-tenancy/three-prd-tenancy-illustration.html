@@ -194,9 +194,9 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
 <header>
   <div>
     <div class="brand"><span class="glyph">BD</span><h1>Three-PRD Tenancy Ledger</h1></div>
-    <p class="sub">Platform Office governs workspace lifecycle only. The ERP owns entity creation, invite acceptance and tenant routing. Business data lives inside the resolved entity schema, protected by explicit permission grants — click through the states below.</p>
+    <p class="sub">Platform Office governs workspace lifecycle only. The ERP owns entity creation, invite acceptance, tenant routing and create-or-join onboarding. Multi-workspace membership is allowed, with exactly one workspace active per session. Administration is two-level: Workspace Admin (authority ceiling) above Company/Entity Admin (scoped), above business operations — and admin authority never equals business permissions. Business data lives inside the resolved entity schema, protected by explicit permission grants — click through the states below.</p>
   </div>
-  <div class="tag">Multi-Tenancy v2.1 · Frontend v1.2 · Office v1.1</div>
+  <div class="tag">Multi-Tenancy v2.1 · Frontend v1.5 · Office v1.3</div>
 </header>
 
 <hr class="rule">
@@ -231,15 +231,27 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
       </div>
       <div class="controls">
         <div class="field"><label>Signed in as</label><select id="userSelect"></select></div>
+        <div class="field"><label>Active workspace (one per session)</label><select id="wsSelect"></select></div>
         <div class="field"><label>Active entity</label><select id="entitySelect"></select></div>
       </div>
 
       <div id="inviteBanner" class="invite-banner hidden">
-        <span>📩 Pending invitation to <b id="inviteWs"></b> — checked before Create Workspace, per Frontend PRD §8/§12.3</span>
-        <button id="acceptInviteBtn">accept_workspace_invitation()</button>
+        <div>
+          <div style="font:600 10px 'IBM Plex Mono';letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">invitation to <b id="inviteWs" style="color:var(--gold-deep)"></b></div>
+          <div id="inviteMeta" style="line-height:1.5"></div>
+        </div>
+        <div id="inviteActions" style="display:flex;gap:7px;flex-wrap:wrap">
+          <button id="acceptInviteBtn">accept_workspace_invitation()</button>
+          <button id="passInviteBtn" style="background:transparent;border:1px solid rgba(169,118,44,.5);color:var(--gold-deep)">Pass for now</button>
+        </div>
       </div>
 
       <div id="resolutionBox" class="resolution-box"></div>
+    </div>
+
+    <div class="card">
+      <h2>Administration — two-level model</h2>
+      <div id="adminBox"></div>
     </div>
 
     <div class="card">
@@ -291,23 +303,32 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
   </div>
 </div>
 
-<footer>Workspace lifecycle · invitation acceptance · entity provisioning · tenant routing · action-based authorization — deny by default</footer>
+<footer>Workspace lifecycle · create-or-join onboarding · invitation lifecycle (pending → accepted/revoked/expired, pass for now is not a state) · two-level administration (Workspace Admin ceiling → Company/Entity Admin → Member) · tenant routing · action-based authorization — deny by default</footer>
 </div>
 
 <script>
-/* ===== MODEL — matches all three PRDs (v2.1 backend, v1.2 frontend, v1.1 platform office) ===== */
-const workspace = { id:'ws_1', slug:'bigdrops-main', name:'BIGDROPS Main', status:'active' };
+/* ===== MODEL — matches all three PRDs (v2.1 backend, v1.5 frontend, v1.3 platform office) ===== */
+const workspaces = [
+  { id:'ws_1', slug:'bigdrops-main',  name:'BIGDROPS Main', status:'active' },
+  { id:'ws_2', slug:'nova-logistics', name:'Nova Logistics', status:'active' },
+];
 
 const entities = [
-  { id:'ent_acme', slug:'acme', name:'Acme Corp', schema:'entity_bigdropsmain_acme', status:'ready' },
-  { id:'ent_beta', slug:'beta', name:'Beta Industries', schema:'entity_bigdropsmain_beta', status:'ready' },
-  { id:'ent_nuri', slug:'nuri', name:'Nuri Logistics', schema:'entity_bigdropsmain_nuri', status:'creating' },
+  { id:'ent_acme', ws:'ws_1', slug:'acme', name:'Acme Corp', schema:'entity_bigdropsmain_acme', status:'ready' },
+  { id:'ent_beta', ws:'ws_1', slug:'beta', name:'Beta Industries', schema:'entity_bigdropsmain_beta', status:'ready' },
+  { id:'ent_nuri', ws:'ws_1', slug:'nuri', name:'Nuri Logistics', schema:'entity_bigdropsmain_nuri', status:'creating' },
+  { id:'ent_vega', ws:'ws_2', slug:'vega', name:'Vega Freight', schema:'entity_novalogistics_vega', status:'ready' },
 ];
 
 const users = [
-  { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#a9762c', wsRole:'owner', pendingInvite:null },
-  { id:'u_chidi', name:'Chidi Okonkwo',  initials:'CO', color:'#3f7d6e', wsRole:'member', pendingInvite:null },
-  { id:'u_bola',  name:'Bola Adeyemi',   initials:'BA', color:'#7a5a9c', wsRole:null,     pendingInvite:{ workspace:'bigdrops-main', invitedBy:'Aisha Mohammed', entity:'ent_beta', resource:'*', action:'view' } },
+  { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#a9762c', wsRole:'owner', workspaces:['bigdrops-main','nova-logistics'], activeWs:'bigdrops-main',
+    adminLevel:{ type:'workspace-admin', scope:'bigdrops-main' }, pendingInvite:null },
+  { id:'u_chidi',  name:'Chidi Okonkwo',  initials:'CO', color:'#3f7d6e', wsRole:'member', workspaces:['bigdrops-main'], activeWs:'bigdrops-main',
+    adminLevel:{ type:'company-admin', scope:'ent_acme' }, pendingInvite:null },
+  { id:'u_bola',   name:'Bola Adeyemi',   initials:'BA', color:'#7a5a9c', wsRole:null,     workspaces:[], activeWs:null,
+    adminLevel:{ type:'none' }, pendingInvite:{ id:'inv_1', workspace:'bigdrops-main', invitedBy:'Aisha Mohammed', entity:'ent_beta', resource:'*', action:'view', status:'pending' } },
+  { id:'u_tunde',  name:'Tunde Bakare',   initials:'TB', color:'#b06a4a', wsRole:null,     workspaces:[], activeWs:null,
+    adminLevel:{ type:'none' }, pendingInvite:null },
 ];
 
 let grants = [
@@ -323,6 +344,10 @@ let grants = [
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_vega', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_vega', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_vega', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
+  { entity:'ent_vega', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
 ];
 
 const mockData = {
@@ -336,6 +361,10 @@ const mockData = {
     { id:'INV-008', client:'Beta Logistics NG', amount:'₦3,200,000' },
   ],
   entity_bigdropsmain_nuri: [],
+  entity_novalogistics_vega: [
+    { id:'INV-021', client:'Vega Port Services', amount:'₦1,450,000' },
+    { id:'INV-022', client:'Nova Haulage', amount:'₦960,000' },
+  ],
 };
 
 const planeCopy = {
@@ -343,19 +372,28 @@ const planeCopy = {
   <div class="pills"><span class="pill office">approve_workspace()</span><span class="pill office">suspend</span><span class="pill">read entity_provisioning_status</span><span class="pill">read workspaces.status</span></div>`,
   registry: `<b>Public schema — shared registry only.</b> Holds workspaces, memberships, invitations, entities, entity_permissions, and provisioning status. This is the only place the Platform Office and the ERP both read from — and neither writes business data here.
   <div class="pills"><span class="pill">workspaces</span><span class="pill">workspace_members</span><span class="pill gold">workspace_invitations</span><span class="pill">entities</span><span class="pill">entity_permissions</span><span class="pill">entity_provisioning_status</span></div>`,
-  erp: `<b>ERP / Tenant Layer.</b> Authenticated users resolve one active workspace, one active entity, one resolved schema. The Tenant Client only routes — RLS inside the entity schema is what actually authorizes every read and write.
-  <div class="pills"><span class="pill gold">provision_entity()</span><span class="pill gold">accept_workspace_invitation()</span><span class="pill vault">tenantClient.schema()</span><span class="pill vault">RLS</span></div>`,
+  erp: `<b>ERP / Tenant Layer.</b> Authenticated users resolve one active workspace, one active entity, one resolved schema. A fresh user without membership or invite chooses Create a Workspace or Join a Workspace — joining is invitation-based only, no codes. Multi-workspace membership is allowed; exactly one workspace is active per session. Invitations flow through a four-state lifecycle (pending → accepted/revoked/expired); "Pass for now" is a session action, not a state, and never rejects or revokes. Administration is two-level: Workspace Admin is the authority ceiling; Company/Entity Admin is scoped to a single entity and bounded by that ceiling. The Tenant Client only routes — RLS inside the entity schema is what actually authorizes every read and write.
+  <div class="pills"><span class="pill gold">provision_entity()</span><span class="pill gold">accept_workspace_invitation()</span><span class="pill office">pass for now (session-only)</span><span class="pill vault">tenantClient.schema()</span><span class="pill vault">RLS</span></div>`,
 };
 
 /* ===== STATE ===== */
 let currentPlane = 'office';
 let currentUserId = 'u_aisha';
+let activeWs = 'bigdrops-main';
 let currentEntityId = 'ent_acme';
+let passedInvites = new Set();
 let activityCount = 0;
 
 const byId = (arr,id) => arr.find(x => x.id === id);
+const wsBySlug = slug => workspaces.find(w => w.slug === slug);
+const wsOfEntity = e => workspaces.find(w => w.id === e.ws);
 const userGrants = (userId, entityId) => grants.filter(g => g.user === userId && g.entity === entityId);
-const userEntities = (userId) => [...new Set(grants.filter(g => g.user === userId).map(g => g.entity))];
+const userEntities = (userId, wsSlug) => [...new Set(grants.filter(g => g.user === userId && entities.find(e => e.id === g.entity)?.ws === wsBySlug(wsSlug)?.id).map(g => g.entity))];
+const adminLabel = user => {
+  if (user.adminLevel.type === 'workspace-admin') return `Workspace Admin — authority ceiling (${user.adminLevel.scope})`;
+  if (user.adminLevel.type === 'company-admin') return `Company/Entity Admin — scoped to ${byId(entities, user.adminLevel.scope)?.name || user.adminLevel.scope}`;
+  return 'Member — business operations only';
+};
 
 /* ===== RENDER ===== */
 function renderPlane(){
@@ -365,43 +403,105 @@ function renderPlane(){
 
 function render(){
   const user = byId(users, currentUserId);
-  const reachable = userEntities(currentUserId);
+  const ws = (activeWs && wsBySlug(activeWs)) || (user.workspaces[0] && wsBySlug(user.workspaces[0])) || null;
+  if (ws) activeWs = ws.slug;
+  const reachable = ws ? userEntities(currentUserId, activeWs) : [];
   if (!reachable.includes(currentEntityId)) currentEntityId = reachable[0] || null;
   const entity = currentEntityId ? byId(entities, currentEntityId) : null;
 
   const av = document.getElementById('avatar');
   av.textContent = user.initials; av.style.background = user.color;
   document.getElementById('userName').textContent = user.name;
-  document.getElementById('userRoleLine').innerHTML = user.wsRole
-    ? `workspace role: <span class="${user.wsRole==='owner'?'owner-tag':''}">${user.wsRole}</span>`
-    : `workspace role: <span style="color:var(--faint)">none yet — pending invitation</span>`;
+  const inv = user.pendingInvite;
+  const invPassed = inv ? passedInvites.has(inv.id) : false;
+  const hasMembership = (user.workspaces || []).length > 0;
+  document.getElementById('userRoleLine').innerHTML = hasMembership
+    ? `workspace role: <span class="${user.wsRole==='owner'?'owner-tag':''}">${user.wsRole}</span> · <span style="color:${user.adminLevel.type==='workspace-admin'?'var(--office)':'var(--vault-deep)'}">${adminLabel(user)}</span> — member of <b>${user.workspaces.length}</b> workspace${user.workspaces.length>1?'s':''}, one active per session`
+    : inv
+      ? `workspace role: <span style="color:var(--faint)">none yet — invitation ${inv.status}${invPassed?' (passed for now)':''}</span>`
+      : `workspace role: <span style="color:var(--faint)">none — create or join (§8)</span>`;
 
   document.getElementById('userSelect').innerHTML = users.map(u =>
     `<option value="${u.id}" ${u.id===currentUserId?'selected':''}>${u.name}</option>`).join('');
+  document.getElementById('wsSelect').innerHTML = hasMembership
+    ? user.workspaces.map(slug => { const w = wsBySlug(slug); return `<option value="${slug}" ${slug===activeWs?'selected':''}>${w.name} (${w.slug})</option>`; }).join('')
+    : `<option>No workspace membership yet</option>`;
   document.getElementById('entitySelect').innerHTML = reachable.length
     ? reachable.map(eid => { const e = byId(entities, eid); return `<option value="${eid}" ${eid===currentEntityId?'selected':''}>${e.name}</option>`; }).join('')
     : `<option>No entity access yet</option>`;
 
-  // invite banner
+  // invite banner — lifecycle: pending → accepted/revoked/expired; pass is session-only
   const banner = document.getElementById('inviteBanner');
-  if (user.pendingInvite) {
+  if (inv) {
     banner.classList.remove('hidden');
-    document.getElementById('inviteWs').textContent = user.pendingInvite.workspace;
+    document.getElementById('inviteWs').textContent = wsBySlug(inv.workspace).name;
+    const meta = document.getElementById('inviteMeta');
+    const actions = document.getElementById('inviteActions');
+    if (inv.status === 'accepted') {
+      meta.innerHTML = `<span style="color:var(--vault-deep);font-weight:600">status: accepted</span> — membership + entity_permissions written server-side`;
+      actions.style.display = 'none';
+    } else if (inv.status === 'revoked') {
+      meta.innerHTML = `<span style="color:var(--danger);font-weight:600">status: revoked by workspace admin</span> — cannot be accepted; reinvite required`;
+      actions.style.display = 'none';
+    } else if (inv.status === 'expired') {
+      meta.innerHTML = `<span style="color:var(--warn);font-weight:600">status: expired</span> — expiration reached; cannot be accepted; reinvite required`;
+      actions.style.display = 'none';
+    } else {
+      meta.innerHTML = `<span style="color:var(--gold-deep);font-weight:600">status: pending</span> — invited by <b>${inv.invitedBy}</b> · expiration admin-controlled (§4)${invPassed ? ' · <span style="color:var(--dim)">passed for now — still pending, may be re-offered</span>' : ''}`;
+      actions.style.display = 'flex';
+      document.getElementById('acceptInviteBtn').style.display = invPassed ? 'inline-block' : 'inline-block';
+    }
   } else {
     banner.classList.add('hidden');
   }
 
-  // resolution steps
-  document.getElementById('resolutionBox').innerHTML = user.pendingInvite ? `
-    <div class="step"><span class="n">1</span> membership? &nbsp;→&nbsp; <span>none directly</span></div>
-    <div class="step"><span class="n">2</span> pending invite? &nbsp;→&nbsp; <span style="color:var(--gold-deep)">yes — checked before Create Workspace</span></div>
-    <div class="step final"><span class="n">3</span> awaiting &nbsp;→&nbsp; <span>accept_workspace_invitation()</span></div>
-  ` : `
-    <div class="step"><span class="n">1</span> workspace &nbsp;→&nbsp; <span>${workspace.slug} (${workspace.status})</span></div>
-    <div class="step"><span class="n">2</span> entity &nbsp;→&nbsp; <span>${entity ? entity.name : '—'}</span></div>
-    <div class="step"><span class="n">3</span> permission check &nbsp;→&nbsp; <span>${entity && userGrants(currentUserId, entity.id).length ? 'explicit grant found' : 'no grant → deny'}</span></div>
-    <div class="step final"><span class="n">4</span> resolved schema &nbsp;→&nbsp; <span>${entity ? entity.schema : 'n/a'}</span></div>
+  // resolution steps — invite lifecycle first, then membership → workspace → entity → permission
+  if (inv) {
+    const rows = [];
+    rows.push(`<div class="step"><span class="n">1</span> pending invite? &nbsp;→&nbsp; <span style="color:var(--gold-deep)">yes — ${inv.status}${invPassed ? ' (passed for now, still pending)' : ''}</span></div>`);
+    if (inv.status === 'pending') rows.push(`<div class="step final"><span class="n">2</span> awaiting &nbsp;→&nbsp; <span>accept_workspace_invitation() ${invPassed ? '| pass for now (session-only, not a state)' : ''}</span></div>`);
+    else if (inv.status === 'revoked') rows.push(`<div class="step final"><span class="n">2</span> blocked &nbsp;→&nbsp; <span>revoked — cannot accept</span></div>`);
+    else if (inv.status === 'expired') rows.push(`<div class="step final"><span class="n">2</span> blocked &nbsp;→&nbsp; <span>expired — cannot accept</span></div>`);
+    else rows.push(`<div class="step final"><span class="n">2</span> membership &nbsp;→&nbsp; <span>created via accept</span></div>`);
+    document.getElementById('resolutionBox').innerHTML = rows.join('');
+  } else if (!hasMembership) {
+    document.getElementById('resolutionBox').innerHTML = `
+    <div class="step"><span class="n">1</span> membership? &nbsp;→&nbsp; <span>none</span></div>
+    <div class="step"><span class="n">2</span> pending invite? &nbsp;→&nbsp; <span style="color:var(--gold-deep)">none auto-detected</span></div>
+    <div class="step"><span class="n">3</span> onboarding choice &nbsp;→&nbsp; <span style="color:var(--gold-deep)">Create a Workspace | Join a Workspace (§8)</span></div>
+    <div class="step final"><span class="n">4</span> joining &nbsp;→&nbsp; <span>invitation-based only, no codes (§12.4)</span></div>
   `;
+  } else {
+    document.getElementById('resolutionBox').innerHTML = `
+    <div class="step"><span class="n">1</span> membership &nbsp;→&nbsp; <span>${user.workspaces.join(', ')}</span></div>
+    <div class="step"><span class="n">2</span> active workspace &nbsp;→&nbsp; <span>${ws.slug} (${ws.status}) — one per session</span></div>
+    <div class="step"><span class="n">3</span> entity &nbsp;→&nbsp; <span>${entity ? entity.name : '—'}</span></div>
+    <div class="step"><span class="n">4</span> permission check &nbsp;→&nbsp; <span>${entity && userGrants(currentUserId, entity.id).length ? 'explicit grant found' : 'no grant → deny'}</span></div>
+    <div class="step final"><span class="n">5</span> resolved schema &nbsp;→&nbsp; <span>${entity ? entity.schema : 'n/a'}</span></div>
+  `;
+  }
+
+  // administration — two-level model with authority ceiling
+  const adminBox = document.getElementById('adminBox');
+  if (hasMembership) {
+    const wsAdminGrant = user.wsRole === 'owner' || user.adminLevel.type === 'workspace-admin';
+    const entityAdmin = user.adminLevel.type === 'company-admin';
+    adminBox.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <span class="pill office" style="${wsAdminGrant ? '' : 'opacity:.38'}">Workspace Admin — authority ceiling</span>
+        <span style="font:600 10px 'IBM Plex Mono';color:var(--faint)">/</span>
+        <span class="pill gold" style="${entityAdmin && entity ? 'border-color:rgba(169,118,44,.5);color:var(--gold-deep);background:var(--gold-glow)' : 'opacity:.38'}">Company/Entity Admin — entity-scoped</span>
+        <span style="font:600 10px 'IBM Plex Mono';color:var(--faint)">/</span>
+        <span class="pill" style="${!wsAdminGrant && !entityAdmin ? 'border-color:var(--vault);color:var(--vault-deep)' : 'opacity:.38'}">Member — business operations only</span>
+      </div>
+      <div style="font-size:11px;line-height:1.55;color:var(--dim)">
+        <b style="color:var(--office)">Ceiling:</b> ${wsAdminGrant ? 'you hold it — workspace-wide governance (invites, expiration, revoke, entity administration)' : `${user.workspaces.map(s => wsBySlug(s).name).join(', ')} admin sets it`} ·
+        <b style="color:var(--gold-deep)">Scope:</b> ${entityAdmin ? `Company/Entity Admin is bounded to <b>${byId(entities,user.adminLevel.scope).name}</b> only` : 'member — entity access comes from entity_permissions rows, never from admin title'} ·
+        <b style="color:var(--vault-deep)">Business permissions:</b> separate — administrative authority does not grant business permissions.
+      </div>`;
+  } else {
+    adminBox.innerHTML = `<div style="font-size:11px;color:var(--faint);line-height:1.5">No workspace membership — administration levels appear after joining (§8).</div>`;
+  }
 
   // ledger
   const g = entity ? userGrants(currentUserId, entity.id) : [];
@@ -416,7 +516,7 @@ function render(){
     </div>`).join('') : `<div class="empty-ledger">No entity_permissions row for this user on this entity — access denied by default.</div>`;
 
   // vaults
-  document.getElementById('vaultList').innerHTML = entities.map(e => {
+  document.getElementById('vaultList').innerHTML = entities.filter(e => e.ws === wsBySlug(activeWs)?.id).map(e => {
     const active = e.id === currentEntityId;
     const dim = !reachable.includes(e.id);
     return `<div class="vault-box ${active?'active':''} ${dim?'dim':''}" data-entity="${e.id}">
@@ -472,10 +572,19 @@ document.getElementById('planeSwitch').addEventListener('click', e => {
 });
 document.getElementById('userSelect').addEventListener('change', e => {
   currentUserId = e.target.value;
-  const reachable = userEntities(currentUserId);
+  const user = byId(users, currentUserId);
+  activeWs = user.workspaces[0] || null;
+  const reachable = activeWs ? userEntities(currentUserId, activeWs) : [];
   currentEntityId = reachable[0] || null;
   render();
-  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> signed in`);
+  logActivity(`<span class="who">${user.name}</span> signed in`);
+});
+document.getElementById('wsSelect').addEventListener('change', e => {
+  activeWs = e.target.value;
+  const reachable = userEntities(currentUserId, activeWs);
+  currentEntityId = reachable[0] || null;
+  render();
+  logActivity(`<span class="who">${byId(users,currentUserId).name}</span> switched active workspace → <b>${activeWs}</b> (one per session)`);
 });
 document.getElementById('entitySelect').addEventListener('change', e => {
   currentEntityId = e.target.value; render();
@@ -483,15 +592,28 @@ document.getElementById('entitySelect').addEventListener('change', e => {
 });
 document.getElementById('acceptInviteBtn').addEventListener('click', () => {
   const user = byId(users, currentUserId);
-  if (!user.pendingInvite) return;
+  if (!user.pendingInvite || user.pendingInvite.status !== 'pending') return;
   const inv = user.pendingInvite;
   // simulate accept_workspace_invitation(): populate membership + entity_permissions server-side
+  inv.status = 'accepted';
   user.wsRole = 'member';
+  user.workspaces.push(inv.workspace);
+  user.activeWs = inv.workspace;
+  activeWs = inv.workspace;
   grants.push({ entity: inv.entity, user: user.id, resource: inv.resource, action: inv.action, grantedBy: `${inv.invitedBy} (via invite)` });
-  user.pendingInvite = null;
+  passedInvites.delete(inv.id);
   currentEntityId = inv.entity;
   render();
-  logActivity(`<span class="who">${user.name}</span> called <b>accept_workspace_invitation()</b> — membership + entity_permissions written server-side`);
+  logActivity(`<span class="who">${user.name}</span> called <b>accept_workspace_invitation()</b> — invite → accepted, membership + entity_permissions written server-side`);
+});
+document.getElementById('passInviteBtn').addEventListener('click', () => {
+  const user = byId(users, currentUserId);
+  if (!user.pendingInvite || user.pendingInvite.status !== 'pending') return;
+  const inv = user.pendingInvite;
+  // Pass for now: session-only, invitation stays pending — never rejects, never revokes
+  passedInvites.add(inv.id);
+  render();
+  logActivity(`<span class="who">${user.name}</span> chose <b>Pass for now</b> — invitation stays pending, may be re-offered on later startup (§12.3)`);
 });
 
 /* ===== INIT ===== */

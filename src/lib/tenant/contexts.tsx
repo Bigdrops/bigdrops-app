@@ -2,6 +2,13 @@ import * as React from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/supabase'
 import { createTenantClient, type TenantClient } from '@/lib/tenantClient'
+import {
+  type ProvisioningStatus,
+  isProvisioningStatus,
+} from '@/domain/tenant/tenantGate'
+import { getEntityProvisioningStatus as readProvisioningStatus } from '@/domain/tenant/tenantCreation'
+
+export { type ProvisioningStatus, isProvisioningStatus } from '@/domain/tenant/tenantGate'
 
 // Captured at module load (~app start) so the diagnostic page can show
 // end-to-end resolution time for the Phase 1 startup resolution flow.
@@ -21,19 +28,11 @@ export interface ActiveEntity {
   name: string | null
 }
 
-export type ProvisioningStatus = 'pending' | 'creating' | 'ready' | 'failed' | 'purging' | 'purged'
-
-const VALID_PROVISIONING_STATES = new Set<ProvisioningStatus>([
-  'pending',
-  'creating',
-  'ready',
-  'failed',
-  'purging',
-  'purged',
-])
-
-export function isProvisioningStatus(value: unknown): value is ProvisioningStatus {
-  return typeof value === 'string' && VALID_PROVISIONING_STATES.has(value as ProvisioningStatus)
+export interface PendingInvitation {
+  id: string
+  workspaceId: string
+  workspaceRole: string | null
+  invitedById: string | null
 }
 
 export type SchemaResolutionSource = 'startup' | 'cache' | 'refresh' | 'workspace-change' | 'entity-change'
@@ -45,8 +44,11 @@ export type SchemaResolutionSource = 'startup' | 'cache' | 'refresh' | 'workspac
 type WorkspaceContextValue = {
   workspace: ActiveWorkspace | null
   workspaceCount: number
+  pendingWorkspace: ActiveWorkspace | null
+  pendingInvitation: PendingInvitation | null
   isLoading: boolean
   error: string | null
+  refresh: () => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
@@ -60,8 +62,13 @@ export function WorkspaceProvider({
 }) {
   const [workspace, setWorkspace] = useState<ActiveWorkspace | null>(null)
   const [workspaceCount, setWorkspaceCount] = useState(0)
+  const [pendingWorkspace, setPendingWorkspace] = useState<ActiveWorkspace | null>(null)
+  const [pendingInvitation, setPendingInvitation] = useState<PendingInvitation | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
     let cancelled = false
@@ -69,10 +76,30 @@ export function WorkspaceProvider({
     async function resolve() {
       setWorkspace(null)
       setWorkspaceCount(0)
+      setPendingWorkspace(null)
+      setPendingInvitation(null)
       setError(null)
       setIsLoading(true)
 
       try {
+        // Own workspace created via the onboarding flow but not yet approved.
+        // Legal pre-membership read: workspaces_select_member includes
+        // created_by = auth.uid(); the unique pending index guarantees at most one.
+        const { data: pendingRows, error: pendingError } = await supabase
+          .from('workspaces')
+          .select('id, slug, name, status')
+          .eq('created_by', userId)
+          .eq('status', 'pending_approval')
+          .limit(1)
+
+        if (cancelled) return
+        if (pendingError) throw pendingError
+
+        const pending = (pendingRows ?? [])[0] as
+          | { id: string; slug: string | null; name: string | null; status: string | null }
+          | undefined
+        setPendingWorkspace(pending ? { id: pending.id, slug: pending.slug, name: pending.name, status: pending.status, role: null } : null)
+
         const { data, error } = await supabase
           .from('workspace_members')
           .select('role, workspace:workspaces(id, slug, name, status)')
@@ -102,6 +129,38 @@ export function WorkspaceProvider({
           // 0 workspaces or multiple: selection is deferred to a future phase.
           setWorkspace(null)
         }
+
+        // A user with no active membership may still hold a pending invitation.
+        // RLS (workspace_invitations_select_member) already restricts rows to the
+        // caller's own email, so no email filter is needed on the client.
+        if (active.length === 0) {
+          const { data: inviteRows, error: inviteError } = await supabase
+            .from('workspace_invitations')
+            .select('id, workspace_id, workspace_role, invited_by')
+            .eq('status', 'pending')
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          if (cancelled) return
+          if (inviteError) throw inviteError
+
+          const invite = (inviteRows ?? [])[0] as
+            | { id: string; workspace_id: string; workspace_role: string | null; invited_by: string | null }
+            | undefined
+          setPendingInvitation(
+            invite
+              ? {
+                  id: invite.id,
+                  workspaceId: invite.workspace_id,
+                  workspaceRole: invite.workspace_role,
+                  invitedById: invite.invited_by,
+                }
+              : null,
+          )
+        } else {
+          setPendingInvitation(null)
+        }
       } catch (e) {
         if (!cancelled) setError(String((e as Error)?.message ?? e))
       } finally {
@@ -113,11 +172,11 @@ export function WorkspaceProvider({
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, refreshKey])
 
   const value = useMemo<WorkspaceContextValue>(
-    () => ({ workspace, workspaceCount, isLoading, error }),
-    [workspace, workspaceCount, isLoading, error],
+    () => ({ workspace, workspaceCount, pendingWorkspace, pendingInvitation, isLoading, error, refresh }),
+    [workspace, workspaceCount, pendingWorkspace, pendingInvitation, isLoading, error, refresh],
   )
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
@@ -145,6 +204,7 @@ type EntityContextValue = {
   provisioningError: string | null
   tenantClient: TenantClient
   recheckProvisioning: () => void
+  refresh: () => void
 }
 
 const EntityContext = createContext<EntityContextValue | null>(null)
@@ -158,6 +218,9 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   const [provisioningStatus, setProvisioningStatus] = useState<ProvisioningStatus | null>(null)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const [schemaSource, setSchemaSource] = useState<SchemaResolutionSource | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
     let cancelled = false
@@ -200,34 +263,27 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [workspace, workspaceLoading])
+  }, [workspace, workspaceLoading, refreshKey])
 
   const checkProvisioning = useCallback(async (entityId: string) => {
     setProvisioningStatus(null)
     setProvisioningError(null)
 
-    const { data, error } = await supabase.rpc('get_entity_provisioning_status', {
-      p_entity_id: entityId,
-    })
+    try {
+      const { status, lastError } = await readProvisioningStatus(entityId)
 
-    if (error) {
-      setProvisioningError(String((error as Error)?.message ?? error))
-      return
-    }
-
-    const row = Array.isArray(data) ? data[0] : data
-    const status = (row as { status?: string } | undefined)?.status
-    const lastError = (row as { last_error?: string | null } | undefined)?.last_error
-
-    if (status) {
-      if (isProvisioningStatus(status)) {
-        setProvisioningStatus(status)
-      } else {
-        setProvisioningStatus(null)
-        setProvisioningError(`Invalid backend provisioning status: ${status}`)
+      if (status) {
+        if (isProvisioningStatus(status)) {
+          setProvisioningStatus(status)
+        } else {
+          setProvisioningStatus(null)
+          setProvisioningError(`Invalid backend provisioning status: ${status}`)
+        }
       }
+      if (lastError) setProvisioningError(lastError)
+    } catch (e) {
+      setProvisioningError(String((e as Error)?.message ?? e))
     }
-    if (lastError) setProvisioningError(lastError)
   }, [])
 
   const recheckProvisioning = useCallback(() => {
@@ -265,6 +321,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       provisioningError,
       tenantClient,
       recheckProvisioning,
+      refresh,
     }),
     [
       entity,
@@ -278,6 +335,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       provisioningError,
       tenantClient,
       recheckProvisioning,
+      refresh,
     ],
   )
 

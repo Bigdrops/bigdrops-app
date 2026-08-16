@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { NativeFeedbackRenderer } from '@/lib/native-feedback-renderer'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import AppShell from '@/components/app/AppShell'
+import TenantGate from '@/components/app/TenantGate'
 import PageLoader from '@/components/app/PageLoader'
 import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
 import SplashOverlay from '@/components/app/SplashOverlay'
@@ -18,6 +19,7 @@ import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import { isAndroidNative } from '@/lib/native/capacitor'
+import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
@@ -571,11 +573,17 @@ function App() {
                       : !approved
                       ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                       : withBoundary(
-                          <AppShell
-                            session={session}
-                            profile={profile}
-                            onProfileUpdate={() => loadProfile(session.user.id)}
-                          />
+                          <WorkspaceProvider userId={session.user.id}>
+                            <EntityProvider>
+                              <TenantGate>
+                                <AppShell
+                                  session={session}
+                                  profile={profile}
+                                  onProfileUpdate={() => loadProfile(session.user.id)}
+                                />
+                              </TenantGate>
+                            </EntityProvider>
+                          </WorkspaceProvider>
                         )
               }
             />

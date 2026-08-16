@@ -1,5 +1,5 @@
 # BIGDROPS ERP Multi-Tenant Frontend Architecture & Migration PRD  
-**Version:** 1.2 (Amended)  
+**Version:** 1.5 (Amended)  
 **Status:** Approved  
 **Authors:** BIGDROPS Architecture Council  
 **Applies To:** BIGDROPS ERP Frontend  
@@ -10,6 +10,9 @@
 - AGENTS.md
 
 **Amendment Record:**
+- **v1.5 (2026-08-16):** Formalized the invitation and authority model. (1) Invitation acceptance now offers Accept or Pass for now; passing never rejects, deletes, or revokes an invitation (§12.3). (2) Invitation lifecycle formalized: `pending`, `accepted`, `revoked`, `expired`; administrator-controlled expiration; an authorized workspace admin may revoke; revoked/expired invitations cannot be accepted (§12.5). (3) Added the two-level administration model: Workspace Admin vs Company/Entity Admin, with the Workspace Admin establishing the authority ceiling for subordinate company/entity administration (§12.6). (4) Distinguished administrative authority from business-resource permissions; the deny-by-default, entity-scoped, action-based permission model remains authoritative (§12.7). (5) Made explicit that a workspace may contain multiple companies/entities and that company/entity admin scope does not cross entities (§12.6). Documentation-only; no architecture change.
+- **v1.4 (2026-08-16):** Formalized three resolved product decisions. (1) Multi-workspace membership: a user may hold membership in more than one workspace; Phase 1 activates exactly one workspace per session, and switching remains future work (§10.6, §14, §16, §20). (2) New-user onboarding: a user with no membership and no pending invitation chooses between Create a Workspace and Join a Workspace; joining is invitation-based only, never code-based (§2, §8, §12.1, new §12.4). (3) Automatic invite detection: pending invitations are detected automatically during startup; there is no separate "check for invitations" action (§8, §12.3, §19). Documentation-only; no architecture change.
+- **v1.3 (2026-08-16):** Added in-app invite acceptance coverage. Startup now routes users with pending workspace invitations to accept them before entity resolution (§8). Added the `accept_workspace_invitation` dependency (§9), a new In-App Invite Acceptance flow (§12.3), pending-invitation display on the Diagnostic Page (§14), the multi-workspace switching non-goal (§16), and two acceptance criteria (§19). Documentation-only; no architecture change.
 - **v1.2 (2026-08-15):** Moved workspace creation and company creation into ERP frontend scope. The ERP now creates workspaces (status `pending_approval`) and companies (entity provisioning) from inside the app. Workspace approval stays with the Platform Office. Added switcher UI placement rules: workspace switching is settings-level; company switching appears in the side drawer of the hamburger menu (LHS) on mobile. See sections 2, 8, 9, 10.7, 12, 15, 16, 19, and 20.
 
 ---
@@ -44,8 +47,10 @@ The ERP frontend requires these items before it can operate in multi-tenant mode
 - At least one platform operator must exist.
 
 Workspace creation now happens inside the ERP:
-- An authenticated user without a workspace creates one in the app.
-- The new workspace has status `pending_approval`.
+- An authenticated user without a workspace chooses between Create a Workspace and Join a Workspace (§8, §12.4).
+- Joining is invitation-based only. There is no join-by-code flow.
+- A user with a pending workspace invitation is routed to invitation acceptance before workspace creation.
+- A user who chooses Create submits the workspace details; the new workspace has status `pending_approval`.
 - A platform operator approves the workspace in the Platform Office.
 - The workspace creator becomes the workspace owner.
 
@@ -219,30 +224,75 @@ Workspace Found?
 │
 No          Yes
 │             │
-Create Workspace   Resolve Entities
-│                  │
-▼                  ▼
-Pending Approval   Entity Count?
-(Screen)           ┌────┼─────────┐
-│                  │    │         │
-(approved)         0    1         >1
-│                  │    │         │
-▼                  ▼    │         │
-Resolve         Create your  Auto Select  Future Entity Selector
-Workspace        first Company
-│                  │          │
-│                  ▼          │
-│             Check Provisioning Status
-│                  │          │
-│              ┌───┼────┐     │
-│              │   │    │     │
-│           Ready Creating Failed
-│              │   │    │     │
-│             ERP Loading Error
-└────────────────┴───┴────┴─────┘
-        (all paths continue)
+▼             ▼
+Pending      Resolve Entities
+Invitation?
+┌────┴────┐
+│         │
+No        Yes
+│         │
+▼         ▼
+Onboarding   Accept Invitation
+Choice       │
+(Create |    ▼
+Join)   Resolve Workspace
+│         Membership
+│
+├─ Create ──► Pending Approval (Screen)
+│            │
+│            ▼ (approved)
+│         Resolve Workspace
+│
+└─ Join ──► Invitation request
+            guidance (§12.4)
+│
+▼
+Entity Count?
+┌────┼─────────┐
+│    │         │
+0    1         >1
+│    │         │
+▼    ▼         │
+Create your  Auto Select  Future Entity Selector
+first Company
+│          │
+▼          │
+Check Provisioning Status
+│          │
+┌───┼────┐  │
+│   │    │  │
+Ready Creating Failed
+│   │    │  │
+│  ERP  Loading Error
+└───┴────┴──┘
+ (all paths continue)
 
 ```
+
+Routing notes:
+
+- A user with a pending workspace invitation matching their email must
+  accept it before creating a workspace or resolving entities. They never
+  see the Create Workspace flow while a pending invitation exists.
+- Pending invitations are detected automatically during startup. There is
+  no separate "check for invitations" user action.
+- The invitation screen offers Accept invitation or Pass for now. Passing
+  leaves the invitation `pending` and continues startup; it never rejects,
+  deletes, or revokes the invitation (§12.3, §12.5).
+- A user with no membership and no pending invitation chooses between
+  Create a Workspace and Join a Workspace. Joining is invitation-based
+  only; the Join path asks an existing workspace admin to send an
+  invitation to the account's email (§12.4). Invitation codes do not
+  exist.
+- Invite acceptance is a single RPC call (`accept_workspace_invitation`,
+  §9); the app never writes `workspace_members` or `entity_permissions`
+  rows directly.
+- After acceptance, startup continues from "Resolve Workspace
+  Membership".
+- Membership is not limited to one workspace. A user may hold membership
+  in more than one workspace. Phase 1 activates exactly one workspace per
+  session (§10.6); switching and multi-workspace session activation remain
+  future work (§20).
 
 ---
 
@@ -253,6 +303,8 @@ The frontend calls these creation contracts:
 - Insert into `entities` (new company)
 - `provision_entity` / `create_entity_schema` RPC (provisions the tenant schema)
 - `get_entity_provisioning_status` (polls provisioning status)
+- Select from `workspace_invitations` (pending invite scoped to the current user's email)
+- `accept_workspace_invitation` RPC (accepts a pending invite)
 
 The frontend must never depend on:
 - Bootstrap workflow
@@ -262,6 +314,7 @@ The frontend must never depend on:
 - Retry logic
 - Schema cloning implementation
 - RLS generation internals
+- Writing `workspace_invitation_entity_grants` rows (invite grants are set at invite-creation time; the app never constructs or modifies them)
 
 The frontend consumes only these stable backend states:
 - Active workspace
@@ -360,6 +413,12 @@ However, provider APIs must stay compatible with future workspace switching.
 Providers must not assume that only one workspace can ever exist.
 The absence of a switching UI in Phase 1 is a product decision.
 It is not an architectural limitation.
+
+Membership is not limited to one workspace. A user may hold membership in
+more than one workspace; the database allows it. Phase 1 activates exactly
+one workspace per session — a UI/session constraint, not a database
+constraint. Switching between workspaces within a session, and activating
+multiple workspaces per session, remain future work (§20).
 
 ---
 
@@ -468,7 +527,8 @@ Show a tenant unavailable page.
 
 12.1 In-App Workspace Creation
 
-Trigger: An authenticated user has no active workspace.
+Trigger: An authenticated user with no workspace membership and no
+pending invitation chooses Create a Workspace (§8).
 
 Flow:
 
@@ -486,6 +546,7 @@ Notes:
 - The app does not call `approve_workspace`.
 - The app does not set workspace status to `active`.
 - The `idx_one_pending_workspace_per_creator` constraint allows one pending workspace per creator.
+- This flow runs only in the Create branch. A user with a pending invitation is routed to Invite Acceptance (§12.3). A user who chooses Join is routed to the In-App Join-Request flow (§12.4).
 
 ---
 
@@ -509,6 +570,203 @@ Notes:
 - The app never constructs schema names.
 - The app never executes schema DDL.
 - The provisioning RPC enforces the `create_entity` permission.
+
+12.3 In-App Invite Acceptance
+
+Trigger: A user with no workspace membership has a pending workspace
+invitation whose email matches their authenticated email (per backend §4,
+`auth.jwt() ->> 'email'`).
+
+The invitation screen must provide:
+
+- the invitation information available under the existing security model
+  (`invite_visibility`, backend §4)
+- **Accept invitation**
+- **Pass for now**
+
+Flow:
+
+1. During startup, after workspace membership resolution, the app selects
+   `workspace_invitations` scoped to the current user's email.
+2. If a pending invite exists, the app shows the Invite Acceptance flow
+   instead of the Create Workspace flow.
+3. **Accept invitation**: the app calls `accept_workspace_invitation` with
+   the invitation id.
+4. The RPC creates the `workspace_members` row (and any invite
+   `entity_permissions`) server-side in a single transaction.
+5. On success, the app resolves the workspace and continues startup.
+6. **Pass for now**: the app dismisses the invitation screen and continues
+   startup without changing the invitation. The invitation remains
+   `pending`.
+
+Notes:
+
+- Acceptance is a single RPC call. The app never writes
+  `workspace_members` or `entity_permissions` rows directly.
+- The app never shows both Create Workspace and Invite Acceptance for
+  the same user state; a pending invite always takes precedence (§8).
+- Invite detection is automatic during startup. There is no separate
+  "check for invitations" action (§8).
+- **Pass for now** is NOT a rejection and is NOT a persisted invitation
+  state. It never rejects, deletes, or revokes the invitation. The
+  invitation stays `pending` and remains acceptable later while valid
+  (§12.5). A user cannot permanently reject an invitation merely by
+  pressing Pass.
+- Passing may be offered again on a later startup while the invitation
+  remains pending; automatic detection remains the primary mechanism. The
+  UI may additionally provide a way to return to/re-check invitations
+  later (§8, §12.5).
+
+---
+
+12.4 In-App Join-Request
+
+Trigger: An authenticated user with no workspace membership and no
+pending invitation chooses Join a Workspace (§8).
+
+Flow:
+
+1. The app shows guidance to contact a workspace administrator.
+2. The administrator sends an invitation to the account's email.
+3. On a later startup, the app auto-detects the pending invitation and
+   shows the Invite Acceptance flow (§12.3).
+
+Notes:
+
+- Joining is invitation-based only. There is no join-by-code flow and
+  no code entry UI (§16).
+- The app does not show the Join flow when a pending invitation exists
+  (§8, §12.3).
+
+---
+
+12.5 Invitation Lifecycle
+
+An invitation may be in one of these states:
+
+- `pending` — created by an authorized workspace administrator; may be
+  accepted.
+- `accepted` — the invitee accepted; the acceptance RPC created the
+  membership/access records.
+- `revoked` — an authorized workspace administrator rescinded the pending
+  invitation.
+- `expired` — the administrator-chosen expiration time passed.
+
+Rules:
+
+- **Pass for now is NOT a state.** It simply leaves a `pending`
+  invitation untouched. It never rejects, deletes, or revokes it (§12.3).
+- The administrator creating/sending an invitation chooses its expiration
+  time. Invitation lifetime is administrator-controlled, subject to any
+  platform-level maximum or validation rule already established in the
+  backend PRD (see Multi-Tenancy PRD §4).
+- An authorized workspace administrator may rescind/revoke a pending
+  invitation.
+- A `revoked` or `expired` invitation cannot be accepted.
+- After successful acceptance, the server-side acceptance flow creates the
+  appropriate membership/access records and the frontend resolves the
+  newly available workspace. The frontend never writes
+  `workspace_members` or entity permission records directly (§12.3).
+
+---
+
+12.6 Two-Level Administration Model
+
+BIGDROPS tenancy has TWO administrative levels:
+
+LEVEL 1 — WORKSPACE ADMINISTRATION
+
+- Governs the entire workspace.
+- A workspace may contain multiple companies/entities.
+- Workspace-level authority spans the whole workspace, including:
+  - workspace membership
+  - company/entity access
+  - company/entity administration
+  - invitations (create, set expiration, revoke)
+  - which management capabilities company/entity administrators may
+    exercise
+- The Workspace Admin establishes the maximum management authority
+  available beneath the workspace level.
+
+LEVEL 2 — COMPANY / ENTITY ADMINISTRATION
+
+- A workspace member may be granted administrative authority over a
+  specific company/entity.
+- A Company/Entity Admin manages that company/entity, but only within the
+  authority permitted by workspace administration.
+- A Company/Entity Admin does NOT automatically gain unrestricted
+  workspace authority.
+- Scope is per company/entity. Administering Company A does not make a
+  user administrator of Company B or Company C.
+
+Hierarchy:
+
+```
+WORKSPACE ADMIN
+│
+│ establishes authority ceiling
+▼
+COMPANY / ENTITY ADMIN
+│
+│ operates within allowed scope
+▼
+MEMBERS / BUSINESS OPERATIONS
+```
+
+Use these terms consistently:
+
+- Workspace Admin = workspace-wide governance authority.
+- Company/Entity Admin = administrative authority scoped to one
+  company/entity.
+- Do NOT collapse these into a single "admin" concept.
+
+A Company/Entity Admin cannot exercise administrative powers that the
+Workspace Admin has not made available to that administrative scope.
+
+This is a hierarchical authority model. This PRD does NOT define the final
+database representation. The implementation-reconciliation phase will
+determine whether the existing membership/permission infrastructure can
+represent this model or whether additional implementation work is
+required.
+
+---
+
+12.7 Administrative Authority vs Business Permissions
+
+Two distinct concepts exist and must not be conflated.
+
+ADMINISTRATIVE AUTHORITY
+
+- Answers: "Who is allowed to administer whom/what?"
+- Examples:
+  - workspace governance
+  - membership management
+  - invitation management
+  - company/entity administration
+  - assigning or managing subordinate administrative authority
+
+BUSINESS PERMISSIONS
+
+- Answers: "What can this user do with business resources?"
+- Examples:
+  - invoice → view
+  - invoice → create
+  - invoice → edit
+  - invoice → approve
+  - client → view
+  - project → edit
+
+Rules:
+
+- The existing deny-by-default, entity-scoped, action-based permission
+  model remains authoritative for business operations (backend PRD §3).
+- Do NOT replace it with roles.
+- Do NOT imply that being a Company/Entity Admin automatically grants
+  every business permission unless an existing PRD explicitly establishes
+  that behavior.
+- Do NOT invent a new permission schema in this documentation pass.
+- Entity-scoped business permissions remain separate from administrative
+  scope.
 
 ---
 
@@ -585,6 +843,7 @@ Membership
 
 · Workspace Role
 · Effective Permission Count
+· Pending Invitations (count, matching the current user's email)
 
 Entity
 
@@ -620,6 +879,10 @@ Performance
 Notes:
 auth.uid() is only meaningful inside authenticated application requests.
 SQL Editor sessions do not contain JWT claims and return NULL.
+Phase 1 activates one workspace per session (§10.6); the diagnostic page
+shows the resolved context for that workspace. When a user has multiple
+workspaces or pending invitations, the page shows the counts; multi-workspace
+session activation is future work (§20).
 
 Access to this page must be restricted to authorized users only (for example, users with a platform operator role).
 
@@ -706,6 +969,13 @@ Phase 1 does NOT:
 · Add workspace switch UI (switching between existing workspaces).
 · Add entity switch UI (switching between existing companies).
 · Add workspace approval UI (approval stays in the Platform Office).
+· Switch between existing workspaces within a session (a pending invitation is accepted into its single target workspace; activating multiple workspaces per session is future work).
+· Implement invitation codes or join-by-code (joining is invitation-based only, §12.4).
+· Allow a user to permanently reject an invitation via Pass for now (passing never revokes; only an authorized workspace admin revokes, §12.3, §12.5).
+· Collapse Workspace Admin and Company/Entity Admin into a single "admin" concept (§12.6).
+· Grant a Company/Entity Admin automatic unrestricted workspace authority (§12.6).
+· Replace the deny-by-default, action-based business permission model with roles (§12.7).
+· Grant a Company/Entity Admin every business permission automatically (§12.7).
 · Delete public tables.
 · Migrate business data.
 · Remove the existing Supabase client.
@@ -838,6 +1108,17 @@ Phase 1 is complete when:
 · Tenant Client targets the correct tenant schema.
 · Diagnostic page shows complete tenant context.
 · User can create a workspace in the app.
+· User with a pending workspace invitation can accept it in-app and is routed into the target workspace.
+· The invitation screen offers Accept invitation and Pass for now; passing leaves the invitation pending and never rejects, deletes, or revokes it.
+· A revoked or expired invitation cannot be accepted in-app.
+· Pending invitations are detected automatically during startup; no separate "check for invitations" action exists.
+· A user with no membership and no invitation can choose Create a Workspace or Join a Workspace at startup.
+· The Join flow shows administrator-contact guidance and never a code entry field.
+· A user with multiple memberships sees exactly one active workspace per session, while membership in more than one workspace remains valid.
+· Workspace Admin and Company/Entity Admin are shown as distinct authority scopes; a Company/Entity Admin is bounded by the workspace-level authority ceiling (§12.6).
+· Business permissions remain deny-by-default, entity-scoped, and action-based; they are not collapsed into roles or inferred automatically from administrative authority (§12.7).
+· A workspace may contain multiple companies/entities; a Company/Entity Admin scoped to one entity does not administer other entities (§12.6).
+· Accepting an invitation never requires or triggers workspace creation.
 · Pending workspace shows the Pending Approval Screen.
 · Owner can create a first company in the app.
 · Company creation provisions the tenant schema.

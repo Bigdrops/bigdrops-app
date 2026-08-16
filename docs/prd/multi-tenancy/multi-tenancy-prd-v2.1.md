@@ -7,6 +7,41 @@
 **Supersedes:** v2.0  
 **Repository path:** `docs/prd/multi-tenancy-prd.md`
 
+**Amendment note (2026-08-16):** Documentation update — formalized the
+invitation lifecycle and the two-level administration model. (1) Invitation
+lifecycle: an invitation is `pending`, `accepted`, `revoked`, or `expired`.
+Pass for now is NOT a state; it leaves the invitation `pending`. The
+administrator who creates/sends an invitation chooses its expiration time,
+subject to the platform-level validation already defined in this chapter
+(§4). An authorized workspace administrator may revoke a pending
+invitation. A revoked or expired invitation cannot be accepted. (2) Two-level
+administration: Workspace Admin (workspace-wide governance, the authority
+ceiling) vs Company/Entity Admin (administrative authority scoped to one
+company/entity). Administrative authority is distinct from business
+permissions, which remain deny-by-default, entity-scoped, and action-based
+(§3). No table shape, RPC, or authorization model changes are introduced by
+this note; the final representation of the two-level hierarchy is a
+reconciliation-phase question, not settled here.
+
+**Amendment note (2026-08-16):** Documentation update — aligned this
+document with three resolved product decisions in the ERP frontend PRD
+v1.4. (1) Multi-workspace membership is permitted: `workspace_members`
+keeps its UNIQUE constraint on (workspace_id, user_id) and gains no
+UNIQUE constraint on user_id; activating exactly one workspace per
+session is a frontend/session constraint, not a database constraint.
+(2) A fresh user without membership or invitation chooses between Create
+and Join; joining is invitation-based only. (3) Pending invitations are
+auto-detected during startup; there is no "check for invitations"
+action. All three are behavior clarifications; the existing RLS
+(`invite_visibility`) and `accept_workspace_invitation` RPC already cover
+them. No table shape, RPC, or authorization model changes.
+
+**Amendment note (2026-08-16):** Documentation update — added §9.3
+(Creator Auto-Grant on Successful Provisioning) to match the existing
+backend behavior and a matching Success Criteria item (§13 item 14). No
+table shape, RPC, or authorization model changes; the §14 amendments table
+above is updated accordingly.
+
 **Amendment note (2026-07-15):** Two in-place fixes, not a version bump —
 (1) fixed a migration-breaking bug where `workspaces.created_by` was
 referenced by a unique index but never defined in the table; (2) added
@@ -330,6 +365,60 @@ END;
 $$;
 ```
 
+3.11 Two-Level Administration Model
+
+BIGDROPS tenancy has two administrative levels. This subsection states the
+model; it does not settle the final representation.
+
+LEVEL 1 — WORKSPACE ADMINISTRATION
+
+- Governs the entire workspace.
+- A workspace may contain multiple companies/entities.
+- Workspace-level governance covers: workspace membership, invitations
+  (create, set expiration, revoke), company/entity administration, and
+  which management capabilities company/entity administrators may
+  exercise.
+- The Workspace Admin establishes the maximum management authority
+  available beneath the workspace level. It is the authority ceiling.
+
+LEVEL 2 — COMPANY / ENTITY ADMINISTRATION
+
+- A workspace member may hold administrative authority over a specific
+  company/entity.
+- Scope is per company/entity; a Company/Entity Admin for Company A does
+  not administer Company B.
+- A Company/Entity Admin operates only within the authority permitted by
+  workspace administration.
+
+Administrative authority vs business permissions
+
+- Administrative authority answers: "Who may administer whom/what?"
+  (governance, membership, invitations, entity administration).
+- Business permissions answer: "What may this user do with business
+  resources?" (invoice → view/create/edit/approve, client → view, etc.).
+- These are distinct concepts. Business permissions remain deny-by-default,
+  entity-scoped, and action-based (§3.1, §3.3). They are not roles, and
+  they are not inferred automatically from administrative authority.
+
+Relationships to existing model
+
+- The existing model expresses workspace governance as `role` + toggle
+  permissions on `workspace_members` (§3.2) and business access as
+  (resource, action) rows on `entity_permissions` (§3.3).
+- This PRD does NOT claim the existing schema fully represents the
+  two-level hierarchy. Whether `workspace_members` toggles and
+  `entity_permissions` can express "Company/Entity Admin scoped to one
+  entity" is a reconciliation-phase question, not decided here.
+- Do NOT introduce roles, new permission schemas, or new fixed hierarchy
+  tables in this documentation pass.
+
+Platform Office relationship
+
+- Platform Operators (§3.8) are platform-level staff; they are NOT tenant
+  administrators and hold no authority over company/entity business
+  permissions. Approval of a workspace never initiates entity/schema
+  provisioning.
+
 ---
 
 4. Signup, Lobby & Invites
@@ -357,7 +446,27 @@ workspace_invitations also gains workspace_permissions jsonb (the toggle
 set to grant on acceptance, mirroring workspace_members.permissions) —
 carried over from the invite into the new member row in 3.10.
 
-Invite expiry: 7 days, auto-voided by a daily scheduled job (unchanged from v2.0).
+Invite expiry: the default is 7 days, auto-voided by a daily scheduled job
+(unchanged from v2.0). An authorized workspace administrator may choose the
+expiration time when creating/sending an invitation, subject to any
+validation rule established for the platform; the `expires_at` column holds
+the chosen time.
+
+Invitation lifecycle:
+
+- `pending` — created by an authorized workspace administrator; acceptable.
+- `accepted` — the invitee accepted via `accept_workspace_invitation`; the
+  RPC creates the membership/access records.
+- `revoked` — an authorized workspace administrator rescinded the pending
+  invitation.
+- `expired` — the administrator-chosen expiration time passed; the daily
+  job auto-voids it.
+- Pass for now (frontend) is NOT a state. It leaves the invitation
+  `pending`; it never rejects, deletes, or revokes (§4, ERP PRD §12.3).
+- A `revoked` or `expired` invitation cannot be accepted.
+
+Only an authorized workspace administrator may revoke a pending
+invitation. Revocation is a workspace-governance action (§3.1, §3.2).
 
 ---
 
@@ -577,6 +686,23 @@ implementation details.
 
 This boundary is explicit and protects against accidental coupling.
 
+9.3 Creator Auto-Grant on Successful Provisioning
+
+create_entity_schema() performs the owner-initiated provisioning. When it
+reaches status 'ready', it inserts baseline entity_permissions rows for the
+calling user in the same SECURITY DEFINER transaction:
+
+```sql
+-- on success, before the 'ready' status update
+INSERT INTO public.entity_permissions (entity_id, user_id, resource, actions)
+VALUES (p_entity_id, auth.uid(), '*', ARRAY['view','create','edit','delete']);
+```
+
+This is transactional with provisioning. A 'ready' entity never exists with
+zero permissioned users. The creator always has a baseline grant in the new
+tenant schema; further grants are managed through the normal permission
+model (§3, §4).
+
 ---
 
 10. Migration: Phase 0 (Grandfathering)
@@ -691,6 +817,9 @@ workspace existence. No role has entity-schema data access.
 12. The observability contract rule (§9.2) is documented and enforced.
 13. Platform operators may never read or write entity-schema data. This is
     explicitly stated in §3.8 and §11.3.
+14. On successful provisioning, the creator receives baseline
+    entity_permissions automatically; no 'ready' entity exists with zero
+    permissioned users.
 
 ---
 
@@ -715,6 +844,16 @@ Workspace health aggregation as future work Reviewer §11.1
 Platform Owner single-power model explicitly preserved Reviewer §3.8, §6.3
 Success Criteria updated with new items (8–13) Reviewer §13
 Open Items updated with column drop Reviewer §12
+Creator auto-grant of baseline permissions on provisioning Documentation §9.3, §13
+Multi-workspace membership confirmed (no UNIQUE on user_id) Frontend PRD v1.4 §5
+Create | Join onboarding clarified as frontend behavior Frontend PRD v1.4 §8, §12.4
+Invitation codes explicitly out of scope Frontend PRD v1.4 §16
+Invitation lifecycle formalized (pending/accepted/revoked/expired) Frontend PRD v1.5 §12.5, §4
+Administrator-controlled expiration and admin revoke of invitations Frontend PRD v1.5 §12.5, §4
+Pass for now is not a state; never rejects/revokes Frontend PRD v1.5 §12.3
+Two-level administration model (workspace vs company/entity admin) Frontend PRD v1.5 §12.6, §3.11
+Admin authority vs business permissions distinguished Frontend PRD v1.5 §12.7, §3.11
+Multiple companies/entities per workspace, admin scope per entity Frontend PRD v1.5 §12.6
 
 ```
 

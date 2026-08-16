@@ -4,8 +4,8 @@
 ## Project: BIGDROPS Platform Office (Operations Console)
 
 **Status:** Locked Architecture (Frozen)  
-**Version:** 1.1  
-**Date:** 2026-07-15  
+**Version:** 1.3  
+**Date:** 2026-08-16  
 **Repository path:** `docs/prd/platform-office-prd.md`  
 **Dependencies:** Multi-Tenancy PRD (v2.1)
 
@@ -64,6 +64,15 @@ To guarantee compliance with the "No-Cross" tenant isolation directive, a physic
 
 - **Direct Access Ban:** Presentational UI routes, layouts, and components **shall not** import or query the Supabase client directly.
 - **Service Mediation:** All read/write operations must go through domain-specific service wrappers (e.g., `workspace-service.ts`, `incident-service.ts`) located within `src/lib/services/`. These services are the *only* files permitted to call the backend database.
+
+### 2.5 Administration Boundary (v1.3)
+
+The Platform Office is an operations/governance console, not a business-administration console.
+
+- It observes workspace lifecycle and provisioning according to its existing powers (approve, suspend, read-only archive/purge observation).
+- It is **not** a tenant business-data administrator. It holds zero authority over company/entity business data and zero authority over ordinary company/entity business permissions.
+- Company/entity administration and business permissions are ERP concerns (see the ERP Frontend PRD v1.5, §12.6–§12.7). The Platform Office does not administer them.
+- The corrected approval rule stands: `approve_workspace()` transitions a workspace from `pending_approval` to `active`. Approval does **not** initiate entity/schema provisioning. Provisioning remains a separate, owner-initiated ERP operation.
 
 ---
 
@@ -149,9 +158,9 @@ The "Home Screen" of the application. It acts as an aggregation layer that does 
 
 Operators manage workspaces via controlled transition events rather than direct row-editing:
 
-- **The Approval Path**: Transitioning a workspace from `pending_approval` to `creating`. Initiates the automated `CREATE SCHEMA` backend pipeline, tracking progress through the `entity_provisioning_status` table.
-- **The Lockout Path (Suspension)**: Flipped to instantly lock out a tenant workspace via RLS/global checks at the platform boundary. This is a non-destructive action that leaves business data intact.
-- **The Termination Path (Purge/Archive)**: High-impact actions requiring multi-step verification and explicit confirmation to trigger background teardown pipelines safely.
+- **The Approval Path**: Transitioning a workspace from `pending_approval` to `active` via `approve_workspace()`. This does not initiate schema provisioning. Provisioning is a separate, owner-initiated action from within the ERP after approval (see the ERP Frontend PRD §12.2; backend PRD §9). The console observes provisioning progress read-only via `entity_provisioning_status` once the owner triggers it from the ERP.
+- **The Lockout Path (Suspension)**: Flipped to instantly lock out a tenant workspace via RLS/global checks at the platform boundary. This is a non-destructive action that leaves business data intact. This is the only immediate, operator-driven transition the console performs.
+- **The Termination Path (Purge/Archive)**: Archiving is owner-initiated from the ERP side (see Multi-Tenancy PRD §8), not a console action. Setting status = `archived` makes the workspace and all its entities inaccessible to members immediately (RLS denies on non-active status) with business data untouched. The console does not trigger archiving or the teardown. Console powers are limited to (a) suspending a workspace and (b) observing the background purge lifecycle read-only via `entity_provisioning_status` (`purging` → `purged`). One recovery exception remains from Multi-Tenancy PRD §8: before the purge job runs, the Platform Owner may restore an archived workspace to `active`.
 
 ### 6.3 Subscription & Entitlements
 
@@ -190,7 +199,7 @@ The following items are explicitly **excluded** from the Platform Office scope:
 ## 9. Success Criteria
 
 1. **Data Isolation Enforced**: No Platform Office query ever accesses tenant-isolated schemas. All data consumed originates from `public`-schema observability tables.
-2. **Workspace Lifecycle Managed**: Operators can approve, suspend, and archive workspaces through controlled transition events.
+2. **Workspace Lifecycle Managed**: Operators can approve and suspend workspaces through controlled transition events and observe the archive/purge lifecycle read-only. Archiving itself is owner-initiated from the ERP.
 3. **Provisioning Observability**: Failed provisioning attempts are visible with error details and retry history via `entity_provisioning_status`.
 4. **Audit Completeness**: Every operator action (approve, suspend, archive, entitlement change) is recorded in `public.activity_events`.
 5. **MFA Step-Up Enforced**: Re-authentication / TOTP challenge is required at console entry, independent of ERP session state.
@@ -242,6 +251,8 @@ The following items are explicitly **excluded** from the Platform Office scope:
 |---------|------|--------|---------|
 | 1.0 | 2026-07-15 | Platform Office Team | Initial locked architecture |
 | 1.1 | 2026-07-15 | Platform Office Team | Added Mobile-First Operations Philosophy; Service Layer Rule; UI Reuse Policy; Migration Strategy; updated Success Criteria |
+| 1.2 | 2026-08-16 | Platform Office Team | Corrected §6.2 Lifecycle Orchestration to match the backend contract: `approve_workspace()` transitions `pending_approval` → `active` and never initiates `CREATE SCHEMA`; archiving is owner-initiated from the ERP (§8); console powers limited to suspend plus read-only purge observation, with the one restore exception. Aligned §9.2. |
+| 1.3 | 2026-08-16 | Platform Office Team | Clarified §2.5 Administration Boundary: the Platform Office is an operations/governance console, not a tenant business-data administrator. It has no responsibility for company/entity business permissions (ERP concern). Preserved the approval rule: `approve_workspace()` → `pending_approval` → `active`; approval never initiates provisioning. Documentation-only; no architecture change. |
 
 ---
 

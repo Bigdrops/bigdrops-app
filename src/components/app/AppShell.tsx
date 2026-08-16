@@ -14,8 +14,6 @@ import {
   type ThemeTokenBundle,
 } from '@/lib/themeTokens'
 import {
-  WorkspaceProvider,
-  EntityProvider,
   AuthorizationProvider,
 } from '@/lib/tenant/contexts'
 
@@ -178,12 +176,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <WorkspaceProvider userId={session.user.id}>
-          <EntityProvider>
-            <AppThemeManager />
-            <AuthorizationProvider userId={session.user.id}>
-              <Routes>
-                <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
+        <AppThemeManager />
+        <AuthorizationProvider userId={session.user.id}>
+          <Routes>
+            <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
           <Route path="/invoices" element={withBoundary(<Invoices />)} />
           <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
           <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
@@ -231,10 +227,8 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/letters/edit/:id" element={withBoundary(<EditLetter />)} />
           <Route path="/letters/:id" element={withBoundary(<ViewLetter />)} />
           <Route path="/debug/tenant" element={withBoundary(<TenantDebug session={session} />)} />
-              </Routes>
-            </AuthorizationProvider>
-          </EntityProvider>
-        </WorkspaceProvider>
+            </Routes>
+          </AuthorizationProvider>
       </Suspense>
     </>
   )
