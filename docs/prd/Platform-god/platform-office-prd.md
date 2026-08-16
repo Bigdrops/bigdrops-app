@@ -2,7 +2,7 @@
 # Product Requirements Document (PRD)
 
 ## Project: BIGDROPS Platform Office (Operations Console)
-
+The Platform Office PRD at this path is a mirrored copy for context only
 **Status:** Locked Architecture (Frozen)  
 **Version:** 1.3  
 **Date:** 2026-08-16  
