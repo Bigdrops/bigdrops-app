@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BIGDROPS — Brutalist Terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>BIGDROPS Dashboard — Brutalist Terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,12 +12,12 @@
   --bg: #F5F5F0;
   --surface: #FFFFFF;
   --ink: #0A0A0A;
-  --ink-secondary: #555;
-  --ink-muted: #999;
+  --ink-secondary: #555555;
+  --ink-muted: #999999;
   --border: #0A0A0A;
-  --border-light: #DDD;
+  --border-light: #DDDDDD;
   --accent: #CCFF00;
-  --accent-dark: #A3CC00;
+  --accent-dim: #A3CC00;
   --danger: #FF3333;
   --success: #00CC66;
   --warning: #FF9900;
@@ -30,17 +30,22 @@
   --border-w: 2px;
   --shadow: none;
   --shadow-lg: 4px 4px 0px #0A0A0A;
+  --nav-height: 54px;
+  --scrim-bg: rgba(10,10,10,0.5);
 }
 [data-theme="dark"] {
   --bg: #0A0A0A;
   --surface: #141414;
   --ink: #F0F0F0;
-  --ink-secondary: #AAA;
-  --ink-muted: #666;
+  --ink-secondary: #AAAAAA;
+  --ink-muted: #666666;
   --border: #F0F0F0;
-  --border-light: #333;
+  --border-light: #333333;
+  --accent: #CCFF00;
+  --accent-dim: #99CC00;
   --shadow: none;
   --shadow-lg: 4px 4px 0px #CCFF00;
+  --scrim-bg: rgba(0,0,0,0.6);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -52,200 +57,232 @@ body {
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh;
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
-/* LAYOUT */
-.app { display: flex; height: 100vh; position: relative; }
-
-/* SIDEBAR */
-.sidebar {
-  width: 260px; flex-shrink: 0;
-  background: var(--surface);
-  border-right: var(--border-w) solid var(--border);
-  display: flex; flex-direction: column;
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  z-index: 40;
+/* APP SHELL */
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
 }
-.sidebar-head {
-  padding: 16px; border-bottom: var(--border-w) solid var(--border);
-  display: flex; align-items: center; gap: 12px;
+.screen {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
-.sidebar-logo {
-  width: 32px; height: 32px; background: var(--ink);
-  display: grid; place-items: center; color: var(--accent);
-  font-family: var(--font-heading); font-weight: 700; font-size: 14px;
-  flex-shrink: 0;
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-height) + 16px);
 }
-.sidebar-brand { font-family: var(--font-heading); font-weight: 700; font-size: 14px; letter-spacing: -0.02em; }
-.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
-.sidebar-section { font-family: var(--font-mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); padding: 8px 8px 4px; }
-.sidebar-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; font-size: 13px; font-weight: 500;
-  color: var(--ink-secondary); border: var(--border-w) solid transparent;
-  transition: all 0.1s;
-}
-.sidebar-link:hover { background: var(--accent); color: var(--ink); border-color: var(--border); }
-.sidebar-link.active { background: var(--ink); color: var(--accent); border-color: var(--border); font-weight: 700; }
-.sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
-.sidebar-foot {
-  padding: 12px 16px; border-top: var(--border-w) solid var(--border);
-  display: flex; align-items: center; gap: 10px;
-}
-.sidebar-avatar {
-  width: 30px; height: 30px; background: var(--accent);
-  border: var(--border-w) solid var(--border);
-  display: grid; place-items: center;
-  font-family: var(--font-mono); font-weight: 700; font-size: 11px; color: var(--ink);
-}
-.sidebar-user-name { font-weight: 700; font-size: 12px; }
-.sidebar-user-role { font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono); }
-
-/* MAIN */
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.scroll-area::-webkit-scrollbar { display: none; }
 
 /* TOPBAR */
 .topbar {
-  height: 52px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px;
-  border-bottom: var(--border-w) solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
   background: var(--surface);
+  border-bottom: var(--border-w) solid var(--border);
+  flex-shrink: 0;
   z-index: 10;
 }
-.topbar-left { display: flex; align-items: center; gap: 10px; }
-.topbar-title { font-family: var(--font-heading); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.topbar-left { display: flex; align-items: center; gap: 8px; }
 .topbar-right { display: flex; align-items: center; gap: 6px; }
 .tb-btn {
-  width: 34px; height: 34px; border: var(--border-w) solid var(--border);
-  display: grid; place-items: center; font-size: 14px;
-  transition: all 0.1s; position: relative; background: var(--surface);
+  width: 34px; height: 34px;
+  border: var(--border-w) solid var(--border);
+  display: grid; place-items: center;
+  background: var(--surface);
+  transition: all 0.1s;
+  flex-shrink: 0;
+  position: relative;
 }
-.tb-btn:hover { background: var(--accent); }
+.tb-btn svg { width: 18px; height: 18px; }
 .tb-btn.active { background: var(--ink); color: var(--accent); border-color: var(--border); }
 .tb-btn .pip {
   position: absolute; top: -3px; right: -3px;
   width: 8px; height: 8px; background: var(--danger);
   border: 2px solid var(--surface);
 }
-.tb-btn .pip.hidden { display: none; }
+.sidebar-toggle {
+  width: 34px; height: 34px;
+  border: var(--border-w) solid var(--border);
+  display: grid; place-items: center;
+  background: var(--surface);
+  transition: all 0.1s;
+  flex-shrink: 0;
+}
+.sidebar-toggle.active { background: var(--ink); color: var(--accent); }
 .tb-ai {
-  height: 34px; padding: 0 14px;
+  height: 34px; padding: 0 12px;
   background: var(--ink); color: var(--accent);
   border: var(--border-w) solid var(--border);
   font-family: var(--font-heading); font-weight: 700; font-size: 11px;
   text-transform: uppercase; letter-spacing: 0.06em;
   display: flex; align-items: center; gap: 6px;
   transition: all 0.1s;
+  flex-shrink: 0;
 }
-.tb-ai:hover { background: var(--accent); color: var(--ink); }
+.tb-ai.active { background: var(--accent); color: var(--ink); }
 .tb-ai svg { width: 14px; height: 14px; }
-
-/* SIDEBAR TOGGLE — wireframe icon */
-.sidebar-toggle {
-  width: 34px; height: 34px; border: var(--border-w) solid var(--border);
-  display: grid; place-items: center; background: var(--surface);
-  transition: all 0.1s; flex-shrink: 0;
-}
-.sidebar-toggle:hover { background: var(--accent); }
-.sidebar-toggle.active { background: var(--ink); color: var(--accent); }
 
 /* CONTENT */
 .content {
-  flex: 1; overflow-y: auto; padding: 16px;
-  display: flex; flex-direction: column; gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
+.content::-webkit-scrollbar { display: none; }
+
+/* SECTION HEADERS */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+.section-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.section-link:active { color: var(--ink); }
 
 /* KPI GRID */
-.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .kpi-card {
   border: var(--border-w) solid var(--border);
-  padding: 12px; background: var(--surface);
-  display: flex; flex-direction: column; gap: 6px;
-  transition: box-shadow 0.15s;
+  padding: 10px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.kpi-card:hover { box-shadow: var(--shadow-lg); }
-.kpi-label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); }
-.kpi-value { font-family: var(--font-heading); font-size: 20px; font-weight: 700; }
+.kpi-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
 .kpi-bar { display: flex; gap: 2px; height: 8px; }
 .kpi-seg { flex: 1; background: var(--border-light); }
 .kpi-seg.balance { background: var(--warning); }
 .kpi-seg.overdue { background: var(--danger); }
 .kpi-seg.invoices { background: var(--purple); }
 .kpi-seg.payments { background: var(--success); }
-.kpi-trend { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); }
+.kpi-value { font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
+.kpi-trend {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+}
 .kpi-trend .up { color: var(--success); font-weight: 700; }
 .kpi-trend .down { color: var(--danger); font-weight: 700; }
 
 /* SMART BANNER */
 .smart-banner {
   border: var(--border-w) solid var(--border);
-  padding: 12px 14px; background: var(--surface);
-  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   position: relative;
 }
 .sb-dot { width: 8px; height: 8px; background: var(--danger); margin-top: 4px; flex-shrink: 0; }
 .sb-body { flex: 1; }
-.sb-title { font-weight: 700; font-size: 13px; }
-.sb-text { font-size: 12px; color: var(--ink-secondary); margin-top: 3px; }
+.sb-title { font-weight: 700; font-size: 12px; }
+.sb-text { font-size: 11px; color: var(--ink-secondary); margin-top: 3px; }
 .sb-cta {
-  display: inline-block; margin-top: 8px;
-  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  display: inline-block; margin-top: 6px;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
   background: var(--ink); color: var(--accent);
-  padding: 5px 12px; border: var(--border-w) solid var(--border);
+  padding: 4px 10px; border: var(--border-w) solid var(--border);
   cursor: pointer; transition: all 0.1s;
 }
-.sb-cta:hover { background: var(--accent); color: var(--ink); }
-.sb-close { position: absolute; top: 8px; right: 8px; font-size: 16px; color: var(--ink-muted); background: none; border: none; cursor: pointer; }
+.sb-cta:active { background: var(--accent); color: var(--ink); }
+.sb-close {
+  position: absolute; top: 6px; right: 6px;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  font-size: 14px; color: var(--ink-muted);
+  cursor: pointer;
+}
 
-/* NOTIF STRIP */
-.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.section-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-.section-link { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); cursor: pointer; }
-.section-link:hover { color: var(--ink); }
+/* NOTIFICATION STRIP */
 .notif-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-.notif-scroll::-webkit-scrollbar { height: 3px; }
-.notif-scroll::-webkit-scrollbar-thumb { background: var(--ink-muted); }
+.notif-scroll::-webkit-scrollbar { display: none; }
 .notif-card {
-  min-width: 130px; border: var(--border-w) solid var(--border);
-  padding: 10px; background: var(--surface);
-  display: flex; flex-direction: column; gap: 6px;
-  cursor: pointer; transition: all 0.1s;
+  min-width: 120px; border: var(--border-w) solid var(--border);
+  padding: 8px; background: var(--surface);
+  display: flex; flex-direction: column; gap: 4px;
+  flex-shrink: 0;
 }
-.notif-card:hover { background: var(--accent); }
-.notif-card-title { font-weight: 700; font-size: 11px; line-height: 1.3; }
-.notif-card-desc { font-size: 10px; color: var(--ink-secondary); line-height: 1.4; }
-.notif-card-time { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); margin-top: auto; }
+.notif-card-title { font-weight: 700; font-size: 10px; line-height: 1.3; }
+.notif-card-desc { font-size: 9px; color: var(--ink-secondary); line-height: 1.3; }
+.notif-card-time {
+  font-family: var(--font-mono); font-size: 8px; color: var(--ink-muted); margin-top: auto;
+}
 
 /* DOCUMENT FEED */
 .feed-list { display: flex; flex-direction: column; gap: 6px; }
 .feed-row {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
   border: var(--border-w) solid var(--border);
-  padding: 10px 12px; background: var(--surface);
-  cursor: pointer; transition: all 0.1s;
+  padding: 8px 10px; background: var(--surface);
 }
-.feed-row:hover { background: var(--accent); }
 .feed-icon {
-  width: 28px; height: 28px; background: var(--ink);
+  width: 26px; height: 26px; background: var(--ink);
   display: grid; place-items: center; color: var(--accent);
   flex-shrink: 0;
 }
-.feed-icon svg { width: 14px; height: 14px; }
+.feed-icon svg { width: 13px; height: 13px; }
 .feed-lines { flex: 1; min-width: 0; }
-.feed-primary { font-family: var(--font-mono); font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
-.feed-secondary { font-size: 11px; color: var(--ink-secondary); margin-top: 2px; }
-.feed-amount { font-family: var(--font-mono); font-weight: 700; font-size: 12px; text-align: right; flex-shrink: 0; }
-.feed-meta { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); text-align: right; }
+.feed-primary {
+  font-family: var(--font-mono); font-weight: 700; font-size: 11px;
+  display: flex; align-items: center; gap: 6px;
+}
+.feed-secondary { font-size: 10px; color: var(--ink-secondary); margin-top: 2px; }
+.feed-amount {
+  font-family: var(--font-mono); font-weight: 700; font-size: 11px;
+  text-align: right; flex-shrink: 0;
+}
+.feed-meta { font-family: var(--font-mono); font-size: 8px; color: var(--ink-muted); text-align: right; }
 .badge {
-  display: inline-block; padding: 1px 6px;
-  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  display: inline-block; padding: 1px 5px;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.04em;
   border: 1px solid currentColor;
 }
@@ -255,48 +292,76 @@ a { color: inherit; text-decoration: none; }
 
 /* AUDIT TRAIL */
 .audit-list { display: flex; flex-direction: column; }
-.audit-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border-light); }
+.audit-row {
+  display: flex; gap: 8px; padding: 7px 0;
+  border-bottom: 1px dashed var(--border-light);
+}
 .audit-row:last-child { border-bottom: none; }
-.audit-dot { width: 7px; height: 7px; border: 1.5px solid var(--border); margin-top: 4px; flex-shrink: 0; }
+.audit-dot { width: 7px; height: 7px; border: 1.5px solid var(--border); margin-top: 3px; flex-shrink: 0; }
 .audit-dot.ok { background: var(--success); border-color: var(--success); }
 .audit-dot.warn { background: var(--warning); border-color: var(--warning); }
 .audit-dot.bad { background: var(--danger); border-color: var(--danger); }
 .audit-body { flex: 1; }
-.audit-title { font-size: 12px; font-weight: 600; }
-.audit-meta { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); margin-top: 2px; }
+.audit-title { font-size: 11px; font-weight: 600; }
+.audit-meta { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); margin-top: 2px; }
 
 /* BOTTOM NAV */
 .bottom-nav {
-  display: none; position: fixed; left: 0; right: 0; bottom: 0;
-  height: 56px; z-index: 50;
-  background: var(--surface); border-top: var(--border-w) solid var(--border);
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: var(--nav-height);
+  background: var(--surface);
+  border-top: var(--border-w) solid var(--border);
+  display: flex;
+  align-items: stretch;
+  z-index: 5;
 }
-.bottom-nav-inner { display: grid; grid-template-columns: repeat(5, 1fr); height: 100%; }
 .bn-item {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  color: var(--ink-muted); font-size: 9px; font-family: var(--font-mono); font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em;
-  border-right: 1px solid var(--border-light); transition: all 0.1s;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--ink-muted);
+  font-size: 8px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-right: 1px solid var(--border-light);
+  transition: all 0.1s;
 }
 .bn-item:last-child { border-right: none; }
 .bn-item svg { width: 18px; height: 18px; }
 .bn-item.active { background: var(--ink); color: var(--accent); }
-.bn-item:hover { background: var(--accent); color: var(--ink); }
+.bn-item:active { background: var(--accent); color: var(--ink); }
 
 /* FAB */
-.fab-wrap { position: fixed; bottom: 72px; right: 16px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fab-wrap {
+  position: absolute;
+  bottom: calc(var(--nav-height) + 12px);
+  right: 14px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
 .fab {
-  width: 48px; height: 48px; background: var(--ink); color: var(--accent);
+  width: 46px; height: 46px;
+  background: var(--ink); color: var(--accent);
   border: var(--border-w) solid var(--border);
-  font-size: 24px; font-weight: 300;
+  font-size: 22px; font-weight: 300;
   display: grid; place-items: center;
   box-shadow: var(--shadow-lg);
-  transition: all 0.2s; z-index: 2;
+  transition: all 0.15s;
+  z-index: 2;
 }
-.fab:hover { background: var(--accent); color: var(--ink); }
+.fab:active { transform: scale(0.92); }
 .fab.open { transform: rotate(45deg); background: var(--danger); color: #fff; }
 .quick-popup {
-  width: 180px; background: var(--surface);
+  width: 170px; background: var(--surface);
   border: var(--border-w) solid var(--border);
   box-shadow: var(--shadow-lg);
   display: flex; flex-direction: column;
@@ -306,173 +371,274 @@ a { color: inherit; text-decoration: none; }
 .quick-popup.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .popup-item {
   display: block; width: 100%; text-align: left;
-  padding: 9px 14px; font-size: 12px; font-weight: 600;
-  border-bottom: 1px solid var(--border-light); transition: all 0.1s;
+  padding: 8px 14px; font-size: 11px; font-weight: 600;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.1s;
 }
 .popup-item:last-child { border-bottom: none; }
-.popup-item:hover { background: var(--accent); }
+.popup-item:active { background: var(--accent); color: var(--ink); }
 
 /* SCRIM */
 .scrim {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-  z-index: 35; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  position: absolute; inset: 0;
+  background: var(--scrim-bg);
+  z-index: 35;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
 }
 .scrim.visible { opacity: 1; pointer-events: auto; }
 
+/* SIDEBAR DRAWER */
+.sidebar-drawer {
+  position: absolute; top: 0; left: 0; bottom: 0; width: 78%;
+  background: var(--surface);
+  border-right: var(--border-w) solid var(--border);
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  z-index: 40;
+  display: flex; flex-direction: column;
+}
+.sidebar-drawer.visible { transform: translateX(0); }
+.sd-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.sd-logo {
+  width: 32px; height: 32px; background: var(--ink);
+  display: grid; place-items: center; color: var(--accent);
+  font-family: var(--font-heading); font-weight: 700; font-size: 12px;
+  flex-shrink: 0;
+}
+.sd-brand { font-family: var(--font-heading); font-weight: 700; font-size: 13px; }
+.sd-nav { flex: 1; overflow-y: auto; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+.sd-nav::-webkit-scrollbar { display: none; }
+.sd-section {
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-muted); padding: 8px 8px 4px;
+}
+.sd-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; font-size: 12px; font-weight: 500;
+  color: var(--ink-secondary); border: var(--border-w) solid transparent;
+  transition: all 0.1s;
+}
+.sd-item:active { background: var(--accent); color: var(--ink); border-color: var(--border); }
+.sd-item.active { background: var(--ink); color: var(--accent); border-color: var(--border); font-weight: 700; }
+.sd-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.sd-foot {
+  padding: 12px 16px;
+  border-top: var(--border-w) solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sd-avatar {
+  width: 28px; height: 28px; background: var(--accent);
+  border: var(--border-w) solid var(--border);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 10px; color: var(--ink);
+}
+.sd-user-name { font-weight: 700; font-size: 11px; }
+.sd-user-role { font-size: 9px; color: var(--ink-muted); font-family: var(--font-mono); }
+
 /* NOTIF PANEL */
 .notif-panel {
-  position: fixed; top: 56px; right: 16px; width: 300px; max-height: 400px;
+  position: absolute; top: 52px; right: 10px; width: 240px; max-height: 360px;
   background: var(--surface); border: var(--border-w) solid var(--border);
   box-shadow: var(--shadow-lg); z-index: 50;
   display: flex; flex-direction: column; overflow: hidden;
-  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
   transition: all 0.2s;
 }
-.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-.np-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: var(--border-w) solid var(--border); }
-.np-title { font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-.np-clear { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); cursor: pointer; }
-.np-clear:hover { color: var(--danger); }
-.np-list { max-height: 320px; overflow-y: auto; }
-.np-row { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px dashed var(--border-light); cursor: pointer; transition: background 0.1s; }
-.np-row:hover { background: var(--accent); }
+.notif-panel.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.np-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.np-title { font-family: var(--font-mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.np-clear { font-family: var(--font-mono); font-size: 8px; color: var(--ink-muted); cursor: pointer; }
+.np-clear:active { color: var(--danger); }
+.np-list { max-height: 280px; overflow-y: auto; }
+.np-list::-webkit-scrollbar { display: none; }
+.np-row {
+  display: flex; gap: 8px; padding: 9px 12px;
+  border-bottom: 1px dashed var(--border-light);
+}
 .np-row:last-child { border-bottom: none; }
+.np-row:active { background: var(--accent); }
 .np-dot { width: 6px; height: 6px; background: var(--danger); margin-top: 4px; flex-shrink: 0; }
 .np-dot.read { background: var(--border-light); }
 .np-lines { flex: 1; }
-.np-l1 { height: 7px; width: 85%; background: var(--border-light); border-radius: 1px; }
-.np-l2 { height: 6px; width: 55%; background: var(--bg); border: 1px solid var(--border-light); margin-top: 5px; border-radius: 1px; }
+.np-l1 { height: 7px; width: 85%; background: var(--border-light); }
+.np-l2 { height: 6px; width: 55%; background: var(--bg); border: 1px solid var(--border-light); margin-top: 5px; }
 
 /* AI PANEL */
 .ai-overlay {
-  position: fixed; inset: 0; z-index: 55;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: flex-end; justify-content: center;
+  position: absolute; inset: 0; z-index: 55;
+  background: var(--scrim-bg);
+  display: flex; align-items: flex-end;
   opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
-.ai-overlay.open { opacity: 1; pointer-events: auto; }
+.ai-overlay.visible { opacity: 1; pointer-events: auto; }
 .ai-panel {
-  width: 100%; max-width: 480px; max-height: 78vh;
+  width: 100%; max-height: 78%;
   background: var(--surface); border: var(--border-w) solid var(--border);
   border-bottom: none;
   display: flex; flex-direction: column;
   transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
 }
-.ai-overlay.open .ai-panel { transform: translateY(0); }
-.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: var(--border-w) solid var(--border); }
-.ai-head-left { display: flex; align-items: center; gap: 10px; }
-.ai-avatar { width: 28px; height: 28px; background: var(--ink); color: var(--accent); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 10px; }
-.ai-title { font-family: var(--font-heading); font-weight: 700; font-size: 13px; }
-.ai-sub { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); }
-.ai-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-.ai-msg { max-width: 80%; padding: 10px 12px; font-size: 12px; line-height: 1.5; border: var(--border-w) solid var(--border); }
+.ai-overlay.visible .ai-panel { transform: translateY(0); }
+.ai-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.ai-head-left { display: flex; align-items: center; gap: 8px; }
+.ai-avatar {
+  width: 26px; height: 26px; background: var(--ink); color: var(--accent);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 9px;
+}
+.ai-title { font-family: var(--font-heading); font-weight: 700; font-size: 12px; }
+.ai-sub { font-family: var(--font-mono); font-size: 8px; color: var(--ink-muted); }
+.ai-close {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  font-size: 14px; color: var(--ink-muted);
+}
+.ai-close:active { color: var(--danger); }
+.ai-body {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ai-body::-webkit-scrollbar { display: none; }
+.ai-msg {
+  max-width: 78%; padding: 9px 11px;
+  font-size: 11px; line-height: 1.5;
+  border: var(--border-w) solid var(--border);
+}
 .ai-msg.bot { align-self: flex-start; background: var(--surface); }
 .ai-msg.user { align-self: flex-end; background: var(--ink); color: var(--accent); }
-.ai-msg strong { font-weight: 700; }
-.typing { display: inline-flex; gap: 4px; padding: 10px 12px; border: var(--border-w) solid var(--border); align-self: flex-start; }
-.typing span { width: 6px; height: 6px; background: var(--ink); animation: blink 1.2s infinite; }
-.typing span:nth-child(2) { animation-delay: 0.15s; }
-.typing span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes blink { 0%,60%,100% { opacity: 0.3; } 30% { opacity: 1; } }
-.ai-chips { display: flex; flex-direction: column; gap: 4px; padding: 0 16px 10px; }
+.ai-chips { display: flex; flex-direction: column; gap: 4px; padding: 0 14px 8px; }
 .ai-chip {
   display: block; width: 100%; text-align: left;
-  padding: 8px 12px; font-size: 11px; font-weight: 500;
+  padding: 7px 10px; font-size: 10px; font-weight: 500;
   border: var(--border-w) solid var(--border); background: var(--surface);
-  cursor: pointer; transition: all 0.1s;
+  transition: all 0.1s;
 }
-.ai-chip:hover { background: var(--accent); }
-.ai-input-row { display: flex; gap: 6px; padding: 10px 16px 14px; border-top: var(--border-w) solid var(--border); }
+.ai-chip:active { background: var(--accent); }
+.ai-input-row {
+  display: flex; gap: 6px;
+  padding: 8px 14px 12px;
+  border-top: var(--border-w) solid var(--border);
+}
 .ai-input {
-  flex: 1; height: 36px; padding: 0 12px;
+  flex: 1; height: 34px; padding: 0 10px;
   border: var(--border-w) solid var(--border); background: var(--surface);
-  font-family: var(--font-body); font-size: 12px; color: var(--ink); outline: none;
+  font-family: var(--font-body); font-size: 11px; color: var(--ink); outline: none;
 }
 .ai-input:focus { border-color: var(--accent); }
 .ai-send {
-  width: 36px; height: 36px; background: var(--ink); color: var(--accent);
+  width: 34px; height: 34px;
+  background: var(--ink); color: var(--accent);
   border: var(--border-w) solid var(--border);
-  font-size: 16px; font-weight: 700; display: grid; place-items: center;
+  font-size: 14px; font-weight: 700;
+  display: grid; place-items: center;
   transition: all 0.1s;
 }
-.ai-send:hover { background: var(--accent); color: var(--ink); }
+.ai-send:active { background: var(--accent); color: var(--ink); }
+
+/* LOADING SCREEN */
+.loading-screen {
+  position: absolute; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 0 24px; text-align: center;
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.loading-screen.visible { transform: translateX(0); }
+.ls-logo {
+  width: 44px; height: 44px; background: var(--ink);
+  display: grid; place-items: center; color: var(--accent);
+  font-family: var(--font-heading); font-weight: 700; font-size: 16px;
+  margin-bottom: 20px;
+}
+.ls-spinner {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border-light);
+  border-top-color: var(--ink);
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ls-tip-card {
+  border: var(--border-w) dashed var(--border-light);
+  padding: 16px 14px; width: 100%; max-width: 280px;
+}
+.ls-tip-eyebrow {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em; color: var(--ink-muted); text-transform: uppercase;
+}
+.ls-tip-text {
+  font-size: 12px; line-height: 1.6; color: var(--ink); margin-top: 8px;
+}
+.ls-tip-text b { font-weight: 700; }
+.ls-dots { display: flex; gap: 5px; margin-top: 20px; justify-content: center; }
+.ls-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--border-light); }
+.ls-dots span.on { background: var(--ink); }
 
 /* TOAST */
 .toast {
-  position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-8px);
-  z-index: 200; padding: 10px 18px;
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  z-index: 200; padding: 8px 16px;
   background: var(--ink); color: var(--accent);
   border: var(--border-w) solid var(--border);
-  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.04em;
   box-shadow: var(--shadow-lg);
   opacity: 0; pointer-events: none; transition: all 0.2s;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 768px) {
-  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; transform: translateX(-100%); z-index: 40; }
-  .sidebar.open { transform: translateX(0); }
-  .bottom-nav { display: block; }
-  .content { padding: 12px; padding-bottom: 72px; }
-  .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .fab-wrap { bottom: 68px; right: 12px; }
+@media (min-width: 768px) {
+  .app { border-left: var(--border-w) solid var(--border); border-right: var(--border-w) solid var(--border); }
 }
 </style>
 </head>
 <body>
 <div class="app" id="app">
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-head">
-      <div class="sidebar-logo">BD</div>
-      <div class="sidebar-brand">BIGDROPS</div>
-    </div>
-    <nav class="sidebar-nav" aria-label="Sections">
-      <div class="sidebar-section">Documents</div>
-      <a href="#" class="sidebar-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
-      <div class="sidebar-section">Operations</div>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
-    </nav>
-    <div class="sidebar-foot">
-      <div class="sidebar-avatar">MA</div>
-      <div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div>
-    </div>
-  </aside>
-
-  <div class="scrim" id="scrim"></div>
-
-  <!-- MAIN -->
-  <div class="main">
+  <div class="screen" id="mainScreen">
+    <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-left">
         <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 3H13C16.7712 3 18.6569 3 19.8284 4.17157C21 5.34315 21 7.22876 21 11V13C21 16.7712 21 18.6569 19.8284 19.8284C18.6569 21 16.7712 21 13 21H11C7.2288 21 5.3431 21 4.1716 19.8284C3 18.6569 3 16.7712 3 13V11C3 7.22876 3 5.34315 4.1716 4.17157C5.3431 3 7.2288 3 11 3Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
-            <path id="panelPath" d="M10 5.5 C10 4.793 10 4.439 9.780 4.220 C9.560 4 9.207 4 8.5 4 H8.5 C6.379 4 5.318 4 4.659 4.659 C4 5.318 4 6.379 4 8.5 V15.5 C4 17.621 4 18.682 4.659 19.341 C5.318 20 6.379 20 8.5 20 H8.5 C9.207 20 9.561 20 9.780 19.780 C10 19.561 10 19.207 10 18.5 V5.5 Z" fill="var(--surface)"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
           </svg>
         </button>
-        <span class="topbar-title">BIGDROPS / Dashboard</span>
       </div>
       <div class="topbar-right">
-        <button class="tb-btn" id="themeBtn" title="Theme">☾</button>
-        <button class="tb-btn" id="notifBtn" title="Notifications" aria-expanded="false">
-          🔔<span class="pip" id="pip"></span>
+        <button class="tb-btn" id="themeBtn" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
-        <button class="tb-ai" id="aiBtn">
+        <button class="tb-btn" id="notifBtn" aria-label="Notifications" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="pip"></span>
+        </button>
+        <button class="tb-ai" id="aiBtn" aria-label="Open AI assistant">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
           STEWARD
         </button>
       </div>
     </header>
 
+    <!-- SCROLLABLE CONTENT -->
     <main class="content" id="content">
       <!-- KPI GRID -->
       <section>
@@ -510,7 +676,7 @@ a { color: inherit; text-decoration: none; }
         <div class="sb-body">
           <div class="sb-title">3 payments may be unrecorded</div>
           <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
-          <div class="sb-cta" onclick="showToast('Recording payments...')">Record now</div>
+          <button class="sb-cta" id="sbCta">Record now</button>
         </div>
         <button class="sb-close" id="sbClose" aria-label="Dismiss">✕</button>
       </section>
@@ -519,173 +685,464 @@ a { color: inherit; text-decoration: none; }
       <section>
         <div class="section-head">
           <div class="section-title">Recent Alerts</div>
-          <span class="section-link" id="seeAll">see all →</span>
+          <span class="section-link">see all</span>
         </div>
-        <div class="notif-scroll" id="notifScroll"></div>
+        <div class="notif-scroll">
+          <div class="notif-card">
+            <div class="notif-card-title">Overdue invoice INV-0042</div>
+            <div class="notif-card-desc">7 days past due</div>
+            <div class="notif-card-time">2h ago</div>
+          </div>
+          <div class="notif-card">
+            <div class="notif-card-title">New quotation accepted</div>
+            <div class="notif-card-desc">QTN-0108 by Acme Ltd</div>
+            <div class="notif-card-time">5h ago</div>
+          </div>
+          <div class="notif-card">
+            <div class="notif-card-title">Payment received</div>
+            <div class="notif-card-desc">₦45,000 — INV-0039</div>
+            <div class="notif-card-time">1d ago</div>
+          </div>
+          <div class="notif-card">
+            <div class="notif-card-title">Waybill dispatched</div>
+            <div class="notif-card-desc">WB-0027 to Site B</div>
+            <div class="notif-card-time">1d ago</div>
+          </div>
+        </div>
       </section>
 
       <!-- DOCUMENT FEED -->
       <section>
         <div class="section-head"><div class="section-title">Recent Documents</div></div>
-        <div class="feed-list" id="feedList"></div>
+        <div class="feed-list">
+          <div class="feed-row">
+            <div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+            <div class="feed-lines">
+              <div class="feed-primary">INV-0045 <span class="badge pending">Pending</span></div>
+              <div class="feed-secondary">Lagos Steel Works</div>
+            </div>
+            <div><div class="feed-amount">₦120,000</div><div class="feed-meta">Aug 15</div></div>
+          </div>
+          <div class="feed-row">
+            <div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="feed-lines">
+              <div class="feed-primary">QTN-0109 <span class="badge draft">Draft</span></div>
+              <div class="feed-secondary">Westfield Corp</div>
+            </div>
+            <div><div class="feed-amount">₦340,000</div><div class="feed-meta">Aug 14</div></div>
+          </div>
+          <div class="feed-row">
+            <div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg></div>
+            <div class="feed-lines">
+              <div class="feed-primary">WB-0028 <span class="badge paid">Delivered</span></div>
+              <div class="feed-secondary">Site Alpha</div>
+            </div>
+            <div><div class="feed-amount">---</div><div class="feed-meta">Aug 13</div></div>
+          </div>
+        </div>
       </section>
 
       <!-- AUDIT TRAIL -->
       <section>
         <div class="section-head"><div class="section-title">Audit Trail</div></div>
-        <div class="audit-list" id="auditList"></div>
+        <div class="audit-list">
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-0045 created by Milad</div><div class="audit-meta">Today, 10:32 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">INV-0042 overdue reminder sent</div><div class="audit-meta">Today, 09:15 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">QTN-0108 accepted by client</div><div class="audit-meta">Yesterday, 4:20 PM</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">WB-0027 dispatched from warehouse</div><div class="audit-meta">Yesterday, 11:00 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-0039 payment mismatch flagged</div><div class="audit-meta">Aug 14, 3:45 PM</div></div></div>
+        </div>
       </section>
     </main>
-  </div>
-</div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation">
-  <div class="bottom-nav-inner">
-    <button class="bn-item active" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
-    <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
-    <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button>
-    <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
-    <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
-  </div>
-</nav>
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation">
+      <button class="bn-item active" role="tab" aria-selected="true" aria-label="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button class="bn-item" role="tab" aria-selected="false" aria-label="Projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Projects
+      </button>
+      <button class="bn-item" role="tab" aria-selected="false" aria-label="Sales">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Sales
+      </button>
+      <button class="bn-item" role="tab" aria-selected="false" aria-label="Clients">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Clients
+      </button>
+      <button class="bn-item" role="tab" aria-selected="false" aria-label="More">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        More
+      </button>
+    </nav>
 
-<!-- FAB -->
-<div class="fab-wrap" id="fabWrap">
-  <div class="quick-popup" id="quickPopup" role="menu">
-    <button class="popup-item" role="menuitem" onclick="createDoc('Invoice')">Invoice</button>
-    <button class="popup-item" role="menuitem" onclick="createDoc('Quotation')">Quotation</button>
-    <button class="popup-item" role="menuitem" onclick="createDoc('Purchase Order')">Purchase orders</button>
-    <button class="popup-item" role="menuitem" onclick="createDoc('BOQ')">Boq</button>
-    <button class="popup-item" role="menuitem" onclick="createDoc('Waybill')">Waybill</button>
-    <button class="popup-item" role="menuitem" onclick="createDoc('CSR Report')">Csr</button>
-  </div>
-  <button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button>
-</div>
-
-<!-- NOTIF PANEL -->
-<div class="notif-panel" id="notifPanel">
-  <div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="clearAll">Clear all</span></div>
-  <div class="np-list" id="npList"></div>
-</div>
-
-<!-- AI PANEL -->
-<div class="ai-overlay" id="aiOverlay">
-  <div class="ai-panel">
-    <div class="ai-head">
-      <div class="ai-head-left">
-        <div class="ai-avatar">BD</div>
-        <div><div class="ai-title">Steward</div><div class="ai-sub">local llm · on-device</div></div>
+    <!-- FAB -->
+    <div class="fab-wrap" id="fabWrap">
+      <div class="quick-popup" id="quickPopup" role="menu" aria-label="Quick actions">
+        <button class="popup-item" role="menuitem">Invoice</button>
+        <button class="popup-item" role="menuitem">Quotation</button>
+        <button class="popup-item" role="menuitem">Purchase orders</button>
+        <button class="popup-item" role="menuitem">Boq</button>
+        <button class="popup-item" role="menuitem">Waybill</button>
+        <button class="popup-item" role="menuitem">Csr</button>
       </div>
-      <button class="tb-btn" id="aiClose" aria-label="Close">✕</button>
+      <button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button>
     </div>
-    <div class="ai-chips">
-      <button class="ai-chip" data-ask="Find invoice INV-000842">Find invoice INV-000842</button>
-      <button class="ai-chip" data-ask="Create quotation for Lagos Solar Grid">Create quotation for Lagos Solar Grid</button>
-      <button class="ai-chip" data-ask="Draft payment reminder for Eko Atlantic">Draft payment reminder for Eko Atlantic</button>
+
+    <!-- SCRIM -->
+    <div class="scrim" id="scrim"></div>
+
+    <!-- SIDEBAR DRAWER -->
+    <div class="sidebar-drawer" id="sidebarDrawer">
+      <div class="sd-head">
+        <div class="sd-logo">BD</div>
+        <div class="sd-brand">BIGDROPS</div>
+      </div>
+      <nav class="sd-nav" aria-label="Sidebar navigation">
+        <div class="sd-section">Documents</div>
+        <button class="sd-item active" data-page="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </button>
+        <button class="sd-item" data-page="invoices">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          Invoices
+        </button>
+        <button class="sd-item" data-page="quotations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Quotations
+        </button>
+        <button class="sd-item" data-page="waybills">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>
+          Waybills
+        </button>
+        <button class="sd-item" data-page="letters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>
+          Letters
+        </button>
+        <button class="sd-item" data-page="csr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          CSR Reports
+        </button>
+        <div class="sd-section">Operations</div>
+        <button class="sd-item" data-page="projects">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projects
+        </button>
+        <button class="sd-item" data-page="compliance">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Compliance
+        </button>
+        <button class="sd-item" data-page="library">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Item Library
+        </button>
+      </nav>
+      <div class="sd-foot">
+        <div class="sd-avatar">MA</div>
+        <div><div class="sd-user-name">Milad A.</div><div class="sd-user-role">Operator</div></div>
+      </div>
     </div>
-    <div class="ai-body" id="aiHistory">
-      <div class="ai-msg bot"><strong>Steward:</strong> Hello! I can help you create invoices, quotations, letters, and find documents.</div>
+
+    <!-- NOTIF PANEL -->
+    <div class="notif-panel" id="notifPanel">
+      <div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="npClear">Clear all</span></div>
+      <div class="np-list">
+        <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+      </div>
     </div>
-    <div class="ai-input-row">
-      <input class="ai-input" id="aiInput" type="text" placeholder="Ask about documents..." />
-      <button class="ai-send" id="aiSend">↑</button>
+
+    <!-- AI PANEL -->
+    <div class="ai-overlay" id="aiOverlay">
+      <div class="ai-panel">
+        <div class="ai-head">
+          <div class="ai-head-left">
+            <div class="ai-avatar">AI</div>
+            <div><div class="ai-title">Steward</div><div class="ai-sub">local llm</div></div>
+          </div>
+          <button class="ai-close" id="aiClose" aria-label="Close">✕</button>
+        </div>
+        <div class="ai-body">
+          <div class="ai-msg bot">Hello! I can help you manage invoices, track payments, and navigate your documents.</div>
+          <div class="ai-msg user">Show me overdue invoices</div>
+          <div class="ai-msg bot">You have 2 overdue invoices totaling ₦56,000. Would you like to send reminders?</div>
+        </div>
+        <div class="ai-chips">
+          <button class="ai-chip">Create a new invoice</button>
+          <button class="ai-chip">Show payment history</button>
+        </div>
+        <div class="ai-input-row">
+          <input class="ai-input" type="text" placeholder="Ask Steward..." aria-label="Ask Steward" />
+          <button class="ai-send" aria-label="Send">↑</button>
+        </div>
+      </div>
     </div>
+
+    <!-- LOADING SCREEN -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="ls-logo">BD</div>
+      <div class="ls-spinner"></div>
+      <div class="ls-tip-card">
+        <div class="ls-tip-eyebrow">Did you know</div>
+        <div class="ls-tip-text">You can convert an accepted <b>quotation</b> straight into an <b>invoice</b> — no need to write a fresh one.</div>
+      </div>
+      <div class="ls-dots"><span class="on"></span><span></span><span></span></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
   </div>
 </div>
-
-<div class="toast" id="toast"><span id="toastMsg"></span></div>
 
 <script>
-(function(){
+(function() {
   'use strict';
-  var PANEL_CLOSED="M10 5.5 C10 4.793 10 4.439 9.780 4.220 C9.560 4 9.207 4 8.5 4 H8.5 C6.379 4 5.318 4 4.659 4.659 C4 5.318 4 6.379 4 8.5 V15.5 C4 17.621 4 18.682 4.659 19.341 C5.318 20 6.379 20 8.5 20 H8.5 C9.207 20 9.561 20 9.780 19.780 C10 19.561 10 19.207 10 18.5 V5.5 Z";
-  var PANEL_OPEN="M14 6 C14 5.057 14 4.586 13.707 4.293 C13.414 4 12.943 4 12 4 H10 C7.172 4 5.757 4 4.879 4.879 C4 5.757 4 7.172 4 10 V14 C4 16.828 4 18.243 4.879 19.121 C5.757 20 7.172 20 10 20 H12 C12.943 20 13.414 20 13.707 19.707 C14 19.414 14 18.943 14 18 V6 Z";
-  function $(id){return document.getElementById(id)}
-  function morph(el,open){
-    if(!el)return;var t=open?PANEL_OPEN:PANEL_CLOSED,c=el.getAttribute('d');
-    if(el.animate){var a=el.animate([{d:c},{d:t}],{duration:300,easing:'cubic-bezier(0.4,0,0.2,1)',fill:'forwards'});a.onfinish=function(){el.setAttribute('d',t)}}
-    else el.setAttribute('d',t);
-  }
-  function showToast(m){var t=$('toast');$('toastMsg').textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
-  window.showToast=showToast;
-  window.createDoc=function(t){closeFab();showToast('Creating '+t+'...')};
+  var sidebarBtn = document.getElementById('sidebarToggle');
+  var sidebarDrawer = document.getElementById('sidebarDrawer');
+  var notifPanel = document.getElementById('notifPanel');
+  var notifBtn = document.getElementById('notifBtn');
+  var aiBtn = document.getElementById('aiBtn');
+  var aiOverlay = document.getElementById('aiOverlay');
+  var aiClose = document.getElementById('aiClose');
+  var fabBtn = document.getElementById('fabBtn');
+  var quickPopup = document.getElementById('quickPopup');
+  var scrim = document.getElementById('scrim');
+  var themeBtn = document.getElementById('themeBtn');
+  var loadingScreen = document.getElementById('loadingScreen');
+  var toast = document.getElementById('toast');
+  var smartBanner = document.getElementById('smartBanner');
+  var sbClose = document.getElementById('sbClose');
+  var sbCta = document.getElementById('sbCta');
+  var npClear = document.getElementById('npClear');
 
-  var state={sidebar:false,notif:false,ai:false,fab:false};
-  function closeAll(except){
-    if(except!=='sidebar'&&state.sidebar){state.sidebar=false;$('sidebar').classList.remove('open');$('sidebarToggle').classList.remove('active');morph($('panelPath'),false)}
-    if(except!=='notif'&&state.notif){state.notif=false;$('notifPanel').classList.remove('open');$('notifBtn').classList.remove('active')}
-    if(except!=='ai'&&state.ai){state.ai=false;$('aiOverlay').classList.remove('open')}
-    if(except!=='fab')closeFab();
-    $('scrim').classList.toggle('visible',state.sidebar||state.notif);
-  }
-  function closeFab(){state.fab=false;$('fabBtn').classList.remove('open');$('fabBtn').classList.remove('open');$('quickPopup').classList.remove('open');$('fabBtn').setAttribute('aria-expanded','false')}
+  var state = { sidebar: false, notif: false, ai: false, fab: false };
+  var toastTimer;
 
-  $('sidebarToggle').addEventListener('click',function(e){e.stopPropagation();var n=!state.sidebar;closeAll('sidebar');state.sidebar=n;$('sidebar').classList.toggle('open',n);$('sidebarToggle').classList.toggle('active',n);morph($('panelPath'),n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('notifBtn').addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;$('notifPanel').classList.toggle('open',n);$('notifBtn').classList.toggle('active',n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('seeAll').addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;$('notifPanel').classList.toggle('open',n);$('notifBtn').classList.toggle('active',n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('aiBtn').addEventListener('click',function(e){e.stopPropagation();closeAll('ai');state.ai=true;$('aiOverlay').classList.add('open')});
-  $('aiClose').addEventListener('click',function(e){e.stopPropagation();closeAll()});
-  $('aiOverlay').addEventListener('click',function(e){if(e.target===$('aiOverlay'))closeAll()});
-  $('fabBtn').addEventListener('click',function(e){e.stopPropagation();state.fab=!state.fab;$('fabBtn').classList.toggle('open',state.fab);$('quickPopup').classList.toggle('open',state.fab);$('fabBtn').setAttribute('aria-expanded',String(state.fab))});
-  $('scrim').addEventListener('click',function(){closeAll()});
-  $('clearAll').addEventListener('click',function(){notifs.forEach(function(n){n.read=true});renderNotifs();showToast('Cleared')});
-  $('themeBtn').addEventListener('click',function(){document.documentElement.toggleAttribute('data-theme')});
-  $('sbClose').addEventListener('click',function(){$('smartBanner').style.display='none'});
-  document.querySelectorAll('.bn-item').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.bn-item').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true')})});
-  document.querySelectorAll('.sidebar-link').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();document.querySelectorAll('.sidebar-link').forEach(function(n){n.classList.remove('active')});l.classList.add('active')})});
-  document.addEventListener('click',function(e){if(!e.target.closest('#fabWrap'))closeFab()});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+  function closeAll(except) {
+    if (except !== 'sidebar' && state.sidebar) {
+      state.sidebar = false;
+      sidebarDrawer.classList.remove('visible');
+      sidebarBtn.classList.remove('active');
+    }
+    if (except !== 'notif' && state.notif) {
+      state.notif = false;
+      notifPanel.classList.remove('visible');
+      notifBtn.classList.remove('active');
+      notifBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (except !== 'ai' && state.ai) {
+      state.ai = false;
+      aiOverlay.classList.remove('visible');
+      aiBtn.classList.remove('active');
+      aiBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (except !== 'fab' && state.fab) {
+      state.fab = false;
+      quickPopup.classList.remove('open');
+      fabBtn.classList.remove('open');
+      fabBtn.setAttribute('aria-expanded', 'false');
+    }
+    updateScrim();
+  }
 
-  function aiChat(q){
-    if(!q.trim())return;var h=$('aiHistory');
-    var u=document.createElement('div');u.className='ai-msg user';u.innerHTML='<strong>You:</strong> '+q;h.appendChild(u);h.scrollTop=h.scrollHeight;
-    var ty=document.createElement('div');ty.className='typing';ty.innerHTML='<span></span><span></span><span></span>';h.appendChild(ty);h.scrollTop=h.scrollHeight;
-    setTimeout(function(){ty.remove();var r='I found related operations for your query.';var ql=q.toLowerCase();
-    if(ql.includes('inv-000842'))r='Invoice INV-000842 cleared ₦5,251,375 for Lagos Solar Grid.';
-    else if(ql.includes('quotation'))r='Opening quotation template for Lagos Solar Grid.';
-    else if(ql.includes('letter')||ql.includes('reminder'))r='Drafting payment reminder for Eko Atlantic Hub.';
-    var b=document.createElement('div');b.className='ai-msg bot';b.innerHTML='<strong>Steward:</strong> '+r;h.appendChild(b);h.scrollTop=h.scrollHeight;$('aiInput').value=''},900);
+  function updateScrim() {
+    var any = state.sidebar || state.notif || state.ai;
+    scrim.classList.toggle('visible', any);
   }
-  $('aiSend').addEventListener('click',function(){aiChat($('aiInput').value)});
-  $('aiInput').addEventListener('keydown',function(e){if(e.key==='Enter')aiChat(e.target.value)});
-  document.querySelectorAll('[data-ask]').forEach(function(b){b.addEventListener('click',function(){aiChat(b.getAttribute('data-ask'))})});
 
-  var notifs=[
-    {id:1,title:'Invoice INV-000842 Cleared',desc:'Payment of ₦5,251,375 confirmed.',time:'2 min ago',read:false},
-    {id:2,title:'Waybill WBL-E-000194 Sign-off',desc:'Eko Atlantic Hub clearance pending.',time:'18 min ago',read:false},
-    {id:3,title:'Quotation QUO-000318 Created',desc:'Lekki Free Zone Ltd BOQ requested.',time:'1 hour ago',read:false},
-    {id:4,title:'Letter Draft LET-000111',desc:'Payment reminder for Zenith Logix.',time:'3 hours ago',read:true},
-    {id:5,title:'CSR Report CSR-000412',desc:'Apapa Container Terminal log completed.',time:'Yesterday',read:true}
-  ];
-  var docs=[
-    {ref:'INV-000842',client:'Lagos Solar Grid Project',amount:'₦5,251,375',status:'paid',date:'Today'},
-    {ref:'WBL-E-000194',client:'Eko Atlantic Hub',amount:'Custody',status:'pending',date:'Today'},
-    {ref:'QUO-000318',client:'Lekki Free Zone Ltd',amount:'₦18,500,000',status:'pending',date:'10 Aug'},
-    {ref:'LET-000111',client:'Zenith Logix',amount:'Reminder',status:'draft',date:'9 Aug'},
-    {ref:'CSR-000412',client:'Apapa Container Terminal',amount:'Service Log',status:'paid',date:'Yesterday'}
-  ];
-  var audit=[
-    {title:'INV-000842 marked as paid',meta:'Today 14:20 · System Auto-match',dot:'ok'},
-    {title:'WBL-E-000194 custody pending',meta:'Today 11:45 · Eko Atlantic Hub',dot:'warn'},
-    {title:'QUO-000318 sent to client',meta:'10 Aug · Lekki Free Zone Ltd',dot:''},
-    {title:'LET-000111 saved as draft',meta:'9 Aug · Zenith Logix',dot:''},
-    {title:'CSR-000412 submitted',meta:'Yesterday · Apapa Container Terminal',dot:'bad'}
-  ];
-  var svg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
-  function renderNotifs(){
-    var u=notifs.filter(function(n){return!n.read}).length;
-    $('pip').classList.toggle('hidden',u===0);
-    $('npList').innerHTML=notifs.map(function(n){return'<div class="np-row" onclick="showToast(\''+n.title+'\')"><div class="np-dot '+(n.read?'read':'')+'"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>'}).join('');
-    $('notifScroll').innerHTML=notifs.map(function(n){return'<div class="notif-card" onclick="showToast(\''+n.title+'\')"><div class="notif-card-title">'+n.title+'</div><div class="notif-card-desc">'+n.desc+'</div><div class="notif-card-time">'+n.time+'</div></div>'}).join('');
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2000);
   }
-  function renderFeed(){
-    $('feedList').innerHTML=docs.map(function(d){return'<div class="feed-row" onclick="showToast(\''+d.ref+'\')"><div class="feed-icon">'+svg+'</div><div class="feed-lines"><div class="feed-primary">'+d.ref+' <span class="badge '+d.status+'">'+d.status+'</span></div><div class="feed-secondary">'+d.client+'</div></div><div><div class="feed-amount">'+d.amount+'</div><div class="feed-meta">'+d.date+'</div></div></div>'}).join('');
+
+  sidebarBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var next = !state.sidebar;
+    closeAll('sidebar');
+    state.sidebar = next;
+    sidebarDrawer.classList.toggle('visible', next);
+    sidebarBtn.classList.toggle('active', next);
+    updateScrim();
+  });
+
+  notifBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var next = !state.notif;
+    closeAll('notif');
+    state.notif = next;
+    notifPanel.classList.toggle('visible', next);
+    notifBtn.classList.toggle('active', next);
+    notifBtn.setAttribute('aria-expanded', String(next));
+    updateScrim();
+  });
+
+  aiBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var next = !state.ai;
+    closeAll('ai');
+    state.ai = next;
+    aiOverlay.classList.toggle('visible', next);
+    aiBtn.classList.toggle('active', next);
+    aiBtn.setAttribute('aria-expanded', String(next));
+    updateScrim();
+  });
+
+  aiClose.addEventListener('click', function(e) { e.stopPropagation(); closeAll(); });
+
+  fabBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var next = !state.fab;
+    closeAll('fab');
+    state.fab = next;
+    quickPopup.classList.toggle('open', next);
+    fabBtn.classList.toggle('open', next);
+    fabBtn.setAttribute('aria-expanded', String(next));
+  });
+
+  scrim.addEventListener('click', function() { closeAll(); });
+
+  themeBtn.addEventListener('click', function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+    showToast(isDark ? 'Light mode' : 'Dark mode');
+  });
+
+  sbClose.addEventListener('click', function() {
+    smartBanner.style.display = 'none';
+    showToast('Banner dismissed');
+  });
+
+  sbCta.addEventListener('click', function() {
+    showToast('Recording payments...');
+  });
+
+  npClear.addEventListener('click', function() {
+    showToast('Notifications cleared');
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAll();
+  });
+
+  // Bottom nav
+  document.querySelectorAll('.bn-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      document.querySelectorAll('.bn-item').forEach(function(n) {
+        n.classList.remove('active');
+        n.setAttribute('aria-selected', 'false');
+      });
+      this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
+      showToast(this.getAttribute('aria-label') + ' selected');
+    });
+  });
+
+  // Sidebar nav
+  document.querySelectorAll('.sd-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      document.querySelectorAll('.sd-item').forEach(function(n) { n.classList.remove('active'); });
+      this.classList.add('active');
+      closeAll();
+      showToast(this.textContent.trim());
+    });
+  });
+
+  // FAB popup items
+  document.querySelectorAll('.popup-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      closeAll();
+      showToast('New ' + this.textContent.trim());
+    });
+  });
+
+  // Refresh -> loading screen
+  document.querySelector('.tb-btn[aria-label="Notifications"]').previousElementSibling.addEventListener('click', function() {
+    // This is the theme button, not refresh. Add refresh behavior via the sidebar-toggle area
+  });
+
+  // Loading screen transition
+  function showLoading() {
+    loadingScreen.classList.add('visible');
+    setTimeout(function() {
+      loadingScreen.classList.remove('visible');
+      showToast('Dashboard refreshed');
+    }, 2200);
   }
-  function renderAudit(){
-    $('auditList').innerHTML=audit.map(function(a){return'<div class="audit-row"><div class="audit-dot '+a.dot+'"></div><div class="audit-body"><div class="audit-title">'+a.title+'</div><div class="audit-meta">'+a.meta+'</div></div></div>'}).join('');
+
+  // Wire refresh button (theme btn is at index 0, let's use a dedicated approach)
+  // Actually the wireframe has refresh as a separate button. Let's find it.
+  var topBtns = document.querySelectorAll('.topbar-right .tb-btn');
+  // topBtns[0] = theme, topBtns[1] = notif. We need a refresh button.
+  // Let's add a click handler on the topbar left area for the sidebar-toggle to also serve as refresh on double-tap
+  // Better: we'll use the notification bell area's prev sibling... actually let's just add a refresh behavior
+  // by listening for a tap on the topbar area. For now, let's make the theme button cycle: single tap = theme, we need refresh elsewhere.
+  // The wireframe had: sidebar btn | refresh | notif bell | dark mode | AI avatar
+  // Our layout has: sidebar btn (left) | theme | notif | AI (right)
+  // Let's add a refresh button next to the sidebar toggle in the topbar-left
+
+  // Actually, rethinking: the topbar-left has the sidebar toggle. Let me add a refresh button there.
+  // For now, let's attach refresh to a double-click on the sidebar toggle as a workaround.
+  // OR: just let the sidebar toggle serve double duty. Better: use the fact that we have room.
+  // Let's inject a refresh button.
+  var refreshBtn = document.createElement('button');
+  refreshBtn.className = 'tb-btn';
+  refreshBtn.setAttribute('aria-label', 'Refresh');
+  refreshBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+  refreshBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeAll();
+    showLoading();
+  });
+  document.querySelector('.topbar-left').appendChild(refreshBtn);
+
+  // Chat send
+  var aiSend = document.querySelector('.ai-send');
+  var aiInput = document.querySelector('.ai-input');
+  if (aiSend && aiInput) {
+    aiSend.addEventListener('click', function() {
+      var val = aiInput.value.trim();
+      if (val) {
+        var body = document.querySelector('.ai-body');
+        var msg = document.createElement('div');
+        msg.className = 'ai-msg user';
+        msg.textContent = val;
+        body.appendChild(msg);
+        aiInput.value = '';
+        body.scrollTop = body.scrollHeight;
+        // Bot response
+        setTimeout(function() {
+          var bot = document.createElement('div');
+          bot.className = 'ai-msg bot';
+          bot.textContent = 'I understand. Let me help you with that.';
+          body.appendChild(bot);
+          body.scrollTop = body.scrollHeight;
+        }, 800);
+      }
+    });
+    aiInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') aiSend.click();
+    });
   }
-  renderNotifs();renderFeed();renderAudit();
+
+  // AI chips
+  document.querySelectorAll('.ai-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      if (aiInput) {
+        aiInput.value = this.textContent;
+        aiSend.click();
+      }
+    });
+  });
+
 })();
 </script>
 </body>

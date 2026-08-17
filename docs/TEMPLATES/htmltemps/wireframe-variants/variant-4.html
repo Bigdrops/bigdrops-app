@@ -2,430 +2,529 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BIGDROPS — Neon Cyber</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>BIGDROPS Dashboard — Soft Editorial</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
 <style>
 :root {
-  --bg: #060A18;
-  --surface: #0C1225;
-  --surface-raised: #111936;
-  --ink: #E8ECF4;
-  --ink-secondary: #7888A8;
-  --ink-muted: #4A5670;
-  --border: rgba(0,240,255,0.08);
-  --border-strong: rgba(0,240,255,0.15);
-  --cyan: #00F0FF;
-  --cyan-dim: rgba(0,240,255,0.12);
-  --cyan-glow: rgba(0,240,255,0.25);
-  --magenta: #FF00E5;
-  --magenta-dim: rgba(255,0,229,0.12);
-  --green: #00FF88;
-  --green-dim: rgba(0,255,136,0.12);
-  --red: #FF3366;
-  --red-dim: rgba(255,51,102,0.12);
-  --orange: #FF8800;
-  --orange-dim: rgba(255,136,0,0.12);
-  --purple: #AA66FF;
-  --purple-dim: rgba(170,102,255,0.12);
-  --font-heading: 'Outfit', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-body: 'Outfit', sans-serif;
-  --r: 12px;
-  --r-md: 10px;
-  --r-sm: 6px;
-  --shadow: 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --glow-cyan: 0 0 20px rgba(0,240,255,0.15);
-  --glow-magenta: 0 0 20px rgba(255,0,229,0.15);
+  --bg: #FAF8F5;
+  --surface: rgba(255,255,255,0.88);
+  --surface-solid: #FFFFFF;
+  --ink: #1C1917;
+  --ink-secondary: #57534E;
+  --ink-muted: #A8A29E;
+  --border: rgba(28,25,23,0.06);
+  --border-strong: rgba(28,25,23,0.12);
+  --accent: #C2410C;
+  --accent-light: #FB923C;
+  --accent-surface: rgba(194,65,12,0.06);
+  --danger: #DC2626;
+  --success: #15803D;
+  --warning: #CA8A04;
+  --warm: #78716C;
+  --font: 'DM Sans', sans-serif;
+  --r: 16px;
+  --r-sm: 10px;
+  --r-xs: 6px;
+  --shadow: 0 1px 2px rgba(28,25,23,0.04);
+  --shadow-md: 0 4px 16px rgba(28,25,23,0.08);
+  --shadow-lg: 0 8px 32px rgba(28,25,23,0.10);
+  --shadow-xl: 0 16px 48px rgba(28,25,23,0.12);
+  --nav-height: 52px;
+  --scrim-bg: rgba(28,25,23,0.35);
+}
+[data-theme="dark"] {
+  --bg: #121010;
+  --surface: rgba(30,27,25,0.9);
+  --surface-solid: #1E1B19;
+  --ink: #F5F0EB;
+  --ink-secondary: #B8B0A8;
+  --ink-muted: #6B6560;
+  --border: rgba(245,240,235,0.06);
+  --border-strong: rgba(245,240,235,0.12);
+  --accent: #FB923C;
+  --accent-light: #FDBA74;
+  --accent-surface: rgba(251,146,60,0.1);
+  --scrim-bg: rgba(0,0,0,0.5);
+  --shadow: 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.25);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.3);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: var(--font-body); font-size: 13px; line-height: 1.55;
-  color: var(--ink); background: var(--bg);
-  -webkit-font-smoothing: antialiased; overflow: hidden; height: 100vh;
-}
-body::before {
-  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(0,240,255,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(255,0,229,0.03) 0%, transparent 60%);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100dvh;
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
-:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
-.app { display: flex; height: 100vh; position: relative; z-index: 1; }
-
-/* SIDEBAR */
-.sidebar {
-  width: 260px; flex-shrink: 0;
-  background: var(--surface); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-  z-index: 40;
+.app {
+  width: 100%; max-width: 420px; height: 100dvh; margin: 0 auto;
+  display: flex; flex-direction: column; background: var(--bg);
+  position: relative; overflow: hidden;
 }
-.sidebar-head { padding: 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-.sidebar-logo {
-  width: 34px; height: 34px; border-radius: 8px;
-  background: linear-gradient(135deg, var(--cyan), var(--magenta));
-  display: grid; place-items: center; color: var(--bg);
-  font-family: var(--font-mono); font-weight: 700; font-size: 12px;
-  box-shadow: var(--glow-cyan);
-}
-.sidebar-brand { font-family: var(--font-heading); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
-.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 8px; display: flex; flex-direction: column; gap: 1px; }
-.sidebar-section { font-family: var(--font-mono); font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted); padding: 12px 8px 4px; }
-.sidebar-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; border-radius: var(--r-sm);
-  font-size: 13px; font-weight: 500; color: var(--ink-secondary);
-  transition: all 0.15s; border: 1px solid transparent;
-}
-.sidebar-link:hover { background: var(--cyan-dim); color: var(--ink); border-color: var(--border); }
-.sidebar-link.active { background: var(--cyan-dim); color: var(--cyan); font-weight: 700; border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
-.sidebar-foot { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.sidebar-avatar { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); display: grid; place-items: center; color: var(--bg); font-family: var(--font-mono); font-weight: 700; font-size: 11px; }
-.sidebar-user-name { font-weight: 700; font-size: 12px; }
-.sidebar-user-role { font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono); }
-
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.screen { flex: 1; overflow: hidden; position: relative; display: flex; flex-direction: column; }
 
 /* TOPBAR */
 .topbar {
-  height: 54px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 18px;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  z-index: 10;
+  padding: 8px 14px; flex-shrink: 0; z-index: 10;
 }
-.topbar-left { display: flex; align-items: center; gap: 12px; }
-.sidebar-toggle {
-  width: 34px; height: 34px; border-radius: var(--r-sm);
-  background: var(--surface-raised); border: 1px solid var(--border);
-  display: grid; place-items: center; transition: all 0.15s;
-}
-.sidebar-toggle:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.sidebar-toggle.active { background: var(--cyan); color: var(--bg); border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.topbar-title { font-family: var(--font-heading); font-weight: 700; font-size: 15px; }
+.topbar-left { display: flex; align-items: center; gap: 8px; }
 .topbar-right { display: flex; align-items: center; gap: 6px; }
-.tb-btn {
-  width: 34px; height: 34px; border-radius: var(--r-sm);
-  background: var(--surface-raised); border: 1px solid var(--border);
-  display: grid; place-items: center; font-size: 13px;
-  transition: all 0.15s; position: relative;
+.tb-icon {
+  width: 36px; height: 36px;
+  background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: 12px;
+  display: grid; place-items: center; transition: all 0.15s; position: relative; box-shadow: var(--shadow);
 }
-.tb-btn:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.tb-btn.active { background: var(--cyan); color: var(--bg); border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.pip { position: absolute; top: -2px; right: -2px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 6px var(--red); }
-.pip.hidden { display: none; }
+.tb-icon svg { width: 18px; height: 18px; }
+.tb-icon.active { background: var(--accent); color: white; border-color: var(--accent); }
+.tb-icon .pip { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid var(--surface-solid); }
 .tb-ai {
-  height: 34px; padding: 0 14px; border-radius: var(--r-sm);
-  background: linear-gradient(135deg, var(--cyan), var(--magenta));
-  color: var(--bg); font-family: var(--font-mono); font-weight: 700; font-size: 11px;
-  text-transform: uppercase; letter-spacing: 0.06em;
-  display: flex; align-items: center; gap: 6px;
-  box-shadow: var(--glow-cyan);
-  transition: all 0.15s;
+  height: 36px; padding: 0 14px;
+  background: var(--ink); color: var(--bg); border-radius: 12px;
+  font-weight: 700; font-size: 11px; letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 6px; transition: all 0.15s; box-shadow: var(--shadow-md);
 }
-.tb-ai:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(0,240,255,0.3); }
+.tb-ai:active { transform: scale(0.96); }
+.tb-ai.active { background: var(--accent); color: white; }
 .tb-ai svg { width: 14px; height: 14px; }
+.sidebar-toggle {
+  width: 36px; height: 36px;
+  background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: 12px;
+  display: grid; place-items: center; transition: all 0.15s; box-shadow: var(--shadow);
+}
+.sidebar-toggle.active { background: var(--ink); color: var(--bg); }
 
-.content { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
-.content::-webkit-scrollbar { width: 4px; }
-.content::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+.content {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px 14px 24px; display: flex; flex-direction: column; gap: 14px;
+}
+.content::-webkit-scrollbar { display: none; }
+
+.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); }
+.section-link { font-size: 11px; color: var(--accent); font-weight: 600; }
 
 /* KPI */
-.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .kpi-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-md); padding: 14px;
-  display: flex; flex-direction: column; gap: 6px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-md); transition: all 0.2s;
 }
-.kpi-card:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.kpi-label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); }
-.kpi-value { font-family: var(--font-heading); font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-.kpi-bar { display: flex; gap: 2px; height: 5px; border-radius: 2px; overflow: hidden; }
-.kpi-seg { flex: 1; border-radius: 2px; background: var(--border-strong); }
-.kpi-seg.balance { background: var(--orange); }
-.kpi-seg.overdue { background: var(--red); }
-.kpi-seg.invoices { background: var(--purple); }
-.kpi-seg.payments { background: var(--green); }
-.kpi-trend { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); }
-.kpi-trend .up { color: var(--green); font-weight: 700; }
-.kpi-trend .down { color: var(--red); font-weight: 700; }
+.kpi-card:active { transform: scale(0.98); }
+.kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); }
+.kpi-bar { display: flex; gap: 2px; height: 5px; margin-top: 2px; }
+.kpi-seg { flex: 1; background: var(--border-strong); border-radius: 2px; }
+.kpi-seg.balance { background: var(--warning); }
+.kpi-seg.overdue { background: var(--danger); }
+.kpi-seg.invoices { background: var(--accent); }
+.kpi-seg.payments { background: var(--success); }
+.kpi-value { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.kpi-trend { font-size: 10px; color: var(--ink-muted); }
+.kpi-trend .up { color: var(--success); font-weight: 700; }
+.kpi-trend .down { color: var(--danger); font-weight: 700; }
 
 /* SMART BANNER */
 .smart-banner {
-  background: var(--surface); border: 1px solid var(--red);
-  border-radius: var(--r-md); padding: 14px;
-  display: flex; align-items: flex-start; gap: 10px;
-  position: relative; box-shadow: 0 0 15px rgba(255,51,102,0.1);
+  background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; position: relative; box-shadow: var(--shadow-md);
 }
-.sb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-top: 4px; flex-shrink: 0; box-shadow: 0 0 8px var(--red); animation: neon-pulse 2s infinite; }
-@keyframes neon-pulse { 0%,100% { box-shadow: 0 0 8px var(--red); } 50% { box-shadow: 0 0 16px var(--red); } }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); margin-top: 4px; flex-shrink: 0; }
 .sb-body { flex: 1; }
-.sb-title { font-weight: 700; font-size: 13px; color: var(--red); }
-.sb-text { font-size: 12px; color: var(--ink-secondary); margin-top: 3px; }
+.sb-title { font-weight: 700; font-size: 12px; }
+.sb-text { font-size: 11px; color: var(--ink-secondary); margin-top: 2px; }
 .sb-cta {
   display: inline-block; margin-top: 8px;
-  padding: 6px 14px; border-radius: var(--r-sm);
-  background: var(--red); color: #fff;
-  font-family: var(--font-mono); font-weight: 700; font-size: 10px;
-  text-transform: uppercase; letter-spacing: 0.06em;
-  transition: all 0.15s; box-shadow: 0 0 12px rgba(255,51,102,0.3);
+  font-size: 11px; font-weight: 700; background: var(--accent); color: white;
+  padding: 5px 12px; border-radius: var(--r-xs); transition: all 0.15s;
 }
-.sb-cta:hover { box-shadow: 0 0 20px rgba(255,51,102,0.5); }
-.sb-close { position: absolute; top: 10px; right: 10px; color: var(--ink-muted); font-size: 14px; background: none; border: none; cursor: pointer; }
+.sb-cta:active { transform: scale(0.96); }
+.sb-close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--ink-muted); }
+.sb-close:active { background: var(--accent-surface); }
 
-.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.section-title { font-family: var(--font-heading); font-size: 14px; font-weight: 700; }
-.section-link { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--cyan); cursor: pointer; }
-.section-link:hover { text-shadow: 0 0 8px var(--cyan); }
-
-/* NOTIF STRIP */
+/* NOTIF */
 .notif-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-.notif-scroll::-webkit-scrollbar { height: 3px; }
-.notif-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); }
+.notif-scroll::-webkit-scrollbar { display: none; }
 .notif-card {
-  min-width: 130px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 10px;
-  display: flex; flex-direction: column; gap: 5px;
-  cursor: pointer; transition: all 0.15s;
+  min-width: 130px; background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px;
+  display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; box-shadow: var(--shadow); transition: all 0.15s;
 }
-.notif-card:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.notif-card-title { font-weight: 700; font-size: 11px; line-height: 1.35; }
-.notif-card-desc { font-size: 10px; color: var(--ink-secondary); line-height: 1.4; }
-.notif-card-time { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); margin-top: auto; }
+.notif-card:active { transform: scale(0.97); }
+.notif-card-title { font-weight: 700; font-size: 10px; line-height: 1.3; }
+.notif-card-desc { font-size: 9px; color: var(--ink-secondary); }
+.notif-card-time { font-size: 8px; color: var(--ink-muted); margin-top: auto; }
 
-/* DOCUMENT FEED */
+/* FEED */
 .feed-list { display: flex; flex-direction: column; gap: 6px; }
 .feed-row {
   display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 10px 12px;
-  cursor: pointer; transition: all 0.15s;
+  background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 12px; box-shadow: var(--shadow-md); transition: all 0.15s;
 }
-.feed-row:hover { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.feed-icon { width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); display: grid; place-items: center; color: var(--bg); flex-shrink: 0; }
-.feed-icon svg { width: 14px; height: 14px; }
+.feed-row:active { transform: scale(0.98); }
+.feed-icon { width: 32px; height: 32px; background: var(--accent-surface); border-radius: var(--r-sm); display: grid; place-items: center; color: var(--accent); flex-shrink: 0; }
+.feed-icon svg { width: 16px; height: 16px; }
 .feed-lines { flex: 1; min-width: 0; }
-.feed-primary { font-family: var(--font-mono); font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
-.feed-secondary { font-size: 11px; color: var(--ink-secondary); margin-top: 2px; }
-.feed-amount { font-family: var(--font-mono); font-weight: 700; font-size: 12px; text-align: right; flex-shrink: 0; }
-.feed-meta { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); text-align: right; }
-.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.badge.paid { background: var(--green-dim); color: var(--green); }
-.badge.pending { background: var(--orange-dim); color: var(--orange); }
-.badge.draft { background: var(--border); color: var(--ink-muted); }
+.feed-primary { font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.feed-secondary { font-size: 10px; color: var(--ink-secondary); margin-top: 1px; }
+.feed-amount { font-weight: 700; font-size: 12px; text-align: right; flex-shrink: 0; }
+.feed-meta { font-size: 9px; color: var(--ink-muted); text-align: right; }
+.badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border-radius: 4px; }
+.badge.paid { background: rgba(21,128,61,0.08); color: var(--success); }
+.badge.pending { background: rgba(202,138,4,0.08); color: var(--warning); }
+.badge.draft { background: var(--accent-surface); color: var(--accent); }
 
 /* AUDIT */
 .audit-list { display: flex; flex-direction: column; }
 .audit-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .audit-row:last-child { border-bottom: none; }
-.audit-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.audit-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.audit-dot.warn { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
-.audit-dot.bad { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.audit-dot.neutral { background: var(--ink-muted); }
+.audit-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.audit-dot.ok { background: var(--success); }
+.audit-dot.warn { background: var(--warning); }
+.audit-dot.bad { background: var(--danger); }
 .audit-body { flex: 1; }
-.audit-title { font-size: 12px; font-weight: 600; }
-.audit-meta { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); margin-top: 2px; }
+.audit-title { font-size: 11px; font-weight: 600; }
+.audit-meta { font-size: 9px; color: var(--ink-muted); margin-top: 1px; }
 
-/* BOTTOM NAV */
-.bottom-nav { display: none; position: fixed; left: 0; right: 0; bottom: 0; height: 56px; z-index: 50; background: var(--surface); border-top: 1px solid var(--border); }
-.bottom-nav-inner { display: grid; grid-template-columns: repeat(5, 1fr); height: 100%; }
-.bn-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--ink-muted); font-size: 9px; font-family: var(--font-mono); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; transition: all 0.15s; }
-.bn-item svg { width: 18px; height: 18px; }
-.bn-item.active { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
-.bn-item:hover { color: var(--ink); }
+/* FLOATING PILL BOTTOM NAV */
+.bottom-nav-wrap { position: absolute; bottom: 12px; left: 16px; right: 16px; z-index: 50; display: flex; justify-content: center; }
+.bottom-nav {
+  display: flex; align-items: center; gap: 3px;
+  background: var(--surface-solid); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-strong); border-radius: 28px; padding: 4px;
+  box-shadow: var(--shadow-xl);
+}
+.bn-item {
+  display: flex; align-items: center; gap: 4px; padding: 8px 10px; border-radius: 20px;
+  color: var(--ink-muted); font-size: 10px; font-weight: 600; transition: all 0.2s; white-space: nowrap;
+}
+.bn-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.bn-item .bn-label { display: none; }
+.bn-item.active { background: var(--accent); color: white; padding: 8px 14px; }
+.bn-item.active .bn-label { display: inline; }
+.bn-item:active { transform: scale(0.95); }
 
 /* FAB */
-.fab-wrap { position: fixed; bottom: 72px; right: 14px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fab-wrap { position: absolute; bottom: 72px; right: 16px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .fab {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--cyan), var(--magenta));
-  color: var(--bg); font-size: 24px; font-weight: 300;
-  display: grid; place-items: center;
-  box-shadow: 0 0 20px rgba(0,240,255,0.3);
-  transition: all 0.25s; z-index: 2;
+  width: 48px; height: 48px; background: var(--ink); color: var(--bg); border-radius: 50%;
+  font-size: 22px; font-weight: 300; display: grid; place-items: center;
+  box-shadow: var(--shadow-lg); transition: all 0.2s; z-index: 2;
 }
-.fab:hover { transform: scale(1.08); box-shadow: 0 0 30px rgba(0,240,255,0.5); }
-.fab.open { transform: rotate(45deg); background: var(--red); box-shadow: 0 0 20px rgba(255,51,102,0.4); }
+.fab:active { transform: scale(0.9); }
+.fab.open { transform: rotate(45deg); background: var(--danger); color: white; }
 .quick-popup {
-  width: 180px; background: var(--surface-raised);
-  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
-  box-shadow: var(--shadow-lg); padding: 4px;
-  display: flex; flex-direction: column;
-  opacity: 0; transform: translateY(8px); pointer-events: none;
-  transition: all 0.2s;
+  width: 170px; background: var(--surface-solid); border: 1px solid var(--border-strong);
+  border-radius: var(--r); padding: 4px; box-shadow: var(--shadow-xl);
+  display: flex; flex-direction: column; opacity: 0; transform: translateY(8px) scale(0.95);
+  pointer-events: none; transition: all 0.2s;
 }
-.quick-popup.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-.popup-item { display: block; width: 100%; text-align: left; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; transition: all 0.1s; }
-.popup-item:hover { background: var(--cyan-dim); color: var(--cyan); }
+.quick-popup.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.popup-item { display: block; width: 100%; text-align: left; padding: 9px 12px; font-size: 12px; font-weight: 500; border-radius: var(--r-xs); transition: all 0.1s; }
+.popup-item:active { background: var(--accent-surface); color: var(--accent); }
 
-.scrim { position: fixed; inset: 0; background: rgba(6,10,24,0.7); z-index: 35; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.scrim { position: absolute; inset: 0; background: var(--scrim-bg); z-index: 35; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .scrim.visible { opacity: 1; pointer-events: auto; }
 
-/* NOTIF PANEL */
-.notif-panel { position: fixed; top: 58px; right: 14px; width: 300px; max-height: 400px; background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: var(--r-md); box-shadow: var(--shadow-lg); z-index: 50; display: flex; flex-direction: column; overflow: hidden; opacity: 0; transform: translateY(-8px); pointer-events: none; transition: all 0.25s; }
-.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.sidebar-drawer {
+  position: absolute; top: 0; left: 0; bottom: 0; width: 78%;
+  background: var(--surface-solid); border-right: 1px solid var(--border);
+  transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  z-index: 40; display: flex; flex-direction: column; box-shadow: var(--shadow-xl);
+}
+.sidebar-drawer.visible { transform: translateX(0); }
+.sd-head { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid var(--border); }
+.sd-logo { width: 32px; height: 32px; background: var(--ink); border-radius: 10px; display: grid; place-items: center; color: var(--bg); font-weight: 800; font-size: 12px; }
+.sd-brand { font-weight: 800; font-size: 14px; letter-spacing: -0.02em; }
+.sd-nav { flex: 1; overflow-y: auto; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+.sd-nav::-webkit-scrollbar { display: none; }
+.sd-section { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); padding: 10px 10px 4px; }
+.sd-item { display: flex; align-items: center; gap: 10px; padding: 10px 10px; font-size: 13px; font-weight: 500; color: var(--ink-secondary); border-radius: var(--r-sm); transition: all 0.1s; }
+.sd-item:active { background: var(--accent-surface); }
+.sd-item.active { background: var(--accent-surface); color: var(--accent); font-weight: 700; }
+.sd-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sd-foot { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.sd-avatar { width: 30px; height: 30px; background: var(--accent); border-radius: 50%; display: grid; place-items: center; color: white; font-weight: 800; font-size: 10px; }
+.sd-user-name { font-weight: 700; font-size: 12px; }
+.sd-user-role { font-size: 10px; color: var(--ink-muted); }
+
+.notif-panel {
+  position: absolute; top: 52px; right: 10px; width: 250px; max-height: 360px;
+  background: var(--surface-solid); border: 1px solid var(--border-strong); border-radius: var(--r);
+  box-shadow: var(--shadow-xl); z-index: 50; display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; transform: translateY(-6px) scale(0.96); pointer-events: none; transition: all 0.2s;
+}
+.notif-panel.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .np-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
-.np-title { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cyan); }
-.np-clear { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); cursor: pointer; }
-.np-clear:hover { color: var(--red); }
-.np-list { max-height: 320px; overflow-y: auto; }
-.np-row { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
-.np-row:hover { background: var(--cyan-dim); }
+.np-title { font-size: 12px; font-weight: 700; }
+.np-clear { font-size: 10px; color: var(--accent); font-weight: 600; }
+.np-clear:active { color: var(--danger); }
+.np-list { max-height: 280px; overflow-y: auto; }
+.np-list::-webkit-scrollbar { display: none; }
+.np-row { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
 .np-row:last-child { border-bottom: none; }
-.np-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); margin-top: 4px; flex-shrink: 0; box-shadow: 0 0 4px var(--red); }
-.np-dot.read { background: var(--ink-muted); box-shadow: none; }
+.np-row:active { background: var(--accent-surface); }
+.np-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); margin-top: 5px; flex-shrink: 0; }
+.np-dot.read { background: var(--border-strong); }
 .np-lines { flex: 1; }
-.np-l1 { height: 6px; width: 85%; background: var(--border-strong); border-radius: 2px; }
-.np-l2 { height: 5px; width: 55%; background: var(--bg); border: 1px solid var(--border); margin-top: 5px; border-radius: 2px; }
+.np-l1 { height: 7px; width: 85%; background: var(--border-strong); border-radius: 3px; }
+.np-l2 { height: 6px; width: 55%; background: var(--accent-surface); border-radius: 3px; margin-top: 5px; }
 
-/* AI PANEL */
-.ai-overlay { position: fixed; inset: 0; z-index: 55; background: rgba(6,10,24,0.8); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-.ai-overlay.open { opacity: 1; pointer-events: auto; }
-.ai-panel { width: 100%; max-width: 480px; max-height: 78vh; background: var(--surface); border: 1px solid var(--cyan); border-bottom: none; border-radius: var(--r-md) var(--r-md) 0 0; box-shadow: 0 0 30px rgba(0,240,255,0.1); display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
-.ai-overlay.open .ai-panel { transform: translateY(0); }
-.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.ai-overlay {
+  position: absolute; inset: 0; z-index: 55; background: var(--scrim-bg);
+  display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.ai-overlay.visible { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  width: 100%; max-height: 78%; background: var(--surface-solid);
+  border-radius: var(--r) var(--r) 0 0; display: flex; flex-direction: column;
+  box-shadow: var(--shadow-xl); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.ai-overlay.visible .ai-panel { transform: translateY(0); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .ai-head-left { display: flex; align-items: center; gap: 10px; }
-.ai-avatar { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--cyan), var(--magenta)); display: grid; place-items: center; color: var(--bg); font-family: var(--font-mono); font-weight: 700; font-size: 11px; box-shadow: var(--glow-cyan); }
-.ai-title { font-family: var(--font-heading); font-weight: 700; font-size: 14px; }
-.ai-sub { font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted); }
-.ai-body { flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; }
-.ai-msg { max-width: 80%; padding: 10px 14px; border-radius: var(--r-sm); font-size: 12px; line-height: 1.55; }
-.ai-msg.bot { align-self: flex-start; background: var(--surface-raised); border: 1px solid var(--border); }
-.ai-msg.user { align-self: flex-end; background: linear-gradient(135deg, var(--cyan), var(--magenta)); color: var(--bg); }
-.ai-msg strong { font-weight: 700; }
-.typing { display: inline-flex; gap: 4px; padding: 10px 14px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--r-sm); align-self: flex-start; }
-.typing span { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); animation: blink 1.2s infinite; box-shadow: 0 0 4px var(--cyan); }
-.typing span:nth-child(2) { animation-delay: 0.15s; }
-.typing span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes blink { 0%,60%,100% { opacity: 0.3; } 30% { opacity: 1; } }
-.ai-chips { display: flex; flex-direction: column; gap: 4px; padding: 0 18px 10px; }
-.ai-chip { display: block; width: 100%; text-align: left; padding: 8px 12px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface-raised); font-size: 11px; font-weight: 500; transition: all 0.15s; }
-.ai-chip:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: var(--glow-cyan); }
-.ai-input-row { display: flex; gap: 6px; padding: 10px 18px 14px; border-top: 1px solid var(--border); }
-.ai-input { flex: 1; height: 38px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface-raised); font-family: var(--font-mono); font-size: 12px; color: var(--ink); outline: none; }
-.ai-input:focus { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
-.ai-send { width: 38px; height: 38px; border-radius: var(--r-sm); background: linear-gradient(135deg, var(--cyan), var(--magenta)); color: var(--bg); font-size: 16px; font-weight: 700; display: grid; place-items: center; box-shadow: var(--glow-cyan); transition: all 0.15s; }
-.ai-send:hover { box-shadow: 0 0 20px rgba(0,240,255,0.4); }
+.ai-avatar { width: 30px; height: 30px; background: var(--ink); border-radius: 50%; display: grid; place-items: center; color: var(--bg); font-weight: 800; font-size: 10px; }
+.ai-title { font-weight: 700; font-size: 13px; }
+.ai-sub { font-size: 10px; color: var(--ink-muted); }
+.ai-close { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; color: var(--ink-muted); }
+.ai-close:active { background: var(--accent-surface); }
+.ai-body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.ai-body::-webkit-scrollbar { display: none; }
+.ai-msg { max-width: 78%; padding: 10px 12px; font-size: 12px; line-height: 1.5; border-radius: var(--r) var(--r) var(--r) 4px; }
+.ai-msg.bot { align-self: flex-start; background: var(--accent-surface); }
+.ai-msg.user { align-self: flex-end; background: var(--ink); color: var(--bg); border-radius: var(--r) var(--r) 4px var(--r); }
+.ai-chips { display: flex; flex-direction: column; gap: 4px; padding: 0 14px 8px; }
+.ai-chip { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); transition: all 0.1s; }
+.ai-chip:active { background: var(--accent-surface); border-color: var(--accent); }
+.ai-input-row { display: flex; gap: 6px; padding: 10px 14px 14px; border-top: 1px solid var(--border); }
+.ai-input { flex: 1; height: 36px; padding: 0 12px; border: 1px solid var(--border); background: var(--bg); border-radius: 18px; font-family: var(--font); font-size: 12px; color: var(--ink); outline: none; }
+.ai-input:focus { border-color: var(--accent); }
+.ai-send { width: 36px; height: 36px; background: var(--ink); color: var(--bg); border-radius: 50%; font-size: 14px; font-weight: 700; display: grid; place-items: center; transition: all 0.15s; }
+.ai-send:active { transform: scale(0.9); }
 
-.toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 200; padding: 10px 18px; border-radius: var(--r-sm); background: var(--surface-raised); color: var(--cyan); border: 1px solid var(--cyan); font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; box-shadow: var(--glow-cyan); opacity: 0; pointer-events: none; transition: all 0.25s; }
+.loading-screen {
+  position: absolute; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 24px; text-align: center; z-index: 100;
+  transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.loading-screen.visible { transform: translateX(0); }
+.ls-logo { width: 48px; height: 48px; background: var(--ink); border-radius: 14px; display: grid; place-items: center; color: var(--bg); font-weight: 800; font-size: 16px; margin: 0 auto 20px; }
+.ls-spinner { width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid var(--border-strong); border-top-color: var(--accent); animation: spin 0.8s linear infinite; margin: 0 auto 24px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ls-tip-card { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 16px; max-width: 280px; margin: 0 auto; box-shadow: var(--shadow-md); }
+.ls-tip-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+.ls-tip-text { font-size: 13px; line-height: 1.6; color: var(--ink); margin-top: 8px; }
+.ls-tip-text b { font-weight: 700; }
+.ls-dots { display: flex; gap: 5px; margin-top: 20px; justify-content: center; }
+.ls-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); }
+.ls-dots span.on { background: var(--ink); }
+
+.toast {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  z-index: 200; padding: 8px 16px;
+  background: var(--ink); color: var(--bg); border-radius: 20px;
+  font-size: 11px; font-weight: 600; box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none; transition: all 0.2s; white-space: nowrap;
+}
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-@media (max-width: 768px) {
-  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; transform: translateX(-100%); z-index: 40; }
-  .sidebar.open { transform: translateX(0); }
-  .bottom-nav { display: block; }
-  .content { padding: 12px; padding-bottom: 72px; }
-  .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .fab-wrap { bottom: 68px; right: 10px; }
-}
+@media (min-width: 768px) { .app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-radius: 20px; } }
 </style>
 </head>
 <body>
 <div class="app" id="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-head"><div class="sidebar-logo">BD</div><div class="sidebar-brand">BIGDROPS</div></div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-section">Documents</div>
-      <a href="#" class="sidebar-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
-      <div class="sidebar-section">Operations</div>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
-      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
-    </nav>
-    <div class="sidebar-foot"><div class="sidebar-avatar">MA</div><div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div></div>
-  </aside>
-  <div class="scrim" id="scrim"></div>
-  <div class="main">
+  <div class="screen" id="mainScreen">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 3H13C16.7712 3 18.6569 3 19.8284 4.17157C21 5.34315 21 7.22876 21 11V13C21 16.7712 21 18.6569 19.8284 19.8284C18.6569 21 16.7712 21 13 21H11C7.2288 21 5.3431 21 4.1716 19.8284C3 18.6569 3 16.7712 3 13V11C3 7.22876 3 5.34315 4.1716 4.17157C5.3431 3 7.2288 3 11 3Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/><path id="panelPath" d="M10 5.5 C10 4.793 10 4.439 9.780 4.220 C9.560 4 9.207 4 8.5 4 H8.5 C6.379 4 5.318 4 4.659 4.659 C4 5.318 4 6.379 4 8.5 V15.5 C4 17.621 4 18.682 4.659 19.341 C5.318 20 6.379 20 8.5 20 H8.5 C9.207 20 9.561 20 9.780 19.780 C10 19.561 10 19.207 10 18.5 V5.5 Z" fill="var(--surface)"/></svg></button>
-        <span class="topbar-title">Dashboard</span>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </button>
       </div>
       <div class="topbar-right">
-        <button class="tb-btn" id="themeBtn" title="Theme">☾</button>
-        <button class="tb-btn" id="notifBtn" title="Notifications" aria-expanded="false">🔔<span class="pip" id="pip"></span></button>
-        <button class="tb-ai" id="aiBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>Steward</button>
+        <button class="tb-icon" id="themeBtn" aria-label="Toggle theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        <button class="tb-icon" id="notifBtn" aria-label="Notifications" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="pip"></span>
+        </button>
+        <button class="tb-ai" id="aiBtn" aria-label="Open AI assistant">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+          STEWARD
+        </button>
       </div>
     </header>
+
     <main class="content" id="content">
-      <section><div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Balance</div><div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦10,000</div><div class="kpi-trend"><span class="up">+12%</span> last week</div></div>
-        <div class="kpi-card"><div class="kpi-label">Overdue</div><div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦56,000</div><div class="kpi-trend"><span class="down">+4%</span> vs yesterday</div></div>
-        <div class="kpi-card"><div class="kpi-label">Invoices</div><div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">12</div><div class="kpi-trend"><span class="up">-2</span> pending review</div></div>
-        <div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦89,000</div><div class="kpi-trend"><span class="up">+18%</span> this month</div></div>
-      </div></section>
-      <section class="smart-banner" id="smartBanner"><div class="sb-dot"></div><div class="sb-body"><div class="sb-title">3 payments may be unrecorded</div><div class="sb-text">Balance moved but no matching payment was logged this week.</div><div class="sb-cta" onclick="showToast('Recording payments...')">Record now</div></div><button class="sb-close" id="sbClose" aria-label="Dismiss">✕</button></section>
-      <section><div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link" id="seeAll">see all →</span></div><div class="notif-scroll" id="notifScroll"></div></section>
-      <section><div class="section-head"><div class="section-title">Recent Documents</div></div><div class="feed-list" id="feedList"></div></section>
-      <section><div class="section-head"><div class="section-title">Audit Trail</div></div><div class="audit-list" id="auditList"></div></section>
+      <section>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Balance</div><div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦10,000</div><div class="kpi-trend"><span class="up">+12%</span> last week</div></div>
+          <div class="kpi-card"><div class="kpi-label">Overdue</div><div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦56,000</div><div class="kpi-trend"><span class="down">+4%</span> vs yesterday</div></div>
+          <div class="kpi-card"><div class="kpi-label">Invoices</div><div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">12</div><div class="kpi-trend"><span class="up">-2</span> pending review</div></div>
+          <div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">₦89,000</div><div class="kpi-trend"><span class="up">+18%</span> this month</div></div>
+        </div>
+      </section>
+
+      <section class="smart-banner" id="smartBanner">
+        <div class="sb-dot"></div>
+        <div class="sb-body"><div class="sb-title">3 payments may be unrecorded</div><div class="sb-text">Balance moved but no matching payment was logged this week.</div><button class="sb-cta" id="sbCta">Record now</button></div>
+        <button class="sb-close" id="sbClose" aria-label="Dismiss">✕</button>
+      </section>
+
+      <section>
+        <div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link">see all</span></div>
+        <div class="notif-scroll">
+          <div class="notif-card"><div class="notif-card-title">Overdue invoice INV-0042</div><div class="notif-card-desc">7 days past due</div><div class="notif-card-time">2h ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">New quotation accepted</div><div class="notif-card-desc">QTN-0108 by Acme Ltd</div><div class="notif-card-time">5h ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">Payment received</div><div class="notif-card-desc">₦45,000 — INV-0039</div><div class="notif-card-time">1d ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">Waybill dispatched</div><div class="notif-card-desc">WB-0027 to Site B</div><div class="notif-card-time">1d ago</div></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div class="section-title">Recent Documents</div></div>
+        <div class="feed-list">
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="feed-lines"><div class="feed-primary">INV-0045 <span class="badge pending">Pending</span></div><div class="feed-secondary">Lagos Steel Works</div></div><div><div class="feed-amount">₦120,000</div><div class="feed-meta">Aug 15</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="feed-lines"><div class="feed-primary">QTN-0109 <span class="badge draft">Draft</span></div><div class="feed-secondary">Westfield Corp</div></div><div><div class="feed-amount">₦340,000</div><div class="feed-meta">Aug 14</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg></div><div class="feed-lines"><div class="feed-primary">WB-0028 <span class="badge paid">Delivered</span></div><div class="feed-secondary">Site Alpha</div></div><div><div class="feed-amount">---</div><div class="feed-meta">Aug 13</div></div></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head"><div class="section-title">Audit Trail</div></div>
+        <div class="audit-list">
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-0045 created by Milad</div><div class="audit-meta">Today, 10:32 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">INV-0042 overdue reminder sent</div><div class="audit-meta">Today, 09:15 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">QTN-0108 accepted by client</div><div class="audit-meta">Yesterday, 4:20 PM</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">WB-0027 dispatched from warehouse</div><div class="audit-meta">Yesterday, 11:00 AM</div></div></div>
+          <div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-0039 payment mismatch flagged</div><div class="audit-meta">Aug 14, 3:45 PM</div></div></div>
+        </div>
+      </section>
     </main>
+
+    <!-- FLOATING PILL BOTTOM NAV -->
+    <div class="bottom-nav-wrap">
+      <nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation">
+        <button class="bn-item active" role="tab" aria-selected="true" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="bn-label">Home</span></button>
+        <button class="bn-item" role="tab" aria-selected="false" aria-label="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="bn-label">Projects</span></button>
+        <button class="bn-item" role="tab" aria-selected="false" aria-label="Sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="bn-label">Sales</span></button>
+        <button class="bn-item" role="tab" aria-selected="false" aria-label="Clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="bn-label">Clients</span></button>
+        <button class="bn-item" role="tab" aria-selected="false" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span class="bn-label">More</span></button>
+      </nav>
+    </div>
+
+    <!-- FAB -->
+    <div class="fab-wrap" id="fabWrap">
+      <div class="quick-popup" id="quickPopup" role="menu" aria-label="Quick actions">
+        <button class="popup-item" role="menuitem">Invoice</button>
+        <button class="popup-item" role="menuitem">Quotation</button>
+        <button class="popup-item" role="menuitem">Purchase orders</button>
+        <button class="popup-item" role="menuitem">Boq</button>
+        <button class="popup-item" role="menuitem">Waybill</button>
+        <button class="popup-item" role="menuitem">Csr</button>
+      </div>
+      <button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+
+    <div class="sidebar-drawer" id="sidebarDrawer">
+      <div class="sd-head"><div class="sd-logo">BD</div><div class="sd-brand">BIGDROPS</div></div>
+      <nav class="sd-nav" aria-label="Sidebar">
+        <div class="sd-section">Documents</div>
+        <button class="sd-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</button>
+        <div class="sd-section">Operations</div>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</button>
+        <button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</button>
+      </nav>
+      <div class="sd-foot"><div class="sd-avatar">MA</div><div><div class="sd-user-name">Milad A.</div><div class="sd-user-role">Operator</div></div></div>
+    </div>
+
+    <div class="notif-panel" id="notifPanel">
+      <div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="npClear">Clear all</span></div>
+      <div class="np-list">
+        <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+        <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+      </div>
+    </div>
+
+    <div class="ai-overlay" id="aiOverlay">
+      <div class="ai-panel">
+        <div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">AI</div><div><div class="ai-title">Steward</div><div class="ai-sub">local llm</div></div></div><button class="ai-close" id="aiClose" aria-label="Close">✕</button></div>
+        <div class="ai-body">
+          <div class="ai-msg bot">Hello! I can help you manage invoices, track payments, and navigate your documents.</div>
+          <div class="ai-msg user">Show me overdue invoices</div>
+          <div class="ai-msg bot">You have 2 overdue invoices totaling ₦56,000. Would you like to send reminders?</div>
+        </div>
+        <div class="ai-chips"><button class="ai-chip">Create a new invoice</button><button class="ai-chip">Show payment history</button></div>
+        <div class="ai-input-row"><input class="ai-input" type="text" placeholder="Ask Steward..." aria-label="Ask Steward" /><button class="ai-send" aria-label="Send">↑</button></div>
+      </div>
+    </div>
+
+    <div class="loading-screen" id="loadingScreen">
+      <div class="ls-logo">BD</div>
+      <div class="ls-spinner"></div>
+      <div class="ls-tip-card"><div class="ls-tip-eyebrow">Did you know</div><div class="ls-tip-text">You can convert an accepted <b>quotation</b> straight into an <b>invoice</b> — no need to write a fresh one.</div></div>
+      <div class="ls-dots"><span class="on"></span><span></span><span></span></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
   </div>
 </div>
-<nav class="bottom-nav" id="bottomNav" role="tablist"><div class="bottom-nav-inner">
-  <button class="bn-item active" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
-  <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
-  <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button>
-  <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
-  <button class="bn-item" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
-</div></nav>
-<div class="fab-wrap" id="fabWrap"><div class="quick-popup" id="quickPopup" role="menu"><button class="popup-item" role="menuitem" onclick="createDoc('Invoice')">Invoice</button><button class="popup-item" role="menuitem" onclick="createDoc('Quotation')">Quotation</button><button class="popup-item" role="menuitem" onclick="createDoc('Purchase Order')">Purchase orders</button><button class="popup-item" role="menuitem" onclick="createDoc('BOQ')">Boq</button><button class="popup-item" role="menuitem" onclick="createDoc('Waybill')">Waybill</button><button class="popup-item" role="menuitem" onclick="createDoc('CSR Report')">Csr</button></div><button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button></div>
-<div class="notif-panel" id="notifPanel"><div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="clearAll">Clear all</span></div><div class="np-list" id="npList"></div></div>
-<div class="ai-overlay" id="aiOverlay"><div class="ai-panel"><div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">BD</div><div><div class="ai-title">Steward</div><div class="ai-sub">local llm · on-device</div></div></div><button class="tb-btn" id="aiClose" aria-label="Close">✕</button></div><div class="ai-chips"><button class="ai-chip" data-ask="Find invoice INV-000842">Find invoice INV-000842</button><button class="ai-chip" data-ask="Create quotation for Lagos Solar Grid">Create quotation for Lagos Solar Grid</button><button class="ai-chip" data-ask="Draft payment reminder for Eko Atlantic">Draft payment reminder for Eko Atlantic</button></div><div class="ai-body" id="aiHistory"><div class="ai-msg bot"><strong>Steward:</strong> Hello! I can help you create invoices, quotations, letters, and find documents.</div></div><div class="ai-input-row"><input class="ai-input" id="aiInput" type="text" placeholder="Ask about documents..." /><button class="ai-send" id="aiSend">↑</button></div></div></div>
-<div class="toast" id="toast"><span id="toastMsg"></span></div>
 <script>
-(function(){
+(function() {
   'use strict';
-  var PC="M10 5.5 C10 4.793 10 4.439 9.780 4.220 C9.560 4 9.207 4 8.5 4 H8.5 C6.379 4 5.318 4 4.659 4.659 C4 5.318 4 6.379 4 8.5 V15.5 C4 17.621 4 18.682 4.659 19.341 C5.318 20 6.379 20 8.5 20 H8.5 C9.207 20 9.561 20 9.780 19.780 C10 19.561 10 19.207 10 18.5 V5.5 Z";
-  var PO="M14 6 C14 5.057 14 4.586 13.707 4.293 C13.414 4 12.943 4 12 4 H10 C7.172 4 5.757 4 4.879 4.879 C4 5.757 4 7.172 4 10 V14 C4 16.828 4 18.243 4.879 19.121 C5.757 20 7.172 20 10 20 H12 C12.943 20 13.414 20 13.707 19.707 C14 19.414 14 18.943 14 18 V6 Z";
-  function $(id){return document.getElementById(id)}
-  function morph(el,open){if(!el)return;var t=open?PO:PC,c=el.getAttribute('d');if(el.animate){var a=el.animate([{d:c},{d:t}],{duration:300,easing:'cubic-bezier(0.4,0,0.2,1)',fill:'forwards'});a.onfinish=function(){el.setAttribute('d',t)}}else el.setAttribute('d',t)}
-  function showToast(m){var t=$('toast');$('toastMsg').textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
-  window.showToast=showToast;window.createDoc=function(t){closeFab();showToast('Creating '+t+'...')};
-  var state={sidebar:false,notif:false,ai:false,fab:false};
-  function closeAll(ex){if(ex!=='sidebar'&&state.sidebar){state.sidebar=false;$('sidebar').classList.remove('open');$('sidebarToggle').classList.remove('active');morph($('panelPath'),false)}if(ex!=='notif'&&state.notif){state.notif=false;$('notifPanel').classList.remove('open');$('notifBtn').classList.remove('active')}if(ex!=='ai'&&state.ai){state.ai=false;$('aiOverlay').classList.remove('open')}if(ex!=='fab')closeFab();$('scrim').classList.toggle('visible',state.sidebar||state.notif)}
-  function closeFab(){state.fab=false;$('fabBtn').classList.remove('open');$('quickPopup').classList.remove('open');$('fabBtn').setAttribute('aria-expanded','false')}
-  $('sidebarToggle').addEventListener('click',function(e){e.stopPropagation();var n=!state.sidebar;closeAll('sidebar');state.sidebar=n;$('sidebar').classList.toggle('open',n);$('sidebarToggle').classList.toggle('active',n);morph($('panelPath'),n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('notifBtn').addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;$('notifPanel').classList.toggle('open',n);$('notifBtn').classList.toggle('active',n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('seeAll').addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;$('notifPanel').classList.toggle('open',n);$('notifBtn').classList.toggle('active',n);$('scrim').classList.toggle('visible',state.sidebar||state.notif)});
-  $('aiBtn').addEventListener('click',function(e){e.stopPropagation();closeAll('ai');state.ai=true;$('aiOverlay').classList.add('open')});
-  $('aiClose').addEventListener('click',function(e){e.stopPropagation();closeAll()});
-  $('aiOverlay').addEventListener('click',function(e){if(e.target===$('aiOverlay'))closeAll()});
-  $('fabBtn').addEventListener('click',function(e){e.stopPropagation();state.fab=!state.fab;$('fabBtn').classList.toggle('open',state.fab);$('quickPopup').classList.toggle('open',state.fab);$('fabBtn').setAttribute('aria-expanded',String(state.fab))});
-  $('scrim').addEventListener('click',function(){closeAll()});
-  $('clearAll').addEventListener('click',function(){notifs.forEach(function(n){n.read=true});renderNotifs();showToast('Cleared')});
-  $('themeBtn').addEventListener('click',function(){document.body.classList.toggle('light')});
-  $('sbClose').addEventListener('click',function(){$('smartBanner').style.display='none'});
-  document.querySelectorAll('.bn-item').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.bn-item').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});b.classList.add('active');b.setAttribute('aria-selected','true')})});
-  document.querySelectorAll('.sidebar-link').forEach(function(l){l.addEventListener('click',function(e){e.preventDefault();document.querySelectorAll('.sidebar-link').forEach(function(n){n.classList.remove('active')});l.classList.add('active')})});
-  document.addEventListener('click',function(e){if(!e.target.closest('#fabWrap'))closeFab()});
+  var sidebarBtn=document.getElementById('sidebarToggle'),sidebarDrawer=document.getElementById('sidebarDrawer'),notifPanel=document.getElementById('notifPanel'),notifBtn=document.getElementById('notifBtn'),aiBtn=document.getElementById('aiBtn'),aiOverlay=document.getElementById('aiOverlay'),aiClose=document.getElementById('aiClose'),fabBtn=document.getElementById('fabBtn'),quickPopup=document.getElementById('quickPopup'),scrim=document.getElementById('scrim'),themeBtn=document.getElementById('themeBtn'),loadingScreen=document.getElementById('loadingScreen'),toast=document.getElementById('toast'),smartBanner=document.getElementById('smartBanner'),sbClose=document.getElementById('sbClose'),sbCta=document.getElementById('sbCta'),npClear=document.getElementById('npClear');
+  var state={sidebar:false,notif:false,ai:false,fab:false};var toastTimer;
+  function closeAll(except){if(except!=='sidebar'&&state.sidebar){state.sidebar=false;sidebarDrawer.classList.remove('visible');sidebarBtn.classList.remove('active')}if(except!=='notif'&&state.notif){state.notif=false;notifPanel.classList.remove('visible');notifBtn.classList.remove('active');notifBtn.setAttribute('aria-expanded','false')}if(except!=='ai'&&state.ai){state.ai=false;aiOverlay.classList.remove('visible');aiBtn.classList.remove('active');aiBtn.setAttribute('aria-expanded','false')}if(except!=='fab'&&state.fab){state.fab=false;quickPopup.classList.remove('open');fabBtn.classList.remove('open');fabBtn.setAttribute('aria-expanded','false')}scrim.classList.toggle('visible',state.sidebar||state.notif||state.ai)}
+  function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},2000)}
+  sidebarBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.sidebar;closeAll('sidebar');state.sidebar=n;sidebarDrawer.classList.toggle('visible',n);sidebarBtn.classList.toggle('active',n);scrim.classList.toggle('visible',n)});
+  notifBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;notifPanel.classList.toggle('visible',n);notifBtn.classList.toggle('active',n);notifBtn.setAttribute('aria-expanded',String(n));scrim.classList.toggle('visible',n)});
+  aiBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.ai;closeAll('ai');state.ai=n;aiOverlay.classList.toggle('visible',n);aiBtn.classList.toggle('active',n);aiBtn.setAttribute('aria-expanded',String(n));scrim.classList.toggle('visible',n)});
+  aiClose.addEventListener('click',function(e){e.stopPropagation();closeAll()});
+  fabBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.fab;closeAll('fab');state.fab=n;quickPopup.classList.toggle('open',n);fabBtn.classList.toggle('open',n);fabBtn.setAttribute('aria-expanded',String(n))});
+  scrim.addEventListener('click',function(){closeAll()});
+  themeBtn.addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',d?'':'dark');showToast(d?'Light mode':'Dark mode')});
+  sbClose.addEventListener('click',function(){smartBanner.style.display='none';showToast('Banner dismissed')});
+  sbCta.addEventListener('click',function(){showToast('Recording payments...')});
+  npClear.addEventListener('click',function(){showToast('Notifications cleared')});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
-  function aiChat(q){if(!q.trim())return;var h=$('aiHistory');var u=document.createElement('div');u.className='ai-msg user';u.innerHTML='<strong>You:</strong> '+q;h.appendChild(u);h.scrollTop=h.scrollHeight;var ty=document.createElement('div');ty.className='typing';ty.innerHTML='<span></span><span></span><span></span>';h.appendChild(ty);h.scrollTop=h.scrollHeight;setTimeout(function(){ty.remove();var r='I found related operations for your query.';var ql=q.toLowerCase();if(ql.includes('inv-000842'))r='Invoice INV-000842 cleared ₦5,251,375 for Lagos Solar Grid.';else if(ql.includes('quotation'))r='Opening quotation template for Lagos Solar Grid.';else if(ql.includes('letter')||ql.includes('reminder'))r='Drafting payment reminder for Eko Atlantic Hub.';var b=document.createElement('div');b.className='ai-msg bot';b.innerHTML='<strong>Steward:</strong> '+r;h.appendChild(b);h.scrollTop=h.scrollHeight;$('aiInput').value=''},900)}
-  $('aiSend').addEventListener('click',function(){aiChat($('aiInput').value)});
-  $('aiInput').addEventListener('keydown',function(e){if(e.key==='Enter')aiChat(e.target.value)});
-  document.querySelectorAll('[data-ask]').forEach(function(b){b.addEventListener('click',function(){aiChat(b.getAttribute('data-ask'))})});
-  var notifs=[{id:1,title:'Invoice INV-000842 Cleared',desc:'Payment of ₦5,251,375 confirmed.',time:'2 min ago',read:false},{id:2,title:'Waybill WBL-E-000194 Sign-off',desc:'Eko Atlantic Hub clearance pending.',time:'18 min ago',read:false},{id:3,title:'Quotation QUO-000318 Created',desc:'Lekki Free Zone Ltd BOQ requested.',time:'1 hour ago',read:false},{id:4,title:'Letter Draft LET-000111',desc:'Payment reminder for Zenith Logix.',time:'3 hours ago',read:true},{id:5,title:'CSR Report CSR-000412',desc:'Apapa Container Terminal log completed.',time:'Yesterday',read:true}];
-  var docs=[{ref:'INV-000842',client:'Lagos Solar Grid Project',amount:'₦5,251,375',status:'paid',date:'Today'},{ref:'WBL-E-000194',client:'Eko Atlantic Hub',amount:'Custody',status:'pending',date:'Today'},{ref:'QUO-000318',client:'Lekki Free Zone Ltd',amount:'₦18,500,000',status:'pending',date:'10 Aug'},{ref:'LET-000111',client:'Zenith Logix',amount:'Reminder',status:'draft',date:'9 Aug'},{ref:'CSR-000412',client:'Apapa Container Terminal',amount:'Service Log',status:'paid',date:'Yesterday'}];
-  var audit=[{title:'INV-000842 marked as paid',meta:'Today 14:20 · System Auto-match',dot:'ok'},{title:'WBL-E-000194 custody pending',meta:'Today 11:45 · Eko Atlantic Hub',dot:'warn'},{title:'QUO-000318 sent to client',meta:'10 Aug · Lekki Free Zone Ltd',dot:'neutral'},{title:'LET-000111 saved as draft',meta:'9 Aug · Zenith Logix',dot:'neutral'},{title:'CSR-000412 submitted',meta:'Yesterday · Apapa Container Terminal',dot:'bad'}];
-  var svg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
-  function renderNotifs(){$('pip').classList.toggle('hidden',notifs.filter(function(n){return!n.read}).length===0);$('npList').innerHTML=notifs.map(function(n){return'<div class="np-row" onclick="showToast(\''+n.title+'\')"><div class="np-dot '+(n.read?'read':'')+'"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>'}).join('');$('notifScroll').innerHTML=notifs.map(function(n){return'<div class="notif-card" onclick="showToast(\''+n.title+'\')"><div class="notif-card-title">'+n.title+'</div><div class="notif-card-desc">'+n.desc+'</div><div class="notif-card-time">'+n.time+'</div></div>'}).join('')}
-  function renderFeed(){$('feedList').innerHTML=docs.map(function(d){return'<div class="feed-row" onclick="showToast(\''+d.ref+'\')"><div class="feed-icon">'+svg+'</div><div class="feed-lines"><div class="feed-primary">'+d.ref+' <span class="badge '+d.status+'">'+d.status+'</span></div><div class="feed-secondary">'+d.client+'</div></div><div><div class="feed-amount">'+d.amount+'</div><div class="feed-meta">'+d.date+'</div></div></div>'}).join('')}
-  function renderAudit(){$('auditList').innerHTML=audit.map(function(a){return'<div class="audit-row"><div class="audit-dot '+a.dot+'"></div><div class="audit-body"><div class="audit-title">'+a.title+'</div><div class="audit-meta">'+a.meta+'</div></div></div>'}).join('')}
-  renderNotifs();renderFeed();renderAudit();
+  document.querySelectorAll('.bn-item').forEach(function(item){item.addEventListener('click',function(){document.querySelectorAll('.bn-item').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});this.classList.add('active');this.setAttribute('aria-selected','true');showToast(this.getAttribute('aria-label')+' selected')})});
+  document.querySelectorAll('.sd-item').forEach(function(item){item.addEventListener('click',function(){document.querySelectorAll('.sd-item').forEach(function(n){n.classList.remove('active')});this.classList.add('active');closeAll();showToast(this.textContent.trim())})});
+  document.querySelectorAll('.popup-item').forEach(function(item){item.addEventListener('click',function(){closeAll();showToast('New '+this.textContent.trim())})});
+  function showLoading(){loadingScreen.classList.add('visible');setTimeout(function(){loadingScreen.classList.remove('visible');showToast('Dashboard refreshed')},2200)}
+  var refreshBtn=document.createElement('button');refreshBtn.className='tb-icon';refreshBtn.setAttribute('aria-label','Refresh');refreshBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+  refreshBtn.addEventListener('click',function(e){e.stopPropagation();closeAll();showLoading()});
+  document.querySelector('.topbar-left').appendChild(refreshBtn);
+  var aiSend=document.querySelector('.ai-send'),aiInput=document.querySelector('.ai-input');
+  if(aiSend&&aiInput){aiSend.addEventListener('click',function(){var val=aiInput.value.trim();if(val){var body=document.querySelector('.ai-body');var msg=document.createElement('div');msg.className='ai-msg user';msg.textContent=val;body.appendChild(msg);aiInput.value='';body.scrollTop=body.scrollHeight;setTimeout(function(){var bot=document.createElement('div');bot.className='ai-msg bot';bot.textContent='I understand. Let me help you with that.';body.appendChild(bot);body.scrollTop=body.scrollHeight},800)}});aiInput.addEventListener('keydown',function(e){if(e.key==='Enter')aiSend.click()})}
+  document.querySelectorAll('.ai-chip').forEach(function(chip){chip.addEventListener('click',function(){if(aiInput){aiInput.value=this.textContent;aiSend.click()}})});
 })();
 </script>
 </body>
