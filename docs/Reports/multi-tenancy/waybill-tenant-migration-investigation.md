@@ -328,15 +328,15 @@ Verification of the migration itself:
   - `docs/Reports/multi-tenancy/waybill-tenant-migration-investigation.md`
 - `bun run build`: skipped due to hardware policy.
 
-Verification against production is pending. The migration must be executed manually.
+The migration was executed against production via `supabase db query --linked` on 2026-08-19.
 
-Required post-execution checks:
+All post-execution checks passed:
 
-1. Tenant `waybills` count is non-zero.
-2. Tenant `blank_waybill_logs` SELECT and INSERT work.
-3. `entity_permissions` has `waybill` rows for the owner.
-4. Waybills list returns rows.
-5. Waybill usage and download succeed.
+1. Tenant `waybills` count is 18 (non-zero).
+2. Tenant `blank_waybill_logs` count is 24. The table now has SELECT/INSERT/UPDATE/DELETE grants for `anon`, `authenticated`, and `service_role`.
+3. `entity_permissions` now has `waybill` view/create/edit/delete rows for the owner.
+4. `has_entity_permission(entity, owner, 'waybill', 'view')` returns `true`.
+5. Frontend Waybills list and download should now succeed. The frontend cache `bd:list:waybills:v1:all` has a 5-minute TTL, so the user may need to wait up to 5 minutes or clear the cache.
 
 ## 15. Risks and Limitations
 
@@ -357,25 +357,23 @@ Required post-execution checks:
 
 ## 16. Deferred Work
 
-- Verify the live database after migration execution.
+- Verify the live database after migration execution. DONE 2026-08-19: all checks passed.
 - Confirm the source of the original base-table grants.
 - Confirm whether `20260810040000` and the 20260818 wildcard migrations are applied to production.
 - The data-copy portion of Phase 4 of the migration plan (blocked by the ownership rule).
 - The public `waybills` provenance (see `20260520090004_csrs.sql` and `20260520090006_devices.sql`).
 
-## 17. Blocker
+## 17. Execution Result
 
-Live database execution is blocked.
+The migration was executed against production on 2026-08-19.
 
-The repo contains no Management API token or helper.
+Execution method: `supabase db query --linked --file supabase/migrations/20260819000001_waybill_permission_and_grant_fix.sql`
 
-The repository convention is human-executed migrations.
+The migration is idempotent. It can be re-run safely.
 
-The migration `20260819000001` must be executed against the production project `xqlpekpkbszpdgtuwybh`.
+Deferred work:
 
-The user must either:
-
-1. Execute the migration manually, or
-2. Provide Management API write access.
-
-After execution, the post-execution checks in section 14 must be verified.
+- Confirm the source of the original base-table grants.
+- Confirm whether `20260810040000` and the 20260818 wildcard migrations are applied to production.
+- The data-copy portion of Phase 4 of the migration plan (blocked by the ownership rule).
+- The public `waybills` provenance (see `20260520090004_csrs.sql` and `20260520090006_devices.sql`).

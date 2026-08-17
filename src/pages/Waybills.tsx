@@ -244,7 +244,7 @@ function WaybillsContent() {
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeWaybill?.waybill_number || 'Waybill'} sections={activeWaybillLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeWaybill?.waybill_number || 'Waybill'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" linkedInvoiceField={null} currentInvoiceId={null} currentClientName={activeWaybill?.client_name} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked waybill?" description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); if (invoice) void attachInvoice(invoice) }} />
-      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
+      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" client={tenantClient} onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
     </>
   )
 }

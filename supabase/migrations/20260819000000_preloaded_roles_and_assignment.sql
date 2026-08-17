@@ -266,6 +266,7 @@ DECLARE
     v_template_workspace_id uuid;
     v_entity_workspace_id uuid;
     v_is_owner boolean;
+    v_item record;
 BEGIN
     SELECT workspace_id INTO v_template_workspace_id
     FROM public.permission_templates

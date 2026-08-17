@@ -168,7 +168,8 @@ export default function ViewWaybill() {
       if (!id) return
       setLoading(true)
       try {
-        const { data, error } = await supabase.from('waybills').select('*').eq('id', id).single()
+        const db = tenantClient.isReady ? tenantClient : supabase
+        const { data, error } = await db.from('waybills').select('*').eq('id', id).single()
 
         if (error || !data) {
           navigate('/waybills')
@@ -296,7 +297,7 @@ export default function ViewWaybill() {
     if (!id || updatingStatus) return
     setUpdatingStatus(true)
     try {
-      await updateWaybillStatus(id, status)
+      await updateWaybillStatus(id, status, tenantClient)
       setWaybill((curr: any) => ({ ...curr, status }))
       showToast(successLabel, `Waybill marked as ${status}.`, 'success')
       ui.closeModal()
@@ -311,7 +312,7 @@ export default function ViewWaybill() {
     if (!id || duplicating) return
     setDuplicating(true)
     try {
-      const created = await duplicateWaybillRecord(id)
+      const created = await duplicateWaybillRecord(id, tenantClient)
       navigate(`/waybills/${created.id}`)
       showToast('Waybill Cloned', 'A new waybill has been created.', 'success')
     } catch (error) {
@@ -325,7 +326,7 @@ export default function ViewWaybill() {
     if (!id || archiving) return
     setArchiving(true)
     try {
-      await archiveWaybillRecord(id)
+      await archiveWaybillRecord(id, tenantClient)
       navigate('/waybills')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
@@ -338,7 +339,7 @@ export default function ViewWaybill() {
     if (!id || deleting) return
     setDeleting(true)
     try {
-      await deleteWaybillRecord(id)
+      await deleteWaybillRecord(id, tenantClient)
       navigate('/waybills')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
@@ -598,7 +599,8 @@ export default function ViewWaybill() {
                       }
 
                       const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
-                      const { error } = await supabase.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
+                      const db = tenantClient.isReady ? tenantClient : supabase
+                      const { error } = await db.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
 
                       if (error) {
                         showToast('Save failed', 'Could not save template selection.')
@@ -674,6 +676,7 @@ export default function ViewWaybill() {
               tableName="waybills"
               recordId={String(id || '')}
               documentLabel={docProps.number || 'Waybill'}
+              client={tenantClient}
               onLinked={() => {}}
             />
           </>

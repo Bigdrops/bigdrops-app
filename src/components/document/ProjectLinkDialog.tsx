@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,6 +40,7 @@ interface ProjectLinkDialogProps {
   recordId: string
   documentLabel: string
   onLinked?: () => void | Promise<void>
+  client?: TenantClient
 }
 
 export default function ProjectLinkDialog({
@@ -48,7 +50,9 @@ export default function ProjectLinkDialog({
   recordId,
   documentLabel,
   onLinked,
+  client,
 }: ProjectLinkDialogProps) {
+  const db = client?.isReady ? client : supabase
   const [query, setQuery] = useState('')
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
@@ -78,13 +82,13 @@ export default function ProjectLinkDialog({
       setLoading(true)
 
       const [projectsResult, documentResult] = await Promise.all([
-        supabase
+        db
           .from('projects')
           .select('id, project_code, name, client_id, client_name, created_at')
           .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(8),
-        supabase
+        db
           .from(tableName)
           .select('id, client_id, client_name, project_id')
           .eq('id', recordId)
@@ -113,7 +117,7 @@ export default function ProjectLinkDialog({
     const timer = setTimeout(async () => {
       setLoading(true)
 
-      let request = supabase
+      let request = db
         .from('projects')
         .select('id, project_code, name, client_id, client_name, created_at')
         .is('archived_at', null)
@@ -151,7 +155,7 @@ export default function ProjectLinkDialog({
   const executeLink = async () => {
     setConfirmingReassign(false)
 
-    const { data: confirmedProject, error: projectError } = await supabase
+    const { data: confirmedProject, error: projectError } = await db
       .from('projects')
       .select('id, project_code, name, client_id, client_name')
       .eq('id', selectedProjectId)
@@ -180,7 +184,7 @@ export default function ProjectLinkDialog({
     }
 
     setSaving(true)
-    const { error: updateError } = await supabase
+    const { error: updateError } = await db
       .from(tableName)
       .update({ project_id: confirmedProject.id })
       .eq('id', recordId)
@@ -202,7 +206,7 @@ export default function ProjectLinkDialog({
   const executeDetach = async () => {
     setConfirmingDetach(false)
     setSaving(true)
-    const { error: updateError } = await supabase
+    const { error: updateError } = await db
       .from(tableName)
       .update({ project_id: null })
       .eq('id', recordId)
