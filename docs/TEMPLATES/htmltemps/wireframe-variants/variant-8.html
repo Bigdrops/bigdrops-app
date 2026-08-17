@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>BIGDROPS Dashboard — Magazine Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#FAF7F2;--surface:#FFFFFF;--ink:#1A1612;--ink-secondary:#6B5E52;--ink-muted:#B0A698;--accent:#8B2500;--accent-light:#B8451A;--accent-surface:rgba(139,37,0,0.05);--danger:#C23B22;--success:#2D6A4F;--warning:#B8860B;--border:rgba(26,22,18,0.08);--border-strong:rgba(26,22,18,0.15);--font-heading:'DM Serif Display',serif;--font-body:'Inter',sans-serif;--r:12px;--r-sm:8px;--r-xs:4px;--shadow:0 1px 3px rgba(26,22,18,0.06);--shadow-lg:0 8px 24px rgba(26,22,18,0.10);--nav-height:48px;--scrim-bg:rgba(26,22,18,0.35)}
+[data-theme="dark"]{--bg:#12100E;--surface:#1C1916;--ink:#EDE6DC;--ink-secondary:#A89C8E;--ink-muted:#5C534A;--accent:#E87040;--accent-light:#F09060;--accent-surface:rgba(232,112,64,0.08);--border:rgba(237,230,220,0.08);--border-strong:rgba(237,230,220,0.14);--scrim-bg:rgba(0,0,0,0.5)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100dvh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.app{width:100%;max-width:420px;height:100dvh;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+.screen{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+/* HERO TOPBAR — minimal */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;z-index:10}
+.topbar-title{font-family:var(--font-heading);font-size:18px;color:var(--ink)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-icon{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;transition:all 0.15s;position:relative;box-shadow:var(--shadow)}
+.tb-icon svg{width:16px;height:16px}
+.tb-icon.active{background:var(--accent);color:white;border-color:var(--accent)}
+.tb-icon .pip{position:absolute;top:-1px;right:-1px;width:7px;height:7px;background:var(--danger);border-radius:50%;border:1.5px solid var(--bg)}
+.avatar-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:grid;place-items:center;font-weight:700;font-size:10px;transition:all 0.15s}
+.avatar-btn:active{transform:scale(0.9)}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 20px;display:flex;flex-direction:column;gap:0}
+.content::-webkit-scrollbar{display:none}
+
+/* HERO KPI SECTION */
+.hero-kpi{padding:8px 16px 20px;display:flex;flex-direction:column;gap:16px}
+.hero-greeting{font-family:var(--font-heading);font-size:24px;line-height:1.2;color:var(--ink)}
+.hero-greeting em{font-style:italic;color:var(--accent)}
+.hero-stats{display:flex;gap:12px}
+.hero-stat{flex:1;text-align:center;padding:12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.hero-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-muted)}
+.hero-stat-value{font-family:var(--font-heading);font-size:22px;margin-top:2px}
+.hero-stat-trend{font-size:9px;color:var(--ink-muted);margin-top:2px}
+.hero-stat-trend .up{color:var(--success);font-weight:700}
+.hero-stat-trend .down{color:var(--danger);font-weight:700}
+
+/* INLINE ALERT */
+.inline-alert{margin:0 16px;padding:10px 14px;background:var(--accent-surface);border-left:3px solid var(--accent);border-radius:0 var(--r-sm) var(--r-sm) 0;display:flex;align-items:center;gap:10px}
+.inline-alert-text{flex:1;font-size:11px;font-weight:600;color:var(--ink)}
+.inline-alert-cta{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.inline-alert-dismiss{font-size:11px;color:var(--ink-muted);padding:4px}
+
+/* SECTION LABELS */
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-muted);padding:16px 16px 8px}
+
+/* NOTIF HORIZONTAL */
+.notif-scroll{display:flex;gap:8px;padding:0 16px;overflow-x:auto}
+.notif-scroll::-webkit-scrollbar{display:none}
+.notif-pill{min-width:140px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;gap:4px;flex-shrink:0;transition:all 0.15s}
+.notif-pill:active{transform:scale(0.97);border-color:var(--accent)}
+.notif-pill-title{font-weight:700;font-size:10px;line-height:1.3}
+.notif-pill-desc{font-size:9px;color:var(--ink-secondary)}
+.notif-pill-time{font-size:8px;color:var(--ink-muted);margin-top:auto}
+
+/* DOCUMENT CARDS — horizontal scroll */
+.doc-scroll{display:flex;gap:10px;padding:0 16px;overflow-x:auto}
+.doc-scroll::-webkit-scrollbar{display:none}
+.doc-card{min-width:200px;max-width:220px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;gap:6px;flex-shrink:0;transition:all 0.15s}
+.doc-card:active{transform:scale(0.97);border-color:var(--accent)}
+.doc-card-type{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent)}
+.doc-card-id{font-family:var(--font-heading);font-size:16px}
+.doc-card-party{font-size:11px;color:var(--ink-secondary);margin-top:2px}
+.doc-card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:6px;border-top:1px solid var(--border)}
+.doc-card-amount{font-weight:700;font-size:12px}
+.doc-card-badge{font-size:8px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:var(--r-xs)}
+.doc-card-badge.paid{background:rgba(45,106,79,0.08);color:var(--success)}
+.doc-card-badge.pending{background:rgba(184,134,11,0.08);color:var(--warning)}
+.doc-card-badge.draft{background:var(--accent-surface);color:var(--accent)}
+
+/* AUDIT — two column */
+.audit-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 16px}
+.audit-tile{padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);display:flex;gap:8px;align-items:flex-start}
+.audit-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.audit-dot.ok{background:var(--success)}
+.audit-dot.warn{background:var(--warning)}
+.audit-dot.bad{background:var(--danger)}
+.audit-body{flex:1}
+.audit-title{font-size:10px;font-weight:600;line-height:1.3}
+.audit-meta{font-size:8px;color:var(--ink-muted);margin-top:2px}
+
+/* FLOATING CIRCLE NAV */
+.nav-wrap{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:6px 10px;box-shadow:var(--shadow-lg)}
+.nav-circle{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink-muted);transition:all 0.15s}
+.nav-circle svg{width:18px;height:18px}
+.nav-circle.active{background:var(--ink);color:var(--bg)}
+.nav-circle:active{transform:scale(0.9)}
+
+.fab-wrap{position:absolute;bottom:76px;right:16px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.fab{width:44px;height:44px;background:var(--accent);color:white;border-radius:50%;font-size:20px;display:grid;place-items:center;box-shadow:var(--shadow-lg);transition:all 0.2s;z-index:2}
+.fab:active{transform:scale(0.9)}
+.fab.open{transform:rotate(45deg);background:var(--danger)}
+.quick-popup{width:160px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:4px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;opacity:0;transform:translateY(8px);pointer-events:none;transition:all 0.2s}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:8px 12px;font-size:12px;font-weight:500;border-radius:var(--r-sm);transition:all 0.1s}
+.popup-item:active{background:var(--accent-surface);color:var(--accent)}
+
+.scrim{position:absolute;inset:0;background:var(--scrim-bg);z-index:35;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.scrim.visible{opacity:1;pointer-events:auto}
+
+.sidebar-drawer{position:absolute;top:0;left:0;bottom:0;width:78%;background:var(--surface);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:40;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.sidebar-drawer.visible{transform:translateX(0)}
+.sd-head{display:flex;align-items:center;gap:10px;padding:16px;border-bottom:1px solid var(--border)}
+.sd-logo{width:30px;height:30px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-family:var(--font-heading);font-size:13px}
+.sd-brand{font-family:var(--font-heading);font-size:16px}
+.sd-nav{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px}
+.sd-nav::-webkit-scrollbar{display:none}
+.sd-section{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-muted);padding:10px 10px 4px}
+.sd-item{display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:12px;font-weight:500;color:var(--ink-secondary);border-radius:var(--r-sm);transition:all 0.1s}
+.sd-item:active{background:var(--accent-surface)}
+.sd-item.active{background:var(--accent-surface);color:var(--accent);font-weight:700}
+.sd-item svg{width:16px;height:16px;flex-shrink:0}
+.sd-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sd-avatar{width:26px;height:26px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-weight:700;font-size:9px}
+.sd-user-name{font-weight:700;font-size:11px}
+.sd-user-role{font-size:9px;color:var(--ink-muted)}
+
+.notif-panel{position:absolute;top:52px;right:10px;width:240px;max-height:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-lg);z-index:50;display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(-6px) scale(0.96);pointer-events:none;transition:all 0.2s}
+.notif-panel.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.np-title{font-size:11px;font-weight:700}
+.np-clear{font-size:10px;color:var(--accent);font-weight:600}
+.np-list{max-height:260px;overflow-y:auto}
+.np-list::-webkit-scrollbar{display:none}
+.np-row{display:flex;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border)}
+.np-row:last-child{border-bottom:none}
+.np-row:active{background:var(--accent-surface)}
+.np-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);margin-top:4px;flex-shrink:0}
+.np-dot.read{background:var(--border-strong)}
+.np-lines{flex:1}
+.np-l1{height:6px;width:85%;background:var(--border-strong);border-radius:3px}
+.np-l2{height:5px;width:55%;background:var(--accent-surface);border-radius:3px;margin-top:5px}
+
+.ai-overlay{position:absolute;inset:0;z-index:55;background:var(--scrim-bg);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.ai-overlay.visible{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-height:78%;background:var(--surface);border-radius:var(--r) var(--r) 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+.ai-overlay.visible .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.ai-head-left{display:flex;align-items:center;gap:8px}
+.ai-avatar{width:28px;height:28px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-weight:700;font-size:10px}
+.ai-title{font-family:var(--font-heading);font-size:14px}
+.ai-sub{font-size:9px;color:var(--ink-muted)}
+.ai-close{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:var(--ink-muted)}
+.ai-close:active{background:var(--accent-surface)}
+.ai-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ai-body::-webkit-scrollbar{display:none}
+.ai-msg{max-width:78%;padding:10px 12px;font-size:12px;line-height:1.5;border-radius:var(--r) var(--r) var(--r) 4px}
+.ai-msg.bot{align-self:flex-start;background:var(--accent-surface)}
+.ai-msg.user{align-self:flex-end;background:var(--ink);color:var(--bg);border-radius:var(--r) var(--r) 4px var(--r)}
+.ai-chips{display:flex;flex-direction:column;gap:4px;padding:0 14px 8px}
+.ai-chip{display:block;width:100%;text-align:left;padding:7px 10px;font-size:10px;font-weight:500;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);transition:all 0.1s}
+.ai-chip:active{background:var(--accent-surface);border-color:var(--accent)}
+.ai-input-row{display:flex;gap:6px;padding:8px 14px 12px;border-top:1px solid var(--border)}
+.ai-input{flex:1;height:34px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:18px;font-family:var(--font-body);font-size:11px;color:var(--ink);outline:none}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:34px;height:34px;background:var(--accent);color:white;border-radius:50%;font-size:14px;font-weight:700;display:grid;place-items:center;transition:all 0.15s}
+.ai-send:active{transform:scale(0.9)}
+
+.loading-screen{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;text-align:center;z-index:100;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)}
+.loading-screen.visible{transform:translateX(0)}
+.ls-logo{width:44px;height:44px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-family:var(--font-heading);font-size:16px;margin:0 auto 20px}
+.ls-spinner{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--border-strong);border-top-color:var(--accent);animation:spin 0.8s linear infinite;margin:0 auto 22px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-tip-card{border:1px solid var(--border);border-radius:var(--r);padding:16px 14px;max-width:260px;margin:0 auto;background:var(--surface)}
+.ls-tip-eyebrow{font-size:9px;font-weight:700;letter-spacing:0.08em;color:var(--accent);text-transform:uppercase}
+.ls-tip-text{font-size:12px;line-height:1.6;color:var(--ink);margin-top:6px}
+.ls-tip-text b{font-weight:700}
+.ls-dots{display:flex;gap:5px;margin-top:18px;justify-content:center}
+.ls-dots span{width:5px;height:5px;border-radius:50%;background:var(--border-strong)}
+.ls-dots span.on{background:var(--accent)}
+
+.toast{position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:8px 16px;background:var(--ink);color:var(--bg);border-radius:20px;font-size:11px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all 0.2s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:768px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="screen" id="mainScreen">
+<header class="topbar">
+<div class="topbar-title">BIGDROPS</div>
+<div class="topbar-right">
+<button class="tb-icon" id="themeBtn" aria-label="Toggle theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+<button class="tb-icon" id="notifBtn" aria-label="Notifications" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pip"></span></button>
+<button class="avatar-btn" id="aiBtn" aria-label="Open AI assistant">AI</button>
+</div>
+</header>
+<main class="content" id="content">
+<section class="hero-kpi">
+<div class="hero-greeting">Good morning, <em>Milad</em></div>
+<div class="hero-stats">
+<div class="hero-stat"><div class="hero-stat-label">Balance</div><div class="hero-stat-value">₦10K</div><div class="hero-stat-trend"><span class="up">+12%</span></div></div>
+<div class="hero-stat"><div class="hero-stat-label">Overdue</div><div class="hero-stat-value">₦56K</div><div class="hero-stat-trend"><span class="down">+4%</span></div></div>
+<div class="hero-stat"><div class="hero-stat-label">Invoices</div><div class="hero-stat-value">12</div><div class="hero-stat-trend"><span class="up">-2</span> pending</div></div>
+<div class="hero-stat"><div class="hero-stat-label">Payments</div><div class="hero-stat-value">₦89K</div><div class="hero-stat-trend"><span class="up">+18%</span></div></div>
+</div>
+</section>
+<section class="inline-alert" id="smartBanner"><div style="flex:1;font-size:11px;font-weight:600">3 payments may be unrecorded</div><button class="inline-alert-cta" id="sbCta">Record</button><button class="inline-alert-dismiss" id="sbClose" aria-label="Dismiss">✕</button></section>
+<section><div class="section-label">Recent Alerts</div><div class="notif-scroll">
+<div class="notif-pill"><div class="notif-pill-title">Overdue INV-0042</div><div class="notif-pill-desc">7 days past due</div><div class="notif-pill-time">2h ago</div></div>
+<div class="notif-pill"><div class="notif-pill-title">QTN-0108 accepted</div><div class="notif-pill-desc">Acme Ltd</div><div class="notif-pill-time">5h ago</div></div>
+<div class="notif-pill"><div class="notif-pill-title">Payment ₦45K</div><div class="notif-pill-desc">INV-0039</div><div class="notif-pill-time">1d ago</div></div>
+<div class="notif-pill"><div class="notif-pill-title">WB-0027 sent</div><div class="notif-pill-desc">Site B</div><div class="notif-pill-time">1d ago</div></div>
+</div></section>
+<section><div class="section-label">Documents</div><div class="doc-scroll">
+<div class="doc-card"><div class="doc-card-type">Invoice</div><div class="doc-card-id">INV-0045</div><div class="doc-card-party">Lagos Steel Works</div><div class="doc-card-footer"><div class="doc-card-amount">₦120,000</div><div class="doc-card-badge pending">Pending</div></div></div>
+<div class="doc-card"><div class="doc-card-type">Quotation</div><div class="doc-card-id">QTN-0109</div><div class="doc-card-party">Westfield Corp</div><div class="doc-card-footer"><div class="doc-card-amount">₦340,000</div><div class="doc-card-badge draft">Draft</div></div></div>
+<div class="doc-card"><div class="doc-card-type">Waybill</div><div class="doc-card-id">WB-0028</div><div class="doc-card-party">Site Alpha</div><div class="doc-card-footer"><div class="doc-card-amount">---</div><div class="doc-card-badge paid">Delivered</div></div></div>
+</div></section>
+<section><div class="section-label">Audit Trail</div><div class="audit-grid">
+<div class="audit-tile"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-0045 created</div><div class="audit-meta">Today, 10:32 AM</div></div></div>
+<div class="audit-tile"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">INV-0042 overdue</div><div class="audit-meta">Today, 09:15 AM</div></div></div>
+<div class="audit-tile"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">QTN-0108 accepted</div><div class="audit-meta">Yesterday</div></div></div>
+<div class="audit-tile"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-0039 flagged</div><div class="audit-meta">Aug 14</div></div></div>
+</div></section>
+</main>
+<nav class="nav-wrap" id="bottomNav" role="tablist" aria-label="Main navigation">
+<button class="nav-circle active" role="tab" aria-selected="true" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+<button class="nav-circle" role="tab" aria-selected="false" aria-label="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></button>
+<button class="nav-circle" role="tab" aria-selected="false" aria-label="Sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></button>
+<button class="nav-circle" role="tab" aria-selected="false" aria-label="Clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></button>
+<button class="nav-circle" role="tab" aria-selected="false" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+</nav>
+<div class="fab-wrap" id="fabWrap"><div class="quick-popup" id="quickPopup" role="menu" aria-label="Quick actions"><button class="popup-item" role="menuitem">Invoice</button><button class="popup-item" role="menuitem">Quotation</button><button class="popup-item" role="menuitem">Purchase orders</button><button class="popup-item" role="menuitem">Boq</button><button class="popup-item" role="menuitem">Waybill</button><button class="popup-item" role="menuitem">Csr</button></div><button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button></div>
+<div class="scrim" id="scrim"></div>
+<div class="sidebar-drawer" id="sidebarDrawer"><div class="sd-head"><div class="sd-logo">BD</div><div class="sd-brand">BIGDROPS</div></div><nav class="sd-nav" aria-label="Sidebar"><div class="sd-section">Documents</div><button class="sd-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</button><div class="sd-section">Operations</div><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button></nav><div class="sd-foot"><div class="sd-avatar">MA</div><div><div class="sd-user-name">Milad A.</div><div class="sd-user-role">Operator</div></div></div></div>
+<div class="notif-panel" id="notifPanel"><div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="npClear">Clear all</span></div><div class="np-list"><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div></div></div>
+<div class="ai-overlay" id="aiOverlay"><div class="ai-panel"><div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">AI</div><div><div class="ai-title">Steward</div><div class="ai-sub">local llm</div></div></div><button class="ai-close" id="aiClose" aria-label="Close">✕</button></div><div class="ai-body"><div class="ai-msg bot">Hello! I can help you manage invoices, track payments, and navigate your documents.</div><div class="ai-msg user">Show me overdue invoices</div><div class="ai-msg bot">You have 2 overdue invoices totaling ₦56,000.</div></div><div class="ai-chips"><button class="ai-chip">Create a new invoice</button><button class="ai-chip">Show payment history</button></div><div class="ai-input-row"><input class="ai-input" type="text" placeholder="Ask Steward..." aria-label="Ask Steward" /><button class="ai-send" aria-label="Send">↑</button></div></div></div>
+<div class="loading-screen" id="loadingScreen"><div class="ls-logo">BD</div><div class="ls-spinner"></div><div class="ls-tip-card"><div class="ls-tip-eyebrow">Did you know</div><div class="ls-tip-text">You can convert an accepted <b>quotation</b> straight into an <b>invoice</b>.</div></div><div class="ls-dots"><span class="on"></span><span></span><span></span></div></div>
+<div class="toast" id="toast"></div>
+</div></div>
+<script>
+(function(){'use strict';var sidebarBtn=document.getElementById('sidebarToggle')||document.querySelector('.topbar-title'),sidebarDrawer=document.getElementById('sidebarDrawer'),notifPanel=document.getElementById('notifPanel'),notifBtn=document.getElementById('notifBtn'),aiBtn=document.getElementById('aiBtn'),aiOverlay=document.getElementById('aiOverlay'),aiClose=document.getElementById('aiClose'),fabBtn=document.getElementById('fabBtn'),quickPopup=document.getElementById('quickPopup'),scrim=document.getElementById('scrim'),themeBtn=document.getElementById('themeBtn'),loadingScreen=document.getElementById('loadingScreen'),toast=document.getElementById('toast'),smartBanner=document.getElementById('smartBanner'),sbClose=document.getElementById('sbClose'),sbCta=document.getElementById('sbCta'),npClear=document.getElementById('npClear');var state={sidebar:false,notif:false,ai:false,fab:false};var toastTimer;function closeAll(except){if(except!=='sidebar'&&state.sidebar){state.sidebar=false;sidebarDrawer.classList.remove('visible')}if(except!=='notif'&&state.notif){state.notif=false;notifPanel.classList.remove('visible');notifBtn.classList.remove('active');notifBtn.setAttribute('aria-expanded','false')}if(except!=='ai'&&state.ai){state.ai=false;aiOverlay.classList.remove('visible');aiBtn.classList.remove('active')}if(except!=='fab'&&state.fab){state.fab=false;quickPopup.classList.remove('open');fabBtn.classList.remove('open')}scrim.classList.toggle('visible',state.sidebar||state.notif||state.ai)}function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},2000)}
+document.querySelector('.topbar-title').addEventListener('click',function(){state.sidebar=!state.sidebar;sidebarDrawer.classList.toggle('visible',state.sidebar);scrim.classList.toggle('visible',state.sidebar)});
+notifBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.notif;closeAll('notif');state.notif=n;notifPanel.classList.toggle('visible',n);notifBtn.classList.toggle('active',n);notifBtn.setAttribute('aria-expanded',String(n));scrim.classList.toggle('visible',n)});
+aiBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.ai;closeAll('ai');state.ai=n;aiOverlay.classList.toggle('visible',n);aiBtn.classList.toggle('active',n);scrim.classList.toggle('visible',n)});
+aiClose.addEventListener('click',function(e){e.stopPropagation();closeAll()});
+fabBtn.addEventListener('click',function(e){e.stopPropagation();var n=!state.fab;closeAll('fab');state.fab=n;quickPopup.classList.toggle('open',n);fabBtn.classList.toggle('open',n)});
+scrim.addEventListener('click',function(){closeAll()});
+themeBtn.addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',d?'':'dark');showToast(d?'Light mode':'Dark mode')});
+sbClose.addEventListener('click',function(){smartBanner.style.display='none';showToast('Dismissed')});
+sbCta.addEventListener('click',function(){showToast('Recording...')});
+npClear.addEventListener('click',function(){showToast('Cleared')});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+document.querySelectorAll('.nav-circle').forEach(function(item){item.addEventListener('click',function(){document.querySelectorAll('.nav-circle').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});this.classList.add('active');this.setAttribute('aria-selected','true');showToast(this.getAttribute('aria-label'))})});
+document.querySelectorAll('.sd-item').forEach(function(item){item.addEventListener('click',function(){document.querySelectorAll('.sd-item').forEach(function(n){n.classList.remove('active')});this.classList.add('active');closeAll();showToast(this.textContent.trim())})});
+document.querySelectorAll('.popup-item').forEach(function(item){item.addEventListener('click',function(){closeAll();showToast('New '+this.textContent.trim())})});
+function showLoading(){loadingScreen.classList.add('visible');setTimeout(function(){loadingScreen.classList.remove('visible');showToast('Refreshed')},2200)}
+var aiSend=document.querySelector('.ai-send'),aiInput=document.querySelector('.ai-input');if(aiSend&&aiInput){aiSend.addEventListener('click',function(){var val=aiInput.value.trim();if(val){var body=document.querySelector('.ai-body');var msg=document.createElement('div');msg.className='ai-msg user';msg.textContent=val;body.appendChild(msg);aiInput.value='';body.scrollTop=body.scrollHeight;setTimeout(function(){var bot=document.createElement('div');bot.className='ai-msg bot';bot.textContent='Let me help with that.';body.appendChild(bot);body.scrollTop=body.scrollHeight},800)}});aiInput.addEventListener('keydown',function(e){if(e.key==='Enter')aiSend.click()})}
+document.querySelectorAll('.ai-chip').forEach(function(c){c.addEventListener('click',function(){if(aiInput){aiInput.value=this.textContent;aiSend.click()}})})})();
+</script>
+</body>
+</html>

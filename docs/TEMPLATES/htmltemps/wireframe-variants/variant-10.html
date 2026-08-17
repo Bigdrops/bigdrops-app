@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>BIGDROPS Dashboard — Chat First</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#1A1714;--surface:#231F1B;--surface-raised:#2A2521;--ink:#EDE6DC;--ink-secondary:#A89C8E;--ink-muted:#6B5F55;--accent:#E87040;--accent-surface:rgba(232,112,64,0.1);--danger:#E84040;--success:#4ADE80;--warning:#FBBF24;--border:rgba(237,230,220,0.08);--font:'Cabin',sans-serif;--r:14px;--r-sm:8px;--shadow:0 2px 8px rgba(0,0,0,0.2);--shadow-lg:0 8px 24px rgba(0,0,0,0.3);--scrim-bg:rgba(0,0,0,0.5)}
+[data-theme="light"]{--bg:#F5F0EB;--surface:#FFFFFF;--surface-raised:#F0EBE6;--ink:#1A1612;--ink-secondary:#6B5E52;--ink-muted:#B0A698;--accent:#C2410C;--accent-surface:rgba(194,65,12,0.06);--border:rgba(26,22,18,0.08);--scrim-bg:rgba(26,22,18,0.35)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100dvh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.app{width:100%;max-width:420px;height:100dvh;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+.screen{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;flex-shrink:0;z-index:10;border-bottom:1px solid var(--border)}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.sidebar-toggle{width:32px;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);display:grid;place-items:center}
+.sidebar-toggle svg{width:16px;height:16px}
+.tb-icon{width:32px;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:grid;place-items:center;position:relative}
+.tb-icon svg{width:16px;height:16px}
+.tb-icon.active{background:var(--accent);color:white;border-color:var(--accent)}
+.tb-icon .pip{position:absolute;top:-1px;right:-1px;width:7px;height:7px;background:var(--danger);border-radius:50%;border:1.5px solid var(--bg)}
+.topbar-brand{font-weight:700;font-size:13px}
+.topbar-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);background:var(--accent-surface);padding:2px 6px;border-radius:4px}
+
+/* CHAT VIEW */
+.chat-view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;display:flex;flex-direction:column;gap:10px}
+.chat-view::-webkit-scrollbar{display:none}
+.chat-msg{max-width:85%;padding:10px 12px;font-size:12px;line-height:1.5;border-radius:var(--r) var(--r) var(--r) 4px}
+.chat-msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--border)}
+.chat-msg.user{align-self:flex-end;background:var(--accent);color:white;border-radius:var(--r) var(--r) 4px var(--r)}
+
+/* DATA CARDS in chat */
+.data-card{align-self:flex-start;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.data-card-header{display:flex;justify-content:space-between;align-items:center}
+.data-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted)}
+.data-card-badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px}
+.data-kpi-row{display:flex;gap:8px}
+.data-kpi{flex:1;text-align:center;padding:8px 4px;background:var(--surface-raised);border-radius:var(--r-sm)}
+.data-kpi-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted)}
+.data-kpi-value{font-size:16px;font-weight:700;margin-top:2px}
+.data-kpi-trend{font-size:8px;color:var(--ink-muted);margin-top:1px}
+.data-kpi-trend .up{color:var(--success);font-weight:700}
+.data-kpi-trend .down{color:var(--danger);font-weight:700}
+.data-doc{display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface-raised);border-radius:var(--r-sm)}
+.data-doc-icon{width:24px;height:24px;background:var(--accent-surface);border-radius:var(--r-sm);display:grid;place-items:center;color:var(--accent);flex-shrink:0}
+.data-doc-icon svg{width:12px;height:12px}
+.data-doc-info{flex:1;min-width:0}
+.data-doc-id{font-weight:700;font-size:10px}
+.data-doc-party{font-size:9px;color:var(--ink-secondary)}
+.data-doc-amt{font-weight:700;font-size:10px;text-align:right;flex-shrink:0}
+.data-alert{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(232,64,64,0.08);border-left:3px solid var(--danger);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:11px;font-weight:600}
+.data-audit{display:flex;flex-direction:column;gap:4px}
+.data-audit-item{display:flex;align-items:center;gap:6px;font-size:10px}
+.data-audit-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.data-audit-dot.ok{background:var(--success)}
+.data-audit-dot.warn{background:var(--warning)}
+.data-audit-dot.bad{background:var(--danger)}
+.data-audit-text{flex:1;font-weight:500}
+.data-audit-time{color:var(--ink-muted);font-size:8px;flex-shrink:0}
+
+/* CHIPS */
+.chat-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px}
+.chat-chip{padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;transition:all 0.1s}
+.chat-chip:active{background:var(--accent-surface);border-color:var(--accent);color:var(--accent)}
+
+/* INPUT */
+.chat-input-wrap{position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);display:flex;gap:6px;z-index:10}
+.chat-input{flex:1;height:40px;padding:0 14px;border:1px solid var(--border);background:var(--surface);border-radius:20px;font-family:var(--font);font-size:12px;color:var(--ink);outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{width:40px;height:40px;background:var(--accent);color:white;border-radius:50%;font-size:16px;font-weight:700;display:grid;place-items:center;transition:all 0.15s}
+.chat-send:active{transform:scale(0.9)}
+
+/* MINIMAL BOTTOM NAV — just 3 items, very thin */
+.mini-nav{position:absolute;bottom:60px;left:14px;right:14px;z-index:9;display:flex;justify-content:center;gap:4px}
+.mini-nav-btn{padding:4px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:9px;font-weight:600;color:var(--ink-muted);transition:all 0.1s}
+.mini-nav-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.mini-nav-btn:active{transform:scale(0.95)}
+
+.fab-wrap{position:absolute;bottom:100px;right:14px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.fab{width:44px;height:44px;background:var(--accent);color:white;border-radius:50%;font-size:20px;display:grid;place-items:center;box-shadow:var(--shadow-lg);transition:all 0.2s;z-index:2}
+.fab:active{transform:scale(0.9)}
+.fab.open{transform:rotate(45deg);background:var(--danger)}
+.quick-popup{width:160px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:4px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;opacity:0;transform:translateY(8px);pointer-events:none;transition:all 0.2s}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:8px 12px;font-size:12px;font-weight:500;border-radius:var(--r-sm);transition:all 0.1s}
+.popup-item:active{background:var(--accent-surface);color:var(--accent)}
+
+.scrim{position:absolute;inset:0;background:var(--scrim-bg);z-index:35;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.scrim.visible{opacity:1;pointer-events:auto}
+
+.sidebar-drawer{position:absolute;top:0;left:0;bottom:0;width:78%;background:var(--surface);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:40;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.sidebar-drawer.visible{transform:translateX(0)}
+.sd-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.sd-logo{width:28px;height:28px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-weight:700;font-size:10px}
+.sd-brand{font-weight:700;font-size:13px}
+.sd-nav{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px}
+.sd-nav::-webkit-scrollbar{display:none}
+.sd-section{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-muted);padding:8px 8px 4px}
+.sd-item{display:flex;align-items:center;gap:8px;padding:8px;font-size:12px;font-weight:500;color:var(--ink-secondary);border-radius:var(--r-sm);transition:all 0.1s}
+.sd-item:active{background:var(--accent-surface)}
+.sd-item.active{background:var(--accent-surface);color:var(--accent);font-weight:600}
+.sd-item svg{width:16px;height:16px;flex-shrink:0}
+.sd-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sd-avatar{width:24px;height:24px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-weight:700;font-size:9px}
+.sd-user-name{font-weight:600;font-size:11px}
+.sd-user-role{font-size:9px;color:var(--ink-muted)}
+
+.loading-screen{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;text-align:center;z-index:100;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)}
+.loading-screen.visible{transform:translateX(0)}
+.ls-logo{width:40px;height:40px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:white;font-weight:700;font-size:14px;margin:0 auto 18px}
+.ls-spinner{width:20px;height:20px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--accent);animation:spin 0.8s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-tip-card{border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;max-width:240px;margin:0 auto;background:var(--surface)}
+.ls-tip-eyebrow{font-size:8px;font-weight:700;letter-spacing:0.08em;color:var(--accent);text-transform:uppercase}
+.ls-tip-text{font-size:11px;line-height:1.6;color:var(--ink);margin-top:4px}
+.ls-tip-text b{font-weight:700}
+.ls-dots{display:flex;gap:4px;margin-top:16px;justify-content:center}
+.ls-dots span{width:4px;height:4px;border-radius:50%;background:var(--border)}
+.ls-dots span.on{background:var(--accent)}
+
+.toast{position:absolute;top:12px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:6px 14px;background:var(--ink);color:var(--bg);border-radius:16px;font-size:10px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all 0.2s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:768px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="screen" id="mainScreen">
+<header class="topbar">
+<div class="topbar-left">
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+<span class="topbar-brand">BIGDROPS</span>
+<span class="topbar-tag">Steward</span>
+</div>
+<div class="topbar-right">
+<button class="tb-icon" id="themeBtn" aria-label="Toggle theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+<button class="tb-icon" id="notifBtn" aria-label="Notifications" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pip"></span></button>
+</div>
+</header>
+<main class="chat-view" id="content">
+<div class="chat-msg bot">Good morning, Milad. Here's your dashboard summary.</div>
+<div class="data-card">
+<div class="data-card-header"><div class="data-card-title">Key Metrics</div></div>
+<div class="data-kpi-row">
+<div class="data-kpi"><div class="data-kpi-label">Balance</div><div class="data-kpi-value">₦10K</div><div class="data-kpi-trend"><span class="up">+12%</span></div></div>
+<div class="data-kpi"><div class="data-kpi-label">Overdue</div><div class="data-kpi-value">₦56K</div><div class="data-kpi-trend"><span class="down">+4%</span></div></div>
+<div class="data-kpi"><div class="data-kpi-label">Invoices</div><div class="data-kpi-value">12</div><div class="data-kpi-trend"><span class="up">-2</span> pending</div></div>
+<div class="data-kpi"><div class="data-kpi-label">Payments</div><div class="data-kpi-value">₦89K</div><div class="data-kpi-trend"><span class="up">+18%</span></div></div>
+</div>
+</div>
+<div class="data-card">
+<div class="data-card-header"><div class="data-card-title">Alert</div></div>
+<div class="data-alert">3 payments may be unrecorded this week.</div>
+</div>
+<div class="chat-msg bot">You have 2 overdue invoices and 3 unrecorded payments. Would you like me to help?</div>
+<div class="data-card">
+<div class="data-card-header"><div class="data-card-title">Recent Documents</div></div>
+<div class="data-doc"><div class="data-doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="data-doc-info"><div class="data-doc-id">INV-0045</div><div class="data-doc-party">Lagos Steel Works</div></div><div class="data-doc-amt">₦120,000</div></div>
+<div class="data-doc"><div class="data-doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="data-doc-info"><div class="data-doc-id">QTN-0109</div><div class="data-doc-party">Westfield Corp</div></div><div class="data-doc-amt">₦340,000</div></div>
+<div class="data-doc"><div class="data-doc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg></div><div class="data-doc-info"><div class="data-doc-id">WB-0028</div><div class="data-doc-party">Site Alpha</div></div><div class="data-doc-amt">Delivered</div></div>
+</div>
+<div class="data-card">
+<div class="data-card-header"><div class="data-card-title">Recent Activity</div></div>
+<div class="data-audit">
+<div class="data-audit-item"><div class="data-audit-dot ok"></div><div class="data-audit-text">INV-0045 created</div><div class="data-audit-time">10:32 AM</div></div>
+<div class="data-audit-item"><div class="data-audit-dot warn"></div><div class="data-audit-text">INV-0042 overdue</div><div class="data-audit-time">09:15 AM</div></div>
+<div class="data-audit-item"><div class="data-audit-dot ok"></div><div class="data-audit-text">QTN-0108 accepted</div><div class="data-audit-time">Yesterday</div></div>
+<div class="data-audit-item"><div class="data-audit-dot bad"></div><div class="data-audit-text">INV-0039 flagged</div><div class="data-audit-time">Aug 14</div></div>
+</div>
+</div>
+</main>
+<div class="chat-chips">
+<button class="chat-chip" data-action="invoice">Create invoice</button>
+<button class="chat-chip" data-action="payment">Record payment</button>
+<button class="chat-chip" data-action="search">Search documents</button>
+</div>
+<div class="mini-nav" role="tablist" aria-label="Quick nav">
+<button class="mini-nav-btn active" role="tab" aria-selected="true" aria-label="Dashboard">Dashboard</button>
+<button class="mini-nav-btn" role="tab" aria-selected="false" aria-label="Projects">Projects</button>
+<button class="mini-nav-btn" role="tab" aria-selected="false" aria-label="Sales">Sales</button>
+<button class="mini-nav-btn" role="tab" aria-selected="false" aria-label="Clients">Clients</button>
+<button class="mini-nav-btn" role="tab" aria-selected="false" aria-label="More">More</button>
+</div>
+<div class="fab-wrap" id="fabWrap"><div class="quick-popup" id="quickPopup" role="menu" aria-label="Quick actions"><button class="popup-item" role="menuitem">Invoice</button><button class="popup-item" role="menuitem">Quotation</button><button class="popup-item" role="menuitem">Purchase orders</button><button class="popup-item" role="menuitem">Boq</button><button class="popup-item" role="menuitem">Waybill</button><button class="popup-item" role="menuitem">Csr</button></div><button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button></div>
+<div class="chat-input-wrap"><input class="chat-input" type="text" placeholder="Ask Steward anything..." aria-label="Ask Steward" id="chatInput" /><button class="chat-send" aria-label="Send" id="chatSend">↑</button></div>
+<div class="scrim" id="scrim"></div>
+<div class="sidebar-drawer" id="sidebarDrawer"><div class="sd-head"><div class="sd-logo">BD</div><div class="sd-brand">BIGDROPS</div></div><nav class="sd-nav" aria-label="Sidebar"><div class="sd-section">Documents</div><button class="sd-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</button><div class="sd-section">Operations</div><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button></nav><div class="sd-foot"><div class="sd-avatar">MA</div><div><div class="sd-user-name">Milad A.</div><div class="sd-user-role">Operator</div></div></div></div>
+<div class="loading-screen" id="loadingScreen"><div class="ls-logo">BD</div><div class="ls-spinner"></div><div class="ls-tip-card"><div class="ls-tip-eyebrow">Did you know</div><div class="ls-tip-text">Convert accepted <b>quotations</b> into <b>invoices</b> instantly.</div></div><div class="ls-dots"><span class="on"></span><span></span><span></span></div></div>
+<div class="toast" id="toast"></div>
+</div></div>
+<script>
+(function(){'use strict';var sb=document.getElementById('sidebarToggle'),sd=document.getElementById('sidebarDrawer'),nb=document.getElementById('notifBtn'),tb=document.getElementById('themeBtn'),sc=document.getElementById('scrim'),fb=document.getElementById('fabBtn'),qp=document.getElementById('quickPopup'),ls=document.getElementById('loadingScreen'),t=document.getElementById('toast'),cs=document.getElementById('chatSend'),ci=document.getElementById('chatInput'),cv=document.getElementById('content');var st={s:false,f:false};var tt;function ca(x){if(x!=='s'&&st.s){st.s=false;sd.classList.remove('visible');sb.classList.remove('active')}if(x!=='f'&&st.f){st.f=false;qp.classList.remove('open');fb.classList.remove('open')}sc.classList.toggle('visible',st.s)}
+function sh(m){t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('show')},2000)}
+function addBot(text){var d=document.createElement('div');d.className='chat-msg bot';d.textContent=text;cv.appendChild(d);cv.scrollTop=cv.scrollHeight}
+sb.addEventListener('click',function(e){e.stopPropagation();var n=!st.s;ca('s');st.s=n;sd.classList.toggle('visible',n);sb.classList.toggle('active',n);sc.classList.toggle('visible',n)});
+nb.addEventListener('click',function(e){e.stopPropagation();sh('Notifications')});
+tb.addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',d?'light':'dark');sh(d?'Light':'Dark')});
+sc.addEventListener('click',function(){ca()});
+fb.addEventListener('click',function(e){e.stopPropagation();var n=!st.f;ca('f');st.f=n;qp.classList.toggle('open',n);fb.classList.toggle('open',n)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')ca()});
+document.querySelectorAll('.mini-nav-btn').forEach(function(i){i.addEventListener('click',function(){document.querySelectorAll('.mini-nav-btn').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});this.classList.add('active');this.setAttribute('aria-selected','true');sh(this.getAttribute('aria-label'))})});
+document.querySelectorAll('.sd-item').forEach(function(i){i.addEventListener('click',function(){document.querySelectorAll('.sd-item').forEach(function(n){n.classList.remove('active')});this.classList.add('active');ca();sh(this.textContent.trim())})});
+document.querySelectorAll('.popup-item').forEach(function(i){i.addEventListener('click',function(){ca();sh('New '+this.textContent.trim())})});
+document.querySelectorAll('.chat-chip').forEach(function(c){c.addEventListener('click',function(){var a=this.getAttribute('data-action');if(a==='invoice')sh('Creating invoice...');else if(a==='payment')sh('Recording payment...');else sh('Searching...')})});
+if(cs&&ci){cs.addEventListener('click',function(){var v=ci.value.trim();if(v){var d=document.createElement('div');d.className='chat-msg user';d.textContent=v;cv.appendChild(d);ci.value='';cv.scrollTop=cv.scrollHeight;setTimeout(function(){addBot('I understand. Let me help you with that.')},800)}});ci.addEventListener('keydown',function(e){if(e.key==='Enter')cs.click()})}
+})();
+</script>
+</body>
+</html>
