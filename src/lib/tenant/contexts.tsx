@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/supabase'
 import { createTenantClient, type TenantClient } from '@/lib/tenantClient'
 import {
@@ -44,8 +44,12 @@ export type SchemaResolutionSource = 'startup' | 'cache' | 'refresh' | 'workspac
 type WorkspaceContextValue = {
   workspace: ActiveWorkspace | null
   workspaceCount: number
+  activeWorkspaces: ActiveWorkspace[]
   pendingWorkspace: ActiveWorkspace | null
   pendingInvitation: PendingInvitation | null
+  selectWorkspace: (id: string) => void
+  invitationDismissed: boolean
+  dismissInvitation: () => void
   isLoading: boolean
   error: string | null
   refresh: () => void
@@ -62,13 +66,27 @@ export function WorkspaceProvider({
 }) {
   const [workspace, setWorkspace] = useState<ActiveWorkspace | null>(null)
   const [workspaceCount, setWorkspaceCount] = useState(0)
+  const [activeWorkspaces, setActiveWorkspaces] = useState<ActiveWorkspace[]>([])
   const [pendingWorkspace, setPendingWorkspace] = useState<ActiveWorkspace | null>(null)
   const [pendingInvitation, setPendingInvitation] = useState<PendingInvitation | null>(null)
+  const [invitationDismissed, setInvitationDismissed] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  // Session-only workspace pick. Resets on a full reload (sign-in/sign-out).
+  const selectedWorkspaceId = useRef<string | null>(null)
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
+
+  const selectWorkspace = useCallback(
+    (id: string) => {
+      selectedWorkspaceId.current = id
+      setWorkspace(activeWorkspaces.find((w) => w.id === id) ?? null)
+    },
+    [activeWorkspaces],
+  )
+
+  const dismissInvitation = useCallback(() => setInvitationDismissed(true), [])
 
   useEffect(() => {
     let cancelled = false
@@ -114,19 +132,22 @@ export function WorkspaceProvider({
         }>
 
         const active = rows.filter((row) => row.workspace && row.workspace.status === 'active')
-        setWorkspaceCount(active.length)
+        const activeList: ActiveWorkspace[] = active.map((row) => {
+          const w = row.workspace!
+          return { id: w.id, slug: w.slug, name: w.name, status: w.status ?? 'active', role: row.role }
+        })
+        setWorkspaceCount(activeList.length)
+        setActiveWorkspaces(activeList)
 
-        if (active.length === 1) {
-          const w = active[0].workspace
-          setWorkspace({
-            id: w.id,
-            slug: w.slug,
-            name: w.name,
-            status: w.status ?? 'active',
-            role: active[0].role,
-          })
+        const remembered = activeList.find((w) => w.id === selectedWorkspaceId.current)
+        if (activeList.length === 1) {
+          selectedWorkspaceId.current = activeList[0].id
+          setWorkspace(activeList[0])
+        } else if (activeList.length > 1 && remembered) {
+          // Session pick survives refreshes but never persists across sign-ins.
+          setWorkspace(remembered)
         } else {
-          // 0 workspaces or multiple: selection is deferred to a future phase.
+          if (activeList.length === 0) selectedWorkspaceId.current = null
           setWorkspace(null)
         }
 
@@ -175,8 +196,32 @@ export function WorkspaceProvider({
   }, [userId, refreshKey])
 
   const value = useMemo<WorkspaceContextValue>(
-    () => ({ workspace, workspaceCount, pendingWorkspace, pendingInvitation, isLoading, error, refresh }),
-    [workspace, workspaceCount, pendingWorkspace, pendingInvitation, isLoading, error, refresh],
+    () => ({
+      workspace,
+      workspaceCount,
+      activeWorkspaces,
+      pendingWorkspace,
+      pendingInvitation,
+      selectWorkspace,
+      invitationDismissed,
+      dismissInvitation,
+      isLoading,
+      error,
+      refresh,
+    }),
+    [
+      workspace,
+      workspaceCount,
+      activeWorkspaces,
+      pendingWorkspace,
+      pendingInvitation,
+      selectWorkspace,
+      invitationDismissed,
+      dismissInvitation,
+      isLoading,
+      error,
+      refresh,
+    ],
   )
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>

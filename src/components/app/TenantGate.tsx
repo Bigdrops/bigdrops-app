@@ -7,6 +7,7 @@ import {
 import PageLoader from '@/components/app/PageLoader'
 import { Button } from '@/components/ui/button'
 import WorkspaceCreation from '@/pages/WorkspaceCreation'
+import WorkspaceSelection from '@/pages/WorkspaceSelection'
 import WorkspaceInvitation from '@/pages/WorkspaceInvitation'
 import WorkspacePendingApproval from '@/pages/WorkspacePendingApproval'
 import CompanyCreation from '@/pages/CompanyCreation'
@@ -42,8 +43,10 @@ export default function TenantGate({ children }: { children: ReactNode }) {
       workspaceLoading: workspaceCtx.isLoading,
       workspaceError: workspaceCtx.error,
       workspace: workspaceCtx.workspace ? { id: workspaceCtx.workspace.id, status: workspaceCtx.workspace.status } : null,
+      workspaceCount: workspaceCtx.workspaceCount,
       pendingWorkspace: workspaceCtx.pendingWorkspace ? { id: workspaceCtx.pendingWorkspace.id } : null,
       pendingInvitation: workspaceCtx.pendingInvitation ? { id: workspaceCtx.pendingInvitation.id } : null,
+      invitationDismissed: workspaceCtx.invitationDismissed,
       entityLoading: entityCtx.isLoading,
       entityError: entityCtx.error,
       entityCount: entityCtx.entityCount,
@@ -53,8 +56,10 @@ export default function TenantGate({ children }: { children: ReactNode }) {
       workspaceCtx.isLoading,
       workspaceCtx.error,
       workspaceCtx.workspace,
+      workspaceCtx.workspaceCount,
       workspaceCtx.pendingWorkspace,
       workspaceCtx.pendingInvitation,
+      workspaceCtx.invitationDismissed,
       entityCtx.isLoading,
       entityCtx.error,
       entityCtx.entityCount,
@@ -79,6 +84,9 @@ export default function TenantGate({ children }: { children: ReactNode }) {
 
     case 'create-workspace':
       return <WorkspaceCreation />
+
+    case 'select-workspace':
+      return <WorkspaceSelection />
 
     case 'pending-invitation':
       return <WorkspaceInvitation />

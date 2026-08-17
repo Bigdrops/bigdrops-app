@@ -10,6 +10,7 @@ import { createWorkspace, slugify } from '@/domain/tenant/tenantCreation'
 
 export default function WorkspaceCreation() {
   const workspaceCtx = useWorkspace()
+  const [mode, setMode] = useState<'create' | 'join'>('create')
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -49,47 +50,79 @@ export default function WorkspaceCreation() {
               BigDrops ERP
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-              Create your workspace
+              {mode === 'create' ? 'Create your workspace' : 'Join a workspace'}
             </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              A workspace holds your business data. Your workspace must be approved before you can
-              create a company inside it.
+              {mode === 'create'
+                ? 'A workspace holds your business data. Your workspace must be approved before you can create a company inside it.'
+                : 'Workspaces are invite-only. Ask your company or team to send you an invitation.'}
             </p>
           </div>
 
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name" className="text-slate-700">
-                Workspace name
-              </Label>
-              <Input
-                id="workspace-name"
-                type="text"
-                value={name}
-                onChange={updateName}
-                placeholder="e.g. Tunde and Sons Limited"
-                className="h-12 rounded-xl border-black/10 bg-background pl-4 text-base shadow-none"
-              />
-            </div>
+          <div className="mt-6 flex rounded-xl border border-black/10 bg-black/5 p-1">
+            {(['create', 'join'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  mode === m ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground'
+                }`}
+              >
+                {m === 'create' ? 'Create' : 'Join'}
+              </button>
+            ))}
+          </div>
 
-            {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+          {mode === 'join' ? (
+            <div className="mt-6 space-y-4">
+              <div className="rounded-xl border border-black/10 bg-background p-4">
+                <h3 className="text-sm font-semibold text-foreground">Invitation required</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Ask the administrator of the company or team you work with to invite this
+                  account&apos;s email address. There is no join code.
+                </p>
               </div>
-            )}
+              <p className="text-xs leading-5 text-muted-foreground">
+                Once an invitation is sent, it appears automatically the next time you sign in and
+                you can accept it from your invitation screen.
+              </p>
+            </div>
+          ) : (
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-name" className="text-slate-700">
+                  Workspace name
+                </Label>
+                <Input
+                  id="workspace-name"
+                  type="text"
+                  value={name}
+                  onChange={updateName}
+                  placeholder="e.g. Tunde and Sons Limited"
+                  className="h-12 rounded-xl border-black/10 bg-background pl-4 text-base shadow-none"
+                />
+              </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
-            >
-              <ButtonLoading
-                loading={loading}
-                loadingLabel="Creating workspace"
-                idleLabel="Create Workspace"
-              />
-            </Button>
-          </form>
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-12 w-full rounded-xl bg-[#111111] text-white hover:bg-black"
+              >
+                <ButtonLoading
+                  loading={loading}
+                  loadingLabel="Creating workspace"
+                  idleLabel="Create Workspace"
+                />
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

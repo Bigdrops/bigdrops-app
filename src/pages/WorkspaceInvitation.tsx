@@ -87,6 +87,17 @@ export default function WorkspaceInvitation() {
             >
               Sign Out
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full rounded-full px-6 font-semibold text-muted-foreground"
+              onClick={workspaceCtx.dismissInvitation}
+            >
+              Pass for now
+            </Button>
+            <p className="px-2 text-center text-xs leading-5 text-muted-foreground">
+              The invitation stays pending. You can accept it on a later sign-in.
+            </p>
           </CardFooter>
         </Card>
       </div>

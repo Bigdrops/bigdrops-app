@@ -30,6 +30,7 @@ export type TenantGatePhase =
   | 'loading'
   | 'error'
   | 'create-workspace'
+  | 'select-workspace'
   | 'pending-invitation'
   | 'pending-approval'
   | 'create-company'
@@ -44,8 +45,10 @@ export interface TenantGateInput {
   workspaceLoading: boolean
   workspaceError: string | null
   workspace: { id: string; status: string | null } | null
+  workspaceCount: number
   pendingWorkspace: { id: string } | null
   pendingInvitation: { id: string } | null
+  invitationDismissed: boolean
   entityLoading: boolean
   entityError: string | null
   entityCount: number
@@ -65,8 +68,11 @@ export function resolveGatePhase(input: TenantGateInput): TenantGatePhase {
 
   if (!input.workspace) {
     if (input.pendingWorkspace) return 'pending-approval'
-    // An invitee with no membership must accept before they can create their own workspace.
-    if (input.pendingInvitation) return 'pending-invitation'
+    // An invitee with no membership must accept before they can create their own
+    // workspace, unless they explicitly chose "Pass for now" this session.
+    if (input.pendingInvitation && !input.invitationDismissed) return 'pending-invitation'
+    // Multiple active memberships: the user must pick one before any entity work.
+    if (input.workspaceCount > 1) return 'select-workspace'
     return 'create-workspace'
   }
 
@@ -101,6 +107,8 @@ export function gatePhaseLabel(phase: TenantGatePhase): string {
   switch (phase) {
     case 'create-workspace':
       return 'Create workspace'
+    case 'select-workspace':
+      return 'Select workspace'
     case 'pending-invitation':
       return 'Pending invitation'
     case 'pending-approval':

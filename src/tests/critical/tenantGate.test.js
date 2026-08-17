@@ -7,8 +7,10 @@ const base = {
   workspaceLoading: false,
   workspaceError: null,
   workspace: { id: 'ws', status: 'active' },
+  workspaceCount: 1,
   pendingWorkspace: null,
   pendingInvitation: null,
+  invitationDismissed: false,
   entityLoading: false,
   entityError: null,
   entityCount: 1,
@@ -43,6 +45,21 @@ test('gate routes a pending invitation ahead of workspace creation', () => {
     }),
     'pending-approval',
   )
+  // "Pass for now" suppresses the invitation for the session.
+  assert.equal(
+    resolveGatePhase({
+      ...base,
+      workspace: null,
+      pendingInvitation: { id: 'inv' },
+      invitationDismissed: true,
+    }),
+    'create-workspace',
+  )
+})
+
+test('gate routes multiple active workspaces to selection', () => {
+  assert.equal(resolveGatePhase({ ...base, workspace: null, workspaceCount: 2 }), 'select-workspace')
+  assert.equal(resolveGatePhase({ ...base, workspace: null, workspaceCount: 0 }), 'create-workspace')
 })
 
 test('gate routes entity loading, errors, and counts once a workspace exists', () => {
