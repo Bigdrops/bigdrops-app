@@ -79,6 +79,19 @@ consumed by the external Platform Office operations console. Neither change
 alters the authorization model, tenancy hierarchy, or any existing table
 shape — see §9.1 and the workspaces table in §5 for the diffs.
 
+Amendment note (2026-08-17): Documentation update — replaced the
+provisional two-level administration model (§3.11) with the resolved
+role/teams model. Roles are user-defined labels over collections of
+abilities, implemented with the existing permission templates (§3.6);
+a role has no authority of its own. Workspace Admin is the preloaded
+comprehensive workspace-wide role; Company Admin is a preloaded
+comprehensive role that is assigned at company scope only. Administrative
+capabilities are abilities inside role bundles, not a separate authority
+layer. Role assignment is limited to existing company members; roles never
+cross companies; the same user may hold different roles in different
+companies. This is a documentation-only update: no table shape, RPC, or
+authorization model change. See §3.11.
+
 Illustration: An interactive HTML reference illustrating this document's model
 alongside the other two PRDs in this set (workspace resolution, entity provisioning,
 action-based permissions, invite acceptance). Not a spec — if it and this document
@@ -153,6 +166,13 @@ Exactly two hard-coded role values — everything else is a toggle:
 |---|---|
 | owner | All workspace powers, always, including delete_workspace. Exactly one per workspace (enforced by unique index). Non-revocable except via explicit ownership transfer. |
 | member | Powers entirely determined by workspace_members.permissions jsonb toggles (invite_members, revoke_members, assign_permissions, create_entity, archive_entity, manage_billing, ...). A member can be granted every toggle except delete_workspace — this is how a "P.A. with near-total power" is expressed, with no new fixed role required. |
+
+Workspace Admin (product name) is the owner role presented as a role: a
+preloaded, comprehensive, workspace-wide role bundle (§3.11). It is not a
+separate authority layer — its governance powers are the owner role plus
+the member toggles on workspace_members.permissions, and its business
+powers are the abilities in its bundle. Any member bundle may be granted
+every governance toggle except delete_workspace.
 
 3.3 Entity permissions — action-based, not CRUD
 CREATE TABLE public.entity_permissions (
@@ -371,47 +391,56 @@ Note on expiration enforcement: this function checks expires_at > now() at
 the moment of acceptance, independent of any scheduled job. See §4 for how
 this interacts with the daily status-expiry job.
 
-3.11 Two-Level Administration Model
-BIGDROPS tenancy has two administrative levels. This subsection states the
-model; it does not settle the final representation.
+3.11 Roles & Administration Model
+This subsection states the resolved role and administration model. It
+replaces the earlier provisional two-level administration description.
 
-LEVEL 1 — WORKSPACE ADMINISTRATION
- * Governs the entire workspace.
- * A workspace may contain multiple companies/entities.
- * Workspace-level governance covers: workspace membership, invitations
-   (create, set expiration, revoke), company/entity administration, and
-   which management capabilities company/entity administrators may
-   exercise.
- * The Workspace Admin establishes the maximum management authority
-   available beneath the workspace level. It is the authority ceiling.
+ROLE = ABILITY BUNDLE
+ * A role is a user-defined label over a collection of abilities.
+ * Roles are implemented with the existing permission templates (§3.6):
+   a role record reuses permission_templates; its abilities are
+   permission_template_items rows; applying the role to a user expands
+   those items into entity_permissions rows via apply_permission_template().
+ * A role has no authority of its own. Only expanded entity_permissions
+   rows are evaluated at query time; nothing is inferred from a role label.
+ * Roles are ordinary editable data. Deleting a role never revokes
+   permissions already expanded for users.
 
-LEVEL 2 — COMPANY / ENTITY ADMINISTRATION
- * A workspace member may hold administrative authority over a specific
-   company/entity.
- * Scope is per company/entity; a Company/Entity Admin for Company A does
-   not administer Company B.
- * A Company/Entity Admin operates only within the authority permitted by
-   workspace administration.
+PRELOADED ROLES
+ * Workspace Admin: the preloaded, comprehensive, workspace-wide role
+   bundle (§3.2). It is the authority ceiling for the workspace.
+ * Company Admin: the preloaded, comprehensive role that is assigned at
+   company scope only. It is a company-scoped role, not a separate
+   authority layer.
+ * There is no "super admin". Administrative capabilities are abilities
+   inside role bundles, not a separate authority model.
 
-Administrative authority vs business permissions
- * Administrative authority answers: "Who may administer whom/what?"
-   (governance, membership, invitations, entity administration).
- * Business permissions answer: "What may this user do with business
-   resources?" (invoice → view/create/edit/approve, client → view, etc.).
- * These are distinct concepts. Business permissions remain deny-by-default,
-   entity-scoped, and action-based (§3.1, §3.3). They are not roles, and
-   they are not inferred automatically from administrative authority.
+AUTHORITY CEILING
+ * Workspace Admin (workspace-wide governance, expressed as role =
+   'owner' plus member governance toggles on workspace_members.permissions,
+   §3.2) is the ceiling.
+ * Company-scoped roles (including Company Admin) operate below it, within
+   the authority the workspace administration makes available.
+ * Below company-scoped roles sit the abilities themselves, expanded as
+   entity_permissions rows.
+ * A company-scoped role grants nothing outside its assigned company.
 
-Relationships to existing model
- * The existing model expresses workspace governance as role + toggle
-   permissions on workspace_members (§3.2) and business access as
-   (resource, action) rows on entity_permissions (§3.3).
- * This PRD does NOT claim the existing schema fully represents the
-   two-level hierarchy. Whether workspace_members toggles and
-   entity_permissions can express "Company/Entity Admin scoped to one
-   entity" is a reconciliation-phase question, not decided here.
- * Do NOT introduce roles, new permission schemas, or new fixed hierarchy
-   tables in this documentation pass.
+ASSIGNMENT RULES
+ * A role is assignable only to a user who is already a member of the
+   target company/entity.
+ * Roles never cross companies: assigning role R in Company A grants
+   nothing in Company B.
+ * The same user may hold different roles in different companies within
+   one workspace.
+ * Company Admin assignment is a company-scoped step that happens after
+   invitation acceptance creates the company membership.
+
+Invitation interaction
+ * Invitation acceptance creates the workspace membership and the invite's
+   entity grants (§3.10). It does not assign roles.
+ * Role assignment is a separate, post-acceptance, company-scope step.
+ * Invitations therefore never carry role payloads; they carry entity
+   grants.
 
 Platform Office relationship
  * Platform Operators (§3.8) are platform-level staff; they are NOT tenant
@@ -839,12 +868,19 @@ dropping this column to prevent dual authority paths.
 §9.1 as the mechanism serializing concurrent CREATE SCHEMA attempts;
 implementation detail, not specified in this document, and the frontend
 must never depend on it.
-· Invite abuse prevention — create_workspace_invitation() (§4.1) has no
-rate-limiting or anti-enumeration protection at the data layer. If
-invitation emails are dispatched on row insertion (an implementation
-detail not specified here), per-workspace or per-admin invite rate caps
-and enumeration protection must be implemented at the application/edge
-layer. Not built in v2.1.
+ · Invite abuse prevention — create_workspace_invitation() (§4.1) has no
+   rate-limiting or anti-enumeration protection at the data layer. If
+   invitation emails are dispatched on row insertion (an implementation
+   detail not specified here), per-workspace or per-admin invite rate caps
+   and enumeration protection must be implemented at the application/edge
+   layer. Not built in v2.1.
+ · Role edit semantics — whether editing a role affects users who already
+   hold it (live updates) or only future assignments (snapshot) is not
+   settled here. The template behavior in §3.6 remains: editing a
+   template's items never alters existing entity_permissions rows until
+   "reapply" is explicitly invoked for specific users (§13). The frontend
+   role editor must expose the same semantics as a deferred decision,
+   not invent a new one (§12.6–§12.8 in the ERP frontend PRD).
 
 13. Success Criteria (v2.1 additions)
  * Granting ('invoice','approve') to a user has no effect on their ability
@@ -882,9 +918,18 @@ layer. Not built in v2.1.
    workspace_invitation_entity_grants rows validates resource and action
    against the canonical list (§3.4.1) and rejects unrecognized values
    rather than silently inserting them.
- * An invitation cannot be successfully accepted after its true expires_at
-   time, regardless of whether the daily status-expiry job has run yet
-   (§4).
+  * An invitation cannot be successfully accepted after its true expires_at
+    time, regardless of whether the daily status-expiry job has run yet
+    (§4).
+  * Assigning a role to a user expands the role's abilities into
+    entity_permissions rows for the assigned company only; no permission is
+    inferred from a role label at query time (§3.11).
+  * A role cannot be assigned to a user who is not a member of the target
+    company; roles never cross companies (§3.11).
+  * Company Admin is a company-scoped role: assigning it in Company A
+    grants no administrative capability in Company B (§3.11).
+  * Deleting a role never revokes permissions already expanded for users
+    (§3.11).
 
 14. Summary of Amendments Applied (v2.1)
 | Amendment | Source | Section |
@@ -924,3 +969,6 @@ layer. Not built in v2.1.
 | Clarified daily expiry job affects displayed status only; acceptance enforcement is independent and real-time | Reviewer | §4, §3.10 |
 | Corrected DDL/transaction premise: Postgres DDL is transactional; real risk is lock contention, mitigated by advisory locks | Reviewer | §9.1, §12 |
 | Fixed wildcard character dropped in §3.4 and §10 during a prior paste (resource = '*', not '') | Reviewer | §3.4, §10 |
+| Roles & administration model resolved: roles are editable ability bundles over permission templates; Workspace Admin and Company Admin are preloaded role bundles; no separate authority layer | Product decision | §3.11 |
+| Role assignment limited to existing company members; roles never cross companies; Company Admin is company-scoped | Product decision | §3.11, §13 |
+| Role edit semantics (live vs snapshot) deferred; template "reapply" behavior remains authoritative | Product decision | §12 |

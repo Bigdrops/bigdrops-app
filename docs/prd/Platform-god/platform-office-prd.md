@@ -73,7 +73,7 @@ The Platform Office is an operations/governance console, not a business-administ
 
 - It observes workspace lifecycle and provisioning according to its existing powers (approve, suspend, read-only archive/purge observation).
 - It is **not** a tenant business-data administrator. It holds zero authority over company/entity business data and zero authority over ordinary company/entity business permissions.
-- Company/entity administration and business permissions are ERP concerns (see the ERP Frontend PRD v1.5, §12.6–§12.7). The Platform Office does not administer them.
+- Company/entity administration, roles, role assignments, and teams are ERP concerns (see the ERP Frontend PRD v1.6, §12.6–§12.9). The Platform Office does not administer them and holds zero authority over them.
 - The corrected approval rule stands: `approve_workspace()` transitions a workspace from `pending_approval` to `active`. Approval does **not** initiate entity/schema provisioning. Provisioning remains a separate, owner-initiated ERP operation.
 
 ---
@@ -193,7 +193,7 @@ Rather than executing destructive, large-scale cleanups, migrations will follow 
 The following items are explicitly **excluded** from the Platform Office scope:
 
 1. **Direct Billing Integration**: No live Stripe/payment processor configuration hooks are implemented inside the workspace settings (deferred).
-2. **ERP Team Membership**: Operators cannot view individual workspace user accounts, invite workspace staff, or alter granular workspace permissions.
+2. **ERP Team Membership**: Operators cannot view individual workspace user accounts, invite workspace staff, or alter granular workspace permissions, roles, role assignments, or teams.
 3. **Data Inspection**: The console will never render a client document (Invoice, Waybill, CSR) or search raw transactional records.
 
 ---
@@ -255,6 +255,7 @@ The following items are explicitly **excluded** from the Platform Office scope:
 | 1.1 | 2026-07-15 | Platform Office Team | Added Mobile-First Operations Philosophy; Service Layer Rule; UI Reuse Policy; Migration Strategy; updated Success Criteria |
 | 1.2 | 2026-08-16 | Platform Office Team | Corrected §6.2 Lifecycle Orchestration to match the backend contract: `approve_workspace()` transitions `pending_approval` → `active` and never initiates `CREATE SCHEMA`; archiving is owner-initiated from the ERP (§8); console powers limited to suspend plus read-only purge observation, with the one restore exception. Aligned §9.2. |
 | 1.3 | 2026-08-16 | Platform Office Team | Clarified §2.5 Administration Boundary: the Platform Office is an operations/governance console, not a tenant business-data administrator. It has no responsibility for company/entity business permissions (ERP concern). Preserved the approval rule: `approve_workspace()` → `pending_approval` → `active`; approval never initiates provisioning. Documentation-only; no architecture change. |
+| 1.4 | 2026-08-17 | Platform Office Team | Aligned with the resolved role and teams model: the Platform Office holds zero authority over roles, role assignments, or teams (ERP concerns; ERP Frontend PRD v1.6, §12.6–§12.9). Updated §2.5 and §8. Documentation-only; no architecture change. |
 
 ---
 

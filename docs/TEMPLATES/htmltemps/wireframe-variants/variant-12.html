@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>BIGDROPS Dashboard — Greenhouse Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#EEF2E3;--surface:#FCFCFC;--ink:#000000;--ink-secondary:#242423;--ink-muted:#6B705C;--accent:#043F2E;--accent-light:#2A6F2B;--accent-surface:rgba(4,63,46,0.06);--chartreuse:#C8F169;--danger:#CC3333;--success:#2A6F2B;--warning:#B8860B;--border:rgba(0,0,0,0.08);--font-heading:'Fraunces',serif;--font-body:'Inter',sans-serif;--r-sm:4px;--r:16px;--shadow:0 1px 3px rgba(0,0,0,0.05);--shadow-lg:0 4px 16px rgba(0,0,0,0.08);--scrim-bg:rgba(0,0,0,0.35)}
+[data-theme="dark"]{--bg:#0A1A0E;--surface:#122218;--ink:#E8F0EA;--ink-secondary:#A0B8A4;--ink-muted:#5A7A5E;--accent:#C8F169;--accent-light:#A8D84A;--accent-surface:rgba(200,241,105,0.08);--border:rgba(232,240,234,0.08);--scrim-bg:rgba(0,0,0,0.55)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100dvh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.app{width:100%;max-width:420px;height:100dvh;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+.screen{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.sidebar-toggle{width:34px;height:34px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);display:grid;place-items:center;box-shadow:var(--shadow)}
+.sidebar-toggle svg{width:18px;height:18px}
+.tb-icon{width:34px;height:34px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);display:grid;place-items:center;position:relative;box-shadow:var(--shadow)}
+.tb-icon svg{width:17px;height:17px}
+.tb-icon.active{background:var(--accent);color:white;border-color:var(--accent)}
+.tb-icon .pip{position:absolute;top:-2px;right:-2px;width:7px;height:7px;background:var(--danger);border-radius:50%;border:1.5px solid var(--bg)}
+.tb-ai{height:34px;padding:0 14px;background:var(--chartreuse);color:var(--accent);border-radius:var(--r-sm);font-weight:700;font-size:11px;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow)}
+.tb-ai:active{transform:scale(0.96)}
+.tb-ai.active{background:var(--accent);color:white}
+.tb-ai svg{width:13px;height:13px}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 20px;display:flex;flex-direction:column;gap:14px}
+.content::-webkit-scrollbar{display:none}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.section-title{font-family:var(--font-body);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted)}
+.section-link{font-size:11px;color:var(--accent);font-weight:600}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.kpi-card:active{transform:scale(0.98)}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted)}
+.kpi-bar{display:flex;gap:2px;height:5px;margin-top:2px}
+.kpi-seg{flex:1;border-radius:2px}
+.kpi-seg.balance{background:var(--warning)}
+.kpi-seg.overdue{background:var(--danger)}
+.kpi-seg.invoices{background:var(--accent)}
+.kpi-seg.payments{background:var(--success)}
+.kpi-seg.empty{background:var(--border)}
+.kpi-value{font-family:var(--font-heading);font-size:20px;font-weight:700;letter-spacing:-0.02em}
+.kpi-trend{font-size:10px;color:var(--ink-muted)}
+.kpi-trend .up{color:var(--success);font-weight:700}
+.kpi-trend .down{color:var(--danger);font-weight:700}
+.smart-banner{background:var(--accent);color:white;border-radius:var(--r);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;position:relative}
+.sb-dot{width:8px;height:8px;border-radius:50%;background:var(--chartreuse);margin-top:4px;flex-shrink:0}
+.sb-body{flex:1}
+.sb-title{font-weight:700;font-size:12px}
+.sb-text{font-size:11px;opacity:0.8;margin-top:2px}
+.sb-cta{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:var(--chartreuse);color:var(--accent);padding:5px 14px;border-radius:var(--r-sm);transition:all 0.15s}
+.sb-cta:active{transform:scale(0.96)}
+.sb-close{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:white;opacity:0.7}
+.sb-close:active{opacity:1}
+.notif-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.notif-scroll::-webkit-scrollbar{display:none}
+.notif-card{min-width:130px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;box-shadow:var(--shadow);transition:all 0.15s}
+.notif-card:active{transform:scale(0.97);border-color:var(--accent)}
+.notif-card-title{font-weight:700;font-size:10px;line-height:1.3}
+.notif-card-desc{font-size:9px;color:var(--ink-secondary)}
+.notif-card-time{font-size:8px;color:var(--ink-muted);margin-top:auto}
+.feed-list{display:flex;flex-direction:column;gap:6px}
+.feed-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;box-shadow:var(--shadow);transition:all 0.15s}
+.feed-row:active{transform:scale(0.98);border-color:var(--accent)}
+.feed-icon{width:30px;height:30px;background:var(--accent);color:var(--chartreuse);border-radius:var(--r-sm);display:grid;place-items:center;flex-shrink:0}
+.feed-icon svg{width:15px;height:15px}
+.feed-lines{flex:1;min-width:0}
+.feed-primary{font-weight:700;font-size:11px;display:flex;align-items:center;gap:5px}
+.feed-secondary{font-size:10px;color:var(--ink-secondary);margin-top:1px}
+.feed-amount{font-family:var(--font-heading);font-weight:700;font-size:12px;text-align:right;flex-shrink:0}
+.feed-meta{font-size:8px;color:var(--ink-muted);text-align:right}
+.badge{display:inline-block;padding:2px 6px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;border-radius:var(--r-sm)}
+.badge.paid{background:rgba(42,111,43,0.1);color:var(--success)}
+.badge.pending{background:rgba(184,134,11,0.1);color:var(--warning)}
+.badge.draft{background:var(--accent-surface);color:var(--accent)}
+.audit-list{display:flex;flex-direction:column}
+.audit-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.audit-dot.ok{background:var(--success)}
+.audit-dot.warn{background:var(--warning)}
+.audit-dot.bad{background:var(--danger)}
+.audit-body{flex:1}
+.audit-title{font-size:11px;font-weight:600}
+.audit-meta{font-size:9px;color:var(--ink-muted);margin-top:1px}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:52px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:5}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink-muted);font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;border-right:1px solid var(--border);transition:all 0.1s}
+.bn-item:last-child{border-right:none}
+.bn-item svg{width:20px;height:20px}
+.bn-item.active{color:var(--accent);background:var(--accent-surface)}
+.bn-item:active{background:var(--accent-surface)}
+.fab-wrap{position:absolute;bottom:calc(52px + 10px);right:16px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.fab{width:46px;height:46px;background:var(--chartreuse);color:var(--accent);border-radius:50%;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow-lg);transition:all 0.2s;z-index:2;font-weight:700}
+.fab:active{transform:scale(0.9)}
+.fab.open{transform:rotate(45deg);background:var(--danger);color:white}
+.quick-popup{width:165px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:4px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;opacity:0;transform:translateY(8px);pointer-events:none;transition:all 0.2s}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:9px 12px;font-size:12px;font-weight:500;border-radius:var(--r-sm);transition:all 0.1s}
+.popup-item:active{background:var(--accent-surface);color:var(--accent)}
+.scrim{position:absolute;inset:0;background:var(--scrim-bg);z-index:35;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.scrim.visible{opacity:1;pointer-events:auto}
+.sidebar-drawer{position:absolute;top:0;left:0;bottom:0;width:78%;background:var(--surface);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:40;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.sidebar-drawer.visible{transform:translateX(0)}
+.sd-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.sd-logo{width:30px;height:30px;background:var(--accent);border-radius:var(--r-sm);display:grid;place-items:center;color:var(--chartreuse);font-weight:700;font-size:11px}
+.sd-brand{font-family:var(--font-heading);font-weight:700;font-size:16px}
+.sd-nav{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px}
+.sd-nav::-webkit-scrollbar{display:none}
+.sd-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-muted);padding:10px 10px 4px}
+.sd-item{display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:12px;font-weight:500;color:var(--ink-secondary);border-radius:var(--r-sm);transition:all 0.1s}
+.sd-item:active{background:var(--accent-surface)}
+.sd-item.active{background:var(--accent);color:white;font-weight:600;border-radius:var(--r-sm)}
+.sd-item svg{width:16px;height:16px;flex-shrink:0}
+.sd-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sd-avatar{width:28px;height:28px;background:var(--chartreuse);color:var(--accent);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:9px}
+.sd-user-name{font-weight:700;font-size:11px}
+.sd-user-role{font-size:9px;color:var(--ink-muted)}
+.notif-panel{position:absolute;top:56px;right:12px;width:240px;max-height:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-lg);z-index:50;display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(-6px) scale(0.96);pointer-events:none;transition:all 0.2s}
+.notif-panel.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.np-title{font-size:11px;font-weight:700}
+.np-clear{font-size:10px;color:var(--accent);font-weight:600}
+.np-list{max-height:260px;overflow-y:auto}
+.np-list::-webkit-scrollbar{display:none}
+.np-row{display:flex;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border)}
+.np-row:last-child{border-bottom:none}
+.np-row:active{background:var(--accent-surface)}
+.np-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);margin-top:4px;flex-shrink:0}
+.np-dot.read{background:var(--border)}
+.np-lines{flex:1}
+.np-l1{height:6px;width:85%;background:var(--border);border-radius:2px}
+.np-l2{height:5px;width:55%;background:var(--accent-surface);border-radius:2px;margin-top:5px}
+.ai-overlay{position:absolute;inset:0;z-index:55;background:var(--scrim-bg);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.ai-overlay.visible{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-height:78%;background:var(--surface);border-radius:var(--r) var(--r) 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+.ai-overlay.visible .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.ai-head-left{display:flex;align-items:center;gap:8px}
+.ai-avatar{width:28px;height:28px;background:var(--accent);border-radius:50%;display:grid;place-items:center;color:var(--chartreuse);font-weight:700;font-size:10px}
+.ai-title{font-family:var(--font-heading);font-weight:700;font-size:14px}
+.ai-sub{font-size:9px;color:var(--ink-muted)}
+.ai-close{width:26px;height:26px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:13px;color:var(--ink-muted)}
+.ai-close:active{background:var(--accent-surface)}
+.ai-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ai-body::-webkit-scrollbar{display:none}
+.ai-msg{max-width:78%;padding:10px 12px;font-size:12px;line-height:1.5;border-radius:var(--r) var(--r) var(--r) 4px}
+.ai-msg.bot{align-self:flex-start;background:var(--accent-surface)}
+.ai-msg.user{align-self:flex-end;background:var(--accent);color:white;border-radius:var(--r) var(--r) 4px var(--r)}
+.ai-chips{display:flex;flex-direction:column;gap:4px;padding:0 14px 8px}
+.ai-chip{display:block;width:100%;text-align:left;padding:7px 10px;font-size:10px;font-weight:500;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);transition:all 0.1s}
+.ai-chip:active{background:var(--accent-surface);border-color:var(--accent)}
+.ai-input-row{display:flex;gap:6px;padding:8px 14px 12px;border-top:1px solid var(--border)}
+.ai-input{flex:1;height:34px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:var(--r-sm);font-family:var(--font-body);font-size:11px;color:var(--ink);outline:none}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:34px;height:34px;background:var(--accent);color:white;border-radius:var(--r-sm);font-size:14px;font-weight:700;display:grid;place-items:center;transition:all 0.15s}
+.ai-send:active{transform:scale(0.9)}
+.loading-screen{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;text-align:center;z-index:100;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)}
+.loading-screen.visible{transform:translateX(0)}
+.ls-logo{width:44px;height:44px;background:var(--accent);border-radius:var(--r-sm);display:grid;place-items:center;color:var(--chartreuse);font-family:var(--font-heading);font-weight:700;font-size:14px;margin:0 auto 18px}
+.ls-spinner{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--accent);animation:spin 0.8s linear infinite;margin:0 auto 22px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-tip-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 14px;max-width:260px;margin:0 auto;box-shadow:var(--shadow)}
+.ls-tip-eyebrow{font-size:9px;font-weight:700;letter-spacing:0.08em;color:var(--accent);text-transform:uppercase}
+.ls-tip-text{font-size:12px;line-height:1.6;color:var(--ink);margin-top:6px}
+.ls-tip-text b{font-weight:700}
+.ls-dots{display:flex;gap:5px;margin-top:18px;justify-content:center}
+.ls-dots span{width:5px;height:5px;border-radius:50%;background:var(--border)}
+.ls-dots span.on{background:var(--accent)}
+.toast{position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:8px 16px;background:var(--accent);color:white;border-radius:var(--r-sm);font-size:11px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all 0.2s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:768px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="screen" id="mainScreen">
+<header class="topbar"><div class="topbar-left"><button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button></div><div class="topbar-right"><button class="tb-icon" id="themeBtn" aria-label="Toggle theme"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button><button class="tb-icon" id="notifBtn" aria-label="Notifications" aria-expanded="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pip"></span></button><button class="tb-ai" id="aiBtn" aria-label="AI"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg> STEWARD</button></div></header>
+<main class="content" id="content">
+<section><div class="kpi-grid">
+<div class="kpi-card"><div class="kpi-label">Balance</div><div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div></div><div class="kpi-value">₦10,000</div><div class="kpi-trend"><span class="up">+12%</span> last week</div></div>
+<div class="kpi-card"><div class="kpi-label">Overdue</div><div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div></div><div class="kpi-value">₦56,000</div><div class="kpi-trend"><span class="down">+4%</span> vs yesterday</div></div>
+<div class="kpi-card"><div class="kpi-label">Invoices</div><div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div></div><div class="kpi-value">12</div><div class="kpi-trend"><span class="up">-2</span> pending review</div></div>
+<div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div><div class="kpi-seg empty"></div></div><div class="kpi-value">₦89,000</div><div class="kpi-trend"><span class="up">+18%</span> this month</div></div>
+</div></section>
+<section class="smart-banner" id="smartBanner"><div class="sb-dot"></div><div class="sb-body"><div class="sb-title">3 payments may be unrecorded</div><div class="sb-text">Balance moved but no matching payment was logged this week.</div><button class="sb-cta" id="sbCta">Record now</button></div><button class="sb-close" id="sbClose" aria-label="Dismiss">✕</button></section>
+<section><div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link">see all</span></div><div class="notif-scroll"><div class="notif-card"><div class="notif-card-title">Overdue INV-0042</div><div class="notif-card-desc">7 days past due</div><div class="notif-card-time">2h ago</div></div><div class="notif-card"><div class="notif-card-title">QTN-0108 accepted</div><div class="notif-card-desc">Acme Ltd</div><div class="notif-card-time">5h ago</div></div><div class="notif-card"><div class="notif-card-title">Payment ₦45K</div><div class="notif-card-desc">INV-0039</div><div class="notif-card-time">1d ago</div></div><div class="notif-card"><div class="notif-card-title">WB-0027 sent</div><div class="notif-card-desc">Site B</div><div class="notif-card-time">1d ago</div></div></div></section>
+<section><div class="section-head"><div class="section-title">Recent Documents</div></div><div class="feed-list"><div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="feed-lines"><div class="feed-primary">INV-0045 <span class="badge pending">Pending</span></div><div class="feed-secondary">Lagos Steel Works</div></div><div><div class="feed-amount">₦120,000</div><div class="feed-meta">Aug 15</div></div></div><div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="feed-lines"><div class="feed-primary">QTN-0109 <span class="badge draft">Draft</span></div><div class="feed-secondary">Westfield Corp</div></div><div><div class="feed-amount">₦340,000</div><div class="feed-meta">Aug 14</div></div></div><div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg></div><div class="feed-lines"><div class="feed-primary">WB-0028 <span class="badge paid">Delivered</span></div><div class="feed-secondary">Site Alpha</div></div><div><div class="feed-amount">---</div><div class="feed-meta">Aug 13</div></div></div></div></section>
+<section><div class="section-head"><div class="section-title">Audit Trail</div></div><div class="audit-list"><div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-0045 created by Milad</div><div class="audit-meta">Today, 10:32 AM</div></div></div><div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">INV-0042 overdue reminder sent</div><div class="audit-meta">Today, 09:15 AM</div></div></div><div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">QTN-0108 accepted by client</div><div class="audit-meta">Yesterday, 4:20 PM</div></div></div><div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-0039 payment mismatch flagged</div><div class="audit-meta">Aug 14, 3:45 PM</div></div></div></div></section>
+</main>
+<nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation"><button class="bn-item active" role="tab" aria-selected="true" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button><button class="bn-item" role="tab" aria-selected="false" aria-label="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button><button class="bn-item" role="tab" aria-selected="false" aria-label="Sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button><button class="bn-item" role="tab" aria-selected="false" aria-label="Clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button><button class="bn-item" role="tab" aria-selected="false" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button></nav>
+<div class="fab-wrap" id="fabWrap"><div class="quick-popup" id="quickPopup" role="menu" aria-label="Quick actions"><button class="popup-item" role="menuitem">Invoice</button><button class="popup-item" role="menuitem">Quotation</button><button class="popup-item" role="menuitem">Purchase orders</button><button class="popup-item" role="menuitem">Boq</button><button class="popup-item" role="menuitem">Waybill</button><button class="popup-item" role="menuitem">Csr</button></div><button class="fab" id="fabBtn" aria-label="Quick actions" aria-haspopup="true" aria-expanded="false">+</button></div>
+<div class="scrim" id="scrim"></div>
+<div class="sidebar-drawer" id="sidebarDrawer"><div class="sd-head"><div class="sd-logo">BD</div><div class="sd-brand">BIGDROPS</div></div><nav class="sd-nav" aria-label="Sidebar"><div class="sd-section">Documents</div><button class="sd-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</button><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</button><div class="sd-section">Operations</div><button class="sd-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button></nav><div class="sd-foot"><div class="sd-avatar">MA</div><div><div class="sd-user-name">Milad A.</div><div class="sd-user-role">Operator</div></div></div></div>
+<div class="notif-panel" id="notifPanel"><div class="np-head"><span class="np-title">Notifications</span><span class="np-clear" id="npClear">Clear all</span></div><div class="np-list"><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div></div></div>
+<div class="ai-overlay" id="aiOverlay"><div class="ai-panel"><div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">AI</div><div><div class="ai-title">Steward</div><div class="ai-sub">local llm</div></div></div><button class="ai-close" id="aiClose" aria-label="Close">✕</button></div><div class="ai-body"><div class="ai-msg bot">Hello! I can help you manage invoices and payments.</div><div class="ai-msg user">Show me overdue invoices</div><div class="ai-msg bot">You have 2 overdue invoices totaling ₦56,000.</div></div><div class="ai-chips"><button class="ai-chip">Create invoice</button><button class="ai-chip">Payment history</button></div><div class="ai-input-row"><input class="ai-input" type="text" placeholder="Ask Steward..." aria-label="Ask" /><button class="ai-send" aria-label="Send">↑</button></div></div></div>
+<div class="loading-screen" id="loadingScreen"><div class="ls-logo">BD</div><div class="ls-spinner"></div><div class="ls-tip-card"><div class="ls-tip-eyebrow">Did you know</div><div class="ls-tip-text">Convert accepted <b>quotations</b> into <b>invoices</b> instantly.</div></div><div class="ls-dots"><span class="on"></span><span></span><span></span></div></div>
+<div class="toast" id="toast"></div>
+</div></div>
+<script>
+(function(){'use strict';var sb=document.getElementById('sidebarToggle'),sd=document.getElementById('sidebarDrawer'),np=document.getElementById('notifPanel'),nb=document.getElementById('notifBtn'),ab=document.getElementById('aiBtn'),ao=document.getElementById('aiOverlay'),ac=document.getElementById('aiClose'),fb=document.getElementById('fabBtn'),qp=document.getElementById('quickPopup'),sc=document.getElementById('scrim'),tb=document.getElementById('themeBtn'),ls=document.getElementById('loadingScreen'),t=document.getElementById('toast'),sb2=document.getElementById('smartBanner'),sbc=document.getElementById('sbClose'),sbc2=document.getElementById('sbCta'),nc=document.getElementById('npClear');var st={s:false,n:false,a:false,f:false};var tt;function ca(x){if(x!=='s'&&st.s){st.s=false;sd.classList.remove('visible');sb.classList.remove('active')}if(x!=='n'&&st.n){st.n=false;np.classList.remove('visible');nb.classList.remove('active');nb.setAttribute('aria-expanded','false')}if(x!=='a'&&st.a){st.a=false;ao.classList.remove('visible');ab.classList.remove('active')}if(x!=='f'&&st.f){st.f=false;qp.classList.remove('open');fb.classList.remove('open')}sc.classList.toggle('visible',st.s||st.n||st.a)}function sh(m){t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('show')},2000)}
+sb.addEventListener('click',function(e){e.stopPropagation();var n=!st.s;ca('s');st.s=n;sd.classList.toggle('visible',n);sb.classList.toggle('active',n);sc.classList.toggle('visible',n)});nb.addEventListener('click',function(e){e.stopPropagation();var n=!st.n;ca('n');st.n=n;np.classList.toggle('visible',n);nb.classList.toggle('active',n);nb.setAttribute('aria-expanded',String(n));sc.classList.toggle('visible',n)});ab.addEventListener('click',function(e){e.stopPropagation();var n=!st.a;ca('a');st.a=n;ao.classList.toggle('visible',n);ab.classList.toggle('active',n);sc.classList.toggle('visible',n)});ac.addEventListener('click',function(e){e.stopPropagation();ca()});fb.addEventListener('click',function(e){e.stopPropagation();var n=!st.f;ca('f');st.f=n;qp.classList.toggle('open',n);fb.classList.toggle('open',n)});sc.addEventListener('click',function(){ca()});tb.addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',d?'':'dark');sh(d?'Light':'Dark')});sbc.addEventListener('click',function(){sb2.style.display='none';sh('Dismissed')});sbc2.addEventListener('click',function(){sh('Recording...')});nc.addEventListener('click',function(){sh('Cleared')});document.addEventListener('keydown',function(e){if(e.key==='Escape')ca()});document.querySelectorAll('.bn-item').forEach(function(i){i.addEventListener('click',function(){document.querySelectorAll('.bn-item').forEach(function(n){n.classList.remove('active');n.setAttribute('aria-selected','false')});this.classList.add('active');this.setAttribute('aria-selected','true');sh(this.getAttribute('aria-label'))})});document.querySelectorAll('.sd-item').forEach(function(i){i.addEventListener('click',function(){document.querySelectorAll('.sd-item').forEach(function(n){n.classList.remove('active')});this.classList.add('active');ca();sh(this.textContent.trim())})});document.querySelectorAll('.popup-item').forEach(function(i){i.addEventListener('click',function(){ca();sh('New '+this.textContent.trim())})});var as=document.querySelector('.ai-send'),ai=document.querySelector('.ai-input');if(as&&ai){as.addEventListener('click',function(){var v=ai.value.trim();if(v){var b=document.querySelector('.ai-body');var m=document.createElement('div');m.className='ai-msg user';m.textContent=v;b.appendChild(m);ai.value='';b.scrollTop=b.scrollHeight;setTimeout(function(){var bt=document.createElement('div');bt.className='ai-msg bot';bt.textContent='Let me help.';b.appendChild(bt);b.scrollTop=b.scrollHeight},800)}});ai.addEventListener('keydown',function(e){if(e.key==='Enter')as.click()})}document.querySelectorAll('.ai-chip').forEach(function(c){c.addEventListener('click',function(){if(ai){ai.value=this.textContent;as.click()}})})})();
+</script>
+</body>
+</html>

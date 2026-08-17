@@ -194,7 +194,7 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
 <header>
   <div>
     <div class="brand"><span class="glyph">BD</span><h1>Three-PRD Tenancy Ledger</h1></div>
-    <p class="sub">Platform Office governs workspace lifecycle only. The ERP owns entity creation, invite acceptance, tenant routing and create-or-join onboarding. Multi-workspace membership is allowed, with exactly one workspace active per session. Administration is two-level: Workspace Admin (authority ceiling) above Company/Entity Admin (scoped), above business operations — and admin authority never equals business permissions. Business data lives inside the resolved entity schema, protected by explicit permission grants — click through the states below.</p>
+    <p class="sub">Platform Office governs workspace lifecycle only. The ERP owns entity creation, invite acceptance, tenant routing and create-or-join onboarding. Multi-workspace membership is allowed, with exactly one workspace active per session. Roles are editable ability bundles: Workspace Admin is the workspace-wide authority ceiling; company-scoped roles (including Company Admin) sit below it, bounded per company; only expanded entity_permissions rows authorize anything — a role label has no authority of its own. Business data lives inside the resolved entity schema, protected by explicit permission grants — click through the states below.</p>
   </div>
   <div class="tag">Multi-Tenancy v2.1 · Frontend v1.5 · Office v1.3</div>
 </header>
@@ -250,13 +250,13 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
     </div>
 
     <div class="card">
-      <h2>Administration — two-level model</h2>
+      <h2>Roles &amp; teams — authority ceiling</h2>
       <div id="adminBox"></div>
     </div>
 
     <div class="card">
       <h2>Entity access ledger</h2>
-      <p class="ledger-heading">Rows from <code>entity_permissions</code>. Deny-by-default — nothing here is implied by role or workspace membership.</p>
+      <p class="ledger-heading">Rows from <code>entity_permissions</code>. Deny-by-default — nothing here is implied by a role label or workspace membership.</p>
       <div id="ledgerList"></div>
     </div>
 
@@ -277,6 +277,7 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
         <div class="tables">
           <span>workspaces</span><span>workspace_members</span><span>workspace_invitations</span>
           <span>entities</span><span>entity_permissions</span><span>entity_provisioning_status</span><span>platform_operators</span>
+          <span>permission_templates</span><span>permission_template_items</span>
         </div>
       </div>
       <div id="vaultList"></div>
@@ -303,11 +304,11 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
   </div>
 </div>
 
-<footer>Workspace lifecycle · create-or-join onboarding · invitation lifecycle (pending → accepted/revoked/expired, pass for now is not a state) · two-level administration (Workspace Admin ceiling → Company/Entity Admin → Member) · tenant routing · action-based authorization — deny by default</footer>
+<footer>Workspace lifecycle · create-or-join onboarding · invitation lifecycle (pending → accepted/revoked/expired, pass for now is not a state) · roles as editable ability bundles (Workspace Admin ceiling → company-scoped roles → abilities) · tenant routing · action-based authorization — deny by default</footer>
 </div>
 
 <script>
-/* ===== MODEL — matches all three PRDs (v2.1 backend, v1.5 frontend, v1.3 platform office) ===== */
+/* ===== MODEL — matches all three PRDs (v2.1 backend, v1.6 frontend, v1.4 platform office) ===== */
 const workspaces = [
   { id:'ws_1', slug:'bigdrops-main',  name:'BIGDROPS Main', status:'active' },
   { id:'ws_2', slug:'nova-logistics', name:'Nova Logistics', status:'active' },
@@ -322,13 +323,13 @@ const entities = [
 
 const users = [
   { id:'u_aisha', name:'Aisha Mohammed', initials:'AM', color:'#a9762c', wsRole:'owner', workspaces:['bigdrops-main','nova-logistics'], activeWs:'bigdrops-main',
-    adminLevel:{ type:'workspace-admin', scope:'bigdrops-main' }, pendingInvite:null },
+    wsAdmin:true, roles:{ ent_acme:['Admin'], ent_beta:['Admin'] }, pendingInvite:null },
   { id:'u_chidi',  name:'Chidi Okonkwo',  initials:'CO', color:'#3f7d6e', wsRole:'member', workspaces:['bigdrops-main'], activeWs:'bigdrops-main',
-    adminLevel:{ type:'company-admin', scope:'ent_acme' }, pendingInvite:null },
+    wsAdmin:false, roles:{ ent_acme:['Admin'] }, pendingInvite:null },
   { id:'u_bola',   name:'Bola Adeyemi',   initials:'BA', color:'#7a5a9c', wsRole:null,     workspaces:[], activeWs:null,
-    adminLevel:{ type:'none' }, pendingInvite:{ id:'inv_1', workspace:'bigdrops-main', invitedBy:'Aisha Mohammed', entity:'ent_beta', resource:'*', action:'view', status:'pending' } },
+    wsAdmin:false, roles:{}, pendingInvite:{ id:'inv_1', workspace:'bigdrops-main', invitedBy:'Aisha Mohammed', entity:'ent_beta', resource:'*', action:'view', status:'pending' } },
   { id:'u_tunde',  name:'Tunde Bakare',   initials:'TB', color:'#b06a4a', wsRole:null,     workspaces:[], activeWs:null,
-    adminLevel:{ type:'none' }, pendingInvite:null },
+    wsAdmin:false, roles:{}, pendingInvite:null },
 ];
 
 let grants = [
@@ -336,10 +337,10 @@ let grants = [
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_acme', user:'u_aisha', resource:'*', action:'delete', grantedBy:'system (creator auto-grant)' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'view',    grantedBy:'Aisha Mohammed' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'create',  grantedBy:'Aisha Mohammed' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'edit',    grantedBy:'Aisha Mohammed' },
-  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'approve', grantedBy:'Aisha Mohammed' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'view',    grantedBy:'Aisha Mohammed (role: Admin @ Acme)' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'create',  grantedBy:'Aisha Mohammed (role: Admin @ Acme)' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'edit',    grantedBy:'Aisha Mohammed (role: Admin @ Acme)' },
+  { entity:'ent_acme', user:'u_chidi', resource:'invoice', action:'approve', grantedBy:'Aisha Mohammed (role: Admin @ Acme)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'view',   grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'create', grantedBy:'system (creator auto-grant)' },
   { entity:'ent_beta', user:'u_aisha', resource:'*', action:'edit',   grantedBy:'system (creator auto-grant)' },
@@ -370,10 +371,10 @@ const mockData = {
 const planeCopy = {
   office: `<b>Platform Office (Operations Console)</b> — a separate application, separate login, separate release cycle. Its only workspace power is <code style="font-family:'IBM Plex Mono'">approve_workspace()</code> and suspend. It never touches an entity schema, never sees an invoice, and cannot see individual workspace membership beyond the observability contract.
   <div class="pills"><span class="pill office">approve_workspace()</span><span class="pill office">suspend</span><span class="pill">read entity_provisioning_status</span><span class="pill">read workspaces.status</span></div>`,
-  registry: `<b>Public schema — shared registry only.</b> Holds workspaces, memberships, invitations, entities, entity_permissions, and provisioning status. This is the only place the Platform Office and the ERP both read from — and neither writes business data here.
-  <div class="pills"><span class="pill">workspaces</span><span class="pill">workspace_members</span><span class="pill gold">workspace_invitations</span><span class="pill">entities</span><span class="pill">entity_permissions</span><span class="pill">entity_provisioning_status</span></div>`,
-  erp: `<b>ERP / Tenant Layer.</b> Authenticated users resolve one active workspace, one active entity, one resolved schema. A fresh user without membership or invite chooses Create a Workspace or Join a Workspace — joining is invitation-based only, no codes. Multi-workspace membership is allowed; exactly one workspace is active per session. Invitations flow through a four-state lifecycle (pending → accepted/revoked/expired); "Pass for now" is a session action, not a state, and never rejects or revokes. Administration is two-level: Workspace Admin is the authority ceiling; Company/Entity Admin is scoped to a single entity and bounded by that ceiling. The Tenant Client only routes — RLS inside the entity schema is what actually authorizes every read and write.
-  <div class="pills"><span class="pill gold">provision_entity()</span><span class="pill gold">accept_workspace_invitation()</span><span class="pill office">pass for now (session-only)</span><span class="pill vault">tenantClient.schema()</span><span class="pill vault">RLS</span></div>`,
+  registry: `<b>Public schema — shared registry only.</b> Holds workspaces, memberships, invitations, entities, entity_permissions, permission templates, and provisioning status. This is the only place the Platform Office and the ERP both read from — and neither writes business data here. Roles are ability bundles stored as permission templates; assigning a role expands its items into entity_permissions rows.
+  <div class="pills"><span class="pill">workspaces</span><span class="pill">workspace_members</span><span class="pill gold">workspace_invitations</span><span class="pill">entities</span><span class="pill">entity_permissions</span><span class="pill">permission_templates</span><span class="pill">permission_template_items</span><span class="pill">entity_provisioning_status</span></div>`,
+  erp: `<b>ERP / Tenant Layer.</b> Authenticated users resolve one active workspace, one active entity, one resolved schema. A fresh user without membership or invite chooses Create a Workspace or Join a Workspace — joining is invitation-based only, no codes. Multi-workspace membership is allowed; exactly one workspace is active per session. Invitations flow through a four-state lifecycle (pending → accepted/revoked/expired); "Pass for now" is a session action, not a state, and never rejects or revokes. Roles are editable ability bundles: Workspace Admin is the workspace-wide authority ceiling; company-scoped roles (including Company Admin) are assigned per company, only to existing members, and never cross companies. A role label grants nothing — only expanded entity_permissions rows are evaluated. The Tenant Client only routes — RLS inside the entity schema is what actually authorizes every read and write.
+  <div class="pills"><span class="pill gold">provision_entity()</span><span class="pill gold">accept_workspace_invitation()</span><span class="pill office">pass for now (session-only)</span><span class="pill vault">tenantClient.schema()</span><span class="pill vault">RLS</span><span class="pill gold">apply_permission_template()</span></div>`,
 };
 
 /* ===== STATE ===== */
@@ -389,9 +390,10 @@ const wsBySlug = slug => workspaces.find(w => w.slug === slug);
 const wsOfEntity = e => workspaces.find(w => w.id === e.ws);
 const userGrants = (userId, entityId) => grants.filter(g => g.user === userId && g.entity === entityId);
 const userEntities = (userId, wsSlug) => [...new Set(grants.filter(g => g.user === userId && entities.find(e => e.id === g.entity)?.ws === wsBySlug(wsSlug)?.id).map(g => g.entity))];
-const adminLabel = user => {
-  if (user.adminLevel.type === 'workspace-admin') return `Workspace Admin — authority ceiling (${user.adminLevel.scope})`;
-  if (user.adminLevel.type === 'company-admin') return `Company/Entity Admin — scoped to ${byId(entities, user.adminLevel.scope)?.name || user.adminLevel.scope}`;
+const adminLabel = (user, entityId) => {
+  if (user.wsAdmin) return `Workspace Admin — authority ceiling (${user.activeWs || user.workspaces[0]})`;
+  const roles = entityId ? (user.roles || {})[entityId] || [] : [];
+  if (roles.length) return `roles: ${roles.join(', ')} @ ${byId(entities, entityId)?.name || entityId} — company-scoped`;
   return 'Member — business operations only';
 };
 
@@ -416,7 +418,7 @@ function render(){
   const invPassed = inv ? passedInvites.has(inv.id) : false;
   const hasMembership = (user.workspaces || []).length > 0;
   document.getElementById('userRoleLine').innerHTML = hasMembership
-    ? `workspace role: <span class="${user.wsRole==='owner'?'owner-tag':''}">${user.wsRole}</span> · <span style="color:${user.adminLevel.type==='workspace-admin'?'var(--office)':'var(--vault-deep)'}">${adminLabel(user)}</span> — member of <b>${user.workspaces.length}</b> workspace${user.workspaces.length>1?'s':''}, one active per session`
+    ? `workspace role: <span class="${user.wsRole==='owner'?'owner-tag':''}">${user.wsRole}</span> · <span style="color:${user.wsAdmin?'var(--office)':'var(--vault-deep)'}">${adminLabel(user, currentEntityId)}</span> — member of <b>${user.workspaces.length}</b> workspace${user.workspaces.length>1?'s':''}, one active per session`
     : inv
       ? `workspace role: <span style="color:var(--faint)">none yet — invitation ${inv.status}${invPassed?' (passed for now)':''}</span>`
       : `workspace role: <span style="color:var(--faint)">none — create or join (§8)</span>`;
@@ -481,26 +483,27 @@ function render(){
   `;
   }
 
-  // administration — two-level model with authority ceiling
+  // roles — editable ability bundles with authority ceiling
   const adminBox = document.getElementById('adminBox');
   if (hasMembership) {
-    const wsAdminGrant = user.wsRole === 'owner' || user.adminLevel.type === 'workspace-admin';
-    const entityAdmin = user.adminLevel.type === 'company-admin';
+    const wsAdminGrant = user.wsRole === 'owner' || user.wsAdmin;
+    const companyRoles = entity ? (user.roles || {})[entity.id] || [] : [];
+    const isCompanyAdmin = companyRoles.includes('Admin');
     adminBox.innerHTML = `
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <span class="pill office" style="${wsAdminGrant ? '' : 'opacity:.38'}">Workspace Admin — authority ceiling</span>
         <span style="font:600 10px 'IBM Plex Mono';color:var(--faint)">/</span>
-        <span class="pill gold" style="${entityAdmin && entity ? 'border-color:rgba(169,118,44,.5);color:var(--gold-deep);background:var(--gold-glow)' : 'opacity:.38'}">Company/Entity Admin — entity-scoped</span>
+        <span class="pill gold" style="${isCompanyAdmin && entity ? 'border-color:rgba(169,118,44,.5);color:var(--gold-deep);background:var(--gold-glow)' : 'opacity:.38'}">Company Admin — company-scoped role</span>
         <span style="font:600 10px 'IBM Plex Mono';color:var(--faint)">/</span>
-        <span class="pill" style="${!wsAdminGrant && !entityAdmin ? 'border-color:var(--vault);color:var(--vault-deep)' : 'opacity:.38'}">Member — business operations only</span>
+        <span class="pill" style="${!wsAdminGrant && !isCompanyAdmin ? 'border-color:var(--vault);color:var(--vault-deep)' : 'opacity:.38'}">Member — business operations only</span>
       </div>
       <div style="font-size:11px;line-height:1.55;color:var(--dim)">
         <b style="color:var(--office)">Ceiling:</b> ${wsAdminGrant ? 'you hold it — workspace-wide governance (invites, expiration, revoke, entity administration)' : `${user.workspaces.map(s => wsBySlug(s).name).join(', ')} admin sets it`} ·
-        <b style="color:var(--gold-deep)">Scope:</b> ${entityAdmin ? `Company/Entity Admin is bounded to <b>${byId(entities,user.adminLevel.scope).name}</b> only` : 'member — entity access comes from entity_permissions rows, never from admin title'} ·
-        <b style="color:var(--vault-deep)">Business permissions:</b> separate — administrative authority does not grant business permissions.
+        <b style="color:var(--gold-deep)">Company roles:</b> ${companyRoles.length ? `${companyRoles.join(', ')} @ <b>${byId(entities, entity.id).name}</b> — assignable only to existing company members, never across companies` : 'none on this entity — roles are assignable only to existing company members'} ·
+        <b style="color:var(--vault-deep)">Authorization:</b> roles are editable ability bundles; only expanded entity_permissions rows are evaluated — a role label never grants anything on its own.
       </div>`;
   } else {
-    adminBox.innerHTML = `<div style="font-size:11px;color:var(--faint);line-height:1.5">No workspace membership — administration levels appear after joining (§8).</div>`;
+    adminBox.innerHTML = `<div style="font-size:11px;color:var(--faint);line-height:1.5">No workspace membership — roles appear after joining (§8).</div>`;
   }
 
   // ledger
