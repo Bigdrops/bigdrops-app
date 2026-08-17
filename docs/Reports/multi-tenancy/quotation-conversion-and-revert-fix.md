@@ -63,7 +63,9 @@ The function body is identical to the previous definition except for the status 
 
 ## Risks or limitations
 
-The new migration has not been applied to a live database. Apply it with `bunx supabase db push` or the equivalent migration runner in the target environment.
+The migration was applied to the live database on 2026-08-17 with `bunx supabase db query --linked --file`. Verification with `pg_get_functiondef` confirmed the corrected status mapping is live.
+
+`bunx supabase db push` was not usable: the remote migration history is empty because the live tables came from a schema dump. The push command attempted to replay the full migration history and failed on the first already-applied migration. Applying the single migration file directly avoided that replay.
 
 The migration redefines a `SECURITY DEFINER` function. The redefinition preserves the existing security model.
 
