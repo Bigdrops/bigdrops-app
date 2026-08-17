@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Form — Wireframe (Extracted from Code)</title>
+<style>
+  :root {
+    --bg: #f5f5f0;
+    --surface: #fff;
+    --ink: #1a1a1a;
+    --ink-2: #555;
+    --ink-3: #999;
+    --border: #ccc;
+    --border-soft: #e0e0e0;
+    --accent: #4a6fa5;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --computed-bg: #f0f4f8;
+    --editable-bg: #fff;
+    --locked-bg: #f9f9f9;
+    --font: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); font-size: 13px; line-height: 1.5; color: var(--ink); background: var(--bg); padding: 24px; max-width: 800px; margin: 0 auto; }
+  
+  h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+  h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin: 16px 0 8px; }
+  
+  .wireframe { background: var(--surface); border: 2px solid var(--ink); padding: 0; }
+  .section { border-bottom: 2px solid var(--border); padding: 16px; }
+  .section:last-child { border-bottom: none; }
+  .section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .section-label .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  
+  .field { margin-bottom: 10px; }
+  .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 3px; }
+  .field-box { border: 1px dashed var(--border); padding: 8px 10px; min-height: 36px; display: flex; align-items: center; font-size: 12px; color: var(--ink-2); background: var(--editable-bg); border-radius: 4px; }
+  .field-box.computed { background: var(--computed-bg); border-style: solid; border-color: var(--accent); }
+  .field-box.locked { background: var(--locked-bg); opacity: 0.7; }
+  .field-box.readonly { background: var(--computed-bg); }
+  .field-placeholder { color: var(--ink-3); font-style: italic; }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  
+  .badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 3px; }
+  .badge.editable { background: #e8f5e9; color: var(--success); }
+  .badge.computed { background: #e3f2fd; color: var(--accent); }
+  .badge.locked { background: #f5f5f5; color: var(--ink-3); }
+  .badge.conditional { background: #fff3e0; color: var(--warning); }
+  
+  .annotation { font-size: 11px; color: var(--ink-2); background: #f9f9f0; border-left: 3px solid var(--warning); padding: 8px 10px; margin: 10px 0; border-radius: 0 4px 4px 0; }
+  .annotation strong { color: var(--ink); }
+  
+  .row-actions { display: flex; gap: 6px; align-items: center; }
+  .row-action { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border: 1px solid var(--border); border-radius: 3px; color: var(--ink-3); }
+  
+  .item-card { border: 1px solid var(--border-soft); border-radius: 6px; padding: 12px; margin-bottom: 8px; background: var(--surface); }
+  .item-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .item-number { font-size: 10px; font-weight: 700; color: var(--ink-3); width: 16px; text-align: center; }
+  .item-drag { color: var(--ink-3); font-size: 10px; }
+  
+  .group-card { border: 2px solid var(--accent); border-radius: 6px; margin-bottom: 12px; }
+  .group-header { background: #f0f4ff; padding: 10px 12px; border-bottom: 1px solid var(--accent); display: flex; align-items: center; gap: 8px; }
+  .group-body { padding: 0 8px 8px; }
+  .group-footer { background: #f8faff; padding: 8px 12px; border-top: 1px solid var(--accent); display: flex; align-items: center; justify-content: space-between; }
+  
+  .collapse-header { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); cursor: pointer; }
+  .collapse-icon { width: 24px; height: 24px; border-radius: 4px; display: grid; place-items: center; font-size: 12px; }
+  .collapse-title { font-size: 13px; font-weight: 700; flex: 1; }
+  .collapse-subtitle { font-size: 11px; color: var(--ink-3); }
+  .collapse-body { padding: 12px 0; }
+  
+  .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .summary-row.negative { color: var(--danger); }
+  .grand-total { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0 0; border-top: 2px solid var(--ink); margin-top: 12px; }
+  .grand-total-label { font-size: 15px; font-weight: 800; }
+  .grand-total-value { font-size: 28px; font-weight: 700; font-family: Georgia, serif; }
+  
+  .footer-bar { position: sticky; bottom: 0; background: var(--surface); border-top: 2px solid var(--ink); padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+  .btn { padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-weight: 700; text-align: center; background: var(--surface); }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  
+  .fab-save { position: fixed; bottom: 88px; right: 16px; width: 52px; height: 52px; border-radius: 12px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 60; }
+  
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  .modal-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-radius: 12px 12px 0 0; padding: 20px; z-index: 101; max-height: 60vh; overflow-y: auto; }
+  
+  .empty-state { padding: 20px; text-align: center; color: var(--ink-3); font-style: italic; border: 1px dashed var(--border); border-radius: 6px; }
+  
+  .toolbar { display: flex; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--border-soft); margin-bottom: 10px; }
+  .toolbar-btn { font-size: 11px; font-weight: 700; padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; color: var(--ink-2); }
+  
+  .rich-editor { border: 1px dashed var(--border); padding: 16px; min-height: 80px; border-radius: 4px; background: var(--surface); }
+  
+  /* Legend */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; padding: 12px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-2); }
+  .legend-swatch { width: 16px; height: 12px; border-radius: 2px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>Invoice Form — Code-Extracted Wireframe</h1>
+<p style="color:var(--ink-2);margin-bottom:8px;">Source: <code style="font-family:var(--mono);font-size:11px;">src/pages/InvoiceFormPage.tsx</code> and full render tree. Low-fidelity mirror of actual code structure.</p>
+<p style="color:var(--ink-3);font-size:11px;margin-bottom:20px;">Generated: August 17, 2026 — by Buffy via Freebuff.</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#fff;"></div> Editable field</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#e3f2fd;border-color:#4a6fa5;"></div> Computed / read-only</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#f9f9f9;opacity:0.7;"></div> Locked (edit mode)</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#fff3e0;border-color:#f39c12;"></div> Conditional</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: FORM HEADER                                        -->
+<!-- ============================================================ -->
+<div class="wireframe">
+
+<div class="section">
+  <h3>Document Type Badge</h3>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <div style="border:1px solid var(--accent);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);display:inline-flex;align-items:center;gap:6px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);"></span>
+      Invoice / Quotation <span style="font-weight:400;color:var(--ink-3);font-size:9px;">[computed from document_type]</span>
+    </div>
+    <div style="width:32px;height:32px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;color:var(--ink-3);">
+      <span style="font-size:14px;">...</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label"><span class="dot" style="background:var(--accent);"></span> Client Selection</div>
+  <div class="annotation"><strong>EDIT MODE:</strong> Shows lock icon, is disabled (opacity 0.7). Clicking triggers IdentityLockDialog offering "Duplicate as new" option. <strong>CREATE MODE:</strong> Opens ClientSelector bottom sheet.</div>
+  <div class="field-box locked" style="cursor:pointer;">
+    <span style="margin-right:8px;">🔒</span>
+    <div>
+      <div class="field-label" style="margin:0;">Client</div>
+      <div style="font-size:14px;font-weight:700;">{invoice.client_name || 'Select a client'}</div>
+    </div>
+    <span style="margin-left:auto;color:var(--ink-3);">›</span>
+  </div>
+  <div class="annotation"><strong>FIELD:</strong> client_id (hidden, set by picker), client_name (display). Edit mode: both locked behind IdentityLockDialog.</div>
+</div>
+
+<div class="section">
+  <div class="section-label">Document Details</div>
+  
+  <div style="margin-bottom:8px;">
+    <div class="field-label" style="font-size:10px;">Mode Label</div>
+    <div style="font-size:24px;font-weight:900;line-height:1.1;">Create Invoice / Edit Invoice</div>
+  </div>
+  
+  <div class="field">
+    <div class="field-label">Invoice Title</div>
+    <div class="field-box">
+      <span class="field-placeholder">e.g. Monthly Maintenance</span>
+    </div>
+    <div class="annotation"><strong>EDITABLE.</strong> Stored as invoice_title. Separate from the Invoice number. Passed to PDF as document title.</div>
+  </div>
+  
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-label">Invoice No.</div>
+      <div class="field-box locked">
+        <span style="margin-right:6px;">#</span>
+        INV-2024-XXX
+      </div>
+      <div class="annotation"><strong>CREATE:</strong> Auto-generated by getNextInvoiceNumber(). <strong>EDIT:</strong> Locked (lock icon). Click triggers IdentityLockDialog.</div>
+    </div>
+    <div class="field">
+      <div class="field-label">PO Number</div>
+      <div class="field-box">
+        <span class="field-placeholder">Optional</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE.</strong> Always editable in both create and edit modes.</div>
+    </div>
+  </div>
+  
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-label">Issue Date</div>
+      <div class="field-box">
+        <span class="field-placeholder">YYYY-MM-DD</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE.</strong> Date input. Quotation mode: label becomes "Quotation Date".</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Due Date</div>
+      <div class="field-box">
+        <span class="field-placeholder">YYYY-MM-DD</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE.</strong> Date input. Quotation mode: label becomes "Valid Until".</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Header Fields <span class="badge editable">Editable</span></div>
+  <div class="annotation"><strong>Dynamic array.</strong> User can add/remove custom key-value pairs. Each field has: id, label, value. <strong>CONDITIONAL:</strong> Only shows "Add header field" button when array is empty. Otherwise shows label+value inputs with remove button.</div>
+  
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div class="field-label">Header Fields</div>
+    <span style="font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;">Add field</span>
+  </div>
+  
+  <div class="empty-state" style="padding:10px;">
+    <span style="font-size:11px;">+ Add header field</span>
+  </div>
+  <!-- When fields exist: -->
+  <div style="display:flex;gap:6px;margin-top:6px;">
+    <div class="field-box" style="flex:1;font-size:11px;"><span class="field-placeholder">Label</span></div>
+    <div class="field-box" style="flex:1.5;font-size:11px;"><span class="field-placeholder">Value</span></div>
+    <div style="width:32px;height:32px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;color:var(--ink-3);font-size:14px;">×</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: LINE ITEMS                                        -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-label"><span class="dot" style="background:var(--success);"></span> Line Items <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--ink-3);">N items</span></div>
+  
+  <div class="toolbar">
+    <div class="toolbar-btn">📥 Import</div>
+    <div class="toolbar-btn">⚙ Settings</div>
+    <div class="toolbar-btn" style="margin-left:auto;color:var(--danger);">🗑 Clear</div>
+  </div>
+  <div class="annotation"><strong>Import:</strong> Opens JsonItemsImportSheet (lazy). <strong>Settings:</strong> Opens ColumnManager (lazy). <strong>Clear:</strong> Shows AlertDialog confirmation. Only visible when items > 0.</div>
+  
+  <!-- SINGLE LINE ITEM -->
+  <div class="item-card">
+    <div class="item-card-header">
+      <div class="item-number">1</div>
+      <div class="item-drag">⋮⋮</div>
+      <div style="flex:1;"></div>
+      <div class="row-actions">
+        <div class="row-action">▲</div>
+        <div class="row-action">▼</div>
+        <div class="row-action" style="color:var(--danger);">×</div>
+      </div>
+    </div>
+    
+    <div class="field">
+      <div class="field-box" style="min-height:48px;flex-direction:column;align-items:flex-start;">
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:2px;">Description</span>
+        <span class="field-placeholder">Item description...</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE. Textarea.</strong> Auto-resize. Item suggestion engine triggers on focus when description >= 2 chars. Suggestions dropdown appears below. Selecting a suggestion auto-fills item_id, description, and unit_price.</div>
+    </div>
+    
+    <!-- Sub-description (conditional) -->
+    <div class="annotation"><strong>CONDITIONAL:</strong> Sub-description area only visible when "Sub-desc" toggle is active OR item already has sub_description content.</div>
+    <div style="border:1px solid var(--border-soft);border-radius:4px;padding:6px 8px;background:var(--bg);margin-bottom:6px;">
+      <span style="font-size:11px;color:var(--ink-3);font-style:italic;">Product sub-description, specs, or notes...</span>
+    </div>
+    
+    <!-- Image (conditional) -->
+    <div class="annotation"><strong>CONDITIONAL:</strong> Image preview only visible when item.image_url is set. Upload via Camera button → Cloudinary.</div>
+    
+    <div style="display:flex;gap:4px;margin-bottom:8px;">
+      <span style="font-size:9px;font-weight:700;padding:2px 8px;border:1px solid var(--border);border-radius:10px;">▼ Sub-desc</span>
+      <span style="font-size:9px;font-weight:700;padding:2px 8px;border:1px solid var(--border);border-radius:10px;">📷 Photo</span>
+    </div>
+    
+    <!-- Editable field grid -->
+    <div class="grid-2" style="gap:6px;">
+      <div class="field">
+        <div class="field-label">Make</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;">
+          <span class="field-placeholder">—</span>
+        </div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> <span class="badge conditional">Conditional</span> Visibility controlled by column visibilityMode.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Qty</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;">1</div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE. NumericInput.</strong> Min: 1. Normalized via normalizeQuantity().</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Unit</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;">
+          <span class="field-placeholder">—</span>
+        </div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> Uses UnitInput component (autocomplete). <span class="badge conditional">Conditional</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Rate</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;text-align:right;font-family:var(--mono);">0</div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE. NumericInput.</strong> Unit price. Right-aligned, monospace.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Part No.</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;">
+          <span class="field-placeholder">—</span>
+        </div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> <span class="badge conditional">Conditional</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Condition</div>
+        <div class="field-box" style="min-height:30px;padding:4px 8px;font-size:11px;">
+          <span class="field-placeholder">—</span>
+        </div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> <span class="badge conditional">Conditional</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Install Rate</div>
+        <div class="field-box computed" style="min-height:30px;padding:4px 8px;font-size:11px;">
+          <span class="field-placeholder">Auto</span>
+        </div>
+        <div class="annotation" style="font-size:10px;"><strong>COMPUTED/EDITABLE.</strong> <span class="badge computed">Computed</span> <span class="badge conditional">Conditional</span> Auto-calculated from formula unless install_rate_override is true. Override: user enters value. Clearing sets override=false.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">VAT %</div>
+        <div class="field-box computed" style="min-height:30px;padding:4px 8px;font-size:11px;">0</div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> <span class="badge conditional">Conditional</span> Per-item VAT rate. Setting to 0 sets to null.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Disc %</div>
+        <div class="field-box computed" style="min-height:30px;padding:4px 8px;font-size:11px;">0</div>
+        <div class="annotation" style="font-size:10px;"><strong>EDITABLE.</strong> <span class="badge conditional">Conditional</span> Per-item discount rate. Setting to 0 sets to null.</div>
+      </div>
+    </div>
+    
+    <!-- Custom columns slot -->
+    <div class="annotation"><strong>CUSTOM COLUMNS:</strong> Any columns with key starting with "custom_" render here. User adds/removes via ColumnManager. Stored in item.custom_data[key].</div>
+    
+    <!-- Subtotal row -->
+    <div style="border:1px solid var(--border-soft);border-radius:6px;padding:8px 10px;background:var(--bg);display:flex;justify-content:space-between;margin-top:6px;">
+      <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--ink-3);">Subtotal</span>
+      <span style="font-family:var(--mono);font-size:16px;font-weight:800;">0.00</span>
+    </div>
+    <div class="annotation"><strong>COMPUTED.</strong> Visible when column "amount" visibilityMode is "show". Value = computedAmount (from computeDocument).</div>
+    
+    <!-- Insert below -->
+    <div style="margin-top:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);cursor:pointer;">
+      + Insert below
+    </div>
+  </div>
+  
+  <!-- ADD ITEM / ADD GROUP -->
+  <div class="grid-2" style="gap:8px;margin-top:10px;">
+    <div class="field-box" style="justify-content:center;border-style:dashed;cursor:pointer;">
+      + Add item
+    </div>
+    <div class="field-box" style="justify-content:center;border-style:dashed;cursor:pointer;">
+      + Add group
+    </div>
+  </div>
+  <div class="annotation"><strong>Add item:</strong> appends new standard row. <strong>Add group:</strong> appends group_header row + empty standard row inside. DnD via @dnd-kit (PointerSensor + TouchSensor).</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 2b: GROUP CARD (when present)                         -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-label">Group Card <span class="badge conditional">Conditional</span></div>
+  <div class="annotation"><strong>CONDITIONAL:</strong> Only renders when items include row_type="group_header". Each group contains a header, body (with child items), and footer.</div>
+  
+  <div class="group-card">
+    <div class="group-header">
+      <span style="font-size:12px;">▼</span>
+      <div style="width:4px;height:16px;border-radius:2px;background:var(--accent);"></div>
+      <input type="text" placeholder="e.g. Electrical Materials" style="flex:1;border:none;background:transparent;font-size:14px;font-weight:900;color:var(--accent);outline:none;" />
+      <span style="font-size:10px;font-weight:700;color:var(--accent);opacity:0.5;">2 items</span>
+      <span style="width:28px;height:28px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--ink-3);">×</span>
+    </div>
+    <div class="group-body" style="padding-left:4px;border-left:3px solid var(--accent);">
+      <div style="padding:12px;text-align:center;color:var(--ink-3);font-style:italic;font-size:11px;">Item cards render here (same structure as above)</div>
+    </div>
+    <div class="group-footer">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:3px 10px;border:1px solid var(--accent);border-radius:12px;">Subtotal</span>
+        <span style="font-size:13px;font-weight:900;color:var(--accent);">Group Total: 0</span>
+      </div>
+      <span style="font-size:11px;font-weight:700;padding:4px 10px;border:1px solid var(--accent);border-radius:12px;">+ Add item to group</span>
+    </div>
+  </div>
+  <div class="annotation"><strong>GROUP PROPERTIES:</strong> id (UUID), name (editable input), showSubtotal (toggle). <strong>COLLAPSIBLE:</strong> Chevron toggle collapses body. <strong>DELETE:</strong> Removes group header + ungroups all child items (items stay, lose group_id). <strong>ADD ITEM TO GROUP:</strong> Creates new item with this group_id.</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: COMMERCIAL TERMS                                  -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-label"><span class="dot" style="background:var(--warning);"></span> Commercial Terms</div>
+  
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-label">Payment Terms</div>
+      <div class="field-box">
+        <span class="field-placeholder">Custom</span>
+        <span style="margin-left:auto;">▾</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE. Select.</strong> Options: Custom, Net 7, Net 14, Net 30, Due on Receipt.</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Due / Validity</div>
+      <div class="field-box">
+        <span class="field-placeholder">e.g. Due in 14 days</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE.</strong> Free text. Quotation: placeholder "e.g. 14 days validity".</div>
+    </div>
+  </div>
+  
+  <!-- COLLAPSIBLE: Discount -->
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#fff8e1;color:#f9a825;">%</div>
+    <div class="collapse-title">Discount</div>
+    <div class="collapse-subtitle">Not set / 5000 NGN / 10%</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div class="grid-2">
+      <div class="field">
+        <div class="field-label">Value</div>
+        <div class="field-box"><span class="field-placeholder">0</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Type</div>
+        <div style="display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;background:var(--ink);color:#fff;">NGN</div>
+          <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;">%</div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Discount Timing</div>
+      <div style="display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+        <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;">After VAT</div>
+        <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;">Before VAT</div>
+      </div>
+    </div>
+    <div class="annotation"><strong>EDITABLE.</strong> discount (number), discountType (fixed|percent), discountTiming (after|before). Controls whether discount appears before or after VAT in summary.</div>
+  </div>
+  
+  <!-- COLLAPSIBLE: VAT -->
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#e8f5e9;color:var(--success);">%</div>
+    <div class="collapse-title">VAT</div>
+    <div class="collapse-subtitle">Not set / 7.5%</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div class="field">
+      <div class="field-label">VAT Rate (%)</div>
+      <div class="field-box"><span class="field-placeholder">0</span></div>
+    </div>
+    <div class="annotation"><strong>EDITABLE. NumericInput.</strong> invoice.vat. Global VAT rate. Also available as duplicate control in FormTotals section.</div>
+  </div>
+  
+  <!-- COLLAPSIBLE: WHT -->
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#f3e5f5;color:#9c27b0;">%</div>
+    <div class="collapse-title">Withholding Tax (WHT)</div>
+    <div class="collapse-subtitle">Not set / 5%</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div class="grid-2">
+      <div class="field">
+        <div class="field-label">WHT Rate</div>
+        <div class="field-box"><span class="field-placeholder">0</span></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Unit</div>
+        <div style="display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;background:var(--ink);color:#fff;">%</div>
+          <div style="flex:1;padding:6px;text-align:center;font-size:11px;font-weight:700;">NGN</div>
+        </div>
+      </div>
+    </div>
+    <div class="annotation"><strong>EDITABLE.</strong> invoice.wht (number), whtType (percent|fixed).</div>
+  </div>
+  
+  <!-- COLLAPSIBLE: Additional Charges -->
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#fff3e0;color:#e65100;">+</div>
+    <div class="collapse-title">Additional Charges</div>
+    <div class="collapse-subtitle">None / 2 charges</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <div class="field-box" style="flex:1;min-height:30px;padding:4px 8px;font-size:11px;"><span class="field-placeholder">Label (e.g. Transport)</span></div>
+      <div class="field-box" style="width:100px;min-height:30px;padding:4px 8px;font-size:11px;text-align:right;font-family:var(--mono);">0</div>
+      <div style="width:32px;height:30px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--danger);">×</div>
+    </div>
+    <div class="grid-2" style="gap:6px;">
+      <div class="field-box" style="justify-content:center;border-style:dashed;font-size:11px;font-weight:700;">+ Charge (with Tax)</div>
+      <div class="field-box" style="justify-content:center;border-style:dashed;font-size:11px;font-weight:700;">+ Charge (No Tax)</div>
+    </div>
+    <div class="annotation"><strong>EDITABLE.</strong> Array of ExtraCharge: {id, label, value, withTax}. Two add buttons: withTax=true (included in taxable base for VAT) and withTax=false (added after tax). Also includes: workmanship, transportation, shipping (top-level fields, with custom labels via chargeLabels).</div>
+  </div>
+  
+  <!-- COLLAPSIBLE: Additional Fields -->
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#e8eaf6;color:var(--accent);">+</div>
+    <div class="collapse-title">Additional Fields</div>
+    <div class="collapse-subtitle">None / 3 fields</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <div class="field-box" style="flex:1;min-height:30px;padding:4px 8px;font-size:11px;"><span class="field-placeholder">Label</span></div>
+      <div class="field-box" style="flex:1;min-height:30px;padding:4px 8px;font-size:11px;"><span class="field-placeholder">Value</span></div>
+      <div style="width:32px;height:30px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--danger);">×</div>
+    </div>
+    <div class="field-box" style="justify-content:center;border-style:dashed;font-size:11px;font-weight:700;">+ Add Additional Field</div>
+    <div class="annotation"><strong>EDITABLE.</strong> Array of InvoiceFieldEntry: {id, label, value}. Custom key-value pairs. These appear below the totals in the PDF output.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: TOTALS                                            -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-label"><span class="dot" style="background:var(--success);"></span> Totals</div>
+  
+  <div class="summary-row">
+    <span>Subtotal</span>
+    <span style="font-family:var(--mono);font-weight:700;">0.00</span>
+  </div>
+  <div class="summary-row negative">
+    <span>Discount</span>
+    <span style="font-family:var(--mono);font-weight:700;">-0.00</span>
+  </div>
+  <div class="summary-row">
+    <span>VAT</span>
+    <span style="font-family:var(--mono);font-weight:700;">0.00</span>
+  </div>
+  <div class="summary-row">
+    <span>Workmanship</span>
+    <span style="font-family:var(--mono);font-weight:700;">0.00</span>
+  </div>
+  <div class="summary-row">
+    <span>Install Rate</span>
+    <span style="font-family:var(--mono);font-weight:700;">0.00</span>
+  </div>
+  <div class="summary-row negative">
+    <span>WHT</span>
+    <span style="font-family:var(--mono);font-weight:700;">-0.00</span>
+  </div>
+  <div class="annotation"><strong>ALL COMPUTED.</strong> Summary rows are dynamically built based on: subtotal, discount (before/after VAT), VAT, extra charges (taxable and non-taxable), install rate total, WHT. Rows only appear when their value > 0. <strong>COMPUTED BY:</strong> computeDocument() from Calculations.ts. The VAT rate field is duplicated here (expandable button) for quick access.</div>
+  
+  <!-- VAT adjust (collapsible) -->
+  <div style="margin:10px 0;">
+    <span style="font-size:11px;font-weight:700;padding:4px 12px;border:1px solid var(--border);border-radius:20px;display:inline-flex;align-items:center;gap:4px;">▾ VAT</span>
+    <div class="annotation"><strong>EXPANDABLE:</strong> Quick VAT rate adjustment without opening the Commercial Terms collapse. Same field as invoice.vat.</div>
+  </div>
+  
+  <!-- Amount in words -->
+  <div style="border:1px dashed var(--border-soft);border-radius:4px;padding:10px;background:var(--bg);font-size:12px;font-style:italic;color:var(--ink-2);margin:10px 0;">
+    Zero Naira Only
+  </div>
+  <div class="annotation"><strong>COMPUTED.</strong> numberToWords(totalPayable). Always present (even if empty string). Appears in dashed box above grand total.</div>
+  
+  <!-- Grand Total -->
+  <div class="grand-total">
+    <span class="grand-total-label">Grand Total</span>
+    <span class="grand-total-value">₦0.00</span>
+  </div>
+  <div class="annotation"><strong>COMPUTED.</strong> totalPayable from computeDocument(). FinalLabel is always "Grand Total".</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: NOTES, TERMS, SIGNATORY, LINKS                    -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#f3f4f6;color:#475569;">📝</div>
+    <div class="collapse-title">Notes & Terms</div>
+    <div class="collapse-subtitle"></div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div class="field">
+      <div class="field-label">Invoice Notes</div>
+      <div class="rich-editor">
+        <span class="field-placeholder">Notes...</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE. RichTextEditor (lazy-loaded).</strong> invoice.notes. HTML content.</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Terms & Conditions</div>
+      <div class="rich-editor">
+        <span class="field-placeholder">Terms...</span>
+      </div>
+      <div class="annotation"><strong>EDITABLE. RichTextEditor (lazy-loaded).</strong> invoice.terms. HTML content.</div>
+    </div>
+  </div>
+  
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#d1fae5;color:var(--success);">✍</div>
+    <div class="collapse-title">Signatory</div>
+    <div class="collapse-subtitle">No Signatory / Selected Name</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div class="annotation"><strong>EDITABLE.</strong> Uses SignatoryPicker component. signatoryId stored in custom_fields.signatoryId. Signatories list from useInvoiceReferenceData().</div>
+    <div class="field-box" style="min-height:48px;justify-content:center;border-style:dashed;">
+      <span class="field-placeholder">Select signatory</span>
+    </div>
+  </div>
+  
+  <div class="collapse-header">
+    <div class="collapse-icon" style="background:#f5f3ff;color:#7c3aed;">🔗</div>
+    <div class="collapse-title">Reference Links</div>
+    <div class="collapse-subtitle">No links attached / 2 links attached</div>
+    <span style="color:var(--ink-3);">▸</span>
+  </div>
+  <div class="collapse-body">
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <div class="field-box" style="flex:1;min-height:30px;padding:4px 8px;font-size:11px;"><span class="field-placeholder">Label</span></div>
+      <div class="field-box" style="flex:2;min-height:30px;padding:4px 8px;font-size:11px;"><span class="field-placeholder">https://...</span></div>
+      <div style="width:32px;height:30px;border:1px solid var(--border);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--danger);">×</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;">+ Add Link</div>
+    <div class="annotation"><strong>EDITABLE.</strong> Array of {label, url, _uiKey}. Stored in invoice.attachments (mapped from custom_fields.attachments).</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: FOOTER (STICKY)                                   -->
+<!-- ============================================================ -->
+<div class="footer-bar">
+  <div class="btn">Cancel</div>
+  <div class="btn">Draft</div>
+  <div class="btn primary">Create Invoice / Save Changes</div>
+</div>
+<div class="fab-save" title="Floating save button">💾</div>
+<div class="annotation"><strong>STICKY BOTTOM BAR.</strong> Three buttons: Cancel (navigates back), Draft (saves as "unpaid"), Primary (saves as "unpaid" — same handler). Floating save button (fixed position, right side) duplicates primary action. Both disabled during save. <strong>SAVING:</strong> useInvoiceSave hook handles both create and edit. Save status: saving (boolean).</div>
+
+</div><!-- end wireframe -->
+
+<!-- ============================================================ -->
+<!-- SECTION 7: PDF OUTPUT SETTINGS (separate below form)          -->
+<!-- ============================================================ -->
+<h2>PDF Output Settings</h2>
+<div class="wireframe">
+  <div class="section">
+    <div class="section-label">Bank Details</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:13px;font-weight:700;">Bank Details</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    <div style="border:1px solid var(--border-soft);border-radius:6px;padding:10px;background:var(--bg);">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3);margin-bottom:6px;">Selected Account</div>
+      <div class="grid-2" style="gap:8px;font-size:11px;">
+        <div><span style="color:var(--ink-3);">Account Name</span><br><strong>GenGrid Power Solutions</strong></div>
+        <div><span style="color:var(--ink-3);">Account Number</span><br><strong style="font-family:var(--mono);">1234567890</strong></div>
+        <div><span style="color:var(--ink-3);">Bank</span><br><strong>Zenith Bank</strong></div>
+        <div><span style="color:var(--ink-3);">Sort Code</span><br><strong style="font-family:var(--mono);">057150013</strong></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;">Switch Account ▾</div>
+    <div class="annotation"><strong>EDITABLE.</strong> Switch toggle (showBankDetails). Bank account picker opens Sheet with list of accounts from settings. Selected account: bankAccountId. Default: first account with isDefault=true.</div>
+  </div>
+  
+  <div class="section">
+    <div class="section-label">Document Options</div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Tagline</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    <div class="annotation"><strong>EDITABLE. Switch.</strong> showTagline. Shows company tagline from settings when on.</div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Footer</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:var(--ink);"></span>
+      </span>
+    </div>
+    <div class="annotation"><strong>EDITABLE. Switch.</strong> showFooter. Shows footer text from settings when on.</div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Show balance due</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    <div class="annotation"><strong>EDITABLE. Switch.</strong> showBalanceDue. <span class="badge conditional">Conditional</span> Only shown when showBalanceDueOption=true (passed from InvoiceFormPage).</div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Show amount in words</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Show VAT % in brackets</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <span style="font-size:13px;">Show WHT % in brackets</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+      <span style="font-size:13px;">Show discount % in brackets</span>
+      <span style="width:36px;height:20px;border:1px solid var(--border);border-radius:10px;background:var(--ink);display:flex;align-items:center;padding:2px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:#fff;margin-left:auto;"></span>
+      </span>
+    </div>
+    <div class="annotation"><strong>ALL EDITABLE. Switch toggles.</strong> All stored in pdfOutput object (InvoicePdfOutput type). Defaults: showBankDetails=true, showBalanceDue=true, showAmountInWords=true, showVatPercentage=true, showWhtPercentage=true, showDiscountPercentage=true, compact=false, showFooter=false, showTagline=false.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODALS / SHEETS                                              -->
+<!-- ============================================================ -->
+<h2>Modals & Sheets (Overlay States)</h2>
+
+<div class="annotation">
+  <strong>ActionsSheet:</strong> Bottom sheet. Items: Save as Draft, Cancel, Table Columns, Import JSON, Merge Qty+Unit, Add Group, Scroll to Notes, Scroll to Links.<br>
+  <strong>ClientSelector:</strong> Bottom sheet with search. Create mode: opens on trigger click. Edit mode: never opens (locked).<br>
+  <strong>ColumnManager:</strong> Lazy-loaded sheet. Toggle column visibility, add/remove custom columns, reorder, reset to defaults.<br>
+  <strong>JsonItemsImportSheet:</strong> Lazy-loaded sheet. JSON paste/upload → line items.<br>
+  <strong>IdentityLockDialog:</strong> Edit mode only. Appears when user clicks locked fields (client, invoice_number). Offers "Duplicate as new document" option.
+</div>
+
+<!-- ============================================================ -->
+<!-- FIELD ANNEX                                                  -->
+<!-- ============================================================ -->
+<h2>Field Annex</h2>
+<div style="background:var(--surface);border:2px solid var(--ink);padding:20px;">
+
+<h3>Invoice-Level Fields</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Editable/Computed</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.invoice_number</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (create) / Locked (edit)</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto-generated in create. Edit: IdentityLockDialog.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.po_number</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Always editable. Optional.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.client_id</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (create) / Locked (edit)</td><td style="padding:4px 8px;border:1px solid var(--border);">Set by ClientSelector. Edit: IdentityLockDialog.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.client_name</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (create) / Locked (edit)</td><td style="padding:4px 8px;border:1px solid var(--border);">Display only. Set alongside client_id.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.issue_date</td><td style="padding:4px 8px;border:1px solid var(--border);">date string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Date input. Label: "Issue Date" or "Quotation Date".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.due_date</td><td style="padding:4px 8px;border:1px solid var(--border);">date string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Date input. Label: "Due Date" or "Valid Until".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.status</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Hidden</td><td style="padding:4px 8px;border:1px solid var(--border);">Set by save logic, not directly editable in form.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.document_type</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Hidden (derived)</td><td style="padding:4px 8px;border:1px solid var(--border);">Determines "Invoice" vs "Quotation" label. Locked in edit.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.payment_terms</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Select)</td><td style="padding:4px 8px;border:1px solid var(--border);">Options: Custom, Net 7, Net 14, Net 30, Due on Receipt.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.custom_payment_terms</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Free text. "Due / Validity" field.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.notes</td><td style="padding:4px 8px;border:1px solid var(--border);">HTML string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (RichTextEditor)</td><td style="padding:4px 8px;border:1px solid var(--border);">In Notes & Terms collapse. Lazy-loaded editor.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.terms</td><td style="padding:4px 8px;border:1px solid var(--border);">HTML string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (RichTextEditor)</td><td style="padding:4px 8px;border:1px solid var(--border);">In Notes & Terms collapse. Lazy-loaded editor.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.workmanship</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (via extraCharges)</td><td style="padding:4px 8px;border:1px solid var(--border);">Non-tax charge. Label from chargeLabels.workmanship.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.transportation</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (via extraCharges)</td><td style="padding:4px 8px;border:1px solid var(--border);">Non-tax charge. Label from chargeLabels.transportation.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.shipping</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (via extraCharges)</td><td style="padding:4px 8px;border:1px solid var(--border);">Non-tax charge. Label from chargeLabels.shipping.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.discount</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Discount value. Type controlled by discountType.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.vat</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">VAT rate as percentage. Duplicate control in Totals.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.wht</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">WHT rate. Unit controlled by whtType.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.subtotal</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed</td><td style="padding:4px 8px;border:1px solid var(--border);">From computeDocument(). Not editable.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.total</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed</td><td style="padding:4px 8px;border:1px solid var(--border);">From computeDocument(). Not editable.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.work_duration</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Not in form UI</td><td style="padding:4px 8px;border:1px solid var(--border);">Present in types but not rendered in form.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.amount_in_words</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed</td><td style="padding:4px 8px;border:1px solid var(--border);">numberToWords(totalPayable). Display only.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoice.project_id</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Hidden (prefill)</td><td style="padding:4px 8px;border:1px solid var(--border);">Set via route state prefill. Not in form UI.</td></tr>
+</table>
+
+<h3>Invoice-Level Controls (not DB fields)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Control</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">State</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">invoiceTitle</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Document title input. Separate from invoice_number.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">discountType</td><td style="padding:4px 8px;border:1px solid var(--border);">"fixed" | "percent"</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (SegmentedControl)</td><td style="padding:4px 8px;border:1px solid var(--border);">Controls discount unit display.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">discountTiming</td><td style="padding:4px 8px;border:1px solid var(--border);">"before" | "after"</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (SegmentedControl)</td><td style="padding:4px 8px;border:1px solid var(--border);">After VAT (default) or Before VAT.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">whtType</td><td style="padding:4px 8px;border:1px solid var(--border);">"percent" | "fixed"</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (SegmentedControl)</td><td style="padding:4px 8px;border:1px solid var(--border);">Controls WHT unit display.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">signatoryId</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (SignatoryPicker)</td><td style="padding:4px 8px;border:1px solid var(--border);">Stored in custom_fields.signatoryId.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">mergeQtyUnit</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Toggle)</td><td style="padding:4px 8px;border:1px solid var(--border);">Merge Qty+Unit in PDF. In ActionsSheet.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">notesTitle</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Custom label for notes section.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">termsTitle</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable</td><td style="padding:4px 8px;border:1px solid var(--border);">Custom label for terms section.</td></tr>
+</table>
+
+<h3>Line Item Fields (InvoiceItem)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Editable/Computed</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">description</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Textarea)</td><td style="padding:4px 8px;border:1px solid var(--border);">Always visible. Item suggestion engine triggers on focus.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">sub_description</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Textarea, conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Hidden by default. Toggle "Sub-desc" to show. Auto-shown if pre-filled.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">item_id</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed (auto-set)</td><td style="padding:4px 8px;border:1px solid var(--border);">Set when user selects item from suggestion engine. Cleared on manual description edit.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">make</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Visible when column visibilityMode="show".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">quantity</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (NumericInput)</td><td style="padding:4px 8px;border:1px solid var(--border);">Min: 1. Normalized via normalizeQuantity().</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">unit</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (UnitInput, conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Autocomplete component. Visible when column visibilityMode="show".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">unit_price</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (NumericInput)</td><td style="padding:4px 8px;border:1px solid var(--border);">Right-aligned, monospace. Auto-filled from item suggestion.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">partNo</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Visible when column visibilityMode="show".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">condition</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Visible when column visibilityMode="show".</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">install_rate</td><td style="padding:4px 8px;border:1px solid var(--border);">number | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed / Editable override</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto: formula * qty * unit_price. Override: user enters value. install_rate_override flag.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">install_rate_override</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal</td><td style="padding:4px 8px;border:1px solid var(--border);">True when user manually enters install_rate. Cleared when field is cleared.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">vat_rate</td><td style="padding:4px 8px;border:1px solid var(--border);">number | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Per-item VAT rate override. Setting to 0 sets to null.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">discount_rate</td><td style="padding:4px 8px;border:1px solid var(--border);">number | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (conditional)</td><td style="padding:4px 8px;border:1px solid var(--border);">Per-item discount rate. Setting to 0 sets to null.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">image_url</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (upload)</td><td style="padding:4px 8px;border:1px solid var(--border);">Cloudinary URL. Camera button triggers file input. Remove via X button.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">row_type</td><td style="padding:4px 8px;border:1px solid var(--border);">"standard" | "group_header"</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal</td><td style="padding:4px 8px;border:1px solid var(--border);">Standard items render as MobileItemCard. Group headers render as MobileGroupCard.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">group_id</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal</td><td style="padding:4px 8px;border:1px solid var(--border);">Links item to group. Set by onAddItemToGroup. Cleared by onUngroup.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">sort_order</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal</td><td style="padding:4px 8px;border:1px solid var(--border);">Maintained by moveItem. Not directly editable.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">custom_data</td><td style="padding:4px 8px;border:1px solid var(--border);">object</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (custom columns)</td><td style="padding:4px 8px;border:1px solid var(--border);">Key-value store for custom column values. Shape: {[custom_*]: value}.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">_uiKey</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal</td><td style="padding:4px 8px;border:1px solid var(--border);">Crypto.randomUUID(). Stable key for React lists and DnD.</td></tr>
+</table>
+
+<h3>Group Fields (InvoiceGroup)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Editable</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">id</td><td style="padding:4px 8px;border:1px solid var(--border);">string (UUID)</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto</td><td style="padding:4px 8px;border:1px solid var(--border);">Generated on creation.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">name</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Input)</td><td style="padding:4px 8px;border:1px solid var(--border);">Group name. Editable inline in group header.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showSubtotal</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable (Toggle)</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggles group subtotal display in footer.</td></tr>
+</table>
+
+<h3>Extra Charges (ExtraCharge)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">id</td><td style="padding:4px 8px;border:1px solid var(--border);">string (UUID)</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto-generated.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">label</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">value</td><td style="padding:4px 8px;border:1px solid var(--border);">number</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable NumericInput. Right-aligned.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">withTax</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">Set at creation time. true = taxable base for VAT. false = post-tax charge.</td></tr>
+</table>
+
+<h3>Additional Fields (InvoiceFieldEntry)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">id</td><td style="padding:4px 8px;border:1px solid var(--border);">string (UUID)</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto-generated.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">label</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">value</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+</table>
+
+<h3>Header Fields (customFields)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">id</td><td style="padding:4px 8px;border:1px solid var(--border);">string (UUID)</td><td style="padding:4px 8px;border:1px solid var(--border);">Auto-generated.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">label</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">value</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+</table>
+
+<h3>Reference Links (attachments)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">label</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">url</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Editable text input. URL.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">_uiKey</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal. Stable key for React list.</td></tr>
+</table>
+
+<h3>PDF Output Settings (InvoicePdfOutput)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Default</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showBankDetails</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">bankAccountId</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">default bank</td><td style="padding:4px 8px;border:1px solid var(--border);">Selected from bank list.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showFooter</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">false</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showTagline</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">false</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showBalanceDue</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Conditional: only shown when prop=true.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showAmountInWords</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showVatPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showWhtPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showDiscountPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Switch toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">compact</td><td style="padding:4px 8px;border:1px solid var(--border);">boolean</td><td style="padding:4px 8px;border:1px solid var(--border);">false</td><td style="padding:4px 8px;border:1px solid var(--border);">Not in form UI. Stored only.</td></tr>
+</table>
+
+<h3>Computed Values (from computeDocument)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Computed Value</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Source</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">rawSubtotal</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Sum of all line item amounts.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">installRateTotal</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Sum of all install_rate values (formula or override).</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">discountAmount</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Fixed or percentage. Applied before or after VAT per timing.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">vatAmount</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Applied to taxable base (subtotal + taxable charges, minus pre-VAT discount).</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">whtAmount</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Withholding tax. Fixed or percentage.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">grandTotal</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Subtotal + charges + VAT - discount - WHT.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">totalPayable</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Grand total. Used for amount-in-words.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">amountInWords</td><td style="padding:4px 8px;border:1px solid var(--border);">numberToWords()</td><td style="padding:4px 8px;border:1px solid var(--border);">Naira words conversion of totalPayable.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">computedItems[]</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Per-item computed values: line_subtotal, visible_line_total, etc.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">computedGroups[]</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Per-group subtotals for group cards.</td></tr>
+</table>
+
+<h3>Conditional Rendering Rules</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Element</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Condition</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Source</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Document type badge</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.document_type or title/modeLabel</td><td style="padding:4px 8px;border:1px solid var(--border);">isQuotation flag in SharedDocumentForm</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Client picker trigger</td><td style="padding:4px 8px;border:1px solid var(--border);">mode === 'edit' → locked. mode === 'create' → opens picker</td><td style="padding:4px 8px;border:1px solid var(--border);">FormHeader: isEdit check</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Invoice number field</td><td style="padding:4px 8px;border:1px solid var(--border);">mode === 'create' → Input. mode === 'edit' → locked span</td><td style="padding:4px 8px;border:1px solid var(--border);">FormHeader: isEdit check</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Line item columns (make, unit, partNo, condition, install_rate, vat_rate, discount_rate)</td><td style="padding:4px 8px;border:1px solid var(--border);">isVisible(key) → column.visibilityMode === 'show'</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: isVisible checks per column</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Line item subtotal</td><td style="padding:4px 8px;border:1px solid var(--border);">isVisible('amount')</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: amount column visibility</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Sub-description</td><td style="padding:4px 8px;border:1px solid var(--border);">showDetails toggle OR item.sub_description is non-empty</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: local state</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Image preview</td><td style="padding:4px 8px;border:1px solid var(--border);">item.image_url is non-null</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Item suggestion dropdown</td><td style="padding:4px 8px;border:1px solid var(--border);">enableItemSuggestions && descriptionFocused && description.length >= 2</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: suggestion engine</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Group card</td><td style="padding:4px 8px;border:1px solid var(--border);">items array contains row_type === 'group_header'</td><td style="padding:4px 8px;border:1px solid var(--border);">FormLineItems: lineItemRows computation</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Clear all button</td><td style="padding:4px 8px;border:1px solid var(--border);">lineItemsCount > 0</td><td style="padding:4px 8px;border:1px solid var(--border);">FormLineItems: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Add group button</td><td style="padding:4px 8px;border:1px solid var(--border);">onAddGroup prop provided</td><td style="padding:4px 8px;border:1px solid var(--border);">FormLineItems: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Summary rows</td><td style="padding:4px 8px;border:1px solid var(--border);">Value > 0 (for discount, VAT, WHT, charges, install rate)</td><td style="padding:4px 8px;border:1px solid var(--border);">SharedDocumentForm: summaryRows filter</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Amount in words</td><td style="padding:4px 8px;border:1px solid var(--border);">amountInWords is truthy (always present after compute)</td><td style="padding:4px 8px;border:1px solid var(--border);">FormTotals: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">IdentityLockDialog</td><td style="padding:4px 8px;border:1px solid var(--border);">isEdit && identityLockDialog.open</td><td style="padding:4px 8px;border:1px solid var(--border);">InvoiceFormPage: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Loading state (edit mode)</td><td style="padding:4px 8px;border:1px solid var(--border);">isEdit && (hydration.loading || !invoice)</td><td style="padding:4px 8px;border:1px solid var(--border);">InvoiceFormPage: early return</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Header fields empty state</td><td style="padding:4px 8px;border:1px solid var(--border);">customFields.length === 0</td><td style="padding:4px 8px;border:1px solid var(--border);">FormHeader: conditional render</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Custom columns in item card</td><td style="padding:4px 8px;border:1px solid var(--border);">customColumns.map → isVisible(col.key)</td><td style="padding:4px 8px;border:1px solid var(--border);">MobileItemCard: dynamic rendering</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Extra charges in summary</td><td style="padding:4px 8px;border:1px solid var(--border);">label is non-empty AND value > 0</td><td style="padding:4px 8px;border:1px solid var(--border);">SharedDocumentForm: taxableChargeRows / nonTaxChargeRows filter</td></tr>
+</table>
+
+</div>
+
+</body>
+</html>

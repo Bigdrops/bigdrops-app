@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice View — Wireframe (Extracted from Code)</title>
+<style>
+  :root {
+    --bg: #f5f5f0;
+    --surface: #fff;
+    --ink: #1a1a1a;
+    --ink-2: #555;
+    --ink-3: #999;
+    --border: #ccc;
+    --border-soft: #e0e0e0;
+    --accent: #4a6fa5;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --computed-bg: #f0f4f8;
+    --font: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); font-size: 13px; line-height: 1.5; color: var(--ink); background: var(--bg); padding: 24px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+  h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin: 16px 0 8px; }
+  .wireframe { background: var(--surface); border: 2px solid var(--ink); padding: 0; }
+  .section { border-bottom: 2px solid var(--border); padding: 16px; }
+  .section:last-child { border-bottom: none; }
+  .section-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .section-label .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .field { margin-bottom: 10px; }
+  .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 3px; }
+  .field-box { border: 1px dashed var(--border); padding: 8px 10px; min-height: 36px; display: flex; align-items: center; font-size: 12px; color: var(--ink-2); background: var(--surface); border-radius: 4px; }
+  .field-box.readonly { background: var(--computed-bg); border-style: solid; border-color: var(--accent); }
+  .field-placeholder { color: var(--ink-3); font-style: italic; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 3px; }
+  .badge.readonly { background: #e3f2fd; color: var(--accent); }
+  .badge.computed { background: #e8f5e9; color: var(--success); }
+  .badge.conditional { background: #fff3e0; color: var(--warning); }
+  .badge.action { background: #fce4ec; color: var(--danger); }
+  .annotation { font-size: 11px; color: var(--ink-2); background: #f9f9f0; border-left: 3px solid var(--warning); padding: 8px 10px; margin: 10px 0; border-radius: 0 4px 4px 0; }
+  .annotation strong { color: var(--ink); }
+  .topnav { display: flex; align-items: center; padding: 12px 16px; border-bottom: 2px solid var(--ink); background: var(--surface); }
+  .topnav-back { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; display: grid; place-items: center; font-size: 16px; margin-right: 10px; }
+  .topnav-center { flex: 1; }
+  .topnav-title { font-size: 13px; font-weight: 700; }
+  .topnav-subtitle { font-size: 11px; color: var(--ink-3); font-family: var(--mono); }
+  .topnav-actions { display: flex; gap: 6px; }
+  .topnav-icon { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; display: grid; place-items: center; font-size: 14px; }
+  .action-row { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-soft); }
+  .btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center; background: var(--surface); display: inline-flex; align-items: center; gap: 6px; }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.pill { padding: 8px 12px; border-radius: 20px; }
+  .doc-card { border: 1px solid var(--border-soft); border-radius: 8px; margin: 16px; background: var(--surface); overflow: hidden; }
+  .doc-card-top { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px; border-bottom: 1px solid var(--border-soft); }
+  .doc-card-body { padding: 16px; }
+  .doc-card-items { border-top: 1px solid var(--border-soft); }
+  .item-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border-soft); }
+  .item-row:last-child { border-bottom: none; }
+  .item-num { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--ink-3); width: 20px; text-align: center; padding-top: 2px; }
+  .item-body { flex: 1; min-width: 0; }
+  .item-name { font-size: 13px; font-weight: 600; }
+  .item-sub { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+  .item-meta { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .item-pill { font-size: 9px; font-weight: 700; padding: 1px 6px; border: 1px solid var(--border); border-radius: 10px; color: var(--ink-3); }
+  .item-amount { font-family: var(--mono); font-size: 13px; font-weight: 700; text-align: right; flex-shrink: 0; }
+  .totals-section { padding: 16px; border-top: 2px solid var(--ink); }
+  .totals-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .totals-grand { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0 0; border-top: 2px solid var(--ink); margin-top: 8px; }
+  .totals-grand-label { font-size: 15px; font-weight: 800; }
+  .totals-grand-value { font-size: 26px; font-weight: 700; font-family: Georgia, serif; }
+  .amount-words { font-size: 11px; font-style: italic; color: var(--ink-2); margin-top: 8px; padding: 8px; border: 1px dashed var(--border-soft); border-radius: 4px; background: var(--bg); }
+  .signatory { display: flex; align-items: center; gap: 12px; padding: 16px; border-top: 1px solid var(--border-soft); }
+  .signatory-img { width: 80px; height: 40px; border: 1px dashed var(--border); border-radius: 4px; display: grid; place-items: center; font-size: 9px; color: var(--ink-3); }
+  .status-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+  .status-pill.paid { background: #e8f5e9; color: var(--success); }
+  .status-pill.unpaid { background: #fff3e0; color: var(--warning); }
+  .status-pill.overdue { background: #fce4ec; color: var(--danger); }
+  .status-pill.draft { background: #f5f5f5; color: var(--ink-3); }
+  .meta-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 11px; margin: 2px; }
+  .meta-chip-icon { font-size: 12px; color: var(--ink-3); }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; border-top: 1px solid var(--border-soft); }
+  .info-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 4px; }
+  .info-value { font-size: 13px; font-weight: 600; }
+  .collapse-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-soft); cursor: pointer; }
+  .collapse-title { font-size: 13px; font-weight: 700; flex: 1; display: flex; align-items: center; gap: 6px; }
+  .collapse-chevron { color: var(--ink-3); font-size: 12px; }
+  .progress-bar { height: 6px; background: var(--border-soft); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; background: var(--success); border-radius: 3px; }
+  .payment-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 6px; margin-bottom: 6px; }
+  .payment-method { font-size: 13px; font-weight: 600; }
+  .payment-date { font-size: 11px; color: var(--ink-3); }
+  .payment-amount { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .payment-actions { display: flex; gap: 6px; font-size: 10px; }
+  .link-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
+  .activity-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px dashed var(--border-soft); font-size: 12px; }
+  .empty-state { padding: 20px; text-align: center; color: var(--ink-3); font-style: italic; font-size: 12px; }
+  .fab { position: fixed; bottom: 80px; right: 16px; width: 52px; height: 52px; border-radius: 14px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 60; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: var(--surface); border-top: 2px solid var(--ink); display: grid; grid-template-columns: repeat(5, 1fr); z-index: 50; }
+  .bn-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--ink-3); border-right: 1px solid var(--border-soft); }
+  .bn-item.active { color: var(--accent); }
+  .modal-sheet { border: 2px solid var(--ink); border-radius: 12px 12px 0 0; padding: 20px; background: var(--surface); margin-top: 16px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft); }
+  .toggle-label { font-size: 12px; }
+  .toggle-switch { width: 36px; height: 20px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; padding: 2px; }
+  .toggle-switch.on { background: var(--accent); border-color: var(--accent); }
+  .toggle-knob { width: 16px; height: 16px; border-radius: 50%; background: var(--ink); }
+  .toggle-switch.on .toggle-knob { margin-left: auto; background: #fff; }
+</style>
+</head>
+<body>
+
+<h1>Invoice View Page — Code-Extracted Wireframe</h1>
+<p style="color:var(--ink-2);margin-bottom:8px;">Source: <code style="font-family:var(--mono);font-size:11px;">src/pages/ViewInvoice.tsx</code> and full render tree. Low-fidelity mirror of actual code structure.</p>
+<p style="color:var(--ink-3);font-size:11px;margin-bottom:20px;">Generated: August 17, 2026 — by Buffy via Freebuff.</p>
+
+<!-- ============================================================ -->
+<!-- TOP NAV                                                       -->
+<!-- ============================================================ -->
+<div class="wireframe">
+<div class="topnav">
+  <div class="topnav-back">‹</div>
+  <div class="topnav-center">
+    <div class="topnav-title">Invoices</div>
+    <div class="topnav-subtitle">INV-2024-001 · Monthly Maintenance</div>
+  </div>
+  <div class="topnav-actions">
+    <div class="topnav-icon">↗</div>
+    <div class="topnav-icon">🎨</div>
+    <div class="topnav-icon">⋯</div>
+  </div>
+</div>
+<div class="annotation"><strong>InvoiceTopNav → DocumentTopNav.</strong> Back (navigates to /invoices). Title: "Invoices". Subtitle: "{invoice_number} · {invoice_title}". Actions: Share, Customize PDF, More. All read-only display.</div>
+
+<!-- ============================================================ -->
+<!-- ACTION ROW                                                    -->
+<!-- ============================================================ -->
+<div class="action-row">
+  <div class="btn primary">↓ Record Payment</div>
+  <div class="btn">✎ Edit</div>
+  <div class="btn pill">⤓</div>
+</div>
+<div class="annotation"><strong>InvoiceActionRow.</strong> Record Payment: <span class="badge conditional">Conditional</span> only shown when status !== "paid". Edit: navigates to /invoices/edit/{id}. Download pill: triggers PDF download. All three buttons are always present except Record Payment condition.</div>
+
+<!-- ============================================================ -->
+<!-- DOCUMENT CARD (InvoiceDocumentCard)                           -->
+<!-- ============================================================ -->
+<div class="section-label" style="padding:16px 16px 0;"><span class="dot" style="background:var(--accent);"></span> Document Preview Card</div>
+
+<div class="doc-card">
+  <!-- Brand + Status -->
+  <div class="doc-card-top">
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:48px;height:48px;border:1px solid var(--border);border-radius:6px;display:grid;place-items:center;font-size:10px;color:var(--ink-3);">LOGO</div>
+      <div>
+        <div style="font-size:14px;font-weight:800;">Company Name</div>
+        <div style="font-size:11px;color:var(--ink-3);">Company Tagline</div>
+        <div style="font-size:10px;color:var(--ink-3);margin-top:4px;">Address line 1<br>Address line 2</div>
+      </div>
+    </div>
+    <div class="status-pill unpaid">UNPAID</div>
+  </div>
+  
+  <!-- Title + Meta -->
+  <div class="doc-card-body">
+    <h1 style="font-size:18px;font-weight:900;margin-bottom:10px;">Monthly Maintenance</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">
+      <div class="meta-chip"><span class="meta-chip-icon">#</span> INV-2024-001</div>
+      <div class="meta-chip"><span class="meta-chip-icon">📅</span> Issued Aug 12, 2024</div>
+      <div class="meta-chip"><span class="meta-chip-icon">⏰</span> Due Aug 17, 2024</div>
+      <div class="meta-chip"><span class="meta-chip-icon">📄</span> PO: PO-2024-042</div>
+    </div>
+  </div>
+  
+  <!-- Info Grid -->
+  <div class="info-grid">
+    <div>
+      <div class="info-label">Client</div>
+      <div class="info-value">Acme Corp</div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:4px;">John Adeyemi<br>john@acme.com</div>
+    </div>
+    <div>
+      <div class="info-label">Details</div>
+      <div style="font-size:12px;line-height:1.8;">
+        <span style="color:var(--ink-3);">Payment Terms:</span> Net 30 Days<br>
+        <span style="color:var(--ink-3);">Custom Terms:</span> Due in 14 days
+      </div>
+    </div>
+  </div>
+  
+  <!-- Line Items -->
+  <div class="doc-card-items">
+    <div style="padding:8px 16px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);border-bottom:1px solid var(--border-soft);">Line Items</div>
+    <div class="item-row">
+      <div class="item-num">01</div>
+      <div class="item-body">
+        <div class="item-name">Web Development</div>
+        <div class="item-sub">Full-stack development services</div>
+        <div class="item-meta">
+          <span class="item-pill">1 Unit</span>
+          <span class="item-pill">Qty: 1</span>
+          <span class="item-pill">@N150,000</span>
+        </div>
+      </div>
+      <div class="item-amount">N150,000</div>
+    </div>
+    <div class="item-row">
+      <div class="item-num">02</div>
+      <div class="item-body">
+        <div class="item-name">UI/UX Design</div>
+        <div class="item-sub">Interface design and prototyping</div>
+        <div class="item-meta">
+          <span class="item-pill">1 Session</span>
+          <span class="item-pill">Qty: 1</span>
+          <span class="item-pill">@N95,000</span>
+        </div>
+      </div>
+      <div class="item-amount">N95,000</div>
+    </div>
+  </div>
+  
+  <!-- Totals -->
+  <div class="totals-section">
+    <div class="totals-row"><span>Subtotal</span><span style="font-family:var(--mono);font-weight:700;">N245,000</span></div>
+    <div class="totals-row"><span>VAT (7.5%)</span><span style="font-family:var(--mono);font-weight:700;">N18,375</span></div>
+    <div class="totals-grand">
+      <span class="totals-grand-label">Grand Total</span>
+      <span class="totals-grand-value">N263,375</span>
+    </div>
+    <div class="amount-words">Two Hundred and Sixty-Three Thousand, Three Hundred and Seventy-Five Naira Only</div>
+  </div>
+  
+  <!-- Signatory -->
+  <div class="signatory">
+    <div class="signatory-img">SIGNATURE</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;">Milad A.</div>
+      <div style="font-size:11px;color:var(--ink-3);">Operator</div>
+    </div>
+  </div>
+</div>
+
+<div class="annotation"><strong>InvoiceDocumentCard.</strong> Pure display component. All data from previewModel (built by buildInvoicePreviewModel). Fields shown: logo, company name, tagline, address lines, status pill, invoice title, meta chips (number, dates, PO), client info, detail rows (payment terms, custom terms), line items (number, name, sub-description, facts/pills, image thumbnail, amount), totals (summary rows, grand total, amount in words), signatory (image, name, role). No editable fields — this is a read-only document preview.</div>
+
+<!-- ============================================================ -->
+<!-- BANK DETAILS CARD                                             -->
+<!-- ============================================================ -->
+<div class="section-label" style="padding:16px 16px 0;"><span class="dot" style="background:var(--success);"></span> Bank Details Card</div>
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header">
+    <span style="font-size:14px;">💳</span>
+    <div class="collapse-title">Bank Details</div>
+    <span class="collapse-chevron">▾</span>
+  </div>
+  <!-- Collapsed state: active account -->
+  <div style="margin:0 14px 14px;padding:14px;background:#f0fdf4;border:2px solid var(--success);border-radius:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:14px;font-weight:700;">Zenith Bank</div>
+        <div style="font-size:12px;color:var(--ink-2);">GenGrid Power Solutions Ltd</div>
+        <div style="font-size:12px;font-family:var(--mono);font-weight:600;">1234567890</div>
+      </div>
+      <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--success);color:#fff;">ACTIVE</span>
+    </div>
+  </div>
+</div>
+<div class="annotation"><strong>BankDetailsCard.</strong> Collapsed: shows only active account with green highlight. Expanded: shows all accounts as selectable cards with radio-style selection. Selecting a bank triggers onBankAccountSelect → handleSaveCustomization({ bankAccountId }). Data from previewModel.previewBankAccounts.</div>
+
+<!-- ============================================================ -->
+<!-- DOCUMENT OPTIONS CARD                                         -->
+<!-- ============================================================ -->
+<div class="section-label" style="padding:16px 16px 0;"><span class="dot" style="background:var(--warning);"></span> Document Options Card</div>
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header">
+    <div class="collapse-title">Document Options</div>
+    <span class="collapse-chevron">▸</span>
+  </div>
+  <!-- Expanded state -->
+  <div style="padding:0 16px 12px;">
+    <div class="toggle-row"><span class="toggle-label">Show Bank Details</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show Amount in Words</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show VAT % in Brackets</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show WHT % in Brackets</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show Discount % in Brackets</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show Tagline</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Show Footer</span><div class="toggle-switch on"><div class="toggle-knob"></div></div></div>
+    <div class="toggle-row"><span class="toggle-label">Merge Qty & Unit in PDF</span><div class="toggle-switch"><div class="toggle-knob"></div></div></div>
+    <div style="margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:6px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;">⚙ Customize Template & Colors</div>
+  </div>
+</div>
+<div class="annotation"><strong>DocumentOptionsCard.</strong> All toggles are editable. Each toggle calls onOutputChange → handleSaveCustomization. "Customize Template & Colors" opens PdfOutputCustomizeSheet. Merge Qty & Unit: <span class="badge conditional">Conditional</span> hidden when hideMergeQty=true (quotations). All other toggles always present.</div>
+
+<!-- ============================================================ -->
+<!-- OPERATIONAL SECTIONS                                          -->
+<!-- ============================================================ -->
+<div class="section-label" style="padding:16px 16px 0;"><span class="dot" style="background:var(--danger);"></span> Operational Sections</div>
+
+<!-- Payment History -->
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header" style="background:rgba(74,111,165,0.06);">
+    <span style="font-size:14px;color:var(--accent);">📄</span>
+    <div class="collapse-title" style="color:var(--accent);">Payment History</div>
+    <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(74,111,165,0.12);color:var(--accent);">Record</div>
+    <span class="collapse-chevron">▾</span>
+  </div>
+  <div style="padding:12px 16px;">
+    <!-- Summary -->
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+      <span style="color:var(--ink-3);">Settled Total</span>
+      <span style="font-family:var(--mono);font-weight:700;">N0.00</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+      <span style="color:var(--ink-3);">Balance Due</span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--danger);">N263,375</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);margin-bottom:4px;">
+      <span>Payment Progress</span>
+      <span style="font-weight:700;">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
+    
+    <!-- Payment rows -->
+    <div style="margin-top:12px;">
+      <div class="payment-row">
+        <div>
+          <div class="payment-method">Transfer</div>
+          <div class="payment-date">Aug 14, 2024 · 10:30 AM</div>
+          <div class="payment-date">REF: GTB/2024/08/14/001</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="payment-amount">N100,000</div>
+          <div class="payment-actions">
+            <span style="color:var(--accent);cursor:pointer;">Receipt #1</span>
+            <span style="color:var(--danger);cursor:pointer;">Void</span>
+          </div>
+        </div>
+      </div>
+      <div class="payment-row">
+        <div>
+          <div class="payment-method">Cash</div>
+          <div class="payment-date">Aug 16, 2024 · 2:15 PM</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="payment-amount">N50,000</div>
+          <div class="payment-actions">
+            <span style="color:var(--danger);cursor:pointer;">Void</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="annotation"><strong>PaymentHistoryCard.</strong> Collapsible (default: open). Shows: settled total, balance due, payment progress bar, payment rows. Each row: method, date+time, reference, notes, attachments (image/file icons), amount, receipt link (if receipt exists), void button (if not voided). "Record" button opens RecordPaymentSheet. Void button opens VoidPaymentDialog. Receipt link navigates to /receipts/{id}. Data: payments[], viewModel (cashReceived, balanceDue, invoiceTotal), receiptsByPayment (fetched from receipts table).</div>
+
+<!-- Advance Invoice -->
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header">
+    <div class="collapse-title">Advance Invoice</div>
+    <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;">CREATE</div>
+  </div>
+</div>
+<div class="annotation"><strong>AdvanceInvoicesCard.</strong> <span class="badge conditional">Conditional</span> Two states: (1) No advance: shows "CREATE" button. (2) Has advance: shows advance invoice number, date, total with "VIEW/EDIT" button. CREATE opens InvoiceAdvanceSheet. VIEW/EDIT calls onViewAdvance → navigates to advance details.</div>
+
+<!-- Linked Documents -->
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header">
+    <span style="font-size:14px;">🔗</span>
+    <div class="collapse-title">Linked Documents</div>
+    <span class="collapse-chevron">▾</span>
+  </div>
+  <div style="padding:4px 16px 12px;">
+    <div class="link-row">
+      <span style="font-size:14px;color:var(--accent);">📄</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Source Quotation</div>
+        <div style="font-size:11px;color:var(--ink-3);">QT-2024-008</div>
+      </div>
+    </div>
+    <div class="link-row">
+      <span style="font-size:14px;color:var(--success);">📄</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;">CSR</div>
+        <div style="font-size:11px;color:var(--ink-3);">CSR-2024-012</div>
+      </div>
+    </div>
+    <div class="link-row">
+      <span style="font-size:14px;color:var(--accent);">📄</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Waybill</div>
+        <div style="font-size:11px;color:var(--ink-3);">WB-2024-032</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="annotation"><strong>RelatedDocsCard.</strong> Collapsible (default: open). Shows: source document (quotation this was converted from), related CSRs, related waybills. Each row is clickable → onViewDoc navigates to the linked document. <span class="badge conditional">Conditional</span> Empty state when no docs. Data: sourceDocument (from getInvoiceSourceDocument), relatedCsrs[], relatedWaybills[].</div>
+
+<!-- Activity & History -->
+<div style="margin:0 16px 16px;border:1px solid var(--border-soft);border-radius:8px;background:var(--surface);overflow:hidden;">
+  <div class="collapse-header">
+    <div class="collapse-title">Activity & History</div>
+    <span class="collapse-chevron">▸</span>
+  </div>
+  <!-- Expanded state -->
+  <div style="padding:4px 0;">
+    <div class="activity-row">
+      <span>John created this invoice</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">Aug 12, 10:32 AM</span>
+    </div>
+    <div class="activity-row">
+      <span>Milad updated line items</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">Aug 12, 11:15 AM</span>
+    </div>
+    <div class="activity-row">
+      <span>John recorded payment of N100,000</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">Aug 14, 10:30 AM</span>
+    </div>
+  </div>
+</div>
+<div class="annotation"><strong>ActivityCard.</strong> Collapsible (default: closed). Lazy-loads audit trail on open (useAuditTrail hook). Each entry: actorLabel, actionLabel, timestamp. Entries with changes are expandable to show field-level diffs (old → new). Data: AuditTrailEntry[] from useAuditTrail({ entityType: "invoice", entityId: documentId }).</div>
+</div><!-- end wireframe -->
+
+<!-- ============================================================ -->
+<!-- FLOATING BUTTON + BOTTOM NAV                                  -->
+<!-- ============================================================ -->
+<div class="fab" title="Download PDF">⤓</div>
+<div class="bottom-nav">
+  <div class="bn-item">⌂ Home</div>
+  <div class="bn-item">📁 Projects</div>
+  <div class="bn-item active">💰 Sales</div>
+  <div class="bn-item">👤 Clients</div>
+  <div class="bn-item">⋯ More</div>
+</div>
+<div class="annotation"><strong>FloatingDocumentButton:</strong> Fixed position, bottom-right. Label: "Download". Icon: Download. Triggers handleDownload (PDF generation). <strong>MobileBottomNav:</strong> Standard 5-tab nav. Active tab: "sales" (since /invoices is the sales section). "More" opens MobileMoreSheet.</div>
+
+<!-- ============================================================ -->
+<!-- OVERLAYS / SHEETS / MODALS                                   -->
+<!-- ============================================================ -->
+<h2>Overlays, Sheets & Modals</h2>
+
+<!-- Record Payment Sheet -->
+<h3>Record Payment Sheet</h3>
+<div class="modal-sheet">
+  <div style="font-size:16px;font-weight:800;margin-bottom:4px;">Record Payment</div>
+  <div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">Payment for INV-2024-001</div>
+  
+  <div class="grid-2" style="gap:12px;margin-bottom:12px;">
+    <div style="background:var(--bg);border-radius:8px;padding:12px;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Balance Due</div>
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700;">N263,375</div>
+      <div style="margin-top:8px;">
+        <div class="field-label">Cash Amount (N)</div>
+        <div class="field-box" style="min-height:32px;"><span class="field-placeholder">Enter amount</span></div>
+      </div>
+      <div style="margin-top:6px;">
+        <div class="field-label">Percentage</div>
+        <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:4px;">
+          <div class="field-box" style="flex:1;border:none;min-height:32px;"><span class="field-placeholder">0</span></div>
+          <span style="padding:0 8px;font-weight:700;color:var(--ink-3);">%</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <div style="flex:1;text-align:center;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">25%</div>
+        <div style="flex:1;text-align:center;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">50%</div>
+        <div style="flex:1;text-align:center;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">75%</div>
+        <div style="flex:1;text-align:center;padding:6px;border:1px solid var(--border);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">100%</div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:12px;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Settlement Preview</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--ink-3);">Cash Received</span><span style="font-family:var(--mono);font-weight:700;">N0.00</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--ink-3);">WHT Deducted</span><span style="font-family:var(--mono);font-weight:700;color:var(--ink-3);">N0.00</span></div>
+      <div style="border-top:1px solid var(--border-soft);padding-top:6px;margin-top:4px;display:flex;justify-content:space-between;font-size:12px;font-weight:600;"><span>Net Settlement</span><span style="font-family:var(--mono);font-weight:700;">N0.00</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;"><span style="color:var(--ink-3);">Remaining Balance</span><span style="font-family:var(--mono);font-weight:700;color:var(--danger);">N263,375</span></div>
+      <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:0%;"></div></div>
+    </div>
+  </div>
+  
+  <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:8px;">Transaction Details</div>
+    <div class="grid-2" style="gap:8px;">
+      <div><div class="field-label">Date</div><div class="field-box" style="min-height:32px;"><span class="field-placeholder">YYYY-MM-DD</span></div></div>
+      <div><div class="field-label">Mode</div><div class="field-box" style="min-height:32px;">Transfer <span style="margin-left:auto;">▾</span></div></div>
+      <div><div class="field-label">Reference</div><div class="field-box" style="min-height:32px;"><span class="field-placeholder">Transaction ID / Ref</span></div></div>
+      <div><div class="field-label">Destination Account</div><div class="field-box" style="min-height:32px;">Zenith — 1234567890 <span style="margin-left:auto;">▾</span></div></div>
+    </div>
+    <div style="margin-top:8px;"><div class="field-label">Notes</div><div class="field-box" style="min-height:48px;"><span class="field-placeholder">Internal notes...</span></div></div>
+  </div>
+  
+  <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Attachments</div>
+    <div class="field-box" style="min-height:40px;justify-content:center;border-style:dashed;"><span class="field-placeholder">Drop files or click to upload</span></div>
+  </div>
+  
+  <div style="display:flex;gap:8px;">
+    <div class="btn" style="flex:1;">Cancel</div>
+    <div class="btn primary" style="flex:2;">💰 Record Payment</div>
+  </div>
+</div>
+<div class="annotation"><strong>InvoiceRecordPaymentSheet.</strong> Full payment recording form. Fields: cashReceived (NumericInput), percentage (text input with quick-pct buttons: 25/50/75/100), date (date input), method (Select: Transfer/Cash/POS/Cheque/Other), reference (text), bankAccountId (Select, conditional: only when method="Transfer"), notes (textarea), attachments (PaymentAttachmentUploader). Settlement preview: computed from getPaymentEntrySummary. Validation: validatePaymentEntry. Save: recordInvoicePayment → refresh + close. <span class="badge conditional">Conditional</span> WHT note shown when invoice.wht > 0.</div>
+
+<!-- More Actions Sheet -->
+<h3>More Actions Sheet</h3>
+<div class="modal-sheet">
+  <div style="font-size:16px;font-weight:800;margin-bottom:12px;">Invoice Actions</div>
+  
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Lifecycle</div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">🔄</span>
+    <div><div style="font-size:13px;font-weight:600;">Revert to Quotation</div><div style="font-size:11px;color:var(--ink-3);">Convert back to open quotation</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">🚛</span>
+    <div><div style="font-size:13px;font-weight:600;">Generate Waybill</div><div style="font-size:11px;color:var(--ink-3);">Create delivery waybill linked to this invoice</div></div>
+  </div>
+  
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Payments & Advances</div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">💵</span>
+    <div><div style="font-size:13px;font-weight:600;">Record Payment</div><div style="font-size:11px;color:var(--ink-3);">Add a new payment against this invoice</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">⚡</span>
+    <div><div style="font-size:13px;font-weight:600;">Advance Invoice</div><div style="font-size:11px;color:var(--ink-3);">Create an advance invoice</div></div>
+  </div>
+  
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px;">Common Actions</div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">🔗</span>
+    <div><div style="font-size:13px;font-weight:600;">Link to Project</div><div style="font-size:11px;color:var(--ink-3);">Associate with a project</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">📋</span>
+    <div><div style="font-size:13px;font-weight:600;">Duplicate</div><div style="font-size:11px;color:var(--ink-3);">Create a copy of this invoice</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">📋</span>
+    <div><div style="font-size:13px;font-weight:600;">Copy Invoice Number</div><div style="font-size:11px;color:var(--ink-3);">Copy document reference to clipboard</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">📥</span>
+    <div><div style="font-size:13px;font-weight:600;">Export as CSV</div><div style="font-size:11px;color:var(--ink-3);">Download line items as spreadsheet</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">🔗</span>
+    <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Qty + Unit merge</div><div style="font-size:11px;color:var(--ink-3);">Currently off for exports</div></div>
+    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid var(--border);">OFF</span>
+  </div>
+  
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--danger);margin-bottom:6px;">Danger Zone</div>
+  <div style="padding:10px;border:1px solid var(--border-soft);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+    <span style="font-size:16px;">📦</span>
+    <div><div style="font-size:13px;font-weight:600;">Archive Invoice</div><div style="font-size:11px;color:var(--ink-3);">Remove from active lists, keep on record</div></div>
+  </div>
+  <div style="padding:10px;border:1px solid var(--danger);border-radius:6px;display:flex;align-items:center;gap:10px;cursor:pointer;background:#fce4ec;">
+    <span style="font-size:16px;">🗑</span>
+    <div><div style="font-size:13px;font-weight:600;color:var(--danger);">Delete Invoice</div><div style="font-size:11px;color:var(--ink-3);">Permanently remove this document</div></div>
+  </div>
+</div>
+<div class="annotation"><strong>InvoiceMoreSheet.</strong> 4 sections, 11 actions total. Lifecycle: Revert to Quotation (opens confirm dialog), Generate Waybill (navigates to /waybills/new with prefill). Payments: Record Payment (opens sheet), Advance Invoice (opens sheet). Common: Link to Project (opens ProjectLinkDialog), Duplicate, Copy Number, Export CSV, Qty+Unit merge (toggle). Danger: Archive (opens confirm dialog), Delete (opens confirm dialog with destructive styling).</div>
+
+<!-- Confirm Dialogs -->
+<h3>Confirmation Dialogs</h3>
+<div class="annotation">
+  <strong>Revert to Quotation:</strong> "INV-XXX will be converted back to an open quotation. Existing payment records will be deleted and cannot be recovered." → handleRevertToQuotation.<br>
+  <strong>Archive:</strong> "INV-XXX will be moved to your archive." → handleArchive.<br>
+  <strong>Delete:</strong> "INV-XXX will be permanently deleted." (destructive) → handleDelete.<br>
+  <strong>Void Payment:</strong> Opens VoidPaymentDialog with reason input → confirmVoidPayment(reason).<br>
+  <strong>Project Link:</strong> ProjectLinkDialog for associating invoice with a project.
+</div>
+
+<!-- ============================================================ -->
+<!-- FIELD ANNEX                                                  -->
+<!-- ============================================================ -->
+<h2>Field Annex</h2>
+<div style="background:var(--surface);border:2px solid var(--ink);padding:20px;">
+
+<h3>Displayed Fields (InvoiceDocumentCard)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Source</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Company Logo</td><td style="padding:4px 8px;border:1px solid var(--border);">settings (resolveCanonicalLogoUrl)</td><td style="padding:4px 8px;border:1px solid var(--border);">Image URL</td><td style="padding:4px 8px;border:1px solid var(--border);">From settings or fallback.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Company Name</td><td style="padding:4px 8px;border:1px solid var(--border);">settings.company_name</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Display only.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Company Tagline</td><td style="padding:4px 8px;border:1px solid var(--border);">settings.company_tagline</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Display only.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Company Address Lines</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.companyPreviewLines</td><td style="padding:4px 8px;border:1px solid var(--border);">string[]</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed from settings.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Status Pill</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.status</td><td style="padding:4px 8px;border:1px solid var(--border);">string (uppercase)</td><td style="padding:4px 8px;border:1px solid var(--border);">UNPAID, PAID, OVERDUE, DRAFT, etc. Color-coded.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Invoice Title</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.invoice_title</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">h1 heading. Conditional: only if non-empty.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Invoice Number</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.invoice_number</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Meta chip with # icon.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Issue Date</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.issue_date</td><td style="padding:4px 8px;border:1px solid var(--border);">date string</td><td style="padding:4px 8px;border:1px solid var(--border);">Meta chip. Formatted via formatDisplayDate.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Due Date</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.due_date</td><td style="padding:4px 8px;border:1px solid var(--border);">date string</td><td style="padding:4px 8px;border:1px solid var(--border);">Meta chip. Formatted via formatDisplayDate.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">PO Number</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.po_number</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Meta chip. Conditional: only if non-empty.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Client Name</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.client_name</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Info grid cell.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Client Address Lines</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.clientPreviewLines</td><td style="padding:4px 8px;border:1px solid var(--border);">string[]</td><td style="padding:4px 8px;border:1px solid var(--border);">Computed from client data.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Detail Rows</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.previewDetailRows</td><td style="padding:4px 8px;border:1px solid var(--border);">Array{label, value}</td><td style="padding:4px 8px;border:1px solid var(--border);">Payment Terms, Custom Terms, etc. PO Number filtered out (shown in meta chips).</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Line Items</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.previewItems</td><td style="padding:4px 8px;border:1px solid var(--border);">Array</td><td style="padding:4px 8px;border:1px solid var(--border);">Each: type (item/group/group_footer), label, detail, facts[], value, imageUrl.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Totals</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.previewTotals</td><td style="padding:4px 8px;border:1px solid var(--border);">Array{label, value, emphasis}</td><td style="padding:4px 8px;border:1px solid var(--border);">Subtotal, VAT, Discount, etc. Grand total has emphasis=true.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Amount in Words</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.previewAmountInWords</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Conditional: only if non-empty.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Signatory</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.signatory</td><td style="padding:4px 8px;border:1px solid var(--border);">object</td><td style="padding:4px 8px;border:1px solid var(--border);">Conditional: {signatureUrl, name, role}. Only if signatory selected.</td></tr>
+</table>
+
+<h3>Computed View Model (viewModel)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Source</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">viewModel.invoiceTotal</td><td style="padding:4px 8px;border:1px solid var(--border);">buildInvoiceViewModel()</td><td style="padding:4px 8px;border:1px solid var(--border);">Total invoice amount.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">viewModel.cashReceived</td><td style="padding:4px 8px;border:1px solid var(--border);">buildInvoiceViewModel()</td><td style="padding:4px 8px;border:1px solid var(--border);">Sum of non-voided payments.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">viewModel.balanceDue</td><td style="padding:4px 8px;border:1px solid var(--border);">buildInvoiceViewModel()</td><td style="padding:4px 8px;border:1px solid var(--border);">invoiceTotal - cashReceived.</td></tr>
+</table>
+
+<h3>Computed Document Totals (documentTotals)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Source</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.subtotal</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Raw subtotal from line items.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.vat</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">VAT amount.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.discount</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Discount amount.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.wht</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">WHT amount.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.installRateTotal</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Install rate total.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">documentTotals.totalPayable</td><td style="padding:4px 8px;border:1px solid var(--border);">computeDocument()</td><td style="padding:4px 8px;border:1px solid var(--border);">Grand total. Used for PDF + display.</td></tr>
+</table>
+
+<h3>PDF Output Settings (pdfOutput)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Default</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showBankDetails</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle in DocumentOptionsCard.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">bankAccountId</td><td style="padding:4px 8px;border:1px solid var(--border);">first account</td><td style="padding:4px 8px;border:1px solid var(--border);">Set via BankDetailsCard selection.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showFooter</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showTagline</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showBalanceDue</td><td style="padding:4px 8px;border:1px solid var(--border);">false</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle. Note: default differs from form.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showAmountInWords</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showVatPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showWhtPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">showDiscountPercentage</td><td style="padding:4px 8px;border:1px solid var(--border);">true</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggle.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">compact</td><td style="padding:4px 8px;border:1px solid var(--border);">false</td><td style="padding:4px 8px;border:1px solid var(--border);">Not exposed in view UI.</td></tr>
+</table>
+
+<h3>Record Payment Fields</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Field</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Type</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Notes</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">cashReceived</td><td style="padding:4px 8px;border:1px solid var(--border);">number | null</td><td style="padding:4px 8px;border:1px solid var(--border);">NumericInput. Primary amount field.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">percentage</td><td style="padding:4px 8px;border:1px solid var(--border);">string (computed)</td><td style="padding:4px 8px;border:1px solid var(--border);">Synced from cashReceived. Quick buttons: 25/50/75/100%.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">date</td><td style="padding:4px 8px;border:1px solid var(--border);">date string</td><td style="padding:4px 8px;border:1px solid var(--border);">Required. Default: today.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">method</td><td style="padding:4px 8px;border:1px solid var(--border);">PaymentMethod</td><td style="padding:4px 8px;border:1px solid var(--border);">Select: Transfer, Cash, POS, Cheque, Other. Default: Transfer.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">reference</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Transaction ID / Ref. Optional.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">bankAccountId</td><td style="padding:4px 8px;border:1px solid var(--border);">string | null</td><td style="padding:4px 8px;border:1px solid var(--border);">Conditional: only when method="Transfer". Select from bank accounts.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">notes</td><td style="padding:4px 8px;border:1px solid var(--border);">string</td><td style="padding:4px 8px;border:1px solid var(--border);">Internal notes textarea. Optional.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">attachments</td><td style="padding:4px 8px;border:1px solid var(--border);">File[]</td><td style="padding:4px 8px;border:1px solid var(--border);">PaymentAttachmentUploader. Optional.</td></tr>
+</table>
+
+<h3>More Actions (InvoiceMoreSheet)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Action</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Handler</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Result</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Revert to Quotation</td><td style="padding:4px 8px;border:1px solid var(--border);">openRevertFlow</td><td style="padding:4px 8px;border:1px solid var(--border);">Confirm dialog → handleRevertToQuotation</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Generate Waybill</td><td style="padding:4px 8px;border:1px solid var(--border);">onGenerateWaybill</td><td style="padding:4px 8px;border:1px solid var(--border);">Navigate to /waybills/new with prefill</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Record Payment</td><td style="padding:4px 8px;border:1px solid var(--border);">onRecordPayment</td><td style="padding:4px 8px;border:1px solid var(--border);">Opens RecordPaymentSheet</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Advance Invoice</td><td style="padding:4px 8px;border:1px solid var(--border);">onAdvanceInvoice</td><td style="padding:4px 8px;border:1px solid var(--border);">Opens InvoiceAdvanceSheet</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Link to Project</td><td style="padding:4px 8px;border:1px solid var(--border);">onLinkProject</td><td style="padding:4px 8px;border:1px solid var(--border);">Opens ProjectLinkDialog</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Duplicate</td><td style="padding:4px 8px;border:1px solid var(--border);">handleDuplicate</td><td style="padding:4px 8px;border:1px solid var(--border);">Creates copy, navigates to create form</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Copy Number</td><td style="padding:4px 8px;border:1px solid var(--border);">handleCopyNumber</td><td style="padding:4px 8px;border:1px solid var(--border);">Copies invoice_number to clipboard</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Export CSV</td><td style="padding:4px 8px;border:1px solid var(--border);">handleDownloadCsv</td><td style="padding:4px 8px;border:1px solid var(--border);">Downloads line items as CSV</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Qty+Unit merge</td><td style="padding:4px 8px;border:1px solid var(--border);">handleToggleMergeQtyUnit</td><td style="padding:4px 8px;border:1px solid var(--border);">Toggles mergeQtyUnit in custom_fields. Persists.</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Archive</td><td style="padding:4px 8px;border:1px solid var(--border);">handleArchive</td><td style="padding:4px 8px;border:1px solid var(--border);">Confirm dialog → archives document</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Delete</td><td style="padding:4px 8px;border:1px solid var(--border);">handleDelete</td><td style="padding:4px 8px;border:1px solid var(--border);">Confirm dialog (destructive) → permanently deletes</td></tr>
+</table>
+
+<h3>Conditional Rendering Rules</h3>
+<table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <tr style="background:var(--bg);"><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Element</th><th style="text-align:left;padding:6px 8px;border:1px solid var(--border);">Condition</th></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Record Payment button (action row)</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.status !== "paid"</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Invoice Title (h1)</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.invoice_title is non-empty</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">PO Number meta chip</td><td style="padding:4px 8px;border:1px solid var(--border);">poRow?.value is non-empty</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Detail Rows section</td><td style="padding:4px 8px;border:1px solid var(--border);">detailRows (excluding PO) has entries</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Amount in Words</td><td style="padding:4px 8px;border:1px solid var(--border);">previewModel.previewAmountInWords is truthy</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Signatory block</td><td style="padding:4px 8px;border:1px solid var(--border);">signatory is non-null</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Bank Details Card</td><td style="padding:4px 8px;border:1px solid var(--border);">bankAccounts.length > 0</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Advance Invoice Card — CREATE vs VIEW/EDIT</td><td style="padding:4px 8px;border:1px solid var(--border);">advanceInvoice is null vs non-null</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Linked Documents — empty state</td><td style="padding:4px 8px;border:1px solid var(--border);">relatedCsrs.length === 0 && relatedWaybills.length === 0 && !sourceDocument</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Activity entries — expandable changes</td><td style="padding:4px 8px;border:1px solid var(--border);">entry.changes.length > 0</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Payment row — receipt link</td><td style="padding:4px 8px;border:1px solid var(--border);">receiptsByPayment[row.id] exists</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Payment row — void button</td><td style="padding:4px 8px;border:1px solid var(--border);">!row.isVoided</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Payment row — VOIDED label</td><td style="padding:4px 8px;border:1px solid var(--border);">row.isVoided</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Payment row — attachments</td><td style="padding:4px 8px;border:1px solid var(--border);">row.hasAttachments</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Record Payment — bank account select</td><td style="padding:4px 8px;border:1px solid var(--border);">form.method === "Transfer" && bankAccounts.length > 0</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Record Payment — WHT note</td><td style="padding:4px 8px;border:1px solid var(--border);">invoice.wht > 0</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Merge Qty+Unit toggle</td><td style="padding:4px 8px;border:1px solid var(--border);">!hideMergeQty && onToggleMergeQtyUnit provided</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Loading state</td><td style="padding:4px 8px;border:1px solid var(--border);">loading === true → CenteredSpinner</td></tr>
+  <tr><td style="padding:4px 8px;border:1px solid var(--border);">Redirect (advance child)</td><td style="padding:4px 8px;border:1px solid var(--border);">isAdvanceInvoiceChild(invoice) → navigate to parent</td></tr>
+</table>
+
+</div>
+
+</body>
+</html>
