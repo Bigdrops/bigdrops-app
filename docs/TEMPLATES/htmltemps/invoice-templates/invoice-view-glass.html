@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>BIGDROPS — Invoice View (Glass)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8F4FF;--surface:rgba(255,255,255,0.72);--surface-solid:#FFFFFF;--ink:#1A0A2A;--ink-2:#5A4070;--ink-3:#9080A0;--accent:#7C3AED;--accent-light:#A78BFA;--accent-surface:rgba(124,58,237,0.08);--danger:#EF4444;--success:#10B981;--warning:#F59E0B;--border:rgba(124,58,237,0.15);--border-strong:rgba(124,58,237,0.3);--border-soft:rgba(124,58,237,0.08);--font:'Plus Jakarta Sans',sans-serif;--r:14px;--r-lg:20px;--blur:blur(16px);--shadow:0 4px 24px rgba(124,58,237,0.08);--glow:0 0 20px rgba(124,58,237,0.15)}
+[data-theme="dark"]{--bg:#0F0A1A;--surface:rgba(30,20,50,0.8);--surface-solid:#1E1432;--ink:#F0E8FF;--ink-2:#B8A0D0;--ink-3:#7060A0;--accent:#A78BFA;--accent-light:#C4B5FD;--accent-surface:rgba(167,139,250,0.12);--border:rgba(167,139,250,0.2);--border-strong:rgba(167,139,250,0.35);--border-soft:rgba(167,139,250,0.1);--shadow:0 4px 24px rgba(0,0,0,0.3);--glow:0 0 30px rgba(167,139,250,0.2)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.topbar-back{width:36px;height:36px;border:1.5px solid var(--border);border-radius:10px;display:grid;place-items:center;margin-right:10px;flex-shrink:0}
+.topbar-back:active{background:var(--accent);color:#fff}
+.topbar-center{flex:1;min-width:0}
+.topbar-title{font-size:13px;font-weight:800}
+.topbar-sub{font-size:10px;color:var(--ink-3);font-weight:600}
+.topbar-right{display:flex;gap:6px}
+.tb-btn{width:36px;height:36px;border:1.5px solid var(--border);border-radius:10px;display:grid;place-items:center;background:var(--surface-solid);transition:all 0.15s}
+.tb-btn:active{transform:scale(0.9);background:var(--accent);color:#fff}
+.tb-btn svg{width:18px;height:18px}
+.action-row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.btn{padding:9px 16px;border:1.5px solid var(--border);border-radius:var(--r);font-size:12px;font-weight:800;text-align:center;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(0.96)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;border:none;box-shadow:var(--glow)}
+.btn.pill{padding:9px 12px;border-radius:20px}
+.content{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{display:none}
+.glass{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow)}
+.doc-title{font-size:18px;font-weight:900;letter-spacing:-0.03em;margin:10px 0}
+.meta-chips{display:flex;flex-wrap:wrap;gap:4px}
+.meta-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:10px;font-weight:700}
+.meta-chip svg{width:12px;height:12px;color:var(--ink-3)}
+.status-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;border:2px solid}
+.status-pill.paid{border-color:var(--success);color:var(--success);background:rgba(16,185,129,0.06)}
+.status-pill.unpaid{border-color:var(--warning);color:var(--warning);background:rgba(245,158,11,0.06)}
+.status-pill.overdue{border-color:var(--danger);color:var(--danger);background:rgba(239,68,68,0.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:14px;border-top:1px solid var(--border-soft)}
+.info-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:4px}
+.info-value{font-size:13px;font-weight:700}
+.info-detail{font-size:11px;color:var(--ink-2);margin-top:4px;line-height:1.6}
+.item-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-soft)}
+.item-row:last-child{border-bottom:none}
+.item-num{font-size:10px;font-weight:900;color:var(--ink-3);width:22px;text-align:center;padding-top:2px}
+.item-body{flex:1;min-width:0}
+.item-name{font-size:13px;font-weight:700}
+.item-sub{font-size:11px;color:var(--ink-2);margin-top:2px}
+.item-meta{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.item-pill{font-size:9px;font-weight:800;padding:2px 8px;border:1px solid var(--border);border-radius:10px;color:var(--ink-3)}
+.item-amount{font-size:13px;font-weight:900;text-align:right;flex-shrink:0}
+.totals-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.totals-grand{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--accent);margin-top:8px;padding-top:8px}
+.totals-grand-label{font-size:14px;font-weight:900}
+.totals-grand-value{font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.amount-words{font-size:11px;font-style:italic;color:var(--ink-2);margin-top:8px;padding:10px;border:1.5px dashed var(--border);border-radius:var(--r);background:var(--accent-surface)}
+.signatory-img{width:80px;height:40px;border:2px dashed var(--border);border-radius:10px;display:grid;place-items:center;font-size:9px;color:var(--ink-3);flex-shrink:0}
+.signatory-name{font-size:13px;font-weight:800}
+.signatory-role{font-size:10px;color:var(--ink-3)}
+.section-card{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface-solid);overflow:hidden}
+.section-header{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer}
+.section-header:active{background:var(--accent-surface)}
+.section-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.section-title{font-size:12px;font-weight:800;flex:1;display:flex;align-items:center;gap:6px}
+.section-action{font-size:10px;font-weight:800;padding:4px 12px;border:1.5px solid var(--accent);color:var(--accent);border-radius:20px;cursor:pointer}
+.section-action:active{background:var(--accent);color:#fff}
+.section-chevron{color:var(--ink-3);font-size:12px;transition:transform 0.2s}
+.section-card.open .section-chevron{transform:rotate(180deg)}
+.section-body{padding:0 14px 14px;display:none}
+.section-card.open .section-body{display:block}
+.payment-summary{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.payment-summary .label{color:var(--ink-3)}
+.payment-summary .value{font-weight:800}
+.payment-summary .danger{color:var(--danger)}
+.progress-bar{height:6px;background:var(--border-soft);border-radius:3px;margin:6px 0}
+.progress-fill{height:100%;background:var(--success);border-radius:3px}
+.payment-row{border:1.5px solid var(--border-soft);border-radius:var(--r);padding:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:flex-start}
+.payment-method{font-size:13px;font-weight:700}
+.payment-date{font-size:10px;color:var(--ink-3)}
+.payment-ref{font-size:10px;color:var(--ink-3)}
+.payment-amount{font-size:13px;font-weight:900}
+.payment-actions{display:flex;gap:8px;font-size:10px;font-weight:700;margin-top:4px}
+.payment-actions .receipt{color:var(--accent)}
+.payment-actions .void{color:var(--danger)}
+.link-item{border:1.5px solid var(--border-soft);border-radius:var(--r);padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.link-item:active{border-color:var(--accent);background:var(--accent-surface)}
+.link-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.link-name{font-size:13px;font-weight:700}
+.link-sub{font-size:10px;color:var(--ink-3)}
+.activity-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border-soft);font-size:12px}
+.activity-row:last-child{border-bottom:none}
+.activity-time{font-size:10px;color:var(--ink-3);flex-shrink:0;margin-left:8px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:12px;font-weight:600}
+.toggle{width:36px;height:20px;border:1.5px solid var(--border-strong);border-radius:10px;display:flex;align-items:center;padding:2px;cursor:pointer}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle-knob{width:16px;height:16px;border-radius:50%;background:var(--ink);transition:all 0.15s}
+.toggle.on .toggle-knob{margin-left:auto;background:#fff}
+.bank-card{padding:14px;border:2px solid var(--success);border-radius:var(--r-lg);background:rgba(16,185,129,0.04);position:relative}
+.bank-active{position:absolute;top:10px;right:10px;font-size:9px;font-weight:900;padding:3px 10px;border-radius:20px;background:var(--success);color:#fff}
+.bank-name{font-size:14px;font-weight:800}
+.bank-detail{font-size:12px;color:var(--ink-2)}
+.bank-number{font-size:12px;font-weight:700}
+.fab{position:fixed;bottom:80px;right:calc(50% - 190px);width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;display:grid;place-items:center;font-size:20px;z-index:60;box-shadow:0 8px 32px rgba(124,58,237,0.3)}
+.fab:active{transform:scale(0.9)}
+@media(max-width:420px){.fab{right:16px}}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;height:56px;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:50}
+.bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);border-right:1px solid var(--border-soft)}
+.bn-item:last-child{border-right:none}
+.bn-item.active{color:var(--accent);background:var(--accent-surface)}
+.bn-item svg{width:18px;height:18px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="topbar-back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="topbar-center"><div class="topbar-title">Invoices</div><div class="topbar-sub">INV-2024-017 . Monthly Maintenance</div></div>
+    <div class="topbar-right">
+      <button class="tb-btn" title="Share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      <button class="tb-btn" id="themeBtn" title="Customize"><svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button>
+      <button class="tb-btn" title="More"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+    </div>
+  </header>
+
+  <div class="action-row">
+    <button class="btn primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>Record Payment</button>
+    <button class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+    <button class="btn pill" title="Download"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  </div>
+
+  <main class="content">
+    <div class="glass">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-light));display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0;">BD</div>
+          <div>
+            <div style="font-size:14px;font-weight:900;">BIGDROPS</div>
+            <div style="font-size:10px;color:var(--ink-3);">Business Management Suite</div>
+            <div style="font-size:10px;color:var(--ink-3);margin-top:4px;line-height:1.4;">Lagos, Nigeria<br>hello@bigdrops.io</div>
+          </div>
+        </div>
+        <div class="status-pill unpaid">UNPAID</div>
+      </div>
+      <div class="doc-title">Monthly Maintenance</div>
+      <div class="meta-chips">
+        <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>INV-2024-017</div>
+        <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Issued Aug 12, 2024</div>
+        <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Due Aug 17, 2024</div>
+        <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>PO: PO-2024-042</div>
+      </div>
+      <div class="info-grid">
+        <div><div class="info-label">Client</div><div class="info-value">Acme Corp</div><div class="info-detail">John Adeyemi<br>john@acme.com</div></div>
+        <div><div class="info-label">Details</div><div class="info-detail"><strong>Payment Terms:</strong> Net 30 Days<br><strong>Custom Terms:</strong> Due in 14 days</div></div>
+      </div>
+      <div style="border-top:1px solid var(--border-soft);margin-top:14px;padding-top:10px;">
+        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:8px;">Line Items</div>
+        <div class="item-row"><div class="item-num">01</div><div class="item-body"><div class="item-name">Web Development</div><div class="item-sub">Full-stack development services</div><div class="item-meta"><span class="item-pill">1 Unit</span><span class="item-pill">Qty: 1</span><span class="item-pill">@N150,000</span></div></div><div class="item-amount">N150,000</div></div>
+        <div class="item-row"><div class="item-num">02</div><div class="item-body"><div class="item-name">UI/UX Design</div><div class="item-sub">Interface design and prototyping</div><div class="item-meta"><span class="item-pill">1 Session</span><span class="item-pill">Qty: 1</span><span class="item-pill">@N95,000</span></div></div><div class="item-amount">N95,000</div></div>
+      </div>
+      <div style="border-top:2px solid var(--accent);margin-top:10px;padding-top:10px;">
+        <div class="totals-row"><span>Subtotal</span><span style="font-weight:800;">N245,000</span></div>
+        <div class="totals-row"><span>VAT (7.5%)</span><span style="font-weight:800;">N18,375</span></div>
+        <div class="totals-grand"><span class="totals-grand-label">Grand Total</span><span class="totals-grand-value">N263,375</span></div>
+        <div class="amount-words">Two Hundred and Sixty-Three Thousand, Three Hundred and Seventy-Five Naira Only</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--border-soft);margin-top:14px;">
+        <div class="signatory-img">SIGNATURE</div>
+        <div><div class="signatory-name">Milad A.</div><div class="signatory-role">Operator</div></div>
+      </div>
+    </div>
+
+    <div class="section-card open" id="bs1"><div class="section-header" onclick="toggle('bs1')"><div class="section-icon" style="background:rgba(16,185,129,0.1);color:var(--success);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="section-title">Bank Details</div><span class="section-chevron">v</span></div><div class="section-body"><div class="bank-card"><span class="bank-active">ACTIVE</span><div class="bank-name">Zenith Bank</div><div class="bank-detail">GenGrid Power Solutions Ltd</div><div class="bank-number">1234567890</div></div></div></div>
+
+    <div class="section-card" id="bs2"><div class="section-header" onclick="toggle('bs2')"><div class="section-title">Document Options</div><span class="section-chevron">v</span></div><div class="section-body">
+      <div class="toggle-row"><span class="toggle-label">Show Bank Details</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="toggle-row"><span class="toggle-label">Show Amount in Words</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="toggle-row"><span class="toggle-label">Show VAT % in Brackets</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="toggle-row"><span class="toggle-label">Show WHT % in Brackets</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="toggle-row"><span class="toggle-label">Show Tagline</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="toggle-row"><span class="toggle-label">Show Footer</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <button style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--r);margin-top:8px;font-size:11px;font-weight:800;">Customize Template & Colors</button>
+    </div></div>
+
+    <div class="section-card open" id="bs3"><div class="section-header" onclick="toggle('bs3')"><div class="section-icon" style="background:var(--accent-surface);color:var(--accent);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg></div><div class="section-title" style="color:var(--accent);">Payment History</div><button class="section-action">Record</button><span class="section-chevron">v</span></div><div class="section-body">
+      <div class="payment-summary"><span class="label">Settled Total</span><span class="value">N150,000</span></div>
+      <div class="payment-summary"><span class="label">Balance Due</span><span class="value danger">N113,375</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);margin-bottom:4px;"><span>Payment Progress</span><span style="font-weight:800;">57%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:57%;"></div></div>
+      <div class="payment-row"><div><div class="payment-method">Transfer</div><div class="payment-date">Aug 14, 2024 . 10:30 AM</div><div class="payment-ref">REF: GTB/2024/08/14/001</div></div><div style="text-align:right;"><div class="payment-amount">N100,000</div><div class="payment-actions"><span class="receipt">Receipt #1</span><span class="void">Void</span></div></div></div>
+      <div class="payment-row"><div><div class="payment-method">Cash</div><div class="payment-date">Aug 16, 2024 . 2:15 PM</div></div><div style="text-align:right;"><div class="payment-amount">N50,000</div><div class="payment-actions"><span class="void">Void</span></div></div></div>
+    </div></div>
+
+    <div class="section-card" id="bs4"><div class="section-header" onclick="toggle('bs4')"><div class="section-title">Advance Invoice</div><button class="section-action">CREATE</button></div></div>
+
+    <div class="section-card open" id="bs5"><div class="section-header" onclick="toggle('bs5')"><div class="section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div class="section-title">Linked Documents</div><span class="section-chevron">v</span></div><div class="section-body">
+      <div class="link-item"><div class="link-icon" style="background:var(--accent-surface);color:var(--accent);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div><div class="link-name">Source Quotation</div><div class="link-sub">QT-2024-008</div></div></div>
+      <div class="link-item"><div class="link-icon" style="background:rgba(16,185,129,0.1);color:var(--success);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div><div class="link-name">CSR</div><div class="link-sub">CSR-2024-012</div></div></div>
+      <div class="link-item"><div class="link-icon" style="background:var(--accent-surface);color:var(--accent);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div><div class="link-name">Waybill</div><div class="link-sub">WB-2024-032</div></div></div>
+    </div></div>
+
+    <div class="section-card" id="bs6"><div class="section-header" onclick="toggle('bs6')"><div class="section-title">Activity & History</div><span class="section-chevron">v</span></div><div class="section-body">
+      <div class="activity-row"><span>John created this invoice</span><span class="activity-time">Aug 12, 10:32 AM</span></div>
+      <div class="activity-row"><span>Milad updated line items</span><span class="activity-time">Aug 12, 11:15 AM</span></div>
+      <div class="activity-row"><span>John recorded payment of N100,000</span><span class="activity-time">Aug 14, 10:30 AM</span></div>
+    </div></div>
+
+    <div style="height:80px;"></div>
+  </main>
+
+  <button class="fab" title="Download PDF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+
+  <nav class="bottom-nav">
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
+    <button class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
+  </nav>
+</div>
+<script>
+let dark=false;document.getElementById('themeBtn').addEventListener('click',()=>{dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.getElementById('themeIcon').innerHTML=dark?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>':'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>';});
+function toggle(id){document.getElementById(id).classList.toggle('open')}
+</script>
+</body>
+</html>
