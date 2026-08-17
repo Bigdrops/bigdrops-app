@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>BIGDROPS — Neon Synthwave</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a14;
+  --surface: rgba(15,15,30,0.85);
+  --surface-solid: #0f0f1e;
+  --ink: #e8e0f0;
+  --ink-secondary: #a090b8;
+  --ink-muted: #605070;
+  --border: rgba(255,0,128,0.25);
+  --border-light: rgba(255,255,255,0.06);
+  --accent: #ff0080;
+  --accent-2: #00e5ff;
+  --accent-3: #a855f7;
+  --danger: #ff2040;
+  --success: #00ff88;
+  --warning: #ffb800;
+  --purple: #a855f7;
+  --font-heading: 'Orbitron', monospace;
+  --font-body: 'Rajdhani', sans-serif;
+  --r: 12px;
+  --r-lg: 20px;
+  --border-w: 1px;
+  --glow: 0 0 20px rgba(255,0,128,0.3);
+  --glow-cyan: 0 0 20px rgba(0,229,255,0.3);
+  --glow-purple: 0 0 20px rgba(168,85,247,0.3);
+}
+[data-theme="light"] {
+  --bg: #f0e8f8;
+  --surface: rgba(255,255,255,0.9);
+  --surface-solid: #ffffff;
+  --ink: #1a0a2a;
+  --ink-secondary: #5a4070;
+  --ink-muted: #9080a0;
+  --border: rgba(255,0,128,0.3);
+  --border-light: rgba(0,0,0,0.08);
+  --glow: 0 0 15px rgba(255,0,128,0.15);
+  --glow-cyan: 0 0 15px rgba(0,229,255,0.15);
+  --glow-purple: 0 0 15px rgba(168,85,247,0.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font-body);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100vh;font-weight:500}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* NEON BACKGROUND GRID */
+body::before{content:'';position:fixed;inset:0;background:
+  linear-gradient(90deg,rgba(255,0,128,0.03) 1px,transparent 1px),
+  linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse at 20% 80%,rgba(255,0,128,0.08) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 20%,rgba(0,229,255,0.08) 0%,transparent 50%),
+  radial-gradient(ellipse at 50% 50%,rgba(168,85,247,0.05) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
+
+.app{display:flex;height:100vh;position:relative;z-index:1}
+
+/* SIDEBAR */
+.sidebar{width:240px;flex-shrink:0;background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:var(--border-w) solid var(--border);display:flex;flex-direction:column;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:40}
+.sidebar-head{padding:16px;border-bottom:var(--border-w) solid var(--border);display:flex;align-items:center;gap:12px}
+.sidebar-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-3));display:grid;place-items:center;font-family:var(--font-heading);font-weight:900;font-size:11px;color:#fff;border-radius:8px;box-shadow:var(--glow)}
+.sidebar-brand{font-family:var(--font-heading);font-weight:700;font-size:13px;letter-spacing:0.08em;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-nav{flex:1;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.sidebar-section{font-family:var(--font-heading);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--accent-2);padding:10px 10px 4px}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;font-weight:500;color:var(--ink-secondary);border-radius:8px;border:var(--border-w) solid transparent;transition:all 0.15s}
+.sidebar-link:active{transform:scale(0.97)}
+.sidebar-link.active{background:linear-gradient(90deg,rgba(255,0,128,0.15),rgba(168,85,247,0.1));color:var(--accent);border-color:var(--border);font-weight:700;box-shadow:var(--glow)}
+.sidebar-link svg{width:18px;height:18px;flex-shrink:0}
+.sidebar-foot{padding:12px 16px;border-top:var(--border-w) solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:50%;display:grid;place-items:center;font-family:var(--font-heading);font-weight:900;font-size:10px;color:#fff}
+.sidebar-user-name{font-weight:700;font-size:12px}
+.sidebar-user-role{font-size:10px;color:var(--ink-muted);font-family:var(--font-heading);letter-spacing:0.05em}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:var(--border-w) solid var(--border);background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:10}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.sidebar-toggle{width:34px;height:34px;border:var(--border-w) solid var(--border);border-radius:8px;display:grid;place-items:14px;background:var(--surface);transition:all 0.15s}
+.sidebar-toggle:active{transform:scale(0.92);background:var(--accent)}
+.topbar-title{font-family:var(--font-heading);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.tb-btn{width:34px;height:34px;border:var(--border-w) solid var(--border);border-radius:8px;display:grid;place-items:center;font-size:14px;transition:all 0.15s;position:relative;background:var(--surface)}
+.tb-btn:active{transform:scale(0.9);background:var(--accent)}
+.tb-btn.active{background:var(--accent);color:#fff;box-shadow:var(--glow)}
+.tb-btn .pip{position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--danger);border:2px solid var(--bg);border-radius:50%}
+.tb-ai{height:34px;padding:0 14px;background:linear-gradient(90deg,var(--accent),var(--accent-3));color:#fff;border:none;border-radius:8px;font-family:var(--font-heading);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:6px;transition:all 0.15s;box-shadow:var(--glow)}
+.tb-ai:active{transform:scale(0.95)}
+.tb-ai svg{width:14px;height:14px}
+.tb-refresh{width:34px;height:34px;border:var(--border-w) solid var(--border);border-radius:8px;display:grid;place-items:center;background:var(--surface);transition:all 0.15s}
+.tb-refresh:active{transform:scale(0.9);background:var(--accent-2)}
+.tb-refresh svg{width:18px;height:18px}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi-card{border:var(--border-w) solid var(--border);border-radius:var(--r);padding:14px;background:var(--surface);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:6px;transition:all 0.15s;box-shadow:var(--glow)}
+.kpi-card:active{transform:scale(0.97);box-shadow:0 0 30px rgba(255,0,128,0.4)}
+.kpi-label{font-family:var(--font-heading);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent-2)}
+.kpi-value{font-family:var(--font-heading);font-size:20px;font-weight:900}
+.kpi-bar{display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden}
+.kpi-seg{flex:1;background:var(--border-light);border-radius:3px}
+.kpi-seg.balance{background:var(--warning)}
+.kpi-seg.overdue{background:var(--danger)}
+.kpi-seg.invoices{background:var(--accent-3)}
+.kpi-seg.payments{background:var(--success)}
+.kpi-trend{font-family:var(--font-heading);font-size:9px;color:var(--ink-muted);letter-spacing:0.05em;display:flex;align-items:center;gap:4px}
+.kpi-trend .up{color:var(--success);font-weight:700}
+.kpi-trend .down{color:var(--danger);font-weight:700}
+.kpi-trend svg{width:10px;height:10px}
+
+/* SMART BANNER */
+.smart-banner{border:var(--border-w) solid var(--border);border-radius:var(--r);padding:14px;background:var(--surface);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-start;gap:10px;position:relative;box-shadow:var(--glow)}
+.sb-dot{width:8px;height:8px;background:var(--danger);border-radius:50%;margin-top:4px;flex-shrink:0;box-shadow:0 0 8px var(--danger)}
+.sb-body{flex:1}
+.sb-title{font-weight:700;font-size:13px}
+.sb-text{font-size:12px;color:var(--ink-secondary);margin-top:3px}
+.sb-cta{display:inline-block;margin-top:8px;font-family:var(--font-heading);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:linear-gradient(90deg,var(--accent),var(--accent-3));color:#fff;padding:6px 14px;border-radius:6px;transition:all 0.15s}
+.sb-cta:active{transform:scale(0.95)}
+.sb-close{position:absolute;top:8px;right:8px;font-size:16px;color:var(--ink-muted);background:none;border:none;cursor:pointer}
+
+/* SECTION HEADERS */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.section-title{font-family:var(--font-heading);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-2)}
+.section-link{font-family:var(--font-heading);font-size:9px;color:var(--ink-muted);cursor:pointer;letter-spacing:0.05em}
+
+/* NOTIFICATIONS STRIP */
+.notif-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none}
+.notif-scroll::-webkit-scrollbar{display:none}
+.notif-card{min-width:140px;border:var(--border-w) solid var(--border);border-radius:var(--r);padding:12px;background:var(--surface);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:6px;transition:all 0.15s;flex-shrink:0}
+.notif-card:active{transform:scale(0.96);background:rgba(255,0,128,0.1)}
+.notif-card-title{font-weight:700;font-size:11px;line-height:1.3}
+.notif-card-desc{font-size:10px;color:var(--ink-secondary);line-height:1.4}
+.notif-card-time{font-family:var(--font-heading);font-size:8px;color:var(--ink-muted);margin-top:auto;letter-spacing:0.05em}
+
+/* DOCUMENT FEED */
+.feed-list{display:flex;flex-direction:column;gap:6px}
+.feed-row{display:flex;align-items:center;gap:10px;border:var(--border-w) solid var(--border);border-radius:var(--r);padding:10px 12px;background:var(--surface);backdrop-filter:blur(10px);transition:all 0.15s}
+.feed-row:active{transform:scale(0.98);background:rgba(255,0,128,0.08)}
+.feed-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent-3));border-radius:8px;display:grid;place-items:center;color:#fff;flex-shrink:0}
+.feed-icon svg{width:14px;height:14px}
+.feed-lines{flex:1;min-width:0}
+.feed-primary{font-family:var(--font-heading);font-weight:700;font-size:11px;display:flex;align-items:center;gap:6px;letter-spacing:0.03em}
+.feed-secondary{font-size:11px;color:var(--ink-secondary);margin-top:2px}
+.feed-amount{font-family:var(--font-heading);font-weight:700;font-size:12px;text-align:right;flex-shrink:0}
+.feed-meta{font-family:var(--font-heading);font-size:8px;color:var(--ink-muted);text-align:right;letter-spacing:0.05em}
+.badge{display:inline-block;padding:1px 6px;font-family:var(--font-heading);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;border-radius:4px}
+.badge.paid{color:var(--success);background:rgba(0,255,136,0.1)}
+.badge.pending{color:var(--warning);background:rgba(255,184,0,0.1)}
+.badge.draft{color:var(--ink-muted);background:rgba(255,255,255,0.05)}
+
+/* AUDIT TRAIL */
+.audit-list{display:flex;flex-direction:column}
+.audit-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border-light)}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.audit-dot.ok{background:var(--success);box-shadow:0 0 6px var(--success)}
+.audit-dot.warn{background:var(--warning);box-shadow:0 0 6px var(--warning)}
+.audit-dot.bad{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+.audit-body{flex:1}
+.audit-title{font-size:12px;font-weight:600}
+.audit-meta{font-family:var(--font-heading);font-size:9px;color:var(--ink-muted);margin-top:2px;letter-spacing:0.05em}
+
+/* BOTTOM NAV - floating pill */
+.bottom-nav{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:50;height:48px;background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:var(--border-w) solid var(--border);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,0.4),var(--glow)}
+.bottom-nav-inner{display:flex;align-items:center;height:100%;padding:0 4px}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--ink-muted);font-size:7px;font-family:var(--font-heading);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;height:40px;border-radius:20px;transition:all 0.2s}
+.bn-item svg{width:18px;height:18px}
+.bn-item.active{background:linear-gradient(90deg,var(--accent),var(--accent-3));color:#fff;box-shadow:var(--glow)}
+.bn-item:active{transform:scale(0.9)}
+
+/* FAB */
+.fab-wrap{position:fixed;bottom:72px;right:16px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.fab{width:50px;height:50px;background:linear-gradient(135deg,var(--accent),var(--accent-3));color:#fff;border:none;border-radius:50%;font-size:24px;font-weight:300;display:grid;place-items:center;box-shadow:0 0 20px rgba(255,0,128,0.4);transition:all 0.2s;z-index:2}
+.fab:active{transform:scale(0.9)}
+.fab.open{transform:rotate(45deg);background:var(--danger)}
+.quick-popup{width:180px;background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:var(--border-w) solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,0.5),var(--glow);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(8px);pointer-events:none;transition:all 0.2s}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:10px 14px;font-size:12px;font-weight:500;border-bottom:1px solid var(--border-light);transition:all 0.15s}
+.popup-item:last-child{border-bottom:none}
+.popup-item:active{background:rgba(255,0,128,0.15)}
+
+/* SCRIM */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:35;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.scrim.visible{opacity:1;pointer-events:auto}
+
+/* NOTIF PANEL */
+.notif-panel{position:fixed;top:56px;right:16px;width:300px;max-height:400px;background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:var(--border-w) solid var(--border);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,0.5),var(--glow);z-index:50;display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all 0.25s}
+.notif-panel.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:var(--border-w) solid var(--border)}
+.np-title{font-family:var(--font-heading);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent-2)}
+.np-clear{font-family:var(--font-heading);font-size:9px;color:var(--ink-muted);cursor:pointer;letter-spacing:0.05em}
+.np-clear:active{color:var(--danger)}
+.np-list{max-height:320px;overflow-y:auto}
+.np-row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--border-light);transition:background 0.15s}
+.np-row:active{background:rgba(255,0,128,0.08)}
+.np-row:last-child{border-bottom:none}
+.np-dot{width:6px;height:6px;background:var(--danger);border-radius:50%;margin-top:4px;flex-shrink:0;box-shadow:0 0 6px var(--danger)}
+.np-dot.read{background:var(--border-light);box-shadow:none}
+.np-lines{flex:1}
+.np-l1{height:7px;width:85%;background:var(--border-light);border-radius:4px}
+.np-l2{height:6px;width:55%;background:rgba(255,0,128,0.1);border:1px solid var(--border);margin-top:5px;border-radius:4px}
+
+/* AI PANEL */
+.ai-overlay{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.ai-overlay.open{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-width:480px;max-height:78vh;background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:var(--border-w) solid var(--border);border-bottom:none;border-radius:var(--r-lg) var(--r-lg) 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:0 -4px 32px rgba(255,0,128,0.2)}
+.ai-overlay.open .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:var(--border-w) solid var(--border)}
+.ai-head-left{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:50%;display:grid;place-items:center;font-family:var(--font-heading);font-weight:900;font-size:10px;color:#fff;box-shadow:var(--glow)}
+.ai-title{font-family:var(--font-heading);font-weight:700;font-size:12px;letter-spacing:0.05em}
+.ai-sub{font-family:var(--font-heading);font-size:8px;color:var(--ink-muted);letter-spacing:0.05em}
+.ai-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:80%;padding:10px 14px;font-size:12px;line-height:1.5;border-radius:12px}
+.ai-msg.bot{align-self:flex-start;background:var(--surface-solid);border:var(--border-w) solid var(--border)}
+.ai-msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--accent-3));color:#fff}
+.ai-msg strong{font-weight:700}
+.typing{display:inline-flex;gap:4px;padding:10px 14px;border:var(--border-w) solid var(--border);border-radius:12px;align-self:flex-start}
+.typing span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:neonPulse 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.15s}
+.typing span:nth-child(3){animation-delay:0.3s}
+@keyframes neonPulse{0%,60%,100%{opacity:0.3;box-shadow:none}30%{opacity:1;box-shadow:0 0 8px var(--accent)}}
+.ai-chips{display:flex;flex-direction:column;gap:4px;padding:0 16px 10px}
+.ai-chip{display:block;width:100%;text-align:left;padding:8px 12px;font-size:11px;font-weight:500;border:var(--border-w) solid var(--border);border-radius:8px;background:var(--surface);transition:all 0.15s}
+.ai-chip:active{background:rgba(255,0,128,0.15);transform:scale(0.97)}
+.ai-input-row{display:flex;gap:6px;padding:10px 16px 14px;border-top:var(--border-w) solid var(--border)}
+.ai-input{flex:1;height:36px;padding:0 12px;border:var(--border-w) solid var(--border);border-radius:8px;background:var(--surface-solid);font-family:var(--font-body);font-size:12px;color:var(--ink);outline:none}
+.ai-input:focus{border-color:var(--accent);box-shadow:var(--glow)}
+.ai-send{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-3));color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;display:grid;place-items:center;transition:all 0.15s;box-shadow:var(--glow)}
+.ai-send:active{transform:scale(0.9)}
+
+/* LOADING SCREEN */
+.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.loading-screen.active{opacity:1;pointer-events:auto}
+.loading-spinner{width:48px;height:48px;border:3px solid var(--border-light);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-tip{text-align:center;max-width:280px}
+.loading-tip-label{font-family:var(--font-heading);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-2);margin-bottom:8px}
+.loading-tip-text{font-size:13px;color:var(--ink-secondary);line-height:1.5}
+.loading-progress{width:200px;height:3px;background:var(--border-light);border-radius:2px;overflow:hidden}
+.loading-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:2px;width:0%;transition:width 0.3s}
+
+/* TOAST */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:10px 18px;background:var(--surface);backdrop-filter:blur(20px);color:var(--accent);border:var(--border-w) solid var(--border);border-radius:8px;font-family:var(--font-heading);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;box-shadow:var(--glow);opacity:0;pointer-events:none;transition:all 0.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:240px;transform:translateX(-100%);z-index:40}
+  .sidebar.open{transform:translateX(0)}
+  .bottom-nav{display:block}
+  .content{padding:12px;padding-bottom:72px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .fab-wrap{bottom:68px;right:12px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">BD</div>
+      <div class="sidebar-brand">BIGDROPS</div>
+    </div>
+    <nav class="sidebar-nav" aria-label="Sections">
+      <div class="sidebar-section">Documents</div>
+      <a href="#" class="sidebar-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
+      <div class="sidebar-section">Operations</div>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-avatar">MA</div>
+      <div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">BIGDROPS / Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="tb-refresh" id="refreshBtn" title="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+        <button class="tb-btn" id="themeBtn" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="tb-btn" id="notifBtn" title="Notifications" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="pip" id="pip"></span>
+        </button>
+        <button class="tb-ai" id="aiBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+          STEWARD
+        </button>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <!-- KPI GRID -->
+      <section>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Balance</div>
+            <div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+            <div class="kpi-value">N10,000</div>
+            <div class="kpi-trend"><span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg> +12%</span> last week</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Overdue</div>
+            <div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+            <div class="kpi-value">N56,000</div>
+            <div class="kpi-trend"><span class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg> +4%</span> vs yesterday</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Invoices</div>
+            <div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-trend"><span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg> -2</span> pending review</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Payments</div>
+            <div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+            <div class="kpi-value">N89,000</div>
+            <div class="kpi-trend"><span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg> +18%</span> this month</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SMART BANNER -->
+      <section class="smart-banner" id="smartBanner">
+        <div class="sb-dot"></div>
+        <div class="sb-body">
+          <div class="sb-title">3 payments may be unrecorded</div>
+          <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+          <div class="sb-cta" id="sbCta">Record now</div>
+        </div>
+        <button class="sb-close" id="sbClose" aria-label="Dismiss">x</button>
+      </section>
+
+      <!-- NOTIFICATIONS STRIP -->
+      <section>
+        <div class="section-head">
+          <div class="section-title">Recent Alerts</div>
+          <span class="section-link" id="seeAll">see all</span>
+        </div>
+        <div class="notif-scroll" id="notifScroll"></div>
+      </section>
+
+      <!-- DOCUMENT FEED -->
+      <section>
+        <div class="section-head"><div class="section-title">Recent Documents</div></div>
+        <div class="feed-list" id="feedList"></div>
+      </section>
+
+      <!-- AUDIT TRAIL -->
+      <section>
+        <div class="section-head"><div class="section-title">Audit Trail</div></div>
+        <div class="audit-list" id="auditList"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation">
+  <div class="bottom-nav-inner">
+    <button class="bn-item active" role="tab" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="bn-item" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span>Projects</span>
+    </button>
+    <button class="bn-item" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <span>Sales</span>
+    </button>
+    <button class="bn-item" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span>Clients</span>
+    </button>
+    <button class="bn-item" role="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      <span>More</span>
+    </button>
+  </div>
+</nav>
+
+<!-- FAB -->
+<div class="fab-wrap" id="fabWrap">
+  <div class="quick-popup" id="quickPopup">
+    <button class="popup-item">Invoice</button>
+    <button class="popup-item">Quotation</button>
+    <button class="popup-item">Purchase orders</button>
+    <button class="popup-item">Boq</button>
+    <button class="popup-item">Waybill</button>
+    <button class="popup-item">Csr</button>
+  </div>
+  <button class="fab" id="fabBtn" aria-label="Quick actions">+</button>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head">
+    <div class="np-title">Notifications</div>
+    <span class="np-clear" id="npClear">clear all</span>
+  </div>
+  <div class="np-list" id="npList"></div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-head">
+      <div class="ai-head-left">
+        <div class="ai-avatar">BD</div>
+        <div>
+          <div class="ai-title">STEWART</div>
+          <div class="ai-sub">AI Assistant</div>
+        </div>
+      </div>
+      <button id="aiClose" aria-label="Close AI panel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="ai-body" id="aiBody">
+      <div class="ai-msg bot"><strong>Welcome back, Milad.</strong><br>3 payments may need attention. How can I help?</div>
+    </div>
+    <div class="ai-chips" id="aiChips">
+      <button class="ai-chip">Review unrecorded payments</button>
+      <button class="ai-chip">Generate weekly report</button>
+      <button class="ai-chip">Show overdue invoices</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Ask Stewart..." type="text" />
+      <button class="ai-send" id="aiSend" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-progress"><div class="loading-progress-bar" id="progressBar"></div></div>
+  <div class="loading-tip">
+    <div class="loading-tip-label">Did you know?</div>
+    <div class="loading-tip-text" id="loadingTip"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  /* === SOUND ENGINE (Web Audio API synth sounds) === */
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx;
+  function ensureAudio(){if(!audioCtx)audioCtx=new AudioCtx()}
+  function playTone(freq,dur,type,vol){
+    ensureAudio();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.08,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+dur);
+  }
+  function sndClick(){playTone(880,0.08,'sine',0.06)}
+  function sndOpen(){playTone(523,0.1,'sine',0.06);setTimeout(()=>playTone(659,0.1,'sine',0.06),60)}
+  function sndClose(){playTone(659,0.08,'sine',0.05);setTimeout(()=>playTone(523,0.08,'sine',0.05),50)}
+  function sndToggle(){playTone(440,0.06,'triangle',0.05)}
+  function sndRefresh(){playTone(523,0.15,'sine',0.05);setTimeout(()=>playTone(784,0.15,'sine',0.05),100);setTimeout(()=>playTone(1047,0.2,'sine',0.04),200)}
+  function sndNotif(){playTone(880,0.08,'sine',0.05);setTimeout(()=>playTone(1100,0.1,'sine',0.04),80)}
+
+  /* === DATA === */
+  const notifications=[
+    {title:'Overdue Alert',desc:'Invoice INV-2024-017 is 5 days past due.',time:'2h ago'},
+    {title:'Payment Received',desc:'N45,000 from Acme Corp posted.',time:'4h ago'},
+    {title:'Waybill Delivered',desc:'WB-2024-032 confirmed delivered.',time:'6h ago'},
+    {title:'Quotation Accepted',desc:'QT-2024-008 accepted by BlueSky Ltd.',time:'1d ago'},
+    {title:'Compliance Due',desc:'Q2 filing deadline in 3 days.',time:'1d ago'}
+  ];
+  const documents=[
+    {ref:'INV-2024-017',client:'Acme Corp',contact:'John Adeyemi',amount:'N245,000',status:'pending',date:'Aug 12, 2024',due:'Aug 17, 2024',notes:'Follow up on payment terms.',items:[{name:'Web Development',qty:1,rate:150000,total:150000},{name:'UI/UX Design',qty:1,rate:95000,total:95000}]},
+    {ref:'INV-2024-016',client:'BlueSky Ltd',contact:'Sarah Okafor',amount:'N180,000',status:'paid',date:'Aug 10, 2024',due:'Aug 15, 2024',notes:'Payment received in full.',items:[{name:'Mobile App Design',qty:1,rate:120000,total:120000},{name:'API Integration',qty:1,rate:60000,total:60000}]},
+    {ref:'QT-2024-008',client:'GreenLeaf Ltd',contact:'Mike Obi',amount:'N320,000',status:'pending',date:'Aug 11, 2024',due:'Aug 20, 2024',notes:'Awaiting client approval.',items:[{name:'Brand Identity',qty:1,rate:200000,total:200000},{name:'Stationery Design',qty:1,rate:120000,total:120000}]},
+    {ref:'INV-2024-015',client:'SunTech',contact:'Amina Bello',amount:'N95,000',status:'paid',date:'Aug 8, 2024',due:'Aug 12, 2024',notes:'Settled.',items:[{name:'Consulting',qty:8,rate:10000,total:80000},{name:'Report Writing',qty:1,rate:15000,total:15000}]},
+    {ref:'INV-2024-014',client:'DataFlow',contact:'Tunde Martins',amount:'N410,000',status:'overdue',date:'Aug 5, 2024',due:'Aug 10, 2024',notes:'Chasing payment.',items:[{name:'Data Pipeline',qty:1,rate:300000,total:300000},{name:'Dashboard Build',qty:1,rate:110000,total:110000}]},
+    {ref:'WB-2024-032',client:'BuildRight',contact:'Chioma Eze',amount:'N0',status:'delivered',date:'Aug 14, 2024',due:'-',notes:'Waybill for site materials.',items:[{name:'PVC Pipes (50mm)',qty:200,rate:0,total:0},{name:'Cement Bags',qty:50,rate:0,total:0}]},
+    {ref:'QT-2024-007',client:'Orion Tech',contact:'Femi Adekunle',amount:'N155,000',status:'draft',date:'Aug 13, 2024',due:'Aug 22, 2024',notes:'Draft under review.',items:[{name:'Cloud Migration',qty:1,rate:100000,total:100000},{name:'Security Audit',qty:1,rate:55000,total:55000}]},
+    {ref:'INV-2024-013',client:'PeakMinds',contact:'Ngozi Uche',amount:'N72,000',status:'paid',date:'Aug 3, 2024',due:'Aug 7, 2024',notes:'Training session invoice.',items:[{name:'Training Session',qty:2,rate:30000,total:60000},{name:'Materials',qty:1,rate:12000,total:12000}]}
+  ];
+  const audit=[
+    {text:'Invoice INV-2024-017 sent to client',meta:'Today, 10:32 AM',status:'ok'},
+    {text:'Payment N45,000 matched to INV-2024-016',meta:'Today, 09:15 AM',status:'ok'},
+    {text:'Quotation QT-2024-008 pending approval 48h+',meta:'Yesterday, 02:00 PM',status:'warn'},
+    {text:'Invoice INV-2024-014 overdue by 7 days',meta:'Yesterday, 08:00 AM',status:'bad'},
+    {text:'Waybill WB-2024-032 delivered and confirmed',meta:'Aug 14, 04:45 PM',status:'ok'}
+  ];
+  const tips=[
+    'You can swipe left on notification cards to dismiss them.',
+    'Tap any KPI card to see a detailed breakdown.',
+    'The AI assistant can generate reports from your documents.',
+    'Audit trail entries are color-coded by severity.',
+    'Use the FAB to quickly create new documents.',
+    'Dark mode reduces eye strain during late-night sessions.',
+    'Document badges show real-time status at a glance.'
+  ];
+
+  /* === DOM REFS === */
+  const sidebar=document.getElementById('sidebar');
+  const sidebarToggle=document.getElementById('sidebarToggle');
+  const scrim=document.getElementById('scrim');
+  const themeBtn=document.getElementById('themeBtn');
+  const themeIcon=document.getElementById('themeIcon');
+  const notifBtn=document.getElementById('notifBtn');
+  const notifPanel=document.getElementById('notifPanel');
+  const aiBtn=document.getElementById('aiBtn');
+  const aiOverlay=document.getElementById('aiOverlay');
+  const aiClose=document.getElementById('aiClose');
+  const aiBody=document.getElementById('aiBody');
+  const aiInput=document.getElementById('aiInput');
+  const aiSend=document.getElementById('aiSend');
+  const aiChips=document.getElementById('aiChips');
+  const fabBtn=document.getElementById('fabBtn');
+  const fabWrap=document.getElementById('fabWrap');
+  const quickPopup=document.getElementById('quickPopup');
+  const refreshBtn=document.getElementById('refreshBtn');
+  const loadingScreen=document.getElementById('loadingScreen');
+  const progressBar=document.getElementById('progressBar');
+  const loadingTip=document.getElementById('loadingTip');
+  const toast=document.getElementById('toast');
+  const notifScroll=document.getElementById('notifScroll');
+  const feedList=document.getElementById('feedList');
+  const auditList=document.getElementById('auditList');
+  const npList=document.getElementById('npList');
+  const bottomNav=document.getElementById('bottomNav');
+
+  let openPanel=null;
+
+  /* === RENDER NOTIFICATIONS === */
+  notifications.forEach(n=>{
+    const card=document.createElement('div');
+    card.className='notif-card';
+    card.innerHTML=`<div class="notif-card-title">${n.title}</div><div class="notif-card-desc">${n.desc}</div><div class="notif-card-time">${n.time}</div>`;
+    card.addEventListener('click',()=>{sndNotif();showToast(n.title)});
+    notifScroll.appendChild(card);
+  });
+
+  /* === RENDER DOCUMENT FEED === */
+  documents.slice(0,5).forEach(d=>{
+    const row=document.createElement('div');
+    row.className='feed-row';
+    const iconColor=d.status==='paid'?'var(--success)':d.status==='pending'?'var(--warning)':d.status==='overdue'?'var(--danger)':d.status==='draft'?'var(--ink-muted)':'var(--accent-2)';
+    row.innerHTML=`
+      <div class="feed-icon" style="background:${iconColor}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      </div>
+      <div class="feed-lines">
+        <div class="feed-primary">${d.ref} <span class="badge ${d.status}">${d.status}</span></div>
+        <div class="feed-secondary">${d.client}</div>
+      </div>
+      <div>
+        <div class="feed-amount">${d.amount}</div>
+        <div class="feed-meta">${d.date}</div>
+      </div>`;
+    row.addEventListener('click',()=>{sndClick();showToast(`${d.ref} — ${d.client}`)});
+    feedList.appendChild(row);
+  });
+
+  /* === RENDER AUDIT === */
+  audit.forEach(a=>{
+    const row=document.createElement('div');
+    row.className='audit-row';
+    row.innerHTML=`<div class="audit-dot ${a.status}"></div><div class="audit-body"><div class="audit-title">${a.text}</div><div class="audit-meta">${a.meta}</div></div>`;
+    auditList.appendChild(row);
+  });
+
+  /* === RENDER NOTIF PANEL === */
+  notifications.forEach((n,i)=>{
+    const row=document.createElement('div');
+    row.className='np-row';
+    row.innerHTML=`<div class="np-dot${i>1?' read':''}"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div>`;
+    row.addEventListener('click',()=>{sndClick();showToast(n.title)});
+    npList.appendChild(row);
+  });
+
+  /* === PANEL MANAGEMENT === */
+  function closeAll(){
+    if(openPanel==='sidebar'){sidebar.classList.remove('open');scrim.classList.remove('visible');sndClose()}
+    if(openPanel==='notif'){notifPanel.classList.remove('open');notifBtn.classList.remove('active');notifBtn.setAttribute('aria-expanded','false');sndClose()}
+    if(openPanel==='ai'){aiOverlay.classList.remove('open');sndClose()}
+    if(openPanel==='fab'){quickPopup.classList.remove('open');fabBtn.classList.remove('open');sndClose()}
+    openPanel=null;
+  }
+
+  sidebarToggle.addEventListener('click',()=>{
+    if(openPanel==='sidebar'){closeAll()}
+    else{closeAll();sidebar.classList.add('open');scrim.classList.add('visible');openPanel='sidebar';sndOpen()}
+  });
+  scrim.addEventListener('click',()=>{closeAll()});
+  notifBtn.addEventListener('click',()=>{
+    if(openPanel==='notif'){closeAll()}
+    else{closeAll();notifPanel.classList.add('open');notifBtn.classList.add('active');notifBtn.setAttribute('aria-expanded','true');openPanel='notif';sndOpen()}
+  });
+  aiBtn.addEventListener('click',()=>{
+    if(openPanel==='ai'){closeAll()}
+    else{closeAll();aiOverlay.classList.add('open');openPanel='ai';sndOpen()}
+  });
+  aiClose.addEventListener('click',()=>{closeAll()});
+  fabBtn.addEventListener('click',()=>{
+    if(openPanel==='fab'){closeAll()}
+    else{closeAll();quickPopup.classList.add('open');fabBtn.classList.add('open');openPanel='fab';sndOpen()}
+  });
+  document.querySelectorAll('.popup-item').forEach(item=>{
+    item.addEventListener('click',()=>{sndClick();showToast('Creating ' + item.textContent);closeAll()});
+  });
+
+  /* === BOTTOM NAV === */
+  document.querySelectorAll('.bn-item').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.bn-item').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false')});
+      tab.classList.add('active');tab.setAttribute('aria-selected','true');
+      sndToggle();showToast(tab.querySelector('span').textContent);
+    });
+  });
+
+  /* === AI CHAT === */
+  aiChips.querySelectorAll('.ai-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      sndClick();
+      addUserMsg(chip.textContent);
+      aiChips.style.display='none';
+      setTimeout(()=>{
+        addBotMsg('I\'ll look into that for you. Based on your current data, here\'s what I found...');
+        showTyping();
+        setTimeout(()=>{
+          removeTyping();
+          addBotMsg('You have <strong>2 overdue invoices</strong> totaling N482,000 and <strong>3 pending quotations</strong> worth N475,000. Want me to send reminders?');
+          aiChips.style.display='flex';
+        },1200);
+      },400);
+    });
+  });
+  function addUserMsg(text){const m=document.createElement('div');m.className='ai-msg user';m.textContent=text;aiBody.appendChild(m);aiBody.scrollTop=aiBody.scrollHeight}
+  function addBotMsg(html){const m=document.createElement('div');m.className='ai-msg bot';m.innerHTML=html;aiBody.appendChild(m);aiBody.scrollTop=aiBody.scrollHeight}
+  function showTyping(){const t=document.createElement('div');t.className='typing';t.id='typingInd';t.innerHTML='<span></span><span></span><span></span>';aiBody.appendChild(t);aiBody.scrollTop=aiBody.scrollHeight}
+  function removeTyping(){const t=document.getElementById('typingInd');if(t)t.remove()}
+  function sendAi(){const v=aiInput.value.trim();if(!v)return;sndClick();addUserMsg(v);aiInput.value='';aiChips.style.display='none';showTyping();setTimeout(()=>{removeTyping();addBotMsg('I understand. Let me analyze that and get back to you with relevant insights from your dashboard data.');aiChips.style.display='flex'},1200)}
+  aiSend.addEventListener('click',sendAi);
+  aiInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendAi()});
+
+  /* === THEME === */
+  let dark=true;
+  themeBtn.addEventListener('click',()=>{
+    dark=!dark;
+    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    themeIcon.innerHTML=dark?'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>':'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    sndToggle();showToast(dark?'Dark mode':'Light mode');
+  });
+
+  /* === REFRESH === */
+  refreshBtn.addEventListener('click',()=>{
+    sndRefresh();
+    loadingTip.textContent=tips[Math.floor(Math.random()*tips.length)];
+    loadingScreen.classList.add('active');
+    progressBar.style.width='0%';
+    let w=0;
+    const iv=setInterval(()=>{w+=Math.random()*15+5;if(w>=100){w=100;clearInterval(iv);setTimeout(()=>{loadingScreen.classList.remove('active');showToast('Dashboard refreshed')},300)}progressBar.style.width=w+'%'},120);
+  });
+
+  /* === SMART BANNER === */
+  document.getElementById('sbClose').addEventListener('click',()=>{
+    sndClose();document.getElementById('smartBanner').style.display='none';
+  });
+  document.getElementById('sbCta').addEventListener('click',()=>{
+    sndClick();showToast('Recording payments...');
+  });
+
+  /* === TOAST === */
+  let toastTimer;
+  function showToast(msg){clearTimeout(toastTimer);toast.textContent=msg;toast.classList.add('show');toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
+
+  /* === KEYBOARD === */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+
+  /* === DEFAULT: auto-select first notification === */
+  notifBtn.click();
+  setTimeout(closeAll,100);
+})();
+</script>
+</body>
+</html>

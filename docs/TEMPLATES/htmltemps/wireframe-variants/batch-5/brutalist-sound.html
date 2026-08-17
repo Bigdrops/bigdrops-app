@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS — Brutalist Sound</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#F5F5F0;--surface:#FFFFFF;--ink:#0A0A0A;--ink-2:#555;--ink-3:#999;--border:#0A0A0A;--border-light:#DDD;--accent:#CCFF00;--accent-dark:#A3CC00;--accent-fg:#0A0A0A;--danger:#FF3333;--success:#00CC66;--warning:#FF9900;--purple:#7733FF;--font-heading:'Space Mono',monospace;--font-body:'Inter',sans-serif;--font-mono:'Space Mono',monospace;--r:0px;--shadow:none;--shadow-lg:4px 4px 0px #0A0A0A}
+[data-theme="dark"]{--bg:#0A0A0A;--surface:#141414;--ink:#F0F0F0;--ink-2:#AAA;--ink-3:#666;--border:#F0F0F0;--border-light:#333;--accent:#CCFF00;--shadow:none;--shadow-lg:4px 4px 0px #CCFF00}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{display:flex;height:100vh}
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:3px solid var(--border);display:flex;flex-direction:column;transition:transform .25s cubic-bezier(.4,0,.2,1);z-index:40}
+.sidebar-head{padding:16px;border-bottom:3px solid var(--border);display:flex;align-items:center;gap:12px}
+.sidebar-logo{width:32px;height:32px;background:var(--ink);color:var(--accent);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:14px;flex-shrink:0}
+.sidebar-brand{font-family:var(--font-heading);font-weight:700;font-size:14px;letter-spacing:-.02em}
+.sidebar-nav{flex:1;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.sidebar-section{font-family:var(--font-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);padding:8px 8px 4px}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;font-weight:500;color:var(--ink-2);border:2px solid transparent;transition:all .1s}
+.sidebar-link:hover{background:var(--accent);color:var(--ink);border-color:var(--border)}
+.sidebar-link.active{background:var(--ink);color:var(--accent);border-color:var(--border);font-weight:700}
+.sidebar-link svg{width:18px;height:18px;flex-shrink:0}
+.sidebar-foot{padding:12px 16px;border-top:3px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:30px;height:30px;background:var(--accent);border:2px solid var(--border);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:11px;color:var(--ink)}
+.sidebar-user-name{font-weight:700;font-size:12px}
+.sidebar-user-role{font-size:10px;color:var(--ink-3);font-family:var(--font-mono)}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:3px solid var(--border);background:var(--surface);z-index:10}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-title{font-family:var(--font-heading);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.tb-btn{width:34px;height:34px;border:2px solid var(--border);display:grid;place-items:center;font-size:14px;transition:all .1s;position:relative;background:var(--surface)}
+.tb-btn:hover{background:var(--accent)}
+.tb-btn.active{background:var(--ink);color:var(--accent);border-color:var(--border)}
+.tb-btn .pip{position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--danger);border:2px solid var(--surface)}
+.tb-ai{height:34px;padding:0 14px;background:var(--ink);color:var(--accent);border:2px solid var(--border);font-family:var(--font-heading);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;transition:all .1s}
+.tb-ai:hover{background:var(--accent);color:var(--ink)}
+.tb-ai svg{width:14px;height:14px}
+.sidebar-toggle{width:34px;height:34px;border:2px solid var(--border);display:grid;place-items:center;background:var(--surface);transition:all .1s;flex-shrink:0}
+.sidebar-toggle:hover{background:var(--accent)}
+.content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi-card{border:2px solid var(--border);padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.kpi-label{font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.kpi-value{font-family:var(--font-heading);font-size:20px;font-weight:700}
+.kpi-bar{display:flex;gap:2px;height:8px}
+.kpi-seg{flex:1;background:var(--border-light)}
+.kpi-seg.balance{background:var(--accent)}
+.kpi-seg.overdue{background:var(--danger)}
+.kpi-seg.invoices{background:var(--purple)}
+.kpi-seg.payments{background:var(--success)}
+.kpi-trend{font-family:var(--font-mono);font-size:10px;color:var(--ink-3)}
+.kpi-trend .up{color:var(--success);font-weight:700}
+.kpi-trend .down{color:var(--danger);font-weight:700}
+/* SMART BANNER */
+.smart-banner{border:3px solid var(--border);padding:12px 14px;background:var(--surface);display:flex;align-items:flex-start;gap:10px;position:relative}
+.sb-dot{width:10px;height:10px;background:var(--danger);margin-top:4px;flex-shrink:0}
+.sb-body{flex:1}
+.sb-title{font-family:var(--font-heading);font-weight:700;font-size:13px}
+.sb-text{font-size:12px;color:var(--ink-2);margin-top:3px}
+.sb-cta{display:inline-block;margin-top:8px;background:var(--ink);color:var(--accent);padding:5px 12px;font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .1s}
+.sb-cta:hover{background:var(--accent);color:var(--ink)}
+.sb-close{position:absolute;top:8px;right:8px;font-size:16px;color:var(--ink-3)}
+/* SECTIONS */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.section-title{font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.section-link{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);cursor:pointer}
+.section-link:hover{color:var(--ink)}
+.notif-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.notif-scroll::-webkit-scrollbar{height:3px}
+.notif-scroll::-webkit-scrollbar-thumb{background:var(--ink-muted)}
+.notif-card{min-width:130px;border:2px solid var(--border);padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:6px;transition:all .1s}
+.notif-card:hover{background:var(--accent);transform:translate(-2px,-2px);box-shadow:var(--shadow-lg)}
+.notif-card-title{font-family:var(--font-heading);font-weight:700;font-size:11px;line-height:1.3}
+.notif-card-desc{font-size:10px;color:var(--ink-2);line-height:1.4}
+.notif-card-time{font-family:var(--font-mono);font-size:9px;color:var(--ink-3);margin-top:auto}
+.feed-list{display:flex;flex-direction:column;gap:6px}
+.feed-row{display:flex;align-items:center;gap:10px;border:2px solid var(--border);padding:10px 12px;background:var(--surface);cursor:pointer;transition:all .1s}
+.feed-row:hover{background:var(--accent);transform:translate(-2px,-2px);box-shadow:var(--shadow-lg)}
+.feed-icon{width:28px;height:28px;background:var(--ink);color:var(--accent);display:grid;place-items:center;flex-shrink:0}
+.feed-icon svg{width:14px;height:14px}
+.feed-lines{flex:1;min-width:0}
+.feed-primary{font-family:var(--font-mono);font-weight:700;font-size:12px;display:flex;align-items:center;gap:6px}
+.feed-secondary{font-size:11px;color:var(--ink-2);margin-top:2px}
+.feed-amount{font-family:var(--font-mono);font-weight:700;font-size:12px;text-align:right;flex-shrink:0}
+.feed-meta{font-family:var(--font-mono);font-size:9px;color:var(--ink-3);text-align:right}
+.badge{display:inline-block;padding:1px 6px;font-family:var(--font-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border:1px solid currentColor}
+.badge.paid{color:var(--success)}
+.badge.pending{color:var(--warning)}
+.badge.draft{color:var(--ink-muted)}
+/* AUDIT */
+.audit-list{display:flex;flex-direction:column}
+.audit-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border-light)}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;margin-top:3px;flex-shrink:0}
+.audit-dot.ok{background:var(--success)}
+.audit-dot.warn{background:var(--warning)}
+.audit-dot.bad{background:var(--danger)}
+.audit-title{font-size:12px;font-weight:600}
+.audit-meta{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-top:2px}
+/* BOTTOM NAV */
+.bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;height:56px;background:var(--surface);border-top:3px solid var(--border);z-index:50}
+.bottom-nav-inner{display:grid;grid-template-columns:repeat(5,1fr);height:100%}
+.bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink-3);font-family:var(--font-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .1s}
+.bn-item svg{width:18px;height:18px}
+.bn-item.active{background:var(--ink);color:var(--accent)}
+.bn-item:hover{background:var(--accent);color:var(--ink)}
+/* FAB */
+.fab-wrap{position:fixed;bottom:72px;right:16px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.fab{width:48px;height:48px;background:var(--ink);color:var(--accent);border:3px solid var(--border);font-size:24px;font-weight:300;display:grid;place-items:center;box-shadow:var(--shadow-lg);z-index:2;transition:all .2s}
+.fab:hover{background:var(--accent);color:var(--ink)}
+.fab.open{transform:rotate(45deg);background:var(--danger);color:#fff}
+.quick-popup{width:180px;background:var(--surface);border:3px solid var(--border);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(8px);pointer-events:none;transition:all .2s;box-shadow:var(--shadow-lg)}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:9px 14px;font-size:12px;font-weight:600;border-bottom:2px solid var(--border);transition:all .1s}
+.popup-item:last-child{border-bottom:none}
+.popup-item:hover{background:var(--accent)}
+/* SIDEBAR OVERLAY */
+.scrim{position:fixed;inset:0;background:rgba(10,10,10,.3);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.visible{opacity:1;pointer-events:auto}
+.sidebar-overlay{position:fixed;top:0;left:0;bottom:0;width:260px;background:var(--surface);border-right:3px solid var(--border);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);z-index:40}
+.sidebar-overlay.open{transform:translateX(0)}
+.sidebar-overlay .sidebar-head,.sidebar-overlay .sidebar-nav,.sidebar-overlay .sidebar-foot{border-color:var(--border)}
+.sidebar-overlay .sidebar-link{border-color:transparent}
+.sidebar-overlay .sidebar-link:hover{background:var(--accent);color:var(--ink);border-color:var(--border)}
+.sidebar-overlay .sidebar-link.active{background:var(--ink);color:var(--accent);border-color:var(--border)}
+/* NOTIF PANEL */
+.notif-panel{position:fixed;top:52px;right:16px;width:300px;max-height:400px;background:var(--surface);border:3px solid var(--border);box-shadow:var(--shadow-lg);z-index:50;display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .2s}
+.notif-panel.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:3px solid var(--border)}
+.np-title{font-family:var(--font-heading);font-size:12px;font-weight:700}
+.np-clear{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);cursor:pointer}
+.np-list{max-height:320px;overflow-y:auto}
+.np-row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--border-light);cursor:pointer}
+.np-row:last-child{border-bottom:none}
+.np-row:hover{background:var(--accent)}
+.np-dot{width:8px;height:8px;background:var(--danger);margin-top:4px;flex-shrink:0}
+.np-dot.read{background:var(--border-light)}
+.np-lines{flex:1}
+.np-l1{height:7px;width:85%;background:var(--border-light)}
+.np-l2{height:6px;width:55%;background:var(--surface);border:1px solid var(--border-light);margin-top:5px}
+/* AI PANEL */
+.ai-overlay{position:fixed;inset:0;z-index:55;background:rgba(10,10,10,.4);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.ai-overlay.open{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-width:480px;max-height:78vh;background:var(--surface);border-top:3px solid var(--border);display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.ai-overlay.open .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:3px solid var(--border)}
+.ai-head-left{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:28px;height:28px;background:var(--ink);color:var(--accent);display:grid;place-items:center;font-family:var(--font-heading);font-weight:700;font-size:10px}
+.ai-title{font-family:var(--font-heading);font-weight:700;font-size:13px}
+.ai-sub{font-family:var(--font-mono);font-size:9px;color:var(--ink-3)}
+.ai-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:80%;padding:10px 12px;font-size:12px;line-height:1.5;border:2px solid var(--border)}
+.ai-msg.bot{align-self:flex-start;background:var(--surface)}
+.ai-msg.user{align-self:flex-end;background:var(--ink);color:var(--accent)}
+.typing{display:inline-flex;gap:4px;padding:10px 12px;border:2px solid var(--border);align-self:flex-start}
+.typing span{width:6px;height:6px;background:var(--ink-3);animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.ai-chips{display:flex;flex-direction:column;gap:4px;padding:0 16px 10px}
+.ai-chip{display:block;width:100%;text-align:left;padding:8px 12px;font-size:11px;font-weight:600;border:2px solid var(--border);background:var(--surface);transition:all .1s}
+.ai-chip:hover{background:var(--accent);transform:translate(-1px,-1px);box-shadow:var(--shadow-lg)}
+.ai-input-row{display:flex;gap:6px;padding:10px 16px 14px;border-top:3px solid var(--border)}
+.ai-input{flex:1;height:36px;padding:0 12px;border:2px solid var(--border);background:var(--surface);font-family:var(--font-body);font-size:12px;color:var(--ink);outline:none}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:36px;height:36px;background:var(--ink);color:var(--accent);border:2px solid var(--border);font-size:16px;font-weight:700;display:grid;place-items:center;transition:all .1s}
+.ai-send:hover{background:var(--accent);color:var(--ink)}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:10px 18px;background:var(--ink);color:var(--accent);border:2px solid var(--border);font-family:var(--font-mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.loading-screen.active{transform:translateY(0)}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-tip{font-family:var(--font-mono);font-size:11px;color:var(--ink-2);text-align:center;max-width:260px}
+.loading-tip strong{color:var(--ink);font-weight:700}
+@media(max-width:768px){.sidebar{display:none}.bottom-nav{display:block}.content{padding:12px;padding-bottom:72px}.fab-wrap{bottom:68px;right:12px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebarStatic">
+    <div class="sidebar-head"><div class="sidebar-logo">BD</div><div class="sidebar-brand">BIGDROPS</div></div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Documents</div>
+      <a href="#" class="sidebar-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
+      <div class="sidebar-section">Operations</div>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
+      <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+    </nav>
+    <div class="sidebar-foot"><div class="sidebar-avatar">MA</div><div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <span class="topbar-title">BIGDROPS / Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="tb-btn" id="refreshBtn" title="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+        <button class="tb-btn" id="themeBtn" title="Theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        <button class="tb-btn" id="notifBtn" title="Notifications"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pip" id="pip"></span></button>
+        <button class="tb-ai" id="aiBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg> STEWARD</button>
+      </div>
+    </header>
+    <main class="content" id="content">
+      <section><div class="kpi-grid" id="kpiGrid"></div></section>
+      <section class="smart-banner" id="smartBanner" style="position:relative">
+        <div class="sb-dot"></div>
+        <div class="sb-body"><div class="sb-title">3 payments may be unrecorded</div><div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div><div class="sb-cta" onclick="showToast('Recording payments...');playSound('success')">Record now</div></div>
+        <button class="sb-close" id="sbClose" aria-label="Dismiss"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </section>
+      <section><div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link" id="seeAll">see all</span></div><div class="notif-scroll" id="notifScroll"></div></section>
+      <section><div class="section-head"><div class="section-title">Recent Documents</div></div><div class="feed-list" id="feedList"></div></section>
+      <section><div class="section-head"><div class="section-title">Audit Trail</div></div><div class="audit-list" id="auditList"></div></section>
+    </main>
+  </div>
+</div>
+<nav class="bottom-nav" id="bottomNav"><div class="bottom-nav-inner">
+  <button class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
+</div></nav>
+<div class="fab-wrap" id="fabWrap">
+  <div class="quick-popup" id="quickPopup">
+    <button class="popup-item" onclick="showToast('New Invoice');playSound('success')">Invoice</button>
+    <button class="popup-item" onclick="showToast('New Quotation');playSound('success')">Quotation</button>
+    <button class="popup-item" onclick="showToast('New Purchase Order');playSound('success')">Purchase orders</button>
+    <button class="popup-item" onclick="showToast('New Boq');playSound('success')">Boq</button>
+    <button class="popup-item" onclick="showToast('New Waybill');playSound('success')">Waybill</button>
+    <button class="popup-item" onclick="showToast('New Csr');playSound('success')">Csr</button>
+  </div>
+  <button class="fab" id="fabBtn" aria-label="Quick actions">+</button>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay">
+  <div class="sidebar-head"><div class="sidebar-logo">BD</div><div class="sidebar-brand">BIGDROPS</div></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Documents</div>
+    <a href="#" class="sidebar-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/></svg>Waybills</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
+    <div class="sidebar-section">Operations</div>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
+    <a href="#" class="sidebar-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+  </nav>
+  <div class="sidebar-foot"><div class="sidebar-avatar">MA</div><div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div></div>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head"><span class="np-title">Notifications</span><span class="np-clear">Clear all</span></div>
+  <div class="np-list"><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div><div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div></div>
+</div>
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel">
+    <div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">AI</div><div><div class="ai-title">STEWARD</div><div class="ai-sub">Business Assistant</div></div></div><button id="aiClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="ai-body" id="aiBody"><div class="ai-msg bot">Hello! I'm Steward, your BIGDROPS business assistant. How can I help you today?</div></div>
+    <div class="ai-chips"><button class="ai-chip" onclick="sendChip('Show overdue invoices')">Show overdue invoices</button><button class="ai-chip" onclick="sendChip('Record a payment')">Record a payment</button><button class="ai-chip" onclick="sendChip('Generate waybill')">Generate waybill</button></div>
+    <div class="ai-input-row"><input class="ai-input" id="aiInput" placeholder="Ask Steward..." /><button class="ai-send" id="aiSend"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+  </div>
+</div>
+<div class="loading-screen" id="loadingScreen"><div class="loading-spinner"></div><div class="loading-tip"><strong>Did you know?</strong><br/>Ask Steward to generate a waybill from any invoice in one command.</div></div>
+<div class="toast" id="toast"></div>
+<script>
+// Sound engine (Web Audio API, inspired by cuelume)
+let audioCtx=null;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
+function playSound(name){
+  try{
+    const ctx=getAudioCtx();if(ctx.state==='suspended')ctx.resume();
+    const now=ctx.currentTime;const osc=ctx.createOscillator();const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    const sounds={
+      chime:{freq:[523,659],dur:[.08,.08],type:'sine',vol:.15},
+      press:{freq:[180],dur:[.04],type:'sine',vol:.1},
+      release:{freq:[440],dur:[.03],type:'sine',vol:.08},
+      toggle:{freq:[600,480],dur:[.03,.03],type:'square',vol:.06},
+      success:{freq:[523,659,784],dur:[.08,.08,.12],type:'sine',vol:.12},
+      error:{freq:[300,250],dur:[.08,.12],type:'sine',vol:.1},
+      tick:{freq:[800],dur:[.02],type:'sine',vol:.05},
+      hover:{freq:[600],dur:[.02],type:'sine',vol:.04},
+      bloom:{freq:[200,300,400,500],dur:[.05,.05,.05,.08],type:'sine',vol:.08}
+    };
+    const s=sounds[name]||sounds.tick;
+    osc.type=s.type;gain.gain.setValueAtTime(s.vol,now);
+    let t=now;s.freq.forEach((f,i)=>{osc.frequency.setValueAtTime(f,t);t+=s.dur[i]});
+    gain.gain.exponentialRampToValueAtTime(.001,t+.05);
+    osc.start(now);osc.stop(t+.05);
+  }catch(e){}
+}
+// Init
+(function(){
+  const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);
+  let openPanel=null;
+  function closeAll(exclude){
+    if(exclude!=='sidebar'){$('#sidebarOverlay').classList.remove('open')}
+    if(exclude!=='notif'){$('#notifPanel').classList.remove('open');$('#notifBtn').classList.remove('active')}
+    if(exclude!=='ai')$('#aiOverlay').classList.remove('open');
+    if(exclude!=='fab'){$('#fabBtn').classList.remove('open');$('#quickPopup').classList.remove('open')}
+    $('#scrim').classList.remove('visible');openPanel=null;
+  }
+  $('#sidebarToggle').onclick=()=>{closeAll('sidebar');$('#sidebarOverlay').classList.toggle('open');$('#scrim').classList.toggle('visible',true);openPanel='sidebar';playSound('press')};
+  $('#scrim').onclick=()=>{closeAll();playSound('release')};
+  $('#notifBtn').onclick=()=>{const o=openPanel==='notif';closeAll();if(!o){$('#notifPanel').classList.add('open');$('#notifBtn').classList.add('active');$('#scrim').classList.add('visible');openPanel='notif';playSound('press')}};
+  $('#aiBtn').onclick=()=>{closeAll('ai');$('#aiOverlay').classList.add('open');$('#scrim').classList.add('visible');openPanel='ai';playSound('bloom')};
+  $('#aiClose').onclick=()=>{closeAll();playSound('droplet')};
+  $('#fabBtn').onclick=()=>{const o=openPanel==='fab';closeAll();if(!o){$('#fabBtn').classList.add('open');$('#quickPopup').classList.add('open');$('#scrim').classList.add('visible');openPanel='fab';playSound('press')}};
+  $('#sbClose').onclick=()=>{$('#smartBanner').style.display='none';playSound('droplet')};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAll();playSound('droplet')}});
+  let dark=false;
+  $('#themeBtn').onclick=()=>{dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'');playSound('toggle')};
+  $('#refreshBtn').onclick=()=>{$('#loadingScreen').classList.add('active');playSound('loading');setTimeout(()=>{$('#loadingScreen').classList.remove('active');playSound('ready')},2200)};
+  $$('.bn-item').forEach(b=>{b.onclick=()=>{$$('.bn-item').forEach(x=>x.classList.remove('active'));b.classList.add('active');playSound('toggle')}});
+  // KPIs
+  const kpis=[{l:'Balance',v:'10,000',t:'<span class="up">+12%</span> last week',segs:10,active:7,cls:'balance'},{l:'Overdue',v:'56,000',t:'<span class="down">+4%</span> vs yesterday',segs:10,active:3,cls:'overdue'},{l:'Invoices',v:'12',t:'<span class="up">-2</span> pending review',segs:10,active:5,cls:'invoices'},{l:'Payments',v:'89,000',t:'<span class="up">+18%</span> this month',segs:10,active:8,cls:'payments'}];
+  kpis.forEach(k=>{const bar=Array.from({length:k.segs},(_,i)=>'<div class="kpi-seg '+(i<k.active?k.cls:'')+'"></div>').join('');const d=document.createElement('div');d.className='kpi-card';d.innerHTML='<div class="kpi-label">'+k.l+'</div><div class="kpi-value">&#8358;'+k.v+'</div><div class="kpi-bar">'+bar+'</div><div class="kpi-trend">'+k.t+'</div>';$('#kpiGrid').appendChild(d)});
+  // Alerts
+  [{t:'Overdue: INV-0412',d:'Payment 7 days late',time:'2h ago'},{t:'New: QUO-0089',d:'Sent to Dangote Ltd',time:'4h ago'},{t:'Waybill dispatch',d:'WB-0034 confirmed',time:'6h ago'},{t:'Payment received',d:'INV-0398 partially paid',time:'1d ago'}].forEach(a=>{const c=document.createElement('div');c.className='notif-card';c.innerHTML='<div class="notif-card-title">'+a.t+'</div><div class="notif-card-desc">'+a.d+'</div><div class="notif-card-time">'+a.time+'</div>';$('#notifScroll').appendChild(c)});
+  // Feed
+  [{icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',primary:'INV-0412',badge:'pending',secondary:'Dangote Ltd - Structural Materials',amount:'&#8358;450,000',meta:'Today'},{icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',primary:'QUO-0089',badge:'draft',secondary:'Julius Berger - Q3 Supplies',amount:'&#8358;1,200,000',meta:'Yesterday'},{icon:'<path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h20"/><path d="M10 18h4"/>',primary:'WB-0034',badge:'paid',secondary:'Lekki Construction Site',amount:'-',meta:'2 days ago'}].forEach(d=>{const r=document.createElement('div');r.className='feed-row';r.innerHTML='<div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+d.icon+'</svg></div><div class="feed-lines"><div class="feed-primary">'+d.primary+' <span class="badge '+d.badge+'">'+d.badge+'</span></div><div class="feed-secondary">'+d.secondary+'</div></div><div style="text-align:right"><div class="feed-amount">'+d.amount+'</div><div class="feed-meta">'+d.meta+'</div></div>';$('#feedList').appendChild(r)});
+  // Audit
+  [{st:'ok',title:'INV-0412 created',meta:'Milad A. - 10:32 AM'},{st:'warn',title:'INV-0412 overdue alert',meta:'System - 9:00 AM'},{st:'ok',title:'QUO-0089 sent',meta:'Milad A. - Yesterday'},{st:'bad',title:'WB-0034 delivery issue',meta:'System - 2 days ago'},{st:'ok',title:'INV-0398 partial payment',meta:'Accountant - 3 days ago'}].forEach(a=>{const r=document.createElement('div');r.className='audit-row';r.innerHTML='<div class="audit-dot '+a.st+'"></div><div class="audit-body"><div class="audit-title">'+a.title+'</div><div class="audit-meta">'+a.meta+'</div></div>';$('#auditList').appendChild(r)});
+  // AI Chat
+  function sendMsg(text,cls){const m=document.createElement('div');m.className='ai-msg '+cls;m.textContent=text;$('#aiBody').appendChild(m);$('#aiBody').scrollTop=$('#aiBody').scrollHeight}
+  function sendChip(text){sendMsg(text,'user');playSound('press');setTimeout(()=>{const t=document.createElement('div');t.className='typing';t.innerHTML='<span></span><span></span><span></span>';$('#aiBody').appendChild(t);$('#aiBody').scrollTop=$('#aiBody').scrollHeight;setTimeout(()=>{t.remove();sendMsg("I'll help you with that. Here are the relevant details from your dashboard.","bot");playSound('chime')},1200)},300)}
+  window.sendChip=sendChip;
+  $('#aiSend').onclick=()=>{const v=$('#aiInput').value.trim();if(!v)return;sendMsg(v,'user');$('#aiInput').value='';sendChip(v)};
+  $('#aiInput').onkeydown=e=>{if(e.key==='Enter')$('#aiSend').click()};
+  window.showToast=function(msg){const t=$('#toast');t.innerHTML=msg;t.classList.add('show');playSound('success');setTimeout(()=>t.classList.remove('show'),2000)};
+  // Sound on hover for interactive elements
+  document.addEventListener('pointerenter',e=>{if(e.target.closest('.sidebar-link,.feed-row,.notif-card'))playSound('tick')},true);
+})();
+</script>
+</body>
+</html>
