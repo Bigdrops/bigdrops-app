@@ -204,7 +204,7 @@ export async function convertQuotationToInvoice(
   // when the entity id is available; otherwise sequential tenant writes.
   let createdInvoice: any = null
   if (entityId) {
-    const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
+    const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
       p_entity_id: entityId,
       p_invoice_payload: invoicePayload,
       p_items: items

@@ -14,8 +14,8 @@
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .app{display:flex;height:100vh}
-/* LEFT PANEL - INDEX */
-.panel-left{width:40%;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
+/* LEFT PANEL */
+.panel-left{width:40%;min-width:300px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
 .panel-left-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .panel-left-header h1{font-size:14px;font-weight:800}
 .panel-actions{display:flex;gap:4px}
@@ -27,7 +27,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .panel-list::-webkit-scrollbar{display:none}
 .list-section{padding:4px 16px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding-top:8px}
 .list-item{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.list-item:hover,.list-item.active{background:var(--surface-2)}
+.list-item:hover{background:var(--surface-2)}
+.list-item.active{background:var(--surface-2);border-left:3px solid var(--accent);padding-left:13px}
 .list-item-icon{width:28px;height:28px;background:var(--accent);color:var(--accent-fg);border-radius:var(--r);display:grid;place-items:center;flex-shrink:0}
 .list-item-icon svg{width:14px;height:14px}
 .list-item-text{flex:1;min-width:0}
@@ -37,29 +38,61 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .list-item-amount{font-weight:700;font-size:11px}
 .list-item-date{font-size:9px;color:var(--ink-3);margin-top:1px}
 .badge{display:inline-block;padding:1px 5px;border-radius:var(--r);font-size:8px;font-weight:700;text-transform:uppercase}
-.badge.paid{background:rgba(22,163,74,.1);color:var(--green)}.badge.pending{background:rgba(202,138,4,.1);color:var(--yellow)}.badge.draft{background:var(--surface-2);color:var(--ink-2)}
+.badge.paid{background:rgba(22,163,74,.1);color:var(--green)}.badge.pending{background:rgba(202,138,4,.1);color:var(--yellow)}.badge.draft{background:var(--surface-2);color:var(--ink-2)}.badge.delivered{background:rgba(124,58,237,.1);color:var(--purple)}
 /* KPI BAR */
 .kpi-bar-wrap{padding:10px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
 .kpi-mini{text-align:center}
 .kpi-mini-val{font-size:16px;font-weight:800}
 .kpi-mini-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.kpi-mini-trend{font-size:8px;color:var(--ink-3)}
+.kpi-mini-trend{font-size:8px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;gap:2px}
 .kpi-mini-trend .up{color:var(--green);font-weight:700}.kpi-mini-trend .down{color:var(--red);font-weight:700}
-/* RIGHT PANEL - DETAIL */
-.panel-right{flex:1;display:flex;flex-direction:column;background:var(--surface-2)}
-.detail-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between}
+/* RIGHT PANEL */
+.panel-right{flex:1;display:flex;flex-direction:column;background:var(--surface-2);overflow-y:auto}
+.panel-right::-webkit-scrollbar{display:none}
+.detail-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2}
 .detail-title{font-size:13px;font-weight:700}
-.detail-body{flex:1;overflow-y:auto;padding:16px}
-.detail-body::-webkit-scrollbar{display:none}
-.detail-section{margin-bottom:16px}
-.detail-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:6px}
-.alert-card{background:var(--red);color:#fff;border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+.detail-subtitle{font-size:10px;color:var(--ink-3);margin-top:1px}
+.detail-actions{display:flex;gap:4px}
+.detail-actions button{height:28px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r);font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px;transition:all .1s}
+.detail-actions button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.detail-actions button:hover{opacity:.8}
+.detail-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+/* DOCUMENT DETAIL */
+.doc-detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.doc-detail-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.doc-detail-ref{font-size:16px;font-weight:800}
+.doc-detail-meta{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.doc-detail-row{display:flex;align-items:center;gap:6px;font-size:11px}
+.doc-detail-label{color:var(--ink-3);width:70px;flex-shrink:0}
+.doc-detail-value{font-weight:600}
+.doc-line-items{padding:0}
+.doc-line-header{display:grid;grid-template-columns:1fr 60px 60px 80px;padding:8px 16px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.doc-line-row{display:grid;grid-template-columns:1fr 60px 60px 80px;padding:8px 16px;border-bottom:1px dashed var(--border);font-size:11px;align-items:center}
+.doc-line-row:last-child{border-bottom:none}
+.doc-line-name{font-weight:600}
+.doc-line-qty,.doc-line-rate,.doc-line-total{text-align:right}
+.doc-totals{padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.doc-total-row{display:flex;justify-content:space-between;font-size:11px}
+.doc-total-row.grand{font-size:13px;font-weight:800;border-top:2px solid var(--border);padding-top:6px;margin-top:4px}
+/* ALERTS */
+.alert-card{background:var(--red);color:#fff;border-radius:var(--r);padding:10px 12px;position:relative}
 .alert-card-title{font-weight:700;font-size:12px}.alert-card-text{font-size:11px;opacity:.85;margin-top:2px}
 .alert-cta{display:inline-block;margin-top:6px;background:rgba(255,255,255,.9);color:var(--red);padding:4px 10px;border-radius:var(--r);font-size:10px;font-weight:700}
-.audit-row{display:flex;gap:6px;padding:5px 0;border-bottom:1px dashed var(--border);font-size:11px}
+.alert-close{position:absolute;top:8px;right:8px;color:#fff;opacity:.7;font-size:14px}
+/* AUDIT */
+.audit-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.audit-section-title{padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.audit-row{display:flex;gap:8px;padding:8px 14px;border-bottom:1px dashed var(--border);font-size:11px;align-items:flex-start}
+.audit-row:last-child{border-bottom:none}
 .audit-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0}
 .audit-dot.ok{background:var(--green)}.audit-dot.warn{background:var(--yellow)}.audit-dot.bad{background:var(--red)}
-.audit-time{color:var(--ink-3);margin-left:auto;font-size:9px}
+.audit-text{flex:1}
+.audit-time{color:var(--ink-3);margin-left:auto;font-size:9px;flex-shrink:0}
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;color:var(--ink-3)}
+.empty-state svg{width:32px;height:32px;margin-bottom:8px;opacity:.3}
+.empty-state-title{font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.empty-state-text{font-size:11px}
 /* BOTTOM NAV */
 .bottom-nav{display:none;position:fixed;left:0;right:0;bottom:0;height:48px;background:var(--surface);border-top:1px solid var(--border);z-index:50}
 .bottom-nav-inner{display:grid;grid-template-columns:repeat(5,1fr);height:100%}
@@ -72,6 +105,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
 .popup-item{display:block;width:100%;text-align:left;padding:7px 10px;font-size:11px;font-weight:600;border-bottom:1px solid var(--border)}
 .popup-item:last-child{border-bottom:none}
+/* OVERLAYS */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
 .scrim.visible{opacity:1;pointer-events:auto}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .25s;z-index:40}
@@ -127,7 +161,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .loading-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-tip{font-size:11px;color:var(--ink-2);text-align:center;max-width:220px}.loading-tip strong{color:var(--ink);font-weight:700}
-@media(max-width:768px){.panel-left{width:100%}.panel-right{display:none}.bottom-nav{display:block}.fab-wrap{bottom:56px;right:8px}}
+/* MOBILE: stack everything vertically */
+@media(max-width:768px){
+  .app{flex-direction:column;overflow-y:auto}
+  .panel-left{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--border);max-height:none;flex:none;overflow:visible}
+  .panel-left .panel-list{max-height:none;overflow:visible}
+  .panel-right{display:flex;width:100%;background:var(--bg)}
+  .bottom-nav{display:block}
+  .fab-wrap{bottom:56px;right:8px}
+  .detail-header{position:static}
+}
 </style>
 </head>
 <body>
@@ -151,21 +194,35 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       <div id="feedList"></div>
     </div>
   </div>
-  <div class="panel-right">
-    <div class="detail-header"><span class="detail-title">Dashboard Overview</span></div>
-    <div class="detail-body">
-      <div class="detail-section">
-        <div class="detail-section-title">Smart Alert</div>
+  <div class="panel-right" id="panelRight">
+    <div class="detail-header" id="detailHeader">
+      <div>
+        <div class="detail-title" id="detailTitle">Select a document</div>
+        <div class="detail-subtitle" id="detailSubtitle">Choose from the list to view details</div>
+      </div>
+      <div class="detail-actions" id="detailActions" style="display:none">
+        <button onclick="showToast('Document duplicated')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Duplicate</button>
+        <button class="primary" onclick="showToast('Opening PDF...')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> PDF</button>
+      </div>
+    </div>
+    <div class="detail-body" id="detailBody">
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        <div class="empty-state-title">No document selected</div>
+        <div class="empty-state-text">Tap a document in the list to view its details</div>
+      </div>
+      <div id="docDetailContent" style="display:none"></div>
+      <div id="dashboardSections">
         <div class="alert-card" id="smartBanner" style="position:relative">
+          <button class="alert-close" id="sbClose">x</button>
           <div class="alert-card-title">3 payments may be unrecorded</div>
           <div class="alert-card-text">Balance moved but no matching payment was logged.</div>
           <span class="alert-cta" onclick="showToast('Recording payments...')">Record now</span>
-          <button id="sbClose" style="position:absolute;top:8px;right:8px;color:#fff;opacity:.7;font-size:14px">x</button>
         </div>
-      </div>
-      <div class="detail-section">
-        <div class="detail-section-title">Audit Trail</div>
-        <div id="auditList"></div>
+        <div class="audit-section">
+          <div class="audit-section-title">Audit Trail</div>
+          <div id="auditList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -187,6 +244,108 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <script>
 (function(){
   const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);let openPanel=null;
+  // --- Document data ---
+  const docs=[
+    {ref:'INV-0412',type:'invoice',client:'Dangote Cement Plc',contact:'Adebayo O.',amount:'\u20A6450,000',status:'pending',date:'Today',due:'Aug 24, 2026',items:[{name:'Dangote 42.5R Cement (50kg)',qty:200,rate:2000,total:400000},{name:'Delivery to Lekki Site',qty:1,rate:50000,total:50000}],notes:'Structural materials for Q3 project'},
+    {ref:'QUO-0089',type:'quotation',client:'Julius Berger Nigeria',contact:'Chidi N.',amount:'\u20A61,200,000',status:'draft',date:'Yesterday',due:'Sep 01, 2026',items:[{name:'Steel Reinforcement Bar (12mm)',qty:500,rate:1800,total:900000},{name:'Sand Filling (per trip)',qty:10,rate:30000,total:300000}],notes:'Q3 construction supplies'},
+    {ref:'WB-0034',type:'waybill',client:'Lekki Construction Site',contact:'Emeka U.',amount:'-',status:'paid',date:'2 days ago',due:'-',items:[{name:'Portland Cement (42.5R)',qty:100,rate:'-',total:'-'},{name:'Binding Wire (25kg roll)',qty:50,rate:'-',total:'-'}],notes:'Delivery confirmed by site manager'},
+    {ref:'INV-0411',type:'invoice',client:'Access Bank Plc',contact:'Funke A.',amount:'\u20A6780,000',status:'paid',date:'3 days ago',due:'Aug 10, 2026',items:[{name:'Office Furniture - Executive Desk',qty:2,rate:150000,total:300000},{name:'Ergonomic Chair',qty:4,rate:85000,total:340000},{name:'Filing Cabinet',qty:2,rate:70000,total:140000}],notes:'Fully paid via bank transfer'},
+    {ref:'INV-0410',type:'invoice',client:'MTN Nigeria',contact:'Yemi K.',amount:'\u20A6320,000',status:'pending',date:'4 days ago',due:'Aug 18, 2026',items:[{name:'Network Cabling (per meter)',qty:500,rate:400,total:200000},{name:'Patch Panel 24-Port',qty:10,rate:12000,total:120000}],notes:'ICT infrastructure upgrade'},
+    {ref:'QUO-0087',type:'quotation',client:'Flour Mills of Nigeria',contact:'Bola M.',amount:'\u20A6650,000',status:'draft',date:'5 days ago',due:'Sep 05, 2026',items:[{name:'Industrial Paint (20L)',qty:40,rate:8000,total:320000},{name:'Paint Brushes & Rollers Set',qty:20,rate:3500,total:70000},{name:'Primer (10L)',qty:15,rate:6000,total:90000},{name:'Thinner (5L)',qty:30,rate:5500,total:165000}],notes:'Factory repainting project'},
+    {ref:'WB-0033',type:'waybill',client:'Zenith Bank HQ',contact:'Ifeoma C.',amount:'-',status:'delivered',date:'6 days ago',due:'-',items:[{name:'Ceiling Board (600x600)',qty:200,rate:'-',total:'-'},{name:'T-Bar Runner',qty:100,rate:'-',total:'-'}],notes:'Delivered and signed off'},
+    {ref:'INV-0409',type:'invoice',client:'Oando Plc',contact:'Tunde B.',amount:'\u20A6890,000',status:'overdue',date:'7 days ago',due:'Aug 01, 2026',items:[{name:'Diesel Generator (50KVA)',qty:1,rate:650000,total:650000},{name:'Fuel Tank (1000L)',qty:1,rate:120000,total:120000},{name:'Installation Service',qty:1,rate:120000,total:120000}],notes:'Payment overdue by 16 days'}
+  ];
+  let selectedIdx=-1;
+  // --- KPIs ---
+  [{l:'Balance',v:'10K',dir:'up',pct:'12%'},{l:'Overdue',v:'56K',dir:'down',pct:'4%'},{l:'Invoices',v:'12',dir:'up',pct:'2'},{l:'Payments',v:'89K',dir:'up',pct:'18%'}].forEach(k=>{
+    const arrow=k.dir==='up'?'\u25B2':'\u25BC';
+    const cls=k.dir==='up'?'up':'down';
+    const d=document.createElement('div');d.className='kpi-mini';
+    d.innerHTML='<div class="kpi-mini-val">'+k.v+'</div><div class="kpi-mini-label">'+k.l+'</div><div class="kpi-mini-trend"><span class="'+cls+'">'+arrow+' '+k.pct+'</span></div>';
+    $('#kpiBar').appendChild(d);
+  });
+  // --- Alerts ---
+  [{t:'Overdue: INV-0412',d:'Payment 7 days late',time:'2h ago'},{t:'New: QUO-0089',d:'Sent to Dangote',time:'4h ago'},{t:'WB dispatch',d:'WB-0034 confirmed',time:'6h ago'},{t:'Payment',d:'INV-0398 partial',time:'1d ago'},{t:'Overdue: INV-0409',d:'16 days past due',time:'2h ago'}].forEach(a=>{
+    const c=document.createElement('div');c.className='notif-card';c.style.minWidth='110px';
+    c.innerHTML='<div class="notif-card-title">'+a.t+'</div><div class="notif-card-desc">'+a.d+'</div><div class="notif-card-time">'+a.time+'</div>';
+    $('#notifScroll').appendChild(c);
+  });
+  // --- Feed (8 docs) ---
+  function renderFeed(){
+    $('#feedList').innerHTML='';
+    docs.forEach((d,i)=>{
+      const r=document.createElement('div');r.className='list-item'+(i===selectedIdx?' active':'');
+      r.setAttribute('data-idx',i);
+      r.innerHTML='<div class="list-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="list-item-text"><div class="list-item-primary">'+d.ref+' <span class="badge '+d.status+'">'+d.status+'</span></div><div class="list-item-secondary">'+d.client+'</div></div><div class="list-item-meta"><div class="list-item-amount">'+d.amount+'</div><div class="list-item-date">'+d.date+'</div></div>';
+      r.onclick=()=>selectDoc(i);
+      $('#feedList').appendChild(r);
+    });
+  }
+  renderFeed();
+  // --- Detail panel ---
+  function selectDoc(idx){
+    selectedIdx=idx;
+    const d=docs[idx];
+    // Update list active state
+    $$('.list-item').forEach((el,i)=>{el.classList.toggle('active',i===idx)});
+    // Show detail
+    $('#emptyState').style.display='none';
+    $('#docDetailContent').style.display='block';
+    $('#detailActions').style.display='flex';
+    $('#detailTitle').textContent=d.ref;
+    $('#detailSubtitle').textContent=d.client;
+    // Build detail HTML
+    let html='<div class="doc-detail">';
+    html+='<div class="doc-detail-header"><div><div class="doc-detail-ref">'+d.ref+'</div></div><span class="badge '+d.status+'">'+d.status+'</span></div>';
+    html+='<div class="doc-detail-meta" style="padding:12px 16px;border-bottom:1px solid var(--border)">';
+    html+='<div class="doc-detail-row"><span class="doc-detail-label">Client</span><span class="doc-detail-value">'+d.client+'</span></div>';
+    html+='<div class="doc-detail-row"><span class="doc-detail-label">Contact</span><span class="doc-detail-value">'+d.contact+'</span></div>';
+    html+='<div class="doc-detail-row"><span class="doc-detail-label">Date</span><span class="doc-detail-value">'+d.date+'</span></div>';
+    html+='<div class="doc-detail-row"><span class="doc-detail-label">Due</span><span class="doc-detail-value">'+d.due+'</span></div>';
+    if(d.amount!=='-')html+='<div class="doc-detail-row"><span class="doc-detail-label">Amount</span><span class="doc-detail-value" style="font-size:14px;font-weight:800">'+d.amount+'</span></div>';
+    html+='</div>';
+    // Line items
+    html+='<div class="doc-line-header"><span>Item</span><span style="text-align:right">Qty</span><span style="text-align:right">Rate</span><span style="text-align:right">Total</span></div>';
+    d.items.forEach(item=>{
+      html+='<div class="doc-line-row"><span class="doc-line-name">'+item.name+'</span><span class="doc-line-qty">'+item.qty+'</span><span class="doc-line-rate">'+(typeof item.rate==='number'?'₦'+item.rate.toLocaleString():item.rate)+'</span><span class="doc-line-total">'+(typeof item.total==='number'?'₦'+item.total.toLocaleString():item.total)+'</span></div>';
+    });
+    // Totals
+    if(d.amount!=='-'){
+      const subtotal=d.items.reduce((s,item)=>s+(typeof item.total==='number'?item.total:0),0);
+      const vat=Math.round(subtotal*0.075);
+      const grand=subtotal+vat;
+      html+='<div class="doc-totals">';
+      html+='<div class="doc-total-row"><span>Subtotal</span><span>\u20A6'+subtotal.toLocaleString()+'</span></div>';
+      html+='<div class="doc-total-row"><span>VAT (7.5%)</span><span>\u20A6'+vat.toLocaleString()+'</span></div>';
+      html+='<div class="doc-total-row grand"><span>Grand Total</span><span>\u20A6'+grand.toLocaleString()+'</span></div>';
+      html+='</div>';
+    }
+    // Notes
+    if(d.notes){
+      html+='<div style="padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--ink-2)"><strong style="color:var(--ink-3);font-size:9px;text-transform:uppercase;letter-spacing:.06em">Notes</strong><div style="margin-top:3px">'+d.notes+'</div></div>';
+    }
+    html+='</div>';
+    // Actions row
+    html+='<div style="display:flex;gap:6px;margin-top:2px">';
+    if(d.type==='invoice')html+='<button onclick="showToast(\'Converting to waybill...\')" style="flex:1;height:32px;border:1px solid var(--border);border-radius:var(--r);font-size:10px;font-weight:600">Convert to Waybill</button>';
+    if(d.type==='quotation')html+='<button onclick="showToast(\'Converting to invoice...\')" style="flex:1;height:32px;border:1px solid var(--border);border-radius:var(--r);font-size:10px;font-weight:600">Convert to Invoice</button>';
+    html+='<button onclick="showToast(\'Marking as sent...\')" style="flex:1;height:32px;border:1px solid var(--border);border-radius:var(--r);font-size:10px;font-weight:600">Send to Client</button>';
+    html+='</div>';
+    $('#docDetailContent').innerHTML=html;
+    // Scroll to top on mobile
+    if(window.innerWidth<=768){
+      $('#panelRight').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  }
+  // Auto-select first doc
+  selectDoc(0);
+  // --- Audit ---
+  [{st:'ok',t:'INV-0412 created',mt:'Milad A. 10:32'},{st:'warn',t:'INV-0412 overdue alert',mt:'System 09:00'},{st:'ok',t:'QUO-0089 sent',mt:'Milad A. yesterday'},{st:'bad',t:'WB-0034 delivery issue',mt:'System 2d ago'},{st:'ok',t:'INV-0398 payment',mt:'Accountant 3d ago'},{st:'ok',t:'INV-0411 marked paid',mt:'System 3d ago'},{st:'warn',t:'INV-0409 overdue notice',mt:'System 7d ago'}].forEach(a=>{
+    const r=document.createElement('div');r.className='audit-row';
+    r.innerHTML='<div class="audit-dot '+a.st+'"></div><span class="audit-text">'+a.t+'</span><span class="audit-time">'+a.mt+'</span>';
+    $('#auditList').appendChild(r);
+  });
+  // --- Overlays ---
   function closeAll(exclude){if(exclude!=='sidebar')$('#sidebar').classList.remove('open');if(exclude!=='notif'){$('#notifPanel').classList.remove('open');$('#notifBtn').classList.remove('active')}if(exclude!=='ai')$('#aiOverlay').classList.remove('open');if(exclude!=='fab'){$('#fabBtn').classList.remove('open');$('#quickPopup').classList.remove('open')}$('#scrim').classList.remove('visible');openPanel=null}
   $('#menuBtn').onclick=()=>{closeAll('sidebar');$('#sidebar').classList.toggle('open');$('#scrim').classList.toggle('visible',true);openPanel='sidebar'};
   $('#scrim').onclick=()=>closeAll();
@@ -199,14 +358,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   let dark=false;$('#themeBtn').onclick=()=>{dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'')};
   $('#refreshBtn').onclick=()=>{$('#loadingScreen').classList.add('active');setTimeout(()=>{$('#loadingScreen').classList.remove('active')},2200)};
   $$('.bn-item').forEach(b=>{b.onclick=()=>{$$('.bn-item').forEach(x=>x.classList.remove('active'));b.classList.add('active')}});
-  // KPIs
-  [{l:'Balance',v:'10K',t:'<span class="up">+12%</span>'},{l:'Overdue',v:'56K',t:'<span class="down">+4%</span>'},{l:'Invoices',v:'12',t:'<span class="up">-2</span>'},{l:'Payments',v:'89K',t:'<span class="up">+18%</span>'}].forEach(k=>{const d=document.createElement('div');d.className='kpi-mini';d.innerHTML='<div class="kpi-mini-val">'+k.v+'</div><div class="kpi-mini-label">'+k.l+'</div><div class="kpi-mini-trend">'+k.t+'</div>';$('#kpiBar').appendChild(d)});
-  // Alerts
-  [{t:'Overdue: INV-0412',d:'Payment 7 days late',time:'2h ago'},{t:'New: QUO-0089',d:'Sent to Dangote',time:'4h ago'},{t:'WB dispatch',d:'WB-0034 confirmed',time:'6h ago'},{t:'Payment',d:'INV-0398 partial',time:'1d ago'}].forEach(a=>{const c=document.createElement('div');c.className='notif-card';c.style.minWidth='110px';c.innerHTML='<div class="notif-card-title">'+a.t+'</div><div class="notif-card-desc">'+a.d+'</div><div class="notif-card-time">'+a.time+'</div>';$('#notifScroll').appendChild(c)});
-  // Feed
-  [{p:'INV-0412',b:'pending',s:'Dangote Ltd - Structural Materials',a:'450K',m:'Today'},{p:'QUO-0089',b:'draft',s:'Julius Berger - Q3 Supplies',a:'1.2M',m:'Yesterday'},{p:'WB-0034',b:'paid',s:'Lekki Construction Site',a:'-',m:'2 days ago'}].forEach(d=>{const r=document.createElement('div');r.className='list-item';r.innerHTML='<div class="list-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="list-item-text"><div class="list-item-primary">'+d.p+' <span class="badge '+d.b+'">'+d.b+'</span></div><div class="list-item-secondary">'+d.s+'</div></div><div class="list-item-meta"><div class="list-item-amount">'+d.a+'</div><div class="list-item-date">'+d.m+'</div></div>';$('#feedList').appendChild(r)});
-  // Audit
-  [{st:'ok',t:'INV-0412 created',mt:'Milad A. 10:32'},{st:'warn',t:'INV-0412 overdue',mt:'System 09:00'},{st:'ok',t:'QUO-0089 sent',mt:'Milad A. yesterday'},{st:'bad',t:'WB-0034 issue',mt:'System 2d ago'},{st:'ok',t:'INV-0398 payment',mt:'Accountant 3d ago'}].forEach(a=>{const r=document.createElement('div');r.className='audit-row';r.innerHTML='<div class="audit-dot '+a.st+'"></div><span>'+a.t+'</span><span class="audit-time">'+a.mt+'</span>';$('#auditList').appendChild(r)});
   function sendMsg(text,cls){const m=document.createElement('div');m.className='ai-msg '+cls;m.textContent=text;$('#aiBody').appendChild(m);$('#aiBody').scrollTop=$('#aiBody').scrollHeight}
   function sendChip(text){sendMsg(text,'user');setTimeout(()=>{const t=document.createElement('div');t.className='typing';t.innerHTML='<span></span><span></span><span></span>';$('#aiBody').appendChild(t);$('#aiBody').scrollTop=$('#aiBody').scrollHeight;setTimeout(()=>{t.remove();sendMsg("Here are the relevant details from your dashboard.","bot")},1200)},300)}
   window.sendChip=sendChip;
