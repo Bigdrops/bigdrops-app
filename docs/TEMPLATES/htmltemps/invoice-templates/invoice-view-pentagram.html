@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>BIGDROPS — Invoice View (Pentagram)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF;--surface:#FFF;--ink:#1A1A1A;--ink-2:#767676;--ink-3:#8C8C8C;--accent:#000;--accent-surface:rgba(26,26,26,0.04);--danger:#CC0000;--success:#2D6A4F;--warning:#B5651D;--border:#E3E4E5;--border-strong:#1A1A1A;--border-soft:#EDEDED;--font:'Inter',sans-serif;--r:4px}
+[data-theme="dark"]{--bg:#000;--surface:#222;--ink:#FFF;--ink-2:#AAA;--ink-3:#767676;--accent:#FFF;--accent-surface:rgba(255,255,255,0.06);--danger:#FF6B6B;--success:#6BCB77;--warning:#E8A838;--border:#333;--border-strong:#FFF;--border-soft:#2A2A2A}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden;letter-spacing:-0.01em}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.app{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;background:var(--surface)}
+.topbar-back{width:36px;height:36px;border:1px solid var(--border);display:grid;place-items:center;margin-right:10px;flex-shrink:0;border-radius:var(--r)}
+.topbar-back:active{background:var(--ink);color:var(--bg)}
+.topbar-center{flex:1;min-width:0}
+.topbar-title{font-size:14px;font-weight:500}
+.topbar-sub{font-size:11px;color:var(--ink-3)}
+.topbar-right{display:flex;gap:6px}
+.tb-btn{width:36px;height:36px;border:1px solid var(--border);display:grid;place-items:center;background:var(--surface);transition:all 0.1s;border-radius:var(--r)}
+.tb-btn:active{transform:scale(0.92);background:var(--ink);color:var(--bg)}
+.action-row{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.btn{padding:8px 16px;border:1px solid var(--border-strong);font-size:13px;font-weight:500;text-align:center;transition:all 0.1s;display:inline-flex;align-items:center;gap:6px;border-radius:var(--r)}
+.btn:active{transform:scale(0.96)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+[data-theme="dark"] .btn.primary{background:var(--accent);border-color:var(--accent)}
+.btn.pill{border-radius:20px;padding:8px 14px}
+.content{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{display:none}
+.doc-card{border:1px solid var(--border-strong);background:var(--surface);overflow:hidden;border-radius:var(--r)}
+.doc-card-top{display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-bottom:1px solid var(--border)}
+.doc-card-body{padding:14px}
+.doc-card-items{border-top:1px solid var(--border)}
+.doc-card-totals{padding:14px;border-top:1px solid var(--border-strong)}
+.doc-card-signatory{display:flex;align-items:center;gap:12px;padding:14px;border-top:1px solid var(--border)}
+.status-pill{display:inline-block;padding:3px 10px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;border:1px solid;border-radius:var(--r)}
+.status-pill.paid{border-color:var(--success);color:var(--success)}
+.status-pill.unpaid{border-color:var(--warning);color:var(--warning)}
+.brand-row{display:flex;gap:10px;align-items:flex-start}
+.brand-logo{width:44px;height:44px;border:1px solid var(--border-strong);display:grid;place-items:center;font-size:10px;font-weight:500;flex-shrink:0;border-radius:var(--r)}
+.brand-name{font-size:15px;font-weight:500}
+.brand-sub{font-size:11px;color:var(--ink-3)}
+.brand-line{font-size:11px;color:var(--ink-3);margin-top:4px;line-height:1.4}
+.doc-title{font-size:18px;font-weight:500;letter-spacing:-0.02em;margin:10px 0}
+.meta-chips{display:flex;flex-wrap:wrap;gap:4px}
+.meta-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);font-size:11px;font-weight:500;border-radius:var(--r)}
+.meta-chip svg{width:12px;height:12px;color:var(--ink-3)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border-top:1px solid var(--border)}
+.info-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:4px}
+.info-value{font-size:13px;font-weight:500}
+.info-detail{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.6}
+.item-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border-soft)}
+.item-row:last-child{border-bottom:none}
+.item-num{font-size:11px;font-weight:500;color:var(--ink-3);width:22px;text-align:center;padding-top:2px}
+.item-body{flex:1;min-width:0}
+.item-name{font-size:13px;font-weight:500}
+.item-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.item-meta{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.item-pill{font-size:10px;font-weight:500;padding:2px 8px;border:1px solid var(--border);color:var(--ink-3);border-radius:var(--r)}
+.item-amount{font-size:13px;font-weight:600;text-align:right;flex-shrink:0}
+.totals-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.totals-grand{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border-strong);margin-top:8px;padding-top:8px}
+.totals-grand-label{font-size:15px;font-weight:500}
+.totals-grand-value{font-size:26px;font-weight:500;letter-spacing:-0.02em}
+.amount-words{font-size:12px;font-style:italic;color:var(--ink-2);margin-top:8px;padding:10px;border:1px dashed var(--border);background:var(--bg);border-radius:var(--r)}
+.signatory-img{width:80px;height:40px;border:1px dashed var(--border);display:grid;place-items:center;font-size:10px;color:var(--ink-3);flex-shrink:0;border-radius:var(--r)}
+.signatory-name{font-size:13px;font-weight:500}
+.signatory-role{font-size:11px;color:var(--ink-3)}
+.section-card{border:1px solid var(--border);background:var(--surface);border-radius:var(--r)}
+.section-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer}
+.section-header:active{background:var(--accent-surface)}
+.section-icon{width:28px;height:28px;border:1px solid var(--border-strong);display:grid;place-items:center;font-size:12px;flex-shrink:0;border-radius:var(--r)}
+.section-title{font-size:13px;font-weight:500;flex:1}
+.section-action{font-size:10px;font-weight:500;padding:3px 10px;border:1px solid var(--border-strong);cursor:pointer;border-radius:var(--r)}
+.section-action:active{background:var(--ink);color:var(--bg)}
+.section-chevron{color:var(--ink-3);font-size:12px;transition:transform 0.2s}
+.section-card.open .section-chevron{transform:rotate(180deg)}
+.section-body{padding:0 14px 14px;display:none}
+.section-card.open .section-body{display:block}
+.payment-summary{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.payment-summary .label{color:var(--ink-3)}
+.payment-summary .value{font-weight:600}
+.payment-summary .danger{color:var(--danger)}
+.progress-bar{height:4px;background:var(--border);margin:6px 0;border-radius:2px}
+.progress-fill{height:100%;background:var(--success);border-radius:2px}
+.payment-row{border:1px solid var(--border-soft);padding:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:flex-start;border-radius:var(--r)}
+.payment-method{font-size:13px;font-weight:500}
+.payment-date{font-size:11px;color:var(--ink-3)}
+.payment-amount{font-size:13px;font-weight:600}
+.payment-actions{display:flex;gap:8px;font-size:11px;font-weight:500;margin-top:4px}
+.payment-actions .receipt{color:var(--ink)}
+.payment-actions .void{color:var(--danger)}
+.link-item{border:1px solid var(--border-soft);padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:var(--r)}
+.link-item:active{border-color:var(--border-strong);background:var(--accent-surface)}
+.link-icon{width:28px;height:28px;border:1px solid var(--border-strong);display:grid;place-items:center;font-size:12px;flex-shrink:0;border-radius:var(--r)}
+.link-name{font-size:13px;font-weight:500}
+.link-sub{font-size:11px;color:var(--ink-3)}
+.activity-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border-soft);font-size:12px}
+.activity-row:last-child{border-bottom:none}
+.activity-label{flex:1}
+.activity-time{font-size:11px;color:var(--ink-3);flex-shrink:0;margin-left:8px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-soft)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;font-weight:500}
+.toggle{width:36px;height:20px;border:1px solid var(--border-strong);display:flex;align-items:center;padding:2px;cursor:pointer;border-radius:var(--r)}
+.toggle.on{background:var(--ink);border-color:var(--ink)}
+.toggle-knob{width:16px;height:16px;background:var(--bg);transition:all 0.15s;border-radius:2px}
+.toggle.on .toggle-knob{margin-left:auto}
+.bank-card{margin:0 14px 10px;padding:14px;border:1px solid var(--success);border-radius:var(--r)}
+.bank-name{font-size:14px;font-weight:500}
+.bank-detail{font-size:12px;color:var(--ink-2)}
+.bank-number{font-size:12px;font-weight:600}
+.fab{position:fixed;bottom:80px;right:calc(50% - 190px);width:52px;height:52px;background:var(--ink);color:var(--bg);border:1px solid var(--ink);display:grid;place-items:center;z-index:60;border-radius:var(--r)}
+[data-theme="dark"] .fab{background:var(--accent);border-color:var(--accent)}
+.fab:active{transform:scale(0.9)}
+@media(max-width:420px){.fab{right:16px}}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;height:56px;background:var(--surface);border-top:1px solid var(--border-strong);display:grid;grid-template-columns:repeat(5,1fr);z-index:50}
+.bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);border-right:1px solid var(--border)}
+.bn-item:last-child{border-right:none}
+.bn-item.active{color:var(--ink);background:var(--accent-surface)}
+.bn-item svg{width:18px;height:18px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="topbar-back" onclick="history.back()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="topbar-center"><div class="topbar-title">Invoices</div><div class="topbar-sub">INV-2024-017 . Monthly Maintenance</div></div>
+    <div class="topbar-right">
+      <button class="tb-btn" title="Share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      <button class="tb-btn" id="themeBtn" title="Customize"><svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+      <button class="tb-btn" title="More"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+    </div>
+  </header>
+  <div class="action-row">
+    <button class="btn primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Record Payment</button>
+    <button class="btn">Edit</button>
+    <button class="btn pill" title="Download"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  </div>
+  <main class="content">
+    <div class="doc-card">
+      <div class="doc-card-top">
+        <div class="brand-row"><div class="brand-logo">BD</div><div><div class="brand-name">BIGDROPS</div><div class="brand-sub">Business Solutions</div><div class="brand-line">Lagos, Nigeria</div></div></div>
+        <span class="status-pill unpaid">Unpaid</span>
+      </div>
+      <div class="doc-card-body">
+        <div class="doc-title">Monthly Maintenance</div>
+        <div class="meta-chips">
+          <span class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="0"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> Aug 15, 2024</span>
+          <span class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Sep 14, 2024</span>
+          <span class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> INV-2024-017</span>
+        </div>
+      </div>
+      <div class="info-grid">
+        <div><div class="info-label">Client</div><div class="info-value">Acme Corp Ltd</div><div class="info-detail">Lekki Phase 1, Lagos</div></div>
+        <div><div class="info-label">PO Number</div><div class="info-value">PO-2024-089</div></div>
+      </div>
+      <div class="doc-card-items">
+        <div class="item-row"><div class="item-num">1</div><div class="item-body"><div class="item-name">Website Maintenance</div><div class="item-sub">Monthly hosting and updates</div><div class="item-meta"><span class="item-pill">1 unit</span><span class="item-pill">x 150,000</span></div></div><div class="item-amount">150,000</div></div>
+        <div class="item-row"><div class="item-num">2</div><div class="item-body"><div class="item-name">SEO Optimization</div><div class="item-sub">Quarterly audit and report</div><div class="item-meta"><span class="item-pill">1 unit</span><span class="item-pill">x 75,000</span></div></div><div class="item-amount">75,000</div></div>
+        <div class="item-row"><div class="item-num">3</div><div class="item-body"><div class="item-name">Content Management</div><div class="item-sub">Blog posts and social media</div><div class="item-meta"><span class="item-pill">3 posts</span><span class="item-pill">x 25,000</span></div></div><div class="item-amount">75,000</div></div>
+      </div>
+      <div class="doc-card-totals">
+        <div class="totals-row"><span>Subtotal</span><span style="font-weight:600;">300,000.00</span></div>
+        <div class="totals-row"><span>VAT (7.5%)</span><span style="font-weight:600;">22,500.00</span></div>
+        <div class="totals-grand"><span class="totals-grand-label">Grand Total</span><span class="totals-grand-value">322,500</span></div>
+        <div class="amount-words">Three Hundred and Twenty-Two Thousand, Five Hundred Naira Only</div>
+      </div>
+      <div class="doc-card-signatory"><div class="signatory-img">Signature</div><div><div class="signatory-name">Adewale O.</div><div class="signatory-role">Managing Director</div></div></div>
+    </div>
+    <div class="section-card open" id="bankSection"><div class="section-header" onclick="toggleSection('bankSection')"><div class="section-icon">B</div><div class="section-title">Bank Details</div><span class="section-chevron">v</span></div><div class="section-body"><div class="bank-card"><div class="bank-name">Access Bank</div><div class="bank-number">0123456789</div><div class="bank-detail">BIGDROPS Solutions</div></div><div style="border:1px solid var(--border);padding:14px;margin:0 0 8px;border-radius:var(--r);"><div class="bank-name">GTBank</div><div class="bank-number">9876543210</div><div class="bank-detail">BIGDROPS Enterprises</div></div></div></div>
+    <div class="section-card" id="optionsSection"><div class="section-header" onclick="toggleSection('optionsSection')"><div class="section-icon">O</div><div class="section-title">Document Options</div><span class="section-chevron">v</span></div><div class="section-body"><div class="toggle-row"><span class="toggle-label">Show Bank Details</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div><div class="toggle-row"><span class="toggle-label">Show Signatory</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div><div class="toggle-row"><span class="toggle-label">Show Header Fields</span><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div><div class="toggle-row"><span class="toggle-label">Show Balance Due</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div></div></div>
+    <div class="section-card" id="paymentSection"><div class="section-header" onclick="toggleSection('paymentSection')"><div class="section-icon">P</div><div class="section-title">Payment History</div><div class="section-action">Record</div><span class="section-chevron">v</span></div><div class="section-body"><div class="payment-summary"><span class="label">Total Invoiced</span><span class="value">322,500</span></div><div class="payment-summary"><span class="label">Total Paid</span><span class="value" style="color:var(--success);">100,000</span></div><div class="payment-summary"><span class="label">Balance Due</span><span class="value danger">222,500</span></div><div class="progress-bar"><div class="progress-fill" style="width:31%;"></div></div><div class="payment-row"><div><div class="payment-method">Bank Transfer</div><div class="payment-date">Aug 20, 2024</div></div><div style="text-align:right;"><div class="payment-amount">100,000</div><div class="payment-actions"><span class="receipt">Receipt</span><span class="void">Void</span></div></div></div></div></div>
+    <div class="section-card" id="relatedSection"><div class="section-header" onclick="toggleSection('relatedSection')"><div class="section-icon">R</div><div class="section-title">Linked Documents</div><span class="section-chevron">v</span></div><div class="section-body"><div class="link-item"><div class="link-icon">Q</div><div><div class="link-name">QT-2024-034</div><div class="link-sub">Source Quotation</div></div></div><div class="link-item"><div class="link-icon">W</div><div><div class="link-name">WB-2024-012</div><div class="link-sub">Waybill</div></div></div></div></div>
+    <div class="section-card" id="activitySection"><div class="section-header" onclick="toggleSection('activitySection')"><div class="section-icon">A</div><div class="section-title">Activity & History</div><span class="section-chevron">v</span></div><div class="section-body"><div class="activity-row"><span class="activity-label">Invoice created</span><span class="activity-time">Aug 15, 10:30</span></div><div class="activity-row"><span class="activity-label">Sent to client</span><span class="activity-time">Aug 15, 11:00</span></div><div class="activity-row"><span class="activity-label">Payment recorded</span><span class="activity-time">Aug 20, 14:22</span></div><div class="activity-row"><span class="activity-label">PDF downloaded</span><span class="activity-time">Aug 22, 09:15</span></div></div></div>
+  </main>
+  <button class="fab" title="Download PDF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  <nav class="bottom-nav">
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
+    <button class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
+    <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
+  </nav>
+</div>
+<script>
+let dark=false;
+document.getElementById('themeBtn').addEventListener('click',()=>{dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'light');document.getElementById('themeIcon').innerHTML=dark?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>':'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';});
+function toggleSection(id){document.getElementById(id).classList.toggle('open')}
+</script>
+</body>
+</html>

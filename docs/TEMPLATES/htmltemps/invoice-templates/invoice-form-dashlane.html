@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>BIGDROPS — Create Invoice (Dashlane)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FCFAF9;--surface:#FFF;--ink:#200F0A;--ink-2:#A69F9D;--ink-3:#A69F9D;--accent:#A2F6F5;--accent-2:#858DF9;--accent-surface:rgba(162,246,245,0.1);--danger:#FF6B6B;--success:#A2F6F5;--warning:#E8A838;--border:#E3CCC0;--border-strong:#200F0A;--border-soft:#F5F0EC;--font:'Inter',sans-serif;--r:8px;--r-pill:9999px}
+[data-theme="dark"]{--bg:#200F0A;--surface:#2B2538;--ink:#FCFAF9;--ink-2:#A69F9D;--ink-3:#A69F9D;--accent:#A2F6F5;--accent-2:#858DF9;--accent-surface:rgba(162,246,245,0.08);--danger:#FF6B6B;--success:#A2F6F5;--warning:#E8A838;--border:#4D3F3B;--border-strong:#FCFAF9;--border-soft:#3A2E35}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);padding:10px 14px;font-size:14px;width:100%;border-radius:var(--r)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none}
+textarea{resize:vertical;min-height:60px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A69F9D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.app{max-width:420px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;background:var(--surface)}
+.topbar-title{font-size:13px;font-weight:600;letter-spacing:0.01em}
+.topbar-right{display:flex;gap:6px}
+.tb-btn{width:36px;height:36px;border:1px solid var(--border);display:grid;place-items:center;background:var(--surface);transition:all 0.1s;border-radius:var(--r-pill)}
+.tb-btn:active{background:var(--accent);color:#200F0A;border-color:var(--accent)}
+.tb-btn svg{width:18px;height:18px}
+.content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:20px;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{display:none}
+.section{border-bottom:1px solid var(--border);padding-bottom:16px}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-3);margin-bottom:8px}
+.field{margin-bottom:10px}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:4px}
+.field-input{border:1px solid var(--border);padding:10px 14px;min-height:44px;display:flex;align-items:center;font-size:14px;background:var(--surface);width:100%;border-radius:var(--r)}
+.field-input:focus-within{border-color:var(--accent)}
+.field-input input,.field-input textarea{border:none;padding:0;background:transparent;min-height:auto;border-radius:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.badge{display:inline-block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:var(--r-pill)}
+.badge.editable{background:var(--accent-surface);color:var(--accent);border:1px solid var(--accent)}
+.badge.computed{background:rgba(162,246,245,0.06);color:var(--accent);border:1px solid var(--accent)}
+.badge.locked{background:var(--border-soft);color:var(--ink-3);border:1px solid var(--border)}
+.client-picker{border:1px dashed var(--border);padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.1s;border-radius:var(--r)}
+.client-picker:active{border-color:var(--accent);background:var(--accent-surface)}
+.client-icon{width:44px;height:44px;border:1px solid var(--border-strong);display:grid;place-items:center;flex-shrink:0;border-radius:var(--r)}
+.client-name{font-size:15px;font-weight:600}
+.client-sub{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em}
+.client-chevron{margin-left:auto;font-size:16px;color:var(--ink-3)}
+.item-card{border:1px solid var(--border);padding:12px;margin-bottom:8px;background:var(--surface);border-radius:var(--r)}
+.item-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.item-num{font-size:11px;font-weight:600;color:var(--ink-3);width:20px}
+.item-actions{display:flex;gap:4px;margin-left:auto}
+.item-action{width:28px;height:28px;border:1px solid var(--border);display:grid;place-items:center;font-size:12px;border-radius:var(--r-pill)}
+.item-action:active{background:var(--accent);color:#200F0A}
+.item-action.danger{border-color:var(--danger);color:var(--danger)}
+.item-action.danger:active{background:var(--danger);color:#fff}
+.item-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.item-field{display:flex;flex-direction:column;gap:2px}
+.item-field label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3)}
+.item-field input{padding:8px 10px;font-size:13px;min-height:36px}
+.item-subtotal{display:flex;justify-content:space-between;border:1px solid var(--border-soft);padding:8px 12px;margin-top:8px;background:var(--bg);border-radius:var(--r)}
+.item-subtotal-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-3)}
+.item-subtotal-value{font-size:16px;font-weight:700}
+.add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.add-btn{border:1px dashed var(--border);padding:10px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.1s;border-radius:var(--r)}
+.add-btn:active{border-color:var(--accent);background:var(--accent-surface);color:var(--accent)}
+.collapse{border:1px solid var(--border);margin-bottom:8px;background:var(--surface);border-radius:var(--r)}
+.collapse-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer}
+.collapse-icon{width:28px;height:28px;border:1px solid var(--border-strong);display:grid;place-items:center;font-size:12px;flex-shrink:0;border-radius:var(--r)}
+.collapse-title{font-size:13px;font-weight:600;flex:1}
+.collapse-sub{font-size:11px;color:var(--ink-3)}
+.collapse-chevron{color:var(--ink-3);font-size:12px;transition:transform 0.2s}
+.collapse.open .collapse-chevron{transform:rotate(180deg)}
+.collapse-body{padding:0 14px 14px;display:none}
+.collapse.open .collapse-body{display:block}
+.segmented{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.segmented button{flex:1;padding:8px;font-size:12px;font-weight:600;text-align:center;border-right:1px solid var(--border);transition:all 0.1s}
+.segmented button:last-child{border-right:none}
+.segmented button.active{background:var(--ink);color:var(--bg)}
+.charge-row{display:flex;gap:6px;margin-bottom:6px}
+.charge-row input{flex:1}
+.charge-row .charge-val{width:80px;text-align:right;font-weight:700}
+.charge-row .charge-remove{width:32px;height:32px;border:1px solid var(--danger);color:var(--danger);display:grid;place-items:center;font-size:14px;flex-shrink:0;border-radius:var(--r-pill)}
+.charge-row .charge-remove:active{background:var(--danger);color:#fff}
+.totals{padding:12px 0}
+.totals-row{display:flex;justify-content:space-between;padding:3px 0;font-size:14px}
+.totals-grand{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border-strong);margin-top:10px;padding-top:10px}
+.totals-grand-label{font-size:15px;font-weight:600}
+.totals-grand-value{font-size:28px;font-weight:700;letter-spacing:-0.02em}
+.amount-words{font-size:12px;font-style:italic;color:var(--ink-2);margin-top:8px;padding:10px;border:1px dashed var(--border);background:var(--bg);border-radius:var(--r)}
+.notes-area{border:1px dashed var(--border);padding:12px;min-height:80px;background:var(--bg);border-radius:var(--r)}
+.footer{position:sticky;bottom:0;border-top:1px solid var(--border-strong);background:var(--surface);padding:10px 16px;z-index:10}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
+.btn{padding:10px;border:1px solid var(--border-strong);font-size:13px;font-weight:600;text-align:center;transition:all 0.1s;border-radius:var(--r-pill)}
+.btn:active{transform:scale(0.96)}
+.btn.primary{background:var(--accent);color:#200F0A;border-color:var(--accent)}
+[data-theme="dark"] .btn.primary{background:var(--accent);border-color:var(--accent);color:#200F0A}
+.fab{position:fixed;bottom:80px;right:calc(50% - 190px);width:52px;height:52px;background:var(--accent);color:#200F0A;border:1px solid var(--accent);display:grid;place-items:center;font-size:20px;z-index:60;border-radius:var(--r-pill)}
+.fab:active{transform:scale(0.9)}
+@media(max-width:420px){.fab{right:16px}}
+.header-fields{border-top:1px solid var(--border-soft);padding-top:12px}
+.hf-row{display:flex;gap:6px;margin-bottom:6px}
+.hf-row input{flex:1;padding:8px 10px;font-size:13px}
+.hf-remove{width:32px;height:32px;border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--ink-3);border-radius:var(--r-pill)}
+.hf-remove:active{background:var(--danger);color:#fff;border-color:var(--danger)}
+.link-row{display:flex;gap:6px;margin-bottom:6px}
+.link-row input{flex:1;padding:8px 10px;font-size:13px}
+.link-remove{width:32px;height:32px;border:1px solid var(--border);display:grid;place-items:center;font-size:14px;color:var(--ink-3);border-radius:var(--r-pill)}
+.link-remove:active{background:var(--danger);color:#fff;border-color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-title">Create Invoice</div>
+    <div class="topbar-right">
+      <button class="tb-btn" id="themeBtn" title="Toggle theme">
+        <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="tb-btn" title="More">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid var(--accent);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);border-radius:var(--r-pill);">
+        <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;"></span> Invoice
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Client</div>
+      <div class="client-picker">
+        <div class="client-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </div>
+        <div><div class="client-sub">Client</div><div class="client-name">Select a client</div></div>
+        <span class="client-chevron">></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Document Details</div>
+      <div style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px;">New Invoice</div>
+      <div class="field"><div class="field-label">Invoice Title</div><div class="field-input"><input type="text" placeholder="e.g. Monthly Maintenance" /></div></div>
+      <div class="grid-2">
+        <div class="field"><div class="field-label">Invoice No.</div><div class="field-input" style="background:var(--border-soft);"><span style="font-size:13px;font-weight:600;">INV-2024-018</span></div></div>
+        <div class="field"><div class="field-label">PO Number</div><div class="field-input"><input type="text" placeholder="Optional" /></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><div class="field-label">Issue Date</div><div class="field-input"><input type="date" /></div></div>
+        <div class="field"><div class="field-label">Due Date</div><div class="field-input"><input type="date" /></div></div>
+      </div>
+      <div class="header-fields">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div class="field-label" style="margin:0;">Header Fields</div><span style="font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;">+ Add field</span></div>
+        <div class="hf-row"><input placeholder="Label" /><input placeholder="Value" /><button class="hf-remove">x</button></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Line Items</div>
+      <div class="item-card">
+        <div class="item-header"><span class="item-num">1</span><div class="item-actions"><button class="item-action">^</button><button class="item-action">v</button><button class="item-action danger">x</button></div></div>
+        <div class="field" style="margin-bottom:6px;"><div class="field-input" style="min-height:48px;"><textarea placeholder="Item description..." rows="2" style="min-height:36px;border:none;padding:0;background:transparent;"></textarea></div></div>
+        <div class="item-fields">
+          <div class="item-field"><label>Make</label><input type="text" placeholder="--" /></div>
+          <div class="item-field"><label>Qty</label><input type="number" value="1" min="1" /></div>
+          <div class="item-field"><label>Unit</label><input type="text" placeholder="--" /></div>
+          <div class="item-field"><label>Rate</label><input type="number" value="0" style="text-align:right;font-weight:700;" /></div>
+        </div>
+        <div class="item-subtotal"><span class="item-subtotal-label">Subtotal</span><span class="item-subtotal-value">0.00</span></div>
+      </div>
+      <div class="item-card">
+        <div class="item-header"><span class="item-num">2</span><div class="item-actions"><button class="item-action">^</button><button class="item-action">v</button><button class="item-action danger">x</button></div></div>
+        <div class="field" style="margin-bottom:6px;"><div class="field-input" style="min-height:48px;"><textarea placeholder="Item description..." rows="2" style="min-height:36px;border:none;padding:0;background:transparent;"></textarea></div></div>
+        <div class="item-fields">
+          <div class="item-field"><label>Make</label><input type="text" placeholder="--" /></div>
+          <div class="item-field"><label>Qty</label><input type="number" value="1" min="1" /></div>
+          <div class="item-field"><label>Unit</label><input type="text" placeholder="--" /></div>
+          <div class="item-field"><label>Rate</label><input type="number" value="0" style="text-align:right;font-weight:700;" /></div>
+        </div>
+        <div class="item-subtotal"><span class="item-subtotal-label">Subtotal</span><span class="item-subtotal-value">0.00</span></div>
+      </div>
+      <div class="add-row"><div class="add-btn">+ Add item</div><div class="add-btn">+ Add group</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Commercial Terms</div>
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div class="field"><div class="field-label">Payment Terms</div><div class="field-input"><select><option>Custom</option><option>Net 7 Days</option><option>Net 14 Days</option><option>Net 30 Days</option><option>Due on Receipt</option></select></div></div>
+        <div class="field"><div class="field-label">Due / Validity</div><div class="field-input"><input type="text" placeholder="e.g. Due in 14 days" /></div></div>
+      </div>
+      <div class="collapse" id="discountCollapse"><div class="collapse-header" onclick="toggleCollapse('discountCollapse')"><div class="collapse-icon" style="color:var(--warning);">%</div><div class="collapse-title">Discount</div><div class="collapse-sub">Not set</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="grid-2" style="margin-bottom:8px;"><div class="field"><div class="field-label">Value</div><div class="field-input"><input type="number" value="0" /></div></div><div class="field"><div class="field-label">Type</div><div class="segmented"><button class="active">NGN</button><button>%</button></div></div></div><div class="field"><div class="field-label">Timing</div><div class="segmented"><button>After VAT</button><button class="active">Before VAT</button></div></div></div></div>
+      <div class="collapse" id="vatCollapse"><div class="collapse-header" onclick="toggleCollapse('vatCollapse')"><div class="collapse-icon" style="color:var(--accent);">%</div><div class="collapse-title">VAT</div><div class="collapse-sub">Not set</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="field"><div class="field-label">VAT Rate (%)</div><div class="field-input"><input type="number" value="0" /></div></div></div></div>
+      <div class="collapse" id="whtCollapse"><div class="collapse-header" onclick="toggleCollapse('whtCollapse')"><div class="collapse-icon" style="color:var(--accent-2);">%</div><div class="collapse-title">Withholding Tax (WHT)</div><div class="collapse-sub">Not set</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="grid-2"><div class="field"><div class="field-label">WHT Rate</div><div class="field-input"><input type="number" value="0" /></div></div><div class="field"><div class="field-label">Unit</div><div class="segmented"><button class="active">%</button><button>NGN</button></div></div></div></div></div>
+      <div class="collapse" id="chargesCollapse"><div class="collapse-header" onclick="toggleCollapse('chargesCollapse')"><div class="collapse-icon">+</div><div class="collapse-title">Additional Charges</div><div class="collapse-sub">None</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="charge-row"><input placeholder="Label (e.g. Transport)" /><input class="charge-val" type="number" value="0" /><button class="charge-remove">x</button></div></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Totals</div>
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><span style="font-weight:700;">0.00</span></div>
+        <div class="totals-row"><span>VAT</span><span style="font-weight:700;">0.00</span></div>
+        <div class="totals-row" style="color:var(--danger);"><span>Discount</span><span style="font-weight:700;">-0.00</span></div>
+        <div class="totals-grand"><span class="totals-grand-label">Grand Total</span><span class="totals-grand-value">0.00</span></div>
+        <div class="amount-words">Zero Naira Only</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="collapse" id="notesCollapse"><div class="collapse-header" onclick="toggleCollapse('notesCollapse')"><div class="collapse-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="collapse-title">Notes & Terms</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="field"><div class="field-label">Invoice Notes</div><div class="notes-area"><textarea placeholder="Notes..." style="border:none;background:transparent;min-height:60px;"></textarea></div></div><div class="field"><div class="field-label">Terms & Conditions</div><div class="notes-area"><textarea placeholder="Terms..." style="border:none;background:transparent;min-height:60px;"></textarea></div></div></div></div>
+      <div class="collapse" id="signatoryCollapse"><div class="collapse-header" onclick="toggleCollapse('signatoryCollapse')"><div class="collapse-icon" style="color:var(--accent);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="collapse-title">Signatory</div><div class="collapse-sub">No Signatory</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div style="border:1px dashed var(--border);padding:16px;text-align:center;color:var(--ink-3);font-size:13px;border-radius:var(--r);">Select signatory</div></div></div>
+      <div class="collapse" id="linksCollapse"><div class="collapse-header" onclick="toggleCollapse('linksCollapse')"><div class="collapse-icon" style="color:var(--accent-2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div class="collapse-title">Reference Links</div><div class="collapse-sub">No links attached</div><span class="collapse-chevron">v</span></div><div class="collapse-body"><div class="link-row"><input placeholder="Label" /><input placeholder="https://..." /><button class="link-remove">x</button></div><div style="font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;">+ Add Link</div></div></div>
+    </div>
+  </main>
+
+  <footer class="footer"><div class="footer-grid"><button class="btn">Cancel</button><button class="btn" style="background:var(--border-soft);">Draft</button><button class="btn primary">Create Invoice</button></div></footer>
+  <button class="fab" title="Save"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+</div>
+<script>
+let dark=true;
+document.documentElement.setAttribute('data-theme','dark');
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  document.getElementById('themeIcon').innerHTML=dark
+    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    :'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+});
+function toggleCollapse(id){document.getElementById(id).classList.toggle('open')}
+document.querySelectorAll('.segmented').forEach(seg=>{seg.querySelectorAll('button').forEach(btn=>{btn.addEventListener('click',()=>{seg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})})});
+</script>
+</body>
+</html>
