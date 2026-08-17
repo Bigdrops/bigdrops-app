@@ -1,168 +1,262 @@
+You are working on the BIGDROPS business platform.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
+====================================================================
+CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
+====================================================================
+OpenCode has full repository access. Read AGENTS.md immediately.
+Follow it completely.
+====================================================================
+
+OBJECTIVE
 
-Create a new HTML dashboard template for Divine Blood.
+Begin the FINAL multi-tenancy cutover.
 
-First, read and follow the Divine Blood design system here:
+The final architecture is:
 
-docs/TEMPLATES/Designsdotmds/Divine-blood.md
+- Business data is entity-scoped.
+- Every business aggregate must live in its entity schema.
+- Public-schema business tables are legacy only.
+- No business data is intentionally left globally public.
+- User-level preferences such as theme choice remain user-scoped and are not
+  company business data.
+- Do not preserve public business storage merely because existing code currently
+  uses it.
 
-Do not restate or reproduce the design system in your work. Use it as the source of truth.
+This pass is INVENTORY ONLY.
 
-## Output
+DO NOT MODIFY APPLICATION SOURCE.
+DO NOT MODIFY DATABASE SCHEMA.
+DO NOT CREATE OR RUN DATA MIGRATIONS.
+DO NOT DELETE PUBLIC TABLES.
+DO NOT DELETE PUBLIC DATA.
 
-Put the finished HTML template(s) here:
+A. READ PROJECT RULES
 
-docs/TEMPLATES/htmltemps/Divine-blood/
+Read:
+- AGENTS.md
+- docs/PROJECTSKILLINDEX.md
+- current multi-tenancy PRDs
+- existing multi-tenancy migration reports
+- existing invoice/quotation/waybill/CSR migration implementations
 
-If practical, create up to 3 different dashboard approaches/variations in that directory. They must all follow the same Divine Blood design system, but can explore different dashboard compositions and information hierarchy.
+Load relevant skills from docs/PROJECTSKILLINDEX.md.
 
-Do not create 3 different visual themes. They are alternative layouts using the same design system.
+B. DATABASE INVENTORY
+
+Inspect the LIVE linked Supabase database.
 
-## Dashboard Architecture
+Build an authoritative inventory of every business-domain object in public
+schema, including:
 
-The dashboard must include:
+- tables
+- views
+- materialized views if any
+- functions/RPCs
+- triggers
+- indexes
+- policies
+- foreign keys
+- sequences
+- helper functions used by business operations
 
-### 1. KPI Summary
-Four KPI cards:
-- Inflow
-- Balance
-- Volume
-- Pending items
+For every public business table determine:
 
-### 2. Recent Documents / Ledger Feed
-A vertical feed containing:
-- Invoices
-- Quotes
-- Dispatch notes
+1. Does the corresponding tenant-schema table exist?
+2. Exact public row count.
+3. Exact tenant row count for the active entity.
+4. Schema/column compatibility.
+5. Primary key.
+6. Foreign keys.
+7. Important indexes.
+8. RLS policies.
+9. Triggers.
+10. Functions/RPCs that read or write it.
+11. Frontend files that access it.
+12. Whether data can be migrated without ambiguity.
 
-Client/details on the left, status on the right.
+Do not infer from old reports when live inspection can answer it.
 
-### 3. Audit Trail
-A chronological vertical timeline with connected markers.
+C. CLASSIFY EVERYTHING
 
-### 4. Tenant Switcher
-The tenant/company switcher belongs in the **sidebar/side drawer**, NOT in the dashboard content.
+Every business object must receive exactly one status:
 
-Required functions:
-```js
-initCompanySwitcher()
-toggleCompanyMenu()
+MIGRATE
+ALREADY TENANT
+GLOBAL INFRASTRUCTURE
+USER-SCOPED
+NEEDS DESIGN
 
-Required elements:
+Do NOT use "INTENTIONALLY PUBLIC" merely because something happens to be
+public today.
 
-#companyTrigger
-#companyMenu
+"Needs design" is only for something that genuinely cannot fit the
+entity-scoped architecture.
 
-Switching companies should update the active company without reloading the page.
+The expected direction is that business data becomes tenant-scoped.
 
-5. Recent Activity
+D. DATA OWNERSHIP
 
-Horizontal notification/activity carousel.
+For every public business table determine whether each row belongs to:
 
-Required functions:
+- an entity
+- a workspace/company relationship
+- a user
+- global infrastructure
 
-renderActivity()
-onNotifClick(id, docIndex)
+Where ownership is not directly represented, inspect existing relationships,
+creation metadata, workspace/entity mappings, foreign keys, and migration
+history.
 
-Required elements:
+CRITICAL:
 
-#activityScroll
-#drawerOverlay
+Never guess ownership.
 
-Use approximately 260px-wide activity cards.
+If ownership cannot be proven, report the exact blocker and the evidence
+required to resolve it.
 
-Clicking an activity opens the Document Drawer.
+E. DEPENDENCY GRAPH
 
-6. Tips & Tricks
+Trace dependencies between public objects.
 
-Hero/banner slideshow with automatically rotating tips.
+Identify:
 
-Required functions:
+- public RPC → public table
+- public view → public table
+- trigger → public table/function
+- frontend → public RPC
+- frontend → public table
+- tenant RPC → public table
+- tenant view → public table
 
-nextTip()
-renderTipDots()
-resetTipInterval()
+Pay particular attention to:
 
-Required elements:
+- invoice transaction RPCs
+- quotation/invoice conversion
+- document numbering
+- audit/activity recording
+- item library
+- financial views
+- project/document relationships
+- RFQ → quotation
+- BOQ → quotation
+- invoice → CSR/waybill
+- invoice → quotation revert
+- offline synchronization
 
-#tipText
-#tipDots
+F. FRONTEND PUBLIC ACCESS MANIFEST
 
-Rotation interval: 5.5 seconds.
+Search the actual repository.
 
-7. FAB / Quick Actions
+Find every business-domain:
 
-Include a FAB consistent with the main application.
+- supabase.from(...)
+- supabase.rpc(...)
+- client.from(...)
+- client.rpc(...)
+- fallback from tenantClient to supabase
+- repository/service that internally uses public supabase
 
-When the FAB is clicked, show a small, humble quick-action popup.
+Do not rely on previous reports or stale line numbers.
 
-Use this existing file only to determine the popup's approximate size/footprint:
+Classify every occurrence:
 
-docs/TEMPLATES/htmltemps/reprise-dashboard.html
+TENANT ALREADY
+MUST CUT OVER
+GLOBAL INFRASTRUCTURE
+USER-SCOPED
+NEEDS DESIGN
 
-Do NOT copy its visual design.
+A business table being "public for now" is NOT an acceptable final state.
 
-The popup should use the Divine Blood design system and remain compact rather than becoming a large modal.
+G. MIGRATION ORDER
 
-Responsive Navigation
+Based on the live dependency graph, propose the safest aggregate migration
+order.
 
-This is important.
+For each batch specify:
 
-The dashboard must have a proper mobile navigation.
+1. Database migration required.
+2. Data migration required.
+3. Permission/RLS work.
+4. RPC/view work.
+5. Frontend cutover.
+6. Verification gate.
+7. Public objects that can eventually be removed.
 
-Mobile navigation is required for:
+Prefer small dependency-safe batches over one giant migration.
 
-Phones
+H. PUBLIC PURGE PLAN
 
-Foldable cover displays
+Produce a final deletion plan.
 
-Flip cover displays
+For every public business table/view/RPC that should disappear, state:
 
+- what replaces it
+- what code currently depends on it
+- what must be migrated first
+- what verification proves it is safe to remove
 
-Use the available viewport width as the source of truth rather than hardcoding device names.
+Do NOT delete anything in this pass.
 
-When a fold/flip device is unfolded and has enough available width, the interface may transition into the tablet/desktop-style layout.
+I. REQUIRED VERIFICATION
 
-Expected behavior:
+Run only safe read-only verification.
 
-Phone / Cover display
-→ Mobile navigation
+Required:
 
-Tablet / unfolded portrait
-→ Tablet navigation
+- git status before and after
+- database object inventory
+- exact counts
+- dependency inventory
+- repository search
+- no source changes
+- no migration changes
 
-Unfolded landscape / sufficiently wide viewport
-→ Desktop-style sidebar/navigation
+DO NOT run:
 
-Do not force desktop navigation onto narrow fold/flip cover displays.
+bun run build
+bun run typecheck
+bun run lint
 
-Respect safe-area insets.
+This is an inventory/audit pass and must not spend resources on application
+verification.
 
-Important
+J. REPORT
 
-The tenant switcher must remain in the sidebar/drawer.
+Create:
 
-It must not appear as a dashboard widget.
+docs/Reports/multi-tenancy/final-public-business-purge-inventory.md
 
-The dashboard must be fully functional, not a static wireframe.
+The report must contain:
 
-Implement the required JavaScript functions and DOM hooks.
+1. Executive summary
+2. Complete public business table inventory
+3. Complete tenant table inventory
+4. Public vs tenant row counts
+5. Ownership/provenance findings
+6. RPC/function inventory
+7. View inventory
+8. Dependency graph
+9. Frontend public-access manifest
+10. Classification of every object
+11. Recommended migration order
+12. Public purge plan
+13. Blockers
+14. Exact next migration batch
 
-Support Light and Dark modes from the design system.
+CRITICAL FINAL RULE:
 
-Follow the design system's responsive and accessibility requirements.
+Do not declare any business object "intentionally public" simply because
+the current implementation leaves it public.
 
-Keep the dashboard spacious and readable.
+The target architecture is entity-scoped business data.
 
-Do not add unnecessary features just to fill space.
+This pass must establish the authoritative map needed to execute the final
+migration safely.
 
-
-Deliverable
-
-Create the HTML template(s) directly in:
-
-docs/TEMPLATES/htmltemps/Divine-blood/
-
-If three approaches genuinely improve the result, create three variations. Otherwise create one excellent implementation rather than padding the directory with weak variations.
-
-Make the result production-quality and visually polished.
+No application code changes.
+No schema changes.
+No data changes.
+No public-data deletion.
