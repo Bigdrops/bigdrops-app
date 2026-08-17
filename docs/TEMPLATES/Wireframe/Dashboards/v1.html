@@ -99,17 +99,31 @@
 
     /* ── KPI GRID — static, no auto-scroll ── */
     .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 5px 0 4px 0; }
-    .kpi-card { border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 7px 7px; display: flex; flex-direction: column; gap: 5px; }
+    .kpi-card { border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 7px 7px; display: flex; flex-direction: column; gap: 4px; }
     .kpi-card .kpi-label { font-weight: 600; font-size: 11px; color: var(--ink); text-transform: uppercase; letter-spacing: 0.04em; }
     .kpi-card .kpi-value { font-size: 13px; font-weight: 700; font-family: monospace; color: var(--ink); }
-    .kpi-card .segmented-stroke { display: flex; gap: 2px; height: 11px; }
+    
+    /* KPI Timeline Indicator styles */
+    .kpi-timeline {
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--grey4);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 1px;
+    }
+    .kpi-timeline .trend-up { color: #10b981; font-weight: bold; }
+    .kpi-timeline .trend-down { color: #ef4444; font-weight: bold; }
+
+    .kpi-card .segmented-stroke { display: flex; gap: 2px; height: 9px; margin-top: 2px; }
     .kpi-card .stroke-segment { width: 3px; background-color: var(--grey3); border-radius: 1px; flex-shrink: 0; }
     .kpi-card .stroke-segment.balance { background-color: #f97316; }
     .kpi-card .stroke-segment.overdue { background-color: #ef4444; }
     .kpi-card .stroke-segment.invoices { background-color: #8b5cf6; }
     .kpi-card .stroke-segment.payments { background-color: #10b981; }
 
-    /* ── SMART BANNER (replaces the "record payments" nag idea) ── */
+    /* ── SMART BANNER ── */
     .smart-banner {
       margin: 2px 0 0;
       border: 1.5px solid var(--line);
@@ -319,7 +333,7 @@
 <body>
   <div class="wrap">
     <h1>BIGDROPS — Dashboard Wireframe (Low-Fidelity)</h1>
-    <div class="meta">v0.8 · smart banner replaces cube-scroll idea · tips moved to loading screen · sidebar/notif/AI open states are live — click to try</div>
+    <div class="meta">v0.9 · KPI timeline metrics added back · smart banner active · all interactions live</div>
 
     <div class="layout">
 
@@ -348,7 +362,7 @@
                   </div>
                 </div>
 
-                <!-- KPI GRID — static, confirmed no auto-scroll -->
+                <!-- KPI GRID with Timelines added back -->
                 <div class="block">
                   <span class="label">02 kpi grid <span class="tag">static</span></span>
                   <div class="kpi-grid">
@@ -356,27 +370,31 @@
                       <div class="kpi-label">Balance</div>
                       <div class="segmented-stroke"><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment balance"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div></div>
                       <div class="kpi-value">₦10,000</div>
+                      <div class="kpi-timeline"><span class="trend-up">+12%</span> last week</div>
                     </div>
                     <div class="kpi-card">
                       <div class="kpi-label">Overdue</div>
                       <div class="segmented-stroke"><div class="stroke-segment overdue"></div><div class="stroke-segment overdue"></div><div class="stroke-segment overdue"></div><div class="stroke-segment overdue"></div><div class="stroke-segment overdue"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div></div>
                       <div class="kpi-value">₦56,000</div>
+                      <div class="kpi-timeline"><span class="trend-down">+4%</span> vs yesterday</div>
                     </div>
                     <div class="kpi-card">
                       <div class="kpi-label">Invoices</div>
                       <div class="segmented-stroke"><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment invoices"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div></div>
                       <div class="kpi-value">12</div>
+                      <div class="kpi-timeline"><span class="trend-up">-2</span> pending review</div>
                     </div>
                     <div class="kpi-card">
                       <div class="kpi-label">Payments</div>
                       <div class="segmented-stroke"><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment payments"></div><div class="stroke-segment"></div><div class="stroke-segment"></div><div class="stroke-segment"></div></div>
                       <div class="kpi-value">₦89,000</div>
+                      <div class="kpi-timeline"><span class="trend-up">+18%</span> this month</div>
                     </div>
                   </div>
 
-                  <!-- SMART BANNER — replaces the "record payments" cube-scroll idea -->
+                  <!-- SMART BANNER -->
                   <div class="smart-banner">
-                    <span class="label" style="top:-14px; right:0;">02b smart banner <span class="fix">new</span></span>
+                    <span class="label" style="top:-14px; right:0;">02b smart banner</span>
                     <div class="sb-dot"></div>
                     <div class="sb-body">
                       <div class="sb-title">3 payments may be unrecorded</div>
@@ -450,7 +468,7 @@
               <!-- SCRIM -->
               <div class="scrim" id="scrim"></div>
 
-              <!-- SIDEBAR DRAWER (open state) -->
+              <!-- SIDEBAR DRAWER -->
               <div class="sidebar-drawer" id="sidebarDrawer">
                 <div class="sd-head">
                   <div class="sd-avatar"></div>
@@ -467,7 +485,7 @@
                 <div class="sd-foot"><div class="sf1"></div></div>
               </div>
 
-              <!-- NOTIFICATION PANEL (open state) -->
+              <!-- NOTIFICATION PANEL -->
               <div class="notif-panel" id="notifPanel">
                 <div class="np-head"><span class="np-title">Notifications</span><span class="np-clear">Clear all</span></div>
                 <div class="np-list">
@@ -479,7 +497,7 @@
                 </div>
               </div>
 
-              <!-- AI PANEL (open state) -->
+              <!-- AI PANEL -->
               <div class="ai-panel" id="aiPanel">
                 <div class="ai-head">
                   <div class="ai-head-left">
@@ -498,15 +516,15 @@
 
             </div><!-- /screen -->
           </div><!-- /phone -->
-          <div class="phone-caption"><b>Dashboard</b> — click ☰ / 🔔 / AI to see each open state live</div>
+          <div class="phone-caption"><b>Dashboard</b> — KPI cards now updated with trend timelines</div>
         </div>
 
-        <!-- ═══════════ SCREEN 2: LOADING / "DO YOU KNOW" TIP ═══════════ -->
+        <!-- ═══════════ SCREEN 2: LOADING SCREEN ═══════════ -->
         <div class="phone-col">
           <div class="phone">
             <div class="screen" style="padding-bottom:0;">
               <div class="loading-screen">
-                <span class="label" style="top:8px; right:8px;">06 loading tip <span class="fix">new</span></span>
+                <span class="label" style="top:8px; right:8px;">06 loading tip</span>
                 <div class="ls-mark"></div>
                 <div class="ls-spinner"></div>
                 <div class="ls-tip-card">
@@ -517,24 +535,10 @@
               </div>
             </div>
           </div>
-          <div class="phone-caption"><b>Loading screen</b> — tips rotate here instead of on the dashboard, like a game load screen</div>
+          <div class="phone-caption"><b>Loading screen</b> — rotating tips layout</div>
         </div>
 
       </div><!-- /phones-row -->
-
-      <!-- ANNOTATIONS -->
-      <div class="notes">
-        <h2>What changed</h2>
-        <ul>
-          <li><b>KPI grid</b> — stays static, no auto-scroll/cube <span class="tag">confirmed</span></li>
-          <li><b>Payment nag</b> — replaced the "3rd slide" idea with a <b>smart banner</b> under the KPI grid. Only shows when there's an actual mismatch (balance moved, no payment logged). Dismissible.</li>
-          <li><b>"Do you know" tips</b> — moved off the dashboard entirely, onto the <b>loading screen</b>. Quotation→invoice conversion is the first example tip.</li>
-          <li><b>Sidebar</b> — tap ☰: drawer slides in from the left with a scrim behind it, 6 nav placeholders + footer</li>
-          <li><b>Notifications</b> — tap 🔔: dropdown panel anchored under the bell, unread items marked with a red dot</li>
-          <li><b>AI assistant</b> — tap the avatar: bottom sheet slides up from the nav bar, chat bubbles + input row, labeled "on-device" per your local LLM setup</li>
-        </ul>
-        <p>Opening the sidebar, notifications, or AI panel auto-closes the other two and the FAB popup — only one overlay at a time. Click the scrim or press Escape to close.</p>
-      </div>
 
     </div><!-- /layout -->
   </div><!-- /wrap -->
