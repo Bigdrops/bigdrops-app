@@ -510,6 +510,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
   <!-- TOPBAR -->
   <header class="topbar">
+    <button class="tb-btn" id="sidebarToggle" aria-label="Toggle sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="brand">
       <div class="brand-mark">am</div>
       <div class="brand-name">amra<span class="brand-sub">Business</span></div>
@@ -766,6 +769,70 @@ function closeOverlays(){
   document.getElementById('fabBtn').classList.remove('open');
   document.getElementById('scrim').classList.remove('visible');
 }
+document.getElementById('sidebarToggle').addEventListener('click', function(){
+  var open = document.getElementById('sidebar').classList.toggle('open');
+  if(open){
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('aiOverlay').classList.remove('open');
+    document.getElementById('quickPopup').classList.remove('open');
+    document.getElementById('fabBtn').classList.remove('open');
+    document.getElementById('scrim').classList.add('visible');
+  } else {
+    document.getElementById('scrim').classList.remove('visible');
+  }
+});
+document.getElementById('scrim').addEventListener('click', closeOverlays);
+document.getElementById('aiBtn').addEventListener('click', function(){
+  var ai = document.getElementById('aiOverlay');
+  var open = !ai.classList.contains('open');
+  closeOverlays();
+  ai.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+  document.getElementById('aiInput').focus();
+});
+document.getElementById('aiClose').addEventListener('click', closeOverlays);
+document.getElementById('aiSend').addEventListener('click', sendAi);
+document.getElementById('aiInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') sendAi();
+});
+document.getElementById('notifBtn').addEventListener('click', function(){
+  var np = document.getElementById('notifPanel');
+  var open = !np.classList.contains('open');
+  closeOverlays();
+  np.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+});
+document.getElementById('npClear').addEventListener('click', function(){
+  document.querySelectorAll('.np-row').forEach(function(r){ r.querySelector('.np-dot').classList.add('read'); });
+  showToast('All notifications read');
+});
+document.getElementById('themeBtn').addEventListener('click', function(){
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
+  this.querySelector('.i-moon').style.display = dark ? '' : 'none';
+  this.querySelector('.i-sun').style.display = dark ? 'none' : '';
+});
+document.getElementById('sbClose').addEventListener('click', function(){
+  document.getElementById('smartBanner').style.display = 'none';
+});
+document.getElementById('seeAll').addEventListener('click', function(){ closeOverlays(); showToast('Showing all alerts'); });
+var navItems = document.querySelectorAll('.bn-item');
+navItems.forEach(function(item){
+  item.addEventListener('click', function(){ navItems.forEach(function(i){ i.classList.remove('active'); }); this.classList.add('active'); showToast(this.dataset.tab + ' selected'); });
+});
+document.querySelectorAll('.sidebar-link').forEach(function(l){ l.addEventListener('click', function(){ closeOverlays(); }); });
+var tipIdx = 0;
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  var ls = document.getElementById('loadingScreen');
+  var tip = document.getElementById('lsTip');
+  tip.textContent = TIPS[tipIdx % TIPS.length]; tipIdx++;
+  ls.classList.add('show');
+  setTimeout(function(){ ls.classList.remove('show'); showToast('Dashboard refreshed'); }, 2200);
+});
+function showToast(msg){
+  var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+}
 document.getElementById('fabBtn').addEventListener('click', function(e){
   e.stopPropagation();
   var open = this.classList.toggle('open');
@@ -808,45 +875,6 @@ document.getElementById('themeBtn').addEventListener('click', function(){
   var dark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
   this.querySelector('.i-moon').style.display = dark ? '' : 'none';
-  this.querySelector('.i-sun').style.display = dark ? 'none' : '';
-});
-document.getElementById('sbClose').addEventListener('click', function(){
-  document.getElementById('smartBanner').style.display = 'none';
-});
-document.getElementById('seeAll').addEventListener('click', function(){
-  closeOverlays();
-  showToast('Showing all alerts');
-});
-var navItems = document.querySelectorAll('.bn-item');
-navItems.forEach(function(item){
-  item.addEventListener('click', function(){
-    navItems.forEach(function(i){ i.classList.remove('active'); });
-    this.classList.add('active');
-    showToast(this.dataset.tab + ' selected');
-  });
-});
-document.querySelectorAll('.sidebar-link').forEach(function(l){
-  l.addEventListener('click', function(){ closeOverlays(); });
-});
-function showToast(msg){
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._h);
-  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
-}
-var tipIdx = 0;
-document.getElementById('refreshBtn').addEventListener('click', function(){
-  var ls = document.getElementById('loadingScreen');
-  var tip = document.getElementById('lsTip');
-  tip.textContent = TIPS[tipIdx % TIPS.length];
-  tipIdx++;
-  ls.classList.add('show');
-  setTimeout(function(){
-    ls.classList.remove('show');
-    showToast('Dashboard refreshed');
-  }, 2200);
-});
 function sendAi(){
   var inp = document.getElementById('aiInput');
   var v = inp.value.trim();
