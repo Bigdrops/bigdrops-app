@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS — 19–86 Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ink: #000000;
+  --paper: #ffffff;
+  --hairline: 1px solid #000000;
+  --font: 'Inter', sans-serif;
+  --track: -0.02em;
+  --body: 24px;
+  --body-lh: 1.2;
+  --display: 40vw;
+  --radius-dot: 9999px;
+  --ease: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --ink: #ffffff;
+  --paper: #000000;
+  --hairline: 1px solid #ffffff;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: var(--body);
+  line-height: var(--body-lh);
+  letter-spacing: var(--track);
+  color: var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "kern";
+}
+button { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* BRAND WATERMARK */
+.watermark {
+  position: fixed;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--display);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  color: var(--ink);
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* APP SHELL */
+.app { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+/* TOP BAR — thin strip, three zones */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: var(--hairline);
+  background: var(--paper);
+}
+.tb-brand { font-size: 16px; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; }
+.tb-zone { display: flex; align-items: center; gap: 24px; }
+.tb-link {
+  font-size: 11px; font-weight: 300; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 8px 0; border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.tb-link.active { border-bottom-color: var(--ink); }
+.tb-btn {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px; padding: 8px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.tb-btn.active { border-bottom-color: var(--ink); }
+.tb-btn svg { width: 16px; height: 16px; }
+.tb-dot { width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--ink); }
+.tb-dot.hidden { display: none; }
+
+/* SCROLL CONTENT */
+.content {
+  margin-top: 64px;
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 0;
+  scrollbar-width: none;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* LEDGER SECTION LABEL */
+.ledger-label {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 16px 0 8px;
+  font-size: 11px; font-weight: 300; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.ledger-label .idx { letter-spacing: 0.05em; }
+.ledger-label .rule { flex: 1; height: 1px; background: var(--ink); align-self: center; }
+
+/* KPI LEDGER — giant numerals in hairlined rows */
+.kpi-row {
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 0;
+  border-bottom: var(--hairline);
+  padding: 20px 0;
+}
+.kpi-cell { display: flex; flex-direction: column; gap: 6px; }
+.kpi-cell + .kpi-cell { border-left: var(--hairline); padding-left: 24px; }
+.kpi-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 300; }
+.kpi-value { font-size: 44px; font-weight: 200; line-height: 1; letter-spacing: -0.03em; }
+.kpi-meta { font-size: 13px; font-weight: 300; display: flex; align-items: center; gap: 8px; }
+.arrow { font-size: 11px; }
+.up { color: var(--ink); }
+.down { color: var(--ink); }
+.kpi-dot { width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--ink); flex-shrink: 0; }
+
+/* SMART BANNER — a ledger row, not a card */
+.smart-banner {
+  display: flex; align-items: center; gap: 24px;
+  border-top: var(--hairline); border-bottom: var(--hairline);
+  padding: 16px 0;
+}
+.sb-dot { width: 8px; height: 8px; border-radius: var(--radius-dot); background: var(--ink); flex-shrink: 0; }
+.sb-body { flex: 1; min-width: 0; }
+.sb-title { font-size: 15px; font-weight: 400; letter-spacing: -0.01em; }
+.sb-text { font-size: 13px; font-weight: 300; margin-top: 2px; letter-spacing: -0.005em; }
+.sb-cta { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid var(--ink); flex-shrink: 0; }
+.sb-close { font-size: 16px; line-height: 1; padding: 4px 8px; flex-shrink: 0; }
+
+/* NOTIF STRIP — horizontal scroll of hairline entries */
+.notif-scroll { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-bottom: var(--hairline); }
+.notif-scroll::-webkit-scrollbar { display: none; }
+.notif-cell {
+  min-width: 190px; padding: 16px 24px 16px 0;
+  display: flex; flex-direction: column; gap: 8px;
+  cursor: pointer;
+}
+.notif-cell + .notif-cell { border-left: var(--hairline); padding-left: 24px; }
+.notif-cell-title { font-size: 14px; font-weight: 400; line-height: 1.25; letter-spacing: -0.01em; }
+.notif-cell-desc { font-size: 12px; font-weight: 300; line-height: 1.35; }
+.notif-cell-time { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* FEED — one project per row, hairline separated */
+.feed-row {
+  display: grid; grid-template-columns: 90px 1fr auto; align-items: center; gap: 16px;
+  border-bottom: var(--hairline);
+  padding: 12px 0; cursor: pointer;
+}
+.feed-row:hover .feed-title { text-decoration: underline; text-underline-offset: 4px; }
+.feed-date { font-size: 14px; font-weight: 300; letter-spacing: 0.02em; }
+.feed-main { min-width: 0; }
+.feed-title { font-size: 15px; font-weight: 400; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-sub { font-size: 12px; font-weight: 300; margin-top: 2px; }
+.feed-right { display: flex; align-items: center; gap: 20px; }
+.feed-amount { font-size: 15px; font-weight: 300; letter-spacing: -0.01em; text-align: right; }
+.feed-amount b { font-weight: 400; }
+.feed-badge { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.feed-badge .bd { width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--ink); }
+
+/* AUDIT — hairline rows with dots */
+.audit-row {
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: var(--hairline);
+  padding: 12px 0;
+}
+.audit-dot { width: 6px; height: 6px; border-radius: var(--radius-dot); flex-shrink: 0; }
+.audit-dot.ok { background: var(--ink); }
+.audit-dot.warn { background: var(--ink); opacity: 0.55; }
+.audit-dot.bad { background: var(--ink); opacity: 0.25; }
+.audit-title { font-size: 14px; font-weight: 400; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+.audit-meta { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0; }
+
+/* BOTTOM NAV — hairline strip of five labels */
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 56px; z-index: 50;
+  border-top: var(--hairline); background: var(--paper);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  position: relative;
+}
+.bn-item svg { width: 17px; height: 17px; }
+.bn-item .bnd { width: 5px; height: 5px; border-radius: var(--radius-dot); background: transparent; }
+.bn-item.active .bnd { background: var(--ink); }
+.bn-item.active { font-weight: 400; }
+
+/* FAB — hairline square, not a filled button */
+.fab-wrap { position: fixed; bottom: 72px; right: 24px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.fab {
+  width: 52px; height: 52px;
+  border: var(--hairline); background: var(--paper);
+  display: grid; place-items: center;
+  transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.94); }
+.fab.open { transform: rotate(45deg); }
+.fab svg { width: 20px; height: 20px; }
+.quick-list {
+  width: 240px; border: var(--hairline); background: var(--paper);
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.quick-list.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.quick-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; padding: 12px 16px; text-align: left;
+  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  border-bottom: var(--hairline);
+}
+.quick-item:last-child { border-bottom: none; }
+.quick-item .qi-arrow { font-size: 14px; }
+
+/* SIDEBAR DRAWER */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.scrim.visible { opacity: 1; pointer-events: auto; }
+.sidebar {
+  position: fixed; top: 0; bottom: 0; left: 0; width: 264px; z-index: 60;
+  background: var(--paper); border-right: var(--hairline);
+  transform: translateX(-100%); transition: transform var(--ease);
+  display: flex; flex-direction: column;
+}
+.sidebar.open { transform: translateX(0); }
+.sb-head { padding: 20px 24px; border-bottom: var(--hairline); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 400; }
+.sb-nav { flex: 1; overflow-y: auto; }
+.sb-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 24px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  border-bottom: var(--hairline); cursor: pointer;
+}
+.sb-link.active { font-weight: 400; }
+.sb-link.active::before { content: ''; width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--ink); }
+.sb-link svg { width: 15px; height: 15px; }
+.sb-foot { padding: 16px 24px; border-top: var(--hairline); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* NOTIF PANEL */
+.notif-panel {
+  position: fixed; top: 64px; right: 24px; width: 300px; z-index: 65;
+  border: var(--hairline); background: var(--paper);
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex; flex-direction: column;
+}
+.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.np-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: var(--hairline); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.np-clear { cursor: pointer; }
+.np-list { max-height: 320px; overflow-y: auto; }
+.np-row { display: flex; gap: 12px; padding: 12px 16px; border-bottom: var(--hairline); }
+.np-row:last-child { border-bottom: none; }
+.np-dot { width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--ink); margin-top: 6px; flex-shrink: 0; }
+.np-dot.read { background: transparent; border: 1px solid var(--ink); }
+.np-lines { flex: 1; font-size: 12px; font-weight: 300; }
+.np-l1 { font-weight: 400; }
+.np-l2 { font-size: 11px; margin-top: 2px; }
+
+/* AI PANEL */
+.ai-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.ai-overlay.open { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  width: 100%; max-width: 480px; max-height: 76vh; background: var(--paper);
+  border-top: var(--hairline);
+  display: flex; flex-direction: column;
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-overlay.open .ai-panel { transform: translateY(0); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: var(--hairline); }
+.ai-title { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 400; }
+.ai-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.ai-msg { font-size: 14px; font-weight: 300; line-height: 1.5; max-width: 82%; letter-spacing: -0.005em; }
+.ai-msg.user { align-self: flex-end; text-align: right; }
+.ai-msg strong { font-weight: 400; }
+.ai-chips { display: flex; flex-direction: column; gap: 8px; padding: 0 20px 12px; }
+.ai-chip { text-align: left; padding: 12px 16px; border: var(--hairline); font-size: 12px; letter-spacing: 0.04em; }
+.ai-input-row { display: flex; border-top: var(--hairline); }
+.ai-input { flex: 1; border: 0; background: none; padding: 16px 20px; font: inherit; letter-spacing: inherit; font-size: 14px; color: var(--ink); outline: none; }
+.ai-send { padding: 0 20px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; border-left: var(--hairline); }
+
+/* LOADING SCREEN */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 90; background: var(--paper);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  padding: 24px;
+}
+.loading-screen.open { opacity: 1; pointer-events: auto; }
+.ls-word { font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 300; }
+.ls-bar { width: min(320px, 70vw); height: 1px; background: var(--ink); opacity: 0.2; position: relative; overflow: hidden; }
+.ls-bar-fill { position: absolute; inset: 0; width: 0; background: var(--ink); transition: width 0.3s linear; }
+.ls-tip { max-width: 420px; text-align: center; font-size: 15px; font-weight: 300; line-height: 1.5; letter-spacing: -0.01em; }
+.ls-tip .tip-idx { display: block; margin-bottom: 12px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* TOAST */
+.toast {
+  position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-8px);
+  z-index: 200; padding: 12px 24px;
+  border: var(--hairline); background: var(--paper);
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  opacity: 0; pointer-events: none; transition: all 0.25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 768px) {
+  :root { --body: 16px; }
+  .topbar { height: 56px; padding: 0 16px; }
+  .tb-links { display: none; }
+  .content { margin-top: 56px; padding: 0 16px 72px; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .kpi-cell + .kpi-cell { border-left: var(--hairline); padding-left: 16px; }
+  .kpi-value { font-size: 32px; }
+  .feed-row { grid-template-columns: 1fr auto; gap: 8px; padding: 12px 0; }
+  .feed-date { display: none; }
+  .feed-amount { display: none; }
+  .smart-banner { flex-wrap: wrap; gap: 12px; }
+  .sb-cta { margin-left: auto; }
+  .audit-meta { display: none; }
+  .notif-panel { left: 16px; right: 16px; width: auto; }
+  .fab-wrap { bottom: 68px; right: 16px; }
+}
+
+@media (min-width: 769px) {
+  .bottom-nav { display: none; }
+  .sidebar { transform: translateX(0); position: sticky; top: 0; height: 100vh; }
+  .scrim { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="watermark" aria-hidden="true">19–86</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">BIGDROPS</div>
+  <nav class="sb-nav">
+    <div class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/><path d="M10 18h4"/></svg>Waybills</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</div>
+  </nav>
+  <div class="sb-foot">MILAD A. — OPERATOR</div>
+</aside>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- MAIN -->
+<div class="app">
+  <header class="topbar">
+    <div class="tb-zone">
+      <button class="tb-btn" id="menuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="tb-brand">BIGDROPS</span>
+    </div>
+    <nav class="tb-zone tb-links">
+      <span class="tb-link active">Index</span>
+      <span class="tb-link">Ledger</span>
+      <span class="tb-link">Clients</span>
+    </nav>
+    <div class="tb-zone">
+      <button class="tb-btn" id="refreshBtn" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+        <span class="tb-btn-label">REFRESH</span>
+      </button>
+      <button class="tb-btn" id="themeBtn" aria-label="Theme">
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+      </button>
+      <button class="tb-btn" id="notifBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="tb-dot" id="pip"></span>
+      </button>
+      <button class="tb-btn" id="aiBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+        <span>AI</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="content" id="content">
+    <!-- KPI -->
+    <section>
+      <div class="ledger-label"><span class="idx">001</span> BALANCE <span class="rule"></span><span>THIS WEEK</span></div>
+      <div class="kpi-row">
+        <div class="kpi-cell">
+          <span class="kpi-label">Balance</span>
+          <span class="kpi-value">₦10,000</span>
+          <span class="kpi-meta"><span class="arrow">&#9650;</span> +12% last week</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-label">Overdue</span>
+          <span class="kpi-value">₦56,000</span>
+          <span class="kpi-meta"><span class="arrow">&#9650;</span> +4% vs yesterday</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-label">Invoices</span>
+          <span class="kpi-value">12</span>
+          <span class="kpi-meta"><span class="arrow">&#9660;</span> 2 pending review</span>
+        </div>
+        <div class="kpi-cell">
+          <span class="kpi-label">Payments</span>
+          <span class="kpi-value">₦89,000</span>
+          <span class="kpi-meta"><span class="arrow">&#9650;</span> +18% this month</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SMART BANNER -->
+    <section>
+      <div class="ledger-label"><span class="idx">002</span> ALERT <span class="rule"></span></div>
+      <div class="smart-banner" id="smartBanner">
+        <span class="sb-dot"></span>
+        <div class="sb-body">
+          <div class="sb-title">3 payments may be unrecorded</div>
+          <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+        </div>
+        <button class="sb-cta" onclick="showToast('Recording payments...')">Record now</button>
+        <button class="sb-close" id="sbClose" aria-label="Dismiss">&#10005;</button>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS STRIP -->
+    <section>
+      <div class="ledger-label"><span class="idx">003</span> RECENT ALERTS <span class="rule"></span></div>
+      <div class="notif-scroll" id="notifScroll"></div>
+    </section>
+
+    <!-- DOCUMENT FEED -->
+    <section>
+      <div class="ledger-label"><span class="idx">004</span> RECENT DOCUMENTS <span class="rule"></span><span>6 ENTRIES</span></div>
+      <div id="feedList"></div>
+    </section>
+
+    <!-- AUDIT TRAIL -->
+    <section>
+      <div class="ledger-label"><span class="idx">005</span> AUDIT TRAIL <span class="rule"></span></div>
+      <div id="auditList"></div>
+    </section>
+  </main>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+  <button class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Home</span><span class="bnd"></span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>Projects</span><span class="bnd"></span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Sales</span><span class="bnd"></span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Clients</span><span class="bnd"></span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span>More</span><span class="bnd"></span></button>
+</nav>
+
+<!-- FAB -->
+<div class="fab-wrap">
+  <div class="quick-list" id="quickList">
+    <button class="quick-item" onclick="showToast('New invoice started')">New Invoice <span class="qi-arrow">&#8599;</span></button>
+    <button class="quick-item" onclick="showToast('New quotation started')">New Quotation <span class="qi-arrow">&#8599;</span></button>
+    <button class="quick-item" onclick="showToast('New waybill started')">New Waybill <span class="qi-arrow">&#8599;</span></button>
+    <button class="quick-item" onclick="showToast('Record payment opened')">Record Payment <span class="qi-arrow">&#8599;</span></button>
+    <button class="quick-item" onclick="showToast('Add client opened')">Add Client <span class="qi-arrow">&#8599;</span></button>
+  </div>
+  <button class="fab" id="fabBtn" aria-label="Quick actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head"><span>Notifications</span><span class="np-clear" id="npClear">Clear all</span></div>
+  <div class="np-list" id="npList"></div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel">
+    <div class="ai-head"><span class="ai-title">Steward — AI</span><button class="tb-btn" onclick="closeOverlays()">CLOSE</button></div>
+    <div class="ai-body">
+      <div class="ai-msg">Good evening, Milad. Three invoices are due this week for a total of <strong>₦2,890,000</strong>. Would you like a summary?</div>
+      <div class="ai-msg user">Summarize my overdue balance.</div>
+      <div class="ai-msg"><strong>₦56,000 overdue</strong> across 2 invoices. INV-2026-012 (₦1,240,000) is 14 days past due; INV-2026-014 is due today. I can draft reminder letters if you want.</div>
+    </div>
+    <div class="ai-chips">
+      <button class="ai-chip" onclick="aiReply('Summarizing overdue invoices...')">Summarize overdue</button>
+      <button class="ai-chip" onclick="aiReply('Fetching your current balance...')">What is my balance?</button>
+      <button class="ai-chip" onclick="aiReply('Starting a draft invoice for you...')">Create invoice draft</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Ask the ledger..." />
+      <button class="ai-send" onclick="aiSend()">SEND</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="ls-word">19–86</div>
+  <div class="ls-bar"><div class="ls-bar-fill" id="lsFill"></div></div>
+  <div class="ls-tip">
+    <span class="tip-idx" id="lsTipIdx">TIPS / 01</span>
+    <span id="lsTipText">Did you know? Hairline rules are the only separator this ledger needs — cards would only add noise.</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var TIPS = [
+  'Did you know? Balance moved without a logged payment appears here as an unrecorded payment alert.',
+  'Did you know? Invoices past their due date roll into the Overdue figure automatically each night.',
+  'Did you know? You can convert any quotation into an invoice without retyping a single line item.',
+  'Did you know? The audit trail records every edit, so nothing is ever silently changed.',
+  'Did you know? Column visibility for line items is configurable from the form — show only what you use.'
+];
+var FEED = [
+  { date: '26-08', ref: 'INV-2026-014', client: 'Eko Hotel & Suites', amount: '₦1,240,000', status: 'Due today' },
+  { date: '25-08', ref: 'INV-2026-013', client: 'Mainland Distributors', amount: '₦860,000', status: 'Paid' },
+  { date: '24-08', ref: 'QTN-2026-021', client: 'Lagos Catering Co.', amount: '₦320,000', status: 'Draft' },
+  { date: '22-08', ref: 'INV-2026-012', client: 'Sterling Traders', amount: '₦2,150,000', status: 'Overdue' },
+  { date: '21-08', ref: 'WB-2026-008', client: 'Transit Logistics', amount: '—', status: 'Approved' },
+  { date: '19-08', ref: 'INV-2026-011', client: 'Ministry of Works', amount: '₦4,800,000', status: 'Paid' }
+];
+var AUDIT = [
+  { title: 'Invoice INV-2026-014 edited — 2 line items updated', meta: 'MILAD A. / 2H AGO', dot: 'ok' },
+  { title: 'Payment ₦450,000 recorded against INV-2026-013', meta: 'AMAKA O. / 5H AGO', dot: 'ok' },
+  { title: 'Waybill WB-2026-008 approved for dispatch', meta: 'TUNDE B. / 1D AGO', dot: 'warn' },
+  { title: 'Quotation QTN-2026-021 created from blank', meta: 'MILAD A. / 2D AGO', dot: 'ok' },
+  { title: 'Client profile updated — new phone number', meta: 'AMAKA O. / 3D AGO', dot: 'bad' },
+  { title: 'Default VAT rate changed to 7.5%', meta: 'SYSTEM / 6D AGO', dot: 'warn' }
+];
+var NOTIFS = [
+  { title: 'Invoice INV-2026-014 due today', desc: '₦1,240,000 from Eko Hotel & Suites', time: '2H' },
+  { title: 'Payment received', desc: '₦450,000 from Zenith Bank', time: '5H' },
+  { title: 'Waybill WB-2026-008 approved', desc: 'Transit Logistics — 42 crates', time: '1D' },
+  { title: 'Low stock: Diesel', desc: '8 units remaining in inventory', time: '1D' },
+  { title: 'Quotation QTN-2026-021 converted', desc: 'Lagos Catering Co. accepted', time: '2D' }
+];
+var NP = [
+  { t: 'Invoice due today', d: 'INV-2026-014 · ₦1,240,000', read: false },
+  { t: 'Payment received', d: '₦450,000 · Zenith Bank', read: false },
+  { t: 'Waybill approved', d: 'WB-2026-008 · Transit Logistics', read: false },
+  { t: 'Quotation converted', d: 'QTN-2026-021 · Lagos Catering', read: true },
+  { t: 'Low stock alert', d: 'Diesel · 8 units left', read: true }
+];
+
+var feedEl = document.getElementById('feedList');
+FEED.forEach(function (f) {
+  var row = document.createElement('div');
+  row.className = 'feed-row';
+  row.innerHTML = '<span class="feed-date">' + f.date + '</span>' +
+    '<div class="feed-main"><div class="feed-title">' + f.ref + ' — ' + f.client + '</div><div class="feed-sub">' + f.client + '</div></div>' +
+    '<div class="feed-right"><span class="feed-amount">' + f.amount + '</span><span class="feed-badge"><span class="bd"></span>' + f.status + '</span></div>';
+  row.addEventListener('click', function () { showToast(f.ref + ' opened'); });
+  feedEl.appendChild(row);
+});
+
+var auditEl = document.getElementById('auditList');
+AUDIT.forEach(function (a) {
+  var row = document.createElement('div');
+  row.className = 'audit-row';
+  row.innerHTML = '<span class="audit-dot ' + a.dot + '"></span><span class="audit-title">' + a.title + '</span><span class="audit-meta">' + a.meta + '</span>';
+  auditEl.appendChild(row);
+});
+
+var notifEl = document.getElementById('notifScroll');
+NOTIFS.forEach(function (n) {
+  var c = document.createElement('div');
+  c.className = 'notif-cell';
+  c.innerHTML = '<span class="notif-cell-title">' + n.title + '</span><span class="notif-cell-desc">' + n.desc + '</span><span class="notif-cell-time">' + n.time + ' AGO</span>';
+  c.addEventListener('click', function () { showToast(n.title); });
+  notifEl.appendChild(c);
+});
+
+var npList = document.getElementById('npList');
+function renderNP() {
+  npList.innerHTML = '';
+  NP.forEach(function (n) {
+    var r = document.createElement('div');
+    r.className = 'np-row';
+    r.innerHTML = '<span class="np-dot ' + (n.read ? 'read' : '') + '"></span><div class="np-lines"><div class="np-l1">' + n.t + '</div><div class="np-l2">' + n.d + '</div></div>';
+    npList.appendChild(r);
+  });
+}
+renderNP();
+
+function closeOverlays() {
+  document.querySelectorAll('.open').forEach(function (el) {
+    if (el.classList.contains('open')) el.classList.remove('open');
+  });
+  document.getElementById('scrim').classList.remove('visible');
+  document.getElementById('fabBtn').classList.remove('open');
+  document.getElementById('aiOverlay').classList.remove('open');
+  document.getElementById('notifPanel').classList.remove('open');
+  document.getElementById('quickList').classList.remove('open');
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+function toggle(id, exclude) {
+  var el = document.getElementById(id);
+  var wasOpen = el.classList.contains('open');
+  closeOverlays();
+  if (!wasOpen) {
+    el.classList.add('open');
+    if (exclude !== 'scrim') document.getElementById('scrim').classList.add('visible');
+  }
+}
+
+document.getElementById('menuBtn').addEventListener('click', function () { toggle('sidebar'); });
+document.getElementById('notifBtn').addEventListener('click', function () { toggle('notifPanel'); });
+document.getElementById('aiBtn').addEventListener('click', function () { toggle('aiOverlay'); document.getElementById('scrim').classList.remove('visible'); });
+document.getElementById('fabBtn').addEventListener('click', function () {
+  var q = document.getElementById('quickList');
+  var open = q.classList.contains('open');
+  closeOverlays();
+  if (!open) { q.classList.add('open'); this.classList.add('open'); document.getElementById('scrim').classList.add('visible'); }
+});
+document.getElementById('scrim').addEventListener('click', closeOverlays);
+document.getElementById('sbClose').addEventListener('click', function () { document.getElementById('smartBanner').style.display = 'none'; });
+document.getElementById('npClear').addEventListener('click', function () { NP = []; renderNP(); document.getElementById('pip').classList.add('hidden'); });
+
+document.getElementById('themeBtn').addEventListener('click', function () {
+  var d = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
+  document.getElementById('iconSun').style.display = d ? 'none' : 'block';
+  document.getElementById('iconMoon').style.display = d ? 'block' : 'none';
+});
+
+/* LOADING SCREEN */
+var tipIdx = 0;
+document.getElementById('refreshBtn').addEventListener('click', function () {
+  var ls = document.getElementById('loadingScreen');
+  var fill = document.getElementById('lsFill');
+  var tipText = document.getElementById('lsTipText');
+  var tipLabel = document.getElementById('lsTipIdx');
+  tipIdx = (tipIdx + 1) % TIPS.length;
+  tipText.textContent = TIPS[tipIdx];
+  tipLabel.textContent = 'TIPS / 0' + (tipIdx + 1);
+  fill.style.width = '0';
+  ls.classList.add('open');
+  var p = 0;
+  var iv = setInterval(function () {
+    p += Math.random() * 18 + 6;
+    if (p >= 100) {
+      p = 100;
+      clearInterval(iv);
+      setTimeout(function () {
+        ls.classList.remove('open');
+        showToast('Ledger refreshed');
+      }, 350);
+    }
+    fill.style.width = p + '%';
+  }, 260);
+});
+
+function aiSend() {
+  var input = document.getElementById('aiInput');
+  var v = input.value.trim();
+  if (!v) return;
+  var body = document.querySelector('.ai-body');
+  var m = document.createElement('div');
+  m.className = 'ai-msg user';
+  m.textContent = v;
+  body.appendChild(m);
+  input.value = '';
+  setTimeout(function () {
+    var r = document.createElement('div');
+    r.className = 'ai-msg';
+    r.innerHTML = 'Noted. I have logged <strong>' + v + '</strong> and will fold it into the next ledger run.';
+    body.appendChild(r);
+    body.scrollTop = body.scrollHeight;
+  }, 700);
+}
+function aiReply(msg) {
+  var body = document.querySelector('.ai-body');
+  var m = document.createElement('div');
+  m.className = 'ai-msg';
+  m.innerHTML = '<strong>' + msg + '</strong>';
+  body.appendChild(m);
+  body.scrollTop = body.scrollHeight;
+}
+
+document.querySelectorAll('.bn-item').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.bn-item').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+    showToast(b.querySelector('span').textContent + ' section');
+  });
+});
+document.querySelectorAll('.sb-link').forEach(function (l) {
+  l.addEventListener('click', function () {
+    document.querySelectorAll('.sb-link').forEach(function (x) { x.classList.remove('active'); });
+    l.classList.add('active');
+    closeOverlays();
+  });
+});
+document.getElementById('aiInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') aiSend(); });
+</script>
+</body>
+</html>

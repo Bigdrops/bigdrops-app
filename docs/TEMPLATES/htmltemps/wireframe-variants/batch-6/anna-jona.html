@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS — A Letter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sansita:wght@700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --blush: #fce1e3;
+  --coral: #db404f;
+  --midnight: #0e1736;
+  --white: #ffffff;
+  --ink: #db404f;
+  --canvas: #fce1e3;
+  --display: 'Sansita', serif;
+  --body: 'Nunito Sans', sans-serif;
+  --ease: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] {
+  --ink: #f2a7ae;
+  --canvas: #12182f;
+  --coral: #e36a76;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--canvas);
+  overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 90px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* SIGNATURE MARK */
+.mark {
+  position: fixed; top: 24px; left: 24px; z-index: 50;
+  width: 52px; height: 52px; border-radius: 90px;
+  background: var(--coral); color: var(--white);
+  display: grid; place-items: center;
+  font-family: var(--display); font-size: 22px;
+}
+[data-theme="dark"] .mark { color: #12182f; }
+
+/* TOP BAR — quiet */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 96px; z-index: 40;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 24px; gap: 14px;
+}
+.icon-btn {
+  width: 48px; height: 48px; border-radius: 90px;
+  display: grid; place-items: center;
+  transition: transform 0.15s;
+}
+.icon-btn:active { transform: scale(0.88); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn .pip { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); border: 2px solid var(--canvas); }
+.icon-btn .pip.hidden { display: none; }
+.icon-btn { position: relative; }
+
+/* SCROLL */
+.content { height: 100vh; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.content::-webkit-scrollbar { display: none; }
+
+/* HERO — the letter's opening statement */
+.hero { padding: 120px 48px 0; max-width: 1200px; margin: 0 auto; }
+.hero-kicker { font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.hero-title {
+  font-family: var(--display); font-size: clamp(44px, 8vw, 72px);
+  line-height: 1.06; letter-spacing: -0.02em; margin-top: 18px; max-width: 720px;
+}
+.hero-sub { font-size: 18px; line-height: 1.5; margin-top: 28px; max-width: 460px; }
+
+/* DIAGONAL BAND */
+.band {
+  height: 140px; margin: 72px 0 0;
+  background: linear-gradient(105deg, var(--coral) 0%, var(--coral) 12%, transparent 12%),
+    linear-gradient(100deg, #f0b6bc 0%, transparent 30%),
+    linear-gradient(110deg, transparent 70%, var(--coral) 70%, var(--coral) 84%, transparent 84%);
+  opacity: 0.5;
+}
+[data-theme="dark"] .band { opacity: 0.32; }
+
+/* SECTIONS */
+.section { max-width: 1200px; margin: 0 auto; padding: 72px 48px 0; }
+.section-head { font-family: var(--display); font-size: clamp(28px, 4.5vw, 40px); line-height: 1.14; letter-spacing: -0.02em; }
+.section-sub { font-size: 18px; margin-top: 14px; max-width: 520px; }
+.section-foot { font-family: var(--body); font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 18px; display: inline-block; border-bottom: 2px solid var(--ink); padding-bottom: 4px; cursor: pointer; }
+
+/* KPI — a quiet row of large numerals */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; margin-top: 40px; }
+.kpi-cell { display: flex; flex-direction: column; gap: 8px; }
+.kpi-label { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.kpi-value { font-family: var(--display); font-size: clamp(34px, 5vw, 48px); line-height: 1.06; letter-spacing: -0.02em; }
+.kpi-trend { font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.kpi-trend .up { color: var(--ink); }
+.kpi-trend .down { color: var(--ink); }
+.glyph { font-size: 11px; }
+
+/* SMART BANNER — a letter paragraph, not a card */
+.smart-banner { margin-top: 56px; max-width: 640px; }
+.sb-title { font-family: var(--display); font-size: 28px; letter-spacing: -0.02em; line-height: 1.17; }
+.sb-text { font-size: 18px; line-height: 1.5; margin-top: 14px; }
+.sb-action {
+  margin-top: 28px; border-radius: 300px;
+  background: var(--coral); color: var(--white);
+  padding: 14px 48px; font-weight: 700; font-size: 16px; letter-spacing: 0.02em;
+  display: inline-block;
+  transition: transform 0.15s;
+}
+[data-theme="dark"] .sb-action { color: #12182f; }
+.sb-action:active { transform: scale(0.96); }
+.sb-dismiss { margin-left: 20px; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }
+
+/* NOTIF STRIP */
+.notif-scroll { display: flex; gap: 24px; overflow-x: auto; scrollbar-width: none; margin-top: 36px; padding-bottom: 8px; }
+.notif-scroll::-webkit-scrollbar { display: none; }
+.notif-note {
+  min-width: 220px; border-radius: 90px; padding: 28px 32px;
+  background: var(--white); color: var(--ink);
+  cursor: pointer; transition: transform 0.15s;
+}
+[data-theme="dark"] .notif-note { background: #1d2547; color: var(--ink); }
+.notif-note:active { transform: scale(0.97); }
+.nn-title { font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; line-height: 1.2; }
+.nn-desc { font-size: 15px; margin-top: 8px; line-height: 1.45; }
+.nn-time { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 14px; display: block; }
+
+/* FEED — one line per document */
+.feed-line { display: flex; align-items: baseline; gap: 20px; padding: 26px 0; cursor: pointer; border-bottom: 1px solid var(--ink); opacity: 0.85; }
+.feed-line:last-child { border-bottom: none; }
+.feed-line:active { opacity: 1; }
+.fl-ref { font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; white-space: nowrap; }
+.fl-client { font-size: 18px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fl-right { display: flex; align-items: baseline; gap: 20px; }
+.fl-amount { font-family: var(--display); font-size: 20px; letter-spacing: -0.02em; white-space: nowrap; }
+.fl-status { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+
+/* AUDIT */
+.audit-line { display: flex; align-items: baseline; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--ink); }
+.audit-line:last-child { border-bottom: none; }
+.audit-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); flex-shrink: 0; transform: translateY(-2px); }
+.audit-dot.warn { opacity: 0.55; }
+.audit-dot.bad { opacity: 0.25; }
+.audit-title { flex: 1; font-size: 17px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audit-meta { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+
+/* BOTTOM NAV — floating pill */
+.bottom-nav {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  z-index: 60; display: flex; gap: 4px;
+  background: var(--white); border-radius: 300px; padding: 8px;
+  box-shadow: 0 10px 40px rgba(219, 64, 79, 0.18);
+}
+[data-theme="dark"] .bottom-nav { background: #1d2547; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+.bn-item {
+  display: flex; align-items: center; gap: 7px;
+  border-radius: 300px; padding: 10px 12px;
+  color: var(--ink); opacity: 0.45;
+  transition: all 0.25s; white-space: nowrap;
+}
+.bn-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.bn-label { font-size: 14px; font-weight: 700; max-width: 0; overflow: hidden; opacity: 0; transition: all 0.25s; }
+.bn-item.active { background: var(--coral); color: var(--white); opacity: 1; }
+[data-theme="dark"] .bn-item.active { color: #12182f; }
+.bn-item.active .bn-label { max-width: 90px; opacity: 1; margin-right: 4px; }
+
+/* FAB */
+.fab-wrap { position: fixed; bottom: 88px; right: 24px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.fab {
+  width: 60px; height: 60px; border-radius: 90px;
+  background: var(--coral); color: var(--white);
+  display: grid; place-items: center;
+  transition: transform 0.15s;
+}
+[data-theme="dark"] .fab { color: #12182f; }
+.fab:active { transform: scale(0.88); }
+.fab.open { transform: rotate(45deg); }
+.fab svg { width: 22px; height: 22px; }
+.quick-popup {
+  width: 220px; border-radius: 90px; background: var(--white);
+  padding: 10px; overflow: hidden;
+  opacity: 0; transform: translateY(10px) scale(0.98); pointer-events: none;
+  transition: all 0.25s;
+}
+[data-theme="dark"] .quick-popup { background: #1d2547; }
+.quick-popup.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.popup-item {
+  display: block; width: 100%; text-align: center;
+  padding: 14px 20px; border-radius: 90px;
+  font-family: var(--display); font-size: 16px; letter-spacing: -0.01em;
+}
+.popup-item:active { background: var(--coral); color: var(--white); }
+
+/* OVERLAYS */
+.scrim { position: fixed; inset: 0; background: rgba(14, 23, 54, 0.45); z-index: 55; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.scrim.visible { opacity: 1; pointer-events: auto; }
+.sidebar {
+  position: fixed; top: 0; bottom: 0; left: 0; width: 280px; z-index: 62;
+  background: var(--white); border-radius: 0 90px 90px 0;
+  transform: translateX(-100%); transition: transform var(--ease);
+  display: flex; flex-direction: column; padding: 28px 0;
+}
+[data-theme="dark"] .sidebar { background: #1d2547; }
+.sidebar.open { transform: translateX(0); }
+.sb-head { padding: 0 32px 24px; font-family: var(--display); font-size: 26px; letter-spacing: -0.02em; }
+.sb-nav { flex: 1; overflow-y: auto; padding: 0 20px; display: flex; flex-direction: column; gap: 6px; }
+.sb-link { display: flex; align-items: center; gap: 14px; padding: 13px 18px; border-radius: 90px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.sb-link svg { width: 19px; height: 19px; }
+.sb-link.active { background: var(--coral); color: var(--white); }
+[data-theme="dark"] .sb-link.active { color: #12182f; }
+.sb-foot { padding: 24px 32px 0; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.notif-panel {
+  position: fixed; top: 100px; right: 24px; width: 300px; z-index: 64;
+  background: var(--white); border-radius: 90px; overflow: hidden; padding: 12px;
+  opacity: 0; transform: translateY(-10px); pointer-events: none;
+  transition: all 0.25s;
+}
+[data-theme="dark"] .notif-panel { background: #1d2547; }
+.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.np-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; }
+.np-title { font-family: var(--display); font-size: 22px; letter-spacing: -0.02em; }
+.np-clear { font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.np-list { max-height: 320px; overflow-y: auto; }
+.np-row { display: flex; gap: 12px; padding: 14px 16px; border-radius: 90px; }
+.np-row:active { background: var(--blush); }
+[data-theme="dark"] .np-row:active { background: #232c52; }
+.np-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--coral); margin-top: 8px; flex-shrink: 0; }
+.np-dot.read { background: #e8b8bd; }
+.np-lines { flex: 1; }
+.np-l1 { font-size: 16px; font-weight: 700; }
+.np-l2 { font-size: 14px; margin-top: 3px; }
+
+.ai-overlay { position: fixed; inset: 0; z-index: 66; background: rgba(14, 23, 54, 0.5); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.ai-overlay.open { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  width: 100%; max-width: 500px; max-height: 78vh; background: var(--white);
+  border-radius: 90px 90px 0 0; display: flex; flex-direction: column;
+  transform: translateY(100%); transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="dark"] .ai-panel { background: #1d2547; }
+.ai-overlay.open .ai-panel { transform: translateY(0); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 16px; }
+.ai-title { font-family: var(--display); font-size: 26px; letter-spacing: -0.02em; }
+.ai-body { flex: 1; overflow-y: auto; padding: 0 28px 20px; display: flex; flex-direction: column; gap: 14px; }
+.ai-msg { max-width: 85%; padding: 16px 22px; border-radius: 90px; font-size: 16px; line-height: 1.5; }
+.ai-msg.bot { align-self: flex-start; background: var(--blush); }
+[data-theme="dark"] .ai-msg.bot { background: #232c52; }
+.ai-msg.user { align-self: flex-end; background: var(--coral); color: var(--white); }
+[data-theme="dark"] .ai-msg.user { color: #12182f; }
+.ai-msg strong { font-weight: 700; }
+.ai-chips { display: flex; flex-direction: column; gap: 8px; padding: 0 28px 14px; }
+.ai-chip { text-align: left; padding: 13px 20px; border-radius: 90px; font-size: 15px; font-weight: 700; background: var(--blush); }
+[data-theme="dark"] .ai-chip { background: #232c52; }
+.ai-chip:active { background: var(--coral); color: var(--white); }
+.ai-input-row { display: flex; gap: 10px; padding: 14px 28px 24px; }
+.ai-input { flex: 1; border-radius: 90px; border: 2px solid var(--coral); background: transparent; padding: 13px 20px; font: inherit; font-size: 16px; outline: none; color: inherit; }
+.ai-send { border-radius: 90px; background: var(--coral); color: var(--white); padding: 0 26px; font-weight: 700; font-size: 15px; }
+[data-theme="dark"] .ai-send { color: #12182f; }
+
+/* LOADING */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 90; background: var(--canvas);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px;
+}
+.loading-screen.open { opacity: 1; pointer-events: auto; }
+.ls-word { font-family: var(--display); font-size: clamp(36px, 8vw, 60px); letter-spacing: -0.02em; line-height: 1.06; text-align: center; }
+.ls-orb {
+  width: 84px; height: 84px; border-radius: 90px;
+  border: 4px solid var(--coral); border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ls-tip { max-width: 440px; text-align: center; font-size: 17px; line-height: 1.5; }
+.ls-tip .tip-idx { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* TOAST */
+.toast {
+  position: fixed; top: 108px; left: 50%; transform: translateX(-50%) translateY(-10px);
+  z-index: 200; padding: 14px 32px; border-radius: 300px;
+  background: var(--midnight); color: var(--blush);
+  font-size: 15px; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: all 0.25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 768px) {
+  .mark { top: 16px; left: 16px; width: 46px; height: 46px; font-size: 19px; }
+  .hero { padding: 104px 24px 0; }
+  .section { padding: 56px 24px 0; }
+  .kpi-row { grid-template-columns: 1fr 1fr; gap: 32px 20px; }
+  .band { height: 100px; margin-top: 56px; }
+  .sb-dismiss { display: block; margin: 16px 0 0; }
+  .feed-line { flex-wrap: wrap; gap: 8px 16px; }
+  .fl-right { width: 100%; justify-content: space-between; }
+  .fl-amount { display: none; }
+  .audit-meta { display: none; }
+  .notif-panel { left: 16px; right: 16px; width: auto; }
+  .fab-wrap { bottom: 88px; right: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="mark">B</div>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="icon-btn" id="themeBtn" aria-label="Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <button class="icon-btn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+  <button class="icon-btn" id="notifBtn" aria-label="Notifications"><span class="pip" id="pip"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+  <button class="icon-btn" id="aiBtn" aria-label="AI Steward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg></button>
+  <button class="icon-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+</header>
+
+<div class="content" id="content">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-kicker">For Milad, this evening</div>
+    <h1 class="hero-title">Your business, written in one quiet letter.</h1>
+    <p class="hero-sub">Three invoices are due this week. Two are overdue. Everything you need sits below, unhurried.</p>
+  </section>
+
+  <div class="band" aria-hidden="true"></div>
+
+  <!-- KPI -->
+  <section class="section">
+    <div class="section-head">The state of things</div>
+    <div class="kpi-row">
+      <div class="kpi-cell"><span class="kpi-label">Balance</span><span class="kpi-value">₦10,000</span><span class="kpi-trend"><span class="glyph">&#9650;</span> +12% last week</span></div>
+      <div class="kpi-cell"><span class="kpi-label">Overdue</span><span class="kpi-value">₦56,000</span><span class="kpi-trend"><span class="glyph">&#9650;</span> +4% vs yesterday</span></div>
+      <div class="kpi-cell"><span class="kpi-label">Invoices</span><span class="kpi-value">12</span><span class="kpi-trend"><span class="glyph">&#9660;</span> 2 pending review</span></div>
+      <div class="kpi-cell"><span class="kpi-label">Payments</span><span class="kpi-value">₦89,000</span><span class="kpi-trend"><span class="glyph">&#9650;</span> +18% this month</span></div>
+    </div>
+  </section>
+
+  <!-- SMART BANNER -->
+  <section class="section">
+    <div class="smart-banner" id="smartBanner">
+      <div class="sb-title">3 payments may be unrecorded</div>
+      <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+      <span class="sb-action" onclick="showToast('Recording payments...')">Record them now</span>
+      <span class="sb-dismiss" id="sbClose">Not now</span>
+    </div>
+  </section>
+
+  <!-- NOTIF STRIP -->
+  <section class="section">
+    <div class="section-head">Recent notes</div>
+    <div class="notif-scroll" id="notifScroll"></div>
+  </section>
+
+  <!-- FEED -->
+  <section class="section">
+    <div class="section-head">Recent documents</div>
+    <div id="feedList" style="margin-top:32px"></div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="section">
+    <div class="section-head">A record of care</div>
+    <div id="auditList" style="margin-top:28px"></div>
+  </section>
+
+  <div style="height:140px"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+  <button class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="bn-label">Home</span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="bn-label">Projects</span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="bn-label">Sales</span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="bn-label">Clients</span></button>
+  <button class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span class="bn-label">More</span></button>
+</nav>
+
+<!-- FAB -->
+<div class="fab-wrap">
+  <div class="quick-popup" id="quickList">
+    <button class="popup-item" onclick="showToast('New invoice started')">New Invoice</button>
+    <button class="popup-item" onclick="showToast('New quotation started')">New Quotation</button>
+    <button class="popup-item" onclick="showToast('New waybill started')">New Waybill</button>
+    <button class="popup-item" onclick="showToast('Record payment opened')">Record Payment</button>
+    <button class="popup-item" onclick="showToast('Add client opened')">Add Client</button>
+  </div>
+  <button class="fab" id="fabBtn" aria-label="Quick actions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+</div>
+
+<!-- SIDEBAR -->
+<div class="scrim" id="scrim"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">BIGDROPS</div>
+  <nav class="sb-nav">
+    <div class="sb-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/><path d="M10 18h4"/></svg>Waybills</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</div>
+    <div class="sb-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</div>
+  </nav>
+  <div class="sb-foot">Milad A. — Operator</div>
+</aside>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head"><span class="np-title">Notes</span><span class="np-clear" id="npClear">Clear all</span></div>
+  <div class="np-list" id="npList"></div>
+</div>
+
+<!-- AI -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel">
+    <div class="ai-head"><span class="ai-title">Steward</span><button class="icon-btn" onclick="closeOverlays()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="ai-body">
+      <div class="ai-msg bot">Good evening, Milad. Three invoices are due this week for a total of <strong>₦2,890,000</strong>. Would you like a summary?</div>
+      <div class="ai-msg user">Summarize my overdue balance.</div>
+      <div class="ai-msg bot"><strong>₦56,000 overdue</strong> across 2 invoices. INV-2026-012 is 14 days past due; INV-2026-014 is due today. I can draft reminder letters if you want.</div>
+    </div>
+    <div class="ai-chips">
+      <button class="ai-chip" onclick="aiReply('Summarizing overdue invoices...')">Summarize overdue</button>
+      <button class="ai-chip" onclick="aiReply('Fetching your current balance...')">What is my balance?</button>
+      <button class="ai-chip" onclick="aiReply('Starting a draft invoice for you...')">Create invoice draft</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Write to Steward..." />
+      <button class="ai-send" onclick="aiSend()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="ls-word">Refreshing, one moment.</div>
+  <div class="ls-orb"></div>
+  <div class="ls-tip"><span class="tip-idx" id="lsTipIdx">DID YOU KNOW / 01</span><span id="lsTipText">Did you know? Invoices past their due date roll into the Overdue figure automatically each night.</span></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var TIPS = [
+  'Did you know? Invoices past their due date roll into the Overdue figure automatically each night.',
+  'Did you know? Balance moved without a logged payment appears here as an unrecorded payment alert.',
+  'Did you know? You can convert any quotation into an invoice without retyping a single line item.',
+  'Did you know? The audit trail records every edit, so nothing is ever silently changed.',
+  'Did you know? Column visibility for line items is configurable — show only what you use.'
+];
+var FEED = [
+  { ref: 'INV-2026-014', client: 'Eko Hotel & Suites', amount: '₦1,240,000', status: 'Due today' },
+  { ref: 'INV-2026-013', client: 'Mainland Distributors', amount: '₦860,000', status: 'Paid' },
+  { ref: 'QTN-2026-021', client: 'Lagos Catering Co.', amount: '₦320,000', status: 'Draft' },
+  { ref: 'INV-2026-012', client: 'Sterling Traders', amount: '₦2,150,000', status: 'Overdue' },
+  { ref: 'WB-2026-008', client: 'Transit Logistics', amount: '—', status: 'Approved' },
+  { ref: 'INV-2026-011', client: 'Ministry of Works', amount: '₦4,800,000', status: 'Paid' }
+];
+var AUDIT = [
+  { title: 'Invoice INV-2026-014 edited — 2 line items updated', meta: 'Milad A. · 2h ago', dot: 'ok' },
+  { title: 'Payment ₦450,000 recorded against INV-2026-013', meta: 'Amaka O. · 5h ago', dot: 'ok' },
+  { title: 'Waybill WB-2026-008 approved for dispatch', meta: 'Tunde B. · 1d ago', dot: 'warn' },
+  { title: 'Quotation QTN-2026-021 created from blank', meta: 'Milad A. · 2d ago', dot: 'ok' },
+  { title: 'Client profile updated — new phone number', meta: 'Amaka O. · 3d ago', dot: 'bad' },
+  { title: 'Default VAT rate changed to 7.5%', meta: 'System · 6d ago', dot: 'warn' }
+];
+var NOTIFS = [
+  { t: 'Invoice due today', d: 'INV-2026-014 · Eko Hotel & Suites', time: '2h ago' },
+  { t: 'Payment received', d: '₦450,000 · Zenith Bank', time: '5h ago' },
+  { t: 'Waybill approved', d: 'WB-2026-008 · Transit Logistics', time: '1d ago' },
+  { t: 'Low stock: Diesel', d: '8 units remaining in inventory', time: '1d ago' },
+  { t: 'Quotation converted', d: 'QTN-2026-021 · Lagos Catering Co.', time: '2d ago' }
+];
+var NP = [
+  { t: 'Invoice due today', d: 'INV-2026-014 · ₦1,240,000', read: false },
+  { t: 'Payment received', d: '₦450,000 · Zenith Bank', read: false },
+  { t: 'Waybill approved', d: 'WB-2026-008 · Transit Logistics', read: false },
+  { t: 'Quotation converted', d: 'QTN-2026-021 · Lagos Catering', read: true },
+  { t: 'Low stock alert', d: 'Diesel · 8 units left', read: true }
+];
+
+var feedEl = document.getElementById('feedList');
+FEED.forEach(function (f) {
+  var row = document.createElement('div');
+  row.className = 'feed-line';
+  row.innerHTML = '<span class="fl-ref">' + f.ref + '</span>' +
+    '<span class="fl-client">' + f.client + '</span>' +
+    '<div class="fl-right"><span class="fl-amount">' + f.amount + '</span><span class="fl-status">' + f.status + '</span></div>';
+  row.addEventListener('click', function () { showToast(f.ref + ' opened'); });
+  feedEl.appendChild(row);
+});
+
+var auditEl = document.getElementById('auditList');
+AUDIT.forEach(function (a) {
+  var row = document.createElement('div');
+  row.className = 'audit-line';
+  row.innerHTML = '<span class="audit-dot ' + a.dot + '"></span><span class="audit-title">' + a.title + '</span><span class="audit-meta">' + a.meta + '</span>';
+  auditEl.appendChild(row);
+});
+
+var notifEl = document.getElementById('notifScroll');
+NOTIFS.forEach(function (n) {
+  var c = document.createElement('div');
+  c.className = 'notif-note';
+  c.innerHTML = '<div class="nn-title">' + n.t + '</div><div class="nn-desc">' + n.d + '</div><span class="nn-time">' + n.time + '</span>';
+  c.addEventListener('click', function () { showToast(n.t); });
+  notifEl.appendChild(c);
+});
+
+var npList = document.getElementById('npList');
+function renderNP() {
+  npList.innerHTML = '';
+  NP.forEach(function (n) {
+    var r = document.createElement('div');
+    r.className = 'np-row';
+    r.innerHTML = '<span class="np-dot ' + (n.read ? 'read' : '') + '"></span><div class="np-lines"><div class="np-l1">' + n.t + '</div><div class="np-l2">' + n.d + '</div></div>';
+    npList.appendChild(r);
+  });
+}
+renderNP();
+
+function closeOverlays() {
+  ['sidebar', 'notifPanel', 'aiOverlay', 'quickList'].forEach(function (id) {
+    document.getElementById(id).classList.remove('open');
+  });
+  document.getElementById('scrim').classList.remove('visible');
+  document.getElementById('fabBtn').classList.remove('open');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+function toggle(id) {
+  var el = document.getElementById(id);
+  var wasOpen = el.classList.contains('open');
+  closeOverlays();
+  if (!wasOpen) {
+    el.classList.add('open');
+    if (id === 'sidebar' || id === 'notifPanel') document.getElementById('scrim').classList.add('visible');
+    if (id === 'quickList') document.getElementById('fabBtn').classList.add('open');
+  }
+}
+
+document.getElementById('menuBtn').addEventListener('click', function () { toggle('sidebar'); });
+document.getElementById('notifBtn').addEventListener('click', function () { toggle('notifPanel'); });
+document.getElementById('aiBtn').addEventListener('click', function () { toggle('aiOverlay'); });
+document.getElementById('fabBtn').addEventListener('click', function () { toggle('quickList'); });
+document.getElementById('scrim').addEventListener('click', closeOverlays);
+document.getElementById('sbClose').addEventListener('click', function () { document.getElementById('smartBanner').style.display = 'none'; });
+document.getElementById('npClear').addEventListener('click', function () { NP = []; renderNP(); document.getElementById('pip').classList.add('hidden'); });
+
+document.getElementById('themeBtn').addEventListener('click', function () {
+  var d = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
+});
+
+var tipIdx = 0;
+document.getElementById('refreshBtn').addEventListener('click', function () {
+  var ls = document.getElementById('loadingScreen');
+  tipIdx = (tipIdx + 1) % TIPS.length;
+  document.getElementById('lsTipText').textContent = TIPS[tipIdx];
+  document.getElementById('lsTipIdx').textContent = 'DID YOU KNOW / 0' + (tipIdx + 1);
+  ls.classList.add('open');
+  setTimeout(function () {
+    ls.classList.remove('open');
+    showToast('Dashboard refreshed');
+  }, 2200);
+});
+
+function aiSend() {
+  var input = document.getElementById('aiInput');
+  var v = input.value.trim();
+  if (!v) return;
+  var body = document.querySelector('.ai-body');
+  var m = document.createElement('div');
+  m.className = 'ai-msg user';
+  m.textContent = v;
+  body.appendChild(m);
+  input.value = '';
+  setTimeout(function () {
+    var r = document.createElement('div');
+    r.className = 'ai-msg bot';
+    r.innerHTML = 'Noted. I have logged <strong>' + v + '</strong> and will fold it into the next ledger run.';
+    body.appendChild(r);
+    body.scrollTop = body.scrollHeight;
+  }, 700);
+}
+function aiReply(msg) {
+  var body = document.querySelector('.ai-body');
+  var m = document.createElement('div');
+  m.className = 'ai-msg bot';
+  m.innerHTML = '<strong>' + msg + '</strong>';
+  body.appendChild(m);
+  body.scrollTop = body.scrollHeight;
+}
+
+document.querySelectorAll('.bn-item').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.bn-item').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+    showToast(b.querySelector('.bn-label').textContent + ' section');
+  });
+});
+document.querySelectorAll('.sb-link').forEach(function (l) {
+  l.addEventListener('click', function () {
+    document.querySelectorAll('.sb-link').forEach(function (x) { x.classList.remove('active'); });
+    l.classList.add('active');
+    closeOverlays();
+  });
+});
+document.getElementById('aiInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') aiSend(); });
+</script>
+</body>
+</html>
