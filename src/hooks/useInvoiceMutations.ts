@@ -122,7 +122,7 @@ export function useInvoiceMutations({
   const { settings } = useSettings()
   const handleAttachExisting = async (item: { id?: string }) => {
     if (!item?.id || !attachKind) return
-    await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind })
+    await attachExistingDocument({ invoiceId: invoice.id, childId: item.id, kind: attachKind, tenantClient })
     setShowAttachSheet(false)
     setAttachKind(null)
     await refresh()

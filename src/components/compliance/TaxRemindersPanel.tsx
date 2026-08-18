@@ -22,6 +22,7 @@ import {
 import { Combobox } from '@/components/ui/combobox'
 import { Bell, PlusCircle, Edit, Trash2, Loader2, CheckCircle2, Calendar, Link as LinkIcon, AlertCircle } from 'lucide-react'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import * as complianceService from '@/modules/compliance/services/complianceService'
 import { TaxReminder, TaxReminderStatus, TaxFilingTaxType, TaxFiling } from '@/domain/compliance/types'
@@ -49,6 +50,7 @@ const TAX_TYPE_LABELS: Record<TaxFilingTaxType, string> = {
 }
 
 export default function TaxRemindersPanel({ reminders, filings, onRemindersChanged }: TaxRemindersPanelProps) {
+  const { tenantClient } = useEntity()
   const [editingReminder, setEditingReminder] = useState<Partial<TaxReminder> | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -85,10 +87,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
       }
 
       if (isNew) {
-        await complianceService.insertTaxReminder(record)
+        await complianceService.insertTaxReminder(record, tenantClient)
         feedback.success('Reminder added')
       } else {
-        await complianceService.updateTaxReminder(editingReminder.id!, record)
+        await complianceService.updateTaxReminder(editingReminder.id!, record, tenantClient)
         feedback.success('Reminder updated')
       }
 
@@ -105,7 +107,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
     if (!confirm('Remove this reminder?')) return
     try {
       setIsDeleting(id)
-      await complianceService.deleteTaxReminder(id)
+      await complianceService.deleteTaxReminder(id, tenantClient)
       feedback.success('Reminder removed')
       onRemindersChanged()
     } catch (e: any) {
@@ -117,7 +119,7 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
   const resolveReminder = async (id: string) => {
     try {
-      await complianceService.updateTaxReminder(id, { status: 'resolved' } as Partial<TaxReminder>)
+      await complianceService.updateTaxReminder(id, { status: 'resolved' } as Partial<TaxReminder>, tenantClient)
       feedback.success('Obligation resolved')
       onRemindersChanged()
     } catch (e: any) {

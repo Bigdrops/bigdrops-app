@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { supabase } from '@/supabase'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { useEntity } from '@/lib/tenant/contexts'
 
@@ -46,7 +45,7 @@ export function useGlobalSearch(query: string) {
           tenantClient.from('projects').select('id, name, client_name').ilike('name', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, created_at').ilike('invoice_number', `%${cleanQuery}%`).is('archived_at', null).limit(3).abortSignal(signal),
           tenantClient.from('quotations').select('id, quotation_number, client_name, total, status, created_at').ilike('quotation_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
-          supabase.from('csrs').select('id, csr_number, client_name, status, created_at').ilike('csr_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
+          tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at').ilike('csr_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at').ilike('waybill_number', `%${cleanQuery}%`).limit(3).abortSignal(signal),
         ])
 

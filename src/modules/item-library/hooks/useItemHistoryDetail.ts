@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { loadItemHistoryDetail } from '../services'
 import type { ItemHistoryRow } from '../types'
 
 export function useItemHistoryDetail(itemId: string | null | undefined, limit = 50, options: { enabled?: boolean, includeHeavyFallbacks?: boolean } = {}) {
+  const { tenantClient } = useEntity()
   const { enabled = true, includeHeavyFallbacks = false } = options
   const [data, setData] = useState<ItemHistoryRow[]>([])
   const [loading, setLoading] = useState(enabled && !!itemId)
@@ -26,7 +28,7 @@ export function useItemHistoryDetail(itemId: string | null | undefined, limit = 
       setError(null)
 
       try {
-        const nextData = await loadItemHistoryDetail(itemId, limit, { includeHeavyFallbacks })
+        const nextData = await loadItemHistoryDetail(itemId, limit, { includeHeavyFallbacks }, tenantClient)
         if (!cancelled) setData(nextData)
       } catch (nextError) {
         if (!cancelled) setError(nextError instanceof Error ? nextError : new Error('Failed to load item history'))
@@ -39,7 +41,7 @@ export function useItemHistoryDetail(itemId: string | null | undefined, limit = 
     return () => {
       cancelled = true
     }
-  }, [itemId, limit, reloadKey, enabled, includeHeavyFallbacks])
+  }, [itemId, limit, reloadKey, enabled, includeHeavyFallbacks, tenantClient])
 
   return { data, loading, error, reload: () => setReloadKey((value) => value + 1) }
 }

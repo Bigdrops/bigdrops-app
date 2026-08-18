@@ -1,3 +1,4 @@
+import type { TenantClient } from "@/lib/tenantClient"
 import { linkCsrToInvoice, linkWaybillToInvoice } from "../repositories/invoiceChildDocRepository"
 
 export interface SourceInvoiceRef {
@@ -32,27 +33,29 @@ export function buildWaybillPrefill(source: SourceInvoiceRef) {
   }
 }
 
-export async function attachExistingCsr(csrId: string, invoiceId: string): Promise<void> {
-  await linkCsrToInvoice(csrId, invoiceId)
+export async function attachExistingCsr(csrId: string, invoiceId: string, tenantClient: TenantClient): Promise<void> {
+  await linkCsrToInvoice(csrId, invoiceId, tenantClient)
 }
 
-export async function attachExistingWaybill(waybillId: string, invoiceId: string): Promise<void> {
-  await linkWaybillToInvoice(waybillId, invoiceId)
+export async function attachExistingWaybill(waybillId: string, invoiceId: string, tenantClient: TenantClient): Promise<void> {
+  await linkWaybillToInvoice(waybillId, invoiceId, tenantClient)
 }
 
 export async function attachChildDocument({
   invoiceId,
   childId,
   kind,
+  tenantClient,
 }: {
   invoiceId: string
   childId: string
   kind: "csr" | "waybill"
+  tenantClient: TenantClient
 }): Promise<void> {
   if (kind === "csr") {
-    await linkCsrToInvoice(childId, invoiceId)
+    await linkCsrToInvoice(childId, invoiceId, tenantClient)
   } else {
-    await linkWaybillToInvoice(childId, invoiceId)
+    await linkWaybillToInvoice(childId, invoiceId, tenantClient)
   }
 }
 

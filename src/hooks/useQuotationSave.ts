@@ -281,8 +281,8 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
       const { recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
       if (isCreate) {
         const { recordQuotationCreated } = await import('@/lib/audit')
-        await recordQuotationCreated(effectiveId)
-        await recordAuditLog({
+        await recordQuotationCreated(tenantClient, effectiveId)
+        await recordAuditLog(tenantClient, {
           entityType: 'quotation',
           recordId: effectiveId,
           entityLabel: createResult?.quotation_number ?? '',
@@ -292,7 +292,7 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
           trackedFields: QUOTATION_TRACKED_FIELDS,
         })
       } else {
-        await recordAuditLog({
+        await recordAuditLog(tenantClient, {
           entityType: 'quotation',
           recordId: effectiveId,
           entityLabel: String(initialQuotationSnapshot?.quotation_number || ''),

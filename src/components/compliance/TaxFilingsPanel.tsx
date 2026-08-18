@@ -23,6 +23,7 @@ import {
 import { ClipboardList, PlusCircle, Edit, Trash2, FileJson } from 'lucide-react'
 import ComplianceJsonImportSheet from './import/ComplianceJsonImportSheet'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { TaxFiling, TaxFilingStatus, TaxFilingTaxType } from '@/domain/compliance/types'
 import * as complianceService from '@/modules/compliance/services/complianceService'
 import { formatNaira } from '@/lib/formatters/money'
@@ -49,6 +50,7 @@ const TAX_TYPE_LABELS: Record<TaxFilingTaxType, string> = {
 }
 
 export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFilingsPanelProps) {
+  const { tenantClient } = useEntity()
   const [editingFiling, setEditingFiling] = useState<Partial<TaxFiling> | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -90,10 +92,10 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
       }
 
       if (isNew) {
-        await complianceService.insertTaxFiling(record)
+        await complianceService.insertTaxFiling(record, tenantClient)
         feedback.success('Filing record created')
       } else {
-        await complianceService.updateTaxFiling(editingFiling.id!, record)
+        await complianceService.updateTaxFiling(editingFiling.id!, record, tenantClient)
         feedback.success('Filing record updated')
       }
 
@@ -110,7 +112,7 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
     if (!confirm('Delete this filing record?')) return
     try {
       setIsDeleting(id)
-      await complianceService.deleteTaxFiling(id)
+      await complianceService.deleteTaxFiling(id, tenantClient)
       feedback.success('Filing deleted')
       onFilingsChanged()
     } catch (e: any) {

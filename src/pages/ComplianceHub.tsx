@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { fetchWhtReceipts, fetchTaxInputEntries, fetchTaxFilings, fetchTaxReminders } from '@/modules/compliance/services/complianceService'
 import { Button } from '@/components/ui/button'
@@ -98,9 +97,9 @@ export default function ComplianceHub() {
         ])
         const [receiptsData, taxInputsData, filingsData, remindersData] = await Promise.all([
           fetchWhtReceipts(tenantClient),
-          fetchTaxInputEntries(),
-          fetchTaxFilings(),
-          fetchTaxReminders(),
+          fetchTaxInputEntries(tenantClient),
+          fetchTaxFilings(tenantClient),
+          fetchTaxReminders(tenantClient),
         ])
 
         if (cancelled) return
@@ -172,7 +171,7 @@ export default function ComplianceHub() {
           <VatInputsPanel
             taxInputs={taxInputs}
             onInputsChanged={() => {
-              supabase.from('tax_input_entries').select('*').order('date', { ascending: false })
+              tenantClient.from('tax_input_entries').select('*').order('date', { ascending: false })
                 .then(({ data }) => { if (data) setTaxInputs(data) })
             }}
           />
@@ -194,7 +193,7 @@ export default function ComplianceHub() {
           <TaxFilingsPanel
             filings={filings}
             onFilingsChanged={() => {
-              supabase.from('tax_filings').select('*').order('period_start', { ascending: false })
+              tenantClient.from('tax_filings').select('*').order('period_start', { ascending: false })
                 .then(({ data }) => { if (data) setFilings(data) })
             }}
           />
@@ -205,7 +204,7 @@ export default function ComplianceHub() {
             reminders={reminders}
             filings={filings}
             onRemindersChanged={() => {
-              supabase.from('tax_reminders').select('*').order('due_date', { ascending: true })
+              tenantClient.from('tax_reminders').select('*').order('due_date', { ascending: true })
                 .then(({ data }) => { if (data) setReminders(data) })
             }}
           />

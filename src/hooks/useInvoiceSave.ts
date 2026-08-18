@@ -1,4 +1,3 @@
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import type { TenantClient } from '@/lib/tenantClient'
 import { toDbItem } from '@/domain/invoice'
@@ -156,7 +155,7 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
       }
     }
 
-    const { project, error: projectError } = await validateProjectAssignment(supabase as any, {
+    const { project, error: projectError } = await validateProjectAssignment(input.tenantClient as any, {
       projectId: invoice.project_id,
       documentClientId: invoice.client_id,
       documentClientName: invoice.client_name,
@@ -277,7 +276,7 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
       return withUniqueRetry(
         async (candidateNumber: string) => {
           payload.invoice_number = candidateNumber
-          const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
+          const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
             p_entity_id: entityId,
             p_invoice_payload: payload,
             p_items: itemsToSave,
@@ -301,7 +300,7 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
 
     if (entityId && !isCreate) {
       payload.id = id
-      const { error } = await supabase.rpc('save_invoice_with_items_transaction', {
+      const { error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
         p_entity_id: entityId,
         p_invoice_payload: payload,
         p_items: itemsToSave,
@@ -359,8 +358,8 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
       const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import('@/lib/audit')
       if (isCreate) {
         const { recordInvoiceCreated } = await import('@/lib/audit')
-        await recordInvoiceCreated(effectiveId)
-        await recordAuditLog({
+        await recordInvoiceCreated(tenantClient, effectiveId)
+        await recordAuditLog(tenantClient, {
           entityType: 'invoice',
           recordId: effectiveId,
           entityLabel: createResult?.invoice_number ?? input.invoice.invoice_number,
@@ -370,7 +369,7 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
           trackedFields: INVOICE_TRACKED_FIELDS,
         })
       } else {
-        await recordAuditLog({
+        await recordAuditLog(tenantClient, {
           entityType: 'invoice',
           recordId: effectiveId,
           entityLabel: initialInvoiceSnapshot?.invoice_number || null,

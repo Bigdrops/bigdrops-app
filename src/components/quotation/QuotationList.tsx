@@ -13,7 +13,6 @@ import {
   Trash2,
   Workflow,
 } from 'lucide-react'
-import { supabase } from '@/supabase'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { loadQuotations as fetchQuotationsFromService, loadQuotationById, loadQuotationNumbers, loadQuotationItems, archiveQuotation, deleteQuotation, cloneQuotation } from '@/modules/quotations/services/quotationService'
 import { useSettings } from '@/hooks/useSettings'

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Landmark, Pencil, Plus, Trash2, Loader2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
@@ -35,6 +35,7 @@ const emptyForm: BankForm = {
 }
 
 export function BankingSettingsSection() {
+  const { tenantClient } = useEntity()
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -46,7 +47,7 @@ export function BankingSettingsSection() {
   const loadAccounts = useCallback(async () => {
     setLoading(true)
 
-    const { data, error } = await supabase
+    const { data, error } = await tenantClient
       .from('bank_accounts')
       .select('id, bank_name, account_name, account_number, sort_code, is_default')
       .order('is_default', { ascending: false })
@@ -63,8 +64,9 @@ export function BankingSettingsSection() {
   }, [])
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     loadAccounts()
-  }, [loadAccounts])
+  }, [loadAccounts, tenantClient.isReady])
 
   const updateForm = (key: keyof BankForm, value: string | boolean) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -104,7 +106,7 @@ export function BankingSettingsSection() {
 
     try {
       if (form.is_default) {
-        const resetQuery = supabase.from('bank_accounts').update({ is_default: false })
+        const resetQuery = tenantClient.from('bank_accounts').update({ is_default: false })
         const resetResult = editingId
           ? await resetQuery.neq('id', editingId)
           : await resetQuery.not('id', 'is', null)
@@ -121,8 +123,8 @@ export function BankingSettingsSection() {
       }
 
       const result = editingId
-        ? await supabase.from('bank_accounts').update(payload).eq('id', editingId)
-        : await supabase.from('bank_accounts').insert(payload)
+        ? await tenantClient.from('bank_accounts').update(payload).eq('id', editingId)
+        : await tenantClient.from('bank_accounts').insert(payload)
 
       if (result.error) throw result.error
 
@@ -145,7 +147,7 @@ export function BankingSettingsSection() {
     
     setActionId(`delete:${id}`)
 
-    const { error } = await supabase.from('bank_accounts').delete().eq('id', id)
+    const { error } = await tenantClient.from('bank_accounts').delete().eq('id', id)
 
     if (error) {
       feedback.error(`Delete failed: ${error.message}`)
@@ -161,7 +163,7 @@ export function BankingSettingsSection() {
   const setDefault = async (id: string) => {
     setActionId(`default:${id}`)
 
-    const { error: resetError } = await supabase
+    const { error: resetError } = await tenantClient
       .from('bank_accounts')
       .update({ is_default: false })
       .neq('id', id)
@@ -172,7 +174,7 @@ export function BankingSettingsSection() {
       return
     }
 
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from('bank_accounts')
       .update({ is_default: true })
       .eq('id', id)

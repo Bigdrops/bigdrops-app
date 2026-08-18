@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { loadSummaryList } from '../services'
 import type { ItemCatalogItem } from '../types'
 import { readListCache, writeListCache, isListCacheFresh } from '@/lib/cache/listCache'
@@ -7,6 +8,7 @@ const ITEM_LIBRARY_CACHE_KEY = "bd:item-library:summary:v1"
 const ITEM_LIBRARY_CACHE_TTL = 10 * 60 * 1000 // 10 minutes
 
 export function useItemHistoryList(limit = 100, options: { includeHeavyFallbacks?: boolean } = {}) {
+  const { tenantClient } = useEntity()
   const { includeHeavyFallbacks = false } = options
   const [data, setData] = useState<ItemCatalogItem[]>(() => {
     const cached = readListCache<ItemCatalogItem>(ITEM_LIBRARY_CACHE_KEY)
@@ -35,7 +37,7 @@ export function useItemHistoryList(limit = 100, options: { includeHeavyFallbacks
       setLoading(data.length === 0)
       setError(null)
       try {
-        const nextData = await loadSummaryList(limit, { includeHeavyFallbacks })
+        const nextData = await loadSummaryList(limit, { includeHeavyFallbacks }, tenantClient)
         if (!cancelled) {
           setData(nextData)
           writeListCache(ITEM_LIBRARY_CACHE_KEY, nextData)
@@ -51,7 +53,7 @@ export function useItemHistoryList(limit = 100, options: { includeHeavyFallbacks
     return () => {
       cancelled = true
     }
-  }, [limit, reloadKey])
+  }, [limit, reloadKey, tenantClient])
 
   return { data, setData, loading, error, reload: () => setReloadKey((value) => value + 1) }
 }

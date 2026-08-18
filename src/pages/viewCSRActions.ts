@@ -1,18 +1,19 @@
 import { supabase } from '@/supabase'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import type { TenantClient } from '@/lib/tenantClient'
 
-export async function archiveCSRRecord(id: string) {
-  const { error } = await supabase.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', id)
+export async function archiveCSRRecord(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteCSRRecord(id: string) {
-  const { error } = await supabase.from('csrs').delete().eq('id', id)
+export async function deleteCSRRecord(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('csrs').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function updateCSRStatus(id: string, status: string) {
-  const { error } = await supabase.from('csrs').update({ status }).eq('id', id)
+export async function updateCSRStatus(id: string, status: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('csrs').update({ status }).eq('id', id)
   if (error) throw error
 }
 
@@ -24,8 +25,8 @@ function toBoolean(value: unknown): boolean | null {
   return null
 }
 
-export async function duplicateCSRRecord(id: string) {
-  const { data: original, error: fetchError } = await supabase.from('csrs').select('*').eq('id', id).single()
+export async function duplicateCSRRecord(id: string, tenantClient: TenantClient) {
+  const { data: original, error: fetchError } = await tenantClient.from('csrs').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'CSR not found')
 
   const { getNextCsrNumber } = await import('@/components/csr/csrUtils')
@@ -51,7 +52,7 @@ export async function duplicateCSRRecord(id: string) {
   }
 
   const regenerateNumber = async () => {
-    const { data: latestRows } = await supabase
+    const { data: latestRows } = await tenantClient
       .from('csrs')
       .select('csr_number')
       .order('created_at', { ascending: false })
@@ -61,7 +62,7 @@ export async function duplicateCSRRecord(id: string) {
 
   const { data: created, error: insertError } = await withUniqueRetry(
     async (candidateNumber) => {
-      const { data, error } = await supabase.from('csrs').insert([{
+      const { data, error } = await tenantClient.from('csrs').insert([{
         ...basePayload,
         csr_number: candidateNumber,
       }]).select().single()

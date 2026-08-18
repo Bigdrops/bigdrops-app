@@ -4,8 +4,8 @@ import Layout from '@/components/Layout'
 import { RfqEditor } from '@/components/rfq/RfqEditor'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
@@ -14,23 +14,24 @@ import { withUniqueRetry } from '@/lib/withUniqueRetry'
 export default function NewRfq() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { tenantClient } = useEntity();
   const [saving, setSaving] = useState(false);
 
   const handleSave = async (rfq: Rfq, items: RfqItem[]) => {
     setSaving(true);
     
     // Get next RFQ number
-    const { data: existingRfqs } = await supabase.from('rfqs').select('rfq_number');
+    const { data: existingRfqs } = await tenantClient.from('rfqs').select('rfq_number');
     const rfqPrefix = resolvePrefix(settings?.document_prefixes, 'rfq');
     const initialRfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || [], rfqPrefix);
 
     const { data: createdRfq, error: rfqError } = await withUniqueRetry(
       async (candidateNumber: string) => {
         const dbRfq = denormalizeToDbRfq({ ...rfq, rfq_number: candidateNumber });
-        return supabase.from('rfqs').insert([dbRfq]).select().single();
+        return tenantClient.from('rfqs').insert([dbRfq]).select().single();
       },
       async () => {
-        const { data: rows } = await supabase.from('rfqs').select('rfq_number');
+        const { data: rows } = await tenantClient.from('rfqs').select('rfq_number');
         return getNextRfqNumber(rows || [], rfqPrefix);
       },
     );
@@ -49,7 +50,7 @@ export default function NewRfq() {
       .map((item, idx) => denormalizeToDbRfqItem({ ...item, sort_order: idx }, rfqId));
 
     if (dbItems.length > 0) {
-      const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
+      const { error: itemsError } = await tenantClient.from('rfq_items').insert(dbItems);
       if (itemsError) {
         feedback.error('Item save failed', { description: itemsError.message });
         // Optionally delete the parent RFQ here but let's keep it for now

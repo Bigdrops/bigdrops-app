@@ -1,11 +1,5 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { WhtReceipt, TaxInputEntry, TaxFiling, TaxReminder, TaxSettings } from '@/domain/compliance/types'
-
-// Phase 3: wht_receipts is part of the invoice aggregate — reads/writes target
-// the tenant schema via the caller-supplied TenantClient. Tax tables
-// (tax_input_entries, tax_filings, tax_reminders, tax_settings) are NOT part
-// of the invoice aggregate and remain on the public client.
 
 export async function fetchWhtReceipts(client: TenantClient): Promise<WhtReceipt[]> {
   const { data, error } = await client.from('wht_receipts').select('*')
@@ -30,76 +24,76 @@ export async function deleteWhtReceipt(id: string, client: TenantClient): Promis
   if (error) throw error
 }
 
-export async function fetchTaxInputEntries(): Promise<TaxInputEntry[]> {
-  const { data, error } = await supabase.from('tax_input_entries').select('*').order('date', { ascending: false })
+export async function fetchTaxInputEntries(client: TenantClient): Promise<TaxInputEntry[]> {
+  const { data, error } = await client.from('tax_input_entries').select('*').order('date', { ascending: false })
   if (error) throw error
   return (data || []) as TaxInputEntry[]
 }
 
-export async function insertTaxInputEntry(record: Partial<TaxInputEntry>): Promise<void> {
-  const { error } = await supabase.from('tax_input_entries').insert([record])
+export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_input_entries').insert([record])
   if (error) throw error
 }
 
-export async function updateTaxInputEntry(id: string, updates: Partial<TaxInputEntry>): Promise<void> {
-  const { error } = await supabase.from('tax_input_entries').update(updates).eq('id', id)
+export async function updateTaxInputEntry(id: string, updates: Partial<TaxInputEntry>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_input_entries').update(updates).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteTaxInputEntry(id: string): Promise<void> {
-  const { error } = await supabase.from('tax_input_entries').delete().eq('id', id)
+export async function deleteTaxInputEntry(id: string, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_input_entries').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function fetchTaxFilings(): Promise<TaxFiling[]> {
-  const { data, error } = await supabase.from('tax_filings').select('*').order('period_start', { ascending: false })
+export async function fetchTaxFilings(client: TenantClient): Promise<TaxFiling[]> {
+  const { data, error } = await client.from('tax_filings').select('*').order('period_start', { ascending: false })
   if (error) throw error
   return (data || []) as TaxFiling[]
 }
 
-export async function insertTaxFiling(record: Partial<TaxFiling>): Promise<void> {
-  const { error } = await supabase.from('tax_filings').insert([record])
+export async function insertTaxFiling(record: Partial<TaxFiling>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_filings').insert([record])
   if (error) throw error
 }
 
-export async function updateTaxFiling(id: string, updates: Partial<TaxFiling>): Promise<void> {
-  const { error } = await supabase.from('tax_filings').update(updates).eq('id', id)
+export async function updateTaxFiling(id: string, updates: Partial<TaxFiling>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_filings').update(updates).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteTaxFiling(id: string): Promise<void> {
-  const { error } = await supabase.from('tax_filings').delete().eq('id', id)
+export async function deleteTaxFiling(id: string, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_filings').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function fetchTaxReminders(): Promise<TaxReminder[]> {
-  const { data, error } = await supabase.from('tax_reminders').select('*').order('due_date', { ascending: true })
+export async function fetchTaxReminders(client: TenantClient): Promise<TaxReminder[]> {
+  const { data, error } = await client.from('tax_reminders').select('*').order('due_date', { ascending: true })
   if (error) throw error
   return (data || []) as TaxReminder[]
 }
 
-export async function insertTaxReminder(record: Partial<TaxReminder>): Promise<void> {
-  const { error } = await supabase.from('tax_reminders').insert([record])
+export async function insertTaxReminder(record: Partial<TaxReminder>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_reminders').insert([record])
   if (error) throw error
 }
 
-export async function updateTaxReminder(id: string, updates: Partial<TaxReminder>): Promise<void> {
-  const { error } = await supabase.from('tax_reminders').update(updates).eq('id', id)
+export async function updateTaxReminder(id: string, updates: Partial<TaxReminder>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_reminders').update(updates).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteTaxReminder(id: string): Promise<void> {
-  const { error } = await supabase.from('tax_reminders').delete().eq('id', id)
+export async function deleteTaxReminder(id: string, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_reminders').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function fetchTaxSettings(): Promise<TaxSettings | null> {
-  const { data, error } = await supabase.from('tax_settings').select('*').eq('settings_id', 1).single()
+export async function fetchTaxSettings(client: TenantClient): Promise<TaxSettings | null> {
+  const { data, error } = await client.from('tax_settings').select('*').eq('settings_id', 1).single()
   if (error && error.code !== 'PGRST116') throw error
   return data as TaxSettings | null
 }
 
-export async function upsertTaxSettings(record: Partial<TaxSettings>): Promise<void> {
-  const { error } = await supabase.from('tax_settings').upsert(record, { onConflict: 'settings_id' })
+export async function upsertTaxSettings(record: Partial<TaxSettings>, client: TenantClient): Promise<void> {
+  const { error } = await client.from('tax_settings').upsert(record, { onConflict: 'settings_id' })
   if (error) throw error
 }

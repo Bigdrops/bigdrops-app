@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
-import { supabase } from '@/supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { SettingsSummaryCard } from '@/components/settings/SettingsSummaryCard'
 import { feedback } from '@/lib/feedback'
@@ -90,10 +89,10 @@ export function ArchivesSettingsSection() {
       tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       tenantClient.from('quotations').select('id, quotation_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       tenantClient.from('projects').select('id, name, client_name, status, start_date, project_value, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('csrs').select('id, csr_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('waybills').select('id, waybill_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      supabase.from('boqs').select('id, boq_number, client_name, title, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('csrs').select('id, csr_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('waybills').select('id, waybill_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('boqs').select('id, boq_number, client_name, title, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
     ])
 
     setRawData({
@@ -173,9 +172,7 @@ export function ArchivesSettingsSection() {
   const restoreRecord = async (type: ArchiveDocType, id: string) => {
     setRestoringId(`${type}:${id}`)
 
-    // Phase 3: invoice restores target the tenant schema.
-    const client = type === 'invoices' || type === 'quotations' ? tenantClient : supabase
-    const { error } = await client.from(type).update({ archived_at: null }).eq('id', id)
+    const { error } = await tenantClient.from(type).update({ archived_at: null }).eq('id', id)
 
     if (error) {
       feedback.error(`Restore failed: ${error.message}`)

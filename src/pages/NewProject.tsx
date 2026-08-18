@@ -12,10 +12,10 @@ import { Loader2 } from 'lucide-react'
 import { pageFormCardClassName, pageFormFieldClassName, pageFormLabelClassName, pageFormPrimaryActionClassName } from '@/components/ui/form-page-styles'
 import { createProjectWithGeneratedCode } from '@/domain/projects'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import ClientSelector from '../components/ClientSelector'
 import { useSettings } from '@/hooks/useSettings'
+import { useEntity } from '@/lib/tenant/contexts'
 
 interface ProjectFormState {
   name: string
@@ -33,6 +33,7 @@ export default function NewProject() {
   const navigate = useNavigate()
   const location = useLocation()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const prefill = (location.state as { clientId?: string; clientName?: string }) || {}
 
   const [saving, setSaving] = useState(false)
@@ -57,7 +58,7 @@ export default function NewProject() {
       return
     }
     setSaving(true)
-    const { data, error } = await createProjectWithGeneratedCode(supabase as any, {
+    const { data, error } = await createProjectWithGeneratedCode(tenantClient, {
       name: form.name.trim(),
       client_id: form.client_id || null,
       client_name: form.client_name || null,
@@ -82,7 +83,7 @@ export default function NewProject() {
     // Audit Trail
     try {
       const { recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
-      await recordAuditLog({
+      await recordAuditLog(tenantClient, {
         entityType: 'project',
         recordId: data.id,
         entityLabel: data.name,

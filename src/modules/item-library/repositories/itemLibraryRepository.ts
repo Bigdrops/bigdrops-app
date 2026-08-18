@@ -1,4 +1,4 @@
-import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { isImportedDescriptionItemId } from '../domain/cleanupApply'
 import type {
   ItemAlias,
@@ -73,17 +73,17 @@ type SuggestionHistoryRow = {
   client_id: string | null
 }
 
-async function loadSuggestionHistoryRows(itemIds: string[]): Promise<SuggestionHistoryRow[]> {
+async function loadSuggestionHistoryRows(itemIds: string[], client: TenantClient): Promise<SuggestionHistoryRow[]> {
   const stableItemIds = [...new Set(itemIds.filter(Boolean))]
   if (stableItemIds.length === 0) return []
 
   const [invoiceHistory, quotationHistory] = await Promise.all([
-    supabase
+    client
       .from('invoice_items')
       .select('item_id, unit_price, updated_at, invoices(invoice_number, client_id, issue_date)')
       .in('item_id', stableItemIds)
       .order('updated_at', { ascending: false }),
-    supabase
+    client
       .from('quotation_items')
       .select('item_id, unit_price, updated_at, quotations(quotation_number, client_id, issue_date)')
       .in('item_id', stableItemIds)
@@ -196,7 +196,8 @@ function normalizeMergeResult(payload: unknown, request: ItemLibraryMergeRequest
 export async function getItemSuggestions(
   searchText: string,
   resultLimit = 10,
-  clientId?: string | null,
+  clientId: string | null | undefined,
+  client: TenantClient,
 ): Promise<ItemSuggestion[]> {
   const trimmed = String(searchText || '').trim()
   if (!trimmed) return []
@@ -208,7 +209,7 @@ export async function getItemSuggestions(
 
   // 1. Fetch base suggestions
   try {
-    const { data, error } = await supabase.rpc('get_item_suggestions', {
+    const { data, error } = await client.rpc('get_item_suggestions', {
       search_text: trimmed,
       result_limit: resultLimit,
     })
@@ -219,7 +220,7 @@ export async function getItemSuggestions(
 
   if (suggestions.length === 0) {
     try {
-      const { data, error } = await supabase.rpc('get_item_suggestions', {
+      const { data, error } = await client.rpc('get_item_suggestions', {
         p_search_text: trimmed,
         p_result_limit: resultLimit,
       })
@@ -230,7 +231,7 @@ export async function getItemSuggestions(
   }
 
   if (suggestions.length === 0) {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('item_price_summary_v')
       .select('item_id, name, standard_price, last_sold_price, usage_count, last_used_at, last_source_type, is_active')
       .eq('is_active', true)
@@ -253,7 +254,7 @@ export async function getItemSuggestions(
   if (suggestions.length === 0) return []
 
   const itemIds = suggestions.map((s) => s.item_id).filter(Boolean)
-  const historyRows = await loadSuggestionHistoryRows(itemIds)
+  const historyRows = await loadSuggestionHistoryRows(itemIds, client)
 
   return suggestions.map((s) => {
     const priceContext = buildItemPriceContext(s.item_id, historyRows, clientId, s)
@@ -267,17 +268,17 @@ export async function getItemSuggestions(
   })
 }
 
-export async function getItemPriceContext(itemId: string, clientId?: string | null): Promise<ItemPriceContext | null> {
+export async function getItemPriceContext(itemId: string, clientId: string | null | undefined, client: TenantClient): Promise<ItemPriceContext | null> {
   const stableItemId = String(itemId || '').trim()
   if (!stableItemId) return null
 
-  const historyRows = await loadSuggestionHistoryRows([stableItemId])
+  const historyRows = await loadSuggestionHistoryRows([stableItemId], client)
   return buildItemPriceContext(stableItemId, historyRows, clientId)
 }
 
-export async function getItemSummaryList(limit = 100, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemCatalogItem[]> {
+export async function getItemSummaryList(limit = 100, options: { includeHeavyFallbacks?: boolean } = {}, client: TenantClient): Promise<ItemCatalogItem[]> {
   const { includeHeavyFallbacks = false } = options
-  const summaryResult = await supabase
+  const summaryResult = await client
     .from('item_price_summary_v')
     .select('*')
     .order('last_used_at', { ascending: false, nullsFirst: false })
@@ -293,10 +294,10 @@ export async function getItemSummaryList(limit = 100, options: { includeHeavyFal
 
   const [invoiceUsageResult, quotationUsageResult] = await Promise.all([
     summaryItemIds.length > 0
-      ? supabase.from('invoice_items').select('item_id').in('item_id', summaryItemIds)
+      ? client.from('invoice_items').select('item_id').in('item_id', summaryItemIds)
       : Promise.resolve({ data: [], error: null }),
     summaryItemIds.length > 0
-      ? supabase.from('quotation_items').select('item_id').in('item_id', summaryItemIds)
+      ? client.from('quotation_items').select('item_id').in('item_id', summaryItemIds)
       : Promise.resolve({ data: [], error: null }),
   ])
 
@@ -331,11 +332,11 @@ export async function getItemSummaryList(limit = 100, options: { includeHeavyFal
   }
 
   const [invoiceItemsResult, quotationItemsResult] = await Promise.all([
-    supabase
+    client
       .from('invoice_items')
       .select('id, invoice_id, item_id, description, quantity, unit, unit_price, amount, updated_at')
       .limit(5000),
-    supabase
+    client
       .from('quotation_items')
       .select('id, quotation_id, item_id, description, quantity, unit, unit_price, amount, updated_at, quotations(issue_date)')
       .limit(5000),
@@ -347,7 +348,7 @@ export async function getItemSummaryList(limit = 100, options: { includeHeavyFal
   const rawInvoiceRows = Array.isArray(invoiceItemsResult.data) ? invoiceItemsResult.data : []
   const invoiceIds = [...new Set(rawInvoiceRows.map((row: any) => String(row.invoice_id || '')).filter(Boolean))]
   const invoiceDocsResult = invoiceIds.length > 0
-    ? await supabase.from('invoices').select('id, issue_date').in('id', invoiceIds)
+    ? await client.from('invoices').select('id, issue_date').in('id', invoiceIds)
     : { data: [], error: null }
 
   if (invoiceDocsResult.error) throw invoiceDocsResult.error
@@ -381,11 +382,11 @@ export async function getItemSummaryList(limit = 100, options: { includeHeavyFal
     .slice(0, limit)
 }
 
-export async function getItemAliases(itemIds: string[]): Promise<ItemAlias[]> {
+export async function getItemAliases(itemIds: string[], client: TenantClient): Promise<ItemAlias[]> {
   const stableItemIds = [...new Set(itemIds.filter(Boolean))]
   if (!stableItemIds.length) return []
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('item_aliases')
     .select('id, item_id, alias_text, normalized_alias_text, is_active, is_retired, source, created_at, updated_at')
     .in('item_id', stableItemIds)
@@ -406,11 +407,11 @@ export interface ItemFilterCounts {
  * Queries the actual database tables to return true global totals
  * instead of relying on a truncated client-side array snapshot.
  */
-export async function getItemFilterCounts(): Promise<ItemFilterCounts> {
+export async function getItemFilterCounts(client: TenantClient): Promise<ItemFilterCounts> {
   const [allResult, invoiceResult, quotationResult] = await Promise.all([
-    supabase.from('item_price_summary_v').select('item_id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('invoice_items').select('item_id', { count: 'exact', head: true }),
-    supabase.from('quotation_items').select('item_id', { count: 'exact', head: true }),
+    client.from('item_price_summary_v').select('item_id', { count: 'exact', head: true }).eq('is_active', true),
+    client.from('invoice_items').select('item_id', { count: 'exact', head: true }),
+    client.from('quotation_items').select('item_id', { count: 'exact', head: true }),
   ])
 
   return {
@@ -430,7 +431,7 @@ export function isValidCatalogItemId(itemId: string): boolean {
   return UUID_REGEX.test(itemId)
 }
 
-export async function mergeItems(request: ItemLibraryMergeRequest): Promise<ItemLibraryMergeResult> {
+export async function mergeItems(request: ItemLibraryMergeRequest, client: TenantClient): Promise<ItemLibraryMergeResult> {
   const { winnerItemId, mergedItemIds } = request
   const stableMergedIds = [...new Set(mergedItemIds.filter((itemId) => itemId && itemId !== winnerItemId))]
 
@@ -448,7 +449,7 @@ export async function mergeItems(request: ItemLibraryMergeRequest): Promise<Item
     throw new Error(`Cannot merge: ${invalidMergedIds.length} merged item ID(s) are not valid catalog UUIDs. Imported fallback items must be backfilled before merging.`)
   }
 
-  const { data, error } = await supabase.rpc('merge_item_catalog_entries', {
+  const { data, error } = await client.rpc('merge_item_catalog_entries', {
     p_winner_item_id: winnerItemId,
     p_merged_item_ids: stableMergedIds,
   })
@@ -457,7 +458,7 @@ export async function mergeItems(request: ItemLibraryMergeRequest): Promise<Item
   return normalizeMergeResult(data, { winnerItemId, mergedItemIds: stableMergedIds })
 }
 
-export async function getItemHistoryDetail(itemId: string, limit = 50, options: { includeHeavyFallbacks?: boolean } = {}): Promise<ItemHistoryRow[]> {
+export async function getItemHistoryDetail(itemId: string, limit = 50, options: { includeHeavyFallbacks?: boolean } = {}, client: TenantClient): Promise<ItemHistoryRow[]> {
   const { includeHeavyFallbacks = false } = options
   const isImportedDescription = isImportedDescriptionItemId(itemId)
   
@@ -467,7 +468,7 @@ export async function getItemHistoryDetail(itemId: string, limit = 50, options: 
 
   const [invoiceRowsResult, quotationRowsResult] = await Promise.all([
     (() => {
-      const query = supabase
+      const query = client
         .from('invoice_items')
         .select('id, item_id, invoice_id, description, quantity, unit, unit_price, amount, updated_at')
         .order('updated_at', { ascending: false })
@@ -475,7 +476,7 @@ export async function getItemHistoryDetail(itemId: string, limit = 50, options: 
       return isImportedDescription ? query.is('item_id', null).limit(5000) : query.eq('item_id', itemId).limit(limit)
     })(),
     (() => {
-      const query = supabase
+      const query = client
         .from('quotation_items')
         .select('id, item_id, quotation_id, description, quantity, unit, unit_price, amount, updated_at')
         .order('updated_at', { ascending: false })
@@ -494,10 +495,10 @@ export async function getItemHistoryDetail(itemId: string, limit = 50, options: 
 
   const [invoiceDocsResult, quotationDocsResult] = await Promise.all([
     invoiceIds.length > 0
-      ? supabase.from('invoices').select('id, invoice_number, issue_date').in('id', invoiceIds)
+      ? client.from('invoices').select('id, invoice_number, issue_date').in('id', invoiceIds)
       : Promise.resolve({ data: [], error: null }),
     quotationIds.length > 0
-      ? supabase.from('quotations').select('id, quotation_number, issue_date').in('id', quotationIds)
+      ? client.from('quotations').select('id, quotation_number, issue_date').in('id', quotationIds)
       : Promise.resolve({ data: [], error: null }),
   ])
 
@@ -516,8 +517,8 @@ export async function getItemHistoryDetail(itemId: string, limit = 50, options: 
     limit,
   })
 }
-export async function getItemMergeHistory(limit = 50): Promise<ItemMergeLogRow[]> {
-  const { data, error } = await supabase
+export async function getItemMergeHistory(limit = 50, client: TenantClient): Promise<ItemMergeLogRow[]> {
+  const { data, error } = await client
     .from('item_merge_log')
     .select('*')
     .order('created_at', { ascending: false })
@@ -534,7 +535,7 @@ export async function getItemMergeHistory(limit = 50): Promise<ItemMergeLogRow[]
 
   if (itemIds.length === 0) return rows
 
-  const { data: itemData, error: itemError } = await supabase
+  const { data: itemData, error: itemError } = await client
     .from('item_catalog')
     .select('id, name')
     .in('id', itemIds)
@@ -550,8 +551,8 @@ export async function getItemMergeHistory(limit = 50): Promise<ItemMergeLogRow[]
   }))
 }
 
-export async function getItemMergeHistoryCount(): Promise<number> {
-  const { count, error } = await supabase
+export async function getItemMergeHistoryCount(client: TenantClient): Promise<number> {
+  const { count, error } = await client
     .from('item_merge_log')
     .select('*', { count: 'exact', head: true })
 

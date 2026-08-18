@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { useEntity } from '@/lib/tenant/contexts'
 import { loadItemAliases } from '../services'
 import type { ItemAlias } from '../types'
 
 export function useItemAliases(itemIds: string[], options: { enabled?: boolean } = {}) {
+  const { tenantClient } = useEntity()
   const { enabled = true } = options
   const [data, setData] = useState<ItemAlias[]>([])
   const [loading, setLoading] = useState(enabled && itemIds.length > 0)
@@ -30,7 +32,7 @@ export function useItemAliases(itemIds: string[], options: { enabled?: boolean }
       setError(null)
 
       try {
-        const nextData = await loadItemAliases(stableItemIds)
+        const nextData = await loadItemAliases(stableItemIds, tenantClient)
         if (!cancelled) setData(nextData)
       } catch (nextError) {
         if (!cancelled) {
@@ -45,7 +47,7 @@ export function useItemAliases(itemIds: string[], options: { enabled?: boolean }
     return () => {
       cancelled = true
     }
-  }, [itemIdsKey, enabled])
+  }, [itemIdsKey, enabled, tenantClient])
 
   return { data, loading, error }
 }

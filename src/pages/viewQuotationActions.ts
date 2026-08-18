@@ -1,5 +1,4 @@
 import type { TenantClient } from '@/lib/tenantClient'
-import { supabase } from '@/supabase'
 import { buildQuotationCsv, downloadQuotationCsv } from '@/components/quotation/exportQuotationCsv'
 import { normalizeSettings } from '@/hooks/useSettings'
 import { appendDerivedTrail, buildTrailLink, getNextInvoiceNumber, parseDocumentCustomFields, withSourceTrail } from '@/domain/documentConversion'
@@ -15,8 +14,8 @@ export async function loadQuotationViewData(id: string, tenantClient: TenantClie
     tenantClient.from('quotations').select('*').eq('id', id).single(),
     tenantClient.from('quotation_items').select('*').eq('quotation_id', id).order('sort_order'),
     tenantClient.from('settings').select('*').eq('id', 1).single(),
-    supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
-    supabase.from('signatories').select('id, name, role, signature_url').order('name'),
+    tenantClient.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+    tenantClient.from('signatories').select('id, name, role, signature_url').order('name'),
   ])
 
   if (quoRes.error || !quoRes.data) {
@@ -204,7 +203,7 @@ export async function convertQuotationToInvoice(
   // when the entity id is available; otherwise sequential tenant writes.
   let createdInvoice: any = null
   if (entityId) {
-    const { data, error } = await supabase.rpc('save_invoice_with_items_transaction', {
+    const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
       p_entity_id: entityId,
       p_invoice_payload: invoicePayload,
       p_items: items
@@ -247,9 +246,9 @@ export async function convertQuotationToInvoice(
 
   try {
     const { recordQuotationLinked, recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
-    await recordQuotationLinked(id, createdInvoice.id)
-    await recordInvoiceCreated(createdInvoice.id)
-    await recordAuditLog({
+    await recordQuotationLinked(tenantClient, id, createdInvoice.id)
+    await recordInvoiceCreated(tenantClient, createdInvoice.id)
+    await recordAuditLog(tenantClient, {
       entityType: 'invoice',
       recordId: createdInvoice.id,
       entityLabel: createdInvoice.invoice_number,
@@ -260,7 +259,7 @@ export async function convertQuotationToInvoice(
     })
 
     const { data: updatedQuotation } = await tenantClient.from('quotations').select('*').eq('id', id).single()
-    await recordAuditLog({
+    await recordAuditLog(tenantClient, {
       entityType: 'quotation',
       recordId: id,
       entityLabel: updatedQuotation?.quotation_number || quotation.quotation_number || null,
@@ -296,8 +295,8 @@ export async function updateQuotationStatus(id: string, status: string, tenantCl
   try {
     const { recordQuotationStatusChanged, recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
     const { data: updatedQuotation } = await tenantClient.from('quotations').select('*').eq('id', id).single()
-    await recordQuotationStatusChanged(id, oldQuo?.status || 'unknown', status)
-    await recordAuditLog({
+    await recordQuotationStatusChanged(tenantClient, id, oldQuo?.status || 'unknown', status)
+    await recordAuditLog(tenantClient, {
       entityType: 'quotation',
       recordId: id,
       entityLabel: updatedQuotation?.quotation_number || null,

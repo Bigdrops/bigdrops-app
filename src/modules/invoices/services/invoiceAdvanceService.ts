@@ -1,4 +1,4 @@
-import { supabase } from "@/supabase"
+import type { TenantClient } from "@/lib/tenantClient"
 import {
   getAdvanceInvoiceMetadata,
   mergeAdvanceInvoiceMetadata,
@@ -17,6 +17,7 @@ const AUDIT_TRACKED_FIELDS = [
 ]
 
 async function recordAdvanceAudit(
+  tenantClient: TenantClient,
   entityId: string,
   label: string | null,
   action: "CREATE" | "UPDATE" | "DELETE",
@@ -26,7 +27,7 @@ async function recordAdvanceAudit(
 ) {
   try {
     const { recordAuditLog } = await import("@/lib/audit")
-    await recordAuditLog({
+    await recordAuditLog(tenantClient, {
       entityType: "invoice",
       recordId: entityId,
       entityLabel: label ?? undefined,
@@ -58,15 +59,15 @@ function toNumber(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function persistParentConfig(invoiceId: string, customFields: unknown) {
-  return supabase
+function persistParentConfig(tenantClient: TenantClient, invoiceId: string, customFields: unknown) {
+  return tenantClient
     .from("invoices")
     .update({ custom_fields: JSON.stringify(customFields) })
     .eq("id", invoiceId)
 }
 
-function loadParentInvoice(id: string) {
-  return supabase
+function loadParentInvoice(tenantClient: TenantClient, id: string) {
+  return tenantClient
     .from("invoices")
     .select("id, invoice_number, invoice_title, po_number, client_id, client_name, project_id, issue_date, due_date, total, notes, terms, custom_fields")
     .eq("id", id)
@@ -99,9 +100,10 @@ export interface AdvanceSaveResult {
 }
 
 export async function createOrUpdateAdvance(
-  input: AdvanceSaveInput
+  input: AdvanceSaveInput,
+  tenantClient: TenantClient
 ): Promise<AdvanceSaveResult> {
-  const { data: parent } = await loadParentInvoice(input.parentId)
+  const { data: parent } = await loadParentInvoice(tenantClient, input.parentId)
   if (!parent) throw new Error("Parent invoice not found")
 
   const existingMetadata = getAdvanceInvoiceMetadata(parent as any)
@@ -123,11 +125,12 @@ export async function createOrUpdateAdvance(
   })
 
   const nextCustomFields = mergeAdvanceInvoiceMetadata(parent.custom_fields, metadata)
-  const { error: updateError } = await persistParentConfig(input.parentId, nextCustomFields)
+  const { error: updateError } = await persistParentConfig(tenantClient, input.parentId, nextCustomFields)
   if (updateError) throw new Error("Could not update parent invoice")
 
   if (existingMetadata) {
     await recordAdvanceAudit(
+      tenantClient,
       input.parentId,
       parent.invoice_number,
       "UPDATE",
@@ -137,6 +140,7 @@ export async function createOrUpdateAdvance(
     )
   } else {
     await recordAdvanceAudit(
+      tenantClient,
       input.parentId,
       parent.invoice_number,
       "CREATE",
@@ -168,17 +172,18 @@ export interface AdvanceDeleteResult {
   message: string
 }
 
-export async function deleteAdvance(parentId: string, parentInvoiceNumber: string | null): Promise<AdvanceDeleteResult> {
-  const { data: parent } = await loadParentInvoice(parentId)
+export async function deleteAdvance(parentId: string, parentInvoiceNumber: string | null, tenantClient: TenantClient): Promise<AdvanceDeleteResult> {
+  const { data: parent } = await loadParentInvoice(tenantClient, parentId)
   if (!parent) throw new Error("Parent invoice not found")
 
   const existingMetadata = getAdvanceInvoiceMetadata(parent as any)
   const nextCustomFields = clearAdvanceInvoiceMetadata(parent.custom_fields)
-  const { error: updateError } = await persistParentConfig(parentId, nextCustomFields)
+  const { error: updateError } = await persistParentConfig(tenantClient, parentId, nextCustomFields)
   if (updateError) throw new Error("Could not update parent invoice")
 
   if (existingMetadata) {
     await recordAdvanceAudit(
+      tenantClient,
       parentId,
       parentInvoiceNumber,
       "DELETE",

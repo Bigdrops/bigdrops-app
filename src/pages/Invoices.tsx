@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
-import { supabase } from "../supabase"
 import { useEntity } from "@/lib/tenant/contexts"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
@@ -157,7 +156,7 @@ function InvoicesContent() {
       setIsDeleting(true)
       // Phase 3: composite delete (invoice + items) is atomic via the tenant RPC.
       if (entityId) {
-        const { error } = await supabase.rpc("delete_invoice_with_items_transaction", {
+        const { error } = await tenantClient.rpc("delete_invoice_with_items_transaction", {
           p_entity_id: entityId,
           p_invoice_id: inv.id,
         })
@@ -240,10 +239,10 @@ function InvoicesContent() {
   const handleAttachExisting = async (item: any) => {
     if (!item?.id || !activeInvoice || !attachKind) return
     if (attachKind === "csr") {
-      await supabase.from("csrs").update({ linked_invoice_id: activeInvoice.id }).eq("id", item.id)
+      await tenantClient.from("csrs").update({ linked_invoice_id: activeInvoice.id }).eq("id", item.id)
     }
     if (attachKind === "waybill") {
-      await supabase.from("waybills").update({ invoice_id: activeInvoice.id }).eq("id", item.id)
+      await tenantClient.from("waybills").update({ invoice_id: activeInvoice.id }).eq("id", item.id)
     }
     const relatedDocs = await fetchInvoiceChildDocuments(activeInvoice.id)
     setActiveInvoiceRelatedDocs(relatedDocs)

@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { buildInvoiceCsv, downloadInvoiceCsv } from '@/components/invoice/exportInvoiceCsv'
 import { computeDocument } from '@/lib/Calculations'
@@ -33,14 +32,16 @@ async function recordAdvanceCreated({
   parentInvoiceId,
   parentInvoiceNumber,
   advanceMetadata,
+  tenantClient,
 }: {
   parentInvoiceId: string
   parentInvoiceNumber: string | null
   advanceMetadata: Record<string, any>
+  tenantClient: TenantClient
 }) {
   const { recordAuditLog } = await import('@/lib/audit')
   try {
-    await recordAuditLog({
+    await recordAuditLog(tenantClient, {
       entityType: 'invoice',
       recordId: parentInvoiceId,
       entityLabel: parentInvoiceNumber ?? undefined,
@@ -68,15 +69,17 @@ async function recordAdvanceUpdated({
   parentInvoiceNumber,
   oldMetadata,
   newMetadata,
+  tenantClient,
 }: {
   parentInvoiceId: string
   parentInvoiceNumber: string | null
   oldMetadata: Record<string, any> | null
   newMetadata: Record<string, any>
+  tenantClient: TenantClient
 }) {
   const { recordAuditLog } = await import('@/lib/audit')
   try {
-    await recordAuditLog({
+    await recordAuditLog(tenantClient, {
       entityType: 'invoice',
       recordId: parentInvoiceId,
       entityLabel: parentInvoiceNumber ?? undefined,
@@ -103,14 +106,16 @@ async function recordAdvanceCleared({
   parentInvoiceId,
   parentInvoiceNumber,
   clearedMetadata,
+  tenantClient,
 }: {
   parentInvoiceId: string
   parentInvoiceNumber: string | null
   clearedMetadata: Record<string, any>
+  tenantClient: TenantClient
 }) {
   const { recordAuditLog } = await import('@/lib/audit')
   try {
-    await recordAuditLog({
+    await recordAuditLog(tenantClient, {
       entityType: 'invoice',
       recordId: parentInvoiceId,
       entityLabel: parentInvoiceNumber ?? undefined,
@@ -313,12 +318,14 @@ export async function createAdvanceInvoiceRecord(
       parentInvoiceNumber: parentInvoice.invoice_number,
       oldMetadata: existingMetadata,
       newMetadata: metadata,
+      tenantClient,
     })
   } else {
     await recordAdvanceCreated({
       parentInvoiceId: String(parentInvoice.id),
       parentInvoiceNumber: parentInvoice.invoice_number,
       advanceMetadata: metadata,
+      tenantClient,
     })
   }
 
@@ -381,6 +388,7 @@ export async function updateAdvanceInvoiceRecord(
     parentInvoiceNumber: parentInvoice.invoice_number,
     oldMetadata: existingMetadata,
     newMetadata: metadata,
+    tenantClient,
   })
 
   return buildAdvanceMetadataBackedRecord({
@@ -414,6 +422,7 @@ export async function deleteAdvanceInvoiceRecord(
       parentInvoiceId,
       parentInvoiceNumber: parentInvoiceNumber ?? null,
       clearedMetadata: existingMetadata,
+      tenantClient,
     })
   }
 

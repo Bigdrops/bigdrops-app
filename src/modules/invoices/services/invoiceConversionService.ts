@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow } from '@/domain/documentConversion'
@@ -79,7 +78,7 @@ export async function revertInvoiceToQuotationService(
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item, index) => toQuotationItemRow(item, '' as any, index))
 
-  const { data: createdQuotation, error } = await supabase.rpc('revert_invoice_to_quotation_transaction', {
+  const { data: createdQuotation, error } = await tenantClient.rpc('revert_invoice_to_quotation_transaction', {
     p_invoice_id: invoice.id,
     p_quotation_payload: quotationPayload,
     p_quotation_items_payload: itemRows,

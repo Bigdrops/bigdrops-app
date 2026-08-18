@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 
 export const INVOICE_TRACKED_FIELDS = [
   'invoice_number',
@@ -132,7 +133,9 @@ async function getActor() {
   return actor
 }
 
-export async function recordAuditLog({
+export async function recordAuditLog(
+  tenantClient: TenantClient,
+  {
   entityType,
   recordId,
   entityLabel,
@@ -148,9 +151,10 @@ export async function recordAuditLog({
   action: AuditAction
   oldData?: Record<string, any> | null
   newData?: Record<string, any> | null
-  trackedFields: string[]
-  reason?: string | null
-}) {
+trackedFields: string[]
+    reason?: string | null
+  },
+) {
   const actor = await getActor()
 
   const p_old_data = oldData ? pick(oldData, trackedFields) : null
@@ -165,7 +169,7 @@ export async function recordAuditLog({
     return { data: null, error: null }
   }
 
-  return supabase.rpc('record_audit_log', {
+  return tenantClient.rpc('record_audit_log', {
     p_entity_type: entityType,
     p_entity_id: recordId,
     p_entity_label: entityLabel ?? null,
@@ -180,9 +184,9 @@ export async function recordAuditLog({
   })
 }
 
-export async function recordInvoiceCreated(invoiceId: string) {
+export async function recordInvoiceCreated(tenantClient: TenantClient, invoiceId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_invoice_created', {
+  return tenantClient.rpc('record_invoice_created', {
     p_invoice_id: invoiceId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -190,9 +194,9 @@ export async function recordInvoiceCreated(invoiceId: string) {
   })
 }
 
-export async function recordInvoiceStatusChanged(invoiceId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+export async function recordInvoiceStatusChanged(tenantClient: TenantClient, invoiceId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_invoice_status_changed', {
+  return tenantClient.rpc('record_invoice_status_changed', {
     p_invoice_id: invoiceId,
     p_old_status: oldStatus,
     p_new_status: newStatus,
@@ -211,6 +215,7 @@ export interface PaymentRecordedParams {
 }
 
 export async function recordPaymentRecorded(
+  tenantClient: TenantClient,
   invoiceId: string,
   amount: number,
   reason?: string | null,
@@ -218,7 +223,7 @@ export async function recordPaymentRecorded(
 ) {
   const actor = await getActor()
 
-  const { data: invoice, error } = await supabase
+  const { data: invoice, error } = await tenantClient
     .from('invoices')
     .select('invoice_number, status, total, scope_type')
     .eq('id', invoiceId)
@@ -228,7 +233,7 @@ export async function recordPaymentRecorded(
     throw new Error('Invoice not found: ' + invoiceId)
   }
 
-  return supabase.rpc('record_activity_event', {
+  return tenantClient.rpc('record_activity_event', {
     p_entity_type: 'invoice',
     p_entity_id: invoiceId,
     p_event_type: 'PAYMENT_RECORDED',
@@ -252,13 +257,14 @@ export async function recordPaymentRecorded(
 }
 
 export async function recordPaymentAttachmentUploaded(
+  tenantClient: TenantClient,
   paymentId: string,
   invoiceId: string,
   fileName: string | null,
   fileSize: number | null,
 ) {
   const actor = await getActor()
-  return supabase.rpc('record_payment_attachment_uploaded', {
+  return tenantClient.rpc('record_payment_attachment_uploaded', {
     p_payment_id: paymentId,
     p_invoice_id: invoiceId,
     p_file_name: fileName,
@@ -269,9 +275,9 @@ export async function recordPaymentAttachmentUploaded(
   })
 }
 
-export async function recordPaymentVoided(paymentId: string, invoiceId: string, amount: number, reason?: string | null) {
+export async function recordPaymentVoided(tenantClient: TenantClient, paymentId: string, invoiceId: string, amount: number, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_payment_voided', {
+  return tenantClient.rpc('record_payment_voided', {
     p_payment_id: paymentId,
     p_invoice_id: invoiceId,
     p_amount: amount,
@@ -282,9 +288,9 @@ export async function recordPaymentVoided(paymentId: string, invoiceId: string, 
   })
 }
 
-export async function recordQuotationCreated(quotationId: string) {
+export async function recordQuotationCreated(tenantClient: TenantClient, quotationId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_quotation_created', {
+  return tenantClient.rpc('record_quotation_created', {
     p_quotation_id: quotationId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -292,9 +298,9 @@ export async function recordQuotationCreated(quotationId: string) {
   })
 }
 
-export async function recordQuotationStatusChanged(quotationId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+export async function recordQuotationStatusChanged(tenantClient: TenantClient, quotationId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_quotation_status_changed', {
+  return tenantClient.rpc('record_quotation_status_changed', {
     p_quotation_id: quotationId,
     p_old_status: oldStatus,
     p_new_status: newStatus,
@@ -306,13 +312,14 @@ export async function recordQuotationStatusChanged(quotationId: string, oldStatu
 }
 
 export async function recordQuotationLinked(
+  tenantClient: TenantClient,
   quotationId: string,
   invoiceId?: string | null,
   projectId?: string | null,
   reason?: string | null,
 ) {
   const actor = await getActor()
-  return supabase.rpc('record_quotation_linked', {
+  return tenantClient.rpc('record_quotation_linked', {
     p_quotation_id: quotationId,
     p_invoice_id: invoiceId ?? null,
     p_project_id: projectId ?? null,
@@ -323,9 +330,9 @@ export async function recordQuotationLinked(
   })
 }
 
-export async function recordProjectUpdated(projectId: string, reason?: string | null, metadata?: Record<string, any>) {
+export async function recordProjectUpdated(tenantClient: TenantClient, projectId: string, reason?: string | null, metadata?: Record<string, any>) {
   const actor = await getActor()
-  return supabase.rpc('record_project_updated', {
+  return tenantClient.rpc('record_project_updated', {
     p_project_id: projectId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -335,9 +342,9 @@ export async function recordProjectUpdated(projectId: string, reason?: string | 
   })
 }
 
-export async function recordProjectNoteAdded(projectId: string, note: string, reason?: string | null) {
+export async function recordProjectNoteAdded(tenantClient: TenantClient, projectId: string, note: string, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_project_note_added', {
+  return tenantClient.rpc('record_project_note_added', {
     p_project_id: projectId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -347,9 +354,9 @@ export async function recordProjectNoteAdded(projectId: string, note: string, re
   })
 }
 
-export async function recordProjectDocumentAdded(projectId: string, documentId: string, docType: string, reason?: string | null) {
+export async function recordProjectDocumentAdded(tenantClient: TenantClient, projectId: string, documentId: string, docType: string, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_project_document_added', {
+  return tenantClient.rpc('record_project_document_added', {
     p_project_id: projectId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -363,6 +370,7 @@ export async function recordProjectDocumentAdded(projectId: string, documentId: 
 }
 
 export async function recordProjectLinkedActivity(
+  tenantClient: TenantClient,
   projectId: string,
   linkedEntityType: 'invoice' | 'quotation',
   linkedEntityId: string,
@@ -370,7 +378,7 @@ export async function recordProjectLinkedActivity(
   reason?: string | null,
 ) {
   const actor = await getActor()
-  return supabase.rpc('record_project_linked_activity', {
+  return tenantClient.rpc('record_project_linked_activity', {
     p_project_id: projectId,
     p_linked_entity_type: linkedEntityType,
     p_linked_entity_id: linkedEntityId,
@@ -389,10 +397,10 @@ export async function recordProjectLinkedActivity(
 // Remove after CSR + Waybill audit logging is verified.
 // ───────────────────────────────────────────────────────────────
 
-export async function recordCsrCreated(csrId: string, csrNumber: string | null, reason?: string | null) {
+export async function recordCsrCreated(tenantClient: TenantClient, csrId: string, csrNumber: string | null, reason?: string | null) {
   try {
     const actor = await getActor()
-    const res = await supabase.rpc('record_csr_created', {
+    const res = await tenantClient.rpc('record_csr_created', {
       p_csr_id: csrId,
       p_actor_id: actor.id,
       p_actor_label: actor.label,
@@ -410,9 +418,9 @@ export async function recordCsrCreated(csrId: string, csrNumber: string | null, 
   }
 }
 
-export async function recordCsrStatusChanged(csrId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+export async function recordCsrStatusChanged(tenantClient: TenantClient, csrId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_csr_status_changed', {
+  return tenantClient.rpc('record_csr_status_changed', {
     p_csr_id: csrId,
     p_old_status: oldStatus,
     p_new_status: newStatus,
@@ -423,9 +431,9 @@ export async function recordCsrStatusChanged(csrId: string, oldStatus: string | 
   })
 }
 
-export async function recordCsrLinked(csrId: string, invoiceId: string, reason?: string | null) {
+export async function recordCsrLinked(tenantClient: TenantClient, csrId: string, invoiceId: string, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_csr_linked', {
+  return tenantClient.rpc('record_csr_linked', {
     p_csr_id: csrId,
     p_invoice_id: invoiceId,
     p_actor_id: actor.id,
@@ -435,10 +443,10 @@ export async function recordCsrLinked(csrId: string, invoiceId: string, reason?:
   })
 }
 
-export async function recordWaybillCreated(waybillId: string, reason?: string | null) {
+export async function recordWaybillCreated(tenantClient: TenantClient, waybillId: string, reason?: string | null) {
   try {
     const actor = await getActor()
-    const res = await supabase.rpc('record_waybill_created', {
+    const res = await tenantClient.rpc('record_waybill_created', {
       p_waybill_id: waybillId,
       p_actor_id: actor.id,
       p_actor_label: actor.label,
@@ -456,9 +464,9 @@ export async function recordWaybillCreated(waybillId: string, reason?: string | 
   }
 }
 
-export async function recordWaybillStatusChanged(waybillId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
+export async function recordWaybillStatusChanged(tenantClient: TenantClient, waybillId: string, oldStatus: string | null, newStatus: string | null, reason?: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_waybill_status_changed', {
+  return tenantClient.rpc('record_waybill_status_changed', {
     p_waybill_id: waybillId,
     p_old_status: oldStatus,
     p_new_status: newStatus,
@@ -470,6 +478,7 @@ export async function recordWaybillStatusChanged(waybillId: string, oldStatus: s
 }
 
 export async function recordReceiptGenerated(
+  tenantClient: TenantClient,
   receiptId: string,
   receiptNumber: string,
   paymentId: string,
@@ -477,7 +486,7 @@ export async function recordReceiptGenerated(
   paymentAmount: number,
   paymentMethod: string,
 ) {
-  return recordAuditLog({
+  return recordAuditLog(tenantClient, {
     entityType: 'receipt',
     recordId: receiptId,
     entityLabel: receiptNumber,
@@ -494,12 +503,13 @@ export async function recordReceiptGenerated(
 }
 
 export async function recordReceiptVoided(
+  tenantClient: TenantClient,
   receiptId: string,
   receiptNumber: string,
   voidReason: string | null,
   originalPaymentId: string,
 ) {
-  return recordAuditLog({
+  return recordAuditLog(tenantClient, {
     entityType: 'receipt',
     recordId: receiptId,
     entityLabel: receiptNumber,
@@ -512,9 +522,9 @@ export async function recordReceiptVoided(
   })
 }
 
-export async function recordLetterCreated(letterId: string) {
+export async function recordLetterCreated(tenantClient: TenantClient, letterId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_letter_created', {
+  return tenantClient.rpc('record_letter_created', {
     p_letter_id: letterId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -522,9 +532,9 @@ export async function recordLetterCreated(letterId: string) {
   })
 }
 
-export async function recordLetterUpdated(letterId: string) {
+export async function recordLetterUpdated(tenantClient: TenantClient, letterId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_letter_updated', {
+  return tenantClient.rpc('record_letter_updated', {
     p_letter_id: letterId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,
@@ -532,9 +542,9 @@ export async function recordLetterUpdated(letterId: string) {
   })
 }
 
-export async function recordLetterStatusChanged(letterId: string, oldStatus: string | null, newStatus: string | null) {
+export async function recordLetterStatusChanged(tenantClient: TenantClient, letterId: string, oldStatus: string | null, newStatus: string | null) {
   const actor = await getActor()
-  return supabase.rpc('record_letter_status_changed', {
+  return tenantClient.rpc('record_letter_status_changed', {
     p_letter_id: letterId,
     p_old_status: oldStatus,
     p_new_status: newStatus,
@@ -544,9 +554,9 @@ export async function recordLetterStatusChanged(letterId: string, oldStatus: str
   })
 }
 
-export async function recordLetterDuplicated(letterId: string, sourceLetterId: string) {
+export async function recordLetterDuplicated(tenantClient: TenantClient, letterId: string, sourceLetterId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_letter_duplicated', {
+  return tenantClient.rpc('record_letter_duplicated', {
     p_letter_id: letterId,
     p_source_letter_id: sourceLetterId,
     p_actor_id: actor.id,
@@ -555,9 +565,9 @@ export async function recordLetterDuplicated(letterId: string, sourceLetterId: s
   })
 }
 
-export async function recordLetterArchived(letterId: string) {
+export async function recordLetterArchived(tenantClient: TenantClient, letterId: string) {
   const actor = await getActor()
-  return supabase.rpc('record_letter_archived', {
+  return tenantClient.rpc('record_letter_archived', {
     p_letter_id: letterId,
     p_actor_id: actor.id,
     p_actor_label: actor.label,

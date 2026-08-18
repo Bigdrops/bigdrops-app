@@ -184,7 +184,7 @@ export async function generateNextProjectCode(
   supabaseClient: {
     from: (table: string) => {
       select: (columns: string) => {
-        ilike: (column: string, pattern: string) => Promise<{ data?: Array<{ project_code?: string | null }>; error?: { message?: string } | null }>
+        ilike: (column: string, pattern: string) => PromiseLike<{ data?: Array<{ project_code?: string | null }>; error?: { message?: string } | null }>
       }
     }
   },
@@ -211,11 +211,11 @@ export async function createProjectWithGeneratedCode(
   supabaseClient: {
     from: (table: string) => {
       select: (columns: string) => {
-        ilike: (column: string, pattern: string) => Promise<{ data?: Array<{ project_code?: string | null }>; error?: ProjectCodeError | null }>
+        ilike: (column: string, pattern: string) => PromiseLike<{ data?: Array<{ project_code?: string | null }>; error?: ProjectCodeError | null }>
       }
       insert: (payload: Record<string, unknown>) => {
         select: () => {
-          single: () => Promise<{ data?: { id: string }; error?: ProjectCodeError | null }>
+          single: () => PromiseLike<{ data?: { id: string }; error?: ProjectCodeError | null }>
         }
       }
     }

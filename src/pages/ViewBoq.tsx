@@ -18,7 +18,6 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
-import { supabase } from '@/supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -56,8 +55,8 @@ export default function ViewBoq() {
       setLoading(true)
       try {
         const [boqRes, itemsRes] = await Promise.all([
-          supabase.from('boqs').select('*').eq('id', id).single(),
-          supabase.from('boq_items').select('*').eq('boq_id', id).order('sort_order'),
+          tenantClient.from('boqs').select('*').eq('id', id).single(),
+          tenantClient.from('boq_items').select('*').eq('boq_id', id).order('sort_order'),
         ])
 
         if (boqRes.error || !boqRes.data) {
@@ -134,7 +133,7 @@ export default function ViewBoq() {
     if (!id || updatingStatus) return
     setUpdatingStatus(true)
     try {
-      await updateBOQStatus(id, status)
+      await updateBOQStatus(id, status, tenantClient)
       setBoq((curr: any) => ({ ...curr, status }))
       showToast(successLabel, `BOQ marked as ${status}.`, 'success')
       ui.closeModal()
@@ -149,7 +148,7 @@ export default function ViewBoq() {
     if (!id || duplicating) return
     setDuplicating(true)
     try {
-      const created = await duplicateBOQRecord(id)
+      const created = await duplicateBOQRecord(id, tenantClient)
       navigate(`/boqs/${created.id}`)
       showToast('BOQ Cloned', 'A new BOQ copy has been created.', 'success')
     } catch (error) {
@@ -163,7 +162,7 @@ export default function ViewBoq() {
     if (!id || archiving) return
     setArchiving(true)
     try {
-      await archiveBOQRecord(id)
+      await archiveBOQRecord(id, tenantClient)
       navigate('/boqs')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
@@ -176,7 +175,7 @@ export default function ViewBoq() {
     if (!id || deleting) return
     setDeleting(true)
     try {
-      await deleteBOQRecord(id)
+      await deleteBOQRecord(id, tenantClient)
       navigate('/boqs')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')

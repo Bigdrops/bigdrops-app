@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
 import {
   buildCalculationInputs,
@@ -206,8 +205,8 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
         if (!tenantClient.isReady) return
 
         const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
-          supabase.from('signatories').select('*').order('name'),
-          supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+          tenantClient.from('signatories').select('*').order('name'),
+          tenantClient.from('bank_accounts').select('*').order('is_default', { ascending: false }),
           tenantClient.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
         ])
 
@@ -478,7 +477,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
       pdfOutput: next,
     })
 
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from('quotations')
       .update({
         custom_fields: JSON.stringify(existingCustomFields),

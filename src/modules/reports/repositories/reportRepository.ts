@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BankAccountLookupRow, CollectionRow, InvoiceFinancialRow, ProjectFinancialRow, TaxInvoiceRow } from '@/components/reports/reportTypes'
 
@@ -16,7 +15,6 @@ export type PaymentWithInvoice = {
 }
 
 // Phase 3: invoices/payments/invoice_financials_v are aggregate → tenant.
-// bank_accounts and project_financials_v remain public.
 export async function fetchInvoiceFinancials(tenantClient: TenantClient, start?: string | null, end?: string | null): Promise<InvoiceFinancialRow[]> {
   let query = tenantClient.from('invoice_financials_v').select('*').order('issue_date', { ascending: false })
   if (start) query = query.gte('issue_date', start)
@@ -25,8 +23,8 @@ export async function fetchInvoiceFinancials(tenantClient: TenantClient, start?:
   return (result.data || []) as InvoiceFinancialRow[]
 }
 
-export async function fetchProjectFinancials(): Promise<ProjectFinancialRow[]> {
-  let query = supabase.from('project_financials_v').select('*').order('outstanding', { ascending: false })
+export async function fetchProjectFinancials(tenantClient: TenantClient): Promise<ProjectFinancialRow[]> {
+  let query = tenantClient.from('project_financials_v').select('*').order('outstanding', { ascending: false })
   const result = await query
   return (result.data || []) as ProjectFinancialRow[]
 }
@@ -56,9 +54,9 @@ export async function fetchPayments(tenantClient: TenantClient, start?: string |
   return (result.data || []) as PaymentWithInvoice[]
 }
 
-export async function fetchBankAccounts(ids: string[]): Promise<BankAccountLookupRow[]> {
+export async function fetchBankAccounts(ids: string[], tenantClient: TenantClient): Promise<BankAccountLookupRow[]> {
   if (ids.length === 0) return []
-  const { data } = await supabase
+  const { data } = await tenantClient
     .from('bank_accounts')
     .select('id, bank_name, account_number')
     .in('id', ids)

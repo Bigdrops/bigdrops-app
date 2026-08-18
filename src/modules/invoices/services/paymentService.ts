@@ -44,8 +44,8 @@ function normalizeAmount(value: number | null | undefined): number {
   return Number.isFinite(numericValue) ? numericValue : 0
 }
 
-async function fetchBankAccountName(bankAccountId: string): Promise<string | null> {
-  const { data } = await supabase
+async function fetchBankAccountName(bankAccountId: string, tenantClient: TenantClient): Promise<string | null> {
+  const { data } = await tenantClient
     .from('bank_accounts')
     .select('bank_name, account_number')
     .eq('id', bankAccountId)
@@ -112,9 +112,9 @@ export async function recordInvoicePayment(
       // ── Client-side: audit trail (fire-and-forget) ────────────────────
       try {
         const bankAccountName = input.bankAccountId
-          ? await fetchBankAccountName(input.bankAccountId)
+          ? await fetchBankAccountName(input.bankAccountId, tenantClient)
           : null
-        await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null, {
+        await recordPaymentRecorded(tenantClient, input.invoiceId, payload.amount, payload.notes || null, {
           payment_mode: input.method,
           account_paid_to: bankAccountName,
           running_balance_after: Math.max(0, input.settlement.remainingBalance),
@@ -143,8 +143,8 @@ export async function recordInvoicePayment(
           tenantClient.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
           tenantClient.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await tenantClient.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
           tenantClient.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
-          payload.bank_account_id ? supabase.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
-          supabase.from('signatories').select('name, role, signature_url').limit(1).single(),
+          payload.bank_account_id ? tenantClient.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
+          tenantClient.from('signatories').select('name, role, signature_url').limit(1).single(),
         ])
 
         if (invoiceResult.data && clientResult.data) {
@@ -197,6 +197,7 @@ export async function recordInvoicePayment(
           } else if (receiptRow) {
             const { recordReceiptGenerated } = await import('@/lib/audit')
             await recordReceiptGenerated(
+              tenantClient,
               receiptRow.id,
               receiptRow.receipt_number,
               paymentId,
@@ -293,9 +294,9 @@ export async function recordInvoicePayment(
 
     try {
       const bankAccountName = input.bankAccountId
-        ? await fetchBankAccountName(input.bankAccountId)
+        ? await fetchBankAccountName(input.bankAccountId, tenantClient)
         : null
-      await recordPaymentRecorded(input.invoiceId, payload.amount, payload.notes || null, {
+      await recordPaymentRecorded(tenantClient, input.invoiceId, payload.amount, payload.notes || null, {
         payment_mode: input.method,
         account_paid_to: bankAccountName,
         running_balance_after: Math.max(0, input.settlement.remainingBalance),
@@ -323,8 +324,8 @@ export async function recordInvoicePayment(
         tenantClient.from('invoices').select('invoice_number, total, subtotal, vat, wht, discount, notes, terms, po_number, project_id').eq('id', input.invoiceId).single(),
         tenantClient.from('clients').select('id, name, address, city, state, phone, email').eq('id', (await tenantClient.from('invoices').select('client_id').eq('id', input.invoiceId).single()).data?.client_id ?? '').single(),
         tenantClient.from('settings').select('company_name, company_address, company_email, company_phone, company_logo_url').limit(1).single(),
-        payload.bank_account_id ? supabase.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
-        supabase.from('signatories').select('name, role, signature_url').limit(1).single(),
+        payload.bank_account_id ? tenantClient.from('bank_accounts').select('bank_name, account_number, account_name').eq('id', payload.bank_account_id).single() : Promise.resolve({ data: null }),
+        tenantClient.from('signatories').select('name, role, signature_url').limit(1).single(),
       ])
 
       if (invoiceResult.data && clientResult.data) {
@@ -377,6 +378,7 @@ export async function recordInvoicePayment(
         } else if (receiptRow) {
           const { recordReceiptGenerated } = await import('@/lib/audit')
           await recordReceiptGenerated(
+            tenantClient,
             receiptRow.id,
             receiptRow.receipt_number,
             paymentRow.id,
@@ -475,8 +477,8 @@ export async function calculatePreviousSettled(invoiceId: string, tenantClient: 
   )
 }
 
-export async function loadBankAccountsList() {
-  return fetchBankAccounts()
+export async function loadBankAccountsList(tenantClient: TenantClient) {
+  return fetchBankAccounts(tenantClient)
 }
 
 export interface PaymentSheetLoadResult {
@@ -491,7 +493,7 @@ export async function loadPaymentSheetData(
 ): Promise<PaymentSheetLoadResult> {
   const [previousSettled, bankAccounts] = await Promise.all([
     calculatePreviousSettled(invoiceId, tenantClient),
-    loadBankAccountsList(),
+    loadBankAccountsList(tenantClient),
   ])
   return {
     currentBalance: Math.max(0, invoiceTotal - previousSettled),
@@ -529,7 +531,7 @@ export async function voidInvoicePayment(input: VoidPaymentInput, tenantClient: 
     await repositorySyncStatus(input.invoiceId, tenantClient)
 
     try {
-      await recordPaymentVoided(input.paymentId, input.invoiceId, amount, input.reason || null)
+      await recordPaymentVoided(tenantClient, input.paymentId, input.invoiceId, amount, input.reason || null)
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)
     }
@@ -542,7 +544,7 @@ export async function voidInvoicePayment(input: VoidPaymentInput, tenantClient: 
       const receipt = await fetchReceiptByPaymentId(input.paymentId, tenantClient)
       if (receipt) {
         await voidReceipt(receipt.id, input.reason || null, tenantClient)
-        await recordReceiptVoided(receipt.id, receipt.receipt_number, input.reason || null, input.paymentId)
+        await recordReceiptVoided(tenantClient, receipt.id, receipt.receipt_number, input.reason || null, input.paymentId)
       }
     } catch (receiptVoidErr) {
       console.error('Receipt void failed:', receiptVoidErr)

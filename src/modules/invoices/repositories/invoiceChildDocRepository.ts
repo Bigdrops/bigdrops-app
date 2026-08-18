@@ -1,4 +1,4 @@
-import { supabase } from "@/supabase"
+import type { TenantClient } from "@/lib/tenantClient"
 
 export interface ChildDocSummary {
   id: string
@@ -10,14 +10,14 @@ export interface InvoiceChildDocs {
   waybills: ChildDocSummary[]
 }
 
-export async function fetchChildDocsForInvoice(invoiceId: string): Promise<InvoiceChildDocs> {
+export async function fetchChildDocsForInvoice(invoiceId: string, client: TenantClient): Promise<InvoiceChildDocs> {
   const [{ data: csrs }, { data: waybills }] = await Promise.all([
-    supabase
+    client
       .from("csrs")
       .select("id, csr_number")
       .eq("linked_invoice_id", invoiceId)
       .order("created_at", { ascending: false }),
-    supabase
+    client
       .from("waybills")
       .select("id, waybill_number")
       .eq("invoice_id", invoiceId)
@@ -30,8 +30,8 @@ export async function fetchChildDocsForInvoice(invoiceId: string): Promise<Invoi
   }
 }
 
-export async function linkCsrToInvoice(csrId: string, invoiceId: string): Promise<void> {
-  const { error } = await supabase
+export async function linkCsrToInvoice(csrId: string, invoiceId: string, client: TenantClient): Promise<void> {
+  const { error } = await client
     .from("csrs")
     .update({ linked_invoice_id: invoiceId })
     .eq("id", csrId)
@@ -39,8 +39,8 @@ export async function linkCsrToInvoice(csrId: string, invoiceId: string): Promis
   if (error) throw error
 }
 
-export async function linkWaybillToInvoice(waybillId: string, invoiceId: string): Promise<void> {
-  const { error } = await supabase
+export async function linkWaybillToInvoice(waybillId: string, invoiceId: string, client: TenantClient): Promise<void> {
+  const { error } = await client
     .from("waybills")
     .update({ invoice_id: invoiceId })
     .eq("id", waybillId)

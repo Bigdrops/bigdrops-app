@@ -1,9 +1,11 @@
 import { useState } from 'react'
 
+import { useEntity } from '@/lib/tenant/contexts'
 import { mergeCatalogItems } from '../services'
 import type { ItemLibraryMergeRequest, ItemLibraryMergeResult } from '../types'
 
 export function useItemMerge() {
+  const { tenantClient } = useEntity()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
@@ -12,7 +14,7 @@ export function useItemMerge() {
     setError(null)
 
     try {
-      const result = await mergeCatalogItems(request)
+      const result = await mergeCatalogItems(request, tenantClient)
       return result
     } catch (nextError) {
       const resolvedError =

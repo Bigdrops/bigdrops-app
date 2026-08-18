@@ -152,7 +152,7 @@ export default function Reports() {
     setProjectsError('')
 
     try {
-      const rows = await loadProjects()
+      const rows = await loadProjects(tenantClient)
       if (requestIds.current.projects !== requestId) return
       setProjects(rows)
       setProjectsLoading(false)

@@ -32,6 +32,7 @@ import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatStatusLabel } from "@/lib/formatters/status"
 import { getStatusTone, getStatusClasses } from "@/lib/statusTheme"
 import { archiveCsr, deleteCsr, attachInvoiceToCsr } from "@/domain/csr/csrService"
+import { useEntity } from '@/lib/tenant/contexts'
 import { DocumentQueryProvider, useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
@@ -65,6 +66,7 @@ function getCsrStatusKey(status: string | null | undefined): string {
 
 function CsrContent() {
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
 
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("csr")
@@ -145,7 +147,7 @@ function CsrContent() {
   const attachInvoice = async (invoice: { id: string } | null) => {
     if (!activeCsr?.id || !invoice?.id) return
     try {
-      const data = await attachInvoiceToCsr(activeCsr.id, invoice.id)
+      const data = await attachInvoiceToCsr(activeCsr.id, invoice.id, tenantClient)
       setActiveCsr(data)
       setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id) : null)
     } catch (error: any) {
@@ -167,7 +169,7 @@ function CsrContent() {
     if (!archiveId) return
     setIsArchiving(true)
     try {
-      await archiveCsr(archiveId)
+      await archiveCsr(archiveId, tenantClient)
       feedback.success('CSR archived')
       setArchiveId(null)
       setActiveCsr(null)
@@ -184,7 +186,7 @@ function CsrContent() {
     if (!deleteId) return
     setIsDeleting(true)
     try {
-      await deleteCsr(deleteId)
+      await deleteCsr(deleteId, tenantClient)
       feedback.success('CSR deleted')
       setDeleteId(null)
       setActiveCsr(null)

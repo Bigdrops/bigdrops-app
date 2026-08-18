@@ -10,7 +10,6 @@ import ProjectDocumentCard from '@/components/project/ProjectDocumentCard'
 import ProjectDocumentSheet from '@/components/project/ProjectDocumentSheet'
 import { feedback } from '@/lib/feedback'
 import { getClientMismatchMessage, isClientMismatch } from '@/domain/projects'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 
 import { useProjectDocumentFetch } from '@/hooks/useProjectDocumentFetch'
@@ -84,7 +83,7 @@ export default function ProjectDetail() {
   const handleSaveEdit = async () => {
     setSaving(true)
 
-    const { error } = await supabase
+    const { error } = await tenantClient
       .from('projects')
       .update({
         name: editForm.name.trim(),
@@ -108,14 +107,14 @@ export default function ProjectDetail() {
       const { recordProjectUpdated, recordProjectNoteAdded, recordAuditLog, PROJECT_TRACKED_FIELDS } = await import('@/lib/audit')
       const { data: updatedProject } = await tenantClient.from('projects').select('*').eq('id', id).single()
       
-      await recordProjectUpdated(id!)
+      await recordProjectUpdated(tenantClient, id!)
       
       // If notes changed, record that specifically too
       if (editForm.notes.trim() !== (project?.notes || '')) {
-        await recordProjectNoteAdded(id!, editForm.notes.trim())
+        await recordProjectNoteAdded(tenantClient, id!, editForm.notes.trim())
       }
       
-      await recordAuditLog({
+      await recordAuditLog(tenantClient, {
         entityType: 'project',
         recordId: id!,
         entityLabel: updatedProject?.name || project?.name || null,
@@ -212,10 +211,10 @@ export default function ProjectDetail() {
     }
 
     const auditBeforeLink = auditEntityType
-      ? await supabase.from(selectedConfig.table).select('*').eq('id', data.id).single()
+      ? await tenantClient.from(selectedConfig.table).select('*').eq('id', data.id).single()
       : { data: null }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await tenantClient
       .from(selectedConfig.table)
       .update({ project_id: id })
       .eq('id', data.id)
@@ -230,14 +229,14 @@ export default function ProjectDetail() {
     try {
       const { recordProjectLinkedActivity, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
       if (auditEntityType) {
-        await recordProjectLinkedActivity(id!, auditEntityType as any, data.id, data[selectedConfig.numberField] || null)
+        await recordProjectLinkedActivity(tenantClient, id!, auditEntityType as any, data.id, data[selectedConfig.numberField] || null)
       }
       
       // Update audit log for the linked document
       const { data: updatedDoc } = await tenantClient.from(selectedConfig.table).select('*').eq('id', data.id).single()
       const fields = selectedConfig.table === 'invoices' ? INVOICE_TRACKED_FIELDS : selectedConfig.table === 'quotations' ? QUOTATION_TRACKED_FIELDS : []
       if (fields.length > 0) {
-        await recordAuditLog({
+        await recordAuditLog(tenantClient, {
           entityType: auditEntityType as any,
           recordId: data.id,
           entityLabel: updatedDoc?.[selectedConfig.numberField] || data[selectedConfig.numberField] || null,

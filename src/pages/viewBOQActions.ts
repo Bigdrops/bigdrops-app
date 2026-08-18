@@ -2,31 +2,31 @@ import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
-export async function archiveBOQRecord(id: string) {
-  const { error } = await supabase.from('boqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
+export async function archiveBOQRecord(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('boqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteBOQRecord(id: string) {
-  const { error: itemError } = await supabase.from('boq_items').delete().eq('boq_id', id)
+export async function deleteBOQRecord(id: string, tenantClient: TenantClient) {
+  const { error: itemError } = await tenantClient.from('boq_items').delete().eq('boq_id', id)
   if (itemError) throw itemError
-  const { error } = await supabase.from('boqs').delete().eq('id', id)
+  const { error } = await tenantClient.from('boqs').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function updateBOQStatus(id: string, status: string) {
-  const { error } = await supabase.from('boqs').update({ status }).eq('id', id)
+export async function updateBOQStatus(id: string, status: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('boqs').update({ status }).eq('id', id)
   if (error) throw error
 }
 
-export async function duplicateBOQRecord(id: string) {
-  const { data: original, error: fetchError } = await supabase.from('boqs').select('*').eq('id', id).single()
+export async function duplicateBOQRecord(id: string, tenantClient: TenantClient) {
+  const { data: original, error: fetchError } = await tenantClient.from('boqs').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'BOQ not found')
 
   const { id: _id, created_at: _ca, updated_at: _ua, boq_number: _wn, ...rest } = original
   
   // Find next number
-  const { data: all } = await supabase.from('boqs').select('boq_number').like('boq_number', 'BOQ-%').order('created_at', { ascending: false })
+  const { data: all } = await tenantClient.from('boqs').select('boq_number').like('boq_number', 'BOQ-%').order('created_at', { ascending: false })
   let nextNum = 1
   if (all && all.length > 0) {
     const nums = all
@@ -35,7 +35,7 @@ export async function duplicateBOQRecord(id: string) {
     nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
   }
 
-  const { data: created, error: insertError } = await supabase.from('boqs').insert([{
+  const { data: created, error: insertError } = await tenantClient.from('boqs').insert([{
     ...rest,
     boq_number: `BOQ-${String(nextNum).padStart(4, '0')}`,
     status: 'open',

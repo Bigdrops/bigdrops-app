@@ -8,7 +8,6 @@ import { getNextWaybillNumber, mapDbWaybill, parseWaybillCustomFields, collectWa
 import type { Waybill, WaybillType, WaybillItem, WaybillCustomFields, WaybillCustomColumn } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
-import { supabase } from '../supabase'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { useEntity } from '@/lib/tenant/contexts'
@@ -40,7 +39,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
     const generate = async () => {
       setLoadingNumber(true)
       try {
-        const db = tenantClient?.isReady ? tenantClient : supabase
+        const db = tenantClient
         const { data: existingWaybills } = await db
           .from('waybills')
           .select('waybill_number')
@@ -62,7 +61,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
     if (!isEdit || !id) return
     const loadWaybill = async () => {
       try {
-        const db = tenantClient?.isReady ? tenantClient : supabase
+        const db = tenantClient
         const { data, error } = await db.from('waybills').select('*').eq('id', id).single()
         if (error || !data) { navigate('/waybills'); return }
         const wb: Waybill = mapDbWaybill(data)
@@ -84,7 +83,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
   const handleBlankDownload = async (blankType: WaybillType) => {
     try {
       const prefix = resolvePrefix(settings?.document_prefixes, 'waybill')
-      const db = tenantClient?.isReady ? tenantClient : supabase
+      const db = tenantClient
 
       for (let attempt = 0; attempt <= 3; attempt++) {
         const [existingWaybills, existingBlanks] = await Promise.all([

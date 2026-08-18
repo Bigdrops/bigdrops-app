@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 
 export function useInvoiceReferenceData() {
@@ -15,8 +14,8 @@ export function useInvoiceReferenceData() {
     setError(null)
     try {
       const [signatoriesResult, bankAccountsResult, settingsResult] = await Promise.all([
-        supabase.from('signatories').select('*').order('name'),
-        supabase.from('bank_accounts').select('*').order('is_default', { ascending: false }),
+        tenantClient.from('signatories').select('*').order('name'),
+        tenantClient.from('bank_accounts').select('*').order('is_default', { ascending: false }),
         tenantClient.from('settings').select('company_tagline, footer_text').eq('id', 1).single(),
       ])
       setSignatories(signatoriesResult.data || [])

@@ -8,6 +8,7 @@ import { JsonImportUI } from '@/components/import/JsonImportLayout'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { 
   ProjectDocumentType, 
   DOCUMENT_TYPE_CONFIG, 
@@ -147,6 +148,7 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
   const [parseError, setParseError] = useState('')
   const [form, setForm] = useState<DocumentFormState>(makeInitialForm())
   const [saving, setSaving] = useState(false)
+  const { tenantClient } = useEntity()
 
   useEffect(() => {
     if (!open) {
@@ -192,7 +194,7 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: insertedDoc, error } = await supabase.from('project_documents').insert([{
+    const { data: insertedDoc, error } = await tenantClient.from('project_documents').insert([{
       project_id: projectId, type: docType, title: normalizedTitle || config.label,
       reference_number: form.reference_number || null, voucher_number: docType === 'purchase_order' ? form.voucher_number || null : null,
       date: form.date || null, from_party: form.from_party || null, to_party: form.to_party || null,
@@ -213,7 +215,7 @@ export default function ProjectDocumentSheet({ open, onOpenChange, projectId, on
     try {
       const { recordProjectDocumentAdded } = await import('@/lib/audit')
       if (insertedDoc) {
-        await recordProjectDocumentAdded(projectId, insertedDoc.id, docType)
+        await recordProjectDocumentAdded(tenantClient, projectId, insertedDoc.id, docType)
       }
     } catch (auditErr) {
       console.error('Audit trail failed:', auditErr)

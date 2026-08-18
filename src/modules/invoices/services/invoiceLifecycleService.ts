@@ -41,7 +41,7 @@ export async function archiveInvoice(invoiceId: string, tenantClient: TenantClie
         .eq("id", invoiceId)
         .maybeSingle()
 
-      await recordAuditLog({
+      await recordAuditLog(tenantClient, {
         entityType: "invoice",
         recordId: invoiceId,
         entityLabel: updatedInvoice?.invoice_number ?? null,
@@ -71,7 +71,7 @@ export async function deleteInvoice(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (entityId) {
-      const { error } = await supabase.rpc("delete_invoice_with_items_transaction", {
+      const { error } = await tenantClient.rpc("delete_invoice_with_items_transaction", {
         p_entity_id: entityId,
         p_invoice_id: invoiceId,
       })
@@ -100,7 +100,7 @@ export async function deleteInvoice(
 
     try {
       const { recordAuditLog, INVOICE_TRACKED_FIELDS } = await import("@/lib/audit")
-      await recordAuditLog({
+      await recordAuditLog(tenantClient, {
         entityType: "invoice",
         recordId: invoiceId,
         entityLabel: invoice?.invoice_number ?? null,
@@ -152,8 +152,8 @@ export async function changeInvoiceStatus({
         .eq("id", invoiceId)
         .single()
 
-      await recordInvoiceStatusChanged(invoiceId, oldStatus, newStatus)
-      await recordAuditLog({
+      await recordInvoiceStatusChanged(tenantClient, invoiceId, oldStatus, newStatus)
+      await recordAuditLog(tenantClient, {
         entityType: "invoice",
         recordId: invoiceId,
         entityLabel: updatedInvoice?.invoice_number || null,
@@ -185,13 +185,15 @@ export async function attachExistingDocument({
   invoiceId,
   childId,
   kind,
+  tenantClient,
 }: {
   invoiceId: string
   childId: string
   kind: "csr" | "waybill"
+  tenantClient: TenantClient
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    await attachChildDocument({ invoiceId, childId, kind })
+    await attachChildDocument({ invoiceId, childId, kind, tenantClient })
     return { success: true }
   } catch (err) {
     return { success: false, error: String(err) }

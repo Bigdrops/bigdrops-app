@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { pdf } from '@react-pdf/renderer'
 import { feedback } from '@/lib/feedback'
 
-import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import CsrFormScreen from '@/components/csr/CsrFormScreen'
 import IdentityLockDialog from '@/components/document/IdentityLockDialog'
@@ -25,6 +24,7 @@ import { createCsr, updateCsr, sanitizeCsrInsertPayload } from '@/domain/csr/csr
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import { useEntity } from '@/lib/tenant/contexts'
 
 const EMPTY_BRANDING = {
   companyName: '',
@@ -54,6 +54,7 @@ interface CsrFormPageProps {
 export default function CsrFormPage({ mode }: CsrFormPageProps) {
   const navigate = useNavigate()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
@@ -110,7 +111,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         return
       }
 
-      const { data: latestRows } = await supabase
+      const { data: latestRows } = await tenantClient
         .from('csrs')
         .select('csr_number')
         .order('created_at', { ascending: false })
@@ -171,7 +172,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         return
       }
 
-      const { data } = await supabase
+      const { data } = await tenantClient
         .from('invoices')
         .select('id, invoice_number, client_id, client_name, po_number')
         .eq('id', sourceInvoice.invoiceId)
@@ -200,7 +201,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
       try {
         setLoading(true)
 
-        const { data, error } = await supabase.from('csrs').select('*').eq('id', id).single()
+        const { data, error } = await tenantClient.from('csrs').select('*').eq('id', id).single()
 
         if (error) {
           feedback.error('Load failed', { description: error.message })
@@ -300,7 +301,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   /* ── Download blank (create-mode only) ── */
   const handleDownloadBlankCsr = async () => {
     try {
-      const { data: existingRows } = await supabase
+      const { data: existingRows } = await tenantClient
         .from('csrs')
         .select('csr_number')
         .order('created_at', { ascending: false })
@@ -308,7 +309,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
       const latestNumber = existingRows?.[existingRows.length - 1]?.csr_number || null
       const blankNumber = getNextCsrNumber(latestNumber, resolvePrefix(settings?.document_prefixes, 'csr'))
 
-      const { error: logError } = await supabase.from('blank_csr_logs').insert([{
+      const { error: logError } = await tenantClient.from('blank_csr_logs').insert([{
         assigned_csr_number: blankNumber,
       }])
       if (logError) {
@@ -354,7 +355,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
     }
 
     if (isCreate) {
-      const { project: validatedProject, error: projectError } = await validateProjectAssignment(supabase as any, {
+      const { project: validatedProject, error: projectError } = await validateProjectAssignment(tenantClient as any, {
         projectId: csr.project_id,
         documentClientId: csr.client_id,
         documentClientName: csr.client_name,
@@ -401,14 +402,14 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           async (candidateNumber: string) => {
             csrData.csr_number = candidateNumber
             try {
-              const result = await createCsr(csrData)
+              const result = await createCsr(csrData, tenantClient)
               return { data: result, error: null }
             } catch (err) {
               return { data: null, error: err as any }
             }
           },
           async () => {
-            const { data: rows } = await supabase
+            const { data: rows } = await tenantClient
               .from('csrs')
               .select('csr_number')
               .order('created_at', { ascending: false })
@@ -428,7 +429,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           try {
             const technicianSignatory = csrData.technician_signatory_id
               ? (
-                  await supabase
+                  await tenantClient
                     .from('signatories')
                     .select('id, name, role, signature_url')
                     .eq('id', csrData.technician_signatory_id)
@@ -467,7 +468,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         materials_used: serializeCsrMaterials(materialsRows, csrMeta),
       })
 
-      const { data: existing } = await supabase.from('csrs').select('id').eq('csr_number', csrData.csr_number)
+      const { data: existing } = await tenantClient.from('csrs').select('id').eq('csr_number', csrData.csr_number)
 
       if ((existing || []).some((item: any) => String(item.id) !== String(id))) {
         feedback.error('Duplicate CSR number', {
@@ -478,7 +479,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
       setSaving(true)
       try {
-        await updateCsr(id!, csrData)
+        await updateCsr(id!, csrData, tenantClient)
         setSaving(false)
         navigate('/csr/' + id)
       } catch (error) {

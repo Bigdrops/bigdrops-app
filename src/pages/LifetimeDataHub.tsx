@@ -8,6 +8,7 @@ import {
 } from '../types/exportHub';
 import { ExportDropdownRow } from '../components/export/ExportDropdownRow';
 import { getExportData, isValidExportContext, getFilterSummary } from '../services/exportFetchers';
+import { useEntity } from '@/lib/tenant/contexts';
 import {
   compileToCSV,
   flattenLineItems,
@@ -128,6 +129,7 @@ export const LifetimeDataHub: React.FC<LifetimeDataHubProps> = ({
   onNavigateBack,
   matchingRecordsCount,
 }) => {
+  const { tenantClient } = useEntity()
   /**
    * Localized map tracking processing flags separately per component card domain.
    * Allows independent async operations without blocking the UI.
@@ -163,7 +165,7 @@ export const LifetimeDataHub: React.FC<LifetimeDataHubProps> = ({
       );
 
       // Step 1: Extract complete dataset without pagination overrides
-      const rawData = await getExportData(domain, inheritedContext);
+      const rawData = await getExportData(domain, inheritedContext, tenantClient);
 
       if (!rawData || rawData.length === 0) {
         alert(

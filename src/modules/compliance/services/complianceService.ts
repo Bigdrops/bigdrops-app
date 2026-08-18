@@ -129,66 +129,66 @@ export async function updateInlineWhtReceipt(id: string, updates: Partial<WhtRec
   return repo.updateWhtReceipt(id, { ...updates, updated_at: now() } as Partial<WhtReceipt>, tenantClient)
 }
 
-export async function fetchTaxInputEntries(): Promise<TaxInputEntry[]> {
-  return repo.fetchTaxInputEntries()
+export async function fetchTaxInputEntries(tenantClient: TenantClient): Promise<TaxInputEntry[]> {
+  return repo.fetchTaxInputEntries(tenantClient)
 }
 
-export async function insertTaxInputEntry(record: Partial<TaxInputEntry>): Promise<void> {
-  return repo.insertTaxInputEntry({ ...record, created_at: now(), updated_at: now() } as Partial<TaxInputEntry>)
+export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, tenantClient: TenantClient): Promise<void> {
+  return repo.insertTaxInputEntry({ ...record, created_at: now(), updated_at: now() } as Partial<TaxInputEntry>, tenantClient)
 }
 
-export async function updateTaxInputEntry(id: string, updates: Partial<TaxInputEntry>): Promise<void> {
-  return repo.updateTaxInputEntry(id, { ...updates, updated_at: now() } as Partial<TaxInputEntry>)
+export async function updateTaxInputEntry(id: string, updates: Partial<TaxInputEntry>, tenantClient: TenantClient): Promise<void> {
+  return repo.updateTaxInputEntry(id, { ...updates, updated_at: now() } as Partial<TaxInputEntry>, tenantClient)
 }
 
-export async function deleteTaxInputEntry(id: string): Promise<void> {
-  return repo.deleteTaxInputEntry(id)
+export async function deleteTaxInputEntry(id: string, tenantClient: TenantClient): Promise<void> {
+  return repo.deleteTaxInputEntry(id, tenantClient)
 }
 
-export async function fetchTaxFilings(): Promise<TaxFiling[]> {
-  return repo.fetchTaxFilings()
+export async function fetchTaxFilings(tenantClient: TenantClient): Promise<TaxFiling[]> {
+  return repo.fetchTaxFilings(tenantClient)
 }
 
-export async function insertTaxFiling(record: Partial<TaxFiling>): Promise<void> {
-  return repo.insertTaxFiling({ ...record, created_at: now(), updated_at: now() } as Partial<TaxFiling>)
+export async function insertTaxFiling(record: Partial<TaxFiling>, tenantClient: TenantClient): Promise<void> {
+  return repo.insertTaxFiling({ ...record, created_at: now(), updated_at: now() } as Partial<TaxFiling>, tenantClient)
 }
 
-export async function updateTaxFiling(id: string, updates: Partial<TaxFiling>): Promise<void> {
-  return repo.updateTaxFiling(id, { ...updates, updated_at: now() } as Partial<TaxFiling>)
+export async function updateTaxFiling(id: string, updates: Partial<TaxFiling>, tenantClient: TenantClient): Promise<void> {
+  return repo.updateTaxFiling(id, { ...updates, updated_at: now() } as Partial<TaxFiling>, tenantClient)
 }
 
-export async function deleteTaxFiling(id: string): Promise<void> {
-  return repo.deleteTaxFiling(id)
+export async function deleteTaxFiling(id: string, tenantClient: TenantClient): Promise<void> {
+  return repo.deleteTaxFiling(id, tenantClient)
 }
 
-export async function fetchTaxReminders(): Promise<TaxReminder[]> {
-  return repo.fetchTaxReminders()
+export async function fetchTaxReminders(tenantClient: TenantClient): Promise<TaxReminder[]> {
+  return repo.fetchTaxReminders(tenantClient)
 }
 
-export async function insertTaxReminder(record: Partial<TaxReminder>): Promise<void> {
-  return repo.insertTaxReminder({ ...record, created_at: now(), updated_at: now() } as Partial<TaxReminder>)
+export async function insertTaxReminder(record: Partial<TaxReminder>, tenantClient: TenantClient): Promise<void> {
+  return repo.insertTaxReminder({ ...record, created_at: now(), updated_at: now() } as Partial<TaxReminder>, tenantClient)
 }
 
-export async function updateTaxReminder(id: string, updates: Partial<TaxReminder>): Promise<void> {
-  return repo.updateTaxReminder(id, { ...updates, updated_at: now() } as Partial<TaxReminder>)
+export async function updateTaxReminder(id: string, updates: Partial<TaxReminder>, tenantClient: TenantClient): Promise<void> {
+  return repo.updateTaxReminder(id, { ...updates, updated_at: now() } as Partial<TaxReminder>, tenantClient)
 }
 
-export async function deleteTaxReminder(id: string): Promise<void> {
-  return repo.deleteTaxReminder(id)
+export async function deleteTaxReminder(id: string, tenantClient: TenantClient): Promise<void> {
+  return repo.deleteTaxReminder(id, tenantClient)
 }
 
-export async function fetchTaxSettings(): Promise<TaxSettings | null> {
-  return repo.fetchTaxSettings()
+export async function fetchTaxSettings(tenantClient: TenantClient): Promise<TaxSettings | null> {
+  return repo.fetchTaxSettings(tenantClient)
 }
 
-export async function upsertTaxSettings(record: Partial<TaxSettings>): Promise<void> {
-  return repo.upsertTaxSettings({ ...record, updated_at: now() } as Partial<TaxSettings>)
+export async function upsertTaxSettings(record: Partial<TaxSettings>, tenantClient: TenantClient): Promise<void> {
+  return repo.upsertTaxSettings({ ...record, updated_at: now() } as Partial<TaxSettings>, tenantClient)
 }
 
 export async function importRecord(
   type: string,
   record: Record<string, unknown>,
-  tenantClient?: TenantClient,
+  tenantClient: TenantClient,
 ): Promise<void> {
   const timestamp = now()
   const table = type === 'vat_input' ? 'tax_input_entries'
@@ -196,9 +196,6 @@ export async function importRecord(
     : type === 'wht_receipt' ? 'wht_receipts'
     : null
   if (!table) throw new Error(`Unknown import type: ${type}`)
-  // Phase 3: wht_receipts is part of the invoice aggregate → tenant client.
-  // Tax tables remain public.
-  const client = type === 'wht_receipt' && tenantClient ? tenantClient : supabase
-  const { error } = await client.from(table).insert([{ ...record, created_at: timestamp, updated_at: timestamp }])
+  const { error } = await tenantClient.from(table).insert([{ ...record, created_at: timestamp, updated_at: timestamp }])
   if (error) throw error
 }

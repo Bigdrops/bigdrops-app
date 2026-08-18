@@ -1,14 +1,13 @@
-import { supabase } from '@/supabase'
 import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
 import type { TenantClient } from '@/lib/tenantClient'
 
-export async function archiveWaybillRecord(id: string, client?: TenantClient) {
-  const db = client?.isReady ? client : supabase
+export async function archiveWaybillRecord(id: string, tenantClient: TenantClient) {
+  const db = tenantClient
   const { error } = await db.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
   // ponytail: audit inline, no refactoring
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'waybill',
       recordId: id,
       action: 'ARCHIVE',
@@ -19,13 +18,13 @@ export async function archiveWaybillRecord(id: string, client?: TenantClient) {
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function deleteWaybillRecord(id: string, client?: TenantClient) {
-  const db = client?.isReady ? client : supabase
+export async function deleteWaybillRecord(id: string, tenantClient: TenantClient) {
+  const db = tenantClient
   const { error } = await db.from('waybills').delete().eq('id', id)
   if (error) throw error
   // ponytail: audit inline, no refactoring
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'waybill',
       recordId: id,
       action: 'DELETE',
@@ -36,8 +35,8 @@ export async function deleteWaybillRecord(id: string, client?: TenantClient) {
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function updateWaybillStatus(id: string, status: string, client?: TenantClient) {
-  const db = client?.isReady ? client : supabase
+export async function updateWaybillStatus(id: string, status: string, tenantClient: TenantClient) {
+  const db = tenantClient
   // Fetch old status before update for activity_events
   let oldStatus: string | null = null
   try {
@@ -50,7 +49,7 @@ export async function updateWaybillStatus(id: string, status: string, client?: T
 
   // ponytail: audit inline, no refactoring
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'waybill',
       recordId: id,
       action: 'STATUS_CHANGE',
@@ -60,12 +59,12 @@ export async function updateWaybillStatus(id: string, status: string, client?: T
     })
     // Lazy import to avoid circular dependency at module load
     const { recordWaybillStatusChanged } = await import('@/lib/audit')
-    void recordWaybillStatusChanged(id, oldStatus, status)
+    void recordWaybillStatusChanged(tenantClient, id, oldStatus, status)
   } catch { /* audit failure must not break mutation */ }
 }
 
-export async function duplicateWaybillRecord(id: string, client?: TenantClient) {
-  const db = client?.isReady ? client : supabase
+export async function duplicateWaybillRecord(id: string, tenantClient: TenantClient) {
+  const db = tenantClient
   const { data: original, error: fetchError } = await db.from('waybills').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'Waybill not found')
 
@@ -96,7 +95,7 @@ export async function duplicateWaybillRecord(id: string, client?: TenantClient) 
   // ponytail: audit inline, no refactoring
   if (created) {
     try {
-      void recordAuditLog({
+      void recordAuditLog(tenantClient, {
         entityType: 'waybill',
         recordId: created.id,
         entityLabel: created.waybill_number,
@@ -105,7 +104,7 @@ export async function duplicateWaybillRecord(id: string, client?: TenantClient) 
         newData: created,
         trackedFields: WAYBILL_TRACKED_FIELDS,
       })
-      void recordWaybillCreated(created.id)
+      void recordWaybillCreated(tenantClient, created.id)
     } catch { /* audit failure must not break mutation */ }
   }
 

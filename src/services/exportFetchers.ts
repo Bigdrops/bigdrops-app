@@ -10,7 +10,7 @@
  * - Proper error handling and logging
  */
 
-import { supabase } from '@/supabase';
+import type { TenantClient } from '@/lib/tenantClient';
 import type {
   ExportModuleDomain,
   InheritedExportContext,
@@ -69,7 +69,8 @@ const ITEMS_TABLE_MAP: Record<string, string> = {
  */
 export async function fetchExportDataset(
   domain: ExportModuleDomain,
-  context: InheritedExportContext
+  context: InheritedExportContext,
+  tenantClient: TenantClient
 ): Promise<Record<string, unknown>[]> {
   const table = TABLE_MAP[domain];
 
@@ -85,7 +86,7 @@ export async function fetchExportDataset(
   }
 
   // Start building the query
-  let query = supabase.from(table).select(selectClause);
+  let query = tenantClient.from(table).select(selectClause);
 
   // Apply parametric filters from inherited context
   if (context.clientId) {
@@ -152,10 +153,11 @@ export async function fetchExportDataset(
  */
 export async function getExportData(
   domain: ExportModuleDomain,
-  context: InheritedExportContext
+  context: InheritedExportContext,
+  tenantClient: TenantClient
 ): Promise<Record<string, unknown>[]> {
   try {
-    const data = await fetchExportDataset(domain, context);
+    const data = await fetchExportDataset(domain, context, tenantClient);
     return data;
   } catch (error) {
     console.error(`Export data retrieval failed for ${domain}:`, error);

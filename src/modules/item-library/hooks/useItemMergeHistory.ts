@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getItemMergeHistory, getItemMergeHistoryCount } from '../repositories/itemLibraryRepository'
 import type { ItemMergeLogRow } from '../types'
 
 export function useItemMergeHistory(options: { enabled?: boolean } = {}) {
+  const { tenantClient } = useEntity()
   const { enabled = true } = options
   const [data, setData] = useState<ItemMergeLogRow[]>([])
   const [count, setCount] = useState(0)
@@ -13,8 +15,8 @@ export function useItemMergeHistory(options: { enabled?: boolean } = {}) {
     try {
       setLoading(true)
       const [historyRows, totalCount] = await Promise.all([
-        getItemMergeHistory(100),
-        getItemMergeHistoryCount()
+        getItemMergeHistory(100, tenantClient),
+        getItemMergeHistoryCount(tenantClient)
       ])
       setData(historyRows)
       setCount(totalCount)
@@ -24,7 +26,7 @@ export function useItemMergeHistory(options: { enabled?: boolean } = {}) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [tenantClient])
 
   useEffect(() => {
     if (enabled) {

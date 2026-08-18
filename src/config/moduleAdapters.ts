@@ -12,14 +12,18 @@ import type {
   ModuleScope,
   ProjectQueryState,
 } from "@/types/queryPlatform";
-import { supabase } from "@/supabase";
+import type { TenantClient } from "@/lib/tenantClient";
 import { readListCache, writeListCache, isListCacheFresh } from "@/lib/cache/listCache";
 
-// Phase 3: invoices/receipts are part of the invoice aggregate. When the
-// caller supplies the resolved tenant client (post-cutover), list fetches
-// target the tenant schema. Falls back to public for pre-cutover callers.
-function resolveFetchClient(ctx?: AdapterFetchContext) {
-  return ctx?.tenantClient?.isReady ? ctx.tenantClient : null;
+// Document list fetches always target the tenant schema. The caller
+// (DocumentQueryContext) supplies the resolved tenant client. Missing or
+// not-ready client is a hard error — never fall back to public.
+function requireFetchClient(ctx?: AdapterFetchContext): TenantClient {
+  const client = ctx?.tenantClient;
+  if (!client || !client.isReady) {
+    throw new Error("Tenant client is required for document queries");
+  }
+  return client;
 }
 
 // --- Shared Helpers ---
@@ -132,8 +136,7 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
       return cached.rows;
     }
 
-    const tenantClient = resolveFetchClient(ctx);
-    const client = tenantClient ?? supabase;
+    const client = requireFetchClient(ctx);
 
     let q = client
       .from("invoices")
@@ -317,8 +320,7 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
       return cached.rows;
     }
 
-    const tenantClient = resolveFetchClient(ctx);
-    const client = tenantClient ?? supabase;
+    const client = requireFetchClient(ctx);
 
     let q = client
       .from("quotations")
@@ -397,8 +399,7 @@ const waybillsAdapter: DocumentAdapter<LogisticsQueryState, any> = {
       return cached.rows;
     }
 
-    const tenantClient = resolveFetchClient(ctx);
-    const client = tenantClient ?? supabase;
+    const client = requireFetchClient(ctx);
 
     let q = client
       .from("waybills")
@@ -455,13 +456,13 @@ const projectsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   cacheKey: "bd:list:projects:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(projectsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, projectsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    let q = requireFetchClient(ctx)
       .from("projects")
       .select("id, name, project_code, client_name, status, project_value, start_date, created_at")
       .is("archived_at", null);
@@ -501,13 +502,13 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
   cacheKey: "bd:list:csr:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(csrAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, csrAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    let q = requireFetchClient(ctx)
       .from("csrs")
       .select("id, csr_number, client_name, equipment_type, make, date, created_at, status, linked_invoice_id, project_id")
       .is("archived_at", null);
@@ -551,13 +552,13 @@ const rfqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   cacheKey: "bd:list:rfqs:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(rfqsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, rfqsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    let q = requireFetchClient(ctx)
       .from("rfqs")
       .select("id, rfq_number, client_name, created_at, status, project_id, title")
       .is("archived_at", null);
@@ -603,8 +604,7 @@ const receiptsAdapter: DocumentAdapter<FinancialQueryState, any> = {
       return cached.rows;
     }
 
-    const tenantClient = resolveFetchClient(ctx);
-    const client = tenantClient ?? supabase;
+    const client = requireFetchClient(ctx);
 
     let q = client
       .from("receipts")
@@ -652,13 +652,13 @@ const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   cacheKey: "bd:list:boqs:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
-  async fetcher(query) {
+  async fetcher(query, ctx) {
     const cached = readListCache<any>(boqsAdapter.cacheKey);
     if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, boqsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
-    let q = supabase
+    let q = requireFetchClient(ctx)
       .from("boqs")
       .select("id, boq_number, client_name, created_at, status, project_id, title, total")
       .is("archived_at", null);

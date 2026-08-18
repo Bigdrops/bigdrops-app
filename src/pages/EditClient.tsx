@@ -3,21 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 import { feedback } from '@/lib/feedback'
-import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import Layout from '../components/Layout'
 import { pageFormCardClassName } from '@/components/ui/form-page-styles'
 
 export default function EditClient() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const [client, setClient] = useState<Partial<ClientFormData>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      if (!id) return
-      const { data, error } = await supabase.from('clients').select('*').eq('id', id).single()
+      if (!id || !tenantClient.isReady) return
+      const { data, error } = await tenantClient.from('clients').select('*').eq('id', id).single()
       if (error) {
         console.error(error)
         feedback.error('Failed to load client')
@@ -40,12 +41,12 @@ export default function EditClient() {
       setLoading(false)
     }
     load()
-  }, [id])
+  }, [id, tenantClient.isReady])
 
   const handleSave = async (data: Omit<ClientFormData, 'address2'> & { address: string }) => {
     if (!id) return
     setSaving(true)
-    const { error } = await supabase.from('clients').update({
+    const { error } = await tenantClient.from('clients').update({
       name: data.name,
       contact_person: data.contact_person,
       category: data.category,

@@ -2,31 +2,31 @@ import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
-export async function archiveRFQRecord(id: string) {
-  const { error } = await supabase.from('rfqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
+export async function archiveRFQRecord(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('rfqs').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
 
-export async function deleteRFQRecord(id: string) {
-  const { error: itemError } = await supabase.from('rfq_items').delete().eq('rfq_id', id)
+export async function deleteRFQRecord(id: string, tenantClient: TenantClient) {
+  const { error: itemError } = await tenantClient.from('rfq_items').delete().eq('rfq_id', id)
   if (itemError) throw itemError
-  const { error } = await supabase.from('rfqs').delete().eq('id', id)
+  const { error } = await tenantClient.from('rfqs').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function updateRFQStatus(id: string, status: string) {
-  const { error } = await supabase.from('rfqs').update({ status }).eq('id', id)
+export async function updateRFQStatus(id: string, status: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient.from('rfqs').update({ status }).eq('id', id)
   if (error) throw error
 }
 
-export async function duplicateRFQRecord(id: string) {
-  const { data: original, error: fetchError } = await supabase.from('rfqs').select('*').eq('id', id).single()
+export async function duplicateRFQRecord(id: string, tenantClient: TenantClient) {
+  const { data: original, error: fetchError } = await tenantClient.from('rfqs').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'RFQ not found')
 
   const { id: _id, created_at: _ca, updated_at: _ua, rfq_number: _wn, ...rest } = original
   
   // Find next number
-  const { data: all } = await supabase.from('rfqs').select('rfq_number').like('rfq_number', 'RFQ-%').order('created_at', { ascending: false })
+  const { data: all } = await tenantClient.from('rfqs').select('rfq_number').like('rfq_number', 'RFQ-%').order('created_at', { ascending: false })
   let nextNum = 1
   if (all && all.length > 0) {
     const nums = all
@@ -35,7 +35,7 @@ export async function duplicateRFQRecord(id: string) {
     nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
   }
 
-  const { data: created, error: insertError } = await supabase.from('rfqs').insert([{
+  const { data: created, error: insertError } = await tenantClient.from('rfqs').insert([{
     ...rest,
     rfq_number: `RFQ-${String(nextNum).padStart(4, '0')}`,
     status: 'open',

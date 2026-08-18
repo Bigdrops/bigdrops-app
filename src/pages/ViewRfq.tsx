@@ -20,7 +20,6 @@ import { RfqPreview } from '@/components/rfq/RfqPreview'
 import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
-import { supabase } from '@/supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -58,8 +57,8 @@ export default function ViewRfq() {
       setLoading(true)
       try {
         const [rfqRes, itemsRes] = await Promise.all([
-          supabase.from('rfqs').select('*').eq('id', id).single(),
-          supabase.from('rfq_items').select('*').eq('rfq_id', id).order('sort_order'),
+          tenantClient.from('rfqs').select('*').eq('id', id).single(),
+          tenantClient.from('rfq_items').select('*').eq('rfq_id', id).order('sort_order'),
         ])
 
         if (rfqRes.error || !rfqRes.data) {
@@ -163,7 +162,7 @@ export default function ViewRfq() {
     if (!id || updatingStatus) return
     setUpdatingStatus(true)
     try {
-      await updateRFQStatus(id, status)
+      await updateRFQStatus(id, status, tenantClient)
       setRfq((curr: any) => ({ ...curr, status }))
       showToast(successLabel, `RFQ marked as ${status}.`, 'success')
       ui.closeModal()
@@ -178,7 +177,7 @@ export default function ViewRfq() {
     if (!id || duplicating) return
     setDuplicating(true)
     try {
-      const created = await duplicateRFQRecord(id)
+      const created = await duplicateRFQRecord(id, tenantClient)
       navigate(`/rfqs/${created.id}`)
       showToast('RFQ Cloned', 'A new open RFQ has been created.', 'success')
     } catch (error) {
@@ -192,7 +191,7 @@ export default function ViewRfq() {
     if (!id || archiving) return
     setArchiving(true)
     try {
-      await archiveRFQRecord(id)
+      await archiveRFQRecord(id, tenantClient)
       navigate('/rfqs')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
@@ -205,7 +204,7 @@ export default function ViewRfq() {
     if (!id || deleting) return
     setDeleting(true)
     try {
-      await deleteRFQRecord(id)
+      await deleteRFQRecord(id, tenantClient)
       navigate('/rfqs')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
@@ -234,7 +233,7 @@ export default function ViewRfq() {
     setSavingCustomization(true)
     try {
       const payload = denormalizeToDbRfq(draftRfq)
-      const { error } = await supabase.from('rfqs').update(payload).eq('id', id)
+      const { error } = await tenantClient.from('rfqs').update(payload).eq('id', id)
       if (error) throw error
       setRfq(draftRfq)
       ui.closeSheet()

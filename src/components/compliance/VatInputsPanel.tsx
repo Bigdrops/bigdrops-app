@@ -16,6 +16,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import * as complianceService from '@/modules/compliance/services/complianceService'
 import { TaxInputEntry } from '@/domain/compliance/types'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -29,6 +30,7 @@ interface VatInputsPanelProps {
 }
 
 export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputsPanelProps) {
+  const { tenantClient } = useEntity()
   const [editingEntry, setEditingEntry] = useState<Partial<TaxInputEntry> | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -58,10 +60,10 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
       }
 
       if (isNew) {
-        await complianceService.insertTaxInputEntry(recordToSave)
+        await complianceService.insertTaxInputEntry(recordToSave, tenantClient)
         feedback.success('VAT input recorded')
       } else {
-        await complianceService.updateTaxInputEntry(editingEntry.id, recordToSave)
+        await complianceService.updateTaxInputEntry(editingEntry.id, recordToSave, tenantClient)
         feedback.success('VAT input updated')
       }
 
@@ -77,7 +79,7 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
   const handleDelete = async (id: string) => {
     try {
       setIsDeleting(id)
-        await complianceService.deleteTaxInputEntry(id)
+        await complianceService.deleteTaxInputEntry(id, tenantClient)
       feedback.success('VAT input deleted')
       onInputsChanged()
     } catch (e: any) {

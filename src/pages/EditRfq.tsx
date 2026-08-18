@@ -4,24 +4,26 @@ import Layout from '@/components/Layout'
 import { RfqEditor } from '@/components/rfq/RfqEditor'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, normalizeDbRfq } from '@/domain/rfq/normalize'
-import { supabase } from '@/supabase'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 
 export default function EditRfq() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { tenantClient } = useEntity();
   const [rfq, setRfq] = useState<Rfq | null>(null);
   const [items, setItems] = useState<RfqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     const load = async () => {
       setLoading(true);
       const [rfqResult, itemsResult] = await Promise.all([
-        supabase.from('rfqs').select('*').eq('id', id).single(),
-        supabase.from('rfq_items').select('*').eq('rfq_id', id).order('sort_order'),
+        tenantClient.from('rfqs').select('*').eq('id', id).single(),
+        tenantClient.from('rfq_items').select('*').eq('rfq_id', id).order('sort_order'),
       ]);
 
       if (rfqResult.data) {
@@ -34,12 +36,12 @@ export default function EditRfq() {
       setLoading(false);
     };
     load();
-  }, [id, navigate]);
+  }, [id, tenantClient.isReady, navigate]);
 
   const handleSave = async (updatedRfq: Rfq, updatedItems: RfqItem[]) => {
     setSaving(true);
     const dbRfq = denormalizeToDbRfq(updatedRfq);
-    const { error: rfqError } = await supabase
+    const { error: rfqError } = await tenantClient
       .from('rfqs')
       .update(dbRfq)
       .eq('id', id);
@@ -53,7 +55,7 @@ export default function EditRfq() {
     }
 
     // Upsert items (delete and re-insert for simplicity)
-    const { error: deleteError } = await supabase.from('rfq_items').delete().eq('rfq_id', id);
+    const { error: deleteError } = await tenantClient.from('rfq_items').delete().eq('rfq_id', id);
     if (deleteError) {
        feedback.error('Item save failed', {
          description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
@@ -67,7 +69,7 @@ export default function EditRfq() {
       .map((item, idx) => denormalizeToDbRfqItem({ ...item, sort_order: idx }, id!));
 
     if (dbItems.length > 0) {
-      const { error: itemsError } = await supabase.from('rfq_items').insert(dbItems);
+      const { error: itemsError } = await tenantClient.from('rfq_items').insert(dbItems);
       if (itemsError) {
         feedback.error('Item save failed', { description: itemsError.message });
       }

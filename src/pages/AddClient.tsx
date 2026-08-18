@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 import { feedback } from '@/lib/feedback'
-import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import Layout from '../components/Layout'
 import { pageFormCardClassName } from '@/components/ui/form-page-styles'
 
 export default function AddClient() {
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const [saving, setSaving] = useState(false)
 
   const handleSave = async (data: Omit<ClientFormData, 'address2'> & { address: string }) => {
     setSaving(true)
-    const { error } = await supabase.from('clients').insert({
+    const { error } = await tenantClient.from('clients').insert({
       name: data.name,
       contact_person: data.contact_person,
       category: data.category,

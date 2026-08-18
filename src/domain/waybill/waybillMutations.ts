@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
 import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
@@ -14,10 +13,10 @@ export async function saveWaybill(params: {
   mode: 'new' | 'edit';
   waybillId?: string;
   prefixes?: DocumentPrefixes | null;
-  tenantClient?: TenantClient;
+  tenantClient: TenantClient;
 }) {
-  const { waybill, items, custom_fields, mode, waybillId, prefixes, tenantClient: tc } = params
-  const db = tc?.isReady ? tc : supabase;
+  const { waybill, items, custom_fields, mode, waybillId, prefixes, tenantClient } = params
+  const db = tenantClient;
 
   const errors: string[] = []
   if (waybill.type === 'external' && !waybill.client_id) {
@@ -106,7 +105,7 @@ export async function saveWaybill(params: {
     invalidateListCache('bd:list:waybills:v1:all')
     // Audit: fire-and-forget after successful create
     try {
-      void recordAuditLog({
+      void recordAuditLog(tenantClient, {
         entityType: 'waybill',
         recordId: data?.id ?? '',
         entityLabel: waybillNumber,
@@ -115,7 +114,7 @@ export async function saveWaybill(params: {
         newData: payload,
         trackedFields: WAYBILL_TRACKED_FIELDS,
       })
-      void recordWaybillCreated(data?.id ?? '')
+      void recordWaybillCreated(tenantClient, data?.id ?? '')
     } catch { /* ponytail: audit failure must not break mutation */ }
     return { status: 'online', waybillId: data?.id }
   } else {
@@ -134,7 +133,7 @@ export async function saveWaybill(params: {
     invalidateListCache('bd:list:waybills:v1:all')
     // Audit: fire-and-forget after successful update
     try {
-      void recordAuditLog({
+      void recordAuditLog(tenantClient, {
         entityType: 'waybill',
         recordId: waybillId,
         entityLabel: waybillNumber,
@@ -145,7 +144,7 @@ export async function saveWaybill(params: {
       })
       const newWaybillStatus = (payload.status as string | null) ?? null
       if (oldWaybillStatus !== newWaybillStatus) {
-        void recordWaybillStatusChanged(waybillId, oldWaybillStatus, newWaybillStatus)
+        void recordWaybillStatusChanged(tenantClient, waybillId, oldWaybillStatus, newWaybillStatus)
       }
     } catch { /* ponytail: audit failure must not break mutation */ }
     return { status: 'online', waybillId }

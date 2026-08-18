@@ -15,7 +15,6 @@ import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import { supabase } from '@/supabase'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
@@ -169,7 +168,7 @@ export default function ViewCSR() {
       if (!id) return
       setLoading(true)
       try {
-        const { data, error } = await supabase.from('csrs').select('*').eq('id', id).single()
+        const { data, error } = await tenantClient.from('csrs').select('*').eq('id', id).single()
 
         if (error || !data) {
           navigate('/csr')
@@ -178,7 +177,7 @@ export default function ViewCSR() {
 
         setCsr(data)
 
-        const { data: signatories } = await supabase.from('signatories').select('*')
+        const { data: signatories } = await tenantClient.from('signatories').select('*')
         setSignatories(signatories || [])
 
         if (data.client_id) {
@@ -257,7 +256,7 @@ export default function ViewCSR() {
     if (!id || updatingStatus) return
     setUpdatingStatus(true)
     try {
-      await updateCSRStatus(id, status)
+      await updateCSRStatus(id, status, tenantClient)
       setCsr((curr: any) => ({ ...curr, status }))
       showToast(successLabel, `Record marked as ${status}.`, 'success')
       ui.closeModal()
@@ -272,7 +271,7 @@ export default function ViewCSR() {
     if (!id || duplicating) return
     setDuplicating(true)
     try {
-      const created = await duplicateCSRRecord(id)
+      const created = await duplicateCSRRecord(id, tenantClient)
       navigate(`/csr/${created.id}`)
       showToast('Record Cloned', 'A new service report has been created.', 'success')
     } catch (error) {
@@ -286,7 +285,7 @@ export default function ViewCSR() {
     if (!id || archiving) return
     setArchiving(true)
     try {
-      await archiveCSRRecord(id)
+      await archiveCSRRecord(id, tenantClient)
       navigate('/csr')
     } catch (error) {
       showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
@@ -299,7 +298,7 @@ export default function ViewCSR() {
     if (!id || deleting) return
     setDeleting(true)
     try {
-      await deleteCSRRecord(id)
+      await deleteCSRRecord(id, tenantClient)
       navigate('/csr')
     } catch (error) {
       showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')

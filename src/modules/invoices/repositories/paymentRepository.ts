@@ -1,10 +1,5 @@
-import { supabase } from "@/supabase"
 import type { TenantClient } from "@/lib/tenantClient"
 import type { InvoicePayment, InvoiceFinancialsRow, BankAccountSummary, PaymentInput } from "../types/paymentTypes"
-
-// Phase 3: invoice aggregate reads/writes now target the tenant schema via
-// the caller-supplied TenantClient. Out-of-aggregate reads (bank_accounts)
-// remain on the public client until their own migration phase.
 
 export async function fetchInvoiceIdForPayment(paymentId: string, client: TenantClient): Promise<string | null> {
   const { data, error } = await client
@@ -85,10 +80,8 @@ export async function updateInvoiceStatus(invoiceId: string, status: string, cli
   }
 }
 
-export async function fetchBankAccounts(): Promise<BankAccountSummary[]> {
-  // bank_accounts is NOT part of the Phase 3 invoice aggregate — stays public
-  // until its own migration phase.
-  const { data, error } = await supabase
+export async function fetchBankAccounts(client: TenantClient): Promise<BankAccountSummary[]> {
+  const { data, error } = await client
     .from("bank_accounts")
     .select("*")
     .order("is_default", { ascending: false })

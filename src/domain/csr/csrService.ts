@@ -1,5 +1,5 @@
-import { supabase } from '@/supabase'
 import { recordAuditLog, recordCsrCreated, recordCsrStatusChanged, recordCsrLinked, CSR_TRACKED_FIELDS } from '@/lib/audit'
+import type { TenantClient } from '@/lib/tenantClient'
 
 export type CsrRow = {
   id: string
@@ -92,7 +92,7 @@ export function sanitizeCsrInsertPayload<T extends Record<string, unknown>>(payl
 
 // ── Create / Update ────────────────────────────────────────
 
-export async function createCsr(csrData: Record<string, unknown>): Promise<CreatedCsr> {
+export async function createCsr(csrData: Record<string, unknown>, tenantClient: TenantClient): Promise<CreatedCsr> {
   const safeData = sanitizeCsrInsertPayload(csrData)
 
   // ── VERIFY: id must never appear in the INSERT payload ──
@@ -106,7 +106,7 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
 
   const { data, error } = await withRetry(
     async () =>
-      supabase
+      tenantClient
         .from('csrs')
         .insert([safeData])
         .select('id, csr_number')
@@ -127,7 +127,7 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
 
   // Audit: fire-and-forget after successful create
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'csr',
       recordId: data.id,
       entityLabel: data.csr_number,
@@ -136,24 +136,24 @@ export async function createCsr(csrData: Record<string, unknown>): Promise<Creat
       newData: csrData,
       trackedFields: CSR_TRACKED_FIELDS,
     })
-    void recordCsrCreated(data.id, data.csr_number)
+    void recordCsrCreated(tenantClient, data.id, data.csr_number)
   } catch { /* ponytail: audit failure must not break mutation */ }
 
   return data as CreatedCsr
 }
 
-export async function updateCsr(id: string, csrData: Record<string, unknown>): Promise<void> {
+export async function updateCsr(id: string, csrData: Record<string, unknown>, tenantClient: TenantClient): Promise<void> {
   // Fetch old status before update for audit
   let oldStatus: string | null = null
   try {
-    const { data } = await supabase.from('csrs').select('status').eq('id', id).single()
+    const { data } = await tenantClient.from('csrs').select('status').eq('id', id).single()
     oldStatus = data?.status ?? null
   } catch { /* ponytail: best-effort old status */ }
 
   const safeData = sanitizeCsrInsertPayload(csrData)
   const { error } = await withRetry(
     async () =>
-      supabase
+      tenantClient
         .from('csrs')
         .update(safeData)
         .eq('id', id),
@@ -167,7 +167,7 @@ export async function updateCsr(id: string, csrData: Record<string, unknown>): P
 
   // Audit: fire-and-forget after successful update
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'csr',
       recordId: id,
       entityLabel: csrData.csr_number as string | null ?? null,
@@ -178,13 +178,13 @@ export async function updateCsr(id: string, csrData: Record<string, unknown>): P
     })
     const newStatus = (csrData.status as string | null) ?? null
     if (oldStatus !== newStatus) {
-      void recordCsrStatusChanged(id, oldStatus, newStatus)
+      void recordCsrStatusChanged(tenantClient, id, oldStatus, newStatus)
     }
   } catch { /* ponytail: audit failure must not break mutation */ }
 }
 
-export async function loadCsrsFromSupabase(): Promise<CsrRow[]> {
-  const { data, error } = await supabase
+export async function loadCsrsFromSupabase(tenantClient: TenantClient): Promise<CsrRow[]> {
+  const { data, error } = await tenantClient
     .from("csrs")
     .select("*")
     .is('archived_at', null)
@@ -198,8 +198,8 @@ export async function loadCsrsFromSupabase(): Promise<CsrRow[]> {
   return (data as CsrRow[]) || []
 }
 
-export async function archiveCsr(id: string) {
-  const { error } = await supabase
+export async function archiveCsr(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient
     .from('csrs')
     .update({ archived_at: new Date().toISOString() })
     .eq('id', id)
@@ -209,8 +209,8 @@ export async function archiveCsr(id: string) {
   }
 }
 
-export async function deleteCsr(id: string) {
-  const { error } = await supabase
+export async function deleteCsr(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient
     .from("csrs")
     .delete()
     .eq("id", id)
@@ -220,8 +220,8 @@ export async function deleteCsr(id: string) {
   }
 }
 
-export async function attachInvoiceToCsr(csrId: string, invoiceId: string) {
-  const { error } = await supabase
+export async function attachInvoiceToCsr(csrId: string, invoiceId: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient
     .from("csrs")
     .update({ linked_invoice_id: invoiceId })
     .eq("id", csrId)
@@ -230,7 +230,7 @@ export async function attachInvoiceToCsr(csrId: string, invoiceId: string) {
     throw error
   }
 
-  const { data, error: fetchError } = await supabase
+  const { data, error: fetchError } = await tenantClient
     .from("csrs")
     .select("*")
     .eq("id", csrId)
@@ -242,7 +242,7 @@ export async function attachInvoiceToCsr(csrId: string, invoiceId: string) {
 
   // Audit: fire-and-forget after successful link
   try {
-    void recordAuditLog({
+    void recordAuditLog(tenantClient, {
       entityType: 'csr',
       recordId: csrId,
       entityLabel: data.csr_number,
@@ -251,7 +251,7 @@ export async function attachInvoiceToCsr(csrId: string, invoiceId: string) {
       newData: { linked_invoice_id: invoiceId },
       trackedFields: CSR_TRACKED_FIELDS,
     })
-    void recordCsrLinked(csrId, invoiceId)
+    void recordCsrLinked(tenantClient, csrId, invoiceId)
   } catch { /* ponytail: audit failure must not break mutation */ }
 
   return data as CsrRow

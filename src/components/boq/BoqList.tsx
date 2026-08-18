@@ -9,7 +9,7 @@ import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { feedback } from '@/lib/feedback'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
 import { getNextBoqNumber } from '@/domain/boq/storage'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
@@ -21,6 +21,7 @@ const BOQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export function BoqList() {
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const { state, patchUpdate, reset, results: boqs, loading } = useDocumentQuery("boqs")
   const [activeBoq, setActiveBoq] = useState<any | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
@@ -32,7 +33,7 @@ export function BoqList() {
   const handleArchive = async () => {
     if (!archiveId) return
     setIsArchiving(true)
-    const { error } = await supabase.from('boqs').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
+    const { error } = await tenantClient.from('boqs').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
     setIsArchiving(false)
     if (error) {
       feedback.error('Archive failed', { description: error.message })
@@ -50,14 +51,14 @@ export function BoqList() {
     setIsDeleting(true)
     
     // Delete items first
-    const { error: itemsError } = await supabase.from('boq_items').delete().eq('boq_id', deleteId)
+    const { error: itemsError } = await tenantClient.from('boq_items').delete().eq('boq_id', deleteId)
     if (itemsError) {
       setIsDeleting(false)
       feedback.error('Delete failed', { description: itemsError.message })
       return
     }
 
-    const { error } = await supabase.from('boqs').delete().eq('id', deleteId)
+    const { error } = await tenantClient.from('boqs').delete().eq('id', deleteId)
     setIsDeleting(false)
     if (error) {
       feedback.error('Delete failed', { description: error.message })

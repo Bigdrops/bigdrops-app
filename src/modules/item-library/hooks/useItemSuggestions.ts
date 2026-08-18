@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { loadSuggestions } from '../services'
 import type { ItemSuggestion } from '../types'
 
 export function useItemSuggestions(searchText: string, resultLimit = 10, clientId?: string | null) {
+  const { tenantClient } = useEntity()
   const [data, setData] = useState<ItemSuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -22,7 +24,7 @@ export function useItemSuggestions(searchText: string, resultLimit = 10, clientI
       setError(null)
 
       try {
-        const nextData = await loadSuggestions(searchText, resultLimit, clientId)
+        const nextData = await loadSuggestions(searchText, resultLimit, clientId, tenantClient)
         if (!cancelled) setData(nextData)
       } catch (nextError) {
         if (!cancelled) {
@@ -38,7 +40,7 @@ export function useItemSuggestions(searchText: string, resultLimit = 10, clientI
     return () => {
       cancelled = true
     }
-  }, [resultLimit, searchText, clientId])
+  }, [resultLimit, searchText, clientId, tenantClient])
 
   return { data, loading, error }
 }

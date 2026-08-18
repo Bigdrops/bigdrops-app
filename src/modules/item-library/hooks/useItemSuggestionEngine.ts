@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEntity } from '@/lib/tenant/contexts'
 import { findExactItemSuggestionMatch } from '../domain/invoiceSuggestionSelection'
 import { getInvoiceSuggestionPriceContextText } from '../domain/invoiceSuggestionPriceContext'
 import { loadSuggestions, loadItemPriceContext } from '../services'
@@ -24,6 +25,7 @@ export function useItemSuggestionEngine(
   isFocused: boolean,
   rowType?: string | null,
 ): SuggestionEngineResult {
+  const { tenantClient } = useEntity()
   const [suggestions, setSuggestions] = useState<ItemSuggestion[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [exactMatch, setExactMatch] = useState<ItemSuggestion | null>(null)
@@ -53,7 +55,7 @@ export function useItemSuggestionEngine(
       setExactMatch(null)
 
       try {
-        const results = await loadSuggestions(trimmed, 10, clientId)
+        const results = await loadSuggestions(trimmed, 10, clientId, tenantClient)
         if (cancelled || fetchId !== fetchIdRef.current) return
 
         setSuggestions(results)
@@ -75,7 +77,7 @@ export function useItemSuggestionEngine(
     return () => {
       cancelled = true
     }
-  }, [shouldFetchSuggestions, trimmed, clientId])
+  }, [shouldFetchSuggestions, trimmed, clientId, tenantClient])
 
   useEffect(() => {
     if (!selectedItemId) {
@@ -89,7 +91,7 @@ export function useItemSuggestionEngine(
 
     const run = async () => {
       try {
-        const ctx = await loadItemPriceContext(selectedItemId, clientId)
+        const ctx = await loadItemPriceContext(selectedItemId, clientId, tenantClient)
         if (cancelled || fetchId !== priceFetchIdRef.current) return
         setPriceContextText(getInvoiceSuggestionPriceContextText(ctx))
       } catch {
@@ -104,7 +106,7 @@ export function useItemSuggestionEngine(
     return () => {
       cancelled = true
     }
-  }, [selectedItemId, clientId])
+  }, [selectedItemId, clientId, tenantClient])
 
   const handleSuggestionSelect = useCallback((suggestion: ItemSuggestion) => {
     const { description: desc, item_id, unit_price } = (() => {

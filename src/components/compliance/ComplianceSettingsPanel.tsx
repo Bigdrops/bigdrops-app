@@ -8,10 +8,12 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { TaxSettings } from '@/domain/compliance/types'
 import { fetchTaxSettings, upsertTaxSettings } from '@/modules/compliance/services/complianceService'
 
 export default function ComplianceSettingsPanel() {
+  const { tenantClient } = useEntity()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<Partial<TaxSettings>>({
@@ -26,7 +28,7 @@ export default function ComplianceSettingsPanel() {
     async function loadSettings() {
       try {
         setLoading(true)
-        const data = await fetchTaxSettings()
+        const data = await fetchTaxSettings(tenantClient)
         if (data) setSettings(data)
       } catch (error: any) {
         console.error('Error loading tax settings:', error)
@@ -36,7 +38,7 @@ export default function ComplianceSettingsPanel() {
     }
 
     void loadSettings()
-  }, [])
+  }, [tenantClient])
 
   async function handleSave() {
     try {
@@ -44,7 +46,7 @@ export default function ComplianceSettingsPanel() {
       await upsertTaxSettings({
         settings_id: 1,
         ...settings,
-      } as Partial<TaxSettings>)
+      } as Partial<TaxSettings>, tenantClient)
       feedback.success('Tax settings updated successfully')
     } catch (error: any) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'save' }))

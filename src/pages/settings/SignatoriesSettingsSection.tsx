@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pencil, Plus, Trash2, Upload, UserCheck, ShieldCheck, Loader2 } from 'lucide-react'
 import { uploadFile } from '@/hooks/useSettings'
 import { processSignature, dataURItoFile } from '@/lib/processSignature'
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { SettingsField, SettingsInput } from './SettingsFormPrimitives'
 import { SettingsLoadingState } from './SettingsLoadingState'
@@ -27,6 +27,7 @@ type SignatoryForm = {
 const emptyForm: SignatoryForm = { name: '', role: '', signature_url: '' }
 
 export function SignatoriesSettingsSection() {
+  const { tenantClient } = useEntity()
   const [items, setItems] = useState<Signatory[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -40,7 +41,7 @@ export function SignatoriesSettingsSection() {
 
   const loadSignatories = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data, error } = await tenantClient
       .from('signatories')
       .select('id, name, role, signature_url')
       .order('name', { ascending: true })
@@ -55,8 +56,9 @@ export function SignatoriesSettingsSection() {
   }, [])
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     loadSignatories()
-  }, [loadSignatories])
+  }, [loadSignatories, tenantClient.isReady])
 
   const updateForm = (key: keyof SignatoryForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -132,8 +134,8 @@ export function SignatoriesSettingsSection() {
     }
 
     const result = editingId
-      ? await supabase.from('signatories').update(payload).eq('id', editingId)
-      : await supabase.from('signatories').insert(payload)
+      ? await tenantClient.from('signatories').update(payload).eq('id', editingId)
+      : await tenantClient.from('signatories').insert(payload)
 
     if (result.error) {
       feedback.error(getUserFacingMutationMessage(result.error, { action: 'save' }))
@@ -149,7 +151,7 @@ export function SignatoriesSettingsSection() {
 
   const removeSignatory = async (id: string) => {
     setDeletingId(id)
-    const { error } = await supabase.from('signatories').delete().eq('id', id)
+    const { error } = await tenantClient.from('signatories').delete().eq('id', id)
 
     if (error) {
       feedback.error(`Delete failed: ${error.message}`)

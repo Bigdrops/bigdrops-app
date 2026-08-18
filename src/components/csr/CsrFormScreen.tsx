@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Download, Hash, Lock, Loader2, MoreHorizontal, Save } from 'lucide-react'
 
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import ClientSelector from '@/components/ClientSelector'
 import UnitInput from '@/components/UnitInput'
 import CsrImportSheet from '@/components/csr/CsrImportSheet'
@@ -187,6 +187,7 @@ export default function CsrFormScreen({
   onDownloadBlank,
   onLockedFieldClick,
 }: Props) {
+  const { tenantClient } = useEntity()
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
@@ -235,7 +236,7 @@ export default function CsrFormScreen({
     let mounted = true
 
     const load = async () => {
-      const { data } = await supabase.from('signatories').select('*').order('name')
+      const { data } = await tenantClient.from('signatories').select('*').order('name')
 
       if (!mounted) return
       setSignatories((data || []) as SignatoryRow[])
