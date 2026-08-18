@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BIGDROPS — Convex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ink-black: #141414;
+  --paper-white: #ffffff;
+  --cream-surface: #f6f6f6;
+  --lilac-wash: #f7f1ff;
+  --charcoal-surface: #292929;
+  --graphite-border: #38383a;
+  --slate-text: #4f4f52;
+  --fog-text: #6d6d70;
+  --ash-text: #a9a9ac;
+  --mist-divider: #e5e5e5;
+  --signal-blue: #69bee2;
+  --hot-pink: #fc618d;
+  --iris-violet: #948ae3;
+  --mint-green: #7bd88f;
+  --canary-yellow: #f8e67a;
+  --ember-orange: #de5d33;
+  --text: var(--ink-black);
+  --text-2: var(--slate-text);
+  --text-3: var(--fog-text);
+  --border: var(--mist-divider);
+  --surface: var(--paper-white);
+  --surface-2: var(--lilac-wash);
+  --accent: var(--signal-blue);
+  --danger: #c0392b;
+  --warning: #b7791f;
+  --ok: #1e8e5a;
+  --r-card: 12px;
+  --r-btn: 8px;
+  --r-tag: 4px;
+  --font: 'Inter', 'GT America', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+[data-theme="dark"] {
+  --ink-black: #ececec;
+  --paper-white: #1b1b1b;
+  --cream-surface: #101010;
+  --lilac-wash: #191624;
+  --charcoal-surface: #2a2a2a;
+  --graphite-border: #3a3a3d;
+  --slate-text: #a8a8ad;
+  --fog-text: #7c7c80;
+  --ash-text: #5a5a5e;
+  --mist-divider: #2a2a2a;
+  --signal-blue: #69bee2;
+  --text: var(--ink-black);
+  --text-2: var(--slate-text);
+  --text-3: var(--fog-text);
+  --border: var(--mist-divider);
+  --surface: var(--paper-white);
+  --surface-2: #16131f;
+  --danger: #e07a6a;
+  --warning: #d9a24a;
+  --ok: #4cc48a;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: #dcdcdc;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+[data-theme="dark"] body { background: #000; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.app {
+  width: 100%; max-width: 440px; height: 100%;
+  position: relative;
+  background: var(--cream-surface);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+:focus-visible { outline: 2px solid var(--signal-blue); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.mono { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+.eyebrow { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--signal-blue); }
+
+/* TOPBAR */
+.topbar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+  background: var(--paper-white);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--ink-black);
+  display: grid; place-items: center;
+  color: var(--cream-surface);
+  font-family: var(--font-mono); font-weight: 700; font-size: 12px;
+}
+.brand-name { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+.brand-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-left: 6px; }
+.tb-row { display: flex; align-items: center; gap: 8px; }
+.tb-btn {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: var(--cream-surface);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  position: relative;
+  transition: transform 0.12s, background 0.12s;
+}
+.tb-btn:active { transform: scale(0.88); background: var(--lilac-wash); }
+.tb-btn svg { width: 17px; height: 17px; stroke: var(--text); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tb-btn .pip { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 999px; background: var(--hot-pink); border: 2px solid var(--cream-surface); }
+.tb-ai {
+  height: 40px; padding: 0 16px; border-radius: 8px;
+  background: var(--ink-black); color: var(--cream-surface);
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 500; font-size: 13px;
+  transition: transform 0.12s, opacity 0.12s;
+}
+.tb-ai:active { transform: scale(0.94); opacity: 0.85; }
+.tb-ai svg { width: 13px; height: 13px; fill: var(--signal-blue); }
+
+/* CONTENT */
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 16px 16px calc(112px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 24px;
+  scrollbar-width: none;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* SECTION HEAD */
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.section-link { font-size: 12px; color: var(--signal-blue); font-weight: 500; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: transform 0.12s;
+}
+.kpi-card:active { transform: scale(0.97); }
+.kpi-label { font-size: 11px; font-weight: 500; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+.kpi-trend { font-size: 12px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+.trend-up, .trend-down { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; font-size: 12px; }
+.trend-up { color: var(--ok); }
+.trend-down { color: var(--danger); }
+.trend-up svg, .trend-down svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.kpi-bar { display: flex; gap: 2px; height: 5px; margin-top: 2px; }
+.kpi-seg { flex: 1; background: var(--border); }
+.kpi-seg.balance { background: var(--signal-blue); }
+.kpi-seg.overdue { background: var(--danger); opacity: 0.75; }
+.kpi-seg.invoices { background: var(--iris-violet); }
+.kpi-seg.payments { background: var(--mint-green); }
+.kpi-seg:first-child { border-radius: 2px 0 0 2px; }
+.kpi-seg:last-child { border-radius: 0 2px 2px 0; }
+
+/* SMART BANNER — dark code-panel style */
+.smart-banner {
+  border-radius: var(--r-card);
+  background:
+    linear-gradient(135deg, #221f1d, #312b2b 40%, rgba(41,57,105,0.55));
+  padding: 18px;
+  display: flex; gap: 12px; align-items: flex-start;
+  position: relative;
+  color: #f0f0f0;
+}
+.sb-icon {
+  width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--graphite-border);
+  display: grid; place-items: center;
+  color: var(--signal-blue);
+}
+.sb-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sb-body { flex: 1; }
+.sb-title { font-weight: 700; font-size: 15px; }
+.sb-text { font-size: 12.5px; color: rgba(240,240,240,0.75); margin-top: 3px; line-height: 1.5; }
+.sb-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 12px;
+  background: var(--signal-blue); color: var(--ink-black);
+  border-radius: var(--r-btn);
+  padding: 9px 18px;
+  font-weight: 500; font-size: 13px;
+  transition: transform 0.12s, opacity 0.12s;
+}
+.sb-cta:active { transform: scale(0.96); opacity: 0.85; }
+.sb-cta svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.sb-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px; border-radius: 999px;
+  display: grid; place-items: center; color: rgba(255,255,255,0.6);
+}
+.sb-close:active { background: rgba(255,255,255,0.1); }
+.sb-close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+
+/* NOTIF STRIP */
+.notif-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.notif-scroll::-webkit-scrollbar { display: none; }
+.notif-card {
+  min-width: 168px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 7px;
+  transition: transform 0.12s;
+}
+.notif-card:active { transform: scale(0.97); }
+.notif-tag { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--signal-blue); }
+.notif-card-title { font-weight: 700; font-size: 13.5px; line-height: 1.3; }
+.notif-card-desc { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.notif-card-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-top: auto; }
+
+/* FEED */
+.feed-list { display: flex; flex-direction: column; gap: 8px; }
+.feed-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 13px;
+  transition: transform 0.12s;
+}
+.feed-row:active { transform: scale(0.985); }
+.feed-icon {
+  width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;
+  background: var(--cream-surface);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  color: var(--text-2);
+}
+.feed-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.feed-lines { flex: 1; min-width: 0; }
+.feed-primary { font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+.feed-secondary { font-size: 12px; color: var(--text-2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-right { text-align: right; flex-shrink: 0; }
+.feed-amount { font-family: var(--font-mono); font-weight: 700; font-size: 13.5px; }
+.feed-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); margin-top: 2px; }
+.badge {
+  display: inline-block; padding: 2px 8px;
+  font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;
+  border: 1px solid var(--border); border-radius: var(--r-tag);
+  color: var(--text-2);
+}
+.badge.paid { border-color: var(--mint-green); color: var(--ok); }
+.badge.pending { border-color: var(--canary-yellow); color: var(--warning); }
+.badge.draft { border-color: var(--border); color: var(--text-3); }
+.badge.overdue { border-color: var(--hot-pink); color: var(--danger); }
+
+/* AUDIT */
+.audit-list { display: flex; flex-direction: column; }
+.audit-row { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.audit-row:last-child { border-bottom: none; }
+.audit-dot { width: 8px; height: 8px; border-radius: 2px; margin-top: 6px; flex-shrink: 0; }
+.audit-dot.ok { background: var(--ok); }
+.audit-dot.warn { background: var(--warning); }
+.audit-dot.bad { background: var(--danger); }
+.audit-body { flex: 1; }
+.audit-title { font-size: 13.5px; font-weight: 500; }
+.audit-meta { font-size: 11.5px; color: var(--text-2); margin-top: 1px; }
+
+/* FAB */
+.fab-wrap { position: absolute; right: 16px; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.fab {
+  width: 54px; height: 54px; border-radius: 12px;
+  background: var(--signal-blue); color: var(--ink-black);
+  display: grid; place-items: center;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.fab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fab:active { transform: scale(0.88); }
+.fab.open { transform: rotate(45deg); background: var(--hot-pink); color: #fff; }
+.quick-popup {
+  width: 210px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: 0 20px 40px rgba(20,20,20,0.14);
+  overflow: hidden;
+  opacity: 0; transform: translateY(8px) scale(0.98); pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+}
+[data-theme="dark"] .quick-popup { box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+.quick-popup.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.popup-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; text-align: left;
+  padding: 13px 16px; font-size: 13.5px; font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+.popup-item:last-child { border-bottom: none; }
+.popup-item:active { background: var(--cream-surface); }
+.popup-item svg { width: 16px; height: 16px; fill: none; stroke: var(--signal-blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* BOTTOM NAV — hairline cell strip with syntax-token active */
+.bottom-nav {
+  position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 40;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 4px;
+  display: flex;
+  box-shadow: 0 12px 30px rgba(20,20,20,0.08);
+}
+[data-theme="dark"] .bottom-nav { box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+.bn-item {
+  flex: 1; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  color: var(--text-2);
+  border-bottom: 2px solid transparent;
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+}
+.bn-item svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bn-item .bn-label {
+  display: none; margin-left: 7px;
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.bn-item:active { transform: scale(0.88); }
+.bn-item.active { background: var(--cream-surface); color: var(--signal-blue); border-bottom-color: var(--signal-blue); }
+.bn-item.active .bn-label { display: inline; }
+
+/* SCRIM */
+.scrim {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(20,20,20,0.4);
+  backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.scrim.visible { opacity: 1; pointer-events: auto; }
+
+/* SIDEBAR */
+.sidebar {
+  position: absolute; top: 0; left: 0; bottom: 0; width: 288px; z-index: 60;
+  background: var(--paper-white);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-head { padding: calc(16px + env(safe-area-inset-top)) 18px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.sidebar-logo { width: 34px; height: 34px; border-radius: 8px; background: var(--ink-black); display: grid; place-items: center; color: var(--signal-blue); font-family: var(--font-mono); font-weight: 700; font-size: 12px; }
+.sidebar-brand { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 10px; display: flex; flex-direction: column; gap: 2px; }
+.sidebar-section { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); padding: 12px 10px 4px; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 10px; font-size: 14px; font-weight: 500;
+  border-radius: 8px;
+  color: var(--text);
+}
+.sidebar-link:active { background: var(--cream-surface); }
+.sidebar-link.active { background: var(--lilac-wash); color: var(--signal-blue); }
+.sidebar-link svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.sidebar-foot { padding: 13px 18px calc(13px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.sidebar-avatar { width: 34px; height: 34px; border-radius: 8px; background: var(--ink-black); color: var(--signal-blue); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+.sidebar-user-name { font-weight: 700; font-size: 13.5px; }
+.sidebar-user-role { font-size: 12px; color: var(--text-2); }
+
+/* NOTIF PANEL */
+.notif-panel {
+  position: absolute; top: calc(62px + env(safe-area-inset-top)); left: 12px; right: 12px;
+  z-index: 60;
+  background: var(--paper-white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: 0 20px 40px rgba(20,20,20,0.14);
+  overflow: hidden;
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+[data-theme="dark"] .notif-panel { box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.np-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.np-title { font-size: 14px; font-weight: 700; }
+.np-clear { font-size: 12px; color: var(--signal-blue); font-weight: 500; }
+.np-list { max-height: 320px; overflow-y: auto; }
+.np-row { display: flex; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+.np-row:last-child { border-bottom: none; }
+.np-row:active { background: var(--cream-surface); }
+.np-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--signal-blue); margin-top: 6px; flex-shrink: 0; }
+.np-dot.read { background: var(--ash-text); }
+.np-l1 { font-size: 13.5px; font-weight: 500; }
+.np-l2 { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+
+/* AI PANEL */
+.ai-overlay {
+  position: absolute; inset: 0; z-index: 70;
+  background: rgba(20,20,20,0.5);
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.ai-overlay.open { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  width: 100%; max-height: 78%;
+  background: var(--paper-white);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  display: flex; flex-direction: column;
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.ai-overlay.open .ai-panel { transform: translateY(0); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.ai-head-left { display: flex; align-items: center; gap: 12px; }
+.ai-avatar { width: 34px; height: 34px; border-radius: 8px; background: var(--ink-black); color: var(--signal-blue); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 11px; }
+.ai-title { font-weight: 700; font-size: 14px; }
+.ai-sub { font-size: 11px; color: var(--text-2); }
+.ai-close { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--text-2); }
+.ai-close:active { background: var(--cream-surface); }
+.ai-close svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.ai-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 9px; }
+.ai-msg { max-width: 84%; padding: 11px 14px; font-size: 13.5px; line-height: 1.5; border-radius: 10px; }
+.ai-msg.bot { align-self: flex-start; background: var(--cream-surface); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+.ai-msg.user { align-self: flex-end; background: var(--ink-black); color: var(--cream-surface); border-bottom-right-radius: 3px; }
+.typing { display: inline-flex; gap: 5px; padding: 13px 14px; background: var(--cream-surface); border: 1px solid var(--border); border-radius: 10px; align-self: flex-start; }
+.typing span { width: 6px; height: 6px; border-radius: 999px; background: var(--signal-blue); animation: blink 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.15s; }
+.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes blink { 0%,60%,100% { opacity: 0.25; } 30% { opacity: 1; } }
+.ai-chips { display: flex; flex-direction: column; gap: 8px; padding: 0 18px 14px; }
+.ai-chip {
+  width: 100%; text-align: left;
+  padding: 12px 14px; font-size: 13.5px; font-weight: 500;
+  background: var(--cream-surface); border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+}
+.ai-chip:active { transform: scale(0.98); border-color: var(--signal-blue); }
+.ai-input-row { display: flex; gap: 9px; padding: 12px 18px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+.ai-input {
+  flex: 1; height: 44px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: var(--r-btn);
+  background: var(--cream-surface); color: var(--text);
+  font: inherit; font-size: 13.5px; outline: none;
+}
+.ai-input:focus { border-color: var(--signal-blue); }
+.ai-input::placeholder { color: var(--text-3); }
+.ai-send {
+  width: 44px; height: 44px; border-radius: var(--r-btn); flex-shrink: 0;
+  background: var(--signal-blue); color: var(--ink-black);
+  display: grid; place-items: center;
+  transition: transform 0.12s;
+}
+.ai-send:active { transform: scale(0.88); }
+.ai-send svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* LOADING SCREEN */
+.loading-screen {
+  position: absolute; inset: 0; z-index: 80;
+  background:
+    linear-gradient(135deg, #221f1d, #312b2b 40%, rgba(41,57,105,0.65));
+  color: #f0f0f0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.loading-screen.show { opacity: 1; pointer-events: auto; }
+.ls-mark {
+  width: 70px; height: 70px; border-radius: 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--graphite-border);
+  display: grid; place-items: center;
+  margin-bottom: 24px;
+  color: var(--signal-blue);
+  font-family: var(--font-mono); font-weight: 700; font-size: 22px;
+}
+.ls-spinner { width: 34px; height: 34px; border-radius: 999px; border: 2px solid rgba(255,255,255,0.15); border-top-color: var(--signal-blue); animation: spin 0.9s linear infinite; margin-bottom: 18px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ls-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.ls-tip-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--signal-blue); margin-top: 20px; }
+.ls-tip { font-size: 13.5px; color: rgba(240,240,240,0.75); max-width: 290px; margin-top: 8px; line-height: 1.55; }
+.ls-bar { width: 200px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.15); margin-top: 26px; overflow: hidden; }
+.ls-bar i { display: block; height: 100%; width: 40%; border-radius: 999px; background: var(--signal-blue); animation: load 1.4s ease-in-out infinite; }
+@keyframes load { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+/* TOAST */
+.toast {
+  position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 90;
+  background: var(--ink-black); color: var(--cream-surface);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 12.5px; font-weight: 500;
+  box-shadow: 0 12px 30px rgba(20,20,20,0.2);
+  opacity: 0; pointer-events: none; transition: all 0.2s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">cx</div>
+      <div class="brand-name">Convex<span class="brand-sub">bigdrops.app</span></div>
+    </div>
+    <div class="tb-row">
+      <button class="tb-btn" id="themeBtn" aria-label="Toggle theme">
+        <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="tb-btn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+      <button class="tb-btn" id="notifBtn" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="pip"></span></button>
+      <button class="tb-ai" id="aiBtn"><svg viewBox="0 0 24 24"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>Steward</button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content" id="content">
+    <!-- KPI -->
+    <section>
+      <div class="section-head"><div class="section-title">Overview</div></div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Balance</div>
+          <div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦10,000</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>+12%</span>last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Overdue</div>
+          <div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦56,000</div>
+          <div class="kpi-trend"><span class="trend-down"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></svg>+4%</span>vs yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Invoices</div>
+          <div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">12</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>-2</span>pending review</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Payments</div>
+          <div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦89,000</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>+18%</span>this month</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SMART BANNER -->
+    <section class="smart-banner" id="smartBanner">
+      <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12z"/><path d="M12 2v10h10"/></svg></div>
+      <div class="sb-body">
+        <div class="sb-title">3 payments may be unrecorded</div>
+        <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+        <button class="sb-cta" onclick="showToast('Recording payments...')"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Record now</button>
+      </div>
+      <button class="sb-close" id="sbClose" aria-label="Dismiss"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </section>
+
+    <!-- NOTIF STRIP -->
+    <section>
+      <div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link" id="seeAll">See all</span></div>
+      <div class="notif-scroll">
+        <div class="notif-card"><div class="notif-tag">Payment</div><div class="notif-card-title">Payment received ₦120,000</div><div class="notif-card-desc">Global Traders settled INV-1042.</div><div class="notif-card-time">today 09:41</div></div>
+        <div class="notif-card"><div class="notif-tag">Overdue</div><div class="notif-card-title">INV-1038 is 3 days overdue</div><div class="notif-card-desc">Follow up with Jade &amp; Co.</div><div class="notif-card-time">yesterday 16:20</div></div>
+        <div class="notif-card"><div class="notif-tag">Draft</div><div class="notif-card-title">Q-091 awaiting review</div><div class="notif-card-desc">Draft saved by Milad 2h ago.</div><div class="notif-card-time">yesterday 13:05</div></div>
+        <div class="notif-card"><div class="notif-tag">System</div><div class="notif-card-title">Waybill WB-210 shipped</div><div class="notif-card-desc">Carrier tracking updated.</div><div class="notif-card-time">mon 11:30</div></div>
+      </div>
+    </section>
+
+    <!-- DOCUMENT FEED -->
+    <section>
+      <div class="section-head"><div class="section-title">Recent Documents</div></div>
+      <div class="feed-list">
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1042 <span class="badge paid">Paid</span></div>
+            <div class="feed-secondary">Global Traders — Office furniture</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦120,000</div><div class="feed-meta">Aug 17</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">Q-091 <span class="badge draft">Draft</span></div>
+            <div class="feed-secondary">Jade &amp; Co. — POS hardware bundle</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦45,000</div><div class="feed-meta">Aug 16</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">WB-210 <span class="badge pending">In transit</span></div>
+            <div class="feed-secondary">Global Traders — Dispatch batch 2</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">—</div><div class="feed-meta">Aug 15</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1038 <span class="badge overdue">Overdue</span></div>
+            <div class="feed-secondary">Jade &amp; Co. — Retail shelving</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦56,000</div><div class="feed-meta">Aug 14</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">Q-088 <span class="badge paid">Accepted</span></div>
+            <div class="feed-secondary">Sunbeam Ltd — Branding collateral</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦210,000</div><div class="feed-meta">Aug 12</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1035 <span class="badge paid">Paid</span></div>
+            <div class="feed-secondary">Kaduna Mills — Spare parts</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦89,000</div><div class="feed-meta">Aug 10</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUDIT TRAIL -->
+    <section>
+      <div class="section-head"><div class="section-title">Audit Trail</div></div>
+      <div class="audit-list">
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-1042 marked as paid</div><div class="audit-meta">Milad A. · Today 09:41 · verified against bank</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">Waybill WB-210 dispatched</div><div class="audit-meta">System · Today 08:12 · carrier linked</div></div></div>
+        <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">Q-091 edited — line items changed</div><div class="audit-meta">Milad A. · Yesterday 17:02 · 2 rows</div></div></div>
+        <div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-1038 reminder sent</div><div class="audit-meta">Automation · Yesterday 09:00 · overdue</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">Payment received from Sunbeam</div><div class="audit-meta">Bank sync · Aug 12 14:22 · ₦210,000</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">CSR-019 closed</div><div class="audit-meta">Ada O. · Aug 11 16:40 · resolution logged</div></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FAB -->
+  <div class="fab-wrap">
+    <div class="quick-popup" id="quickPopup">
+      <button class="popup-item" onclick="closeOverlays();showToast('New invoice draft opened')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>New invoice</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Quotation draft opened')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>New quotation</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Waybill created')"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg>New waybill</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Client added')"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>New client</button>
+    </div>
+    <button class="fab" id="fabBtn" aria-label="Quick actions"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="bn-item active" data-tab="Home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="bn-label">Home</span></button>
+    <button class="bn-item" data-tab="Projects"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="bn-label">Projects</span></button>
+    <button class="bn-item" data-tab="Sales"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="bn-label">Sales</span></button>
+    <button class="bn-item" data-tab="Clients"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="bn-label">Clients</span></button>
+    <button class="bn-item" data-tab="More"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span class="bn-label">More</span></button>
+  </nav>
+
+  <!-- SCRIM -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">cx</div>
+      <div class="sidebar-brand">Convex</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Documents</div>
+      <a href="#" class="sidebar-link active" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Dashboard</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg>Waybills</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
+      <div class="sidebar-section">Operations</div>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-avatar">MA</div>
+      <div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div>
+    </div>
+  </aside>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="np-head"><div class="np-title">Notifications</div><span class="np-clear" onclick="showToast('Notifications cleared')">Clear all</span></div>
+    <div class="np-list">
+      <div class="np-row"><div class="np-dot"></div><div><div class="np-l1">Payment received — ₦120,000</div><div class="np-l2">INV-1042 · Global Traders · 09:41</div></div></div>
+      <div class="np-row"><div class="np-dot"></div><div><div class="np-l1">INV-1038 overdue by 3 days</div><div class="np-l2">Jade &amp; Co. · balance ₦56,000</div></div></div>
+      <div class="np-row"><div class="np-dot read"></div><div><div class="np-l1">Quotation Q-091 awaiting review</div><div class="np-l2">Draft saved by Milad · 13:05</div></div></div>
+      <div class="np-row"><div class="np-dot read"></div><div><div class="np-l1">Waybill WB-210 shipped</div><div class="np-l2">Tracking updated · Mon 11:30</div></div></div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="ai-overlay" id="aiOverlay">
+    <div class="ai-panel">
+      <div class="ai-head">
+        <div class="ai-head-left">
+          <div class="ai-avatar">cx</div>
+          <div><div class="ai-title">Steward</div><div class="ai-sub">Online · answers in seconds</div></div>
+        </div>
+        <button class="ai-close" onclick="closeOverlays()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="ai-body">
+        <div class="ai-msg bot">Good morning, Milad. You have <strong>3 unrecorded payments</strong> and <strong>1 overdue invoice</strong> to follow up on today.</div>
+        <div class="ai-msg user">Summarize my cash position this week.</div>
+        <div class="typing"><span></span><span></span><span></span></div>
+        <div class="ai-msg bot">Received ₦419,000 across 5 payments. Outstanding balance is ₦66,000. Want me to draft reminders?</div>
+      </div>
+      <div class="ai-chips">
+        <button class="ai-chip" onclick="sendAi()">Draft overdue invoice reminders</button>
+        <button class="ai-chip">Reconcile this week's payments</button>
+        <button class="ai-chip">Which clients owe the most?</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="aiInput" placeholder="Ask Steward anything..." />
+        <button class="ai-send" onclick="sendAi()" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING SCREEN -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="ls-mark">cx</div>
+    <div class="ls-spinner"></div>
+    <div class="ls-title">Refreshing</div>
+    <div class="ls-tip-label">Did you know</div>
+    <div class="ls-tip" id="lsTip"></div>
+    <div class="ls-bar"><i></i></div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+var TIPS = [
+  'You can convert an invoice to a waybill directly from the document view.',
+  'Keyboard shortcuts exist for saving: Ctrl+S drafts, Ctrl+Enter finalizes.',
+  'Unpaid invoices older than 7 days can be pushed to a CSR report.',
+  'The item library deduplicates by part number across all documents.',
+  'Quotations reuse the same tax engine as invoices, so totals always match.'
+];
+function closeOverlays(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('notifPanel').classList.remove('open');
+  document.getElementById('aiOverlay').classList.remove('open');
+  document.getElementById('quickPopup').classList.remove('open');
+  document.getElementById('fabBtn').classList.remove('open');
+  document.getElementById('scrim').classList.remove('visible');
+}
+document.getElementById('fabBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  var open = this.classList.toggle('open');
+  document.getElementById('quickPopup').classList.toggle('open', open);
+  document.getElementById('scrim').classList.toggle('visible', open);
+  if(open){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('aiOverlay').classList.remove('open');
+  }
+});
+document.getElementById('scrim').addEventListener('click', closeOverlays);
+document.getElementById('aiBtn').addEventListener('click', function(){
+  var ai = document.getElementById('aiOverlay');
+  var open = !ai.classList.contains('open');
+  closeOverlays();
+  ai.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+  document.getElementById('aiInput').focus();
+});
+document.getElementById('notifBtn').addEventListener('click', function(){
+  var np = document.getElementById('notifPanel');
+  var open = !np.classList.contains('open');
+  closeOverlays();
+  np.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+});
+document.getElementById('themeBtn').addEventListener('click', function(){
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
+  this.querySelector('.i-moon').style.display = dark ? '' : 'none';
+  this.querySelector('.i-sun').style.display = dark ? 'none' : '';
+});
+document.getElementById('sbClose').addEventListener('click', function(){
+  document.getElementById('smartBanner').style.display = 'none';
+});
+document.getElementById('seeAll').addEventListener('click', function(){
+  closeOverlays();
+  showToast('Showing all alerts');
+});
+var navItems = document.querySelectorAll('.bn-item');
+navItems.forEach(function(item){
+  item.addEventListener('click', function(){
+    navItems.forEach(function(i){ i.classList.remove('active'); });
+    this.classList.add('active');
+    showToast(this.dataset.tab + ' selected');
+  });
+});
+document.querySelectorAll('.sidebar-link').forEach(function(l){
+  l.addEventListener('click', function(){ closeOverlays(); });
+});
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+var tipIdx = 0;
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  var ls = document.getElementById('loadingScreen');
+  var tip = document.getElementById('lsTip');
+  tip.textContent = TIPS[tipIdx % TIPS.length];
+  tipIdx++;
+  ls.classList.add('show');
+  setTimeout(function(){
+    ls.classList.remove('show');
+    showToast('Dashboard refreshed');
+  }, 2200);
+});
+function sendAi(){
+  var inp = document.getElementById('aiInput');
+  var v = inp.value.trim();
+  if(!v) return;
+  var body = document.querySelector('.ai-body');
+  var u = document.createElement('div');
+  u.className = 'ai-msg user';
+  u.textContent = v;
+  body.appendChild(u);
+  inp.value = '';
+  var b = document.createElement('div');
+  b.className = 'ai-msg bot';
+  b.textContent = 'I will look into that for you.';
+  setTimeout(function(){ body.appendChild(b); body.scrollTop = body.scrollHeight; }, 700);
+}
+</script>
+</body>
+</html>
