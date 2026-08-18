@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BIGDROPS — Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --void: #0a0a0a;
+  --grid: #e5e7eb;
+  --body: #d4d4d4;
+  --muted: #737373;
+  --divider: #171717;
+  --danger: #e5484d;
+  --warning: #c9a227;
+  --ok: #3fb950;
+  --canvas: var(--void);
+  --surface: var(--void);
+  --text: var(--body);
+  --text-2: var(--muted);
+  --border: var(--grid);
+  --border-soft: var(--divider);
+  --r: 0px;
+  --font: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+[data-theme="light"] {
+  --void: #f4f4f2;
+  --grid: #2b2b28;
+  --body: #262626;
+  --muted: #8a8a86;
+  --divider: #dcdcd8;
+  --danger: #d0332b;
+  --warning: #9a7200;
+  --ok: #1a7f37;
+  --canvas: var(--void);
+  --surface: var(--void);
+  --text: var(--body);
+  --text-2: var(--muted);
+  --border: var(--grid);
+  --border-soft: var(--divider);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.app {
+  width: 100%; max-width: 440px; height: 100%;
+  position: relative;
+  background: var(--canvas);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+/* TOPBAR — header block */
+.topbar {
+  flex-shrink: 0;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 10px;
+  padding: calc(18px + env(safe-area-inset-top)) 16px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.brand { line-height: 1.4; }
+.brand-name { font-size: 16px; font-weight: 600; letter-spacing: 0; }
+.brand-tag { font-size: 11px; color: var(--text-2); }
+.tb-row { display: flex; align-items: center; gap: 4px; }
+.tb-btn {
+  height: 38px; min-width: 38px; padding: 0 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  font-size: 11px;
+  position: relative;
+  transition: background 0.12s, transform 0.12s;
+}
+.tb-btn:active { background: var(--text); color: var(--canvas); transform: scale(0.95); }
+.tb-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tb-btn .pip { position: absolute; top: -1px; right: -1px; width: 7px; height: 7px; background: var(--danger); }
+.tb-ai {
+  height: 38px; padding: 0 10px;
+  border: 1px solid var(--border);
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  transition: background 0.12s, transform 0.12s;
+}
+.tb-ai:active { background: var(--text); color: var(--canvas); transform: scale(0.95); }
+.tb-ai svg { width: 12px; height: 12px; fill: currentColor; }
+
+/* CONTENT */
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 16px 16px calc(112px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 32px;
+  scrollbar-width: none;
+}
+.content::-webkit-scrollbar { display: none; }
+
+/* SECTION LABEL */
+.section-label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0 2px; margin-bottom: 10px;
+}
+.section-label a { color: var(--text-2); text-decoration: none; }
+.section-label a:active { color: var(--text); }
+
+/* KPI — lattice cells */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
+.kpi-card { padding: 14px 12px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.kpi-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 16px; font-weight: 600; line-height: 1.2; }
+.kpi-trend { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+.trend-up { color: var(--ok); font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+.trend-down { color: var(--danger); font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+.trend-up svg, .trend-down svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.kpi-bar { display: flex; gap: 2px; height: 6px; }
+.kpi-seg { flex: 1; background: var(--divider); }
+.kpi-seg.balance { background: var(--text); opacity: 0.85; }
+.kpi-seg.overdue { background: var(--text); opacity: 0.4; }
+.kpi-seg.invoices { background: var(--text); opacity: 0.7; }
+.kpi-seg.payments { background: var(--text); opacity: 0.55; }
+
+/* SMART BANNER — bordered cell */
+.smart-banner {
+  border: 1px solid var(--border);
+  padding: 16px;
+  display: flex; gap: 10px; align-items: flex-start;
+  position: relative;
+}
+.sb-idx { font-size: 11px; color: var(--text-2); flex-shrink: 0; padding-top: 2px; }
+.sb-body { flex: 1; }
+.sb-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.sb-title .caret { color: var(--ok); }
+.sb-text { font-size: 12px; color: var(--text-2); margin-top: 4px; line-height: 1.55; }
+.sb-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  padding: 7px 12px;
+  font-size: 12px; font-weight: 600;
+  transition: background 0.12s, transform 0.12s;
+}
+.sb-cta:active { background: var(--text); color: var(--canvas); transform: scale(0.97); }
+.sb-cta svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.sb-close {
+  position: absolute; top: 8px; right: 8px;
+  width: 26px; height: 26px;
+  display: grid; place-items: center; color: var(--text-2);
+}
+.sb-close:active { background: var(--text); color: var(--canvas); }
+.sb-close svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+
+/* NOTIF STRIP */
+.notif-scroll { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border: 1px solid var(--border); }
+.notif-scroll::-webkit-scrollbar { display: none; }
+.notif-card {
+  min-width: 170px;
+  padding: 12px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+  flex-shrink: 0;
+}
+.notif-card:last-child { border-right: none; }
+.notif-tag { font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.notif-card-title { font-size: 12px; font-weight: 600; line-height: 1.4; }
+.notif-card-desc { font-size: 11px; color: var(--text-2); line-height: 1.45; }
+.notif-card-time { font-size: 10px; color: var(--text-2); margin-top: auto; }
+
+/* FEED */
+.feed-list { display: flex; flex-direction: column; border: 1px solid var(--border); }
+.feed-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.feed-row:last-child { border-bottom: none; }
+.feed-row:active { background: var(--divider); }
+.feed-icon { width: 30px; height: 30px; border: 1px solid var(--border); display: grid; place-items: center; flex-shrink: 0; }
+.feed-icon svg { width: 14px; height: 14px; stroke: var(--text); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.feed-lines { flex: 1; min-width: 0; }
+.feed-primary { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+.feed-secondary { font-size: 11px; color: var(--text-2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-right { text-align: right; flex-shrink: 0; }
+.feed-amount { font-size: 12px; font-weight: 600; }
+.feed-meta { font-size: 10px; color: var(--text-2); margin-top: 1px; }
+.badge {
+  display: inline-block; padding: 1px 7px;
+  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  border: 1px solid currentColor;
+}
+.badge.paid { color: var(--ok); }
+.badge.pending { color: var(--warning); }
+.badge.draft { color: var(--text-2); }
+.badge.overdue { color: var(--danger); }
+
+/* AUDIT */
+.audit-list { display: flex; flex-direction: column; border: 1px solid var(--border); }
+.audit-row { display: flex; gap: 10px; padding: 11px 12px; border-bottom: 1px solid var(--border); }
+.audit-row:last-child { border-bottom: none; }
+.audit-dot { width: 7px; height: 7px; margin-top: 5px; flex-shrink: 0; }
+.audit-dot.ok { background: var(--ok); }
+.audit-dot.warn { background: var(--warning); }
+.audit-dot.bad { background: var(--danger); }
+.audit-body { flex: 1; }
+.audit-title { font-size: 12px; font-weight: 600; }
+.audit-meta { font-size: 10px; color: var(--text-2); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* FAB — bordered square */
+.fab-wrap { position: absolute; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fab {
+  width: 50px; height: 50px;
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  display: grid; place-items: center;
+  color: var(--text);
+  transition: transform 0.15s, background 0.15s;
+}
+.fab svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fab:active { transform: scale(0.9); background: var(--text); color: var(--canvas); }
+.fab.open { transform: rotate(45deg); background: var(--danger); color: var(--canvas); }
+.quick-popup {
+  width: 200px;
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+}
+.quick-popup.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.popup-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left;
+  padding: 12px; font-size: 12px; font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.popup-item:last-child { border-bottom: none; }
+.popup-item:active { background: var(--text); color: var(--canvas); }
+.popup-item svg { width: 14px; height: 14px; stroke: var(--text); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* BOTTOM NAV — hairline strip */
+.bottom-nav {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  border-top: 1px solid var(--border);
+  background: var(--canvas);
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+  display: flex;
+}
+.bn-item {
+  flex: 1; height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  color: var(--text-2);
+  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  border-right: 1px solid var(--divider);
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.bn-item:last-child { border-right: none; }
+.bn-item svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.bn-item .bn-label { display: none; }
+.bn-item:active { transform: scale(0.92); }
+.bn-item.active { background: var(--text); color: var(--canvas); }
+.bn-item.active .bn-label { display: inline; }
+
+/* SCRIM */
+.scrim {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.6);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.scrim.visible { opacity: 1; pointer-events: auto; }
+
+/* SIDEBAR */
+.sidebar {
+  position: absolute; top: 0; left: 0; bottom: 0; width: 280px; z-index: 60;
+  background: var(--canvas);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-head { padding: calc(16px + env(safe-area-inset-top)) 16px 14px; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.sidebar-head .caption { font-size: 11px; color: var(--text-2); display: block; }
+.sidebar-brand { font-size: 16px; font-weight: 600; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 0; }
+.sidebar-section { font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 16px 6px; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 16px; font-size: 13px; font-weight: 600;
+  border-left: 2px solid transparent;
+  color: var(--text);
+  transition: background 0.12s;
+}
+.sidebar-link:active { background: var(--divider); }
+.sidebar-link.active { border-left-color: var(--text); background: var(--divider); }
+.sidebar-link svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.sidebar-foot { padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.sidebar-avatar { width: 30px; height: 30px; border: 1px solid var(--border); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+.sidebar-user-name { font-size: 13px; font-weight: 600; }
+.sidebar-user-role { font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* NOTIF PANEL */
+.notif-panel {
+  position: absolute; top: calc(64px + env(safe-area-inset-top)); left: 12px; right: 12px;
+  z-index: 60;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.notif-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.np-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.np-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.np-clear { font-size: 11px; color: var(--text-2); }
+.np-list { max-height: 320px; overflow-y: auto; }
+.np-row { display: flex; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--divider); }
+.np-row:last-child { border-bottom: none; }
+.np-row:active { background: var(--divider); }
+.np-dot { width: 7px; height: 7px; background: var(--danger); margin-top: 5px; flex-shrink: 0; }
+.np-dot.read { background: var(--divider); }
+.np-l1 { font-size: 12px; font-weight: 600; }
+.np-l2 { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+/* AI PANEL */
+.ai-overlay {
+  position: absolute; inset: 0; z-index: 70;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.ai-overlay.open { opacity: 1; pointer-events: auto; }
+.ai-panel {
+  width: 100%; max-height: 78%;
+  background: var(--canvas);
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.ai-overlay.open .ai-panel { transform: translateY(0); }
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.ai-head-left { display: flex; align-items: center; gap: 10px; }
+.ai-avatar { width: 30px; height: 30px; border: 1px solid var(--border); display: grid; place-items: center; font-size: 10px; font-weight: 600; }
+.ai-title { font-size: 13px; font-weight: 600; }
+.ai-sub { font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.ai-close { width: 30px; height: 30px; display: grid; place-items: center; color: var(--text-2); }
+.ai-close:active { background: var(--text); color: var(--canvas); }
+.ai-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+.ai-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.ai-msg { max-width: 86%; padding: 10px 12px; font-size: 12px; line-height: 1.55; border: 1px solid var(--divider); }
+.ai-msg.bot { align-self: flex-start; }
+.ai-msg.user { align-self: flex-end; background: var(--text); color: var(--canvas); border-color: var(--text); }
+.typing { display: inline-flex; gap: 4px; padding: 11px 12px; border: 1px solid var(--divider); align-self: flex-start; }
+.typing span { width: 5px; height: 5px; background: var(--text); animation: blink 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.15s; }
+.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes blink { 0%,60%,100% { opacity: 0.25; } 30% { opacity: 1; } }
+.ai-chips { display: flex; flex-direction: column; gap: 6px; padding: 0 16px 12px; }
+.ai-chip {
+  width: 100%; text-align: left;
+  padding: 11px 12px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  transition: transform 0.12s;
+}
+.ai-chip:active { transform: scale(0.98); background: var(--text); color: var(--canvas); }
+.ai-input-row { display: flex; gap: 8px; padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+.ai-input {
+  flex: 1; height: 42px; padding: 0 12px;
+  border: 1px solid var(--border);
+  background: var(--canvas); color: var(--text);
+  font: inherit; font-size: 13px; outline: none;
+}
+.ai-input:focus { border-color: var(--text); }
+.ai-send {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  transition: background 0.12s, transform 0.12s;
+}
+.ai-send:active { background: var(--text); color: var(--canvas); transform: scale(0.92); }
+.ai-send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* LOADING SCREEN — terminal boot */
+.loading-screen {
+  position: absolute; inset: 0; z-index: 80;
+  background: var(--canvas);
+  display: flex; flex-direction: column;
+  padding: calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.loading-screen.show { opacity: 1; pointer-events: auto; }
+.ls-term {
+  flex: 1;
+  border: 1px solid var(--border);
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow: hidden;
+}
+.ls-line { white-space: nowrap; overflow: hidden; }
+.ls-line .p { color: var(--text-2); }
+.ls-line .ok { color: var(--ok); }
+.ls-cursor { display: inline-block; width: 8px; height: 14px; background: var(--text); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.ls-spinner { width: 30px; height: 30px; margin-top: 16px; border: 2px solid var(--divider); border-top-color: var(--text); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ls-tip { margin-top: 14px; font-size: 11px; color: var(--text-2); line-height: 1.55; }
+.ls-tip b { color: var(--text); }
+.ls-bar { width: 200px; height: 4px; background: var(--divider); margin-top: 16px; overflow: hidden; }
+.ls-bar i { display: block; height: 100%; width: 40%; background: var(--text); animation: load 1.4s ease-in-out infinite; }
+@keyframes load { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+/* TOAST */
+.toast {
+  position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 90;
+  background: var(--text); color: var(--canvas);
+  padding: 9px 16px;
+  font-size: 11px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: all 0.2s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-name">bigdrops_</div>
+      <div class="brand-tag">[operator: milad]</div>
+    </div>
+    <div class="tb-row">
+      <button class="tb-btn" id="themeBtn" aria-label="Toggle theme">
+        <svg class="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="tb-btn" id="refreshBtn" aria-label="Refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+      <button class="tb-btn" id="notifBtn" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="pip"></span></button>
+      <button class="tb-ai" id="aiBtn"><svg viewBox="0 0 24 24"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>AI</button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content" id="content">
+    <!-- KPI -->
+    <section>
+      <div class="section-label"><span>[01] PULSE</span><span>updated 09:41</span></div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Balance</div>
+          <div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦10,000</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>+12%</span>last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Overdue</div>
+          <div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦56,000</div>
+          <div class="kpi-trend"><span class="trend-down"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></svg>+4%</span>vs yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Invoices</div>
+          <div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">12</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>-2</span>pending review</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Payments</div>
+          <div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div>
+          <div class="kpi-value">₦89,000</div>
+          <div class="kpi-trend"><span class="trend-up"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>+18%</span>this month</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SMART BANNER -->
+    <section class="smart-banner" id="smartBanner">
+      <span class="sb-idx">[02-N]</span>
+      <div class="sb-body">
+        <div class="sb-title">WARN: 3 payments may be unrecorded <span class="caret">_</span></div>
+        <div class="sb-text">balance moved, no matching payment logged this week. record them to keep reports accurate.</div>
+        <button class="sb-cta" onclick="showToast('Recording payments...')"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>RECORD NOW</button>
+      </div>
+      <button class="sb-close" id="sbClose" aria-label="Dismiss"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </section>
+
+    <!-- NOTIF STRIP -->
+    <section>
+      <div class="section-label"><span>[03] ALERTS</span><a id="seeAll" href="#">see all</a></div>
+      <div class="notif-scroll">
+        <div class="notif-card"><div class="notif-tag">payment</div><div class="notif-card-title">payment received ₦120,000</div><div class="notif-card-desc">global traders settled INV-1042</div><div class="notif-card-time">today 09:41</div></div>
+        <div class="notif-card"><div class="notif-tag">overdue</div><div class="notif-card-title">INV-1038 is 3 days overdue</div><div class="notif-card-desc">follow up with jade &amp; co</div><div class="notif-card-time">yesterday 16:20</div></div>
+        <div class="notif-card"><div class="notif-tag">draft</div><div class="notif-card-title">Q-091 awaiting review</div><div class="notif-card-desc">draft saved by milad 2h ago</div><div class="notif-card-time">yesterday 13:05</div></div>
+        <div class="notif-card"><div class="notif-tag">system</div><div class="notif-card-title">waybill WB-210 shipped</div><div class="notif-card-desc">carrier tracking updated</div><div class="notif-card-time">mon 11:30</div></div>
+      </div>
+    </section>
+
+    <!-- DOCUMENT FEED -->
+    <section>
+      <div class="section-label"><span>[04] LEDGER</span></div>
+      <div class="feed-list">
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1042 <span class="badge paid">Paid</span></div>
+            <div class="feed-secondary">global traders — office furniture</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦120,000</div><div class="feed-meta">aug 17</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">Q-091 <span class="badge draft">Draft</span></div>
+            <div class="feed-secondary">jade &amp; co — pos hardware bundle</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦45,000</div><div class="feed-meta">aug 16</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">WB-210 <span class="badge pending">In transit</span></div>
+            <div class="feed-secondary">global traders — dispatch batch 2</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">—</div><div class="feed-meta">aug 15</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1038 <span class="badge overdue">Overdue</span></div>
+            <div class="feed-secondary">jade &amp; co — retail shelving</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦56,000</div><div class="feed-meta">aug 14</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">Q-088 <span class="badge paid">Accepted</span></div>
+            <div class="feed-secondary">sunbeam ltd — branding collateral</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦210,000</div><div class="feed-meta">aug 12</div></div>
+        </div>
+        <div class="feed-row">
+          <div class="feed-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div class="feed-lines">
+            <div class="feed-primary">INV-1035 <span class="badge paid">Paid</span></div>
+            <div class="feed-secondary">kaduna mills — spare parts</div>
+          </div>
+          <div class="feed-right"><div class="feed-amount">₦89,000</div><div class="feed-meta">aug 10</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUDIT TRAIL -->
+    <section>
+      <div class="section-label"><span>[05] HISTORY</span></div>
+      <div class="audit-list">
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-1042 marked as paid</div><div class="audit-meta">milad · today 09:41 · verified</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">waybill WB-210 dispatched</div><div class="audit-meta">system · today 08:12 · carrier linked</div></div></div>
+        <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">Q-091 edited — line items changed</div><div class="audit-meta">milad · yesterday 17:02 · 2 rows</div></div></div>
+        <div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">INV-1038 reminder sent</div><div class="audit-meta">automation · yesterday 09:00 · overdue</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">payment received from sunbeam</div><div class="audit-meta">bank sync · aug 12 14:22 · ₦210,000</div></div></div>
+        <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">CSR-019 closed</div><div class="audit-meta">ada o · aug 11 16:40 · resolution logged</div></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FAB -->
+  <div class="fab-wrap">
+    <div class="quick-popup" id="quickPopup">
+      <button class="popup-item" onclick="closeOverlays();showToast('New invoice draft opened')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>new invoice</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Quotation draft opened')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>new quotation</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Waybill created')"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg>new waybill</button>
+      <button class="popup-item" onclick="closeOverlays();showToast('Client added')"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>new client</button>
+    </div>
+    <button class="fab" id="fabBtn" aria-label="Quick actions"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="bn-item active" data-tab="Home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span class="bn-label">Home</span></button>
+    <button class="bn-item" data-tab="Projects"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="bn-label">Proj</span></button>
+    <button class="bn-item" data-tab="Sales"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="bn-label">Sales</span></button>
+    <button class="bn-item" data-tab="Clients"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span class="bn-label">Clients</span></button>
+    <button class="bn-item" data-tab="More"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span class="bn-label">More</span></button>
+  </nav>
+
+  <!-- SCRIM -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="sidebar-head">
+      <span class="caption">bigdrops / [00-N]</span>
+      <div class="sidebar-brand">navigation</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">documents</div>
+      <a href="#" class="sidebar-link active" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>dashboard</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>invoices</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>quotations</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg>waybills</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>letters</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>csr reports</a>
+      <div class="sidebar-section">operations</div>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>projects</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>compliance</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>item library</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-avatar">MA</div>
+      <div><div class="sidebar-user-name">milad a.</div><div class="sidebar-user-role">operator</div></div>
+    </div>
+  </aside>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="np-head"><div class="np-title">notifications</div><span class="np-clear" onclick="showToast('Notifications cleared')">clear all</span></div>
+    <div class="np-list">
+      <div class="np-row"><div class="np-dot"></div><div><div class="np-l1">payment received — ₦120,000</div><div class="np-l2">INV-1042 · global traders · 09:41</div></div></div>
+      <div class="np-row"><div class="np-dot"></div><div><div class="np-l1">INV-1038 overdue by 3 days</div><div class="np-l2">jade &amp; co · balance ₦56,000</div></div></div>
+      <div class="np-row"><div class="np-dot read"></div><div><div class="np-l1">quotation Q-091 awaiting review</div><div class="np-l2">draft saved by milad · 13:05</div></div></div>
+      <div class="np-row"><div class="np-dot read"></div><div><div class="np-l1">waybill WB-210 shipped</div><div class="np-l2">tracking updated · mon 11:30</div></div></div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="ai-overlay" id="aiOverlay">
+    <div class="ai-panel">
+      <div class="ai-head">
+        <div class="ai-head-left">
+          <div class="ai-avatar">BD</div>
+          <div><div class="ai-title">steward</div><div class="ai-sub">online · answers in seconds</div></div>
+        </div>
+        <button class="ai-close" onclick="closeOverlays()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="ai-body">
+        <div class="ai-msg bot">good morning, milad. you have <strong>3 unrecorded payments</strong> and <strong>1 overdue invoice</strong> to follow up on today.</div>
+        <div class="ai-msg user">summarize my cash position this week</div>
+        <div class="typing"><span></span><span></span><span></span></div>
+        <div class="ai-msg bot">received ₦419,000 across 5 payments. outstanding balance is ₦66,000. want me to draft the follow-up for INV-1038?</div>
+      </div>
+      <div class="ai-chips">
+        <button class="ai-chip" onclick="showToast('Drafting follow-up...')">draft follow-up for INV-1038</button>
+        <button class="ai-chip" onclick="showToast('Building cash report...')">build cash position report</button>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="aiInput" placeholder="$ ask steward anything..." />
+        <button class="ai-send" aria-label="Send" onclick="sendAi()"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING SCREEN -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="ls-term">
+      <div class="ls-line"><span class="p">$</span> bigdrops refresh --force</div>
+      <div class="ls-line"><span class="ok">ok</span> · syncing ledger cells</div>
+      <div class="ls-line"><span class="ok">ok</span> · re-fetching payments</div>
+      <div class="ls-line"><span class="ok">ok</span> · reconciling balances</div>
+      <div class="ls-line"><span class="p">$</span> verifying audit trail<span class="ls-cursor"></span></div>
+      <div class="ls-spinner"></div>
+      <div class="ls-tip">TIP: <b>invoice → waybill</b> conversion lives inside the document view. monetary fields are stripped automatically.</div>
+      <div class="ls-bar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+var TIPS = [
+  'invoice → waybill conversion strips monetary fields automatically.',
+  'Ctrl+S drafts, Ctrl+Enter finalizes a document.',
+  'unpaid invoices older than 7 days can be pushed to a CSR report.',
+  'the item library deduplicates by part number across all documents.',
+  'quotations reuse the same tax engine as invoices, so totals always match.'
+];
+function closeOverlays(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('notifPanel').classList.remove('open');
+  document.getElementById('aiOverlay').classList.remove('open');
+  document.getElementById('quickPopup').classList.remove('open');
+  document.getElementById('fabBtn').classList.remove('open');
+  document.getElementById('scrim').classList.remove('visible');
+}
+document.getElementById('fabBtn').addEventListener('click', function(e){
+  e.stopPropagation();
+  var open = this.classList.toggle('open');
+  document.getElementById('quickPopup').classList.toggle('open', open);
+  document.getElementById('scrim').classList.toggle('visible', open);
+  if(open){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('aiOverlay').classList.remove('open');
+  }
+});
+document.getElementById('scrim').addEventListener('click', closeOverlays);
+document.getElementById('aiBtn').addEventListener('click', function(){
+  var ai = document.getElementById('aiOverlay');
+  var open = !ai.classList.contains('open');
+  closeOverlays();
+  ai.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+  document.getElementById('aiInput').focus();
+});
+document.getElementById('notifBtn').addEventListener('click', function(){
+  var np = document.getElementById('notifPanel');
+  var open = !np.classList.contains('open');
+  closeOverlays();
+  np.classList.toggle('open', open);
+  if(open) document.getElementById('scrim').classList.add('visible');
+});
+document.getElementById('themeBtn').addEventListener('click', function(){
+  var dark = document.documentElement.getAttribute('data-theme') !== 'light';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : '');
+  this.querySelector('.i-moon').style.display = dark ? 'none' : '';
+  this.querySelector('.i-sun').style.display = dark ? '' : 'none';
+});
+document.getElementById('sbClose').addEventListener('click', function(){
+  document.getElementById('smartBanner').style.display = 'none';
+});
+document.getElementById('seeAll').addEventListener('click', function(e){
+  e.preventDefault();
+  closeOverlays();
+  showToast('Showing all alerts');
+});
+var navItems = document.querySelectorAll('.bn-item');
+navItems.forEach(function(item){
+  item.addEventListener('click', function(){
+    navItems.forEach(function(i){ i.classList.remove('active'); });
+    this.classList.add('active');
+    showToast(this.dataset.tab + ' selected');
+  });
+});
+document.querySelectorAll('.sidebar-link').forEach(function(l){
+  l.addEventListener('click', function(){ closeOverlays(); });
+});
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+var tipIdx = 0;
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  var ls = document.getElementById('loadingScreen');
+  ls.classList.add('show');
+  setTimeout(function(){
+    ls.classList.remove('show');
+    showToast('Dashboard refreshed');
+  }, 2200);
+});
+function sendAi(){
+  var inp = document.getElementById('aiInput');
+  var v = inp.value.trim();
+  if(!v) return;
+  var body = document.querySelector('.ai-body');
+  var u = document.createElement('div');
+  u.className = 'ai-msg user';
+  u.textContent = v;
+  body.appendChild(u);
+  inp.value = '';
+  var b = document.createElement('div');
+  b.className = 'ai-msg bot';
+  b.textContent = 'I will look into that for you.';
+  setTimeout(function(){ body.appendChild(b); body.scrollTop = body.scrollHeight; }, 700);
+}
+</script>
+</body>
+</html>
