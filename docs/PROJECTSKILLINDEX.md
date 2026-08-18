@@ -10,12 +10,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 91 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit`) |
+| `.agents/skills/` | 92 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design`) |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `.mimocode/skills/` | 2 skills | Audit trail investigation and waybill template debugging |
 | `.mimocode/commands/` | 1 command | Type checking verification |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **106 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **107 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 ---
 ## `.agents/skills/`
@@ -121,6 +121,13 @@ General engineering and frontend skills used by coding agents during development
 | 90 | web-to-markdown | .agents/skills/web-to-markdown/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\web-to-markdown\SKILL.md | Convert webpage URLs to clean Markdown via local web2md CLI (explicit-invocation only) |
 | 91 | writing-clearly-and-concisely | .agents/skills/writing-clearly-and-concisely/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\writing-clearly-and-concisely\SKILL.md | Apply Strunk's rules for clearer prose — docs, commits, error messages, UI text |
 
+### Added via `skills.sh/ceorkm/mobile-app-ui-design`
+Installed manually by the project lead on 2026-08-18. Mobile-first UI/UX design skill.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 92 | mobile-app-ui-design | .agents/skills/mobile-app-ui-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mobile-app-ui-design\SKILL.md | Mobile-first UI/UX — thumb-zone CTAs, F-pattern layout, 8-point grid, 60/30/10 color rule, soft tinted shadows, mobile screens/flows/onboarding |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -170,6 +177,7 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── accessibility/
 │       ├── deploy-to-vercel/
 │       ├── frontend-design/
+│       ├── mobile-app-ui-design/
 │       ├── pdf-rendering-correctness/
 │       ├── react-pdf/
 │       ├── redesign-existing-projects/
@@ -206,5 +214,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: August 11, 2026 — added `supabase`, `valyu-best-practices`, and `audit-trail-investigation`*
+*Last updated: August 18, 2026 — added `mobile-app-ui-design` from `skills.sh/ceorkm/mobile-app-ui-design`*
 ```

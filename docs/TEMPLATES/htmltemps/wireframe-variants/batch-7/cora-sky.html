@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BIGDROPS — Cora Sky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --sky-1:#117bc8; --sky-2:#4a9ed6; --sky-3:#8ec8ea;
+  --deep:#0d5c96; --atmos:#60a8dd; --navy:#09426c; --berry:#cf372d;
+  --surface:#ffffff; --surface-2:#ebebeb; --fog:#dadada;
+  --stone:#a1a1a1; --graphite:#7d7d7d; --ink:#2b2b2b;
+  --sky-gradient:linear-gradient(160deg,#0f6cb4 0%,#2b8ed4 35%,#6db5e2 70%,#a8d4ef 100%);
+  --danger:#cf372d; --warn:#c28a1d; --ok:#1e7d4f;
+  --shadow:0 4px 4px rgba(13,92,150,.1),0 12px 32px rgba(13,92,150,.16);
+  --shadow-lg:0 16px 48px rgba(13,92,150,.28),0 4px 12px rgba(13,92,150,.16);
+  --blur:16px;
+}
+[data-theme="dark"]{
+  --sky-1:#072c49; --sky-2:#0d4a77; --sky-3:#1c5f8f;
+  --deep:#60a8dd; --atmos:#4a9ed6; --navy:#2b8ed4; --berry:#ef6b5e;
+  --surface:#0f2030; --surface-2:#16293b; --fog:#1c3347;
+  --stone:#7f96a8; --graphite:#9db1c0; --ink:#e8eef3;
+  --sky-gradient:linear-gradient(160deg,#041c30 0%,#0a3554 40%,#124a72 75%,#1a5a86 100%);
+  --danger:#ef6b5e; --warn:#e0ab3f; --ok:#4ade80;
+  --shadow:0 4px 4px rgba(0,0,0,.3),0 12px 32px rgba(0,0,0,.4);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--sky-gradient);color:var(--ink);font-size:14px;line-height:1.4;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+.serif{font-family:'Cormorant Garamond',serif}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+::-webkit-scrollbar{width:0;height:0}
+
+.app{display:flex;height:100%}
+
+/* SIDEBAR */
+.sidebar{width:258px;flex-shrink:0;background:rgba(255,255,255,.14);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border-right:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;z-index:40;transition:transform .28s cubic-bezier(.4,0,.2,1);color:#fff}
+.sb-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.18)}
+.sb-logo{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;display:grid;place-items:center;font-weight:600;font-size:12px;font-family:'Cormorant Garamond',serif}
+.sb-brand{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:16px;font-style:italic}
+.sb-brand span{font-style:normal;font-weight:600;font-size:13px;font-family:'Manrope',sans-serif;opacity:.8}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px}
+.sb-sec{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.55);padding:12px 12px 5px;font-weight:600}
+.sb-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:999px;color:rgba(255,255,255,.75);font-weight:500;font-size:13px;margin-bottom:2px;transition:background .15s}
+.sb-link svg{width:16px;height:16px;flex-shrink:0}
+.sb-link.active{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
+.sb-link.active svg{color:#fff}
+.sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.18);display:flex;align-items:center;gap:10px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600}
+.sb-user b{font-size:12px;display:block;color:#fff}
+.sb-user span{font-size:10px;color:rgba(255,255,255,.6)}
+
+/* MAIN */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.16);z-index:10;color:#fff;background:rgba(7,60,100,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.tb-title b{color:#fff;font-weight:600}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-btn{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;color:rgba(255,255,255,.85);transition:all .15s;position:relative}
+.tb-btn svg{width:16px;height:16px}
+.tb-btn:active{transform:scale(.92);background:rgba(255,255,255,.2)}
+.tb-btn:hover{background:rgba(255,255,255,.15)}
+.tb-btn .pip{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--berry);border:1.5px solid rgba(255,255,255,.6)}
+.ai-btn{height:34px;padding:0 14px;border-radius:999px;background:var(--navy);color:#fff;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;transition:transform .15s}
+.ai-btn svg{width:13px;height:13px}
+.ai-btn:active{transform:scale(.95)}
+
+/* CONTENT — floats on sky */
+.content{flex:1;overflow-y:auto;padding:14px 16px 96px;display:flex;flex-direction:column;gap:20px}
+
+/* KPI — floating glass cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi-card{background:rgba(255,255,255,.16);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;color:#fff;transition:transform .15s}
+.kpi-card:active{transform:scale(.97)}
+.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.65);font-weight:600}
+.kpi-value{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;line-height:1.05}
+.kpi-bar{display:flex;gap:3px;height:6px}
+.kpi-seg{flex:1;border-radius:999px;background:rgba(255,255,255,.22)}
+.kpi-seg.on{background:#fff}
+.kpi-seg.on.y{background:var(--berry)}
+.kpi-trend{font-size:10px;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:4px;font-weight:500}
+.kpi-trend .up{color:#b7f5cd}
+.kpi-trend .down{color:#ffb3ab}
+
+/* SMART BANNER — floating card */
+.smart-banner{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.16);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:16px;color:#fff;position:relative;overflow:hidden}
+.sb-body{flex:1;position:relative}
+.sb-title{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:16px;line-height:1.2}
+.sb-title em{font-style:italic;color:#ffe9e6}
+.sb-text{font-size:12px;color:rgba(255,255,255,.8);margin-top:3px;max-width:520px}
+.sb-cta{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:var(--navy);color:#fff;font-size:11px;font-weight:600;padding:9px 18px;border-radius:999px;transition:transform .15s}
+.sb-cta:active{transform:scale(.95)}
+.sb-close{position:absolute;top:10px;right:12px;color:rgba(255,255,255,.6);width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+.sb-close svg{width:14px;height:14px}
+.sb-close:hover{color:#fff;background:rgba(255,255,255,.15)}
+
+/* SECTION HEAD */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.section-title{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.65)}
+.section-link{font-size:10px;color:#fff;cursor:pointer;font-weight:600}
+.section-link:hover{text-decoration:underline}
+
+/* NOTIF STRIP */
+.notif-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:2px}
+.notif-card{min-width:152px;background:rgba(255,255,255,.16);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:transform .15s;flex-shrink:0;color:#fff}
+.notif-card:active{transform:scale(.97)}
+.nc-top{display:flex;align-items:center;justify-content:space-between}
+.nc-ic{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;color:#fff}
+.nc-ic svg{width:12px;height:12px}
+.nc-ic.warn{background:rgba(194,138,29,.3)}
+.nc-ic.danger{background:rgba(207,55,45,.35)}
+.nc-title{font-size:12px;font-weight:600;line-height:1.3}
+.nc-desc{font-size:11px;color:rgba(255,255,255,.72);line-height:1.4}
+.nc-time{font-size:9px;color:rgba(255,255,255,.55);margin-top:auto;font-weight:500}
+
+/* FEED */
+.feed-list{display:flex;flex-direction:column;gap:10px}
+.feed-row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.16);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:12px 14px;cursor:pointer;transition:transform .15s;color:#fff}
+.feed-row:active{transform:scale(.985)}
+.feed-ic{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;color:#fff;flex-shrink:0}
+.feed-ic svg{width:15px;height:15px}
+.feed-lines{flex:1;min-width:0}
+.feed-primary{display:flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px}
+.feed-primary .ref{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:11px;color:rgba(255,255,255,.6);font-weight:400}
+.feed-secondary{font-size:11px;color:rgba(255,255,255,.72);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-right{text-align:right;flex-shrink:0}
+.feed-amount{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:400}
+.feed-meta{font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;font-weight:500}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor}
+.badge.paid{color:#b7f5cd}
+.badge.pending{color:#ffe3a3}
+.badge.draft{color:rgba(255,255,255,.55)}
+.badge.overdue{color:#ffb3ab}
+
+/* AUDIT */
+.audit-list{display:flex;flex-direction:column;background:rgba(255,255,255,.16);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.28);border-radius:16px;overflow:hidden;color:#fff}
+.audit-row{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.14)}
+.audit-row:last-child{border-bottom:0}
+.audit-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.audit-dot.ok{background:#b7f5cd}
+.audit-dot.warn{background:#ffe3a3}
+.audit-dot.bad{background:#ffb3ab}
+.audit-body{flex:1;min-width:0}
+.audit-title{font-size:12px;font-weight:500}
+.audit-meta{font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;font-weight:500}
+.audit-amount{font-family:'Cormorant Garamond',serif;font-size:12px;color:rgba(255,255,255,.8);flex-shrink:0}
+
+/* BOTTOM NAV — floating pill, active expands */
+.bottom-nav{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center;z-index:45;pointer-events:none;padding:0 12px}
+.bn-inner{pointer-events:auto;display:flex;gap:4px;background:rgba(9,66,108,.5);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px;box-shadow:var(--shadow-lg);max-width:430px;width:100%}
+.bn-item{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:999px;color:rgba(255,255,255,.7);transition:all .25s;min-height:42px;white-space:nowrap}
+.bn-item svg{width:17px;height:17px;flex-shrink:0}
+.bn-item span{font-size:10px;font-weight:600;opacity:0;width:0;overflow:hidden;transition:all .25s}
+.bn-item:active{transform:scale(.92)}
+.bn-item.active{background:var(--navy);color:#fff;flex:1.6}
+.bn-item.active span{opacity:1;width:auto}
+
+/* FAB */
+.fab-wrap{position:fixed;right:16px;bottom:84px;z-index:46;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.fab{width:50px;height:50px;border-radius:999px;background:var(--navy);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow-lg);transition:transform .2s;border:1px solid rgba(255,255,255,.3)}
+.fab svg{width:20px;height:20px}
+.fab:active{transform:scale(.9)}
+.fab.open{background:var(--berry);transform:rotate(45deg)}
+.quick-popup{width:190px;background:rgba(255,255,255,.95);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:var(--shadow-lg);overflow:hidden;opacity:0;transform:translateY(8px) scale(.97);pointer-events:none;transition:all .2s;color:var(--ink)}
+.quick-popup.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.popup-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;font-size:12.5px;font-weight:500;border-bottom:1px solid var(--fog);color:var(--ink);transition:background .12s}
+.popup-item:last-child{border-bottom:0}
+.popup-item svg{width:15px;height:15px;color:var(--navy)}
+.popup-item:active{background:var(--surface-2)}
+
+/* OVERLAYS */
+.scrim{position:fixed;inset:0;background:rgba(7,48,80,.5);z-index:39;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px)}
+.scrim.visible{opacity:1;pointer-events:auto}
+.notif-panel{position:fixed;top:60px;right:16px;width:300px;max-width:calc(100vw - 32px);background:rgba(255,255,255,.95);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));border:1px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:var(--shadow-lg);z-index:50;overflow:hidden;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .22s;color:var(--ink)}
+.notif-panel.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--fog)}
+.np-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em}
+.np-clear{font-size:9px;color:var(--navy);cursor:pointer;font-weight:600}
+.np-clear:hover{color:var(--deep)}
+.np-list{max-height:320px;overflow-y:auto}
+.np-row{display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--fog);cursor:pointer}
+.np-row:last-child{border-bottom:0}
+.np-row:active{background:var(--surface-2)}
+.np-dot{width:7px;height:7px;border-radius:50%;background:var(--navy);margin-top:5px;flex-shrink:0}
+.np-dot.read{background:var(--fog)}
+.np-lines{flex:1;min-width:0}
+.np-t{font-size:12px;font-weight:500}
+.np-s{font-size:11px;color:var(--graphite);margin-top:2px}
+.np-time{font-size:9px;color:var(--stone);margin-top:3px;font-weight:500}
+
+/* AI PANEL */
+.ai-overlay{position:fixed;inset:0;z-index:55;background:rgba(7,48,80,.6);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(3px)}
+.ai-overlay.open{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-width:480px;max-height:80vh;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px 24px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;color:var(--ink)}
+.ai-overlay.open .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--fog)}
+.ai-head-l{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center}
+.ai-avatar svg{width:15px;height:15px}
+.ai-title{font-weight:600;font-size:13px}
+.ai-sub{font-size:9px;color:var(--stone);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.ai-close{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;color:var(--stone)}
+.ai-close svg{width:15px;height:15px}
+.ai-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{max-width:82%;padding:10px 13px;border-radius:16px;font-size:12.5px;line-height:1.5}
+.ai-msg.bot{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:6px}
+.ai-msg.user{align-self:flex-end;background:var(--navy);color:#fff;border-bottom-right-radius:6px}
+.ai-msg strong{color:var(--navy)}
+.typing{display:inline-flex;gap:4px;padding:12px 14px;background:var(--surface-2);border-radius:16px;align-self:flex-start}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--navy);animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.ai-chips{display:flex;flex-direction:column;gap:6px;padding:0 16px 12px}
+.ai-chip{width:100%;text-align:left;padding:9px 13px;font-size:12px;font-weight:500;border:1px solid var(--fog);border-radius:999px;color:var(--graphite);transition:all .15s}
+.ai-chip:active{transform:scale(.98);background:var(--surface-2)}
+.ai-chip b{color:var(--ink)}
+.ai-input-row{display:flex;gap:8px;padding:10px 16px 14px;border-top:1px solid var(--fog)}
+.ai-input{flex:1;height:38px;padding:0 14px;border:1px solid var(--fog);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;outline:none}
+.ai-input:focus{border-color:var(--navy)}
+.ai-send{width:38px;height:38px;border-radius:999px;background:var(--navy);color:#fff;display:grid;place-items:center;transition:transform .15s}
+.ai-send svg{width:15px;height:15px}
+.ai-send:active{transform:scale(.9)}
+
+/* LOADING SCREEN */
+.loading-screen{position:fixed;inset:0;z-index:70;background:var(--sky-gradient);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;pointer-events:none;transition:opacity .3s}
+.loading-screen.active{opacity:1;pointer-events:auto}
+.ls-mark{position:relative;width:74px;height:74px}
+.ls-ring{position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin 1s linear infinite}
+.ls-core{position:absolute;inset:16px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.4);border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:11px;font-family:'Cormorant Garamond',serif}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-tip{max-width:340px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 24px}
+.ls-tip .kicker{font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,255,255,.7);font-weight:600}
+.ls-tip p{font-size:13px;color:rgba(255,255,255,.85);line-height:1.55}
+.ls-tip p b{color:#fff;font-weight:600}
+.ls-bar{width:180px;height:3px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}
+.ls-bar i{display:block;height:100%;width:40%;background:#fff;border-radius:999px;animation:slide 1.2s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+@media (min-width:769px){
+  .sidebar{position:static;transform:none}
+}
+@media (max-width:768px){
+  .sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .content{padding:12px 12px 100px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo">BD</div>
+      <div class="sb-brand">BIGDROPS <span>Sky</span></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">Documents</div>
+      <a href="#" class="sb-link active" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/></svg>Dashboard</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17h16M4 12h16M4 7h16"/></svg>Waybills</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>CSR Reports</a>
+      <div class="sb-sec">Operations</div>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 .9-4.4 4.3 1 6.1-5.6-3-5.6 3 1-6.1L3 8.9 9 8z"/></svg>Compliance</a>
+      <a href="#" class="sb-link" onclick="return navGo(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-avatar">MA</div>
+      <div class="sb-user"><b>Milad A.</b><span>Operator</span></div>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="tb-btn" id="sidebarToggle" aria-label="Toggle sidebar" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
+        </button>
+        <span class="tb-title"><b>Dashboard</b> / Overview</span>
+      </div>
+      <div class="tb-right">
+        <button class="tb-btn" id="themeBtn" aria-label="Toggle theme" onclick="toggleTheme()">
+          <svg id="sunIc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg id="moonIc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <button class="tb-btn" id="refreshBtn" aria-label="Refresh" onclick="showLoading()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        </button>
+        <button class="tb-btn" id="notifBtn" aria-label="Notifications" onclick="togglePanel('notif')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="pip"></span>
+        </button>
+        <button class="ai-btn" onclick="openAI()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>
+          STEWARD
+        </button>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <!-- KPI -->
+      <section>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Balance</div>
+            <div class="kpi-value">&#8358;10,000</div>
+            <div class="kpi-bar"><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span></div>
+            <div class="kpi-trend"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg><span class="up">+12%</span> last week</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Overdue</div>
+            <div class="kpi-value">&#8358;56,000</div>
+            <div class="kpi-bar"><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span></div>
+            <div class="kpi-trend"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg><span class="down">+4%</span> vs yesterday</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Invoices</div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-bar"><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg on"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span><span class="kpi-seg"></span></div>
+            <div class="kpi-trend"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg><span class="up">-2</span> pending review</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Payments</div>
+            <div class="kpi-value">&#8358;89,000</div>
+            <div class="kpi-bar"><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg on y"></span><span class="kpi-seg"></span><span class="kpi-seg"></span></div>
+            <div class="kpi-trend"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg><span class="up">+18%</span> this month</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SMART BANNER -->
+      <section class="smart-banner" id="smartBanner">
+        <div class="sb-body">
+          <div class="sb-title">3 payments may be <em>unrecorded</em></div>
+          <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+          <div class="sb-cta" onclick="showToast('Recording payments...')">Record now</div>
+        </div>
+        <button class="sb-close" aria-label="Dismiss" onclick="document.getElementById('smartBanner').style.display='none'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </section>
+
+      <!-- NOTIFICATIONS STRIP -->
+      <section>
+        <div class="section-head">
+          <div class="section-title">Recent Alerts</div>
+          <span class="section-link" onclick="togglePanel('notif')">see all &#8594;</span>
+        </div>
+        <div class="notif-scroll" id="notifScroll"></div>
+      </section>
+
+      <!-- DOCUMENT FEED -->
+      <section>
+        <div class="section-head"><div class="section-title">Recent Documents</div></div>
+        <div class="feed-list" id="feedList"></div>
+      </section>
+
+      <!-- AUDIT TRAIL -->
+      <section>
+        <div class="section-head"><div class="section-title">Audit Trail</div></div>
+        <div class="audit-list" id="auditList"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" aria-label="Main navigation">
+  <div class="bn-inner">
+    <button class="bn-item active" onclick="return navTab(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Home</span></button>
+    <button class="bn-item" onclick="return navTab(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span>Projects</span></button>
+    <button class="bn-item" onclick="return navTab(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 11v6M9 14h6"/></svg><span>Sales</span></button>
+    <button class="bn-item" onclick="return navTab(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Clients</span></button>
+    <button class="bn-item" onclick="return navTab(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg><span>More</span></button>
+  </div>
+</nav>
+
+<!-- FAB -->
+<div class="fab-wrap">
+  <div class="quick-popup" id="quickPopup">
+    <button class="popup-item" onclick="showToast('New invoice started')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>New Invoice</button>
+    <button class="popup-item" onclick="showToast('New quotation started')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>New Quotation</button>
+    <button class="popup-item" onclick="showToast('New waybill started')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17h16M4 12h16M4 7h16"/></svg>New Waybill</button>
+    <button class="popup-item" onclick="showToast('New client added')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>Add Client</button>
+  </div>
+  <button class="fab" id="fab" aria-label="Quick actions" onclick="toggleFab()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head">
+    <div class="np-title">Notifications</div>
+    <span class="np-clear" onclick="showToast('All marked read')">mark all read</span>
+  </div>
+  <div class="np-list" id="npList"></div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel">
+    <div class="ai-head">
+      <div class="ai-head-l">
+        <div class="ai-avatar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg></div>
+        <div><div class="ai-title">Steward</div><div class="ai-sub">AI Assistant</div></div>
+      </div>
+      <button class="ai-close" onclick="closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="ai-body" id="aiBody">
+      <div class="ai-msg bot">Good morning, Milad. You have <strong>3 unrecorded payments</strong> and 2 invoices due this week. Want me to walk you through them?</div>
+      <div class="typing"><span></span><span></span><span></span></div>
+    </div>
+    <div class="ai-chips">
+      <button class="ai-chip" onclick="sendChip(this)"><b>Reconcile</b> unrecorded payments</button>
+      <button class="ai-chip" onclick="sendChip(this)"><b>Summarize</b> this month's cash flow</button>
+      <button class="ai-chip" onclick="sendChip(this)"><b>Find</b> overdue invoices</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Ask Steward anything..." />
+      <button class="ai-send" aria-label="Send" onclick="sendMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="ls-mark">
+    <div class="ls-ring"></div>
+    <div class="ls-core">BD</div>
+  </div>
+  <div class="ls-tip">
+    <div class="kicker">DID YOU KNOW?</div>
+    <p id="tipText">You can convert a quotation to an invoice in one tap from the document view.</p>
+  </div>
+  <div class="ls-bar"><i></i></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const TIPS=[
+  "You can convert a quotation to an invoice in one tap from the document view.",
+  "Waybills strip all monetary values automatically when converted from invoices.",
+  "VAT is computed from the row rate — set it once per line item, not per total.",
+  "Duplicate an invoice to keep its client, items, and terms while editing.",
+  "PDF templates stay renderers: all totals are prepared before they reach the PDF.",
+  "You can lock client and number after finalizing to preserve the audit trail."
+];
+const DOCS=[
+  {ref:'INV-0042',client:'Lagos Steelworks Ltd',title:'Supply of galvanized pipes',amount:'&#8358;1,240,000',status:'paid',date:'Today, 09:41',kind:'inv'},
+  {ref:'QTN-0118',client:'Ikeja Hardware Depot',title:'Construction materials bundle',amount:'&#8358;860,000',status:'pending',date:'Today, 08:12',kind:'qtn'},
+  {ref:'INV-0041',client:'Abuja Logistics Co',title:'Freight & haulage — Phase 2',amount:'&#8358;2,100,000',status:'overdue',date:'Yesterday',kind:'inv'},
+  {ref:'WYB-0277',client:'Onitsha Traders Union',title:'Dispatch — 240 crates',amount:'&#8358;0',status:'draft',date:'Yesterday',kind:'wyb'},
+  {ref:'INV-0040',client:'Port Harcourt Oil & Gas',title:'Equipment servicing',amount:'&#8358;540,000',status:'paid',date:'Aug 14',kind:'inv'},
+  {ref:'QTN-0117',client:'Kano Agro Industries',title:'Packaging line upgrade',amount:'&#8358;3,400,000',status:'pending',date:'Aug 13',kind:'qtn'},
+  {ref:'LTR-0031',client:'Federal Trade Ministry',title:'Compliance response letter',amount:'&#8358;0',status:'draft',date:'Aug 12',kind:'ltr'},
+  {ref:'INV-0039',client:'Lagos Steelworks Ltd',title:'Retainer — August',amount:'&#8358;720,000',status:'paid',date:'Aug 11',kind:'inv'}
+];
+const ALERTS=[
+  {t:'Payment received',d:'INV-0042 cleared via transfer',time:'2m ago',kind:''},
+  {t:'Invoice overdue',d:'INV-0041 is 5 days past due',time:'1h ago',kind:'warn'},
+  {t:'Low stock alert',d:'3 items under reorder level',time:'3h ago',kind:'danger'},
+  {t:'Quotation accepted',d:'QTN-0118 approved by client',time:'5h ago',kind:''}
+];
+const AUDIT=[
+  {t:'Invoice INV-0042 marked as paid',meta:'Milad A. · 09:41',kind:'ok',amt:'+&#8358;1,240,000'},
+  {t:'Quotation QTN-0118 sent to client',meta:'Ada O. · 08:12',kind:'',amt:''},
+  {t:'Waybill WYB-0277 created from INV-0041',meta:'Milad A. · Yesterday',kind:'warn',amt:''},
+  {t:'Payment recorded on INV-0040',meta:'System · Aug 14',kind:'ok',amt:'+&#8358;540,000'},
+  {t:'Client field changed on INV-0039',meta:'Ada O. · Aug 11',kind:'warn',amt:''},
+  {t:'Invoice INV-0038 deleted (draft)',meta:'Milad A. · Aug 10',kind:'bad',amt:''}
+];
+const KIND_IC={inv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',qtn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',wyb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17h16M4 12h16M4 7h16"/></svg>',ltr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>'};
+function renderFeed(){
+  document.getElementById('feedList').innerHTML=DOCS.map(d=>
+    `<div class="feed-row">
+      <div class="feed-ic">${KIND_IC[d.kind]}</div>
+      <div class="feed-lines">
+        <div class="feed-primary">${d.title} <span class="ref">${d.ref}</span></div>
+        <div class="feed-secondary">${d.client}</div>
+      </div>
+      <div class="feed-right">
+        <div class="feed-amount">${d.amount}</div>
+        <div class="feed-meta">${d.date} <span class="badge ${d.status}">${d.status}</span></div>
+      </div>
+    </div>`).join('');
+}
+function renderAlerts(){
+  document.getElementById('notifScroll').innerHTML=ALERTS.map(a=>
+    `<div class="notif-card" onclick="showToast('${a.t}')">
+      <div class="nc-top"><div class="nc-ic ${a.kind}">${a.kind==='warn'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>':a.kind==='danger'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>'}</div><div class="nc-time">${a.time}</div></div>
+      <div class="nc-title">${a.t}</div>
+      <div class="nc-desc">${a.d}</div>
+    </div>`).join('');
+  document.getElementById('npList').innerHTML=ALERTS.map((a,i)=>
+    `<div class="np-row" onclick="showToast('${a.t}')">
+      <div class="np-dot ${i<2?'':'read'}"></div>
+      <div class="np-lines"><div class="np-t">${a.t}</div><div class="np-s">${a.d}</div><div class="np-time">${a.time}</div></div>
+    </div>`).join('');
+}
+function renderAudit(){
+  document.getElementById('auditList').innerHTML=AUDIT.map(a=>
+    `<div class="audit-row">
+      <div class="audit-dot ${a.kind}"></div>
+      <div class="audit-body"><div class="audit-title">${a.t}</div><div class="audit-meta">${a.meta}</div></div>
+      ${a.amt?`<div class="audit-amount">${a.amt}</div>`:''}
+    </div>`).join('');
+}
+renderFeed();renderAlerts();renderAudit();
+
+function closeOverlays(){
+  document.querySelectorAll('.sidebar').forEach(s=>s.classList.remove('open'));
+  document.getElementById('scrim').classList.remove('visible');
+  document.getElementById('notifPanel').classList.remove('open');
+  document.getElementById('aiOverlay').classList.remove('open');
+  document.getElementById('quickPopup').classList.remove('open');
+  document.getElementById('fab').classList.remove('open');
+}
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');
+  s.classList.toggle('open');
+  document.getElementById('scrim').classList.toggle('visible',s.classList.contains('open'));
+}
+function togglePanel(name){
+  const p=document.getElementById(name==='notif'?'notifPanel':'');
+  const was=p.classList.contains('open');
+  closeOverlays();
+  if(name==='notif'&&!was){p.classList.add('open');document.getElementById('scrim').classList.add('visible');}
+}
+function openAI(){
+  const was=document.getElementById('aiOverlay').classList.contains('open');
+  closeOverlays();
+  if(!was)document.getElementById('aiOverlay').classList.add('open');
+}
+function toggleFab(){
+  const f=document.getElementById('fab');
+  const p=document.getElementById('quickPopup');
+  const was=p.classList.contains('open');
+  closeOverlays();
+  if(!was){p.classList.add('open');f.classList.add('open');}
+}
+function navTab(el){
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  closeOverlays();
+  return false;
+}
+function navGo(el){
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  el.classList.add('active');
+  closeOverlays();
+  return false;
+}
+function toggleTheme(){
+  const d=document.documentElement;
+  const dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'':'dark');
+  document.getElementById('sunIc').style.display=dark?'':'none';
+  document.getElementById('moonIc').style.display=dark?'none':'';
+}
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+let tipIdx=0;
+function showLoading(){
+  closeOverlays();
+  const ls=document.getElementById('loadingScreen');
+  document.getElementById('tipText').textContent=TIPS[tipIdx%TIPS.length];
+  tipIdx++;
+  ls.classList.add('active');
+  setTimeout(()=>ls.classList.remove('active'),1800);
+}
+function sendChip(el){
+  const t=el.textContent.replace(/<b>|<\/b>/g,'');
+  const body=document.getElementById('aiBody');
+  body.innerHTML+=`<div class="ai-msg user">${t}</div><div class="typing"><span></span><span></span><span></span></div>`;
+  body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{body.innerHTML+=`<div class="ai-msg bot">Working on that for you. I'll have a breakdown ready shortly.</div>`;body.scrollTop=body.scrollHeight;},1400);
+}
+function sendMsg(){
+  const inp=document.getElementById('aiInput');
+  const v=inp.value.trim();if(!v)return;
+  const body=document.getElementById('aiBody');
+  body.innerHTML+=`<div class="ai-msg user">${v.replace(/</g,'&lt;')}</div>`;
+  inp.value='';
+  body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{body.innerHTML+=`<div class="ai-msg bot">Got it. Let me look into that and get back to you.</div>`;body.scrollTop=body.scrollHeight;},1200);
+}
+document.getElementById('scrim').addEventListener('click',closeOverlays);
+document.getElementById('aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+</script>
+<style>
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:200;background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.04em;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:all .22s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</body>
+</html>
