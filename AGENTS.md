@@ -24,6 +24,8 @@ bun run audit:load
 
 Run `bun run audit:load` before `bun run typecheck`.
 
+For connecting to the database, follow `supabase/database-workflow.md`.
+
 Naming conventions:
 
 - Components: `PascalCase`, example: `WaybillForm.tsx`
