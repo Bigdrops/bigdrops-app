@@ -31,7 +31,7 @@ export function buildTotalsProjection(
   input: TotalsProjectionInput,
 ): PreviewTotalRow[] {
   const { invoice, totals, customFieldObject, invoiceTotal, formatMoney } = input
-  const summaryLabels = getPdfSummaryLabels(invoice, input.pdfOutput)
+  const summaryLabels = getPdfSummaryLabels(invoice)
 
   return [
     ...buildSummaryRows({

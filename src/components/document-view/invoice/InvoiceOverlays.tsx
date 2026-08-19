@@ -147,7 +147,6 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
         bankAccounts={previewBankAccounts}
         companyTagline={String(settingsData?.company_tagline || "")}
         footerText={String(settingsData?.footer_text || "")}
-        showBalanceDueOption={true}
         designOnly
         templateId={pdfTemplateId}
         onSave={handleSaveCustomization}

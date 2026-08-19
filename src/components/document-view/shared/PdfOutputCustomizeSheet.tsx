@@ -125,7 +125,6 @@ interface PdfOutputCustomizeSheetProps {
   bankAccounts?: BankAccountOption[]
   companyTagline?: string
   footerText?: string
-  showBalanceDueOption?: boolean
   designOnly?: boolean
   templateId?: InvoicePdfTemplateId
   onSave: (value: PdfOutputSettingsValue, preset: PdfDesignPreset, templateId: InvoicePdfTemplateId) => void | Promise<void>
@@ -141,7 +140,6 @@ export default function PdfOutputCustomizeSheet({
   bankAccounts = [],
   companyTagline = '',
   footerText = '',
-  showBalanceDueOption = false,
   designOnly = false,
   templateId = 'industry',
   onSave,
@@ -211,7 +209,6 @@ export default function PdfOutputCustomizeSheet({
               onChange={setDraftValue}
               companyTagline={companyTagline}
               footerText={footerText}
-              showBalanceDueOption={showBalanceDueOption}
               defaultOpen
             />
           </>

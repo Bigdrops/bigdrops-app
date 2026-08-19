@@ -93,26 +93,6 @@ export const DocumentOptionsCard: React.FC<DocumentOptionsCardProps> = ({
             onToggle={() => patch("showBankDetails", !state.showBankDetails)}
           />
           <ToggleRow
-            label="Show Amount in Words"
-            checked={state.showAmountInWords}
-            onToggle={() => patch("showAmountInWords", !state.showAmountInWords)}
-          />
-          <ToggleRow
-            label="Show VAT % in Brackets"
-            checked={state.showVatPercentage}
-            onToggle={() => patch("showVatPercentage", !state.showVatPercentage)}
-          />
-          <ToggleRow
-            label="Show WHT % in Brackets"
-            checked={state.showWhtPercentage}
-            onToggle={() => patch("showWhtPercentage", !state.showWhtPercentage)}
-          />
-          <ToggleRow
-            label="Show Discount % in Brackets"
-            checked={state.showDiscountPercentage}
-            onToggle={() => patch("showDiscountPercentage", !state.showDiscountPercentage)}
-          />
-          <ToggleRow
             label="Show Tagline"
             checked={state.showTagline}
             onToggle={() => patch("showTagline", !state.showTagline)}

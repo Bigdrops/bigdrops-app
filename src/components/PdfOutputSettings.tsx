@@ -53,7 +53,6 @@ type PdfOutputSettingsProps = {
    */
   companyTagline?: string
   footerText?: string
-  showBalanceDueOption?: boolean
 }
 
 const PLACEHOLDER_BANKS: BankAccount[] = [
@@ -210,7 +209,7 @@ export function PdfBankControls({
 
 type PdfDocumentOptionsCardProps = Pick<
   PdfOutputSettingsProps,
-  'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'
+  'value' | 'onChange' | 'companyTagline' | 'footerText'
 > & {
   defaultOpen?: boolean
 }
@@ -220,7 +219,6 @@ export function PdfDocumentOptionsCard({
   onChange,
   companyTagline = 'Reliable power for every site',
   footerText = 'Thank you for your business. Payment is due within 7 days unless otherwise agreed.',
-  showBalanceDueOption = false,
   defaultOpen = false,
 }: PdfDocumentOptionsCardProps) {
   const state = mergeOutputState(value, null)
@@ -271,38 +269,6 @@ export function PdfDocumentOptionsCard({
                 </div>
               ) : null}
             </SettingsRow>
-
-            {showBalanceDueOption ? (
-              <SettingsRow
-                label="Show balance due"
-                control={<Switch size="sm" checked={state.showBalanceDue} onCheckedChange={() => update({ showBalanceDue: !state.showBalanceDue })} />}
-              />
-            ) : null}
-
-            <SettingsRow
-              label="Show amount in words"
-              control={<Switch size="sm" checked={state.showAmountInWords} onCheckedChange={() => update({ showAmountInWords: !state.showAmountInWords })} />}
-            />
-
-            <SettingsRow
-              label="Show VAT % in brackets"
-              control={<Switch size="sm" checked={state.showVatPercentage} onCheckedChange={() => update({ showVatPercentage: !state.showVatPercentage })} />}
-            />
-
-            <SettingsRow
-              label="Show WHT % in brackets"
-              control={<Switch size="sm" checked={state.showWhtPercentage} onCheckedChange={() => update({ showWhtPercentage: !state.showWhtPercentage })} />}
-            />
-
-            <SettingsRow
-              label="Show discount % in brackets"
-              control={
-                <Switch size="sm"
-                  checked={state.showDiscountPercentage}
-                  onCheckedChange={() => update({ showDiscountPercentage: !state.showDiscountPercentage })}
-                />
-              }
-            />
           </div>
         ) : null}
       </CardContent>
@@ -310,7 +276,7 @@ export function PdfDocumentOptionsCard({
   )
 }
 
-export function PdfSupportingOptions(props: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText' | 'showBalanceDueOption'>) {
+export function PdfSupportingOptions(props: Pick<PdfOutputSettingsProps, 'value' | 'onChange' | 'companyTagline' | 'footerText'>) {
   return <PdfDocumentOptionsCard {...props} defaultOpen />
 }
 
@@ -320,7 +286,6 @@ export function PdfOutputSettings({
   bankAccounts,
   companyTagline = "Reliable power for every site",
   footerText = "Thank you for your business. Payment is due within 7 days unless otherwise agreed.",
-  showBalanceDueOption = false,
 }: PdfOutputSettingsProps) {
   return (
     <div className="space-y-3">
@@ -330,7 +295,6 @@ export function PdfOutputSettings({
         onChange={onChange}
         companyTagline={companyTagline}
         footerText={footerText}
-        showBalanceDueOption={showBalanceDueOption}
       />
     </div>
   )

@@ -1,11 +1,5 @@
 import { parseCustomFields } from '@/domain/invoice'
 
-type LabelOptions = {
-  showVatPercentage?: boolean
-  showWhtPercentage?: boolean
-  showDiscountPercentage?: boolean
-}
-
 type SupportedDocument = {
   custom_fields?: unknown
 }
@@ -19,12 +13,12 @@ function formatPercentage(value: number): string {
   return `${value.toFixed(4).replace(/\.?0+$/, '')}%`
 }
 
-function buildLabel(baseLabel: string, percentage: number | null, showPercentage?: boolean): string {
-  if (!showPercentage || percentage === null) return baseLabel
+function buildLabel(baseLabel: string, percentage: number | null): string {
+  if (percentage === null) return baseLabel
   return `${baseLabel} (${formatPercentage(percentage)})`
 }
 
-export function getPdfSummaryLabels(document: SupportedDocument, options: LabelOptions = {}) {
+export function getPdfSummaryLabels(document: SupportedDocument) {
   const customFields = parseCustomFields(document?.custom_fields)
   const calculationInputs = customFields.calculationInputs || {}
   const vatPercentage = toFiniteNumber(calculationInputs.vatPercent ?? customFields.vatPercent)
@@ -38,8 +32,8 @@ export function getPdfSummaryLabels(document: SupportedDocument, options: LabelO
       : null
 
   return {
-    vat: buildLabel('VAT', vatPercentage, options.showVatPercentage),
-    wht: buildLabel('WHT', whtPercentage, options.showWhtPercentage),
-    discount: buildLabel('Discount', discountPercentage, options.showDiscountPercentage),
+    vat: buildLabel('VAT', vatPercentage),
+    wht: buildLabel('WHT', whtPercentage),
+    discount: buildLabel('Discount', discountPercentage),
   }
 }

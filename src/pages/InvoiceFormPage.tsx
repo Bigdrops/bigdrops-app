@@ -532,7 +532,6 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
             }))}
             companyTagline={refData.settingsData?.company_tagline || ''}
             footerText={refData.settingsData?.footer_text || ''}
-            showBalanceDueOption
           />
         </div>
 

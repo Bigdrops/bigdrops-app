@@ -47,7 +47,7 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
   ].filter((row) => String(row.value || "").trim().length > 0);
   const previewTableSettings = resolveQuotationPreviewTableSettings(items, customFields);
 
-  const previewSummaryLabels = getPdfSummaryLabels(quotation, pdfOutput);
+  const previewSummaryLabels = getPdfSummaryLabels(quotation);
   const previewTotals = [
     ...buildSummaryRows({
       invoice: quotation || {},
