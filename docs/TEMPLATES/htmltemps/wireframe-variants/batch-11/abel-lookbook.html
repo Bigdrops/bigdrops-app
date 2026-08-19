@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BIGDROPS / Abel Lookbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg:#ffffff;--surface:#f6eada;--surface-2:#dad9d5;--ink:#030303;--text-2:#807e81;--text-3:#cccccc;
+  --border:#030303;--border-light:#e1e1e1;--accent:#f6eada;--danger:#c44;--success:#3a7a3a;--warning:#b8860b;
+  --r:0px;--r-btn:0px;--r-pill:0px;--font-body:'Inter',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+[data-theme="dark"] {
+  --bg:#0a0a0a;--surface:#181818;--surface-2:#222;--ink:#f0ece4;--text-2:#a09e9b;--text-3:#555;
+  --border:#f0ece4;--border-light:#333;--accent:#3d3520;--danger:#e55;--success:#5a5;--warning:#da3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font-body);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;height:100vh;height:100dvh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.app{display:flex;height:100vh;height:100dvh;position:relative}
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:transform .25s ease;z-index:40}
+.sidebar.open{transform:translateX(0)}
+.sidebar-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.sidebar-logo{width:32px;height:32px;background:var(--ink);display:grid;place-items:center;color:var(--accent);font-family:var(--font-mono);font-weight:400;font-size:11px;flex-shrink:0}
+.sidebar-brand{font-family:var(--font-mono);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.sidebar-nav{flex:1;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.sidebar-section{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-2);padding:12px 8px 4px}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:13px;font-weight:400;color:var(--text-2);border:1px solid transparent;transition:all .1s}
+.sidebar-link:active{background:var(--surface)}
+.sidebar-link.active{background:var(--ink);color:var(--accent);font-weight:500}
+.sidebar-link svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:28px;height:28px;background:var(--accent);border:1px solid var(--border);display:grid;place-items:center;font-family:var(--font-mono);font-size:10px;font-weight:400}
+.sidebar-user-name{font-size:12px;font-weight:500}
+.sidebar-user-role{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2)}
+/* SCIRIM */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:35;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.visible{opacity:1;pointer-events:auto}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+/* TOPBAR */
+.topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--border);background:var(--bg);z-index:10;gap:10px}
+.topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.topbar-title{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-btn{width:36px;height:36px;border:1px solid var(--border);display:grid;place-items:center;flex-shrink:0;transition:transform .1s;background:var(--bg)}
+.tb-btn:active{transform:scale(.88);background:var(--ink);color:var(--accent)}
+.tb-btn svg{width:16px;height:16px}
+.tb-btn .pip{position:absolute;top:-3px;right:-3px;width:7px;height:7px;background:var(--danger);border:2px solid var(--bg)}
+.tb-btn .pip.hidden{display:none}
+.tb-ai{height:36px;padding:0 12px;background:var(--ink);color:var(--accent);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:transform .1s}
+.tb-ai:active{transform:scale(.92)}
+.tb-ai svg{width:12px;height:12px}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+/* SECTION HEADS */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.section-title{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2)}
+.section-link{font-family:var(--font-mono);font-size:10px;color:var(--text-2);cursor:pointer}
+.section-link:active{color:var(--ink)}
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi-card{border:1px solid var(--border);padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.kpi-label{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2)}
+.kpi-value{font-family:var(--font-body);font-size:20px;font-weight:300;letter-spacing:-.01em}
+.kpi-bar{display:flex;gap:1px;height:6px}
+.kpi-seg{flex:1;background:var(--border-light)}
+.kpi-seg.balance{background:var(--warning)}.kpi-seg.overdue{background:var(--danger)}.kpi-seg.invoices{background:#555}.kpi-seg.payments{background:var(--success)}
+.kpi-trend{font-family:var(--font-mono);font-size:9px;color:var(--text-2)}
+.kpi-trend .up{color:var(--success);font-weight:500}
+.kpi-trend .down{color:var(--danger);font-weight:500}
+/* SMART BANNER */
+.smart-banner{border:1px solid var(--border);padding:12px;background:var(--bg);display:flex;align-items:flex-start;gap:10px;position:relative}
+.sb-dot{width:6px;height:6px;background:var(--danger);margin-top:5px;flex-shrink:0}
+.sb-body{flex:1}
+.sb-title{font-weight:500;font-size:13px}
+.sb-text{font-size:12px;color:var(--text-2);margin-top:3px;font-weight:300}
+.sb-cta{display:inline-block;margin-top:8px;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;background:var(--ink);color:var(--accent);padding:6px 14px;border:1px solid var(--border);cursor:pointer;transition:transform .1s}
+.sb-cta:active{transform:scale(.94)}
+.sb-close{position:absolute;top:8px;right:8px;font-size:14px;color:var(--text-2);background:none;border:none;cursor:pointer;padding:4px}
+/* NOTIF SCROLL */
+.notif-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.notif-scroll::-webkit-scrollbar{display:none}
+.notif-card{min-width:130px;border:1px solid var(--border);padding:10px;background:var(--bg);display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:transform .1s}
+.notif-card:active{transform:scale(.96)}
+.notif-card-title{font-weight:500;font-size:11px;line-height:1.3}
+.notif-card-desc{font-size:10px;color:var(--text-2);font-weight:300}
+.notif-card-time{font-family:var(--font-mono);font-size:8px;color:var(--text-2);margin-top:auto}
+/* DOCUMENT FEED */
+.feed-list{display:flex;flex-direction:column;gap:6px}
+.feed-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);padding:10px 12px;background:var(--bg);cursor:pointer;transition:transform .1s}
+.feed-row:active{transform:scale(.98)}
+.feed-icon{width:28px;height:28px;background:var(--ink);display:grid;place-items:center;color:var(--accent);flex-shrink:0}
+.feed-icon svg{width:14px;height:14px}
+.feed-lines{flex:1;min-width:0}
+.feed-primary{font-family:var(--font-mono);font-weight:400;font-size:11px;display:flex;align-items:center;gap:6px}
+.feed-secondary{font-size:11px;color:var(--text-2);margin-top:2px;font-weight:300}
+.feed-amount{font-family:var(--font-mono);font-weight:400;font-size:11px;text-align:right;flex-shrink:0}
+.feed-meta{font-family:var(--font-mono);font-size:8px;color:var(--text-2);text-align:right}
+.badge{display:inline-block;padding:1px 6px;font-family:var(--font-mono);font-size:8px;text-transform:uppercase;letter-spacing:.04em;border:1px solid currentColor}
+.badge.paid{color:var(--success)}.badge.pending{color:var(--warning)}.badge.draft{color:var(--text-2)}
+/* AUDIT */
+.audit-list{display:flex;flex-direction:column}
+.audit-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border-light)}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:6px;height:6px;border:1px solid var(--border);margin-top:4px;flex-shrink:0}
+.audit-dot.ok{background:var(--success);border-color:var(--success)}
+.audit-dot.warn{background:var(--warning);border-color:var(--warning)}
+.audit-dot.bad{background:var(--danger);border-color:var(--danger)}
+.audit-body{flex:1}
+.audit-title{font-size:12px;font-weight:400}
+.audit-meta{font-family:var(--font-mono);font-size:9px;color:var(--text-2);margin-top:2px}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:52px;z-index:50;background:var(--bg);border-top:1px solid var(--border);display:none;padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav-inner{display:grid;grid-template-columns:repeat(5,1fr);height:100%}
+.bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-2);font-family:var(--font-mono);font-size:8px;text-transform:uppercase;letter-spacing:.06em;border-right:1px solid var(--border-light);transition:all .1s}
+.bn-item:last-child{border-right:none}
+.bn-item svg{width:16px;height:16px}
+.bn-item.active{background:var(--ink);color:var(--accent)}
+.bn-item:active{background:var(--surface)}
+/* FAB */
+.fab-wrap{position:fixed;bottom:64px;right:16px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.fab{width:48px;height:48px;background:var(--ink);color:var(--accent);border:1px solid var(--border);font-size:22px;display:grid;place-items:center;transition:transform .15s;z-index:2}
+.fab:active{transform:scale(.9)}
+.fab.open{transform:rotate(45deg);background:var(--danger);color:#fff}
+.quick-popup{width:180px;background:var(--bg);border:1px solid var(--border);display:flex;flex-direction:column;opacity:0;transform:translateY(8px);pointer-events:none;transition:all .2s}
+.quick-popup.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.popup-item{display:block;width:100%;text-align:left;padding:9px 14px;font-size:12px;font-weight:400;border-bottom:1px solid var(--border-light);transition:background .1s}
+.popup-item:last-child{border-bottom:none}
+.popup-item:active{background:var(--surface)}
+/* NOTIF PANEL */
+.notif-panel{position:fixed;top:56px;right:16px;width:300px;max-height:400px;background:var(--bg);border:1px solid var(--border);z-index:50;display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(-8px);pointer-events:none;transition:all .2s}
+.notif-panel.open{opacity:1;transform:translateY(0);pointer-events:auto}
+.np-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+.np-title{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.np-clear{font-family:var(--font-mono);font-size:9px;color:var(--text-2);cursor:pointer}
+.np-clear:active{color:var(--danger)}
+.np-list{max-height:320px;overflow-y:auto}
+.np-row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--border-light);cursor:pointer;transition:background .1s}
+.np-row:active{background:var(--surface)}
+.np-row:last-child{border-bottom:none}
+.np-dot{width:6px;height:6px;background:var(--danger);margin-top:4px;flex-shrink:0}
+.np-dot.read{background:var(--border-light)}
+.np-lines{flex:1}
+.np-l1{height:7px;width:85%;background:var(--border-light)}
+.np-l2{height:6px;width:55%;background:var(--bg);border:1px solid var(--border-light);margin-top:5px}
+/* AI PANEL */
+.ai-overlay{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.ai-overlay.open{opacity:1;pointer-events:auto}
+.ai-panel{width:100%;max-width:480px;max-height:78vh;background:var(--bg);border:1px solid var(--border);border-bottom:none;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.ai-overlay.open .ai-panel{transform:translateY(0)}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ai-head-left{display:flex;align-items:center;gap:10px}
+.ai-avatar{width:28px;height:28px;background:var(--ink);color:var(--accent);display:grid;place-items:center;font-family:var(--font-mono);font-size:10px}
+.ai-title{font-family:var(--font-mono);font-weight:400;font-size:12px}
+.ai-sub{font-family:var(--font-mono);font-size:9px;color:var(--text-2)}
+.ai-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:80%;padding:10px 12px;font-size:12px;line-height:1.5;border:1px solid var(--border)}
+.ai-msg.bot{align-self:flex-start;background:var(--bg)}
+.ai-msg.user{align-self:flex-end;background:var(--ink);color:var(--accent)}
+.typing{display:inline-flex;gap:4px;padding:10px 12px;border:1px solid var(--border);align-self:flex-start}
+.typing span{width:5px;height:5px;background:var(--ink);animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.ai-chips{display:flex;flex-direction:column;gap:4px;padding:0 16px 10px}
+.ai-chip{display:block;width:100%;text-align:left;padding:8px 12px;font-size:11px;font-weight:400;border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:background .1s}
+.ai-chip:active{background:var(--surface)}
+.ai-input-row{display:flex;gap:6px;padding:10px 16px 14px;border-top:1px solid var(--border)}
+.ai-input{flex:1;height:36px;padding:0 12px;border:1px solid var(--border);background:var(--bg);font-family:var(--font-body);font-size:12px;color:var(--ink);outline:none}
+.ai-input:focus{border-color:var(--ink)}
+.ai-send{width:36px;height:36px;background:var(--ink);color:var(--accent);border:1px solid var(--border);font-size:16px;display:grid;place-items:center;transition:transform .1s}
+.ai-send:active{transform:scale(.9)}
+/* LOADING SCREEN */
+.loading-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.loading-screen.show{opacity:1;pointer-events:auto}
+.ls-spinner{width:32px;height:32px;border:2px solid var(--border-light);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-tip{font-family:var(--font-mono);font-size:11px;text-align:center;color:var(--text-2);max-width:280px;line-height:1.5}
+/* TOAST */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:200;padding:10px 18px;background:var(--ink);color:var(--accent);border:1px solid var(--border);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;opacity:0;pointer-events:none;transition:all .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;transform:translateX(-100%);z-index:40}
+  .sidebar.open{transform:translateX(0)}
+  .bottom-nav{display:block}
+  .content{padding:12px;padding-bottom:72px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">BD</div>
+      <div class="sidebar-brand">BIGDROPS</div>
+    </div>
+    <nav class="sidebar-nav" aria-label="Sections">
+      <div class="sidebar-section">Documents</div>
+      <a href="#" class="sidebar-link active" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Quotations</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg>Waybills</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M12 11v6M9 14h6"/></svg>Letters</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>CSR Reports</a>
+      <div class="sidebar-section">Operations</div>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Compliance</a>
+      <a href="#" class="sidebar-link" onclick="event.preventDefault();closeOverlays()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Item Library</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-avatar">MA</div>
+      <div><div class="sidebar-user-name">Milad A.</div><div class="sidebar-user-role">Operator</div></div>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="tb-btn" id="sidebarToggle" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <span class="topbar-title">BIGDROPS / Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="tb-btn" id="refreshBtn" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+        <button class="tb-btn" id="themeBtn" title="Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+        <button class="tb-btn" id="notifBtn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="pip" id="pip"></span></button>
+        <button class="tb-ai" id="aiBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.4 6.6 6.6 2.4-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z"/></svg>Steward</button>
+      </div>
+    </header>
+    <main class="content" id="content">
+      <!-- KPI -->
+      <section>
+        <div class="section-head"><div class="section-title">Overview</div><span class="section-link">This week</span></div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Balance</div><div class="kpi-bar"><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg balance"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">&#8358;10,000</div><div class="kpi-trend"><span class="up">&#9650; 12%</span> last week</div></div>
+          <div class="kpi-card"><div class="kpi-label">Overdue</div><div class="kpi-bar"><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg overdue"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">&#8358;56,000</div><div class="kpi-trend"><span class="down">&#9660; 4%</span> vs yesterday</div></div>
+          <div class="kpi-card"><div class="kpi-label">Invoices</div><div class="kpi-bar"><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg invoices"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">12</div><div class="kpi-trend"><span class="down">&#9660; 2</span> pending review</div></div>
+          <div class="kpi-card"><div class="kpi-label">Payments</div><div class="kpi-bar"><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg payments"></div><div class="kpi-seg"></div><div class="kpi-seg"></div><div class="kpi-seg"></div></div><div class="kpi-value">&#8358;89,000</div><div class="kpi-trend"><span class="up">&#9650; 18%</span> this month</div></div>
+        </div>
+      </section>
+      <!-- SMART BANNER -->
+      <section class="smart-banner" id="smartBanner">
+        <div class="sb-dot"></div>
+        <div class="sb-body">
+          <div class="sb-title">3 payments may be unrecorded</div>
+          <div class="sb-text">Balance moved but no matching payment was logged this week. Record them to keep reports accurate.</div>
+          <div class="sb-cta" onclick="showToast('Recording payments...')">Record now</div>
+        </div>
+        <button class="sb-close" id="sbClose" aria-label="Dismiss">&times;</button>
+      </section>
+      <!-- NOTIFICATIONS -->
+      <section>
+        <div class="section-head"><div class="section-title">Recent Alerts</div><span class="section-link" id="seeAll">see all</span></div>
+        <div class="notif-scroll" id="notifScroll">
+          <div class="notif-card"><div class="notif-card-title">Overdue: INV-2026-0041</div><div class="notif-card-desc">Gates Corp payment 14 days past due</div><div class="notif-card-time">2h ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">Waybill signed</div><div class="notif-card-desc">WB-0087 confirmed by client</div><div class="notif-card-time">5h ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">New quotation</div><div class="notif-card-desc">QT-0032 created for NovaTech</div><div class="notif-card-time">1d ago</div></div>
+          <div class="notif-card"><div class="notif-card-title">Payment received</div><div class="notif-card-desc">&#8358;45,000 from Stellar Inc</div><div class="notif-card-time">2d ago</div></div>
+        </div>
+      </section>
+      <!-- DOCUMENT FEED -->
+      <section>
+        <div class="section-head"><div class="section-title">Recent Documents</div></div>
+        <div class="feed-list" id="feedList">
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="feed-lines"><div class="feed-primary">INV-2026-0041 <span class="badge pending">Overdue</span></div><div class="feed-secondary">Gates Corp / 3 items</div></div><div><div class="feed-amount">&#8358;125,000</div><div class="feed-meta">Aug 4</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="feed-lines"><div class="feed-primary">QT-2026-0032 <span class="badge draft">Draft</span></div><div class="feed-secondary">NovaTech / 5 items</div></div><div><div class="feed-amount">&#8358;340,000</div><div class="feed-meta">Aug 6</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg></div><div class="feed-lines"><div class="feed-primary">WB-2026-0087 <span class="badge paid">Delivered</span></div><div class="feed-secondary">Stellar Inc / 2 items</div></div><div><div class="feed-amount">&#8358;78,000</div><div class="feed-meta">Aug 7</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="feed-lines"><div class="feed-primary">INV-2026-0039 <span class="badge paid">Paid</span></div><div class="feed-secondary">Apex Ltd / 4 items</div></div><div><div class="feed-amount">&#8358;210,000</div><div class="feed-meta">Aug 2</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="feed-lines"><div class="feed-primary">QT-2026-0030 <span class="badge paid">Accepted</span></div><div class="feed-secondary">Meridian / 8 items</div></div><div><div class="feed-amount">&#8358;560,000</div><div class="feed-meta">Jul 28</div></div></div>
+          <div class="feed-row"><div class="feed-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19M10 18h4"/></svg></div><div class="feed-lines"><div class="feed-primary">WB-2026-0082 <span class="badge pending">In Transit</span></div><div class="feed-secondary">Forge Co / 6 items</div></div><div><div class="feed-amount">&#8358;195,000</div><div class="feed-meta">Jul 30</div></div></div>
+        </div>
+      </section>
+      <!-- AUDIT TRAIL -->
+      <section>
+        <div class="section-head"><div class="section-title">Audit Trail</div></div>
+        <div class="audit-list" id="auditList">
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">INV-2026-0039 marked as paid</div><div class="audit-meta">Aug 3 / system / auto-reconciled</div></div></div>
+          <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">INV-2026-0041 overdue warning</div><div class="audit-meta">Aug 12 / system / 14-day threshold</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">WB-2026-0087 signed by client</div><div class="audit-meta">Aug 7 / Stellar Inc / e-signature</div></div></div>
+          <div class="audit-row"><div class="audit-dot bad"></div><div class="audit-body"><div class="audit-title">QT-2026-0028 rejected</div><div class="audit-meta">Jul 25 / Nexus Corp / price mismatch</div></div></div>
+          <div class="audit-row"><div class="audit-dot ok"></div><div class="audit-body"><div class="audit-title">Payment &#8358;45,000 recorded</div><div class="audit-meta">Jul 22 / Stellar Inc / manual entry</div></div></div>
+          <div class="audit-row"><div class="audit-dot warn"></div><div class="audit-body"><div class="audit-title">Item library sync completed</div><div class="audit-meta">Jul 20 / system / 3 duplicates removed</div></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav" role="tablist" aria-label="Main navigation">
+  <div class="bottom-nav-inner">
+    <button class="bn-item active" role="tab" aria-selected="true" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bn-item" role="tab" data-tab="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</button>
+    <button class="bn-item" role="tab" data-tab="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sales</button>
+    <button class="bn-item" role="tab" data-tab="clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clients</button>
+    <button class="bn-item" role="tab" data-tab="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>More</button>
+  </div>
+</nav>
+<!-- FAB -->
+<div class="fab-wrap">
+  <div class="quick-popup" id="quickPopup">
+    <button class="popup-item" onclick="closeOverlays();showToast('New invoice')">New Invoice</button>
+    <button class="popup-item" onclick="closeOverlays();showToast('New quotation')">New Quotation</button>
+    <button class="popup-item" onclick="closeOverlays();showToast('New waybill')">New Waybill</button>
+    <button class="popup-item" onclick="closeOverlays();showToast('New letter')">New Letter</button>
+  </div>
+  <button class="fab" id="fabBtn" aria-label="Quick actions">+</button>
+</div>
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="np-head"><div class="np-title">Notifications</div><span class="np-clear" id="npClear">Clear all</span></div>
+  <div class="np-list">
+    <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+    <div class="np-row"><div class="np-dot"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+    <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+    <div class="np-row"><div class="np-dot read"></div><div class="np-lines"><div class="np-l1"></div><div class="np-l2"></div></div></div>
+  </div>
+</div>
+<!-- AI PANEL -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-panel">
+    <div class="ai-head"><div class="ai-head-left"><div class="ai-avatar">AI</div><div><div class="ai-title">Steward</div><div class="ai-sub">BIGDROPS Assistant</div></div></div><button id="aiClose" aria-label="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="ai-body">
+      <div class="ai-msg bot">Hello! I can help you manage invoices, quotations, and waybills. What do you need?</div>
+    </div>
+    <div class="ai-chips"><button class="ai-chip" onclick="sendAiChip('Show overdue invoices')">Show overdue invoices</button><button class="ai-chip" onclick="sendAiChip('Create a new waybill')">Create a new waybill</button><button class="ai-chip" onclick="sendAiChip('Summarize this week')">Summarize this week</button></div>
+    <div class="ai-input-row"><input class="ai-input" id="aiInput" placeholder="Ask Steward..." aria-label="Ask Steward" /><button class="ai-send" id="aiSend" aria-label="Send"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+  </div>
+</div>
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen" role="status" aria-label="Refreshing">
+  <div class="ls-spinner"></div>
+  <div class="ls-tip" id="lsTip">Keyboard shortcuts: Ctrl+S drafts, Ctrl+Enter finalizes.</div>
+</div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<script>
+var TIPS=['You can convert an invoice to a waybill directly from the document view.','Keyboard shortcuts: Ctrl+S drafts, Ctrl+Enter finalizes.','Unpaid invoices older than 7 days can be pushed to a CSR report.','The item library deduplicates by part number across all documents.','Quotations reuse the same tax engine as invoices, so totals always match.'];
+function closeOverlays(){document.getElementById('sidebar').classList.remove('open');document.getElementById('notifPanel').classList.remove('open');document.getElementById('aiOverlay').classList.remove('open');document.getElementById('quickPopup').classList.remove('open');document.getElementById('fabBtn').classList.remove('open');document.getElementById('scrim').classList.remove('visible')}
+document.getElementById('sidebarToggle').addEventListener('click',function(){var open=document.getElementById('sidebar').classList.toggle('open');if(open){document.getElementById('notifPanel').classList.remove('open');document.getElementById('aiOverlay').classList.remove('open');document.getElementById('quickPopup').classList.remove('open');document.getElementById('fabBtn').classList.remove('open');document.getElementById('scrim').classList.add('visible')}else{document.getElementById('scrim').classList.remove('visible')}});
+document.getElementById('scrim').addEventListener('click',closeOverlays);
+document.getElementById('aiBtn').addEventListener('click',function(){var ai=document.getElementById('aiOverlay');var open=!ai.classList.contains('open');closeOverlays();ai.classList.toggle('open',open);if(open)document.getElementById('scrim').classList.add('visible');document.getElementById('aiInput').focus()});
+document.getElementById('aiClose').addEventListener('click',closeOverlays);
+document.getElementById('aiSend').addEventListener('click',sendAi);
+document.getElementById('aiInput').addEventListener('keydown',function(e){if(e.key==='Enter')sendAi()});
+document.getElementById('notifBtn').addEventListener('click',function(){var np=document.getElementById('notifPanel');var open=!np.classList.contains('open');closeOverlays();np.classList.toggle('open',open);if(open)document.getElementById('scrim').classList.add('visible')});
+document.getElementById('npClear').addEventListener('click',function(){document.querySelectorAll('.np-dot').forEach(function(r){r.classList.add('read')});showToast('All notifications read')});
+document.getElementById('themeBtn').addEventListener('click',function(){var dark=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',dark?'':'dark');showToast(dark?'Light mode':'Dark mode')});
+document.getElementById('sbClose').addEventListener('click',function(){document.getElementById('smartBanner').style.display='none'});
+document.getElementById('seeAll').addEventListener('click',function(){closeOverlays();showToast('Showing all alerts')});
+document.querySelectorAll('.bn-item').forEach(function(item){item.addEventListener('click',function(){document.querySelectorAll('.bn-item').forEach(function(i){i.classList.remove('active');this.classList.add('active')}.bind(this));showToast(this.dataset.tab+' selected')}.bind(item))});
+document.getElementById('fabBtn').addEventListener('click',function(e){e.stopPropagation();var open=this.classList.toggle('open');document.getElementById('quickPopup').classList.toggle('open',open);document.getElementById('scrim').classList.toggle('visible',open);if(open){document.getElementById('sidebar').classList.remove('open');document.getElementById('notifPanel').classList.remove('open');document.getElementById('aiOverlay').classList.remove('open')}});
+var tipIdx=0;
+document.getElementById('refreshBtn').addEventListener('click',function(){var ls=document.getElementById('loadingScreen');var tip=document.getElementById('lsTip');tip.textContent=TIPS[tipIdx%TIPS.length];tipIdx++;ls.classList.add('show');setTimeout(function(){ls.classList.remove('show');showToast('Dashboard refreshed')},2200)});
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show')},2200)}
+function sendAi(){var inp=document.getElementById('aiInput');var v=inp.value.trim();if(!v)return;var body=document.querySelector('.ai-body');var u=document.createElement('div');u.className='ai-msg user';u.textContent=v;body.appendChild(u);inp.value='';var b=document.createElement('div');b.className='ai-msg bot';b.textContent='I will look into that for you.';setTimeout(function(){body.appendChild(b);body.scrollTop=body.scrollHeight},700)}
+function sendAiChip(t){document.getElementById('aiInput').value=t;sendAi()}
+</script>
+</body>
+</html>
