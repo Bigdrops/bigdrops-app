@@ -12,6 +12,12 @@
       "skillPath": "skills/agent-md-refactor/SKILL.md",
       "computedHash": "11d1ffbb2d9f180d63dabfb0b6c63a4632b4c0e2e6be1660c7651cef0f3f1c07"
     },
+    "appllama-app-design-skill": {
+      "source": "appllama/appllama-skills",
+      "sourceType": "github",
+      "skillPath": "skills/appllama-app-design-skill/SKILL.md",
+      "computedHash": "effb84b74db5ebee8c4a207f94393e4e9951a7ac6dd36f099aa88867bc1b86d4"
+    },
     "backend-to-frontend-handoff-docs": {
       "source": "softaworks/agent-toolkit",
       "sourceType": "github",
@@ -485,6 +491,24 @@
       "sourceType": "github",
       "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
       "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
+    },
+    "swift-api-design-guidelines": {
+      "source": "dpearson2699/swift-ios-skills",
+      "sourceType": "github",
+      "skillPath": "skills/swift-api-design-guidelines/SKILL.md",
+      "computedHash": "c4927636993757b287c51c1cc9ac1d7479b5c1934934a30b846e770b2f2f8453"
+    },
+    "swiftui-animation": {
+      "source": "dpearson2699/swift-ios-skills",
+      "sourceType": "github",
+      "skillPath": "skills/swiftui-animation/SKILL.md",
+      "computedHash": "baca47d3770f9b41fb7a55135da36b191897d6287462703e2f6d3c75239a17d6"
+    },
+    "swiftui-gestures": {
+      "source": "dpearson2699/swift-ios-skills",
+      "sourceType": "github",
+      "skillPath": "skills/swiftui-gestures/SKILL.md",
+      "computedHash": "2655829128fe850d19b83ddce09a9cad23b0a208ce162066fdfd21147a235f15"
     },
     "tailwind-capacitor": {
       "source": "Cap-go/capgo-skills",

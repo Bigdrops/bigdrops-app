@@ -7,15 +7,18 @@ import ModuleShell from "@/components/layout/ModuleShell"
 import ModuleRowCard from "@/components/layout/ModuleRowCard"
 import { listLetters } from "@/domain/correspondence/letter/letterRepository"
 import type { LetterDocument } from "@/domain/correspondence/letter/types"
+import { useEntity } from "@/lib/tenant/contexts"
 
 export default function Letters() {
   const [search, setSearch] = useState("")
   const [letters, setLetters] = useState<LetterDocument[]>([])
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
 
   useEffect(() => {
-    listLetters().then(setLetters).catch(() => {})
-  }, [])
+    if (!tenantClient.isReady) return
+    listLetters(tenantClient).then(setLetters).catch(() => {})
+  }, [tenantClient])
 
   const filtered = letters.filter(
     (l) =>

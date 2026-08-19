@@ -1,5 +1,5 @@
-import { supabase } from '@/supabase'
 import { getCurrentTenantId } from '@/lib/tenant'
+import type { TenantClient } from '@/lib/tenantClient'
 import type { CreateLetterInput, UpdateLetterInput, LetterDocument } from './types'
 import type { LetterRow, LetterInsertPayload, LetterUpdatePayload } from './persistence'
 import { letterRowToDocument, documentToInsertPayload, documentToUpdatePayload } from './persistence'
@@ -7,13 +7,12 @@ import { getNextLetterNumber } from './numbering'
 import { createLetterDraft, normalizeLetter } from './normalize'
 import { createCorrespondenceIdentity } from './normalize'
 
-export async function createLetter(input: CreateLetterInput): Promise<LetterDocument> {
+export async function createLetter(input: CreateLetterInput, tenantClient: TenantClient): Promise<LetterDocument> {
   const tenantId = await getCurrentTenantId()
 
-  const { data: existingRows } = await supabase
+  const { data: existingRows } = await tenantClient
     .from('letters')
     .select('letter_number')
-    .eq('tenant_id', tenantId)
 
   const letterNumber = getNextLetterNumber(existingRows ?? [])
 
@@ -28,7 +27,7 @@ export async function createLetter(input: CreateLetterInput): Promise<LetterDocu
 
   const payload: LetterInsertPayload = documentToInsertPayload(normalized, tenantId)
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantClient
     .from('letters')
     .insert(payload)
     .select()
@@ -43,10 +42,11 @@ export async function createLetter(input: CreateLetterInput): Promise<LetterDocu
 export async function updateLetter(
   id: string,
   input: UpdateLetterInput,
+  tenantClient: TenantClient,
 ): Promise<LetterDocument> {
   const payload: LetterUpdatePayload = documentToUpdatePayload(input)
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantClient
     .from('letters')
     .update(payload)
     .eq('id', id)
@@ -59,41 +59,32 @@ export async function updateLetter(
   return letterRowToDocument(row)
 }
 
-export async function getLetter(id: string): Promise<LetterDocument | null> {
-  const tenantId = await getCurrentTenantId()
-
-  const { data, error } = await supabase
+export async function getLetter(id: string, tenantClient: TenantClient): Promise<LetterDocument | null> {
+  const { data, error } = await tenantClient
     .from('letters')
     .select('*')
     .eq('id', id)
-    .eq('tenant_id', tenantId)
     .maybeSingle()
 
   if (error) throw error
   return data ? letterRowToDocument(data as LetterRow) : null
 }
 
-export async function listLetters(): Promise<LetterDocument[]> {
-  const tenantId = await getCurrentTenantId()
-
-  const { data, error } = await supabase
+export async function listLetters(tenantClient: TenantClient): Promise<LetterDocument[]> {
+  const { data, error } = await tenantClient
     .from('letters')
     .select('*')
-    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
 
   if (error) throw error
   return (data ?? []).map((row: LetterRow) => letterRowToDocument(row))
 }
 
-export async function deleteDraftLetter(id: string): Promise<void> {
-  const tenantId = await getCurrentTenantId()
-
-  const { error } = await supabase
+export async function deleteDraftLetter(id: string, tenantClient: TenantClient): Promise<void> {
+  const { error } = await tenantClient
     .from('letters')
     .delete()
     .eq('id', id)
-    .eq('tenant_id', tenantId)
     .eq('status', 'draft')
 
   if (error) throw error

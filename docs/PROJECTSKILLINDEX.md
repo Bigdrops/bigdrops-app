@@ -10,12 +10,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 92 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design`) |
+| `.agents/skills/` | 96 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills`) |
 | `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
-| `.mimocode/skills/` | 2 skills | Audit trail investigation and waybill template debugging |
-| `.mimocode/commands/` | 1 command | Type checking verification |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **107 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **109 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+
+> **Note:** 4 new skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
 
 ---
 ## `.agents/skills/`
@@ -128,6 +128,24 @@ Installed manually by the project lead on 2026-08-18. Mobile-first UI/UX design 
 | :--- | :--- | :--- | :--- | :--- |
 | 92 | mobile-app-ui-design | .agents/skills/mobile-app-ui-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mobile-app-ui-design\SKILL.md | Mobile-first UI/UX — thumb-zone CTAs, F-pattern layout, 8-point grid, 60/30/10 color rule, soft tinted shadows, mobile screens/flows/onboarding |
 
+### Added via `appllama/appllama-skills`
+Installed from `appllama/appllama-skills` on 2026-08-19. Native-feeling mobile app screens (Expo / React Native), Apple HIG fidelity.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 93 | appllama-app-design-skill | .agents/skills/appllama-app-design-skill/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\appllama-app-design-skill\SKILL.md | Native-feeling Expo/React Native screens — Apple HIG, semantic colors, Reanimated motion, simulator-verified loop |
+
+### Added via `dpearson2699/swift-ios-skills`
+Installed from `dpearson2699/swift-ios-skills` on 2026-08-19. Swift 6.3 / iOS 26+ design and SwiftUI skills.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 94 | swift-api-design-guidelines | .agents/skills/swift-api-design-guidelines/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swift-api-design-guidelines\SKILL.md | Swift API Design Guidelines — argument labels, mutating pairs (-ed/-ing), documentation comments, protocol naming (-able/-ible) |
+| 95 | swiftui-animation | .agents/skills/swiftui-animation/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-animation\SKILL.md | SwiftUI motion — explicit/scoped implicit animations, springs, PhaseAnimator, KeyframeAnimator, matchedGeometry, SF Symbol effects |
+| 96 | swiftui-gestures | .agents/skills/swiftui-gestures/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-gestures\SKILL.md | SwiftUI gestures — tap/longPress/drag/magnify/rotate, composition (simultaneous/sequenced), @GestureState, custom Gesture protocol |
+
+> **Note:** These 4 skills are mirrored in `.claude/skills/` and `.commandcode/skills/` by the installer. Index lists the canonical `.agents/skills/` copy; `.commandcode` duplicates are purged (not indexed) because the skills already exist in `.agents`/`.claude`.
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -141,15 +159,6 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | 5 | webapp-testing | .claude/skills/webapp-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\webapp-testing\SKILL.md | Web app testing with Playwright — browser automation, screenshot capture, server lifecycle management, element discovery |
 | 6 | using-superpowers | .claude/skills/using-superpowers/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\using-superpowers\SKILL.md | Meta-skill: establishes how to find and use skills — requires Skill tool invocation before ANY response; skill priority, red flags |
 | 7 | gitnexus | .claude/skills/gitnexus/ | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\gitnexus\ | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring. Entry: `docs/contracts/gitnexus-operations.md` |
-
----
-## `.mimocode/skills/`
-Specialized agent skills for targeted debugging workflows.
-
-| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
-| :--- | :--- | :--- | :--- | :--- |
-| 1 | audit-trail-investigation | .mimocode/skills/audit-trail-investigation/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\audit-trail-investigation\SKILL.md | Systematically trace audit trail call paths for any BIGDROPS document module — audit gap investigation, wiring verification, silent failure debugging, entity_type whitelist auditing |
-| 2 | waybill-template-debug | .mimocode/skills/waybill-template-debug/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.mimocode\skills\waybill-template-debug\SKILL.md | Debug waybill PDF template rendering issues — validates template structure, tests edge cases, ensures correctness |
 
 ---
 ## `.opencode/agents/`
@@ -201,12 +210,6 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── using-superpowers/
 │       ├── gitnexus/             ← 6 sub-skills
 │       └── webapp-testing/
-├── .mimocode/
-│   ├── commands/
-│   │   └── typecheck.md
-│   └── skills/
-│       ├── audit-trail-investigation/
-│       └── waybill-template-debug/
 ├── .opencode/
 │   └── agents/          ← 232 subagents → canonical index: docs/SUBAGENTS.md
 ├── node_modules/
@@ -214,5 +217,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: August 18, 2026 — added `mobile-app-ui-design` from `skills.sh/ceorkm/mobile-app-ui-design`*
+*Last updated: August 19, 2026 — purged `.mimocode` (2 skills + 1 command, deleted), added 4 skills (`appllama-app-design-skill` from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills`), purged `.commandcode` duplicates (not indexed — already in `.agents`/`.claude`)*
 ```

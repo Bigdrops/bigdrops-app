@@ -142,11 +142,7 @@
       grid-template-columns: 38px 1fr 38px 38px;
       align-items: center;
       padding: 0 8px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
+      background: var(--paper);
       border-bottom: 1px solid var(--line);
     }
     .nav h1 {
@@ -167,35 +163,6 @@
       color: var(--ink);
     }
     .icon:hover { background: var(--soft); }
-
-    /* Jumpbar Navigation */
-    .jumpbar {
-      position: sticky;
-      top: 42px;
-      z-index: 18;
-      display: flex;
-      gap: 4px;
-      padding: 6px 10px;
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--line);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .jumpbar::-webkit-scrollbar { display: none; }
-    .jumpbar button {
-      flex: 0 0 auto;
-      height: 26px;
-      padding: 0 9px;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      background: var(--paper);
-      color: var(--sub);
-      font: 800 8px/26px var(--body);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .jumpbar button:hover, .jumpbar button:active { color: var(--rust); border-color: var(--rust); }
 
     /* Exposed Section Form Structure */
     .form-scroll { padding: 0; }
@@ -487,7 +454,7 @@
       place-items: center;
       font: 600 8px var(--mono);
     }
-    .line-actions { margin-left: auto; display: flex; gap: 2px; }
+    .line-actions { display: flex; gap: 2px; }
     .line-actions button {
       width: 24px;
       height: 24px;
@@ -500,6 +467,28 @@
     }
     .line-actions button:hover { background: var(--soft); color: var(--rust); }
     .line-actions .danger:hover { color: var(--red); background: var(--red-soft); }
+    .line-actions-bottom {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      padding: 6px 6px;
+      background: var(--soft);
+      border-top: 1px solid var(--line);
+    }
+    .line-actions-bottom button {
+      height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 800 8.5px var(--body);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .line-actions-bottom button:hover { color: var(--rust); border-color: var(--rust); }
+    .line-actions-bottom .danger { color: var(--red); }
 
     .compact-body {
       border: 1px solid var(--line);
@@ -910,14 +899,6 @@
           <button class="icon" aria-label="Switch Theme" onclick="toggleTheme()">${I(isDark ? 'sun' : 'moon')}</button>
           <button class="icon" aria-label="Document actions" onclick="openSheet('actions')">${I('ellipsis')}</button>
         </header>
-        <nav class="jumpbar" aria-label="Jump sections">
-          <button onclick="jump('document')">Document</button>
-          <button onclick="jump('client')">Client</button>
-          <button onclick="jump('items')">Items</button>
-          <button onclick="jump('terms')">Terms</button>
-          <button onclick="jump('bank')">Bank</button>
-          <button onclick="jump('support')">Support</button>
-        </nav>
         <main class="form-scroll">
           ${documentSection()}
           ${clientSection()}
@@ -1004,13 +985,11 @@
         <section class="exposed" id="items">
           <div class="section-head">
             <h2>Line Items (${x.items.length})</h2>
-            <button onclick="addItem()">${I('plus')} Add Line</button>
           </div>
           <div class="item-toolbar">
-            <button class="primary" onclick="addGroup()">${I('layers-2')} New Group</button>
             <button onclick="openSheet('import')">${I('file-input')} Import</button>
             <button onclick="openSheet('columns')">${I('sliders-horizontal')} Columns</button>
-            <button class="danger" onclick="clearItems()">${I('trash-2')} Clear</button>
+            <button class="danger" style="margin-left:auto" onclick="clearItems()">${I('x')} Clear All</button>
           </div>
           <div class="item-instruction">
             Tap copy icon to duplicate any row, or use + to insert a new row directly beneath it.
@@ -1025,7 +1004,10 @@
               ${ungrouped.map((a, i) => itemRow(a, x.items.indexOf(a))).join('')}
             </div>
           ` : ''}
-          <button class="add-btn" onclick="addItem()">${I('plus')} Add Line Item</button>
+          <div class="item-toolbar" style="padding-top:8px">
+            <button class="primary" onclick="addItem()">${I('plus')} Add Line</button>
+            <button onclick="addGroup()">${I('layers-2')} New Group</button>
+          </div>
           
           <div class="section-head" style="margin-top:14px">
             <h2>Invoice Totals</h2>
@@ -1075,11 +1057,6 @@
           <header class="compact-line-head">
             <span class="item-no">${String(i + 1).padStart(2, '0')}</span>
             <span>LINE ITEM</span>
-            <div class="line-actions">
-              <button aria-label="Insert item below" onclick="insertBelow('${a.id}')">${I('plus')}</button>
-              <button aria-label="Duplicate item" onclick="duplicateItem('${a.id}')">${I('copy')}</button>
-              <button class="danger" aria-label="Remove item" onclick="removeItem('${a.id}')">${I('trash-2')}</button>
-            </div>
           </header>
           <div class="compact-body">
             <div class="description-field">
@@ -1131,6 +1108,11 @@
                 <span>Disc %</span>
                 <input class="mono" inputmode="decimal" value="${a.discountRate || ''}" onchange="inlineVal('${a.id}','discountRate',this.value,1)">
               </label>
+            </div>
+            <div class="line-actions-bottom">
+              <button aria-label="Insert item below" onclick="insertBelow('${a.id}')">${I('plus')} Below</button>
+              <button aria-label="Duplicate item" onclick="duplicateItem('${a.id}')">${I('copy')} Dup</button>
+              <button class="danger" aria-label="Remove item" onclick="removeItem('${a.id}')">${I('trash-2')}</button>
             </div>
           </div>
         </article>

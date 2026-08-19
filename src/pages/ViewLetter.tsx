@@ -5,6 +5,7 @@ import DocumentPage from "@/components/document-view/shared/DocumentPage"
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav"
 import { getLetter } from "@/domain/correspondence/letter/letterRepository"
 import type { LetterDocument, LetterBodyBlock } from "@/domain/correspondence/letter/types"
+import { useEntity } from "@/lib/tenant/contexts"
 
 function renderBlock(block: LetterBodyBlock, idx: number) {
   switch (block.type) {
@@ -52,19 +53,20 @@ function renderBlock(block: LetterBodyBlock, idx: number) {
 export default function ViewLetter() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const [letter, setLetter] = useState<LetterDocument | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!id) return
-    getLetter(id)
+    if (!id || !tenantClient.isReady) return
+    getLetter(id, tenantClient)
       .then((doc) => {
         if (!doc) { navigate("/letters", { replace: true }); return }
         setLetter(doc)
       })
       .catch(() => navigate("/letters", { replace: true }))
       .finally(() => setLoading(false))
-  }, [id, navigate])
+  }, [id, navigate, tenantClient])
 
   const statusColor = (status: string) => {
     const map: Record<string, string> = {

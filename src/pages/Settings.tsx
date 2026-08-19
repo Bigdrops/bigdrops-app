@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import {
-  AdminSettingsSection,
+  TeamSettingsSection,
+  DeviceSettingsSection,
   AppThemeSettingsSection,
   ArchivesSettingsSection,
   BankingSettingsSection,
@@ -23,8 +24,7 @@ import {
 import type { SettingsSession } from './settings/settings-types'
 import { SettingsShell } from '@/components/settings/SettingsShell'
 import { feedback } from '@/lib/feedback'
-
-const ADMIN_EMAILS = ['jaiyewisdom@gmail.com', 'mondayevg2007@gmail.com']
+import { useWorkspace } from '@/lib/tenant/contexts'
 
 export default function Settings() {
   const [active, setActive] = useState<ActiveSectionId | null>(null)
@@ -56,15 +56,17 @@ export default function Settings() {
     }
   }, [session?.user?.id])
 
-  const isAdmin = ADMIN_EMAILS.includes(session?.user?.email || '')
-  const groups = buildGroups(isAdmin, isOperator)
+  const { workspace } = useWorkspace()
+  const isOwner = workspace?.role === 'owner'
+  const groups = buildGroups(isOwner, isOperator)
 
   const showToast = useCallback((msg: string) => {
     feedback.success(msg)
   }, [])
 
   const renderSection = () => {
-    switch (active) {
+    const resolved = active === 'admin' ? 'team' : active
+    switch (resolved) {
       case 'user':
         return <UserSettingsSection session={session} onToast={showToast} />
       case 'company':
@@ -87,8 +89,10 @@ export default function Settings() {
         return <DocumentPrefixesSettingsSection />
       case 'archives':
         return <ArchivesSettingsSection />
-      case 'admin':
-        return <AdminSettingsSection session={session} />
+      case 'team':
+        return <TeamSettingsSection session={session} />
+      case 'devices':
+        return <DeviceSettingsSection />
       case 'tenant-debug':
         return null
       default:
@@ -113,10 +117,10 @@ export default function Settings() {
     >
       <SettingsShell
         groups={groups}
-        activeSection={active}
+        activeSection={active === 'admin' ? 'team' : active}
         setActiveSection={handleSelectSection}
         renderContent={renderSection}
-        isAdmin={isAdmin}
+        isAdmin={isOwner}
       />
     </Layout>
   )

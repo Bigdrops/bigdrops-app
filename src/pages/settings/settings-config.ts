@@ -9,6 +9,8 @@ import {
   LayoutDashboard,
   Palette,
   Shield,
+  Smartphone,
+  Users,
   UserCheck,
   Bell,
   Terminal,
@@ -28,6 +30,8 @@ export type ActiveSectionId =
   | 'dashboard'
   | 'archives'
   | 'admin'
+  | 'team'
+  | 'devices'
   | 'tenant-debug'
 
 export type SettingsItem = {
@@ -135,17 +139,23 @@ export const SYSTEM_GROUP: SettingsGroup = {
   variant: 'system',
   items: [
     {
+      id: 'team',
+      label: 'Team',
+      icon: Users,
+      desc: 'Manage the people who have access to this business.',
+    },
+    {
+      id: 'devices',
+      label: 'Devices',
+      icon: Smartphone,
+      desc: 'Linked installations and device codes',
+      adminOnly: true,
+    },
+    {
       id: 'archives',
       label: 'Archives',
       icon: ArchiveRestore,
       desc: 'Restore or remove archived records',
-    },
-    {
-      id: 'admin',
-      label: 'Admin Panel',
-      icon: Shield,
-      desc: 'Users, devices, and admin controls',
-      adminOnly: true,
     },
     {
       id: 'tenant-debug',

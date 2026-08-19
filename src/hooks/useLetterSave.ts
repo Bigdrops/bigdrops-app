@@ -3,6 +3,7 @@ import { useDocumentSave } from './useDocumentSave'
 import type { DocumentSaveStrategy } from './useDocumentSave'
 import { createLetter, updateLetter } from '@/domain/correspondence/letter/letterRepository'
 import type { LetterBody, CreateLetterInput } from '@/domain/correspondence/letter/types'
+import type { TenantClient } from '@/lib/tenantClient'
 
 export interface LetterFormFields {
   subject: string
@@ -27,6 +28,7 @@ interface UseLetterSaveParams {
   isEdit: boolean
   id?: string
   navigate: (path: string) => void
+  tenantClient: TenantClient
 }
 
 function bodyBlocksFromText(text: string): LetterBody {
@@ -60,7 +62,7 @@ const letterStrategy: DocumentSaveStrategy<UseLetterSaveParams> = {
   },
 
   async persist(input, _payload, { isCreate, id }) {
-    const { fields } = input
+    const { fields, tenantClient } = input
     const body = bodyBlocksFromText(fields.bodyText)
 
     const recipient = {
@@ -79,11 +81,11 @@ const letterStrategy: DocumentSaveStrategy<UseLetterSaveParams> = {
     }
 
     if (isCreate) {
-      const doc = await createLetter({ recipient, sender, subject: fields.subject, date: fields.date, body })
+      const doc = await createLetter({ recipient, sender, subject: fields.subject, date: fields.date, body }, tenantClient)
       return { data: { id: doc.identity.id }, error: null }
     }
 
-    await updateLetter(id!, { recipient, sender, subject: fields.subject, date: fields.date, body, status: 'draft' })
+    await updateLetter(id!, { recipient, sender, subject: fields.subject, date: fields.date, body, status: 'draft' }, tenantClient)
     return { data: null, error: null }
   },
 
