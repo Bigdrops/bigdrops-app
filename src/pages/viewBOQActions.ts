@@ -8,7 +8,7 @@ export async function archiveBOQRecord(id: string, tenantClient: TenantClient) {
 }
 
 export async function deleteBOQRecord(id: string, tenantClient: TenantClient) {
-  const { error: itemError } = await tenantClient.from('boq_items').delete().eq('boq_id', id)
+  const { error: itemError } = await tenantClient.from('boq_rows').delete().eq('boq_id', id)
   if (itemError) throw itemError
   const { error } = await tenantClient.from('boqs').delete().eq('id', id)
   if (error) throw error

@@ -287,40 +287,85 @@ export type Database = {
       }
       boqs: {
         Row: {
+          accent_color: string | null
           archived_at: string | null
+          background_primary: string | null
+          background_secondary: string | null
+          boq_number: string | null
+          brand_name_override: string | null
           client_name: string | null
           created_at: string | null
           custom_fields: Json | null
           id: string
+          issue_date: string | null
+          notes: string | null
+          palette_name: string | null
+          project_id: string | null
           project_name: string | null
+          show_brand_name: boolean | null
+          status: string | null
           template_id: string | null
+          text_color: string | null
           title: string | null
+          total: number | null
           updated_at: string | null
           user_id: string
+          vendor_contact: string | null
+          vendor_name: string | null
         }
         Insert: {
+          accent_color?: string | null
           archived_at?: string | null
+          background_primary?: string | null
+          background_secondary?: string | null
+          boq_number?: string | null
+          brand_name_override?: string | null
           client_name?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           id?: string
+          issue_date?: string | null
+          notes?: string | null
+          palette_name?: string | null
+          project_id?: string | null
           project_name?: string | null
+          show_brand_name?: boolean | null
+          status?: string | null
           template_id?: string | null
+          text_color?: string | null
           title?: string | null
+          total?: number | null
           updated_at?: string | null
           user_id: string
+          vendor_contact?: string | null
+          vendor_name?: string | null
         }
         Update: {
+          accent_color?: string | null
           archived_at?: string | null
+          background_primary?: string | null
+          background_secondary?: string | null
+          boq_number?: string | null
+          brand_name_override?: string | null
           client_name?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           id?: string
+          issue_date?: string | null
+          notes?: string | null
+          palette_name?: string | null
+          project_id?: string | null
           project_name?: string | null
+          show_brand_name?: boolean | null
+          status?: string | null
           template_id?: string | null
+          text_color?: string | null
           title?: string | null
+          total?: number | null
           updated_at?: string | null
           user_id?: string
+          vendor_contact?: string | null
+          vendor_name?: string | null
         }
         Relationships: []
       }

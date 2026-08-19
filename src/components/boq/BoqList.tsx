@@ -51,7 +51,7 @@ export function BoqList() {
     setIsDeleting(true)
     
     // Delete items first
-    const { error: itemsError } = await tenantClient.from('boq_items').delete().eq('boq_id', deleteId)
+    const { error: itemsError } = await tenantClient.from('boq_rows').delete().eq('boq_id', deleteId)
     if (itemsError) {
       setIsDeleting(false)
       feedback.error('Delete failed', { description: itemsError.message })

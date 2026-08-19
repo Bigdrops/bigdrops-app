@@ -21,4 +21,21 @@ export interface Boq {
   table_columns: TableDocumentColumn[]
   created_at: string
   updated_at: string
+  custom_fields?: Record<string, any>
+}
+
+export interface DbBoq extends Omit<Boq, 'custom_fields'> {
+  custom_fields: string | Record<string, any> | null
+}
+
+export interface DbBoqRow {
+  boq_id: string
+  sort_order: number
+  row_type: string
+  description?: string | null
+  section_title?: string | null
+  unit?: string | null
+  quantity?: number | null
+  notes?: string | null
+  cells?: Record<string, any> | null
 }

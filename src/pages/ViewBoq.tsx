@@ -22,6 +22,7 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
+import { normalizeDbBoq } from '@/domain/boq/normalize'
 import { useSettings } from '@/hooks/useSettings'
 import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
@@ -56,7 +57,7 @@ export default function ViewBoq() {
       try {
         const [boqRes, itemsRes] = await Promise.all([
           tenantClient.from('boqs').select('*').eq('id', id).single(),
-          tenantClient.from('boq_items').select('*').eq('boq_id', id).order('sort_order'),
+          tenantClient.from('boq_rows').select('*').eq('boq_id', id).order('sort_order'),
         ])
 
         if (boqRes.error || !boqRes.data) {
@@ -64,10 +65,7 @@ export default function ViewBoq() {
           return
         }
 
-        setBoq({
-          ...boqRes.data,
-          table_rows: itemsRes.data || [],
-        })
+        setBoq(normalizeDbBoq(boqRes.data, itemsRes.data || []))
       } catch (err) {
         console.error('Failed to load BOQ', err)
       } finally {
