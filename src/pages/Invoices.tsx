@@ -188,7 +188,7 @@ function InvoicesContent() {
         return
       }
       const [relatedDocs, project, customFields] = await Promise.all([
-        fetchInvoiceChildDocuments(activeInvoice.id),
+        fetchInvoiceChildDocuments(activeInvoice.id, tenantClient),
         activeInvoice.project_id ? fetchProjectSummary(activeInvoice.project_id, tenantClient) : Promise.resolve(null),
         loadInvoiceCustomFields(activeInvoice.id, tenantClient),
       ])
@@ -244,7 +244,7 @@ function InvoicesContent() {
     if (attachKind === "waybill") {
       await tenantClient.from("waybills").update({ invoice_id: activeInvoice.id }).eq("id", item.id)
     }
-    const relatedDocs = await fetchInvoiceChildDocuments(activeInvoice.id)
+    const relatedDocs = await fetchInvoiceChildDocuments(activeInvoice.id, tenantClient)
     setActiveInvoiceRelatedDocs(relatedDocs)
     setShowAttachSheet(false)
     setAttachKind(null)

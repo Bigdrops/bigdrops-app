@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { supabase } from "../supabase"
 import { useEntity } from "../lib/tenant/contexts"
 import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"

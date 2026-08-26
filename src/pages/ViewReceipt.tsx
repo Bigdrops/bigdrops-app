@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useEffect, useState, useCallback } from "react"
-import { supabase } from "@/supabase"
+import { useEntity } from "@/lib/tenant/contexts"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
 import ReceiptPdf from "@/components/pdf-new/ReceiptPdf"
@@ -20,16 +20,17 @@ import "@/components/document-view/shared/documentViewTheme.css"
 export default function ViewReceipt() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { tenantClient } = useEntity()
   const [receipt, setReceipt] = useState<ReceiptRow | null>(null)
   const [loading, setLoading] = useState(true)
   const designPreset = getPdfDesignPreset("receipt")
 
   useEffect(() => {
-    if (!id) return
+    if (!id || !tenantClient.isReady) return
     setLoading(true)
     ;(async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await tenantClient
           .from("receipts")
           .select("*")
           .eq("id", id)
@@ -42,7 +43,7 @@ export default function ViewReceipt() {
         setLoading(false)
       }
     })()
-  }, [id, navigate])
+  }, [id, navigate, tenantClient.isReady, tenantClient.schemaName])
 
   const handleDownload = useCallback(async () => {
     if (!receipt) return

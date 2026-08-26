@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 

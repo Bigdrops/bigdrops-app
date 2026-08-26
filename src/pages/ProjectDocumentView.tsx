@@ -20,7 +20,6 @@ import {
 } from '@/domain/projectDocuments'
 import { feedback } from '@/lib/feedback'
 import { useSettings } from '@/hooks/useSettings'
-import { supabase } from '@/supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 
 export default function ProjectDocumentView() {

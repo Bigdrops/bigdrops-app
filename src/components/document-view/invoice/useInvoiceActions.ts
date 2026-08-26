@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/supabase";
 import { useEntity } from "@/lib/tenant/contexts";
 import { feedback } from "@/lib/feedback";
 import { parseCustomFields } from "@/domain/invoice";

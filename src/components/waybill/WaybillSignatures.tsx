@@ -22,6 +22,7 @@ import { feedback } from '@/lib/feedback'
 import { processSignature, dataURItoFile } from '@/lib/processSignature'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import type { WaybillCustomFields } from './waybillUtils'
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -64,13 +65,14 @@ function PickSignatorySheet({
   >([])
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('')
+  const { tenantClient } = useEntity()
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !tenantClient.isReady) return
     let cancelled = false
     setLoading(true)
     ;(async () => {
-      const { data } = await supabase
+      const { data } = await tenantClient
         .from('signatories')
         .select('id, name, role, signature_url')
         .order('name')
@@ -82,7 +84,7 @@ function PickSignatorySheet({
     return () => {
       cancelled = true
     }
-  }, [open])
+  }, [open, tenantClient.isReady, tenantClient.schemaName])
 
   const filtered = rows.filter((r) => {
     if (!query.trim()) return true

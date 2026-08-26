@@ -64,7 +64,7 @@ function WaybillsContent() {
       }
 
       const [invoice, project] = await Promise.all([
-        activeWaybill.invoice_id ? fetchInvoiceSummary(activeWaybill.invoice_id) : Promise.resolve(null),
+        activeWaybill.invoice_id ? fetchInvoiceSummary(activeWaybill.invoice_id, tenantClient) : Promise.resolve(null),
         activeWaybill.project_id ? fetchProjectSummary(activeWaybill.project_id, tenantClient) : Promise.resolve(null),
       ])
 
@@ -149,7 +149,7 @@ function WaybillsContent() {
         const { data } = await tenantClient.from('waybills').select('*').eq('id', activeWaybill.id).single()
         if (data) {
           setActiveWaybill(mapDbWaybill(data))
-          setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id) : null)
+          setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id, tenantClient) : null)
         }
       }
     } catch {

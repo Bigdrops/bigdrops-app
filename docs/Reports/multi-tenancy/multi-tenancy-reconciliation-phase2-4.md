@@ -122,7 +122,7 @@ No application code changed in this session.
 
 Do NOT start the public-schema purge. The next task is to tenant-scope the remaining pre-existing public `supabase` business pages listed in blocker 1 (clients, invoices, BOQ/CSR/RFQ view actions, project documents, receipts). After that is verified, re-run this report's Phase 1 verification items, then proceed to the purge.
 
-Offline quotation/CSR sync remains deferred (see `offline-sync-tenant-aware-deferral.md`).
+Offline quotation/CSR sync remains deferred (see `docs/tickets/Deferred-Work/deferred-offline-sync-debt.md`).
 
 ## Risks or limitations
 

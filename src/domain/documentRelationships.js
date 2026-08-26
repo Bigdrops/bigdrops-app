@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import { parseDocumentCustomFields } from '@/domain/documentConversion'
 
 function toArray(value) {
@@ -51,8 +50,8 @@ export function hasWaybillRelatedDocuments(waybill) {
  * @param {string} projectId
  * @param {any} client
  */
-export async function fetchProjectSummary(projectId, client = supabase) {
-  if (!projectId) return null
+export async function fetchProjectSummary(projectId, client) {
+  if (!projectId || !client) return null
   const { data, error } = await client
     .from('projects')
     .select('id, name')
@@ -63,9 +62,9 @@ export async function fetchProjectSummary(projectId, client = supabase) {
   return data
 }
 
-export async function fetchInvoiceSummary(invoiceId) {
-  if (!invoiceId) return null
-  const { data, error } = await supabase
+export async function fetchInvoiceSummary(invoiceId, client) {
+  if (!invoiceId || !client) return null
+  const { data, error } = await client
     .from('invoices')
     .select('id, invoice_number')
     .eq('id', invoiceId)
@@ -75,16 +74,16 @@ export async function fetchInvoiceSummary(invoiceId) {
   return data
 }
 
-export async function fetchInvoiceChildDocuments(invoiceId) {
-  if (!invoiceId) return { csrs: [], waybills: [] }
+export async function fetchInvoiceChildDocuments(invoiceId, client) {
+  if (!invoiceId || !client) return { csrs: [], waybills: [] }
 
   const [{ data: csrs }, { data: waybills }] = await Promise.all([
-    supabase
+    client
       .from('csrs')
       .select('id, csr_number')
       .eq('linked_invoice_id', invoiceId)
       .order('created_at', { ascending: false }),
-    supabase
+    client
       .from('waybills')
       .select('id, waybill_number')
       .eq('invoice_id', invoiceId)

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import ConfirmActionDialog from '@/components/ConfirmActionDialog'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 
 function normalize(value: string | number | null | undefined): string {
   return String(value || '').trim().toLowerCase()
@@ -98,6 +98,7 @@ export default function AttachExistingDocumentSheet({
   const [results, setResults] = React.useState<DocumentItem[]>([])
   const [loading, setLoading] = React.useState(false)
   const [confirmState, setConfirmState] = React.useState<ConfirmState | null>(null)
+  const { tenantClient } = useEntity()
 
   const currentClient = normalize(currentClientName)
 
@@ -108,9 +109,9 @@ export default function AttachExistingDocumentSheet({
   }, [numberField, clientField, poField, linkedInvoiceField])
 
   const loadRecent = React.useCallback(async () => {
-    if (!table || !fields) return
+    if (!table || !fields || !tenantClient.isReady) return
     setLoading(true)
-    const { data } = await supabase
+    const { data } = await tenantClient
       .from(table)
       .select(fields)
       .order('created_at', { ascending: false })
@@ -127,7 +128,7 @@ export default function AttachExistingDocumentSheet({
 
     setRecentItems(next)
     setLoading(false)
-  }, [table, fields, currentClient, clientField, numberField, poField])
+  }, [table, fields, currentClient, clientField, numberField, poField, tenantClient.isReady, tenantClient.schemaName])
 
   const runSearch = React.useCallback(async (term: string) => {
     const q = normalize(term)
@@ -135,6 +136,7 @@ export default function AttachExistingDocumentSheet({
       setResults([])
       return
     }
+    if (!tenantClient.isReady) return
     setLoading(true)
     const orParts = [
       numberField ? `${numberField}.ilike.%${q}%` : null,
@@ -142,7 +144,7 @@ export default function AttachExistingDocumentSheet({
       poField ? `${poField}.ilike.%${q}%` : null,
     ].filter(Boolean).join(',')
 
-    const { data } = await supabase
+    const { data } = await tenantClient
       .from(table)
       .select(fields)
       .or(orParts)
@@ -169,7 +171,7 @@ export default function AttachExistingDocumentSheet({
 
     setResults(next)
     setLoading(false)
-  }, [table, fields, numberField, clientField, poField, currentClient])
+  }, [table, fields, numberField, clientField, poField, currentClient, tenantClient.isReady, tenantClient.schemaName])
 
   React.useEffect(() => {
     if (!open) return

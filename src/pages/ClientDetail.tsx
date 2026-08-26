@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { feedback } from '@/lib/feedback'
@@ -162,15 +161,15 @@ export default function ClientDetail() {
           .from('quotations')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
-        supabase
+        tenantClient
           .from('csrs')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
-        supabase
+        tenantClient
           .from('waybills')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
-        supabase
+        tenantClient
           .from('projects')
           .select('id', { count: 'exact', head: true })
           .eq('client_id', id),
@@ -180,19 +179,19 @@ export default function ClientDetail() {
           .eq('client_id', id)
           .order('issue_date', { ascending: false })
           .limit(10),
-        supabase
+        tenantClient
           .from('csrs')
           .select('id, csr_number, title, status, created_at, date')
           .eq('client_id', id)
           .order('created_at', { ascending: false })
           .limit(10),
-        supabase
+        tenantClient
           .from('waybills')
           .select('id, waybill_number, status, date, created_at, type')
           .eq('client_id', id)
           .order('created_at', { ascending: false })
           .limit(10),
-        supabase
+        tenantClient
           .from('projects')
           .select('id, name, project_code, status, start_date')
           .eq('client_id', id)
@@ -275,13 +274,13 @@ export default function ClientDetail() {
   }, [id, tenantClient])
 
   const loadProjects = useCallback(async () => {
-    if (!id) return
+    if (!id || !tenantClient.isReady) return
 
     const requestId = ++requestIds.current.projects
     setLoading((current) => ({ ...current, projects: true }))
     setError((current) => ({ ...current, projects: '' }))
 
-    const projectRes = await supabase
+    const projectRes = await tenantClient
       .from('projects')
       .select('id, name, project_code, status, project_value, start_date')
       .eq('client_id', id)
@@ -295,16 +294,16 @@ export default function ClientDetail() {
     if (!projectRes.error) {
       setLoaded((current) => ({ ...current, projects: true }))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   const loadQuotations = useCallback(async () => {
-    if (!id) return
+    if (!id || !tenantClient.isReady) return
 
     const requestId = ++requestIds.current.quotations
     setLoading((current) => ({ ...current, quotations: true }))
     setError((current) => ({ ...current, quotations: '' }))
 
-    const quotationRes = await supabase
+    const quotationRes = await tenantClient
       .from('quotations')
       .select('id, quotation_number, status, total, issue_date')
       .eq('client_id', id)
@@ -318,16 +317,16 @@ export default function ClientDetail() {
     if (!quotationRes.error) {
       setLoaded((current) => ({ ...current, quotations: true }))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   const loadCsrs = useCallback(async () => {
-    if (!id) return
+    if (!id || !tenantClient.isReady) return
 
     const requestId = ++requestIds.current.csrs
     setLoading((current) => ({ ...current, csrs: true }))
     setError((current) => ({ ...current, csrs: '' }))
 
-    const csrRes = await supabase
+    const csrRes = await tenantClient
       .from('csrs')
       .select('id, csr_number, title, status, created_at, date')
       .eq('client_id', id)
@@ -341,16 +340,16 @@ export default function ClientDetail() {
     if (!csrRes.error) {
       setLoaded((current) => ({ ...current, csrs: true }))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   const loadWaybills = useCallback(async () => {
-    if (!id) return
+    if (!id || !tenantClient.isReady) return
 
     const requestId = ++requestIds.current.waybills
     setLoading((current) => ({ ...current, waybills: true }))
     setError((current) => ({ ...current, waybills: '' }))
 
-    const waybillRes = await supabase
+    const waybillRes = await tenantClient
       .from('waybills')
       .select('id, waybill_number, status, date, created_at, type')
       .eq('client_id', id)
@@ -364,7 +363,7 @@ export default function ClientDetail() {
     if (!waybillRes.error) {
       setLoaded((current) => ({ ...current, waybills: true }))
     }
-  }, [id])
+  }, [id, tenantClient])
 
   useEffect(() => {
     void loadOverview()

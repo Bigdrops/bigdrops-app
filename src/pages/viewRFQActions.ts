@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 

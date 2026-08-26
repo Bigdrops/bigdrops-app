@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import type {

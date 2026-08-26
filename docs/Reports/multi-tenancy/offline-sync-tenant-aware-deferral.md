@@ -1,33 +1,25 @@
-# Offline Sync Tenant-Awareness Deferral Ticket
+# Offline Sync Tenant-Awareness Deferral
 
 This report was written by deepseek-v4-pro on 2026-08-25 via opencode.
 
-## Objective
+## Classification
 
-Record the deferred work to make offline quotation and CSR sync tenant-aware before the public business schema is purged.
+**DEFERRED — NOT PART OF CURRENT TENANCY CUTOVER.**
 
-## Scope
+The offline quotation/CSR sync (`src/lib/native/quotationSync.ts`, `src/lib/native/csrSync.ts`) is non-functional: every public-table access is guarded by `canUseAndroidNativeSqlite()`, which is false on the web deployment. It is intentionally excluded from the tenancy cutover and from the public-purge dependency graph.
 
-`src/**/quotationSync.ts` and `src/**/csrSync.ts` (or their current locations). No change was made in this pass.
+## Canonical ticket
 
-## Background
+The implementation analysis, tenant-identity requirements, future architecture scope, and reactivation criteria live in:
 
-The offline sync path still reads and writes public business tables. The pre-purge hardening pass deferred this work because it needs a dedicated tenant-aware queue design, not a minimal fallback removal.
+`docs/tickets/Deferred-Work/deferred-offline-sync-debt.md`
 
-## Required work
+Purge gate verdict: `docs/Reports/multi-tenancy/public-purge-readiness-gate.md`.
 
-- Route sync reads and writes through the tenant client and tenant schema.
-- Carry entity context through the offline queue so each record resolves to the correct tenant schema.
-- Add conflict resolution for records synced while offline against changed server data.
-- Scope sync queries to the tenant schema (no public fallback).
-- Add rollback on partial sync failure.
-- Reuse native constraints (unique keys, foreign keys) for idempotency.
-- Define reactivation criteria: only re-enable offline sync after the tenant path is verified end to end.
+## Skills used
 
-## Verification
+NONE
 
-Not started. This ticket is a future task.
+## Documentation standard
 
-## Status
-
-Deferred.
+ADS-STE100 Simplified Technical English

@@ -1,4 +1,3 @@
-import { supabase } from '@/supabase'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import type { TenantClient } from '@/lib/tenantClient'
 

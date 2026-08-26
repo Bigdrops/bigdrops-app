@@ -64,4 +64,4 @@ Database migration:
 
 - Extend `_prov_get_template_tables` and `_prov_table_to_resource` to the full 32-table set (verified against a live DB first).
 - Author tenant item-library RPCs and `item_price_summary_v`.
-- Offline sync tenant-awareness (see `offline-sync-tenant-aware-deferral.md`).
+- Offline sync tenant-awareness (see `docs/tickets/Deferred-Work/deferred-offline-sync-debt.md`).

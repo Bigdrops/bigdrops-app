@@ -1,4 +1,3 @@
-import { supabase } from "@/supabase"
 import type { TenantClient } from "@/lib/tenantClient"
 import type { DuplicateInvoicePrefill } from "../types/invoiceTypes"
 import { syncInvoiceStatusFromFinancials as repositorySyncStatus } from "../repositories/paymentRepository"

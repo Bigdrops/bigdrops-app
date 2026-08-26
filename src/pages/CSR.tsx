@@ -113,8 +113,8 @@ function CsrContent() {
         return
       }
       const [invoice, project] = await Promise.all([
-        activeCsr.linked_invoice_id ? fetchInvoiceSummary(activeCsr.linked_invoice_id) : Promise.resolve(null),
-        activeCsr.project_id ? fetchProjectSummary(activeCsr.project_id) : Promise.resolve(null),
+        activeCsr.linked_invoice_id ? fetchInvoiceSummary(activeCsr.linked_invoice_id, tenantClient) : Promise.resolve(null),
+        activeCsr.project_id ? fetchProjectSummary(activeCsr.project_id, tenantClient) : Promise.resolve(null),
       ])
       if (cancelled) return
       setActiveCsrInvoice(invoice)
@@ -149,7 +149,7 @@ function CsrContent() {
     try {
       const data = await attachInvoiceToCsr(activeCsr.id, invoice.id, tenantClient)
       setActiveCsr(data)
-      setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id) : null)
+      setActiveCsrInvoice(data.linked_invoice_id ? await fetchInvoiceSummary(data.linked_invoice_id, tenantClient) : null)
     } catch (error: any) {
       feedback.error('Attachment failed', { description: error.message })
     }

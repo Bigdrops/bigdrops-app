@@ -90,10 +90,10 @@ export function useInvoiceDetailData(id) {
   }, [id, tenantClient])
 
   const fetchInvoiceRelationships = useCallback(async () => {
-    const related = await fetchInvoiceChildDocuments(id)
+    const related = await fetchInvoiceChildDocuments(id, tenantClient)
     setRelatedCsrs(related.csrs || [])
     setRelatedWaybills(related.waybills || [])
-  }, [id])
+  }, [id, tenantClient])
 
   const fetchPayments = useCallback(async () => {
     const [
@@ -175,7 +175,7 @@ export function useInvoiceDetailData(id) {
         fetchPayments(),
         fetchInvoiceRelationships(),
         fetchInvoiceFinancials(),
-        supabase
+        tenantClient
           .from('signatories')
           .select('*')
           .order('name')
@@ -183,7 +183,7 @@ export function useInvoiceDetailData(id) {
             if (signatoriesError) throw signatoriesError
             setSignatories(data || [])
           }),
-        supabase
+        tenantClient
           .from('bank_accounts')
           .select('*')
           .order('is_default', { ascending: false })

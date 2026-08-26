@@ -8,6 +8,16 @@ This report was written by deepseek-v4-flash-free on 2026-08-18 via Local Runner
 
 Document the current quotation and CSR offline-sync modules. Do not implement or repair offline sync in this pass. Mark the modules as DEFERRED OFFLINE DEBT. The final multi-tenancy cutover must proceed without depending on offline sync.
 
+## Status
+
+DEFERRED — NOT PART OF CURRENT TENANCY CUTOVER.
+
+Reconciled on 2026-08-25 against the final tenancy state. The modules are reachable from `QuotationList.tsx`, `CSR.tsx`, and `src/app/useSyncBootstrap.ts`, but every public-table access is guarded by `canUseAndroidNativeSqlite()`, which is false on the web deployment. The feature is non-functional.
+
+The modules are retained, not deleted. They address tables by string name and import no generated `database.types.ts` types, so they do not affect TypeScript safety after the public purge. This ticket is excluded from the purge dependency graph.
+
+Purge gate record: `docs/Reports/multi-tenancy/public-purge-readiness-gate.md` (verdict: READY FOR PURGE).
+
 ## Current Quotation Offline-Sync Implementation
 
 Files: `src/lib/native/quotationOffline.ts`, `src/lib/native/quotationSync.ts`.
@@ -123,6 +133,13 @@ A future queue item must store, per queued operation:
 - Rollback: on child-item failure, delete the created parent (existing pattern) and expose any partial writes.
 - Authentication: persist the session identity at enqueue time and re-validate at flush time.
 - Tenant switching: scope the queue per tenant and do not flush one tenant's items into another tenant.
+- Migration and versioning of queued records when the local queue schema changes.
+- Explicit online/offline state handling surfaced to the user.
+- End-to-end tests of the tenant-aware sync path before reactivation.
+
+## Reactivation Criteria
+
+Re-enable offline sync only after the tenant-aware architecture above is implemented and verified end to end. Until then, offline sync must not write to any business table.
 
 ## DEFERRED OFFLINE DEBT
 
@@ -134,7 +151,7 @@ The modules above are unreachable or non-functional in the current production ap
 
 ## Files Changed
 
-- `docs/tickets/deferred-offline-sync-debt.md` (this document).
+- `docs/tickets/Deferred-Work/deferred-offline-sync-debt.md` (this document).
 
 ## Skills Used
 

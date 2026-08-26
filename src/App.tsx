@@ -23,7 +23,6 @@ import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
-const PendingApproval = lazy(() => import('./pages/PendingApproval'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 const SPLASH_TIPS = [
@@ -58,7 +57,6 @@ const withBoundary = (element: React.ReactNode) => <ErrorBoundary>{element}</Err
 export interface Profile {
   id: string
   has_password?: boolean | null
-  is_approved?: boolean | null
   email?: string | null
   [key: string]: any
 }
@@ -513,10 +511,6 @@ function App() {
   const currentSessionUserId = session?.user?.id || null
   const profileResolvedForCurrentSession =
     !currentSessionUserId || resolvedProfileUserId === currentSessionUserId
-  const approved =
-    profileResolvedForCurrentSession &&
-    (profile?.is_approved === true ||
-      (!profile && currentSessionUserId && offlineAccessState.reason === 'within_window'))
   const waitingForProfileResolution =
     !!currentSessionUserId && (!profileResolvedForCurrentSession || profileLoading)
 
@@ -526,13 +520,11 @@ function App() {
       sessionEmail: session?.user?.email || null,
       resolvedProfileUserId,
       profile,
-      approved,
       authLoading,
       profileLoading,
       waitingForProfileResolution,
     })
   }, [
-    approved,
     authLoading,
     currentSessionUserId,
     profile,
@@ -570,8 +562,6 @@ function App() {
                     ? withBoundary(<PageLoader />)
                     : !offlineAccessState.allowed
                       ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
-                      : !approved
-                      ? withBoundary(<PendingApproval email={session?.user?.email || ''} />)
                       : withBoundary(
                           <WorkspaceProvider userId={session.user.id}>
                             <EntityProvider>

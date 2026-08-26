@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
-import { supabase } from '../supabase'
+import { useEntity } from '@/lib/tenant/contexts'
 import SharedDocumentForm from '@/components/document/SharedDocumentForm'
 import IdentityLockDialog from '@/components/document/IdentityLockDialog'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
@@ -86,6 +86,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const { isMobile } = useLayoutMode()
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
@@ -264,8 +265,8 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
   }, [isCreate, projectPrefill.clientId, projectPrefill.clientName, projectPrefill.projectId])
 
   useEffect(() => {
-    if (!isCreate || prefill) return
-    supabase
+    if (!isCreate || prefill || !tenantClient.isReady) return
+    tenantClient
       .from('invoices')
       .select('invoice_number')
       .order('created_at', { ascending: false })
@@ -273,7 +274,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
         const newNumber = getNextInvoiceNumber(data || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
         setInvoice((current) => ({ ...current!, invoice_number: newNumber }))
       })
-  }, [isCreate, prefill, settings?.document_prefixes])
+  }, [isCreate, prefill, settings?.document_prefixes, tenantClient.isReady, tenantClient.schemaName])
 
   useEffect(() => {
     if (!isCreate) return
