@@ -137,7 +137,7 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
 
     setInviteSubmitting(true)
     try {
-      await createWorkspaceInvitation({ workspaceId, email: normalized })
+      await createWorkspaceInvitation({ workspaceId, email: normalized, entityId: entityId ?? undefined })
       setInviteSuccess(normalized)
       setInviteEmail('')
       await refreshInvitations()

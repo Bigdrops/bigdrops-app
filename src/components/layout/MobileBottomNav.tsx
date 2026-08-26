@@ -1,12 +1,12 @@
-import { Icons } from '@/lib/iconRegistry'
+import { Briefcase, Home, MoreHorizontal, TrendingUp, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const items = [
-  { key: 'home', label: 'Home', icon: Icons.home },
-  { key: 'projects', label: 'Projects', icon: Icons.projects },
-  { key: 'sales', label: 'Sales', icon: Icons.sales },
-  { key: 'clients', label: 'Clients', icon: Icons.clients },
-  { key: 'more', label: 'More', icon: Icons.more },
+  { key: 'home', label: 'Home', icon: Home },
+  { key: 'projects', label: 'Projects', icon: Briefcase },
+  { key: 'sales', label: 'Sales', icon: TrendingUp },
+  { key: 'clients', label: 'Clients', icon: Users },
+  { key: 'more', label: 'More', icon: MoreHorizontal },
 ]
 
 export default function MobileBottomNav({

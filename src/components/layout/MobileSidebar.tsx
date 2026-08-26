@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Building2 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { BusinessSwitcher } from './BusinessSwitcher'
+import { useWorkspace } from '@/lib/tenant/contexts'
 import {
   APP_NAME,
   mobileDrawerPrimaryNav,
@@ -31,6 +32,34 @@ interface MobileSidebarProps {
   presalesRouteActive: boolean
   handleSalesPick: (key: string) => void
   handleMorePick: (key: string) => Promise<void>
+}
+
+function formatWorkspaceRole(role: string | null | undefined) {
+  const trimmed = String(role || '').trim()
+  if (!trimmed) return ''
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+}
+
+function WorkspaceRoleInfo() {
+  const { workspace, isLoading } = useWorkspace()
+  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
+  const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
+
+  return (
+    <div className="mt-2 rounded-2xl border border-border bg-muted/40 px-3 py-2.5">
+      <div className="flex items-start gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-card text-foreground shadow-sm">
+          <Building2 className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-xs font-bold text-foreground">{workspaceName}</div>
+          <div className="truncate text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            {workspaceRole}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function MobileSidebar({
@@ -67,7 +96,7 @@ export function MobileSidebar({
             <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Business
             </div>
-            <BusinessSwitcher />
+            <WorkspaceRoleInfo />
           </div>
 
           {mobileDrawerPrimaryNav.map((item) => {

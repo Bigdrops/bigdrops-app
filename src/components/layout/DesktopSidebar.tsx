@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import type { Session } from '@supabase/supabase-js'
+import { Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
-import { BusinessSwitcher } from './BusinessSwitcher'
+import { useWorkspace } from '@/lib/tenant/contexts'
 import {
   APP_NAME,
   desktopNav,
@@ -24,6 +25,34 @@ interface DesktopSidebarProps {
   handleMorePick: (key: string) => void
 }
 
+function formatWorkspaceRole(role: string | null | undefined) {
+  const trimmed = String(role || '').trim()
+  if (!trimmed) return ''
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+}
+
+function WorkspaceRoleInfo() {
+  const { workspace, isLoading } = useWorkspace()
+  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
+  const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
+
+  return (
+    <div className="mt-2 rounded-[var(--bd-radius-md)] border border-bd-border/70 bg-[hsl(var(--bd-surface-muted))/0.55] px-2.5 py-2">
+      <div className="flex items-start gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-bd-surface text-bd-text shadow-sm">
+          <Building2 className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-[11px] font-bold text-bd-text">{workspaceName}</div>
+          <div className="truncate text-[9px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
+            {workspaceRole}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function DesktopSidebar({
   session,
   activeTab,
@@ -32,10 +61,8 @@ export function DesktopSidebar({
   handleMorePick,
 }: DesktopSidebarProps) {
   return (
-    <aside 
-      className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex"
-    >
-      <div className="flex flex-col h-full">
+    <aside className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex">
+      <div className="flex h-full flex-col">
         <div className="px-5 py-6">
           <div className="text-[13px] font-black tracking-tight text-bd-text">
             {APP_NAME}
@@ -56,35 +83,35 @@ export function DesktopSidebar({
               Navigation
             </div>
             <div className="space-y-1.5">
-            <div className="space-y-0.5">
-              {desktopNav.map((item) => {
-                const Icon = item.icon
-                const isActive = activeTab === item.key
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => onTabClick(item.key)}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 rounded-[var(--bd-radius-lg)] px-2.5 py-1.5 text-xs transition-all active:scale-[0.985]',
-                      isActive ? activeNavItemClassName : inactiveNavItemClassName
-                    )}
-                  >
-                    <span
+              <div className="space-y-0.5">
+                {desktopNav.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeTab === item.key
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => onTabClick(item.key)}
                       className={cn(
-                        'grid h-7 w-7 place-items-center rounded-[var(--bd-icon-container-radius)] transition-colors',
-                        isActive ? activeNavIconClassName : 'bg-[var(--bd-icon-container-bg)]'
+                        'flex w-full items-center gap-2.5 rounded-[var(--bd-radius-lg)] px-2.5 py-1.5 text-xs transition-all active:scale-[0.985]',
+                        isActive ? activeNavItemClassName : inactiveNavItemClassName
                       )}
                     >
-                      <Icon className={cn('h-4 w-4', isActive ? '' : 'text-[var(--bd-icon-container-text)]')} strokeWidth={2} />
-                    </span>
-                    <span className="font-semibold">{item.label}</span>
-                  </button>
-                )
-              })}
+                      <span
+                        className={cn(
+                          'grid h-7 w-7 place-items-center rounded-[var(--bd-icon-container-radius)] transition-colors',
+                          isActive ? activeNavIconClassName : 'bg-[var(--bd-icon-container-bg)]'
+                        )}
+                      >
+                        <Icon className={cn('h-4 w-4', isActive ? '' : 'text-[var(--bd-icon-container-text)]')} strokeWidth={2} />
+                      </span>
+                      <span className="font-semibold">{item.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
           <div>
             <Separator className="my-4 bg-bd-border/60" />
@@ -144,7 +171,6 @@ export function DesktopSidebar({
               </div>
             </div>
           ))}
-
         </div>
 
         <div className="px-4 pb-4 pt-3">
@@ -152,7 +178,7 @@ export function DesktopSidebar({
             <div className="mb-[var(--bd-space-sm)] px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
               Business Context
             </div>
-            <BusinessSwitcher />
+            <WorkspaceRoleInfo />
           </div>
         </div>
       </div>

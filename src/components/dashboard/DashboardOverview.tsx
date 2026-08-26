@@ -1,13 +1,11 @@
 import * as React from 'react'
 import {
-  AlertCircle,
-  ChevronRight,
   ClipboardCheck,
   FileSignature,
-  FolderKanban,
+  Moon,
   Receipt,
-  TrendingUp,
   Truck,
+  UserRound,
   FileText,
   ClipboardList,
 } from 'lucide-react'
@@ -17,11 +15,15 @@ import type { ComponentType } from 'react'
 import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import NotificationBell from '@/components/notifications/NotificationBell'
-import type { PriorityItem, RecentDoc } from '@/hooks/useDashboardData'
+import type { PriorityItem, RecentDoc, HeroStats, SummaryStats } from '@/hooks/useDashboardData'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { cn } from '@/lib/utils'
+import { AuditTrailSkeleton } from '@/components/dashboard/AuditTrailSkeleton'
+import { KpiGrid } from '@/components/dashboard/KpiGrid'
+import { PaymentReminderBanner } from '@/components/dashboard/PaymentReminderBanner'
+import { RecentAlertsCarousel } from '@/components/dashboard/RecentAlertsCarousel'
 
 type QuickTile = {
   id: string
@@ -36,17 +38,8 @@ type DashboardOverviewProps = {
   businessName: string
   userName: string
   loading: boolean
-  heroStats: {
-    collections: number
-    openWork: number
-    awaitingPaymentCount: number
-    inTransitWaybills: number
-  }
-  summary: {
-    overdue: number
-    dueThisWeek: number
-    pendingFollowUp: number
-  }
+  heroStats: HeroStats
+  summary: SummaryStats
   quickTiles: QuickTile[]
   priorityItems: PriorityItem[]
   recentDocs: RecentDoc[]
@@ -136,6 +129,12 @@ function getIdentityLine(userName: string, businessName: string) {
   return trimmedName || trimmedBusiness || 'Bigdrops Workspace'
 }
 
+function getAvatarInitials(userName: string) {
+  const parts = String(userName || '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return ''
+  return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('')
+}
+
 function formatRecentRecordMeta(doc: RecentDoc) {
   const dateText = formatDisplayDate(doc.date, {
     fallback: 'No date',
@@ -216,11 +215,27 @@ export function DashboardOverview({
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              aria-label="Toggle dark mode"
+              onClick={() => {}}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] border border-border bg-muted text-foreground transition active:scale-95"
+            >
+              <Moon className="size-4" />
+            </button>
             <NotificationBell className="h-8 w-8" />
             <div className="sr-only">Search</div>
             <div className="[&>button]:grid [&>button]:h-8 [&>button]:w-8 [&>button]:place-items-center [&>button]:rounded-[var(--notification-radius,var(--radius))] [&>button]:bg-[var(--notification-bg,hsl(var(--muted)))] [&>button]:text-foreground [&_svg]:h-3.5 [&_svg]:w-3.5">
               <GlobalSearch />
             </div>
+            <button
+              type="button"
+              aria-label="Account"
+              onClick={() => {}}
+              className="ml-1 grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border border-border bg-muted text-[10px] font-black uppercase tracking-wide text-foreground transition active:scale-95"
+            >
+              {getAvatarInitials(userName) || <UserRound className="size-4" />}
+            </button>
           </div>
         </div>
       </section>
@@ -378,6 +393,22 @@ export function DashboardOverview({
             )}
           </div>
         )}
+      </section>
+
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <KpiGrid loading={loading} heroStats={heroStats} summary={summary} />
+      </section>
+
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <PaymentReminderBanner />
+      </section>
+
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <RecentAlertsCarousel />
+      </section>
+
+      <section className="mt-5 md:mt-8 px-4 md:px-6">
+        <AuditTrailSkeleton />
       </section>
 
     </div>

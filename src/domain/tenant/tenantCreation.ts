@@ -79,16 +79,21 @@ export async function acceptWorkspaceInvitation(inviteId: string): Promise<void>
 /**
  * Create a workspace invitation. The RPC is SECURITY DEFINER and enforces
  * owner OR invite_members toggle, lowercases the email, and defaults expiry to
- * 7 days. The client never writes workspace_invitations rows directly.
+ * 7 days. Passing entityId associates the invite with one company of the
+ * workspace: acceptance then seeds a baseline ('*', 'view') entity grant,
+ * which is the company-membership signal required before a company role can
+ * be assigned. The client never writes workspace_invitations rows directly.
  */
 export async function createWorkspaceInvitation(input: {
   workspaceId: string
   email: string
+  entityId?: string
 }): Promise<string> {
   const { data, error } = await supabase.rpc('create_workspace_invitation', {
     p_workspace_id: input.workspaceId,
     p_email: input.email.trim().toLowerCase(),
     p_role: 'member',
+    ...(input.entityId ? { p_entity_id: input.entityId } : {}),
   })
   if (error) throw error
   return String(data ?? '')

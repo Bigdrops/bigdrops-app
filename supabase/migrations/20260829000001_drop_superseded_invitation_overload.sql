@@ -1,0 +1,21 @@
+-- ============================================================
+-- Drop superseded create_workspace_invitation overload
+--
+-- 20260829000000 added p_entity_id to create_workspace_invitation.
+-- In Postgres, CREATE OR REPLACE FUNCTION with a changed argument list
+-- creates a NEW function and leaves the previous overload in place.
+-- The live database therefore had both:
+--   create_workspace_invitation(uuid, text, text, jsonb, timestamptz)
+--   create_workspace_invitation(uuid, text, text, jsonb, timestamptz, uuid)
+-- Calls that omit p_entity_id resolve to the OLD 5-arg overload, which
+-- does not seed the company-membership baseline grant, silently keeping
+-- production bug err_1787718465611_nf7s7a alive.
+--
+-- This migration drops the superseded 5-arg overload so every call goes
+-- through the new implementation (p_entity_id defaults to NULL, which
+-- preserves the pre-baseline behavior for callers that do not pass it).
+-- Verified live before dropping: both signatures resolved via
+-- to_regprocedure; after this migration only the 6-arg form remains.
+-- ============================================================
+
+DROP FUNCTION IF EXISTS public.create_workspace_invitation(uuid, text, text, jsonb, timestamptz);
