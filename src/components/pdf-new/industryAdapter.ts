@@ -376,6 +376,7 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
     client: model.recipient
       ? {
           name: model.recipient.name || '',
+          attention: model.recipient.attention || '',
           address: recipientAddress.address,
           cityState: recipientAddress.cityState,
           phone: model.recipient.phone || '',

@@ -1,5 +1,6 @@
 type PartyInput = {
   name?: string | null
+  attention?: string | null
   address?: string | null
   cityState?: string | null
   phone?: string | null
@@ -19,6 +20,9 @@ export function buildPartyLines(party: PartyInput): PartyLine[] {
 
   if (party.name) {
     lines.push({ key: 'name', value: party.name, type: 'name' })
+  }
+  if (party.attention?.trim()) {
+    lines.push({ key: 'attention', value: `ATTN: ${party.attention.trim()}`, type: 'custom' })
   }
   if (party.address) {
     lines.push({ key: 'address', value: party.address, type: 'address' })
