@@ -1,188 +1,130 @@
 import * as React from 'react'
-import { ArrowDownRight, ArrowUpRight, Clock3, PackageCheck, ReceiptText, Truck } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react'
 
-import type { HeroStats, SummaryStats } from '@/hooks/useDashboardData'
-import { formatNaira } from '@/lib/formatters/money'
+import type { KpiCardViewModel, KpiMetricId, KpiTone } from '@/config/kpiCards'
+import { KPI_BAR_SEGMENTS, KPI_CARD_COUNT } from '@/config/kpiCards'
 import { cn } from '@/lib/utils'
-
-type MetricTone = 'emerald' | 'blue' | 'amber' | 'slate' | 'rose'
-
-type MetricCard = {
-  label: string
-  value: string
-  hint: string
-  tone: MetricTone
-  icon: React.ComponentType<{ className?: string }>
-}
 
 type KpiGridProps = {
   loading: boolean
-  heroStats: HeroStats
-  summary: SummaryStats
+  cards: KpiCardViewModel[]
 }
 
-const toneStyles: Record<MetricTone, string> = {
-  emerald: 'from-emerald-500/15 via-emerald-500/5 to-transparent text-emerald-700 dark:text-emerald-300',
-  blue: 'from-sky-500/15 via-sky-500/5 to-transparent text-sky-700 dark:text-sky-300',
-  amber: 'from-amber-500/15 via-amber-500/5 to-transparent text-amber-700 dark:text-amber-300',
-  slate: 'from-slate-500/15 via-slate-500/5 to-transparent text-slate-700 dark:text-slate-300',
-  rose: 'from-rose-500/15 via-rose-500/5 to-transparent text-rose-700 dark:text-rose-300',
+const SEGMENT_BASE_CLASS = 'h-full w-[3px] shrink-0 transition-colors'
+const SEGMENT_DIM_CLASS = 'bg-border opacity-50'
+
+const TONE_SEGMENT_CLASS: Record<KpiTone, string> = {
+  emerald: 'bg-emerald-500',
+  rose: 'bg-rose-500',
+  violet: 'bg-violet-500',
+  amber: 'bg-amber-500',
+  sky: 'bg-sky-500',
+  slate: 'bg-slate-400',
 }
 
-function formatMetricValue(value: number | null | undefined, kind: 'amount' | 'count') {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) return '—'
-  if (kind === 'amount') return formatNaira(Number(value), { round: true })
-  return String(value)
+// View models carry only ids; the grid owns the visual tone mapping.
+const METRIC_TONE: Record<KpiMetricId, KpiTone> = {
+  collections: 'emerald',
+  thisMonthCollections: 'emerald',
+  overdue: 'rose',
+  pastDue: 'rose',
+  dueThisWeek: 'amber',
+  awaitingPaymentCount: 'violet',
+  openWork: 'sky',
+  pendingFollowUp: 'sky',
+  inTransitWaybills: 'slate',
 }
 
-function MetricCardRow({ metric }: { metric: MetricCard }) {
-  const Icon = metric.icon
-
-  return (
-    <article className="relative overflow-hidden rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm">
-      <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', toneStyles[metric.tone])} />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground">
-            {metric.label}
-          </div>
-          <div className="mt-2 text-[24px] font-black leading-none tracking-tight text-foreground">
-            {metric.value}
-          </div>
-          <div className="mt-2 text-[11px] leading-4 text-muted-foreground">
-            {metric.hint}
-          </div>
-        </div>
-
-        <div className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-muted/70', toneStyles[metric.tone])}>
-          <Icon className="size-4" />
-        </div>
+function TrendIndicator({ card }: { card: KpiCardViewModel }) {
+  if (card.trendDirection === 'neutral') {
+    return (
+      <div className="flex items-center gap-[3px] text-[11px] text-muted-foreground">
+        <Minus className="size-3" aria-hidden="true" />
+        <span>{card.trendText}</span>
       </div>
-    </article>
-  )
-}
+    )
+  }
 
-function MetricSkeletonCard() {
+  const isUp = card.trendDirection === 'up'
+
   return (
-    <div className="relative overflow-hidden rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm">
-      <div className="h-1 w-16 rounded-full bg-muted/80" />
-      <div className="mt-3 h-3 w-20 rounded bg-muted/70" />
-      <div className="mt-3 h-7 w-28 rounded bg-muted/70" />
-      <div className="mt-3 h-3 w-24 rounded bg-muted/60" />
+    <div className="flex items-center gap-[3px] text-[11px] text-muted-foreground">
+      <span
+        className={cn(
+          'inline-flex items-center font-bold',
+          card.trendPolarity === 'good' && (isUp
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : 'text-rose-600 dark:text-rose-400'),
+        )}
+      >
+        {isUp ? <ArrowUpRight className="size-3" aria-hidden="true" /> : <ArrowDownRight className="size-3" aria-hidden="true" />}
+        {card.trendText.split(' ')[0]}
+      </span>
+      <span>{card.trendText.split(' ').slice(1).join(' ')}</span>
     </div>
   )
 }
 
-export function KpiGrid({ loading, heroStats, summary }: KpiGridProps) {
-  const heroMetrics: MetricCard[] = [
-    {
-      label: 'Collections',
-      value: formatMetricValue(heroStats.collections, 'amount'),
-      hint: 'Live collections captured this month.',
-      tone: 'emerald',
-      icon: ReceiptText,
-    },
-    {
-      label: 'Open work',
-      value: formatMetricValue(heroStats.openWork, 'count'),
-      hint: 'Tasks and follow-up work in flight.',
-      tone: 'blue',
-      icon: PackageCheck,
-    },
-    {
-      label: 'Awaiting payment',
-      value: formatMetricValue(heroStats.awaitingPaymentCount, 'count'),
-      hint: 'Invoices still carrying a balance.',
-      tone: 'amber',
-      icon: ArrowDownRight,
-    },
-    {
-      label: 'Waybills in transit',
-      value: formatMetricValue(heroStats.inTransitWaybills, 'count'),
-      hint: 'Dispatched waybills still moving.',
-      tone: 'slate',
-      icon: Truck,
-    },
-  ]
-
-  const summaryMetrics: MetricCard[] = [
-    {
-      label: 'Overdue balance',
-      value: formatMetricValue(summary.overdue, 'amount'),
-      hint: 'Past due invoices that still need collection.',
-      tone: 'rose',
-      icon: Clock3,
-    },
-    {
-      label: 'Past due',
-      value: formatMetricValue(summary.pastDue, 'amount'),
-      hint: 'Duplicated financial view from the same source.',
-      tone: 'rose',
-      icon: ArrowDownRight,
-    },
-    {
-      label: 'Due this week',
-      value: formatMetricValue(summary.dueThisWeek, 'amount'),
-      hint: 'Balance expected before the week closes.',
-      tone: 'amber',
-      icon: ArrowUpRight,
-    },
-    {
-      label: 'Collected this month',
-      value: formatMetricValue(summary.thisMonthCollections, 'amount'),
-      hint: 'Cash received since the month began.',
-      tone: 'emerald',
-      icon: ReceiptText,
-    },
-    {
-      label: 'Pending follow-up',
-      value: formatMetricValue(summary.pendingFollowUp, 'count'),
-      hint: 'Invoices that still need attention.',
-      tone: 'slate',
-      icon: PackageCheck,
-    },
-  ]
+function KpiBar({ card }: { card: KpiCardViewModel }) {
+  const filledClass = TONE_SEGMENT_CLASS[METRIC_TONE[card.id]]
 
   return (
-    <div className="rounded-[var(--bd-radius-xl)] border border-border bg-card px-4 py-4 shadow-sm md:px-5 md:py-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-            KPI Grid
-          </div>
-          <div className="mt-1 text-[12px] text-muted-foreground">
-            Live values from the dashboard aggregation layer.
-          </div>
-        </div>
+    <div className="flex h-3 items-center justify-start gap-[2px]" role="img" aria-label={card.barTitle}>
+      {Array.from({ length: KPI_BAR_SEGMENTS }).map((_, index) => (
+        <span
+          key={index}
+          className={cn(
+            SEGMENT_BASE_CLASS,
+            index < card.barFilledSegments ? filledClass : SEGMENT_DIM_CLASS,
+          )}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Informational only by design: no onClick, no button/link semantics.
+function KpiCard({ card }: { card: KpiCardViewModel }) {
+  return (
+    <article className="flex flex-col gap-2 rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm">
+      <div className="truncate text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+        {card.label}
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <MetricSkeletonCard key={index} />
-            ))}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <MetricSkeletonCard key={`summary-${index}`} />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {heroMetrics.map((metric) => (
-              <MetricCardRow key={metric.label} metric={metric} />
-            ))}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {summaryMetrics.map((metric) => (
-              <MetricCardRow key={metric.label} metric={metric} />
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="text-2xl font-extrabold leading-none tracking-[-0.02em] text-foreground">
+        {card.valueText}
+      </div>
+
+      <KpiBar card={card} />
+
+      <TrendIndicator card={card} />
+    </article>
+  )
+}
+
+function KpiCardSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm" aria-hidden="true">
+      <div className="h-3 w-20 rounded bg-muted/80" />
+      <div className="h-7 w-28 rounded bg-muted/80" />
+      <div className="flex h-3 items-center gap-[2px]">
+        {Array.from({ length: KPI_BAR_SEGMENTS }).map((_, index) => (
+          <span key={index} className={cn(SEGMENT_BASE_CLASS, 'bg-muted/70')} />
+        ))}
+      </div>
+      <div className="h-3 w-24 rounded bg-muted/60" />
+    </div>
+  )
+}
+
+export function KpiGrid({ loading, cards }: KpiGridProps) {
+  const visibleCards = cards.slice(0, KPI_CARD_COUNT)
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {loading || visibleCards.length === 0
+        ? Array.from({ length: KPI_CARD_COUNT }).map((_, index) => <KpiCardSkeleton key={index} />)
+        : visibleCards.map((card) => <KpiCard key={card.id} card={card} />)}
     </div>
   )
 }

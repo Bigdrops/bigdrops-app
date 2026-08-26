@@ -15,7 +15,8 @@ import type { ComponentType } from 'react'
 import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import NotificationBell from '@/components/notifications/NotificationBell'
-import type { PriorityItem, RecentDoc, HeroStats, SummaryStats } from '@/hooks/useDashboardData'
+import type { RecentDoc } from '@/hooks/useDashboardData'
+import type { KpiCardViewModel } from '@/config/kpiCards'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -25,26 +26,12 @@ import { KpiGrid } from '@/components/dashboard/KpiGrid'
 import { PaymentReminderBanner } from '@/components/dashboard/PaymentReminderBanner'
 import { RecentAlertsCarousel } from '@/components/dashboard/RecentAlertsCarousel'
 
-type QuickTile = {
-  id: string
-  label: string
-  path: string
-  icon: ComponentType<{ className?: string; size?: number; strokeWidth?: number }>
-  description: string
-  iconBg: string
-}
-
 type DashboardOverviewProps = {
   businessName: string
   userName: string
   loading: boolean
-  heroStats: HeroStats
-  summary: SummaryStats
-  quickTiles: QuickTile[]
-  priorityItems: PriorityItem[]
+  kpiCards: KpiCardViewModel[]
   recentDocs: RecentDoc[]
-  onQuickAction: (path: string) => void
-  onPrioritySelect: (item: PriorityItem) => void
   onRecentDocSelect: (doc: RecentDoc) => void
   onViewAllActivity: () => void
 }
@@ -82,45 +69,6 @@ const recentRecordMeta = {
       'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
   },
 } as const
-
-function getQuickActionHint(tile: QuickTile) {
-  if (tile.id === 'invoices') return 'Create & track invoices'
-  if (tile.id === 'quotations') return 'Draft pricing proposals'
-  if (tile.id === 'projects') return 'Manage live jobs'
-  if (tile.id === 'waybills') return 'Log dispatch records'
-  return tile.description
-}
-
-function getFollowUpBadgeClassName(item: PriorityItem) {
-  const label = String(item.badgeLabel || '').toLowerCase()
-  const type = String(item.type || '').toLowerCase()
-
-  if (label.includes('payment') || type === 'payment') {
-    return 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.18)] dark:bg-[hsl(var(--destructive)/0.15)]'
-  }
-
-  if (label.includes('quotation') || type === 'quotation') {
-    return 'tone-warning-panel text-[var(--tone-warning)]'
-  }
-
-  return 'tone-success-panel text-[var(--tone-success)]'
-}
-
-function getFollowUpDotClassName(item: PriorityItem) {
-  const label = String(item.badgeLabel || '').toLowerCase()
-  const type = String(item.type || '').toLowerCase()
-
-  if (label.includes('payment') || type === 'payment') {
-    return 'bg-[hsl(var(--destructive))]'
-  }
-
-  if (label.includes('quotation') || type === 'quotation') {
-    return 'bg-[var(--tone-warning)]'
-  }
-
-  return 'bg-[var(--tone-success)]'
-}
-
 
 function getIdentityLine(userName: string, businessName: string) {
   const trimmedName = String(userName || '').trim()
@@ -177,13 +125,8 @@ export function DashboardOverview({
   businessName,
   userName,
   loading,
-  heroStats,
-  summary,
-  quickTiles,
-  priorityItems,
+  kpiCards,
   recentDocs,
-  onQuickAction,
-  onPrioritySelect,
   onRecentDocSelect,
   onViewAllActivity,
 }: DashboardOverviewProps) {
@@ -242,96 +185,9 @@ export function DashboardOverview({
 
 
       <section className="mt-4 md:mt-6 px-4 md:px-6">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-            Quick Actions
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {quickTiles.slice(0, 4).map((tile) => {
-            const Icon = tile.icon
-
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={() => onQuickAction(tile.path)}
-                className="rounded-[var(--bd-radius-xl)] border border-border bg-card p-3 text-left shadow-sm active:scale-[0.97] transition-all"
-              >
-                <div
-                  className={cn(
-                    'grid h-8 w-8 place-items-center rounded-[var(--bd-icon-container-radius)] bg-[var(--bd-icon-container-bg)] text-[var(--bd-icon-container-text)] shadow-sm',
-                    tile.iconBg,
-                  )}
-                >
-                  <Icon size={16} strokeWidth={2.5} />
-                </div>
-
-                <div className="mt-2 text-[12px] font-bold tracking-tight text-foreground">
-                  {tile.label}
-                </div>
-              </button>
-            )
-          })}
-        </div>
+        <KpiGrid loading={loading} cards={kpiCards} />
       </section>
 
-      <section className="mt-5 md:mt-8 px-4 md:px-6">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-            Tasks
-          </div>
-          <span className="inline-flex h-4 items-center rounded-full border border-[hsl(var(--destructive)/0.18)] bg-[hsl(var(--destructive)/0.08)] px-2 text-[8px] font-bold uppercase tracking-wider text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]">
-            {priorityItems.length} Pending
-          </span>
-        </div>
-
-        <div className="space-y-1.5">
-          {priorityItems.length === 0 ? (
-            <div className="flex items-center gap-3 rounded-[var(--bd-radius-lg)] border border-border bg-card px-4 py-2.5 shadow-sm">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[12px] font-bold tracking-tight text-foreground">
-                  No pending tasks
-                </div>
-              </div>
-            </div>
-          ) : (
-            priorityItems.slice(0, 3).map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => onPrioritySelect(item)}
-                className={cn(
-                  "group relative flex w-full cursor-pointer items-center gap-3 rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface p-2.5 text-left transition-all hover:bg-bd-surface-muted active:scale-[0.99] shadow-sm",
-                )}
-              >
-                <span
-                  className={cn(
-                    'h-1.5 w-1.5 shrink-0 rounded-full',
-                    getFollowUpDotClassName(item),
-                  )}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12px] font-bold tracking-tight text-foreground">
-                    {item.title}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground truncate">{item.meta}</div>
-                </div>
-                <span
-                  className={cn(
-                    'inline-flex h-[18px] shrink-0 items-center rounded-full border px-1.5 text-[8px] font-black uppercase tracking-wider',
-                    getFollowUpBadgeClassName(item),
-                  )}
-                >
-                  {item.badgeLabel}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      </section>
       <section className="mt-5 md:mt-8 px-4 md:px-6">
         <div className="mb-2">
           <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
@@ -393,10 +249,6 @@ export function DashboardOverview({
             )}
           </div>
         )}
-      </section>
-
-      <section className="mt-5 md:mt-8 px-4 md:px-6">
-        <KpiGrid loading={loading} heroStats={heroStats} summary={summary} />
       </section>
 
       <section className="mt-5 md:mt-8 px-4 md:px-6">

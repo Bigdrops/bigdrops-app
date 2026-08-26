@@ -1,8 +1,6 @@
 import * as React from 'react'
 
 import { feedback } from '@/lib/feedback'
-import { formatNaira } from '@/lib/formatters/money'
-import { formatStatusLabel } from '@/lib/formatters/status'
 import { useEntity } from '@/lib/tenant/contexts'
 import { listBoqs } from '@/domain/boq/storage'
 import {
@@ -29,17 +27,6 @@ export type RecentProject = {
   client_name: string | null
 }
 
-export type PriorityItem = {
-  key: string
-  title: string
-  meta: string
-  dotClassName: string
-  dotRingClassName: string
-  badgeLabel: string
-  badgeClassName: string
-  type?: string
-}
-
 export type HeroStats = {
   collections: number
   openWork: number
@@ -55,6 +42,18 @@ export type SummaryStats = {
   pendingFollowUp: number
 }
 
+// Full ingredient set for KPI cards: the nine dashboard metrics plus the
+// comparison/aggregation fields required for real trends and segmented bars.
+export type KpiStats = HeroStats &
+  SummaryStats & {
+    prevMonthCollections: number
+    outstandingTotal: number
+    dueLastWeekWindow: number
+    totalFinancialRows: number
+    waybillsTotal: number
+    waybillsDispatchedTotal: number
+  }
+
 type UseDashboardDataOptions = {
   variant?: 'overview' | 'classic'
 }
@@ -63,9 +62,9 @@ type UseDashboardDataResult = {
   loading: boolean
   recentDocs: RecentDoc[]
   recentProjects: RecentProject[]
-  priorityItems: PriorityItem[]
   heroStats: HeroStats
   summary: SummaryStats
+  kpiStats: KpiStats
   refresh: () => Promise<void>
 }
 
@@ -84,8 +83,15 @@ const defaultSummary: SummaryStats = {
   pendingFollowUp: 0,
 }
 
-function formatDashboardAmount(amount: number | string | null | undefined) {
-  return formatNaira(Number(amount || 0), { round: true })
+const defaultKpiStats: KpiStats = {
+  ...defaultHeroStats,
+  ...defaultSummary,
+  prevMonthCollections: 0,
+  outstandingTotal: 0,
+  dueLastWeekWindow: 0,
+  totalFinancialRows: 0,
+  waybillsTotal: 0,
+  waybillsDispatchedTotal: 0,
 }
 
 function isValidDateString(value: string | null | undefined): value is string {
@@ -98,117 +104,6 @@ function mergeRecentDocs(docs: RecentDoc[]) {
     .filter((doc) => isValidDateString(doc.date))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6)
-}
-
-function buildClassicPriorityItems(projects: RecentProject[], invoices: any[], quotations: any[]) {
-  const items: PriorityItem[] = []
-
-  if (projects[0]) {
-    items.push({
-      key: `project-${projects[0].id}`,
-      title: `Update project status — ${projects[0].name}`,
-      meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
-      dotClassName: 'bg-emerald-500',
-      dotRingClassName: 'ring-[6px] ring-emerald-500/15',
-      badgeLabel: 'Project',
-      badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      type: 'project',
-    })
-  }
-
-  const paymentInvoice = invoices.find((doc) => {
-    const status = String(doc.status || '').toLowerCase()
-    return status && status !== 'paid'
-  })
-
-  if (paymentInvoice) {
-    items.push({
-      key: `payment-${paymentInvoice.id}`,
-      title: `Record payment — ${paymentInvoice.invoice_number}`,
-      meta: `${paymentInvoice.client_name || 'Walking Client'} • ${formatDashboardAmount(paymentInvoice.total)}`,
-      dotClassName: 'bg-blue-500',
-      dotRingClassName: 'ring-[6px] ring-blue-500/15',
-      badgeLabel: 'Payment',
-      badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
-      type: 'payment',
-    })
-  }
-
-  if (projects[1]) {
-    items.push({
-      key: `project-review-${projects[1].id}`,
-      title: `Confirm progress — ${projects[1].name}`,
-      meta: `${projects[1].client_name || 'Open project'} • team follow-up needed`,
-      dotClassName: 'bg-amber-500',
-      dotRingClassName: 'ring-[6px] ring-amber-500/15',
-      badgeLabel: 'Review',
-      badgeClassName: 'bg-amber-50 text-amber-700 border-amber-200',
-      type: 'project',
-    })
-  } else if (quotations[0]) {
-    items.push({
-      key: `quote-${quotations[0].id}`,
-      title: `Follow up quotation — ${quotations[0].quotation_number}`,
-      meta: `${quotations[0].client_name || 'Walking Client'} • awaiting response`,
-      dotClassName: 'bg-violet-500',
-      dotRingClassName: 'ring-[6px] ring-violet-500/15',
-      badgeLabel: 'Quote',
-      badgeClassName: 'bg-violet-50 text-violet-700 border-violet-200',
-      type: 'quotation',
-    })
-  }
-
-  return items.slice(0, 3)
-}
-
-function buildOverviewPriorityItems(projects: RecentProject[], quotations: any[], hasPastDue: boolean) {
-  const items: PriorityItem[] = []
-
-  if (projects[0]) {
-    items.push({
-      key: `project-${projects[0].id}`,
-      title: `Update project status — ${projects[0].name}`,
-      meta: `${projects[0].client_name || 'Open project'} • no movement recorded recently`,
-      dotClassName: 'bg-emerald-500',
-      dotRingClassName: 'ring-[6px] ring-emerald-500/15',
-      badgeLabel: 'Project',
-      badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      type: 'project',
-    })
-  }
-
-  if (hasPastDue) {
-    items.push({
-      key: 'past-due-invoice',
-      title: 'Record payment — Past due',
-      meta: 'Balance still pending for record capture',
-      dotClassName: 'bg-rose-500',
-      dotRingClassName: 'ring-[6px] ring-rose-500/15',
-      badgeLabel: 'Payment',
-      badgeClassName: 'bg-rose-50 text-rose-700 border-rose-200',
-      type: 'payment',
-    })
-  }
-
-  const pendingQuotation = quotations.find((quotation) => {
-    const status = String(quotation.status || '').toLowerCase()
-    return status === 'open'
-  })
-
-  if (pendingQuotation) {
-    items.push({
-      key: `quotation-${pendingQuotation.id}`,
-      title: `Follow up quotation — ${pendingQuotation.quotation_number}`,
-      meta: `${pendingQuotation.client_name || 'Walking Client'} • status ${formatStatusLabel(pendingQuotation.status, { fallback: 'open', lowercase: true })}`,
-      dotClassName: 'bg-blue-500',
-      dotRingClassName: 'ring-[6px] ring-blue-500/15',
-      badgeLabel: 'Quotation',
-      badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
-      type: 'quotation',
-    })
-  }
-
-  return items.slice(0, 3)
 }
 
 function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[], opts?: { useIssueDate?: boolean }) {
@@ -281,6 +176,51 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
   return mergeRecentDocs(docs)
 }
 
+// Comparison/aggregation ingredients for KPI cards, derived from the same
+// unbounded invoice_financials_v result set as the existing metrics.
+function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth: Date) {
+  const prevMonthStart = new Date(startOfMonth)
+  prevMonthStart.setMonth(prevMonthStart.getMonth() - 1)
+
+  const weekAgo = new Date(now)
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  weekAgo.setHours(0, 0, 0, 0)
+
+  let prevMonthCollections = 0
+  let outstandingTotal = 0
+  let dueLastWeekWindow = 0
+
+  for (const row of invoiceFinancials) {
+    const balance = Number(row.balance_due || 0)
+    const cashReceived = Number(row.cash_received || 0)
+
+    const issueDate = row.issue_date ? new Date(row.issue_date) : null
+    const hasIssueDate = !!issueDate && !Number.isNaN(issueDate.getTime())
+
+    if (balance > 0) {
+      outstandingTotal += balance
+    }
+
+    if (hasIssueDate && (issueDate as Date) >= prevMonthStart && (issueDate as Date) < startOfMonth) {
+      prevMonthCollections += cashReceived
+    }
+
+    if (balance > 0 && row.due_date) {
+      const dueDate = new Date(row.due_date)
+      if (!Number.isNaN(dueDate.getTime()) && dueDate >= weekAgo && dueDate <= now) {
+        dueLastWeekWindow += balance
+      }
+    }
+  }
+
+  return {
+    prevMonthCollections,
+    outstandingTotal,
+    dueLastWeekWindow,
+    totalFinancialRows: invoiceFinancials.length,
+  }
+}
+
 export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
   const { variant = 'overview' } = options
   const { tenantClient } = useEntity()
@@ -299,9 +239,9 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     const cached = readDashboardCache(cacheKey)
     return cached?.data.recentProjects || []
   })
-  const [priorityItems, setPriorityItems] = React.useState<PriorityItem[]>(() => {
+  const [kpiStats, setKpiStats] = React.useState<KpiStats>(() => {
     const cached = readDashboardCache(cacheKey)
-    return cached?.data.priorityItems || []
+    return cached?.data.kpiStats || defaultKpiStats
   })
   const [heroStats, setHeroStats] = React.useState<HeroStats>(() => {
     const cached = readDashboardCache(cacheKey)
@@ -394,12 +334,12 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           return dueDate >= now && dueDate <= endOfWeek
         }).length
 
-        const reminders = buildClassicPriorityItems(projects, invoices, quotations)
-        
+        const kpiAggregates = computeKpiAggregates(invoiceFinancials, now, startOfMonth)
+
         const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
         const nextHeroStats = {
           collections: thisMonthCollections,
-          openWork: reminders.length || pendingFollowUp,
+          openWork: pendingFollowUp,
           awaitingPaymentCount: 0,
           inTransitWaybills: 0,
         }
@@ -410,19 +350,26 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           thisMonthCollections,
           pendingFollowUp,
         }
+        const nextKpiStats: KpiStats = {
+          ...nextHeroStats,
+          ...nextSummary,
+          ...kpiAggregates,
+          waybillsTotal: 0,
+          waybillsDispatchedTotal: 0,
+        }
 
         setRecentDocs(nextRecentDocs)
         setRecentProjects(projects)
-        setPriorityItems(reminders)
         setHeroStats(nextHeroStats)
         setSummary(nextSummary)
+        setKpiStats(nextKpiStats)
 
         writeDashboardCache(cacheKey, {
           recentDocs: nextRecentDocs,
           recentProjects: projects,
-          priorityItems: reminders,
           heroStats: nextHeroStats,
           summary: nextSummary,
+          kpiStats: nextKpiStats,
         })
       } catch (error) {
         console.error('Dashboard data load failed:', error)
@@ -443,7 +390,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     endOfWeek.setHours(23, 59, 59, 999)
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes] = await Promise.all([
         tenantClient
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
@@ -456,6 +403,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
         tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
         tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
+        // Exact waybill counts for the in-transit KPI bar; the recent-rows
+        // query above is limit-truncated and would produce misleading ratios.
+        tenantClient.from('waybills').select('id', { count: 'exact', head: true }),
+        tenantClient.from('waybills').select('id', { count: 'exact', head: true }).eq('status', 'dispatched'),
       ])
 
       const invoices = (invoiceRes.data || [])
@@ -508,16 +459,15 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
       const awaitingPaymentCount = invoiceFinancials.filter((row: any) => Number(row.balance_due || 0) > 0).length
 
-      const hasPastDue = invoiceFinancials.some((row: any) => isPastDue(row))
       const inTransitWaybills = waybills.filter(
         (row: any) => String(row.status || '').toLowerCase() === 'dispatched',
       ).length
-      const reminders = buildOverviewPriorityItems(projects, quotations, hasPastDue)
+      const kpiAggregates = computeKpiAggregates(invoiceFinancials, now, startOfMonth)
 
       const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: false })
       const nextHeroStats = {
         collections: thisMonthCollections,
-        openWork: reminders.length || pendingFollowUp,
+        openWork: pendingFollowUp,
         awaitingPaymentCount,
         inTransitWaybills,
       }
@@ -528,19 +478,26 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         thisMonthCollections,
         pendingFollowUp,
       }
+      const nextKpiStats: KpiStats = {
+        ...nextHeroStats,
+        ...nextSummary,
+        ...kpiAggregates,
+        waybillsTotal: waybillsTotalRes.count ?? 0,
+        waybillsDispatchedTotal: waybillsDispatchedRes.count ?? 0,
+      }
 
       setRecentDocs(nextRecentDocs)
       setRecentProjects(projects)
-      setPriorityItems(reminders)
       setHeroStats(nextHeroStats)
       setSummary(nextSummary)
+      setKpiStats(nextKpiStats)
 
       writeDashboardCache(cacheKey, {
         recentDocs: nextRecentDocs,
         recentProjects: projects,
-        priorityItems: reminders,
         heroStats: nextHeroStats,
         summary: nextSummary,
+        kpiStats: nextKpiStats,
       })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
@@ -556,5 +513,5 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     void load()
   }, [load])
 
-  return { loading, recentDocs, recentProjects, priorityItems, heroStats, summary, refresh: load }
+  return { loading, recentDocs, recentProjects, heroStats, summary, kpiStats, refresh: load }
 }

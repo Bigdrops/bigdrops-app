@@ -1,8 +1,5 @@
 import { Icons } from '@/lib/iconRegistry'
 
-export const QUICK_TILE_STORAGE_KEY = 'quick_tiles'
-export const QUICK_TILE_COUNT = 4
-
 export const QUICK_TILE_REGISTRY = {
   invoices: {
     id: 'invoices',
@@ -136,8 +133,6 @@ export const QUICK_TILE_REGISTRY = {
   },
 }
 
-export const ALL_QUICK_TILE_IDS = Object.keys(QUICK_TILE_REGISTRY)
-export const DEFAULT_QUICK_TILES = ['invoices', 'quotations', 'csr', 'projects']
 export const DEFAULT_CREATE_ACTION_TILES = [
   'new_invoice',
   'new_project',
@@ -147,8 +142,6 @@ export const DEFAULT_CREATE_ACTION_TILES = [
   'new_waybill',
   'new_letter',
 ]
-
-const LEGACY_ACTION_DEFAULTS = ['new_invoice', 'new_quotation', 'new_csr', 'new_project']
 
 export function sanitizeQuickTileIds(tileIds) {
   if (!Array.isArray(tileIds)) return []
@@ -161,61 +154,8 @@ export function sanitizeQuickTileIds(tileIds) {
   })
 }
 
-function normalizeQuickTiles(tileIds) {
-  const sanitized = sanitizeQuickTileIds(tileIds)
-  const nextTiles = sanitized.filter((tileId) => !tileId.startsWith('new_'))
-
-  for (const tileId of DEFAULT_QUICK_TILES) {
-    if (nextTiles.length >= QUICK_TILE_COUNT) break
-    if (!nextTiles.includes(tileId)) {
-      nextTiles.push(tileId)
-    }
-  }
-
-  return nextTiles.slice(0, QUICK_TILE_COUNT)
-}
-
-export function loadStoredQuickTiles() {
-  try {
-    const savedTiles = localStorage.getItem(QUICK_TILE_STORAGE_KEY)
-    if (!savedTiles) return [...DEFAULT_QUICK_TILES]
-
-    const parsedTiles = JSON.parse(savedTiles)
-    if (!Array.isArray(parsedTiles)) return [...DEFAULT_QUICK_TILES]
-
-    const isLegacyDefault = LEGACY_ACTION_DEFAULTS.every((tileId, index) => parsedTiles[index] === tileId)
-    if (isLegacyDefault) return [...DEFAULT_QUICK_TILES]
-
-    const normalized = normalizeQuickTiles(parsedTiles)
-
-    const hadCreateActionTile = parsedTiles.some(
-      (tileId) => typeof tileId === 'string' && tileId.startsWith('new_')
-    )
-
-    if (hadCreateActionTile) {
-      try {
-        localStorage.setItem(QUICK_TILE_STORAGE_KEY, JSON.stringify(normalized))
-      } catch {
-        // ignore localStorage write failures
-      }
-    }
-
-    return normalized
-  } catch {
-    return [...DEFAULT_QUICK_TILES]
-  }
-}
-
-export function saveStoredQuickTiles(tileIds) {
-  const nextTiles = normalizeQuickTiles(tileIds)
-  localStorage.setItem(QUICK_TILE_STORAGE_KEY, JSON.stringify(nextTiles))
-  return nextTiles
-}
-
-export function getQuickTiles(tileIds = DEFAULT_QUICK_TILES) {
-  return normalizeQuickTiles(tileIds).map((tileId) => QUICK_TILE_REGISTRY[tileId])
-}
-
+// Feeds the FAB / Quick Create popup on the dashboard. The dashboard Quick
+// Actions tile grid has been retired; create actions remain in active use.
 export function getCreateActions(tileIds = DEFAULT_CREATE_ACTION_TILES) {
   return sanitizeQuickTileIds(tileIds)
     .filter((tileId) => tileId.startsWith('new_'))

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { ArrowDown, ArrowUp, Check, ChevronRight, X } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -11,101 +10,81 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
+import type { KpiMetricId } from '@/config/kpiCards'
+import { KPI_METRIC_REGISTRY, TONE_CHIP_CLASS } from '@/config/kpiCards'
 
-type QuickTileOption = {
-  id: string
-  label: string
-  description: string
-  icon: LucideIcon
-  iconBg: string
+type DashboardKpiCardsSettingsProps = {
+  activeMetrics: KpiMetricId[]
+  flashMetric: string | null
+  onSelectMetric: (index: number, nextId: KpiMetricId) => void
+  onMoveMetric: (index: number, direction: 'up' | 'down') => void
 }
 
-type DashboardQuickTilesSettingsProps = {
-  activeTiles: string[]
-  flashTile: string | null
-  onSelectTile: (index: number, nextId: string) => void
-  onMoveTile: (index: number, direction: 'up' | 'down') => void
-  registry: Record<string, QuickTileOption>
-  optionIds: string[]
-}
-
-export default function DashboardQuickTilesSettings({
-  activeTiles,
-  flashTile,
-  onSelectTile,
-  onMoveTile,
-  registry,
-  optionIds,
-}: DashboardQuickTilesSettingsProps) {
+export default function DashboardKpiCardsSettings({
+  activeMetrics,
+  flashMetric,
+  onSelectMetric,
+  onMoveMetric,
+}: DashboardKpiCardsSettingsProps) {
   const [pickerIndex, setPickerIndex] = React.useState<number | null>(null)
-  const selectedTileId = pickerIndex == null ? null : activeTiles[pickerIndex]
+  const selectedMetricId = pickerIndex == null ? null : activeMetrics[pickerIndex]
 
   const closePicker = () => setPickerIndex(null)
-
-  const chooseTile = (nextTileId: string) => {
-    if (pickerIndex == null) return
-    onSelectTile(pickerIndex, nextTileId)
-    closePicker()
-  }
 
   return (
     <div className="space-y-4">
       <div className="px-1">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-violet-700/80">
-          Dashboard Layout
+          Dashboard KPIs
         </p>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
         <div className="border-b border-slate-200/80 bg-violet-50/40 px-4 py-3.5">
-          <div className="text-sm font-bold text-slate-900">Quick Tiles</div>
+          <div className="text-sm font-bold text-slate-900">KPI Cards</div>
           <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-            Choose the four shortcuts shown on your dashboard and reorder them.
+            Choose the four metrics shown on your dashboard and reorder them.
           </div>
         </div>
 
-        {activeTiles.slice(0, 4).length === 0 ? (
+        {activeMetrics.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No quick tiles configured.
+            No KPI metrics configured.
           </div>
         ) : (
           <div className="divide-y divide-slate-200/80">
-            {activeTiles.slice(0, 4).map((tileId, index) => {
-              const tile = registry[tileId]
-              if (!tile) return null
-
-              const Icon = tile.icon
+            {activeMetrics.map((metricId, index) => {
+              const metric = KPI_METRIC_REGISTRY[metricId]
+              if (!metric) return null
 
               return (
                 <div
-                  key={`${tileId}-${index}`}
+                  key={`${metricId}-${index}`}
                   className={cn(
                     'px-4 py-4 transition-colors',
-                    flashTile === tileId && 'bg-emerald-50/60'
+                    flashMetric === metricId && 'bg-emerald-50/60',
                   )}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={cn(
-                        'grid h-11 w-11 shrink-0 place-items-center rounded-xl',
-                        tile.iconBg
+                        'grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-black uppercase text-white',
+                        TONE_CHIP_CLASS[metric.tone],
                       )}
                     >
-                      <Icon className="h-5 w-5 text-white" />
+                      {metric.label.charAt(0)}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
-                        <h4 className="truncate text-sm font-bold text-slate-900">
-                          {tile.label}
-                        </h4>
+                        <h4 className="truncate text-sm font-bold text-slate-900">{metric.label}</h4>
                         <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700">
-                          Tile {index + 1}
+                          Card {index + 1}
                         </span>
                       </div>
 
                       <p className="mt-0 text-[12px] leading-5 text-muted-foreground">
-                        {tile.description}
+                        {metric.description}
                       </p>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -114,7 +93,7 @@ export default function DashboardQuickTilesSettings({
                           onClick={() => setPickerIndex(index)}
                           className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-bd-surface px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-violet-50/50"
                         >
-                          <span className="truncate">Change Tile</span>
+                          <span className="truncate">Change Metric</span>
                           <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-400" />
                         </button>
 
@@ -122,9 +101,9 @@ export default function DashboardQuickTilesSettings({
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onMoveTile(index, 'up')}
+                            onClick={() => onMoveMetric(index, 'up')}
                             disabled={index === 0}
-                            aria-label={`Move tile ${index + 1} up`}
+                            aria-label={`Move card ${index + 1} up`}
                             className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
                           >
                             <ArrowUp className="h-4 w-4" />
@@ -133,9 +112,9 @@ export default function DashboardQuickTilesSettings({
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onMoveTile(index, 'down')}
-                            disabled={index === activeTiles.length - 1}
-                            aria-label={`Move tile ${index + 1} down`}
+                            onClick={() => onMoveMetric(index, 'down')}
+                            disabled={index === activeMetrics.length - 1}
+                            aria-label={`Move card ${index + 1} down`}
                             className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
                           >
                             <ArrowDown className="h-4 w-4" />
@@ -162,12 +141,12 @@ export default function DashboardQuickTilesSettings({
           <SheetHeader className="flex-row items-start justify-between gap-4 px-4 pb-4 pt-5 text-left">
             <div className="min-w-0 flex-1">
               <SheetTitle className="text-lg font-extrabold tracking-[-0.03em] text-foreground">
-                Choose Tile
+                Choose Metric
               </SheetTitle>
               <SheetDescription className="mt-1 text-sm leading-5 text-muted-foreground">
                 {pickerIndex == null
-                  ? 'Select a dashboard shortcut.'
-                  : `Select the shortcut for Tile ${pickerIndex + 1}.`}
+                  ? 'Select a dashboard KPI.'
+                  : `Select the metric for Card ${pickerIndex + 1}.`}
               </SheetDescription>
             </div>
 
@@ -176,7 +155,7 @@ export default function DashboardQuickTilesSettings({
               variant="outline"
               onClick={closePicker}
               className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 shadow-none"
-              aria-label="Close tile picker"
+              aria-label="Close metric picker"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -184,30 +163,31 @@ export default function DashboardQuickTilesSettings({
 
           <div className="max-h-[var(--bd-overlay-sheet-max-height)] overflow-y-auto px-4 pb-2">
             <div className="space-y-2">
-              {optionIds.map((optionId) => {
-                const option = registry[optionId]
-                if (!option) return null
-
-                const OptionIcon = option.icon
-                const isSelected = selectedTileId === optionId
+              {(Object.keys(KPI_METRIC_REGISTRY) as KpiMetricId[]).map((optionId) => {
+                const option = KPI_METRIC_REGISTRY[optionId]
+                const isSelected = selectedMetricId === optionId
 
                 return (
                   <button
                     key={optionId}
                     type="button"
-                    onClick={() => chooseTile(optionId)}
+                    onClick={() => {
+                      if (pickerIndex == null) return
+                      onSelectMetric(pickerIndex, optionId)
+                      closePicker()
+                    }}
                     className={cn(
                       'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-slate-200/80 bg-bd-surface px-3 py-3 text-left transition-colors hover:bg-violet-50/40',
-                      isSelected && 'border-violet-200 bg-violet-50/50'
+                      isSelected && 'border-violet-200 bg-violet-50/50',
                     )}
                   >
                     <span
                       className={cn(
-                        'grid h-11 w-11 place-items-center rounded-xl',
-                        option.iconBg
+                        'grid h-11 w-11 place-items-center rounded-xl text-[15px] font-black uppercase text-white',
+                        TONE_CHIP_CLASS[option.tone],
                       )}
                     >
-                      <OptionIcon className="h-5 w-5 text-white" />
+                      {option.label.charAt(0)}
                     </span>
 
                     <span className="min-w-0">
@@ -224,7 +204,7 @@ export default function DashboardQuickTilesSettings({
                         'flex h-5 w-5 items-center justify-center rounded-md border transition-colors',
                         isSelected
                           ? 'border-violet-600 bg-violet-600 text-white'
-                          : 'border-slate-300 bg-bd-surface text-transparent'
+                          : 'border-slate-300 bg-bd-surface text-transparent',
                       )}
                     >
                       <Check className="h-3.5 w-3.5" />

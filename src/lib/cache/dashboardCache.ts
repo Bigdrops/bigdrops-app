@@ -1,9 +1,11 @@
+import type { KpiStats } from '@/hooks/useDashboardData'
+
 export type DashboardCacheData = {
   recentDocs: any[]
   recentProjects: any[]
-  priorityItems: any[]
   heroStats: any
   summary: any
+  kpiStats?: KpiStats
 }
 
 export type DashboardCacheEntry = {

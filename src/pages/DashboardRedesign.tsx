@@ -7,17 +7,18 @@ import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
 import { useSettings } from '@/hooks/useSettings'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
-import { useDashboardData, type PriorityItem, type RecentDoc } from '@/hooks/useDashboardData'
-import { getCreateActions, getQuickTiles, loadStoredQuickTiles } from '@/config/quickTiles'
+import { useDashboardData, type RecentDoc } from '@/hooks/useDashboardData'
+import { buildKpiCards, loadStoredKpiCards } from '@/config/kpiCards'
+import { getCreateActions } from '@/config/quickTiles'
 
 export default function DashboardRedesign({ session }: { session: Session }) {
   const navigate = useNavigate()
   const { settings } = useSettings()
   const { widthClass } = useLayoutMode()
-  const { loading, recentDocs, priorityItems, heroStats, summary } = useDashboardData()
+  const { loading, recentDocs, kpiStats } = useDashboardData()
   const [createOpen, setCreateOpen] = React.useState(false)
 
-  const quickTiles = React.useMemo(() => getQuickTiles(loadStoredQuickTiles()), [])
+  const kpiCards = React.useMemo(() => buildKpiCards(kpiStats, loadStoredKpiCards()), [kpiStats])
   const createActions = React.useMemo(() => getCreateActions(), [])
   const createPanelWidthClass =
     widthClass === 'compact'
@@ -39,19 +40,6 @@ export default function DashboardRedesign({ session }: { session: Session }) {
 
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || ''
   const businessName = settings?.company_name || 'Bigdrops Workspace'
-
-  const handlePrioritySelect = React.useCallback(
-    (item: PriorityItem) => {
-      const pathByType: Record<string, string> = {
-        project: '/projects',
-        payment: '/invoices',
-        quotation: '/quotations',
-      }
-
-      navigate(pathByType[item.type] || '/')
-    },
-    [navigate],
-  )
 
   const handleRecentDocSelect = React.useCallback(
     (doc: RecentDoc) => {
@@ -82,13 +70,8 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         businessName={businessName}
         userName={userName}
         loading={loading}
-        heroStats={heroStats}
-        summary={summary}
-        quickTiles={quickTiles}
-        priorityItems={priorityItems}
+        kpiCards={kpiCards}
         recentDocs={recentDocs}
-        onQuickAction={(path) => navigate(path)}
-        onPrioritySelect={handlePrioritySelect}
         onRecentDocSelect={handleRecentDocSelect}
         onViewAllActivity={() => {}}
       />
