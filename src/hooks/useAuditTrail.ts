@@ -2,7 +2,8 @@ import { startTransition, useCallback, useEffect, useRef, useState } from 'react
 
 import type { AuditEntityType, AuditLogRecord, AuditTrailEntry } from '@/domain/audit/auditTypes'
 import { buildAuditTrailItems } from '@/domain/audit/auditFormatters'
-import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
+import type { TenantClient } from '@/lib/tenantClient'
 
 interface UseAuditTrailOptions {
   entityType: AuditEntityType
@@ -82,8 +83,8 @@ function sortByCreatedDesc(rows: AuditLogRecord[]): AuditLogRecord[] {
   })
 }
 
-async function fetchMerged(entityType: string, entityId: string, before?: string): Promise<AuditLogRecord[]> {
-  const auditQuery = supabase
+async function fetchMerged(client: TenantClient, entityType: string, entityId: string, before?: string): Promise<AuditLogRecord[]> {
+  const auditQuery = client
     .from('audit_logs')
     .select(AUDIT_LOG_SELECT)
     .eq('entity_type', entityType)
@@ -91,7 +92,7 @@ async function fetchMerged(entityType: string, entityId: string, before?: string
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const activityQuery = supabase
+  const activityQuery = client
     .from('activity_events')
     .select(ACTIVITY_EVENT_SELECT)
     .eq('entity_type', entityType)
@@ -150,13 +151,14 @@ export function useAuditTrail({
   entityId,
   enabled = true,
 }: UseAuditTrailOptions): UseAuditTrailResult {
+  const { tenantClient } = useEntity()
   const [entries, setEntries] = useState<AuditTrailEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const cancelledRef = useRef(false)
 
   const load = useCallback(async (skipCache = false) => {
-    if (!enabled || !entityId) return
+    if (!enabled || !entityId || !tenantClient.isReady) return
 
     setLoading(true)
     setError(null)
@@ -166,7 +168,7 @@ export function useAuditTrail({
     try {
       let rows: AuditLogRecord[]
 
-      const doFetch = () => fetchMerged(entityType, entityId)
+      const doFetch = () => fetchMerged(tenantClient, entityType, entityId)
 
       if (!skipCache) {
         const cached = getCachedPromise(cacheKey)
@@ -202,7 +204,7 @@ export function useAuditTrail({
         setLoading(false)
       })
     }
-  }, [enabled, entityId, entityType])
+  }, [enabled, entityId, entityType, tenantClient])
 
   useEffect(() => {
     cancelledRef.current = false
@@ -227,13 +229,13 @@ export function useAuditTrail({
   }, [load])
 
   const loadOlder = useCallback(async (before: string) => {
-    if (!entityId) return
+    if (!entityId || !tenantClient.isReady) return
 
     setLoading(true)
     setError(null)
 
     try {
-      const rows = await fetchMerged(entityType, entityId, before)
+      const rows = await fetchMerged(tenantClient, entityType, entityId, before)
 
       if (cancelledRef.current) return
 
@@ -253,7 +255,7 @@ export function useAuditTrail({
         setLoading(false)
       })
     }
-  }, [entityId, entityType, cancelledRef])
+  }, [entityId, entityType, tenantClient, cancelledRef])
 
   return {
     entries,

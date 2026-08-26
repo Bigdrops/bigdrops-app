@@ -10,6 +10,15 @@ export type TeamMember = {
   isCurrentUser: boolean
 }
 
+export type TeamInvitation = {
+  id: string
+  email: string
+  status: string
+  workspaceRole: string
+  createdAt: string
+  expiresAt: string | null
+}
+
 export function deriveNameFromEmail(email: string): string {
   const local = email.split('@')[0] || email
   // ponytail: simple split on .,_,- → Title Case, no lib

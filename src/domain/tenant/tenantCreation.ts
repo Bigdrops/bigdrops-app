@@ -77,6 +77,71 @@ export async function acceptWorkspaceInvitation(inviteId: string): Promise<void>
 }
 
 /**
+ * Create a workspace invitation. The RPC is SECURITY DEFINER and enforces
+ * owner OR invite_members toggle, lowercases the email, and defaults expiry to
+ * 7 days. The client never writes workspace_invitations rows directly.
+ */
+export async function createWorkspaceInvitation(input: {
+  workspaceId: string
+  email: string
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('create_workspace_invitation', {
+    p_workspace_id: input.workspaceId,
+    p_email: input.email.trim().toLowerCase(),
+    p_role: 'member',
+  })
+  if (error) throw error
+  return String(data ?? '')
+}
+
+/**
+ * Revoke a pending workspace invitation. The RPC is SECURITY DEFINER and
+ * enforces owner OR invite_members toggle; it refuses non-pending status.
+ */
+export async function revokeWorkspaceInvitation(inviteId: string): Promise<void> {
+  const { error } = await supabase.rpc('revoke_workspace_invitation', { p_invite_id: inviteId })
+  if (error) throw error
+}
+
+/**
+ * Grant a role template to a member on ONE entity. The RPC is SECURITY
+ * DEFINER and enforces the delegation ceiling (workspace owner, or caller
+ * already holds every ability of the template on that entity). The client
+ * never writes entity_permissions rows directly and never calls
+ * apply_permission_template.
+ */
+export async function assignRoleToCompanyMember(input: {
+  templateId: string
+  entityId: string
+  userId: string
+}): Promise<void> {
+  const { error } = await supabase.rpc('assign_role_to_company_member', {
+    p_template_id: input.templateId,
+    p_entity_id: input.entityId,
+    p_user_id: input.userId,
+  })
+  if (error) throw error
+}
+
+/**
+ * Remove a role template from a member on ONE entity. Same authorization
+ * contract as assignRoleToCompanyMember. The backend remains authoritative;
+ * the UI only offers this action to workspace owners.
+ */
+export async function removeRoleFromCompanyMember(input: {
+  templateId: string
+  entityId: string
+  userId: string
+}): Promise<void> {
+  const { error } = await supabase.rpc('remove_role_from_company_member', {
+    p_template_id: input.templateId,
+    p_entity_id: input.entityId,
+    p_user_id: input.userId,
+  })
+  if (error) throw error
+}
+
+/**
  * Read provisioning status. The RPC is SECURITY DEFINER and returns zero rows
  * to callers without permission, so normalize array/empty into a nullable row.
  */

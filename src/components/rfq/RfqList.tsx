@@ -16,6 +16,7 @@ import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
+import { useEntity } from '@/lib/tenant/contexts'
 
 const formatCompactDate = (value?: string) => {
   if (!value) return null
@@ -78,6 +79,7 @@ const RFQ_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export const RfqList: React.FC = () => {
   const navigate = useNavigate();
+  const { tenantClient } = useEntity();
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("rfqs");
   const rfqs = results as Rfq[];
   const [activeRfq, setActiveRfq] = useState<Rfq | null>(null);
@@ -90,7 +92,7 @@ export const RfqList: React.FC = () => {
   const handleArchive = async (id: string) => {
     setIsArchiving(true);
     try {
-      await archiveRfq(id);
+      await archiveRfq(id, tenantClient);
       feedback.success('RFQ archived');
       invalidateListCache(RFQ_CACHE_KEY);
       setArchiveId(null);
@@ -106,7 +108,7 @@ export const RfqList: React.FC = () => {
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
     try {
-      await deleteRfq(id);
+      await deleteRfq(id, tenantClient);
       feedback.success('RFQ deleted');
       invalidateListCache(RFQ_CACHE_KEY);
       setDeleteId(null);

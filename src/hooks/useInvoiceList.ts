@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { supabase } from "../supabase"
 import { canUseNativeSqlite } from "@/lib/native/capacitor"
+import { useEntity } from "@/lib/tenant/contexts"
 import {
   cacheInvoiceList,
   getCachedInvoiceList,
@@ -48,6 +48,7 @@ const matchesInvoiceStatusFilter = (invoice: Pick<InvoiceRow, "total" | "status"
 }
 
 export function useInvoiceList() {
+  const { tenantClient } = useEntity()
   const [invoices, setInvoices]           = useState<InvoiceRow[]>([])
   const [search, setSearch]               = useState("")
   const [clientFilter, setClientFilter]   = useState("All")
@@ -61,7 +62,7 @@ export function useInvoiceList() {
   const [loadingMore, setLoadingMore]     = useState(false)
 
   const buildInvoiceQuery = () => {
-    let query = supabase
+    let query = tenantClient
       .from("invoices")
       .select("id, invoice_number, client_name, issue_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
       .is("archived_at", null)
@@ -281,7 +282,7 @@ export function useInvoiceList() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await tenantClient
         .from("invoices")
         .select("client_name, custom_fields")
         .is("archived_at", null)
@@ -314,15 +315,17 @@ export function useInvoiceList() {
   }
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     fetchClientOptions()
-  }, [])
+  }, [tenantClient])
 
   useEffect(() => {
+    if (!tenantClient.isReady) return
     setInvoices([])
     setPage(0)
     setHasMore(false)
     fetchInvoices(0, true)
-  }, [clientFilter, dateFilter, search, sortBy, statusFilter])
+  }, [clientFilter, dateFilter, search, sortBy, statusFilter, tenantClient])
 
   const resetFilters = () => {
     setSearch("")

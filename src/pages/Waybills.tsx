@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, FolderOpen, FolderPlus, GitBranchPlus, Loader2, Pencil, Trash2, Truck, Workflow } from 'lucide-react'
 
-import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { formatWaybillDate, mapDbWaybill } from '../components/waybill/waybillUtils'
 import type { Waybill } from '../components/waybill/waybillUtils'
@@ -87,33 +86,41 @@ function WaybillsContent() {
   const handleArchiveWaybill = async () => {
     if (!archiveId) return
     setIsArchiving(true)
-    const db = tenantClient?.isReady ? tenantClient : supabase
-    const { error } = await db.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
-    setIsArchiving(false)
-    if (error) {
-      feedback.error('Archive failed', { description: error.message })
-      return
+    try {
+      const { error } = await tenantClient.from('waybills').update({ archived_at: new Date().toISOString() }).eq('id', archiveId)
+      if (error) {
+        feedback.error('Archive failed', { description: error.message })
+        return
+      }
+      feedback.success('Waybill archived')
+      setArchiveId(null)
+      setActiveWaybill(null)
+      patchUpdate({ search: state.search } as any)
+    } catch (e) {
+      feedback.error('Archive failed', { description: e instanceof Error ? e.message : 'Tenant schema unavailable' })
+    } finally {
+      setIsArchiving(false)
     }
-    feedback.success('Waybill archived')
-    setArchiveId(null)
-    setActiveWaybill(null)
-    patchUpdate({ search: state.search } as any)
   }
 
   const handleDeleteWaybill = async () => {
     if (!deleteId) return
     setIsDeleting(true)
-    const db = tenantClient?.isReady ? tenantClient : supabase
-    const { error } = await db.from('waybills').delete().eq('id', deleteId)
-    setIsDeleting(false)
-    if (error) {
-      feedback.error('Delete failed', { description: error.message })
-      return
+    try {
+      const { error } = await tenantClient.from('waybills').delete().eq('id', deleteId)
+      if (error) {
+        feedback.error('Delete failed', { description: error.message })
+        return
+      }
+      feedback.success('Waybill deleted')
+      setDeleteId(null)
+      setActiveWaybill(null)
+      patchUpdate({ search: state.search } as any)
+    } catch (e) {
+      feedback.error('Delete failed', { description: e instanceof Error ? e.message : 'Tenant schema unavailable' })
+    } finally {
+      setIsDeleting(false)
     }
-    feedback.success('Waybill deleted')
-    setDeleteId(null)
-    setActiveWaybill(null)
-    patchUpdate({ search: state.search } as any)
   }
 
   const waybillProjectState = getProjectActionState({ projectId: activeWaybill?.project_id, project: activeWaybillProject })
@@ -135,15 +142,18 @@ function WaybillsContent() {
 
   const attachInvoice = async (invoice: { id: string }) => {
     if (!activeWaybill?.id || !invoice?.id) return
-    const db = tenantClient?.isReady ? tenantClient : supabase
-    await db.from('waybills').update({ invoice_id: invoice.id }).eq('id', activeWaybill.id)
-    patchUpdate({ search: state.search } as any)
-    if (activeWaybill?.id) {
-      const { data } = await db.from('waybills').select('*').eq('id', activeWaybill.id).single()
-      if (data) {
-        setActiveWaybill(mapDbWaybill(data))
-        setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id) : null)
+    try {
+      await tenantClient.from('waybills').update({ invoice_id: invoice.id }).eq('id', activeWaybill.id)
+      patchUpdate({ search: state.search } as any)
+      if (activeWaybill?.id) {
+        const { data } = await tenantClient.from('waybills').select('*').eq('id', activeWaybill.id).single()
+        if (data) {
+          setActiveWaybill(mapDbWaybill(data))
+          setActiveWaybillInvoice(data.invoice_id ? await fetchInvoiceSummary(data.invoice_id) : null)
+        }
       }
+    } catch {
+      // Tenant schema unavailable — no public fallback for business data.
     }
     setShowAttachInvoice(false)
   }
@@ -244,7 +254,7 @@ function WaybillsContent() {
       <LinkedDocumentsSheet open={showLinkedDocuments} onOpenChange={setShowLinkedDocuments} title="Linked Documents" subtitle={activeWaybill?.waybill_number || 'Waybill'} sections={activeWaybillLinkedSections} />
       <AttachExistingDocumentSheet open={showAttachInvoice} onOpenChange={setShowAttachInvoice} title="Attach to Invoice" description={activeWaybill?.waybill_number || 'Waybill'} table="invoices" numberField="invoice_number" clientField="client_name" poField="po_number" linkedInvoiceField={null} currentInvoiceId={null} currentClientName={activeWaybill?.client_name} searchPlaceholder="Search invoice number, client, or PO" onAttach={handleAttachInvoice} />
       <ConfirmActionDialog open={Boolean(pendingAttachInvoice)} onOpenChange={(nextOpen) => { if (!nextOpen) setPendingAttachInvoice(null) }} title="Reassign linked waybill?" description="This waybill is already linked to a different invoice. Reassigning will detach it from the previous invoice." confirmLabel="Reassign" onConfirm={() => { const invoice = pendingAttachInvoice; setPendingAttachInvoice(null); if (invoice) void attachInvoice(invoice) }} />
-      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" client={tenantClient} onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
+      <ProjectLinkDialog open={showProjectLinkDialog} onOpenChange={setShowProjectLinkDialog} tableName="waybills" recordId={activeWaybill?.id || null} documentLabel="Waybill" onLinked={async () => { patchUpdate({ search: state.search } as any); setActiveWaybill(null) }} />
     </>
   )
 }

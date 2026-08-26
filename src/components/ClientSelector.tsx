@@ -11,7 +11,6 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { cn } from '@/lib/utils'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
-import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
 import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 
@@ -100,7 +99,7 @@ export default function ClientSelector({
 
   const handleSaveNewClient = async (data: Omit<ClientFormData, 'address2'> & { address: string }): Promise<void> => {
     setSaving(true)
-    const { data: savedData, error } = await supabase
+    const { data: savedData, error } = await tenantClient
       .from('clients')
       .insert([
         {

@@ -8,6 +8,7 @@ import { useSettings } from "@/hooks/useSettings"
 import { getLetter } from "@/domain/correspondence/letter/letterRepository"
 import type { LetterDocument } from "@/domain/correspondence/letter/types"
 import type { LetterFormFields } from "@/hooks/useLetterSave"
+import { useEntity } from "@/lib/tenant/contexts"
 
 const inputClass = "h-12 w-full rounded-xl border border-bd-border bg-bd-surface px-4 text-sm text-bd-text placeholder:text-bd-text-muted focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg disabled:opacity-50 disabled:cursor-not-allowed"
 
@@ -29,6 +30,7 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const { settings } = useSettings()
+  const { tenantClient } = useEntity()
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
 
@@ -70,8 +72,8 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
 
   /* ── Edit-mode: load from DB ── */
   useEffect(() => {
-    if (!isEdit || !id) return
-    getLetter(id)
+    if (!isEdit || !id || !tenantClient.isReady) return
+    getLetter(id, tenantClient)
       .then((doc) => {
         if (!doc) { navigate("/letters", { replace: true }); return }
         setLetter(doc)
@@ -94,7 +96,7 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
       })
       .catch(() => navigate("/letters", { replace: true }))
       .finally(() => setLoading(false))
-  }, [isEdit, id, navigate])
+  }, [isEdit, id, navigate, tenantClient])
 
   const { saving, save } = useLetterSave({
     fields,
@@ -102,6 +104,7 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
     isEdit,
     id,
     navigate,
+    tenantClient,
   })
 
   const update = (key: keyof LetterFormFields, value: string) =>

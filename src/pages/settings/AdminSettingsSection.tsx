@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Trash2, Users, ShieldCheck } from 'lucide-react'
+import { Loader2, Trash2, Users, ShieldCheck, ShieldOff, Mail, UserPlus, Clock, X } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession } from './settings-types'
@@ -7,11 +7,19 @@ import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/S
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { cn } from '@/lib/utils'
-import { useWorkspace } from '@/lib/tenant/contexts'
+import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
-import type { TeamMember } from '@/domain/team/teamTypes'
+import { useTeamInvitations } from '@/hooks/useTeamInvitations'
+import { usePermissionTemplates, coversTemplate } from '@/hooks/usePermissionTemplates'
+import type { PermissionTemplate } from '@/hooks/usePermissionTemplates'
+import { createWorkspaceInvitation, revokeWorkspaceInvitation, assignRoleToCompanyMember, removeRoleFromCompanyMember } from '@/domain/tenant/tenantCreation'
+import type { TeamMember, TeamInvitation } from '@/domain/team/teamTypes'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function RemoveConfirmModal({
   member,
@@ -82,10 +90,76 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   const isOwner = workspace?.role === 'owner'
   const currentUserId = session?.user?.id ?? null
   const { members, loading, error, refresh } = useTeamMembers(workspaceId, currentUserId)
+  const { invitations, refresh: refreshInvitations } = useTeamInvitations(workspaceId)
+  const { entity } = useEntity()
+  const entityId = entity?.id ?? null
+  const { templates, effectiveByUser, loading: rolesLoading, error: rolesError, refresh: refreshRoles } = usePermissionTemplates(workspaceId, entityId)
   const [actionId, setActionId] = useState<string | null>(null)
   const [modalMember, setModalMember] = useState<TeamMember | null>(null)
+  const [roleActionKey, setRoleActionKey] = useState<string | null>(null)
+
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteSubmitting, setInviteSubmitting] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+  const [revokingId, setRevokingId] = useState<string | null>(null)
 
   const closeModal = useCallback(() => setModalMember(null), [])
+
+  const closeInvite = useCallback(() => {
+    setInviteOpen(false)
+    setInviteEmail('')
+    setInviteError(null)
+    setInviteSuccess(null)
+  }, [])
+
+  const handleInvite = async () => {
+    if (!workspaceId) return
+    const normalized = inviteEmail.trim().toLowerCase()
+    setInviteError(null)
+    setInviteSuccess(null)
+
+    if (!EMAIL_RE.test(normalized)) {
+      setInviteError('Enter a valid email address.')
+      return
+    }
+    const alreadyMember = members.some((m) => m.email.toLowerCase() === normalized)
+    if (alreadyMember) {
+      setInviteError('This person is already a member of this workspace.')
+      return
+    }
+    const alreadyInvited = invitations.some((i) => i.email.toLowerCase() === normalized)
+    if (alreadyInvited) {
+      setInviteError('An invitation is already pending for this email.')
+      return
+    }
+
+    setInviteSubmitting(true)
+    try {
+      await createWorkspaceInvitation({ workspaceId, email: normalized })
+      setInviteSuccess(normalized)
+      setInviteEmail('')
+      await refreshInvitations()
+    } catch (e) {
+      setInviteError(getErrorMessage(e))
+    } finally {
+      setInviteSubmitting(false)
+    }
+  }
+
+  const handleRevoke = async (invite: TeamInvitation) => {
+    setRevokingId(invite.id)
+    try {
+      await revokeWorkspaceInvitation(invite.id)
+      feedback.success(`Invitation to ${invite.email} revoked`)
+      await refreshInvitations()
+    } catch (e) {
+      feedback.error('Error: ' + getErrorMessage(e))
+    } finally {
+      setRevokingId(null)
+    }
+  }
 
   const handleRemove = async () => {
     if (!modalMember || !workspaceId) return
@@ -100,6 +174,28 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
     }
     setActionId(null)
     setModalMember(null)
+  }
+
+  const handleToggleRole = async (m: TeamMember, template: PermissionTemplate) => {
+    if (!entityId) return
+    // Effective coverage decides which direction to toggle; the backend RPCs
+    // remain authoritative for authorization and for what actually changes.
+    const granted = coversTemplate(effectiveByUser.get(m.userId), template)
+    setRoleActionKey(`${m.membershipId}:${template.id}`)
+    try {
+      if (granted) {
+        await removeRoleFromCompanyMember({ templateId: template.id, entityId, userId: m.userId })
+        feedback.success(`${template.name} removed for ${m.name}`)
+      } else {
+        await assignRoleToCompanyMember({ templateId: template.id, entityId, userId: m.userId })
+        feedback.success(`${template.name} granted to ${m.name}`)
+      }
+      await refreshRoles()
+    } catch (e) {
+      feedback.error('Error: ' + getErrorMessage(e))
+    } finally {
+      setRoleActionKey(null)
+    }
   }
 
   if (!workspaceId) {
@@ -126,6 +222,45 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {modalMember ? <RemoveConfirmModal member={modalMember} onConfirm={handleRemove} onCancel={closeModal} loading={!!actionId} /> : null}
+
+      <Dialog open={inviteOpen} onOpenChange={(open) => (open ? setInviteOpen(true) : closeInvite())}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite member</DialogTitle>
+            <DialogDescription>Send an invitation to join this workspace. The invitee accepts it from their own sign-in.</DialogDescription>
+          </DialogHeader>
+          {inviteSuccess ? (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">Invitation sent to <span className="font-bold">{inviteSuccess}</span>.</div>
+              <Button variant="outline" className="w-full" onClick={closeInvite}>Done</Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted">Email address</label>
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  autoFocus
+                  disabled={inviteSubmitting}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !inviteSubmitting) void handleInvite() }}
+                  className="h-10"
+                />
+              </div>
+              {inviteError ? <p className="text-[11px] font-bold text-red-500">{inviteError}</p> : null}
+              <DialogFooter>
+                <Button variant="outline" onClick={closeInvite} disabled={inviteSubmitting}>Cancel</Button>
+                <Button onClick={() => void handleInvite()} disabled={inviteSubmitting}>
+                  {inviteSubmitting ? <Loader2 size={14} className="animate-spin mr-1" /> : <Mail size={14} className="mr-1" />}
+                  {inviteSubmitting ? 'Sending…' : 'Send invitation'}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="px-1">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">Team</p>
@@ -158,7 +293,16 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
             <p className="py-8 text-center text-sm text-bd-text-muted">No members yet.</p>
           ) : null}
 
-          {members.map((m) => (
+          {!entity ? (
+            <p className="rounded-lg border border-dashed border-[hsl(var(--bd-border)/0.5)] bg-bd-surface-muted/30 px-3 py-2 text-[10px] font-medium text-bd-text-muted">
+              No active company selected — select or create a company to manage member access.
+            </p>
+          ) : null}
+
+          {members.map((m) => {
+            const canManageRoles = isOwner && !m.isCurrentUser && templates.length > 0
+            const showAccess = !!entity && !rolesLoading && (isOwner || m.isCurrentUser)
+            return (
             <div key={m.membershipId} className={cn('rounded-[var(--bd-radius-lg)] border p-4 transition-all', m.isCurrentUser ? 'border-blue-200 bg-blue-50/20' : 'border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg')}>
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
@@ -176,6 +320,51 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
                 <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">Active</span>
               </div>
 
+              {showAccess ? (
+                <div className="mb-3 space-y-1.5 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.3)] bg-bd-surface-muted/40 px-3 py-2.5">
+                  <p className="truncate text-[9px] font-black uppercase tracking-widest text-bd-text-muted">Roles &amp; Access · {entity?.name || 'Active company'}</p>
+                  {rolesError ? (
+                    <p className="text-[10px] font-bold text-red-500">Could not load roles: {rolesError}</p>
+                  ) : templates.length === 0 ? (
+                    <p className="text-[10px] text-bd-text-muted">No roles are available in this workspace yet.</p>
+                  ) : (
+                    <div className="divide-y divide-[hsl(var(--bd-border)/0.2)]">
+                      {templates.map((tpl) => {
+                        const hasAccess = coversTemplate(effectiveByUser.get(m.userId), tpl)
+                        const rowKey = `${m.membershipId}:${tpl.id}`
+                        return (
+                          <div key={tpl.id} className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0">
+                            <span className={cn('inline-flex min-w-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', hasAccess ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500')}>
+                              {hasAccess ? <ShieldCheck size={10} className="shrink-0" /> : <ShieldOff size={10} className="shrink-0" />}
+                              <span className="truncate">{tpl.name}</span>
+                            </span>
+                            {canManageRoles ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => void handleToggleRole(m, tpl)}
+                                disabled={!!roleActionKey}
+                                className="h-7 shrink-0 rounded-lg px-2.5 text-[10px] font-bold hover:bg-emerald-50 hover:text-emerald-700"
+                              >
+                                {roleActionKey === rowKey ? (
+                                  <Loader2 size={11} className="animate-spin mr-1" />
+                                ) : hasAccess ? (
+                                  <ShieldOff size={11} className="mr-1" />
+                                ) : (
+                                  <ShieldCheck size={11} className="mr-1" />
+                                )}
+                                {roleActionKey === rowKey ? 'Working…' : hasAccess ? 'Remove' : 'Grant'}
+                              </Button>
+                            ) : null}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  <p className="text-[9px] leading-snug text-bd-text-muted opacity-70">Shows effective access for this company. Permissions can overlap between roles.</p>
+                </div>
+              ) : null}
+
               {!m.isCurrentUser && isOwner ? (
                 <div className="flex gap-2 pt-2 border-t border-[hsl(var(--bd-border)/0.3)] justify-end">
                   <Button variant="ghost" size="sm" onClick={() => setModalMember(m)} disabled={!!actionId} className="h-8 px-3 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg text-[11px] font-bold">
@@ -186,10 +375,59 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
               ) : null}
               {m.isCurrentUser ? <p className="pt-2 border-t border-[hsl(var(--bd-border)/0.3)] text-[10px] font-medium text-bd-text-muted">You cannot remove yourself from this view.</p> : null}
             </div>
-          ))}
+            )
+          })}
 
-          <Button variant="outline" disabled className="w-full mt-2 h-10 rounded-xl border-dashed text-[11px] font-black uppercase tracking-widest">+ Invite member</Button>
+          <Button
+            variant="outline"
+            disabled={!isOwner}
+            onClick={() => setInviteOpen(true)}
+            className="w-full mt-2 h-10 rounded-xl border-dashed text-[11px] font-black uppercase tracking-widest"
+          >
+            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            + Invite member
+          </Button>
           <p className="text-center text-[10px] text-bd-text-muted">Invitations are sent by workspace owners. Ask an owner to invite by email.</p>
+        </div>
+
+        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Pending Invitations</h5>
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] font-black uppercase">
+              {invitations.length} Pending
+            </Badge>
+          </div>
+
+          {invitations.length === 0 ? (
+            <p className="py-6 text-center text-sm text-bd-text-muted">No pending invitations.</p>
+          ) : null}
+
+          {invitations.map((inv) => (
+            <div key={inv.id} className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-bd-text-muted"><Mail size={15} /></div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-bd-text">{inv.email}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-bd-text-muted">
+                      <Clock size={11} />
+                      Invited {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : '—'}
+                      {inv.expiresAt ? <span className="opacity-70">· Expires {new Date(inv.expiresAt).toLocaleDateString()}</span> : null}
+                    </p>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-amber-600">Pending</span>
+              </div>
+              {isOwner ? (
+                <div className="flex justify-end gap-2 pt-2 border-t border-[hsl(var(--bd-border)/0.3)]">
+                  <Button variant="ghost" size="sm" onClick={() => void handleRevoke(inv)} disabled={revokingId === inv.id} className="h-8 px-3 text-amber-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg text-[11px] font-bold">
+                    {revokingId === inv.id ? <Loader2 size={12} className="animate-spin mr-1" /> : <X size={12} className="mr-1" />}
+                    Revoke
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       </div>
     </div>

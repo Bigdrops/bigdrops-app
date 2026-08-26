@@ -15,7 +15,6 @@ import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import { supabase } from '@/supabase'
 import { buildWaybillCustomFields, mapDbWaybill, parseWaybillCustomFields } from '@/components/waybill/waybillUtils'
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
@@ -168,8 +167,7 @@ export default function ViewWaybill() {
       if (!id) return
       setLoading(true)
       try {
-        const db = tenantClient.isReady ? tenantClient : supabase
-        const { data, error } = await db.from('waybills').select('*').eq('id', id).single()
+        const { data, error } = await tenantClient.from('waybills').select('*').eq('id', id).single()
 
         if (error || !data) {
           navigate('/waybills')
@@ -599,8 +597,7 @@ export default function ViewWaybill() {
                       }
 
                       const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
-                      const db = tenantClient.isReady ? tenantClient : supabase
-                      const { error } = await db.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
+                      const { error } = await tenantClient.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
 
                       if (error) {
                         showToast('Save failed', 'Could not save template selection.')
@@ -676,7 +673,6 @@ export default function ViewWaybill() {
               tableName="waybills"
               recordId={String(id || '')}
               documentLabel={docProps.number || 'Waybill'}
-              client={tenantClient}
               onLinked={() => {}}
             />
           </>

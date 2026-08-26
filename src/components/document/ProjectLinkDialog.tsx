@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { supabase } from '@/supabase'
-import type { TenantClient } from '@/lib/tenantClient'
+import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,7 +39,6 @@ interface ProjectLinkDialogProps {
   recordId: string
   documentLabel: string
   onLinked?: () => void | Promise<void>
-  client?: TenantClient
 }
 
 export default function ProjectLinkDialog({
@@ -50,9 +48,8 @@ export default function ProjectLinkDialog({
   recordId,
   documentLabel,
   onLinked,
-  client,
 }: ProjectLinkDialogProps) {
-  const db = client?.isReady ? client : supabase
+  const { tenantClient: db } = useEntity()
   const [query, setQuery] = useState('')
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
@@ -77,6 +74,11 @@ export default function ProjectLinkDialog({
     }
 
     let active = true
+
+    if (!db.isReady) {
+      setError('Tenant schema is not available yet.')
+      return
+    }
 
     const load = async () => {
       setLoading(true)
@@ -108,10 +110,10 @@ export default function ProjectLinkDialog({
     return () => {
       active = false
     }
-  }, [open, recordId, tableName])
+  }, [open, recordId, tableName, db])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !db.isReady) return
 
     const term = query.trim()
     const timer = setTimeout(async () => {
@@ -134,7 +136,7 @@ export default function ProjectLinkDialog({
     }, 180)
 
     return () => clearTimeout(timer)
-  }, [open, query])
+  }, [open, query, db])
 
   const handleLink = async () => {
     setError('')

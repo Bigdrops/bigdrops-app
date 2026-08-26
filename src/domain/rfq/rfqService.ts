@@ -1,8 +1,8 @@
-import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { Rfq } from './types'
 
-export async function loadRfqsFromSupabase() {
-  const { data, error } = await supabase
+export async function loadRfqsFromSupabase(tenantClient: TenantClient) {
+  const { data, error } = await tenantClient
     .from('rfqs')
     .select('*')
     .is('archived_at', null)
@@ -15,8 +15,8 @@ export async function loadRfqsFromSupabase() {
   return data as any[]
 }
 
-export async function archiveRfq(id: string) {
-  const { error } = await supabase
+export async function archiveRfq(id: string, tenantClient: TenantClient) {
+  const { error } = await tenantClient
     .from('rfqs')
     .update({ archived_at: new Date().toISOString() })
     .eq('id', id)
@@ -26,8 +26,8 @@ export async function archiveRfq(id: string) {
   }
 }
 
-export async function deleteRfq(id: string) {
-  const { error: itemsError } = await supabase
+export async function deleteRfq(id: string, tenantClient: TenantClient) {
+  const { error: itemsError } = await tenantClient
     .from('rfq_items')
     .delete()
     .eq('rfq_id', id)
@@ -36,7 +36,7 @@ export async function deleteRfq(id: string) {
     throw itemsError
   }
 
-  const { error } = await supabase
+  const { error } = await tenantClient
     .from('rfqs')
     .delete()
     .eq('id', id)
