@@ -5,7 +5,7 @@ import Layout from "../components/Layout"
 import ConfirmActionDialog from "../components/ConfirmActionDialog"
 import { feedback } from "../lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
-import { isListCacheFresh, readListCache, writeListCache } from "@/lib/cache/listCache"
+import { clientListCacheKey, isListCacheFresh, readListCache, writeListCache } from "@/lib/cache/listCache"
 
 import MobileFab from "../components/layout/MobileFab"
 import ModuleShell from "@/components/layout/ModuleShell"
@@ -25,7 +25,6 @@ type Client = {
   category?: string | null
 }
 
-const CLIENTS_LIST_CACHE_KEY = "bd:list:clients:v1:all"
 const CLIENTS_LIST_CACHE_TTL_MS = 10 * 60 * 1000
 
 function initials(name: string) {
@@ -67,6 +66,11 @@ export default function Clients() {
   useEffect(() => {
     let mounted = true
 
+    const schemaName = tenantClient.schemaName
+    if (!schemaName) return
+
+    const cacheKey = clientListCacheKey(schemaName)
+
     const fetchClients = async (options?: { background?: boolean }) => {
       if (!options?.background) {
         setLoading(true)
@@ -84,12 +88,12 @@ export default function Clients() {
       const nextRows = (data as Client[]) || []
       setClients(nextRows)
       if (nextRows.length > 0) {
-        writeListCache(CLIENTS_LIST_CACHE_KEY, nextRows)
+        writeListCache(cacheKey, nextRows)
       }
       setLoading(false)
     }
 
-    const cachedEntry = readListCache<Client>(CLIENTS_LIST_CACHE_KEY)
+    const cachedEntry = readListCache<Client>(cacheKey)
 
     if (cachedEntry) {
       setClients(cachedEntry.rows)
@@ -137,7 +141,9 @@ export default function Clients() {
       if (error) throw error
       const nextClients = clients.filter((client) => client.id !== clientId)
       setClients(nextClients)
-      writeListCache(CLIENTS_LIST_CACHE_KEY, nextClients)
+      if (tenantClient.schemaName) {
+        writeListCache(clientListCacheKey(tenantClient.schemaName), nextClients)
+      }
       setActiveClient((current) => (current?.id === clientId ? null : current))
       feedback.success('Client deleted')
       setClientToDelete(null)

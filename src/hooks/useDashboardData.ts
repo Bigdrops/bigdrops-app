@@ -42,7 +42,7 @@ export type SummaryStats = {
   pendingFollowUp: number
 }
 
-// Full ingredient set for KPI cards: the nine dashboard metrics plus the
+// Full ingredient set for KPI cards: the dashboard metrics plus the
 // comparison/aggregation fields required for real trends and segmented bars.
 export type KpiStats = HeroStats &
   SummaryStats & {
@@ -52,6 +52,8 @@ export type KpiStats = HeroStats &
     totalFinancialRows: number
     waybillsTotal: number
     waybillsDispatchedTotal: number
+    totalInvoiced: number
+    prevMonthInvoiced: number
   }
 
 type UseDashboardDataOptions = {
@@ -92,6 +94,8 @@ const defaultKpiStats: KpiStats = {
   totalFinancialRows: 0,
   waybillsTotal: 0,
   waybillsDispatchedTotal: 0,
+  totalInvoiced: 0,
+  prevMonthInvoiced: 0,
 }
 
 function isValidDateString(value: string | null | undefined): value is string {
@@ -189,13 +193,18 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
   let prevMonthCollections = 0
   let outstandingTotal = 0
   let dueLastWeekWindow = 0
+  let totalInvoiced = 0
+  let prevMonthInvoiced = 0
 
   for (const row of invoiceFinancials) {
     const balance = Number(row.balance_due || 0)
     const cashReceived = Number(row.cash_received || 0)
+    const totalGross = Number(row.total_gross || 0)
 
     const issueDate = row.issue_date ? new Date(row.issue_date) : null
     const hasIssueDate = !!issueDate && !Number.isNaN(issueDate.getTime())
+
+    totalInvoiced += totalGross
 
     if (balance > 0) {
       outstandingTotal += balance
@@ -203,6 +212,7 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
 
     if (hasIssueDate && (issueDate as Date) >= prevMonthStart && (issueDate as Date) < startOfMonth) {
       prevMonthCollections += cashReceived
+      prevMonthInvoiced += totalGross
     }
 
     if (balance > 0 && row.due_date) {
@@ -218,6 +228,8 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
     outstandingTotal,
     dueLastWeekWindow,
     totalFinancialRows: invoiceFinancials.length,
+    totalInvoiced,
+    prevMonthInvoiced,
   }
 }
 
@@ -253,6 +265,11 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
   })
 
   const load = React.useCallback(async () => {
+    // Guard: tenantClient must be ready before any query.
+    if (!tenantClient.isReady) {
+      return
+    }
+
     const cached = readDashboardCache(cacheKey)
 
     // Only show loading if we don't have ANY data to show (including stale)
@@ -282,7 +299,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
-          tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
+          tenantClient.from('invoice_financials_v').select('balance_due, cash_received, total_gross, issue_date, due_date, computed_status'),
           tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
 

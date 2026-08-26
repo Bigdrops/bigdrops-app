@@ -10,23 +10,18 @@ export const KPI_BAR_SEGMENTS = 14
 export const KPI_CARDS_STORAGE_KEY = 'dashboard_kpi_cards'
 
 export type KpiMetricId =
-  | 'collections'
-  | 'openWork'
-  | 'awaitingPaymentCount'
-  | 'inTransitWaybills'
-  | 'overdue'
-  | 'pastDue'
-  | 'dueThisWeek'
+  | 'totalInvoiced'
   | 'thisMonthCollections'
-  | 'pendingFollowUp'
+  | 'outstandingReceivables'
+  | 'overdue'
 
 export type KpiTone = 'emerald' | 'rose' | 'violet' | 'amber' | 'sky' | 'slate'
 
 export const DEFAULT_KPI_METRIC_IDS: KpiMetricId[] = [
+  'totalInvoiced',
   'thisMonthCollections',
+  'outstandingReceivables',
   'overdue',
-  'awaitingPaymentCount',
-  'dueThisWeek',
 ]
 
 type KpiMetricDefinition = {
@@ -38,10 +33,10 @@ type KpiMetricDefinition = {
 }
 
 export const KPI_METRIC_REGISTRY: Record<KpiMetricId, KpiMetricDefinition> = {
-  collections: {
-    id: 'collections',
-    label: 'Collections',
-    description: 'Cash received this month across issued invoices.',
+  totalInvoiced: {
+    id: 'totalInvoiced',
+    label: 'Total Invoiced',
+    description: 'Total value of all invoices ever created.',
     format: 'naira',
     tone: 'emerald',
   },
@@ -52,54 +47,19 @@ export const KPI_METRIC_REGISTRY: Record<KpiMetricId, KpiMetricDefinition> = {
     format: 'naira',
     tone: 'emerald',
   },
+  outstandingReceivables: {
+    id: 'outstandingReceivables',
+    label: 'Outstanding Receivables',
+    description: 'Total money still owed by clients.',
+    format: 'naira',
+    tone: 'amber',
+  },
   overdue: {
     id: 'overdue',
     label: 'Overdue Balance',
     description: 'Past-due balances still awaiting collection.',
     format: 'naira',
     tone: 'rose',
-  },
-  pastDue: {
-    id: 'pastDue',
-    label: 'Past Due',
-    description: 'Same past-due balance view as Overdue.',
-    format: 'naira',
-    tone: 'rose',
-  },
-  dueThisWeek: {
-    id: 'dueThisWeek',
-    label: 'Due This Week',
-    description: 'Outstanding balance falling due within seven days.',
-    format: 'naira',
-    tone: 'amber',
-  },
-  awaitingPaymentCount: {
-    id: 'awaitingPaymentCount',
-    label: 'Awaiting Payment',
-    description: 'Invoices still carrying an unpaid balance.',
-    format: 'count',
-    tone: 'violet',
-  },
-  openWork: {
-    id: 'openWork',
-    label: 'Open Work',
-    description: 'Invoices currently needing follow-up.',
-    format: 'count',
-    tone: 'sky',
-  },
-  pendingFollowUp: {
-    id: 'pendingFollowUp',
-    label: 'Pending Follow-up',
-    description: 'Invoices flagged for attention this week.',
-    format: 'count',
-    tone: 'sky',
-  },
-  inTransitWaybills: {
-    id: 'inTransitWaybills',
-    label: 'Waybills In Transit',
-    description: 'Dispatched waybills not yet delivered.',
-    format: 'count',
-    tone: 'slate',
   },
 }
 
@@ -173,7 +133,7 @@ export function saveStoredKpiCards(metricIds: KpiMetricId[]): KpiMetricId[] {
   return nextIds
 }
 
-type TrendDirection = 'up' | 'down' | 'neutral'
+type TrendDirection = 'up' | 'down' | null
 
 export type KpiCardViewModel = {
   id: KpiMetricId
@@ -212,10 +172,6 @@ function signedPercentText(change: number): string {
   return `${change >= 0 ? '+' : '\u2212'}${Math.abs(change)}%`
 }
 
-function neutralTrend(): Pick<KpiCardViewModel, 'trendDirection' | 'trendPolarity' | 'trendText'> {
-  return { trendDirection: 'neutral', trendPolarity: 'info', trendText: 'No comparison period' }
-}
-
 function buildCard(
   definition: KpiMetricDefinition,
   stats: KpiStats,
@@ -225,80 +181,59 @@ function buildCard(
       ? formatNaira(Number(stats[definition.id] ?? 0), { round: true })
       : String(Math.max(0, Math.round(Number(stats[definition.id] ?? 0))))
 
-  let trend: Pick<KpiCardViewModel, 'trendDirection' | 'trendPolarity' | 'trendText'>
+  let trendDirection: TrendDirection = null
+  let trendPolarity: 'good' | 'info' = 'info'
+  let trendText = ''
   let barRatio = 0
   let barTitle = ''
 
   switch (definition.id) {
-    case 'thisMonthCollections':
-    case 'collections': {
-      // Current period: cash received on invoices issued this month.
-      // Comparison period: same measure over the previous calendar month.
+    case 'totalInvoiced': {
+      const change = percentChange(stats.totalInvoiced - stats.prevMonthInvoiced, stats.prevMonthInvoiced)
+      if (change !== null) {
+        trendDirection = change >= 0 ? 'up' : 'down'
+        trendPolarity = 'good'
+        trendText = `${signedPercentText(change)} vs last month`
+      }
+      barRatio = safeRatio(stats.totalInvoiced - stats.prevMonthInvoiced, stats.totalInvoiced)
+      barTitle = 'Current-month share of cumulative invoiced'
+      break
+    }
+    case 'thisMonthCollections': {
       const change = percentChange(stats.thisMonthCollections, stats.prevMonthCollections)
-      trend =
-        change === null
-          ? neutralTrend()
-          : {
-              trendDirection: change >= 0 ? 'up' : 'down',
-              trendPolarity: 'good',
-              trendText: `${signedPercentText(change)} vs last month`,
-            }
+      if (change !== null) {
+        trendDirection = change >= 0 ? 'up' : 'down'
+        trendPolarity = 'good'
+        trendText = `${signedPercentText(change)} vs last month`
+      }
       barRatio = safeRatio(stats.thisMonthCollections, stats.thisMonthCollections + stats.prevMonthCollections)
       barTitle = 'Current-month share of last two months\u2019 collections'
       break
     }
-    case 'dueThisWeek': {
-      // Current window: balance due within the next 7 days.
-      // Comparison window: balance that fell due in the prior 7 days.
-      const change = percentChange(stats.dueThisWeek, stats.dueLastWeekWindow)
-      trend =
-        change === null
-          ? neutralTrend()
-          : {
-              trendDirection: change >= 0 ? 'up' : 'down',
-              trendPolarity: 'info',
-              trendText: `${signedPercentText(change)} vs last week`,
-            }
-      barRatio = safeRatio(stats.dueThisWeek, stats.outstandingTotal)
-      barTitle = 'Share of outstanding balance due this week'
+    case 'outstandingReceivables': {
+      barRatio = safeRatio(stats.outstandingTotal, stats.totalInvoiced)
+      barTitle = 'Outstanding as share of total invoiced'
       break
     }
-    case 'overdue':
-    case 'pastDue': {
-      trend = neutralTrend()
+    case 'overdue': {
       barRatio = safeRatio(stats.overdue, stats.outstandingTotal)
       barTitle = 'Overdue share of outstanding balance'
       break
     }
-    case 'awaitingPaymentCount': {
-      trend = neutralTrend()
-      barRatio = safeRatio(stats.awaitingPaymentCount, stats.totalFinancialRows)
-      barTitle = 'Unpaid invoices as share of all invoices'
-      break
-    }
-    case 'openWork':
-    case 'pendingFollowUp': {
-      trend = neutralTrend()
-      barRatio = safeRatio(stats.pendingFollowUp, stats.awaitingPaymentCount)
-      barTitle = 'Follow-up concentration among unpaid invoices'
-      break
-    }
-    case 'inTransitWaybills': {
-      trend = neutralTrend()
-      barRatio = safeRatio(stats.waybillsDispatchedTotal, stats.waybillsTotal)
-      barTitle = 'Dispatched share of all waybills'
-      break
-    }
   }
 
-  return {
+  const result: KpiCardViewModel = {
     id: definition.id,
     label: definition.label,
     valueText: value,
-    ...trend,
+    trendDirection,
+    trendPolarity,
+    trendText,
     barFilledSegments: filledSegments(barRatio),
     barTitle,
   }
+
+  return result
 }
 
 // Always resolves to exactly KPI_CARD_COUNT view models; unknown ids cannot

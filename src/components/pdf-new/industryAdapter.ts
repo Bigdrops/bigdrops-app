@@ -53,6 +53,7 @@ export type CommercialDocumentData = {
   } | null
   client: {
     name: string
+    attention?: string | null
     address: string
     cityState: string
     phone: string

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 
 import type { KpiCardViewModel, KpiMetricId, KpiTone } from '@/config/kpiCards'
 import { KPI_BAR_SEGMENTS, KPI_CARD_COUNT } from '@/config/kpiCards'
@@ -24,25 +24,15 @@ const TONE_SEGMENT_CLASS: Record<KpiTone, string> = {
 
 // View models carry only ids; the grid owns the visual tone mapping.
 const METRIC_TONE: Record<KpiMetricId, KpiTone> = {
-  collections: 'emerald',
+  totalInvoiced: 'emerald',
   thisMonthCollections: 'emerald',
+  outstandingReceivables: 'amber',
   overdue: 'rose',
-  pastDue: 'rose',
-  dueThisWeek: 'amber',
-  awaitingPaymentCount: 'violet',
-  openWork: 'sky',
-  pendingFollowUp: 'sky',
-  inTransitWaybills: 'slate',
 }
 
 function TrendIndicator({ card }: { card: KpiCardViewModel }) {
-  if (card.trendDirection === 'neutral') {
-    return (
-      <div className="flex items-center gap-[3px] text-[11px] text-muted-foreground">
-        <Minus className="size-3" aria-hidden="true" />
-        <span>{card.trendText}</span>
-      </div>
-    )
+  if (card.trendDirection === null) {
+    return null
   }
 
   const isUp = card.trendDirection === 'up'

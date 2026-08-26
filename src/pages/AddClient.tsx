@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClientForm, type ClientFormData } from '@/components/client/ClientForm'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
+import { clientListCacheKey, invalidateListCache } from '@/lib/cache/listCache'
 import Layout from '../components/Layout'
 import { pageFormCardClassName } from '@/components/ui/form-page-styles'
 
 export default function AddClient() {
   const navigate = useNavigate()
-  const { tenantClient } = useEntity()
+  const { tenantClient, schemaName } = useEntity()
   const [saving, setSaving] = useState(false)
 
   const handleSave = async (data: Omit<ClientFormData, 'address2'> & { address: string }) => {
@@ -30,6 +31,7 @@ export default function AddClient() {
       feedback.error('Save failed', { description: 'Failed to save client' })
     } else {
       feedback.success('Client created')
+      if (schemaName) invalidateListCache(clientListCacheKey(schemaName))
       navigate('/clients')
     }
   }

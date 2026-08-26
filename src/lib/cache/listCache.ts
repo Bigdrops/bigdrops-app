@@ -7,6 +7,14 @@ export type ListCacheEntry<T> = {
 
 const LIST_CACHE_VERSION = 1
 
+/**
+ * Entity-scoped cache key for the Client List.
+ * Each active entity/schema gets its own entry; entities never share rows.
+ */
+export function clientListCacheKey(schemaName: string): string {
+  return `bd:list:clients:v1:${schemaName}`
+}
+
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined"
 }
