@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f7f8" />
+    <title>BIGDROPS · Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ── SLATE & CORAL ── cool, crisp, editorial */
+        :root {
+            --bg: #f7f7f8;
+            --surface: #ffffff;
+            --surface-raised: #fcfcfd;
+            --surface-muted: #eeeff1;
+            --surface-strong: #dddee2;
+            --ink: #141416;
+            --ink-2: #6b6d73;
+            --ink-3: #a2a4aa;
+            --accent: #e06050;
+            --accent-bright: #ee7060;
+            --accent-light: #fcecea;
+            --blue: #4a6cf7;
+            --blue-light: #eaedfe;
+            --moss: #3a8a6a;
+            --moss-light: #e6f5ee;
+            --stone: #7a7c82;
+            --stone-light: #ececef;
+            --line: rgba(20, 20, 22, .06);
+            --line-strong: rgba(20, 20, 22, .10);
+            --shadow-sm: 0 1px 2px rgba(20, 20, 22, .04);
+            --shadow: 0 2px 12px rgba(20, 20, 22, .06);
+            --shadow-lg: 0 8px 28px rgba(20, 20, 22, .10);
+            --nav-bg: rgba(255, 255, 255, .90);
+            --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+        }
+        [data-theme="dark"] {
+            --bg: #111113;
+            --surface: #1a1a1e;
+            --surface-raised: #222226;
+            --surface-muted: #2a2a2e;
+            --surface-strong: #3a3a3e;
+            --ink: #f0f0f2;
+            --ink-2: #a0a2a8;
+            --ink-3: #6a6c72;
+            --accent: #f07060;
+            --accent-bright: #ff8878;
+            --accent-light: #2a1e1c;
+            --blue: #6a8cff;
+            --blue-light: #1e2240;
+            --moss: #50c090;
+            --moss-light: #1a2e26;
+            --stone: #9a9ca2;
+            --stone-light: #242428;
+            --line: rgba(240, 240, 242, .06);
+            --line-strong: rgba(240, 240, 242, .10);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.15);
+            --shadow: 0 2px 12px rgba(0,0,0,.2);
+            --shadow-lg: 0 8px 28px rgba(0,0,0,.3);
+            --nav-bg: rgba(26, 26, 30, .90);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            background: var(--bg); color: var(--ink);
+            font-family: var(--font); -webkit-font-smoothing: antialiased;
+            transition: background .24s, color .24s;
+        }
+        button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        button:active { transform: scale(.97); }
+        button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .app {
+            width: 100%; max-width: 430px; height: 100dvh;
+            position: relative; margin: 0 auto; overflow: hidden;
+            background: var(--bg);
+        }
+        .scroll {
+            height: 100%; overflow-y: auto; overscroll-behavior: contain;
+            scrollbar-width: none; padding: 0 20px calc(100px + env(safe-area-inset-bottom));
+        }
+        .scroll::-webkit-scrollbar { display: none; }
+
+        /* ── TOP BAR ── */
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            height: calc(52px + env(safe-area-inset-top));
+            padding: calc(6px + env(safe-area-inset-top)) 0 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(180deg, var(--bg) 80%, transparent);
+        }
+        .top-left { display: flex; align-items: center; gap: 10px; }
+        .top-title { font-size: 15px; font-weight: 800; letter-spacing: -.04em; }
+        .top-right { display: flex; align-items: center; gap: 5px; }
+        .icon-btn {
+            width: 34px; height: 34px; display: grid; place-items: center;
+            border-radius: 10px; background: var(--surface);
+            border: 1px solid var(--line); position: relative;
+        }
+        .icon-btn svg { width: 17px; height: 17px; }
+        .icon-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent); border: 1.5px solid var(--surface);
+        }
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: grid; place-items: center;
+            background: var(--accent-light); color: var(--accent);
+            font-size: 10px; font-weight: 800;
+        }
+
+        /* ── GREETING ── */
+        .greeting {
+            margin: 4px 0 20px;
+        }
+        .greeting h1 {
+            font-size: 22px; font-weight: 800; letter-spacing: -.04em;
+            line-height: 1.2;
+        }
+        .greeting h1 span { color: var(--accent); }
+        .greeting p {
+            font-size: 12px; color: var(--ink-2); margin-top: 4px;
+        }
+
+        /* ── HORIZONTAL SCROLL METRICS ── */
+        .metrics-scroll {
+            display: flex; gap: 10px; overflow-x: auto;
+            scrollbar-width: none; margin: 0 -20px; padding: 0 20px 4px;
+        }
+        .metrics-scroll::-webkit-scrollbar { display: none; }
+        .metric-card {
+            min-width: 150px; flex: 0 0 150px;
+            padding: 14px 16px; border-radius: 14px;
+            background: var(--surface); border: 1px solid var(--line);
+            box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; gap: 4px;
+            text-align: left; position: relative;
+        }
+        .metric-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; border-radius: 14px 14px 0 0;
+            background: var(--m-color);
+        }
+        .metric-card.green { --m-color: var(--moss); }
+        .metric-card.red { --m-color: var(--accent); }
+        .metric-card.blue { --m-color: var(--blue); }
+        .metric-card.gray { --m-color: var(--stone); }
+        .metric-label {
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--ink-3);
+        }
+        .metric-value {
+            font-family: var(--mono); font-size: 20px; font-weight: 600;
+            letter-spacing: -.04em; line-height: 1;
+        }
+        .metric-trend {
+            font-size: 9px; color: var(--ink-3); margin-top: 2px;
+        }
+        .metric-trend strong { color: var(--moss); font-weight: 700; }
+        .metric-trend.warn strong { color: var(--accent); }
+
+        /* ── SECTION ── */
+        .section { margin-top: 28px; }
+        .section-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .07em; color: var(--ink-3);
+        }
+        .section-link { font-size: 11px; font-weight: 700; color: var(--accent); }
+        .card {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 14px; box-shadow: var(--shadow-sm);
+        }
+
+        /* ── ACTIVITY ── compact rows */
+        .activity-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; width: 100%; text-align: left;
+        }
+        .activity-row + .activity-row { border-top: 1px solid var(--line); }
+        .act-icon {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .act-icon svg { width: 16px; height: 16px; }
+        .act-icon.inv { background: var(--accent-light); color: var(--accent); }
+        .act-icon.qtn { background: var(--blue-light); color: var(--blue); }
+        .act-icon.wb { background: var(--moss-light); color: var(--moss); }
+        .act-body { flex: 1; min-width: 0; }
+        .act-top { display: flex; align-items: center; gap: 6px; }
+        .act-doc { font-size: 12px; font-weight: 700; }
+        .act-badge {
+            font-size: 8px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .04em; padding: 2px 6px; border-radius: 4px;
+        }
+        .act-badge.pending { background: var(--accent-light); color: var(--accent); }
+        .act-badge.draft { background: var(--surface-muted); color: var(--ink-2); }
+        .act-badge.done { background: var(--moss-light); color: var(--moss); }
+        .act-meta { font-size: 10px; color: var(--ink-3); margin-top: 2px; }
+        .act-right { text-align: right; flex-shrink: 0; }
+        .act-amount { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: -.03em; }
+        .act-date { font-size: 9px; color: var(--ink-3); margin-top: 2px; }
+
+        /* ── REMINDER ── inline banner */
+        .reminder {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; width: 100%; text-align: left;
+        }
+        .rem-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: grid; place-items: center; flex-shrink: 0;
+            background: var(--accent-light); color: var(--accent);
+        }
+        .rem-icon svg { width: 17px; height: 17px; }
+        .rem-body { flex: 1; min-width: 0; }
+        .rem-title { font-size: 12px; font-weight: 700; line-height: 1.3; }
+        .rem-sub { font-size: 10px; color: var(--ink-2); margin-top: 2px; }
+        .rem-actions { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-fill {
+            border-radius: 8px; padding: 7px 12px;
+            background: var(--ink); color: var(--bg);
+            font-size: 10px; font-weight: 700;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-fill svg { width: 12px; height: 12px; }
+        .btn-text { font-size: 10px; color: var(--ink-3); font-weight: 600; padding: 7px 4px; }
+        .btn-x {
+            width: 26px; height: 26px; border-radius: 50%;
+            display: grid; place-items: center; color: var(--ink-3);
+            flex-shrink: 0;
+        }
+        .btn-x svg { width: 13px; height: 13px; }
+
+        /* ── ALERTS ── */
+        .alert-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; width: 100%; text-align: left;
+        }
+        .alert-row + .alert-row { border-top: 1px solid var(--line); }
+        .alert-pip {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .alert-pip.red { background: var(--accent); }
+        .alert-pip.blue { background: var(--blue); }
+        .alert-pip.gray { background: var(--ink-3); }
+        .alert-body { flex: 1; min-width: 0; }
+        .alert-title { font-size: 12px; font-weight: 700; }
+        .alert-desc { font-size: 10px; color: var(--ink-2); margin-top: 1px; }
+        .alert-time { font-size: 9px; color: var(--ink-3); flex-shrink: 0; }
+
+        /* ── AUDIT ── */
+        .audit-row {
+            display: flex; gap: 10px; padding: 10px 14px;
+            align-items: flex-start;
+        }
+        .audit-row + .audit-row { border-top: 1px solid var(--line); }
+        .audit-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            margin-top: 4px; flex-shrink: 0;
+        }
+        .audit-dot.accent { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+        .audit-dot.blue { background: var(--blue); box-shadow: 0 0 0 3px var(--blue-light); }
+        .audit-text { font-size: 11px; font-weight: 600; line-height: 1.3; }
+        .audit-meta { font-size: 9px; color: var(--ink-3); margin-top: 1px; }
+
+        /* ── BOTTOM NAV ── floating segmented — icon-only active pill */
+        .bottom-nav {
+            position: absolute; z-index: 30;
+            left: 16px; right: 16px;
+            bottom: max(12px, env(safe-area-inset-bottom));
+            height: 58px; padding: 5px;
+            display: flex; align-items: center; justify-content: space-between; gap: 3px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px) saturate(140%);
+            border: 1px solid var(--line-strong);
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg);
+        }
+        .nav-tab {
+            flex: 1; height: 46px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 2px;
+            border-radius: 12px; color: var(--ink-3);
+            font-size: 9px; font-weight: 700;
+            transition: background .18s, color .18s;
+        }
+        .nav-tab svg { width: 20px; height: 20px; stroke-width: 1.8; }
+        .nav-tab.active {
+            background: var(--ink); color: #fff;
+            box-shadow: 0 4px 12px rgba(20, 20, 22, .2);
+        }
+        [data-theme="dark"] .nav-tab.active {
+            background: var(--accent); color: #fff;
+            box-shadow: 0 4px 12px rgba(240, 112, 96, .25);
+        }
+
+        /* ── FAB ── */
+        .fab {
+            position: absolute; z-index: 31; right: 20px;
+            bottom: calc(78px + env(safe-area-inset-bottom));
+            width: 48px; height: 48px; border-radius: 14px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center;
+            box-shadow: 0 6px 20px rgba(224, 96, 80, .3);
+            transition: transform .2s;
+        }
+        .fab svg { width: 22px; height: 22px; transition: transform .2s; }
+        .fab.open { background: var(--ink); }
+        .fab.open svg { transform: rotate(45deg); }
+        [data-theme="dark"] .fab.open { background: var(--accent); color: #111113; }
+
+        /* ── SCRIM ── */
+        .scrim {
+            position: absolute; inset: 0; z-index: 40;
+            background: rgba(14, 12, 10, .32);
+            opacity: 0; pointer-events: none;
+            backdrop-filter: blur(2px); transition: opacity .2s;
+        }
+        .scrim.show { opacity: 1; pointer-events: auto; }
+
+        /* ── DRAWER ── */
+        .drawer {
+            position: absolute; z-index: 42; top: 0; bottom: 0; left: 0;
+            width: min(80%, 310px); display: flex; flex-direction: column;
+            background: var(--surface); box-shadow: var(--shadow-lg);
+            border-radius: 0 18px 18px 0;
+            transform: translateX(-105%); transition: transform .26s cubic-bezier(.2,.9,.24,1);
+            padding-top: env(safe-area-inset-top);
+        }
+        .drawer.show { transform: translateX(0); }
+        .drawer-head {
+            padding: 16px 16px 14px; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--line);
+        }
+        .brand-mark {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: grid; place-items: center;
+            background: var(--accent); color: #fff;
+        }
+        .brand-mark svg { width: 17px; height: 17px; }
+        .brand-name { font-size: 14px; font-weight: 800; letter-spacing: -.04em; }
+        .brand-sub { font-size: 10px; color: var(--ink-3); margin-top: 1px; }
+        .drawer-list { overflow-y: auto; flex: 1; padding: 10px 10px 14px; scrollbar-width: none; }
+        .drawer-list::-webkit-scrollbar { display: none; }
+        .drawer-label {
+            padding: 8px 10px 4px; font-size: 9px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3);
+        }
+        .drawer-item {
+            width: 100%; padding: 9px 12px; border-radius: 10px;
+            display: flex; align-items: center; gap: 10px;
+            text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-2);
+        }
+        .drawer-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+        .drawer-item.active { color: var(--accent); background: var(--accent-light); }
+        .drawer-item .chev { margin-left: auto; width: 13px; height: 13px; opacity: .35; }
+        .drawer-foot {
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--line);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .drawer-av {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: grid; place-items: center;
+            background: var(--accent-light); color: var(--accent);
+            font-size: 9px; font-weight: 800;
+        }
+        .drawer-uname { font-size: 11px; font-weight: 700; }
+        .drawer-urole { font-size: 9px; color: var(--ink-3); }
+
+        /* ── SHEETS ── */
+        .sheet {
+            position: absolute; z-index: 43; left: 0; right: 0; bottom: 0;
+            max-height: 72%; border-radius: 18px 18px 0 0;
+            background: var(--surface); box-shadow: 0 -8px 28px rgba(0,0,0,.15);
+            transform: translateY(106%); transition: transform .26s cubic-bezier(.2,.9,.24,1);
+            padding: 8px 16px calc(14px + env(safe-area-inset-bottom));
+            overflow-y: auto;
+        }
+        .sheet.show { transform: translateY(0); }
+        .grab { width: 30px; height: 3px; background: var(--surface-strong); border-radius: 3px; margin: 0 auto 10px; }
+        .sheet-head {
+            display: flex; justify-content: space-between; gap: 10px;
+            margin-bottom: 12px; padding: 0 2px;
+        }
+        .sheet-title { font-size: 17px; font-weight: 800; letter-spacing: -.04em; }
+        .sheet-sub { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+        .sheet-x {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: grid; place-items: center;
+            background: var(--surface-muted); color: var(--ink-2);
+        }
+        .sheet-x svg { width: 13px; height: 13px; }
+        .sheet-group { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin: 10px 2px 5px; }
+        .sheet-divider { height: 1px; background: var(--line); margin: 6px 2px; }
+        .sheet-action {
+            display: flex; gap: 10px; align-items: center;
+            padding: 9px 8px; border-radius: 12px; text-align: left; width: 100%;
+        }
+        .sheet-action:active { background: var(--surface-muted); }
+        .sa-icon {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .sa-icon svg { width: 16px; height: 16px; }
+        .sa-icon.accent { background: var(--accent-light); color: var(--accent); }
+        .sa-icon.blue { background: var(--blue-light); color: var(--blue); }
+        .sa-icon.moss { background: var(--moss-light); color: var(--moss); }
+        .sa-icon.muted { background: var(--surface-muted); color: var(--ink-2); }
+        .sa-title { font-size: 12px; font-weight: 700; }
+        .sa-desc { font-size: 10px; color: var(--ink-2); margin-top: 1px; }
+
+        /* ── SEARCH ── */
+        .search-layer {
+            position: absolute; z-index: 50; inset: 0;
+            background: var(--bg); padding: calc(6px + env(safe-area-inset-top)) 20px 20px;
+            transform: translateY(-104%); transition: transform .22s cubic-bezier(.2,.9,.24,1);
+        }
+        .search-layer.show { transform: translateY(0); }
+        .search-row { display: flex; gap: 8px; align-items: center; }
+        .search-wrap {
+            flex: 1; height: 40px; display: flex; align-items: center; gap: 8px;
+            padding: 0 12px; border-radius: 12px; background: var(--surface-muted);
+        }
+        .search-wrap svg { width: 16px; height: 16px; color: var(--ink-3); flex-shrink: 0; }
+        .search-wrap input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; }
+        .search-cancel { font-size: 12px; color: var(--accent); font-weight: 700; padding: 6px 2px; }
+        .search-sugs { padding-top: 20px; }
+        .search-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 800; margin-bottom: 8px; }
+        .sug { padding: 10px 0; border-bottom: 1px solid var(--line); text-align: left; width: 100%; font-size: 12px; font-weight: 600; }
+        .sug span { display: block; font-size: 10px; color: var(--ink-2); margin-top: 1px; font-weight: 400; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: absolute; z-index: 60;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 50%; transform: translate(-50%, -10px);
+            padding: 8px 14px; border-radius: 10px;
+            background: var(--ink); color: var(--bg);
+            box-shadow: var(--shadow-lg);
+            font-size: 11px; font-weight: 700;
+            opacity: 0; pointer-events: none; white-space: nowrap;
+            transition: opacity .16s, transform .16s;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+        /* ── EMPTY ── */
+        .empty { padding-top: 60px; text-align: center; }
+        .empty-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            margin: 0 auto 12px; display: grid; place-items: center;
+            background: var(--accent-light); color: var(--accent);
+        }
+        .empty-icon svg { width: 22px; height: 22px; }
+        .empty h2 { font-size: 16px; font-weight: 800; letter-spacing: -.04em; }
+        .empty p { max-width: 210px; margin: 5px auto 0; color: var(--ink-2); font-size: 11px; line-height: 1.4; }
+
+        @media (min-width: 560px) {
+            .app { height: 860px; margin-top: 24px; border: 1px solid var(--line-strong); border-radius: 34px; box-shadow: var(--shadow-lg); }
+            body { min-height: 100%; display: flex; justify-content: center; background: var(--surface-muted); }
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <div class="scroll" id="scroll">
+            <header class="topbar">
+                <div class="top-left">
+                    <button class="icon-btn" id="menuBtn" aria-label="Menu"><i data-lucide="menu"></i></button>
+                    <span class="top-title">BIGDROPS</span>
+                </div>
+                <div class="top-right">
+                    <button class="icon-btn" id="searchBtn" aria-label="Search"><i data-lucide="search"></i></button>
+                    <button class="icon-btn" id="themeBtn" aria-label="Theme"><i data-lucide="moon"></i></button>
+                    <button class="icon-btn" id="notifBtn" aria-label="Notifications"><i data-lucide="bell"></i><i class="notif-dot"></i></button>
+                    <button class="avatar" id="accountBtn" aria-label="Account">MA</button>
+                </div>
+            </header>
+
+            <main class="page active" id="home-page">
+                <div class="greeting">
+                    <h1>Good morning, <span>Milad</span></h1>
+                    <p>Finance pulse · August 2026</p>
+                </div>
+
+                <div class="metrics-scroll">
+                    <button class="metric-card green" data-action="collections">
+                        <span class="metric-label">Collected</span>
+                        <span class="metric-value">₦89,000</span>
+                        <span class="metric-trend"><strong>+18%</strong> vs last month</span>
+                    </button>
+                    <button class="metric-card red" data-action="overdue">
+                        <span class="metric-label">Overdue</span>
+                        <span class="metric-value">₦56,000</span>
+                        <span class="metric-trend warn"><strong>7 days</strong> past due</span>
+                    </button>
+                    <button class="metric-card blue" data-action="awaiting">
+                        <span class="metric-label">Awaiting</span>
+                        <span class="metric-value">12</span>
+                        <span class="metric-trend">invoices unpaid</span>
+                    </button>
+                    <button class="metric-card gray" data-action="due">
+                        <span class="metric-label">Due this week</span>
+                        <span class="metric-value">₦120K</span>
+                        <span class="metric-trend"><strong>7 days</strong> upcoming</span>
+                    </button>
+                </div>
+
+                <section class="section">
+                    <div class="section-head">
+                        <h2 class="section-title">Recent activity</h2>
+                        <button class="section-link">View all</button>
+                    </div>
+                    <div class="card">
+                        <button class="activity-row" data-action="doc">
+                            <span class="act-icon inv"><i data-lucide="file-text"></i></span>
+                            <span class="act-body">
+                                <span class="act-top"><span class="act-doc">INV-0045</span><span class="act-badge pending">Pending</span></span>
+                                <span class="act-meta">Lagos Steel Works · Aug 15</span>
+                            </span>
+                            <span class="act-right"><span class="act-amount">₦120,000</span><span class="act-date">Aug 15</span></span>
+                        </button>
+                        <button class="activity-row" data-action="doc">
+                            <span class="act-icon qtn"><i data-lucide="file-pen-line"></i></span>
+                            <span class="act-body">
+                                <span class="act-top"><span class="act-doc">QTN-0109</span><span class="act-badge draft">Draft</span></span>
+                                <span class="act-meta">Westfield Corp · Aug 14</span>
+                            </span>
+                            <span class="act-right"><span class="act-amount">₦340,000</span><span class="act-date">Aug 14</span></span>
+                        </button>
+                        <button class="activity-row" data-action="doc">
+                            <span class="act-icon wb"><i data-lucide="truck"></i></span>
+                            <span class="act-body">
+                                <span class="act-top"><span class="act-doc">WB-0028</span><span class="act-badge done">Delivered</span></span>
+                                <span class="act-meta">Site Alpha · Aug 13</span>
+                            </span>
+                            <span class="act-right"><span class="act-amount" style="color:var(--ink-3)">Delivered</span><span class="act-date">Aug 13</span></span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="section" id="paymentReminder">
+                    <div class="section-head"><h2 class="section-title">Reminder</h2></div>
+                    <div class="card">
+                        <div class="reminder">
+                            <span class="rem-icon"><i data-lucide="bell-ring"></i></span>
+                            <span class="rem-body">
+                                <div class="rem-title">Record payments as they land</div>
+                                <div class="rem-sub">Keep your books accurate by logging each payment.</div>
+                                <div class="rem-actions">
+                                    <button class="btn-fill" id="recordPayments">Record payment <i data-lucide="arrow-right"></i></button>
+                                    <button class="btn-text" id="dismissReminder">Dismiss</button>
+                                </div>
+                            </span>
+                            <button class="btn-x" id="dismissReminderX" aria-label="Dismiss"><i data-lucide="x"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="section-head">
+                        <h2 class="section-title">Alerts</h2>
+                        <button class="section-link">See all</button>
+                    </div>
+                    <div class="card">
+                        <button class="alert-row" data-action="alert">
+                            <span class="alert-pip red"></span>
+                            <span class="alert-body"><div class="alert-title">INV-0042 is overdue</div><div class="alert-desc">7 days past due. Follow up or record payment.</div></span>
+                            <span class="alert-time">2h</span>
+                        </button>
+                        <button class="alert-row" data-action="alert">
+                            <span class="alert-pip blue"></span>
+                            <span class="alert-body"><div class="alert-title">QTN-0108 accepted</div><div class="alert-desc">Acme Ltd accepted. Convert to invoice.</div></span>
+                            <span class="alert-time">5h</span>
+                        </button>
+                        <button class="alert-row" data-action="alert">
+                            <span class="alert-pip gray"></span>
+                            <span class="alert-body"><div class="alert-title">₦45,000 received</div><div class="alert-desc">Payment for INV-0039. Reconcile.</div></span>
+                            <span class="alert-time">1d</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="section-head"><h2 class="section-title">Audit trail</h2></div>
+                    <div class="card">
+                        <div class="audit-row"><span class="audit-dot accent"></span><div><div class="audit-text">INV-0045 created by Milad</div><div class="audit-meta">Today, 10:32 AM</div></div></div>
+                        <div class="audit-row"><span class="audit-dot blue"></span><div><div class="audit-text">INV-0042 overdue reminder sent</div><div class="audit-meta">Today, 09:15 AM</div></div></div>
+                        <div class="audit-row"><span class="audit-dot accent"></span><div><div class="audit-text">QTN-0108 accepted by client</div><div class="audit-meta">Yesterday, 4:20 PM</div></div></div>
+                    </div>
+                </section>
+                <div style="height:8px"></div>
+            </main>
+
+            <section class="page empty" id="projects-page"><div class="empty-icon"><i data-lucide="folder-kanban"></i></div><h2>Projects</h2><p>Your project workspaces and live updates.</p></section>
+            <section class="page empty" id="sales-page"><div class="empty-icon"><i data-lucide="bar-chart-3"></i></div><h2>Sales</h2><p>Invoices, quotations, CSR, and waybills.</p></section>
+            <section class="page empty" id="clients-page"><div class="empty-icon"><i data-lucide="users"></i></div><h2>Clients</h2><p>Client records, activity, and history.</p></section>
+            <section class="page empty" id="more-page"><div class="empty-icon"><i data-lucide="more-horizontal"></i></div><h2>More</h2><p>Reports, compliance, receipts, and tools.</p></section>
+        </div>
+
+        <button class="fab" id="fab" aria-label="Create new"><i data-lucide="plus"></i></button>
+        <nav class="bottom-nav" aria-label="Main navigation">
+            <button class="nav-tab active" data-tab="home"><i data-lucide="house"></i><span>Home</span></button>
+            <button class="nav-tab" data-tab="projects"><i data-lucide="folder-kanban"></i><span>Projects</span></button>
+            <button class="nav-tab" data-tab="sales"><i data-lucide="bar-chart-3"></i><span>Sales</span></button>
+            <button class="nav-tab" data-tab="clients"><i data-lucide="users"></i><span>Clients</span></button>
+            <button class="nav-tab" data-tab="more"><i data-lucide="more-horizontal"></i><span>More</span></button>
+        </nav>
+
+        <div class="scrim" id="scrim"></div>
+
+        <aside class="drawer" id="drawer" aria-label="Navigation drawer">
+            <div class="drawer-head"><div class="brand-mark"><i data-lucide="hexagon"></i></div><div><div class="brand-name">BIGDROPS</div><div class="brand-sub">Project finance workspace</div></div></div>
+            <div class="drawer-list">
+                <div class="drawer-label">Workspace</div>
+                <button class="drawer-item active" data-destination="Dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+                <button class="drawer-item" data-destination="Projects"><i data-lucide="folder-kanban"></i>Projects</button>
+                <button class="drawer-item" data-destination="Clients"><i data-lucide="users"></i>Clients</button>
+                <div class="drawer-label">Sales</div>
+                <button class="drawer-item" data-destination="Invoices"><i data-lucide="file-text"></i>Invoices<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-item" data-destination="Quotations"><i data-lucide="file-pen-line"></i>Quotations<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-item" data-destination="CSR"><i data-lucide="clipboard-check"></i>CSR<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-item" data-destination="Waybills"><i data-lucide="truck"></i>Waybills<i class="chev" data-lucide="chevron-right"></i></button>
+                <div class="drawer-label">Tools</div>
+                <button class="drawer-item" data-destination="Reports"><i data-lucide="bar-chart-3"></i>Reports</button>
+                <button class="drawer-item" data-destination="Compliance Hub"><i data-lucide="shield-check"></i>Compliance Hub</button>
+                <button class="drawer-item" data-destination="Item Library"><i data-lucide="library"></i>Item Library</button>
+                <button class="drawer-item" data-destination="Settings"><i data-lucide="settings"></i>Settings</button>
+            </div>
+            <div class="drawer-foot"><div class="drawer-av">MA</div><div><div class="drawer-uname">Milad A.</div><div class="drawer-urole">Operator</div></div></div>
+        </aside>
+
+        <section class="sheet" id="actionSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head"><div><div class="sheet-title">Create</div><div class="sheet-sub">Start a record in your workspace.</div></div><button class="sheet-x" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+            <button class="sheet-action" data-destination="New Invoice"><span class="sa-icon accent"><i data-lucide="file-text"></i></span><div><div class="sa-title">New Invoice</div><div class="sa-desc">Create and send a sales invoice</div></div></button>
+            <button class="sheet-action" data-destination="New Project"><span class="sa-icon muted"><i data-lucide="folder-plus"></i></span><div><div class="sa-title">New Project</div><div class="sa-desc">Start a new project workspace</div></div></button>
+            <button class="sheet-action" data-destination="New RFQ"><span class="sa-icon blue"><i data-lucide="file-search"></i></span><div><div class="sa-title">New RFQ</div><div class="sa-desc">Create a request for quotation</div></div></button>
+            <button class="sheet-action" data-destination="New Quotation"><span class="sa-icon blue"><i data-lucide="file-pen-line"></i></span><div><div class="sa-title">New Quotation</div><div class="sa-desc">Build a quotation for a client</div></div></button>
+            <button class="sheet-action" data-destination="New CSR"><span class="sa-icon muted"><i data-lucide="clipboard-check"></i></span><div><div class="sa-title">New CSR</div><div class="sa-desc">Log a customer service report</div></div></button>
+            <button class="sheet-action" data-destination="New Waybill"><span class="sa-icon muted"><i data-lucide="truck"></i></span><div><div class="sa-title">New Waybill</div><div class="sa-desc">Create a dispatch or delivery waybill</div></div></button>
+            <button class="sheet-action" data-destination="New Letter"><span class="sa-icon blue"><i data-lucide="mail-plus"></i></span><div><div class="sa-title">New Letter</div><div class="sa-desc">Draft official correspondence</div></div></button>
+        </section>
+
+        <section class="sheet" id="salesSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head"><div><div class="sheet-title">Sales</div><div class="sheet-sub">Create, send, collect, and reconcile.</div></div><button class="sheet-x" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+            <button class="sheet-action" data-destination="Invoices"><span class="sa-icon accent"><i data-lucide="file-text"></i></span><div><div class="sa-title">Invoices</div><div class="sa-desc">Create, send, collect, and reconcile.</div></div></button>
+            <button class="sheet-action" data-destination="Quotations"><span class="sa-icon blue"><i data-lucide="file-pen-line"></i></span><div><div class="sa-title">Quotations</div><div class="sa-desc">Prepare pricing and convert when approved.</div></div></button>
+            <button class="sheet-action" data-destination="CSR"><span class="sa-icon muted"><i data-lucide="clipboard-check"></i></span><div><div class="sa-title">CSR</div><div class="sa-desc">Track service reports and client sign-off.</div></div></button>
+            <button class="sheet-action" data-destination="Waybills"><span class="sa-icon muted"><i data-lucide="truck"></i></span><div><div class="sa-title">Waybills</div><div class="sa-desc">Manage dispatch and proof of delivery.</div></div></button>
+        </section>
+
+        <section class="sheet" id="moreSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head"><div><div class="sheet-title">More</div><div class="sheet-sub">Admin, reporting, and workspace tools.</div></div><button class="sheet-x" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+            <div class="sheet-group">Correspondence</div>
+            <button class="sheet-action" data-destination="Letters"><span class="sa-icon muted"><i data-lucide="mail"></i></span><div><div class="sa-title">Letters</div><div class="sa-desc">Official correspondence and notices.</div></div></button>
+            <div class="sheet-divider"></div>
+            <div class="sheet-group">Finance & Reporting</div>
+            <button class="sheet-action" data-destination="Reports"><span class="sa-icon muted"><i data-lucide="bar-chart-3"></i></span><div><div class="sa-title">Reports</div><div class="sa-desc">Revenue, collections, workload, and trends.</div></div></button>
+            <button class="sheet-action" data-destination="Compliance Hub"><span class="sa-icon muted"><i data-lucide="shield-check"></i></span><div><div class="sa-title">Compliance Hub</div><div class="sa-desc">Approvals, policy logs, and audit trail.</div></div></button>
+            <button class="sheet-action" data-destination="Receipts"><span class="sa-icon muted"><i data-lucide="receipt"></i></span><div><div class="sa-title">Receipts</div><div class="sa-desc">View payment receipts and download PDFs.</div></div></button>
+            <button class="sheet-action" data-destination="Item Library"><span class="sa-icon muted"><i data-lucide="library"></i></span><div><div class="sa-title">Item Library</div><div class="sa-desc">Review price history and master items.</div></div></button>
+            <div class="sheet-divider"></div>
+            <div class="sheet-group">Workspace</div>
+            <button class="sheet-action" data-destination="Settings"><span class="sa-icon muted"><i data-lucide="settings"></i></span><div><div class="sa-title">Settings</div><div class="sa-desc">Roles, preferences, and workspace controls.</div></div></button>
+            <button class="sheet-action" data-destination="Sign Out"><span class="sa-icon accent"><i data-lucide="log-out"></i></span><div><div class="sa-title">Sign out</div><div class="sa-desc">Exit this workspace securely.</div></div></button>
+        </section>
+
+        <section class="sheet" id="notificationSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head"><div><div class="sheet-title">Notifications</div><div class="sheet-sub">Activity from your workspace.</div></div><button class="sheet-x" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+            <button class="sheet-action" data-action="alert"><span class="sa-icon accent"><i data-lucide="alert-triangle"></i></span><div><div class="sa-title">INV-0042 is overdue</div><div class="sa-desc">7 days past due. Follow up or record payment.</div></div></button>
+            <button class="sheet-action" data-action="alert"><span class="sa-icon moss"><i data-lucide="check-circle"></i></span><div><div class="sa-title">Quotation accepted</div><div class="sa-desc">QTN-0108 is ready to become an invoice.</div></div></button>
+            <button class="sheet-action" data-action="alert"><span class="sa-icon muted"><i data-lucide="receipt"></i></span><div><div class="sa-title">Payment received</div><div class="sa-desc">₦45,000 needs reconciliation against INV-0039.</div></div></button>
+        </section>
+
+        <section class="search-layer" id="searchLayer">
+            <div class="search-row">
+                <label class="search-wrap"><i data-lucide="search"></i><input id="searchInput" placeholder="Search documents, clients, projects" autocomplete="off" /></label>
+                <button class="search-cancel" id="cancelSearch">Cancel</button>
+            </div>
+            <div class="search-sugs">
+                <div class="search-lbl">Recent</div>
+                <button class="sug" data-destination="INV-0045">INV-0045<span>Lagos Steel Works · Invoice</span></button>
+                <button class="sug" data-destination="QTN-0108">QTN-0108<span>Acme Ltd · Quotation</span></button>
+                <button class="sug" data-destination="Site Alpha">Site Alpha<span>Project · Waybill activity</span></button>
+            </div>
+        </section>
+
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        const root = document.documentElement;
+        const $ = s => document.querySelector(s);
+        const $$ = s => [...document.querySelectorAll(s)];
+        const toast = $('#toast'), scrim = $('#scrim'), drawer = $('#drawer');
+        let toastTimer;
+        const sheets = [$('#actionSheet'), $('#salesSheet'), $('#moreSheet'), $('#notificationSheet')];
+
+        function icons() { lucide.createIcons({ attrs: { 'stroke-width': 1.8 } }); }
+        function say(msg) { toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800); }
+        function closeAll() { drawer.classList.remove('show'); sheets.forEach(s => { s.classList.remove('show'); s.setAttribute('aria-hidden', 'true'); }); scrim.classList.remove('show'); $('#fab').classList.remove('open'); $('#menuBtn').classList.remove('active'); }
+        function openSheet(s) { closeAll(); s.classList.add('show'); s.setAttribute('aria-hidden', 'false'); scrim.classList.add('show'); }
+        function setTheme() { const d = root.dataset.theme === 'dark'; root.dataset.theme = d ? 'light' : 'dark'; localStorage.setItem('bigdrops-theme2', root.dataset.theme); $('#themeBtn').innerHTML = d ? '<i data-lucide="moon"></i>' : '<i data-lucide="sun"></i>'; icons(); say(d ? 'Light mode' : 'Dark mode'); }
+        function setTab(t) { $$('.nav-tab').forEach(e => e.classList.toggle('active', e.dataset.tab === t)); $$('.page').forEach(e => e.classList.toggle('active', e.id === t + '-page')); $('#scroll').scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        $('#menuBtn').addEventListener('click', () => { closeAll(); drawer.classList.add('show'); scrim.classList.add('show'); $('#menuBtn').classList.add('active'); });
+        $('#themeBtn').addEventListener('click', setTheme);
+        $('#notifBtn').addEventListener('click', () => openSheet($('#notificationSheet')));
+        $('#searchBtn').addEventListener('click', () => { $('#searchLayer').classList.add('show'); setTimeout(() => $('#searchInput').focus(), 200); });
+        $('#cancelSearch').addEventListener('click', () => $('#searchLayer').classList.remove('show'));
+        $('#accountBtn').addEventListener('click', () => say('Account menu'));
+        $('#fab').addEventListener('click', () => { const o = $('#actionSheet').classList.contains('show'); if (o) closeAll(); else { openSheet($('#actionSheet')); $('#fab').classList.add('open'); } });
+        scrim.addEventListener('click', closeAll);
+        $$('[data-close]').forEach(e => e.addEventListener('click', closeAll));
+        $$('.nav-tab').forEach(e => e.addEventListener('click', () => { const t = e.dataset.tab; if (t === 'sales') { setTab('sales'); openSheet($('#salesSheet')); } else if (t === 'more') { setTab('more'); openSheet($('#moreSheet')); } else { closeAll(); setTab(t); } }));
+        $$('.drawer-item').forEach(e => e.addEventListener('click', () => { $$('.drawer-item').forEach(x => x.classList.remove('active')); e.classList.add('active'); closeAll(); say(e.dataset.destination); }));
+        $$('[data-destination]').forEach(e => { if (!e.classList.contains('drawer-item')) e.addEventListener('click', () => { closeAll(); $('#searchLayer').classList.remove('show'); say((e.dataset.destination || 'Item') + ' opened'); }); });
+        $$('[data-action="collections"]').forEach(e => e.addEventListener('click', () => say('Collections report')));
+        $$('[data-action="overdue"]').forEach(e => e.addEventListener('click', () => say('Overdue invoices')));
+        $$('[data-action="awaiting"]').forEach(e => e.addEventListener('click', () => say('Awaiting payment')));
+        $$('[data-action="due"]').forEach(e => e.addEventListener('click', () => say('Due this week')));
+        $$('[data-action="doc"]').forEach(e => e.addEventListener('click', () => say('Document opened')));
+        $$('[data-action="alert"]').forEach(e => e.addEventListener('click', () => { closeAll(); say('Notification reviewed'); }));
+        $('#recordPayments').addEventListener('click', () => say('Opening payment recording'));
+        $('#dismissReminder').addEventListener('click', () => { $('#paymentReminder').style.display = 'none'; say('Dismissed'); });
+        $('#dismissReminderX').addEventListener('click', () => { $('#paymentReminder').style.display = 'none'; say('Dismissed'); });
+        $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { say('Searching "' + e.target.value + '"'); $('#searchLayer').classList.remove('show'); } });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAll(); $('#searchLayer').classList.remove('show'); } });
+        root.dataset.theme = localStorage.getItem('bigdrops-theme2') || 'light';
+        icons();
+    </script>
+</body>
+</html>
