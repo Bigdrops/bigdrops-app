@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -6,6 +6,7 @@ import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
+
 import { BASE_THEME_MODE, getThemePreset, resolveThemeMode } from '@/lib/themePresets'
 import {
   applyThemeTokenBundle,
@@ -87,67 +88,60 @@ const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoun
 function AppThemeManager() {
   const { settings } = useSettings()
 
+  // Read dark mode from <html> class, re-apply on mutation
+  const getPresetId = () =>
+    document.documentElement.classList.contains('dark') ? 'bmw' : 'modern-minimalist'
+
   useEffect(() => {
-    const bgSetting = settings?.app_background_color
-    const cardSetting = settings?.app_card_color
-    const rawBundle = (settings as unknown as { app_theme_tokens?: unknown })?.app_theme_tokens
-    const normalizedBundle = normalizeThemeTokenBundle(rawBundle, { allowRadius: true })
-    const mode = resolveThemeMode(settings)
+    let currentPreset = getPresetId()
 
-    let bundleToApply: ThemeTokenBundle = {}
+    const applyTokens = (presetId: string) => {
+      const bundleToApply = getThemePreset(presetId)?.bundle ?? {}
 
-    if (mode && mode !== 'custom' && mode !== BASE_THEME_MODE) {
-      bundleToApply = getThemePreset(mode)?.bundle ?? {}
-    } else if (mode === 'custom') {
-      const legacyOverrides: ThemeTokenBundle = {}
-      const normBg = bgSetting ? normalizeHexColor(bgSetting) : null
-      const normCard = cardSetting ? normalizeHexColor(cardSetting) : null
-
-      if (normBg) {
-        legacyOverrides.background = hexToHslTriplet(normBg)
+      // Resolve Density & Padding
+      const density = bundleToApply['bd-layout-density'] || 'standard'
+      if (!bundleToApply['bd-layout-padding']) {
+        const paddingMap: Record<string, string> = {
+          compact: '0.5rem',
+          standard: '1.5rem',
+          comfortable: '2rem',
+        }
+        bundleToApply['bd-layout-padding'] = paddingMap[density] || '1.5rem'
       }
 
-      if (normCard) {
-        const cardHsl = hexToHslTriplet(normCard)
-        legacyOverrides.card = cardHsl
-        legacyOverrides.popover = cardHsl
-      }
+      const applied = applyThemeTokenBundle(bundleToApply)
 
-      bundleToApply = {
-        ...normalizedBundle,
-        ...legacyOverrides,
-      }
+      // Apply visibility classes
+      const showSidebar = bundleToApply['bd-layout-sidebar'] !== 'hidden'
+      const showBottomNav = bundleToApply['bd-layout-nav'] !== 'hidden'
+      document.documentElement.classList.toggle('bd-sidebar-hidden', !showSidebar)
+      document.documentElement.classList.toggle('bd-nav-hidden', !showBottomNav)
+
+      return applied
     }
 
-    // Resolve Density & Padding
-    const density = bundleToApply['bd-layout-density'] || 'standard'
-    if (!bundleToApply['bd-layout-padding']) {
-      const paddingMap = {
-        compact: '0.5rem',
-        standard: '1.5rem',
-        comfortable: '2rem',
+    let applied = applyTokens(currentPreset)
+
+    // Watch for dark class changes on <html>
+    const observer = new MutationObserver(() => {
+      const next = getPresetId()
+      if (next !== currentPreset) {
+        clearThemeTokenBundle(applied)
+        currentPreset = next
+        applied = applyTokens(currentPreset)
       }
-      bundleToApply['bd-layout-padding'] = paddingMap[density as keyof typeof paddingMap] || '1.5rem'
-    }
-
-    const applied = applyThemeTokenBundle(bundleToApply)
-
-    // Apply visibility classes
-    const showSidebar = bundleToApply['bd-layout-sidebar'] !== 'hidden'
-    const showBottomNav = bundleToApply['bd-layout-nav'] !== 'hidden'
-    document.documentElement.classList.toggle('bd-sidebar-hidden', !showSidebar)
-    document.documentElement.classList.toggle('bd-nav-hidden', !showBottomNav)
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
 
     return () => {
+      observer.disconnect()
       clearThemeTokenBundle(applied)
       document.documentElement.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
     }
-  }, [
-    settings?.app_background_color,
-    settings?.app_card_color,
-    settings?.app_theme_preset_id,
-    (settings as any)?.app_theme_tokens,
-  ])
+  }, [])
 
   return null
 }

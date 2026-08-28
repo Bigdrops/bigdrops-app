@@ -1,15 +1,28 @@
 'use client'
 
-import { useTheme } from 'next-themes'
+import { useState, useEffect } from 'react'
 import { GoeyToaster } from 'goey-toast'
 
 export function Toaster() {
-  const { theme = 'system' } = useTheme()
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  )
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <GoeyToaster
       position="top-center"
-      theme={theme === 'dark' ? 'dark' : 'light'}
+      theme={isDark ? 'dark' : 'light'}
       offset="24px"
       gap={12}
       closeButton="top-right"

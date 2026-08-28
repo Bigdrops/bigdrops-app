@@ -10,7 +10,7 @@ import {
   FileText,
   ClipboardList,
 } from 'lucide-react'
-import { useTheme } from 'next-themes'
+
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 import type { ComponentType } from 'react'
 
@@ -132,8 +132,16 @@ export function DashboardOverview({
   onRecentDocSelect,
   onViewAllActivity,
 }: DashboardOverviewProps) {
-  const { theme, setTheme } = useTheme()
-  const isDark = theme === 'dark'
+  const [isDark, setIsDark] = React.useState(() =>
+    document.documentElement.classList.contains('dark')
+  )
+
+  const toggleDark = React.useCallback(() => {
+    document.documentElement.classList.toggle('dark')
+    const nowDark = document.documentElement.classList.contains('dark')
+    setIsDark(nowDark)
+    localStorage.setItem('theme', nowDark ? 'dark' : 'light')
+  }, [])
 
   const mobileChrome = React.useContext(MobileChromeContext)
 
@@ -166,7 +174,7 @@ export function DashboardOverview({
             <button
               type="button"
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              onClick={toggleDark}
               className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] border border-border bg-muted text-foreground transition active:scale-95"
             >
               {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}

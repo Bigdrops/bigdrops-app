@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider } from '@/components/theme-provider'
+// Dark mode: manual class toggle on <html>, persisted in localStorage
 import { OperationProvider } from '@/context/OperationContext'
 import OperationOverlay from '@/components/ui/OperationOverlay'
 import '@fontsource-variable/inter'
@@ -40,22 +40,23 @@ import App from './App.jsx'
 //   });
 // }
 
+// Initialize dark mode from localStorage before render
+const savedTheme = localStorage.getItem('theme')
+if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.classList.add('dark')
+} else {
+  document.documentElement.classList.remove('dark')
+}
+
 const rootElement = document.getElementById('root')
 
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <OperationProvider>
-          <App />
-          <OperationOverlay />
-        </OperationProvider>
-      </ThemeProvider>
+      <OperationProvider>
+        <App />
+        <OperationOverlay />
+      </OperationProvider>
     </StrictMode>,
   )
 }
