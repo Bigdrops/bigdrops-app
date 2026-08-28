@@ -1,43 +1,46 @@
 # Implementation Roadmap — UI/UX Consolidation PRD
 
-**Total estimated effort:** 8-10 engineering days  
-**Design Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`  
-**Date:** August 2026 (revised)
+**Total estimated effort:** 8-10 engineering days (excluding design system migration)  
+**Design Source of Truth:** TBD — stakeholder to select  
+**Date:** August 2026 (revised 2026-08-28)
 
 ---
 
-## Phase 1: Divine Blood Token Replacement (Days 1-3)
+## Phase 1: Design System Token Replacement — BLOCKED
 
-**Goal:** Replace all existing token systems with Divine Blood. Delete all other themes.
+**Goal:** Replace all existing token systems with the chosen design language.
+**Status:** ⬜ BLOCKED — Design system not yet selected (D-017 superseded 2026-08-28).
 
 | Task | Effort | Owner |
 |---|---|---|
-| Replace `--bd-*` tokens with Divine Blood `--db-*` in index.css | 1 day | Frontend |
-| Replace shadcn HSL tokens with Divine Blood hex tokens | 0.5 day | Frontend |
-| Update Tailwind config colors to Divine Blood palette | 0.5 day | Frontend |
-| Delete `formTheme.css` (merge surviving rules into index.css) | 0.5 day | Frontend |
-| Grep + replace all `--bd-*` references in component files | 0.5 day | Frontend |
+| Select design language | — | Stakeholder |
+| Create token mapping document | 1 day | Frontend |
+| Replace `--bd-*` tokens with chosen system tokens | 1 day | Frontend |
+| Replace shadcn HSL tokens | 0.5 day | Frontend |
+| Update Tailwind config colors | 0.5 day | Frontend |
+| Delete `formTheme.css` (merge surviving rules) | 0.5 day | Frontend |
+| Grep + replace all `--bd-*` references in components | 0.5 day | Frontend |
 
-**Gate:** No `--bd-*` references remain. All tokens are Divine Blood `--db-*`.  
-**Reference:** D-017, D-018, `design-system-roadmap.md`
+**Gate:** No `--bd-*` references remain. All tokens aligned to chosen system.
 
 ---
 
-## Phase 2: Component Visual Migration (Days 4-6)
+## Phase 2: Component Visual Migration — BLOCKED
 
-**Goal:** Update all components to use Divine Blood visual language.
+**Goal:** Update all components to use the chosen design language.
+**Status:** ⬜ BLOCKED — Waiting on Phase 1.
 
 | Task | Effort | Owner |
 |---|---|---|
-| Update button variants (primary = ink surface, gold accent) | 0.5 day | Frontend |
-| Update badge/status colors to Divine Blood palette | 0.5 day | Frontend |
-| Update nav active state (surface-soft + gold indicator) | 0.5 day | Frontend |
-| Update form input focus states to gold | 0.5 day | Frontend |
-| Update card/panel surfaces to Divine Blood tokens | 0.5 day | Frontend |
+| Update button variants per chosen design | 0.5 day | Frontend |
+| Update badge/status colors per chosen palette | 0.5 day | Frontend |
+| Update nav active state | 0.5 day | Frontend |
+| Update form input focus states | 0.5 day | Frontend |
+| Update card/panel surfaces | 0.5 day | Frontend |
 | QA pass: light mode visual consistency | 0.5 day | QA |
 | QA pass: dark mode visual consistency | 0.5 day | QA |
 
-**Gate:** All components visually match Divine Blood design doc. Light = white+gold+crimson. Dark = black+crimson+gold.
+**Gate:** All components visually match chosen design. Both modes verified.
 
 ---
 
@@ -93,11 +96,11 @@
 ## Dependency Graph
 
 ```
-Phase 1 (Divine Blood tokens) ─── no deps (FIRST PRIORITY)
+Phase 1 (Design system tokens) ─── BLOCKED (awaiting stakeholder decision)
 Phase 2 (Component visual)     ─── depends on Phase 1
-Phase 3 (Quick wins)           ─── no deps (can parallel with Phase 2)
-Phase 4 (Architecture)         ─── depends on Phase 2
-Phase 5 (Polish)               ─── depends on all above
+Phase 3 (Quick wins)           ─── no deps (CAN PROCEED NOW)
+Phase 4 (Architecture)         ─── no deps (CAN PROCEED NOW)
+Phase 5 (Polish)               ─── depends on Phase 3 + 4
 ```
 
 ---
@@ -113,16 +116,12 @@ Phase 5 (Polish)               ─── depends on all above
 
 ---
 
-## Divine Blood Design Rules (Quick Reference)
+## Current Design State
 
-| Rule | Detail |
-|------|--------|
-| Light canvas | `#FFFFFF` (pure white, not cream) |
-| Light surface-soft | `#F5F5F5` (neutral gray, not beige) |
-| Light border | `#E5E5E5` (clean gray, not brown) |
-| Gold accent | `#F59E0B` (vibrant amber, not dusty) |
-| Crimson | `#A52A2A` / `#8B0000` (deep blood, not bright red) |
-| Dark canvas | `#0A0A0A` (deep black) |
-| Nav active | surface-soft + 2px gold left rail (not gold background) |
-| Primary button | Dark ink surface in light, warm white in dark |
-| Living material | Atmospheric only, not in data tables or forms |
+| Aspect | Current | Target |
+|--------|---------|--------|
+| Primary color | Blue-600 (HSL 225 75% 48%) | TBD |
+| Typography | Inter (system) | TBD |
+| Visual modes | Light + Dark | Light + Dark (2 modes max) |
+| Token system | shadcn HSL + `--bd-*` CSS vars | Single unified system |
+| `formTheme.css` | 196 definitions, still active | To be replaced/deleted |

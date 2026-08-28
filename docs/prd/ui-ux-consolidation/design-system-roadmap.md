@@ -1,85 +1,60 @@
 # Design System Roadmap
 
 > **Part of:** BIGDROPS UI/UX Consolidation PRD  
-> **Goal:** Replace all existing theme systems with Divine Blood as the single design language  
-> **Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`
+> **Goal:** Replace all existing theme systems with a single design language  
+> **Status:** Design system selection pending — D-017 (Divine Blood) superseded 2026-08-28  
+> **Source of Truth:** TBD — stakeholder to select
 
 ---
 
 ## Executive Summary
 
-BIGDROPS previously had a **hybrid design system**: a shadcn CSS-variable layer (`index.css`), a BigDrops custom token layer (`formTheme.css`), Radix theme overrides, and scattered inline custom properties. **Divine Blood replaces all of these.** The system reduces to exactly two visual modes (Light and Dark) with a unified token set.
+BIGDROPS currently has a **hybrid design system**: a shadcn CSS-variable layer (`index.css`), a BigDrops custom token layer (`formTheme.css` with 196 `--bd-*` definitions), Radix theme overrides, and scattered inline custom properties. **A single design language will eventually replace all of these.** The specific system is yet to be chosen by the stakeholder.
 
 ---
 
-## Divine Blood Design Language
+## Current State
 
-### Core Equation
+### Existing Token Systems
 
-```
-LIGHT:  White + Gold + Crimson
-DARK:   Black + Crimson + Gold
-```
+| System | Location | Definitions |
+|--------|----------|-------------|
+| shadcn HSL tokens | `index.css :root` | ~30 color tokens |
+| BigDrops `--bd-*` tokens | `styles/formTheme.css` | 196 definitions |
+| Tailwind config colors | `tailwind.config.cjs` | Extends default palette |
+| Radix theme overrides | `index.css .dark` | Dark mode tokens |
 
-### Token Set
+### Active Visual Modes
 
-All tokens are defined in `docs/TEMPLATES/Designsdotmds/Divine-blood.md` Section 4.
-
-**Light Tokens:**
-```
---db-canvas:         #FFFFFF    (pure white)
---db-surface:        #FFFFFF
---db-surface-raised: #FFFFFF
---db-surface-soft:   #F5F5F5    (neutral gray, not beige)
---db-border:         #E5E5E5    (clean gray)
---db-border-strong:  #D4D4D4
---db-ink:            #171614
---db-ink-secondary:  #525252
---db-ink-muted:      #737373
---db-ink-faint:      #A3A3A3
---db-gold-500:       #F59E0B    (vibrant amber)
---db-crimson-500:    #A52A2A    (deep blood crimson)
-```
-
-**Dark Tokens:**
-```
---db-canvas:         #0A0A0A    (deep black)
---db-surface:        #141010
---db-surface-raised: #1C1414
---db-surface-soft:   #261A1A
---db-border:         #3D2222    (crimson-tinted)
---db-gold-400:       #FBBF24    (bright gold)
---db-crimson-400:    #C43E3E
-```
+- Light mode (default)
+- Dark mode (`.dark` class)
 
 ### Typography
 
 | Role | Font | Weights |
 |------|------|---------|
-| UI (human interaction) | Instrument Sans | 400, 500, 600, 700 |
-| Data (financial figures, IDs) | Berkeley Mono | 400, 500, 600, 700 |
+| UI | Inter (system default) | 400, 500, 600, 700, 800 |
+| Monospace | System monospace | Default |
 
-### Design Rules
+### Next Steps
 
-- Light mode: white surfaces dominate, gold is primary accent, crimson is secondary
-- Dark mode: black surfaces dominate, crimson is primary accent, gold is secondary
-- No blue as brand color
-- No more than 2 visual modes
-- Hairline borders (1px) — no thick borders as default
-- Living material is atmospheric, not functional
+1. Stakeholder selects a design language
+2. Create token mapping from current `--bd-*` / shadcn to new system
+3. Execute phased migration per this roadmap
 
 ---
 
-## Migration: What Gets Replaced
+## Migration Plan (Pending Design Choice)
 
-| Old System | Location | Replacement |
-|------------|----------|-------------|
-| shadcn HSL tokens | `index.css :root` | Divine Blood `--db-*` tokens |
-| BigDrops `--bd-*` tokens | `formTheme.css` | Divine Blood `--db-*` tokens |
-| Tailwind config colors | `tailwind.config.cjs` | Divine Blood palette values |
-| Radix theme overrides | `index.css .dark` | Divine Blood dark tokens |
-| Ambient wave animations | `formTheme.css` | Living material per Divine-blood.md §20-21 |
-| Form-specific theme | `formTheme.css` | Delete (merged into global tokens) |
+| Old System | Location | Action |
+|------------|----------|--------|
+| shadcn HSL tokens | `index.css :root` | Replace with chosen system |
+| BigDrops `--bd-*` tokens | `styles/formTheme.css` | Replace with chosen system |
+| Tailwind config colors | `tailwind.config.cjs` | Align to chosen palette |
+| Radix theme overrides | `index.css .dark` | Replace with chosen dark tokens |
+| Form-specific theme | `styles/formTheme.css` | Delete after migration |
+
+**Critical:** `formTheme.css` still exists and is imported in `main.tsx`. It contains 196 `--bd-*` definitions that are actively used across the codebase.
 
 ---
 

@@ -1,24 +1,24 @@
 # Implementation Roadmap — UI/UX Consolidation
 
-> **Status:** Active — Divine Blood Design Language Adoption  
-> **Date:** August 2026 (revised)  
+> **Status:** Active — Design System Selection Pending  
+> **Date:** August 2026 (revised 2026-08-28)  
 > **Stack:** React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · Vite 7 · Supabase · Bun  
-> **Design Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`  
-> **Scope:** Replace all theme systems with Divine Blood. Reduce to 2 modes.
+> **Design Source of Truth:** TBD — stakeholder to select  
+> **Scope:** Unify UI layer, consolidate patterns, remove dead code. Design system choice deferred.
 
 ---
 
 ## 1. Executive Summary
 
-This is the master execution plan for adopting Divine Blood as the BIGDROPS design language. It prescribes **11 days of work across 5 phases**, starting with token replacement and ending with polish.
+This is the master execution plan for the BIGDROPS UI/UX consolidation. It prescribes work across 5 phases, starting with quick wins and dead code removal, then architecture cleanup, and finally design system token migration (once a system is chosen).
 
-**Phase 1 (Days 1-3):** Replace all token systems with Divine Blood. Delete all other themes. (D-017, D-018)
-**Phase 2 (Days 4-6):** Migrate all components to Divine Blood visual language.
-**Phase 3 (Days 7-8):** Quick UX wins.
-**Phase 4 (Days 9-10):** Architecture cleanup.
-**Phase 5 (Day 11):** Polish and documentation.
+**Phase 1 (Quick Wins):** Dead code removal ✅, sign-out confirmation, reduced motion, drag handles.
+**Phase 2 (Architecture):** Column hooks, portal standardization, CSS Module consolidation, BOQ/RFQ unification.
+**Phase 3 (Views):** View page layout, summary strip, hero meta, document preview.
+**Phase 4 (Design System):** Token replacement — **BLOCKED** until design language is selected.
+**Phase 5 (Polish):** Route transitions, safe areas, aria-live, documentation.
 
-**Critical path:** 11 days sequential.
+**Critical path:** Phase 4 blocked. Phases 1-3 and 5 can proceed in parallel.
 
 **Gate:** Every batch must pass `bun run audit:load`, `bun run typecheck`, `bun run lint`, and `bun run test` before proceeding.
 
@@ -65,35 +65,39 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 
 ## 3. Implementation Phases
 
-### Phase 0: Divine Blood Token Replacement (Days 1-3)
+### Phase 0: Design System Token Replacement — BLOCKED
 
-**Goal:** Replace all existing token systems with Divine Blood. Delete all other themes. (D-017, D-018)
-
-| # | Task | Source | Effort | Dependencies | Completion Criteria |
-|---|---|---|---|---|---|
-| F-01 | Replace `--bd-*` tokens with `--db-*` Divine Blood tokens | Divine-blood.md §4 | 1 day | None | All `--bd-*` definitions replaced |
-| F-02 | Replace shadcn HSL tokens with Divine Blood hex tokens | Divine-blood.md §4 | 0.5 day | None | All HSL color tokens replaced |
-| F-03 | Update Tailwind config colors to Divine Blood palette | Divine-blood.md §4 | 0.5 day | None | Tailwind colors match Divine Blood |
-| F-04 | Delete `formTheme.css` (merge surviving rules) | design-system-roadmap.md | 0.5 day | F-01, F-02 | File deleted, no import errors |
-| F-05 | Grep + replace all `--bd-*` references in component files | All .tsx | 0.5 day | F-01 | No `--bd-*` references remain |
-
-**Gate:** No `--bd-*` references remain. All tokens are Divine Blood `--db-*`.
-
-### Phase 1: Component Visual Migration (Days 4-6)
-
-**Goal:** Update all components to use Divine Blood visual language.
+**Goal:** Replace all existing token systems with the chosen design language.
+**Status:** ⬜ BLOCKED — Design system not yet selected. D-017 superseded 2026-08-28.
 
 | # | Task | Source | Effort | Dependencies | Completion Criteria |
 |---|---|---|---|---|---|
-| V-01 | Update button variants (primary = ink surface, gold accent) | Divine-blood.md §14 | 0.5 day | Phase 0 | Buttons match design doc |
-| V-02 | Update badge/status colors to Divine Blood palette | Divine-blood.md §15 | 0.5 day | Phase 0 | Status badges use correct colors |
-| V-03 | Update nav active state (surface-soft + gold indicator) | Divine-blood.md §18 | 0.5 day | Phase 0 | Nav matches design doc |
-| V-04 | Update form input focus states to gold | Divine-blood.md §14 | 0.5 day | Phase 0 | Focus rings use gold |
-| V-05 | Update card/panel surfaces to Divine Blood tokens | Divine-blood.md §10 | 0.5 day | Phase 0 | Surfaces match design doc |
-| V-06 | QA pass: light mode visual consistency | — | 0.5 day | V-01–V-05 | Light mode verified |
-| V-07 | QA pass: dark mode visual consistency | — | 0.5 day | V-01–V-05 | Dark mode verified |
+| F-01 | Select design language | — | — | Stakeholder decision | Design doc finalized |
+| F-02 | Create token mapping (current → new) | TBD | 1 day | F-01 | Mapping document complete |
+| F-03 | Replace `--bd-*` tokens with chosen system tokens | TBD | 1 day | F-02 | All `--bd-*` definitions replaced |
+| F-04 | Replace shadcn HSL tokens | TBD | 0.5 day | F-02 | All HSL color tokens replaced |
+| F-05 | Update Tailwind config colors | TBD | 0.5 day | F-02 | Tailwind colors aligned |
+| F-06 | Delete `formTheme.css` | — | 0.5 day | F-03, F-04 | File deleted, no import errors |
+| F-07 | Grep + replace all `--bd-*` references in components | All .tsx | 0.5 day | F-03 | No `--bd-*` references remain |
 
-**Gate:** All components visually match Divine Blood. Light = white+gold+crimson. Dark = black+crimson+gold.
+**Gate:** No `--bd-*` references remain. All tokens aligned to chosen system.
+
+### Phase 1: Component Visual Migration — BLOCKED
+
+**Goal:** Update all components to use the chosen design language's visual rules.
+**Status:** ⬜ BLOCKED — Waiting on Phase 0 (design system selection).
+
+| # | Task | Source | Effort | Dependencies | Completion Criteria |
+|---|---|---|---|---|---|
+| V-01 | Update button variants per chosen design | TBD | 0.5 day | Phase 0 | Buttons match design doc |
+| V-02 | Update badge/status colors per chosen palette | TBD | 0.5 day | Phase 0 | Status badges correct |
+| V-03 | Update nav active state | TBD | 0.5 day | Phase 0 | Nav matches design doc |
+| V-04 | Update form input focus states | TBD | 0.5 day | Phase 0 | Focus rings correct |
+| V-05 | Update card/panel surfaces | TBD | 0.5 day | Phase 0 | Surfaces match design doc |
+| V-06 | QA pass: light mode | — | 0.5 day | V-01–V-05 | Light mode verified |
+| V-07 | QA pass: dark mode | — | 0.5 day | V-01–V-05 | Dark mode verified |
+
+**Gate:** All components visually match chosen design. Both modes verified.
 
 ### Phase 2: Quick Wins (Days 7-8)
 
@@ -124,7 +128,7 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 
 **Gate:** Forms unified. CSS reduced. No dead patterns.
 
-### Phase 4: Polish & Documentation (Day 11)
+### Phase 4: Polish & Documentation
 
 **Goal:** Final polish and documentation.
 
@@ -133,12 +137,10 @@ Phase 4 ──→ Phase 5 (Polish) must wait for Phase 4
 | Z-01 | Route transition animations | product-inspection | 0.5 day | Q-03 | Page transitions animated |
 | Z-02 | Safe area insets for Capacitor | product-inspection | 0.25 day | None | iOS notch handled |
 | Z-03 | `aria-live` loading regions | product-inspection | 0.25 day | None | Screen reader announcements work |
-| Z-04 | Update component documentation | post-migration | 0.5 day | All | docs reflect Divine Blood |
+| Z-04 | Update component documentation | post-migration | 0.5 day | All | Docs reflect current state |
 | Z-05 | Final audits (audit:load, typecheck, lint, test) | post-migration | 0.5 day | All | All pass clean |
 
 **Gate:** All audits pass. Documentation updated.
-
-(Phase 4 renamed to Phase 5 above — see Phase 4: Polish & Documentation)
 
 ---
 

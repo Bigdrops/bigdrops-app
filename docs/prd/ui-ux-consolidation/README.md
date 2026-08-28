@@ -1,10 +1,10 @@
 # BIGDROPS — UI/UX Consolidation PRD
 
-> **Status:** Active — Divine Blood Design Language Adoption  
+> **Status:** Active — Design System Selection Pending  
 > **Stack:** React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · Vite 7 · Supabase · Bun  
-> **Date:** August 2026  
-> **Design Source of Truth:** `docs/TEMPLATES/Designsdotmds/Divine-blood.md`  
-> **Scope:** Replace all theme systems with Divine Blood. Reduce to 2 modes (Light + Dark).
+> **Date:** August 2026 (revised 2026-08-28)  
+> **Design Source of Truth:** TBD — stakeholder to select design language  
+> **Scope:** Unify UI layer, consolidate patterns, remove dead code. Design system choice deferred.
 
 ---
 
@@ -33,11 +33,11 @@ BIGDROPS serves Nigerian SMEs with **invoices**, **quotations**, **CSRs**, **way
 ## Key Findings Summary
 
 ### Design System (Updated August 2026)
-- **Divine Blood** is now the sole design language (Decision D-017)
-- All `--bd-*` tokens to be replaced with Divine Blood `--db-*` tokens
-- shadcn HSL tokens to be replaced with Divine Blood hex tokens
-- Exactly 2 visual modes: Light (white+gold+crimson) and Dark (black+crimson+gold)
-- All other themes deleted (Decision D-018)
+- **No design system selected yet** — D-017 and D-018 superseded (2026-08-28)
+- `--bd-*` tokens remain the current system (196 definitions in formTheme.css)
+- shadcn HSL tokens remain the current color layer
+- Current modes: Light + Dark (shadcn-based)
+- Stakeholder must choose a design language before token migration begins
 
 ### Architecture
 - **4 form architectures**: `SharedDocumentForm` (invoice/quotation), custom inline (CSR), tabbed editor (BOQ/RFQ), overlay (waybill)

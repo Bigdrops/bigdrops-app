@@ -37,8 +37,8 @@
 | D-014 | **InputGroup + ButtonGroup Primitives** | Create shared primitives from templates (`filter-button-reference.tsx`, `richtextform.tsx`). Used across all forms. | 2026-06-30 | UI Team | ✅ Accepted | Medium | `migration-plan.md` |
 | D-015 | **Column Locking in DataGrid** | First column sticky, rest scrollable. Prevents horizontal scrolling context loss. | 2026-06-30 | Product | ✅ Accepted | High | `issue-tracker.md` (UX-003) |
 | D-016 | **Mobile-First Safe Areas** | Respect `env(safe-area-inset-*)` for all bottom sheets/FABs. | 2026-06-30 | Architecture Team | ✅ Accepted | Medium | `02-inconsistency-report.md` |
-| D-017 | **Divine Blood Is the Design Language** | Replace all theme systems (shadcn HSL, `--bd-*` tokens, Tailwind config) with Divine Blood tokens. Reduce to exactly 2 visual modes (Light + Dark). Source of truth: `docs/TEMPLATES/Designsdotmds/Divine-blood.md`. Delete all other themes. | 2026-08-15 | Design Team | ✅ Accepted | High | `design-system-roadmap.md` |
-| D-018 | **Delete All Themes Except Light/Dark** | No Gold Light theme. No Crimson Dark theme. No rainbow theme system. Exactly 2 modes: Light (white+gold+crimson) and Dark (black+crimson+gold). | 2026-08-15 | Design Team | ✅ Accepted | High | `design-system-roadmap.md` |
+| D-017 | ~~**Divine Blood Is the Design Language**~~ | ~~Replace all theme systems with Divine Blood tokens.~~ **Superseded** — Design system not yet chosen by stakeholder. | 2026-08-15 | Design Team | 🔄 Superseded | High | `design-system-roadmap.md` |
+| D-018 | ~~**Delete All Themes Except Light/Dark**~~ | ~~Exactly 2 modes: Light (white+gold+crimson) and Dark (black+crimson+gold).~~ **Superseded** — Dependent on D-017. | 2026-08-15 | Design Team | 🔄 Superseded | High | `design-system-roadmap.md` |
 
 ---
 
@@ -82,6 +82,6 @@
 | D-014 (InputGroup/ButtonGroup) | Medium (2 days) | Low | Medium | 1 | Medium |
 | D-015 (Column Locking) | Low (1 day) | Low | Medium | 1 | High |
 | D-016 (Safe Areas) | Low (1 day) | Low | Medium | 3 | Medium |
-| D-017 (Divine Blood) | High (2 weeks) | Medium | High | 1 | High |
-| D-018 (Delete Themes) | Medium (1 week) | Medium | High | 1 | High |
+| D-017 (Divine Blood) | High (2 weeks) | Medium | High | 1 | 🔄 Superseded |
+| D-018 (Delete Themes) | Medium (1 week) | Medium | High | 1 | 🔄 Superseded |
 ---
