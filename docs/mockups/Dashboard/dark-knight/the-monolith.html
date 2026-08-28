@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>BIGDROPS · The Monolith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           THE MONOLITH — Brutalist Single-Column, Massive Numbers
+           Dark · Industrial · Raw
+           ══════════════════════════════════════════════════════════════ */
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --surface-raised: #1a1a1a;
+            --surface-hover: #222222;
+            --text: #e8e8e8;
+            --text-dim: #888888;
+            --text-muted: #555555;
+            --accent: #ff4d00;
+            --accent-dim: #cc3d00;
+            --accent-soft: rgba(255, 77, 0, 0.08);
+            --green: #00e676;
+            --green-soft: rgba(0, 230, 118, 0.08);
+            --red: #ff3d3d;
+            --red-soft: rgba(255, 61, 61, 0.08);
+            --blue: #448aff;
+            --blue-soft: rgba(68, 138, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-strong: rgba(255, 255, 255, 0.12);
+            --font: "Space Grotesk", sans-serif;
+            --mono: "JetBrains Mono", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+        .app { max-width: 430px; margin: 0 auto; height: 100dvh; overflow: hidden; position: relative; }
+        .scroll { height: 100%; overflow-y: auto; scrollbar-width: none; padding: 0 0 100px; }
+        .scroll::-webkit-scrollbar { display: none; }
+
+        /* ── TOPBAR: raw, minimal ── */
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+        .topbar-right { display: flex; gap: 8px; }
+        .icon-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+            display: grid; place-items: center; background: transparent; color: var(--text-dim);
+            transition: all 0.15s;
+        }
+        .icon-btn:hover { background: var(--surface-raised); color: var(--text); border-color: var(--border-strong); }
+        .icon-btn svg { width: 16px; height: 16px; }
+
+        /* ── HERO NUMBER ── */
+        .hero {
+            padding: 40px 20px 32px;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-label {
+            font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 8px;
+        }
+        .hero-number {
+            font-family: var(--mono); font-size: 56px; font-weight: 600;
+            letter-spacing: -0.04em; line-height: 1;
+            color: var(--text);
+        }
+        .hero-number .currency { font-size: 28px; color: var(--text-dim); margin-right: 4px; }
+        .hero-change {
+            display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 12px; padding: 4px 10px; border-radius: 6px;
+            font-family: var(--mono); font-size: 12px; font-weight: 600;
+            background: var(--green-soft); color: var(--green);
+        }
+
+        /* ── STATS ROW ── */
+        .stats {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat {
+            padding: 20px; text-align: center;
+            border-right: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .stat:last-child { border-right: 0; }
+        .stat:hover { background: var(--surface); }
+        .stat-value {
+            font-family: var(--mono); font-size: 22px; font-weight: 600;
+            letter-spacing: -0.03em; color: var(--text);
+        }
+        .stat-label {
+            font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--text-muted); margin-top: 4px;
+        }
+
+        /* ── SECTION ── */
+        .section { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+        .section-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--text-muted);
+        }
+        .section-link { font-size: 10px; font-weight: 700; color: var(--accent); text-decoration: none; }
+
+        /* ── ACTIVITY: raw rows ── */
+        .row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .row:first-child { border-top: 0; }
+        .row:hover { background: var(--surface); margin: 0 -20px; padding: 14px 20px; }
+        .row-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: grid; place-items: center; flex-shrink: 0;
+            font-size: 14px; font-weight: 700;
+        }
+        .row-icon.inv { background: var(--accent-soft); color: var(--accent); }
+        .row-icon.qtn { background: var(--blue-soft); color: var(--blue); }
+        .row-icon.wb { background: var(--green-soft); color: var(--green); }
+        .row-body { flex: 1; min-width: 0; }
+        .row-title { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+        .row-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .row-right { text-align: right; flex-shrink: 0; }
+        .row-amount { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: -0.02em; }
+        .row-date { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+        .tag {
+            display: inline-block; padding: 2px 6px; border-radius: 4px;
+            font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+            margin-left: 6px; vertical-align: middle;
+        }
+        .tag.pending { background: var(--accent-soft); color: var(--accent); }
+        .tag.draft { background: var(--blue-soft); color: var(--blue); }
+        .tag.done { background: var(--green-soft); color: var(--green); }
+
+        /* ── ALERT CARDS ── */
+        .alert-cards { display: flex; flex-direction: column; gap: 8px; }
+        .alert-card {
+            padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+            background: var(--surface); display: flex; gap: 12px; align-items: flex-start;
+            transition: border-color 0.15s;
+        }
+        .alert-card:hover { border-color: var(--border-strong); }
+        .alert-card-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .alert-card-icon.warn { background: var(--red-soft); color: var(--red); }
+        .alert-card-icon.info { background: var(--blue-soft); color: var(--blue); }
+        .alert-card-icon svg { width: 16px; height: 16px; }
+        .alert-card-body { flex: 1; min-width: 0; }
+        .alert-card-title { font-size: 12px; font-weight: 600; }
+        .alert-card-desc { font-size: 10px; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+        .alert-card-time { font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+
+        /* ── AUDIT ── */
+        .audit-row {
+            display: flex; gap: 10px; padding: 10px 0;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+        }
+        .audit-row:first-child { border-top: 0; }
+        .audit-dot {
+            width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+            background: var(--accent);
+        }
+        .audit-dot.alt { background: var(--blue); }
+        .audit-text { color: var(--text-dim); }
+        .audit-text strong { color: var(--text); font-weight: 600; }
+
+        /* ── BOTTOM NAV ── */
+        .bottom {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+            height: 56px; padding: 0 8px;
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            background: var(--bg); border-top: 1px solid var(--border);
+        }
+        .tab {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; color: var(--text-muted); font-size: 9px; font-weight: 600;
+            transition: color 0.15s;
+        }
+        .tab svg { width: 18px; height: 18px; }
+        .tab.active { color: var(--accent); }
+
+        /* ── FAB ── */
+        .fab {
+            position: absolute; z-index: 21; right: 20px; bottom: 68px;
+            width: 48px; height: 48px; border-radius: 14px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center;
+            box-shadow: 0 4px 16px rgba(255, 77, 0, 0.3);
+        }
+        .fab svg { width: 20px; height: 20px; }
+
+        @media (min-width: 560px) {
+            .app { height: 880px; margin-top: 22px; border: 1px solid var(--border); border-radius: 24px; overflow: hidden; }
+            body { min-height: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition-duration: 0.001ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="scroll">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <span class="brand">BIGDROPS</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="icon-btn"><i data-lucide="search"></i></button>
+                    <button class="icon-btn"><i data-lucide="bell"></i></button>
+                    <button class="icon-btn"><i data-lucide="moon"></i></button>
+                </div>
+            </header>
+
+            <div class="hero">
+                <div class="hero-label">Total collected this month</div>
+                <div class="hero-number"><span class="currency">₦</span>89,000</div>
+                <div class="hero-change">▲ +18% vs last month</div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">₦56k</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Unpaid</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">₦120k</div>
+                    <div class="stat-label">Due 7d</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-title">Recent activity</span>
+                    <a class="section-link" href="#">View all</a>
+                </div>
+                <div class="row">
+                    <div class="row-icon inv">₹</div>
+                    <div class="row-body">
+                        <div class="row-title">INV-0045 <span class="tag pending">Pending</span></div>
+                        <div class="row-meta">Lagos Steel Works</div>
+                    </div>
+                    <div class="row-right">
+                        <div class="row-amount">₦120,000</div>
+                        <div class="row-date">Aug 15</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row-icon qtn">Q</div>
+                    <div class="row-body">
+                        <div class="row-title">QTN-0109 <span class="tag draft">Draft</span></div>
+                        <div class="row-meta">Westfield Corp</div>
+                    </div>
+                    <div class="row-right">
+                        <div class="row-amount">₦340,000</div>
+                        <div class="row-date">Aug 14</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row-icon wb">W</div>
+                    <div class="row-body">
+                        <div class="row-title">WB-0028 <span class="tag done">Delivered</span></div>
+                        <div class="row-meta">Site Alpha</div>
+                    </div>
+                    <div class="row-right">
+                        <div class="row-amount">—</div>
+                        <div class="row-date">Aug 13</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-title">Alerts</span>
+                </div>
+                <div class="alert-cards">
+                    <div class="alert-card">
+                        <div class="alert-card-icon warn"><i data-lucide="triangle-alert"></i></div>
+                        <div class="alert-card-body">
+                            <div class="alert-card-title">INV-0042 is overdue</div>
+                            <div class="alert-card-desc">7 days past due. Record payment or follow up.</div>
+                            <div class="alert-card-time">2h ago</div>
+                        </div>
+                    </div>
+                    <div class="alert-card">
+                        <div class="alert-card-icon info"><i data-lucide="circle-check"></i></div>
+                        <div class="alert-card-body">
+                            <div class="alert-card-title">QTN-0108 accepted</div>
+                            <div class="alert-card-desc">Acme Ltd accepted. Convert to invoice.</div>
+                            <div class="alert-card-time">5h ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-title">Audit trail</span>
+                </div>
+                <div class="audit-row"><div class="audit-dot"></div><div class="audit-text"><strong>INV-0045</strong> created by Milad · Today, 10:32 AM</div></div>
+                <div class="audit-row"><div class="audit-dot alt"></div><div class="audit-text"><strong>INV-0042</strong> overdue reminder sent · Today, 09:15 AM</div></div>
+                <div class="audit-row"><div class="audit-dot"></div><div class="audit-text"><strong>QTN-0108</strong> accepted by client · Yesterday, 4:20 PM</div></div>
+            </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i></button>
+        <nav class="bottom">
+            <button class="tab active"><i data-lucide="house"></i><span>Home</span></button>
+            <button class="tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button>
+            <button class="tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button>
+            <button class="tab"><i data-lucide="contact-round"></i><span>Clients</span></button>
+            <button class="tab"><i data-lucide="ellipsis"></i><span>More</span></button>
+        </nav>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

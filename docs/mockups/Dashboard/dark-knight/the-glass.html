@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#e8e0f0" />
+    <title>BIGDROPS · The Glass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           THE GLASS — Frosted Glass Cards on Soft Gradient
+           Light · Layered · Premium
+           ══════════════════════════════════════════════════════════════ */
+
+        :root {
+            --bg-start: #e8e0f0;
+            --bg-mid: #d8d0e8;
+            --bg-end: #c8c0e0;
+            --glass: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --glass-strong: rgba(255, 255, 255, 0.72);
+            --ink: #1a1428;
+            --ink-2: #5a5070;
+            --ink-3: #9088a0;
+            --accent: #6c47d0;
+            --accent-soft: rgba(108, 71, 208, 0.10);
+            --green: #2a8a4a;
+            --green-soft: rgba(42, 138, 74, 0.10);
+            --red: #c83040;
+            --red-soft: rgba(200, 48, 64, 0.10);
+            --blue: #3070c0;
+            --blue-soft: rgba(48, 112, 192, 0.10);
+            --pink: #c04080;
+            --pink-soft: rgba(192, 64, 128, 0.10);
+            --font: "Outfit", sans-serif;
+            --mono: "IBM Plex Mono", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+        body {
+            background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            color: var(--ink);
+        }
+
+        .app { max-width: 430px; margin: 0 auto; height: 100dvh; overflow: hidden; position: relative; }
+        .scroll { height: 100%; overflow-y: auto; scrollbar-width: none; padding: 16px 14px calc(100px + env(safe-area-inset-bottom)); }
+        .scroll::-webkit-scrollbar { display: none; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            padding: 12px 0 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(180deg, var(--bg-start) 60%, transparent);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 10px; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 12px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center;
+            font-size: 12px; font-weight: 700;
+            box-shadow: 0 2px 8px rgba(108, 71, 208, 0.25);
+        }
+        .identity-label {
+            font-size: 8px; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3);
+        }
+        .identity-name { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+        .topbar-right { display: flex; gap: 6px; }
+        .glass-btn {
+            width: 36px; height: 36px; border-radius: 12px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: grid; place-items: center; color: var(--ink-2);
+            transition: all 0.15s;
+        }
+        .glass-btn:hover { background: var(--glass-strong); color: var(--ink); }
+        .glass-btn svg { width: 16px; height: 16px; }
+        .glass-btn.accent { background: var(--accent); color: #fff; border-color: transparent; }
+
+        /* ── GLASS CARD ── */
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .glass-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        /* ── HERO CARD ── */
+        .hero-card { margin-bottom: 12px; text-align: center; padding: 24px 16px; }
+        .hero-eyebrow {
+            font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px;
+        }
+        .hero-amount {
+            font-family: var(--mono); font-size: 44px; font-weight: 500;
+            letter-spacing: -0.04em; line-height: 1;
+        }
+        .hero-amount .cur { font-size: 24px; color: var(--ink-2); }
+        .hero-change {
+            display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 10px; padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+            background: var(--green-soft); color: var(--green);
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+            margin-bottom: 12px;
+        }
+        .stat-card {
+            background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 16px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 14px 10px; text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+        }
+        .stat-value {
+            font-family: var(--mono); font-size: 17px; font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+        .stat-label {
+            font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3); margin-top: 3px;
+        }
+
+        /* ── SECTION ── */
+        .section { margin-bottom: 12px; }
+        .section-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 4px; margin-bottom: 8px;
+        }
+        .section-title {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3);
+        }
+        .section-more { font-size: 10px; font-weight: 600; color: var(--accent); text-decoration: none; }
+
+        /* ── ACTIVITY ── */
+        .activity-list { display: flex; flex-direction: column; gap: 6px; }
+        .activity-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px; border-radius: 14px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            transition: transform 0.15s;
+        }
+        .activity-item:hover { transform: translateX(2px); }
+        .activity-icon {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .activity-icon svg { width: 16px; height: 16px; }
+        .activity-icon.inv { background: var(--accent-soft); color: var(--accent); }
+        .activity-icon.qtn { background: var(--blue-soft); color: var(--blue); }
+        .activity-icon.wb { background: var(--green-soft); color: var(--green); }
+        .activity-body { flex: 1; min-width: 0; }
+        .activity-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .activity-meta { font-size: 9px; color: var(--ink-3); margin-top: 2px; }
+        .activity-right { text-align: right; flex-shrink: 0; }
+        .activity-amount { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+        .activity-date { font-size: 9px; color: var(--ink-3); margin-top: 2px; }
+        .pill {
+            display: inline-block; padding: 2px 6px; border-radius: 6px;
+            font-size: 7px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .pill.pending { background: var(--pink-soft); color: var(--pink); }
+        .pill.draft { background: var(--blue-soft); color: var(--blue); }
+        .pill.done { background: var(--green-soft); color: var(--green); }
+
+        /* ── ALERTS ── */
+        .alerts-list { display: flex; flex-direction: column; gap: 6px; }
+        .alert-item {
+            padding: 12px; border-radius: 14px;
+            background: var(--glass); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: flex; gap: 10px; align-items: flex-start;
+        }
+        .alert-icon {
+            width: 30px; height: 30px; border-radius: 8px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .alert-icon svg { width: 14px; height: 14px; }
+        .alert-icon.warn { background: var(--red-soft); color: var(--red); }
+        .alert-icon.info { background: var(--blue-soft); color: var(--blue); }
+        .alert-body { flex: 1; }
+        .alert-title { font-size: 12px; font-weight: 600; }
+        .alert-desc { font-size: 9px; color: var(--ink-2); margin-top: 2px; line-height: 1.4; }
+        .alert-time { font-size: 8px; color: var(--ink-3); margin-top: 4px; }
+
+        /* ── BOTTOM NAV ── */
+        .bottom {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+            height: 60px; padding: 6px 10px;
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+        }
+        .bottom-inner {
+            width: 100%; height: 100%;
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+            background: var(--glass-strong); border: 1px solid var(--glass-border);
+            border-radius: 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+        .tab {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; color: var(--ink-3); font-size: 8px; font-weight: 600;
+            border-radius: 14px; transition: all 0.15s;
+        }
+        .tab svg { width: 17px; height: 17px; }
+        .tab.active { color: #fff; background: var(--accent); box-shadow: 0 2px 8px rgba(108, 71, 208, 0.3); }
+
+        .fab {
+            position: absolute; z-index: 21; right: 18px; bottom: 72px;
+            width: 50px; height: 50px; border-radius: 16px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center;
+            box-shadow: 0 4px 16px rgba(108, 71, 208, 0.35);
+        }
+        .fab svg { width: 22px; height: 22px; }
+
+        @media (min-width: 560px) {
+            .app { height: 880px; margin-top: 22px; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 16px 48px rgba(0,0,0,0.1); }
+            body { min-height: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition-duration: 0.001ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="scroll">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <div class="avatar">MA</div>
+                    <div>
+                        <div class="identity-label">Workspace</div>
+                        <div class="identity-name">Milad A.</div>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <button class="glass-btn"><i data-lucide="search"></i></button>
+                    <button class="glass-btn"><i data-lucide="bell"></i></button>
+                    <button class="glass-btn accent"><i data-lucide="moon"></i></button>
+                </div>
+            </header>
+
+            <div class="glass-card hero-card">
+                <div class="hero-eyebrow">Collected this month</div>
+                <div class="hero-amount"><span class="cur">₦</span>89,000</div>
+                <div class="hero-change">▲ +18% vs last month</div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value">₦56k</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Unpaid</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">₦120k</div>
+                    <div class="stat-label">Due 7d</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-title">Recent activity</span>
+                    <a class="section-more" href="#">View all</a>
+                </div>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon inv"><i data-lucide="receipt-text"></i></div>
+                        <div class="activity-body">
+                            <div class="activity-title">INV-0045 <span class="pill pending">Pending</span></div>
+                            <div class="activity-meta">Lagos Steel Works</div>
+                        </div>
+                        <div class="activity-right">
+                            <div class="activity-amount">₦120,000</div>
+                            <div class="activity-date">Aug 15</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon qtn"><i data-lucide="file-signature"></i></div>
+                        <div class="activity-body">
+                            <div class="activity-title">QTN-0109 <span class="pill draft">Draft</span></div>
+                            <div class="activity-meta">Westfield Corp</div>
+                        </div>
+                        <div class="activity-right">
+                            <div class="activity-amount">₦340,000</div>
+                            <div class="activity-date">Aug 14</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon wb"><i data-lucide="truck"></i></div>
+                        <div class="activity-body">
+                            <div class="activity-title">WB-0028 <span class="pill done">Delivered</span></div>
+                            <div class="activity-meta">Site Alpha</div>
+                        </div>
+                        <div class="activity-right">
+                            <div class="activity-amount">—</div>
+                            <div class="activity-date">Aug 13</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <span class="section-title">Alerts</span>
+                </div>
+                <div class="alerts-list">
+                    <div class="alert-item">
+                        <div class="alert-icon warn"><i data-lucide="triangle-alert"></i></div>
+                        <div class="alert-body">
+                            <div class="alert-title">INV-0042 is overdue</div>
+                            <div class="alert-desc">7 days past due. Record payment or follow up.</div>
+                            <div class="alert-time">2h ago</div>
+                        </div>
+                    </div>
+                    <div class="alert-item">
+                        <div class="alert-icon info"><i data-lucide="circle-check"></i></div>
+                        <div class="alert-body">
+                            <div class="alert-title">QTN-0108 accepted</div>
+                            <div class="alert-desc">Acme Ltd accepted. Convert to invoice.</div>
+                            <div class="alert-time">5h ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i></button>
+        <div class="bottom">
+            <div class="bottom-inner">
+                <button class="tab active"><i data-lucide="house"></i><span>Home</span></button>
+                <button class="tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button>
+                <button class="tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button>
+                <button class="tab"><i data-lucide="contact-round"></i><span>Clients</span></button>
+                <button class="tab"><i data-lucide="ellipsis"></i><span>More</span></button>
+            </div>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0c12" />
+    <title>BIGDROPS · The Bento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           THE BENTO — Asymmetric Grid, Varying Card Sizes
+           Dark · Modern SaaS · Playful
+           ══════════════════════════════════════════════════════════════ */
+
+        :root {
+            --bg: #0c0c12;
+            --card: #16161f;
+            --card-raised: #1c1c28;
+            --card-hover: #22222e;
+            --ink: #eeeef2;
+            --ink-2: #8888a0;
+            --ink-3: #55556a;
+            --accent: #7c5cff;
+            --accent-bright: #9b80ff;
+            --accent-soft: rgba(124, 92, 255, 0.10);
+            --green: #3dd68c;
+            --green-soft: rgba(61, 214, 140, 0.10);
+            --red: #ff5a6a;
+            --red-soft: rgba(255, 90, 106, 0.10);
+            --orange: #ff8c42;
+            --orange-soft: rgba(255, 140, 66, 0.10);
+            --blue: #4a9eff;
+            --blue-soft: rgba(74, 158, 255, 0.10);
+            --border: rgba(255, 255, 255, 0.06);
+            --font: "Plus Jakarta Sans", sans-serif;
+            --mono: "JetBrains Mono", monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+        .app { max-width: 430px; margin: 0 auto; height: 100dvh; overflow: hidden; position: relative; }
+        .scroll { height: 100%; overflow-y: auto; scrollbar-width: none; padding: 12px 12px calc(100px + env(safe-area-inset-bottom)); }
+        .scroll::-webkit-scrollbar { display: none; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 4px 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 10px; }
+        .brand-pill {
+            padding: 6px 12px; border-radius: 10px;
+            background: var(--accent-soft); color: var(--accent-bright);
+            font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+        }
+        .greeting { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+        .greeting strong { color: var(--ink); }
+        .topbar-right { display: flex; gap: 6px; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            display: grid; place-items: center; color: var(--ink-2);
+            transition: all 0.15s;
+        }
+        .icon-btn:hover { background: var(--card-raised); color: var(--ink); }
+        .icon-btn svg { width: 16px; height: 16px; }
+
+        /* ── BENTO GRID ── */
+        .bento {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            gap: 10px;
+        }
+
+        /* ── BENTO CARDS ── */
+        .bento-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ── SPAN VARIANTS ── */
+        .span-2 { grid-column: span 2; }
+        .span-row { grid-row: span 2; }
+
+        /* ── HERO CARD (wide) ── */
+        .hero-card {
+            background: linear-gradient(135deg, var(--accent), #5a3cff);
+            border: none;
+            color: #fff;
+            padding: 20px;
+        }
+        .hero-card:hover { box-shadow: 0 8px 24px rgba(124, 92, 255, 0.3); }
+        .hero-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; opacity: 0.7;
+        }
+        .hero-amount {
+            font-family: var(--mono); font-size: 36px; font-weight: 500;
+            letter-spacing: -0.04em; margin: 6px 0;
+        }
+        .hero-amount .cur { font-size: 20px; opacity: 0.6; }
+        .hero-change {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px; border-radius: 8px;
+            font-size: 10px; font-weight: 600;
+            background: rgba(255,255,255,0.2);
+        }
+        /* decorative orb */
+        .hero-card:after {
+            content: "";
+            position: absolute; right: -30px; top: -30px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15), transparent);
+        }
+
+        /* ── STAT CARDS ── */
+        .stat-card { padding: 14px; }
+        .stat-card .stat-icon {
+            width: 32px; height: 32px; border-radius: 10px;
+            display: grid; place-items: center; margin-bottom: 10px;
+        }
+        .stat-card .stat-icon svg { width: 16px; height: 16px; }
+        .stat-card .stat-icon.red { background: var(--red-soft); color: var(--red); }
+        .stat-card .stat-icon.orange { background: var(--orange-soft); color: var(--orange); }
+        .stat-card .stat-icon.green { background: var(--green-soft); color: var(--green); }
+        .stat-card .stat-icon.blue { background: var(--blue-soft); color: var(--blue); }
+        .stat-value {
+            font-family: var(--mono); font-size: 20px; font-weight: 500;
+            letter-spacing: -0.03em;
+        }
+        .stat-label {
+            font-size: 9px; font-weight: 600; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--ink-3); margin-top: 2px;
+        }
+
+        /* ── ACTIVITY CARD (wide) ── */
+        .activity-card { padding: 14px; }
+        .activity-card .card-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
+        }
+        .act-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 0;
+            border-top: 1px solid var(--border);
+        }
+        .act-row:first-child { border-top: 0; }
+        .act-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .act-dot.inv { background: var(--accent); }
+        .act-dot.qtn { background: var(--blue); }
+        .act-dot.wb { background: var(--green); }
+        .act-body { flex: 1; min-width: 0; }
+        .act-title { font-size: 12px; font-weight: 600; }
+        .act-meta { font-size: 9px; color: var(--ink-3); margin-top: 1px; }
+        .act-right { text-align: right; flex-shrink: 0; }
+        .act-amount { font-family: var(--mono); font-size: 11px; font-weight: 500; }
+        .act-date { font-size: 8px; color: var(--ink-3); margin-top: 1px; }
+        .pill {
+            display: inline-block; padding: 2px 6px; border-radius: 6px;
+            font-size: 7px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .pill.pending { background: var(--orange-soft); color: var(--orange); }
+        .pill.draft { background: var(--blue-soft); color: var(--blue); }
+        .pill.done { background: var(--green-soft); color: var(--green); }
+
+        /* ── ALERT CARD ── */
+        .alert-card { padding: 14px; }
+        .alert-card .card-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px;
+        }
+        .alert-mini {
+            display: flex; gap: 8px; align-items: flex-start;
+            padding: 8px 0;
+            border-top: 1px solid var(--border);
+        }
+        .alert-mini:first-child { border-top: 0; }
+        .alert-mini-icon {
+            width: 26px; height: 26px; border-radius: 7px;
+            display: grid; place-items: center; flex-shrink: 0;
+        }
+        .alert-mini-icon svg { width: 13px; height: 13px; }
+        .alert-mini-icon.warn { background: var(--red-soft); color: var(--red); }
+        .alert-mini-icon.info { background: var(--green-soft); color: var(--green); }
+        .alert-mini-body { flex: 1; }
+        .alert-mini-title { font-size: 11px; font-weight: 600; }
+        .alert-mini-desc { font-size: 9px; color: var(--ink-3); margin-top: 1px; }
+        .alert-mini-time { font-size: 8px; color: var(--ink-3); margin-top: 3px; }
+
+        /* ── QUICK ACTIONS CARD ── */
+        .quick-card { padding: 14px; }
+        .quick-card .card-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px;
+        }
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .quick-btn {
+            padding: 12px; border-radius: 12px;
+            background: var(--card-raised); border: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            transition: all 0.15s;
+        }
+        .quick-btn:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.1); }
+        .quick-btn-icon {
+            width: 32px; height: 32px; border-radius: 10px;
+            display: grid; place-items: center;
+        }
+        .quick-btn-icon svg { width: 16px; height: 16px; }
+        .quick-btn-label { font-size: 10px; font-weight: 600; }
+
+        /* ── BOTTOM NAV ── */
+        .bottom {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+            height: 58px; padding: 6px 12px;
+        }
+        .bottom-inner {
+            width: 100%; height: 100%;
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .tab {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; color: var(--ink-3); font-size: 8px; font-weight: 600;
+            border-radius: 12px; transition: all 0.15s;
+        }
+        .tab svg { width: 17px; height: 17px; }
+        .tab.active { color: #fff; background: var(--accent); }
+
+        .fab {
+            position: absolute; z-index: 21; right: 18px; bottom: 70px;
+            width: 50px; height: 50px; border-radius: 16px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center;
+            box-shadow: 0 4px 16px rgba(124, 92, 255, 0.35);
+        }
+        .fab svg { width: 22px; height: 22px; }
+
+        @media (min-width: 560px) {
+            .app { height: 880px; margin-top: 22px; border: 1px solid var(--border); border-radius: 28px; overflow: hidden; }
+            body { min-height: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition-duration: 0.001ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="scroll">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <span class="brand-pill">BIGDROPS</span>
+                    <span class="greeting">Good morning, <strong>Milad</strong></span>
+                </div>
+                <div class="topbar-right">
+                    <button class="icon-btn"><i data-lucide="search"></i></button>
+                    <button class="icon-btn"><i data-lucide="bell"></i></button>
+                </div>
+            </header>
+
+            <div class="bento">
+                <!-- Hero: wide -->
+                <div class="bento-card hero-card span-2">
+                    <div class="hero-label">Collected this month</div>
+                    <div class="hero-amount"><span class="cur">₦</span>89,000</div>
+                    <div class="hero-change">▲ +18% vs last month</div>
+                </div>
+
+                <!-- Stats: 2x1 -->
+                <div class="bento-card stat-card">
+                    <div class="stat-icon red"><i data-lucide="alert-triangle"></i></div>
+                    <div class="stat-value">₦56k</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+                <div class="bento-card stat-card">
+                    <div class="stat-icon orange"><i data-lucide="clock"></i></div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Unpaid</div>
+                </div>
+
+                <!-- Quick actions: wide -->
+                <div class="bento-card quick-card span-2">
+                    <div class="card-label">Quick actions</div>
+                    <div class="quick-grid">
+                        <button class="quick-btn">
+                            <div class="quick-btn-icon" style="background:var(--accent-soft);color:var(--accent)"><i data-lucide="receipt-text"></i></div>
+                            <span class="quick-btn-label">Invoice</span>
+                        </button>
+                        <button class="quick-btn">
+                            <div class="quick-btn-icon" style="background:var(--blue-soft);color:var(--blue)"><i data-lucide="file-signature"></i></div>
+                            <span class="quick-btn-label">Quotation</span>
+                        </button>
+                        <button class="quick-btn">
+                            <div class="quick-btn-icon" style="background:var(--green-soft);color:var(--green)"><i data-lucide="truck"></i></div>
+                            <span class="quick-btn-label">Waybill</span>
+                        </button>
+                        <button class="quick-btn">
+                            <div class="quick-btn-icon" style="background:var(--orange-soft);color:var(--orange)"><i data-lucide="clipboard-check"></i></div>
+                            <span class="quick-btn-label">CSR</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity: wide -->
+                <div class="bento-card activity-card span-2">
+                    <div class="card-label">Recent activity</div>
+                    <div class="act-row">
+                        <div class="act-dot inv"></div>
+                        <div class="act-body">
+                            <div class="act-title">INV-0045 <span class="pill pending">Pending</span></div>
+                            <div class="act-meta">Lagos Steel Works</div>
+                        </div>
+                        <div class="act-right">
+                            <div class="act-amount">₦120,000</div>
+                            <div class="act-date">Aug 15</div>
+                        </div>
+                    </div>
+                    <div class="act-row">
+                        <div class="act-dot qtn"></div>
+                        <div class="act-body">
+                            <div class="act-title">QTN-0109 <span class="pill draft">Draft</span></div>
+                            <div class="act-meta">Westfield Corp</div>
+                        </div>
+                        <div class="act-right">
+                            <div class="act-amount">₦340,000</div>
+                            <div class="act-date">Aug 14</div>
+                        </div>
+                    </div>
+                    <div class="act-row">
+                        <div class="act-dot wb"></div>
+                        <div class="act-body">
+                            <div class="act-title">WB-0028 <span class="pill done">Delivered</span></div>
+                            <div class="act-meta">Site Alpha</div>
+                        </div>
+                        <div class="act-right">
+                            <div class="act-amount">—</div>
+                            <div class="act-date">Aug 13</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Due soon: single -->
+                <div class="bento-card stat-card">
+                    <div class="stat-icon blue"><i data-lucide="calendar-clock"></i></div>
+                    <div class="stat-value">₦120k</div>
+                    <div class="stat-label">Due 7d</div>
+                </div>
+
+                <!-- Alerts: single -->
+                <div class="bento-card alert-card">
+                    <div class="card-label">Alerts</div>
+                    <div class="alert-mini">
+                        <div class="alert-mini-icon warn"><i data-lucide="triangle-alert"></i></div>
+                        <div class="alert-mini-body">
+                            <div class="alert-mini-title">INV-0042</div>
+                            <div class="alert-mini-desc">Overdue 7d</div>
+                        </div>
+                    </div>
+                    <div class="alert-mini">
+                        <div class="alert-mini-icon info"><i data-lucide="circle-check"></i></div>
+                        <div class="alert-mini-body">
+                            <div class="alert-mini-title">QTN-0108</div>
+                            <div class="alert-mini-desc">Accepted</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i></button>
+        <div class="bottom">
+            <div class="bottom-inner">
+                <button class="tab active"><i data-lucide="house"></i><span>Home</span></button>
+                <button class="tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button>
+                <button class="tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button>
+                <button class="tab"><i data-lucide="contact-round"></i><span>Clients</span></button>
+                <button class="tab"><i data-lucide="ellipsis"></i><span>More</span></button>
+            </div>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
