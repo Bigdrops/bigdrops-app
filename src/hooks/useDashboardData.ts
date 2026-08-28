@@ -8,6 +8,8 @@ import {
   writeDashboardCache,
   DashboardCacheData,
 } from '@/lib/cache/dashboardCache'
+import { fetchInvoiceFinancials } from '@/modules/reports/repositories/reportRepository'
+import { isPastDue as isPastDueUtil } from '@/components/reports/reportUtils'
 
 export type RecentDoc = {
   id: string
@@ -288,7 +290,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setDate(now.getDate() + 7)
         endOfWeek.setHours(23, 59, 59, 999)
 
-        const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialsRes, projectsRes] = await Promise.all([
+        const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes] = await Promise.all([
           tenantClient
             .from('invoices')
             .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
@@ -299,7 +301,6 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
-          tenantClient.from('invoice_financials_v').select('balance_due, cash_received, total_gross, issue_date, due_date, computed_status'),
           tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         ])
 
@@ -310,18 +311,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         const rfqs = rfqRes.data || []
         const boqs = listBoqs()
         const projects = (projectsRes.data || []) as RecentProject[]
-        const invoiceFinancials = financialsRes.data || []
+        // ponytail: reuse Reports pipe — same tenant view, unfiltered for global KPIs
+        const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
 
-        const isPastDue = (row: any) => {
-          const balance = Number(row.balance_due || 0)
-          if (balance <= 0 || !row.due_date) return false
-          const dueDate = new Date(row.due_date)
-          if (Number.isNaN(dueDate.getTime())) return false
-          dueDate.setHours(0, 0, 0, 0)
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          return dueDate < today
-        }
+        const isPastDue = (row: any) => isPastDueUtil(row.due_date, row.balance_due)
 
         const overdue = invoiceFinancials.reduce(
           (sum: number, row: any) => (isPastDue(row) ? sum + Number(row.balance_due || 0) : sum),
@@ -407,7 +400,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     endOfWeek.setHours(23, 59, 59, 999)
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, financialMetricsRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes] = await Promise.all([
         tenantClient
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
@@ -418,7 +411,6 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(8),
         tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
-        tenantClient.from('invoice_financials_v').select('balance_due, cash_received, issue_date, due_date, computed_status'),
         tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
         // Exact waybill counts for the in-transit KPI bar; the recent-rows
         // query above is limit-truncated and would produce misleading ratios.
@@ -433,18 +425,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const rfqs = rfqRes.data || []
       const boqs = listBoqs()
       const projects = (projectsRes.data || []) as RecentProject[]
-      const invoiceFinancials = financialMetricsRes.data || []
+      // ponytail: same pipe as Reports — unfiltered for global KPIs, no date-range clipping
+      const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
 
-      const isPastDue = (row: any) => {
-        const balance = Number(row.balance_due || 0)
-        if (balance <= 0 || !row.due_date) return false
-        const dueDate = new Date(row.due_date)
-        if (Number.isNaN(dueDate.getTime())) return false
-        dueDate.setHours(0, 0, 0, 0)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        return dueDate < today
-      }
+      const isPastDue = (row: any) => isPastDueUtil(row.due_date, row.balance_due)
 
       const overdue = invoiceFinancials.reduce(
         (sum: number, row: any) => (isPastDue(row) ? sum + Number(row.balance_due || 0) : sum),
