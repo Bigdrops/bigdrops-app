@@ -1,0 +1,1568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f4">
+  <title>BIGDROPS — Invoice Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --canvas: #f4f4f0;
+      --paper: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --ink: #0d0e10;
+      --sub: #5c626a;
+      --line: #dbdde1;
+      --soft: #eeeff2;
+      --rust: #8c620d;
+      --rust-soft: #fff6de;
+      --amber: #d98a12;
+      --amber-soft: #fff3d6;
+      --red: #c0382b;
+      --red-soft: #fdeae8;
+      --group-bg: linear-gradient(115deg, #121316 0%, #2a2012 55%, #6e4c0b 100%);
+      --group-text: #ffffff;
+      --group-subtext: #ffebad;
+      --group-border: #9e7316;
+      --readout-bg: linear-gradient(130deg, #101114 0%, #2d2311 100%);
+      --readout-text: #ffe07a;
+      --mono: "DM Mono", monospace;
+      --body: "Manrope", sans-serif;
+      --display: "Syne", sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .phone[data-theme="dark"] {
+      --canvas: #0b0d11;
+      --paper: #11141a;
+      --card-bg: rgba(18, 22, 29, 0.95);
+      --ink: #f1f3f7;
+      --sub: #9ca3af;
+      --line: #262c36;
+      --soft: #1a1f28;
+      --rust: #ffc848;
+      --rust-soft: #2e240f;
+      --amber: #ffb82e;
+      --amber-soft: #382808;
+      --red: #ff6b5e;
+      --red-soft: #381816;
+      --group-bg: linear-gradient(115deg, #181510 0%, #3d2b09 50%, #805708 100%);
+      --group-text: #fff6db;
+      --group-subtext: #ffe085;
+      --group-border: #b88214;
+      --readout-bg: linear-gradient(130deg, #090a0d 0%, #231b0a 100%);
+      --readout-text: #ffe07a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(0.98); }
+    svg { width: 16px; height: 16px; stroke-width: 1.8; }
+
+    .phone {
+      width: min(100%, 430px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--paper);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.12);
+      isolation: isolate;
+      transition: background 0.25s var(--ease), color 0.25s var(--ease);
+    }
+
+    /* Ambient background orbs */
+    .phone::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      top: -90px;
+      right: -80px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.8) 0, transparent 4%),
+                  radial-gradient(circle at 45% 45%, #ffdf73 0, #f0a824 35%, #945d05 75%, transparent 100%);
+      opacity: 0.28;
+      filter: blur(1px);
+      animation: orb-drift 14s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+      pointer-events: none;
+    }
+
+    .phone::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      top: 220px;
+      left: -90px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, #ffd085 0, #d97706 40%, #572a02 80%, transparent 100%);
+      opacity: 0.18;
+      animation: orb-drift 18s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate-reverse;
+      pointer-events: none;
+    }
+
+    .phone[data-theme="dark"]::before { opacity: 0.22; }
+    .phone[data-theme="dark"]::after { opacity: 0.15; }
+
+    @keyframes orb-drift {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(-20px, 28px, 0) scale(1.08); }
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      height: 100dvh;
+      overflow-y: auto;
+      padding: calc(6px + env(safe-area-inset-top)) 0 calc(78px + env(safe-area-inset-bottom));
+      scrollbar-width: none;
+    }
+    main::-webkit-scrollbar { display: none; }
+
+    /* Top Nav */
+    .nav {
+      height: 42px;
+      display: grid;
+      grid-template-columns: 38px 1fr 38px 38px;
+      align-items: center;
+      padding: 0 8px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav h1 {
+      margin: 0;
+      font: 800 12px var(--display);
+      letter-spacing: -0.04em;
+      text-align: center;
+      color: var(--ink);
+    }
+    .icon {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+    }
+    .icon:hover { background: var(--soft); }
+
+    /* Exposed Section Form Structure */
+    .form-scroll { padding: 0; }
+    .exposed { scroll-margin-top: 76px; padding: 10px 10px 0; }
+    
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font: 800 9px var(--body);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--sub);
+    }
+    .section-head button {
+      border: 0;
+      background: transparent;
+      color: var(--rust);
+      font: 800 9px var(--body);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .exposed-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card-bg);
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+    
+    /* Reduced Height Field Styles */
+    .field {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .field:last-child { border-bottom: 0; }
+    .field label {
+      display: block;
+      margin: 0 0 2px;
+      font-size: 7px;
+      color: var(--sub);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .field input, .field textarea, .field select {
+      display: block;
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      padding: 0;
+      color: var(--ink);
+      font: 600 11px var(--body);
+    }
+    .field textarea { min-height: 32px; resize: vertical; line-height: 14px; }
+    .field input.mono { font-family: var(--mono); font-weight: 500; font-size: 10px; }
+    
+    .grid2, .grid3 { display: grid; border-bottom: 1px solid var(--line); }
+    .grid2 { grid-template-columns: 1fr 1fr; }
+    .grid3 { grid-template-columns: repeat(3, 1fr); }
+    .grid2 .field, .grid3 .field { border-bottom: 0; border-right: 1px solid var(--line); }
+    .grid2 .field:last-child, .grid3 .field:last-child { border-right: 0; }
+
+    /* Client Card */
+    .client-picker-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--group-bg);
+      color: var(--group-text);
+      border: 1px solid var(--group-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .client-picker {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 34px 1fr 18px;
+      gap: 8px;
+      align-items: center;
+      min-height: 52px;
+      padding: 8px 10px;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: inherit;
+    }
+    .client-picker .avatar {
+      width: 34px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--group-text);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font: 800 11px var(--body);
+    }
+    .client-picker small, .client-picker b, .client-picker em { display: block; font-style: normal; }
+    .client-picker small { font: 800 7px var(--body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--group-subtext); }
+    .client-picker b { margin: 1px 0; font-size: 11px; }
+    .client-picker em { font-size: 8.5px; opacity: 0.85; }
+    .client-meta {
+      display: flex;
+      gap: 10px;
+      padding: 0 10px 8px;
+      font: 500 8px var(--mono);
+      color: var(--group-subtext);
+    }
+    .client-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* Toolbar for Item Commands */
+    .item-toolbar {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 2px 0 8px;
+      scrollbar-width: none;
+    }
+    .item-toolbar button {
+      flex: 0 0 auto;
+      height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 800 8.5px var(--body);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .item-toolbar button.primary { background: var(--rust); border-color: var(--rust); color: #fff; }
+    .item-toolbar button.danger { color: var(--red); }
+
+    .item-instruction {
+      padding: 5px 8px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--amber);
+      background: var(--amber-soft);
+      font-size: 8px;
+      line-height: 12px;
+      color: var(--ink);
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* GROUP WORKBENCH: Distinct & Prominent Header */
+    .group-workbench {
+      margin-bottom: 10px;
+      border: 1px solid var(--group-border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .group-banner {
+      display: grid;
+      grid-template-columns: 26px 1fr auto 26px;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 8px;
+      background: var(--group-bg);
+      color: var(--group-text);
+    }
+    .group-mark {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 7px;
+      background: rgba(255,255,255,0.1);
+    }
+    .group-banner label { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--group-subtext); }
+    .group-banner input {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--group-text);
+      font: 700 11px var(--body);
+      outline: 0;
+    }
+    .group-sum { text-align: right; }
+    .group-sum small, .group-sum b { display: block; }
+    .group-sum small { font-size: 6.5px; color: var(--group-subtext); }
+    .group-sum b { font: 600 10px var(--mono); }
+    .group-remove {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.12);
+      color: var(--group-text);
+      display: grid;
+      place-items: center;
+    }
+
+    .group-lines { padding: 4px; background: var(--soft); }
+    .group-footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--paper);
+      border-top: 1px solid var(--line);
+    }
+    .group-footer button:first-child {
+      border: 0;
+      background: transparent;
+      color: var(--rust);
+      font: 800 8.5px var(--body);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .group-footer > span { margin-left: auto; color: var(--sub); font-size: 8px; }
+
+    /* Tiny Toggle Switch */
+    .tiny-toggle {
+      width: 26px;
+      height: 15px;
+      border: 0;
+      border-radius: 99px;
+      background: var(--line);
+      position: relative;
+    }
+    .tiny-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.16s;
+    }
+    .tiny-toggle.on { background: var(--rust); }
+    .tiny-toggle.on::after { transform: translateX(11px); }
+
+    /* Ungrouped Block */
+    .ungrouped-block {
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--paper);
+    }
+    .ungrouped-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      background: var(--soft);
+      color: var(--sub);
+      font: 800 8px var(--body);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    /* COMPACT LINE ITEM */
+    .compact-line {
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+    }
+    .compact-line:last-child { border-bottom: 0; }
+    .compact-line-head {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 2px 4px;
+      color: var(--sub);
+      font: 800 7.5px var(--body);
+      letter-spacing: 0.08em;
+    }
+    .item-no {
+      width: 20px;
+      height: 17px;
+      border-radius: 5px;
+      background: var(--soft);
+      color: var(--rust);
+      display: grid;
+      place-items: center;
+      font: 600 8px var(--mono);
+    }
+    .line-actions { display: flex; gap: 2px; }
+    .line-actions button {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sub);
+      display: grid;
+      place-items: center;
+    }
+    .line-actions button:hover { background: var(--soft); color: var(--rust); }
+    .line-actions .danger:hover { color: var(--red); background: var(--red-soft); }
+    .line-actions-bottom {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      padding: 6px 6px;
+      background: var(--soft);
+      border-top: 1px solid var(--line);
+    }
+    .line-actions-bottom button {
+      height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      font: 800 8.5px var(--body);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .line-actions-bottom button:hover { color: var(--rust); border-color: var(--rust); }
+    .line-actions-bottom .danger { color: var(--red); }
+
+    .compact-body {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      overflow: hidden;
+      background: var(--paper);
+    }
+    .description-field { padding: 5px 7px; border-bottom: 1px solid var(--line); }
+    .description-field label, .metric-grid label > span, .compact-extra label > span {
+      display: block;
+      margin-bottom: 1px;
+      color: var(--sub);
+      font: 800 6.5px var(--body);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .description-field input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font: 600 11px var(--body);
+    }
+
+    .sub-row {
+      display: grid;
+      grid-template-columns: 1fr auto 14px;
+      gap: 5px;
+      align-items: center;
+      width: 100%;
+      min-height: 24px;
+      padding: 0 7px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--sub);
+      font: 700 7.5px var(--body);
+      text-align: left;
+    }
+    .sub-row span { display: flex; align-items: center; gap: 4px; }
+    .sub-row small { font-size: 7.5px; color: var(--rust); }
+    
+    .sub-editor { padding: 5px 7px; border-bottom: 1px solid var(--line); background: var(--soft); }
+    .sub-editor textarea {
+      display: block;
+      width: 100%;
+      min-height: 28px;
+      border: 0;
+      outline: 0;
+      resize: vertical;
+      background: transparent;
+      color: var(--ink);
+      font: 500 9.5px/13px var(--body);
+    }
+
+    .metric-grid, .compact-extra { display: grid; grid-template-columns: 1fr 1fr; }
+    .metric-grid label, .compact-extra label { min-width: 0; padding: 4px 6px; border-right: 1px solid var(--line); }
+    .metric-grid label:last-child, .compact-extra label:last-child { border-right: 0; }
+    .metric-grid input, .compact-extra input {
+      display: block;
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font: 500 9.5px var(--mono);
+    }
+
+    .compact-extra { border-top: 1px solid var(--line); background: var(--paper); }
+
+    /* Row Total — full width, prominent */
+    .row-total-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: var(--readout-bg);
+      color: var(--readout-text);
+      border-top: 1px solid var(--line);
+    }
+    .row-total-bar span {
+      font: 800 7px var(--body);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--readout-text);
+      opacity: 0.85;
+    }
+    .row-total-bar b {
+      font: 600 13px var(--mono);
+      letter-spacing: -0.03em;
+      color: var(--readout-text);
+    }
+
+    .add-btn {
+      width: 100%;
+      height: 36px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+    .add-btn svg { color: var(--rust); }
+
+    /* Summary Card */
+    .summary {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .sumline {
+      display: flex;
+      justify-content: space-between;
+      min-height: 18px;
+      color: var(--sub);
+      font-size: 8.5px;
+    }
+    .sumline b { color: var(--ink); font: 500 8.5px var(--mono); }
+    .sumline.minus, .sumline.minus b { color: var(--red); }
+    .sumtotal {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 6px;
+      margin-top: 4px;
+      border-top: 1px solid var(--line);
+    }
+    .sumtotal small { display: block; color: var(--sub); font-size: 7.5px; font-weight: 800; letter-spacing: 0.08em; }
+    .sumtotal b { font: 600 15px var(--mono); letter-spacing: -0.05em; color: var(--rust); }
+    .words {
+      padding: 6px 8px;
+      margin: 6px 0;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      font-size: 8px;
+      color: var(--sub);
+      font-style: italic;
+    }
+
+    /* Save FAB */
+    .save-fab {
+      position: absolute;
+      z-index: 25;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      width: 46px;
+      height: 46px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--rust);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+    }
+    .save-fab svg { width: 19px; height: 19px; }
+
+    /* Support Card Row */
+    .support-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .support-row:last-child { border-bottom: 0; }
+    .support-row b { font-size: 10px; }
+    .support-row small { display: block; margin-top: 1px; color: var(--sub); font-size: 8px; }
+    .bank-switch {
+      height: 26px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+      color: var(--rust);
+      font: 800 8.5px var(--body);
+      padding: 0 7px;
+    }
+
+    /* Modal Sheet Overlays */
+    .overlay {
+      position: absolute;
+      z-index: 50;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+    }
+    .sheet {
+      width: 100%;
+      max-height: 85dvh;
+      overflow-y: auto;
+      padding: 8px 12px calc(16px + env(safe-area-inset-bottom));
+      background: var(--paper);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+    }
+    .grip { width: 32px; height: 3.5px; border-radius: 99px; background: var(--line); margin: 0 auto 10px; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .sheet-head h3 { margin: 0; font: 800 15px var(--display); letter-spacing: -0.04em; color: var(--ink); }
+    .sheet-head button { width: 32px; height: 32px; border: 0; border-radius: 9px; background: var(--soft); display: grid; place-items: center; color: var(--ink); }
+    .sheet-copy { margin: 0 0 10px; color: var(--sub); font-size: 9px; line-height: 14px; }
+
+    .choice {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      min-height: 46px;
+      padding: 6px 8px;
+      margin: 5px 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      text-align: left;
+      color: var(--ink);
+    }
+    .choice .cicon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--soft); color: var(--rust); }
+    .choice b, .choice small { display: block; }
+    .choice b { font-size: 9.5px; }
+    .choice small { margin-top: 1px; font-size: 8px; color: var(--sub); }
+
+    .cta {
+      width: 100%;
+      height: 42px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 9.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .cta.rust { background: var(--rust); color: #fff; }
+    .cta.ghost { background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+
+    /* Toast Notification */
+    .toast {
+      position: absolute;
+      z-index: 60;
+      left: 50%;
+      bottom: 80px;
+      transform: translate(-50%, 10px);
+      padding: 8px 12px;
+      border-radius: 99px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 8.5px;
+      font-weight: 700;
+      opacity: 0;
+      transition: all 0.2s var(--ease);
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <div class="phone" data-theme="light">
+    <main id="app"></main>
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+    const I = n => `<i data-lucide="${n}"></i>`;
+    const uid = () => Math.random().toString(36).slice(2, 9);
+    const money = n => '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s = '') => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
+    // Persistent Theme State
+    const savedTheme = localStorage.getItem('bigdrops-invoice-theme') || 
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    const state = {
+      theme: savedTheme,
+      sheet: null,
+      active: null,
+      mode: 'create',
+      subOpen: {},
+      clientCreating: false,
+      savedClients: [
+        ['Adeyemi & Partners', 'Ijeoma Adeyemi', 'A&'],
+        ['Uptown Facilities', 'Oma Okoro', 'UF'],
+        ['Wellspring Homes', 'Wale Peters', 'WH']
+      ],
+      invoice: {
+        type: 'Invoice',
+        title: 'Quarterly equipment overhaul',
+        number: 'INV-2026-0142',
+        po: 'PO-3278',
+        client: { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&' },
+        issue: '2026-08-18',
+        due: '2026-09-01',
+        payment: 'Net 14',
+        customPayment: 'Payment due within 14 days',
+        headers: [{ id: uid(), label: 'Project', value: 'Ikoyi Office Retrofit' }],
+        items: [
+          {
+            id: 'i1',
+            description: 'Molded case circuit breaker 125A',
+            subDescription: '4 pole, adjustable thermal-magnetic trip unit',
+            itemId: 'catalog-mccb',
+            qty: 3,
+            unit: 'pcs',
+            price: 184000,
+            make: 'Schneider',
+            partNo: 'NSX160F',
+            condition: 'New',
+            installRate: 0,
+            vatRate: 7.5,
+            discountRate: 0,
+            image: null,
+            groupId: 'g1',
+            customData: { colour: 'Black' }
+          },
+          {
+            id: 'i2',
+            description: 'Copper cable 4mm²',
+            subDescription: 'FR PVC insulated copper cable',
+            itemId: 'catalog-cable',
+            qty: 40,
+            unit: 'm',
+            price: 6800,
+            make: 'Nexans',
+            partNo: 'CAB-4MM',
+            condition: 'New',
+            installRate: 0,
+            vatRate: 7.5,
+            discountRate: 0,
+            image: null,
+            groupId: 'g1',
+            customData: { colour: 'Copper' }
+          }
+        ],
+        groups: [{ id: 'g1', name: 'Electrical materials', showSubtotal: true }],
+        columns: { make: true, unit: true, partNo: true, condition: true, installRate: true, itemVat: true, itemDiscount: true, custom: true },
+        charges: [{ id: uid(), label: 'Transportation', value: 25000, withTax: false }],
+        discount: 0,
+        discountType: 'percent',
+        discountTiming: 'after',
+        vat: 7.5,
+        wht: 0,
+        whtType: 'percent',
+        notes: 'Thank you for the opportunity to support this project.',
+        terms: 'Payment is due within fourteen days of issue.',
+        notesTitle: 'Notes',
+        termsTitle: 'Terms & Conditions',
+        additional: [{ id: uid(), label: 'Delivery', value: '7 working days' }],
+        signatory: { id: 'sig-1', name: 'Nneka Okoro', role: 'Operations Director' },
+        links: [{ id: uid(), label: 'Project folder', url: 'https://example.com/ikoyi' }],
+        pdf: { showBankDetails: true, bankAccountId: 'zenith-1', showFooter: false, showTagline: false, showBalanceDue: true, showAmountInWords: true, showVatPercentage: true, showWhtPercentage: true, showDiscountPercentage: true }
+      }
+    };
+
+    function calc() {
+      let raw = 0, install = 0;
+      state.invoice.items.forEach(a => {
+        const base = a.qty * a.price;
+        const disc = base * (a.discountRate || 0) / 100;
+        a.line = base - disc;
+        raw += a.line;
+        install += Number(a.installRate || 0);
+      });
+      const taxable = state.invoice.charges.filter(c => c.withTax).reduce((s, c) => s + Number(c.value || 0), 0);
+      const post = state.invoice.charges.filter(c => !c.withTax).reduce((s, c) => s + Number(c.value || 0), 0);
+      const disc = state.invoice.discountType === 'percent' ? raw * state.invoice.discount / 100 : state.invoice.discount;
+      const pre = state.invoice.discountTiming === 'before' ? disc : 0;
+      const vat = (raw + taxable - pre) * state.invoice.vat / 100;
+      const after = state.invoice.discountTiming === 'after' ? disc : 0;
+      const wht = state.invoice.whtType === 'percent' ? (raw + taxable + vat - after) * state.invoice.wht / 100 : state.invoice.wht;
+      return { raw, install, disc, vat, wht, charges: taxable + post, total: raw + taxable + post + install + vat - disc - wht };
+    }
+
+    function words(n) { return n ? 'Amount payable: ' + money(n) + ' only.' : 'Zero Naira only.'; }
+
+    function applyTheme() {
+      document.querySelector('.phone').dataset.theme = state.theme;
+      document.documentElement.style.colorScheme = state.theme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', state.theme === 'dark' ? '#0b0d11' : '#f4f4f0');
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('bigdrops-invoice-theme', state.theme);
+      applyTheme();
+      render();
+      toast(state.theme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled');
+    }
+
+    function jump(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function render() {
+      const x = state.invoice, t = calc(), isDark = state.theme === 'dark';
+      document.getElementById('app').innerHTML = `
+        <header class="nav">
+          <button class="icon" aria-label="Back" onclick="toast('Back to documents')">${I('chevron-left')}</button>
+          <h1>${x.type.toUpperCase()}</h1>
+          <button class="icon" aria-label="Switch Theme" onclick="toggleTheme()">${I(isDark ? 'sun' : 'moon')}</button>
+          <button class="icon" aria-label="Document actions" onclick="openSheet('actions')">${I('ellipsis')}</button>
+        </header>
+        <main class="form-scroll">
+          ${documentSection()}
+          ${clientSection()}
+          ${itemsSection(t)}
+          ${termsSection(t)}
+          ${bankSection()}
+          ${supportSection()}
+        </main>
+        <button class="save-fab" aria-label="Save invoice" onclick="commit()">${I('save')}</button>
+        ${state.sheet ? renderSheet() : ''}
+      `;
+      applyTheme();
+      lucide.createIcons({ attrs: { 'stroke-width': '1.8' } });
+    }
+
+    function documentSection() {
+      const x = state.invoice;
+      return `
+        <section class="exposed" id="document">
+          <div class="section-head">
+            <h2>Document</h2>
+            <button onclick="openSheet('type')">${I('receipt-text')} ${x.type}</button>
+          </div>
+          <div class="exposed-card">
+            <div class="field">
+              <label>Document Title</label>
+              <input value="${esc(x.title)}" placeholder="Invoice title / project reference" onchange="dv('title',this.value)">
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Invoice No.</label>
+                <input class="mono" ${state.mode==='edit'?'disabled':''} value="${esc(x.number)}" onchange="dv('number',this.value)">
+              </div>
+              <div class="field">
+                <label>PO No.</label>
+                <input class="mono" value="${esc(x.po)}" onchange="dv('po',this.value)">
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Issue Date</label>
+                <input value="${esc(x.issue)}" placeholder="YYYY-MM-DD" onchange="dv('issue',this.value)">
+              </div>
+              <div class="field">
+                <label>Due Date</label>
+                <input value="${esc(x.due)}" placeholder="YYYY-MM-DD" onchange="dv('due',this.value)">
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function clientSection() {
+      const c = state.invoice.client, x = state.invoice;
+      return `
+        <section class="exposed" id="client">
+          <div class="section-head">
+            <h2>Bill To</h2>
+            ${state.mode==='edit' ? '<span style="font-size:8px;font-weight:800;color:var(--rust)">IDENTITY LOCKED</span>' : ''}
+          </div>
+          <div class="client-picker-card">
+            <button class="client-picker" onclick="clientPicker()">
+              <span class="avatar">${esc(c.initials || 'CL')}</span>
+              <span>
+                <small>Client Identity</small>
+                <b>${esc(c.name)}</b>
+                <em>Attn: ${esc(c.person)}</em>
+              </span>
+              ${I('chevron-right')}
+            </button>
+            <div class="client-meta">
+              <span>${I('calendar-clock')} Terms: ${esc(x.payment)}</span>
+              <span>${I('calendar-days')} Due: ${esc(x.due)}</span>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function itemsSection(t) {
+      const x = state.invoice, ungrouped = x.items.filter(a => !a.groupId);
+      return `
+        <section class="exposed" id="items">
+          <div class="section-head">
+            <h2>Line Items (${x.items.length})</h2>
+          </div>
+          <div class="item-toolbar">
+            <button onclick="openSheet('import')">${I('file-input')} Import</button>
+            <button onclick="openSheet('columns')">${I('sliders-horizontal')} Columns</button>
+            <button class="danger" style="margin-left:auto" onclick="clearItems()">${I('x')} Clear All</button>
+          </div>
+          <div class="item-instruction">
+            Tap copy icon to duplicate any row, or use + to insert a new row directly beneath it.
+          </div>
+          ${x.groups.map(g => groupForm(g, t)).join('')}
+          ${ungrouped.length ? `
+            <div class="ungrouped-block">
+              <div class="ungrouped-head">
+                <span>${I('list')} Independent Items</span>
+                <small>${ungrouped.length}</small>
+              </div>
+              ${ungrouped.map((a, i) => itemRow(a, x.items.indexOf(a))).join('')}
+            </div>
+          ` : ''}
+          <div class="item-toolbar" style="padding-top:8px">
+            <button class="primary" onclick="addItem()">${I('plus')} Add Line</button>
+            <button onclick="addGroup()">${I('layers-2')} New Group</button>
+          </div>
+          
+          <div class="section-head" style="margin-top:14px">
+            <h2>Invoice Totals</h2>
+          </div>
+          ${summary(t)}
+        </section>
+      `;
+    }
+
+    function groupForm(g, t) {
+      const lines = state.invoice.items.filter(a => a.groupId === g.id);
+      const subtotal = lines.reduce((s, a) => s + Number(a.line || 0), 0);
+      return `
+        <section class="group-workbench">
+          <header class="group-banner">
+            <span class="group-mark">${I('layers-3')}</span>
+            <div>
+              <label>Item Group Header</label>
+              <input value="${esc(g.name || '')}" placeholder="Group name" onchange="groupVal('${g.id}','name',this.value)">
+            </div>
+            <span class="group-sum">
+              <small>${lines.length} line${lines.length===1?'':'s'}</small>
+              <b>${money(subtotal)}</b>
+            </span>
+            <button class="group-remove" aria-label="Remove group" onclick="removeGroup('${g.id}')">${I('trash-2')}</button>
+          </header>
+          <div class="group-lines">
+            ${lines.map(a => itemRow(a, state.invoice.items.indexOf(a))).join('') || `
+              <div style="padding:10px;text-align:center;font-size:8px;color:var(--sub)">
+                Group is empty. Tap 'Add to Group' below to populate.
+              </div>
+            `}
+          </div>
+          <footer class="group-footer">
+            <button onclick="addItemToGroup('${g.id}')">${I('plus')} Add to Group</button>
+            <span>Subtotal: ${g.showSubtotal ? 'Visible' : 'Hidden'}</span>
+            <button class="tiny-toggle ${g.showSubtotal ? 'on' : ''}" aria-label="Toggle subtotal" onclick="groupToggle('${g.id}')"></button>
+          </footer>
+        </section>
+      `;
+    }
+
+    function itemRow(a, i) {
+      const isOpen = !!state.subOpen[a.id];
+      return `
+        <article class="compact-line">
+          <header class="compact-line-head">
+            <span class="item-no">${String(i + 1).padStart(2, '0')}</span>
+            <span>LINE ITEM</span>
+          </header>
+          <div class="compact-body">
+            <div class="description-field">
+              <label>Description</label>
+              <input value="${esc(a.description)}" placeholder="Description" onchange="inlineVal('${a.id}','description',this.value)">
+            </div>
+            <button class="sub-row" aria-expanded="${isOpen}" onclick="toggleSub('${a.id}')">
+              <span>${I('align-left')} Sub-description</span>
+              <small>${a.subDescription ? 'Added' : 'Optional'}</small>
+              ${I(isOpen ? 'chevron-up' : 'chevron-down')}
+            </button>
+            ${isOpen ? `
+              <div class="sub-editor">
+                <textarea placeholder="Sub-description details..." onchange="inlineVal('${a.id}','subDescription',this.value)">${esc(a.subDescription)}</textarea>
+              </div>
+            ` : ''}
+            <div class="metric-grid">
+              <label>
+                <span>Qty</span>
+                <input class="mono" inputmode="decimal" value="${a.qty}" onchange="inlineVal('${a.id}','qty',this.value,1)">
+              </label>
+              <label>
+                <span>Unit</span>
+                <input value="${esc(a.unit)}" onchange="inlineVal('${a.id}','unit',this.value)">
+              </label>
+            </div>
+            <div class="row-total-bar">
+              <span>Row Total</span>
+              <b>${money(a.line)}</b>
+            </div>
+            <div class="compact-extra">
+              <label>
+                <span>Make</span>
+                <input value="${esc(a.make)}" onchange="inlineVal('${a.id}','make',this.value)">
+              </label>
+              <label>
+                <span>Rate</span>
+                <input class="mono" inputmode="decimal" value="${a.price}" onchange="inlineVal('${a.id}','price',this.value,1)">
+              </label>
+            </div>
+            <div class="compact-extra">
+              <label>
+                <span>Part No.</span>
+                <input value="${esc(a.partNo)}" onchange="inlineVal('${a.id}','partNo',this.value)">
+              </label>
+              <label>
+                <span>VAT %</span>
+                <input class="mono" inputmode="decimal" value="${a.vatRate || ''}" onchange="inlineVal('${a.id}','vatRate',this.value,1)">
+              </label>
+            </div>
+            <div class="compact-extra">
+              <label>
+                <span>Disc %</span>
+                <input class="mono" inputmode="decimal" value="${a.discountRate || ''}" onchange="inlineVal('${a.id}','discountRate',this.value,1)">
+              </label>
+              <label style="border-right:0"></label>
+            </div>
+            <div class="line-actions-bottom">
+              <button aria-label="Insert item below" onclick="insertBelow('${a.id}')">${I('plus')} Below</button>
+              <button aria-label="Duplicate item" onclick="duplicateItem('${a.id}')">${I('copy')} Dup</button>
+              <button class="danger" aria-label="Remove item" onclick="removeItem('${a.id}')">${I('trash-2')}</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function termsSection(t) {
+      const x = state.invoice;
+      return `
+        <section class="exposed" id="terms">
+          <div class="section-head">
+            <h2>Commercial Terms</h2>
+          </div>
+          <div class="exposed-card">
+            <div class="grid3">
+              <div class="field">
+                <label>VAT %</label>
+                <input class="mono" inputmode="decimal" value="${x.vat}" onchange="dv('vat',this.value,1)">
+              </div>
+              <div class="field">
+                <label>Discount %</label>
+                <input class="mono" inputmode="decimal" value="${x.discount || ''}" onchange="dv('discount',this.value,1)">
+              </div>
+              <div class="field">
+                <label>WHT %</label>
+                <input class="mono" inputmode="decimal" value="${x.wht || ''}" onchange="dv('wht',this.value,1)">
+              </div>
+            </div>
+            <div class="field">
+              <label>Notes</label>
+              <textarea onchange="dv('notes',this.value)">${esc(x.notes)}</textarea>
+            </div>
+            <div class="field">
+              <label>Terms & Conditions</label>
+              <textarea onchange="dv('terms',this.value)">${esc(x.terms)}</textarea>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function bankSection() {
+      const p = state.invoice.pdf;
+      const accounts = {
+        'zenith-1': ['Zenith Bank', '1234567890'],
+        'gtb-1': ['Guaranty Trust Bank', '0045528713'],
+        'access-1': ['Access Bank', '0213465780']
+      };
+      const a = accounts[p.bankAccountId] || accounts['zenith-1'];
+      return `
+        <section class="exposed" id="bank">
+          <div class="section-head">
+            <h2>Bank Details</h2>
+          </div>
+          <div class="exposed-card">
+            <div class="support-row">
+              <span>
+                <b>${a[0]}</b>
+                <small>Account: ${a[1]}</small>
+              </span>
+              <button class="bank-switch" onclick="openSheet('bank')">Switch Bank</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function supportSection() {
+      const x = state.invoice;
+      return `
+        <section class="exposed" id="support">
+          <div class="section-head">
+            <h2>Supporting Options</h2>
+          </div>
+          <div class="exposed-card">
+            <div class="support-row">
+              <span>
+                <b>Attachments & Links</b>
+                <small>${x.links.length} link${x.links.length===1?'':'s'} attached</small>
+              </span>
+              <button class="bank-switch" onclick="openSheet('attachments')">Manage</button>
+            </div>
+            <div class="support-row">
+              <span>
+                <b>Signatory</b>
+                <small>${esc(x.signatory.name || 'Not set')}</small>
+              </span>
+              <button class="bank-switch" onclick="openSheet('signatory')">Edit</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function summary(t) {
+      return `
+        <div class="summary">
+          <div class="sumline"><span>Subtotal</span><b>${money(t.raw)}</b></div>
+          ${t.disc ? `<div class="sumline minus"><span>Discount</span><b>−${money(t.disc)}</b></div>` : ''}
+          ${t.vat ? `<div class="sumline"><span>VAT (${state.invoice.vat}%)</span><b>${money(t.vat)}</b></div>` : ''}
+          ${t.charges ? `<div class="sumline"><span>Extra Charges</span><b>${money(t.charges)}</b></div>` : ''}
+          ${t.wht ? `<div class="sumline minus"><span>WHT (${state.invoice.wht}%)</span><b>−${money(t.wht)}</b></div>` : ''}
+          ${state.invoice.pdf.showAmountInWords ? `<div class="words">${words(t.total)}</div>` : ''}
+          <div class="sumtotal">
+            <small>Total Payable</small>
+            <b>${money(t.total)}</b>
+          </div>
+        </div>
+      `;
+    }
+
+    // Modal Sheet Controller
+    function openSheet(s) { state.sheet = s; render(); }
+    function closeSheet() { state.sheet = null; render(); }
+
+    function renderSheet() {
+      let b = '';
+      if (state.sheet === 'client') b = clientSheet();
+      if (state.sheet === 'type') b = typeSheet();
+      if (state.sheet === 'bank') b = bankSheet();
+      if (state.sheet === 'columns') b = columnsSheet();
+      if (state.sheet === 'import') b = importSheet();
+      if (state.sheet === 'attachments') b = attachmentsSheet();
+      if (state.sheet === 'signatory') b = signatorySheet();
+      if (state.sheet === 'actions') b = actionsSheet();
+      return `
+        <aside class="overlay" role="dialog" aria-modal="true" onclick="if(event.target===this)closeSheet()">
+          <section class="sheet">
+            <div class="grip"></div>
+            ${b}
+          </section>
+        </aside>
+      `;
+    }
+
+    function clientPicker() { state.clientCreating = false; openSheet('client'); }
+
+    function clientSheet() {
+      if (state.mode === 'edit') {
+        return `
+          <div class="sheet-head"><h3>Client Identity Locked</h3><button onclick="closeSheet()">${I('x')}</button></div>
+          <p class="sheet-copy">Recorded documents preserve client details for compliance.</p>
+          <button class="cta rust" onclick="duplicateDoc()">${I('copy-plus')} Duplicate as New Draft</button>
+        `;
+      }
+      if (state.clientCreating) {
+        return `
+          <div class="sheet-head"><h3>Add New Client</h3><button onclick="closeSheet()">${I('x')}</button></div>
+          <div style="display:grid;gap:8px">
+            <div class="field"><label>Client Name</label><input id="newClientName" placeholder="e.g. Acme Corp"></div>
+            <div class="field"><label>Contact Person</label><input id="newClientPerson" placeholder="e.g. John Doe"></div>
+          </div>
+          <button class="cta rust" onclick="createNewClient()">${I('plus')} Save Client</button>
+        `;
+      }
+      return `
+        <div class="sheet-head"><h3>Select Client</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        ${state.savedClients.map((a, i) => `
+          <button class="choice" onclick="pickSavedClient(${i})">
+            <span class="cicon">${a[2]}</span>
+            <span><b>${a[0]}</b><small>${a[1]}</small></span>
+            ${I('chevron-right')}
+          </button>
+        `).join('')}
+        <button class="cta ghost" onclick="state.clientCreating=true;render()">${I('plus')} Add Custom Client</button>
+      `;
+    }
+
+    function typeSheet() {
+      return `
+        <div class="sheet-head"><h3>Document Type</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        ${['Invoice', 'Quotation'].map(v => `
+          <button class="choice" onclick="state.invoice.type='${v}';closeSheet();">
+            <span class="cicon">${I(v === 'Invoice' ? 'receipt-text' : 'file-text')}</span>
+            <span><b>${v}</b><small>${v === 'Invoice' ? 'Payment due document' : 'Price quotation'}</small></span>
+            ${state.invoice.type === v ? I('check') : I('chevron-right')}
+          </button>
+        `).join('')}
+      `;
+    }
+
+    function bankSheet() {
+      const selected = state.invoice.pdf.bankAccountId;
+      const accounts = [
+        ['zenith-1', 'Zenith Bank', '1234567890'],
+        ['gtb-1', 'Guaranty Trust Bank', '0045528713'],
+        ['access-1', 'Access Bank', '0213465780']
+      ];
+      return `
+        <div class="sheet-head"><h3>Select Bank Account</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        ${accounts.map(a => `
+          <button class="choice" onclick="state.invoice.pdf.bankAccountId='${a[0]}';closeSheet();">
+            <span class="cicon">${I('landmark')}</span>
+            <span><b>${a[1]}</b><small>Acc: ${a[2]}</small></span>
+            ${selected === a[0] ? I('check') : I('chevron-right')}
+          </button>
+        `).join('')}
+      `;
+    }
+
+    function columnsSheet() {
+      const c = state.invoice.columns;
+      const options = { make: 'Make', unit: 'Unit', partNo: 'Part No.', condition: 'Condition', installRate: 'Install Rate', itemVat: 'Item VAT', itemDiscount: 'Item Discount' };
+      return `
+        <div class="sheet-head"><h3>Table Columns</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        ${Object.entries(options).map(([k, label]) => `
+          <button class="choice" onclick="state.invoice.columns['${k}']=!state.invoice.columns['${k}'];render();">
+            <span class="cicon">${I('columns-3')}</span>
+            <span><b>${label}</b><small>${c[k] ? 'Active' : 'Hidden'}</small></span>
+            <span class="tiny-toggle ${c[k] ? 'on' : ''}"></span>
+          </button>
+        `).join('')}
+        <button class="cta" onclick="closeSheet()">${I('check')} Done</button>
+      `;
+    }
+
+    function importSheet() {
+      return `
+        <div class="sheet-head"><h3>Import JSON Items</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        <div class="field" style="margin-bottom:8px">
+          <label>Paste JSON Array</label>
+          <textarea id="jsonInput" placeholder='[{"description":"Cable","qty":2,"price":12000}]' style="min-height:80px"></textarea>
+        </div>
+        <button class="cta rust" onclick="processJSON()">${I('file-down')} Import JSON</button>
+      `;
+    }
+
+    function attachmentsSheet() {
+      const x = state.invoice;
+      return `
+        <div class="sheet-head"><h3>Reference Links</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        ${x.links.map((l, i) => `
+          <div style="display:grid;grid-template-columns:1fr 1.5fr 30px;gap:4px;margin-bottom:6px">
+            <input style="border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:9px;" value="${esc(l.label)}" onchange="state.invoice.links[${i}].label=this.value">
+            <input style="border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:9px;" value="${esc(l.url)}" onchange="state.invoice.links[${i}].url=this.value">
+            <button style="border:0;background:var(--red-soft);color:var(--red);border-radius:6px;" onclick="state.invoice.links.splice(${i},1);render()">${I('x')}</button>
+          </div>
+        `).join('')}
+        <button class="cta ghost" onclick="state.invoice.links.push({id:uid(),label:'',url:''});render()">${I('plus')} Add Link</button>
+        <button class="cta" onclick="closeSheet()">${I('check')} Done</button>
+      `;
+    }
+
+    function signatorySheet() {
+      const s = state.invoice.signatory;
+      return `
+        <div class="sheet-head"><h3>Signatory</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        <div style="display:grid;gap:8px">
+          <div class="field"><label>Signatory Name</label><input value="${esc(s.name)}" onchange="state.invoice.signatory.name=this.value"></div>
+          <div class="field"><label>Role / Title</label><input value="${esc(s.role)}" onchange="state.invoice.signatory.role=this.value"></div>
+        </div>
+        <button class="cta" onclick="closeSheet()">${I('check')} Save</button>
+      `;
+    }
+
+    function actionsSheet() {
+      return `
+        <div class="sheet-head"><h3>Document Actions</h3><button onclick="closeSheet()">${I('x')}</button></div>
+        <button class="choice" onclick="state.mode=state.mode==='create'?'edit':'create';closeSheet();toast('Mode switched');">
+          <span class="cicon">${I('lock-keyhole')}</span>
+          <span><b>Toggle Recorded State</b><small>Current mode: ${state.mode}</small></span>
+          ${I('chevron-right')}
+        </button>
+        <button class="choice" onclick="clearItems();closeSheet();">
+          <span class="cicon">${I('trash-2')}</span>
+          <span><b>Clear All Items</b><small>Reset invoice line items</small></span>
+          ${I('chevron-right')}
+        </button>
+      `;
+    }
+
+    // State Mutation Helpers
+    function dv(k, v, n = 0) { state.invoice[k] = n ? Number(v || 0) : v; render(); }
+    function inlineVal(id, k, v, n = 0) {
+      const item = state.invoice.items.find(a => a.id === id);
+      if (item) { item[k] = n ? Number(v || 0) : v; render(); }
+    }
+
+    function toggleSub(id) { state.subOpen[id] = !state.subOpen[id]; render(); }
+
+    function pickSavedClient(i) {
+      const a = state.savedClients[i];
+      state.invoice.client = { id: 'c' + i, name: a[0], person: a[1], initials: a[2] };
+      closeSheet();
+      toast('Client assigned');
+    }
+
+    function createNewClient() {
+      const name = document.getElementById('newClientName')?.value.trim();
+      const person = document.getElementById('newClientPerson')?.value.trim();
+      if (!name) { toast('Please enter client name'); return; }
+      const initials = name.split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase();
+      state.savedClients.push([name, person || 'Contact', initials]);
+      state.invoice.client = { id: 'custom-' + uid(), name, person: person || 'Contact', initials };
+      closeSheet();
+      toast('New client saved');
+    }
+
+    function addGroup() {
+      const g = { id: 'g-' + uid(), name: 'New Item Group', showSubtotal: true };
+      state.invoice.groups.push(g);
+      render();
+      toast('Group added');
+    }
+
+    function groupVal(id, k, v) {
+      const g = state.invoice.groups.find(a => a.id === id);
+      if (g) { g[k] = v; render(); }
+    }
+
+    function groupToggle(id) {
+      const g = state.invoice.groups.find(a => a.id === id);
+      if (g) { g.showSubtotal = !g.showSubtotal; render(); }
+    }
+
+    function removeGroup(id) {
+      state.invoice.groups = state.invoice.groups.filter(a => a.id !== id);
+      state.invoice.items.forEach(a => { if (a.groupId === id) a.groupId = null; });
+      render();
+      toast('Group removed');
+    }
+
+    function freshItem(groupId = null) {
+      return {
+        id: 'i-' + uid(),
+        description: 'New line item',
+        subDescription: '',
+        itemId: null,
+        qty: 1,
+        unit: 'pcs',
+        price: 0,
+        make: '',
+        partNo: '',
+        condition: 'New',
+        installRate: 0,
+        vatRate: null,
+        discountRate: null,
+        image: null,
+        groupId,
+        customData: {}
+      };
+    }
+
+    function addItem() {
+      const a = freshItem();
+      state.invoice.items.push(a);
+      render();
+      toast('Line item added');
+    }
+
+    function addItemToGroup(groupId) {
+      const a = freshItem(groupId);
+      state.invoice.items.push(a);
+      render();
+    }
+
+    function insertBelow(id) {
+      const index = state.invoice.items.findIndex(a => a.id === id);
+      const targetGroup = state.invoice.items[index]?.groupId || null;
+      const newItem = freshItem(targetGroup);
+      state.invoice.items.splice(index + 1, 0, newItem);
+      render();
+      toast('Item inserted below');
+    }
+
+    function duplicateItem(id) {
+      const index = state.invoice.items.findIndex(a => a.id === id);
+      const source = state.invoice.items[index];
+      const copy = { ...source, id: 'i-' + uid(), description: source.description + ' (Copy)' };
+      state.invoice.items.splice(index + 1, 0, copy);
+      render();
+      toast('Item duplicated');
+    }
+
+    function removeItem(id) {
+      state.invoice.items = state.invoice.items.filter(a => a.id !== id);
+      render();
+      toast('Item removed');
+    }
+
+    function clearItems() {
+      state.invoice.items = [];
+      render();
+      toast('All items cleared');
+    }
+
+    function processJSON() {
+      try {
+        const text = document.getElementById('jsonInput').value;
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) throw new Error('Not an array');
+        parsed.forEach(a => {
+          state.invoice.items.push({
+            id: 'i-' + uid(),
+            description: a.description || a.name || 'Imported item',
+            subDescription: a.subDescription || '',
+            qty: Number(a.qty) || 1,
+            unit: a.unit || 'pcs',
+            price: Number(a.price || a.rate) || 0,
+            make: a.make || '',
+            partNo: a.partNo || '',
+            condition: 'New',
+            groupId: null,
+            customData: {}
+          });
+        });
+        closeSheet();
+        toast(`${parsed.length} items imported`);
+      } catch (e) {
+        toast('Invalid JSON array');
+      }
+    }
+
+    function duplicateDoc() {
+      state.mode = 'create';
+      state.invoice.number = 'INV-2026-' + Math.floor(1000 + Math.random() * 8999);
+      closeSheet();
+      toast('Duplicated as new draft');
+    }
+
+    function commit() {
+      closeSheet();
+      toast(state.mode === 'edit' ? 'Changes saved successfully' : 'Invoice saved as draft');
+    }
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // Initialize application on DOM Ready
+    window.onload = function() {
+      render();
+    };
+  </script>
+</body>
+</html>
+
