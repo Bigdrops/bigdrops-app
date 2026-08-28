@@ -1,6 +1,20 @@
-# Loading State — Refresh Behavior
+# Loading and Refresh
 
-This document describes what happens when a user taps the **refresh button** on any dashboard in `docs/TEMPLATES/htmltemps/wireframe-variants/batch-10/`.
+> Status: Established
+> Last updated: 2026-08-28
+> Source reference: `docs/TEMPLATES/htmltemps/wireframe-variants/batch-10/`
+
+---
+
+## Purpose
+
+Define loading states and refresh behavior for BIGDROPS dashboards. This specification is derived from the batch-10 wireframe variants and must be implemented against the canonical design system defined in [03-design-system.md](./03-design-system.md).
+
+---
+
+## Overview
+
+Every variant in batch-10 implements the same refresh flow:
 
 ---
 
