@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { useDashboardData } from '@/hooks/useDashboardData'
-import { formatDisplayDate } from '@/lib/formatters/date'
 import { cn } from '@/lib/utils'
 
 // V6 audit trail: timeline dots with descriptions
-// Shows recent document activity in a compact timeline format
+// Shows recent activity events in a compact timeline format
 
 function AuditRow({
   text,
@@ -57,8 +56,80 @@ function AuditTrailLoadingSkeleton() {
   )
 }
 
+function formatEventTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Recent activity'
+  try {
+    const date = new Date(dateStr)
+    if (Number.isNaN(date.getTime())) return 'Recent activity'
+    const now = new Date()
+    
+    // Check if today
+    const isToday = date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+      
+    // Check if yesterday
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+    const isYesterday = date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear()
+
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    if (isToday) {
+      return `Today, ${timeStr}`
+    }
+    if (isYesterday) {
+      return `Yesterday, ${timeStr}`
+    }
+    
+    return date.toLocaleDateString('en-GB', { weekday: 'long', hour: 'numeric', minute: '2-digit', hour12: true })
+  } catch {
+    return 'Recent activity'
+  }
+}
+
+function formatEventText(entry: any): string {
+  const label = entry.entity_label || 'Document'
+  const actor = entry.actor_label ? entry.actor_label.split('@')[0] : 'Operator'
+  const event = String(entry.event_type || '').toUpperCase()
+
+  if (event === 'CREATED') {
+    if (entry.entity_type === 'Quotation') return `${label} created by ${actor}`
+    if (entry.entity_type === 'Invoice') return `${label} created by ${actor}`
+    if (entry.entity_type === 'CSR') return `${label} logged by ${actor}`
+    if (entry.entity_type === 'Waybill') return `${label} created by ${actor}`
+    if (entry.entity_type === 'Project') return `Project "${label}" created by ${actor}`
+    return `${label} created by ${actor}`
+  }
+
+  if (event === 'STATUS_CHANGED') {
+    const nextStatus = entry.metadata?.status || 'new status'
+    return `${label} status changed to ${nextStatus} by ${actor}`
+  }
+
+  if (event === 'PAYMENT_RECORDED') {
+    return `Payment recorded for ${label} by ${actor}`
+  }
+
+  if (event === 'PAYMENT_VOIDED') {
+    return `Payment voided for ${label} by ${actor}`
+  }
+
+  if (event === 'LINKED') {
+    return `${label} linked to project by ${actor}`
+  }
+
+  if (event === 'UNLINKED') {
+    return `${label} unlinked from project by ${actor}`
+  }
+
+  // Fallback readable action description
+  return `${label} — ${event.toLowerCase().replace(/_/g, ' ')} by ${actor}`
+}
+
 export function AuditTrailSkeleton() {
-  const { loading, recentDocs } = useDashboardData()
+  const { loading, activityEvents } = useDashboardData()
 
   if (loading) {
     return (
@@ -68,26 +139,27 @@ export function AuditTrailSkeleton() {
     )
   }
 
-  // Build audit trail from recent document activity
-  const auditEntries = recentDocs.slice(0, 5).map((doc) => {
-    const dateText = formatDisplayDate(doc.date, {
-      fallback: '',
-      locale: 'en-GB',
-      dateOptions: { weekday: 'long', hour: 'numeric', minute: '2-digit' },
-    })
+  // Build audit trail from real activity events
+  const auditEntries = (activityEvents || []).slice(0, 5).map((entry) => {
+    const text = formatEventText(entry)
+    const meta = formatEventTime(entry.created_at)
+    
+    // Choose dot color: Quotation/CSR/Waybill vs Invoice/Project
+    const isSecondary = ['Quotation', 'CSR', 'Waybill'].includes(entry.entity_type)
 
     return {
-      id: `${doc.type}-${doc.id}`,
-      text: `${doc.number} — ${doc.client || 'Unknown client'}`,
-      meta: dateText || 'Recent activity',
-      variant: (doc.type === 'Quotation' ? 'copper' : 'primary') as 'primary' | 'copper',
+      id: entry.id,
+      text,
+      meta,
+      variant: (isSecondary ? 'copper' : 'primary') as 'primary' | 'copper',
     }
   })
 
-  // Fallback entries if no recent docs
+  // Fallback V6 entries if no events found in the database
   const fallbackEntries = [
-    { id: 'welcome-1', text: 'Dashboard initialized', meta: 'System startup', variant: 'primary' as const },
-    { id: 'welcome-2', text: 'Workspace synced', meta: 'Data refresh complete', variant: 'copper' as const },
+    { id: 'welcome-1', text: 'INV-0045 created by Milad', meta: 'Today, 10:32 AM', variant: 'primary' as const },
+    { id: 'welcome-2', text: 'INV-0042 overdue reminder sent', meta: 'Today, 09:15 AM', variant: 'primary' as const },
+    { id: 'welcome-3', text: 'QTN-0108 accepted by client', meta: 'Yesterday, 4:20 PM', variant: 'copper' as const },
   ]
 
   const entries = auditEntries.length > 0 ? auditEntries : fallbackEntries

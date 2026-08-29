@@ -159,23 +159,24 @@ export function DashboardOverview({
   onRecentDocSelect,
   onViewAllActivity,
 }: DashboardOverviewProps) {
-  const [isDark, setIsDark] = React.useState(() =>
-    document.documentElement.classList.contains('dark')
-  )
-
   const { save: saveThemePref, preference } = useUserThemePreferences(userId ?? null)
 
+  // Derive isDark from user preference, not from DOM class.
+  // AppThemeManager is the single owner of DOM class mutations.
+  const isDark = preference.themeMode === 'dark' ||
+    (preference.themeMode === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  // Toggle dark/light by updating the user preference.
+  // AppThemeManager reacts to this state change and applies the theme to the DOM.
   const toggleDark = React.useCallback(() => {
-    document.documentElement.classList.toggle('dark')
-    const nowDark = document.documentElement.classList.contains('dark')
-    setIsDark(nowDark)
-    if (userId) {
-      saveThemePref({
-        themePresetId: preference.themePresetId,
-        themeMode: nowDark ? (preference.themePresetId ?? 'slate-navy') : (preference.themePresetId ?? 'slate-navy'),
-      })
-    }
-  }, [userId, saveThemePref, preference.themePresetId])
+    if (!userId) return
+    saveThemePref({
+      themeMode: isDark ? 'light' : 'dark',
+      themePresetId: preference.themePresetId,
+    })
+  }, [userId, saveThemePref, isDark, preference.themePresetId])
 
   const mobileChrome = React.useContext(MobileChromeContext)
   const now = new Date()

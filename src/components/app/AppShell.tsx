@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -92,35 +92,67 @@ const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoun
 // Liquid Onyx is NOT a separate theme — it is Slate Navy's dark variant.
 function AppThemeManager({ userId }: { userId: string }) {
   const { preference } = useUserThemePreferences(userId)
-
-  const isDark = document.documentElement.classList.contains('dark')
-
-  // Determine the theme family ID to apply from the user's personal preference.
-  // The dark variant is resolved by the theme engine, not stored as a separate ID.
-  // Default: slate-navy (canonical default) when no preference exists.
-  const getEffectiveThemeId = (): string => {
-    const presetId = preference.themePresetId
-
-    // Explicit preset selected by user — must be a valid selectable theme family
-    if (presetId && isThemePresetId(presetId)) {
-      return presetId
-    }
-
-    // Legacy preset migration (both map to slate-navy)
-    if (presetId === 'bmw') return 'slate-navy'
-    if (presetId === 'modern-minimalist') return 'slate-navy'
-
-    // Default: slate-navy (always; dark variant applied by theme engine)
-    return 'slate-navy'
-  }
+  const lastApplied = useRef<{ themePresetId: string | null; isDark: boolean | null }>({
+    themePresetId: null,
+    isDark: null,
+  })
 
   useEffect(() => {
-    let currentThemeId = getEffectiveThemeId()
+    const root = document.documentElement
     let appliedTokens: ThemeToken[] = []
     let appliedSemanticProps: string[] = []
 
-    const applyTheme = (themeId: string) => {
-      // Determine if we should use the dark variant
+    // Stable reference to preference — read inside effect to avoid stale closures.
+    // The effect dependency array (themePresetId, themeMode) controls when this runs.
+    const currentPreference = preference
+
+    const getSystemDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches
+
+    const determineIsDark = (): boolean => {
+      const mode = currentPreference.themeMode
+      if (mode === 'dark') return true
+      if (mode === 'light') return false
+      return getSystemDark()
+    }
+
+    // Resolve the theme family ID from the user's personal preference.
+    // Defined inside the effect to always read the current preference, avoiding stale closures.
+    const getEffectiveThemeId = (): string => {
+      const presetId = currentPreference.themePresetId
+
+      if (presetId && isThemePresetId(presetId)) {
+        return presetId
+      }
+
+      // Legacy preset migration
+      if (presetId === 'bmw') return 'slate-navy'
+      if (presetId === 'modern-minimalist') return 'slate-navy'
+
+      // Default: slate-navy
+      return 'slate-navy'
+    }
+
+    const applyTheme = () => {
+      const themeId = getEffectiveThemeId()
+      const isDark = determineIsDark()
+
+      // Avoid redundant application — same theme + same mode = skip
+      if (
+        lastApplied.current.themePresetId === themeId &&
+        lastApplied.current.isDark === isDark
+      ) {
+        return
+      }
+
+      // Cleanup previously applied variables to prevent leak
+      clearThemeTokenBundle(appliedTokens)
+      for (const prop of appliedSemanticProps) {
+        root.style.removeProperty(prop)
+      }
+
+      // Apply dark class — single owner of DOM class mutations
+      root.classList.toggle('dark', isDark)
+
       const preset = getThemePreset(themeId)
       const effectiveDark = isDark && preset && !preset.isDark
 
@@ -128,7 +160,6 @@ function AppThemeManager({ userId }: { userId: string }) {
       let semanticTokens: Record<string, string>
 
       if (effectiveDark) {
-        // User has dark mode on but selected a light theme — use dark variant
         bundle = getDarkVariantBundle(themeId as any) ?? preset?.bundle ?? {}
         semanticTokens = getDarkVariantSemanticTokens(themeId as any) ?? preset?.semanticTokens ?? {}
       } else {
@@ -150,8 +181,7 @@ function AppThemeManager({ userId }: { userId: string }) {
       // Apply bd-* and shadcn token bundle
       appliedTokens = applyThemeTokenBundle(bundle)
 
-      // Apply PRD semantic tokens (--bg, --surface, --ink, etc.) as CSS custom properties
-      const root = document.documentElement
+      // Apply PRD semantic tokens (--bg, --surface, --ink, etc.)
       appliedSemanticProps = []
       for (const [key, value] of Object.entries(semanticTokens)) {
         root.style.setProperty(key, value)
@@ -161,46 +191,44 @@ function AppThemeManager({ userId }: { userId: string }) {
       // Apply visibility classes
       const showSidebar = bundle['bd-layout-sidebar'] !== 'hidden'
       const showBottomNav = bundle['bd-layout-nav'] !== 'hidden'
-      document.documentElement.classList.toggle('bd-sidebar-hidden', !showSidebar)
-      document.documentElement.classList.toggle('bd-nav-hidden', !showBottomNav)
-    }
+      root.classList.toggle('bd-sidebar-hidden', !showSidebar)
+      root.classList.toggle('bd-nav-hidden', !showBottomNav)
 
-    const cleanup = () => {
-      clearThemeTokenBundle(appliedTokens)
-      const root = document.documentElement
-      for (const prop of appliedSemanticProps) {
-        root.style.removeProperty(prop)
-      }
-      appliedTokens = []
-      appliedSemanticProps = []
-      document.documentElement.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
+      // Record last applied state
+      lastApplied.current = { themePresetId: themeId, isDark }
     }
 
     // Initial apply
-    applyTheme(currentThemeId)
+    applyTheme()
 
-    // Watch for dark class changes on <html> (user toggled dark/light mode)
-    const observer = new MutationObserver(() => {
-      const nextDark = document.documentElement.classList.contains('dark')
-      const nextThemeId = getEffectiveThemeId()
-
-      // Re-apply if dark mode changed or theme ID changed
-      if (nextThemeId !== currentThemeId || nextDark !== isDark) {
-        cleanup()
-        currentThemeId = nextThemeId
-        applyTheme(nextThemeId)
+    // Listen to system preference changes if in 'system' mode
+    if (currentPreference.themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const handleSystemThemeChange = () => {
+        applyTheme()
       }
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
+      mediaQuery.addEventListener('change', handleSystemThemeChange)
+      return () => {
+        mediaQuery.removeEventListener('change', handleSystemThemeChange)
+        // Cleanup applied theme variables
+        clearThemeTokenBundle(appliedTokens)
+        for (const prop of appliedSemanticProps) {
+          root.style.removeProperty(prop)
+        }
+        root.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
+        lastApplied.current = { themePresetId: null, isDark: null }
+      }
+    }
 
     return () => {
-      observer.disconnect()
-      cleanup()
+      clearThemeTokenBundle(appliedTokens)
+      for (const prop of appliedSemanticProps) {
+        root.style.removeProperty(prop)
+      }
+      root.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
+      lastApplied.current = { themePresetId: null, isDark: null }
     }
-  }, [preference.themePresetId, preference.themeMode, isDark])
+  }, [preference.themePresetId, preference.themeMode])
 
   return null
 }

@@ -10,7 +10,7 @@ import { useSafeAsyncTask } from './useSafeAsyncTask'
 
 export type UserThemePreference = {
   themePresetId: ThemePresetId | null
-  themeMode: ThemeMode
+  themeMode: 'light' | 'dark' | 'system'
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -18,8 +18,8 @@ export type UserThemePreference = {
 // ────────────────────────────────────────────────────────────────────
 
 const DEFAULT_PREFERENCE: UserThemePreference = {
-  themePresetId: null,
-  themeMode: 'base',
+  themePresetId: 'slate-navy',
+  themeMode: 'system',
 }
 
 const LOCAL_STORAGE_PREFIX = 'bigdrops_user_theme_'
@@ -39,9 +39,11 @@ function readLocalCache(userId: string): UserThemePreference | null {
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed === 'object') {
+      const presetId = parsed.themePresetId
+      const mode = parsed.themeMode
       return {
-        themePresetId: parsed.themePresetId ?? null,
-        themeMode: parsed.themeMode ?? 'base',
+        themePresetId: isThemePresetId(presetId) ? presetId : null,
+        themeMode: (mode === 'light' || mode === 'dark' || mode === 'system') ? mode : 'system',
       }
     }
   } catch {
@@ -105,7 +107,9 @@ export function cleanupStaleThemeCaches(currentUserIds: string[]): void {
 export function useUserThemePreferences(userId: string | undefined | null) {
   const [preference, setPreference] = useState<UserThemePreference>(DEFAULT_PREFERENCE)
   const [loading, setLoading] = useState(Boolean(userId))
-  const [lastWriteAt, setLastWriteAt] = useState(0)
+  // Use a ref for lastWriteAt instead of state to avoid triggering
+  // unnecessary re-fetches when the write timestamp changes.
+  const lastWriteAtRef = useRef(0)
   const { runLatest, cancel } = useSafeAsyncTask()
   const mountedRef = useRef(true)
 
@@ -135,15 +139,17 @@ export function useUserThemePreferences(userId: string | undefined | null) {
       return
     }
 
+    const dbPresetId = data.theme_preset_id
+    const dbMode = data.theme_mode
     const dbPref: UserThemePreference = {
-      themePresetId: data.theme_preset_id as ThemePresetId | null,
-      themeMode: (data.theme_mode as ThemeMode) ?? 'base',
+      themePresetId: isThemePresetId(dbPresetId) ? dbPresetId : null,
+      themeMode: (dbMode === 'light' || dbMode === 'dark' || dbMode === 'system') ? dbMode : 'system',
     }
 
     // Merge: if a local write happened very recently, prefer it
     // (avoids flicker when DB read is slightly behind a recent save)
     const cached = readLocalCache(userId)
-    if (cached && Date.now() - lastWriteAt < LOCAL_STORAGE_GRACE_MS) {
+    if (cached && Date.now() - lastWriteAtRef.current < LOCAL_STORAGE_GRACE_MS) {
       setPreference(cached)
     } else {
       setPreference(dbPref)
@@ -151,7 +157,7 @@ export function useUserThemePreferences(userId: string | undefined | null) {
     }
 
     setLoading(false)
-  }, [userId, lastWriteAt])
+  }, [userId])
 
   // Initial fetch
   useEffect(() => {
@@ -179,7 +185,7 @@ export function useUserThemePreferences(userId: string | undefined | null) {
       // Optimistic local update
       setPreference(nextPref)
       writeLocalCache(userId, nextPref)
-      setLastWriteAt(Date.now())
+      lastWriteAtRef.current = Date.now()
 
       // Persist to database
       const { error } = await supabase

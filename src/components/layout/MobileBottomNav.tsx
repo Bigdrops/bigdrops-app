@@ -19,34 +19,29 @@ export default function MobileBottomNav({
   return (
     <nav
       data-bd-layout="bottom-nav"
-      className="fixed inset-x-0 bottom-0 z-40 transform-gpu will-change-transform border-t border-bd-border bg-[hsl(var(--bd-layout-nav)/0.95)] backdrop-blur-xl"
-      style={{ paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))' }}
+      className="fixed z-40 left-2.5 right-2.5 bottom-[max(8px,env(safe-area-inset-bottom,0px))] h-[62px] p-1 grid grid-cols-5 border border-[var(--line-strong)] rounded-[20px] bg-[var(--nav)] shadow-lg"
     >
-      <div className="grid h-[64px] w-full grid-cols-5 gap-1 px-2 pt-1.5">
-        {items.map((item) => {
-          const Icon = item.icon
-          const isActive = active === item.key
+      {items.map((item) => {
+        const Icon = item.icon
+        const isActive = active === item.key
 
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onSelect(item.key)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-all outline-none",
-                isActive 
-                  ? "bg-bd-text text-bd-surface shadow-sm" 
-                  : "text-bd-text-muted hover:bg-[hsl(var(--bd-surface-muted))/0.5]"
-              )}
-            >
-              <Icon className={cn("h-[18px] w-[18px]", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />
-              <span className={cn("text-[10px] font-bold tracking-tight", isActive ? "opacity-100" : "opacity-80")}>
-                {item.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onSelect(item.key)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-[2px] rounded-[15px] font-[800] text-[7px] uppercase transition-all duration-200 outline-none active:scale-[0.965]",
+              isActive 
+                ? "bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] text-white shadow-[0_5px_12px_color-mix(in_srgb,var(--primary)_35%,transparent)]" 
+                : "text-[var(--ink-3)] hover:bg-[var(--surface-muted)]/50"
+            )}
+          >
+            <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
+            <span className="tracking-tight">{item.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }

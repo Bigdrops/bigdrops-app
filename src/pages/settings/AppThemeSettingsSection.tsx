@@ -4,7 +4,7 @@ import { saveSettings, useSettings } from '@/hooks/useSettings'
 import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
 import { useEntity } from '@/lib/tenant/contexts'
 import { normalizeHexColor } from '@/lib/colorTheme'
-import { BASE_THEME_MODE, THEME_PRESETS, SELECTABLE_THEME_PRESETS, type ThemePresetId, type ThemeMode } from '@/lib/themePresets'
+import { BASE_THEME_MODE, THEME_PRESETS, SELECTABLE_THEME_PRESETS, isThemePresetId, type ThemePresetId } from '@/lib/themePresets'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -89,19 +89,29 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
   const { settings, loading: settingsLoading } = useSettings()
   const { tenantClient } = useEntity()
   const { preference, loading: prefLoading, save: saveThemePref } = useUserThemePreferences(userId ?? null)
-  const [selectedMode, setSelectedMode] = useState<ThemeMode>(BASE_THEME_MODE)
+  // Theme family: which color palette is selected (null = default slate-navy)
+  const [selectedFamily, setSelectedFamily] = useState<ThemePresetId | null>(null)
+  // Whether the user has selected a custom build
+  const [isCustom, setIsCustom] = useState(false)
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
   const [saving, setSaving] = useState(false)
 
   const loading = settingsLoading || prefLoading
 
-  // Initialize from user-scoped preference (theme preset) and tenant settings (custom colors)
+  // Initialize from user-scoped preference
   useEffect(() => {
     if (prefLoading) return
-    // Use user-scoped preference for theme preset
-    setSelectedMode(preference.themePresetId ?? preference.themeMode ?? BASE_THEME_MODE)
-  }, [prefLoading, preference.themePresetId, preference.themeMode])
+    // Determine which theme family is active
+    const presetId = preference.themePresetId
+    if (presetId && isThemePresetId(presetId) && presetId !== 'bmw' && presetId !== 'modern-minimalist') {
+      setSelectedFamily(presetId)
+      setIsCustom(false)
+    } else {
+      setSelectedFamily(null)
+      setIsCustom(false)
+    }
+  }, [prefLoading, preference.themePresetId])
 
   useEffect(() => {
     if (settingsLoading || !settings) return
@@ -110,7 +120,6 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
   }, [settingsLoading, settings])
 
   const handleSelectPreset = async (presetId: ThemePresetId | typeof BASE_THEME_MODE | 'custom') => {
-    setSelectedMode(presetId)
     setSaving(true)
     try {
       if (!userId) {
@@ -119,23 +128,30 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
       }
       if (presetId === BASE_THEME_MODE) {
         // Reset to default — clear user preference
-        await saveThemePref({ themePresetId: null, themeMode: 'base' })
+        setSelectedFamily(null)
+        setIsCustom(false)
+        await saveThemePref({ themePresetId: null, themeMode: 'system' })
         // Also clear any legacy tenant settings for backward compat
         await saveSettings({
           app_theme_preset_id: null,
           app_background_color: null,
           app_card_color: null,
           app_theme_tokens: null,
-        }, tenantClient).catch(() => {}) // ignore tenant settings errors
+        }, tenantClient).catch(() => {})
         setBackground('')
         setCard('')
         feedback.success('Default Bigdrops theme restored')
       } else if (presetId === 'custom') {
-        await saveThemePref({ themePresetId: null, themeMode: 'custom' })
+        setIsCustom(true)
+        await saveThemePref({ themePresetId: null, themeMode: 'system' })
         feedback.success('Custom mode active')
       } else {
-        // Save to user-scoped preference
-        await saveThemePref({ themePresetId: presetId, themeMode: presetId })
+        // Save to user-scoped preference.
+        // themeMode stores the appearance mode ('light' | 'dark' | 'system'),
+        // NOT the preset ID. themePresetId stores the theme family.
+        setSelectedFamily(presetId)
+        setIsCustom(false)
+        await saveThemePref({ themePresetId: presetId, themeMode: 'system' })
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
         feedback.success(`${label ?? 'Theme'} applied`)
       }
@@ -146,7 +162,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
   }
 
   const handleSaveCustom = async () => {
-    if (selectedMode !== 'custom') return
+    if (!isCustom) return
 
     const normBg = background ? normalizeHexColor(background) : null
     const normCard = card ? normalizeHexColor(card) : null
@@ -162,8 +178,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
 
     setSaving(true)
     try {
-      // Theme mode goes to user-scoped preference
-      await saveThemePref({ themeMode: 'custom' })
+      // Theme mode goes to user-scoped preference (keep current mode)
+      await saveThemePref({ themeMode: preference.themeMode })
       // Custom colors remain in tenant settings (shared across business)
       await saveSettings({
         app_background_color: normBg,
@@ -179,8 +195,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
   const handleReset = async () => {
     setSaving(true)
     try {
-      // Reset user-scoped preference
-      await saveThemePref({ themePresetId: null, themeMode: 'base' })
+      // Reset user-scoped preference — default to slate-navy with system mode
+      await saveThemePref({ themePresetId: 'slate-navy', themeMode: 'system' })
       // Also clear legacy tenant settings for backward compat
       await saveSettings({
         app_theme_preset_id: null,
@@ -188,7 +204,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         app_card_color: null,
         app_theme_tokens: null,
       }, tenantClient).catch(() => {})
-      setSelectedMode(BASE_THEME_MODE)
+      setSelectedFamily('slate-navy')
+      setIsCustom(false)
       setBackground('')
       setCard('')
       feedback.success('Default Bigdrops theme restored')
@@ -200,11 +217,16 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
 
   if (loading) return <SettingsLoadingState />
 
-  const activePreset = THEME_PRESETS.find(p => p.id === selectedMode)
-  const themeLabel = selectedMode === 'custom' ? 'Custom Theme' : activePreset?.label || 'Slate Navy'
+  const activePreset = selectedFamily ? THEME_PRESETS.find(p => p.id === selectedFamily) : null
+  const themeLabel = isCustom ? 'Custom Theme' : activePreset?.label || 'Slate Navy'
 
-  // Determine current dark/light mode from the DOM
-  const isDark = document.documentElement.classList.contains('dark')
+  // Determine current dark/light mode from user preferences.
+  // preference.themeMode is always 'light' | 'dark' | 'system' (never a preset ID).
+  const isDark = preference.themeMode === 'dark' ||
+    (preference.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  // Display the current mode label
+  const currentModeLabel = isDark ? 'Dark' : 'Light'
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -225,8 +247,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
           value={
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold">{themeLabel}</span>
-              <span className="text-[10px] text-bd-text-muted">{isDark ? 'Dark' : 'Light'}</span>
-              {selectedMode === 'custom' && (
+              <span className="text-[10px] text-bd-text-muted">{currentModeLabel}</span>
+              {isCustom && (
                 <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 h-5 px-1.5 text-[9px] font-black uppercase">
                   Manual
                 </Badge>
@@ -239,8 +261,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         <div className="px-5 py-4 border-t border-[hsl(var(--bd-border)/0.3)] bg-[hsl(var(--bd-surface-muted)/0.1)]">
           <div className="flex items-center gap-3">
              <div className="h-10 w-20 rounded-lg border border-[hsl(var(--bd-border)/0.5)] overflow-hidden shadow-sm flex">
-                <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(background) || BASE_BACKGROUND) : (activePreset?.preview.background || BASE_BACKGROUND) }} />
-                <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(card) || BASE_CARD) : (activePreset?.preview.card || BASE_CARD) }} />
+                <div className="flex-1" style={{ backgroundColor: isCustom ? (normalizeHexColor(background) || BASE_BACKGROUND) : (activePreset?.preview.background || BASE_BACKGROUND) }} />
+                <div className="flex-1" style={{ backgroundColor: isCustom ? (normalizeHexColor(card) || BASE_CARD) : (activePreset?.preview.card || BASE_CARD) }} />
              </div>
              <p className="text-[11px] text-bd-text-muted leading-relaxed max-w-[200px]">
                Theme and mode apply to all pages. Each user's choice is independent.
@@ -266,7 +288,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
               title={preset.label}
               description={preset.description}
               preview={preset.preview}
-              selected={selectedMode === preset.id}
+              selected={selectedFamily === preset.id}
               onSelect={() => handleSelectPreset(preset.id)}
             />
           ))}
@@ -279,7 +301,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
           >
             <div className={cn(
               "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
-              selectedMode === 'custom'
+              isCustom
                 ? "border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
                 : "border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg hover:border-bd-border hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
             )}>
@@ -287,7 +309,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                 <h4 className="text-sm font-bold">Custom Build</h4>
                 <div className={cn(
                   "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-                  selectedMode === 'custom' ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
+                  isCustom ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
                 )}>
                   <Check size={12} strokeWidth={3} />
                 </div>
@@ -303,26 +325,15 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
           <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Mode</h5>
           <div className="flex gap-2">
             {(['light', 'dark', 'system'] as const).map((mode) => {
-              const isActive = mode === 'system'
-                ? preference.themeMode !== 'custom' && !preference.themePresetId
-                : (mode === 'dark') === isDark
+              const isActive = mode === preference.themeMode
               return (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => {
-                    if (mode === 'system') {
-                      // Reset to system preference
-                      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-                      document.documentElement.classList.toggle('dark', prefersDark)
-                    } else {
-                      document.documentElement.classList.toggle('dark', mode === 'dark')
-                    }
-                    // Persist immediately to user preferences
                     if (userId) {
-                      const nextIsDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
                       saveThemePref({
-                        themeMode: nextIsDark ? (preference.themePresetId ?? 'slate-navy') : (preference.themePresetId ?? 'slate-navy'),
+                        themeMode: mode,
                         themePresetId: preference.themePresetId,
                       })
                     }
@@ -342,7 +353,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         </div>
 
         {/* Custom Editor Section */}
-        {selectedMode === 'custom' && (
+        {isCustom && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
              <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Manual Color Overrides</h5>

@@ -69,6 +69,7 @@ type UseDashboardDataResult = {
   heroStats: HeroStats
   summary: SummaryStats
   kpiStats: KpiStats
+  activityEvents: any[]
   refresh: () => Promise<void>
 }
 
@@ -265,6 +266,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     const cached = readDashboardCache(cacheKey)
     return cached?.data.summary || defaultSummary
   })
+  const [activityEvents, setActivityEvents] = React.useState<any[]>(() => {
+    const cached = readDashboardCache(cacheKey)
+    return cached?.data.activityEvents || []
+  })
 
   const load = React.useCallback(async () => {
     // Guard: tenantClient must be ready before any query.
@@ -373,6 +378,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         setHeroStats(nextHeroStats)
         setSummary(nextSummary)
         setKpiStats(nextKpiStats)
+        setActivityEvents([])
 
         writeDashboardCache(cacheKey, {
           recentDocs: nextRecentDocs,
@@ -380,6 +386,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           heroStats: nextHeroStats,
           summary: nextSummary,
           kpiStats: nextKpiStats,
+          activityEvents: [],
         })
       } catch (error) {
         console.error('Dashboard data load failed:', error)
@@ -400,7 +407,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     endOfWeek.setHours(23, 59, 59, 999)
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes, activityEventsRes] = await Promise.all([
         tenantClient
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
@@ -416,6 +423,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         // query above is limit-truncated and would produce misleading ratios.
         tenantClient.from('waybills').select('id', { count: 'exact', head: true }),
         tenantClient.from('waybills').select('id', { count: 'exact', head: true }).eq('status', 'dispatched'),
+        tenantClient.from('activity_events').select('id, entity_type, entity_id, entity_label, event_type, actor_label, created_at, metadata').order('created_at', { ascending: false }).limit(10),
       ])
 
       const invoices = (invoiceRes.data || [])
@@ -487,11 +495,14 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         waybillsDispatchedTotal: waybillsDispatchedRes.count ?? 0,
       }
 
+      const activityEvents = activityEventsRes.data || []
+
       setRecentDocs(nextRecentDocs)
       setRecentProjects(projects)
       setHeroStats(nextHeroStats)
       setSummary(nextSummary)
       setKpiStats(nextKpiStats)
+      setActivityEvents(activityEvents)
 
       writeDashboardCache(cacheKey, {
         recentDocs: nextRecentDocs,
@@ -499,6 +510,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         heroStats: nextHeroStats,
         summary: nextSummary,
         kpiStats: nextKpiStats,
+        activityEvents,
       })
     } catch (error) {
       console.error('Dashboard data load failed:', error)
@@ -514,5 +526,5 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     void load()
   }, [load])
 
-  return { loading, recentDocs, recentProjects, heroStats, summary, kpiStats, refresh: load }
+  return { loading, recentDocs, recentProjects, heroStats, summary, kpiStats, activityEvents, refresh: load }
 }

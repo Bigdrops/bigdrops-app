@@ -6,6 +6,7 @@ export type DashboardCacheData = {
   heroStats: any
   summary: any
   kpiStats?: KpiStats
+  activityEvents?: any[]
 }
 
 export type DashboardCacheEntry = {
