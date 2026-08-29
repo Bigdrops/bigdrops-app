@@ -46,7 +46,7 @@ export function PaymentReminderBanner() {
         }}
       />
 
-      <div className="relative z-10 flex items-start gap-[9px] p-3">
+      <div className="relative z-10 flex items-start gap-[9px] p-3 md:p-4">
         {/* V6 gradient icon */}
         <div
           className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[12px] text-white"
@@ -59,10 +59,10 @@ export function PaymentReminderBanner() {
           <div className="text-[7px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
             Smart banner
           </div>
-          <h2 className="mt-[3px] text-[12px] font-[800] tracking-[-.04em] text-[hsl(var(--ink))]">
+          <h2 className="mt-[3px] text-[12px] font-[800] tracking-[-.04em] text-[hsl(var(--ink))] md:text-[14px]">
             Keep payments recorded as they land
           </h2>
-          <p className="mt-[2px] text-[9px] leading-[1.4] text-[hsl(var(--ink-2))]">
+          <p className="mt-[2px] text-[9px] leading-[1.4] text-[hsl(var(--ink-2))] md:text-[11px]">
             Record each invoice payment promptly so your books stay accurate.
           </p>
 
@@ -70,7 +70,7 @@ export function PaymentReminderBanner() {
             <button
               type="button"
               onClick={() => navigate('/invoices')}
-              className="inline-flex items-center gap-[6px] rounded-[10px] px-[10px] py-[7px] text-[8px] font-[800] uppercase tracking-[0.065em] text-white transition active:scale-[0.96]"
+              className="inline-flex items-center gap-[6px] rounded-[10px] px-[10px] py-[7px] text-[8px] font-[800] uppercase tracking-[0.065em] text-white transition active:scale-[0.96] md:px-4 md:py-2.5 md:text-[10px]"
               style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
             >
               Record payments

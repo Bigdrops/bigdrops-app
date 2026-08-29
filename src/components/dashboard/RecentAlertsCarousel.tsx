@@ -42,9 +42,8 @@ function AlertsSkeleton() {
   return (
     <div className="flex gap-2 overflow-hidden">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div
-          key={index}
-          className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px]"
+        <div                  key={index}
+                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
         >
           <div className="h-2 w-16 rounded bg-[hsl(var(--surface-muted))]/80" />
           <div className="mt-2 h-3 w-32 rounded bg-[hsl(var(--surface-muted))]/80" />
@@ -77,7 +76,7 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md"
+    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md md:px-4 md:py-4"
       style={{
         boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
       }}
@@ -101,7 +100,7 @@ export function RecentAlertsCarousel() {
           No recent alerts.
         </div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex gap-2 overflow-x-auto pb-1 md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
           {alerts.map((notification) => {
             const Icon = getIcon(notification)
             const route = getNotificationRoute(notification)
@@ -125,16 +124,16 @@ export function RecentAlertsCarousel() {
                     <Icon size={14} strokeWidth={1.9} />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[6px] font-[800] uppercase tracking-[0.13em] text-[hsl(var(--ink-3))]">
+                    <div className="text-[6px] font-[800] uppercase tracking-[0.13em] text-[hsl(var(--ink-3))] md:text-[7px]">
                       Alert
                     </div>
-                    <div className="mt-[2px] line-clamp-2 text-[10px] font-[800] leading-[1.25] text-[hsl(var(--ink))]">
+                    <div className="mt-[2px] line-clamp-2 text-[10px] font-[800] leading-[1.25] text-[hsl(var(--ink))] md:text-[11px]">
                       {notification.title}
                     </div>
                   </div>
                 </div>
 
-                <p className="mt-[6px] line-clamp-3 text-[8px] leading-[1.4] text-[hsl(var(--ink-2))]">
+                <p className="mt-[6px] line-clamp-3 text-[8px] leading-[1.4] text-[hsl(var(--ink-2))] md:text-[9px]">
                   {body}
                 </p>
 
@@ -149,7 +148,7 @@ export function RecentAlertsCarousel() {
               return (
                 <article
                   key={notification.id}
-                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left"
+                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
                 >
                   {card}
                 </article>
@@ -161,7 +160,7 @@ export function RecentAlertsCarousel() {
                 key={notification.id}
                 type="button"
                 onClick={() => void handleSelect(notification)}
-                className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99]"
+                className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
               >
                 {card}
               </button>

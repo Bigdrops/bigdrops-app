@@ -16,7 +16,7 @@ function AuditRow({
   variant?: 'primary' | 'copper'
 }) {
   return (
-    <div className="flex gap-[8px] border-t border-[hsl(var(--line))] py-[9px] first:border-t-0">
+    <div className="flex gap-[8px] border-t border-[hsl(var(--line))] py-[9px] first:border-t-0 md:py-3">
       {/* V6 timeline dot */}
       <div
         className={cn(
@@ -27,10 +27,10 @@ function AuditRow({
         )}
       />
       <div>
-        <div className="text-[9px] font-[700] leading-[1.25] text-[hsl(var(--ink))]">
+        <div className="text-[9px] font-[700] leading-[1.25] text-[hsl(var(--ink))] md:text-[11px]">
           {text}
         </div>
-        <div className="mt-[2px] text-[7px] text-[hsl(var(--ink-3))]">
+        <div className="mt-[2px] text-[7px] text-[hsl(var(--ink-3))] md:text-[9px]">
           {meta}
         </div>
       </div>
@@ -98,7 +98,7 @@ export function AuditTrailSkeleton() {
         boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
       }}
     >
-      <div className="px-[11px]">
+      <div className="px-[11px] md:px-4">
         {entries.map((entry) => (
           <AuditRow
             key={entry.id}

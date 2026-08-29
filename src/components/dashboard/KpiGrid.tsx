@@ -103,7 +103,7 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
   return (
     <article
       className={cn(
-        'relative flex min-h-[108px] flex-col overflow-hidden rounded-[18px] border p-[11px_12px_10px] text-left transition-all',
+        'relative flex min-h-[108px] flex-col overflow-hidden rounded-[18px] border p-[11px_12px_10px] text-left transition-all md:min-h-[116px] md:p-[12px_14px_11px] lg:min-h-[120px] lg:p-[14px_16px_12px]',
         isCollect
           ? 'border-transparent bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] text-white shadow-lg'
           : isOverdue
@@ -169,7 +169,7 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="flex min-h-[108px] flex-col gap-2 rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] p-[11px_12px_10px] shadow-md"
+      className="flex min-h-[108px] flex-col gap-2 rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] p-[11px_12px_10px] shadow-md md:min-h-[116px] md:p-[12px_14px_11px] lg:min-h-[120px] lg:p-[14px_16px_12px]"
       aria-hidden="true"
     >
       <div className="h-2 w-20 rounded bg-[hsl(var(--surface-muted))]/80" />
@@ -188,7 +188,7 @@ export function KpiGrid({ loading, cards }: KpiGridProps) {
   const visibleCards = cards.slice(0, KPI_CARD_COUNT)
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
       {loading || visibleCards.length === 0
         ? Array.from({ length: KPI_CARD_COUNT }).map((_, index) => <KpiCardSkeleton key={index} />)
         : visibleCards.map((card) => <KpiCard key={card.id} card={card} />)}

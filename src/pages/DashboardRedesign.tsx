@@ -88,7 +88,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
           <div
             role="dialog"
             aria-label="Create actions"
-            className={`fixed bottom-[calc(6rem+60px)] right-5 z-50 rounded-[var(--bd-overlay-radius)] border border-bd-overlay-border bg-bd-overlay-bg p-1.5 shadow-2xl ${createPanelWidthClass}`}
+            className={`fixed bottom-[calc(6rem+60px)] right-5 z-50 rounded-[var(--bd-overlay-radius)] border border-bd-overlay-border bg-bd-overlay-bg p-1.5 shadow-2xl lg:bottom-auto lg:top-[calc(4rem+60px)] lg:right-8 ${createPanelWidthClass}`}
           >
             <div className="bd-custom-scrollbar max-h-[min(24rem,calc(100dvh-12rem))] space-y-1 overflow-y-auto">
               {createActions.map((action) => (
@@ -120,7 +120,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         onClick={() => setCreateOpen((open) => !open)}
         aria-expanded={createOpen}
         aria-haspopup="true"
-        className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[var(--bd-overlay-radius)] bg-bd-fab-bg text-bd-fab-text shadow-2xl shadow-black/20 transition active:scale-90 md:hidden"
+        className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[var(--bd-overlay-radius)] bg-bd-fab-bg text-bd-fab-text shadow-2xl shadow-black/20 transition active:scale-90 lg:bottom-auto lg:top-24 lg:right-8"
         aria-label="Create new record"
       >
         <Plus className="h-5 w-5" />

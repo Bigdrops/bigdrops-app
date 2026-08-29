@@ -83,7 +83,6 @@ const ACTIVITY_ICON: Record<string, ComponentType<{ size?: number; strokeWidth?:
   BOQ: ClipboardList,
 }
 
-// V6 status badge styling
 function StatusBadge({ status }: { status: string }) {
   const normalized = String(status || '').toLowerCase()
   const isDraft = normalized === 'draft'
@@ -92,7 +91,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-[5px] px-[5px] py-[2px] text-[6px] font-[800] uppercase tracking-[0.07em]',
+        'inline-flex items-center rounded-[5px] px-[5px] py-[2px] text-[6px] font-[800] uppercase tracking-[0.07em] lg:text-[7px]',
         isDraft
           ? 'bg-[hsl(var(--primary)/0.14)] text-[hsl(var(--primary))]'
           : isDelivered
@@ -117,7 +116,6 @@ function formatRecentRecordMeta(doc: RecentDoc) {
     locale: 'en-GB',
     dateOptions: { month: 'short', day: 'numeric', year: 'numeric' },
   })
-
   return [doc.client, dateText].filter(Boolean).join(' · ')
 }
 
@@ -125,7 +123,6 @@ function formatRecentRecordValue(doc: RecentDoc) {
   if (doc.amount != null) {
     return formatNaira(doc.amount, { round: true })
   }
-
   return formatStatusLabel(doc.status, { fallback: 'open', lowercase: false })
 }
 
@@ -181,14 +178,12 @@ export function DashboardOverview({
   }, [userId, saveThemePref, preference.themePresetId])
 
   const mobileChrome = React.useContext(MobileChromeContext)
-
-  // V6 eyebrow: month label
   const now = new Date()
   const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col pb-32 md:pb-16">
-      {/* V6 Top Bar — sticky with gradient fade */}
+    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col pb-32 md:pb-16 lg:pb-8">
+      {/* V6 Top Bar */}
       <header
         className="sticky top-0 z-30 flex items-center justify-between py-2 transition-colors"
         style={{
@@ -247,109 +242,114 @@ export function DashboardOverview({
         </div>
       </header>
 
-      <main className="px-[14px] pt-[6px] md:px-6">
+      <main className="px-[14px] pt-[6px] sm:px-5 md:px-6 lg:px-8">
         {/* V6 Eyebrow */}
-        <div className="mb-2 flex items-center justify-between px-[2px]">
+        <div className="mb-2 flex items-center justify-between px-[2px] lg:mb-3">
           <span className="text-[8px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
             Finance pulse · {monthLabel}
           </span>
         </div>
 
-        {/* KPI Metric Grid */}
+        {/* KPI Metric Grid — 2-col mobile, 4-col desktop */}
         <KpiGrid loading={loading} cards={kpiCards} />
 
-        {/* V6 Recent Activity Section */}
-        <section className="mt-[14px]">
-          <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))]">
-            Recent activity
-          </h2>
+        {/* Activity + Payment Reminder: stacked mobile, side-by-side md+ */}
+        <div className="mt-[14px] grid gap-[14px] md:mt-5 md:grid-cols-5 md:gap-4 lg:gap-5">
+          {/* Recent Activity — 3/5 on tablet+ */}
+          <section className="md:col-span-3">
+            <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))] md:mb-3 md:text-[10px]">
+              Recent activity
+            </h2>
 
-          {loading ? (
-            <RecentActivitySkeleton />
-          ) : (
-            <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md">
-              {recentDocs.length === 0 ? (
-                <div className="px-4 py-8 text-center text-[12px] text-[hsl(var(--ink-2))]">
-                  No recent activity.
-                </div>
-              ) : (
-                recentDocs.slice(0, 6).map((doc) => {
-                  const iconStyle = ACTIVITY_ICON_STYLE[doc.type] || ACTIVITY_ICON_STYLE.Invoice
-                  const Icon = ACTIVITY_ICON[doc.type] || Receipt
-                  const recordValue = formatRecentRecordValue(doc)
-                  const meta = formatRecentRecordMeta(doc)
-                  const isAmount = doc.amount != null
+            {loading ? (
+              <RecentActivitySkeleton />
+            ) : (
+              <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md">
+                {recentDocs.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-[12px] text-[hsl(var(--ink-2))]">
+                    No recent activity.
+                  </div>
+                ) : (
+                  recentDocs.slice(0, 6).map((doc) => {
+                    const iconStyle = ACTIVITY_ICON_STYLE[doc.type] || ACTIVITY_ICON_STYLE.Invoice
+                    const Icon = ACTIVITY_ICON[doc.type] || Receipt
+                    const recordValue = formatRecentRecordValue(doc)
+                    const meta = formatRecentRecordMeta(doc)
 
-                  return (
-                    <button
-                      key={`${doc.type}-${doc.id}`}
-                      type="button"
-                      onClick={() => onRecentDocSelect(doc)}
-                      className="flex w-full items-center gap-[9px] border-t border-[hsl(var(--line))] px-[11px] py-[9px] text-left first:border-t-0 transition-all active:scale-[0.99]"
-                    >
-                      {/* V6 typed activity icon */}
-                      <div
-                        className={cn(
-                          'grid h-[32px] w-[32px] shrink-0 place-items-center rounded-[11px] border',
-                          iconStyle.bg,
-                          iconStyle.color,
-                          iconStyle.border,
-                        )}
+                    return (
+                      <button
+                        key={`${doc.type}-${doc.id}`}
+                        type="button"
+                        onClick={() => onRecentDocSelect(doc)}
+                        className="flex w-full items-center gap-[9px] border-t border-[hsl(var(--line))] px-[11px] py-[9px] text-left first:border-t-0 transition-all active:scale-[0.99] md:px-4 md:py-3"
                       >
-                        <Icon size={15} strokeWidth={1.9} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-[5px]">
-                          <span className="text-[11px] font-[800] tracking-[-.025em] text-[hsl(var(--ink))]">
-                            {doc.number}
-                          </span>
-                          <StatusBadge status={doc.status} />
+                        <div
+                          className={cn(
+                            'grid h-[32px] w-[32px] shrink-0 place-items-center rounded-[11px] border md:h-[36px] md:w-[36px] md:rounded-[12px]',
+                            iconStyle.bg,
+                            iconStyle.color,
+                            iconStyle.border,
+                          )}
+                        >
+                          <Icon size={15} strokeWidth={1.9} />
                         </div>
-                        <div className="mt-[2px] truncate text-[8px] text-[hsl(var(--ink-2))]">
-                          {meta}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-[5px]">
+                            <span className="text-[11px] font-[800] tracking-[-.025em] text-[hsl(var(--ink))] md:text-[13px]">
+                              {doc.number}
+                            </span>
+                            <StatusBadge status={doc.status} />
+                          </div>
+                          <div className="mt-[2px] truncate text-[8px] text-[hsl(var(--ink-2))] md:text-[10px]">
+                            {meta}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="text-right flex-shrink-0">
-                        <div className="font-[\'DM_Mono\',ui-monospace,SFMono-Regular,Menlo,monospace] text-[10px] font-medium tracking-[-.045em] text-[hsl(var(--ink))]">
-                          {recordValue}
+                        <div className="text-right flex-shrink-0">
+                          <div className="font-[\'DM_Mono\',ui-monospace,SFMono-Regular,Menlo,monospace] text-[10px] font-medium tracking-[-.045em] text-[hsl(var(--ink))] md:text-[12px]">
+                            {recordValue}
+                          </div>
+                          <div className="mt-[3px] font-[var(--font)] text-[7px] text-[hsl(var(--ink-3))] md:text-[9px]">
+                            {formatDisplayDate(doc.date, {
+                              fallback: '',
+                              locale: 'en-GB',
+                              dateOptions: { month: 'short', day: 'numeric' },
+                            })}
+                          </div>
                         </div>
-                        <div className="mt-[3px] font-[var(--font)] text-[7px] text-[hsl(var(--ink-3))]">
-                          {formatDisplayDate(doc.date, {
-                            fallback: '',
-                            locale: 'en-GB',
-                            dateOptions: { month: 'short', day: 'numeric' },
-                          })}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          )}
-        </section>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            )}
+          </section>
 
-        {/* V6 Payment Reminder */}
-        <section className="mt-[14px]">
-          <PaymentReminderBanner />
-        </section>
+          {/* Payment Reminder — 2/5 on tablet+ */}
+          <section className="md:col-span-2">
+            <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))] md:mb-3 md:text-[10px]">
+              Payment reminder
+            </h2>
+            <PaymentReminderBanner />
+          </section>
+        </div>
 
-        {/* V6 Recent Alerts */}
-        <section className="mt-[14px]">
-          <RecentAlertsCarousel />
-        </section>
+        {/* Alerts + Audit Trail: stacked mobile, side-by-side lg+ */}
+        <div className="mt-[14px] grid gap-[14px] lg:mt-5 lg:grid-cols-2 lg:gap-5">
+          <section>
+            <RecentAlertsCarousel />
+          </section>
 
-        {/* V6 Audit Trail */}
-        <section className="mt-[14px]">
-          <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))]">
-            Audit trail
-          </h2>
-          <AuditTrailSkeleton />
-        </section>
+          <section>
+            <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))] lg:mb-3 lg:text-[10px]">
+              Audit trail
+            </h2>
+            <AuditTrailSkeleton />
+          </section>
+        </div>
 
-        <div className="h-[6px]" />
+        <div className="h-[6px] lg:h-4" />
       </main>
     </div>
   )
