@@ -132,6 +132,10 @@ export default function Layout({
   }
 
   const executeSignOut = async () => {
+    // Clean up legacy unscoped theme localStorage to prevent cross-user leakage
+    try {
+      localStorage.removeItem('theme')
+    } catch { /* ignore */ }
     await supabase.auth.signOut()
     navigate('/login')
     setMoreOpen(false)

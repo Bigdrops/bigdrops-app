@@ -69,6 +69,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
       <DashboardOverview
         businessName={businessName}
         userName={userName}
+        userId={session.user.id}
         loading={loading}
         kpiCards={kpiCards}
         recentDocs={recentDocs}

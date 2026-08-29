@@ -40,9 +40,11 @@ import App from './App.jsx'
 //   });
 // }
 
-// Initialize dark mode from localStorage before render
-const savedTheme = localStorage.getItem('theme')
-if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+// Initialize dark mode from system preference before render.
+// The user-scoped theme preference is resolved by AppThemeManager after auth.
+// We do NOT read from localStorage here to prevent cross-user theme leakage
+// on shared devices (localStorage is not scoped by user ID at this point).
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.documentElement.classList.add('dark')
 } else {
   document.documentElement.classList.remove('dark')

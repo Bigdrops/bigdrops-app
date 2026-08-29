@@ -33,7 +33,9 @@ export const THEME_COLOR_TOKENS = [
   // BigDrops Component/Form Tokens
   "bd-app-bg",
   "bd-surface",
+  "bd-surface-raised",
   "bd-surface-muted",
+  "bd-surface-strong",
   "bd-border",
   "bd-border-strong",
   "bd-text",

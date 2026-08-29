@@ -4,16 +4,18 @@ import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import PageLoader from '@/components/app/PageLoader'
 import { isAndroidNative } from '@/lib/native/capacitor'
-import { useSettings } from '@/hooks/useSettings'
 import { normalizeHexColor, hexToHslTriplet } from '@/lib/colorTheme'
 
-import { BASE_THEME_MODE, getThemePreset, resolveThemeMode } from '@/lib/themePresets'
+import { getThemePreset, getDarkVariantBundle, getDarkVariantSemanticTokens, isThemePresetId } from '@/lib/themePresets'
+import type { ThemePresetId } from '@/lib/themePresets'
 import {
   applyThemeTokenBundle,
   clearThemeTokenBundle,
   normalizeThemeTokenBundle,
   type ThemeTokenBundle,
+  type ThemeToken,
 } from '@/lib/themeTokens'
+import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
 import {
   AuthorizationProvider,
 } from '@/lib/tenant/contexts'
@@ -83,52 +85,110 @@ type AppShellProps = {
 
 const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
-// Theme application consumes useSettings(), which resolves the tenant client
-// through useEntity(). It must therefore render inside EntityProvider.
-function AppThemeManager() {
-  const { settings } = useSettings()
+// Theme application uses user-scoped preferences (user_preferences table),
+// NOT tenant-scoped settings. This ensures each user's theme choice is independent.
+//
+// Theme model: each theme family (slate-navy, amber-terracotta, etc.) has light and dark variants.
+// Liquid Onyx is NOT a separate theme — it is Slate Navy's dark variant.
+function AppThemeManager({ userId }: { userId: string }) {
+  const { preference } = useUserThemePreferences(userId)
 
-  // Read dark mode from <html> class, re-apply on mutation
-  const getPresetId = () =>
-    document.documentElement.classList.contains('dark') ? 'bmw' : 'modern-minimalist'
+  const isDark = document.documentElement.classList.contains('dark')
+
+  // Determine the theme family ID to apply from the user's personal preference.
+  // The dark variant is resolved by the theme engine, not stored as a separate ID.
+  // Default: slate-navy (canonical default) when no preference exists.
+  const getEffectiveThemeId = (): string => {
+    const presetId = preference.themePresetId
+
+    // Explicit preset selected by user — must be a valid selectable theme family
+    if (presetId && isThemePresetId(presetId)) {
+      return presetId
+    }
+
+    // Legacy preset migration (both map to slate-navy)
+    if (presetId === 'bmw') return 'slate-navy'
+    if (presetId === 'modern-minimalist') return 'slate-navy'
+
+    // Default: slate-navy (always; dark variant applied by theme engine)
+    return 'slate-navy'
+  }
 
   useEffect(() => {
-    let currentPreset = getPresetId()
+    let currentThemeId = getEffectiveThemeId()
+    let appliedTokens: ThemeToken[] = []
+    let appliedSemanticProps: string[] = []
 
-    const applyTokens = (presetId: string) => {
-      const bundleToApply = getThemePreset(presetId)?.bundle ?? {}
+    const applyTheme = (themeId: string) => {
+      // Determine if we should use the dark variant
+      const preset = getThemePreset(themeId)
+      const effectiveDark = isDark && preset && !preset.isDark
+
+      let bundle: ThemeTokenBundle
+      let semanticTokens: Record<string, string>
+
+      if (effectiveDark) {
+        // User has dark mode on but selected a light theme — use dark variant
+        bundle = getDarkVariantBundle(themeId as any) ?? preset?.bundle ?? {}
+        semanticTokens = getDarkVariantSemanticTokens(themeId as any) ?? preset?.semanticTokens ?? {}
+      } else {
+        bundle = preset?.bundle ?? {}
+        semanticTokens = preset?.semanticTokens ?? {}
+      }
 
       // Resolve Density & Padding
-      const density = bundleToApply['bd-layout-density'] || 'standard'
-      if (!bundleToApply['bd-layout-padding']) {
+      const density = bundle['bd-layout-density'] || 'standard'
+      if (!bundle['bd-layout-padding']) {
         const paddingMap: Record<string, string> = {
           compact: '0.5rem',
           standard: '1.5rem',
           comfortable: '2rem',
         }
-        bundleToApply['bd-layout-padding'] = paddingMap[density] || '1.5rem'
+        bundle['bd-layout-padding'] = paddingMap[density] || '1.5rem'
       }
 
-      const applied = applyThemeTokenBundle(bundleToApply)
+      // Apply bd-* and shadcn token bundle
+      appliedTokens = applyThemeTokenBundle(bundle)
+
+      // Apply PRD semantic tokens (--bg, --surface, --ink, etc.) as CSS custom properties
+      const root = document.documentElement
+      appliedSemanticProps = []
+      for (const [key, value] of Object.entries(semanticTokens)) {
+        root.style.setProperty(key, value)
+        appliedSemanticProps.push(key)
+      }
 
       // Apply visibility classes
-      const showSidebar = bundleToApply['bd-layout-sidebar'] !== 'hidden'
-      const showBottomNav = bundleToApply['bd-layout-nav'] !== 'hidden'
+      const showSidebar = bundle['bd-layout-sidebar'] !== 'hidden'
+      const showBottomNav = bundle['bd-layout-nav'] !== 'hidden'
       document.documentElement.classList.toggle('bd-sidebar-hidden', !showSidebar)
       document.documentElement.classList.toggle('bd-nav-hidden', !showBottomNav)
-
-      return applied
     }
 
-    let applied = applyTokens(currentPreset)
+    const cleanup = () => {
+      clearThemeTokenBundle(appliedTokens)
+      const root = document.documentElement
+      for (const prop of appliedSemanticProps) {
+        root.style.removeProperty(prop)
+      }
+      appliedTokens = []
+      appliedSemanticProps = []
+      document.documentElement.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
+    }
 
-    // Watch for dark class changes on <html>
+    // Initial apply
+    applyTheme(currentThemeId)
+
+    // Watch for dark class changes on <html> (user toggled dark/light mode)
     const observer = new MutationObserver(() => {
-      const next = getPresetId()
-      if (next !== currentPreset) {
-        clearThemeTokenBundle(applied)
-        currentPreset = next
-        applied = applyTokens(currentPreset)
+      const nextDark = document.documentElement.classList.contains('dark')
+      const nextThemeId = getEffectiveThemeId()
+
+      // Re-apply if dark mode changed or theme ID changed
+      if (nextThemeId !== currentThemeId || nextDark !== isDark) {
+        cleanup()
+        currentThemeId = nextThemeId
+        applyTheme(nextThemeId)
       }
     })
     observer.observe(document.documentElement, {
@@ -138,10 +198,9 @@ function AppThemeManager() {
 
     return () => {
       observer.disconnect()
-      clearThemeTokenBundle(applied)
-      document.documentElement.classList.remove('bd-sidebar-hidden', 'bd-nav-hidden')
+      cleanup()
     }
-  }, [])
+  }, [preference.themePresetId, preference.themeMode, isDark])
 
   return null
 }
@@ -170,7 +229,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <AppThemeManager />
+        <AppThemeManager userId={session.user.id} />
         <AuthorizationProvider userId={session.user.id}>
           <Routes>
             <Route path="/" element={withBoundary(<Dashboard session={session} />)} />

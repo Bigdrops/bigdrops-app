@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Palette, RotateCcw, Sparkles, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
+import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
 import { useEntity } from '@/lib/tenant/contexts'
 import { normalizeHexColor } from '@/lib/colorTheme'
-import { BASE_THEME_MODE, THEME_PRESETS, type FixedThemePresetId, type ThemeMode, resolveThemeMode } from '@/lib/themePresets'
+import { BASE_THEME_MODE, THEME_PRESETS, SELECTABLE_THEME_PRESETS, type ThemePresetId, type ThemeMode } from '@/lib/themePresets'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -84,43 +85,59 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
   )
 }
 
-export function AppThemeSettingsSection() {
-  const { settings, loading } = useSettings()
+export function AppThemeSettingsSection({ userId }: { userId?: string | undefined }) {
+  const { settings, loading: settingsLoading } = useSettings()
   const { tenantClient } = useEntity()
+  const { preference, loading: prefLoading, save: saveThemePref } = useUserThemePreferences(userId ?? null)
   const [selectedMode, setSelectedMode] = useState<ThemeMode>(BASE_THEME_MODE)
   const [background, setBackground] = useState('')
   const [card, setCard] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (loading || !settings) return
+  const loading = settingsLoading || prefLoading
 
-    setSelectedMode(resolveThemeMode(settings))
+  // Initialize from user-scoped preference (theme preset) and tenant settings (custom colors)
+  useEffect(() => {
+    if (prefLoading) return
+    // Use user-scoped preference for theme preset
+    setSelectedMode(preference.themePresetId ?? preference.themeMode ?? BASE_THEME_MODE)
+  }, [prefLoading, preference.themePresetId, preference.themeMode])
+
+  useEffect(() => {
+    if (settingsLoading || !settings) return
     setBackground(settings.app_background_color || '')
     setCard(settings.app_card_color || '')
-  }, [loading, settings])
+  }, [settingsLoading, settings])
 
-  const handleSelectPreset = async (presetId: FixedThemePresetId | typeof BASE_THEME_MODE | 'custom') => {
+  const handleSelectPreset = async (presetId: ThemePresetId | typeof BASE_THEME_MODE | 'custom') => {
     setSelectedMode(presetId)
     setSaving(true)
     try {
+      if (!userId) {
+        feedback.error('User session not available')
+        return
+      }
       if (presetId === BASE_THEME_MODE) {
+        // Reset to default — clear user preference
+        await saveThemePref({ themePresetId: null, themeMode: 'base' })
+        // Also clear any legacy tenant settings for backward compat
         await saveSettings({
           app_theme_preset_id: null,
           app_background_color: null,
           app_card_color: null,
           app_theme_tokens: null,
-        }, tenantClient)
+        }, tenantClient).catch(() => {}) // ignore tenant settings errors
         setBackground('')
         setCard('')
         feedback.success('Default Bigdrops theme restored')
       } else if (presetId === 'custom') {
-        await saveSettings({ app_theme_preset_id: 'custom' }, tenantClient)
+        await saveThemePref({ themePresetId: null, themeMode: 'custom' })
         feedback.success('Custom mode active')
       } else {
-        await saveSettings({ app_theme_preset_id: presetId }, tenantClient)
+        // Save to user-scoped preference
+        await saveThemePref({ themePresetId: presetId, themeMode: presetId })
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
-        feedback.success(`${label ?? 'Theme preset'} applied`)
+        feedback.success(`${label ?? 'Theme'} applied`)
       }
     } catch (error) {
       feedback.error(getErrorMessage(error))
@@ -145,11 +162,12 @@ export function AppThemeSettingsSection() {
 
     setSaving(true)
     try {
+      // Theme mode goes to user-scoped preference
+      await saveThemePref({ themeMode: 'custom' })
+      // Custom colors remain in tenant settings (shared across business)
       await saveSettings({
-        app_theme_preset_id: 'custom',
         app_background_color: normBg,
         app_card_color: normCard,
-        app_theme_tokens: null,
       }, tenantClient)
       feedback.success('Custom theme updated')
     } catch (error) {
@@ -161,12 +179,15 @@ export function AppThemeSettingsSection() {
   const handleReset = async () => {
     setSaving(true)
     try {
+      // Reset user-scoped preference
+      await saveThemePref({ themePresetId: null, themeMode: 'base' })
+      // Also clear legacy tenant settings for backward compat
       await saveSettings({
         app_theme_preset_id: null,
         app_background_color: null,
         app_card_color: null,
         app_theme_tokens: null,
-      }, tenantClient)
+      }, tenantClient).catch(() => {})
       setSelectedMode(BASE_THEME_MODE)
       setBackground('')
       setCard('')
@@ -180,7 +201,10 @@ export function AppThemeSettingsSection() {
   if (loading) return <SettingsLoadingState />
 
   const activePreset = THEME_PRESETS.find(p => p.id === selectedMode)
-  const themeLabel = selectedMode === 'custom' ? 'Custom Theme' : activePreset?.label || 'Default Theme'
+  const themeLabel = selectedMode === 'custom' ? 'Custom Theme' : activePreset?.label || 'Slate Navy'
+
+  // Determine current dark/light mode from the DOM
+  const isDark = document.documentElement.classList.contains('dark')
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -197,10 +221,11 @@ export function AppThemeSettingsSection() {
         description="Global theme settings that define the visual language of your workspace."
       >
         <SettingsSummaryRow 
-          label="Active Language" 
+          label="Active Theme" 
           value={
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold">{themeLabel}</span>
+              <span className="text-[10px] text-bd-text-muted">{isDark ? 'Dark' : 'Light'}</span>
               {selectedMode === 'custom' && (
                 <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 h-5 px-1.5 text-[9px] font-black uppercase">
                   Manual
@@ -218,16 +243,16 @@ export function AppThemeSettingsSection() {
                 <div className="flex-1" style={{ backgroundColor: selectedMode === 'custom' ? (normalizeHexColor(card) || BASE_CARD) : (activePreset?.preview.card || BASE_CARD) }} />
              </div>
              <p className="text-[11px] text-bd-text-muted leading-relaxed max-w-[200px]">
-               Selected theme applies to all pages and surfaces across the application.
+               Theme and mode apply to all pages. Each user's choice is independent.
              </p>
           </div>
         </div>
       </SettingsSummaryCard>
 
-      {/* Inline Theme Picker */}
+      {/* Theme Family Picker */}
       <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Semantic Presets</h5>
+          <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Theme Family</h5>
           <Badge variant="outline" className="gap-1 border-emerald-100 bg-emerald-50 text-emerald-700 font-bold text-[9px] uppercase">
             <Sparkles className="h-2.5 w-2.5" />
             Recommended
@@ -235,7 +260,7 @@ export function AppThemeSettingsSection() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {THEME_PRESETS.map((preset) => (
+          {SELECTABLE_THEME_PRESETS.map((preset) => (
             <PresetCard
               key={preset.id}
               title={preset.label}
@@ -246,32 +271,7 @@ export function AppThemeSettingsSection() {
             />
           ))}
 
-          {/* Default Reset Button Styled as Card */}
-          <button
-            type="button"
-            onClick={() => handleSelectPreset(BASE_THEME_MODE)}
-            className="group text-left transition-all active:scale-[0.98] outline-none"
-          >
-            <div className={cn(
-              "h-full rounded-[var(--bd-radius-xl)] border p-4 transition-all",
-              selectedMode === BASE_THEME_MODE
-                ? "border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.03)] ring-1 ring-[hsl(var(--bd-button-primary-bg)/0.2)]"
-                : "border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg hover:border-bd-border hover:bg-[hsl(var(--bd-surface-muted)/0.3)]"
-            )}>
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h4 className="text-sm font-bold">Standard UI</h4>
-                <div className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-                  selectedMode === BASE_THEME_MODE ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
-                )}>
-                  <Check size={12} strokeWidth={3} />
-                </div>
-              </div>
-              <p className="text-[11px] text-bd-text-muted">Default Bigdrops experience.</p>
-            </div>
-          </button>
-
-          {/* Custom Trigger Styled as Card */}
+          {/* Custom Theme Card */}
           <button
             type="button"
             onClick={() => handleSelectPreset('custom')}
@@ -295,6 +295,50 @@ export function AppThemeSettingsSection() {
               <p className="text-[11px] text-bd-text-muted">Manual surface overrides.</p>
             </div>
           </button>
+        </div>
+
+        {/* Mode Control: Light / Dark / System */}
+        <div className="space-y-3 pt-2">
+          <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
+          <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Mode</h5>
+          <div className="flex gap-2">
+            {(['light', 'dark', 'system'] as const).map((mode) => {
+              const isActive = mode === 'system'
+                ? preference.themeMode !== 'custom' && !preference.themePresetId
+                : (mode === 'dark') === isDark
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    if (mode === 'system') {
+                      // Reset to system preference
+                      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                      document.documentElement.classList.toggle('dark', prefersDark)
+                    } else {
+                      document.documentElement.classList.toggle('dark', mode === 'dark')
+                    }
+                    // Persist immediately to user preferences
+                    if (userId) {
+                      const nextIsDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                      saveThemePref({
+                        themeMode: nextIsDark ? (preference.themePresetId ?? 'slate-navy') : (preference.themePresetId ?? 'slate-navy'),
+                        themePresetId: preference.themePresetId,
+                      })
+                    }
+                  }}
+                  className={cn(
+                    "flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                    isActive
+                      ? "bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm"
+                      : "border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg text-bd-text-muted hover:border-bd-border"
+                  )}
+                >
+                  {mode === 'light' ? '☀ Light' : mode === 'dark' ? '☽ Dark' : '↺ System'}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Custom Editor Section */}

@@ -1,8 +1,6 @@
 import * as React from 'react'
-import { AlertCircle, ArrowRight, BellRing, X } from 'lucide-react'
+import { ArrowRight, BellRing, X, CircleDotDashed } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-
-import { cn } from '@/lib/utils'
 
 const STORAGE_KEY = 'bd:dashboard:payment-reminder-dismissed:v1'
 
@@ -33,43 +31,55 @@ export function PaymentReminderBanner() {
   return (
     <section
       aria-label="Payment reminder"
-      className="relative overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--border))] bg-[linear-gradient(135deg,hsl(var(--primary)/0.08),hsl(var(--card))_45%,hsl(var(--muted)/0.35))] px-4 py-4 shadow-sm md:px-5"
+      className="relative overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md"
+      style={{
+        boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
+      }}
     >
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-28 bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.16),transparent_70%)]" />
+      {/* V6 decorative corner ring */}
+      <div
+        className="pointer-events-none absolute -right-[36px] -top-[48px] h-[120px] w-[120px] rounded-full border-[18px] border-transparent opacity-85"
+        style={{
+          background: 'conic-gradient(from 180deg, hsl(var(--primary)/0.14), hsl(var(--secondary)/0.13), hsl(var(--primary)/0.14)) border-box',
+          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px))',
+          mask: 'radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px))',
+        }}
+      />
 
-      <div className="relative flex items-start gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--border))] bg-card text-[hsl(var(--primary))] shadow-sm">
-          <BellRing className="size-4" />
+      <div className="relative z-10 flex items-start gap-[9px] p-3">
+        {/* V6 gradient icon */}
+        <div
+          className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[12px] text-white"
+          style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
+        >
+          <BellRing size={16} strokeWidth={1.9} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-            Smart Banner
+          <div className="text-[7px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
+            Smart banner
           </div>
-          <h2 className="mt-1 text-[14px] font-black tracking-tight text-foreground">
+          <h2 className="mt-[3px] text-[12px] font-[800] tracking-[-.04em] text-[hsl(var(--ink))]">
             Keep payments recorded as they land
           </h2>
-          <p className="mt-1 max-w-[44rem] text-[12px] leading-5 text-muted-foreground">
-            Record each invoice payment promptly so your books stay accurate and follow-ups stay clean.
+          <p className="mt-[2px] text-[9px] leading-[1.4] text-[hsl(var(--ink-2))]">
+            Record each invoice payment promptly so your books stay accurate.
           </p>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-[9px] flex items-center gap-[6px]">
             <button
               type="button"
               onClick={() => navigate('/invoices')}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full bg-[hsl(var(--foreground))] px-3.5 py-2 text-[11px] font-black uppercase tracking-wider text-[hsl(var(--background))] transition active:scale-[0.98]',
-                'hover:opacity-95',
-              )}
+              className="inline-flex items-center gap-[6px] rounded-[10px] px-[10px] py-[7px] text-[8px] font-[800] uppercase tracking-[0.065em] text-white transition active:scale-[0.96]"
+              style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
             >
               Record payments
-              <ArrowRight className="size-3.5" />
+              <ArrowRight size={12} strokeWidth={1.9} />
             </button>
-
-            <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-border bg-background/80 px-3 py-2 text-[11px] font-semibold text-muted-foreground">
-              <AlertCircle className="size-3.5" />
-              Evergreen reminder
-            </div>
+            <span className="inline-flex items-center gap-[3px] text-[7px] font-[700] text-[hsl(var(--ink-2))]">
+              <CircleDotDashed size={11} strokeWidth={1.9} />
+              Evergreen
+            </span>
           </div>
         </div>
 
@@ -77,9 +87,9 @@ export function PaymentReminderBanner() {
           type="button"
           aria-label="Dismiss payment reminder"
           onClick={dismiss}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground active:scale-95"
+          className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full text-[hsl(var(--ink-3))] transition hover:text-[hsl(var(--ink-2))] active:scale-95"
         >
-          <X className="size-4" />
+          <X size={14} strokeWidth={1.9} />
         </button>
       </div>
     </section>

@@ -79,7 +79,7 @@ export default function Settings() {
       case 'signatories':
         return <SignatoriesSettingsSection />
       case 'theme':
-        return <AppThemeSettingsSection />
+        return <AppThemeSettingsSection userId={session?.user?.id} />
       case 'notifications':
         return <NotificationSettingsPage />
       case 'dashboard':

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronRight, Clock3, AlertTriangle, CheckCircle2, Info, ReceiptText, Bell } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Info, ReceiptText, Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { getNotificationRoute } from '@/domain/notifications/notificationRoutes'
@@ -40,14 +40,19 @@ function formatRelativeTime(value: string) {
 
 function AlertsSkeleton() {
   return (
-    <div className="flex gap-3 overflow-hidden">
+    <div className="flex gap-2 overflow-hidden">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="min-w-[17rem] max-w-[17rem] rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm">
-          <div className="h-3 w-16 rounded-full bg-muted/80" />
-          <div className="mt-3 h-4 w-32 rounded bg-muted/80" />
-          <div className="mt-2 h-3 w-full rounded bg-muted/70" />
-          <div className="mt-2 h-3 w-3/4 rounded bg-muted/60" />
-          <div className="mt-4 h-3 w-20 rounded bg-muted/60" />
+        <div
+          key={index}
+          className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px]"
+        >
+          <div className="h-2 w-16 rounded bg-[hsl(var(--surface-muted))]/80" />
+          <div className="mt-2 h-3 w-32 rounded bg-[hsl(var(--surface-muted))]/80" />
+          <div className="mt-2 h-2 w-full rounded bg-[hsl(var(--surface-muted))]/70" />
+          <div className="mt-4 flex justify-between">
+            <div className="h-2 w-12 rounded bg-[hsl(var(--surface-muted))]/60" />
+            <div className="h-2 w-10 rounded bg-[hsl(var(--surface-muted))]/60" />
+          </div>
         </div>
       ))}
     </div>
@@ -72,14 +77,19 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <section className="rounded-[var(--bd-radius-xl)] border border-border bg-card px-4 py-4 shadow-sm md:px-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md"
+      style={{
+        boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
+      }}
+    >
+      {/* V6 alerts header */}
+      <div className="mb-[9px] flex items-start justify-between gap-[10px]">
         <div>
-          <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-            Recent Alerts
+          <div className="text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))]">
+            Recent alerts
           </div>
-          <div className="mt-1 text-[12px] text-muted-foreground">
-            Second presentation of the live notifications feed.
+          <div className="mt-[3px] text-[9px] leading-[1.3] text-[hsl(var(--ink-2))]">
+            What needs a response, not just a read.
           </div>
         </div>
       </div>
@@ -87,80 +97,78 @@ export function RecentAlertsCarousel() {
       {loading ? (
         <AlertsSkeleton />
       ) : alerts.length === 0 ? (
-        <div className="rounded-[var(--bd-radius-xl)] border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-[12px] text-muted-foreground">
+        <div className="rounded-[16px] border border-dashed border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] px-4 py-8 text-center text-[12px] text-[hsl(var(--ink-2))]">
           No recent alerts.
         </div>
       ) : (
-        <div className="overflow-x-auto pb-1">
-          <div className="flex min-w-max gap-3">
-            {alerts.map((notification) => {
-              const Icon = getIcon(notification)
-              const route = getNotificationRoute(notification)
-              const unread = isNotificationUnread(notification)
-              const body = notification.message || 'Open the notification to review the linked record.'
-              const time = formatRelativeTime(notification.created_at)
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {alerts.map((notification) => {
+            const Icon = getIcon(notification)
+            const route = getNotificationRoute(notification)
+            const unread = isNotificationUnread(notification)
+            const body = notification.message || 'Open the notification to review the linked record.'
+            const time = formatRelativeTime(notification.created_at)
+            const isWarning = String(notification.severity || '').toLowerCase() === 'critical' ||
+              String(notification.severity || '').toLowerCase() === 'warning'
 
-              const card = (
-                <>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        'grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border bg-muted/60',
-                        unread ? 'text-[hsl(var(--primary))]' : 'text-muted-foreground',
-                      )}>
-                        <Icon className="size-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
-                          Alert
-                        </div>
-                        <div className="mt-1 line-clamp-2 text-[13px] font-bold tracking-tight text-foreground">
-                          {notification.title}
-                        </div>
-                      </div>
-                    </div>
-
-                    {route ? (
-                      <ChevronRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                    ) : null}
-                  </div>
-
-                  <p className="mt-3 line-clamp-3 text-[12px] leading-5 text-muted-foreground">
-                    {body}
-                  </p>
-
-                  <div className="mt-4 flex items-center justify-between gap-3 text-[11px] font-semibold text-muted-foreground">
-                    <span>{time || 'Just now'}</span>
-                    <span>{unread ? 'Unread' : 'Read'}</span>
-                  </div>
-                </>
-              )
-
-              if (!route) {
-                return (
-                  <article
-                    key={notification.id}
-                    className="min-w-[17rem] max-w-[17rem] rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 shadow-sm"
+            const card = (
+              <>
+                <div className="flex items-start gap-[7px]">
+                  <div
+                    className={cn(
+                      'grid h-[29px] w-[29px] shrink-0 place-items-center rounded-[10px]',
+                      isWarning
+                        ? 'bg-[hsl(var(--attention-soft,hsl(var(--attention)/0.1)))] text-[hsl(var(--attention))]'
+                        : 'bg-[hsl(var(--primary)/0.14)] text-[hsl(var(--primary))]',
+                    )}
                   >
-                    {card}
-                  </article>
-                )
-              }
+                    <Icon size={14} strokeWidth={1.9} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[6px] font-[800] uppercase tracking-[0.13em] text-[hsl(var(--ink-3))]">
+                      Alert
+                    </div>
+                    <div className="mt-[2px] line-clamp-2 text-[10px] font-[800] leading-[1.25] text-[hsl(var(--ink))]">
+                      {notification.title}
+                    </div>
+                  </div>
+                </div>
 
+                <p className="mt-[6px] line-clamp-3 text-[8px] leading-[1.4] text-[hsl(var(--ink-2))]">
+                  {body}
+                </p>
+
+                <div className="mt-[8px] flex items-center justify-between text-[7px] font-[700] text-[hsl(var(--ink-3))]">
+                  <span>{time || 'Just now'}</span>
+                  <span>{unread ? 'Unread' : 'Read'}</span>
+                </div>
+              </>
+            )
+
+            if (!route) {
               return (
-                <button
+                <article
                   key={notification.id}
-                  type="button"
-                  onClick={() => void handleSelect(notification)}
-                  className="min-w-[17rem] max-w-[17rem] rounded-[var(--bd-radius-xl)] border border-border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[hsl(var(--primary)/0.35)] hover:shadow-md active:scale-[0.99]"
+                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left"
                 >
                   {card}
-                </button>
+                </article>
               )
-            })}
-          </div>
+            }
+
+            return (
+              <button
+                key={notification.id}
+                type="button"
+                onClick={() => void handleSelect(notification)}
+                className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99]"
+              >
+                {card}
+              </button>
+            )
+          })}
         </div>
       )}
-    </section>
+    </div>
   )
 }
