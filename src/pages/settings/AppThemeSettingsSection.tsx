@@ -126,12 +126,14 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         feedback.error('User session not available')
         return
       }
+      // Preserve current mode when switching theme families.
+      // Use preferenceRef.current to avoid stale closure.
+      const currentMode = preference.themeMode
+
       if (presetId === BASE_THEME_MODE) {
-        // Reset to default — clear user preference
         setSelectedFamily(null)
         setIsCustom(false)
-        await saveThemePref({ themePresetId: null, themeMode: 'system' })
-        // Also clear any legacy tenant settings for backward compat
+        await saveThemePref({ themePresetId: 'slate-navy', themeMode: 'light' })
         await saveSettings({
           app_theme_preset_id: null,
           app_background_color: null,
@@ -143,15 +145,13 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         feedback.success('Default Bigdrops theme restored')
       } else if (presetId === 'custom') {
         setIsCustom(true)
-        await saveThemePref({ themePresetId: null, themeMode: 'system' })
+        await saveThemePref({ themePresetId: null, themeMode: currentMode })
         feedback.success('Custom mode active')
       } else {
-        // Save to user-scoped preference.
-        // themeMode stores the appearance mode ('light' | 'dark' | 'system'),
-        // NOT the preset ID. themePresetId stores the theme family.
+        // Preserve current mode when switching theme families
         setSelectedFamily(presetId)
         setIsCustom(false)
-        await saveThemePref({ themePresetId: presetId, themeMode: 'system' })
+        await saveThemePref({ themePresetId: presetId, themeMode: currentMode })
         const label = THEME_PRESETS.find((preset) => preset.id === presetId)?.label
         feedback.success(`${label ?? 'Theme'} applied`)
       }
@@ -195,9 +195,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
   const handleReset = async () => {
     setSaving(true)
     try {
-      // Reset user-scoped preference — default to slate-navy with system mode
-      await saveThemePref({ themePresetId: 'slate-navy', themeMode: 'system' })
-      // Also clear legacy tenant settings for backward compat
+      // Reset to Slate Navy Light — the canonical default
+      await saveThemePref({ themePresetId: 'slate-navy', themeMode: 'light' })
       await saveSettings({
         app_theme_preset_id: null,
         app_background_color: null,

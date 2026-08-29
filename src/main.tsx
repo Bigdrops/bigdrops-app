@@ -40,15 +40,11 @@ import App from './App.jsx'
 //   });
 // }
 
-// Initialize dark mode from system preference before render.
-// The user-scoped theme preference is resolved by AppThemeManager after auth.
-// We do NOT read from localStorage here to prevent cross-user theme leakage
-// on shared devices (localStorage is not scoped by user ID at this point).
-if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.documentElement.classList.add('dark')
-} else {
-  document.documentElement.classList.remove('dark')
-}
+// Do NOT set dark class here. AppThemeManager is the single owner of
+// document.documentElement class mutations for theme.
+// Setting dark class here before React mounts causes a flash when the
+// user's preference is light (class set → React mounts → class removed).
+// AppThemeManager applies the correct class after preferences load.
 
 const rootElement = document.getElementById('root')
 

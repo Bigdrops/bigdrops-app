@@ -19,7 +19,7 @@ export type UserThemePreference = {
 
 const DEFAULT_PREFERENCE: UserThemePreference = {
   themePresetId: 'slate-navy',
-  themeMode: 'system',
+  themeMode: 'light',
 }
 
 const LOCAL_STORAGE_PREFIX = 'bigdrops_user_theme_'
@@ -41,9 +41,12 @@ function readLocalCache(userId: string): UserThemePreference | null {
     if (parsed && typeof parsed === 'object') {
       const presetId = parsed.themePresetId
       const mode = parsed.themeMode
+      // Handle legacy data where themeMode might contain a preset ID
+      // (e.g., 'slate-navy' stored as themeMode instead of 'light'|'dark'|'system')
+      const validMode = (mode === 'light' || mode === 'dark' || mode === 'system') ? mode : 'light'
       return {
-        themePresetId: isThemePresetId(presetId) ? presetId : null,
-        themeMode: (mode === 'light' || mode === 'dark' || mode === 'system') ? mode : 'system',
+        themePresetId: isThemePresetId(presetId) ? presetId : 'slate-navy',
+        themeMode: validMode,
       }
     }
   } catch {
@@ -107,11 +110,12 @@ export function cleanupStaleThemeCaches(currentUserIds: string[]): void {
 export function useUserThemePreferences(userId: string | undefined | null) {
   const [preference, setPreference] = useState<UserThemePreference>(DEFAULT_PREFERENCE)
   const [loading, setLoading] = useState(Boolean(userId))
-  // Use a ref for lastWriteAt instead of state to avoid triggering
-  // unnecessary re-fetches when the write timestamp changes.
   const lastWriteAtRef = useRef(0)
   const { runLatest, cancel } = useSafeAsyncTask()
   const mountedRef = useRef(true)
+  // Ref to always have current preference without stale closures
+  const preferenceRef = useRef(preference)
+  preferenceRef.current = preference
 
   // Fetch from database, merge with local cache
   const refresh = useCallback(async () => {
@@ -142,8 +146,8 @@ export function useUserThemePreferences(userId: string | undefined | null) {
     const dbPresetId = data.theme_preset_id
     const dbMode = data.theme_mode
     const dbPref: UserThemePreference = {
-      themePresetId: isThemePresetId(dbPresetId) ? dbPresetId : null,
-      themeMode: (dbMode === 'light' || dbMode === 'dark' || dbMode === 'system') ? dbMode : 'system',
+      themePresetId: isThemePresetId(dbPresetId) ? dbPresetId : 'slate-navy',
+      themeMode: (dbMode === 'light' || dbMode === 'dark' || dbMode === 'system') ? dbMode : 'light',
     }
 
     // Merge: if a local write happened very recently, prefer it
@@ -172,22 +176,23 @@ export function useUserThemePreferences(userId: string | undefined | null) {
     }
   }, [runLatest, cancel, refresh])
 
-  // Save preference to database + local cache
+  // Save preference to database + local cache.
+  // Uses preferenceRef to avoid stale closure — always reads current preference.
   const save = useCallback(
     async (updates: Partial<UserThemePreference>) => {
       if (!userId) return
 
       const nextPref: UserThemePreference = {
-        ...preference,
+        ...preferenceRef.current,
         ...updates,
       }
 
-      // Optimistic local update
+      // Optimistic local update — immediately visible
       setPreference(nextPref)
       writeLocalCache(userId, nextPref)
       lastWriteAtRef.current = Date.now()
 
-      // Persist to database
+      // Persist to database asynchronously — do NOT await before UI update
       const { error } = await supabase
         .from('user_preferences')
         .upsert(
@@ -201,11 +206,9 @@ export function useUserThemePreferences(userId: string | undefined | null) {
 
       if (error) {
         console.error('[useUserThemePreferences] Save failed:', error)
-        // Don't revert optimistic update — the local cache is still valid
-        // and the next refresh will reconcile
       }
     },
-    [userId, preference],
+    [userId],
   )
 
   return {
