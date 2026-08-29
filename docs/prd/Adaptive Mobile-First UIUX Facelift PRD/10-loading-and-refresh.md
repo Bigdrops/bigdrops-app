@@ -1,7 +1,7 @@
 # Loading States and Refresh
 
 > Status: Authoritative
-> Last updated: 2026-08-29
+> Last updated: 2026-08-29 (tip library added §23)
 > Supersedes: batch-10 wireframe loading concept (historical reference only — see §22)
 > Depends on: `03-design-system.md`, `04-theme-system.md`, `05-navigation-shell.md`, `11-accessibility.md`, `15-interaction-model.md`
 
@@ -1022,3 +1022,108 @@ The previous version of this document (status: Established, last updated 2026-08
 | Respect reduced motion | Preserved and strengthened (§13) |
 
 The new specification takes precedence over obsolete concepts. The batch-10 wireframe variants remain as historical reference material only. They do NOT define the current loading system.
+
+---
+
+## 23. Tip Content Library — First Draft
+
+> **Status:** First draft for review. This is authored content, not a structural addition to the spec. Every tip below is editable. The user SHOULD review and revise copy before implementation.
+
+This section provides an initial set of tips matching the content model defined in §7. Tips are grouped by category. Each tip follows the contract: `id`, `category`, `message`, `context`, `priority`, `audience`, `repeatPolicy`, `active`.
+
+### Feature Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.feature.convert-quotation` | You can convert an approved quotation directly into an invoice with one tap. | `quotations` | 1 |
+| `tip.feature.duplicate-document` | Any document can be duplicated. Open the document, tap More, and select Duplicate. | `null` | 2 |
+| `tip.feature.column-settings` | Tap the table settings icon on any form to customise which columns appear and their order. | `invoices` | 3 |
+| `tip.feature.advanced-invoices` | Create advance invoices to request partial payment before work begins. | `invoices` | 4 |
+| `tip.feature.project-linking` | Link invoices, quotations, and waybills to a project to keep related documents together. | `null` | 5 |
+
+### Workflow Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.workflow.record-payment` | Record a payment against an invoice to update your outstanding balance automatically. | `invoices` | 1 |
+| `tip.workflow.waybill-from-invoice` | Transform invoice line items into a waybill. Monetary values are stripped automatically. | `invoices` | 2 |
+| `tip.workflow.csr-from-invoice` | Create a Customer Service Report directly from an invoice to track post-sale service. | `invoices` | 3 |
+| `tip.workflow.quotation-to-waybill` | Convert a quotation into a waybill to prepare dispatch without re-entering items. | `quotations` | 4 |
+| `tip.workflow.offline-drafts` | On Android, you can create quotation and CSR drafts offline. They sync when you reconnect. | `null` | 5 |
+
+### Productivity Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.productivity.search-overlay` | Use the search overlay to find any document by number, client name, or project. | `null` | 1 |
+| `tip.productivity.json-import` | Import line items from a JSON file instead of typing them manually. Available on invoice and quotation forms. | `invoices` | 2 |
+| `tip.productivity.custom-columns` | Add custom columns to your line-item table for specifications, part numbers, or internal notes. | `invoices` | 3 |
+| `tip.productivity.merge-qty-unit` | Merge quantity and unit into a single column to save horizontal space on narrow screens. | `invoices` | 4 |
+| `tip.productivity.csv-export` | Export your quotation or RFQ items as CSV for use in spreadsheets. | `quotations` | 5 |
+
+### Shortcut Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.shortcut.save-draft` | Ctrl+S saves a draft. Ctrl+Enter finalises a document. | `null` | 1 |
+| `tip.shortcut.back-button` | On Android, the back button closes overlays first, then navigates back. Double-tap to exit. | `null` | 2 |
+| `tip.shortcut.pull-to-refresh` | Pull down on any list to refresh the data. | `null` | 3 |
+
+### Document Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.document.waybill-strips-money` | Waybills strip monetary values by design. Rates and totals live on the source invoice. | `waybills` | 1 |
+| `tip.document.pdf-templates` | Switch between document templates (Bolt, Crest, Ember, etc.) to change your PDF style. | `pdf-generation` | 2 |
+| `tip.document.signatory` | Add a signatory to your document for authorised approval. The signature appears on the PDF. | `null` | 3 |
+| `tip.document.footer-text` | Configure a footer message in Settings to appear on all your PDFs. | `pdf-generation` | 4 |
+| `tip.document.reference-links` | Attach reference links to documents. They appear on the PDF and in the document view. | `null` | 5 |
+
+### Business Operations Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.business.overdue-recalc` | Overdue flags recalculate every time the dashboard loads. No manual refresh needed. | `null` | 1 |
+| `tip.business.wht-deduction` | Withholding Tax (WHT) is deducted automatically when you select the WHT option on an invoice. | `invoices` | 2 |
+| `tip.business.vat-config` | Set your default VAT rate in Document Settings so it applies to every new invoice automatically. | `null` | 3 |
+| `tip.business.device-codes` | Each linked device gets a unique two-letter code. Use it to track which device created a document. | `null` | 4 |
+
+### Navigation Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.navigation.drawer` | Tap the menu icon to open the drawer and switch between modules. | `null` | 1 |
+| `tip.navigation.recent-documents` | Your recently viewed documents appear on the dashboard for quick access. | `null` | 2 |
+| `tip.navigation.project-hub` | Open a project to see all linked invoices, quotations, waybills, and CSRs in one place. | `projects` | 3 |
+
+### Contextual Tips
+
+| id | message | context | priority |
+|----|---------|---------|----------|
+| `tip.contextual.pdf-generating` | While you wait for this PDF, you can queue multiple documents for download. | `pdf-generation` | 1 |
+| `tip.contextual.import-waiting` | Large imports run in the background. You can continue working while data is processed. | `null` | 2 |
+| `tip.contextual.quotation-expiry` | Set an expiry date on quotations to automatically flag overdue responses. | `quotations` | 3 |
+
+### Summary
+
+| Category | Tips authored |
+|----------|---------------|
+| Feature Tips | 5 |
+| Workflow Tips | 5 |
+| Productivity Tips | 5 |
+| Shortcut Tips | 3 |
+| Document Tips | 5 |
+| Business Operations Tips | 4 |
+| Navigation Tips | 3 |
+| Contextual Tips | 3 |
+| **Total** | **33** |
+
+### Draft Notes
+
+- All tips reference features that are currently shipped in the codebase.
+- No tips reference deferred features (AI integration, split-screen, etc.).
+- The `context` field uses module names matching the routing structure (`invoices`, `quotations`, `waybills`, `projects`, `pdf-generation`, or `null` for general).
+- The `repeatPolicy` defaults to `session:3` (max 3 times per session) per the anti-repetition strategy in §6.
+- The `audience` field is `all` for every tip. Role-based tips MAY be added later.
+- The `active` field is `true` for every tip. Tips can be disabled individually without removing them from the pool.
+- This is a first draft. The user SHOULD review, revise, and approve copy before implementation.

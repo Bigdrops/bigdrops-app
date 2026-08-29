@@ -6,6 +6,7 @@ import {
   TeamSettingsSection,
   DeviceSettingsSection,
   AppThemeSettingsSection,
+  SecuritySettingsSection,
   ArchivesSettingsSection,
   BankingSettingsSection,
   BrandingSettingsSection,
@@ -93,6 +94,8 @@ export default function Settings() {
         return <TeamSettingsSection session={session} />
       case 'devices':
         return <DeviceSettingsSection />
+      case 'security':
+        return <SecuritySettingsSection />
       case 'tenant-debug':
         return null
       default:

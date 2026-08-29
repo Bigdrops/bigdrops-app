@@ -18,6 +18,8 @@ import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
+import BiometricGate from '@/components/app/BiometricGate'
+import { isBiometricLockEnabled } from '@/lib/native/biometric'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
@@ -71,6 +73,7 @@ function App() {
   })
   const [profileLoading, setProfileLoading] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
+  const [biometricLockEnabled, setBiometricLockEnabled] = useState(() => isBiometricLockEnabled())
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null)
@@ -563,17 +566,24 @@ function App() {
                     : !offlineAccessState.allowed
                       ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                       : withBoundary(
-                          <WorkspaceProvider userId={session.user.id}>
-                            <EntityProvider>
-                              <TenantGate>
-                                <AppShell
-                                  session={session}
-                                  profile={profile}
-                                  onProfileUpdate={() => loadProfile(session.user.id)}
-                                />
-                              </TenantGate>
-                            </EntityProvider>
-                          </WorkspaceProvider>
+                          <BiometricGate
+                            enabled={biometricLockEnabled}
+                            onAuthFailure={() => {
+                              void supabase.auth.signOut({ scope: 'local' })
+                            }}
+                          >
+                            <WorkspaceProvider userId={session.user.id}>
+                              <EntityProvider>
+                                <TenantGate>
+                                  <AppShell
+                                    session={session}
+                                    profile={profile}
+                                    onProfileUpdate={() => loadProfile(session.user.id)}
+                                  />
+                                </TenantGate>
+                              </EntityProvider>
+                            </WorkspaceProvider>
+                          </BiometricGate>
                         )
               }
             />

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Palette,
   Shield,
+  ShieldCheck,
   Smartphone,
   Users,
   UserCheck,
@@ -32,6 +33,7 @@ export type ActiveSectionId =
   | 'admin'
   | 'team'
   | 'devices'
+  | 'security'
   | 'tenant-debug'
 
 export type SettingsItem = {
@@ -124,13 +126,19 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         desc: 'Set invoice, quotation, and PDF defaults',
       },
       {
-        id: 'prefixes',
-        label: 'Document Prefixes',
-        icon: Hash,
-        desc: 'Configure prefixes for auto-generated numbers',
+      id: 'prefixes',
+      label: 'Document Prefixes',
+      icon: Hash,
+      desc: 'Configure prefixes for auto-generated numbers',
+    },
+      {
+        id: 'security',
+        label: 'App Lock',
+        icon: ShieldCheck,
+        desc: 'Biometric lock for device-level security',
       },
-    ],
-  },
+  ],
+},
 ]
 
 export const SYSTEM_GROUP: SettingsGroup = {

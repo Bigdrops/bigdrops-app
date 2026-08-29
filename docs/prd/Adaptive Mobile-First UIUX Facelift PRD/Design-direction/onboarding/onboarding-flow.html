@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#1e3a5f" />
+<meta name="theme-color" content="#1e3a5f" /><!-- ponytail: overridden by JS per-theme -->
 <title>BIGDROPS Onboarding Flow Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
+/* ============ ROOT VARIABLES ============ */
 :root{
   --bg:#f0f4f8;--surface:#ffffff;--surface-raised:#f8fafc;--surface-muted:#e2e8f0;--surface-strong:#cbd5e1;
   --ink:#0f172a;--ink-2:#475569;--ink-3:#94a3b8;
@@ -27,31 +28,33 @@
   --success:#16a34a;
 }
 [data-theme="dark"]{
-  --bg:#0f172a;--surface:#1e293b;--surface-raised:#253448;--surface-muted:#334155;--surface-strong:#475569;
-  --ink:#f1f5f9;--ink-2:#cbd5e1;--ink-3:#64748b;
-  --primary:#60a5fa;--primary-bright:#93c5fd;--primary-soft:color-mix(in srgb,var(--primary) 20%,transparent);
-  --secondary:#94a3b8;--secondary-bright:#cbd5e1;--secondary-soft:color-mix(in srgb,var(--secondary) 18%,transparent);
-  --attention:#f87171;--attention-soft:#3b1518;
-  --sage:#94a3b8;--sage-soft:#1e293b;
-  --line:rgba(241,245,249,.08);--line-strong:rgba(241,245,249,.15);
-  --shadow:0 12px 28px rgba(0,0,0,.38),0 2px 6px rgba(0,0,0,.26);
-  --shadow-float:0 18px 44px rgba(0,0,0,.52),0 3px 10px rgba(0,0,0,.34);
-  --nav:rgba(15,23,42,.88);--success:#4ad890;
+  /* ponytail: sourced from dashlane-midnight-vault wireframe variant */
+  --bg:#200F0A; --surface:#2B2538; --surface-raised:#3A3348; --surface-muted:#322C3E; --surface-strong:#4A4358;
+  --ink:#FCFAF9; --ink-2:#A69F9D; --ink-3:#6B6560;
+  --primary:#A2F6F5; --primary-bright:#C5FAFA; --primary-soft:rgba(162,246,245,0.12);
+  --secondary:#858DF9; --secondary-bright:#A5ABFA; --secondary-soft:rgba(133,141,249,0.12);
+  --attention:#FF6B6B; --attention-soft:rgba(255,107,107,0.12);
+  --sage:#6B6560; --sage-soft:rgba(107,101,96,0.12);
+  --line:rgba(252,250,249,0.08); --line-strong:rgba(252,250,249,0.16);
+  --shadow:0 12px 28px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.3);
+  --shadow-float:0 18px 44px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4);
+  --nav:rgba(32,15,10,0.92);
+  --success:#4ADE80;
 }
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;transition:background .34s ease,color .34s ease;display:flex;justify-content:center;align-items:flex-start}
-[data-theme="dark"] body{background:radial-gradient(ellipse at top,color-mix(in srgb,var(--secondary) 30%,#0a1212),color-mix(in srgb,var(--primary) 35%,#0a1212) 60%,color-mix(in srgb,var(--primary) 14%,black))}
+[data-theme="dark"] body{background:radial-gradient(ellipse at top, #2B2538, #200F0A 60%, #150A06)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:active{transform:scale(.965)}
-button:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-input{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+input,select{font:inherit;color:inherit}
 .app{width:100%;max-width:430px;min-height:100dvh;position:relative;margin:0 auto;overflow:hidden;background:var(--bg);transition:background .34s ease,color .34s ease;display:flex;flex-direction:column}
 @media(min-width:560px){body{padding:22px 0;align-items:center}.app{min-height:auto;height:880px;border:1px solid var(--line-strong);border-radius:40px;box-shadow:var(--shadow-float)}}
 @media(min-width:900px){.app{max-width:480px}}
 .proto-controls{position:fixed;top:8px;right:8px;z-index:999;background:var(--surface);border:2px dashed var(--primary);border-radius:14px;padding:10px 12px;max-width:240px;box-shadow:var(--shadow-float)}
 .proto-controls summary{cursor:pointer;color:var(--primary);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;list-style:none;display:flex;align-items:center;gap:6px}
 .proto-controls summary::before{content:"PROTO";font-size:7px;background:var(--primary);color:#fff;padding:1px 4px;border-radius:3px}
-[data-theme="dark"] .proto-controls summary::before{color:var(--ink)}
+[data-theme="dark"] .proto-controls summary::before{color:#200F0A}
 .proto-controls[open] summary{margin-bottom:8px}
 .proto-controls .pc-label{color:var(--ink-3);font-size:7px;margin:6px 0 3px;display:block;text-transform:uppercase;letter-spacing:.06em}
 .proto-controls .pc-grid{display:flex;flex-direction:column;gap:4px}
@@ -76,14 +79,14 @@ input{font:inherit;color:inherit}
 .content::-webkit-scrollbar{display:none}
 .entry{align-items:center;justify-content:center;text-align:center;padding:32px 24px}
 .entry .brand-mark{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--gradient);color:#fff;margin-bottom:20px;box-shadow:0 8px 20px color-mix(in srgb,var(--primary) 25%,transparent)}
-[data-theme="dark"] .entry .brand-mark{color:var(--ink)}
+[data-theme="dark"] .entry .brand-mark{color:#200F0A}
 .entry .brand-mark svg{width:28px;height:28px}
 .entry h1{font-size:22px;font-weight:800;letter-spacing:-.04em;margin:0 0 6px}
 .entry-sub{font-size:11px;color:var(--ink-2);line-height:1.45;max-width:260px;margin:0 auto 28px}
 .entry-btn{width:100%;max-width:300px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:10px;transition:transform .1s}
 .entry-btn svg{width:18px;height:18px}
 .entry-btn.primary{background:var(--gradient);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--primary) 30%,transparent)}
-[data-theme="dark"] .entry-btn.primary{color:var(--ink)}
+[data-theme="dark"] .entry-btn.primary{color:#200F0A}
 .entry-btn.secondary{background:var(--surface);border:1px solid var(--line-strong);color:var(--ink);box-shadow:var(--shadow)}
 .entry-btn:active{transform:scale(.97)}
 .entry-divider{display:flex;align-items:center;gap:10px;margin:14px 0;width:100%;max-width:300px}
@@ -104,18 +107,20 @@ input{font:inherit;color:inherit}
 .field-hint{font-size:8px;color:var(--ink-3);margin-top:4px}
 .field-pw-wrap{position:relative}
 .field-pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
+/* Password strength meter */
+.pw-strength{margin-top:6px;display:flex;align-items:center;gap:6px}
+.pw-strength-bar{flex:1;height:4px;border-radius:2px;background:var(--surface-muted);overflow:hidden}
+.pw-strength-fill{height:100%;width:0;background:var(--attention);transition:width .2s,background .2s}
+.pw-strength-label{font-size:8px;font-weight:800;color:var(--ink-3);min-width:50px;text-align:right}
 .btn-primary{width:100%;height:46px;border-radius:14px;background:var(--gradient);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;transition:transform .1s}
-[data-theme="dark"] .btn-primary{color:var(--ink)}
+[data-theme="dark"] .btn-primary{color:#200F0A}
 .btn-primary:active{transform:scale(.97)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-primary svg{width:16px;height:16px}
 .btn-secondary{width:100%;height:42px;border-radius:12px;background:var(--surface-muted);border:1px solid var(--line);color:var(--ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
 .btn-link{font-size:11px;color:var(--primary);font-weight:700;background:none;padding:4px 0;margin-top:10px;display:inline-block}
-.step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:12px}
-.step-dot{width:24px;height:4px;border-radius:2px;background:var(--surface-muted);transition:background .3s}
-.step-dot.active{background:var(--gradient)}
-.step-dot.done{background:var(--primary)}
-.step-label{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:4px}
+
+/* Ponytail: step-indicator removed — PRD does not define a numbered wizard */
 .choice-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:border-color .2s;width:100%;text-align:left}
 .choice-card:hover{border-color:var(--primary)}
 .choice-card:active{transform:scale(.98)}
@@ -133,7 +138,7 @@ input{font:inherit;color:inherit}
 .pending-ws-name{display:inline-flex;align-items:center;gap:6px;background:var(--surface-muted);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;margin-bottom:16px}
 .loading-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px calc(32px + env(safe-area-inset-bottom));text-align:center}
 .ls-brand{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--gradient);color:#fff;margin-bottom:24px;animation:ls-pulse 1.8s ease-in-out infinite}
-[data-theme="dark"] .ls-brand{color:var(--ink)}
+[data-theme="dark"] .ls-brand{color:#200F0A}
 .ls-brand svg{width:24px;height:24px}
 @keyframes ls-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.9}}
 .ls-spinner{width:36px;height:36px;border:3px solid var(--surface-muted);border-top-color:var(--primary);border-radius:50%;animation:ls-spin .9s linear infinite;margin-bottom:18px}
@@ -147,7 +152,7 @@ input{font:inherit;color:inherit}
 .ls-stage.active .stage-dot{border-color:var(--primary)}
 .ls-stage.done .stage-dot{border-color:var(--success);background:var(--success)}
 .stage-dot svg{width:10px;height:10px;color:#fff}
-[data-theme="dark"] .stage-dot svg{color:var(--ink)}
+[data-theme="dark"] .stage-dot svg{color:#200F0A}
 .tip-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;max-width:300px;width:100%;text-align:left;box-shadow:var(--shadow)}
 .tip-label{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;display:flex;align-items:center;gap:5px}
 .tip-label svg{width:12px;height:12px;color:var(--primary)}
@@ -164,7 +169,7 @@ input{font:inherit;color:inherit}
 .error-card p{font-size:11px;color:var(--ink-2);line-height:1.45;margin:0 0 16px}
 .ctx-screen{align-items:center;justify-content:center;text-align:center;padding:32px 24px}
 .ctx-brand{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--gradient);color:#fff;margin-bottom:20px}
-[data-theme="dark"] .ctx-brand{color:var(--ink)}
+[data-theme="dark"] .ctx-brand{color:#200F0A}
 .ctx-brand svg{width:20px;height:20px}
 .ctx-label{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
 .ctx-value{font-size:15px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-bottom:20px}
@@ -180,7 +185,7 @@ input{font:inherit;color:inherit}
 .dash-icon-btn{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--surface-raised);display:grid;place-items:center;position:relative;box-shadow:0 2px 6px rgba(30,28,24,.05),inset 0 1px rgba(255,255,255,.35)}
 .dash-icon-btn svg{width:17px;height:17px}
 .dash-ai-btn{background:var(--gradient);border-color:transparent;color:#fff;font-size:10px;font-weight:800}
-[data-theme="dark"] .dash-ai-btn{color:var(--ink)}
+[data-theme="dark"] .dash-ai-btn{color:#200F0A}
 .notif-pip{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--attention);border:1.5px solid var(--surface-raised)}
 .dash-content{padding:6px 14px calc(106px + env(safe-area-inset-bottom))}
 .dash-eyebrow{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px}
@@ -247,6 +252,53 @@ input{font:inherit;color:inherit}
 .hint-dismiss{font-size:10px;font-weight:700;color:var(--primary);padding:4px 0}
 .hint-gotit{margin-left:auto;padding:6px 14px;border-radius:10px;background:var(--gradient);color:#fff;font-size:10px;font-weight:800}
 [data-theme="dark"] .hint-gotit{color:var(--ink)}
+
+/* ============ ADDITIONS / ENHANCEMENTS ============ */
+
+/* Skeleton loading */
+.skeleton{background:linear-gradient(90deg,var(--surface-muted) 25%,var(--surface-strong) 50%,var(--surface-muted) 75%);background-size:200% 100%;animation:skeleton-shimmer 1.2s infinite;border-radius:8px}
+@keyframes skeleton-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-kpi{height:80px;border-radius:18px}
+.skeleton-act{height:48px;border-radius:12px}
+.skeleton-text{height:12px;width:60%;margin:8px 0}
+.skeleton-section{margin-bottom:14px}
+
+/* Slug availability */
+.slug-status{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;margin-top:4px}
+.slug-status.available{color:var(--success)}
+.slug-status.taken{color:var(--attention)}
+
+/* Notification panel */
+.notif-panel{position:absolute;z-index:45;top:0;right:0;bottom:0;width:min(85%,340px);background:var(--surface);box-shadow:var(--shadow-float);border-radius:24px 0 0 24px;transform:translateX(105%);transition:transform .3s cubic-bezier(.2,.9,.24,1);padding-top:env(safe-area-inset-top)}
+.notif-panel.show{transform:translateX(0)}
+.notif-head{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.notif-title{font-size:13px;font-weight:800}
+.notif-list{padding:8px;overflow-y:auto;flex:1}
+.notif-item{padding:12px;border-radius:12px;margin-bottom:8px;background:var(--surface-muted)}
+.notif-item .notif-time{font-size:8px;color:var(--ink-3);margin-top:4px}
+
+/* Floating action button */
+.fab{position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:var(--gradient);color:#fff;display:grid;place-items:center;box-shadow:var(--shadow-float);z-index:25}
+[data-theme="dark"] .fab{color:var(--ink)}
+.fab svg{width:24px;height:24px}
+
+/* Coach mark */
+.coach-mark{position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));right:76px;background:var(--surface);border:1px solid var(--primary);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-float);z-index:36;font-size:11px;max-width:200px}
+.coach-mark::after{content:"";position:absolute;top:50%;right:-6px;transform:translateY(-50%) rotate(45deg);width:10px;height:10px;background:var(--surface);border-right:1px solid var(--primary);border-top:1px solid var(--primary)}
+
+/* Edit metrics mode */
+.kpi-card.editing{opacity:.6;pointer-events:none}
+.kpi-card.hidden{display:none}
+
+/* RC Number field */
+#rc-number-group{display:none}
+
+/* Invitation simulation */
+.invite-sim-btn{margin-top:16px;background:var(--surface-muted);border:1px dashed var(--line-strong);border-radius:12px;padding:10px;font-size:10px;color:var(--ink-2);cursor:pointer}
+.invite-sim-btn:hover{background:var(--primary-soft);color:var(--primary)}
+
+/* Focus management */
+.screen.active h1, .screen.active h2, .screen.active .form-title{outline:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}}
 </style>
 </head>
@@ -298,7 +350,7 @@ input{font:inherit;color:inherit}
 <h2 class="form-title">Get started</h2>
 <p class="form-desc">Create your BIGDROPS account to start managing your business.</p>
 <div class="field-group"><label class="field-label" for="su-email">Email</label><input class="field-input" id="su-email" type="email" placeholder="you@company.com" autocomplete="email" /><div class="field-error" id="su-email-err">Enter a valid email address.</div></div>
-<div class="field-group"><label class="field-label" for="su-pw">Password</label><div class="field-pw-wrap"><input class="field-input" id="su-pw" type="password" placeholder="At least 8 characters" autocomplete="new-password" /><button class="field-pw-toggle" onclick="togglePw('su-pw',this)" aria-label="Show password"><i data-lucide="eye" style="width:16px;height:16px"></i></button></div><div class="field-error" id="su-pw-err">Password must be at least 8 characters.</div><div class="field-hint">Use 8+ characters with a mix of letters and numbers.</div></div>
+<div class="field-group"><label class="field-label" for="su-pw">Password</label><div class="field-pw-wrap"><input class="field-input" id="su-pw" type="password" placeholder="At least 8 characters" autocomplete="new-password" oninput="checkPasswordStrength(this.value)" /><button class="field-pw-toggle" onclick="togglePw('su-pw',this)" aria-label="Show password"><i data-lucide="eye" style="width:16px;height:16px"></i></button></div><div class="field-error" id="su-pw-err">Password must be at least 8 characters.</div><div class="field-hint">Use 8+ characters with a mix of letters and numbers.</div><div class="pw-strength"><div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div><span class="pw-strength-label" id="pw-strength-label">Weak</span></div></div>
 <div class="field-group"><label class="field-label" for="su-pw2">Confirm Password</label><div class="field-pw-wrap"><input class="field-input" id="su-pw2" type="password" placeholder="Re-enter password" autocomplete="new-password" /><button class="field-pw-toggle" onclick="togglePw('su-pw2',this)" aria-label="Show password"><i data-lucide="eye" style="width:16px;height:16px"></i></button></div><div class="field-error" id="su-pw2-err">Passwords do not match.</div></div>
 <button class="btn-primary" id="su-submit" onclick="submitSignUp()"><span id="su-btn-text">Create Account</span></button>
 <button class="btn-link" onclick="go('SIGN_IN')">Already have an account? Sign In</button>
@@ -356,8 +408,8 @@ input{font:inherit;color:inherit}
 <div style="width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);margin:0 auto 14px"><i data-lucide="mail-check" style="width:28px;height:28px"></i></div>
 <h2 class="form-title">Check your email</h2>
 <p class="form-desc">We sent a verification link to <strong id="verify-email-display" style="color:var(--ink)">your email</strong>. Click the link to confirm your account.</p>
-<button class="btn-primary" onclick="go('ONBOARDING')"><i data-lucide="check-circle"></i> I've Verified - Continue</button>
-<button class="btn-secondary" id="resend-btn" onclick="resendVerify()" style="margin-top:10px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Resend verification</button>
+<button class="btn-primary" onclick="go('INVITE_ACCEPTANCE')"><i data-lucide="check-circle"></i> I've Verified - Continue</button>
+<button class="btn-secondary" id="resend-btn" onclick="resendVerify()" style="margin-top:10px"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> <span id="resend-text">Resend verification</span></button>
 <button class="btn-link" onclick="go('SIGN_UP')">Change email</button>
 </div></div>
 </section>
@@ -366,7 +418,6 @@ input{font:inherit;color:inherit}
 <section class="screen" id="screen-ONBOARDING" role="main" aria-label="Onboarding">
 <div class="topbar"><button class="back-btn" onclick="go('ENTRY')" aria-label="Back"><i data-lucide="chevron-left"></i></button><span class="tb-title">Set Up Workspace</span><span class="tb-spacer"></span></div>
 <div class="content">
-<div class="step-indicator"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><span class="step-label">Step 1 of 3</span></div>
 <h2 class="form-title" style="padding:0 2px">Choose your workspace</h2>
 <p class="form-desc" style="padding:0 2px 16px">A workspace holds your companies. You can create one or join an existing one.</p>
 <button class="choice-card" onclick="go('WORKSPACE_SETUP')"><div class="choice-icon create"><i data-lucide="building-2"></i></div><div class="choice-body"><h3>Create a Workspace</h3><p>Start a new organisation. Add companies and invite your team.</p></div></button>
@@ -384,6 +435,7 @@ input{font:inherit;color:inherit}
 <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface-muted);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;margin-bottom:16px"><i data-lucide="at-sign" style="width:14px;height:14px;color:var(--ink-3)"></i><span id="join-email-display">your@email.com</span></div>
 <p class="form-desc" style="margin-bottom:16px">Once invited, you'll see the invitation next time you open BIGDROPS.</p>
 <button class="btn-secondary" onclick="go('ENTRY')"><i data-lucide="log-in" style="width:14px;height:14px"></i> Back to Sign In</button>
+<button class="invite-sim-btn" onclick="simulateInvitation()"><i data-lucide="mail-plus" style="width:14px;height:14px"></i> Simulate receiving invitation</button>
 </div></div>
 </section>
 
@@ -391,12 +443,11 @@ input{font:inherit;color:inherit}
 <section class="screen" id="screen-WORKSPACE_SETUP" role="main" aria-label="Create workspace">
 <div class="topbar"><button class="back-btn" onclick="go('ONBOARDING')" aria-label="Back"><i data-lucide="chevron-left"></i></button><span class="tb-title">Create Workspace</span><span class="tb-spacer"></span></div>
 <div class="content">
-<div class="step-indicator"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><span class="step-label">Step 1 of 3</span></div>
 <div class="form-card">
 <h2 class="form-title">Name your workspace</h2>
 <p class="form-desc">A workspace is your organisation. You can add multiple companies inside it.</p>
 <div class="field-group"><label class="field-label" for="ws-name">Workspace Name</label><input class="field-input" id="ws-name" type="text" placeholder="e.g. BIGDROPS Group" oninput="autoSlug('ws-name','ws-slug')" /><div class="field-error" id="ws-name-err">Enter a workspace name.</div></div>
-<div class="field-group"><label class="field-label" for="ws-slug">Workspace Slug</label><input class="field-input" id="ws-slug" type="text" placeholder="bigdrops-group" /><div class="field-hint">Used in URLs and identifiers.</div></div>
+<div class="field-group"><label class="field-label" for="ws-slug">Workspace Slug</label><input class="field-input" id="ws-slug" type="text" placeholder="bigdrops-group" oninput="checkSlug('ws-slug','ws-slug-status')" /><div class="slug-status" id="ws-slug-status"></div></div>
 <button class="btn-primary" id="ws-submit" onclick="submitWorkspace()"><span id="ws-btn-text">Create Workspace</span></button>
 </div></div>
 </section>
@@ -426,15 +477,15 @@ input{font:inherit;color:inherit}
 <section class="screen" id="screen-COMPANY_SETUP" role="main" aria-label="Create company">
 <div class="topbar"><button class="back-btn" onclick="go('WORKSPACE_PENDING')" aria-label="Back"><i data-lucide="chevron-left"></i></button><span class="tb-title">Create Company</span><span class="tb-spacer"></span></div>
 <div class="content">
-<div class="step-indicator"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><span class="step-label">Step 2 of 3</span></div>
 <div class="form-card">
 <h2 class="form-title">Create your first company</h2>
 <p class="form-desc">A company is the business entity you'll manage invoices, quotations, and projects for.</p>
 <div class="field-group"><label class="field-label" for="co-name">Company Name</label><input class="field-input" id="co-name" type="text" placeholder="e.g. Sun & Shield Power Solutions" oninput="autoSlug('co-name','co-slug')" /><div class="field-error" id="co-name-err">Enter a company name.</div></div>
-<div class="field-group"><label class="field-label" for="co-slug">Company Slug</label><input class="field-input" id="co-slug" type="text" placeholder="sun-shield-power" /></div>
+<div class="field-group"><label class="field-label" for="co-slug">Company Slug</label><input class="field-input" id="co-slug" type="text" placeholder="sun-shield-power" oninput="checkSlug('co-slug','co-slug-status')" /><div class="slug-status" id="co-slug-status"></div></div>
 <div class="field-group"><label class="field-label" for="co-type">Company Type</label>
-<select class="field-input" id="co-type"><option value="">Select type...</option><option>Limited Liability Company</option><option>Sole Proprietorship</option><option>Partnership</option><option> Incorporated Trustee</option></select>
+<select class="field-input" id="co-type" onchange="companyTypeChange()"><option value="">Select type...</option><option>Limited Liability Company</option><option>Sole Proprietorship</option><option>Partnership</option><option> Incorporated Trustee</option></select>
 <div class="field-error" id="co-type-err">Select a company type.</div></div>
+<div class="field-group" id="rc-number-group"><label class="field-label" for="rc-number">RC Number</label><input class="field-input" id="rc-number" type="text" placeholder="e.g. RC 123456" /><div class="field-error" id="rc-number-err">Enter RC Number for Limited Liability Company.</div></div>
 <button class="btn-primary" id="co-submit" onclick="submitCompany()"><span id="co-btn-text">Create Company</span></button>
 </div></div>
 </section>
@@ -465,9 +516,24 @@ input{font:inherit;color:inherit}
 <div class="error-card">
 <div class="error-icon"><i data-lucide="alert-triangle"></i></div>
 <h2>We couldn't set up your company</h2>
-p>Something went wrong during setup. This is not your fault. Please try again.</p>
+<p>Something went wrong during setup. This is not your fault. Please try again.</p>
 <button class="btn-primary" onclick="go('COMPANY_PROVISIONING')"><i data-lucide="refresh-cw"></i> Retry Setup</button>
 <button class="btn-secondary" style="margin-top:8px" onclick="go('ENTRY')"><i data-lucide="headset"></i> Contact Support</button>
+</div></div>
+</section>
+
+<!-- INVITE ACCEPTANCE (§12.3 — pending invitation auto-detected at startup) -->
+<section class="screen" id="screen-INVITE_ACCEPTANCE" role="main" aria-label="Accept invitation">
+<div class="topbar"><button class="back-btn" onclick="go('ENTRY')" aria-label="Back"><i data-lucide="chevron-left"></i></button><span class="tb-title">Invitation</span><span class="tb-spacer"></span></div>
+<div class="content">
+<div class="pending-card">
+<div class="pending-icon"><i data-lucide="mail-check"></i></div>
+<h2>You've been invited</h2>
+<p>A workspace administrator has invited you to join.</p>
+<div class="pending-ws-name"><i data-lucide="building-2" style="width:14px;height:14px"></i> <span id="invite-ws-name">Acme Workspace</span></div>
+<div style="font-size:10px;color:var(--ink-3);margin-bottom:16px">Invited by <strong style="color:var(--ink-2)">admin@acme.com</strong></div>
+<button class="btn-primary" onclick="acceptInvitation()"><i data-lucide="check-circle"></i> Accept invitation</button>
+<button class="btn-link" onclick="passInvitation()">Pass for now</button>
 </div></div>
 </section>
 
@@ -487,24 +553,13 @@ p>Something went wrong during setup. This is not your fault. Please try again.</
 <section class="screen" id="screen-DASHBOARD_FIRST_RUN" role="main" aria-label="Dashboard">
 <div class="dash-topbar">
 <div class="dash-tl"><button class="dash-menu-btn" onclick="openDrawer()" aria-label="Open navigation"><i data-lucide="panel-left"></i></button><div><div class="dash-ws">BIGDROPS GROUP</div><div class="dash-owner">Milad A.</div></div></div>
-<div class="dash-tr"><button class="dash-icon-btn" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="moon" id="dash-theme-icon"></i></button><button class="dash-icon-btn" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-pip"></span></button><button class="dash-icon-btn" aria-label="Search"><i data-lucide="search"></i></button><button class="dash-icon-btn dash-ai-btn" aria-label="AI">AI</button></div>
+<div class="dash-tr"><button class="dash-icon-btn" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="moon" id="dash-theme-icon"></i></button><button class="dash-icon-btn" onclick="openNotifications()" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-pip"></span></button><button class="dash-icon-btn" aria-label="Search"><i data-lucide="search"></i></button><button class="dash-icon-btn dash-ai-btn" aria-label="AI">AI</button></div>
 </div>
 <div class="dash-content" id="dash-content-first">
-<div class="dash-eyebrow"><span>Finance pulse - August 2026</span><button>Edit metrics</button></div>
-<div class="kpi-grid">
-<button class="kpi-card"><span class="kpi-label">Total invoiced</span><span class="kpi-value">N0</span><span class="kpi-trend">No invoices yet</span></button>
-<button class="kpi-card collect"><span class="kpi-label">Collected this month</span><span class="kpi-value">N0</span><span class="kpi-trend">No collections yet</span></button>
-<button class="kpi-card"><span class="kpi-label">Outstanding</span><span class="kpi-value">N0</span><span class="kpi-trend">Nothing owed</span></button>
-<button class="kpi-card"><span class="kpi-label">Overdue</span><span class="kpi-value">N0</span><span class="kpi-trend">Nothing overdue</span></button>
+<!-- Skeleton loading will be inserted here by JS -->
 </div>
-<div class="dash-section"><h2 class="dash-section-title">Recent activity</h2><div class="dash-card" style="padding:24px 16px;text-align:center"><div style="width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);margin:0 auto 10px"><i data-lucide="receipt-text" style="width:24px;height:24px"></i></div><div style="font-size:11px;font-weight:800;color:var(--ink)">No activity yet</div><div style="font-size:9px;color:var(--ink-3);margin-top:3px">Create your first invoice to get started.</div></div></div>
-<div class="hint-card" id="first-hint">
-<div class="hint-label"><i data-lucide="lightbulb"></i> Welcome to BIGDROPS</div>
-<div class="hint-title">Your workspace is ready</div>
-<div class="hint-text">Tap the + button to create your first invoice, quotation, or project. Use the menu to switch companies.</div>
-<div class="hint-actions"><button class="hint-dismiss" onclick="dismissHint()">Remind me later</button><button class="hint-gotit" onclick="dismissHint()">Got it</button></div>
-</div>
-</div>
+<button class="fab" onclick="alert('Create new document')" aria-label="Create new"><i data-lucide="plus"></i></button>
+<div class="coach-mark" id="coach-mark">Tap + to create your first invoice, quotation, or project.</div>
 <div class="bottom-nav"><button class="nav-tab active"><i data-lucide="house"></i><span>Home</span></button><button class="nav-tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button><button class="nav-tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button><button class="nav-tab"><i data-lucide="contact-round"></i><span>Clients</span></button><button class="nav-tab"><i data-lucide="ellipsis"></i><span>More</span></button></div>
 </section>
 
@@ -512,21 +567,12 @@ p>Something went wrong during setup. This is not your fault. Please try again.</
 <section class="screen" id="screen-DASHBOARD_RETURNING" role="main" aria-label="Dashboard">
 <div class="dash-topbar">
 <div class="dash-tl"><button class="dash-menu-btn" onclick="openDrawer()" aria-label="Open navigation"><i data-lucide="panel-left"></i></button><div><div class="dash-ws">BIGDROPS GROUP</div><div class="dash-owner">Milad A.</div></div></div>
-<div class="dash-tr"><button class="dash-icon-btn" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="moon" id="dash-theme-icon2"></i></button><button class="dash-icon-btn" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-pip"></span></button><button class="dash-icon-btn" aria-label="Search"><i data-lucide="search"></i></button><button class="dash-icon-btn dash-ai-btn" aria-label="AI">AI</button></div>
+<div class="dash-tr"><button class="dash-icon-btn" onclick="toggleTheme()" aria-label="Toggle theme"><i data-lucide="moon" id="dash-theme-icon2"></i></button><button class="dash-icon-btn" onclick="openNotifications()" aria-label="Notifications"><i data-lucide="bell"></i><span class="notif-pip"></span></button><button class="dash-icon-btn" aria-label="Search"><i data-lucide="search"></i></button><button class="dash-icon-btn dash-ai-btn" aria-label="AI">AI</button></div>
 </div>
-<div class="dash-content">
-<div class="dash-eyebrow"><span>Finance pulse - August 2026</span><button>Edit metrics</button></div>
-<div class="kpi-grid">
-<button class="kpi-card"><span class="kpi-label">Total invoiced</span><span class="kpi-value">N1,240,000</span><span class="kpi-trend">+12% vs last month</span></button>
-<button class="kpi-card collect"><span class="kpi-label">Collected this month</span><span class="kpi-value">N89,000</span><span class="kpi-trend">+18% vs last month</span></button>
-<button class="kpi-card"><span class="kpi-label">Outstanding</span><span class="kpi-value">N340,000</span><span class="kpi-trend">28% of total invoiced</span></button>
-<button class="kpi-card"><span class="kpi-label">Overdue</span><span class="kpi-value">N86,000</span><span class="kpi-trend">25% of outstanding</span></button>
+<div class="dash-content" id="dash-content-returning">
+<!-- Skeleton loading will be inserted here by JS -->
 </div>
-<div class="dash-section"><h2 class="dash-section-title">Recent activity</h2><div class="dash-card">
-<button class="act-row"><span class="act-icon"><i data-lucide="receipt-text"></i></span><span style="flex:1;min-width:0"><span class="act-primary">INV-0045 <span class="status-pill">Pending</span></span><div class="act-meta">Lagos Steel Works - Aug 15</div></span><span><span class="act-val">N120,000</span></span></button>
-<button class="act-row"><span class="act-icon"><i data-lucide="file-signature"></i></span><span style="flex:1;min-width:0"><span class="act-primary">QTN-0109 <span class="status-pill" style="background:var(--primary-soft);color:var(--primary)">Draft</span></span><div class="act-meta">Westfield Corp - Aug 14</div></span><span><span class="act-val">N340,000</span></span></button>
-</div></div>
-</div>
+<button class="fab" onclick="alert('Create new document')" aria-label="Create new"><i data-lucide="plus"></i></button>
 <div class="bottom-nav"><button class="nav-tab active"><i data-lucide="house"></i><span>Home</span></button><button class="nav-tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button><button class="nav-tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button><button class="nav-tab"><i data-lucide="contact-round"></i><span>Clients</span></button><button class="nav-tab"><i data-lucide="ellipsis"></i><span>More</span></button></div>
 </section>
 
@@ -534,7 +580,7 @@ p>Something went wrong during setup. This is not your fault. Please try again.</
 <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
 <aside class="drawer" id="drawer" aria-label="Navigation">
 <div class="drawer-head"><div class="drawer-brand"><i data-lucide="sparkles"></i></div><div><div class="drawer-brand-name">BIGDROPS</div><div class="drawer-brand-sub">Project finance workspace</div></div></div>
-<div class="drawer-company-row"><div><div class="drawer-company-label">Current Company</div><div class="drawer-company-name" id="drawer-company">Sun & Shield Power</div></div><i data-lucide="chevron-right"></i></div>
+<div class="drawer-company-row" onclick="switchCompany()"><div><div class="drawer-company-label">Current Company</div><div class="drawer-company-name" id="drawer-company">Sun & Shield Power</div></div><i data-lucide="chevron-right"></i></div>
 <div class="drawer-list">
 <div class="drawer-label">Workspace</div>
 <button class="drawer-row active"><i data-lucide="layout-dashboard"></i>Dashboard</button>
@@ -550,69 +596,83 @@ p>Something went wrong during setup. This is not your fault. Please try again.</
 <div class="drawer-foot"><div class="user-avatar">MA</div><div><div class="user-name">Milad A.</div><div class="user-role">Operator</div></div></div>
 </aside>
 
+<!-- Notification Panel -->
+<div class="scrim" id="notif-scrim" onclick="closeNotifications()"></div>
+<aside class="notif-panel" id="notif-panel" aria-label="Notifications">
+<div class="notif-head"><span class="notif-title">Notifications</span><button class="back-btn" onclick="closeNotifications()"><i data-lucide="x"></i></button></div>
+<div class="notif-list" id="notif-list">
+<!-- Notifications will be inserted by JS -->
+</div>
+</aside>
+
 </div>
 <script>
 // ═════════════════════════════════════════════════════════════
-// BIGDROPS Onboarding Prototype — State Machine
+// BIGDROPS Onboarding Prototype — Enhanced State Machine
 // ═════════════════════════════════════════════════════════════
 
-// ── Loading Tips Pool (from 10-loading-and-refresh.md §4-5) ──
+// ---------- Data ----------
 const TIPS = [
-  { id: 'tip.qtn.convert', category: 'Feature', message: 'You can convert an approved quotation directly into an invoice.' },
-  { id: 'tip.waybill.strip', category: 'Document', message: 'Waybills strip monetary values by design. Rates and totals live on invoices.' },
-  { id: 'tip.shortcut.save', category: 'Shortcut', message: 'Ctrl+S saves a draft. Ctrl+Enter finalizes a document.' },
-  { id: 'tip.search', category: 'Productivity', message: 'Use the search overlay to find any document by number, client, or project.' },
-  { id: 'tip.overdue', category: 'Business', message: 'Overdue flags recalculate every time the dashboard loads.' },
-  { id: 'tip.payments', category: 'Workflow', message: 'Record a payment against an invoice to update your outstanding balance automatically.' },
-  { id: 'tip.menu', category: 'Navigation', message: 'Tap the menu button to open the drawer and switch between modules or companies.' },
-  { id: 'tip.csr', category: 'Document', message: 'CSR reports track service delivery and client sign-off separately from invoices.' },
-  { id: 'tip.collapsible', category: 'Productivity', message: 'Group headers in line items can collapse to keep long forms short.' },
-  { id: 'tip.audit', category: 'Business', message: 'Reconciled payments update the audit trail automatically.' },
+  { id: 'tip.qtn.convert', message: 'You can convert an approved quotation directly into an invoice.' },
+  { id: 'tip.waybill.strip', message: 'Waybills strip monetary values by design. Rates and totals live on invoices.' },
+  { id: 'tip.shortcut.save', message: 'Ctrl+S saves a draft. Ctrl+Enter finalizes a document.' },
+  { id: 'tip.search', message: 'Use the search overlay to find any document by number, client, or project.' },
+  { id: 'tip.overdue', message: 'Overdue flags recalculate every time the dashboard loads.' },
+  { id: 'tip.payments', message: 'Record a payment against an invoice to update your outstanding balance automatically.' },
+  { id: 'tip.menu', message: 'Tap the menu button to open the drawer and switch between modules or companies.' },
+  { id: 'tip.csr', message: 'CSR reports track service delivery and client sign-off separately from invoices.' },
+  { id: 'tip.collapsible', message: 'Group headers in line items can collapse to keep long forms short.' },
+  { id: 'tip.audit', message: 'Reconciled payments update the audit trail automatically.' },
 ];
 let tipIndex = 0;
 let shownTips = [];
+let currentTipIndex = 0;
 
-function pickTip() {
-  let available = TIPS.filter(t => !shownTips.includes(t.id));
-  if (available.length === 0) { shownTips = []; available = TIPS; }
-  const tip = available[Math.floor(Math.random() * available.length)];
-  shownTips.push(tip.id);
-  return tip;
+const companies = [
+  { name: 'Sun & Shield Power', data: { invoiced: 'N1,240,000', collected: 'N89,000', outstanding: 'N340,000', overdue: 'N86,000', activity: [{type:'invoice', code:'INV-0045', status:'Pending', client:'Lagos Steel Works', date:'Aug 15', amount:'N120,000'},{type:'quotation', code:'QTN-0109', status:'Draft', client:'Westfield Corp', date:'Aug 14', amount:'N340,000'}] } },
+  { name: 'Green Energy Ltd', data: { invoiced: 'N2,500,000', collected: 'N150,000', outstanding: 'N800,000', overdue: 'N200,000', activity: [{type:'invoice', code:'INV-0088', status:'Paid', client:'Eko Atlantic', date:'Aug 12', amount:'N250,000'},{type:'invoice', code:'INV-0089', status:'Pending', client:'Lekki Gardens', date:'Aug 10', amount:'N180,000'}] } },
+  { name: 'BIGDROPS Consulting', data: { invoiced: 'N500,000', collected: 'N120,000', outstanding: 'N0', overdue: 'N0', activity: [{type:'quotation', code:'QTN-0100', status:'Accepted', client:'TechHub', date:'Aug 13', amount:'N300,000'}] } }
+];
+let currentCompanyIndex = 0;
+
+// ---------- State Persistence ----------
+function saveState() {
+  const state = {
+    currentScreen: currentState,
+    theme: document.documentElement.dataset.theme,
+    currentCompanyIndex,
+    wsName: document.getElementById('ws-name')?.value || '',
+    coName: document.getElementById('co-name')?.value || ''
+  };
+  localStorage.setItem('bigdrops-state', JSON.stringify(state));
+}
+function loadState() {
+  const saved = localStorage.getItem('bigdrops-state');
+  if (saved) {
+    const state = JSON.parse(saved);
+    if (state.theme) setTheme(state.theme);
+    if (state.wsName) document.getElementById('ws-name').value = state.wsName;
+    if (state.coName) document.getElementById('co-name').value = state.coName;
+    if (state.currentCompanyIndex) currentCompanyIndex = state.currentCompanyIndex;
+    if (state.currentScreen) showScreen(state.currentScreen);
+  }
 }
 
-function showTip() {
-  const tip = pickTip();
-  const el = document.getElementById('prov-tip-text');
-  if (el) el.textContent = tip.message;
-  const card = document.getElementById('prov-tip');
-  if (card) card.style.display = 'block';
-}
-
-function nextTip() {
-  showTip();
-}
-
-function dismissTip() {
-  const card = document.getElementById('prov-tip');
-  if (card) card.style.display = 'none';
-}
-
-// ── State Machine ──
+// ---------- State Machine ----------
 let currentState = 'ENTRY';
-let backStack = [];
-
 const BACK_MAP = {
   'SIGN_UP': 'ENTRY',
   'SIGN_IN': 'ENTRY',
   'PW_RECOVERY': 'SIGN_IN',
   'PW_SENT': 'SIGN_IN',
   'VERIFICATION': 'SIGN_UP',
+  'INVITE_ACCEPTANCE': 'ENTRY',
   'ONBOARDING': 'ENTRY',
   'JOIN_WORKSPACE': 'ONBOARDING',
   'WORKSPACE_SETUP': 'ONBOARDING',
   'WORKSPACE_PENDING': 'ONBOARDING',
   'COMPANY_SETUP': 'WORKSPACE_PENDING',
-  'PROVISIONING_FAILED': 'COMPANY_SETUP',
+  'PROVISIONING_FAILED': 'COMPANY_SETUP'
 };
 
 function go(state) {
@@ -626,8 +686,15 @@ function showScreen(state) {
     el.classList.add('active');
     currentState = state;
     closeDrawer();
+    closeNotifications();
     refreshIcons();
     updateThemeColor();
+    saveState();
+    // Focus management: focus the main heading or first focusable element
+    setTimeout(() => {
+      const focusable = el.querySelector('h1, h2, .form-title, .btn-primary, .back-btn, .field-input, button');
+      if (focusable) focusable.focus();
+    }, 50);
   }
 }
 
@@ -638,13 +705,12 @@ function refreshIcons() {
 }
 
 function updateThemeColor() {
-  const isDark = document.documentElement.dataset.theme === 'dark';
   const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta && primary) meta.setAttribute('content', primary);
 }
 
-// ── Theme ──
+// ---------- Theme ----------
 function toggleTheme() {
   const isDark = document.documentElement.dataset.theme === 'dark';
   setTheme(isDark ? 'light' : 'dark');
@@ -652,18 +718,18 @@ function toggleTheme() {
 
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  const icon = document.getElementById('themeIcon');
-  const dashIcon = document.getElementById('dash-theme-icon');
-  const dashIcon2 = document.getElementById('dash-theme-icon2');
+  const icons = ['themeIcon','dash-theme-icon','dash-theme-icon2'];
   const iconName = theme === 'dark' ? 'sun' : 'moon';
-  if (icon) icon.setAttribute('data-lucide', iconName);
-  if (dashIcon) dashIcon.setAttribute('data-lucide', iconName);
-  if (dashIcon2) dashIcon2.setAttribute('data-lucide', iconName);
+  icons.forEach(id => {
+    const icon = document.getElementById(id);
+    if (icon) icon.setAttribute('data-lucide', iconName);
+  });
   refreshIcons();
   updateThemeColor();
+  saveState();
 }
 
-// ── Password Toggle ──
+// ---------- Password ----------
 function togglePw(id, btn) {
   const input = document.getElementById(id);
   if (!input) return;
@@ -673,28 +739,83 @@ function togglePw(id, btn) {
   refreshIcons();
 }
 
-// ── Auto Slug ──
+function checkPasswordStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  const fill = document.getElementById('pw-strength-fill');
+  const label = document.getElementById('pw-strength-label');
+  if (!fill || !label) return;
+  let color = 'var(--attention)';
+  let text = 'Weak';
+  if (score <= 2) { text = 'Weak'; color = 'var(--attention)'; }
+  else if (score <= 4) { text = 'Medium'; color = '#f59e0b'; }
+  else { text = 'Strong'; color = 'var(--success)'; }
+  fill.style.width = (score * 20) + '%';
+  fill.style.background = color;
+  label.textContent = text;
+  label.style.color = color;
+}
+
+// ---------- Auto Slug & Availability ----------
 function autoSlug(nameId, slugId) {
   const name = document.getElementById(nameId);
   const slug = document.getElementById(slugId);
   if (name && slug && !slug.dataset.manual) {
     slug.value = name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    checkSlug(slugId, slugId + '-status');
   }
 }
 
-// ── Validation ──
+function checkSlug(slugId, statusId) {
+  const slug = document.getElementById(slugId);
+  const status = document.getElementById(statusId);
+  if (!slug || !status) return;
+  const val = slug.value.trim();
+  if (!val) {
+    status.textContent = '';
+    status.className = 'slug-status';
+    return;
+  }
+  // Simulate async check
+  setTimeout(() => {
+    if (val === 'taken' || val === 'admin') {
+      status.textContent = '✗ Taken';
+      status.className = 'slug-status taken';
+    } else {
+      status.textContent = '✓ Available';
+      status.className = 'slug-status available';
+    }
+  }, 300);
+}
+
+// ---------- Validation ----------
 function showFieldError(id, show) {
   const err = document.getElementById(id + '-err');
   const input = document.getElementById(id);
   if (err) err.classList.toggle('show', show);
   if (input) input.classList.toggle('error', show);
 }
-
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ── Sign Up ──
+// ---------- Simulated Backend ----------
+function simulateNetwork(callback, errorChance = 0.1) {
+  const delay = 500 + Math.random() * 1500;
+  setTimeout(() => {
+    if (Math.random() < errorChance) {
+      callback(new Error('Network error'));
+    } else {
+      callback(null);
+    }
+  }, delay);
+}
+
+// ---------- Sign Up ----------
 function submitSignUp() {
   const email = document.getElementById('su-email').value.trim();
   const pw = document.getElementById('su-pw').value;
@@ -704,16 +825,19 @@ function submitSignUp() {
   if (!isValidEmail(email)) { showFieldError('su-email', true); valid = false; } else showFieldError('su-email', false);
   if (pw.length < 8) { showFieldError('su-pw', true); valid = false; } else showFieldError('su-pw', false);
   if (pw !== pw2 || !pw2) { showFieldError('su-pw2', true); valid = false; } else showFieldError('su-pw2', false);
-
   if (!valid) return;
 
   const btn = document.getElementById('su-submit');
   const txt = document.getElementById('su-btn-text');
   btn.disabled = true;
   txt.textContent = 'Creating account...';
-
-  go('SIGN_UP_LOADING');
-  setTimeout(() => {
+  simulateNetwork((err) => {
+    if (err) {
+      btn.disabled = false;
+      txt.textContent = 'Create Account';
+      alert('Network error. Please try again.');
+      return;
+    }
     const display = document.getElementById('verify-email-display');
     if (display) display.textContent = email;
     const joinDisplay = document.getElementById('join-email-display');
@@ -721,115 +845,130 @@ function submitSignUp() {
     go('VERIFICATION');
     btn.disabled = false;
     txt.textContent = 'Create Account';
-  }, 1200);
+  });
 }
 
-// ── Sign In ──
+// ---------- Sign In ----------
 function submitSignIn() {
   const email = document.getElementById('si-email').value.trim();
   const pw = document.getElementById('si-pw').value;
   let valid = true;
-
   if (!isValidEmail(email)) { showFieldError('si-email', true); valid = false; } else showFieldError('si-email', false);
   if (!pw) { showFieldError('si-pw', true); valid = false; } else showFieldError('si-pw', false);
-
   if (!valid) return;
 
   const btn = document.getElementById('si-submit');
   const txt = document.getElementById('si-btn-text');
   btn.disabled = true;
   txt.textContent = 'Signing in...';
-
-  // Simulate sign-in → existing user with context
-  setTimeout(() => {
+  simulateNetwork((err) => {
+    if (err) {
+      btn.disabled = false;
+      txt.textContent = 'Sign In';
+      alert('Network error. Please try again.');
+      return;
+    }
     go('CONTEXT_RESTORING');
     btn.disabled = false;
     txt.textContent = 'Sign In';
+  });
+}
+
+// ---------- Resend Verification Countdown ----------
+let resendCooldown = 0;
+function resendVerify() {
+  const btn = document.getElementById('resend-btn');
+  const text = document.getElementById('resend-text');
+  if (!btn || !text) return;
+  if (resendCooldown > 0) return;
+  resendCooldown = 30;
+  btn.disabled = true;
+  text.textContent = `Resend in ${resendCooldown}s`;
+  const interval = setInterval(() => {
+    resendCooldown--;
+    if (resendCooldown <= 0) {
+      clearInterval(interval);
+      btn.disabled = false;
+      text.textContent = 'Resend verification';
+    } else {
+      text.textContent = `Resend in ${resendCooldown}s`;
+    }
   }, 1000);
 }
 
-// ── Resend Verification ──
-function resendVerify() {
-  const btn = document.getElementById('resend-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="check"></i> Sent';
-    refreshIcons();
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Resend verification';
-      refreshIcons();
-    }, 2000);
-  }
-}
-
-// ── Workspace Submission ──
+// ---------- Workspace ----------
 function submitWorkspace() {
   const name = document.getElementById('ws-name').value.trim();
-  let valid = true;
-
-  if (!name) { showFieldError('ws-name', true); valid = false; } else showFieldError('ws-name', false);
-
-  if (!valid) return;
+  if (!name) { showFieldError('ws-name', true); return; }
+  showFieldError('ws-name', false);
 
   const btn = document.getElementById('ws-submit');
   const txt = document.getElementById('ws-btn-text');
   btn.disabled = true;
   txt.textContent = 'Creating...';
-
-  go('WORKSPACE_SUBMITTED');
-  setTimeout(() => {
-    const display = document.getElementById('pending-ws-display');
-    if (display) display.textContent = name;
+  simulateNetwork((err) => {
+    if (err) {
+      btn.disabled = false;
+      txt.textContent = 'Create Workspace';
+      alert('Network error. Please try again.');
+      return;
+    }
+    document.getElementById('pending-ws-display').textContent = name;
     go('WORKSPACE_PENDING');
     btn.disabled = false;
     txt.textContent = 'Create Workspace';
-  }, 1200);
+  });
 }
 
-// ── Simulate Approval (prototype only) ──
 function approveAndContinue() {
   go('COMPANY_SETUP');
 }
 
-// ── Company Submission ──
+// ---------- Company Type Specific Fields ----------
+function companyTypeChange() {
+  const type = document.getElementById('co-type').value;
+  const rcGroup = document.getElementById('rc-number-group');
+  if (type === 'Limited Liability Company') {
+    rcGroup.style.display = 'block';
+  } else {
+    rcGroup.style.display = 'none';
+  }
+}
+
+// ---------- Company Submission ----------
 function submitCompany() {
   const name = document.getElementById('co-name').value.trim();
   const type = document.getElementById('co-type').value;
   let valid = true;
-
   if (!name) { showFieldError('co-name', true); valid = false; } else showFieldError('co-name', false);
   if (!type) { showFieldError('co-type', true); valid = false; } else showFieldError('co-type', false);
-
+  if (type === 'Limited Liability Company') {
+    const rc = document.getElementById('rc-number').value.trim();
+    if (!rc) { showFieldError('rc-number', true); valid = false; } else showFieldError('rc-number', false);
+  }
   if (!valid) return;
 
   const btn = document.getElementById('co-submit');
   const txt = document.getElementById('co-btn-text');
   btn.disabled = true;
   txt.textContent = 'Creating...';
-
   // Update drawer company name
-  const drawerCo = document.getElementById('drawer-company');
-  if (drawerCo) drawerCo.textContent = name;
-
+  document.getElementById('drawer-company').textContent = name;
   startProvisioning(true);
   btn.disabled = false;
   txt.textContent = 'Create Company';
 }
 
-// ── Provisioning (Level 5 loading with status stages + tips) ──
+// ---------- Provisioning ----------
 let provTimer = null;
 let provStage = 0;
-
 function startProvisioning(allowFail) {
   provStage = 0;
   shownTips = [];
   go('COMPANY_PROVISIONING');
   showTip();
-
   const stages = document.querySelectorAll('#prov-stages .ls-stage');
   if (stages[0]) stages[0].classList.add('active');
-
   provTimer = setInterval(() => {
     if (provStage < 3) {
       if (stages[provStage]) {
@@ -841,11 +980,8 @@ function startProvisioning(allowFail) {
       provStage++;
       if (stages[provStage]) stages[provStage].classList.add('active');
       refreshIcons();
-
-      // Rotate tip every ~2 stages
       if (provStage === 2) showTip();
     } else {
-      // Finalize done
       if (stages[provStage]) {
         stages[provStage].classList.remove('active');
         stages[provStage].classList.add('done');
@@ -854,8 +990,6 @@ function startProvisioning(allowFail) {
         refreshIcons();
       }
       clearInterval(provTimer);
-
-      // Simulate: 85% success, 15% failure
       setTimeout(() => {
         if (allowFail && Math.random() < 0.15) {
           go('PROVISIONING_FAILED');
@@ -867,77 +1001,227 @@ function startProvisioning(allowFail) {
   }, 1000);
 }
 
-// ── Context Restoring (existing user) ──
+// ---------- Tips ----------
+function pickTip() {
+  let available = TIPS.filter(t => !shownTips.includes(t.id));
+  if (available.length === 0) { shownTips = []; available = TIPS; }
+  const tip = available[Math.floor(Math.random() * available.length)];
+  shownTips.push(tip.id);
+  return tip;
+}
+function showTip() {
+  const tip = pickTip();
+  const el = document.getElementById('prov-tip-text');
+  if (el) el.textContent = tip.message;
+  const card = document.getElementById('prov-tip');
+  if (card) card.style.display = 'block';
+}
+function nextTip() { showTip(); }
+function dismissTip() {
+  const card = document.getElementById('prov-tip');
+  if (card) card.style.display = 'none';
+}
+
+// ---------- Invitation Acceptance (§12.3) ----------
+// ponytail: prototype always shows a pending invite; real app detects at startup
+function acceptInvitation() {
+  // Simulates accept_workspace_invitation() RPC → workspace resolved → continue startup
+  go('ONBOARDING');
+  refreshIcons();
+}
+function passInvitation() {
+  // §12.3: "Pass for now" — invitation stays pending, continue without joining
+  go('ONBOARDING');
+  refreshIcons();
+}
+
+// ---------- Dashboard Skeleton Loading ----------
+function showDashboardSkeleton(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = `
+    <div class="dash-eyebrow"><span>Finance pulse - August 2026</span><button disabled>Edit metrics</button></div>
+    <div class="kpi-grid">
+      <div class="skeleton skeleton-kpi"></div>
+      <div class="skeleton skeleton-kpi"></div>
+      <div class="skeleton skeleton-kpi"></div>
+      <div class="skeleton skeleton-kpi"></div>
+    </div>
+    <div class="dash-section">
+      <h2 class="dash-section-title">Recent activity</h2>
+      <div class="dash-card" style="padding:12px">
+        <div class="skeleton skeleton-act"></div>
+        <div class="skeleton skeleton-act" style="margin-top:8px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function populateDashboard(containerId, data, isFirstRun = false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = `
+    <div class="dash-eyebrow"><span>Finance pulse - August 2026</span><button onclick="toggleEditMetrics()">Edit metrics</button></div>
+    <div class="kpi-grid" id="kpi-grid-${containerId}">
+      <button class="kpi-card" data-kpi="invoiced"><span class="kpi-label">Total invoiced</span><span class="kpi-value">${data.invoiced}</span><span class="kpi-trend">No invoices yet</span></button>
+      <button class="kpi-card collect" data-kpi="collected"><span class="kpi-label">Collected this month</span><span class="kpi-value">${data.collected}</span><span class="kpi-trend">No collections yet</span></button>
+      <button class="kpi-card" data-kpi="outstanding"><span class="kpi-label">Outstanding</span><span class="kpi-value">${data.outstanding}</span><span class="kpi-trend">Nothing owed</span></button>
+      <button class="kpi-card" data-kpi="overdue"><span class="kpi-label">Overdue</span><span class="kpi-value">${data.overdue}</span><span class="kpi-trend">Nothing overdue</span></button>
+    </div>
+    <div class="dash-section">
+      <h2 class="dash-section-title">Recent activity</h2>
+      <div class="dash-card">
+        ${data.activity.map(a => `
+          <button class="act-row">
+            <span class="act-icon"><i data-lucide="${a.type === 'invoice' ? 'receipt-text' : 'file-signature'}"></i></span>
+            <span style="flex:1;min-width:0"><span class="act-primary">${a.code} <span class="status-pill">${a.status}</span></span><div class="act-meta">${a.client} - ${a.date}</div></span>
+            <span><span class="act-val">${a.amount}</span></span>
+          </button>
+        `).join('')}
+        ${data.activity.length === 0 ? '<div style="padding:24px;text-align:center;color:var(--ink-3)">No activity yet</div>' : ''}
+      </div>
+    </div>
+  `;
+  if (isFirstRun) {
+    // Show coach mark
+    const coach = document.getElementById('coach-mark');
+    if (coach) coach.style.display = 'block';
+  } else {
+    const coach = document.getElementById('coach-mark');
+    if (coach) coach.style.display = 'none';
+  }
+  refreshIcons();
+}
+
+function loadDashboard(containerId, isFirstRun) {
+  showDashboardSkeleton(containerId);
+  setTimeout(() => {
+    const data = companies[currentCompanyIndex].data;
+    populateDashboard(containerId, data, isFirstRun);
+  }, 800);
+}
+
+// ---------- Context Restoring ----------
 function startContextRestore() {
   go('CONTEXT_RESTORING');
   setTimeout(() => {
     go('DASHBOARD_RETURNING');
-  }, 1800);
+    loadDashboard('dash-content-returning', false);
+  }, 1500);
 }
 
-// ── Drawer ──
+// ---------- Multi-company switching ----------
+function switchCompany() {
+  currentCompanyIndex = (currentCompanyIndex + 1) % companies.length;
+  document.getElementById('drawer-company').textContent = companies[currentCompanyIndex].name;
+  const containerId = currentState === 'DASHBOARD_FIRST_RUN' ? 'dash-content-first' : 'dash-content-returning';
+  loadDashboard(containerId, currentState === 'DASHBOARD_FIRST_RUN');
+  saveState();
+}
+
+// ---------- Edit Metrics Mode ----------
+let editMode = false;
+function toggleEditMetrics() {
+  editMode = !editMode;
+  const grids = document.querySelectorAll('.kpi-grid');
+  grids.forEach(grid => {
+    const cards = grid.querySelectorAll('.kpi-card');
+    cards.forEach(card => {
+      if (editMode) {
+        card.classList.add('editing');
+        card.addEventListener('click', function handler() {
+          card.classList.toggle('hidden');
+        });
+      } else {
+        card.classList.remove('editing');
+        // remove listeners - not easy, but for prototype we just reload
+        location.reload();
+      }
+    });
+  });
+}
+
+// ---------- Notifications Panel ----------
+function openNotifications() {
+  document.getElementById('notif-panel').classList.add('show');
+  document.getElementById('notif-scrim').classList.add('show');
+  const list = document.getElementById('notif-list');
+  list.innerHTML = `
+    <div class="notif-item">
+      <div style="font-size:11px;font-weight:700;">Invoice INV-0045 was paid</div>
+      <div class="notif-time">2 min ago</div>
+    </div>
+    <div class="notif-item">
+      <div style="font-size:11px;font-weight:700;">New client added: Lagos Steel Works</div>
+      <div class="notif-time">1 hour ago</div>
+    </div>
+    <div class="notif-item">
+      <div style="font-size:11px;font-weight:700;">Quotation QTN-0109 approved</div>
+      <div class="notif-time">3 hours ago</div>
+    </div>
+  `;
+}
+function closeNotifications() {
+  document.getElementById('notif-panel').classList.remove('show');
+  document.getElementById('notif-scrim').classList.remove('show');
+}
+
+// ---------- Drawer ----------
 function openDrawer() {
-  const drawer = document.getElementById('drawer');
-  const scrim = document.getElementById('scrim');
-  if (drawer) drawer.classList.add('show');
-  if (scrim) scrim.classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('scrim').classList.add('show');
 }
-
 function closeDrawer() {
-  const drawer = document.getElementById('drawer');
-  const scrim = document.getElementById('scrim');
-  if (drawer) drawer.classList.remove('show');
-  if (scrim) scrim.classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('scrim').classList.remove('show');
 }
 
-// ── First-Run Hint ──
-function dismissHint() {
-  const hint = document.getElementById('first-hint');
-  if (hint) hint.style.display = 'none';
+// ---------- Invitation Simulation ----------
+function simulateInvitation() {
+  // Prototype helper: pretend a pending invitation was received
+  go('INVITE_ACCEPTANCE');
+  refreshIcons();
 }
 
-// ── Back Handler (Android-style) ──
-function handleBack() {
-  const drawerOpen = document.getElementById('drawer').classList.contains('show');
-  if (drawerOpen) { closeDrawer(); return; }
-
-  const backTarget = BACK_MAP[currentState];
-  if (backTarget) {
-    go(backTarget);
-  } else if (currentState === 'DASHBOARD_FIRST_RUN' || currentState === 'DASHBOARD_RETURNING') {
-    // Dashboard: back exits (no action in prototype)
-  } else if (currentState === 'CONTEXT_RESTORING') {
-    // Can't go back during restore
-  } else if (currentState === 'COMPANY_PROVISIONING') {
-    // Blocking: can't go back during provisioning
-  }
-}
-
-// ── Keyboard ──
+// ---------- Focus management & accessibility ----------
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const drawerOpen = document.getElementById('drawer').classList.contains('show');
-    if (drawerOpen) { closeDrawer(); return; }
+    if (document.getElementById('drawer').classList.contains('show')) { closeDrawer(); return; }
+    if (document.getElementById('notif-panel').classList.contains('show')) { closeNotifications(); return; }
     handleBack();
   }
   if (e.key === 'Enter') {
     const active = document.querySelector('.screen.active');
     if (active) {
-      const input = active.querySelector('input:not([type="hidden"])');
-      const btn = active.querySelector('.btn-primary:not(:disabled)');
-      if (btn && document.activeElement !== btn) {
-        // If focused on last input in a form, submit
-        const inputs = active.querySelectorAll('input');
-        if (inputs.length > 0 && document.activeElement === inputs[inputs.length - 1]) {
-          btn.click();
-        }
+      const inputs = active.querySelectorAll('input, select');
+      if (inputs.length > 0 && document.activeElement === inputs[inputs.length - 1]) {
+        const btn = active.querySelector('.btn-primary:not(:disabled)');
+        if (btn) btn.click();
       }
     }
   }
 });
 
-// ── Init ──
+function handleBack() {
+  const backTarget = BACK_MAP[currentState];
+  if (backTarget) {
+    go(backTarget);
+  } else if (currentState === 'DASHBOARD_FIRST_RUN' || currentState === 'DASHBOARD_RETURNING') {
+    // Do nothing (exit app in real scenario)
+  } else if (currentState === 'CONTEXT_RESTORING' || currentState === 'COMPANY_PROVISIONING') {
+    // Blocking, ignore back
+  }
+}
+
+// ---------- Init ----------
 refreshIcons();
+loadState();
+// Initial dashboard skeleton if landing on dashboard
+if (currentState === 'DASHBOARD_FIRST_RUN') {
+  loadDashboard('dash-content-first', true);
+} else if (currentState === 'DASHBOARD_RETURNING') {
+  loadDashboard('dash-content-returning', false);
+}
 </script>
 </body>
 </html>
