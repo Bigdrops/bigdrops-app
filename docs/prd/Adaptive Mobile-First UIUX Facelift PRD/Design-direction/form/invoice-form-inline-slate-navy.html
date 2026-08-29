@@ -67,8 +67,10 @@
       --group-subtext: #ffe085;
       --group-border: #b88214;
       --readout-bg: linear-gradient(130deg, #090a0d 0%, #231b0a 100%);
-      --readout-text: #ffe07a;
+      --readout-text: #f1f5f9;
     }
+    /* Pure slate — remove yellow orbs, use slate tint like onboarding-flow.html */
+    .phone::before, .phone::after { display: none !important; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: var(--canvas); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; }
     button, input, textarea, select { font: inherit; }
