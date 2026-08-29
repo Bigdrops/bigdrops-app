@@ -188,7 +188,7 @@ export function KpiGrid({ loading, cards }: KpiGridProps) {
   const visibleCards = cards.slice(0, KPI_CARD_COUNT)
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
       {loading || visibleCards.length === 0
         ? Array.from({ length: KPI_CARD_COUNT }).map((_, index) => <KpiCardSkeleton key={index} />)
         : visibleCards.map((card) => <KpiCard key={card.id} card={card} />)}

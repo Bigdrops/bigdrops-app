@@ -183,13 +183,13 @@ export function DashboardOverview({
   const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col pb-32 md:pb-16 lg:pb-8">
-      {/* V6 Top Bar */}
+    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col" style={{ paddingBottom: 'max(128px, calc(70px + env(safe-area-inset-bottom, 0px)))' }}>
+      {/* V6 Top Bar — solid bg for Android-native feel, matches V6 padding */}
       <header
-        className="sticky top-0 z-30 flex items-center justify-between py-2 transition-colors"
+        className="sticky top-0 z-30 flex items-center justify-between"
         style={{
-          padding: 'calc(8px + env(safe-area-inset-top, 0px)) 14px 8px',
-          background: 'linear-gradient(180deg, hsl(var(--bg)) 72%, transparent)',
+          padding: 'calc(8px + env(safe-area-inset-top, 0px)) 14px 8px 8px',
+          background: 'hsl(var(--bg))',
         }}
       >
         <div className="flex min-w-0 items-center gap-[5px]">
@@ -217,7 +217,9 @@ export function DashboardOverview({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        {/* V6 top-right: gap 4px, order: theme, notif, search, AI */}
+        <div className="flex shrink-0 items-center gap-[4px]">
+          {/* Theme toggle */}
           <button
             type="button"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -227,28 +229,38 @@ export function DashboardOverview({
           >
             {isDark ? <Sun className="size-[17px]" strokeWidth={1.9} /> : <Moon className="size-[17px]" strokeWidth={1.9} />}
           </button>
-          <NotificationBell className="h-[36px] w-[36px]" />
-          <div className="sr-only">Search</div>
+          {/* Notification bell with V6 red pip */}
+          <div className="relative">
+            <NotificationBell className="h-[36px] w-[36px]" />
+          </div>
+          {/* Search */}
           <div className="[&>button]:grid [&>button]:h-[36px] [&>button]:w-[36px] [&>button]:place-items-center [&>button]:rounded-[12px] [&>button]:border [&>button]:border-[hsl(var(--line))] [&>button]:bg-[hsl(var(--surface-raised))] [&>button]:text-[hsl(var(--ink))] [&_svg]:h-[17px] [&_svg]:w-[17px]">
             <GlobalSearch />
           </div>
+          {/* V6 AI button — gradient bg, white text, matching V6 spec */}
           <button
             type="button"
-            aria-label="Account"
-            onClick={() => {}}
-            className="ml-1 grid h-[36px] w-[36px] shrink-0 place-items-center overflow-hidden rounded-full border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] text-[9px] font-[800] uppercase tracking-wide text-[hsl(var(--primary))] transition active:scale-95"
+            aria-label="Ask AI assistant"
+            className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[12px] border border-transparent text-[10px] font-[800] tracking-[.01em] text-white transition active:scale-95"
+            style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
           >
-            {getAvatarInitials(userName) || <UserRound className="size-4" />}
+            AI
           </button>
         </div>
       </header>
 
       <main className="px-[14px] pt-[6px] sm:px-5 md:px-6 lg:px-8">
-        {/* V6 Eyebrow */}
+        {/* V6 Eyebrow — with 'Edit metrics' button on right */}
         <div className="mb-2 flex items-center justify-between px-[2px] lg:mb-3">
           <span className="text-[8px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
             Finance pulse · {monthLabel}
           </span>
+          <button
+            type="button"
+            className="text-[9px] font-[800] text-[hsl(var(--primary))]"
+          >
+            Edit metrics
+          </button>
         </div>
 
         {/* KPI Metric Grid — 2-col mobile, 4-col desktop */}
@@ -339,6 +351,9 @@ export function DashboardOverview({
         {/* Alerts + Audit Trail: stacked mobile, side-by-side lg+ */}
         <div className="mt-[14px] grid gap-[14px] lg:mt-5 lg:grid-cols-2 lg:gap-5">
           <section>
+            <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))] lg:mb-3 lg:text-[10px]">
+              Recent alerts
+            </h2>
             <RecentAlertsCarousel />
           </section>
 

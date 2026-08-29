@@ -88,7 +88,7 @@ export default function DashboardRedesign({ session }: { session: Session }) {
           <div
             role="dialog"
             aria-label="Create actions"
-            className={`fixed bottom-[calc(6rem+60px)] right-5 z-50 rounded-[var(--bd-overlay-radius)] border border-bd-overlay-border bg-bd-overlay-bg p-1.5 shadow-2xl lg:bottom-auto lg:top-[calc(4rem+60px)] lg:right-8 ${createPanelWidthClass}`}
+            className={`fixed bottom-[calc(82px+60px+env(safe-area-inset-bottom,0px))] right-4 z-50 rounded-[18px] border border-bd-overlay-border bg-bd-overlay-bg p-1.5 shadow-2xl lg:bottom-auto lg:top-[calc(4rem+60px)] lg:right-8 ${createPanelWidthClass}`}
           >
             <div className="bd-custom-scrollbar max-h-[min(24rem,calc(100dvh-12rem))] space-y-1 overflow-y-auto">
               {createActions.map((action) => (
@@ -115,15 +115,21 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         </>
       ) : null}
 
+      {/* V6 FAB: 50x50, radius 18px, right 16px, bottom calc(82px + safe-area) */}
       <button
         type="button"
         onClick={() => setCreateOpen((open) => !open)}
         aria-expanded={createOpen}
         aria-haspopup="true"
-        className="fixed bottom-24 right-5 z-50 grid h-[52px] w-[52px] place-items-center rounded-[var(--bd-overlay-radius)] bg-bd-fab-bg text-bd-fab-text shadow-2xl shadow-black/20 transition active:scale-90 lg:bottom-auto lg:top-24 lg:right-8"
+        className="fixed right-4 z-50 grid h-[50px] w-[50px] place-items-center rounded-[18px] text-white transition active:scale-90 lg:right-8 lg:top-24"
+        style={{
+          bottom: 'calc(82px + env(safe-area-inset-bottom, 0px))',
+          background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
+          boxShadow: '0 10px 24px color-mix(in srgb, hsl(var(--primary)) 40%, transparent)',
+        }}
         aria-label="Create new record"
       >
-        <Plus className="h-5 w-5" />
+        <Plus className="h-5 w-5" strokeWidth={2} />
       </button>
     </Layout>
   )

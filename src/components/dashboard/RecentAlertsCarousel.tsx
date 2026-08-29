@@ -76,13 +76,13 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md md:px-4 md:py-4"
+    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] pl-[11px] py-[11px] shadow-md md:pl-4 md:py-4 md:pr-4"
       style={{
         boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
       }}
     >
-      {/* V6 alerts header */}
-      <div className="mb-[9px] flex items-start justify-between gap-[10px]">
+      {/* V6 alerts header — margin-right matches V6's11px right padding for scroll edge */}
+      <div className="mb-[9px] mr-[11px] flex items-start justify-between gap-[10px] md:mr-4">
         <div>
           <div className="text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))]">
             Recent alerts
