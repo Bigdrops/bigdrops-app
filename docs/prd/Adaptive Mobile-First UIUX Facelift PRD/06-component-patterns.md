@@ -38,15 +38,16 @@ Document reusable visual and interaction patterns visible in the canonical v6 re
 | Layout | Flex column |
 | Grid | 2-column (`1fr 1fr`), gap 8px |
 
-### Variants
+### Variants — Shipped Model (locked)
 
-| Variant | Background | Text Color | Use |
-|---------|-----------|------------|-----|
-| Default | `var(--surface)` | `var(--ink)` | Standard metric |
-| Collect (highlight) | `var(--gradient)` | `#fff` | Primary KPI |
-| Overdue | `var(--surface)` | `var(--ink)` | Attention metric |
-| Awaiting | `var(--surface)` | `var(--ink)` | Status metric |
-| Due | `var(--surface)` | `var(--ink)` | Upcoming metric |
+| Metric ID | Label | Format | Tone | Background | Use |
+|-----------|-------|--------|------|------------|-----|
+| `totalInvoiced` | Total Invoiced | `₦` currency (`formatNaira`) | `emerald` | `var(--surface)` | Cumulative invoiced value — ever created |
+| `thisMonthCollections` | Collected This Month | `₦` currency | `emerald` | `var(--surface)` with `var(--gradient)` highlight option | Cash received since month start |
+| `outstandingReceivables` | Outstanding Receivables | `₦` currency | `amber` | `var(--surface)` | Total still owed (`balance_due` sum) |
+| `overdue` | Overdue Balance | `₦` currency | `rose` | `var(--surface)` | Past-due portion of outstanding |
+
+> Supersedes prior sample set (Collected/Overdue/Awaiting(count)/Due-this-week). All four KPIs are currency-denominated; **no counts** (the old `Awaiting` count of `12` is removed). Trends: `totalInvoiced` vs `prevMonthInvoiced`, `thisMonthCollections` vs `prevMonthCollections` (good/bad polarity); `outstandingReceivables` and `overdue` render neutral trend (no comparison baseline — snapshot metrics). Bars: `outstanding/totalInvoiced` and `overdue/outstanding` ratios (`src/config/kpiCards.ts:12`, `src/hooks/useDashboardData.ts:185`). See `mobile-dashboard-v6.html:06` for markup.
 
 ### Tickbar
 

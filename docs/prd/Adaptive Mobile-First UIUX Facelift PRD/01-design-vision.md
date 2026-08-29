@@ -100,7 +100,7 @@ The application adapts to screen size without breaking its core identity.
 
 - Phone: single column, bottom nav, focused views
 - Foldable: expanded phone layout with optional side-by-side
-- Tablet: multi-column content, persistent navigation
+- Tablet: multi-column content, bottom nav (phone pattern, expanded) — locked per `00-index.md`
 - Desktop: sidebar navigation, full data tables, maximum density
 
 The adaptation unlocks space. It does not redesign the experience.
@@ -121,7 +121,7 @@ The adaptation unlocks space. It does not redesign the experience.
 
 The current visual direction is defined by:
 - **Structure:** `Design-direction/dashboard/mobile-dashboard-v6.html`
-- **Palette:** Slate Navy (current default theme)
+- **Palette:** Slate Navy — **locked final palette** (light `#f0f4f8`/`#1e3a5f`, dark `#0f172a`/`#60a5fa`) per `00-index.md`
 - **Typography:** Manrope (body) + DM Mono (numbers)
 - **Radius:** 12–18px on cards, 10–12px on buttons, 50% on avatars
 - **Elevation:** Subtle shadows with primary-tinted color

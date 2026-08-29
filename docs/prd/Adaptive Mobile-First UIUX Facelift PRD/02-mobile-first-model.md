@@ -79,7 +79,7 @@ A richer mobile experience with more visible content. NOT a desktop shrunk down.
 |----------|-------|
 | Width range | 768px – 1024px (typical) |
 | Layout | Multi-column content |
-| Navigation | Persistent side panel or bottom bar (TBD) |
+| Navigation | Bottom tab bar — phone pattern with expanded spacing (locked) |
 | Content density | High — more columns, more visible data |
 | Side-by-side | Common — list + detail, form + preview |
 
@@ -87,12 +87,12 @@ A richer mobile experience with more visible content. NOT a desktop shrunk down.
 - Multi-column content layouts
 - Higher data density — more rows visible, more columns in tables
 - Side-by-side panels for document editing
-- Navigation may shift from bottom bar to persistent side rail
+- Navigation remains bottom tab bar (same 5-tab model as phone, with more breathing room) — not a side rail
 - Forms can use wider field layouts
 - Sheets may become inline panels instead of overlays
 - Touch targets remain finger-sized
 
-**Navigation decision pending:** Whether tablet uses bottom nav (phone pattern) or side rail (desktop pattern). See [05-navigation-shell.md](./05-navigation-shell.md).
+> **Locked:** Tablet uses bottom nav (phone pattern, more breathing room). Rationale: PRD defines tablet as "expanded mobile, not shrunk desktop" — a side rail is a desktop pattern and would violate that framing. See `00-index.md:00` locked decisions and [05-navigation-shell.md](./05-navigation-shell.md) adaptive navigation.
 
 ---
 
@@ -131,13 +131,19 @@ The largest screen tier. An adaptation of the mobile experience, not a separate 
 
 | Tier | Width | Breakpoint | Layout Change |
 |------|-------|------------|---------------|
-| Phone | < 430px | — | Single column, bottom nav |
-| Phone (wide) | 430px – 499px | — | Single column, centered phone frame |
-| Foldable | 500px – 767px | — | Expanded single column, optional panels |
-| Tablet | 768px – 1023px | `@media (min-width: 768px)` | Multi-column, persistent nav |
-| Desktop | 1024px+ | `@media (min-width: 1024px)` | Sidebar + content, full density |
+| Phone | < 600px | — | Single column, bottom nav |
+| Phone (wide) | 430px – 599px | — | Single column, centered 430px phone frame (preview) |
+| Foldable (compact→medium) | 600px – 839px | `@media (min-width: 600px)` | Expanded single column, optional panels |
+| Tablet (medium→expanded) | 840px – 1199px | `@media (min-width: 840px)` | Multi-column, bottom nav (expanded) |
+| Desktop (expanded+) | 1200px+ | `@media (min-width: 1200px)` | Sidebar + content, full density |
 
-**Note:** Exact breakpoint values are TBD pending implementation research. The values above are informed estimates based on common device widths. Test on actual devices before finalizing.
+**Proposal — derived from shipped app code (needs confirmation, not yet locked):**
+
+Evidence: `src/lib/native/foldAwareness.ts:43` `getWebFallback()` defines `widthClass` as `compact <600 → medium <840 → expanded <1200 → large <1600 → extra_large` and `layoutMode` as `mobile <600 → tablet <1200 → desktop >=1200`. `src/hooks/FoldAwareness.ts:10` wires this fallback as the web implementation; `useLayoutMode.ts:10` exposes `isMobile/isTablet/isDesktop` directly from it. These are the actual width-class thresholds running in production today.
+
+The table above aligns PRD breakpoints to those thresholds: 600 (mobile→tablet), 840 (medium→expanded), 1200 (tablet→desktop). The older PRD estimate of 768/1024 was an informed guess from common device widths; the proposal replaces it with what the app already computes.
+
+*Status:* Proposal only — confirm on real devices (foldable hinge, tablet 768–840 range, desktop 1200) before locking. If `getWebFallback` thresholds are inconsistent with native FoldAwareness plugin values, report the discrepancy instead of choosing arbitrarily. No application code was changed to derive this; it is a documentation proposal for approval.
 
 ---
 

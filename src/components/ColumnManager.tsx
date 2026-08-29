@@ -423,10 +423,8 @@ export default function ColumnManager({
   const [deletingKey, setDeletingKey] = useState<string | null>(null)
 
   const descriptionCol = columns.find((c) => c.key === 'description')
-  const builtinCols = columns.filter(
-    (c) => !c.key.startsWith('custom_') && c.key !== 'description',
-  )
-  const customCols = columns.filter((c) => c.key.startsWith('custom_'))
+  // ponytail: render in columns[] order so custom columns can sit between built-ins
+  const orderedCols = columns.filter((c) => c.key !== 'description')
 
   const standardItems = items.filter((i) => i.row_type === 'standard')
 
@@ -547,10 +545,33 @@ export default function ColumnManager({
               <div className="mt-7">
                 <SectionTitle>Form Fields</SectionTitle>
 
-                {builtinCols.length > 0 || customCols.length > 0 ? (
+                {orderedCols.length > 0 ? (
                   <div className="rounded-[12px] border border-[var(--bd-border-soft)] overflow-hidden">
-                    {builtinCols.map((col) => {
+                    {orderedCols.map((col) => {
                       const absIdx = columns.findIndex((c) => c.key === col.key)
+                      if (col.key.startsWith('custom_')) {
+                        return (
+                          <CustomColumnRow
+                            key={col.key}
+                            col={col}
+                            onToggle={onToggle}
+                            onUpdate={(key, field, val) => onUpdate(key, field, val)}
+                            onRemoveCustom={handleDeleteCustom}
+                            onMoveUp={() => {
+                              if (!onMove || absIdx <= 1) return
+                              onMove(col.key, absIdx - 1)
+                            }}
+                            onMoveDown={() => {
+                              if (!onMove || absIdx >= columns.length - 1) return
+                              onMove(col.key, absIdx + 1)
+                            }}
+                            disableMoveUp={absIdx <= 1}
+                            disableMoveDown={absIdx >= columns.length - 1}
+                            deleting={deletingKey === col.key}
+                            {...dragHandlers}
+                          />
+                        )
+                      }
                       return (
                         <BuiltInColumnRow
                           key={col.key}
@@ -569,31 +590,6 @@ export default function ColumnManager({
                           disableMoveUp={absIdx <= 1}
                           disableMoveDown={absIdx >= columns.length - 1}
                           affectsTotals={TOTAL_AFFECTING_COLUMNS.has(col.key)}
-                          {...dragHandlers}
-                        />
-                      )
-                    })}
-
-                    {customCols.map((col) => {
-                      const idx = columns.findIndex((c) => c.key === col.key)
-                      return (
-                        <CustomColumnRow
-                          key={col.key}
-                          col={col}
-                          onToggle={onToggle}
-                          onUpdate={(key, field, val) => onUpdate(key, field, val)}
-                          onRemoveCustom={handleDeleteCustom}
-                          onMoveUp={() => {
-                            if (!onMove || idx <= 0) return
-                            onMove(col.key, idx - 1)
-                          }}
-                          onMoveDown={() => {
-                            if (!onMove || idx >= columns.length - 1) return
-                            onMove(col.key, idx + 1)
-                          }}
-                          disableMoveUp={idx <= 0}
-                          disableMoveDown={idx >= columns.length - 1}
-                          deleting={deletingKey === col.key}
                           {...dragHandlers}
                         />
                       )

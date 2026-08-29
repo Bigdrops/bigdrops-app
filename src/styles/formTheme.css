@@ -194,7 +194,134 @@
   --bd-icon-container-radius: var(--bd-radius-md);
 }
 
-/* Dark mode overrides — brand tokens inherit from primary/accent above */
+/* Dark mode overrides — bridge tokens adapt for dark surfaces */
+.dark {
+  --bd-app-bg: var(--background);
+  --bd-surface: var(--card);
+  --bd-surface-muted: var(--muted);
+  --bd-border: var(--border);
+  --bd-border-strong: var(--foreground);
+  --bd-text: var(--foreground);
+  --bd-text-muted: var(--muted-foreground);
+  --bd-input-bg: var(--card);
+  --bd-input-border: var(--border);
+  --bd-input-focus: var(--ring);
+  --bd-input-error: var(--destructive);
+  --bd-card-bg: var(--card);
+  --bd-card-border: var(--border);
+  --bd-button-primary-bg: var(--primary);
+  --bd-button-primary-text: var(--primary-foreground);
+  --bd-focus-ring: var(--ring);
+
+  /* Navigation dark tokens */
+  --bd-nav-active-bg: var(--muted);
+  --bd-nav-active-text: var(--foreground);
+  --bd-nav-active-icon: var(--primary);
+  --bd-nav-hover-bg: var(--muted);
+
+  /* Overlay dark tokens */
+  --bd-overlay-bg: var(--card);
+  --bd-overlay-text: var(--foreground);
+  --bd-overlay-muted: var(--muted-foreground);
+  --bd-overlay-border: var(--border);
+  --bd-overlay-scrim: 222 25% 8% / 0.6;
+  --bd-overlay-close-bg: var(--muted);
+  --bd-overlay-close-text: var(--foreground);
+  --bd-overlay-section-bg: var(--card);
+  --bd-overlay-section-border: var(--border);
+  --bd-overlay-input-bg: var(--card);
+  --bd-overlay-footer-bg: var(--card);
+  --bd-overlay-disabled-bg: var(--muted);
+  --bd-overlay-disabled-text: var(--muted-foreground);
+
+  /* Action surface dark tokens */
+  --bd-surface-action: var(--card);
+  --bd-surface-action-hover: var(--muted);
+  --bd-surface-action-border: var(--border);
+  --bd-surface-action-text: var(--foreground);
+  --bd-surface-action-muted: var(--muted-foreground);
+  --bd-action-icon-bg: var(--primary);
+  --bd-action-icon-text: var(--primary-foreground);
+
+  /* FAB dark tokens */
+  --bd-fab-bg: var(--primary);
+  --bd-fab-text: var(--primary-foreground);
+
+  /* Layout dark tokens */
+  --bd-layout-nav: var(--card);
+  --bd-layout-sidebar: var(--card);
+
+  /* Status dark tokens */
+  --bd-status-success-bg: 142 71% 45% / 0.15;
+  --bd-status-success-text: 142 71% 55%;
+  --bd-status-success-border: 142 71% 45% / 0.25;
+  --bd-status-warning-bg: 38 92% 50% / 0.15;
+  --bd-status-warning-text: 38 92% 60%;
+  --bd-status-warning-border: 38 92% 50% / 0.25;
+  --bd-status-danger-bg: 0 84% 60% / 0.15;
+  --bd-status-danger-text: 0 84% 65%;
+  --bd-status-danger-border: 0 84% 60% / 0.25;
+  --bd-status-info-bg: 217 91% 60% / 0.15;
+  --bd-status-info-text: 217 91% 70%;
+  --bd-status-info-border: 217 91% 60% / 0.25;
+  --bd-status-neutral-bg: 215 15% 70% / 0.15;
+  --bd-status-neutral-text: 215 15% 80%;
+  --bd-status-neutral-border: 215 15% 70% / 0.25;
+
+  /* Feedback dark tokens */
+  --bd-feedback-success-bg: 142 46% 18%;
+  --bd-feedback-success-text: 147 51% 65%;
+  --bd-feedback-success-border: 145 39% 28%;
+  --bd-feedback-error-bg: 8 72% 18%;
+  --bd-feedback-error-text: 8 55% 65%;
+  --bd-feedback-error-border: 8 47% 28%;
+  --bd-feedback-warning-bg: 42 100% 18%;
+  --bd-feedback-warning-text: 29 68% 65%;
+  --bd-feedback-warning-border: 39 78% 28%;
+  --bd-feedback-info-bg: 194 62% 18%;
+  --bd-feedback-info-text: 196 56% 65%;
+  --bd-feedback-info-border: 194 45% 28%;
+  --bd-feedback-save: var(--primary);
+
+  /* Brand & accent dark tokens */
+  --bd-brand: var(--primary);
+  --bd-brand-foreground: var(--primary-foreground);
+  --bd-accent: var(--accent);
+  --bd-accent-foreground: var(--accent-foreground);
+
+  /* Icon container dark tokens */
+  --bd-icon-container-bg: var(--muted);
+  --bd-icon-container-text: var(--primary);
+
+  /* Legacy color shorthand — dark mode */
+  --bd-bg2: var(--muted);
+  --bd-bg3: color-mix(in oklab, hsl(var(--muted)) 80%, hsl(var(--background)));
+  --bd-border-color: hsl(var(--border));
+  --bd-border-soft: color-mix(in oklab, hsl(var(--border)) 60%, transparent);
+  --bd-text-color: hsl(var(--foreground));
+  --bd-text2: hsl(var(--muted-foreground));
+  --bd-text3: color-mix(in oklab, hsl(var(--muted-foreground)) 80%, transparent);
+  --bd-text4: color-mix(in oklab, hsl(var(--muted-foreground)) 60%, transparent);
+
+  /* Hardcoded tone dark overrides */
+  --bd-amber: #f59e0b;
+  --bd-amber-bg: #451a03;
+  --bd-amber-border: #92400e;
+  --bd-amber-dark: #fbbf24;
+  --bd-indigo: #818cf8;
+  --bd-indigo-bg: #1e1b4b;
+  --bd-indigo-border: #3730a3;
+  --bd-indigo-light: #a5b4fc;
+  --bd-emerald: #34d399;
+  --bd-emerald-bg: #064e3b;
+  --bd-emerald-border: #065f46;
+  --bd-rose: #fb7185;
+  --bd-rose-bg: #4c0519;
+  --bd-rose-border: #9f1239;
+  --bd-violet: #a78bfa;
+  --bd-violet-bg: #2e1065;
+  --bd-violet-border: #5b21b6;
+}
 
 /* Layout Token Overrides */
 .bd-sidebar-hidden aside { display: none !important; }

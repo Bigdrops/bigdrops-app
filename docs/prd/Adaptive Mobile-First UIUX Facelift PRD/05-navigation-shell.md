@@ -31,9 +31,11 @@ BIGDROPS uses a **5-tab bottom navigation** on phone. The tabs are:
 | Bottom inset | `max(8px, env(safe-area-inset-bottom))` |
 | Border | `1px solid var(--line-strong)` |
 | Border radius | 20px |
-| Background | `var(--nav)` with `backdrop-filter: blur(23px) saturate(150%)` |
-| Shadow | `var(--shadow-float)` |
+| Background | `var(--nav)` (`rgba(255,255,255,.88)` light / `rgba(15,23,42,.88)` dark) — solid/near-solid, no blur |
+| Shadow | `var(--shadow-float)` — provides floating elevation without glassmorphism |
 | Grid | `grid-template-columns: repeat(5, 1fr)` |
+
+> Glassmorphism removed — blur filter deleted. The nav retains distinct elevation via `var(--shadow-float)` + solid `var(--nav)` background — do not leave it flat as a side effect. See `03-design-system.md:03` elevation tokens.
 
 ### Tab Item
 
@@ -100,6 +102,7 @@ BIGDROPS uses a **5-tab bottom navigation** on phone. The tabs are:
 ### Drawer Content
 
 - Brand mark (32×32px gradient square) + brand name + subtitle
+- Company Switcher row (context control, not navigation) — see [16-context-switchers.md](./16-context-switchers.md) §4 for full specification
 - Navigation rows (9px padding, 12px radius, icon + label + chevron)
 - Active row: `var(--primary)` text, `var(--primary-soft)` background
 - Footer: user avatar + name + role
@@ -188,14 +191,11 @@ BIGDROPS uses a **5-tab bottom navigation** on phone. The tabs are:
 
 **Foldable (unfolded):** Same bottom tab bar. Wider content area. Optional side-by-side panels.
 
-**Tablet:** TBD — decision pending. Options:
-- Persistent bottom bar (phone pattern extended)
-- Side rail with labels (desktop pattern at tablet width)
-- Hybrid: bottom bar that transforms to side rail at breakpoint
+**Tablet:** **Bottom tab bar — phone pattern with expanded spacing (locked).** Not a side rail. Tablet is "expanded mobile, not shrunk desktop" (`02-mobile-first-model.md:02`) — a side rail would be a desktop pattern bleeding into this tier.
 
 **Desktop:** Sidebar navigation with labels. Bottom bar is removed. Sidebar is persistent.
 
-See [02-mobile-first-model.md](./02-mobile-first-model.md) for platform tiers.
+See [02-mobile-first-model.md](./02-mobile-first-model.md) for platform tiers and `00-index.md:00` locked decisions.
 
 ---
 

@@ -89,17 +89,19 @@ See [04-theme-system.md](./04-theme-system.md) for the complete theme contract.
 | 01 | [Design Vision](./01-design-vision.md) | Product experience, brand feel, design principles | Current |
 | 02 | [Mobile-First Model](./02-mobile-first-model.md) | Platform tiers, breakpoints, responsive behavior | Current |
 | 03 | [Design System](./03-design-system.md) | Typography, spacing, radius, elevation, controls | Current |
-| 04 | [Theme System](./04-theme-system.md) | Theme contract, color tokens, light/dark model | Current |
-| 05 | [Navigation Shell](./05-navigation-shell.md) | Bottom nav, drawer, search, AI, sheets | Current |
-| 06 | [Component Patterns](./06-component-patterns.md) | KPI cards, activity, alerts, audit, FAB, sheets | Current |
+| 04 | [Theme System](./04-theme-system.md) | Theme contract, color tokens, light/dark model — slate-navy locked | Current |
+| 05 | [Navigation Shell](./05-navigation-shell.md) | Bottom nav (no blur), drawer, search, AI, sheets — tablet bottom nav locked | Current |
+| 06 | [Component Patterns](./06-component-patterns.md) | KPI cards (shipped 4-currency model), activity, alerts, audit, FAB, sheets | Current |
 | 07 | [Forms](./07-forms.md) | Invoice form, line items, field layout, validation | Current |
 | 08 | [Tables and Data](./08-tables-and-data.md) | Data surfaces, columns, sorting, mobile tables | Current |
 | 09 | [Documents](./09-documents.md) | Invoice, quotation, waybill, CSR view UX | Current |
 | 10 | [Loading and Refresh](./10-loading-and-refresh.md) | Loading states, refresh behavior, progress indicators | Current |
 | 11 | [Accessibility](./11-accessibility.md) | WCAG, touch targets, keyboard, screen readers | Current |
 | 12 | [Capacitor Native](./12-capacitor-native.md) | Safe areas, status bar, keyboard, splash | Current |
-| 13 | [AI Integration](./13-ai-integration.md) | Gateway, use cases, client setup, deployment | Current |
+| 13 | [AI Integration](./13-ai-integration.md) | Gateway, use cases, client setup, deployment — locked, deferred | Current |
 | 14 | [Implementation Roadmap](./14-implementation-roadmap.md) | Phased plan, dependencies, milestones | Current |
+| 15 | [Interaction Model](./15-interaction-model.md) | Platform-idiomatic Android patterns on shadcn+vaul, brand slate-navy (NOT Material 3) | Current |
+| 16 | [Context Switchers](./16-context-switchers.md) | Company Switcher (drawer) & Workspace Switcher (Settings) — multi-tenant context selection UX | Current |
 
 ---
 
@@ -149,18 +151,22 @@ Alternative design explorations. Not canonical. Useful ideas may inform future i
 | Manrope + DM Mono typography | ✅ Locked | 03-design-system.md |
 | 2-column KPI grid | ✅ Locked | 06-component-patterns.md |
 | Free-LLM gateway for AI | ✅ Locked | 13-ai-integration.md |
+| Final palette: slate-navy (light `#f0f4f8`/`#1e3a5f`, dark `#0f172a`/`#60a5fa`) | ✅ Locked — slate-navy confirmed over alternatives | 04-theme-system.md, Design-direction/dashboard/mobile-dashboard-v6.html |
+| Tablet navigation: bottom nav (phone pattern, expanded spacing) — not side rail | ✅ Locked | 02-mobile-first-model.md, 05-navigation-shell.md |
+| Bottom nav visual: solid/near-solid `var(--nav)` + `var(--shadow-float)`, no glassmorphism | ✅ Locked | 05-navigation-shell.md |
+| Shipped KPI model: Total Invoiced / Collected This Month / Outstanding Receivables / Overdue Balance (all currency) | ✅ Locked | 06-component-patterns.md, `src/config/kpiCards.ts`, `src/hooks/useDashboardData.ts` |
 
 ## Pending Decisions
 
 | Decision | Priority | Blocked By |
 |----------|----------|------------|
-| Final light mode color palette | High | Stakeholder selection |
-| Final dark mode color palette | High | Stakeholder selection |
-| Tablet navigation model | Medium | 02-mobile-first-model.md |
 | Desktop sidebar design | Medium | 02-mobile-first-model.md |
 | Foldable posture behavior | Medium | 02-mobile-first-model.md |
 | Table column priority system | Medium | 08-tables-and-data.md |
 | Document view layout | Low | 09-documents.md |
+| Breakpoint values | Medium | 02-mobile-first-model.md — proposal in 02 §Breakpoint Strategy, awaiting confirmation |
+
+> Tablet navigation is no longer pending — locked to bottom nav per `02-mobile-first-model.md:02` rationale ("tablet is expanded mobile, not shrunk desktop"). Palette is no longer pending — locked to slate-navy.
 
 ---
 

@@ -114,7 +114,9 @@ Dark mode is implemented via CSS selector `[data-theme="dark"]`. The structural 
 
 ## Current Default Theme
 
-**Slate Navy** (from `mobile-dashboard-v6.html`) is the current default.
+**Slate Navy** (from `mobile-dashboard-v6.html`) is the **locked final palette** — confirmed over alternatives, not "canonical by accident."
+
+> Locked per `00-index.md:00` (2026-08-28). This overrides any prior "TBD palette" status.
 
 | Property | Light | Dark |
 |----------|-------|------|
@@ -122,6 +124,8 @@ Dark mode is implemented via CSS selector `[data-theme="dark"]`. The structural 
 | Surface | `#ffffff` (white) | `#1e293b` (dark slate) |
 | Primary | `#1e3a5f` (dark navy) | `#60a5fa` (bright blue) |
 | Accent feel | Professional, restrained | High contrast, clear |
+
+Shipped mockup `mobile-dashboard-v6.html:13` (light `#f0f4f8`/`#1e3a5f`, dark `#0f172a`/`#60a5fa`) is the normative reference. Other theme variants in `Design-direction/dashboard/themes/` remain structural duplicates with colour-only differences — they are not alternative palettes under consideration.
 
 ---
 
