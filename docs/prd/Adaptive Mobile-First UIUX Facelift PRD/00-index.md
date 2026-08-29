@@ -102,6 +102,8 @@ See [04-theme-system.md](./04-theme-system.md) for the complete theme contract.
 | 14 | [Implementation Roadmap](./14-implementation-roadmap.md) | Phased plan, dependencies, milestones | Current |
 | 15 | [Interaction Model](./15-interaction-model.md) | Platform-idiomatic Android patterns on shadcn+vaul, brand slate-navy (NOT Material 3) | Current |
 | 16 | [Context Switchers](./16-context-switchers.md) | Company Switcher (drawer) & Workspace Switcher (Settings) — multi-tenant context selection UX | Current |
+| 17 | [App Entry and Onboarding](./17-app-entry-and-onboarding.md) | App launch, authentication, sign-up, onboarding, workspace/company setup, dashboard arrival — UX specification | Current |
+| — | [Design.md](./Design.md) | Authoritative visual design system & theme contract — tokens, components, theme power matrix, anti-patterns | Current |
 
 ---
 
