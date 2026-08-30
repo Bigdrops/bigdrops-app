@@ -1,5 +1,59 @@
 import type { ThemeTokenBundle } from "@/lib/themeTokens"
 import { normalizeThemeTokenBundle } from "@/lib/themeTokens"
+import { hexToHslTriplet, normalizeHexColor } from "./colorTheme"
+
+/**
+ * Converts a color string (hex or rgba) to an HSL triplet for CSS variable use.
+ * Returns the original string if conversion fails.
+ */
+function toHslTriplet(color: string): string {
+  const trimmed = color.trim()
+  
+  // Handle hex colors
+  if (trimmed.startsWith('#')) {
+    const normalized = normalizeHexColor(trimmed)
+    if (normalized) return hexToHslTriplet(normalized)
+  }
+  
+  // Handle rgba() format: rgba(r, g, b, a)
+  const rgbaMatch = trimmed.match(/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/)
+  if (rgbaMatch) {
+    const [, r, g, b, a] = rgbaMatch
+    const rNorm = parseInt(r) / 255
+    const gNorm = parseInt(g) / 255
+    const bNorm = parseInt(b) / 255
+    
+    const max = Math.max(rNorm, gNorm, bNorm)
+    const min = Math.min(rNorm, gNorm, bNorm)
+    let h = 0
+    let s = 0
+    const l = (max + min) / 2
+    
+    if (max !== min) {
+      const d = max - min
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+      
+      switch (max) {
+        case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break
+        case gNorm: h = (bNorm - rNorm) / d + 2; break
+        case bNorm: h = (rNorm - gNorm) / d + 4; break
+      }
+      h /= 6
+    }
+    
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}% / ${a}`
+  }
+  
+  // Handle rgb() format without alpha
+  const rgbMatch = trimmed.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/)
+  if (rgbMatch) {
+    const [, r, g, b] = rgbMatch
+    return toHslTriplet(`rgba(${r}, ${g}, ${b}, 1)`)
+  }
+  
+  // Return original if not convertible (e.g., already HSL triplet)
+  return trimmed
+}
 
 // ────────────────────────────────────────────────────────────────────
 // Theme ID constants
@@ -88,7 +142,7 @@ export function isFixedThemePresetId(value: unknown): value is ThemePresetId {
  * from a theme's core color values. These are CSS custom properties
  * that components consume via `var(--bg)`, `var(--ink)`, etc.
  *
- * The values are hex strings; the CSS layer handles conversion.
+ * The values are converted to HSL triplets for CSS variable use with `hsl()` wrapper.
  */
 function prdSemanticTokens(opts: {
   bg: string
@@ -112,25 +166,25 @@ function prdSemanticTokens(opts: {
   nav: string
 }): Record<string, string> {
   return {
-    "--bg": opts.bg,
-    "--surface": opts.surface,
-    "--surface-raised": opts.surfaceRaised ?? opts.surface,
-    "--surface-muted": opts.surfaceMuted ?? opts.surface,
-    "--surface-strong": opts.surfaceStrong ?? opts.surface,
-    "--ink": opts.ink,
-    "--ink-2": opts.ink2,
-    "--ink-3": opts.ink3,
-    "--primary": opts.primary,
-    "--primary-bright": opts.primaryBright ?? opts.primary,
-    "--secondary": opts.secondary,
-    "--secondary-bright": opts.secondaryBright ?? opts.secondary,
-    "--attention": opts.attention,
-    "--attention-soft": opts.attentionSoft ?? opts.attention,
-    "--sage": opts.sage ?? opts.ink2,
-    "--sage-soft": opts.sageSoft ?? opts.surface,
-    "--line": opts.line,
-    "--line-strong": opts.lineStrong,
-    "--nav": opts.nav,
+    "--bg": toHslTriplet(opts.bg),
+    "--surface": toHslTriplet(opts.surface),
+    "--surface-raised": toHslTriplet(opts.surfaceRaised ?? opts.surface),
+    "--surface-muted": toHslTriplet(opts.surfaceMuted ?? opts.surface),
+    "--surface-strong": toHslTriplet(opts.surfaceStrong ?? opts.surface),
+    "--ink": toHslTriplet(opts.ink),
+    "--ink-2": toHslTriplet(opts.ink2),
+    "--ink-3": toHslTriplet(opts.ink3),
+    "--primary": toHslTriplet(opts.primary),
+    "--primary-bright": toHslTriplet(opts.primaryBright ?? opts.primary),
+    "--secondary": toHslTriplet(opts.secondary),
+    "--secondary-bright": toHslTriplet(opts.secondaryBright ?? opts.secondary),
+    "--attention": toHslTriplet(opts.attention),
+    "--attention-soft": toHslTriplet(opts.attentionSoft ?? opts.attention),
+    "--sage": toHslTriplet(opts.sage ?? opts.ink2),
+    "--sage-soft": toHslTriplet(opts.sageSoft ?? opts.surface),
+    "--line": toHslTriplet(opts.line),
+    "--line-strong": toHslTriplet(opts.lineStrong),
+    "--nav": toHslTriplet(opts.nav),
     "--gradient": `linear-gradient(135deg, ${opts.primary}, ${opts.secondary})`,
   }
 }
