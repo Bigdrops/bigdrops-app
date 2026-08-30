@@ -12,10 +12,10 @@ export type DashboardCacheData = {
 export type DashboardCacheEntry = {
   data: DashboardCacheData
   fetchedAt: number
-  version: 1
+  version: 2
 }
 
-const DASHBOARD_CACHE_VERSION = 1
+const DASHBOARD_CACHE_VERSION = 2
 
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined"
