@@ -10,8 +10,15 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useDashboardData, type RecentDoc } from '@/hooks/useDashboardData'
 import { buildKpiCards, loadStoredKpiCards } from '@/config/kpiCards'
 import { getCreateActions } from '@/config/quickTiles'
+import type { UserThemePreference } from '@/hooks/useUserThemePreferences'
 
-export default function DashboardRedesign({ session }: { session: Session }) {
+type DashboardRedesignProps = {
+  session: Session
+  preference: UserThemePreference
+  saveThemePref: (updates: Partial<UserThemePreference>) => Promise<void>
+}
+
+export default function DashboardRedesign({ session, preference, saveThemePref }: DashboardRedesignProps) {
   const navigate = useNavigate()
   const { settings } = useSettings()
   const { widthClass } = useLayoutMode()
@@ -75,6 +82,8 @@ export default function DashboardRedesign({ session }: { session: Session }) {
         recentDocs={recentDocs}
         onRecentDocSelect={handleRecentDocSelect}
         onViewAllActivity={() => {}}
+        preference={preference}
+        saveThemePref={saveThemePref}
       />
 
       {createOpen && createActions.length > 0 ? (

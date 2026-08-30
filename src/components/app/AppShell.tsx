@@ -15,7 +15,8 @@ import {
   type ThemeTokenBundle,
   type ThemeToken,
 } from '@/lib/themeTokens'
-import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
+import { useUserThemePreferences, type UserThemePreference } from '@/hooks/useUserThemePreferences'
+import { ThemePreferenceProvider } from '@/contexts/ThemePreferenceContext'
 import {
   AuthorizationProvider,
 } from '@/lib/tenant/contexts'
@@ -90,8 +91,7 @@ const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoun
 //
 // Theme model: each theme family (slate-navy, amber-terracotta, etc.) has light and dark variants.
 // Liquid Onyx is NOT a separate theme — it is Slate Navy's dark variant.
-function AppThemeManager({ userId }: { userId: string }) {
-  const { preference } = useUserThemePreferences(userId)
+function AppThemeManager({ userId, preference }: { userId: string; preference: UserThemePreference }) {
   const lastApplied = useRef<{ themePresetId: string | null; isDark: boolean | null }>({
     themePresetId: null,
     isDark: null,
@@ -238,6 +238,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
   const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
   const showAndroidBackHandler = isAndroidNative()
 
+  // SINGLE source of truth for theme preference state.
+  // Both AppThemeManager and DashboardOverview consume this shared state.
+  const { preference, loading: prefLoading, save: saveThemePref } = useUserThemePreferences(session.user.id)
+
   return (
     <>
       <Suspense fallback={null}>
@@ -257,10 +261,11 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         </Suspense>
       )}
       <Suspense fallback={<PageLoader />}>
-        <AppThemeManager userId={session.user.id} />
+        <ThemePreferenceProvider value={{ preference, loading: prefLoading, save: saveThemePref, refresh: () => Promise.resolve() }}>
+          <AppThemeManager userId={session.user.id} preference={preference} />
         <AuthorizationProvider userId={session.user.id}>
           <Routes>
-            <Route path="/" element={withBoundary(<Dashboard session={session} />)} />
+            <Route path="/" element={withBoundary(<Dashboard session={session} preference={preference} saveThemePref={saveThemePref} />)} />
           <Route path="/invoices" element={withBoundary(<Invoices />)} />
           <Route path="/invoices/new" element={withBoundary(<NewInvoice />)} />
           <Route path="/invoices/edit/:id" element={withBoundary(<EditInvoice />)} />
@@ -310,6 +315,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/debug/tenant" element={withBoundary(<TenantDebug session={session} />)} />
             </Routes>
           </AuthorizationProvider>
+        </ThemePreferenceProvider>
       </Suspense>
     </>
   )

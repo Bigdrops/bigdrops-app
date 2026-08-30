@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Palette, RotateCcw, Sparkles, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
-import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
+import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { useEntity } from '@/lib/tenant/contexts'
 import { normalizeHexColor } from '@/lib/colorTheme'
 import { BASE_THEME_MODE, THEME_PRESETS, SELECTABLE_THEME_PRESETS, isThemePresetId, type ThemePresetId } from '@/lib/themePresets'
@@ -88,7 +88,7 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
 export function AppThemeSettingsSection({ userId }: { userId?: string | undefined }) {
   const { settings, loading: settingsLoading } = useSettings()
   const { tenantClient } = useEntity()
-  const { preference, loading: prefLoading, save: saveThemePref } = useUserThemePreferences(userId ?? null)
+  const { preference, loading: prefLoading, save: saveThemePref } = useThemePreferenceContext()
   // Theme family: which color palette is selected (null = default slate-navy)
   const [selectedFamily, setSelectedFamily] = useState<ThemePresetId | null>(null)
   // Whether the user has selected a custom build

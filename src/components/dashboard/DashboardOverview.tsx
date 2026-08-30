@@ -18,7 +18,7 @@ import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import type { RecentDoc } from '@/hooks/useDashboardData'
-import { useUserThemePreferences } from '@/hooks/useUserThemePreferences'
+import type { UserThemePreference } from '@/hooks/useUserThemePreferences'
 import type { KpiCardViewModel } from '@/config/kpiCards'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
@@ -38,6 +38,8 @@ type DashboardOverviewProps = {
   recentDocs: RecentDoc[]
   onRecentDocSelect: (doc: RecentDoc) => void
   onViewAllActivity: () => void
+  preference: UserThemePreference
+  saveThemePref: (updates: Partial<UserThemePreference>) => Promise<void>
 }
 
 // V6 activity icon styling — typed by document domain
@@ -158,8 +160,9 @@ export function DashboardOverview({
   recentDocs,
   onRecentDocSelect,
   onViewAllActivity,
+  preference,
+  saveThemePref,
 }: DashboardOverviewProps) {
-  const { save: saveThemePref, preference } = useUserThemePreferences(userId ?? null)
 
   // Derive isDark from user preference, not from DOM class.
   // AppThemeManager is the single owner of DOM class mutations.
