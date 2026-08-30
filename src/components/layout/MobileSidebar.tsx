@@ -1,8 +1,7 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Building2 } from 'lucide-react'
-import { Separator } from '@/components/ui/separator'
+import { Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/lib/tenant/contexts'
 import {
@@ -34,32 +33,37 @@ interface MobileSidebarProps {
   handleMorePick: (key: string) => Promise<void>
 }
 
+function DrawerLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-2 pt-3 pb-1 text-[7px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--ink-3))]">
+      {children}
+    </div>
+  )
+}
+
+function DrawerFooter() {
+  const { workspace, isLoading } = useWorkspace()
+  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
+  const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
+  const initials = workspaceName.slice(0, 2).toUpperCase()
+
+  return (
+    <div className="mt-auto border-t border-[hsl(var(--line))] px-3.5 py-3 flex items-center gap-2">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[8px] font-[800]">
+        {initials}
+      </span>
+      <div className="min-w-0">
+        <div className="truncate text-[10px] font-[800] text-[hsl(var(--ink))]">{workspaceName}</div>
+        <div className="truncate text-[8px] text-[hsl(var(--ink-3))] mt-px">{workspaceRole}</div>
+      </div>
+    </div>
+  )
+}
+
 function formatWorkspaceRole(role: string | null | undefined) {
   const trimmed = String(role || '').trim()
   if (!trimmed) return ''
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
-}
-
-function WorkspaceRoleInfo() {
-  const { workspace, isLoading } = useWorkspace()
-  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
-  const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
-
-  return (
-    <div className="mt-2 rounded-2xl border border-border bg-muted/40 px-3 py-2.5">
-      <div className="flex items-start gap-2.5">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-card text-foreground shadow-sm">
-          <Building2 className="h-4 w-4" />
-        </span>
-        <div className="min-w-0">
-          <div className="truncate text-xs font-bold text-foreground">{workspaceName}</div>
-          <div className="truncate text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-            {workspaceRole}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export function MobileSidebar({
@@ -76,29 +80,26 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px] overflow-y-auto bd-custom-scrollbar" showCloseButton={false}>
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground"
-          aria-label="Close navigation menu"
-        >
-          <Icons.close className="h-5 w-5" />
-        </button>
-
-        <div className="px-5 pb-5 pt-6">
-          <div className="text-sm font-black tracking-[-0.03em] text-foreground">{APP_NAME}</div>
-          <div className="mt-1 text-xs text-muted-foreground">Navigation</div>
+      <SheetContent
+        side="left"
+        className="w-[min(84%,340px)] p-0 sm:max-w-[340px] overflow-y-auto bd-custom-scrollbar rounded-none border-0 border-r border-[hsl(var(--line))]"
+        showCloseButton={false}
+      >
+        {/* Drawer header — brand mark + name + subtitle */}
+        <div className="flex items-center gap-2 border-b border-[hsl(var(--line))] px-3.5 py-3.5">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[hsl(var(--gradient))] text-white">
+            <Sparkles className="h-4 w-4" strokeWidth={1.9} />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[13px] font-[800] tracking-[-0.05em] text-[hsl(var(--ink))]">{APP_NAME}</div>
+            <div className="mt-px text-[7px] font-[800] uppercase tracking-[0.09em] text-[hsl(var(--ink-3))]">Project finance workspace</div>
+          </div>
         </div>
 
-        <div className="space-y-2 px-4 pb-6">
-          <div className="rounded-2xl border border-border bg-card px-3 py-3 shadow-sm">
-            <div className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Business
-            </div>
-            <WorkspaceRoleInfo />
-          </div>
-
+        {/* Drawer nav list */}
+        <div className="flex-1 overflow-y-auto px-2 py-2.5 bd-custom-scrollbar">
+          {/* Workspace */}
+          <DrawerLabel>Workspace</DrawerLabel>
           {mobileDrawerPrimaryNav.map((item) => {
             const Icon = item.icon
             const isActive = isPathActive(pathname, item.path || '')
@@ -111,131 +112,82 @@ export function MobileSidebar({
                   onOpenChange(false)
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition active:scale-[0.985]',
-                  isActive ? activeNavItemClassName : inactiveNavItemClassName
+                  'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+                  isActive ? activeNavItemClassName : inactiveNavItemClassName,
                 )}
               >
-                <span
-                  className={cn(
-                    'grid h-9 w-9 place-items-center rounded-xl',
-                    isActive ? activeNavIconClassName : inactiveNavIconClassName
-                  )}
-                >
-                  <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
-                </span>
-                <span className="font-semibold">{item.label}</span>
+                <Icon className={cn('h-4 w-4', isActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+                {item.label}
               </button>
             )
           })}
 
-          <Separator className="my-3" />
-
-          <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setDrawerSalesOpen((prev) => !prev)}
-              className={cn(
-                'flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition active:scale-[0.985]',
-                salesRouteActive ? activeNavItemClassName : inactiveNavItemClassName
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    'grid h-9 w-9 place-items-center rounded-xl',
-                    salesRouteActive ? activeNavIconClassName : inactiveNavIconClassName
-                  )}
-                >
-                  <Icons.sales className={cn('h-5 w-5', salesRouteActive ? '' : inactiveNavIconColorClassName)} />
-                </span>
-                <span className="font-semibold">Sales</span>
-              </div>
-              <Icons.chevronDown className={cn('h-5 w-5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
-            </button>
-
-            {drawerSalesOpen ? (
-              <div className="mt-1 space-y-1 pb-1 pl-2">
-                {salesPicker.map((item) => {
-                  const Icon = item.icon
-                  const isActive = isPathActive(pathname, getSalesPath(item.key))
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => handleSalesPick(item.key)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition active:scale-[0.985]',
-                        isActive ? activeNavItemClassName : inactiveNavItemClassName
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'grid h-9 w-9 place-items-center rounded-xl',
-                          isActive ? activeNavIconClassName : inactiveNavIconClassName
-                        )}
-                      >
-                        <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
-                      </span>
-                      <span className="font-semibold">{item.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-1 shadow-sm">
-            <div
-              className={cn(
-                'flex w-full items-center justify-between rounded-[18px] px-2 py-2 text-sm transition',
-                presalesRouteActive ? activeNavItemClassName : inactiveNavItemClassName
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    'grid h-9 w-9 place-items-center rounded-xl',
-                    presalesRouteActive ? activeNavIconClassName : inactiveNavIconClassName
-                  )}
-                >
-                  <Icons.boq className={cn('h-5 w-5', presalesRouteActive ? '' : inactiveNavIconColorClassName)} />
-                </span>
-                <span className="font-semibold">Pre-Sales</span>
-              </div>
-            </div>
-
-            <div className="mt-1 space-y-1 pb-1 pl-2">
-              {presalesPicker.map((item) => {
+          {/* Sales — collapsible */}
+          <DrawerLabel>Sales</DrawerLabel>
+          <button
+            type="button"
+            onClick={() => setDrawerSalesOpen((prev) => !prev)}
+            className={cn(
+              'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+              salesRouteActive ? activeNavItemClassName : inactiveNavItemClassName,
+            )}
+          >
+            <Icons.sales className={cn('h-4 w-4', salesRouteActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+            Sales
+            <Icons.chevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', drawerSalesOpen ? 'rotate-180' : '')} />
+          </button>
+          {drawerSalesOpen ? (
+            <div className="ml-3 space-y-0.5 pb-1">
+              {salesPicker.map((item) => {
                 const Icon = item.icon
-                const isActive = isPathActive(pathname, getPreSalesPath(item.key))
+                const isActive = isPathActive(pathname, getSalesPath(item.key))
                 return (
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => {
-                      navigate(getPreSalesPath(item.key))
-                      onOpenChange(false)
-                    }}
+                    onClick={() => handleSalesPick(item.key)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-2xl px-4 py-2 text-left text-sm transition',
-                      isActive ? activeNavItemClassName : inactiveNavItemClassName
+                      'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+                      isActive ? activeNavItemClassName : inactiveNavItemClassName,
                     )}
                   >
-                    <span
-                      className={cn(
-                        'grid h-9 w-9 place-items-center rounded-xl',
-                        isActive ? activeNavIconClassName : inactiveNavIconClassName
-                      )}
-                    >
-                      <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
-                    </span>
-                    <span className="font-semibold">{item.label}</span>
+                    <Icon className={cn('h-4 w-4', isActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+                    {item.label}
+                    <Icons.chevronRight className="ml-auto h-3.5 w-3.5" />
                   </button>
                 )
               })}
             </div>
+          ) : null}
+
+          {/* Pre-Sales */}
+          <DrawerLabel>Pre-Sales</DrawerLabel>
+          <div className="space-y-0.5 pb-1">
+            {presalesPicker.map((item) => {
+              const Icon = item.icon
+              const isActive = isPathActive(pathname, getPreSalesPath(item.key))
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    navigate(getPreSalesPath(item.key))
+                    onOpenChange(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+                    isActive ? activeNavItemClassName : inactiveNavItemClassName,
+                  )}
+                >
+                  <Icon className={cn('h-4 w-4', isActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+                  {item.label}
+                </button>
+              )
+            })}
           </div>
 
+          {/* Workspace tools */}
+          <DrawerLabel>Workspace tools</DrawerLabel>
           {mobileDrawerUtilityNav.map((item) => {
             const Icon = item.icon
             const isActive = isPathActive(pathname, item.path || '')
@@ -248,37 +200,31 @@ export function MobileSidebar({
                   onOpenChange(false)
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm transition active:scale-[0.985]',
-                  isActive ? activeNavItemClassName : inactiveNavItemClassName
+                  'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+                  isActive ? activeNavItemClassName : inactiveNavItemClassName,
                 )}
               >
-                <span
-                  className={cn(
-                    'grid h-9 w-9 place-items-center rounded-xl',
-                    isActive ? activeNavIconClassName : inactiveNavIconClassName
-                  )}
-                >
-                  <Icon className={cn('h-5 w-5', isActive ? '' : inactiveNavIconColorClassName)} />
-                </span>
-                <span className="font-semibold">{item.label}</span>
+                <Icon className={cn('h-4 w-4', isActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+                {item.label}
               </button>
             )
           })}
 
-          <button
-            type="button"
-            onClick={() => handleMorePick('signout')}
-            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-muted/50"
-          >
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
-                <Icons.signout className="h-5 w-5 text-foreground/80" />
-              </span>
-              <span className="font-semibold text-foreground">Sign Out</span>
-            </div>
-            <Icons.chevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
+          {/* Sign Out */}
+          <div className="mt-1 border-t border-[hsl(var(--line))] pt-2">
+            <button
+              type="button"
+              onClick={() => handleMorePick('signout')}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] text-[hsl(var(--ink-2))] transition active:scale-[0.985] hover:bg-[hsl(var(--surface-muted))]/50"
+            >
+              <Icons.signout className="h-4 w-4" strokeWidth={1.9} />
+              Sign Out
+            </button>
+          </div>
         </div>
+
+        {/* Drawer footer — user info */}
+        <DrawerFooter />
       </SheetContent>
     </Sheet>
   )

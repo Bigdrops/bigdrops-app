@@ -184,7 +184,7 @@ function prdSemanticTokens(opts: {
     "--sage-soft": toHslTriplet(opts.sageSoft ?? opts.surface),
     "--line": toHslTriplet(opts.line),
     "--line-strong": toHslTriplet(opts.lineStrong),
-    "--nav": toHslTriplet(opts.nav),
+    "--nav": opts.nav,
     "--gradient": `linear-gradient(135deg, ${opts.primary}, ${opts.secondary})`,
   }
 }

@@ -40,7 +40,7 @@ function formatRelativeTime(value: string) {
 
 function AlertsSkeleton() {
   return (
-    <div className="flex gap-2 overflow-hidden">
+    <div className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
       {Array.from({ length: 3 }).map((_, index) => (
         <div                  key={index}
                   className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
@@ -76,23 +76,11 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] pl-[11px] py-[11px] shadow-md md:pl-4 md:py-4 md:pr-4"
+    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md md:px-4 md:py-4"
       style={{
         boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
       }}
     >
-      {/* V6 alerts header — margin-right matches V6's11px right padding for scroll edge */}
-      <div className="mb-[9px] mr-[11px] flex items-start justify-between gap-[10px] md:mr-4">
-        <div>
-          <div className="text-[9px] font-[800] uppercase tracking-[0.105em] text-[hsl(var(--ink-3))]">
-            Recent alerts
-          </div>
-          <div className="mt-[3px] text-[9px] leading-[1.3] text-[hsl(var(--ink-2))]">
-            What needs a response, not just a read.
-          </div>
-        </div>
-      </div>
-
       {loading ? (
         <AlertsSkeleton />
       ) : alerts.length === 0 ? (
@@ -100,7 +88,7 @@ export function RecentAlertsCarousel() {
           No recent alerts.
         </div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1 md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
           {alerts.map((notification) => {
             const Icon = getIcon(notification)
             const route = getNotificationRoute(notification)

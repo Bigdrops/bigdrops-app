@@ -253,17 +253,11 @@ export function DashboardOverview({
       </header>
 
       <main className="px-[14px] pt-[6px] sm:px-5 md:px-6 lg:px-8">
-        {/* V6 Eyebrow — with 'Edit metrics' button on right */}
-        <div className="mb-2 flex items-center justify-between px-[2px] lg:mb-3">
+        {/* V6 Eyebrow */}
+        <div className="mb-2 px-[2px] lg:mb-3">
           <span className="text-[8px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
             Finance pulse · {monthLabel}
           </span>
-          <button
-            type="button"
-            className="text-[9px] font-[800] text-[hsl(var(--primary))]"
-          >
-            Edit metrics
-          </button>
         </div>
 
         {/* KPI Metric Grid — 2-col mobile, 4-col desktop */}
