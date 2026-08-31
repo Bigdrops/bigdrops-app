@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import { WorkspaceSwitcherRow } from '../components/layout/WorkspaceSwitcherRow'
 import {
   TeamSettingsSection,
   DeviceSettingsSection,
@@ -26,7 +25,7 @@ import {
 import type { SettingsSession } from './settings/settings-types'
 import { SettingsShell } from '@/components/settings/SettingsShell'
 import { feedback } from '@/lib/feedback'
-import { useWorkspace } from '@/lib/tenant/contexts'
+import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 
 export default function Settings() {
   const [active, setActive] = useState<ActiveSectionId | null>(null)
@@ -59,6 +58,7 @@ export default function Settings() {
   }, [session?.user?.id])
 
   const { workspace } = useWorkspace()
+  const { entity } = useEntity()
   const isOwner = workspace?.role === 'owner'
   const groups = buildGroups(isOwner, isOperator)
 
@@ -112,11 +112,14 @@ export default function Settings() {
     setActive(id)
   }, [navigate])
 
+  const wsName = String(workspace?.name || '').trim() || '—'
+  const coName = entity?.name || '—'
+
   return (
-    <Layout 
-      title="Settings" 
-      session={session} 
-      hidePageHeader 
+    <Layout
+      title="Settings"
+      session={session}
+      hidePageHeader
       contentClassName="bg-bd-surface"
     >
       <SettingsShell
@@ -125,7 +128,19 @@ export default function Settings() {
         setActiveSection={handleSelectSection}
         renderContent={renderSection}
         isAdmin={isOwner}
-        headerSlot={<WorkspaceSwitcherRow />}
+        workspaceContext={
+          <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-3.5 py-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[11px] font-[800]">
+                {wsName.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[12px] font-[800] text-bd-text">{wsName}</div>
+                <div className="truncate text-[10px] font-[600] text-bd-text-muted">{coName}</div>
+              </div>
+            </div>
+          </div>
+        }
       />
     </Layout>
   )

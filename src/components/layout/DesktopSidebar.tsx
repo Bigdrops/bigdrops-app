@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import type { Session } from '@supabase/supabase-js'
-import { Building2 } from 'lucide-react'
+import { Building2, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
@@ -25,44 +25,28 @@ interface DesktopSidebarProps {
   handleMorePick: (key: string) => void
 }
 
-function formatWorkspaceRole(role: string | null | undefined) {
-  const trimmed = String(role || '').trim()
-  if (!trimmed) return ''
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
-}
-
-function WorkspaceRoleInfo() {
-  const { workspace, isLoading } = useWorkspace()
-  const { entity, entities, isLoading: entityLoading } = useEntity()
-  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
-  const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
-  const companyName = entity?.name || (entityLoading ? 'Loading…' : 'No company')
-  const hasMultipleEntities = entities.length > 1
+/**
+ * Compact workspace/company context control.
+ * Shows current workspace name and active company.
+ * Does NOT show role, entity counts, or other metadata.
+ */
+function ContextControl() {
+  const { workspace } = useWorkspace()
+  const { entity } = useEntity()
+  const wsName = String(workspace?.name || '').trim() || '—'
+  const coName = entity?.name || '—'
 
   return (
-    <div className="mt-2 rounded-[var(--bd-radius-md)] border border-bd-border/70 bg-[hsl(var(--bd-surface-muted))/0.55] px-2.5 py-2">
-      <div className="flex items-start gap-2.5">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--bd-radius-md)] bg-bd-surface text-bd-text shadow-sm">
-          <Building2 className="h-4 w-4" />
+    <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-3 py-2.5 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[10px] font-[800]">
+          {wsName.charAt(0).toUpperCase()}
         </span>
-        <div className="min-w-0">
-          <div className="truncate text-[11px] font-bold text-bd-text">{workspaceName}</div>
-          <div className="truncate text-[9px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
-            {workspaceRole}
-          </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[11px] font-[800] text-bd-text">{wsName}</div>
+          <div className="truncate text-[9px] font-[600] text-bd-text-muted">{coName}</div>
         </div>
-      </div>
-      {/* Company context — secondary exposure per PRD §8 */}
-      <div className="mt-2 border-t border-bd-border/40 pt-2">
-        <div className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted opacity-60">
-          Company
-        </div>
-        <div className="mt-1 truncate text-[11px] font-bold text-bd-text">{companyName}</div>
-        {hasMultipleEntities ? (
-          <div className="mt-0.5 text-[9px] text-bd-text-muted">
-            {entities.length} companies available
-          </div>
-        ) : null}
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-bd-text-muted" />
       </div>
     </div>
   )
@@ -188,13 +172,9 @@ export function DesktopSidebar({
           ))}
         </div>
 
+        {/* Compact context control at bottom */}
         <div className="px-4 pb-4 pt-3">
-          <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-[hsl(var(--bd-surface-muted))/0.5] px-3 py-3 shadow-sm">
-            <div className="mb-[var(--bd-space-sm)] px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
-              Business Context
-            </div>
-            <WorkspaceRoleInfo />
-          </div>
+          <ContextControl />
         </div>
       </div>
     </aside>

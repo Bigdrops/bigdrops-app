@@ -14,8 +14,8 @@ interface SettingsShellProps {
   setActiveSection: (id: ActiveSectionId | null) => void
   renderContent: () => React.ReactNode
   isAdmin: boolean
-  /** Optional slot rendered above the settings navigation (e.g. Workspace Switcher). */
-  headerSlot?: React.ReactNode
+  /** Workspace/company context displayed at the top of settings. */
+  workspaceContext?: React.ReactNode
 }
 
 export function SettingsShell({
@@ -24,7 +24,7 @@ export function SettingsShell({
   setActiveSection,
   renderContent,
   isAdmin,
-  headerSlot,
+  workspaceContext,
 }: SettingsShellProps) {
   const [viewportWidth, setViewportWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
   const { openSidebar, sidebarOpen } = React.useContext(MobileChromeContext)
@@ -95,21 +95,21 @@ export function SettingsShell({
         )}>
           {!activeSection ? (
             <>
-              {headerSlot ? (
-                <div className="mb-4 px-1">{headerSlot}</div>
+              {workspaceContext ? (
+                <div className="mb-4">{workspaceContext}</div>
               ) : null}
-              <SettingsNav 
-                groups={groups} 
-                activeSection={null} 
-                onSelect={(id) => setActiveSection(id)} 
-                variant="list" 
+              <SettingsNav
+                groups={groups}
+                activeSection={null}
+                onSelect={(id) => setActiveSection(id)}
+                variant="list"
               />
             </>
           ) : (
             currentSection && (
-              <SettingsSectionFrame 
-                section={currentSection} 
-                onBack={() => setActiveSection(null)} 
+              <SettingsSectionFrame
+                section={currentSection}
+                onBack={() => setActiveSection(null)}
                 showBackButton={true}
               >
                 {renderContent()}
@@ -131,19 +131,19 @@ export function SettingsShell({
     )}>
       {/* Sidebar Nav */}
       <aside className="sticky top-6">
-        <SettingsNav 
-          groups={groups} 
-          activeSection={activeSection} 
-          onSelect={(id) => setActiveSection(id)} 
-          variant="sidebar" 
+        <SettingsNav
+          groups={groups}
+          activeSection={activeSection}
+          onSelect={(id) => setActiveSection(id)}
+          variant="sidebar"
           isTablet={isTablet}
         />
       </aside>
 
       {/* Main Content Area */}
       <main className="min-w-0">
-        {headerSlot && !activeSection ? (
-          <div className="mb-4">{headerSlot}</div>
+        {workspaceContext && !activeSection ? (
+          <div className="mb-6">{workspaceContext}</div>
         ) : null}
         {currentSection ? (
           <SettingsSectionFrame section={currentSection}>
