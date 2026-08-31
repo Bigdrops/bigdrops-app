@@ -238,35 +238,45 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
 
 export function useDashboardData(options: UseDashboardDataOptions = {}): UseDashboardDataResult {
   const { variant = 'overview' } = options
-  const { tenantClient } = useEntity()
-  const cacheKey = `bd:dashboard:${variant}:v1`
+  const { tenantClient, schemaName } = useEntity()
+  // ponytail: entity-scoped key — old unscoped bd:dashboard:${variant}:v1 entries are orphaned harmlessly
+  const cacheKey = schemaName
+    ? `bd:dashboard:${schemaName}:${variant}:v2`
+    : `bd:dashboard:pending:${variant}:v2`
 
   const [loading, setLoading] = React.useState(() => {
+    if (!schemaName) return true
     const cached = readDashboardCache(cacheKey)
     return !cached
   })
   
   const [recentDocs, setRecentDocs] = React.useState<RecentDoc[]>(() => {
+    if (!schemaName) return []
     const cached = readDashboardCache(cacheKey)
     return cached?.data.recentDocs || []
   })
   const [recentProjects, setRecentProjects] = React.useState<RecentProject[]>(() => {
+    if (!schemaName) return []
     const cached = readDashboardCache(cacheKey)
     return cached?.data.recentProjects || []
   })
   const [kpiStats, setKpiStats] = React.useState<KpiStats>(() => {
+    if (!schemaName) return defaultKpiStats
     const cached = readDashboardCache(cacheKey)
     return cached?.data.kpiStats || defaultKpiStats
   })
   const [heroStats, setHeroStats] = React.useState<HeroStats>(() => {
+    if (!schemaName) return defaultHeroStats
     const cached = readDashboardCache(cacheKey)
     return cached?.data.heroStats || defaultHeroStats
   })
   const [summary, setSummary] = React.useState<SummaryStats>(() => {
+    if (!schemaName) return defaultSummary
     const cached = readDashboardCache(cacheKey)
     return cached?.data.summary || defaultSummary
   })
   const [activityEvents, setActivityEvents] = React.useState<any[]>(() => {
+    if (!schemaName) return []
     const cached = readDashboardCache(cacheKey)
     return cached?.data.activityEvents || []
   })
