@@ -1,4 +1,5 @@
 export { CompanySettingsSection } from './CompanySettingsSection'
+export { WorkspaceSwitchSection } from './WorkspaceSwitchSection'
 export { BankingSettingsSection } from './BankingSettingsSection'
 export { BrandingSettingsSection } from './BrandingSettingsSection'
 export { SignatoriesSettingsSection } from './SignatoriesSettingsSection'

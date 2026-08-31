@@ -17,6 +17,7 @@ import {
   NotificationSettingsPage,
   SignatoriesSettingsSection,
   UserSettingsSection,
+  WorkspaceSwitchSection,
 } from './settings/index'
 import {
   ActiveSectionId,
@@ -71,6 +72,8 @@ export default function Settings() {
     switch (resolved) {
       case 'user':
         return <UserSettingsSection session={session} onToast={showToast} />
+      case 'workspace-switch':
+        return <WorkspaceSwitchSection />
       case 'company':
         return <CompanySettingsSection />
       case 'branding':

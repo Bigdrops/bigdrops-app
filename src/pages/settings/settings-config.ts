@@ -7,6 +7,7 @@ import {
   Hash,
   ImageIcon,
   LayoutDashboard,
+  Layers,
   Palette,
   Shield,
   ShieldCheck,
@@ -20,6 +21,7 @@ import {
 
 export type ActiveSectionId =
   | 'user'
+  | 'workspace-switch'
   | 'theme'
   | 'notifications'
   | 'company'
@@ -71,6 +73,12 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     id: 'workspace',
     label: 'Workspace',
     items: [
+      {
+        id: 'workspace-switch',
+        label: 'Switch Workspace',
+        icon: Layers,
+        desc: 'Change the active workspace',
+      },
       {
         id: 'company',
         label: 'Company Info',
