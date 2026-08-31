@@ -3,7 +3,6 @@ import {
   ChevronDown,
   GripVertical,
   Minus,
-  Pencil,
   Plus,
   RotateCcw,
   Trash2,
@@ -81,10 +80,10 @@ function GripHandle({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className="flex flex-col items-center justify-center w-8 h-12 shrink-0 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 transition-opacity select-none touch-manipulation"
+      className="flex items-center justify-center w-7 shrink-0 cursor-grab active:cursor-grabbing opacity-30 hover:opacity-60 transition-opacity select-none touch-manipulation"
       aria-label="Drag to reorder"
     >
-      <GripVertical className="w-5 h-5 text-[var(--bd-text3)]" />
+      <GripVertical className="w-4 h-4 text-bd-text-muted" />
     </div>
   )
 }
@@ -101,24 +100,24 @@ function ReorderButtons({
   disableDown: boolean
 }) {
   return (
-    <div className="flex flex-col gap-0.5 shrink-0">
+    <div className="flex flex-col shrink-0">
       <button
         type="button"
         onClick={onUp}
         disabled={disableUp}
-        className="flex items-center justify-center w-8 h-6 rounded-lg border border-transparent text-[var(--bd-text3)] hover:text-[var(--bd-text)] hover:border-[var(--bd-border-soft)] hover:bg-[var(--bd-bg)] active:scale-95 disabled:opacity-20 disabled:cursor-default disabled:hover:border-transparent disabled:hover:bg-transparent transition-all"
+        className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
         aria-label="Move up"
       >
-        <ChevronDown className="w-4 h-4 rotate-180" />
+        <ChevronDown className="w-3.5 h-3.5 rotate-180" />
       </button>
       <button
         type="button"
         onClick={onDown}
         disabled={disableDown}
-        className="flex items-center justify-center w-8 h-6 rounded-lg border border-transparent text-[var(--bd-text3)] hover:text-[var(--bd-text)] hover:border-[var(--bd-border-soft)] hover:bg-[var(--bd-bg)] active:scale-95 disabled:opacity-20 disabled:cursor-default disabled:hover:border-transparent disabled:hover:bg-transparent transition-all"
+        className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
         aria-label="Move down"
       >
-        <ChevronDown className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5" />
       </button>
     </div>
   )
@@ -126,16 +125,14 @@ function ReorderButtons({
 
 type SectionTitleProps = {
   children: ReactNode
-  action?: ReactNode
 }
 
-function SectionTitle({ children, action }: SectionTitleProps) {
+function SectionTitle({ children }: SectionTitleProps) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3 px-1">
-      <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--bd-text3)]">
+    <div className="mb-2 px-0.5">
+      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
         {children}
       </div>
-      {action}
     </div>
   )
 }
@@ -152,19 +149,16 @@ function FixedColumnRow({
   onUpdate: (key: string, field: string, value: ColumnUpdateValue) => void
 }) {
   return (
-    <div className="flex items-center min-h-[56px] px-4 py-3 gap-3 border-b border-[var(--bd-border-soft)] last:border-b-0">
-      <div className="min-w-0 flex-1 flex items-center gap-3">
-        <Input
-          value={col.label || ''}
-          onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
-          placeholder="Column label"
-          className="h-10 rounded-xl border border-transparent hover:border-[var(--bd-border)] bg-transparent px-3 text-[15px] font-medium text-[var(--bd-text)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)] flex-1 transition-colors"
-        />
-        <span className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--bd-text3)]">
-          <Pencil className="w-3 h-3" />
-          Fixed
-        </span>
-      </div>
+    <div className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+      <Input
+        value={col.label || ''}
+        onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
+        placeholder="Column label"
+        className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+      />
+      <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+        Fixed
+      </span>
     </div>
   )
 }
@@ -202,7 +196,7 @@ function BuiltInColumnRow({
   return (
     <div
       className={cn(
-        'flex items-center min-h-[56px] px-3 py-2.5 gap-1 border-b border-[var(--bd-border-soft)] last:border-b-0 transition-all duration-200',
+        'flex items-center min-h-[44px] px-2 py-1.5 gap-0.5 border-b border-bd-border/50 last:border-b-0 transition-opacity',
         isFullHidden && 'opacity-40',
       )}
     >
@@ -221,39 +215,39 @@ function BuiltInColumnRow({
       />
 
       <div className={cn('min-w-0 flex-1 px-1', isFullHidden && 'opacity-60')}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Input
             value={col.label || ''}
             onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
             placeholder="Column label"
             className={cn(
-              'h-9 rounded-lg px-2.5 text-[14px] font-medium transition-colors flex-1',
+              'h-8 rounded-lg px-2 text-[13px] font-medium transition-colors flex-1',
               isFullHidden
-                ? 'border-transparent bg-transparent text-[var(--bd-text3)] line-through hover:border-[var(--bd-border-soft)]'
-                : 'border-transparent bg-transparent text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)]',
+                ? 'border-transparent bg-transparent text-bd-text-muted line-through'
+                : 'border-transparent bg-transparent text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border',
             )}
           />
-          <span className="shrink-0 inline-flex rounded-lg border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--bd-text3)]">
+          <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
             {affectsTotals ? 'Num' : 'Text'}
           </span>
         </div>
 
         {col.key === 'install_rate' ? (
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-1.5 flex items-center gap-1.5">
             <NumericInput
               step={0.01}
               min={0}
               value={col.formula || 0}
               onChange={(val) => onUpdate(col.key, 'formula', String(val))}
               placeholder="0"
-              className="h-8 w-[72px] rounded-lg border-[var(--bd-border)] bg-[var(--bd-bg)] text-xs px-2"
+              className="h-7 w-[64px] rounded-md border-bd-border bg-bd-surface-muted text-[11px] px-1.5"
             />
-            <span className="text-[12px] font-medium text-[var(--bd-text3)]">multiplier</span>
+            <span className="text-[11px] text-bd-text-muted">multiplier</span>
           </div>
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2.5 shrink-0 pl-2 pr-1">
+      <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
         <Switch
           size="sm"
           checked={isShown}
@@ -267,17 +261,17 @@ function BuiltInColumnRow({
             type="button"
             onClick={() => onToggleFull(col.key)}
             className={cn(
-              'flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 active:scale-90',
+              'flex items-center justify-center w-7 h-7 rounded-md transition-colors',
               isFullHidden
-                ? 'text-[var(--bd-feedback-success)] hover:bg-[var(--bd-feedback-success-bg)]'
-                : 'text-[var(--bd-feedback-error)] hover:bg-[var(--bd-feedback-error-bg)]',
+                ? 'text-bd-status-success-text hover:bg-bd-status-success-bg'
+                : 'text-bd-status-danger-text hover:bg-bd-status-danger-bg',
             )}
             title={isFullHidden ? 'Restore to totals' : 'Remove from totals'}
           >
             {isFullHidden ? (
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             ) : (
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3.5 h-3.5" />
             )}
           </button>
         ) : null}
@@ -317,8 +311,8 @@ function CustomColumnRow({
   return (
     <div
       className={cn(
-        'flex items-center min-h-[56px] px-3 py-2.5 gap-1 border-b border-[var(--bd-border-soft)] last:border-b-0 transition-all duration-200',
-        deleting && 'opacity-0 -translate-x-3',
+        'flex items-center min-h-[44px] px-2 py-1.5 gap-0.5 border-b border-bd-border/50 last:border-b-0 transition-all duration-200',
+        deleting && 'opacity-0 -translate-x-2',
       )}
     >
       <GripHandle
@@ -335,19 +329,19 @@ function CustomColumnRow({
         disableDown={disableMoveDown}
       />
 
-      <div className="min-w-0 flex-1 px-1 flex items-center gap-2">
+      <div className="min-w-0 flex-1 px-1 flex items-center gap-1.5">
         <Input
           value={col.label || ''}
           onChange={(e) => onUpdate(col.key, 'label', e.target.value)}
           placeholder="Column label"
-          className="h-9 rounded-lg border-transparent bg-transparent px-2.5 text-[14px] font-medium text-[var(--bd-text)] hover:border-[var(--bd-border)] focus:bg-[var(--bd-surface)] focus:border-[var(--bd-border)] flex-1 transition-colors"
+          className="h-8 rounded-lg border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
         />
-        <span className="shrink-0 inline-flex rounded-lg border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--bd-text3)]">
+        <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
           Custom
         </span>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 pl-2 pr-1">
+      <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
         <Switch
           size="sm"
           checked={isShown}
@@ -358,10 +352,10 @@ function CustomColumnRow({
         <button
           type="button"
           onClick={() => onRemoveCustom(col.key)}
-          className="flex items-center justify-center w-8 h-8 rounded-lg text-[var(--bd-text3)] hover:text-[var(--bd-feedback-error)] hover:bg-[var(--bd-feedback-error-bg)] active:scale-90 transition-all duration-200"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-bd-text-muted hover:text-bd-status-danger-text hover:bg-bd-status-danger-bg transition-colors"
           title="Delete custom column"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -386,7 +380,7 @@ function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogPro
           <DialogHeader className="mb-3">
             <DialogTitle>Reset table to default?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-[var(--bd-overlay-muted)]">
+          <p className="text-sm text-bd-text-muted">
             This restores columns, labels, and layout. Items are not removed.
           </p>
           <div className="mt-5 flex gap-3">
@@ -394,14 +388,14 @@ function ResetConfirmDialog({ open, onCancel, onConfirm }: ResetConfirmDialogPro
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="h-11 flex-1 rounded-xl"
+              className="h-10 flex-1 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               type="button"
               onClick={onConfirm}
-              className="h-11 flex-1 rounded-xl bg-[var(--bd-feedback-error)] text-white hover:brightness-95"
+              className="h-10 flex-1 rounded-xl bg-bd-status-danger-text text-white hover:brightness-95"
             >
               Reset
             </Button>
@@ -514,41 +508,36 @@ export default function ColumnManager({
       <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
         <SheetContent
           side="bottom"
-          className="max-h-[var(--bd-overlay-sheet-max-height)] rounded-t-[24px] border border-[var(--bd-border)] bg-[var(--bd-overlay-bg)] p-0 shadow-[0_-8px_40px_rgba(15,23,42,0.12)] sm:mx-auto sm:max-w-[560px] [&>[data-slot=sheet-close]]:hidden"
+          className="h-auto max-h-[75vh] rounded-t-2xl border-t border-bd-border bg-bd-card-bg p-0 shadow-lg sm:mx-auto sm:max-w-md [&>[data-slot=sheet-close]]:hidden"
         >
           {/* ── Drag indicator ── */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="h-[5px] w-10 rounded-full bg-[var(--bd-overlay-handle-bg)]" />
+          <div className="flex justify-center pt-2.5 pb-1">
+            <div className="h-1 w-8 rounded-full bg-bd-surface-muted" />
           </div>
 
-          <div className="flex max-h-[var(--bd-overlay-sheet-max-height)] flex-col overflow-hidden">
+          <div className="flex max-h-[calc(75vh-40px)] flex-col overflow-hidden">
             {/* ── Header ── */}
-            <div className="flex items-center justify-between border-b border-[var(--bd-overlay-border)] px-6 pb-4 pt-1">
-              <div>
-                <h2 className="text-[20px] font-bold tracking-[-0.02em] text-[var(--bd-overlay-text)]">
-                  Table Settings
-                </h2>
-                <p className="text-[13px] text-[var(--bd-overlay-muted)] mt-0.5">
-                  Show, hide, and reorder columns
-                </p>
-              </div>
+            <div className="flex items-center justify-between border-b border-bd-border px-4 pb-3 pt-0.5">
+              <h2 className="text-[16px] font-bold tracking-[-0.01em] text-bd-text">
+                Column Settings
+              </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-section-bg)] text-[var(--bd-overlay-muted)] transition-colors hover:bg-[var(--bd-overlay-close-bg)] hover:text-[var(--bd-overlay-close-text)] active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text transition-colors active:scale-95"
                 aria-label="Close"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* ── Scrollable body ── */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-5 sm:px-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4">
               {/* ── Description column ── */}
               {descriptionCol ? (
                 <section>
-                  <SectionTitle>Standard PDF</SectionTitle>
-                  <div className="rounded-xl border border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-section-bg)] overflow-hidden">
+                  <SectionTitle>Description</SectionTitle>
+                  <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
                     <FixedColumnRow
                       col={descriptionCol}
                       onUpdate={(key, field, val) => onUpdate(key, field, val as string)}
@@ -558,11 +547,11 @@ export default function ColumnManager({
               ) : null}
 
               {/* ── Form fields ── */}
-              <section className="mt-6">
-                <SectionTitle>Form Fields</SectionTitle>
+              <section className="mt-3">
+                <SectionTitle>Columns</SectionTitle>
 
                 {orderedCols.length > 0 ? (
-                  <div className="rounded-xl border border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-section-bg)] overflow-hidden">
+                  <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
                     {orderedCols.map((col) => {
                       const absIdx = columns.findIndex((c) => c.key === col.key)
                       if (col.key.startsWith('custom_')) {
@@ -612,8 +601,8 @@ export default function ColumnManager({
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-section-bg)] px-6 py-10 text-center">
-                    <p className="text-[14px] text-[var(--bd-overlay-muted)]">
+                  <div className="rounded-xl border border-dashed border-bd-border bg-bd-surface-muted px-4 py-8 text-center">
+                    <p className="text-[13px] text-bd-text-muted">
                       No form fields configured
                     </p>
                   </div>
@@ -623,9 +612,9 @@ export default function ColumnManager({
                 <button
                   type="button"
                   onClick={onAddCustom}
-                  className="mt-3 flex w-full items-center gap-2.5 px-3 py-3 text-[14px] font-semibold text-[var(--bd-brand)] rounded-xl hover:bg-[var(--bd-overlay-section-bg)] transition-colors active:scale-[0.98]"
+                  className="mt-2 flex w-full items-center gap-2 px-2 py-2 text-[13px] font-semibold text-bd-button-primary-bg rounded-lg hover:bg-bd-surface-muted transition-colors"
                 >
-                  <Plus className="w-[18px] h-[18px]" />
+                  <Plus className="w-4 h-4" />
                   Add Custom Column
                 </button>
 
@@ -633,7 +622,7 @@ export default function ColumnManager({
                 <button
                   type="button"
                   onClick={() => setConfirmReset(true)}
-                  className="mt-1 px-3 py-2 text-[13px] font-medium text-[var(--bd-overlay-muted)] hover:text-[var(--bd-overlay-text)] transition-colors"
+                  className="px-2 py-1 text-[12px] text-bd-text-muted hover:text-bd-text transition-colors"
                 >
                   Reset to defaults
                 </button>
@@ -641,50 +630,49 @@ export default function ColumnManager({
 
               {/* ── Row overrides ── */}
               {onResetItemOverrides ? (
-                <section className="mt-6 rounded-xl border border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-section-bg)] overflow-hidden">
+                <section className="mt-3 rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setOverridesOpen(!overridesOpen)}
-                    className="flex items-center justify-between w-full min-h-[48px] px-4 py-3 hover:bg-[var(--bd-overlay-section-bg)] transition-colors"
+                    className="flex items-center justify-between w-full min-h-[40px] px-3 py-2 hover:bg-bd-surface-muted/50 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5 text-[14px] font-semibold text-[var(--bd-overlay-text)]">
-                      <span className="w-2 h-2 rounded-full bg-[var(--bd-brand)] shrink-0" />
+                    <div className="flex items-center gap-2 text-[13px] font-semibold text-bd-text">
                       Row Overrides
                       {overrideEntries.length > 0 ? (
-                        <span className="inline-flex rounded-lg px-2 py-0.5 text-[11px] font-bold text-bd-brand" style={{ backgroundColor: 'color-mix(in srgb, var(--bd-brand) 12%, transparent)' }}>
+                        <span className="inline-flex rounded-md bg-bd-surface-muted px-1.5 py-0.5 text-[10px] font-bold text-bd-text-muted">
                           {overrideEntries.length}
                         </span>
                       ) : null}
                     </div>
                     <ChevronDown
                       className={cn(
-                        'w-[18px] h-[18px] text-[var(--bd-overlay-muted)] transition-transform duration-200',
+                        'w-4 h-4 text-bd-text-muted transition-transform duration-200',
                         overridesOpen && 'rotate-180',
                       )}
                     />
                   </button>
 
                   {overridesOpen && (
-                    <div className="border-t border-[var(--bd-overlay-border)]">
+                    <div className="border-t border-bd-border/50">
                       {overrideEntries.length > 0 ? (
                         <>
                           {overrideEntries.map((entry) => (
                             <div
                               key={entry.id}
-                              className="flex items-center justify-between px-4 py-3 border-b border-[var(--bd-overlay-border)] last:border-b-0 gap-3"
+                              className="flex items-center justify-between px-3 py-2.5 border-b border-bd-border/50 last:border-b-0 gap-2"
                             >
                               <div className="min-w-0">
-                                <div className="text-[13px] font-semibold text-[var(--bd-overlay-text)] truncate">
+                                <div className="text-[12px] font-semibold text-bd-text truncate">
                                   {entry.name}
                                 </div>
-                                <div className="text-[12px] text-[var(--bd-overlay-muted)] mt-0.5">
+                                <div className="text-[11px] text-bd-text-muted">
                                   {entry.detail}
                                 </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={entry.onReset}
-                                className="shrink-0 text-[12px] font-semibold text-[var(--bd-overlay-muted)] border border-[var(--bd-overlay-border)] rounded-lg px-3 py-1.5 hover:bg-[var(--bd-overlay-section-bg)] hover:text-[var(--bd-overlay-text)] transition-colors active:scale-95"
+                                className="shrink-0 text-[11px] font-semibold text-bd-text-muted border border-bd-border rounded-md px-2 py-1 hover:bg-bd-surface-muted hover:text-bd-text transition-colors"
                               >
                                 Reset
                               </button>
@@ -696,14 +684,14 @@ export default function ColumnManager({
                             onClick={() =>
                               onResetItemOverrides({ vat: true, discount: true, install: true })
                             }
-                            className="w-full py-3 text-[13px] font-semibold text-[var(--bd-brand)] hover:bg-[var(--bd-overlay-section-bg)] transition-colors"
+                            className="w-full py-2.5 text-[12px] font-semibold text-bd-button-primary-bg hover:bg-bd-surface-muted/50 transition-colors"
                           >
-                            <RotateCcw className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-                            Reset All Overrides
+                            <RotateCcw className="inline w-3 h-3 mr-1 -mt-0.5" />
+                            Reset All
                           </button>
                         </>
                       ) : (
-                        <div className="px-4 py-4 text-[13px] text-[var(--bd-overlay-muted)] text-center">
+                        <div className="px-3 py-3 text-[12px] text-bd-text-muted text-center">
                           No overrides applied
                         </div>
                       )}
@@ -714,11 +702,11 @@ export default function ColumnManager({
             </div>
 
             {/* ── Footer ── */}
-            <div className="border-t border-[var(--bd-overlay-border)] bg-[var(--bd-overlay-bg)] px-5 sm:px-6" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+            <div className="border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
               <Button
                 type="button"
                 onClick={onClose}
-                className="h-[52px] w-full rounded-2xl text-[17px] font-bold"
+                className="h-11 w-full rounded-xl text-[15px] font-bold"
               >
                 Done
               </Button>
