@@ -56,6 +56,8 @@ export type KpiStats = HeroStats &
     waybillsDispatchedTotal: number
     totalInvoiced: number
     prevMonthInvoiced: number
+    vatOnPaid: number
+    whtOnPaid: number
   }
 
 type UseDashboardDataOptions = {
@@ -99,6 +101,8 @@ const defaultKpiStats: KpiStats = {
   waybillsDispatchedTotal: 0,
   totalInvoiced: 0,
   prevMonthInvoiced: 0,
+  vatOnPaid: 0,
+  whtOnPaid: 0,
 }
 
 function isValidDateString(value: string | null | undefined): value is string {
@@ -198,6 +202,8 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
   let dueLastWeekWindow = 0
   let totalInvoiced = 0
   let prevMonthInvoiced = 0
+  let vatOnPaid = 0
+  let whtOnPaid = 0
 
   for (const row of invoiceFinancials) {
     const balance = Number(row.balance_due || 0)
@@ -224,6 +230,13 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
         dueLastWeekWindow += balance
       }
     }
+
+    // ponytail: paid = zero balance, same heuristic as Reports getReceivableStatus
+    const isPaid = balance <= 0
+    if (isPaid) {
+      vatOnPaid += Number(row.vat || 0)
+      whtOnPaid += Number(row.wht_received || 0)
+    }
   }
 
   return {
@@ -233,6 +246,8 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
     totalFinancialRows: invoiceFinancials.length,
     totalInvoiced,
     prevMonthInvoiced,
+    vatOnPaid,
+    whtOnPaid,
   }
 }
 

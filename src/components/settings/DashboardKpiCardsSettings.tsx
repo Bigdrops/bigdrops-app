@@ -43,7 +43,7 @@ export default function DashboardKpiCardsSettings({
         <div className="border-b border-slate-200/80 bg-violet-50/40 px-4 py-3.5">
           <div className="text-sm font-bold text-slate-900">KPI Cards</div>
           <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
-            Choose the four metrics shown on your dashboard and reorder them.
+            Choose the metrics shown on your dashboard and reorder them.
           </div>
         </div>
 

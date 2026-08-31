@@ -2,12 +2,13 @@ import * as React from 'react'
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 import type { KpiCardViewModel, KpiMetricId, KpiTone } from '@/config/kpiCards'
-import { KPI_BAR_SEGMENTS, KPI_CARD_COUNT } from '@/config/kpiCards'
+import { KPI_BAR_SEGMENTS } from '@/config/kpiCards'
 import { cn } from '@/lib/utils'
 
 type KpiGridProps = {
   loading: boolean
   cards: KpiCardViewModel[]
+  maxCards?: number
 }
 
 // V6 tick bar: thin vertical segments
@@ -25,6 +26,16 @@ const TICK_FILLED: Record<KpiTone, string> = {
   slate: 'bg-[hsl(var(--ink-3))]',
 }
 
+// ponytail: segment fill color per metric tone — single source for bar coloring
+const METRIC_TICK_TONE: Record<KpiMetricId, KpiTone> = {
+  totalInvoiced: 'emerald',
+  thisMonthCollections: 'emerald',
+  outstandingReceivables: 'amber',
+  overdue: 'rose',
+  vatOnPaid: 'violet',
+  whtOnPaid: 'sky',
+}
+
 // V6 metric card tone classes
 // "collect" = gradient card (collected this month)
 // "overdue" = attention-tinted
@@ -35,6 +46,8 @@ const METRIC_VARIANT: Record<KpiMetricId, 'default' | 'collect' | 'overdue' | 'a
   thisMonthCollections: 'collect',
   outstandingReceivables: 'awaiting',
   overdue: 'overdue',
+  vatOnPaid: 'default',
+  whtOnPaid: 'default',
 }
 
 function TickBar({ card }: { card: KpiCardViewModel }) {
@@ -51,7 +64,7 @@ function TickBar({ card }: { card: KpiCardViewModel }) {
             index < card.barFilledSegments
               ? isCollect
                 ? 'bg-white/80'
-                : TICK_FILLED[card.id === 'totalInvoiced' ? 'emerald' : card.id === 'overdue' ? 'rose' : card.id === 'outstandingReceivables' ? 'amber' : 'emerald']
+                : TICK_FILLED[METRIC_TICK_TONE[card.id]]
               : isCollect
                 ? 'bg-white/25'
                 : TICK_DIM,
@@ -184,13 +197,13 @@ function KpiCardSkeleton() {
   )
 }
 
-export function KpiGrid({ loading, cards }: KpiGridProps) {
-  const visibleCards = cards.slice(0, KPI_CARD_COUNT)
+export function KpiGrid({ loading, cards, maxCards = 4 }: KpiGridProps) {
+  const visibleCards = cards.slice(0, maxCards)
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
       {loading || visibleCards.length === 0
-        ? Array.from({ length: KPI_CARD_COUNT }).map((_, index) => <KpiCardSkeleton key={index} />)
+        ? Array.from({ length: maxCards }).map((_, index) => <KpiCardSkeleton key={index} />)
         : visibleCards.map((card) => <KpiCard key={card.id} card={card} />)}
     </div>
   )

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
+import { WorkspaceSwitcherRow } from '../components/layout/WorkspaceSwitcherRow'
 import {
   TeamSettingsSection,
   DeviceSettingsSection,
@@ -124,6 +125,7 @@ export default function Settings() {
         setActiveSection={handleSelectSection}
         renderContent={renderSection}
         isAdmin={isOwner}
+        headerSlot={<WorkspaceSwitcherRow />}
       />
     </Layout>
   )

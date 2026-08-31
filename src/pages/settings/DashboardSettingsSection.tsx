@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BarChart3, Pencil, Check } from 'lucide-react'
 import DashboardKpiCardsSettings from '@/components/settings/DashboardKpiCardsSettings'
 import {
-  KPI_CARD_COUNT,
+  KPI_CARD_COUNT_DESKTOP,
   KPI_METRIC_REGISTRY,
   loadStoredKpiCards,
   saveStoredKpiCards,
@@ -78,11 +78,11 @@ export function DashboardSettingsSection() {
 
       <SettingsSummaryCard
         title="Dashboard KPIs"
-        description="The four metrics pinned to your dashboard overview."
+        description="The metrics pinned to your dashboard overview."
       >
         <div className="px-5 py-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {activeMetrics.slice(0, KPI_CARD_COUNT).map((metricId) => {
+            {activeMetrics.slice(0, KPI_CARD_COUNT_DESKTOP).map((metricId) => {
               const metric = KPI_METRIC_REGISTRY[metricId]
               if (!metric) return null
               return (
@@ -115,7 +115,7 @@ export function DashboardSettingsSection() {
           <div className="flex-1 overflow-y-auto px-6">
             <div className="py-6">
               <DashboardKpiCardsSettings
-                activeMetrics={activeMetrics.slice(0, KPI_CARD_COUNT)}
+                activeMetrics={activeMetrics.slice(0, KPI_CARD_COUNT_DESKTOP)}
                 flashMetric={flashMetric}
                 onSelectMetric={updateMetricAt}
                 onMoveMetric={moveMetric}

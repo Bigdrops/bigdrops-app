@@ -14,6 +14,8 @@ interface SettingsShellProps {
   setActiveSection: (id: ActiveSectionId | null) => void
   renderContent: () => React.ReactNode
   isAdmin: boolean
+  /** Optional slot rendered above the settings navigation (e.g. Workspace Switcher). */
+  headerSlot?: React.ReactNode
 }
 
 export function SettingsShell({
@@ -21,7 +23,8 @@ export function SettingsShell({
   activeSection,
   setActiveSection,
   renderContent,
-  isAdmin
+  isAdmin,
+  headerSlot,
 }: SettingsShellProps) {
   const [viewportWidth, setViewportWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
   const { openSidebar, sidebarOpen } = React.useContext(MobileChromeContext)
@@ -91,12 +94,17 @@ export function SettingsShell({
           !activeSection ? "px-4 pt-4 pb-24" : "px-0 pb-24"
         )}>
           {!activeSection ? (
-            <SettingsNav 
-              groups={groups} 
-              activeSection={null} 
-              onSelect={(id) => setActiveSection(id)} 
-              variant="list" 
-            />
+            <>
+              {headerSlot ? (
+                <div className="mb-4 px-1">{headerSlot}</div>
+              ) : null}
+              <SettingsNav 
+                groups={groups} 
+                activeSection={null} 
+                onSelect={(id) => setActiveSection(id)} 
+                variant="list" 
+              />
+            </>
           ) : (
             currentSection && (
               <SettingsSectionFrame 
@@ -134,6 +142,9 @@ export function SettingsShell({
 
       {/* Main Content Area */}
       <main className="min-w-0">
+        {headerSlot && !activeSection ? (
+          <div className="mb-4">{headerSlot}</div>
+        ) : null}
         {currentSection ? (
           <SettingsSectionFrame section={currentSection}>
             {renderContent()}

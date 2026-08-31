@@ -239,7 +239,11 @@ export function useWorkspace() {
 
 type EntityContextValue = {
   entity: ActiveEntity | null
+  /** All active entities within the current workspace. */
+  entities: ActiveEntity[]
   entityCount: number
+  /** Switch the active entity. Updates schema resolution automatically. */
+  selectEntity: (id: string) => void
   isLoading: boolean
   error: string | null
   expectedSchema: string | null
@@ -257,6 +261,7 @@ const EntityContext = createContext<EntityContextValue | null>(null)
 export function EntityProvider({ children }: { children: React.ReactNode }) {
   const { workspace, isLoading: workspaceLoading } = useWorkspace()
   const [entity, setEntity] = useState<ActiveEntity | null>(null)
+  const [entities, setEntities] = useState<ActiveEntity[]>([])
   const [entityCount, setEntityCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -264,14 +269,26 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const [schemaSource, setSchemaSource] = useState<SchemaResolutionSource | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  // Session-only entity pick. Resets on workspace change or full reload.
+  const selectedEntityId = useRef<string | null>(null)
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
+
+  const selectEntity = useCallback(
+    (id: string) => {
+      selectedEntityId.current = id
+      const found = entities.find((e) => e.id === id) ?? null
+      setEntity(found)
+    },
+    [entities],
+  )
 
   useEffect(() => {
     let cancelled = false
 
     async function resolve() {
       setEntity(null)
+      setEntities([])
       setEntityCount(0)
       setError(null)
       setIsLoading(workspaceLoading)
@@ -289,12 +306,28 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error
 
         const rows = (data ?? []) as Array<{ id: string; slug: string | null; display_name: string | null }>
-        setEntityCount(rows.length)
+        const allEntities: ActiveEntity[] = rows.map((r) => ({
+          id: r.id,
+          slug: r.slug,
+          name: r.display_name ?? r.slug,
+        }))
+        setEntities(allEntities)
+        setEntityCount(allEntities.length)
 
-        if (rows.length === 1) {
-          setEntity({ id: rows[0].id, slug: rows[0].slug, name: rows[0].display_name ?? rows[0].slug })
+        // Auto-select: single entity = auto-select, multiple = restore session pick or first
+        if (allEntities.length === 1) {
+          selectedEntityId.current = allEntities[0].id
+          setEntity(allEntities[0])
+        } else if (allEntities.length > 1) {
+          const remembered = allEntities.find((e) => e.id === selectedEntityId.current)
+          if (remembered) {
+            setEntity(remembered)
+          } else {
+            selectedEntityId.current = allEntities[0].id
+            setEntity(allEntities[0])
+          }
         } else {
-          // 0 entities or multiple: an entity selector is a future phase.
+          selectedEntityId.current = null
           setEntity(null)
         }
       } catch (e) {
@@ -356,7 +389,9 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<EntityContextValue>(
     () => ({
       entity,
+      entities,
       entityCount,
+      selectEntity,
       isLoading,
       error,
       expectedSchema,
@@ -370,7 +405,9 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       entity,
+      entities,
       entityCount,
+      selectEntity,
       isLoading,
       error,
       expectedSchema,

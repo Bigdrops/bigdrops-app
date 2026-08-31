@@ -1,7 +1,10 @@
 import { formatNaira } from '@/lib/formatters/money'
 import type { KpiStats } from '@/hooks/useDashboardData'
 
-export const KPI_CARD_COUNT = 4
+// ponytail: responsive cap — desktop shows up to 6, mobile up to 4.
+// The actual slice happens at the call site (DashboardOverview).
+export const KPI_CARD_COUNT_DESKTOP = 6
+export const KPI_CARD_COUNT_MOBILE = 4
 
 // Barcode-style bar segment count per the current Glass Mesh reference
 // (docs/TEMPLATES/htmltemps/wireframe-variants/batch-5/glass-mesh.html).
@@ -14,14 +17,16 @@ export type KpiMetricId =
   | 'thisMonthCollections'
   | 'outstandingReceivables'
   | 'overdue'
+  | 'vatOnPaid'
+  | 'whtOnPaid'
 
 export type KpiTone = 'emerald' | 'rose' | 'violet' | 'amber' | 'sky' | 'slate'
 
 export const DEFAULT_KPI_METRIC_IDS: KpiMetricId[] = [
   'totalInvoiced',
   'thisMonthCollections',
-  'outstandingReceivables',
-  'overdue',
+  'vatOnPaid',
+  'whtOnPaid',
 ]
 
 type KpiMetricDefinition = {
@@ -60,6 +65,20 @@ export const KPI_METRIC_REGISTRY: Record<KpiMetricId, KpiMetricDefinition> = {
     description: 'Past-due balances still awaiting collection.',
     format: 'naira',
     tone: 'rose',
+  },
+  vatOnPaid: {
+    id: 'vatOnPaid',
+    label: 'VAT on Paid',
+    description: 'VAT collected on fully paid invoices.',
+    format: 'naira',
+    tone: 'violet',
+  },
+  whtOnPaid: {
+    id: 'whtOnPaid',
+    label: 'WHT on Paid',
+    description: 'Withholding tax received on paid invoices.',
+    format: 'naira',
+    tone: 'sky',
   },
 }
 
@@ -101,16 +120,16 @@ export function sanitizeKpiMetricIds(value: unknown): KpiMetricId[] {
 }
 
 // Deterministic recovery: drop unknown ids, remove duplicates, top up from the
-// defaults, then clamp to exactly four. Every output is a valid registry id.
+// defaults. No硬编码 clamp — the caller decides how many to display.
 export function resolveKpiSelection(rawIds: unknown): KpiMetricId[] {
   const selected = sanitizeKpiMetricIds(rawIds)
 
   for (const defaultId of DEFAULT_KPI_METRIC_IDS) {
-    if (selected.length >= KPI_CARD_COUNT) break
+    if (selected.length >= KPI_CARD_COUNT_DESKTOP) break
     if (!selected.includes(defaultId)) selected.push(defaultId)
   }
 
-  return selected.slice(0, KPI_CARD_COUNT)
+  return selected.slice(0, KPI_CARD_COUNT_DESKTOP)
 }
 
 export function loadStoredKpiCards(): KpiMetricId[] {
@@ -220,6 +239,16 @@ function buildCard(
       barTitle = 'Overdue share of outstanding balance'
       break
     }
+    case 'vatOnPaid': {
+      barRatio = safeRatio(stats.vatOnPaid, stats.totalInvoiced)
+      barTitle = 'VAT on paid as share of total invoiced'
+      break
+    }
+    case 'whtOnPaid': {
+      barRatio = safeRatio(stats.whtOnPaid, stats.totalInvoiced)
+      barTitle = 'WHT on paid as share of total invoiced'
+      break
+    }
   }
 
   const result: KpiCardViewModel = {
@@ -236,7 +265,7 @@ function buildCard(
   return result
 }
 
-// Always resolves to exactly KPI_CARD_COUNT view models; unknown ids cannot
+// Always resolves to at most KPI_CARD_COUNT_DESKTOP view models; unknown ids cannot
 // reach this point because selection goes through resolveKpiSelection.
 export function buildKpiCards(
   stats: KpiStats,

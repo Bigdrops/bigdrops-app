@@ -20,6 +20,7 @@ import NotificationBell from '@/components/notifications/NotificationBell'
 import type { RecentDoc } from '@/hooks/useDashboardData'
 import type { UserThemePreference } from '@/hooks/useUserThemePreferences'
 import type { KpiCardViewModel } from '@/config/kpiCards'
+import { KPI_CARD_COUNT_DESKTOP, KPI_CARD_COUNT_MOBILE } from '@/config/kpiCards'
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
@@ -181,6 +182,19 @@ export function DashboardOverview({
     })
   }, [userId, saveThemePref, isDark, preference.themePresetId])
 
+  // ponytail: inline matchMedia — one state, one listener, no separate file
+  const [isDesktop, setIsDesktop] = React.useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true,
+  )
+  React.useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  const kpiMaxCards = isDesktop ? KPI_CARD_COUNT_DESKTOP : KPI_CARD_COUNT_MOBILE
+
   const mobileChrome = React.useContext(MobileChromeContext)
   const now = new Date()
   const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -261,7 +275,7 @@ export function DashboardOverview({
         </div>
 
         {/* KPI Metric Grid — 2-col mobile, 4-col desktop */}
-        <KpiGrid loading={loading} cards={kpiCards} />
+        <KpiGrid loading={loading} cards={kpiCards} maxCards={kpiMaxCards} />
 
         {/* Activity + Payment Reminder: stacked mobile, side-by-side md+ */}
         <div className="mt-[14px] grid gap-[14px] md:mt-5 md:grid-cols-5 md:gap-4 lg:gap-5">

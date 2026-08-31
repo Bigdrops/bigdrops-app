@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
-import { useWorkspace } from '@/lib/tenant/contexts'
+import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
   APP_NAME,
   desktopNav,
@@ -33,8 +33,11 @@ function formatWorkspaceRole(role: string | null | undefined) {
 
 function WorkspaceRoleInfo() {
   const { workspace, isLoading } = useWorkspace()
+  const { entity, entities, isLoading: entityLoading } = useEntity()
   const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Workspace loading…' : 'Workspace unavailable')
   const workspaceRole = formatWorkspaceRole(workspace?.role) || (isLoading ? 'Loading role…' : 'Role unavailable')
+  const companyName = entity?.name || (entityLoading ? 'Loading…' : 'No company')
+  const hasMultipleEntities = entities.length > 1
 
   return (
     <div className="mt-2 rounded-[var(--bd-radius-md)] border border-bd-border/70 bg-[hsl(var(--bd-surface-muted))/0.55] px-2.5 py-2">
@@ -48,6 +51,18 @@ function WorkspaceRoleInfo() {
             {workspaceRole}
           </div>
         </div>
+      </div>
+      {/* Company context — secondary exposure per PRD §8 */}
+      <div className="mt-2 border-t border-bd-border/40 pt-2">
+        <div className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted opacity-60">
+          Company
+        </div>
+        <div className="mt-1 truncate text-[11px] font-bold text-bd-text">{companyName}</div>
+        {hasMultipleEntities ? (
+          <div className="mt-0.5 text-[9px] text-bd-text-muted">
+            {entities.length} companies available
+          </div>
+        ) : null}
       </div>
     </div>
   )
