@@ -58,6 +58,8 @@ export type KpiStats = HeroStats &
     prevMonthInvoiced: number
     vatOnPaid: number
     whtOnPaid: number
+    vatUnpaid: number
+    whtOutstanding: number
   }
 
 type UseDashboardDataOptions = {
@@ -103,6 +105,8 @@ const defaultKpiStats: KpiStats = {
   prevMonthInvoiced: 0,
   vatOnPaid: 0,
   whtOnPaid: 0,
+  vatUnpaid: 0,
+  whtOutstanding: 0,
 }
 
 function isValidDateString(value: string | null | undefined): value is string {
@@ -187,9 +191,28 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
   return mergeRecentDocs(docs)
 }
 
+// ponytail: build id→{vat,wht,status} lookup from the invoices query so
+// computeKpiAggregates can read invoice-level tax fields the view doesn't expose.
+function buildInvoiceMap(invoices: any[]) {
+  const map = new Map<string, { vat: number; wht: number; status: string }>()
+  for (const inv of invoices) {
+    map.set(inv.id, {
+      vat: Number(inv.vat || 0),
+      wht: Number(inv.wht || 0),
+      status: String(inv.status || ''),
+    })
+  }
+  return map
+}
+
 // Comparison/aggregation ingredients for KPI cards, derived from the same
 // unbounded invoice_financials_v result set as the existing metrics.
-function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth: Date) {
+function computeKpiAggregates(
+  invoiceFinancials: any[],
+  invoiceMap: Map<string, { vat: number; wht: number; status: string }>,
+  now: Date,
+  startOfMonth: Date,
+) {
   const prevMonthStart = new Date(startOfMonth)
   prevMonthStart.setMonth(prevMonthStart.getMonth() - 1)
 
@@ -204,6 +227,8 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
   let prevMonthInvoiced = 0
   let vatOnPaid = 0
   let whtOnPaid = 0
+  let vatUnpaid = 0
+  let whtOutstanding = 0
 
   for (const row of invoiceFinancials) {
     const balance = Number(row.balance_due || 0)
@@ -231,12 +256,19 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
       }
     }
 
-    // ponytail: paid = zero balance, same heuristic as Reports getReceivableStatus
+    // ponytail: use invoice-level vat/wht from invoices table (not the view)
+    const inv = invoiceMap.get(row.id)
+    const invoiceVat = inv?.vat ?? 0
+    const invoiceWht = inv?.wht ?? 0
     const isPaid = balance <= 0
     if (isPaid) {
-      vatOnPaid += Number(row.vat || 0)
-      whtOnPaid += Number(row.wht_received || 0)
+      vatOnPaid += invoiceVat
+      whtOnPaid += invoiceWht
+    } else {
+      vatUnpaid += invoiceVat
     }
+    // WHT outstanding = expected WHT on invoice − actual WHT deducted from payments
+    whtOutstanding += Math.max(0, invoiceWht - Number(row.wht_received || 0))
   }
 
   return {
@@ -248,6 +280,8 @@ function computeKpiAggregates(invoiceFinancials: any[], now: Date, startOfMonth:
     prevMonthInvoiced,
     vatOnPaid,
     whtOnPaid,
+    vatUnpaid,
+    whtOutstanding,
   }
 }
 
@@ -323,10 +357,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes] = await Promise.all([
           tenantClient
             .from('invoices')
-            .select('id, invoice_number, client_name, status, created_at, total, custom_fields')
-            .is('archived_at', null)
-            .order('created_at', { ascending: false })
-            .limit(8),
+          .select('id, invoice_number, client_name, status, created_at, total, vat, wht, custom_fields')
+          .is('archived_at', null)
+          .order('created_at', { ascending: false })
+          .limit(8),
           tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
@@ -343,6 +377,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         const projects = (projectsRes.data || []) as RecentProject[]
         // ponytail: reuse Reports pipe — same tenant view, unfiltered for global KPIs
         const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
+        const invoiceMap = buildInvoiceMap(invoices)
 
         const isPastDue = (row: any) => isPastDueUtil(row.due_date, row.balance_due)
 
@@ -374,7 +409,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           return dueDate >= now && dueDate <= endOfWeek
         }).length
 
-        const kpiAggregates = computeKpiAggregates(invoiceFinancials, now, startOfMonth)
+        const kpiAggregates = computeKpiAggregates(invoiceFinancials, invoiceMap, now, startOfMonth)
 
         const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
         const nextHeroStats = {
@@ -435,7 +470,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes, activityEventsRes] = await Promise.all([
         tenantClient
           .from('invoices')
-          .select('id, invoice_number, client_name, status, created_at, issue_date, total, custom_fields')
+          .select('id, invoice_number, client_name, status, created_at, issue_date, total, vat, wht, custom_fields')
           .is('archived_at', null)
           .order('created_at', { ascending: false })
           .limit(20),
@@ -460,6 +495,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const projects = (projectsRes.data || []) as RecentProject[]
       // ponytail: same pipe as Reports — unfiltered for global KPIs, no date-range clipping
       const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
+      const invoiceMap = buildInvoiceMap(invoices)
 
       const isPastDue = (row: any) => isPastDueUtil(row.due_date, row.balance_due)
 
@@ -496,7 +532,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const inTransitWaybills = waybills.filter(
         (row: any) => String(row.status || '').toLowerCase() === 'dispatched',
       ).length
-      const kpiAggregates = computeKpiAggregates(invoiceFinancials, now, startOfMonth)
+      const kpiAggregates = computeKpiAggregates(invoiceFinancials, invoiceMap, now, startOfMonth)
 
       const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: false })
       const nextHeroStats = {

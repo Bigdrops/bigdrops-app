@@ -33,7 +33,9 @@ const METRIC_TICK_TONE: Record<KpiMetricId, KpiTone> = {
   outstandingReceivables: 'amber',
   overdue: 'rose',
   vatOnPaid: 'violet',
+  vatUnpaid: 'violet',
   whtOnPaid: 'sky',
+  whtOutstanding: 'sky',
 }
 
 // V6 metric card tone classes
@@ -47,7 +49,9 @@ const METRIC_VARIANT: Record<KpiMetricId, 'default' | 'collect' | 'overdue' | 'a
   outstandingReceivables: 'awaiting',
   overdue: 'overdue',
   vatOnPaid: 'default',
+  vatUnpaid: 'default',
   whtOnPaid: 'default',
+  whtOutstanding: 'default',
 }
 
 function TickBar({ card }: { card: KpiCardViewModel }) {

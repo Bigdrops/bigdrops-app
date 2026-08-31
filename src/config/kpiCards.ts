@@ -18,7 +18,9 @@ export type KpiMetricId =
   | 'outstandingReceivables'
   | 'overdue'
   | 'vatOnPaid'
+  | 'vatUnpaid'
   | 'whtOnPaid'
+  | 'whtOutstanding'
 
 export type KpiTone = 'emerald' | 'rose' | 'violet' | 'amber' | 'sky' | 'slate'
 
@@ -27,6 +29,8 @@ export const DEFAULT_KPI_METRIC_IDS: KpiMetricId[] = [
   'thisMonthCollections',
   'vatOnPaid',
   'whtOnPaid',
+  'outstandingReceivables',
+  'whtOutstanding',
 ]
 
 type KpiMetricDefinition = {
@@ -68,15 +72,29 @@ export const KPI_METRIC_REGISTRY: Record<KpiMetricId, KpiMetricDefinition> = {
   },
   vatOnPaid: {
     id: 'vatOnPaid',
-    label: 'VAT on Paid',
-    description: 'VAT collected on fully paid invoices.',
+    label: 'VAT — Paid Invoices',
+    description: 'VAT on fully paid invoices.',
+    format: 'naira',
+    tone: 'violet',
+  },
+  vatUnpaid: {
+    id: 'vatUnpaid',
+    label: 'VAT — Unpaid Invoices',
+    description: 'VAT on unpaid or partially paid invoices.',
     format: 'naira',
     tone: 'violet',
   },
   whtOnPaid: {
     id: 'whtOnPaid',
-    label: 'WHT on Paid',
-    description: 'Withholding tax received on paid invoices.',
+    label: 'WHT — Paid Invoices',
+    description: 'Withholding tax on paid invoices.',
+    format: 'naira',
+    tone: 'sky',
+  },
+  whtOutstanding: {
+    id: 'whtOutstanding',
+    label: 'WHT Outstanding',
+    description: 'Expected WHT not yet deducted from payments.',
     format: 'naira',
     tone: 'sky',
   },
@@ -244,9 +262,19 @@ function buildCard(
       barTitle = 'VAT on paid as share of total invoiced'
       break
     }
+    case 'vatUnpaid': {
+      barRatio = safeRatio(stats.vatUnpaid, stats.vatOnPaid + stats.vatUnpaid)
+      barTitle = 'VAT on unpaid as share of total VAT'
+      break
+    }
     case 'whtOnPaid': {
       barRatio = safeRatio(stats.whtOnPaid, stats.totalInvoiced)
       barTitle = 'WHT on paid as share of total invoiced'
+      break
+    }
+    case 'whtOutstanding': {
+      barRatio = safeRatio(stats.whtOutstanding, stats.whtOnPaid + stats.whtOutstanding)
+      barTitle = 'WHT outstanding as share of total expected WHT'
       break
     }
   }
