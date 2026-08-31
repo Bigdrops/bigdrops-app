@@ -3,10 +3,13 @@
 import * as React from 'react'
 import { CircuitBoard } from '@/components/ui/circuit-board'
 import { cn } from '@/lib/utils'
+import QuickTipCard from '@/components/app/QuickTipCard'
 
 type SplashOverlayProps = {
   visible?: boolean
   tip?: string
+  /** Educational tip to display below the loading indicator. */
+  quickTip?: string | null
   showProgress?: boolean
   /**
    * Kept for backwards compatibility with existing callers.
@@ -23,6 +26,7 @@ type SplashOverlayProps = {
 export default function SplashOverlay({
   visible = true,
   tip = 'Preparing your workspace...',
+  quickTip = null,
   showProgress = true,
   circuitPosition = 'above',
   className,
@@ -72,6 +76,8 @@ export default function SplashOverlay({
           <p className="mt-2 text-center text-[15px] leading-6 text-muted-foreground sm:text-[16px]">
             {tip}
           </p>
+
+          {quickTip ? <QuickTipCard message={quickTip} /> : null}
 
           {circuitPosition === 'below' ? (
             <div className="mt-5">{circuit}</div>

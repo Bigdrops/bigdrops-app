@@ -5,6 +5,8 @@ import { toPng } from 'html-to-image'
 import { TableDocumentExportSegment } from './TableDocumentExportSegment'
 import { feedback } from '@/lib/feedback'
 import { chunkTableRows } from '@/domain/rfq/exportHelpers'
+import { useLoadingTip } from '@/hooks/useLoadingTip'
+import QuickTipCard from '@/components/app/QuickTipCard'
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
 
 type DocumentLike = {
@@ -76,6 +78,11 @@ export function TableDocumentExportController({
     }
   }, [captureAll, chunks.length, document])
 
+  const { tip } = useLoadingTip({
+    pathname: typeof window !== 'undefined' ? window.location.pathname : '/',
+    active: capturing,
+  })
+
   if (!document) return null
 
   return (
@@ -90,6 +97,7 @@ export function TableDocumentExportController({
             Preparing {chunks.length} segmented {chunks.length === 1 ? 'image' : 'images'}...
           </p>
         </div>
+        {tip ? <QuickTipCard message={tip.message} className="mt-2 w-full max-w-[280px] rounded-[18px] border border-border bg-card/80 px-3 py-2.5" /> : null}
       </div>
 
       <div className="fixed left-[-9999px] top-[-9999px] pointer-events-none opacity-0">

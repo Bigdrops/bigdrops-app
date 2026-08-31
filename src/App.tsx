@@ -16,6 +16,7 @@ import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { PushNotificationRuntime } from '@/components/notifications/PushNotificationRuntime'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
+import { useLoadingTip } from '@/hooks/useLoadingTip'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import BiometricGate from '@/components/app/BiometricGate'
@@ -32,6 +33,9 @@ const SPLASH_TIPS = [
   'Preparing your workspace...',
   'Getting documents and projects in order...',
 ]
+
+// Legacy status messages above are retained for the status text area.
+// The educational quick-tip is powered by useLoadingTip.
 
 const RECOVERY_COOLDOWN_MS = 1500
 
@@ -78,6 +82,10 @@ function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null)
   const [tipIndex, setTipIndex] = useState(0)
+  const { tip: loadingTip } = useLoadingTip({
+    pathname: typeof window !== 'undefined' ? window.location.pathname : '/',
+    active: showSplash,
+  })
 
   const loadingRef = useRef(false)
   const splashStartRef = useRef(Date.now())
@@ -330,6 +338,7 @@ function App() {
     }
   }, [])
 
+  // Legacy status-message rotation (retained for the status text area)
   useEffect(() => {
     const id = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % SPLASH_TIPS.length)
@@ -590,7 +599,11 @@ function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <SplashOverlay visible={showSplash} tip={SPLASH_TIPS[tipIndex]} />
+      <SplashOverlay
+        visible={showSplash}
+        tip={SPLASH_TIPS[tipIndex]}
+        quickTip={loadingTip?.message ?? null}
+      />
     </>
   )
 }
