@@ -22,6 +22,7 @@ import {
 export type ActiveSectionId =
   | 'user'
   | 'workspace-switch'
+  | 'company-manage'
   | 'theme'
   | 'notifications'
   | 'company'
@@ -78,6 +79,12 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
         label: 'Switch Workspace',
         icon: Layers,
         desc: 'Change the active workspace',
+      },
+      {
+        id: 'company-manage',
+        label: 'Company Management',
+        icon: Building2,
+        desc: 'Switch between companies or create a new one',
       },
       {
         id: 'company',

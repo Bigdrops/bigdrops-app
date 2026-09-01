@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Sparkles, ChevronDown, Check, Building2 } from 'lucide-react'
+import { Sparkles, ChevronDown, Check, Building2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
@@ -19,6 +19,7 @@ import {
   getPreSalesPath,
   mobileDrawerUtilityNav,
 } from './navData'
+import { CreateCompanySheet } from './CreateCompanySheet'
 import {
   Sheet as SelectionSheet,
   SheetContent as SelectionSheetContent,
@@ -70,19 +71,13 @@ function DrawerFooter() {
 function CompanySwitcher({ onOpenSheet }: { onOpenSheet: () => void }) {
   const { entity, entities, isLoading } = useEntity()
   const name = entity?.name || (isLoading ? 'Loading…' : '—')
-  const hasMultiple = entities.length > 1
   const initials = (name || '?').charAt(0).toUpperCase()
 
   return (
     <button
       type="button"
-      onClick={hasMultiple ? onOpenSheet : undefined}
-      className={cn(
-        'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all active:scale-[0.985]',
-        hasMultiple
-          ? 'hover:bg-[hsl(var(--surface-muted))]/60'
-          : 'cursor-default',
-      )}
+      onClick={onOpenSheet}
+      className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all hover:bg-[hsl(var(--surface-muted))]/60 active:scale-[0.985]"
     >
       {/* Avatar / initials */}
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[10px] font-[800]">
@@ -93,9 +88,7 @@ function CompanySwitcher({ onOpenSheet }: { onOpenSheet: () => void }) {
         {name}
       </span>
       {/* Chevron affordance */}
-      {hasMultiple ? (
-        <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--ink-3))]" />
-      ) : null}
+      <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--ink-3))]" />
     </button>
   )
 }
@@ -112,6 +105,7 @@ function CompanySelectionSheet({
   onOpenChange: (open: boolean) => void
 }) {
   const { entity, entities, selectEntity } = useEntity()
+  const [createOpen, setCreateOpen] = React.useState(false)
 
   const handleSelect = React.useCallback(
     (id: string) => {
@@ -120,8 +114,6 @@ function CompanySelectionSheet({
     },
     [selectEntity, onOpenChange],
   )
-
-  if (entities.length <= 1) return null
 
   return (
     <SelectionSheet open={open} onOpenChange={onOpenChange}>
@@ -183,8 +175,30 @@ function CompanySelectionSheet({
               </button>
             )
           })}
+
+          {/* Divider before Create Company */}
+          <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" />
+
+          {/* Create Company button */}
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false)
+              setTimeout(() => setCreateOpen(true), 150)
+            }}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition hover:bg-[hsl(var(--surface-muted))]/50 active:scale-[0.985]"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]">
+              <Plus className="h-4 w-4" />
+            </span>
+            <span className="flex-1 truncate text-[12px] font-[800] text-[hsl(var(--ink-3))]">
+              Create Company
+            </span>
+          </button>
         </div>
       </SelectionSheetContent>
+
+      <CreateCompanySheet open={createOpen} onOpenChange={setCreateOpen} />
     </SelectionSheet>
   )
 }

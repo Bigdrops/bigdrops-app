@@ -10,6 +10,7 @@ import {
   ArchivesSettingsSection,
   BankingSettingsSection,
   BrandingSettingsSection,
+  CompanyManageSection,
   CompanySettingsSection,
   DashboardSettingsSection,
   DocumentPrefixesSettingsSection,
@@ -74,6 +75,8 @@ export default function Settings() {
         return <UserSettingsSection session={session} onToast={showToast} />
       case 'workspace-switch':
         return <WorkspaceSwitchSection />
+      case 'company-manage':
+        return <CompanyManageSection />
       case 'company':
         return <CompanySettingsSection />
       case 'branding':

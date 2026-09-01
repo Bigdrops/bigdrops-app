@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { Check, Building2 } from 'lucide-react'
+import { Check, Building2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEntity } from '@/lib/tenant/contexts'
+import { CreateCompanySheet } from './CreateCompanySheet'
 import {
   Sheet,
   SheetContent,
@@ -77,9 +78,7 @@ export function CompanySelectionSheet({
     [selectEntity, onOpenChange],
   )
 
-  // Do not show the sheet if there is only one or zero entities.
-  // The drawer row itself handles the non-interactive single-entity state.
-  if (entities.length <= 1) return null
+  const [createOpen, setCreateOpen] = React.useState(false)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -126,8 +125,28 @@ export function CompanySelectionSheet({
               ) : null}
             </React.Fragment>
           ))}
+
+          {/* Divider + Create Company */}
+          <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" />
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false)
+              setTimeout(() => setCreateOpen(true), 150)
+            }}
+            className="flex w-full items-center gap-3 rounded-[14px] px-2.5 py-2.5 text-left transition hover:bg-[hsl(var(--surface-muted))]/50 active:scale-[0.985]"
+          >
+            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-2xl bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]">
+              <Plus className="h-4 w-4" />
+            </span>
+            <span className="flex-1 truncate text-[11px] font-[800] tracking-[-0.025em] text-[hsl(var(--ink-3))]">
+              Create Company
+            </span>
+          </button>
         </div>
       </SheetContent>
+
+      <CreateCompanySheet open={createOpen} onOpenChange={setCreateOpen} />
     </Sheet>
   )
 }
