@@ -9,6 +9,8 @@
 
 Document reusable visual and interaction patterns visible in the canonical v6 reference. Structure is separated from colour. Colour tokens come from [04-theme-system.md](./04-theme-system.md).
 
+> **Design skills:** Load `mobile-app-ui-design` (`.agents/skills/mobile-app-ui-design/SKILL.md`) or `appllama-app-design-skill` (`.agents/skills/appllama-app-design-skill/SKILL.md`) when implementing or reviewing these component patterns on mobile. For animation polish, use `emil-design-eng` or `review-animations`.
+
 ---
 
 ## KPI Metric Card

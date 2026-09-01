@@ -359,8 +359,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
             .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, total, vat, wht, custom_fields')
           .is('archived_at', null)
-          .order('created_at', { ascending: false })
-          .limit(8),
+          .order('created_at', { ascending: false }),
           tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),

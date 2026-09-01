@@ -10,12 +10,12 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 96 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills`) |
-| `.claude/skills/` | 7 skills | Meta, design, testing, discipline, and skill-discovery skills |
+| `.agents/skills/` | 108 skills | General-purpose dev, UI, infra, and Capacitor skills (50 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs) |
+| `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
 | **Total** | **109 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
-> **Note:** 4 new skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
+> **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
 
 ---
 ## `.agents/skills/`
@@ -146,6 +146,24 @@ Installed from `dpearson2699/swift-ios-skills` on 2026-08-19. Swift 6.3 / iOS 26
 
 > **Note:** These 4 skills are mirrored in `.claude/skills/` and `.commandcode/skills/` by the installer. Index lists the canonical `.agents/skills/` copy; `.commandcode` duplicates are purged (not indexed) because the skills already exist in `.agents`/`.claude`.
 
+### Added via animation and UI toolkit installs
+Installed on 2026-09-01. Animation construction, review, UI library selection, prototyping, Apple design, and Swift skills.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 97 | animate | .agents/skills/animate/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\animate\SKILL.md | Build animations from scratch — gate (should it animate?), purpose, tool selection, easing/duration, springs, interruptibility, reduced motion |
+| 98 | animate-expo | .agents/skills/animate-expo/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\animate-expo\SKILL.md | React Native/Expo animations — Reanimated worklets, Gesture Handler, press feedback, sheets, haptics, UI-thread-only motion |
+| 99 | animation-vocabulary | .agents/skills/animation-vocabulary/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\animation-vocabulary\SKILL.md | Reverse-lookup glossary — turns vague motion descriptions into precise terms ("bouncy popover" → Pop in, "iOS rubber-band" → Rubber-banding) |
+| 100 | apple-design | .agents/skills/apple-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\apple-design\SKILL.md | Apple design philosophy — fluid interfaces, spring physics, velocity handoff, momentum projection, materials/translucency, typography, 8 design principles |
+| 101 | ask-sonner | .agents/skills/ask-sonner/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ask-sonner\SKILL.md | Sonner toast library — install, wire Toaster, toast() calls, promise toasts, dismiss/persist, styling, theming, positioning |
+| 102 | emil-design-eng | .agents/skills/emil-design-eng/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\emil-design-eng\SKILL.md | Emil Kowalski's philosophy — UI polish, component design, animation decisions, invisible details that make software feel great |
+| 103 | find-animation-opportunities | .agents/skills/find-animation-opportunities/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\find-animation-opportunities\SKILL.md | Search codebase for places that should animate — read-only gate (frequency, purpose, speed, function), rejects candidates rigorously |
+| 104 | improve-animations | .agents/skills/improve-animations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\improve-animations\SKILL.md | Audit animation code as senior motion advisor — prioritized findings, self-contained implementation plans, 8-category audit framework |
+| 105 | pick-ui-library | .agents/skills/pick-ui-library/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\pick-ui-library\SKILL.md | Curated library picks — toasts (Sonner), UI primitives (base-ui), motion (Motion), charts (recharts), virtualization (Virtuoso), state (zustand) |
+| 106 | prototype | .agents/skills/prototype/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\prototype\SKILL.md | Build multiple UI variants behind a visual picker — divergence skill for design exploration, 3-5 genuinely different directions per run |
+| 107 | review-animations | .agents/skills/review-animations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\review-animations\SKILL.md | Review animation code against high craft bar — 10 non-negotiable standards, aggressive escalation triggers, block/approve verdict |
+| 108 | write-swift | .agents/skills/write-swift/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\write-swift\SKILL.md | Modern Swift — value types, Swift 6 concurrency (@concurrent, actors), protocols/generics (some vs any), performance, ARC, Swift Testing |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -217,5 +235,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: August 19, 2026 — purged `.mimocode` (2 skills + 1 command, deleted), added 4 skills (`appllama-app-design-skill` from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills`), purged `.commandcode` duplicates (not indexed — already in `.agents`/`.claude`)*
+*Last updated: September 1, 2026 — added 12 skills from animation/UI toolkit installs (animate, animate-expo, animation-vocabulary, apple-design, ask-sonner, emil-design-eng, find-animation-opportunities, improve-animations, pick-ui-library, prototype, review-animations, write-swift). Total .agents/skills: 108.*
 ```

@@ -16,6 +16,28 @@ It does NOT answer: How should the codebase be cleaned up to get there? That is 
 
 ---
 
+## Related Skills
+
+These agent skills are directly relevant to implementing this PRD. Load them when working on mobile UI, component design, or animation.
+
+| Skill | Use When | Path |
+|-------|----------|------|
+| **mobile-app-ui-design** | Designing or reviewing mobile screens, flows, onboarding, navigation, or any mobile-first UI work | `.agents/skills/mobile-app-ui-design/SKILL.md` |
+| **appllama-app-design-skill** | Building native-feeling Expo/React Native screens with Apple HIG fidelity, semantic colors, Reanimated motion | `.agents/skills/appllama-app-design-skill/SKILL.md` |
+| **frontend-design** | Creating distinctive, production-grade web interfaces — anti-generic aesthetics, creative typography, spatial composition | `.agents/skills/frontend-design/SKILL.md` |
+| **redesign-existing-projects** | Upgrading existing screens to premium quality — audits current design, identifies generic patterns, applies high-end standards | `.agents/skills/redesign-existing-projects/SKILL.md` |
+| **shadcn** | shadcn/ui component patterns — CLI, composition, forms, styling, registry management | `.agents/skills/shadcn/SKILL.md` |
+| **tailwind-css-patterns** | Tailwind CSS utility-first styling — responsive design, flexbox/grid, dark mode, component extraction | `.agents/skills/tailwind-css-patterns/SKILL.md` |
+| **animate** | Building web animations from scratch — easing, springs, interruptibility, reduced motion, performance | `.agents/skills/animate/SKILL.md` |
+| **animate-expo** | React Native/Expo animations — Reanimated worklets, Gesture Handler, haptics, UI-thread-only motion | `.agents/skills/animate-expo/SKILL.md` |
+| **apple-design** | Apple design philosophy — fluid interfaces, spring physics, velocity handoff, materials, typography, design principles | `.agents/skills/apple-design/SKILL.md` |
+| **emil-design-eng** | Emil Kowalski's UI polish philosophy — component design, animation decisions, invisible details | `.agents/skills/emil-design-eng/SKILL.md` |
+| **review-animations** | Reviewing animation code against a high craft bar — 10 non-negotiable standards, block/approve verdict | `.agents/skills/review-animations/SKILL.md` |
+| **capacitor-best-practices** | Capacitor app development — project structure, plugin usage, performance, security, deployment | `.agents/skills/capacitor-best-practices/SKILL.md` |
+| **capacitor-accessibility** | Accessibility in Capacitor apps — screen readers, semantic HTML, focus management, WCAG compliance | `.agents/skills/capacitor-accessibility/SKILL.md` |
+
+---
+
 ## Mobile-First Philosophy
 
 BIGDROPS is mobile-first by design. "Mobile" includes:

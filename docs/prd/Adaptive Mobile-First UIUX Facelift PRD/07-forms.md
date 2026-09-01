@@ -11,6 +11,8 @@ Define how forms adapt across phone, foldable, tablet, and desktop. Cover invoic
 
 Reference: `Design-direction/form/invoice-form-2col.html`
 
+> **Mobile form design:** Load `mobile-app-ui-design` (`.agents/skills/mobile-app-ui-design/SKILL.md`) for thumb-zone CTAs, F-pattern layout, and mobile form UX patterns.
+
 ---
 
 ## Form Layout Principles

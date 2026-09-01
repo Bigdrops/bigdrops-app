@@ -34,11 +34,14 @@ export default function ViewInvoice() {
 
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  // Guard: invalid URL param (e.g. /invoices/undefined) should not attempt a fetch.
+  const validId = id && id !== 'undefined' && id !== 'null' ? id : null;
+
   const {
     invoice, items, payments, advanceInvoiceProjection, relatedCsrs, relatedWaybills,
     invoiceFinancials, client, settings, bankAccounts,
-    signatories, linkedProject, loading, refresh, setInvoice
-  } = useInvoiceDetailData(id) as any;
+    signatories, linkedProject, loading, error: invoiceError, refresh, setInvoice
+  } = useInvoiceDetailData(validId) as any;
 
   const [pdfOutput, setPdfOutput] = useState(DEFAULT_INVOICE_PDF_OUTPUT);
 
@@ -121,8 +124,42 @@ export default function ViewInvoice() {
 
   const previewBankAccounts = useMemo(() => buildBankAccountsProjection(bankAccounts || []), [bankAccounts]);
 
+  if (!validId) {
+    return (
+      <DocumentPage topNav={<DocumentTopNav title="Invoice" onBack={() => navigate("/invoices")} />}>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-sm text-muted-foreground">Invalid invoice link.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/invoices')}
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
+            Back to Invoices
+          </button>
+        </div>
+      </DocumentPage>
+    );
+  }
+
   if (loading) return <DocumentPage topNav={<DocumentTopNav title="Opening Invoice..." onBack={() => navigate("/invoices")} />}><CenteredSpinner /></DocumentPage>;
-  if (!invoice) return null;
+  if (!invoice) {
+    return (
+      <DocumentPage topNav={<DocumentTopNav title="Invoice" onBack={() => navigate("/invoices")} />}>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            {invoiceError ? 'Could not load this invoice.' : 'Invoice not found.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => { void refresh(); }}
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
+            Try Again
+          </button>
+        </div>
+      </DocumentPage>
+    );
+  }
 
   return (
     <InvoiceWorkspace

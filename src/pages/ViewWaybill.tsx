@@ -38,19 +38,9 @@ import WaybillPDF from '@/components/waybill/WaybillPDF'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
+import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 import { WaybillActivityCard } from '@/components/document-view/waybill/sections/ActivityCard'
-import { PenLine, Type } from 'lucide-react'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { PDF_FONT_OPTIONS, PDF_FILLABLE_FONT_OPTIONS } from '@/lib/pdfDesignPreset'
+import { PDF_FILLABLE_FONT_OPTIONS } from '@/lib/pdfDesignPreset'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -443,180 +433,46 @@ export default function ViewWaybill() {
               title="Customize Waybill PDF"
               subtitle="These controls update the saved waybill PDF design preset used by download."
             >
-              <div className="space-y-4">
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Template Style</div>
-                  <WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />
-                </div>
-
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
-                    <Type className="h-4 w-4 text-bd-button-primary-bg" />
-                    Document Font
-                  </div>
-                  <Select value={customization.documentFont} onValueChange={setDocumentFont}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PDF_FONT_OPTIONS.map((font) => (
-                        <SelectItem key={font.value} value={font.value}>
-                          {font.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      if (customColor === 'auto') {
-                        const stashed = getStoredCustomColor()
-                        setCustomColor(stashed !== 'auto' ? stashed : WAYBILL_TEMPLATE_DEFAULTS.handwritingColor)
-                      } else {
-                        setCustomColor('auto')
-                      }
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
-                        Ink Color
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Override the fillable text color with a custom hex value.</p>
-                    </div>
-                    <Switch
-                      checked={customColor !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const stashed = getStoredCustomColor()
-                          setCustomColor(stashed !== 'auto' ? stashed : WAYBILL_TEMPLATE_DEFAULTS.handwritingColor)
-                        } else {
-                          setCustomColor('auto')
-                        }
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customColor !== 'auto' ? (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {WAYBILL_COLOR_SWATCHES.map((swatch) => (
-                          <button
-                            key={swatch}
-                            type="button"
-                            onClick={() => setCustomColor(swatch)}
-                            className={cn(
-                              'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                              customColor.toLowerCase() === swatch.toLowerCase()
-                                ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
-                                : 'border-transparent hover:border-bd-text-muted/40',
-                            )}
-                            style={{ backgroundColor: swatch }}
-                          />
-                        ))}
-                      </div>
-                      <Input
-                        type="color"
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      if (customFont === 'auto') {
-                        const stashed = getStoredCustomFont()
-                        setCustomFont(stashed !== 'auto' ? stashed : 'Caveat')
-                      } else {
-                        setCustomFont('auto')
-                      }
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <Type className="h-4 w-4 text-bd-button-primary-bg" />
-                        Handwriting Font
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Swap the handwriting script used for fillable data entries.</p>
-                    </div>
-                    <Switch
-                      checked={customFont !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const stashed = getStoredCustomFont()
-                          setCustomFont(stashed !== 'auto' ? stashed : 'Caveat')
-                        } else {
-                          setCustomFont('auto')
-                        }
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customFont !== 'auto' ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {WAYBILL_HANDWRITING_FONTS.map((font) => (
-                        <button
-                          key={font.value}
-                          type="button"
-                          onClick={() => setCustomFont(font.value)}
-                          className={cn(
-                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                            customFont === font.value
-                              ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
-                              : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
-                          )}
-                        >
-                          {font.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <button
-                  type="button"
-                  className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={saving}
-                  onClick={async () => {
-                    setSaving(true)
-                    try {
-                      if (typeof window !== 'undefined') {
-                        window.localStorage.setItem(WAYBILL_TEMPLATE_KEY, template)
-                        window.localStorage.setItem(WAYBILL_CUSTOM_FONT_KEY, customFont)
-                        window.localStorage.setItem(WAYBILL_CUSTOM_COLOR_KEY, customColor)
-                      }
-
-                      const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
-                      const { error } = await tenantClient.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
-
-                      if (error) {
-                        showToast('Save failed', 'Could not save template selection.')
-                        return
-                      }
-
-                      setWaybill((curr: any) => ({ ...curr, custom_fields: nextCustomFields }))
-                      ui.closeSheet()
-                      showToast('Customization saved', 'Waybill PDF design and fillable settings updated.', 'success')
-                    } catch {
-                      showToast('Save failed', 'Could not save customization.')
-                    } finally {
-                      setSaving(false)
+              <DocumentCustomizeCard
+                customization={customization}
+                setDocumentFont={setDocumentFont}
+                setInkFont={setInkFont}
+                setInkColour={setInkColour}
+                templatePicker={<WaybillTemplateSelector value={template} onChange={(id) => setTemplate(id as typeof template)} />}
+                colorSwatches={WAYBILL_COLOR_SWATCHES}
+                customColor={customColor}
+                onCustomColorChange={setCustomColor}
+                handwritingFonts={WAYBILL_HANDWRITING_FONTS}
+                customFont={customFont}
+                onCustomFontChange={setCustomFont}
+                saving={saving}
+                onSave={async () => {
+                  setSaving(true)
+                  try {
+                    if (typeof window !== 'undefined') {
+                      window.localStorage.setItem(WAYBILL_TEMPLATE_KEY, template)
+                      window.localStorage.setItem(WAYBILL_CUSTOM_FONT_KEY, customFont)
+                      window.localStorage.setItem(WAYBILL_CUSTOM_COLOR_KEY, customColor)
                     }
-                  }}
-                >
-                  {saving ? 'Saving...' : 'Save Settings'}
-                </button>
-              </div>
+
+                    const nextCustomFields = buildWaybillCustomFields(waybill.custom_fields, { pdfTemplateId: template })
+                    const { error } = await tenantClient.from('waybills').update({ custom_fields: JSON.stringify(nextCustomFields) }).eq('id', id)
+
+                    if (error) {
+                      showToast('Save failed', 'Could not save template selection.')
+                      return
+                    }
+
+                    setWaybill((curr: any) => ({ ...curr, custom_fields: nextCustomFields }))
+                    ui.closeSheet()
+                    showToast('Customization saved', 'Waybill PDF design and fillable settings updated.', 'success')
+                  } catch {
+                    showToast('Save failed', 'Could not save customization.')
+                  } finally {
+                    setSaving(false)
+                  }
+                }}
+              />
             </DocumentSheet>
 
             <WaybillMoreSheet

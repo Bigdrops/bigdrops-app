@@ -119,6 +119,14 @@ BEGIN
         GROUP BY i.id, i.invoice_number, i.client_id, i.client_name, i.project_id,
                  i.issue_date, i.due_date, i.total, i.status
     $fmt$, p_schema_name, p_schema_name, p_schema_name);
+
+    -- Grant SELECT to authenticated so PostgREST can serve the view.
+    -- Without this, the SECURITY DEFINER owner (superuser) owns the view
+    -- but the authenticated role has no access → 403 from PostgREST.
+    EXECUTE format(
+        'GRANT SELECT ON %I.invoice_financials_v TO authenticated',
+        p_schema_name
+    );
 END;
 $function$;
 

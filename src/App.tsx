@@ -506,6 +506,7 @@ function App() {
     if (!loadingDone) return
 
     const elapsed = Date.now() - splashStartRef.current
+    // Keep splash brief — tips appear during sustained operations, not startup.
     const minimumVisible = 600
     const remaining = Math.max(0, minimumVisible - elapsed)
 

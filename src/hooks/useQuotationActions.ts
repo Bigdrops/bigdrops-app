@@ -149,8 +149,12 @@ export function useQuotationActions(input: {
     operation.start("convert-quotation", "Creating Invoice", "Transferring quotation information...");
     try {
       const createdInvoice = await convertQuotationToInvoice({ id, quotation, items, prefixes: settings?.document_prefixes }, tenantClient, entityId);
+      const invoiceId = createdInvoice?.id;
+      if (!invoiceId) {
+        throw new Error('Conversion succeeded but the invoice ID was not returned. The invoice may exist in the invoice list.');
+      }
       operation.finish("success");
-      navigate(`/invoices/${createdInvoice.id}`);
+      navigate(`/invoices/${invoiceId}`);
     } catch (error) {
       operation.finish("error");
       showToast("Conversion failed", error instanceof Error ? error.message : "Could not convert this quotation.");

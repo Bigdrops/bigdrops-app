@@ -304,7 +304,7 @@ When adding PDF customization to a new document family, follow this order:
 3. **Define template defaults** — one entry per template ID in the family
 4. **Define a static metadata module** — a file like `src/domain/pdf/customization/<family>.ts` that exports capabilities, policy, defaults, and the bridge function
 5. **Wire the hook** — in the view page, call `usePdfCustomization()` with the document family and metadata
-6. **Build the UI** — embed controls in `DocumentSheet` following the CSR-style Switch pattern. Only render controls for capabilities that are enabled in both capabilities AND policy.
+6. **Build the UI** — embed `DocumentCustomizeCard` inside the document's `DocumentSheet`. The card renders template picker, document font, ink color, handwriting font, and save button from a single canonical component. Only render controls for capabilities that are enabled in both capabilities AND policy.
 7. **Wire the bridge** — call `bridgeToDesignPreset()` and pass the result to the `PdfDesignPreset` prop of the PDF renderer component
 8. **Register fonts** — if the family needs new fonts, update the registry and allowed lists
 9. **Verify** — download a PDF in each template, confirm customizations apply. Test the auto/custom switch toggles.
@@ -335,7 +335,7 @@ For **CSRs**, fillable fields include:
 
 ---
 
-## 14. Lessons Learned (Waybill Rollout)
+## 16. Lessons Learned (Waybill Rollout)
 
 1. **Resolver-first:** The biggest win was building the resolver before touching any template or UI code. This allowed parallel work on templates and the hook layer without coordination overhead.
 2. **Bridge pattern prevented template churn:** All 6 waybill templates continued consuming `PdfDesignPreset` unchanged. The bridge absorbed the mapping.
@@ -343,4 +343,46 @@ For **CSRs**, fillable fields include:
 4. **Font library extensibility eliminated template edits:** Adding a new font is now a two-file change (registry + allowed list) instead of touching every template.
 5. **Switch UX > Select for binary choices:** The CSR-style Switch with auto/custom sentinel reduces cognitive load compared to a dropdown with "Default" option.
 6. **Category keys prevent cross-contamination:** The `pdf_customization_<family>` key means waybill settings never bleed into CSRs or invoices.
-7. **Do not create a shared standalone drawer:** Each document family has unique enough controls that a shared panel would require too many conditional branches. Let each page own its layout.
+7. **Use the canonical DocumentCustomizeCard:** All document families MUST use `DocumentCustomizeCard` (in `src/components/document-view/shared/`) for their customization UI inside `DocumentSheet`. Different documents provide different capabilities and template pickers — not different cards. No `CsrCustomizeCard`, `WaybillCustomizeCard`, etc.
+
+---
+
+## 15. DocumentCustomizeCard
+
+**Location:** `src/components/document-view/shared/DocumentCustomizeCard.tsx`
+
+A single canonical component consumed by every document View page that supports PDF customization. It renders:
+
+- **Template picker** — injected via `templatePicker` prop (each document family provides its own)
+- **Document font selector** — `Select` dropdown from `PDF_FONT_OPTIONS`, gated by `showDocumentFont`
+- **Ink color section** — toggle + swatches + color input, swatches list passed via `colorSwatches`
+- **Handwriting font section** — toggle + font buttons, list passed via `handwritingFonts`
+- **Save button** — delegates to `onSave` callback
+
+**Props interface:**
+
+```ts
+interface DocumentCustomizeCardProps {
+  customization: ResolvedPdfCustomization
+  setDocumentFont: (font: string) => void
+  setInkFont: (font: string) => void
+  setInkColour: (color: string) => void
+  templatePicker: ReactNode
+  colorSwatches: string[]
+  customColor: string | 'auto'
+  onCustomColorChange: (color: string | 'auto') => void
+  handwritingFonts: { value: PdfFillableFontChoice; label: string }[]
+  customFont: string | 'auto'
+  onCustomFontChange: (font: PdfFillableFontChoice | 'auto') => void
+  showDocumentFont?: boolean
+  saving?: boolean
+  onSave: () => void
+}
+```
+
+**Rules:**
+- The card does NOT own persistence — the page's `onSave` callback handles localStorage + Supabase writes
+- The card does NOT own state — `customFont`, `customColor`, and their setters come from the page
+- The card is purely presentational — it composes the same UI sections that were previously inline in each View page
+- Template picker is injected as a ReactNode — the card does not know about specific template selectors
+- `showDocumentFont` defaults to `true`; set to `false` for families without a document font selector

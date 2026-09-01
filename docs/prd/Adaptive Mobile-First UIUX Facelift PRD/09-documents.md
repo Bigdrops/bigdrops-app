@@ -9,6 +9,8 @@
 
 Define the UX direction for invoice, quotation, waybill, CSR, BOQ, RFQ, and letter document surfaces. This document concerns application UX only — not PDF rendering or financial calculations.
 
+> **Document view design:** Load `appllama-app-design-skill` (`.agents/skills/appllama-app-design-skill/SKILL.md`) for native-feeling document view screens, or `mobile-app-ui-design` for mobile-first document layouts.
+
 ---
 
 ## Document Types

@@ -33,10 +33,7 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
-import { Input } from '@/components/ui/input'
-import { PenLine, Type } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Switch } from '@/components/ui/switch'
+import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
 import { CsrActivityCard } from '@/components/document-view/csr/sections/ActivityCard'
 
@@ -106,6 +103,7 @@ export default function ViewCSR() {
   // Engine: customization state + persistence
   const {
     customization,
+    setDocumentFont,
     setInkFont,
     setInkColour,
     reset: resetCustomization,
@@ -379,139 +377,28 @@ export default function ViewCSR() {
               title="Customize CSR PDF"
               subtitle="Adjust template, ink color, and handwriting font for PDF exports."
             >
-              <div className="space-y-6">
-                {/* Template Selection */}
-                <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
-                  <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Template</div>
-                  <CsrTemplateCarousel value={template} onChange={(next) => setTemplate(next)} />
-                </div>
-
-                {/* Ink Color Switch */}
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      if (customColor === 'auto') {
-                        const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
-                        setCustomColor(defaults.color)
-                      } else {
-                        setCustomColor('auto')
-                      }
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <PenLine className="h-4 w-4 text-bd-button-primary-bg" />
-                        Ink Color
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Override the fillable text color with a custom hex value.</p>
-                    </div>
-                    <Switch
-                      checked={customColor !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const defaults = CSR_TEMPLATE_DEFAULTS[template] || CSR_TEMPLATE_DEFAULTS['3']
-                          setCustomColor(defaults.color)
-                        } else {
-                          setCustomColor('auto')
-                        }
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customColor !== 'auto' ? (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex gap-2">
-                        {CSR_COLOR_SWATCHES.map((swatch) => {
-                          const active = customColor.toLowerCase() === swatch.toLowerCase()
-                          return (
-                            <button
-                              key={swatch}
-                              type="button"
-                              onClick={() => setCustomColor(swatch)}
-                              className={cn(
-                                'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-                                active ? 'border-bd-text scale-110 ring-2 ring-bd-text/20' : 'border-transparent hover:border-bd-text-muted/40',
-                              )}
-                              style={{ backgroundColor: swatch }}
-                              aria-label={`Color ${swatch}`}
-                            />
-                          )
-                        })}
-                      </div>
-                      <Input
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="h-9 rounded-[12px] font-mono text-xs"
-                        placeholder="#0f172a"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* ROW 3: Handwriting Font Switch (Global) */}
-                <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-                  <div
-                    className="flex cursor-pointer items-center justify-between select-none"
-                    onClick={() => {
-                      setCustomFont(customFont === 'auto' ? 'Caveat' : 'auto')
-                    }}
-                  >
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
-                        <Type className="h-4 w-4 text-bd-button-primary-bg" />
-                        Handwriting Font
-                      </div>
-                      <p className="text-xs text-bd-text-muted">Swap the handwriting script used for fillable data entries.</p>
-                    </div>
-                    <Switch
-                      checked={customFont !== 'auto'}
-                      onCheckedChange={(checked) => {
-                        setCustomFont(checked ? 'Caveat' : 'auto')
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {customFont !== 'auto' ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {CSR_HANDWRITING_FONTS.map((font) => (
-                        <button
-                          key={font.value}
-                          type="button"
-                          onClick={() => setCustomFont(font.value)}
-                          className={cn(
-                            'rounded-[14px] px-4 py-2.5 text-sm font-medium border transition-all active:scale-95',
-                            customFont === font.value
-                              ? 'bg-bd-button-primary-bg text-bd-button-primary-text border-bd-button-primary-bg shadow-sm ring-2 ring-bd-button-primary-bg/20'
-                              : 'bg-bd-surface-muted text-bd-text border-bd-border hover:border-bd-text-muted',
-                          )}
-                        >
-                          {font.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* Save Button */}
-                <button
-                  type="button"
-                  className="h-12 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-bold text-bd-button-primary-text transition hover:opacity-90"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
-                      window.localStorage.setItem(CSR_CUSTOM_FONT_STASH, customFont)
-                      window.localStorage.setItem(CSR_CUSTOM_COLOR_STASH, customColor)
-                    }
-                    ui.closeSheet()
-                    showToast('Customization saved', 'CSR template and fillable settings updated.', 'success')
-                  }}
-                >
-                  Save Settings
-                </button>
-              </div>
+              <DocumentCustomizeCard
+                customization={customization}
+                setDocumentFont={setDocumentFont}
+                setInkFont={setInkFont}
+                setInkColour={setInkColour}
+                templatePicker={<CsrTemplateCarousel value={template} onChange={setTemplate} />}
+                colorSwatches={CSR_COLOR_SWATCHES}
+                customColor={customColor}
+                onCustomColorChange={setCustomColor}
+                handwritingFonts={CSR_HANDWRITING_FONTS}
+                customFont={customFont}
+                onCustomFontChange={setCustomFont}
+                onSave={() => {
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem(CSR_TEMPLATE_KEY, template)
+                    window.localStorage.setItem(CSR_CUSTOM_FONT_STASH, customFont)
+                    window.localStorage.setItem(CSR_CUSTOM_COLOR_STASH, customColor)
+                  }
+                  ui.closeSheet()
+                  showToast('Customization saved', 'CSR template and fillable settings updated.', 'success')
+                }}
+              />
             </DocumentSheet>
 
             <CsrMoreSheet

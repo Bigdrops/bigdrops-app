@@ -120,8 +120,13 @@ export function useLoadingTip({
   const sessionCountRef = useRef(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Keep pathname in a ref so the interval callback always reads the
+  // latest value without restarting the timer on route changes.
+  const pathnameRef = useRef(pathname)
+  pathnameRef.current = pathname
+
   const selectNext = useCallback(() => {
-    const context = resolveContext(pathname)
+    const context = resolveContext(pathnameRef.current)
     const next = selectTip({
       context,
       recentIds: recentIdsRef.current,
@@ -138,9 +143,10 @@ export function useLoadingTip({
         RECENT_HISTORY_SIZE,
       )
     }
-  }, [pathname])
+  }, [])
 
-  // Select first tip when becoming active
+  // Select first tip when becoming active.
+  // Reset state when deactivated.
   useEffect(() => {
     if (active) {
       selectNext()
@@ -149,9 +155,11 @@ export function useLoadingTip({
       sessionCountRef.current = 0
       recentIdsRef.current = []
     }
-  }, [active, selectNext])
+  }, [active])
 
-  // Rotate tips during long operations
+  // Rotate tips during long operations.
+  // selectNext reads from refs, so the interval never restarts due to
+  // pathname or tip state changes.
   useEffect(() => {
     if (!active) {
       if (intervalRef.current) {
@@ -171,11 +179,11 @@ export function useLoadingTip({
         intervalRef.current = null
       }
     }
-  }, [active, rotationInterval, selectNext])
+  }, [active, rotationInterval])
 
   const nextTip = useCallback(() => {
     selectNext()
-  }, [selectNext])
+  }, [])
 
   return { tip, nextTip }
 }
