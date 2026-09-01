@@ -283,10 +283,13 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
             p_mode: 'create',
           })
           if (error) return { data: null, error }
+          // PostgREST wraps jsonb function returns in an array.
+          const rpcResult = Array.isArray(data) ? data[0] : data
+          const resolved = rpcResult?.invoice ?? rpcResult
           return {
             data: {
-              id: (data as any)?.id,
-              invoice_number: (data as any)?.invoice?.invoice_number ?? payload.invoice_number,
+              id: resolved?.id ?? rpcResult?.id,
+              invoice_number: resolved?.invoice_number ?? payload.invoice_number,
             },
             error: null,
           }

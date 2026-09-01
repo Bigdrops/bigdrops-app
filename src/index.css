@@ -603,3 +603,65 @@ html[data-keyboard-open="true"] .app-ambient::after {
     transform: none !important;
   }
 }
+
+/* ── Loading tip avatar animations ────────────────────────────────────
+   Pure CSS, runs off main thread during loading states.
+   Families: payment, document, search, archive, compliance, workspace.
+   All use transform + opacity only (GPU-composited).
+   ────────────────────────────────────────────────────────────────── */
+
+/* Payment: card slides in, receipt slides out (bowing/celebratory) */
+.bd-avatar-payment {
+  animation: bd-avatar-payment 1.6s ease-in-out infinite;
+}
+@keyframes bd-avatar-payment {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  30% { transform: translateY(-3px) rotate(-6deg); opacity: 0.8; }
+  60% { transform: translateY(2px) rotate(4deg); opacity: 1; }
+}
+
+/* Document: page flip */
+.bd-avatar-document {
+  animation: bd-avatar-document 2s ease-in-out infinite;
+}
+@keyframes bd-avatar-document {
+  0%, 100% { transform: perspective(200px) rotateY(0deg); opacity: 1; }
+  50% { transform: perspective(200px) rotateY(15deg); opacity: 0.85; }
+}
+
+/* Search: gentle sweep left-right */
+.bd-avatar-search {
+  animation: bd-avatar-search 1.8s ease-in-out infinite;
+}
+@keyframes bd-avatar-search {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(3px); }
+  75% { transform: translateX(-3px); }
+}
+
+/* Archive: box lid lifts */
+.bd-avatar-archive {
+  animation: bd-avatar-archive 2.2s ease-in-out infinite;
+}
+@keyframes bd-avatar-archive {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-2px) scale(1.05); }
+}
+
+/* Compliance: shield pulse */
+.bd-avatar-compliance {
+  animation: bd-avatar-compliance 1.8s ease-in-out infinite;
+}
+@keyframes bd-avatar-compliance {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+/* Workspace: gear spin (slow) */
+.bd-avatar-workspace {
+  animation: bd-avatar-workspace 3s linear infinite;
+}
+@keyframes bd-avatar-workspace {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

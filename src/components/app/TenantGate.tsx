@@ -1,10 +1,12 @@
 import { useMemo, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
   resolveGatePhase,
   type TenantGateInput,
 } from '@/domain/tenant/tenantGate'
 import PageLoader from '@/components/app/PageLoader'
+import LoadingTips from '@/components/loading/LoadingTips'
 import { Button } from '@/components/ui/button'
 import WorkspaceCreation from '@/pages/WorkspaceCreation'
 import WorkspaceSelection from '@/pages/WorkspaceSelection'
@@ -37,6 +39,7 @@ function GateError({ message, onRetry }: { message: string; onRetry: () => void 
 export default function TenantGate({ children }: { children: ReactNode }) {
   const workspaceCtx = useWorkspace()
   const entityCtx = useEntity()
+  const location = useLocation()
 
   const input = useMemo<TenantGateInput>(
     () => ({
@@ -71,7 +74,11 @@ export default function TenantGate({ children }: { children: ReactNode }) {
 
   switch (phase) {
     case 'loading':
-      return <PageLoader />
+      return (
+        <PageLoader>
+          <LoadingTips pathname={location.pathname} active />
+        </PageLoader>
+      )
 
     case 'error': {
       const message = workspaceCtx.error ?? entityCtx.error ?? 'Unknown error.'

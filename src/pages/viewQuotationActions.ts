@@ -212,7 +212,18 @@ export async function convertQuotationToInvoice(
       p_mode: 'create',
     })
     if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
-    createdInvoice = data?.invoice ?? data
+    // PostgREST wraps jsonb function returns in an array.
+    const rpcResult = Array.isArray(data) ? data[0] : data
+    createdInvoice = rpcResult?.invoice ?? rpcResult
+    // Fallback: if the RPC response shape is unexpected, query the latest invoice.
+    if (!createdInvoice?.id) {
+      const { data: latest } = await tenantClient
+        .from('invoices')
+        .select('*')
+        .eq('invoice_number', invoicePayload.invoice_number)
+        .single()
+      if (latest) createdInvoice = latest
+    }
   } else {
     const { data, error } = await tenantClient.from('invoices').insert([invoicePayload]).select().single()
     if (error || !data) throw new Error(error?.message || 'Failed to create invoice')

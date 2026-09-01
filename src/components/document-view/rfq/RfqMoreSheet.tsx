@@ -1,6 +1,13 @@
-import type { ReactNode } from 'react'
-
-import DocumentSheet from '../shared/DocumentSheet'
+import {
+  Lock,
+  Zap,
+  Link,
+  Copy,
+  Download,
+  Archive,
+  Trash2,
+} from 'lucide-react'
+import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 
 interface RfqMoreSheetProps {
   open: boolean
@@ -27,184 +34,87 @@ export default function RfqMoreSheet({
   onArchive,
   onDelete,
 }: RfqMoreSheetProps) {
-  const SectionLabel = ({ children }: { children: ReactNode }) => (
-    <div
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: 'hsl(var(--bd-text-muted))',
-        padding: '16px 8px 8px',
-      }}
-    >
-      {children}
-    </div>
-  )
-
-  const Divider = () => (
-    <div style={{ height: 1, background: 'hsl(var(--bd-border))', margin: '8px 0' }} />
-  )
-
-  const Action = ({
-    icon,
-    label,
-    desc,
-    danger,
-    onClick,
-  }: {
-    icon: ReactNode
-    label: string
-    desc: string
-    danger?: boolean
-    onClick: () => void
-  }) => (
-    <button
-      type="button"
-      onClick={() => {
-        onClick()
-        onClose()
-      }}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '12px 8px',
-        border: 'none',
-        background: 'none',
-        width: '100%',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
-    >
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 10,
-          background: danger ? 'hsl(var(--bd-status-danger-bg))' : 'hsl(var(--bd-surface-muted))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          color: danger ? 'hsl(var(--bd-status-danger-text))' : 'hsl(var(--bd-text-muted))',
-        }}
-      >
-        {icon}
-      </div>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: danger ? 'hsl(var(--bd-status-danger-text))' : 'hsl(var(--bd-text))' }}>
-          {label}
-        </div>
-        <div style={{ fontSize: 11, color: danger ? 'hsl(var(--bd-status-danger-text) / 0.6)' : 'hsl(var(--bd-text-muted))', marginTop: 2 }}>
-          {desc}
-        </div>
-      </div>
-    </button>
-  )
+  const sections = [
+    {
+      title: 'Lifecycle',
+      items: [
+        {
+          id: 'mark-closed',
+          label: 'Mark as Closed / Cancelled',
+          description: 'Close this RFQ so no further responses are expected',
+          icon: <Lock size={18} />,
+          onClick: onMarkAsClosed,
+        },
+        {
+          id: 'generate-quotation',
+          label: 'Generate Quotation',
+          description: 'Create a quote supplying these requested items',
+          icon: <Zap size={18} />,
+          onClick: onConvertToQuotation,
+        },
+      ],
+    },
+    {
+      title: 'Common Actions',
+      items: [
+        {
+          id: 'link-project',
+          label: 'Link to Project',
+          description: 'Associate this request with a project',
+          icon: <Link size={18} />,
+          onClick: onLinkProject,
+        },
+        {
+          id: 'duplicate',
+          label: 'Duplicate',
+          description: 'Create a copy of this request',
+          icon: <Copy size={18} />,
+          onClick: onDuplicate,
+        },
+        {
+          id: 'copy-number',
+          label: 'Copy RFQ Number',
+          description: 'Copy the document reference number',
+          icon: <Copy size={18} />,
+          onClick: onCopyNumber,
+        },
+        {
+          id: 'export-csv',
+          label: 'Export as CSV',
+          description: 'Download requested items as spreadsheet',
+          icon: <Download size={18} />,
+          onClick: onExportCsv,
+        },
+      ],
+    },
+    {
+      title: 'Danger Zone',
+      items: [
+        {
+          id: 'archive',
+          label: 'Archive RFQ',
+          description: 'Remove from active lists, keep on record',
+          icon: <Archive size={18} />,
+          onClick: onArchive,
+        },
+        {
+          id: 'delete',
+          label: 'Delete RFQ',
+          description: 'Permanently remove this request',
+          icon: <Trash2 size={18} />,
+          destructive: true,
+          onClick: onDelete,
+        },
+      ],
+    },
+  ]
 
   return (
-    <DocumentSheet open={open} onClose={onClose} title="More Actions">
-      <SectionLabel>Lifecycle</SectionLabel>
-      <Action
-        label="Mark as Closed / Cancelled"
-        desc="Close this RFQ so no further responses are expected"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-        }
-        onClick={onMarkAsClosed}
-      />
-      <Action
-        label="Generate Quotation"
-        desc="Create a quote supplying these requested items"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
-        }
-        onClick={onConvertToQuotation}
-      />
-
-      <Divider />
-      <SectionLabel>Links & Attachments</SectionLabel>
-      <Action
-        label="Link to Project"
-        desc="Associate this request with a project"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="9" y1="21" x2="9" y2="9" />
-          </svg>
-        }
-        onClick={onLinkProject}
-      />
-      <Action
-        label="Duplicate"
-        desc="Create a copy of this request"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        }
-        onClick={onDuplicate}
-      />
-
-      <Divider />
-      <SectionLabel>Document</SectionLabel>
-      <Action
-        label="Copy RFQ Number"
-        desc="Copy the document reference number"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        }
-        onClick={onCopyNumber}
-      />
-      <Action
-        label="Export as CSV"
-        desc="Download requested items as spreadsheet"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-        }
-        onClick={onExportCsv}
-      />
-
-      <Divider />
-      <SectionLabel>Danger</SectionLabel>
-      <Action
-        label="Archive RFQ"
-        desc="Remove from active lists, keep on record"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="21 8 21 21 3 21 3 8" />
-            <rect x="1" y="3" width="22" height="5" />
-            <line x1="10" y1="12" x2="14" y2="12" />
-          </svg>
-        }
-        onClick={onArchive}
-      />
-      <Action
-        danger
-        label="Delete RFQ"
-        desc="Permanently remove this request"
-        icon={
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-          </svg>
-        }
-        onClick={onDelete}
-      />
-    </DocumentSheet>
+    <DocumentMoreSheet
+      open={open}
+      onClose={onClose}
+      title="RFQ Actions"
+      sections={sections}
+    />
   )
 }
