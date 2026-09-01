@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from '@/components/PdfOutputSettings'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
 import { type InvoicePdfTemplateId } from '@/domain/invoice/types'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
-import type { ResolvedPdfCustomization } from '@/domain/pdf/customization/types'
+import type { ResolvedPdfCustomization, PdfCustomizationDocumentFamily } from '@/domain/pdf/customization/types'
 import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, bridgeToCommercialDesignPreset, loadEngineSettings, resolveCommercialDocumentFamily } from '@/domain/pdf/customization/commercial'
-import type { PdfCustomizationDocumentFamily } from '@/domain/pdf/customization/types'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
-import { getPdfDesignPreset, hasSavedPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, hasSavedPdfDesignPreset, setPdfDesignPreset, PDF_ACCENT_SWATCHES } from '@/lib/pdfDesignPreset'
 
 import DocumentSheet from './DocumentSheet'
+import DocumentCustomizeCard from './DocumentCustomizeCard'
 
 type BankAccountOption = {
   id: string
@@ -25,57 +23,43 @@ type BankAccountOption = {
 
 const INVOICE_PDF_TEMPLATE_OPTIONS = [
   {
-    id: 'industry',
-    label: 'Industry',
-    eyebrow: 'Structured',
+    id: 'industry', label: 'Industry', eyebrow: 'Structured',
     shell: 'bg-white border border-slate-200',
     accents: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
   },
   {
-    id: 'ledger',
-    label: 'Ledger',
-    eyebrow: 'Editorial',
+    id: 'ledger', label: 'Ledger', eyebrow: 'Editorial',
     shell: 'bg-[#2F3A44] border border-[#24303A]',
     accents: ['h-2.5 w-12 rounded-full bg-[#D8C7A3]', 'h-1 w-4/5 rounded-full bg-white/70', 'h-1 w-3/5 rounded-full bg-white/40'],
     columns: ['h-7 w-full rounded-md bg-[#F3EFE6]', 'h-1 w-full rounded-full bg-white/45', 'h-1 w-2/3 rounded-full bg-white/30'],
   },
   {
-    id: 'crest',
-    label: 'Crest',
-    eyebrow: 'Coming Soon',
+    id: 'crest', label: 'Crest', eyebrow: 'Coming Soon',
     shell: 'bg-white border border-slate-200',
     accents: ['h-1.5 w-full rounded-full bg-[#1e3a5f]', 'h-1 w-2/5 rounded-full bg-[#c9a96e]', 'h-1 w-3/5 rounded-full bg-slate-200'],
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-slate-50', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-2/3 rounded-full bg-slate-200'],
   },
   {
-    id: 'minimal',
-    label: 'Minimal',
-    eyebrow: 'Restrained',
+    id: 'minimal', label: 'Minimal', eyebrow: 'Restrained',
     shell: 'bg-white border border-slate-200',
     accents: ['h-1.5 w-full rounded-full bg-[#111827]', 'h-0.5 w-4/5 rounded-full bg-slate-300', 'h-0.5 w-3/5 rounded-full bg-slate-200'],
     columns: ['h-7 w-full rounded-md border border-slate-200 bg-white', 'h-1 w-full rounded-full bg-slate-200', 'h-1 w-5/6 rounded-full bg-slate-200'],
   },
   {
-    id: 'evergreen',
-    label: 'Evergreen',
-    eyebrow: 'Fresh',
+    id: 'evergreen', label: 'Evergreen', eyebrow: 'Fresh',
     shell: 'bg-white border border-slate-200',
     accents: ['h-1.5 w-full rounded-full bg-[#1f6e5c]', 'h-1 w-2/5 rounded-full bg-[#2a8a73]', 'h-1 w-3/5 rounded-full bg-[#e8f3ef]'],
     columns: ['h-7 w-full rounded-md bg-[#f0f6f2]', 'h-1 w-full rounded-full bg-[#d4dfd8]', 'h-1 w-2/3 rounded-full bg-[#d4dfd8]'],
   },
   {
-    id: 'bolt',
-    label: 'Bolt',
-    eyebrow: 'Certificate',
+    id: 'bolt', label: 'Bolt', eyebrow: 'Certificate',
     shell: 'bg-[#faf8f0] border border-[#1b4332]',
     accents: ['h-1.5 w-full rounded-full bg-[#2d6a4f]', 'h-1 w-2/5 rounded-full bg-[#52b788]', 'h-1 w-3/5 rounded-full bg-[#d4a373]'],
     columns: ['h-7 w-full rounded-md bg-white border border-[#d1d5db]', 'h-1 w-full rounded-full bg-[#d1d5db]', 'h-1 w-2/3 rounded-full bg-[#d1d5db]'],
   },
   {
-    id: 'ember',
-    label: 'Ember',
-    eyebrow: 'Warm',
+    id: 'ember', label: 'Ember', eyebrow: 'Warm',
     shell: 'bg-[#f4f6f8] border border-[#2c3e50]',
     accents: ['h-1.5 w-full rounded-full bg-[#2c3e50]', 'h-1 w-2/5 rounded-full bg-[#e67e22]', 'h-1 w-3/5 rounded-full bg-[#e9edf2]'],
     columns: ['h-7 w-full rounded-md bg-white border border-[#e9edf2]', 'h-1 w-full rounded-full bg-[#e9edf2]', 'h-1 w-2/3 rounded-full bg-[#e9edf2]'],
@@ -156,12 +140,6 @@ export default function PdfOutputCustomizeSheet({
     policy: COMMERCIAL_POLICY,
   })
 
-  /**
-   * Draft preset is initialized from the PERSISTED design preset so the
-   * explicitly saved Custom Colors / Custom Fonts toggles survive reopen.
-   * Engine-saved accent/font values are merged on top when present (the
-   * engine store is kept in sync by handlePresetChange on every edit).
-   */
   const [draftPreset, setDraftPreset] = useState<PdfDesignPreset>(() =>
     resolveInitialDraftPreset(documentType, docFamily, customization),
   )
@@ -171,8 +149,6 @@ export default function PdfOutputCustomizeSheet({
     setDraftValue(value)
     setDraftTemplateId(templateId)
     setDraftPreset(resolveInitialDraftPreset(documentType, docFamily, customization))
-    // Intentional: rebuild the draft only when the sheet opens so in-progress
-    // edits are never clobbered by engine-store updates while the user edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -187,8 +163,6 @@ export default function PdfOutputCustomizeSheet({
   const handleSave = async () => {
     setSaving(true)
     try {
-      // Persist the full preset (including useCustomColors / useCustomFonts)
-      // so an explicitly saved OFF state survives save → reopen → PDF generation.
       setPdfDesignPreset(documentType, draftPreset)
       await onSave(draftValue, draftPreset, draftTemplateId)
       onClose()
@@ -197,13 +171,60 @@ export default function PdfOutputCustomizeSheet({
     }
   }
 
+  // Build the template picker carousel for DocumentCustomizeCard
+  const templatePickerNode = (
+    <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-4">
+      {INVOICE_PDF_TEMPLATE_OPTIONS.map((option) => {
+        const active = draftTemplateId === option.id
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => setDraftTemplateId(option.id)}
+            className={cn(
+              'relative flex w-[240px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
+              active
+                ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-xl ring-2 ring-bd-button-primary-bg ring-offset-2'
+                : 'border-bd-border bg-bd-surface text-bd-text hover:border-bd-border hover:bg-bd-surface-muted/50',
+            )}
+          >
+            <div className={cn('mb-3 flex h-[120px] flex-col justify-between rounded-[18px] p-3.5 shadow-inner', option.shell)}>
+              <div className="space-y-1.5">
+                {option.accents.map((nodeClass, index) => (
+                  <div key={`${option.id}-accent-${index}`} className={cn(nodeClass, 'opacity-80')} />
+                ))}
+              </div>
+              <div className="space-y-2">
+                {option.columns.map((nodeClass, index) => (
+                  <div key={`${option.id}-column-${index}`} className={nodeClass} />
+                ))}
+              </div>
+            </div>
+            <div className="px-2 pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
+                    {option.eyebrow}
+                  </div>
+                  <div className="mt-0.5 truncate text-sm font-bold tracking-tight text-bd-text">
+                    {option.label}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
     <DocumentSheet open={open} onClose={onClose} title={title} subtitle={subtitle}>
       <div className="space-y-4">
+        {/* ── Commercial-specific: Bank controls & Document options ── */}
         {!designOnly ? (
           <>
             <PdfBankControls value={draftValue} onChange={setDraftValue} bankAccounts={bankAccounts} />
-
             <PdfDocumentOptionsCard
               value={draftValue}
               onChange={setDraftValue}
@@ -214,129 +235,36 @@ export default function PdfOutputCustomizeSheet({
           </>
         ) : null}
 
-        <div className="rounded-[24px] border border-bd-border bg-bd-surface p-4">
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-bd-text">PDF Design</div>
-              <div className="mt-1 text-xs text-bd-text-muted">Pick a template, then fine-tune fonts and colors.</div>
-            </div>
-          </div>
-
-          <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-4">
-            {INVOICE_PDF_TEMPLATE_OPTIONS.map((option) => {
-              const active = draftTemplateId === option.id
-
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setDraftTemplateId(option.id)}
-                  className={cn(
-                    'relative flex w-[240px] shrink-0 flex-col overflow-hidden rounded-[24px] border p-1.5 transition-all duration-300',
-                    active
-                      ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-xl ring-2 ring-bd-button-primary-bg ring-offset-2'
-                      : 'border-bd-border bg-bd-surface text-bd-text hover:border-bd-border hover:bg-bd-surface-muted/50',
-                  )}
-                >
-                  <div className={cn('mb-3 flex h-[120px] flex-col justify-between rounded-[18px] p-3.5 shadow-inner', option.shell)}>
-                    <div className="space-y-1.5">
-                      {option.accents.map((nodeClass, index) => (
-                        <div key={`${option.id}-accent-${index}`} className={cn(nodeClass, 'opacity-80')} />
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      {option.columns.map((nodeClass, index) => (
-                        <div key={`${option.id}-column-${index}`} className={nodeClass} />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="px-2 pb-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className={cn(
-                          'text-[10px] font-extrabold uppercase tracking-[0.16em]',
-                          active ? 'text-bd-text-muted' : 'text-bd-text-muted'
-                        )}>
-                          {option.eyebrow}
-                        </div>
-                        <div className={cn(
-                          'mt-0.5 truncate text-sm font-bold tracking-tight',
-                          active ? 'text-bd-button-primary-text' : 'text-bd-text'
-                        )}>
-                          {option.label}
-                        </div>
-                      </div>
-                      {active && (
-                        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-bd-button-primary-bg">
-                          <CheckCircle2 className="size-3 text-bd-button-primary-text" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {!active && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 transition-opacity hover:opacity-100" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-
-          <div className="mt-4 border-t border-bd-border pt-4">
-            <DocumentTemplateDesignOverrides value={draftPreset} onChange={handlePresetChange} />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between rounded-[24px] border border-bd-border bg-bd-surface px-4 py-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-bd-text">Compact Layout</div>
-            <div className="mt-0.5 text-xs text-bd-text-muted">Condense margins and spacing to fit content onto fewer pages</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDraftValue((prev) => ({ ...prev, compact: !prev.compact }))}
-            className={`relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-              draftValue.compact ? 'bg-bd-brand' : 'bg-bd-border'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-bd-card-bg shadow-md transition-transform duration-200 ${
-                draftValue.compact ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between rounded-[24px] border border-bd-border bg-bd-surface px-4 py-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-bd-text">Landscape Layout</div>
-            <div className="mt-0.5 text-xs text-bd-text-muted">Force page orientation to landscape for wider content</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDraftValue((prev) => ({ ...prev, landscapeLayout: !prev.landscapeLayout }))}
-            className={`relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
-              draftValue.landscapeLayout ? 'bg-bd-brand' : 'bg-bd-border'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-bd-card-bg shadow-md transition-transform duration-200 ${
-                draftValue.landscapeLayout ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="h-11 w-full rounded-[18px] bg-bd-button-primary-bg text-sm font-semibold text-bd-button-primary-text transition hover:bg-bd-button-primary-bg/90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={saving}
-          onClick={() => void handleSave()}
-        >
-          {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Settings'}
-        </button>
+        {/* ── Canonical customization card (shared) ── */}
+        <DocumentCustomizeCard
+          customization={customization}
+          setDocumentFont={(font) => {
+            setDocumentFont(font)
+            handlePresetChange({ ...draftPreset, bodyFont: font as any, headerFont: font as any })
+          }}
+          setInkFont={() => {}}
+          setInkColour={() => {}}
+          templatePicker={templatePickerNode}
+          colorSwatches={[]}
+          customColor="auto"
+          onCustomColorChange={() => {}}
+          handwritingFonts={[]}
+          customFont="auto"
+          onCustomFontChange={() => {}}
+          showDocumentFont
+          showAccentColor
+          accentColor={draftPreset.accentColor}
+          onAccentColorChange={(color) => handlePresetChange({ ...draftPreset, accentColor: color })}
+          accentColorSwatches={PDF_ACCENT_SWATCHES}
+          showCompact
+          compact={draftValue.compact}
+          onCompactChange={(c) => setDraftValue((prev) => ({ ...prev, compact: c }))}
+          showLandscape
+          landscape={draftValue.landscapeLayout ?? false}
+          onLandscapeChange={(l) => setDraftValue((prev) => ({ ...prev, landscapeLayout: l }))}
+          saving={saving}
+          onSave={() => void handleSave()}
+        />
       </div>
     </DocumentSheet>
   )

@@ -24,8 +24,9 @@ import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './viewBOQActions'
 import { normalizeDbBoq } from '@/domain/boq/normalize'
 import { useSettings } from '@/hooks/useSettings'
-import DocumentTemplateDesignOverrides from '@/components/document/DocumentTemplateDesignOverrides'
-import { getPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
+import { BOQ_CAPABILITIES, BOQ_POLICY, BOQ_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/boq'
+import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
@@ -49,6 +50,17 @@ export default function ViewBoq() {
   const [duplicating, setDuplicating] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [converting, setConverting] = useState(false)
+
+  // Engine: customization state + persistence
+  const {
+    customization,
+    setDocumentFont,
+  } = usePdfCustomization({
+    documentFamily: 'boq',
+    capabilities: BOQ_CAPABILITIES,
+    policy: BOQ_POLICY,
+    templateDefaults: BOQ_TEMPLATE_DEFAULTS,
+  })
 
   useEffect(() => {
     const loadBoq = async () => {
@@ -262,24 +274,30 @@ export default function ViewBoq() {
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
               onClose={ui.closeSheet}
               title="Customize BOQ PDF"
-              subtitle="The PDF design preset is reused by download to allow consistent branding across document types."
+              subtitle="Adjust the document font for BOQ PDF exports."
             >
-              <div className="space-y-4">
-                <div className="rounded-[24px] border border-border bg-card p-4">
-                  <div className="mb-3 text-sm font-semibold text-foreground">PDF Design</div>
-                  <DocumentTemplateDesignOverrides value={getPdfDesignPreset('boq')} onChange={(p) => setPdfDesignPreset('boq', p)} />
-                </div>
-                <button
-                  type="button"
-                  className="h-11 w-full rounded-[18px] bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  onClick={() => {
-                    ui.closeSheet()
-                    showToast('Customization saved', 'BOQ PDF design updated.', 'success')
-                  }}
-                >
-                  Save Settings
-                </button>
-              </div>
+              <DocumentCustomizeCard
+                customization={customization}
+                setDocumentFont={setDocumentFont}
+                setInkFont={() => {}}
+                setInkColour={() => {}}
+                templatePicker={
+                  <div className="py-2 text-center text-xs text-bd-text-muted">
+                    BOQ uses a single default template.
+                  </div>
+                }
+                colorSwatches={[]}
+                customColor="auto"
+                onCustomColorChange={() => {}}
+                handwritingFonts={[]}
+                customFont="auto"
+                onCustomFontChange={() => {}}
+                showDocumentFont
+                onSave={() => {
+                  ui.closeSheet()
+                  showToast('Customization saved', 'BOQ PDF design updated.', 'success')
+                }}
+              />
             </DocumentSheet>
 
             <BoqMoreSheet

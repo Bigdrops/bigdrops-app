@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { PenLine, Type } from 'lucide-react'
+import { Palette, PenLine, Type } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -47,8 +47,23 @@ interface DocumentCustomizeCardProps {
   customFont: string | 'auto'
   onCustomFontChange: (font: PdfFillableFontChoice | 'auto') => void
 
+  // ── Accent color (commercial documents) ───────────────────────
+  showAccentColor?: boolean
+  accentColor?: string
+  onAccentColorChange?: (color: string) => void
+  accentColorSwatches?: string[]
+
   // ── Document font (optional — hidden when capability disabled) ─
   showDocumentFont?: boolean
+
+  // ── Compact / Landscape toggles (commercial documents) ────────
+  compact?: boolean
+  onCompactChange?: (compact: boolean) => void
+  showCompact?: boolean
+
+  landscape?: boolean
+  onLandscapeChange?: (landscape: boolean) => void
+  showLandscape?: boolean
 
   // ── Save ──────────────────────────────────────────────────────
   saving?: boolean
@@ -69,7 +84,17 @@ export default function DocumentCustomizeCard({
   handwritingFonts,
   customFont,
   onCustomFontChange,
+  showAccentColor = false,
+  accentColor,
+  onAccentColorChange,
+  accentColorSwatches,
   showDocumentFont = true,
+  compact,
+  onCompactChange,
+  showCompact = false,
+  landscape,
+  onLandscapeChange,
+  showLandscape = false,
   saving = false,
   onSave,
 }: DocumentCustomizeCardProps) {
@@ -82,6 +107,15 @@ export default function DocumentCustomizeCard({
         </div>
         {templatePicker}
       </div>
+
+      {/* ── Accent Color ─────────────────────────────────────── */}
+      {showAccentColor && onAccentColorChange && accentColor != null ? (
+        <AccentColorSection
+          accentColor={accentColor}
+          onAccentColorChange={onAccentColorChange}
+          swatches={accentColorSwatches ?? ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']}
+        />
+      ) : null}
 
       {/* ── Document Font ─────────────────────────────────────── */}
       {showDocumentFont ? (
@@ -119,6 +153,28 @@ export default function DocumentCustomizeCard({
         handwritingFonts={handwritingFonts}
       />
 
+      {/* ── Compact / Landscape ───────────────────────────────── */}
+      {(showCompact || showLandscape) ? (
+        <div className="space-y-2">
+          {showCompact && compact != null && onCompactChange ? (
+            <ToggleRow
+              label="Compact Layout"
+              description="Condense margins and spacing to fit content onto fewer pages"
+              checked={compact}
+              onToggle={() => onCompactChange(!compact)}
+            />
+          ) : null}
+          {showLandscape && landscape != null && onLandscapeChange ? (
+            <ToggleRow
+              label="Landscape Layout"
+              description="Force page orientation to landscape for wider content"
+              checked={landscape}
+              onToggle={() => onLandscapeChange(!landscape)}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
       {/* ── Save ──────────────────────────────────────────────── */}
       <button
         type="button"
@@ -133,6 +189,50 @@ export default function DocumentCustomizeCard({
 }
 
 // ── Sub-sections ─────────────────────────────────────────────────
+
+function AccentColorSection({
+  accentColor,
+  onAccentColorChange,
+  swatches,
+}: {
+  accentColor: string
+  onAccentColorChange: (color: string) => void
+  swatches: string[]
+}) {
+  return (
+    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+        <Palette className="h-4 w-4 text-bd-button-primary-bg" />
+        Accent Color
+      </div>
+      <p className="mb-3 text-xs text-bd-text-muted">
+        Override the template accent color used in headers and rules.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {swatches.map((swatch) => (
+          <button
+            key={swatch}
+            type="button"
+            onClick={() => onAccentColorChange(swatch)}
+            className={cn(
+              'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+              accentColor.toLowerCase() === swatch.toLowerCase()
+                ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
+                : 'border-transparent hover:border-bd-text-muted/40',
+            )}
+            style={{ backgroundColor: swatch }}
+          />
+        ))}
+      </div>
+      <Input
+        type="color"
+        value={accentColor}
+        onChange={(e) => onAccentColorChange(e.target.value)}
+        className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
+      />
+    </div>
+  )
+}
 
 function InkColorSection({
   customColor,
@@ -253,6 +353,44 @@ function HandwritingFontSection({
           ))}
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onToggle,
+}: {
+  label: string
+  description?: string
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-[20px] border border-bd-border bg-bd-card-bg px-4 py-3">
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-bd-text">{label}</div>
+        {description ? (
+          <div className="mt-0.5 text-xs text-bd-text-muted">{description}</div>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          'relative ml-3 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none',
+          checked ? 'bg-bd-brand' : 'bg-bd-border',
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block h-4 w-4 transform rounded-full bg-bd-card-bg shadow-md transition-transform duration-200',
+            checked ? 'translate-x-6' : 'translate-x-1',
+          )}
+        />
+      </button>
     </div>
   )
 }

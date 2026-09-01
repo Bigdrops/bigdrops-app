@@ -304,10 +304,20 @@ When adding PDF customization to a new document family, follow this order:
 3. **Define template defaults** — one entry per template ID in the family
 4. **Define a static metadata module** — a file like `src/domain/pdf/customization/<family>.ts` that exports capabilities, policy, defaults, and the bridge function
 5. **Wire the hook** — in the view page, call `usePdfCustomization()` with the document family and metadata
-6. **Build the UI** — embed `DocumentCustomizeCard` inside the document's `DocumentSheet`. The card renders template picker, document font, ink color, handwriting font, and save button from a single canonical component. Only render controls for capabilities that are enabled in both capabilities AND policy.
+6. **Build the UI** — embed `DocumentCustomizeCard` inside the document's `DocumentSheet`. The card renders template picker, accent color, document font, ink color, handwriting font, compact/landscape toggles, and save button from a single canonical component. Only render controls for capabilities that are enabled in both capabilities AND policy.
 7. **Wire the bridge** — call `bridgeToDesignPreset()` and pass the result to the `PdfDesignPreset` prop of the PDF renderer component
 8. **Register fonts** — if the family needs new fonts, update the registry and allowed lists
 9. **Verify** — download a PDF in each template, confirm customizations apply. Test the auto/custom switch toggles.
+
+**Document families and their capabilities:**
+
+| Family | Template | Accent Color | Document Font | Handwriting Font | Handwriting Color | Compact | Landscape |
+|--------|----------|-------------|---------------|-----------------|-------------------|---------|----------|
+| CSR | Carousel | No | Yes | Yes | Yes | No | No |
+| Waybill | Carousel | No | Yes | Yes | Yes | No | No |
+| Invoice | Carousel | Yes | Yes | No | No | Yes | Yes |
+| Quotation | Carousel | Yes | Yes | No | No | Yes | Yes |
+| BOQ | Placeholder | No | Yes | No | No | No | No |
 
 ---
 
@@ -335,7 +345,29 @@ For **CSRs**, fillable fields include:
 
 ---
 
-## 16. Lessons Learned (Waybill Rollout)
+## 16. PdfOutputCustomizeSheet (Commercial Wrapper)
+
+**Location:** `src/components/document-view/shared/PdfOutputCustomizeSheet.tsx`
+
+This sheet is used by Invoice and Quotation. It composes `DocumentCustomizeCard` inside `DocumentSheet`, adding commercial-specific controls around the card:
+
+- **Bank controls** (`PdfBankControls`) — bank account selection
+- **Document options** (`PdfDocumentOptionsCard`) — footer, tagline, output toggles
+- **Template carousel** — invoice-specific template picker with 7 options, injected as `templatePicker`
+- **Accent color + Document font** — wired through the card's `showAccentColor` and `showDocumentFont` props
+- **Compact/Landscape toggles** — wired through the card's `showCompact` and `showLandscape` props
+
+The card handles all customization UI. The sheet handles state management (draft value, draft preset, save flow) and commercial-specific layout.
+
+**Rules:**
+- `PdfOutputCustomizeSheet` MUST use `DocumentCustomizeCard` for all customization controls
+- Bank controls and document options are commercial-specific additions, not part of the shared card
+- The template carousel is injected as `templatePicker` — not rendered separately
+- `designOnly` mode hides bank controls and document options while preserving the full card
+
+---
+
+## 17. Lessons Learned (Waybill Rollout)
 
 1. **Resolver-first:** The biggest win was building the resolver before touching any template or UI code. This allowed parallel work on templates and the hook layer without coordination overhead.
 2. **Bridge pattern prevented template churn:** All 6 waybill templates continued consuming `PdfDesignPreset` unchanged. The bridge absorbed the mapping.
@@ -351,12 +383,17 @@ For **CSRs**, fillable fields include:
 
 **Location:** `src/components/document-view/shared/DocumentCustomizeCard.tsx`
 
-A single canonical component consumed by every document View page that supports PDF customization. It renders:
+The single canonical customization card consumed by every document View page that supports PDF customization. All document families use this same card — different documents provide different capabilities and template pickers, not different cards.
+
+**Renders:**
 
 - **Template picker** — injected via `templatePicker` prop (each document family provides its own)
+- **Accent color** — swatches + color input, gated by `showAccentColor`
 - **Document font selector** — `Select` dropdown from `PDF_FONT_OPTIONS`, gated by `showDocumentFont`
 - **Ink color section** — toggle + swatches + color input, swatches list passed via `colorSwatches`
 - **Handwriting font section** — toggle + font buttons, list passed via `handwritingFonts`
+- **Compact toggle** — gated by `showCompact`
+- **Landscape toggle** — gated by `showLandscape`
 - **Save button** — delegates to `onSave` callback
 
 **Props interface:**
@@ -374,7 +411,17 @@ interface DocumentCustomizeCardProps {
   handwritingFonts: { value: PdfFillableFontChoice; label: string }[]
   customFont: string | 'auto'
   onCustomFontChange: (font: PdfFillableFontChoice | 'auto') => void
-  showDocumentFont?: boolean
+  showAccentColor?: boolean          // Accent color swatches + picker
+  accentColor?: string               // Current accent hex value
+  onAccentColorChange?: (color: string) => void
+  accentColorSwatches?: string[]     // Default: PDF_ACCENT_SWATCHES
+  showDocumentFont?: boolean         // Default: true
+  compact?: boolean                  // Compact layout toggle state
+  onCompactChange?: (compact: boolean) => void
+  showCompact?: boolean              // Show compact toggle
+  landscape?: boolean                // Landscape layout toggle state
+  onLandscapeChange?: (landscape: boolean) => void
+  showLandscape?: boolean            // Show landscape toggle
   saving?: boolean
   onSave: () => void
 }
@@ -382,7 +429,10 @@ interface DocumentCustomizeCardProps {
 
 **Rules:**
 - The card does NOT own persistence — the page's `onSave` callback handles localStorage + Supabase writes
-- The card does NOT own state — `customFont`, `customColor`, and their setters come from the page
+- The card does NOT own state — `customFont`, `customColor`, `accentColor`, and their setters come from the page
 - The card is purely presentational — it composes the same UI sections that were previously inline in each View page
 - Template picker is injected as a ReactNode — the card does not know about specific template selectors
 - `showDocumentFont` defaults to `true`; set to `false` for families without a document font selector
+- `showAccentColor` defaults to `false`; set to `true` for commercial documents (Invoice, Quotation)
+- `showCompact` and `showLandscape` default to `false`; set to `true` for commercial documents
+- All new props are optional for backward compatibility with existing CSR and Waybill consumers
