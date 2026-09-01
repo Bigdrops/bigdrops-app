@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -23,7 +23,7 @@ interface DocumentSheetProps {
  *
  * Handles:
  * - Responsive bottom (mobile) / right (desktop) presentation
- * - Android keyboard/IME via visualViewport
+ * - Android keyboard/IME height adjustment via visualViewport
  * - Safe-area inset padding
  * - Stable open/close lifecycle
  */
@@ -38,7 +38,6 @@ export default function DocumentSheet({
     typeof window === 'undefined' ? false : window.innerWidth < 768,
   )
   const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
 
   // Responsive breakpoint detection
   useEffect(() => {
@@ -57,12 +56,14 @@ export default function DocumentSheet({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Android keyboard detection via visualViewport
+  // Android keyboard detection via visualViewport.
+  // Used only to adjust sheet max-height when keyboard is visible.
+  // We do NOT manually scrollIntoView — the browser handles that natively.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return undefined
 
     const vv = window.visualViewport
-    const threshold = 150 // px reduction considered keyboard
+    const threshold = 150
 
     const handleViewportResize = () => {
       const heightDiff = window.innerHeight - (vv.height ?? window.innerHeight)
@@ -77,24 +78,6 @@ export default function DocumentSheet({
     }
   }, [])
 
-  // Scroll focused input into view when keyboard appears
-  useEffect(() => {
-    if (!keyboardVisible || !scrollRef.current) return
-
-    const timer = setTimeout(() => {
-      const active = document.activeElement as HTMLElement | null
-      if (active && scrollRef.current?.contains(active)) {
-        active.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [keyboardVisible])
-
-  // Dynamic max-height: use visualViewport when keyboard is visible
-  const sheetMaxHeight = keyboardVisible
-    ? 'calc(var(--bd-overlay-sheet-max-height, 85vh) - 0px)'
-    : 'var(--bd-overlay-sheet-max-height, 85vh)'
-
   return (
     <Sheet
       open={open}
@@ -107,17 +90,17 @@ export default function DocumentSheet({
         showCloseButton={false}
         className={
           isMobile
-            ? 'flex h-auto w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-bd-border bg-bd-card-bg p-0'
+            ? 'flex h-auto max-h-[var(--bd-overlay-sheet-max-height)] w-full max-w-full flex-col overflow-hidden rounded-t-[var(--bd-overlay-radius)] border-bd-border bg-bd-card-bg p-0'
             : 'flex h-full w-full max-w-full flex-col overflow-hidden border-bd-border bg-bd-card-bg p-0 sm:max-w-xl'
         }
-        style={isMobile ? { maxHeight: sheetMaxHeight } : undefined}
+        style={isMobile && keyboardVisible ? { maxHeight: '70vh' } : undefined}
       >
-        <SheetHeader className="border-b border-bd-border px-5 py-3 pr-14 sm:px-6 sm:py-4">
+        <SheetHeader className="border-b border-bd-border px-5 py-4 pr-14 sm:px-6">
           <SheetTitle className="text-base font-black tracking-tight text-bd-text">
             {title}
           </SheetTitle>
           {subtitle ? (
-            <SheetDescription className="pt-0.5 text-sm leading-relaxed text-bd-text-muted">
+            <SheetDescription className="pt-1 text-sm leading-relaxed text-bd-text-muted">
               {subtitle}
             </SheetDescription>
           ) : null}
@@ -134,10 +117,7 @@ export default function DocumentSheet({
           <span className="sr-only">Close</span>
         </Button>
 
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-5"
-        >
+        <div className="flex-1 overflow-y-auto px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6">
           {children}
         </div>
       </SheetContent>

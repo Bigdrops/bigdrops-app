@@ -55,6 +55,7 @@ export type KpiStats = HeroStats &
     waybillsTotal: number
     waybillsDispatchedTotal: number
     totalInvoiced: number
+    thisMonthInvoiced: number
     prevMonthInvoiced: number
     vatOnPaid: number
     whtOnPaid: number
@@ -102,6 +103,7 @@ const defaultKpiStats: KpiStats = {
   waybillsTotal: 0,
   waybillsDispatchedTotal: 0,
   totalInvoiced: 0,
+  thisMonthInvoiced: 0,
   prevMonthInvoiced: 0,
   vatOnPaid: 0,
   whtOnPaid: 0,
@@ -224,6 +226,7 @@ function computeKpiAggregates(
   let outstandingTotal = 0
   let dueLastWeekWindow = 0
   let totalInvoiced = 0
+  let thisMonthInvoiced = 0
   let prevMonthInvoiced = 0
   let vatOnPaid = 0
   let whtOnPaid = 0
@@ -239,6 +242,10 @@ function computeKpiAggregates(
     const hasIssueDate = !!issueDate && !Number.isNaN(issueDate.getTime())
 
     totalInvoiced += totalGross
+
+    if (hasIssueDate && (issueDate as Date) >= startOfMonth) {
+      thisMonthInvoiced += totalGross
+    }
 
     if (balance > 0) {
       outstandingTotal += balance
@@ -277,6 +284,7 @@ function computeKpiAggregates(
     dueLastWeekWindow,
     totalFinancialRows: invoiceFinancials.length,
     totalInvoiced,
+    thisMonthInvoiced,
     prevMonthInvoiced,
     vatOnPaid,
     whtOnPaid,
@@ -354,7 +362,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         endOfWeek.setDate(now.getDate() + 7)
         endOfWeek.setHours(23, 59, 59, 999)
 
-        const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes] = await Promise.all([
+        const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, paymentsRes] = await Promise.all([
           tenantClient
             .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, total, vat, wht, custom_fields')
@@ -365,6 +373,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
+          tenantClient.from('payments').select('id, cash_amount, date').gte('date', startOfMonth.toISOString()),
         ])
 
         const invoices = (invoiceRes.data || [])
@@ -393,11 +402,11 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           return sum + balance
         }, 0)
 
-        const thisMonthCollections = invoiceFinancials.reduce((sum: number, row: any) => {
-          const issueDate = row.issue_date ? new Date(row.issue_date) : null
-          if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
-          return sum + Number(row.cash_received || 0)
-        }, 0)
+        const thisMonthPayments = (paymentsRes.data || []) as Array<{ cash_amount: number | null }>
+        const thisMonthCollections = thisMonthPayments.reduce(
+          (sum: number, p: { cash_amount: number | null }) => sum + Number(p.cash_amount || 0),
+          0,
+        )
 
         const pendingFollowUp = invoiceFinancials.filter((row: any) => {
           const balance = Number(row.balance_due || 0)
@@ -466,13 +475,12 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
     endOfWeek.setHours(23, 59, 59, 999)
 
     try {
-      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes, activityEventsRes] = await Promise.all([
+      const [invoiceRes, quotationRes, csrRes, waybillRes, rfqRes, projectsRes, waybillsTotalRes, waybillsDispatchedRes, activityEventsRes, paymentsRes] = await Promise.all([
         tenantClient
           .from('invoices')
           .select('id, invoice_number, client_name, status, created_at, issue_date, total, vat, wht, custom_fields')
           .is('archived_at', null)
-          .order('created_at', { ascending: false })
-          .limit(20),
+          .order('created_at', { ascending: false }),
         tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
         tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(8),
         tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
@@ -483,6 +491,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         tenantClient.from('waybills').select('id', { count: 'exact', head: true }),
         tenantClient.from('waybills').select('id', { count: 'exact', head: true }).eq('status', 'dispatched'),
         tenantClient.from('activity_events').select('id, entity_type, entity_id, entity_label, event_type, actor_label, created_at, metadata').order('created_at', { ascending: false }).limit(10),
+        // ponytail: direct payments query for "Collected This Month" — the
+        // view sums cash_received by invoice issue_date which is wrong for
+        // collections; payments.date is the actual receipt date.
+        tenantClient.from('payments').select('id, cash_amount, date').gte('date', startOfMonth.toISOString()),
       ])
 
       const invoices = (invoiceRes.data || [])
@@ -511,11 +523,12 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         return sum + balance
       }, 0)
 
-      const thisMonthCollections = invoiceFinancials.reduce((sum: number, row: any) => {
-        const issueDate = row.issue_date ? new Date(row.issue_date) : null
-        if (!issueDate || Number.isNaN(issueDate.getTime()) || issueDate < startOfMonth) return sum
-        return sum + Number(row.cash_received || 0)
-      }, 0)
+      // ponytail: sum from payments table by payment date, not invoice issue_date
+      const thisMonthPayments = (paymentsRes.data || []) as Array<{ cash_amount: number | null }>
+      const thisMonthCollections = thisMonthPayments.reduce(
+        (sum: number, p: { cash_amount: number | null }) => sum + Number(p.cash_amount || 0),
+        0,
+      )
 
       const pendingFollowUp = invoiceFinancials.filter((row: any) => {
         const balance = Number(row.balance_due || 0)

@@ -70,28 +70,28 @@ export default function CsrMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate CSR with a project/site',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this record',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy CSR Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export',
           label: 'Export Document',
-          description: 'Download a local copy',
+
           icon: <Download size={18} />,
           onClick: onExport,
         },

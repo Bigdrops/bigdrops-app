@@ -226,13 +226,13 @@ function buildCard(
 
   switch (definition.id) {
     case 'totalInvoiced': {
-      const change = percentChange(stats.totalInvoiced - stats.prevMonthInvoiced, stats.prevMonthInvoiced)
+      const change = percentChange(stats.thisMonthInvoiced, stats.prevMonthInvoiced)
       if (change !== null) {
         trendDirection = change >= 0 ? 'up' : 'down'
         trendPolarity = 'good'
         trendText = `${signedPercentText(change)} vs last month`
       }
-      barRatio = safeRatio(stats.totalInvoiced - stats.prevMonthInvoiced, stats.totalInvoiced)
+      barRatio = safeRatio(stats.thisMonthInvoiced, stats.totalInvoiced)
       barTitle = 'Current-month share of cumulative invoiced'
       break
     }

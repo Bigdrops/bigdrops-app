@@ -70,28 +70,28 @@ export default function WaybillMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate delivery with a project/site',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this waybill',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy Waybill Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export',
           label: 'Export as Spreadsheet',
-          description: 'Download item manifest as CSV',
+
           icon: <Download size={18} />,
           onClick: onExport,
         },

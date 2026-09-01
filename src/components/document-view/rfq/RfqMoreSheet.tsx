@@ -60,28 +60,28 @@ export default function RfqMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate this request with a project',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this request',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy RFQ Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export-csv',
           label: 'Export as CSV',
-          description: 'Download requested items as spreadsheet',
+
           icon: <Download size={18} />,
           onClick: onExportCsv,
         },

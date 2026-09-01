@@ -27,26 +27,19 @@ interface DocumentMoreSheetProps {
   sections: DocumentMoreSheetSection[]
 }
 
+/**
+ * Shared More Actions renderer for all BIGDROPS document View pages.
+ *
+ * All actions use one consistent divider-separated list row.
+ * Sections are grouped by compact labels and subtle spacing.
+ * Danger actions are differentiated by color, not by component structure.
+ */
 export default function DocumentMoreSheet({
   open,
   onClose,
   title = 'More Actions',
   sections = [],
 }: DocumentMoreSheetProps) {
-  const lifecycleSections = sections.filter(
-    (s) => s.title === 'Lifecycle' || s.title === 'Payments & Advances',
-  )
-  const commonSections = sections.filter(
-    (s) =>
-      s.title !== 'Lifecycle' &&
-      s.title !== 'Payments & Advances' &&
-      s.title !== 'Danger Zone' &&
-      s.title !== 'Danger',
-  )
-  const dangerSections = sections.filter(
-    (s) => s.title === 'Danger Zone' || s.title === 'Danger',
-  )
-
   return (
     <DocumentSheet
       open={open}
@@ -54,111 +47,75 @@ export default function DocumentMoreSheet({
       title={title}
       subtitle="Quick document actions and destructive controls."
     >
-      {/* Lifecycle / primary actions — prominent cards */}
-      {lifecycleSections.map((section, sIdx) => (
-        <div key={`lc-${sIdx}`} className={styles.lifecycleSection}>
-          <div className={styles.sectionLabel}>{section.title}</div>
-          <div className={styles.lifecycleGrid}>
-            {section.items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={item.disabled}
-                className={`${styles.lifecycleAction} ${item.selected ? styles.lifecycleSelected : ''} ${item.disabled ? styles.lifecycleDisabled : ''}`}
-                onClick={() => {
-                  item.onClick?.()
-                  if (item.closeOnClick !== false) onClose()
-                }}
-              >
-                <div className={styles.lifecycleIcon}>{item.icon}</div>
-                <div className={styles.lifecycleBody}>
-                  <div className={styles.lifecycleLabel}>{item.label}</div>
-                  {item.description && (
-                    <div className={styles.lifecycleDesc}>
-                      {item.description}
-                    </div>
-                  )}
-                </div>
-                {item.statusLabel && (
-                  <div
-                    className={`${styles.statusPill} ${item.selected ? styles.statusPillActive : ''}`}
-                  >
-                    {item.statusLabel}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
+      {sections.map((section, sIdx) => {
+        const isDanger =
+          section.title === 'Danger Zone' || section.title === 'Danger'
 
-      {/* Common / utility actions — compact list */}
-      {commonSections.map((section, sIdx) => (
-        <div key={`cm-${sIdx}`} className={styles.commonSection}>
-          <div className={styles.sectionLabel}>{section.title}</div>
-          <div className={styles.commonList}>
-            {section.items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={item.disabled}
-                className={`${styles.commonAction} ${item.selected ? styles.commonSelected : ''} ${item.disabled ? styles.commonDisabled : ''}`}
-                onClick={() => {
-                  item.onClick?.()
-                  if (item.closeOnClick !== false) onClose()
-                }}
-              >
-                <div className={styles.commonIcon}>{item.icon}</div>
-                <div className={styles.commonLabel}>{item.label}</div>
-                {item.statusLabel && (
-                  <div
-                    className={`${styles.statusPill} ${item.selected ? styles.statusPillActive : ''}`}
-                  >
-                    {item.statusLabel}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Danger zone — isolated, visually distinct */}
-      {dangerSections.map((section, sIdx) => (
-        <div key={`dz-${sIdx}`} className={styles.dangerSection}>
-          <div className={styles.dangerZoneLabel}>{section.title}</div>
-          <div className={styles.dangerList}>
-            {section.items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={item.disabled}
-                className={`${styles.dangerAction} ${item.destructive ? styles.destructiveAction : ''} ${item.disabled ? styles.dangerDisabled : ''}`}
-                onClick={() => {
-                  item.onClick?.()
-                  if (item.closeOnClick !== false) onClose()
-                }}
-              >
-                <div
-                  className={`${styles.dangerIcon} ${item.destructive ? styles.dangerIconDestructive : ''}`}
+        return (
+          <div key={sIdx} className={styles.section}>
+            <div
+              className={`${styles.sectionLabel} ${isDanger ? styles.sectionLabelDanger : ''}`}
+            >
+              {section.title}
+            </div>
+            <div className={styles.list}>
+              {section.items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  disabled={item.disabled}
+                  className={[
+                    styles.action,
+                    item.selected ? styles.actionSelected : '',
+                    item.destructive ? styles.actionDestructive : '',
+                    item.disabled ? styles.actionDisabled : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => {
+                    item.onClick?.()
+                    if (item.closeOnClick !== false) onClose()
+                  }}
                 >
-                  {item.icon}
-                </div>
-                <div className={styles.dangerBody}>
-                  <div
-                    className={`${styles.dangerItemLabel} ${item.destructive ? styles.destructiveLabel : ''}`}
+                  <span
+                    className={[
+                      styles.icon,
+                      item.destructive ? styles.iconDestructive : '',
+                      item.selected ? styles.iconSelected : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                   >
-                    {item.label}
-                  </div>
-                  {item.description && (
-                    <div className={styles.dangerDesc}>{item.description}</div>
-                  )}
-                </div>
-              </button>
-            ))}
+                    {item.icon}
+                  </span>
+                  <span className={styles.body}>
+                    <span
+                      className={[
+                        styles.label,
+                        item.destructive ? styles.labelDestructive : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {item.label}
+                    </span>
+                    {item.description ? (
+                      <span className={styles.desc}>{item.description}</span>
+                    ) : null}
+                  </span>
+                  {item.statusLabel ? (
+                    <span
+                      className={`${styles.pill} ${item.selected ? styles.pillActive : ''}`}
+                    >
+                      {item.statusLabel}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </DocumentSheet>
   )
 }

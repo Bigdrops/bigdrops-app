@@ -38,7 +38,7 @@ export default function QuotationMoreSheet({
         {
           id: 'convert-invoice',
           label: 'Convert to Invoice',
-          description: 'Generate a billing invoice from this data',
+
           icon: <Zap size={18} />,
           onClick: onConvertToInvoice,
         },
@@ -50,28 +50,28 @@ export default function QuotationMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate this quotation with a project',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this quotation',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy Quotation Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export-csv',
           label: 'Export as CSV',
-          description: 'Download line items as spreadsheet',
+
           icon: <DownloadCloud size={18} />,
           onClick: onExportCsv,
         },

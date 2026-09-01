@@ -90,28 +90,28 @@ export default function InvoiceMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate this invoice with a project',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this invoice',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy Invoice Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export-csv',
           label: 'Export as CSV',
-          description: 'Download line items as spreadsheet',
+
           icon: <DownloadCloud size={18} />,
           onClick: onExportCsv,
         },

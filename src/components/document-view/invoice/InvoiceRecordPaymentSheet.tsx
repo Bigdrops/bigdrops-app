@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Loader2, Banknote, Calendar, Check, CircleCheck } from 'lucide-react'
 import { PaymentAttachmentUploader } from '@/components/ui/PaymentAttachmentUploader'
 import type { PaymentAttachment } from '@/lib/attachmentTypes'
@@ -52,8 +52,6 @@ const DEFAULT_FORM = (): FormState => ({
 
 const QUICK_PCTS = [25, 50, 75, 100]
 
-const ANIMATION_DURATION_MS = 300
-
 export default function InvoiceRecordPaymentSheet({
   open,
   onClose,
@@ -62,6 +60,9 @@ export default function InvoiceRecordPaymentSheet({
 }: InvoiceRecordPaymentSheetProps) {
   const { tenantClient, entity } = useEntity()
   const entityId = entity?.id ?? null
+
+  // Form state — reset immediately when sheet opens (before animation).
+  // The loading spinner gates user interaction until data is ready.
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [currentBalance, setCurrentBalance] = useState(0)
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
@@ -74,40 +75,21 @@ export default function InvoiceRecordPaymentSheet({
   const [uploadResults, setUploadResults] = useState<PaymentAttachment[] | null>(null)
   const [paymentRecorded, setPaymentRecorded] = useState(false)
   const [pctInput, setPctInput] = useState('')
-  const [ready, setReady] = useState(false)
-  const prevOpenRef = useRef(false)
 
   const invoiceHasWht = Number(invoice?.wht || 0) > 0
 
-  // FIX: Delay form reset until after sheet animation completes.
-  // This prevents the opening glitch where state changes mid-animation.
+  // Reset form state immediately when sheet opens.
+  // No artificial delay — the loading spinner provides the visual buffer.
   useEffect(() => {
-    if (open && !prevOpenRef.current) {
-      const timer = setTimeout(() => {
-        setForm(DEFAULT_FORM())
-        setPctInput('')
-        setError('')
-        setSubmitAttempted(false)
-        setAttachments([])
-        setUploadResults(null)
-        setPaymentRecorded(false)
-        setReady(true)
-      }, ANIMATION_DURATION_MS)
-      return () => clearTimeout(timer)
-    }
-    if (!open) {
-      prevOpenRef.current = false
-      setReady(false)
-    }
-  }, [open])
+    if (!open || !invoice?.id) return
 
-  useEffect(() => {
-    prevOpenRef.current = open
-  }, [open])
-
-  // Load payment data after ready (after animation)
-  useEffect(() => {
-    if (!ready || !open || !invoice?.id) return
+    setForm(DEFAULT_FORM())
+    setPctInput('')
+    setError('')
+    setSubmitAttempted(false)
+    setAttachments([])
+    setUploadResults(null)
+    setPaymentRecorded(false)
 
     let cancelled = false
     const loadData = async () => {
@@ -122,7 +104,7 @@ export default function InvoiceRecordPaymentSheet({
     }
     void loadData()
     return () => { cancelled = true }
-  }, [ready, open, invoice?.id])
+  }, [open, invoice?.id])
 
   const settlementSummary = getPaymentEntrySummary({
     balanceDue: currentBalance,
@@ -237,7 +219,7 @@ export default function InvoiceRecordPaymentSheet({
       title="Record Payment"
       subtitle={`Payment for ${invoice.invoice_number}`}
     >
-      {!ready || loadingData ? (
+      {loadingData ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-bd-text-muted text-sm">
           <Loader2 className="animate-spin" size={24} />
           <span>Loading balance...</span>
@@ -258,7 +240,6 @@ export default function InvoiceRecordPaymentSheet({
                 value={form.cashReceived}
                 onChange={handleCashChange}
                 placeholder="Enter amount"
-                autoFocus
                 className={`h-11 rounded-lg border text-base font-semibold ${amountFieldHasError ? 'border-bd-status-danger-border ring-2 ring-bd-status-danger-border/20' : 'border-bd-border'} bg-bd-surface px-3`}
               />
             </div>
@@ -417,7 +398,7 @@ export default function InvoiceRecordPaymentSheet({
             ) : null}
           </div>
 
-          {/* Submit Actions (sticky bottom) */}
+          {/* Submit Actions */}
           <div className="flex-shrink-0 space-y-2 pt-1 border-t border-bd-border/60">
             {error ? (
               <div className="bg-bd-status-danger-bg border border-bd-status-danger-border text-bd-status-danger-text px-3 py-2 rounded-lg text-xs font-medium">

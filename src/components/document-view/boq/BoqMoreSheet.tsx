@@ -70,28 +70,28 @@ export default function BoqMoreSheet({
         {
           id: 'link-project',
           label: 'Link to Project',
-          description: 'Associate this BOQ with a project/site',
+
           icon: <Link size={18} />,
           onClick: onLinkProject,
         },
         {
           id: 'duplicate',
           label: 'Duplicate',
-          description: 'Create a copy of this bill',
+
           icon: <Copy size={18} />,
           onClick: onDuplicate,
         },
         {
           id: 'copy-number',
           label: 'Copy BOQ Number',
-          description: 'Copy the document reference number',
+
           icon: <Copy size={18} />,
           onClick: onCopyNumber,
         },
         {
           id: 'export',
           label: 'Export as Spreadsheet',
-          description: 'Download billed items as editable Excel/CSV',
+
           icon: <Download size={18} />,
           onClick: onExport,
         },
