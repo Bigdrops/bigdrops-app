@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Check, Building2, Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEntity } from '@/lib/tenant/contexts'
 import { CreateCompanySheet } from './CreateCompanySheet'
@@ -31,6 +31,7 @@ function CompanyRow({
     <button
       type="button"
       onClick={onClick}
+      aria-label={`${name}${isSelected ? ', current company' : ''}`}
       className={cn(
         'flex w-full items-center gap-3 rounded-[14px] px-2.5 py-2.5 text-left transition active:scale-[0.985]',
         isSelected
@@ -57,7 +58,7 @@ function CompanyRow({
         {name}
       </span>
       {isSelected ? (
-        <Check className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--primary))]" />
+        <Check className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--primary))]" aria-hidden="true" />
       ) : null}
     </button>
   )
@@ -80,11 +81,17 @@ export function CompanySelectionSheet({
 
   const [createOpen, setCreateOpen] = React.useState(false)
 
+  const hasMultiple = entities.length > 1
+  const sheetTitle = hasMultiple ? 'Switch Company' : 'Company'
+  const sheetDescription = hasMultiple
+    ? 'Select the company to work in.'
+    : 'Manage your company.'
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[78vh] rounded-t-[24px] border-0 p-0"
+        className="max-h-[78vh] rounded-t-[var(--bd-overlay-radius)] border-0 p-0"
         showCloseButton={false}
       >
         {/* Grab handle */}
@@ -96,16 +103,17 @@ export function CompanySelectionSheet({
         <div className="flex items-center justify-between px-5 pb-3">
           <div>
             <SheetTitle className="text-[17px] font-[800] tracking-[-0.05em] text-[hsl(var(--ink))]">
-              Switch Company
+              {sheetTitle}
             </SheetTitle>
             <SheetDescription className="mt-0.5 text-[9px] font-[700] text-[hsl(var(--ink-3))]">
-              Select the company to work in.
+              {sheetDescription}
             </SheetDescription>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             className="grid h-7 w-7 place-items-center rounded-full bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]"
+            aria-label="Close"
           >
             <span className="text-[11px] font-[800]">×</span>
           </button>
@@ -121,23 +129,24 @@ export function CompanySelectionSheet({
                 onClick={() => handleSelect(ent.id)}
               />
               {index < entities.length - 1 ? (
-                <div className="mx-2.5 border-b border-[hsl(var(--line))]" />
+                <div className="mx-2.5 border-b border-[hsl(var(--line))]" aria-hidden="true" />
               ) : null}
             </React.Fragment>
           ))}
 
           {/* Divider + Create Company */}
-          <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" />
+          <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" aria-hidden="true" />
           <button
             type="button"
             onClick={() => {
               onOpenChange(false)
               setTimeout(() => setCreateOpen(true), 150)
             }}
+            aria-label="Create a new company in this workspace"
             className="flex w-full items-center gap-3 rounded-[14px] px-2.5 py-2.5 text-left transition hover:bg-[hsl(var(--surface-muted))]/50 active:scale-[0.985]"
           >
             <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-2xl bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="flex-1 truncate text-[11px] font-[800] tracking-[-0.025em] text-[hsl(var(--ink-3))]">
               Create Company

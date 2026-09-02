@@ -116,21 +116,6 @@ export default function TenantGate({ children }: { children: ReactNode }) {
     case 'unavailable':
       return <GateError message="This workspace is no longer available." onRetry={() => workspaceCtx.refresh()} />
 
-    case 'multi-entity':
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-6">
-          <div className="w-full max-w-md rounded-2xl border border-black/10 bg-card p-8 text-center shadow-[0_25px_80px_rgba(0,0,0,0.10)]">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              Multiple companies detected
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              This workspace contains more than one company. Company selection is coming in a
-              future phase.
-            </p>
-          </div>
-        </div>
-      )
-
     case 'ready':
       return <>{children}</>
   }

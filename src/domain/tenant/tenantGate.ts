@@ -38,7 +38,6 @@ export type TenantGatePhase =
   | 'provisioning-failed'
   | 'blocked'
   | 'unavailable'
-  | 'multi-entity'
   | 'ready'
 
 export interface TenantGateInput {
@@ -80,7 +79,6 @@ export function resolveGatePhase(input: TenantGateInput): TenantGatePhase {
   if (input.entityError) return 'error'
 
   if (input.entityCount === 0) return 'create-company'
-  if (input.entityCount > 1) return 'multi-entity'
 
   switch (input.provisioningStatus) {
     case 'ready':
@@ -123,8 +121,6 @@ export function gatePhaseLabel(phase: TenantGatePhase): string {
       return 'Workspace blocked'
     case 'unavailable':
       return 'Workspace unavailable'
-    case 'multi-entity':
-      return 'Multiple companies'
     default:
       return phase
   }

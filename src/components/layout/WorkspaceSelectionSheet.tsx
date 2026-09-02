@@ -1,11 +1,10 @@
 import * as React from 'react'
-import { Check, Building2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '@/lib/tenant/contexts'
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
@@ -32,6 +31,7 @@ function WorkspaceRow({
     <button
       type="button"
       onClick={onClick}
+      aria-label={`${name}${companyCount != null && companyCount > 0 ? `, ${companyCount} ${companyCount === 1 ? 'company' : 'companies'}` : ''}${isSelected ? ', current workspace' : ''}`}
       className={cn(
         'flex w-full items-center gap-3 rounded-[14px] px-2.5 py-2.5 text-left transition active:scale-[0.985]',
         isSelected
@@ -65,7 +65,7 @@ function WorkspaceRow({
         ) : null}
       </div>
       {isSelected ? (
-        <Check className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--primary))]" />
+        <Check className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--primary))]" aria-hidden="true" />
       ) : null}
     </button>
   )
@@ -91,7 +91,7 @@ export function WorkspaceSelectionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[78vh] rounded-t-[24px] border-0 p-0"
+        className="max-h-[78vh] rounded-t-[var(--bd-overlay-radius)] border-0 p-0"
         showCloseButton={false}
       >
         {/* Grab handle */}
@@ -113,6 +113,7 @@ export function WorkspaceSelectionSheet({
             type="button"
             onClick={() => onOpenChange(false)}
             className="grid h-7 w-7 place-items-center rounded-full bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]"
+            aria-label="Close"
           >
             <span className="text-[11px] font-[800]">×</span>
           </button>
@@ -128,7 +129,7 @@ export function WorkspaceSelectionSheet({
                 onClick={() => handleSelect(ws.id)}
               />
               {index < activeWorkspaces.length - 1 ? (
-                <div className="mx-2.5 border-b border-[hsl(var(--line))]" />
+                <div className="mx-2.5 border-b border-[hsl(var(--line))]" aria-hidden="true" />
               ) : null}
             </React.Fragment>
           ))}

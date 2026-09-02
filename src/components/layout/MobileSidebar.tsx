@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Sparkles, ChevronDown, Check, Building2, Plus } from 'lucide-react'
+import { Sparkles, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
@@ -10,7 +10,6 @@ import {
   isPathActive,
   activeNavItemClassName,
   inactiveNavItemClassName,
-  activeNavIconClassName,
   inactiveNavIconClassName,
   inactiveNavIconColorClassName,
   salesPicker,
@@ -19,12 +18,7 @@ import {
   getPreSalesPath,
   mobileDrawerUtilityNav,
 } from './navData'
-import { CreateCompanySheet } from './CreateCompanySheet'
-import {
-  Sheet as SelectionSheet,
-  SheetContent as SelectionSheetContent,
-  SheetTitle,
-} from '@/components/ui/sheet'
+import { CompanySelectionSheet } from './CompanySelectionSheet'
 
 interface MobileSidebarProps {
   open: boolean
@@ -72,11 +66,13 @@ function CompanySwitcher({ onOpenSheet }: { onOpenSheet: () => void }) {
   const { entity, entities, isLoading } = useEntity()
   const name = entity?.name || (isLoading ? 'Loading…' : '—')
   const initials = (name || '?').charAt(0).toUpperCase()
+  const hasMultiple = entities.length > 1
 
   return (
     <button
       type="button"
       onClick={onOpenSheet}
+      aria-label={`Current company: ${name}. ${hasMultiple ? 'Tap to switch.' : 'Tap to manage.'}`}
       className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all hover:bg-[hsl(var(--surface-muted))]/60 active:scale-[0.985]"
     >
       {/* Avatar / initials */}
@@ -87,119 +83,11 @@ function CompanySwitcher({ onOpenSheet }: { onOpenSheet: () => void }) {
       <span className="flex-1 min-w-0 truncate text-[12px] font-[800] tracking-[-0.03em] text-[hsl(var(--ink))]">
         {name}
       </span>
-      {/* Chevron affordance */}
-      <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--ink-3))]" />
+      {/* Chevron affordance — only when multiple companies exist */}
+      {hasMultiple ? (
+        <ChevronDown className="h-4 w-4 shrink-0 text-[hsl(var(--ink-3))]" aria-hidden="true" />
+      ) : null}
     </button>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/* Company Selection Sheet — compact bottom sheet                     */
-/* ------------------------------------------------------------------ */
-
-function CompanySelectionSheet({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const { entity, entities, selectEntity } = useEntity()
-  const [createOpen, setCreateOpen] = React.useState(false)
-
-  const handleSelect = React.useCallback(
-    (id: string) => {
-      selectEntity(id)
-      setTimeout(() => onOpenChange(false), 120)
-    },
-    [selectEntity, onOpenChange],
-  )
-
-  return (
-    <SelectionSheet open={open} onOpenChange={onOpenChange}>
-      <SelectionSheetContent
-        side="bottom"
-        className="max-h-[60vh] rounded-t-[20px] border-0 p-0"
-        showCloseButton={false}
-      >
-        {/* Grab handle */}
-        <div className="flex justify-center pt-2.5 pb-1">
-          <div className="h-[3px] w-[34px] rounded-full bg-[hsl(var(--surface-strong))]" />
-        </div>
-
-        {/* Title */}
-        <div className="px-5 pb-3">
-          <SheetTitle className="text-[15px] font-[800] tracking-[-0.04em] text-[hsl(var(--ink))]">
-            Switch Company
-          </SheetTitle>
-        </div>
-
-        {/* List */}
-        <div className="px-3 pb-5 space-y-0.5">
-          {entities.map((ent) => {
-            const isActive = ent.id === entity?.id
-            const entInitials = (ent.name || '?').charAt(0).toUpperCase()
-            return (
-              <button
-                key={ent.id}
-                type="button"
-                onClick={() => handleSelect(ent.id)}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition active:scale-[0.985]',
-                  isActive
-                    ? 'bg-[hsl(var(--primary-soft))]'
-                    : 'hover:bg-[hsl(var(--surface-muted))]/50',
-                )}
-              >
-                <span
-                  className={cn(
-                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-[800]',
-                    isActive
-                      ? 'bg-[hsl(var(--primary))] text-white'
-                      : 'bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))]',
-                  )}
-                >
-                  {entInitials}
-                </span>
-                <span
-                  className={cn(
-                    'flex-1 truncate text-[12px] font-[800]',
-                    isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--ink))]',
-                  )}
-                >
-                  {ent.name || 'Unnamed'}
-                </span>
-                {isActive ? (
-                  <Check className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" />
-                ) : null}
-              </button>
-            )
-          })}
-
-          {/* Divider before Create Company */}
-          <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" />
-
-          {/* Create Company button */}
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false)
-              setTimeout(() => setCreateOpen(true), 150)
-            }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition hover:bg-[hsl(var(--surface-muted))]/50 active:scale-[0.985]"
-          >
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]">
-              <Plus className="h-4 w-4" />
-            </span>
-            <span className="flex-1 truncate text-[12px] font-[800] text-[hsl(var(--ink-3))]">
-              Create Company
-            </span>
-          </button>
-        </div>
-      </SelectionSheetContent>
-
-      <CreateCompanySheet open={createOpen} onOpenChange={setCreateOpen} />
-    </SelectionSheet>
   )
 }
 
@@ -397,7 +285,7 @@ export function MobileSidebar({
         <DrawerFooter />
       </SheetContent>
 
-      {/* Company Selection Sheet */}
+      {/* Canonical Company Selection Sheet */}
       <CompanySelectionSheet
         open={companySheetOpen}
         onOpenChange={setCompanySheetOpen}

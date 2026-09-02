@@ -19,7 +19,7 @@ interface CreateCompanySheetProps {
 
 export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetProps) {
   const { workspace } = useWorkspace()
-  const { refresh: refreshEntity } = useEntity()
+  const { refresh: refreshEntity, selectEntity } = useEntity()
   const [displayName, setDisplayName] = React.useState('')
   const [error, setError] = React.useState('')
   const [loading, setLoading] = React.useState(false)
@@ -53,6 +53,8 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         slug: slugify(displayName),
       })
       await provisionEntity(entity.id)
+      // Make the newly created company the active entity
+      selectEntity(entity.id)
       refreshEntity()
       feedback.success('Company created', { description: `${displayName.trim()} is now available.` })
       onOpenChange(false)

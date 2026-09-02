@@ -38,6 +38,8 @@ export default function CompanyCreation() {
         slug: slugify(displayName),
       })
       await provisionEntity(entity.id)
+      // Make the newly created company the active entity
+      entityCtx.selectEntity(entity.id)
       entityCtx.refresh()
     } catch (e) {
       setError(String((e as Error)?.message ?? e))

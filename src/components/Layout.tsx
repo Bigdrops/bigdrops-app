@@ -50,7 +50,6 @@ import {
   getActiveTab,
   type TabKey,
 } from './layout/navData'
-import { BusinessSwitcher } from './layout/BusinessSwitcher'
 import { MobileSidebar } from './layout/MobileSidebar'
 import { DesktopSidebar } from './layout/DesktopSidebar'
 import { MobileSalesSheet } from './layout/MobileSalesSheet'
