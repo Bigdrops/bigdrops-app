@@ -1,6 +1,6 @@
 # AGENTS.md — BIGDROPS AI Agent Guide
 
-> Read this file before making changes to the repository.
+Read this file before you change the repository.
 
 ---
 
@@ -9,7 +9,7 @@
 - **Product:** B2B business management suite for Nigerian SMEs.
 - **Stack:** React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase/Postgres, Vite 7, Bun, Vercel, Capacitor 8.
 - **Package manager:** Bun only.
-- **Never use:** npm, yarn, pnpm.
+- **Do not use:** npm, yarn, pnpm.
 
 Commands:
 
@@ -22,45 +22,77 @@ bun run test
 bun run audit:load
 ```
 
-Run `bun run audit:load` before `bun run typecheck`.
+Run bun run audit:load before bun run typecheck.
 
-For connecting to the database, follow `supabase/database-workflow.md`.
+For database connection, follow supabase/database-workflow.md.
 
 Naming conventions:
 
-- Components: `PascalCase`, example: `WaybillForm.tsx`
-- Files/utilities: `kebab-case`, example: `waybill-utils.ts`
-- Database fields: `snake_case`, example: `waybill_number`
+· Components: PascalCase (example: WaybillForm.tsx)
+· Files/utilities: kebab-case (example: waybill-utils.ts)
+· Database fields: snake_case (example: waybill_number)
 
 ---
 
-## 2. Core Guardrails
+2. Concurrent Agent Safety
+
+Multiple AI agents may work on this repository at the same time.
+
+· Treat any pre-existing uncommitted, staged, or untracked change as belonging to another agent.
+· Do not destroy another agent's work.
+· Do not run these commands without explicit user authorization:
+  · git reset
+  · git reset --hard
+  · git checkout -- <file>
+  · git restore <file>
+  · git clean
+  · git stash (on another agent's work)
+  · Any equivalent command that discards or overwrites pre-existing work.
+· Do not delete untracked files, revert modifications, or overwrite files that you did not change.
+· Do not revert changes because they cause typecheck, lint, or build failures.
+· Pre-existing changes are immutable. Do not clean the working tree.
+· A file that seems unrelated or contains errors is still protected.
+· Before you modify any file, run git status and identify pre-existing changes.
+· Modify only files required by the current task.
+· If pre-existing changes block verification, do not modify or revert them. Report the conflict.
+· If another agent modifies the same file, stop and report the collision. Do not overwrite or merge.
+· git status and git diff are for observation only. They do not permit cleanup.
+· For every task:
+  1. Capture git status before changes.
+  2. Record pre-existing modified/staged/untracked files.
+  3. Make only task-scoped changes.
+  4. Capture git status after changes.
+  5. Confirm no pre-existing files were reverted or overwritten.
+
+---
+
+3. Core Guardrails
 
 These guardrails protect business correctness. Do not violate them unless the user explicitly instructs otherwise.
 
-### Financial calculations
+Financial calculations
 
-`src/lib/Calculations.ts` is the financial source of truth.
+src/lib/Calculations.ts is the financial source of truth.
 
-- `calcTotals()` and `resolveRowVat()` are core financial pipelines.
-- Do not duplicate financial calculation logic.
-- Do not bypass `Calculations.ts`.
-- Quotations must reuse the invoice/domain financial layer.
+· Use calcTotals() and resolveRowVat() for financial calculations.
+· Do not duplicate financial calculation logic.
+· Do not bypass Calculations.ts.
+· Quotations must reuse the invoice/domain financial layer.
 
-### Domain boundaries
+Domain boundaries
 
-- PDFs are renderers. They must receive prepared data.
-- PDFs must not calculate prices, taxes, totals, VAT, or discounts.
-- Quotation logic must reuse the invoice domain layer where applicable.
-- When transforming invoice items to waybills, remove monetary values:
-  - `unit_price`
-  - `rate`
-  - `vat`
-  - `discount`
-  - `subtotal`
-  - `grand_total`
+· PDFs are renderers. They receive prepared data only.
+· PDFs must not calculate prices, taxes, totals, VAT, or discounts.
+· Quotation logic must reuse the invoice domain layer.
+· When you transform invoice items to waybills, remove monetary values:
+  · unit_price
+  · rate
+  · vat
+  · discount
+  · subtotal
+  · grand_total
 
-### Document lifecycle
+Document lifecycle
 
 Edit, duplicate, revert, and transformation operations must follow:
 
@@ -68,15 +100,11 @@ Edit, duplicate, revert, and transformation operations must follow:
 docs/standard/document-transformation-standard.md
 ```
 
-### UI constraint
-
-- Do not use framer-motion components in production.
-
 ---
 
-## 3. Execution Rules
+4. Execution Rules
 
-Before changing code:
+Before you change code:
 
 1. Understand the task.
 2. Identify affected files.
@@ -88,18 +116,18 @@ Before changing code:
 
 Rules:
 
-- Make surgical changes only.
-- Do not refactor unrelated code.
-- Do not rename unrelated symbols.
-- Do not change business behavior unless requested.
-- Preserve audit trails, document lineage, and existing output behavior.
-- Prefer simple, readable control flow over abstraction.
+· Make surgical changes only.
+· Do not refactor unrelated code.
+· Do not rename unrelated symbols.
+· Do not change business behavior unless requested.
+· Preserve audit trails, document lineage, and existing output behavior.
+· Prefer simple, readable control flow over abstraction.
 
 ---
 
-## 4. Verification Gate
+5. Verification Gate
 
-Run these checks before reporting completion:
+Run these checks before you report completion:
 
 ```bash
 bun run audit:load
@@ -123,7 +151,7 @@ must not be used as a normal verification step. The local machine has limited RA
 
 ---
 
-## 5. Standards
+6. Standards
 
 Standards live under:
 
@@ -131,16 +159,16 @@ Standards live under:
 docs/standard/
 ```
 
-`docs/standard/` is normative.
+docs/standard/ is normative.
 
 Rules:
 
-- All active standards under `docs/standard/` must be followed where applicable.
-- Do not silently diverge from a standard.
-- If an implementation conflicts with a standard, either fix the implementation or stop and ask.
-- Extend an existing standard before creating a new one.
-- Do not duplicate a concept already covered by an existing standard.
-- If a standard is marked placeholder, coming soon, or excluded, do not treat it as authoritative unless the user says otherwise.
+· Follow all active standards under docs/standard/.
+· Do not silently diverge from a standard.
+· If an implementation conflicts with a standard, fix the implementation or stop and ask.
+· Extend an existing standard before creating a new one.
+· Do not duplicate a concept already covered by an existing standard.
+· If a standard is marked placeholder, coming soon, or excluded, do not treat it as authoritative unless the user says otherwise.
 
 New document modules must conform to:
 
@@ -149,10 +177,10 @@ docs/standard/json-import-standard.md
 docs/standard/document-column-standard.md
 ```
 
-Rule precedence for repository/business rules:
+Rule precedence:
 
 1. Explicit user instruction.
-2. `docs/standard/`
+2. docs/standard/
 3. This file.
 4. Module-specific documentation.
 
@@ -160,7 +188,7 @@ A loaded skill controls implementation approach, but it must not violate explici
 
 ---
 
-## 6. Skills
+7. Skills
 
 Skills are the primary instruction mechanism for how work is performed.
 
@@ -181,30 +209,24 @@ Load skills from one of these locations:
 
 Skill rules:
 
-- Use exact skill names.
-- If the user names a skill, use that skill.
-- If a requested skill cannot be found, stop and ask.
-- Do not guess a skill name.
-- Do not silently replace a requested skill with another skill.
-- Do not replace a requested skill with a subagent.
-- If a skill is loaded, record it in the task report.
+· If a skill is loaded, record it in the task report.
 
 A loaded skill may guide or override non-normative workflow behavior in this file.
 
 A skill must not silently override:
 
-- active standards under `docs/standard/`
-- financial calculation integrity
-- document transformation integrity
-- audit trail integrity
-- database safety rules
-- security rules
+· active standards under docs/standard/
+· financial calculation integrity
+· document transformation integrity
+· audit trail integrity
+· database safety rules
+· security rules
 
 If a skill appears to conflict with any of those, stop and ask.
 
 ---
 
-## 7. Subagents
+8. Subagents
 
 Subagents are optional.
 
@@ -216,20 +238,20 @@ docs/SUBAGENTS.md
 
 Use a subagent only when:
 
-- the user explicitly asks for one, or
-- no suitable skill exists and a specialist persona is clearly useful.
+· the user explicitly asks for one, or
+· no suitable skill exists and a specialist persona is clearly useful.
 
 Rules:
 
-- Subagents do not override skills.
-- Subagents do not require delegation logs.
-- Subagents must not bypass standards or locked business rules.
-- If a skill and a subagent conflict, follow the skill.
-- If the user gives direct instruction, follow the user.
+· Subagents do not override skills.
+· Subagents do not require delegation logs.
+· Subagents must not bypass standards or locked business rules.
+· If a skill and a subagent conflict, follow the skill.
+· If the user gives direct instruction, follow the user.
 
 ---
 
-## 8. Reports
+9. Reports
 
 Every completed task must produce a report under:
 
@@ -252,7 +274,7 @@ docs/reports/item-library/
 
 Do not place reports in the repository root.
 
-Reports must adhere to ADS-STE100 Simplified Technical English.
+Reports must adhere to ASD-STE100 Simplified Technical English.
 
 Each report must begin with a title and identity line.
 
@@ -268,28 +290,28 @@ Use the actual AI name, date, and harness. Do not use placeholder text.
 
 Each report must include:
 
-- Objective
-- Scope
-- Files changed
-- Skills used
-- Documentation standard
-- Changes made
-- Verification result
-- Risks or limitations
-- Deferred work
+· Objective
+· Scope
+· Files changed
+· Skills used
+· Documentation standard
+· Changes made
+· Verification result
+· Risks or limitations
+· Deferred work
 
 Required fields:
 
 ```md
 Skills used: <exact-skill-name>, <exact-skill-name>
-Documentation standard: ADS-STE100 Simplified Technical English
+Documentation standard: ASD-STE100 Simplified Technical English
 ```
 
 If no skill was used:
 
 ```md
 Skills used: NONE
-Documentation standard: ADS-STE100 Simplified Technical English
+Documentation standard: ASD-STE100 Simplified Technical English
 ```
 
 If a subagent was used, include it optionally:
@@ -304,7 +326,7 @@ Verification section must state exact results.
 
 Example:
 
-```md
+``
 Verification:
 - bun run audit:load: passed
 - bun run typecheck: passed
@@ -314,38 +336,38 @@ Verification:
 
 ---
 
-## 9. Documentation Standard
+10. Documentation Standard
 
-All technical documentation must adhere to ADS-STE100 Simplified Technical English.
+All technical documentation must adhere to ASD-STE100 Simplified Technical English.
 
 This applies to:
 
-- architecture documents
-- design documents
-- pattern documents
-- READMEs
-- specifications
-- API documentation
-- developer guides
-- contribution guides
-- AI-generated documentation
-- reports
+· architecture documents
+· design documents
+· pattern documents
+· READMEs
+· specifications
+· API documentation
+· developer guides
+· contribution guides
+· AI-generated documentation
+· reports
 
 Writing rules:
 
-- Use short, direct sentences.
-- Use active voice.
-- Use consistent terminology.
-- Define technical terms before using them.
-- Explain concepts before implementation details.
-- Use one idea per paragraph.
-- Prefer bullet lists and tables over long prose.
-- Remove unnecessary adjectives and filler.
-- Do not use marketing language.
-- Do not use conversational language.
-- Do not use AI-style hedging.
-- Avoid repetition.
-- Make documents easy to scan.
+· Use short, direct sentences.
+· Use active voice.
+· Use consistent terminology.
+· Define technical terms before using them.
+· Explain concepts before implementation details.
+· Use one idea per paragraph.
+· Prefer bullet lists and tables over long prose.
+· Remove unnecessary adjectives and filler.
+· Do not use marketing language.
+· Do not use conversational language.
+· Do not use AI-style hedging.
+· Avoid repetition.
+· Make documents easy to scan.
 
 Documentation workflow:
 
@@ -360,11 +382,11 @@ Duplicate documentation is a defect.
 
 ---
 
-## 10. Architecture Map
+11. Architecture Map
 
 High-level boundaries:
 
-```md
+
 src/app/          App bootstrap
 src/components/   UI components and reusable UI modules
 src/domain/       Business logic, module rules, types, factories
@@ -377,6 +399,8 @@ src/tests/        Critical tests
 
 Rules:
 
-- Keep business logic in `src/domain/` or `src/lib/`, not in UI components.
-- Keep PDF components as renderers.
-- Keep database access through the established Supabase layer.
+· Keep business logic in src/domain/ or src/lib/, not in UI components.
+· Keep PDF components as renderers.
+· Keep database access through the established Supabase layer.
+
+```

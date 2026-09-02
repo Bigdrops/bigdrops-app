@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ArrowLeftRight, Building2 } from 'lucide-react'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,14 +13,25 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { supabase } from '../supabase'
-import { useEntity } from '@/lib/tenant/contexts'
+import { useEntity, useWorkspace } from '@/lib/tenant/contexts'
+import { CompanySelectionSheet } from '@/components/layout/CompanySelectionSheet'
 
 export default function ProvisioningFailed() {
   const entityCtx = useEntity()
+  const { workspace } = useWorkspace()
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
+
+  const failedName = entityCtx.entity?.name || 'Your company'
+  const hasOtherCompanies = entityCtx.entityCount > 1
+  const workspaceName = workspace?.name || 'your workspace'
 
   const handleRetry = () => {
     entityCtx.recheckProvisioning()
+  }
+
+  const handleSwitchCompany = () => {
+    setSwitcherOpen(true)
   }
 
   const handleSignOut = async () => {
@@ -44,11 +55,11 @@ export default function ProvisioningFailed() {
 
               <CardContent className="p-0">
                 <p className="text-sm leading-6 text-muted-foreground">
-                  We could not finish setting up your company.
-                  {entityCtx.provisioningError ? ' Our system reported the following:' : ''}
+                  <span className="font-semibold text-foreground">{failedName}</span> could not
+                  be set up in {workspaceName}.
                 </p>
                 {entityCtx.provisioningError && (
-                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-left text-sm text-red-700">
+                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
                     {entityCtx.provisioningError}
                   </p>
                 )}
@@ -56,25 +67,44 @@ export default function ProvisioningFailed() {
             </div>
           </CardHeader>
 
-          <CardFooter className="flex justify-center gap-3 pb-8 pt-2">
+          <CardFooter className="flex flex-col gap-3 pb-8 pt-2">
+            {/* Primary: Switch Company (if other companies exist) */}
+            {hasOtherCompanies && (
+              <Button
+                type="button"
+                className="w-full rounded-xl bg-[#111111] px-6 font-semibold text-white shadow-sm hover:bg-black"
+                onClick={handleSwitchCompany}
+              >
+                <ArrowLeftRight className="mr-2 h-4 w-4" />
+                Switch Company
+              </Button>
+            )}
+
+            {/* Secondary: Retry */}
             <Button
               type="button"
               variant="outline"
-              className="rounded-full px-6 font-semibold shadow-sm"
+              className="w-full rounded-xl font-semibold shadow-sm"
+              onClick={handleRetry}
+            >
+              Try Again
+            </Button>
+
+            {/* Tertiary: low-priority escape */}
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full rounded-xl text-muted-foreground"
               onClick={() => setSignOutDialogOpen(true)}
             >
               Sign Out
             </Button>
-            <Button
-              type="button"
-              className="rounded-full bg-[#111111] px-6 font-semibold text-white shadow-sm hover:bg-black"
-              onClick={handleRetry}
-            >
-              Retry
-            </Button>
           </CardFooter>
         </Card>
       </div>
+
+      {/* Company Switcher */}
+      <CompanySelectionSheet open={switcherOpen} onOpenChange={setSwitcherOpen} />
 
       <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
         <AlertDialogContent>
