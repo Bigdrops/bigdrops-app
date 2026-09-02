@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f0f4f8">
+  <title>BIGDROPS — Waybill Editor (Inline Fill — Slate Navy Variant)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Approved PRD palette — Slate Navy (00-index locked) */
+    :root {
+      --canvas: #f0f4f8;
+      --paper: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --ink: #0f172a;
+      --sub: #475569;
+      --line: rgba(15, 23, 42, .07);
+      --soft: #f8fafc;
+      --rust: #1e3a5f;
+      --rust-soft: #eef2ff;
+      --amber: #0f172a;
+      --amber-soft: #f1f5f9;
+      --red: #ef4444;
+      --red-soft: #fee2e2;
+      --green: #64748b;
+      --green-soft: #f1f5f9;
+      --indigo: #1e3a5f;
+      --indigo-soft: #eef2ff;
+      --violet: #0f172a;
+      --violet-soft: #f1f5f9;
+      --group-bg: linear-gradient(115deg, #0f172a 0%, #1e3a5f 55%, #334155 100%);
+      --group-text: #ffffff;
+      --group-subtext: #cbd5e1;
+      --group-border: #1e3a5f;
+      --readout-bg: linear-gradient(130deg, #0f172a 0%, #1e293b 100%);
+      --readout-text: #f1f5f9;
+      --mono: "DM Mono", monospace;
+      --body: "Manrope", sans-serif;
+      --display: "Syne", sans-serif;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+    .phone[data-theme="dark"] {
+      --canvas: #0f172a;
+      --paper: #1e293b;
+      --card-bg: rgba(30, 41, 59, 0.95);
+      --ink: #f1f5f9;
+      --sub: #cbd5e1;
+      --line: rgba(241, 245, 249, .08);
+      --soft: #253448;
+      --rust: #60a5fa;
+      --rust-soft: rgba(96, 165, 250, 0.14);
+      --amber: #94a3b8;
+      --amber-soft: #1e293b;
+      --red: #f87171;
+      --red-soft: #3b1518;
+      --green: #94a3b8;
+      --green-soft: #1e293b;
+      --indigo: #60a5fa;
+      --indigo-soft: #1e293b;
+      --violet: #94a3b8;
+      --violet-soft: #1e293b;
+      --group-bg: linear-gradient(115deg, #020617 0%, #0f172a 50%, #1e3a5f 100%);
+      --group-text: #f1f5f9;
+      --group-subtext: #ffe085;
+      --group-border: #b88214;
+      --readout-bg: linear-gradient(130deg, #090a0d 0%, #231b0a 100%);
+      --readout-text: #f1f5f9;
+    }
+    /* Pure slate — remove yellow orbs, use slate tint like onboarding-flow.html */
+    .phone::before, .phone::after { display: none !important; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--canvas); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(0.98); }
+    svg { width: 16px; height: 16px; stroke-width: 1.8; }
+    .phone { width: min(100%, 430px); min-height: 100dvh; margin: 0 auto; background: var(--paper); position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.12); isolation: isolate; transition: background 0.25s var(--ease), color 0.25s var(--ease); }
+    .phone::before { content: ""; position: absolute; z-index: 0; top: -90px; right: -80px; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.8) 0, transparent 4%), radial-gradient(circle at 45% 45%, #ffdf73 0, #f0a824 35%, #945d05 75%, transparent 100%); opacity: 0.28; filter: blur(1px); animation: orb-drift 14s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; pointer-events: none; }
+    .phone::after { content: ""; position: absolute; z-index: 0; top: 220px; left: -90px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #ffd085 0, #d97706 40%, #572a02 80%, transparent 100%); opacity: 0.18; animation: orb-drift 18s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate-reverse; pointer-events: none; }
+    .phone[data-theme="dark"]::before { opacity: 0.22; }
+    .phone[data-theme="dark"]::after { opacity: 0.15; }
+    @keyframes orb-drift { 0% { transform: translate3d(0,0,0) scale(1); } 100% { transform: translate3d(-20px, 28px, 0) scale(1.08); } }
+    main { position: relative; z-index: 1; height: 100dvh; overflow-y: auto; padding: calc(10px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom)); scrollbar-width: none; }
+    main::-webkit-scrollbar { display: none; }
+    /* Mobile-app-ui-design: 8pt grid + thumb-zone — footer now scrolls, FAB stays in thumb zone */
+    .form-scroll { padding-bottom: 24px; }
+    .nav { height: 42px; display: grid; grid-template-columns: 38px 1fr 38px 38px; align-items: center; padding: 0 8px; background: var(--paper); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+    .nav h1 { margin: 0; font: 800 12px var(--display); letter-spacing: -0.04em; text-align: center; color: var(--ink); }
+    .icon { width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; display: grid; place-items: center; color: var(--ink); }
+    .icon:hover { background: var(--soft); }
+    .exposed { scroll-margin-top: 52px; padding: 10px 10px 0; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .section-head h2 { margin: 0; font: 800 9px var(--body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--sub); }
+    .section-head button { border: 0; background: transparent; color: var(--rust); font: 800 9px var(--body); display: inline-flex; align-items: center; gap: 3px; }
+    .exposed-card { border: 1px solid var(--line); border-radius: 12px; background: var(--card-bg); overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+    .field { padding: 5px 8px; border-bottom: 1px solid var(--line); }
+    .field:last-child { border-bottom: 0; }
+    .field label { display: block; margin: 0 0 2px; font-size: 7px; color: var(--sub); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .field input, .field textarea, .field select { display: block; width: 100%; border: 0; outline: 0; background: transparent; padding: 0; color: var(--ink); font: 600 11px var(--body); }
+    .field textarea { min-height: 32px; resize: vertical; line-height: 14px; }
+    .field input.mono { font-family: var(--mono); font-weight: 500; font-size: 10px; }
+    .field select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c626a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 4px center; padding-right: 16px; }
+    .grid2, .grid3 { display: grid; border-bottom: 1px solid var(--line); }
+    .grid2 { grid-template-columns: 1fr 1fr; }
+    .grid3 { grid-template-columns: repeat(3, 1fr); }
+    .grid2 .field, .grid3 .field { border-bottom: 0; border-right: 1px solid var(--line); }
+    .grid2 .field:last-child, .grid3 .field:last-child { border-right: 0; }
+    /* Client picker — dashed border style matching real form */
+    .client-picker-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 12px; background: var(--paper); text-align: left; color: var(--ink); transition: border-color 0.15s, background 0.15s; }
+    .client-picker-btn:hover { border-color: var(--indigo); background: var(--indigo-soft); }
+    .client-avatar { width: 36px; height: 36px; border-radius: 9px; background: var(--soft); color: var(--sub); display: grid; place-items: center; font: 800 11px var(--body); flex-shrink: 0; }
+    .client-text { flex: 1; min-width: 0; }
+    .client-text small { display: block; font: 800 7px var(--body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--sub); }
+    .client-text b { display: block; margin: 1px 0; font-size: 11px; }
+    .client-text em { display: block; font-style: normal; font-size: 8.5px; color: var(--sub); }
+    .client-meta-row { display: flex; gap: 10px; padding: 6px 0 0; font: 500 8px var(--mono); color: var(--sub); }
+    .client-meta-row span { display: flex; align-items: center; gap: 4px; }
+    /* Toolbar */
+    .item-toolbar { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
+    .item-toolbar button { flex: 0 0 auto; height: 28px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: 800 8.5px var(--body); display: flex; align-items: center; gap: 4px; }
+    .item-toolbar button.primary { background: var(--rust); border-color: var(--rust); color: #fff; }
+    .item-toolbar button.danger { color: var(--red); }
+    .item-instruction { padding: 5px 8px; margin-bottom: 8px; border-left: 3px solid var(--amber); background: var(--amber-soft); font-size: 8px; line-height: 12px; color: var(--ink); border-radius: 0 6px 6px 0; }
+    /* Group workbench */
+    .group-workbench { margin-bottom: 10px; border: 1px solid var(--group-border); border-radius: 12px; overflow: hidden; background: var(--paper); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .group-banner { display: grid; grid-template-columns: 26px 1fr auto 26px; gap: 6px; align-items: center; padding: 6px 8px; background: var(--group-bg); color: var(--group-text); }
+    .group-mark { width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,0.2); border-radius: 7px; background: rgba(255,255,255,0.1); }
+    .group-banner label { display: block; font-size: 6.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--group-subtext); }
+    .group-banner input { width: 100%; border: 0; background: transparent; color: var(--group-text); font: 700 11px var(--body); outline: 0; }
+    .group-sum { text-align: right; }
+    .group-sum small, .group-sum b { display: block; }
+    .group-sum small { font-size: 6.5px; color: var(--group-subtext); }
+    .group-sum b { font: 600 10px var(--mono); }
+    .group-remove { width: 26px; height: 26px; border: 0; border-radius: 6px; background: rgba(255,255,255,0.1); color: var(--group-subtext); display: grid; place-items: center; }
+    .group-remove:hover { background: rgba(255,255,255,0.2); color: var(--group-text); }
+    .group-lines { padding: 4px; background: var(--soft); }
+    .group-footer { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--paper); border-top: 1px solid var(--line); }
+    .group-footer button:first-child { border: 0; background: transparent; color: var(--rust); font: 800 8.5px var(--body); display: flex; align-items: center; gap: 3px; }
+    .group-footer > span { margin-left: auto; color: var(--sub); font-size: 8px; }
+    .tiny-toggle { width: 26px; height: 15px; border: 0; border-radius: 99px; background: var(--line); position: relative; cursor: pointer; }
+    .tiny-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: transform 0.16s; }
+    .tiny-toggle.on { background: var(--rust); }
+    .tiny-toggle.on::after { transform: translateX(11px); }
+    .ungrouped-block { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--paper); }
+    .ungrouped-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--soft); color: var(--sub); font: 800 8px var(--body); letter-spacing: 0.07em; text-transform: uppercase; }
+    /* Compact line item — mobile idiomatic: left rail drag + nudge arrows, 44pt targets */
+    .compact-line { padding: 8px 4px; border-bottom: 1px solid var(--line); background: var(--paper); }
+    .compact-line:last-child { border-bottom: 0; }
+    .compact-line-head { display: flex; align-items: center; gap: 6px; padding: 4px 2px 8px; color: var(--sub); font: 800 7.5px var(--body); letter-spacing: 0.08em; }
+    .compact-line-head .head-spacer { flex: 1; }
+    .drag-handle, .head-remove, .reorder-btn { width: 32px; height: 32px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--sub); display: grid; place-items: center; flex-shrink: 0; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+    .drag-handle { width: 36px; height: 36px; border-color: var(--line); background: var(--soft); color: var(--ink); touch-action: none; cursor: grab; border-radius: 10px; }
+    .drag-handle:active { cursor: grabbing; background: var(--rust); border-color: var(--rust); color: #fff; transform: scale(0.96); }
+    .reorder-btn { width: 32px; height: 32px; border-color: var(--line); background: var(--paper); color: var(--ink); }
+    .reorder-btn:hover { border-color: var(--rust); color: var(--rust); background: var(--rust-soft); }
+    .reorder-btn:disabled { opacity: 0.35; pointer-events: none; border-color: var(--line); color: var(--sub); }
+    .reorder-group { display: flex; gap: 4px; align-items: center; }
+    .head-remove { width: 32px; height: 32px; border-color: transparent; }
+    .head-remove:hover, .head-remove:active { color: var(--red); background: var(--red-soft); border-color: var(--red-soft); }
+    .drag-ghost { position: fixed; z-index: 999; pointer-events: none; opacity: 0.96; box-shadow: 0 14px 30px rgba(0,0,0,0.28); border-radius: 12px; transform: scale(1.02); }
+    @media (max-width: 380px) { .reorder-group { display: none; } /* ultra-narrow: keep drag only */ }
+    .item-no { width: 20px; height: 17px; border-radius: 5px; background: var(--soft); color: var(--rust); display: grid; place-items: center; font: 600 8px var(--mono); }
+    .compact-body { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--paper); }
+    .description-field { padding: 5px 7px; border-bottom: 1px solid var(--line); }
+    .description-field label { display: block; margin-bottom: 1px; color: var(--sub); font: 800 6.5px var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
+    .description-field input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: 600 11px var(--body); }
+    .sub-row { display: grid; grid-template-columns: 1fr auto 14px; gap: 5px; align-items: center; width: 100%; min-height: 24px; padding: 0 7px; border: 0; border-bottom: 1px solid var(--line); background: var(--soft); color: var(--sub); font: 700 7.5px var(--body); text-align: left; cursor: pointer; }
+    .sub-row span { display: flex; align-items: center; gap: 4px; }
+    .sub-row small { font-size: 7.5px; color: var(--rust); }
+    .sub-editor { padding: 5px 7px; border-bottom: 1px solid var(--line); background: var(--soft); }
+    .sub-editor textarea { display: block; width: 100%; min-height: 28px; border: 0; outline: 0; resize: vertical; background: transparent; color: var(--ink); font: 500 9.5px/13px var(--body); }
+    .metric-grid, .compact-extra { display: grid; grid-template-columns: 1fr 1fr; }
+    .metric-grid label, .compact-extra label { min-width: 0; padding: 6px 8px; border-right: 1px solid var(--line); }
+    .metric-grid label:last-child, .compact-extra label:last-child { border-right: 0; }
+    .metric-grid input, .compact-extra input, .compact-extra select { display: block; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: 500 9.5px var(--mono); -webkit-appearance: none; appearance: none; }
+    .compact-extra { border-top: 1px solid var(--line); background: var(--paper); }
+    .row-total-bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: var(--readout-bg); color: var(--readout-text); border-top: 1px solid var(--line); }
+    .row-total-bar span { font: 800 7px var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--readout-text); opacity: 0.85; }
+    .row-total-bar b { font: 600 13px var(--mono); letter-spacing: -0.03em; color: var(--readout-text); }
+    .line-actions-bottom { display: flex; gap: 4px; justify-content: flex-end; padding: 5px 4px; background: var(--soft); border-top: 1px solid var(--line); flex-wrap: wrap; }
+    .line-actions-bottom button { height: 26px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); font: 800 7.5px var(--body); display: inline-flex; align-items: center; gap: 3px; }
+    .line-actions-bottom button:hover { color: var(--rust); border-color: var(--rust); }
+    .line-actions-bottom .danger { color: var(--red); }
+    .add-btn { width: 100%; height: 36px; border: 1px dashed var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 9px; font-weight: 800; margin-top: 6px; }
+    .add-btn svg { color: var(--rust); }
+    /* Summary */
+    .summary { padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .sumline { display: flex; justify-content: space-between; min-height: 18px; color: var(--sub); font-size: 8.5px; }
+    .sumline b { color: var(--ink); font: 500 8.5px var(--mono); }
+    .sumline.minus, .sumline.minus b { color: var(--red); }
+    .sumtotal { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 6px; margin-top: 4px; border-top: 1px solid var(--line); }
+    .sumtotal small { display: block; color: var(--sub); font-size: 7.5px; font-weight: 800; letter-spacing: 0.08em; }
+    .sumtotal b { font: 600 15px var(--mono); letter-spacing: -0.05em; color: var(--rust); }
+    .words { padding: 6px 8px; margin: 6px 0; border: 1px dashed var(--line); border-radius: 8px; background: var(--soft); font-size: 8px; color: var(--sub); font-style: italic; }
+    /* Footer bar — now SCROLLS with content (not floating). FAB remains floating for thumb-zone quick save. */
+    .footer-bar { position: relative; z-index: 1; left: auto; right: auto; bottom: auto; margin: 16px 10px 0; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 10px; }
+    .footer-grid { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+    .footer-grid button { height: 44px; border-radius: 12px; font: 800 11px var(--body); display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.12s, box-shadow 0.12s; }
+    .footer-grid button:active { transform: scale(0.97); }
+    .btn-cancel { border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+    .btn-draft { border: 1px solid var(--line); background: var(--soft); color: var(--ink); }
+    .btn-save { border: 0; background: var(--rust); color: #fff; box-shadow: 0 4px 12px rgba(140,98,13,0.25); }
+    .footer-hint { text-align: center; font: 500 8px var(--body); color: var(--sub); letter-spacing: 0.02em; }
+    .save-fab { position: absolute; z-index: 25; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border: 0; border-radius: 16px; background: var(--rust); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.24), 0 2px 8px rgba(0,0,0,0.12); }
+    .save-fab svg { width: 19px; height: 19px; }
+    /* Segmented control */
+    .seg-ctrl { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+    .seg-ctrl button { flex: 1; height: 26px; border: 0; background: var(--paper); color: var(--sub); font: 700 8px var(--body); transition: background 0.15s, color 0.15s; }
+    .seg-ctrl button.active { background: var(--rust); color: #fff; }
+    /* Collapse card */
+    .collapse-head { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .collapse-head:last-child { border-bottom: 0; }
+    .collapse-icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; flex-shrink: 0; }
+    .collapse-text { flex: 1; min-width: 0; }
+    .collapse-text b { display: block; font-size: 10px; }
+    .collapse-text small { display: block; font-size: 8px; color: var(--sub); margin-top: 1px; }
+    .collapse-body { padding: 8px; }
+    /* Extra charge row */
+    .charge-row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
+    .charge-row input { flex: 1; height: 30px; border: 1px solid var(--line); border-radius: 7px; padding: 0 7px; font-size: 9px; background: var(--paper); color: var(--ink); }
+    .charge-row .charge-amt { width: 80px; }
+    .charge-row .charge-del { width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--red-soft); color: var(--red); display: grid; place-items: center; flex-shrink: 0; }
+    .add-charge-btns { display: flex; gap: 5px; margin-top: 4px; }
+    .add-charge-btns button { flex: 1; height: 30px; border: 1px dashed var(--line); border-radius: 7px; background: var(--paper); font: 700 8px var(--body); color: var(--ink); }
+    /* Additional field row */
+    .afield-row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
+    .afield-row input { flex: 1; height: 30px; border: 1px solid var(--line); border-radius: 7px; padding: 0 7px; font-size: 9px; background: var(--paper); color: var(--ink); }
+    .afield-row .afield-del { width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--soft); color: var(--sub); display: grid; place-items: center; flex-shrink: 0; }
+    /* Confirm dialog */
+    .confirm-overlay { position: absolute; z-index: 60; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); }
+    .confirm-box { width: min(85%, 300px); background: var(--paper); border-radius: 16px; padding: 16px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+    .confirm-box h3 { margin: 0 0 6px; font: 800 13px var(--body); }
+    .confirm-box p { margin: 0 0 12px; font-size: 9px; color: var(--sub); line-height: 1.4; }
+    .confirm-btns { display: flex; gap: 6px; }
+    .confirm-btns button { flex: 1; height: 34px; border-radius: 8px; font: 800 9px var(--body); }
+    .confirm-btns .c-cancel { border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+    .confirm-btns .c-danger { border: 0; background: var(--red); color: #fff; }
+    /* Toast */
+    .toast { position: absolute; z-index: 70; left: 50%; bottom: 80px; transform: translate(-50%, 10px); padding: 8px 12px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: 8.5px; font-weight: 700; opacity: 0; transition: all 0.2s var(--ease); white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    /* Overlay sheet */
+    .overlay { position: absolute; z-index: 50; inset: 0; display: flex; align-items: flex-end; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); }
+    .sheet { width: 100%; max-height: 85dvh; overflow-y: auto; padding: 8px 12px calc(16px + env(safe-area-inset-bottom)); background: var(--paper); border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); }
+    .grip { width: 32px; height: 3.5px; border-radius: 99px; background: var(--line); margin: 0 auto 10px; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .sheet-head h3 { margin: 0; font: 800 15px var(--display); letter-spacing: -0.04em; color: var(--ink); }
+    .sheet-head button { width: 32px; height: 32px; border: 0; border-radius: 9px; background: var(--soft); display: grid; place-items: center; color: var(--ink); }
+    .choice { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; width: 100%; min-height: 46px; padding: 6px 8px; margin: 5px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); text-align: left; color: var(--ink); }
+    .choice .cicon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--soft); color: var(--rust); }
+    .choice b, .choice small { display: block; }
+    .choice b { font-size: 9.5px; }
+    .choice small { margin-top: 1px; font-size: 8px; color: var(--sub); }
+    .cta { width: 100%; height: 44px; margin-top: 12px; border: 0; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+    .cta.rust { background: var(--rust); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 12px rgba(140,98,13,0.22); }
+    .cta.ghost { background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+    /* ── MOBILE POLISH: 8pt grid, 44pt targets, thumb-zone, tinted shadows, hierarchy ── */
+    .exposed { padding: 16px 12px 0; }
+    .section-head { margin-bottom: 12px; }
+    .exposed-card { border-radius: 16px; box-shadow: 0 8px 20px rgba(13,14,16,0.04), 0 2px 8px rgba(13,14,16,0.04); }
+    .field { padding: 10px 12px; }
+    .field label { margin-bottom: 4px; font-size: 7px; letter-spacing: 0.09em; }
+    .field input, .field textarea, .field select { font-size: 12px; min-height: 20px; }
+    .client-picker-btn { padding: 14px 12px; border-radius: 16px; gap: 12px; }
+    .item-toolbar { gap: 8px; padding: 8px 0; }
+    .item-toolbar button { height: 36px; padding: 0 12px; border-radius: 10px; font-size: 9px; }
+    .item-instruction { padding: 10px 12px; margin-bottom: 12px; border-radius: 8px; font-size: 8.5px; line-height: 13px; }
+    .group-workbench { margin-bottom: 16px; border-radius: 16px; }
+    .group-banner { padding: 10px 12px; gap: 8px; }
+    .group-lines { padding: 8px; }
+    .compact-line { padding: 8px; }
+    .description-field { padding: 10px 12px; }
+    .metric-grid label, .compact-extra label { padding: 10px 12px; }
+    .seg-ctrl { border-radius: 10px; }
+    .seg-ctrl button { height: 36px; font-size: 8.5px; }
+    .collapse-head { padding: 12px; gap: 10px; }
+    .collapse-icon { width: 36px; height: 36px; border-radius: 10px; }
+    .collapse-body { padding: 12px; }
+    .charge-row input, .afield-row input { height: 40px; border-radius: 10px; padding: 0 12px; font-size: 10px; }
+    .charge-row .charge-del, .afield-row .afield-del { width: 40px; height: 40px; border-radius: 10px; }
+    .tiny-toggle { width: 36px; height: 20px; }
+    .tiny-toggle::after { width: 16px; height: 16px; top: 2px; left: 2px; }
+    .tiny-toggle.on::after { transform: translateX(16px); }
+    .summary { padding: 16px; border-radius: 16px; }
+    .save-fab { box-shadow: 0 12px 28px rgba(140,98,13,0.32), 0 4px 12px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.2); }
+    .save-fab:active { transform: scale(0.96); }
+    /* Thumb-zone hint: footer summary sits just above thumb reach, FAB is primary in thumb zone */
+    /* ── Waybill-specific: transport card, signature blocks ── */
+    .transport-card { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+    .transport-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--soft); border-bottom: 1px solid var(--line); }
+    .transport-header .icon-badge { width: 28px; height: 28px; border-radius: 7px; background: var(--rust-soft); color: var(--rust); display: grid; place-items: center; }
+    .transport-header b { font-size: 9px; color: var(--ink); }
+    .signature-block { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
+    .signature-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--soft); border-bottom: 1px solid var(--line); }
+    .signature-header .icon-badge { width: 28px; height: 28px; border-radius: 7px; background: var(--indigo-soft); color: var(--indigo); display: grid; place-items: center; }
+    .signature-header b { font-size: 9px; color: var(--ink); }
+    .signature-area { padding: 12px; text-align: center; }
+    .signature-area .placeholder { width: 100%; height: 60px; border: 2px dashed var(--line); border-radius: 8px; display: grid; place-items: center; color: var(--sub); font-size: 8px; background: var(--soft); }
+    .signature-meta { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; font-size: 8px; color: var(--sub); }
+    .signature-meta span { display: flex; align-items: center; gap: 4px; }
+    /* Purpose selector */
+    .purpose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; }
+    .purpose-option { padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); text-align: center; cursor: pointer; transition: all 0.15s; }
+    .purpose-option:hover { border-color: var(--rust); background: var(--rust-soft); }
+    .purpose-option.active { border-color: var(--rust); background: var(--rust-soft); color: var(--rust); }
+    .purpose-option b { display: block; font-size: 9px; margin-bottom: 2px; }
+    .purpose-option small { font-size: 7px; color: var(--sub); }
+    .purpose-option.active small { color: var(--rust); }
+    /* Custom columns */
+    .custom-columns { padding: 8px; border-top: 1px solid var(--line); }
+    .custom-columns .col-row { display: flex; gap: 5px; margin-bottom: 6px; }
+    .custom-columns .col-row input { flex: 1; height: 30px; border: 1px solid var(--line); border-radius: 7px; padding: 0 7px; font-size: 9px; background: var(--paper); color: var(--ink); }
+    .custom-columns .col-row .col-del { width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--soft); color: var(--sub); display: grid; place-items: center; flex-shrink: 0; }
+    .custom-columns .add-col-btn { width: 100%; height: 30px; border: 1px dashed var(--line); border-radius: 7px; background: var(--paper); font: 700 8px var(--body); color: var(--ink); }
+    /* Reference documents */
+    .ref-docs { padding: 8px; }
+    .ref-doc-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .ref-doc-item:last-child { border-bottom: 0; }
+    .ref-doc-item .doc-icon { width: 24px; height: 24px; border-radius: 6px; background: var(--soft); color: var(--sub); display: grid; place-items: center; }
+    .ref-doc-item .doc-info { flex: 1; min-width: 0; }
+    .ref-doc-item .doc-info b { display: block; font-size: 9px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ref-doc-item .doc-info small { font-size: 7px; color: var(--sub); }
+    .ref-doc-item .doc-remove { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--sub); display: grid; place-items: center; }
+    .ref-doc-item .doc-remove:hover { background: var(--red-soft); color: var(--red); }
+  </style>
+</head>
+<body>
+  <div class="phone" data-theme="light">
+    <main id="app"></main>
+    <div id="toast" class="toast"></div>
+  </div>
+  <script>
+    const I = n => `<i data-lucide="${n}"></i>`;
+    const uid = () => Math.random().toString(36).slice(2, 9);
+    const money = n => '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s = '') => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    const savedTheme = localStorage.getItem('bigdrops-waybill-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    const state = {
+      theme: savedTheme,
+      sheet: null,
+      confirmClear: false,
+      mode: 'create',
+      subOpen: {},
+      savedClients: [
+        ['Adeyemi & Partners', 'Ijeoma Adeyemi', 'A&'],
+        ['Uptown Facilities', 'Oma Okoro', 'UF'],
+        ['Wellspring Homes', 'Wale Peters', 'WH']
+      ],
+      waybill: {
+        type: 'external',
+        title: 'Quarterly equipment overhaul',
+        number: 'WB-2026-0089',
+        purpose: 'Supply',
+        client: { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&' },
+        issue: '2026-08-18',
+        due: '2026-08-20',
+        transportMode: 'By Vehicle',
+        vehicle: 'Toyota Hilux — ABC 123 DE',
+        driver: 'Chukwuemeka Obi',
+        items: [
+          { id: 'i1', description: 'Molded case circuit breaker 125A', qty: 3, unit: 'pcs', condition: 'New', customColumns: [{ label: 'Batch', value: 'BATCH-001' }] },
+          { id: 'i2', description: 'Copper cable 4mm²', qty: 40, unit: 'm', condition: 'New', customColumns: [{ label: 'Batch', value: 'BATCH-002' }] }
+        ],
+        groups: [{ id: 'g1', name: 'Electrical materials', showSubtotal: true }],
+        customColumns: [{ id: 'col1', label: 'Batch' }],
+        notes: 'Deliver to site office. Contact Emeka on arrival.',
+        partyNotes: 'Client prefers morning deliveries.',
+        referenceDocs: [
+          { id: 'ref1', name: 'Purchase Order.pdf', type: 'pdf' },
+          { id: 'ref2', name: 'Delivery Schedule.xlsx', type: 'xlsx' }
+        ],
+        signatures: {
+          sender: { name: '', signed: false },
+          receiver: { name: '', signed: false }
+        },
+        headerFields: [{ id: uid(), label: 'Project', value: 'Ikoyi Office Retrofit' }]
+      }
+    };
+
+    function calc() {
+      let totalQty = 0;
+      state.waybill.items.forEach(a => { totalQty += Number(a.qty || 0); });
+      return { totalQty, itemCount: state.waybill.items.length };
+    }
+
+    function words(n) { return n ? 'Total items: ' + n : 'No items.'; }
+
+    function applyTheme() {
+      document.querySelector('.phone').dataset.theme = state.theme;
+      document.documentElement.style.colorScheme = state.theme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', state.theme === 'dark' ? '#0b0d11' : '#f4f4f0');
+    }
+    function toggleTheme() {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('bigdrops-waybill-theme', state.theme);
+      applyTheme(); render();
+      toast(state.theme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled');
+    }
+
+    function render() {
+      const x = state.waybill, t = calc(), isDark = state.theme === 'dark';
+      document.getElementById('app').innerHTML = `
+        <header class="nav">
+          <button class="icon" aria-label="Back" onclick="toast('Back to documents')">${I('chevron-left')}</button>
+          <h1>${x.type === 'internal' ? 'TRANSFER NOTE' : 'WAYBILL'}</h1>
+          <button class="icon" aria-label="Switch Theme" onclick="toggleTheme()">${I(isDark ? 'sun' : 'moon')}</button>
+          <button class="icon" aria-label="Document actions" onclick="openSheet('actions')">${I('ellipsis')}</button>
+        </header>
+        <main class="form-scroll">
+          ${documentSection()}
+          ${gatewaySection()}
+          ${clientSection()}
+          ${transportSection()}
+          ${purposeSection()}
+          ${itemsSection(t)}
+          ${customColumnsSection()}
+          ${notesSection()}
+          ${referenceDocsSection()}
+          ${signaturesSection()}
+          <div class="footer-bar">
+            <div class="footer-grid">
+              <button class="btn-cancel" onclick="toast('Cancelled')">Cancel</button>
+              <button class="btn-draft" onclick="toast('Saved as draft')">Draft</button>
+              <button class="btn-save" onclick="commit()">${state.mode === 'edit' ? 'Save Changes' : 'Save & Send'}</button>
+            </div>
+            <div class="footer-hint">Tip: tap the floating save button anytime — no need to scroll to bottom</div>
+          </div>
+        </main>
+        <button class="save-fab" aria-label="Quick save — always in thumb zone" onclick="commit()">${I('save')}</button>
+        ${state.sheet ? renderSheet() : ''}
+        ${state.confirmClear ? renderConfirmClear() : ''}
+      `;
+      applyTheme();
+      lucide.createIcons({ attrs: { 'stroke-width': '1.8' } });
+    }
+
+    /* ── DOCUMENT SECTION ── */
+    function documentSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="document">
+          <div class="section-head">
+            <h2>Document</h2>
+            <button onclick="openSheet('type')">${I('receipt-text')} ${x.type === 'internal' ? 'Transfer Note' : 'Waybill'}</button>
+          </div>
+          <div class="exposed-card">
+            <div class="field">
+              <label>Document Title</label>
+              <input value="${esc(x.title)}" placeholder="Waybill title / project reference" onchange="dv('title',this.value)">
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Waybill No.</label>
+                <input class="mono" ${state.mode==='edit'?'disabled':''} value="${esc(x.number)}" onchange="dv('number',this.value)">
+              </div>
+              <div class="field">
+                <label>Purpose</label>
+                <select onchange="dv('purpose',this.value)">
+                  <option ${x.purpose==='Supply'?'selected':''}>Supply</option>
+                  <option ${x.purpose==='Return'?'selected':''}>Return</option>
+                  <option ${x.purpose==='Repair'?'selected':''}>Repair</option>
+                  <option ${x.purpose==='Transfer'?'selected':''}>Transfer</option>
+                  <option ${x.purpose==='Other'?'selected':''}>Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Issue Date</label>
+                <input type="date" value="${esc(x.issue)}" onchange="dv('issue',this.value)">
+              </div>
+              <div class="field">
+                <label>Expected Delivery</label>
+                <input type="date" value="${esc(x.due)}" onchange="dv('due',this.value)">
+              </div>
+            </div>
+            ${x.headerFields.length ? `
+              <div style="padding:5px 8px;border-bottom:1px solid var(--line)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <span style="font:800 6.5px var(--body);letter-spacing:0.08em;text-transform:uppercase;color:var(--sub)">Header Fields</span>
+                  <button onclick="addHeaderField()" style="border:0;background:transparent;color:var(--indigo);font:800 8px var(--body)">+ Add</button>
+                </div>
+                ${x.headerFields.map(f => `
+                  <div style="display:flex;gap:4px;margin-bottom:4px">
+                    <input value="${esc(f.label)}" placeholder="Label" onchange="updateHeaderField('${f.id}','label',this.value)" style="flex:1;height:26px;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:8px;background:var(--soft);color:var(--ink)">
+                    <input value="${esc(f.value)}" placeholder="Value" onchange="updateHeaderField('${f.id}','value',this.value)" style="flex:1.5;height:26px;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:8px;color:var(--ink)">
+                    <button onclick="removeHeaderField('${f.id}')" style="width:26px;height:26px;border:0;border-radius:6px;background:var(--soft);color:var(--sub);display:grid;place-items:center;font-size:10px">\u00D7</button>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div style="padding:5px 8px">
+                <button onclick="addHeaderField()" style="width:100%;height:28px;border:1px dashed var(--line);border-radius:7px;background:var(--paper);color:var(--indigo);font:800 8px var(--body)">+ Add header field</button>
+              </div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── GATEWAY SECTION — type selector matching live WaybillGatewayOverlay ── */
+    function gatewaySection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="gateway">
+          <div class="section-head">
+            <h2>Document Type</h2>
+          </div>
+          <div class="seg-ctrl" style="margin-bottom:12px">
+            <button class="${x.type==='external'?'active':''}" onclick="dv('type','external');dv('purpose','Supply')">${I('truck')} External Waybill</button>
+            <button class="${x.type==='internal'?'active':''}" onclick="dv('type','internal');dv('purpose','Transfer')">${I('warehouse')} Internal Transfer</button>
+          </div>
+          <div class="item-instruction" style="border-left-color:var(--indigo);background:var(--indigo-soft)">
+            ${x.type === 'internal' 
+              ? 'Internal Transfer Note — for stock movement between depots, warehouses, or locations. No client required.'
+              : 'External Waybill — for delivery to clients, vendors, or external parties. Requires client selection.'
+            }
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── CLIENT SECTION — dashed border matching real form ── */
+    function clientSection() {
+      const c = state.waybill.client, x = state.waybill;
+      if (x.type === 'internal') {
+        return `
+          <section class="exposed" id="client">
+            <div class="section-head">
+              <h2>Transfer Details</h2>
+            </div>
+            <div class="exposed-card">
+              <div class="field">
+                <label>From Location</label>
+                <input value="Main Warehouse — Lagos" placeholder="Source location" onchange="dv('fromLocation',this.value)">
+              </div>
+              <div class="field">
+                <label>To Location</label>
+                <input value="Site Office — Ikoyi" placeholder="Destination location" onchange="dv('toLocation',this.value)">
+              </div>
+            </div>
+          </section>
+        `;
+      }
+      return `
+        <section class="exposed" id="client">
+          <div class="section-head">
+            <h2>Deliver To</h2>
+            ${state.mode==='edit' ? '<span style="font-size:8px;font-weight:800;color:var(--rust)">LOCKED</span>' : ''}
+          </div>
+          <button class="client-picker-btn" onclick="openSheet('client')">
+            <span class="client-avatar">${esc(c.initials || 'CL')}</span>
+            <span class="client-text">
+              <small>Client</small>
+              <b>${esc(c.name)}</b>
+              <em>Attn: ${esc(c.person)}</em>
+            </span>
+            ${I('chevron-right')}
+          </button>
+          <div class="client-meta-row">
+            <span>${I('calendar-clock')} Delivery: ${esc(x.due)}</span>
+            <span>${I('map-pin')} Purpose: ${esc(x.purpose)}</span>
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── TRANSPORT SECTION — vehicle, driver, mode ── */
+    function transportSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="transport">
+          <div class="section-head">
+            <h2>Transport</h2>
+          </div>
+          <div class="transport-card">
+            <div class="transport-header">
+              <span class="icon-badge">${I('truck')}</span>
+              <b>Transport Information</b>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Mode</label>
+                <select onchange="dv('transportMode',this.value)">
+                  <option ${x.transportMode==='By Vehicle'?'selected':''}>By Vehicle</option>
+                  <option ${x.transportMode==='By Hand'?'selected':''}>By Hand</option>
+                  <option ${x.transportMode==='Courier'?'selected':''}>Courier</option>
+                  <option ${x.transportMode==='Self Pick-Up'?'selected':''}>Self Pick-Up</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Driver</label>
+                <input value="${esc(x.driver)}" placeholder="Driver name" onchange="dv('driver',this.value)">
+              </div>
+            </div>
+            ${x.transportMode === 'By Vehicle' ? `
+              <div class="field">
+                <label>Vehicle</label>
+                <input value="${esc(x.vehicle)}" placeholder="Vehicle registration / description" onchange="dv('vehicle',this.value)">
+              </div>
+            ` : ''}
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── PURPOSE SECTION — purpose selector grid ── */
+    function purposeSection() {
+      const x = state.waybill;
+      const purposes = x.type === 'internal' 
+        ? [{ name: 'Transfer', desc: 'Stock movement between locations' }]
+        : [
+            { name: 'Supply', desc: 'New delivery to client' },
+            { name: 'Return', desc: 'Return to vendor/warehouse' },
+            { name: 'Repair', desc: 'Send for repair/maintenance' },
+            { name: 'Other', desc: 'Miscellaneous movement' }
+          ];
+      return `
+        <section class="exposed" id="purpose">
+          <div class="section-head">
+            <h2>Purpose</h2>
+          </div>
+          <div class="exposed-card">
+            <div class="purpose-grid">
+              ${purposes.map(p => `
+                <div class="purpose-option ${x.purpose === p.name ? 'active' : ''}" onclick="dv('purpose','${p.name}')">
+                  <b>${p.name}</b>
+                  <small>${p.desc}</small>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── ITEMS SECTION ── */
+    function itemsSection(t) {
+      const x = state.waybill, ungrouped = x.items.filter(a => !a.groupId);
+      return `
+        <section class="exposed" id="items">
+          <div class="section-head">
+            <h2>Line Items (${x.items.length})</h2>
+          </div>
+          <div class="item-toolbar">
+            <button onclick="openSheet('import')">${I('file-input')} Import</button>
+            <button onclick="openSheet('columns')">${I('sliders-horizontal')} Columns</button>
+            <button class="danger" style="margin-left:auto" onclick="state.confirmClear=true;render()">${I('trash-2')} Clear All</button>
+          </div>
+          <div class="item-instruction">
+            Hold the left grip to drag & drop within the group, or tap ⬆️⬇️ to nudge up/down one step. Drag stays inside its group. Tap × to delete, copy to duplicate.
+          </div>
+          ${x.groups.map(g => groupForm(g, t)).join('')}
+          ${ungrouped.length ? `
+            <div class="ungrouped-block">
+              <div class="ungrouped-head"><span>${I('list')} Independent Items</span><small>${ungrouped.length}</small></div>
+              ${ungrouped.map((a, i) => itemRow(a, x.items.indexOf(a))).join('')}
+            </div>
+          ` : ''}
+          <div class="item-toolbar" style="padding-top:8px">
+            <button class="primary" onclick="addItem()">${I('plus')} Add Line</button>
+            <button onclick="addGroup()">${I('layers-2')} New Group</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function groupForm(g, t) {
+      const lines = state.waybill.items.filter(a => a.groupId === g.id);
+      const totalQty = lines.reduce((s, a) => s + Number(a.qty || 0), 0);
+      return `
+        <section class="group-workbench">
+          <header class="group-banner">
+            <span class="group-mark">${I('layers-3')}</span>
+            <div><label>Item Group Header</label><input value="${esc(g.name || '')}" placeholder="Group name" onchange="groupVal('${g.id}','name',this.value)"></div>
+            <span class="group-sum"><small>${lines.length} line${lines.length===1?'':'s'}</small><b>${totalQty} units</b></span>
+            <button class="group-remove" aria-label="Remove group" onclick="removeGroup('${g.id}')">${I('x')}</button>
+          </header>
+          <div class="group-lines">
+            ${lines.map(a => itemRow(a, state.waybill.items.indexOf(a))).join('') || '<div style="padding:10px;text-align:center;font-size:8px;color:var(--sub)">Group is empty.</div>'}
+          </div>
+          <footer class="group-footer">
+            <button onclick="addItemToGroup('${g.id}')">${I('plus')} Add to Group</button>
+            <span>Subtotal: ${g.showSubtotal ? 'Visible' : 'Hidden'}</span>
+            <button class="tiny-toggle ${g.showSubtotal ? 'on' : ''}" onclick="groupToggle('${g.id}')"></button>
+          </footer>
+        </section>
+      `;
+    }
+
+    function itemRow(a, idx) {
+      const colValues = state.waybill.customColumns.map(col => {
+        const cv = (a.customColumns || []).find(c => c.label === col.label);
+        return { label: col.label, value: cv ? cv.value : '' };
+      });
+      return `
+        <div class="compact-line" data-id="${a.id}">
+          <div class="compact-line-head">
+            <span class="item-no">${idx + 1}</span>
+            <div class="reorder-group">
+              <button class="reorder-btn" onclick="moveItem('${a.id}',-1)" ${idx===0?'disabled':''}>${I('chevron-up')}</button>
+              <button class="reorder-btn" onclick="moveItem('${a.id}',1)" ${idx===state.waybill.items.length-1?'disabled':''}>${I('chevron-down')}</button>
+            </div>
+            <span class="head-spacer"></span>
+            <button class="head-remove" onclick="removeItem('${a.id}')">${I('x')}</button>
+          </div>
+          <div class="compact-body">
+            <div class="description-field">
+              <label>Description</label>
+              <input value="${esc(a.description)}" placeholder="Item description" onchange="itemVal('${a.id}','description',this.value)">
+            </div>
+            <div class="metric-grid">
+              <label>
+                <span style="font-size:7px;color:var(--sub);font-weight:800;letter-spacing:0.08em;text-transform:uppercase">Qty</span>
+                <input type="number" value="${a.qty}" min="0" onchange="itemVal('${a.id}','qty',+this.value)">
+              </label>
+              <label>
+                <span style="font-size:7px;color:var(--sub);font-weight:800;letter-spacing:0.08em;text-transform:uppercase">Unit</span>
+                <select onchange="itemVal('${a.id}','unit',this.value)">
+                  <option ${a.unit==='pcs'?'selected':''}>pcs</option>
+                  <option ${a.unit==='kg'?'selected':''}>kg</option>
+                  <option ${a.unit==='m'?'selected':''}>m</option>
+                  <option ${a.unit==='rolls'?'selected':''}>rolls</option>
+                  <option ${a.unit==='cartons'?'selected':''}>cartons</option>
+                  <option ${a.unit==='sets'?'selected':''}>sets</option>
+                  <option ${a.unit==='pairs'?'selected':''}>pairs</option>
+                  <option ${a.unit==='litres'?'selected':''}>litres</option>
+                </select>
+              </label>
+            </div>
+            <div class="compact-extra">
+              <label>
+                <span style="font-size:7px;color:var(--sub);font-weight:800;letter-spacing:0.08em;text-transform:uppercase">Condition</span>
+                <select onchange="itemVal('${a.id}','condition',this.value)">
+                  <option ${a.condition==='New'?'selected':''}>New</option>
+                  <option ${a.condition==='Used'?'selected':''}>Used</option>
+                  <option ${a.condition==='Refurbished'?'selected':''}>Refurbished</option>
+                  <option ${a.condition==='Damaged'?'selected':''}>Damaged</option>
+                </select>
+              </label>
+              ${colValues.length ? `
+                <label>
+                  <span style="font-size:7px;color:var(--sub);font-weight:800;letter-spacing:0.08em;text-transform:uppercase">${colValues[0].label}</span>
+                  <input value="${esc(colValues[0].value)}" placeholder="${colValues[0].label}" onchange="updateItemColumn('${a.id}','${colValues[0].label}',this.value)">
+                </label>
+              ` : ''}
+            </div>
+            <div class="line-actions-bottom">
+              <button onclick="duplicateItem('${a.id}')">${I('copy')} Duplicate</button>
+              <button class="danger" onclick="removeItem('${a.id}')">${I('trash-2')} Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ── CUSTOM COLUMNS SECTION ── */
+    function customColumnsSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="custom-columns">
+          <div class="section-head">
+            <h2>Custom Columns</h2>
+            <button onclick="addColumn()">${I('plus')} Add</button>
+          </div>
+          <div class="exposed-card">
+            <div class="custom-columns">
+              ${x.customColumns.length ? x.customColumns.map(col => `
+                <div class="col-row">
+                  <input value="${esc(col.label)}" placeholder="Column name" onchange="updateColumn('${col.id}','label',this.value)">
+                  <button class="col-del" onclick="removeColumn('${col.id}')">${I('x')}</button>
+                </div>
+              `).join('') : '<div style="text-align:center;padding:8px;font-size:8px;color:var(--sub)">No custom columns defined</div>'}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── NOTES SECTION ── */
+    function notesSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="notes">
+          <div class="section-head">
+            <h2>Notes</h2>
+          </div>
+          <div class="exposed-card">
+            <div class="field">
+              <label>Delivery Notes</label>
+              <textarea placeholder="Special instructions for delivery..." onchange="dv('notes',this.value)">${esc(x.notes)}</textarea>
+            </div>
+            ${x.type === 'external' ? `
+              <div class="field">
+                <label>Party Notes</label>
+                <textarea placeholder="Internal notes about the client..." onchange="dv('partyNotes',this.value)">${esc(x.partyNotes)}</textarea>
+              </div>
+            ` : ''}
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── REFERENCE DOCS SECTION ── */
+    function referenceDocsSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="reference-docs">
+          <div class="section-head">
+            <h2>Reference Documents</h2>
+            <button onclick="addRefDoc()">${I('plus')} Add</button>
+          </div>
+          <div class="exposed-card">
+            <div class="ref-docs">
+              ${x.referenceDocs.length ? x.referenceDocs.map(doc => `
+                <div class="ref-doc-item">
+                  <span class="doc-icon">${I('file-text')}</span>
+                  <span class="doc-info">
+                    <b>${esc(doc.name)}</b>
+                    <small>${doc.type.toUpperCase()}</small>
+                  </span>
+                  <button class="doc-remove" onclick="removeRefDoc('${doc.id}')">${I('x')}</button>
+                </div>
+              `).join('') : '<div style="text-align:center;padding:8px;font-size:8px;color:var(--sub)">No reference documents</div>'}
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── SIGNATURES SECTION ── */
+    function signaturesSection() {
+      const x = state.waybill;
+      return `
+        <section class="exposed" id="signatures">
+          <div class="section-head">
+            <h2>Signatures</h2>
+          </div>
+          <div class="signature-block">
+            <div class="signature-header">
+              <span class="icon-badge">${I('pen-line')}</span>
+              <b>Sender</b>
+            </div>
+            <div class="signature-area">
+              ${x.signatures.sender.signed 
+                ? `<div style="padding:8px;background:var(--green-soft);border-radius:8px;color:var(--green);font-size:9px;font-weight:700">${I('check-circle')} Signed by ${esc(x.signatures.sender.name)}</div>`
+                : `<div class="placeholder">${I('signature')} Tap to sign</div>`
+              }
+            </div>
+            <div class="signature-meta">
+              <span>${I('user')} ${x.signatures.sender.name || 'Not signed'}</span>
+              <span>${I('clock')} ${x.signatures.sender.signed ? 'Signed' : 'Pending'}</span>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="signature-block">
+            <div class="signature-header">
+              <span class="icon-badge">${I('pen-line')}</span>
+              <b>Receiver</b>
+            </div>
+            <div class="signature-area">
+              ${x.signatures.receiver.signed 
+                ? `<div style="padding:8px;background:var(--green-soft);border-radius:8px;color:var(--green);font-size:9px;font-weight:700">${I('check-circle')} Signed by ${esc(x.signatures.receiver.name)}</div>`
+                : `<div class="placeholder">${I('signature')} Tap to sign</div>`
+              }
+            </div>
+            <div class="signature-meta">
+              <span>${I('user')} ${x.signatures.receiver.name || 'Not signed'}</span>
+              <span>${I('clock')} ${x.signatures.receiver.signed ? 'Signed' : 'Pending'}</span>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    /* ── SHEETS ── */
+    function renderSheet() {
+      const sheets = {
+        actions: renderActionsSheet,
+        type: renderTypeSheet,
+        client: renderClientSheet,
+        import: renderImportSheet,
+        columns: renderColumnsSheet
+      };
+      return sheets[state.sheet]?.() || '';
+    }
+
+    function renderActionsSheet() {
+      return `
+        <div class="overlay" onclick="if(event.target===this)closeSheet()">
+          <div class="sheet">
+            <div class="grip"></div>
+            <div class="sheet-head">
+              <h3>Waybill Actions</h3>
+              <button onclick="closeSheet()">${I('x')}</button>
+            </div>
+            <button class="cta ghost" onclick="toast('Duplicated');closeSheet()">${I('copy')} Duplicate Waybill</button>
+            <button class="cta ghost" onclick="toast('PDF generated');closeSheet()">${I('file-down')} Generate PDF</button>
+            <button class="cta ghost" onclick="toast('Shared');closeSheet()">${I('share-2')} Share</button>
+            <button class="cta" onclick="toast('Deleted');closeSheet()" style="background:var(--red);margin-top:8px">${I('trash-2')} Delete Waybill</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTypeSheet() {
+      return `
+        <div class="overlay" onclick="if(event.target===this)closeSheet()">
+          <div class="sheet">
+            <div class="grip"></div>
+            <div class="sheet-head">
+              <h3>Select Document Type</h3>
+              <button onclick="closeSheet()">${I('x')}</button>
+            </div>
+            <button class="choice" onclick="dv('type','external');dv('purpose','Supply');closeSheet()">
+              <span class="cicon">${I('truck')}</span>
+              <div><b>External Waybill</b><small>Delivery to clients, vendors, or external parties</small></div>
+              ${state.waybill.type === 'external' ? `<span style="color:var(--rust)">${I('check')}</span>` : ''}
+            </button>
+            <button class="choice" onclick="dv('type','internal');dv('purpose','Transfer');closeSheet()">
+              <span class="cicon">${I('warehouse')}</span>
+              <div><b>Internal Transfer Note</b><small>Stock movement between depots or warehouses</small></div>
+              ${state.waybill.type === 'internal' ? `<span style="color:var(--rust)">${I('check')}</span>` : ''}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderClientSheet() {
+      return `
+        <div class="overlay" onclick="if(event.target===this)closeSheet()">
+          <div class="sheet">
+            <div class="grip"></div>
+            <div class="sheet-head">
+              <h3>Select Client</h3>
+              <button onclick="closeSheet()">${I('x')}</button>
+            </div>
+            ${state.savedClients.map((c, i) => `
+              <button class="choice" onclick="selectClient(${i})">
+                <span class="cicon">${esc(c[2])}</span>
+                <div><b>${esc(c[0])}</b><small>${esc(c[1])}</small></div>
+                ${state.waybill.client.name === c[0] ? `<span style="color:var(--rust)">${I('check')}</span>` : ''}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderImportSheet() {
+      return `
+        <div class="overlay" onclick="if(event.target===this)closeSheet()">
+          <div class="sheet">
+            <div class="grip"></div>
+            <div class="sheet-head">
+              <h3>Import Items</h3>
+              <button onclick="closeSheet()">${I('x')}</button>
+            </div>
+            <button class="cta ghost" onclick="toast('From CSV');closeSheet()">${I('file-spreadsheet')} Import from CSV</button>
+            <button class="cta ghost" onclick="toast('From template');closeSheet()">${I('file-text')} Import from Template</button>
+            <button class="cta ghost" onclick="toast('From previous waybill');closeSheet()">${I('copy')} Copy from Previous Waybill</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderColumnsSheet() {
+      return `
+        <div class="overlay" onclick="if(event.target===this)closeSheet()">
+          <div class="sheet">
+            <div class="grip"></div>
+            <div class="sheet-head">
+              <h3>Manage Columns</h3>
+              <button onclick="closeSheet()">${I('x')}</button>
+            </div>
+            <div style="padding:8px;font-size:9px;color:var(--sub)">
+              Toggle which columns appear on line items. Custom columns appear as editable fields on each item.
+            </div>
+            <div style="padding:8px">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+                <span style="font-size:9px">Description</span><span style="font-size:8px;color:var(--sub)">Always visible</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+                <span style="font-size:9px">Quantity</span><span style="font-size:8px;color:var(--sub)">Always visible</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+                <span style="font-size:9px">Unit</span><span style="font-size:8px;color:var(--sub)">Always visible</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+                <span style="font-size:9px">Condition</span><span style="font-size:8px;color:var(--sub)">Always visible</span>
+              </div>
+              ${state.waybill.customColumns.map(col => `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+                  <span style="font-size:9px">${esc(col.label)}</span>
+                  <button class="tiny-toggle on" onclick="this.classList.toggle('on')"></button>
+                </div>
+              `).join('')}
+            </div>
+            <button class="cta" onclick="closeSheet()">${I('check')} Done</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderConfirmClear() {
+      return `
+        <div class="confirm-overlay" onclick="if(event.target===this){state.confirmClear=false;render()}">
+          <div class="confirm-box">
+            <h3>Clear all items?</h3>
+            <p>This will remove all line items from this waybill. This action cannot be undone.</p>
+            <div class="confirm-btns">
+              <button class="c-cancel" onclick="state.confirmClear=false;render()">Cancel</button>
+              <button class="c-danger" onclick="clearAllItems()">Clear All</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ── ACTIONS ── */
+    function dv(k, v) { state.waybill[k] = v; render(); }
+    function itemVal(id, k, v) { const a = state.waybill.items.find(x => x.id === id); if (a) { a[k] = v; render(); } }
+    function groupVal(id, k, v) { const g = state.waybill.groups.find(x => x.id === id); if (g) { g[k] = v; render(); } }
+    function groupToggle(id) { const g = state.waybill.groups.find(x => x.id === id); if (g) { g.showSubtotal = !g.showSubtotal; render(); } }
+    function addItem() {
+      state.waybill.items.push({ id: uid(), description: '', qty: 1, unit: 'pcs', condition: 'New', customColumns: [], groupId: null });
+      render();
+    }
+    function addGroup() {
+      const gid = uid();
+      state.waybill.groups.push({ id: gid, name: '', showSubtotal: true });
+      render();
+    }
+    function addItemToGroup(gid) {
+      state.waybill.items.push({ id: uid(), description: '', qty: 1, unit: 'pcs', condition: 'New', customColumns: [], groupId: gid });
+      render();
+    }
+    function removeItem(id) { state.waybill.items = state.waybill.items.filter(x => x.id !== id); render(); }
+    function removeGroup(id) { state.waybill.groups = state.waybill.groups.filter(x => x.id !== id); state.waybill.items.forEach(a => { if (a.groupId === id) a.groupId = null; }); render(); }
+    function duplicateItem(id) {
+      const a = state.waybill.items.find(x => x.id === id);
+      if (a) { state.waybill.items.push({ ...a, id: uid(), customColumns: [...(a.customColumns || []).map(c => ({...c}))] }); render(); }
+    }
+    function moveItem(id, dir) {
+      const arr = state.waybill.items, i = arr.findIndex(x => x.id === id);
+      if (i < 0) return;
+      const ni = i + dir;
+      if (ni < 0 || ni >= arr.length) return;
+      [arr[i], arr[ni]] = [arr[ni], arr[i]];
+      render();
+    }
+    function clearAllItems() { state.waybill.items = []; state.confirmClear = false; render(); toast('All items cleared'); }
+    function selectClient(i) {
+      const c = state.savedClients[i];
+      state.waybill.client = { id: 'c' + i, name: c[0], person: c[1], initials: c[2] };
+      closeSheet();
+      render();
+    }
+    function addHeaderField() { state.waybill.headerFields.push({ id: uid(), label: '', value: '' }); render(); }
+    function updateHeaderField(id, k, v) { const f = state.waybill.headerFields.find(x => x.id === id); if (f) { f[k] = v; render(); } }
+    function removeHeaderField(id) { state.waybill.headerFields = state.waybill.headerFields.filter(x => x.id !== id); render(); }
+    function addColumn() { state.waybill.customColumns.push({ id: uid(), label: 'New Column' }); render(); }
+    function updateColumn(id, k, v) { const c = state.waybill.customColumns.find(x => x.id === id); if (c) { c[k] = v; render(); } }
+    function removeColumn(id) { state.waybill.customColumns = state.waybill.customColumns.filter(x => x.id !== id); render(); }
+    function updateItemColumn(itemId, label, value) {
+      const a = state.waybill.items.find(x => x.id === itemId);
+      if (!a) return;
+      if (!a.customColumns) a.customColumns = [];
+      const existing = a.customColumns.find(c => c.label === label);
+      if (existing) existing.value = value;
+      else a.customColumns.push({ label, value });
+      render();
+    }
+    function addRefDoc() { state.waybill.referenceDocs.push({ id: uid(), name: 'New Document.pdf', type: 'pdf' }); render(); }
+    function removeRefDoc(id) { state.waybill.referenceDocs = state.waybill.referenceDocs.filter(x => x.id !== id); render(); }
+    function openSheet(s) { state.sheet = s; render(); }
+    function closeSheet() { state.sheet = null; render(); }
+    function commit() { toast(state.mode === 'edit' ? 'Waybill updated' : 'Waybill created'); }
+    function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
+
+    render();
+  </script>
+</body>
+</html>
