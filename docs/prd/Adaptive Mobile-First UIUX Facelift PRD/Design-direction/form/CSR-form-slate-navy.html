@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f0f4f8">
+  <title>BIGDROPS — Customer Service Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --canvas: #f0f4f8; --paper: #ffffff; --ink: #0f172a; --sub: #475569;
+      --line: rgba(15,23,42,.07); --soft: #f8fafc; --rust: #1e3a5f; --rust-soft: #eef2ff;
+      --amber: #b45309; --red: #ef4444; --green: #059669; --indigo: #1e3a5f;
+      --violet: #6d28d9; --teal: #0d9488; --mono: "DM Mono",monospace;
+      --body: "Manrope",sans-serif; --display: "Syne",sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    html, body { background: var(--canvas); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(.98); }
+    svg { width: 16px; height: 16px; stroke-width: 1.8; }
+
+    /* ── Page layout ── */
+    .page { display: flex; min-height: 100dvh; }
+
+    /* ── Sidebar (desktop summary panel) ── */
+    .side-panel {
+      width: 240px; flex-shrink: 0; padding: 20px 16px;
+      background: var(--paper); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+    }
+    .side-title { font: 800 11px var(--display); letter-spacing: -.02em; }
+    .side-meta { display: flex; flex-direction: column; gap: 8px; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 9px; }
+    .meta-row span:first-child { color: var(--sub); font-weight: 600; }
+    .meta-row span:last-child { font: 600 9px var(--mono); color: var(--ink); }
+    .side-section { border-top: 1px solid var(--line); padding-top: 12px; }
+    .side-section-title {
+      font: 800 8px var(--body); letter-spacing: .09em;
+      text-transform: uppercase; color: var(--sub); margin-bottom: 8px;
+    }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 6px;
+      font: 700 8px var(--body);
+    }
+    .status-badge.in-progress { background: rgba(5,150,105,.1); color: var(--green); }
+    .status-badge.pending { background: rgba(180,83,9,.1); color: var(--amber); }
+    .mini-list { display: flex; flex-direction: column; gap: 4px; }
+    .mini-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 7px; border-radius: 6px; background: var(--soft);
+      font: 600 8.5px var(--body); color: var(--ink);
+    }
+    .mini-item .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Main ── */
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; background: var(--paper); border-bottom: 1px solid var(--line);
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-left .back {
+      width: 32px; height: 32px; border: 0; border-radius: 9px;
+      background: var(--soft); display: grid; place-items: center; color: var(--sub);
+    }
+    .topbar-left h1 { font: 800 16px var(--display); letter-spacing: -.04em; }
+    .topbar-right { display: flex; gap: 8px; }
+    .topbar-right button {
+      height: 34px; padding: 0 14px; border-radius: 9px;
+      font: 700 10px var(--body); display: flex; align-items: center; gap: 6px;
+    }
+    .btn-outline { border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+    .btn-primary { border: 0; background: var(--rust); color: #fff; box-shadow: 0 3px 10px rgba(30,58,95,.22); }
+
+    /* ── Content ── */
+    .content { flex: 1; padding: 24px; overflow-y: auto; }
+    .content-inner { max-width: 720px; }
+    .section + .section { margin-top: 24px; }
+    .section-title {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 10px; font: 800 9px var(--body);
+      letter-spacing: .09em; text-transform: uppercase; color: var(--sub);
+    }
+    .section-title .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Card ── */
+    .card {
+      border: 1px solid var(--line); border-radius: 14px;
+      background: var(--paper); overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.03);
+    }
+
+    /* ── Field ── */
+    .field { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .field:last-child { border-bottom: 0; }
+    .field label {
+      display: block; margin-bottom: 3px;
+      font: 800 7.5px var(--body); letter-spacing: .09em;
+      text-transform: uppercase; color: var(--sub);
+    }
+    .field input, .field textarea, .field select {
+      display: block; width: 100%; border: 0; outline: 0;
+      background: transparent; color: var(--ink);
+      font: 600 12px var(--body);
+    }
+    .field textarea { min-height: 56px; resize: vertical; line-height: 15px; }
+    .field input.mono { font-family: var(--mono); font-weight: 500; font-size: 11px; }
+    .field select {
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c626a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center; padding-right: 16px;
+    }
+    .field .hint { margin-top: 3px; font: 500 8px var(--body); color: var(--sub); }
+    .field.error input { box-shadow: inset 0 -2px 0 var(--red); }
+    .field.error .hint { color: var(--red); }
+
+    /* ── Grid ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; }
+    .grid2 .field { border-right: 1px solid var(--line); }
+    .grid2 .field:last-child { border-right: 0; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .grid3 .field { border-right: 1px solid var(--line); }
+    .grid3 .field:last-child { border-right: 0; }
+
+    /* ── Radio group ── */
+    .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .radio-pill {
+      height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--paper); color: var(--sub); font: 700 9px var(--body);
+      display: flex; align-items: center; gap: 4px; transition: all .12s;
+    }
+    .radio-pill:hover { border-color: var(--rust); color: var(--ink); }
+    .radio-pill.active { background: var(--rust); color: #fff; border-color: var(--rust); }
+
+    /* ── Toggle ── */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle {
+      width: 36px; height: 20px; border: 0; border-radius: 99px;
+      background: var(--line); position: relative; cursor: pointer;
+      transition: background .15s;
+    }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%; background: #fff;
+      transition: transform .16s;
+    }
+    .toggle.on { background: var(--rust); }
+    .toggle.on::after { transform: translateX(16px); }
+
+    /* ── Client picker ── */
+    .client-picker {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 12px; border: 1px dashed var(--line); border-radius: 12px;
+      background: var(--paper); text-align: left; color: var(--ink);
+      transition: border-color .15s, background .15s;
+    }
+    .client-picker:hover { border-color: var(--indigo); background: var(--rust-soft); }
+    .client-avatar {
+      width: 36px; height: 36px; border-radius: 9px; background: var(--soft);
+      color: var(--sub); display: grid; place-items: center;
+      font: 800 11px var(--body); flex-shrink: 0;
+    }
+    .client-text { flex: 1; min-width: 0; }
+    .client-text small { display: block; font: 800 7px var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--sub); }
+    .client-text b { display: block; margin: 1px 0; font-size: 11px; }
+    .client-text em { display: block; font-style: normal; font-size: 8.5px; color: var(--sub); }
+
+    /* ── Collapsible optional sections ── */
+    .collapse-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-bottom: 1px solid var(--line);
+      cursor: pointer; background: var(--soft);
+    }
+    .collapse-header .chevron { transition: transform .2s; }
+    .collapse-header.open .chevron { transform: rotate(90deg); }
+    .collapse-header span { flex: 1; font: 700 9px var(--body); color: var(--ink); }
+    .collapse-header .badge {
+      padding: 2px 6px; border-radius: 5px;
+      font: 700 7px var(--mono); background: var(--line); color: var(--sub);
+    }
+    .collapse-body { display: none; }
+    .collapse-body.open { display: block; }
+
+    /* ── Material row ── */
+    .material-row {
+      display: grid; grid-template-columns: 1fr 70px 70px 28px; gap: 6px;
+      align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line);
+    }
+    .material-row:last-child { border-bottom: 0; }
+    .material-row input, .material-row select {
+      height: 30px; border: 1px solid var(--line); border-radius: 7px;
+      padding: 0 7px; font-size: 9px; background: var(--soft); color: var(--ink);
+    }
+    .material-row select {
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c626a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center;
+    }
+    .material-row .del-btn {
+      width: 28px; height: 28px; border: 0; border-radius: 6px;
+      background: transparent; color: var(--sub); display: grid; place-items: center;
+    }
+    .material-row .del-btn:hover { background: rgba(239,68,68,.08); color: var(--red); }
+    .add-material {
+      width: 100%; height: 34px; border: 1px dashed var(--line); border-radius: 8px;
+      background: var(--paper); color: var(--ink); display: flex;
+      align-items: center; justify-content: center; gap: 5px;
+      font: 800 9px var(--body); margin-top: 6px;
+    }
+
+    /* ── Signature block ── */
+    .sig-block { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .sig-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; background: var(--soft);
+    }
+    .sig-head span { font: 700 9px var(--body); color: var(--ink); }
+    .sig-body { padding: 10px 12px; }
+    .sig-area {
+      width: 100%; height: 56px; border: 1px dashed var(--line); border-radius: 8px;
+      background: var(--soft); display: grid; place-items: center;
+      font: 500 9px var(--body); color: var(--sub);
+    }
+    .sig-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .sig-actions button {
+      flex: 1; height: 30px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--paper); color: var(--ink); font: 700 9px var(--body);
+    }
+    .sig-actions button.primary { background: var(--rust); color: #fff; border-color: var(--rust); }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+      .side-panel { display: none; }
+      .topbar { padding: 12px 16px; }
+      .content { padding: 16px; }
+      .topbar-left h1 { font-size: 14px; }
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+      .grid2 .field, .grid3 .field { border-right: 0; border-bottom: 1px solid var(--line); }
+      .grid2 .field:last-child, .grid3 .field:last-child { border-bottom: 0; }
+      .material-row { grid-template-columns: 1fr 60px 60px 28px; gap: 4px; }
+    }
+
+    /* ── Desktop ── */
+    @media (min-width: 768px) {
+      .content-inner { max-width: 760px; }
+    }
+    @media (min-width: 1024px) {
+      .content-inner { max-width: 820px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <!-- Side Panel (desktop only) -->
+  <aside class="side-panel">
+    <div class="side-title">CSR Summary</div>
+    <div class="side-meta">
+      <div class="meta-row"><span>CSR No.</span><span>CSR-2026-00847</span></div>
+      <div class="meta-row"><span>Date</span><span>02 Sep 2026</span></div>
+      <div class="meta-row"><span>Status</span><span class="status-badge in-progress">In Progress</span></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">Client</div>
+      <div style="font: 700 10px var(--body);">Acme Corporation</div>
+      <div style="font: 500 8px var(--body); color: var(--sub);">PO: PO-2026-1234</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">Equipment</div>
+      <div class="side-meta">
+        <div class="meta-row"><span>Type</span><span>Generator</span></div>
+        <div class="meta-row"><span>Make</span><span>Cummins</span></div>
+        <div class="meta-row"><span>Model</span><span>QSB7-G3</span></div>
+        <div class="meta-row"><span>Serial</span><span>CUM-2024-88712</span></div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">Service Window</div>
+      <div class="side-meta">
+        <div class="meta-row"><span>Start</span><span>02 Sep 09:15</span></div>
+        <div class="meta-row"><span>End</span><span>02 Sep 14:30</span></div>
+        <div class="meta-row"><span>Duration</span><span>5h 15m</span></div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">Materials Used</div>
+      <div class="mini-list">
+        <div class="mini-item"><span class="dot" style="background:var(--green)"></span> Oil Filter x2</div>
+        <div class="mini-item"><span class="dot" style="background:var(--green)"></span> Fuel Filter x1</div>
+        <div class="mini-item"><span class="dot" style="background:var(--amber)"></span> Gasket Set x1</div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">Technician</div>
+      <div style="font: 600 9px var(--body);">Emeka Okonkwo</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="back"><i data-lucide="arrow-left" style="width:15px"></i></button>
+        <h1>New CSR</h1>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-outline"><i data-lucide="file-up" style="width:14px"></i> Import</button>
+        <button class="btn-primary"><i data-lucide="save" style="width:14px"></i> Save</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content-inner">
+
+        <!-- ── Document Details ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--ink)"></span> Document Details</div>
+          <div class="card">
+            <div class="field">
+              <label>Client</label>
+              <button class="client-picker">
+                <div class="client-avatar">AC</div>
+                <div class="client-text">
+                  <small>Client</small>
+                  <b>Acme Corporation</b>
+                  <em>Lagos, Nigeria</em>
+                </div>
+                <i data-lucide="chevron-right" style="width:14px;color:var(--sub)"></i>
+              </button>
+            </div>
+            <div class="grid3">
+              <div class="field">
+                <label>CSR Number</label>
+                <input type="text" class="mono" value="CSR-2026-00847" readonly style="opacity:.6" />
+              </div>
+              <div class="field">
+                <label>Date</label>
+                <input type="date" value="2026-09-02" />
+              </div>
+              <div class="field">
+                <label>PO Number</label>
+                <input type="text" class="mono" value="PO-2026-1234" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Customer Name</label>
+              <input type="text" value="John Adeyemi" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Call Details ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--indigo)"></span> Call Details</div>
+          <div class="card">
+            <div class="field">
+              <label>Call Type</label>
+              <div class="radio-group">
+                <button class="radio-pill">Installation</button>
+                <button class="radio-pill active">Maintenance</button>
+                <button class="radio-pill">Repair</button>
+                <button class="radio-pill">Inspection</button>
+                <button class="radio-pill">Service</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Service Basis</label>
+              <div class="radio-group">
+                <button class="radio-pill active">Contract</button>
+                <button class="radio-pill">Warranty</button>
+                <button class="radio-pill">Billable</button>
+              </div>
+            </div>
+            <div class="field">
+              <div class="toggle-row">
+                <label style="margin-bottom:0">System Down</label>
+                <button class="toggle" aria-label="System down toggle"></button>
+              </div>
+              <div class="hint">Mark if the equipment is non-operational.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Equipment ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--teal)"></span> Equipment</div>
+          <div class="card">
+            <div class="grid2">
+              <div class="field">
+                <label>Equipment Type</label>
+                <select>
+                  <option>Generator</option>
+                  <option>HVAC</option>
+                  <option>Pump</option>
+                  <option>Compressor</option>
+                  <option>Motor</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Equipment Location</label>
+                <input type="text" value="Building A, Ground Floor" />
+              </div>
+            </div>
+            <div class="grid3">
+              <div class="field">
+                <label>Make</label>
+                <input type="text" value="Cummins" />
+              </div>
+              <div class="field">
+                <label>Capacity</label>
+                <input type="text" value="500 kVA" />
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <input type="text" value="QSB7-G3" />
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Serial Number</label>
+                <input type="text" class="mono" value="CUM-2024-88712" />
+              </div>
+              <div class="field">
+                <label>Engine Number</label>
+                <input type="text" class="mono" value="ENG-88712-QSB" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Problem & Service ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--amber)"></span> Problem & Service</div>
+          <div class="card">
+            <div class="field">
+              <label>Problem Reported</label>
+              <textarea placeholder="Describe the reported issue...">Customer reported intermittent power fluctuations and unusual vibration during operation. Oil leak observed near the base gasket.</textarea>
+            </div>
+            <div class="field">
+              <label>Service Rendered</label>
+              <textarea placeholder="Describe work performed...">Replaced oil filter, fuel filter, and base gasket. Performed full oil change (15W-40). Tightened all loose mounting bolts. Ran load test at 75% capacity for 2 hours — stable output confirmed.</textarea>
+            </div>
+            <div class="field">
+              <label>Defects Found</label>
+              <textarea placeholder="Any defects discovered...">Worn base gasket causing oil seepage. Air filter element showing 40% clogging — recommend replacement at next service interval.</textarea>
+            </div>
+            <div class="field">
+              <label>Engineer Remarks</label>
+              <textarea placeholder="Additional observations...">Unit operating within normal parameters after service. Next scheduled maintenance due in 500 hours or 3 months, whichever comes first.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Service Execution ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--green)"></span> Service Execution</div>
+          <div class="card">
+            <div class="grid3">
+              <div class="field">
+                <label>Start Date</label>
+                <input type="date" value="2026-09-02" />
+              </div>
+              <div class="field">
+                <label>Start Time</label>
+                <input type="time" value="09:15" />
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select>
+                  <option>In Progress</option>
+                  <option selected>Completed</option>
+                  <option>Pending Parts</option>
+                  <option>Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>End Date</label>
+                <input type="date" value="2026-09-02" />
+              </div>
+              <div class="field">
+                <label>End Time</label>
+                <input type="time" value="14:30" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Operational Readings (optional) ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--sub)"></span> Operational Readings</div>
+          <div class="card">
+            <div class="collapse-header open" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              <i data-lucide="chevron-right" class="chevron" style="width:14px;color:var(--sub)"></i>
+              <span>Optional Readings</span>
+              <span class="badge">0 / 6</span>
+            </div>
+            <div class="collapse-body open">
+              <div class="grid3">
+                <div class="field">
+                  <label>Voltage (V)</label>
+                  <input type="number" placeholder="—" />
+                </div>
+                <div class="field">
+                  <label>Frequency (Hz)</label>
+                  <input type="number" placeholder="—" />
+                </div>
+                <div class="field">
+                  <label>Battery (V)</label>
+                  <input type="number" placeholder="—" />
+                </div>
+              </div>
+              <div class="grid3">
+                <div class="field">
+                  <label>Temperature (&deg;C)</label>
+                  <input type="number" placeholder="—" />
+                </div>
+                <div class="field">
+                  <label>Pressure (PSI)</label>
+                  <input type="number" placeholder="—" />
+                </div>
+                <div class="field">
+                  <label>Run Hours</label>
+                  <input type="number" placeholder="—" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Materials Used ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--violet)"></span> Materials Used</div>
+          <div class="card">
+            <div style="display:grid;grid-template-columns:1fr 70px 70px 28px;gap:6px;padding:6px 12px;border-bottom:1px solid var(--line);font:800 7.5px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--sub)">
+              <span>Item</span><span>Qty</span><span>Unit</span><span></span>
+            </div>
+            <div class="material-row">
+              <input type="text" value="Oil Filter (15W-40 compatible)" />
+              <input type="number" value="2" />
+              <select><option selected>Pcs</option><option>Box</option><option>Litre</option></select>
+              <button class="del-btn" aria-label="Remove"><i data-lucide="x" style="width:12px"></i></button>
+            </div>
+            <div class="material-row">
+              <input type="text" value="Fuel Filter" />
+              <input type="number" value="1" />
+              <select><option selected>Pcs</option><option>Box</option></select>
+              <button class="del-btn" aria-label="Remove"><i data-lucide="x" style="width:12px"></i></button>
+            </div>
+            <div class="material-row">
+              <input type="text" value="Base Gasket (Cummins QSB7)" />
+              <input type="number" value="1" />
+              <select><option selected>Pcs</option><option>Box</option></select>
+              <button class="del-btn" aria-label="Remove"><i data-lucide="x" style="width:12px"></i></button>
+            </div>
+            <div class="material-row">
+              <input type="text" value="Engine Oil 15W-40" />
+              <input type="number" value="18" />
+              <select><option>Pcs</option><option>Box</option><option selected>Litre</option></select>
+              <button class="del-btn" aria-label="Remove"><i data-lucide="x" style="width:12px"></i></button>
+            </div>
+            <div style="padding:4px 12px 8px">
+              <button class="add-material"><i data-lucide="plus" style="width:13px"></i> Add material</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Technician (optional) ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--rust)"></span> Technician</div>
+          <div class="card">
+            <div class="collapse-header open" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              <i data-lucide="chevron-right" class="chevron" style="width:14px;color:var(--sub)"></i>
+              <span>Technician Details</span>
+              <span class="badge">Optional</span>
+            </div>
+            <div class="collapse-body open">
+              <div class="field">
+                <label>Technician Name</label>
+                <input type="text" value="Emeka Okonkwo" />
+              </div>
+              <div class="field">
+                <label>Technician Signature</label>
+                <div class="sig-area">Draw, upload, or pick signatory</div>
+                <div class="sig-actions">
+                  <button class="primary"><i data-lucide="pen-tool" style="width:13px"></i> Draw</button>
+                  <button><i data-lucide="upload" style="width:13px"></i> Upload</button>
+                  <button><i data-lucide="user" style="width:13px"></i> Pick</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Acknowledgement (optional) ── -->
+        <div class="section">
+          <div class="section-title"><span class="dot" style="background:var(--sub)"></span> Acknowledgement</div>
+          <div class="card">
+            <div class="collapse-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+              <i data-lucide="chevron-right" class="chevron" style="width:14px;color:var(--sub)"></i>
+              <span>Recipient Acknowledgement</span>
+              <span class="badge">Optional</span>
+            </div>
+            <div class="collapse-body">
+              <div class="field">
+                <label>Recipient Name</label>
+                <input type="text" placeholder="Name of person acknowledging" />
+              </div>
+              <div class="field">
+                <label>Comment</label>
+                <textarea placeholder="Recipient comments..."></textarea>
+              </div>
+              <div class="field">
+                <label>Recipient Signature</label>
+                <div class="sig-area">Draw, upload, or pick signatory</div>
+                <div class="sig-actions">
+                  <button class="primary"><i data-lucide="pen-tool" style="width:13px"></i> Draw</button>
+                  <button><i data-lucide="upload" style="width:13px"></i> Upload</button>
+                  <button><i data-lucide="user" style="width:13px"></i> Pick</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
