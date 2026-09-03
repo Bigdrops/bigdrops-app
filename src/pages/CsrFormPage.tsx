@@ -57,7 +57,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   const { tenantClient } = useEntity()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
 
@@ -554,6 +554,20 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         materialsRows={materialsRows}
         saving={saving}
         csrNumberReady={isEdit ? Boolean(String(csr.csr_number || '').trim()) : (csrNumberPopulated.current && Boolean(String(csr.csr_number || '').trim()))}
+        isFieldMode={isField}
+        onToggleFieldMode={isCreate ? () => {
+          const next = new URLSearchParams(searchParams)
+          if (isField) {
+            next.delete('type')
+            if (String(csr.status || '') === 'Field Entry Pending') {
+              update('status', 'Complete')
+            }
+          } else {
+            next.set('type', 'field')
+            update('status', 'Field Entry Pending')
+          }
+          setSearchParams(next, { replace: true })
+        } : undefined}
         onUpdate={guardedUpdate}
         onUpdateMeta={updateMeta}
         onUpdateMaterialRow={updateMaterialRow}

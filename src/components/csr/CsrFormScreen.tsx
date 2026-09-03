@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Download, Hash, Lock, Loader2, MoreHorizontal, Save } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download, Hash, Lock, Loader2, MoreHorizontal, Save, X } from 'lucide-react'
 
 import { useEntity } from '@/lib/tenant/contexts'
 import ClientSelector from '@/components/ClientSelector'
@@ -12,6 +12,8 @@ import MobileFab from '@/components/layout/MobileFab'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
+
+/* ── Types ────────────────────────────────────────────────────────────── */
 
 type SignatoryRow = {
   id: string
@@ -46,6 +48,8 @@ type Props = {
   materialsRows: MaterialRow[]
   saving: boolean
   csrNumberReady?: boolean
+  isFieldMode?: boolean
+  onToggleFieldMode?: () => void
   onUpdate: (field: string, value: any) => void
   onUpdateMeta: (field: string, value: any) => void
   onUpdateMaterialRow: (index: number, field: string, value: string) => void
@@ -56,6 +60,8 @@ type Props = {
   onDownloadBlank?: () => void
   onLockedFieldClick?: (field: 'client' | 'csr_number') => void
 }
+
+/* ── Constants ────────────────────────────────────────────────────────── */
 
 const STATUS_OPTIONS = [
   'Complete',
@@ -69,137 +75,58 @@ const CALL_TYPE_OPTIONS = ['Breakdown', 'Preventive Maintenance', 'Installation'
 const SERVICE_BASIS_OPTIONS = ['Paid Service', 'AMC', 'Warranty']
 const YES_NO_OPTIONS = ['Yes', 'No']
 
-function Section({
-  title,
-  number,
-  dotClassName,
-  action,
-  children,
-}: {
-  title: React.ReactNode
-  number?: string
-  dotClassName: string
-  action?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section>
-      <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
-          <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
-          <span className="truncate">
-            {number && <span className="mr-1.5 font-mono text-[9px] opacity-50" style={{ fontFamily: '"DM Mono", monospace' }}>{number}</span>}
-            {title}
-          </span>
-        </div>
-        {action}
-      </div>
+/* ── Scoped styles ────────────────────────────────────────────────────── */
 
-      <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]">
-        {children}
-      </div>
-    </section>
-  )
-}
-
-/**
- * Collapsible section with smooth height animation.
- * Uses CSS grid trick for animating height from 0 to auto.
- */
-function CollapsibleSection({
-  title,
-  number,
-  dotClassName,
-  action,
-  isOpen,
-  onToggle,
-  children,
-}: {
-  title: React.ReactNode
-  number?: string
-  dotClassName: string
-  action?: React.ReactNode
-  isOpen: boolean
-  onToggle: () => void
-  children: React.ReactNode
-}) {
-  const contentRef = React.useRef<HTMLDivElement>(null)
-  const [height, setHeight] = React.useState<number | undefined>(isOpen ? undefined : 0)
-
-  React.useEffect(() => {
-    if (isOpen) {
-      const el = contentRef.current
-      if (el) {
-        setHeight(el.scrollHeight)
-        // After transition ends, set to undefined for auto-sizing
-        const timer = setTimeout(() => setHeight(undefined), 200)
-        return () => clearTimeout(timer)
-      }
-    } else {
-      const el = contentRef.current
-      if (el) {
-        // First set explicit height, then set to 0 in next frame
-        setHeight(el.scrollHeight)
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => setHeight(0))
-        })
-      }
+const scopedStyles = `
+  @keyframes csrFieldErrorPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--bd-status-danger-text) / 0.5);
+      border-color: hsl(var(--bd-status-danger-text));
     }
-  }, [isOpen])
+    50% {
+      box-shadow: 0 0 0 6px hsl(var(--bd-status-danger-text) / 0.2);
+      border-color: hsl(var(--bd-status-danger-text));
+    }
+  }
+  .csr-error-highlight {
+    animation: csrFieldErrorPulse 1.2s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .csr-error-highlight { animation: none !important; }
+    .csr-fab-float { animation: none !important; }
+    .csr-fab-halo { animation: none !important; }
+    .csr-ambient-drift { animation: none !important; }
+  }
+`
 
-  return (
-    <section>
-      <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
-          <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
-          <span className="truncate">
-            {number && <span className="mr-1.5 font-mono text-[9px] opacity-50" style={{ fontFamily: '"DM Mono", monospace' }}>{number}</span>}
-            {title}
-          </span>
-        </div>
-        {action || (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
-          >
-            {isOpen ? 'Hide' : 'Show'}
-          </button>
-        )}
-      </div>
-
-      <div
-        className="overflow-hidden rounded-[20px] border border-bd-border bg-bd-surface shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]"
-        style={{
-          display: 'grid',
-          gridTemplateRows: height !== undefined ? `${height}px` : '1fr',
-          transition: 'grid-template-rows 200ms cubic-bezier(0.23, 1, 0.32, 1)',
-        }}
-      >
-        <div ref={contentRef} className="overflow-hidden">
-          <div className="p-4">
-            {children}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
+/* ── Primitives ───────────────────────────────────────────────────────── */
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">
+    <label className="mb-1 block text-[8px] font-extrabold uppercase tracking-[0.07em] text-bd-text-muted">
       {children}
       {required && <span className="ml-0.5 text-bd-status-danger-text">*</span>}
     </label>
   )
 }
 
-function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function TextInput(props: React.InputHTMLAttributes<HTMLInputElement> & { error?: boolean }) {
+  const { error, className, ...rest } = props
   return (
     <input
-      {...props}
-      className={`h-11 w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] text-bd-text outline-none ${props.className || ''}`}
+      {...rest}
+      className={`h-10 w-full rounded-[10px] border border-bd-border bg-bd-surface px-2.5 text-[11px] font-semibold text-bd-text shadow-xs focus:outline-none focus:ring-1 focus:ring-bd-button-primary-bg ${error ? 'csr-error-highlight' : ''} ${className || ''}`}
+    />
+  )
+}
+
+function TextInputMono(props: React.InputHTMLAttributes<HTMLInputElement> & { error?: boolean }) {
+  const { error, className, ...rest } = props
+  return (
+    <input
+      {...rest}
+      className={`h-10 w-full rounded-[10px] border border-bd-border bg-bd-surface px-2.5 text-[10px] font-medium text-bd-text shadow-xs focus:outline-none focus:ring-1 focus:ring-bd-button-primary-bg ${error ? 'csr-error-highlight' : ''} ${className || ''}`}
+      style={{ fontFamily: '"DM Mono", monospace' }}
     />
   )
 }
@@ -208,7 +135,16 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`min-h-[84px] w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 py-3 text-[14px] text-bd-text outline-none ${props.className || ''}`}
+      className={`min-h-[80px] w-full rounded-[10px] border border-bd-border bg-bd-surface p-2 text-[10px] font-semibold text-bd-text shadow-xs focus:outline-none focus:ring-1 focus:ring-bd-button-primary-bg resize-none ${props.className || ''}`}
+    />
+  )
+}
+
+function TextAreaCompact(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      className={`w-full rounded-[10px] border border-bd-border bg-bd-surface p-2 text-[10px] font-medium text-bd-text shadow-xs focus:outline-none resize-none ${props.className || ''}`}
     />
   )
 }
@@ -228,7 +164,7 @@ function SelectField({
 
   return (
     <Select value={safeValue} onValueChange={(next) => onChange(next === '__placeholder__' ? '' : next)}>
-      <SelectTrigger className="h-11 w-full rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] text-bd-text shadow-none focus:ring-0 focus:ring-offset-0">
+      <SelectTrigger className="h-10 w-full rounded-[10px] border border-bd-border bg-bd-surface px-2 text-[10px] font-semibold text-bd-text shadow-xs focus:ring-1 focus:ring-bd-button-primary-bg">
         <SelectValue placeholder={placeholder || 'Select'} />
       </SelectTrigger>
       <SelectContent>
@@ -243,26 +179,7 @@ function SelectField({
   )
 }
 
-function HeaderActionButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode
-  onClick?: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text disabled:opacity-60"
-    >
-      {children}
-    </button>
-  )
-}
+/* ── Main Component ───────────────────────────────────────────────────── */
 
 export default function CsrFormScreen({
   mode,
@@ -271,6 +188,8 @@ export default function CsrFormScreen({
   materialsRows,
   saving,
   csrNumberReady = true,
+  isFieldMode = false,
+  onToggleFieldMode,
   onUpdate,
   onUpdateMeta,
   onUpdateMaterialRow,
@@ -287,8 +206,23 @@ export default function CsrFormScreen({
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
   const [clientPickerOpen, setClientPickerOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
-  const [recipientSignatureName, setRecipientSignatureName] = React.useState('')
+  const [recipientSignatureName, setRecipientSignatureName] = React.useState(() => {
+    // Initialize from existing CSR data if available
+    return (csr as any).recipient_signature_name || ''
+  })
   const recipientSignatureInputRef = React.useRef<HTMLInputElement | null>(null)
+
+  // Validation highlight state
+  const [highlightedField, setHighlightedField] = React.useState<string | null>(null)
+  const clientSelectorRef = React.useRef<HTMLDivElement>(null)
+  const csrNumberRef = React.useRef<HTMLDivElement>(null)
+
+  const triggerValidationHighlight = (fieldId: string) => {
+    setHighlightedField(fieldId)
+    const ref = fieldId === 'clientSelector' ? clientSelectorRef : csrNumberRef
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => setHighlightedField(null), 2800)
+  }
 
   // Track online/offline status
   const [isOnline, setIsOnline] = React.useState(() =>
@@ -298,7 +232,6 @@ export default function CsrFormScreen({
   React.useEffect(() => {
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
-
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
     return () => {
@@ -307,14 +240,11 @@ export default function CsrFormScreen({
     }
   }, [])
 
-  // Store the last known good CSR number for auto-restore
   const lastGoodCsrNumber = React.useRef<string>(String(csr.csr_number || ''))
 
   React.useEffect(() => {
     const current = String(csr.csr_number || '').trim()
-    if (current) {
-      lastGoodCsrNumber.current = current
-    }
+    if (current) lastGoodCsrNumber.current = current
   }, [csr.csr_number])
 
   const handleCsrNumberBlur = () => {
@@ -328,18 +258,13 @@ export default function CsrFormScreen({
 
   React.useEffect(() => {
     let mounted = true
-
     const load = async () => {
       const { data } = await tenantClient.from('signatories').select('*').order('name')
-
       if (!mounted) return
       setSignatories((data || []) as SignatoryRow[])
     }
-
     load()
-    return () => {
-      mounted = false
-    }
+    return () => { mounted = false }
   }, [])
 
   const selectedSignatory =
@@ -347,42 +272,92 @@ export default function CsrFormScreen({
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-bd-app-bg px-3 pb-[200px] pt-4 sm:px-4">
-      <div className="space-y-5">
-        <Section title="Document Details" number="01" dotClassName="bg-slate-900">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">
-                {mode === 'new' ? 'New CSR' : 'Edit CSR'}
-              </div>
-              <h1 className="mt-1 text-[28px] font-black leading-none tracking-[-0.04em] text-bd-text">
-                {mode === 'new' ? 'Create CSR' : 'Update CSR'}
-              </h1>
-            </div>
+    <div className="mx-auto min-h-screen max-w-md bg-bd-app-bg px-4 pb-28 pt-4 sm:px-5">
+      <style>{scopedStyles}</style>
+
+      {/* ── Top Minimal Toolbar ──────────────────────────────────────── */}
+      <div className="mb-4 flex items-center justify-between border-b border-bd-border pb-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-[13px] font-extrabold tracking-tight text-bd-text">
+            Customer Service Report
+          </h1>
+          <span className="rounded-[4px] bg-bd-surface-muted px-1.5 py-0.5 font-mono text-[7px] font-bold text-bd-text-muted">
+            {mode === 'new' ? 'CREATE' : 'EDIT'}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {onToggleFieldMode && (
             <button
               type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border-[1.5px] border-bd-border bg-bd-surface text-bd-text-muted"
+              onClick={onToggleFieldMode}
+              className={`h-8 px-2 rounded-[4px] text-[8px] font-bold uppercase tracking-wider transition-all active:scale-95 ${
+                isFieldMode
+                  ? 'bg-bd-button-primary-bg/14 text-bd-button-primary-bg'
+                  : 'bg-bd-surface-muted text-bd-text-muted'
+              }`}
             >
-              <MoreHorizontal className="h-5 w-5" />
+              {isFieldMode ? 'Field' : 'Standard'}
             </button>
+          )}
+          {mode === 'new' && onDownloadBlank && (
+            <button
+              type="button"
+              onClick={onDownloadBlank}
+              className="flex h-11 w-11 items-center justify-center rounded-[8px] text-bd-text-muted transition-colors hover:text-bd-text active:scale-95"
+              title="Download Blank"
+              aria-label="Download blank CSR"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-[8px] text-bd-text-muted transition-colors hover:text-bd-text active:scale-95"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── CONTINUOUS FORM FLOW ─────────────────────────────────────── */}
+      <div className="divide-y divide-bd-border space-y-5">
+
+        {/* ── 01. DOCUMENT DETAILS ──────────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
+              01. Document Details
+            </span>
+            <span
+              className="text-[9px] font-mono font-bold text-bd-button-primary-bg"
+              style={{ fontFamily: '"DM Mono", monospace' }}
+            >
+              {csr.csr_number || '—'}
+            </span>
           </div>
 
-          <div className="mt-4 rounded-[16px] border-2 border-dashed border-bd-border-strong bg-bd-surface-muted p-3">
+          {/* Client Account Selector */}
+          <div ref={clientSelectorRef}>
+            <FieldLabel required>Client Account</FieldLabel>
             {mode === 'edit' ? (
               <button
                 type="button"
                 onClick={() => onLockedFieldClick?.('client')}
-                className="flex w-full items-center gap-3 text-left"
+                className="w-full flex items-center justify-between p-2.5 min-h-[44px] rounded-[10px] bg-bd-surface border border-bd-border cursor-pointer shadow-xs active:scale-[0.98] transition-transform duration-150"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-bd-surface text-bd-text-muted">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-bd-text-muted">Client</div>
-                  <div className="mt-0.5 truncate text-[14px] font-bold text-bd-text">
+                <div className="truncate pr-2">
+                  <div className="text-[11px] font-bold text-bd-text truncate">
                     {csr.client_name || 'No client selected'}
                   </div>
+                  {csr.address && (
+                    <div className="text-[9px] text-bd-text-muted truncate mt-0.5">
+                      {String(csr.address)}
+                    </div>
+                  )}
                 </div>
+                <Lock className="h-3 w-3 text-bd-text-muted shrink-0" />
               </button>
             ) : (
               <ClientSelector
@@ -406,87 +381,92 @@ export default function CsrFormScreen({
             )}
           </div>
 
-          <div className="mt-4 space-y-3">
-            <div>
+          {/* CSR Number & Date */}
+          <div className="grid grid-cols-2 gap-2">
+            <div ref={csrNumberRef}>
               <FieldLabel required>CSR Number</FieldLabel>
-              <div className="relative">
-                {mode === 'edit' ? (
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
-                ) : (
-                  <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
-                )}
-                {mode === 'edit' ? (
-                  <span
-                    onClick={() => onLockedFieldClick?.('csr_number')}
-                    className="inline-flex h-11 w-full cursor-default items-center rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted pl-9 font-mono text-[14px] font-bold text-bd-text opacity-70"
-                  >
-                    {csr.csr_number || ''}
-                  </span>
-                ) : (
-                  <TextInput
-                    value={String(csr.csr_number || '')}
-                    onChange={(event) => onUpdate('csr_number', event.target.value)}
-                    onBlur={handleCsrNumberBlur}
-                    className="bg-bd-surface-muted pl-9 font-mono font-bold"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Date</FieldLabel>
-                <TextInput
-                  type="date"
-                  value={String(csr.date || '')}
-                  onChange={(event) => onUpdate('date', event.target.value)}
+              {mode === 'edit' ? (
+                <button
+                  type="button"
+                  onClick={() => onLockedFieldClick?.('csr_number')}
+                  className="w-full h-10 px-2.5 rounded-[10px] bg-bd-surface border border-bd-border flex items-center justify-between font-mono font-medium text-[11px] text-bd-text cursor-pointer shadow-xs"
+                >
+                  <span style={{ fontFamily: '"DM Mono", monospace' }}>{csr.csr_number || ''}</span>
+                  <Lock className="h-3 w-3 text-bd-text-muted" />
+                </button>
+              ) : (
+                <TextInputMono
+                  value={String(csr.csr_number || '')}
+                  onChange={(e) => onUpdate('csr_number', e.target.value)}
+                  onBlur={handleCsrNumberBlur}
+                  error={highlightedField === 'csrNumber'}
                 />
-              </div>
-              <div>
-                <FieldLabel>Customer Name</FieldLabel>
-                {mode === 'edit' ? (
-                  <div
-                    onClick={() => onLockedFieldClick?.('client')}
-                    className="flex h-11 cursor-default items-center gap-2 rounded-[12px] border-[1.5px] border-bd-border bg-bd-surface-muted px-3 text-[14px] font-bold text-bd-text opacity-70"
-                  >
-                    <Lock className="h-4 w-4 shrink-0 text-bd-text-muted" />
-                    <span className="truncate">{csr.client_name || ''}</span>
-                  </div>
-                ) : (
-                  <TextInput
-                    value={String(csr.client_name || '')}
-                    onChange={(event) => onUpdate('client_name', event.target.value)}
-                  />
-                )}
-              </div>
+              )}
             </div>
-
             <div>
-              <FieldLabel>PO Number</FieldLabel>
+              <FieldLabel>Report Date</FieldLabel>
+              <TextInputMono
+                type="date"
+                value={String(csr.date || '')}
+                onChange={(e) => onUpdate('date', e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Customer Contact & PO Number */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel>Customer Contact</FieldLabel>
+              {mode === 'edit' ? (
+                <button
+                  type="button"
+                  onClick={() => onLockedFieldClick?.('client')}
+                  className="w-full h-10 px-2.5 rounded-[10px] bg-bd-surface border border-bd-border flex items-center justify-between text-[11px] font-semibold text-bd-text cursor-pointer truncate shadow-xs"
+                >
+                  <span className="truncate">{csr.client_name || ''}</span>
+                  <Lock className="h-3 w-3 text-bd-text-muted shrink-0" />
+                </button>
+              ) : (
+                <TextInput
+                  placeholder="Contact person"
+                  value={String(csr.client_name || '')}
+                  onChange={(e) => onUpdate('client_name', e.target.value)}
+                />
+              )}
+            </div>
+            <div>
+              <FieldLabel>P.O. Number</FieldLabel>
               <TextInput
+                placeholder="PO #"
                 value={String(csr.po_number || '')}
-                placeholder="Optional"
-                onChange={(event) => {
-                  onUpdate('po_number', event.target.value)
-                  onUpdate('show_po', Boolean(event.target.value.trim()))
+                onChange={(e) => {
+                  onUpdate('po_number', e.target.value)
+                  onUpdate('show_po', Boolean(e.target.value.trim()))
                 }}
               />
             </div>
           </div>
-        </Section>
+        </section>
 
-        <Section title="Item Controls" number="02" dotClassName="bg-slate-700">
-          <button
-            type="button"
-            onClick={() => setImportSheetOpen(true)}
-            className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border bg-bd-surface px-3 text-[13px] font-bold text-bd-text"
-          >
+        {/* ── 02. ITEM CONTROLS ─────────────────────────────────────── */}
+        <section className="pt-4 flex items-center justify-between">
+          <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
+            02. Item Controls
+          </span>              <button
+                type="button"
+                onClick={() => setImportSheetOpen(true)}
+                className="h-10 px-3 rounded-[8px] bg-bd-surface hover:bg-bd-surface-muted text-bd-text text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition border border-bd-border shadow-xs"
+              >
             Import
           </button>
-        </Section>
+        </section>
 
-        <Section title="Service Parameters" number="03" dotClassName="bg-bd-violet">
-          <div className="grid grid-cols-2 gap-3">
+        {/* ── 03. SERVICE PARAMETERS ────────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
+            03. Service Parameters
+          </span>
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <FieldLabel>Call Type</FieldLabel>
               <SelectField
@@ -506,14 +486,11 @@ export default function CsrFormScreen({
               />
             </div>
             <div>
-              <FieldLabel>System Down</FieldLabel>
+              <FieldLabel>System Down?</FieldLabel>
               <SelectField
                 value={csr.system_down === true ? 'Yes' : csr.system_down === false ? 'No' : ''}
                 onChange={(value) => {
-                  if (!value) {
-                    onUpdate('system_down', null)
-                    return
-                  }
+                  if (!value) { onUpdate('system_down', null); return }
                   onUpdate('system_down', value === 'Yes')
                 }}
                 options={YES_NO_OPTIONS}
@@ -521,402 +498,503 @@ export default function CsrFormScreen({
               />
             </div>
           </div>
-        </Section>
+        </section>
 
-        <Section title="Equipment" number="04" dotClassName="bg-slate-600">
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Equipment Type</FieldLabel>
-                <TextInput
-                  value={String(csr.equipment_type || '')}
-                  onChange={(event) => onUpdate('equipment_type', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Equipment Location</FieldLabel>
-                <TextInput
-                  value={String(csr.equipment_location || '')}
-                  onChange={(event) => onUpdate('equipment_location', event.target.value)}
-                />
-              </div>
+        {/* ── 04. EQUIPMENT SPECIFICATIONS ──────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
+            04. Equipment Specifications
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel>Equipment Type</FieldLabel>
+              <TextInput
+                value={String(csr.equipment_type || '')}
+                onChange={(e) => onUpdate('equipment_type', e.target.value)}
+                placeholder="e.g. Diesel Generator"
+              />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Make</FieldLabel>
-                <TextInput value={String(csr.make || '')} onChange={(event) => onUpdate('make', event.target.value)} />
-              </div>
-              <div>
-                <FieldLabel>Capacity</FieldLabel>
-                <TextInput
-                  value={String(csr.capacity || '')}
-                  onChange={(event) => onUpdate('capacity', event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>{csrMeta.modelLabel || 'Model'}</FieldLabel>
-                <TextInput value={String(csr.model || '')} onChange={(event) => onUpdate('model', event.target.value)} />
-              </div>
-              <div>
-                <FieldLabel>{csrMeta.serialLabel || 'Serial No.'}</FieldLabel>
-                <TextInput
-                  value={String(csr.serial_no || '')}
-                  onChange={(event) => onUpdate('serial_no', event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Engine No</FieldLabel>
-                <TextInput
-                  value={String(csr.engine_no || '')}
-                  onChange={(event) => onUpdate('engine_no', event.target.value)}
-                />
-              </div>
-              <div />
+            <div>
+              <FieldLabel>Equipment Location</FieldLabel>
+              <TextInput
+                value={String(csr.equipment_location || '')}
+                onChange={(e) => onUpdate('equipment_location', e.target.value)}
+                placeholder="e.g. Bay 2"
+              />
             </div>
           </div>
-        </Section>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel>Make</FieldLabel>
+              <TextInput
+                value={String(csr.make || '')}
+                onChange={(e) => onUpdate('make', e.target.value)}
+                placeholder="Manufacturer"
+              />
+            </div>
+            <div>
+              <FieldLabel>Capacity</FieldLabel>
+              <TextInput
+                value={String(csr.capacity || '')}
+                onChange={(e) => onUpdate('capacity', e.target.value)}
+                placeholder="e.g. 500 kVA"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <FieldLabel>{csrMeta.modelLabel || 'Model'}</FieldLabel>
+              <TextInput
+                value={String(csr.model || '')}
+                onChange={(e) => onUpdate('model', e.target.value)}
+                placeholder="Model ID"
+              />
+            </div>
+            <div>
+              <FieldLabel>{csrMeta.serialLabel || 'Serial No.'}</FieldLabel>
+              <TextInputMono
+                value={String(csr.serial_no || '')}
+                onChange={(e) => onUpdate('serial_no', e.target.value)}
+                placeholder="Serial #"
+              />
+            </div>
+            <div>
+              <FieldLabel>Engine No</FieldLabel>
+              <TextInputMono
+                value={String(csr.engine_no || '')}
+                onChange={(e) => onUpdate('engine_no', e.target.value)}
+                placeholder="Engine #"
+              />
+            </div>
+          </div>
+        </section>
 
-        <Section title="Problem & Service" number="05" dotClassName="bg-bd-rose">
-          <div className="space-y-3">
-            <div>
-              <FieldLabel>Problem Reported</FieldLabel>
-              <TextArea
-                value={String(csr.problem_reported || '')}
-                onChange={(event) => onUpdate('problem_reported', event.target.value)}
-              />
-            </div>
-            <div>
-              <FieldLabel>Service Rendered</FieldLabel>
-              <TextArea
-                className="min-h-[96px]"
-                value={String(csr.service_rendered || '')}
-                onChange={(event) => onUpdate('service_rendered', event.target.value)}
-              />
-            </div>
+        {/* ── 05. PROBLEM & SERVICE ─────────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
+            05. Problem & Service Details
+          </span>
+          <div>
+            <FieldLabel>Problem Reported</FieldLabel>
+            <TextArea
+              value={String(csr.problem_reported || '')}
+              onChange={(e) => onUpdate('problem_reported', e.target.value)}
+              placeholder="Client complaint or initial defect description..."
+            />
+          </div>
+          <div>
+            <FieldLabel>Service Rendered</FieldLabel>
+            <TextArea
+              className="min-h-[88px]"
+              value={String(csr.service_rendered || '')}
+              onChange={(e) => onUpdate('service_rendered', e.target.value)}
+              placeholder="Corrective actions taken by engineer..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <FieldLabel>Defects Found</FieldLabel>
-              <TextArea
+              <TextAreaCompact
+                rows={2}
                 value={String(csr.defects_found || '')}
-                onChange={(event) => onUpdate('defects_found', event.target.value)}
+                onChange={(e) => onUpdate('defects_found', e.target.value)}
+                placeholder="Root causes..."
               />
             </div>
             <div>
               <FieldLabel>Engineer Remarks</FieldLabel>
-              <TextArea
+              <TextAreaCompact
+                rows={2}
                 value={String(csr.engineer_remarks || '')}
-                onChange={(event) => onUpdate('engineer_remarks', event.target.value)}
+                onChange={(e) => onUpdate('engineer_remarks', e.target.value)}
+                placeholder="Recommendations..."
               />
             </div>
           </div>
-        </Section>
+        </section>
 
-        <Section title="Service Execution" number="06" dotClassName="bg-slate-900">
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Start Date</FieldLabel>
-                <TextInput
+        {/* ── 06. EXECUTION TIMELINE & STATUS ────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
+            06. Execution Timeline & Status
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <FieldLabel>Start Date & Time</FieldLabel>
+              <div className="flex gap-1.5">
+                <TextInputMono
                   type="date"
                   value={String(csr.start_date || '')}
-                  onChange={(event) => onUpdate('start_date', event.target.value)}
+                  onChange={(e) => onUpdate('start_date', e.target.value)}
+                  className="w-3/5"
                 />
-              </div>
-              <div>
-                <FieldLabel>Start Time</FieldLabel>
-                <TextInput
+                <TextInputMono
                   type="time"
                   value={String(csr.start_time || '')}
-                  onChange={(event) => onUpdate('start_time', event.target.value)}
+                  onChange={(e) => onUpdate('start_time', e.target.value)}
+                  className="w-2/5"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>End Date</FieldLabel>
-                <TextInput
+            <div>
+              <FieldLabel>End Date & Time</FieldLabel>
+              <div className="flex gap-1.5">
+                <TextInputMono
                   type="date"
                   value={String(csr.end_date || '')}
-                  onChange={(event) => onUpdate('end_date', event.target.value)}
+                  onChange={(e) => onUpdate('end_date', e.target.value)}
+                  className="w-3/5"
                 />
-              </div>
-              <div>
-                <FieldLabel>End Time</FieldLabel>
-                <TextInput
+                <TextInputMono
                   type="time"
                   value={String(csr.end_time || '')}
-                  onChange={(event) => onUpdate('end_time', event.target.value)}
+                  onChange={(e) => onUpdate('end_time', e.target.value)}
+                  className="w-2/5"
                 />
               </div>
             </div>
-            <div>
-              <FieldLabel>Status After Service</FieldLabel>
-              <SelectField
-                value={String(csr.status || '')}
-                onChange={(value) => onUpdate('status', value)}
-                options={STATUS_OPTIONS}
-                placeholder="Select"
-              />
-            </div>
           </div>
-        </Section>
-
-        <CollapsibleSection
-          title="Operational Readings"
-          number="07"
-          dotClassName="bg-amber-500"
-          isOpen={!!csrMeta.showOperationalReadings}
-          onToggle={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}
-          action={
-            <HeaderActionButton onClick={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}>
-              {csrMeta.showOperationalReadings ? 'Hide section' : 'Show section'}
-            </HeaderActionButton>
-          }
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <FieldLabel>Voltage</FieldLabel>
-              <TextInput value={String(csr.voltage || '')} onChange={(event) => onUpdate('voltage', event.target.value)} />
-            </div>
-            <div>
-              <FieldLabel>Frequency</FieldLabel>
-              <TextInput
-                value={String(csr.frequency || '')}
-                onChange={(event) => onUpdate('frequency', event.target.value)}
-              />
-            </div>
-            <div>
-              <FieldLabel>Battery</FieldLabel>
-              <TextInput value={String(csr.battery || '')} onChange={(event) => onUpdate('battery', event.target.value)} />
-            </div>
-            <div>
-              <FieldLabel>Temperature</FieldLabel>
-              <TextInput
-                value={String(csr.temperature || '')}
-                onChange={(event) => onUpdate('temperature', event.target.value)}
-              />
-            </div>
-            <div>
-              <FieldLabel>Pressure</FieldLabel>
-              <TextInput
-                value={String(csr.pressure || '')}
-                onChange={(event) => onUpdate('pressure', event.target.value)}
-              />
-            </div>
-            <div>
-              <FieldLabel>Hours</FieldLabel>
-              <TextInput value={String(csr.hours || '')} onChange={(event) => onUpdate('hours', event.target.value)} />
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        <Section
-          title={
-            <input
-              value={materialsTitle}
-              onChange={(event) => setMaterialsTitle(event.target.value)}
-              className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted outline-none"
+          <div>
+            <FieldLabel>Status After Service</FieldLabel>
+            <SelectField
+              value={String(csr.status || '')}
+              onChange={(value) => onUpdate('status', value)}
+              options={STATUS_OPTIONS}
+              placeholder="Select"
             />
-          }
-          number="08"
-          dotClassName="bg-bd-emerald"
-          action={
-            <span className="inline-flex h-8 items-center rounded-full border border-bd-status-success-border bg-bd-status-success-bg px-3 text-[12px] font-bold text-bd-status-success-text">
-              {materialCount} item{materialCount === 1 ? '' : 's'}
+          </div>
+        </section>
+
+        {/* ── 07. OPERATIONAL READINGS ──────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
+              07. Operational Readings
             </span>
-          }
-        >
-          <div className="space-y-3">
-            <div className="space-y-3">
-              {materialsRows.map((row, index) => (
-                <div key={index} className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-                  <div className="grid grid-cols-[minmax(0,1.4fr)_88px_86px] gap-3">
-                    <TextInput
-                      value={row.item}
-                      onChange={(event) => onUpdateMaterialRow(index, 'item', event.target.value)}
-                      placeholder="Material"
-                      className="bg-bd-surface"
-                    />
+            <button
+              type="button"
+              onClick={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}
+              className={`px-2 py-0.5 rounded-[6px] text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-1 transition active:scale-95 border ${
+                csrMeta.showOperationalReadings
+                  ? 'bg-bd-surface border-bd-button-primary-bg/30 text-bd-button-primary-bg'
+                  : 'bg-bd-surface border-bd-border text-bd-text-muted'
+              }`}
+            >
+              {csrMeta.showOperationalReadings ? (
+                <><ChevronUp className="h-3 w-3" /> Included</>
+              ) : (
+                <><ChevronDown className="h-3 w-3" /> Excluded</>
+              )}
+            </button>
+          </div>
 
-                    <NumericInput
-                      value={row.quantity}
-                      onChange={(val) => onUpdateMaterialRow(index, 'quantity', String(val))}
-                      placeholder="Qty"
-                      className="bg-bd-surface text-center"
-                    />
-
-                    <div className="[&>div>input]:h-11 [&>div>input]:rounded-[12px] [&>div>input]:border-[1.5px] [&>div>input]:border-bd-border [&>div>input]:bg-bd-surface [&>div>input]:px-3 [&>div>input]:text-[14px]">
-                      <UnitInput value={row.unit || ''} onChange={(value) => onUpdateMaterialRow(index, 'unit', value)} />
-                    </div>
-                  </div>
-
-                  {materialsRows.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => onRemoveMaterialRow(index)}
-                      className="mt-3 text-[12px] font-bold text-bd-status-danger-text"
-                    >
-                      Remove
-                    </button>
-                  ) : null}
+          {csrMeta.showOperationalReadings && (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Voltage', field: 'voltage', placeholder: '415 V' },
+                { label: 'Frequency', field: 'frequency', placeholder: '50 Hz' },
+                { label: 'Battery', field: 'battery', placeholder: '24 VDC' },
+                { label: 'Temperature', field: 'temperature', placeholder: '85 °C' },
+                { label: 'Pressure', field: 'pressure', placeholder: '4.5 Bar' },
+                { label: 'Hours', field: 'hours', placeholder: 'Running Hrs' },
+              ].map(({ label, field, placeholder }) => (
+                <div key={field}>
+                  <FieldLabel>{label}</FieldLabel>
+                  <TextInputMono
+                    value={String((csr as any)[field] || '')}
+                    onChange={(e) => onUpdate(field, e.target.value)}
+                    placeholder={placeholder}
+                  />
                 </div>
               ))}
             </div>
+          )}
+        </section>
 
+        {/* ── 08. MATERIALS USED ────────────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <input
+              type="text"
+              value={materialsTitle}
+              onChange={(e) => setMaterialsTitle(e.target.value)}
+              className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted bg-transparent focus:outline-none focus:text-bd-text"
+            />
+            <span
+              className="font-mono text-[8px] font-medium text-bd-text-muted"
+              style={{ fontFamily: '"DM Mono", monospace' }}
+            >
+              {materialCount} items
+            </span>
+          </div>
+
+          <div className="divide-y divide-bd-border">
+            {materialsRows.map((row, index) => (
+              <div key={index} className="py-2 flex items-center gap-2 first:pt-0 last:pb-0">
+                {/* Row number */}
+                <span
+                  className="w-5 h-5 rounded-[4px] bg-bd-surface-muted text-bd-text font-mono font-bold text-[9px] flex items-center justify-center shrink-0"
+                  style={{ fontFamily: '"DM Mono", monospace' }}
+                >
+                  {index + 1}
+                </span>
+
+                {/* Fields: 12-col grid (6+3+3) */}
+                <div className="flex-1 grid grid-cols-12 gap-1.5">
+                  <div className="col-span-6">
+                    <TextInput
+                      placeholder="Material specification"
+                      value={row.item}
+                      onChange={(e) => onUpdateMaterialRow(index, 'item', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <TextInputMono
+                      placeholder="Qty"
+                      value={row.quantity}
+                      onChange={(e) => onUpdateMaterialRow(index, 'quantity', e.target.value)}
+                      className="text-center"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <TextInput
+                      placeholder="Unit"
+                      value={row.unit}
+                      onChange={(e) => onUpdateMaterialRow(index, 'unit', e.target.value)}
+                      className="text-center font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* Remove button */}
+                {materialsRows.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveMaterialRow(index)}
+                    className="min-w-[44px] min-h-[44px] w-11 h-11 rounded-full hover:bg-bd-status-danger-bg text-bd-text-muted hover:text-bd-status-danger-text flex items-center justify-center active:scale-90 transition shrink-0"
+                    title="Remove"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={onAddMaterialRow}
+            className="w-full h-10 rounded-[8px] bg-bd-surface hover:bg-bd-surface-muted text-bd-text font-extrabold text-[8px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition border border-bd-border shadow-xs"
+          >
+            + Add material row
+          </button>
+        </section>
+
+        {/* ── 09. TECHNICIAN ENDORSEMENT ────────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
+              09. Technician Endorsement
+            </span>
             <button
               type="button"
-              onClick={onAddMaterialRow}
-              className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-bd-border px-3 text-[13px] font-bold text-bd-text"
+              onClick={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}
+              className={`px-2 py-0.5 rounded-[6px] text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-1 transition active:scale-95 border ${
+                csrMeta.showTechnicianSignLine
+                  ? 'bg-bd-surface border-bd-status-success-border text-bd-status-success-text'
+                  : 'bg-bd-surface border-bd-status-danger-border text-bd-status-danger-text'
+              }`}
             >
-              Add material
+              {csrMeta.showTechnicianSignLine ? (
+                <><ChevronUp className="h-3 w-3" /> Included</>
+              ) : (
+                <><ChevronDown className="h-3 w-3" /> Excluded</>
+              )}
             </button>
           </div>
-        </Section>
 
-        <CollapsibleSection
-          title="Technician"
-          number="09"
-          dotClassName="bg-sky-500"
-          isOpen={!!csrMeta.showTechnicianSignLine}
-          onToggle={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}
-          action={
-            <HeaderActionButton onClick={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}>
-              {csrMeta.showTechnicianSignLine ? 'Included' : 'Include'}
-            </HeaderActionButton>
-          }
-        >
-          <div className="space-y-3">
-            <div>
-              <FieldLabel>Technician Name</FieldLabel>
-              <TextInput
-                value={String(csrMeta.technicianName || '')}
-                onChange={(event) => onUpdateMeta('technicianName', event.target.value)}
-              />
-            </div>
-            <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-              <div className="text-[13px] font-bold text-bd-text">Technician Signature</div>
-              <div className="mt-1 text-[11px] text-bd-text-muted">
-                {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
+          {csrMeta.showTechnicianSignLine && (
+            <div className="space-y-2">
+              <div>
+                <FieldLabel>Technician Name</FieldLabel>
+                <TextInput
+                  value={String(csrMeta.technicianName || '')}
+                  onChange={(e) => onUpdateMeta('technicianName', e.target.value)}
+                />
               </div>
-              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-                <button
-                  type="button"
-                  onClick={() => setSignatorySheetOpen(true)}
-                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
-                >
-                  {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdate('technician_signatory_id', null)}
-                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
-                >
-                  Leave blank
-                </button>
+
+              {/* Inline signatory card */}
+              <div className="p-2.5 rounded-[10px] bg-bd-surface border border-bd-border flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[7px] font-mono uppercase text-bd-text-muted block">Technician Signature</span>
+                  <p className="text-[10px] font-bold text-bd-text mt-0.5">
+                    {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
+                  </p>
+                  {selectedSignatory && selectedSignatory.role && (
+                    <span className="text-[8px] text-bd-text-muted">{selectedSignatory.role}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">                    <button
+                      type="button"
+                      onClick={() => setSignatorySheetOpen(true)}
+                      className="h-10 px-3 rounded-[6px] text-bd-button-primary-text text-[8px] font-bold uppercase tracking-wider shadow-xs active:scale-95 transition bg-bd-button-primary-bg"
+                    >
+                    {selectedSignatory ? 'Change' : 'Choose'}
+                  </button>
+                  {selectedSignatory && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdate('technician_signatory_id', null)}
+                      className="h-10 px-3 rounded-[6px] bg-bd-surface text-bd-text-muted text-[8px] font-bold uppercase border border-bd-border active:scale-95"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+          )}
+        </section>
+
+        {/* ── 10. CUSTOMER ACKNOWLEDGEMENT ──────────────────────────── */}
+        <section className="pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
+              10. Customer Acknowledgement
+            </span>
+            <button
+              type="button"
+              onClick={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}
+              className={`px-2 py-0.5 rounded-[6px] text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-1 transition active:scale-95 border ${
+                csrMeta.showAcknowledgement
+                  ? 'bg-bd-surface border-bd-status-success-border text-bd-status-success-text'
+                  : 'bg-bd-surface border-bd-status-danger-border text-bd-status-danger-text'
+              }`}
+            >
+              {csrMeta.showAcknowledgement ? (
+                <><ChevronUp className="h-3 w-3" /> Included</>
+              ) : (
+                <><ChevronDown className="h-3 w-3" /> Excluded</>
+              )}
+            </button>
           </div>
-        </CollapsibleSection>
 
-        <CollapsibleSection
-          title="Acknowledgement"
-          number="10"
-          dotClassName="bg-slate-900 dark:bg-slate-100"
-          isOpen={!!csrMeta.showAcknowledgement}
-          onToggle={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}
-          action={
-            <HeaderActionButton onClick={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}>
-              {csrMeta.showAcknowledgement ? 'Included' : 'Include'}
-            </HeaderActionButton>
-          }
-        >
-          <div className="space-y-3">
-            <div>
-              <FieldLabel>Recipient name/title</FieldLabel>
-              <TextInput
-                value={String(csr.acknowledgement_name || '')}
-                onChange={(event) => onUpdate('acknowledgement_name', event.target.value)}
-              />
-            </div>
-            <div>
-              <FieldLabel>Comment</FieldLabel>
-              <TextArea
-                value={String(csr.customer_feedback || '')}
-                onChange={(event) => onUpdate('customer_feedback', event.target.value)}
-              />
-            </div>
-
-            <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-              <div className="text-[13px] font-bold text-bd-text">Recipient Signature</div>
-              <div className="mt-1 text-[11px] text-bd-text-muted">
-                {recipientSignatureName || 'Leave blank for offline sign.'}
+          {csrMeta.showAcknowledgement && (
+            <div className="space-y-2">
+              <div>
+                <FieldLabel>Recipient Name & Title</FieldLabel>
+                <TextInput
+                  placeholder="e.g. John Doe (Plant Manager)"
+                  value={String(csr.acknowledgement_name || '')}
+                  onChange={(e) => onUpdate('acknowledgement_name', e.target.value)}
+                />
               </div>
-              <input
-                ref={recipientSignatureInputRef}
-                type="file"
-                accept={IMAGE_ACCEPT_ATTRIBUTE}
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  if (file && !isSupportedImageFile(file)) {
-                    feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
-                    event.target.value = ''
-                    return
-                  }
-                  setRecipientSignatureName(file?.name || '')
-                  if (file) {
-                    const reader = new FileReader()
-                    reader.onload = () => {
-                      onUpdate('recipient_signature_uri', reader.result as string)
+              <div>
+                <FieldLabel>Feedback / Endorsement Note</FieldLabel>
+                <TextAreaCompact
+                  rows={2}
+                  value={String(csr.customer_feedback || '')}
+                  onChange={(e) => onUpdate('customer_feedback', e.target.value)}
+                  placeholder="Client feedback notes..."
+                />
+              </div>
+
+              {/* Signature area */}
+              <div className="p-2.5 rounded-[10px] bg-bd-surface border border-bd-border space-y-2 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] font-extrabold uppercase text-bd-text-muted">
+                    Recipient Signature
+                  </span>
+                  <span className="text-[7px] font-mono text-bd-text-muted">
+                    {recipientSignatureName ? 'Attached' : 'Offline Blank'}
+                  </span>
+                </div>
+
+                <input
+                  ref={recipientSignatureInputRef}
+                  type="file"
+                  accept={IMAGE_ACCEPT_ATTRIBUTE}
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (file && !isSupportedImageFile(file)) {
+                      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
+                      event.target.value = ''
+                      return
                     }
-                    reader.readAsDataURL(file)
-                  }
-                }}
-              />
-              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                    setRecipientSignatureName(file?.name || '')
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        onUpdate('recipient_signature_uri', reader.result as string)
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+
+                {recipientSignatureName || csr.recipient_signature_uri ? (
+                  <div className="h-16 rounded-[8px] bg-bd-surface-muted flex items-center justify-center p-1 relative border border-bd-border">
+                    {csr.recipient_signature_uri ? (
+                      <img src={String(csr.recipient_signature_uri)} alt="Recipient signature" className="max-h-full object-contain" />
+                    ) : (
+                      <span className="text-[9px] text-bd-text-muted font-medium">{recipientSignatureName}</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRecipientSignatureName('')
+                        onUpdate('recipient_signature_uri', '')
+                        if (recipientSignatureInputRef.current) recipientSignatureInputRef.current.value = ''
+                      }}
+                      className="absolute top-1 right-1 min-w-[44px] min-h-[44px] w-11 h-11 rounded-full bg-bd-surface text-bd-text-muted hover:text-bd-status-danger-text flex items-center justify-center shadow-xs"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-10 rounded-[8px] bg-bd-surface-muted flex items-center justify-center text-[9px] text-bd-text-muted font-medium border border-dashed border-bd-border">
+                    No signature attached (leave blank for physical sign)
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => recipientSignatureInputRef.current?.click()}
-                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
+                  className="w-full h-10 px-2.5 rounded-[8px] bg-bd-surface text-bd-text font-bold text-[8px] uppercase tracking-wider hover:bg-bd-surface-muted flex items-center justify-center gap-1.5 active:scale-95 transition border border-bd-border shadow-xs"
                 >
-                  Upload signature
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRecipientSignatureName('')
-                    onUpdate('recipient_signature_uri', '')
-                    if (recipientSignatureInputRef.current) {
-                      recipientSignatureInputRef.current.value = ''
-                    }
-                  }}
-                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
-                >
-                  Leave blank
+                  Upload Signature Image
                 </button>
               </div>
             </div>
-          </div>
-        </CollapsibleSection>
+          )}
+        </section>
+
       </div>
 
-      {/* Offline Indicator */}
+      {/* ── Offline Indicator ───────────────────────────────────────── */}
       {!isOnline && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-[13px] font-bold text-white sm:bottom-auto sm:top-0">
-          <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-          You are offline — save is disabled
+        <div className="fixed bottom-0 left-0 right-0 bg-bd-status-warning-bg text-bd-status-warning-text px-3 py-1 text-[8px] font-bold text-center z-50">
+          Offline Mode Active: Draft saved locally for synchronization.
         </div>
       )}
 
-      {/* Floating Save Button */}
+      {/* ── Mobile FAB ─────────────────────────────────────────────── */}
+      <div className="sm:hidden">
+        <MobileFab
+          onClick={onSave}
+          icon={saving ? Loader2 : Save}
+          ariaLabel="Save CSR"
+          disabled={saveDisabled}
+        />
+      </div>
+
+      {/* ── Desktop Save Buttons ────────────────────────────────────── */}
       <div className="hidden sm:block fixed bottom-6 right-6 z-30 flex items-center gap-3">
         {onDownloadBlank && (
           <button
             onClick={onDownloadBlank}
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-separator"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
             title="Download blank CSR"
           >
             <Download className="h-6 w-6" />
@@ -931,15 +1009,7 @@ export default function CsrFormScreen({
         </button>
       </div>
 
-      <div className="sm:hidden">
-        <MobileFab 
-          onClick={onSave} 
-          icon={saving ? Loader2 : Save} 
-          ariaLabel="Save CSR" 
-          disabled={saveDisabled}
-        />
-      </div>
-
+      {/* ── Signatory Sheet ─────────────────────────────────────────── */}
       <Sheet open={signatorySheetOpen} onOpenChange={setSignatorySheetOpen}>
         <SheetContent side="bottom" className="rounded-t-[24px]">
           <SheetHeader className="text-left">
@@ -961,15 +1031,13 @@ export default function CsrFormScreen({
                       onUpdate('technician_signatory_id', signatory.id)
                       setSignatorySheetOpen(false)
                     }}
-                    className={`w-full rounded-[16px] border p-4 text-left ${
+                    className={`w-full rounded-[16px] border p-4 text-left active:scale-[0.98] transition-transform duration-150 ${
                       active ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text' : 'border-bd-border bg-bd-surface text-bd-text'
                     }`}
                   >
                     <div className="text-[14px] font-bold">{signatory.name}</div>
                     {signatory.role ? (
-                      <div className={`mt-1 text-[12px] ${active ? 'text-bd-text-muted' : 'text-bd-text-muted'}`}>
-                        {signatory.role}
-                      </div>
+                      <div className="mt-1 text-[12px] text-bd-text-muted">{signatory.role}</div>
                     ) : null}
                   </button>
                 )
@@ -979,6 +1047,7 @@ export default function CsrFormScreen({
         </SheetContent>
       </Sheet>
 
+      {/* ── Import Sheet ────────────────────────────────────────────── */}
       <CsrImportSheet
         open={importSheetOpen}
         onOpenChange={setImportSheetOpen}
