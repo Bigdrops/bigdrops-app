@@ -71,11 +71,13 @@ const YES_NO_OPTIONS = ['Yes', 'No']
 
 function Section({
   title,
+  number,
   dotClassName,
   action,
   children,
 }: {
   title: React.ReactNode
+  number?: string
   dotClassName: string
   action?: React.ReactNode
   children: React.ReactNode
@@ -85,7 +87,10 @@ function Section({
       <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
         <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
           <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
-          <span className="truncate">{title}</span>
+          <span className="truncate">
+            {number && <span className="mr-1.5 font-mono text-[9px] opacity-50" style={{ fontFamily: '"DM Mono", monospace' }}>{number}</span>}
+            {title}
+          </span>
         </div>
         {action}
       </div>
@@ -97,8 +102,97 @@ function Section({
   )
 }
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">{children}</label>
+/**
+ * Collapsible section with smooth height animation.
+ * Uses CSS grid trick for animating height from 0 to auto.
+ */
+function CollapsibleSection({
+  title,
+  number,
+  dotClassName,
+  action,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  title: React.ReactNode
+  number?: string
+  dotClassName: string
+  action?: React.ReactNode
+  isOpen: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const [height, setHeight] = React.useState<number | undefined>(isOpen ? undefined : 0)
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const el = contentRef.current
+      if (el) {
+        setHeight(el.scrollHeight)
+        // After transition ends, set to undefined for auto-sizing
+        const timer = setTimeout(() => setHeight(undefined), 200)
+        return () => clearTimeout(timer)
+      }
+    } else {
+      const el = contentRef.current
+      if (el) {
+        // First set explicit height, then set to 0 in next frame
+        setHeight(el.scrollHeight)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setHeight(0))
+        })
+      }
+    }
+  }, [isOpen])
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between gap-3 px-0.5">
+        <div className="flex min-w-0 items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted">
+          <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
+          <span className="truncate">
+            {number && <span className="mr-1.5 font-mono text-[9px] opacity-50" style={{ fontFamily: '"DM Mono", monospace' }}>{number}</span>}
+            {title}
+          </span>
+        </div>
+        {action || (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="inline-flex h-8 items-center gap-2 rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
+          >
+            {isOpen ? 'Hide' : 'Show'}
+          </button>
+        )}
+      </div>
+
+      <div
+        className="overflow-hidden rounded-[20px] border border-bd-border bg-bd-surface shadow-[0_1px_3px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.06)]"
+        style={{
+          display: 'grid',
+          gridTemplateRows: height !== undefined ? `${height}px` : '1fr',
+          transition: 'grid-template-rows 200ms cubic-bezier(0.23, 1, 0.32, 1)',
+        }}
+      >
+        <div ref={contentRef} className="overflow-hidden">
+          <div className="p-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">
+      {children}
+      {required && <span className="ml-0.5 text-bd-status-danger-text">*</span>}
+    </label>
+  )
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -255,7 +349,7 @@ export default function CsrFormScreen({
   return (
     <div className="mx-auto min-h-screen max-w-md bg-bd-app-bg px-3 pb-[200px] pt-4 sm:px-4">
       <div className="space-y-5">
-        <Section title="Document Details" dotClassName="bg-slate-900">
+        <Section title="Document Details" number="01" dotClassName="bg-slate-900">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-bd-text-muted">
@@ -314,7 +408,7 @@ export default function CsrFormScreen({
 
           <div className="mt-4 space-y-3">
             <div>
-              <FieldLabel>CSR Number</FieldLabel>
+              <FieldLabel required>CSR Number</FieldLabel>
               <div className="relative">
                 {mode === 'edit' ? (
                   <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" />
@@ -381,7 +475,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Item Controls" dotClassName="bg-slate-700">
+        <Section title="Item Controls" number="02" dotClassName="bg-slate-700">
           <button
             type="button"
             onClick={() => setImportSheetOpen(true)}
@@ -391,7 +485,7 @@ export default function CsrFormScreen({
           </button>
         </Section>
 
-        <Section title="Main Details" dotClassName="bg-bd-violet">
+        <Section title="Service Parameters" number="03" dotClassName="bg-bd-violet">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <FieldLabel>Call Type</FieldLabel>
@@ -429,7 +523,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Equipment" dotClassName="bg-slate-600">
+        <Section title="Equipment" number="04" dotClassName="bg-slate-600">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -486,7 +580,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Problem & Service" dotClassName="bg-bd-rose">
+        <Section title="Problem & Service" number="05" dotClassName="bg-bd-rose">
           <div className="space-y-3">
             <div>
               <FieldLabel>Problem Reported</FieldLabel>
@@ -520,7 +614,7 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section title="Service Execution" dotClassName="bg-slate-900">
+        <Section title="Service Execution" number="06" dotClassName="bg-slate-900">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -570,53 +664,54 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section
+        <CollapsibleSection
           title="Operational Readings"
+          number="07"
           dotClassName="bg-amber-500"
+          isOpen={!!csrMeta.showOperationalReadings}
+          onToggle={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showOperationalReadings', !csrMeta.showOperationalReadings)}>
               {csrMeta.showOperationalReadings ? 'Hide section' : 'Show section'}
             </HeaderActionButton>
           }
         >
-          {csrMeta.showOperationalReadings ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Voltage</FieldLabel>
-                <TextInput value={String(csr.voltage || '')} onChange={(event) => onUpdate('voltage', event.target.value)} />
-              </div>
-              <div>
-                <FieldLabel>Frequency</FieldLabel>
-                <TextInput
-                  value={String(csr.frequency || '')}
-                  onChange={(event) => onUpdate('frequency', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Battery</FieldLabel>
-                <TextInput value={String(csr.battery || '')} onChange={(event) => onUpdate('battery', event.target.value)} />
-              </div>
-              <div>
-                <FieldLabel>Temperature</FieldLabel>
-                <TextInput
-                  value={String(csr.temperature || '')}
-                  onChange={(event) => onUpdate('temperature', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Pressure</FieldLabel>
-                <TextInput
-                  value={String(csr.pressure || '')}
-                  onChange={(event) => onUpdate('pressure', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Hours</FieldLabel>
-                <TextInput value={String(csr.hours || '')} onChange={(event) => onUpdate('hours', event.target.value)} />
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Voltage</FieldLabel>
+              <TextInput value={String(csr.voltage || '')} onChange={(event) => onUpdate('voltage', event.target.value)} />
             </div>
-          ) : null}
-        </Section>
+            <div>
+              <FieldLabel>Frequency</FieldLabel>
+              <TextInput
+                value={String(csr.frequency || '')}
+                onChange={(event) => onUpdate('frequency', event.target.value)}
+              />
+            </div>
+            <div>
+              <FieldLabel>Battery</FieldLabel>
+              <TextInput value={String(csr.battery || '')} onChange={(event) => onUpdate('battery', event.target.value)} />
+            </div>
+            <div>
+              <FieldLabel>Temperature</FieldLabel>
+              <TextInput
+                value={String(csr.temperature || '')}
+                onChange={(event) => onUpdate('temperature', event.target.value)}
+              />
+            </div>
+            <div>
+              <FieldLabel>Pressure</FieldLabel>
+              <TextInput
+                value={String(csr.pressure || '')}
+                onChange={(event) => onUpdate('pressure', event.target.value)}
+              />
+            </div>
+            <div>
+              <FieldLabel>Hours</FieldLabel>
+              <TextInput value={String(csr.hours || '')} onChange={(event) => onUpdate('hours', event.target.value)} />
+            </div>
+          </div>
+        </CollapsibleSection>
 
         <Section
           title={
@@ -626,6 +721,7 @@ export default function CsrFormScreen({
               className="w-32 bg-transparent text-[11px] font-extrabold uppercase tracking-[0.18em] text-bd-text-muted outline-none"
             />
           }
+          number="08"
           dotClassName="bg-bd-emerald"
           action={
             <span className="inline-flex h-8 items-center rounded-full border border-bd-status-success-border bg-bd-status-success-bg px-3 text-[12px] font-bold text-bd-status-success-text">
@@ -680,129 +776,131 @@ export default function CsrFormScreen({
           </div>
         </Section>
 
-        <Section
+        <CollapsibleSection
           title="Technician"
+          number="09"
           dotClassName="bg-sky-500"
+          isOpen={!!csrMeta.showTechnicianSignLine}
+          onToggle={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showTechnicianSignLine', !csrMeta.showTechnicianSignLine)}>
               {csrMeta.showTechnicianSignLine ? 'Included' : 'Include'}
             </HeaderActionButton>
           }
         >
-          {csrMeta.showTechnicianSignLine ? (
-            <div className="space-y-3">
-              <div>
-                <FieldLabel>Technician Name</FieldLabel>
-                <TextInput
-                  value={String(csrMeta.technicianName || '')}
-                  onChange={(event) => onUpdateMeta('technicianName', event.target.value)}
-                />
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Technician Name</FieldLabel>
+              <TextInput
+                value={String(csrMeta.technicianName || '')}
+                onChange={(event) => onUpdateMeta('technicianName', event.target.value)}
+              />
+            </div>
+            <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
+              <div className="text-[13px] font-bold text-bd-text">Technician Signature</div>
+              <div className="mt-1 text-[11px] text-bd-text-muted">
+                {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
               </div>
-              <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-                <div className="text-[13px] font-bold text-bd-text">Technician Signature</div>
-                <div className="mt-1 text-[11px] text-bd-text-muted">
-                  {selectedSignatory ? selectedSignatory.name : 'Leave blank for offline sign.'}
-                </div>
-                <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-                  <button
-                    type="button"
-                    onClick={() => setSignatorySheetOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
-                  >
-                    {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onUpdate('technician_signatory_id', null)}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
-                  >
-                    Leave blank
-                  </button>
-                </div>
+              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                <button
+                  type="button"
+                  onClick={() => setSignatorySheetOpen(true)}
+                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
+                >
+                  {selectedSignatory ? 'Change signatory' : 'Choose signatory'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onUpdate('technician_signatory_id', null)}
+                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
+                >
+                  Leave blank
+                </button>
               </div>
             </div>
-          ) : null}
-        </Section>
+          </div>
+        </CollapsibleSection>
 
-        <Section
+        <CollapsibleSection
           title="Acknowledgement"
+          number="10"
           dotClassName="bg-slate-900 dark:bg-slate-100"
+          isOpen={!!csrMeta.showAcknowledgement}
+          onToggle={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}
           action={
             <HeaderActionButton onClick={() => onUpdateMeta('showAcknowledgement', !csrMeta.showAcknowledgement)}>
               {csrMeta.showAcknowledgement ? 'Included' : 'Include'}
             </HeaderActionButton>
           }
         >
-          {csrMeta.showAcknowledgement ? (
-            <div className="space-y-3">
-              <div>
-                <FieldLabel>Recipient name/title</FieldLabel>
-                <TextInput
-                  value={String(csr.acknowledgement_name || '')}
-                  onChange={(event) => onUpdate('acknowledgement_name', event.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel>Comment</FieldLabel>
-                <TextArea
-                  value={String(csr.customer_feedback || '')}
-                  onChange={(event) => onUpdate('customer_feedback', event.target.value)}
-                />
-              </div>
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Recipient name/title</FieldLabel>
+              <TextInput
+                value={String(csr.acknowledgement_name || '')}
+                onChange={(event) => onUpdate('acknowledgement_name', event.target.value)}
+              />
+            </div>
+            <div>
+              <FieldLabel>Comment</FieldLabel>
+              <TextArea
+                value={String(csr.customer_feedback || '')}
+                onChange={(event) => onUpdate('customer_feedback', event.target.value)}
+              />
+            </div>
 
-              <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
-                <div className="text-[13px] font-bold text-bd-text">Recipient Signature</div>
-                <div className="mt-1 text-[11px] text-bd-text-muted">
-                  {recipientSignatureName || 'Leave blank for offline sign.'}
-                </div>
-                <input
-                  ref={recipientSignatureInputRef}
-                  type="file"
-                  accept={IMAGE_ACCEPT_ATTRIBUTE}
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0]
-                    if (file && !isSupportedImageFile(file)) {
-                      feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
-                      event.target.value = ''
-                      return
+            <div className="rounded-[16px] border border-bd-border bg-bd-surface-muted p-3">
+              <div className="text-[13px] font-bold text-bd-text">Recipient Signature</div>
+              <div className="mt-1 text-[11px] text-bd-text-muted">
+                {recipientSignatureName || 'Leave blank for offline sign.'}
+              </div>
+              <input
+                ref={recipientSignatureInputRef}
+                type="file"
+                accept={IMAGE_ACCEPT_ATTRIBUTE}
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file && !isSupportedImageFile(file)) {
+                    feedback.error('Unsupported file', { description: getUnsupportedImageErrorMessage(file.name) })
+                    event.target.value = ''
+                    return
+                  }
+                  setRecipientSignatureName(file?.name || '')
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                      onUpdate('recipient_signature_uri', reader.result as string)
                     }
-                    setRecipientSignatureName(file?.name || '')
-                    if (file) {
-                      const reader = new FileReader()
-                      reader.onload = () => {
-                        onUpdate('recipient_signature_uri', reader.result as string)
-                      }
-                      reader.readAsDataURL(file)
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                <button
+                  type="button"
+                  onClick={() => recipientSignatureInputRef.current?.click()}
+                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
+                >
+                  Upload signature
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecipientSignatureName('')
+                    onUpdate('recipient_signature_uri', '')
+                    if (recipientSignatureInputRef.current) {
+                      recipientSignatureInputRef.current.value = ''
                     }
                   }}
-                />
-                <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-                  <button
-                    type="button"
-                    onClick={() => recipientSignatureInputRef.current?.click()}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-button-primary-bg bg-bd-button-primary-bg px-[13px] text-[12px] font-bold text-bd-button-primary-text"
-                  >
-                    Upload signature
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRecipientSignatureName('')
-                      onUpdate('recipient_signature_uri', '')
-                      if (recipientSignatureInputRef.current) {
-                        recipientSignatureInputRef.current.value = ''
-                      }
-                    }}
-                    className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
-                  >
-                    Leave blank
-                  </button>
-                </div>
+                  className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] border-bd-border bg-bd-surface px-[13px] text-[12px] font-bold text-bd-text"
+                >
+                  Leave blank
+                </button>
               </div>
             </div>
-          ) : null}
-        </Section>
+          </div>
+        </CollapsibleSection>
       </div>
 
       {/* Offline Indicator */}

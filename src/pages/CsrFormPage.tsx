@@ -505,6 +505,48 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
   return (
     <Layout title={title} hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
+      {/* Decorative ambient SVG backgrounds — subtle industrial identity */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
+        <div
+          className="absolute -top-20 -right-16 h-[420px] w-[420px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(30,58,95,0.10) 0%, rgba(15,23,42,0) 70%)',
+            filter: 'blur(28px)',
+            animation: 'csrAmbientDrift 18s ease-in-out infinite alternate',
+          }}
+        />
+        <svg
+          className="absolute right-[-2rem] top-10 h-56 w-56 text-[rgba(30,58,95,0.04)]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          style={{ animation: 'csrAmbientDrift 22s ease-in-out infinite alternate-reverse' }}
+        >
+          <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
+          <path d="M15 2H9a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1z" />
+          <path d="M9 12h6M9 16h4" />
+        </svg>
+        <svg
+          className="absolute left-[-3rem] top-[38%] h-64 w-64 text-[rgba(15,23,42,0.03)]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.1"
+          style={{ animation: 'csrAmbientDrift 26s ease-in-out infinite alternate' }}
+        >
+          <path d="M2 15h20" />
+          <path d="M6 15v-1a6 6 0 0112 0v1" />
+          <path d="M12 4v4" />
+          <path d="M4 15a8 8 0 0116 0" />
+        </svg>
+      </div>
+      <style>{`
+        @keyframes csrAmbientDrift {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          100% { transform: translate(10px, -8px) rotate(3deg); }
+        }
+      `}</style>
       <CsrFormScreen
         mode={isCreate ? 'new' : 'edit'}
         csr={csr}
