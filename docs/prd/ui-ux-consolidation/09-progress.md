@@ -1,0 +1,127 @@
+# UI/UX Consolidation — Progress Tracker
+
+**Purpose:** Living dashboard tracking implementation status of all consolidation tasks.
+**Last Updated:** 2026-08-28
+
+**Status Legend:**
+- ⬜ Not Started
+- 🟨 In Progress
+- 🟩 Completed
+- ❌ Won't Fix
+- 🔄 Superseded
+
+---
+
+## ✅ Completed Work (Verified Against Codebase)
+
+### Dead Code Removal
+| Task | Status | Evidence |
+|------|--------|----------|
+| Delete `App.css` | 🟩 Done | File no longer exists in `src/` |
+| Delete `Dashboard.tsx` (0-line stub) | 🟩 Done | File no longer exists in `src/pages/` |
+| Delete `ui/sidebar.tsx` (715 lines, unused) | 🟩 Done | File no longer exists in `src/components/ui/` |
+| Delete `FormNavigationItem.tsx` | 🟩 Done | File no longer exists, no imports found |
+| Delete `FormNavigation.tsx` | 🟩 Done | File no longer exists, no imports found |
+
+### Component Primitives
+| Task | Status | Evidence |
+|------|--------|----------|
+| Create `button-group.tsx` | 🟩 Done | Exists at `src/components/ui/button-group.tsx` |
+| Create `input-group.tsx` | 🟩 Done | Exists at `src/components/ui/input-group.tsx` |
+
+### New/Edit Page Unification (R1)
+| Module | Status | Evidence |
+|--------|--------|----------|
+| Invoice | 🟩 Done | `NewInvoice.tsx` + `EditInvoice.tsx` are stubs → `InvoiceFormPage.tsx` (17,980 bytes) |
+| Waybill | 🟩 Done | `NewWaybill.tsx` + `EditWaybill.tsx` are stubs → `WaybillFormPage.tsx` (7,230 bytes) |
+| Quotation | 🟩 Done | `NewQuotation.tsx` + `EditQuotation.tsx` are stubs → `QuotationFormPage.tsx` (32,656 bytes) |
+| CSR | 🟩 Done | `NewCSR.tsx` + `EditCSR.tsx` are stubs → `CsrFormPage.tsx` (19,578 bytes) |
+| BOQ | ⬜ Not Started | `NewBoq.tsx` (83 lines) + `EditBoq.tsx` (95 lines) still separate implementations |
+| RFQ | ⬜ Not Started | `NewRfq.tsx` (70 lines) + `EditRfq.tsx` (92 lines) still separate implementations |
+
+### Accessibility
+| Task | Status | Evidence |
+|------|--------|----------|
+| `prefers-reduced-motion` in `index.css` | 🟩 Done | Present in CSS |
+| `prefers-reduced-motion` in `OperationOverlay.tsx` | 🟩 Done | Present |
+| `prefers-reduced-motion` in `ProvisioningProgress.tsx` | 🟩 Done | Present |
+| `prefers-reduced-motion` in `WorkspacePendingApproval.tsx` | 🟩 Done | Present |
+
+### Sign-Out Confirmation (D-008)
+| Location | Status | Evidence |
+|----------|--------|----------|
+| `WorkspacePendingApproval.tsx` | 🟩 Done | AlertDialog wrapper present |
+| `WorkspaceInvitation.tsx` | 🟩 Done | AlertDialog wrapper present |
+| `ProvisioningProgress.tsx` | 🟩 Done | AlertDialog wrapper present |
+| `ProvisioningFailed.tsx` | 🟩 Done | AlertDialog wrapper present |
+| `MobileSidebar.tsx` | ⬜ Not Started | Direct `supabase.auth.signOut()` — no confirmation dialog |
+| `Layout.tsx` (desktop sign-out) | ⬜ Not Started | Needs verification |
+
+---
+
+## ⬜ Not Started — Remaining Tasks
+
+### Phase 0: Design System Token Replacement
+| ID | Task | Decision | Status |
+|----|------|----------|--------|
+| — | Select design language | D-017 superseded | ⬜ BLOCKED — awaiting stakeholder decision |
+| UX-020 | Replace `--bd-*` tokens with chosen system | TBD | ⬜ Blocked on design choice |
+| UX-021 | Replace shadcn HSL tokens | TBD | ⬜ Blocked on design choice |
+| UX-022 | Update Tailwind config colors | TBD | ⬜ Blocked on design choice |
+| UX-023 | Delete `formTheme.css` (196 `--bd-*` definitions) | — | ⬜ Blocked on design choice |
+| UX-024 | Grep + replace all `--bd-*` references in components | — | ⬜ Blocked on design choice |
+
+### Phase 1: Quick Wins (Remaining)
+| ID | Task | Status |
+|----|------|--------|
+| Q-01 | Sign-out confirmation in MobileSidebar | ⬜ Not Started |
+| Q-02 | Sticky sidebar business context | ⬜ Not Started — `DesktopSidebar.tsx` has 0 `position: sticky` rules |
+| Q-03 | Global `prefers-reduced-motion` (comprehensive) | 🟨 Partial — 4 locations done, not comprehensive |
+| Q-04 | Mobile drag handle touch targets (min 44×44px) | ⬜ Not Started |
+| Q-06 | Sortable columns UI wiring in Settings | ⬜ Not Started |
+| Q-07 | CSR universal toggle | ⬜ Not Started |
+
+### Phase 2: Architecture Cleanup
+| ID | Task | Status |
+|----|------|--------|
+| A-01 | Module-specific column hooks (`useWaybillColumns`, etc.) | ⬜ Not Started |
+| A-03 | Standardize portal usage (`createPortal` vs `appendChild`) | ⬜ Not Started — 4 files still use `document.body.appendChild` |
+| A-04 | CSS Module consolidation (6× → 1×) | ⬜ Not Started |
+| A-05 | BOQ/RFQ New/Edit page unification | ⬜ Not Started |
+
+### Phase 3: Polish
+| ID | Task | Status |
+|----|------|--------|
+| Z-01 | Route transition animations | ⬜ Not Started — no `AnimatePresence` in `App.tsx` |
+| Z-02 | Safe area insets for Capacitor | ⬜ Not Started |
+| Z-03 | `aria-live` loading regions | ⬜ Not Started |
+| Z-04 | Documentation update | ⬜ Not Started |
+| Z-05 | Final audits | ⬜ Not Started |
+
+### Frimer-Motion Audit
+| Component | Status | Note |
+|-----------|--------|------|
+| `circuit-board.tsx` | ⚠️ Uses `motion` | Loading animation — production component |
+| `sidebar-toggle-icon.tsx` | ⚠️ Uses `motion` | Sidebar toggle — production component |
+| `glowing-badge.tsx` | ⬜ Needs check | May use `motion` |
+| `OpenInAIDropdown.tsx` | ⚠️ Uses framer-motion | Per README — needs verification |
+
+**Note:** Both `framer-motion` (^12.38.0) and `motion` (^12.42.2) are in `package.json`. Per AGENTS.md, framer-motion is banned in production. These 3 components need migration to CSS transitions.
+
+---
+
+## 📊 Summary Metrics
+
+| Category | Total | Completed | Remaining |
+|----------|-------|-----------|-----------|
+| Dead code removal | 5 | 5 | 0 |
+| Component primitives | 2 | 2 | 0 |
+| New/Edit unification | 6 modules | 4 | 2 (BOQ, RFQ) |
+| Sign-out confirmation | 6 locations | 4 | 2 |
+| Accessibility | 4 locations | 4 | Global coverage pending |
+| Design system tokens | 5 tasks | 0 | 5 (blocked) |
+| Quick wins | 6 tasks | 0.5 | 5.5 |
+| Architecture cleanup | 4 tasks | 0 | 4 |
+| Polish | 5 tasks | 0 | 5 |
+
+**Overall progress: ~30% of tasks completed. Design system selection is the critical blocker for Phase 0.**

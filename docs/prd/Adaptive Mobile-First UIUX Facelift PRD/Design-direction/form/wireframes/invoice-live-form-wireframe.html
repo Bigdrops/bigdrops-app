@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Live Form — Neutral Wireframe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+  .form-shell { max-width: 780px; margin: 0 auto; padding: 16px 12px 200px; }
+  .section-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin-bottom: 12px; padding: 0 2px; }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .section-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 24px; margin-bottom: 24px; }
+  .field-label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; margin-bottom: 4px; }
+  .field-input { width: 100%; height: 44px; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0 12px; font-size: 14px; background: #f8fafc; outline: none; }
+  .field-input:focus { border-color: #6366f1; }
+  .field-input.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700; }
+  .field-input:disabled { opacity: 0.5; background: #f1f5f9; }
+  .field-input.large { height: 48px; font-size: 16px; font-weight: 700; }
+  .field-input::placeholder { color: #cbd5e1; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .field-full { margin-bottom: 16px; }
+  .type-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; border: 1px solid #6366f133; background: #6366f110; padding: 6px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #6366f1; margin-bottom: 16px; }
+  .type-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; }
+  .selector-btn { display: flex; align-items: center; gap: 12px; width: 100%; border: 1.5px dashed #e2e8f0; border-radius: 16px; background: #fff; padding: 12px 16px; text-align: left; cursor: pointer; transition: all 0.15s; }
+  .selector-btn:hover { border-color: #6366f1; background: #eef2ff; }
+  .selector-btn .icon-box { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; flex-shrink: 0; font-size: 18px; }
+  .selector-btn .label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; }
+  .selector-btn .value { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
+  .selector-btn .chevron { margin-left: auto; color: #cbd5e1; }
+  .selector-btn.locked { border-style: solid; opacity: 0.7; cursor: default; }
+  .selector-btn.locked:hover { background: #fff; border-color: #e2e8f0; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 12px; }
+  .toolbar-btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #475569; }
+  .toolbar-btn:hover { background: #f8fafc; }
+  .toolbar-btn.danger:hover { background: #fef2f2; color: #ef4444; }
+  .item-count { margin-left: auto; font-family: monospace; font-size: 11px; font-weight: 700; color: #94a3b8; }
+
+  /* Line item row */
+  .item-row { border: 1px solid #f1f5f9; border-radius: 12px; background: #fff; padding: 12px; margin-bottom: 8px; }
+  .item-row-header { display: flex; align-items: start; gap: 8px; }
+  .item-number { font-size: 10px; font-weight: 700; color: #94a3b8; padding-top: 8px; min-width: 16px; }
+  .item-grip { color: #cbd5e1; cursor: grab; padding-top: 6px; }
+  .item-fields { flex: 1; min-width: 0; }
+  .item-fields textarea { width: 100%; min-height: 38px; border: 1px solid #f1f5f9; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 500; resize: none; outline: none; background: #f8fafc; }
+  .item-fields textarea:focus { border-color: #6366f1; background: #fff; }
+  .item-qty-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  .item-qty-row .mini-input { height: 36px; border: 1px solid #f1f5f9; border-radius: 8px; padding: 0 8px; font-size: 13px; font-weight: 700; text-align: center; outline: none; }
+  .item-qty-row .mini-input:focus { border-color: #6366f1; }
+  .item-subtotal { display: flex; align-items: center; justify-content: space-between; border: 1px solid #f1f5f9; border-radius: 12px; background: #f8fafc; padding: 10px 12px; margin-top: 8px; }
+  .item-subtotal .label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8; }
+  .item-subtotal .value { font-family: monospace; font-size: 18px; font-weight: 900; }
+  .item-actions { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+  .item-action-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: #64748b; }
+  .item-action-btn:hover { background: #f8fafc; }
+  .item-action-btn.remove { border-color: #fecdd3; background: #fef2f2; color: #ef4444; }
+  .item-action-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+  .item-pills { display: flex; gap: 6px; margin-top: 8px; }
+  .item-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; padding: 4px 10px; font-size: 10px; font-weight: 700; cursor: pointer; color: #94a3b8; }
+  .item-pill.active { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+  .item-pill:hover { background: #f8fafc; }
+  .insert-below { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #cbd5e1; cursor: pointer; padding: 4px 0 0 24px; }
+  .insert-below:hover { color: #6366f1; }
+
+  /* Add buttons */
+  .add-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .add-item-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: 1.5px dashed #e2e8f0; border-radius: 12px; background: #fff; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; }
+  .add-item-btn:hover { border-color: #f59e0b; background: #fffbeb; color: #d97706; }
+  .add-group-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: 1.5px dashed #e2e8f0; border-radius: 12px; background: #fff; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; }
+  .add-group-btn:hover { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+
+  /* Collapse card */
+  .collapse-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; margin-bottom: 8px; overflow: hidden; }
+  .collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; }
+  .collapse-header .title-group { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .collapse-header .title { font-size: 14px; font-weight: 700; }
+  .collapse-header .subtitle { font-size: 12px; color: #94a3b8; margin-left: auto; flex-shrink: 0; }
+  .collapse-header .chevron { color: #94a3b8; margin-left: 8px; }
+  .collapse-body { padding: 0 16px 16px; }
+
+  /* Summary rows */
+  .summary-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+  .summary-row .label { font-size: 14px; font-weight: 500; color: #475569; }
+  .summary-row .value { font-family: monospace; font-size: 14px; font-weight: 700; }
+  .summary-row.negative .value { color: #ef4444; }
+  .summary-row.total { border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 8px; }
+  .summary-row.total .label { font-size: 15px; font-weight: 900; }
+  .summary-row.total .value { font-family: Georgia, serif; font-size: 30px; font-weight: 600; }
+
+  /* Segmented control */
+  .seg-ctrl { display: flex; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .seg-btn { flex: 1; height: 36px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; background: #fff; color: #64748b; }
+  .seg-btn.active { background: #6366f1; color: #fff; }
+
+  /* Extra charge row */
+  .charge-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .charge-row .field-input { flex: 1; }
+  .charge-row .num-input { width: 112px; text-align: right; font-weight: 700; font-family: monospace; }
+  .charge-row .remove-btn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid #fecdd3; background: #fef2f2; color: #ef4444; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+  .charge-add-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .charge-add-btn { height: 36px; border: 1.5px dashed #e2e8f0; border-radius: 10px; background: #fff; font-size: 12px; font-weight: 700; cursor: pointer; color: #475569; }
+
+  /* Header fields */
+  .header-field-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .header-field-row .field-input { flex: 1; height: 40px; font-size: 13px; }
+  .header-field-row .field-input.label-input { flex: 0.7; background: #f1f5f9; font-weight: 600; }
+  .header-field-row .remove-btn { width: 36px; height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+  .add-field-btn { font-size: 11px; font-weight: 700; color: #6366f1; cursor: pointer; padding: 4px 8px; border-radius: 6px; border: none; background: none; }
+  .add-field-btn:hover { background: #eef2ff; }
+
+  /* Footer */
+  .form-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .footer-inner { max-width: 780px; margin: 0 auto; }
+  .footer-btns { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+  .footer-btn { height: 44px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
+  .footer-btn.cancel { border: 1px solid #e2e8f0; background: #fff; color: #1a1a1a; }
+  .footer-btn.draft { border: 1px solid #e2e8f0; background: #f1f5f9; color: #1a1a1a; }
+  .footer-btn.save { background: #6366f1; color: #fff; font-weight: 900; font-size: 14px; }
+  .floating-save { position: fixed; bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 16px); right: 16px; z-index: 60; width: 56px; height: 56px; border-radius: 16px; background: #6366f1; color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(99,102,241,0.4); cursor: pointer; }
+
+  /* Overlay base */
+  .overlay-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.6); display: flex; align-items: end; justify-content: center; }
+  .overlay-backdrop.hidden { display: none; }
+  .overlay-sheet { width: 100%; max-width: 512px; max-height: 85vh; background: #fff; border-radius: 24px 24px 0 0; overflow-y: auto; }
+  .overlay-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; background: #fff; z-index: 1; }
+  .overlay-header .title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.16em; color: #94a3b8; }
+  .overlay-close { width: 32px; height: 32px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; }
+  .overlay-body { padding: 20px 24px 40px; }
+
+  /* Alert dialog */
+  .alert-overlay { position: fixed; inset: 0; z-index: 110; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .alert-overlay.hidden { display: none; }
+  .alert-box { width: 100%; max-width: 380px; background: #fff; border-radius: 16px; padding: 24px; }
+  .alert-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .alert-box p { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+  .alert-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .alert-btn { height: 36px; padding: 0 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
+  .alert-btn.destructive { background: #ef4444; color: #fff; border: none; }
+
+  /* Rich text placeholder */
+  .rte-placeholder { min-height: 100px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #f8fafc; color: #94a3b8; font-size: 13px; font-style: italic; }
+
+  /* Amount in words */
+  .amount-words { border: 1.5px dashed #f1f5f9; border-radius: 12px; background: #f8fafc; padding: 12px; font-size: 12px; font-weight: 500; font-style: italic; color: #475569; margin-top: 16px; }
+
+  /* Reference links */
+  .link-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .link-row .field-input { flex: 1; height: 40px; font-size: 13px; }
+  .link-row .field-input.url-input { flex: 1.5; }
+  .link-row .remove-btn { width: 40px; height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #94a3b8; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; z-index: 200; display: none; }
+  .toast.visible { display: block; }
+
+  /* Conditional */
+  .conditional { display: none; }
+  .conditional.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="form-shell">
+
+  <!-- Section 1: Document Header -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="type-badge"><span class="dot"></span> Invoice</div>
+      <button style="width:36px;height:36px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#475569;font-size:16px;" onclick="openActionsSheet()">⋯</button>
+    </div>
+
+    <div class="section-label" style="color:#0f172a;">Document Details</div>
+
+    <!-- Client Selector -->
+    <button class="selector-btn" id="clientBtn" onclick="openClientPicker()" style="margin-bottom:20px;">
+      <div class="icon-box">👤</div>
+      <div style="flex:1;min-width:0;">
+        <div class="label">Client</div>
+        <div class="value" id="clientDisplay">Select a client</div>
+      </div>
+      <div class="chevron">›</div>
+    </button>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#94a3b8;">New Invoice</div>
+      <h1 style="font-size:25px;font-weight:900;line-height:1.2;margin-top:4px;">Create Invoice</h1>
+    </div>
+
+    <div class="field-full">
+      <label class="field-label">Invoice Title</label>
+      <input class="field-input large" placeholder="e.g. Monthly Maintenance">
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label">Invoice No.</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:14px;">#</span>
+          <input class="field-input mono" style="padding-left:32px;font-size:13px;" value="INV-000043" readonly>
+        </div>
+      </div>
+      <div>
+        <label class="field-label">PO Number</label>
+        <input class="field-input" placeholder="Optional">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label">Issue Date</label>
+        <input class="field-input" type="date" value="2026-09-02">
+      </div>
+      <div>
+        <label class="field-label">Due Date</label>
+        <input class="field-input" type="date">
+      </div>
+    </div>
+
+    <!-- Header Fields -->
+    <div style="border-top:1px solid #f1f5f9;padding-top:16px;margin-top:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.14em;color:#94a3b8;">Header Fields</div>
+        <button class="add-field-btn" onclick="addHeaderField()">Add field</button>
+      </div>
+      <div id="headerFields"></div>
+      <button class="add-field-btn" onclick="addHeaderField()" style="width:100%;text-align:center;padding:8px;border:1.5px dashed #e2e8f0;border-radius:10px;margin-top:4px;">+ Add header field</button>
+    </div>
+  </div>
+
+  <!-- Section 2: Line Items -->
+  <div style="margin-top:24px;">
+    <div class="section-label" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:6px;"><span class="section-dot" style="background:#059669"></span> Line Items</span>
+      <span style="font-family:monospace;font-size:11px;font-weight:700;color:#94a3b8;" id="itemCountDisplay">1 item</span>
+    </div>
+
+    <div class="toolbar">
+      <button class="toolbar-btn" onclick="showToast('Import sheet opened')">📥 Import</button>
+      <button class="toolbar-btn" onclick="showToast('Column manager opened')">⚙ Settings</button>
+      <button class="toolbar-btn danger" onclick="openClearConfirm()" style="margin-left:auto;">🗑 Clear</button>
+    </div>
+
+    <div id="lineItemsContainer">
+      <div class="item-row" data-index="0">
+        <div class="item-row-header">
+          <div class="item-number">1</div>
+          <div class="item-grip">⋮⋮</div>
+          <div class="item-fields">
+            <textarea placeholder="Item description..."></textarea>
+            <div class="item-pills">
+              <button class="item-pill" onclick="this.classList.toggle('active')">▾ Sub-desc</button>
+              <button class="item-pill">📷 Photo</button>
+            </div>
+            <div class="item-qty-row">
+              <div><label class="field-label" style="font-size:9px;">Qty</label><input class="mini-input" type="number" value="1" min="1"></div>
+              <div><label class="field-label" style="font-size:9px;">Unit</label><input class="mini-input" placeholder="Unit"></div>
+              <div><label class="field-label" style="font-size:9px;">Rate</label><input class="mini-input" type="number" value="0"></div>
+              <div><label class="field-label" style="font-size:9px;">Make</label><input class="mini-input" placeholder="—"></div>
+            </div>
+            <div class="item-subtotal">
+              <div class="label">Subtotal</div>
+              <div class="value">0.00</div>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="item-action-btn disabled">▲</button>
+            <button class="item-action-btn disabled">▼</button>
+            <button class="item-action-btn remove" onclick="removeItem(0)">✕</button>
+          </div>
+        </div>
+        <div class="insert-below" onclick="insertItemAfter(0)">+ Insert below</div>
+      </div>
+    </div>
+
+    <div class="add-btns">
+      <button class="add-item-btn" onclick="addItem()">＋ Add item</button>
+      <button class="add-group-btn" onclick="showToast('Group added')">📁 Add group</button>
+    </div>
+  </div>
+
+  <!-- Section 3: Commercial Terms -->
+  <div style="margin-top:24px;">
+    <div class="section-label" style="color:#f59e0b;"><span class="section-dot" style="background:#f59e0b"></span> Commercial Terms</div>
+
+    <div class="field-row" style="border-bottom:1px solid #e2e8f0;padding-bottom:16px;">
+      <div>
+        <label class="field-label">Payment Terms</label>
+        <select class="field-input" style="appearance:none;cursor:pointer;">
+          <option>Custom</option>
+          <option>Net 7 Days</option>
+          <option>Net 14 Days</option>
+          <option>Net 30 Days</option>
+          <option>Due on Receipt</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Due / Validity</label>
+        <input class="field-input" placeholder="e.g. Due in 14 days">
+      </div>
+    </div>
+
+    <!-- Discount -->
+    <div class="collapse-card" style="margin-top:8px;">
+      <div class="collapse-header" onclick="toggleCollapse('discount')">
+        <div class="title-group"><span class="title">Discount</span></div>
+        <span class="subtitle">Not set</span>
+        <span class="chevron" id="discountChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="discountBody" style="display:none;">
+        <div class="field-row">
+          <div><label class="field-label">Value</label><input class="field-input" type="number" value="0" min="0"></div>
+          <div><label class="field-label">Type</label>
+            <div class="seg-ctrl"><button class="seg-btn active">NGN</button><button class="seg-btn" onclick="toggleSeg(this)">%</button></div>
+          </div>
+        </div>
+        <div><label class="field-label">Discount Timing</label>
+          <div class="seg-ctrl"><button class="seg-btn active">After VAT</button><button class="seg-btn" onclick="toggleSeg(this)">Before VAT</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VAT -->
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('vat')">
+        <div class="title-group"><span class="title">VAT</span></div>
+        <span class="subtitle">Not set</span>
+        <span class="chevron" id="vatChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="vatBody" style="display:none;">
+        <div><label class="field-label">VAT Rate (%)</label><input class="field-input" type="number" value="0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- WHT -->
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('wht')">
+        <div class="title-group"><span class="title">Withholding Tax (WHT)</span></div>
+        <span class="subtitle">Not set</span>
+        <span class="chevron" id="whtChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="whtBody" style="display:none;">
+        <div class="field-row">
+          <div><label class="field-label">WHT Rate</label><input class="field-input" type="number" value="0" min="0"></div>
+          <div><label class="field-label">Unit</label>
+            <div class="seg-ctrl"><button class="seg-btn active">%</button><button class="seg-btn" onclick="toggleSeg(this)">NGN</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Charges -->
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('charges')">
+        <div class="title-group"><span class="title">Additional Charges</span></div>
+        <span class="subtitle">None</span>
+        <span class="chevron" id="chargesChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="chargesBody" style="display:none;">
+        <div id="chargesContainer"></div>
+        <div class="charge-add-btns">
+          <button class="charge-add-btn" onclick="addCharge('tax')">+ Charge (with Tax)</button>
+          <button class="charge-add-btn" onclick="addCharge('notax')">+ Charge (No Tax)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Fields -->
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('fields')">
+        <div class="title-group"><span class="title">Additional Fields</span></div>
+        <span class="subtitle">None</span>
+        <span class="chevron" id="fieldsChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="fieldsBody" style="display:none;">
+        <div id="fieldsContainer"></div>
+        <button style="width:100%;height:36px;border:1.5px dashed #e2e8f0;border-radius:10px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;" onclick="addAdditionalField()">Add Additional Field</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Totals -->
+  <div style="margin-top:24px;">
+    <div class="section-label" style="color:#059669;"><span class="section-dot" style="background:#059669"></span> Totals</div>
+
+    <div style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:16px;">
+      <div class="summary-row"><span class="label">Subtotal</span><span class="value">₦0.00</span></div>
+
+      <div style="margin-top:12px;">
+        <button style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font-size:11px;font-weight:800;cursor:pointer;color:#475569;" onclick="toggleCollapse('vatInline')">▾ VAT</button>
+        <div id="vatInlineBody" style="display:none;margin-top:12px;">
+          <label class="field-label">VAT Rate (%)</label>
+          <input class="field-input" type="number" value="0" min="0">
+        </div>
+      </div>
+
+      <div class="amount-words">ZERO NAIRA ONLY</div>
+
+      <div class="summary-row total" style="margin-top:20px;">
+        <span class="label">Grand Total</span>
+        <span class="value">₦0.00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Notes & Terms -->
+  <div style="margin-top:16px;">
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('notes')">
+        <div class="title-group"><span class="title">Notes & Terms</span></div>
+        <span class="chevron" id="notesChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="notesBody" style="display:none;">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:#94a3b8;margin-bottom:8px;">Invoice Notes</div>
+          <div class="rte-placeholder">Rich text editor placeholder</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.16em;color:#94a3b8;margin-bottom:8px;">Terms & Conditions</div>
+          <div class="rte-placeholder">Rich text editor placeholder</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('signatory')">
+        <div class="title-group"><span class="title">Signatory</span></div>
+        <span class="subtitle">No Signatory</span>
+        <span class="chevron" id="signatoryChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="signatoryBody" style="display:none;">
+        <div style="font-size:13px;color:#64748b;">Signatory picker placeholder (grid of saved signatories with name, role, signature thumbnail)</div>
+      </div>
+    </div>
+
+    <div class="collapse-card">
+      <div class="collapse-header" onclick="toggleCollapse('links')">
+        <div class="title-group"><span class="title">Reference Links</span></div>
+        <span class="subtitle">No links attached</span>
+        <span class="chevron" id="linksChevron">▸</span>
+      </div>
+      <div class="collapse-body" id="linksBody" style="display:none;">
+        <div id="linksContainer"></div>
+        <button style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#6366f1;cursor:pointer;padding:4px 0;border:none;background:none;" onclick="addLink()">＋ Add Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="form-footer">
+  <div class="footer-inner">
+    <div class="footer-btns">
+      <button class="footer-btn cancel" onclick="showToast('Cancelled')">Cancel</button>
+      <button class="footer-btn draft" onclick="showToast('Saved as draft')">Draft</button>
+      <button class="footer-btn save" onclick="showToast('Invoice created!')">Create Invoice</button>
+    </div>
+  </div>
+</div>
+<button class="floating-save" onclick="showToast('Invoice created!')">💾</button>
+
+<!-- CLIENT PICKER OVERLAY -->
+<div class="overlay-backdrop hidden" id="clientPickerOverlay" onclick="closeOverlay('clientPickerOverlay', event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Select Client</div>
+      <button class="overlay-close" onclick="closeOverlay('clientPickerOverlay')">✕</button>
+    </div>
+    <div class="overlay-body">
+      <input class="field-input" placeholder="Search clients..." style="margin-bottom:16px;">
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="selectClient('Acme Corp')">
+        <div style="font-weight:700;">Acme Corp</div>
+        <div style="font-size:12px;color:#94a3b8;">Lagos, Nigeria</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIONS SHEET -->
+<div class="overlay-backdrop hidden" id="actionsSheet" onclick="closeOverlay('actionsSheet', event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Quick Actions</div>
+      <button class="overlay-close" onclick="closeOverlay('actionsSheet')">✕</button>
+    </div>
+    <div class="overlay-body" style="padding:12px 16px;">
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="showToast('Saved as draft');closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Save as Draft</div>
+        <div style="font-size:12px;color:#94a3b8;">Save without finalizing</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="showToast('Cancelled');closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Cancel</div>
+        <div style="font-size:12px;color:#94a3b8;">Discard changes</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="showToast('Column manager opened');closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Manage Columns</div>
+        <div style="font-size:12px;color:#94a3b8;">Toggle visibility, rename, add custom columns</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="showToast('Import sheet opened');closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Import JSON</div>
+        <div style="font-size:12px;color:#94a3b8;">Paste JSON to populate items</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-weight:700;font-size:14px;">Merge Qty + Unit</div><div style="font-size:12px;color:#94a3b8;">Combine in PDF output</div></div>
+        <div style="width:44px;height:24px;border-radius:12px;background:#e2e8f0;cursor:pointer;position:relative;"><div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div></div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="showToast('Group added');closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Add Group</div>
+        <div style="font-size:12px;color:#94a3b8;">Insert a group header row</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Notes & Terms</div>
+        <div style="font-size:12px;color:#94a3b8;">Scroll to notes section</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;cursor:pointer;" onclick="closeOverlay('actionsSheet')">
+        <div style="font-weight:700;font-size:14px;">Reference Links</div>
+        <div style="font-size:12px;color:#94a3b8;">Scroll to links section</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLEAR ALL ALERT -->
+<div class="alert-overlay hidden" id="clearAlert">
+  <div class="alert-box">
+    <h3>Clear all items?</h3>
+    <p>This will remove all 1 line items and 0 groups from this document. This action cannot be undone.</p>
+    <div class="alert-btns">
+      <button class="alert-btn" onclick="closeClearConfirm()">Cancel</button>
+      <button class="alert-btn destructive" onclick="clearAllItems()">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- IDENTITY LOCK DIALOG -->
+<div class="alert-overlay hidden" id="identityLockDialog">
+  <div class="alert-box">
+    <h3>Identity Fields Locked</h3>
+    <p>Client and document number cannot be changed after a document is saved. To use different values, duplicate this document as a new draft with your current changes.</p>
+    <div class="alert-btns">
+      <button class="alert-btn" onclick="closeIdentityLock()">Cancel</button>
+      <button class="alert-btn" style="background:#6366f1;color:#fff;border:none;" onclick="showToast('Duplicating...');closeIdentityLock()">Duplicate Current Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let itemCount = 1;
+
+  function selectClient(name) {
+    document.getElementById('clientDisplay').textContent = name;
+    closeOverlay('clientPickerOverlay');
+  }
+
+  function openClientPicker() {
+    document.getElementById('clientPickerOverlay').classList.remove('hidden');
+  }
+  function openActionsSheet() {
+    document.getElementById('actionsSheet').classList.remove('hidden');
+  }
+  function closeOverlay(id, e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById(id).classList.add('hidden');
+  }
+
+  function openClearConfirm() {
+    document.getElementById('clearAlert').classList.remove('hidden');
+  }
+  function closeClearConfirm() {
+    document.getElementById('clearAlert').classList.add('hidden');
+  }
+  function clearAllItems() {
+    document.getElementById('lineItemsContainer').innerHTML = createItemRow(0);
+    itemCount = 1;
+    document.getElementById('itemCountDisplay').textContent = '1 item';
+    closeClearConfirm();
+    showToast('All items cleared');
+  }
+
+  function addItem() {
+    document.getElementById('lineItemsContainer').insertAdjacentHTML('beforeend', createItemRow(itemCount));
+    itemCount++;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+  }
+  function removeItem(idx) {
+    if (itemCount <= 1) return;
+    document.querySelectorAll('.item-row')[idx]?.remove();
+    itemCount--;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+    renumberItems();
+  }
+  function insertItemAfter(idx) {
+    const rows = document.querySelectorAll('.item-row');
+    const div = document.createElement('div');
+    div.innerHTML = createItemRow(idx + 1);
+    rows[idx]?.after(div.firstElementChild);
+    itemCount++;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+    renumberItems();
+  }
+  function createItemRow(idx) {
+    return `<div class="item-row" data-index="${idx}"><div class="item-row-header"><div class="item-number">${idx+1}</div><div class="item-grip">⋮⋮</div><div class="item-fields"><textarea placeholder="Item description..."></textarea><div class="item-pills"><button class="item-pill" onclick="this.classList.toggle('active')">▾ Sub-desc</button><button class="item-pill">📷 Photo</button></div><div class="item-qty-row"><div><label class="field-label" style="font-size:9px;">Qty</label><input class="mini-input" type="number" value="1" min="1"></div><div><label class="field-label" style="font-size:9px;">Unit</label><input class="mini-input" placeholder="Unit"></div><div><label class="field-label" style="font-size:9px;">Rate</label><input class="mini-input" type="number" value="0"></div><div><label class="field-label" style="font-size:9px;">Make</label><input class="mini-input" placeholder="—"></div></div><div class="item-subtotal"><div class="label">Subtotal</div><div class="value">0.00</div></div></div><div class="item-actions"><button class="item-action-btn disabled">▲</button><button class="item-action-btn disabled">▼</button><button class="item-action-btn remove" onclick="removeItem(${idx})">✕</button></div></div><div class="insert-below" onclick="insertItemAfter(${idx})">+ Insert below</div></div>`;
+  }
+  function renumberItems() {
+    document.querySelectorAll('.item-row').forEach((r, i) => { r.querySelector('.item-number').textContent = i + 1; });
+  }
+
+  function toggleCollapse(key) {
+    const body = document.getElementById(key + 'Body');
+    const chevron = document.getElementById(key + 'Chevron');
+    if (!body) return;
+    if (body.style.display === 'none') { body.style.display = 'block'; if (chevron) chevron.textContent = '▴'; }
+    else { body.style.display = 'none'; if (chevron) chevron.textContent = '▸'; }
+  }
+
+  function toggleSeg(btn) {
+    btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function addHeaderField() {
+    document.getElementById('headerFields').insertAdjacentHTML('beforeend', '<div class="header-field-row"><input class="field-input label-input" placeholder="Label"><input class="field-input" placeholder="Value"><button class="remove-btn" onclick="this.parentElement.remove()">×</button></div>');
+  }
+
+  function addCharge(type) {
+    document.getElementById('chargesContainer').insertAdjacentHTML('beforeend', '<div class="charge-row"><input class="field-input" placeholder="Label (e.g. Transport)"><input class="field-input num-input" type="number" value="0"><button class="remove-btn" onclick="this.parentElement.remove()">×</button></div>');
+  }
+
+  function addAdditionalField() {
+    document.getElementById('fieldsContainer').insertAdjacentHTML('beforeend', '<div class="charge-row"><input class="field-input" placeholder="Label"><input class="field-input" placeholder="Value"><button class="remove-btn" onclick="this.parentElement.remove()">×</button></div>');
+  }
+
+  function addLink() {
+    document.getElementById('linksContainer').insertAdjacentHTML('beforeend', '<div class="link-row"><input class="field-input" placeholder="Label"><input class="field-input url-input" placeholder="https://..."><button class="remove-btn" onclick="this.parentElement.remove()">×</button></div>');
+  }
+
+  function closeIdentityLock() {
+    document.getElementById('identityLockDialog').classList.add('hidden');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 2500);
+  }
+</script>
+</body>
+</html>

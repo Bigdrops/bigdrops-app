@@ -1,0 +1,855 @@
+import React, { useState, useRef, useEffect } from 'react';
+
+// --- Pure Vector Icons (Lucide-grade, 2.0 stroke, zero emojis) ---
+const Icons = {
+  Cpu: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M20 9h3m-3 6h3M1 9h3m-3 6h3" />
+    </svg>
+  ),
+  Activity: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+  ClipboardCheck: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  ),
+  Wrench: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+    </svg>
+  ),
+  Floppy: () => (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v5h8" />
+    </svg>
+  ),
+  Search: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+  ),
+  Trash: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  ),
+  Lock: () => (
+    <svg className="w-3 h-3 text-[#94a3b8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+  ),
+  PenTool: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+  ),
+  AlertOctagon: () => (
+    <svg className="w-4 h-4 text-[#ef4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
+  CheckCircle: () => (
+    <svg className="w-3.5 h-3.5 text-[#16a34a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  Upload: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+    </svg>
+  ),
+  RotateCcw: () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M1 4v6h6M3.51 15a9 9 0 102.13-9.36L1 10" />
+    </svg>
+  )
+};
+
+// --- Mock Master Registries ---
+const CLIENTS_DB = [
+  { id: 'c1', name: 'Dangote Sugar Refinery Plc', plant: 'Port Complex Refinery #2', region: 'Apapa, Lagos' },
+  { id: 'c2', name: 'Flour Mills of Nigeria', plant: 'Golden Penny Grains Silo', region: 'Dock Road, Lagos' },
+  { id: 'c3', name: 'TotalEnergies Exploration E&P', plant: 'Obagi Flowstation Delta', region: 'Port Harcourt' },
+  { id: 'c4', name: 'Guinness Nigeria Brewery', plant: 'Main Bottling Line 4', region: 'Ikeja, Lagos' }
+];
+
+const SIGNATORIES_DB = [
+  { id: 's1', name: 'Engr. Babatunde Lawal', stamp: 'LEAD-FIELD-ENGR #0412' },
+  { id: 's2', name: 'Chukwuemeka Obi', stamp: 'SR-ELECTROMECH-SPCLST' },
+  { id: 's3', name: 'Farouk Usman', stamp: 'HV-SYS-INSPECTOR' }
+];
+
+const QUICK_PARTS = [
+  { name: 'Thermostat Kit 82°C', unit: 'Set' },
+  { name: 'HD Coolant Premix 20L', unit: 'Can' },
+  { name: 'Bypass Flange Gasket', unit: 'Pcs' },
+  { name: 'Fleetguard Oil Filter', unit: 'Pcs' },
+  { name: 'Fuel Water Separator', unit: 'Pcs' }
+];
+
+export default function App() {
+  // Navigation & Viewport State
+  const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'diagnostics' | 'signoff'
+  const [isFieldMode, setIsFieldMode] = useState(false);
+  const [reportState, setReportState] = useState('In Progress');
+
+  // Document Identifiers
+  const [csrId, setCsrId] = useState('CSR-2026-0084');
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [dispatchDate, setDispatchDate] = useState('2026-09-02');
+  const [poCode, setPoCode] = useState('PO-DSR-8841');
+
+  // Asset Profile
+  const [equipmentType, setEquipmentType] = useState('Diesel Generator Set');
+  const [make, setMake] = useState('Cummins Power');
+  const [model, setModel] = useState('QSK19-G4');
+  const [serialNo, setSerialNo] = useState('CU-8849201-NG');
+  const [locationTag, setLocationTag] = useState('Main Powerhouse, Bay 2');
+  const [serviceBasis, setServiceBasis] = useState('Warranty');
+  const [callType, setCallType] = useState('Breakdown');
+
+  // Operational Gauge Matrix
+  const [readings, setReadings] = useState({
+    voltage: 415,
+    frequency: 50.2,
+    battery: 26.4,
+    temperature: 86,
+    pressure: 4.8,
+    hours: 4821.5
+  });
+
+  // Diagnostic Logs
+  const [problemReported, setProblemReported] = useState('Engine tripping on over-temperature warning when plant load escalates above 380kW.');
+  const [rootCause, setRootCause] = useState('Calcified cooling jackets and sticky 82°C bypass thermostat valve.');
+  const [correctiveAction, setCorrectiveAction] = useState('Flushed coolant jacket, installed replacement thermostat kit, and verified steady running delta T during 45-min stepped load bank test.');
+  const [preventiveAdvice, setPreventiveAdvice] = useState('Recommended scheduled radiator descaling and replacement of coolant hoses within next 500 operating hours.');
+
+  // Parts & Materials Ledger
+  const [parts, setParts] = useState([
+    { id: 'p1', name: 'Thermostat Kit 82°C', qty: 1, unit: 'Set' },
+    { id: 'p2', name: 'HD Coolant Premix 20L', qty: 2, unit: 'Can' }
+  ]);
+
+  // Signoff & Authorization
+  const [selectedSignatory, setSelectedSignatory] = useState(SIGNATORIES_DB[0]);
+  const [clientRepresentative, setClientRepresentative] = useState('Adewale Balogun (Plant Engr)');
+  const [signatureDataUri, setSignatureDataUri] = useState(null);
+
+  // Modals & Sheets
+  const [clientSheetOpen, setClientSheetOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+  const [signatorySheetOpen, setSignatorySheetOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  // Field Blocker Highlighting & References
+  const [errorField, setErrorField] = useState(null);
+  const clientBoxRef = useRef(null);
+  const csrInputRef = useRef(null);
+  const canvasRef = useRef(null);
+  const isDrawingRef = useRef(false);
+
+  const showToast = (message, isError = false) => {
+    setToast({ text: message, isError });
+    setTimeout(() => setToast(prev => (prev?.text === message ? null : prev)), 3400);
+  };
+
+  // Canvas Touch/Mouse Drawing Handlers
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    isDrawingRef.current = true;
+  };
+
+  const draw = (e) => {
+    if (!isDrawingRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setSignatureDataUri(canvas.toDataURL('image/png'));
+    }
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setSignatureDataUri(null);
+      showToast('Signature pad cleared');
+    }
+  };
+
+  // Teleport to Save Blocker
+  const triggerTeleportBlocker = (tabName, ref, fieldId, message) => {
+    setActiveTab(tabName);
+    setErrorField(fieldId);
+    showToast(message, true);
+
+    setTimeout(() => {
+      if (ref && ref.current) {
+        ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 120);
+
+    setTimeout(() => setErrorField(null), 3000);
+  };
+
+  const handleFinalSave = () => {
+    if (!csrId.trim()) {
+      triggerTeleportBlocker('telemetry', csrInputRef, 'csrId', 'Missing Requirement: Dossier CSR Code required');
+      return;
+    }
+    if (!selectedClient && !isFieldMode) {
+      triggerTeleportBlocker('telemetry', clientBoxRef, 'client', 'Missing Requirement: Client Facility must be assigned');
+      return;
+    }
+
+    setReportState('Certified Complete');
+    showToast(`Dossier ${csrId} sealed and certified! PDF exported.`);
+  };
+
+  const addQuickPart = (item) => {
+    const exists = parts.find(p => p.name === item.name);
+    if (exists) {
+      setParts(parts.map(p => p.name === item.name ? { ...p, qty: p.qty + 1 } : p));
+      showToast(`Increased ${item.name} quantity`);
+    } else {
+      setParts([...parts, { id: `pt-${Date.now()}`, name: item.name, qty: 1, unit: item.unit }]);
+      showToast(`Added ${item.name} to dossier`);
+    }
+  };
+
+  const removePart = (id) => {
+    setParts(parts.filter(p => p.id !== id));
+    showToast('Part removed');
+  };
+
+  return (
+    <div
+      className="min-h-screen relative bg-[#090d16] text-[#e2e8f0] antialiased selection:bg-[#1e3a5f]"
+      style={{ fontFamily: 'Manrope, sans-serif' }}
+    >
+      {/* Background Industrial Grid & Cyan Glow */}
+      <style>{`
+        @keyframes v2PulseGlow {
+          0%, 100% { transform: translateY(0px) scale(1); filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.45)); }
+          50% { transform: translateY(-4px) scale(1.03); filter: drop-shadow(0 0 24px rgba(6, 182, 212, 0.75)); }
+        }
+        @keyframes v2WarnBlink {
+          0%, 100% { border-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+          50% { border-color: #f87171; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.3); }
+        }
+        .v2-fab-live {
+          animation: v2PulseGlow 3s ease-in-out infinite;
+        }
+        .v2-error-highlight {
+          animation: v2WarnBlink 1s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Decorative Technical Top Header */}
+      <div className="sticky top-0 z-30 bg-[#0c1220]/95 backdrop-blur-md border-b border-cyan-500/20 px-4 py-3">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <div>
+              <span className="text-[7px] font-mono uppercase tracking-[0.2em] text-cyan-400 font-bold block">
+                Field Service Dossier v2
+              </span>
+              <span className="text-[13px] font-black tracking-tight text-white font-mono">
+                {csrId}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setIsFieldMode(!isFieldMode);
+                showToast(isFieldMode ? 'Standard Mode Enabled' : 'Field Bypass Mode Enabled');
+              }}
+              className={`px-2 py-1 rounded-[6px] text-[8px] font-mono font-bold uppercase transition ${
+                isFieldMode
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'bg-slate-800 text-slate-300 border border-slate-700'
+              }`}
+            >
+              {isFieldMode ? '⚡ Field Bypass' : 'Standard'}
+            </button>
+            <span className="px-2 py-1 rounded-[6px] text-[8px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+              {reportState}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Dossier Container */}
+      <div className="max-w-md mx-auto px-4 pt-3 pb-32 space-y-4">
+
+        {/* 1. ASSET SPECIMEN BANNER */}
+        <div className="p-3.5 rounded-[14px] bg-gradient-to-br from-[#111827] to-[#0f172a] border border-slate-800 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-[8px] font-mono text-cyan-400 font-bold uppercase tracking-wider block">
+                Asset Telemetry
+              </span>
+              <h2 className="text-[13px] font-black text-white">{equipmentType}</h2>
+              <p className="text-[10px] text-slate-400 mt-0.5">{make} · {model}</p>
+            </div>
+            <div className="text-right font-mono">
+              <span className="text-[8px] text-slate-400 uppercase block">Meter Units</span>
+              <span className="text-[12px] font-bold text-cyan-300">{readings.hours} hrs</span>
+            </div>
+          </div>
+
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[8px] font-mono">
+            <span className="text-slate-400">S/N: <strong className="text-slate-200">{serialNo}</strong></span>
+            <span className="text-slate-400">LOC: <strong className="text-slate-200">{locationTag}</strong></span>
+            <span className="text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">
+              {serviceBasis}
+            </span>
+          </div>
+        </div>
+
+        {/* 2. THREE-TAB DOSSIER NAVIGATION */}
+        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-[10px] bg-[#111827] border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('telemetry')}
+            className={`py-2 rounded-[8px] text-[9px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${
+              activeTab === 'telemetry'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Icons.Cpu /> Telemetry
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('diagnostics')}
+            className={`py-2 rounded-[8px] text-[9px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${
+              activeTab === 'diagnostics'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Icons.Wrench /> Logs
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('signoff')}
+            className={`py-2 rounded-[8px] text-[9px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${
+              activeTab === 'signoff'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Icons.ClipboardCheck /> Signoff
+          </button>
+        </div>
+
+        {/* --- TAB 1: TELEMETRY & SPECIFICATIONS --- */}
+        {activeTab === 'telemetry' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* Facility Selector */}
+            <div
+              ref={clientBoxRef}
+              className={`p-3 rounded-[12px] bg-[#111827] border transition ${
+                errorField === 'client'
+                  ? 'v2-error-highlight bg-red-950/30'
+                  : 'border-slate-800'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                  Target Facility {!isFieldMode && <span className="text-red-400">*</span>}
+                </span>
+                <span className="text-[8px] font-mono text-cyan-400">
+                  {selectedClient ? 'ASSIGNED' : 'REQUIRED'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setClientSheetOpen(true)}
+                className="w-full text-left p-2 rounded-[8px] bg-[#090d16] border border-slate-800 hover:border-cyan-500/40 flex items-center justify-between transition"
+              >
+                <div>
+                  <p className="text-[11px] font-black text-white">
+                    {selectedClient ? selectedClient.name : 'Tap to assign facility'}
+                  </p>
+                  <p className="text-[8px] text-slate-400 mt-0.5">
+                    {selectedClient ? `${selectedClient.plant} · ${selectedClient.region}` : 'Search registered commercial sites'}
+                  </p>
+                </div>
+                <span className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2 py-1 rounded border border-cyan-500/30">
+                  Browse
+                </span>
+              </button>
+            </div>
+
+            {/* Dossier Code & Dispatch Date */}
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                ref={csrInputRef}
+                className={`p-2.5 rounded-[10px] bg-[#111827] border ${
+                  errorField === 'csrId' ? 'v2-error-highlight' : 'border-slate-800'
+                }`}
+              >
+                <label className="block text-[7px] font-mono uppercase text-slate-400 mb-1">
+                  Dossier Code <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={csrId}
+                  onChange={(e) => setCsrId(e.target.value)}
+                  className="w-full h-[32px] px-2 rounded-[6px] bg-[#090d16] text-[10px] font-mono font-bold text-cyan-300 border border-slate-800 outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div className="p-2.5 rounded-[10px] bg-[#111827] border border-slate-800">
+                <label className="block text-[7px] font-mono uppercase text-slate-400 mb-1">
+                  Dispatch Date
+                </label>
+                <input
+                  type="date"
+                  value={dispatchDate}
+                  onChange={(e) => setDispatchDate(e.target.value)}
+                  className="w-full h-[32px] px-2 rounded-[6px] bg-[#090d16] text-[10px] font-mono font-medium text-slate-200 border border-slate-800 outline-none focus:border-cyan-500"
+                />
+              </div>
+            </div>
+
+            {/* Real-Time Telemetry Gauges Grid */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+                  Operational Gauge Telemetry
+                </span>
+                <span className="text-[8px] font-mono text-emerald-400 flex items-center gap-1">
+                  <Icons.CheckCircle /> Calibrated
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Voltage</span>
+                  <input
+                    type="number"
+                    value={readings.voltage}
+                    onChange={(e) => setReadings({ ...readings, voltage: Number(e.target.value) })}
+                    className="w-full text-center bg-transparent text-[13px] font-mono font-black text-cyan-300 outline-none"
+                  />
+                  <span className="text-[7px] font-mono text-slate-500">VAC (Line-Line)</span>
+                </div>
+
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Frequency</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={readings.frequency}
+                    onChange={(e) => setReadings({ ...readings, frequency: Number(e.target.value) })}
+                    className="w-full text-center bg-transparent text-[13px] font-mono font-black text-cyan-300 outline-none"
+                  />
+                  <span className="text-[7px] font-mono text-slate-500">Hertz</span>
+                </div>
+
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Battery</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={readings.battery}
+                    onChange={(e) => setReadings({ ...readings, battery: Number(e.target.value) })}
+                    className="w-full text-center bg-transparent text-[13px] font-mono font-black text-cyan-300 outline-none"
+                  />
+                  <span className="text-[7px] font-mono text-slate-500">VDC Float</span>
+                </div>
+
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Temp</span>
+                  <input
+                    type="number"
+                    value={readings.temperature}
+                    onChange={(e) => setReadings({ ...readings, temperature: Number(e.target.value) })}
+                    className="w-full text-center bg-transparent text-[13px] font-mono font-black text-amber-300 outline-none"
+                  />
+                  <span className="text-[7px] font-mono text-slate-500">°C Water Jacket</span>
+                </div>
+
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Lube Press</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={readings.pressure}
+                    onChange={(e) => setReadings({ ...readings, pressure: Number(e.target.value) })}
+                    className="w-full text-center bg-transparent text-[13px] font-mono font-black text-cyan-300 outline-none"
+                  />
+                  <span className="text-[7px] font-mono text-slate-500">Bar Gauge</span>
+                </div>
+
+                <div className="p-2 rounded-[8px] bg-[#090d16] border border-slate-800 text-center">
+                  <span className="text-[7px] font-mono uppercase text-slate-400 block">Call Nature</span>
+                  <select
+                    value={callType}
+                    onChange={(e) => setCallType(e.target.value)}
+                    className="w-full text-center bg-transparent text-[9px] font-bold text-cyan-300 outline-none"
+                  >
+                    <option value="Breakdown" className="bg-[#0f172a]">Breakdown</option>
+                    <option value="PM" className="bg-[#0f172a]">PM</option>
+                    <option value="Inspection" className="bg-[#0f172a]">Inspection</option>
+                  </select>
+                  <span className="text-[7px] font-mono text-slate-500">Dispatch Code</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB 2: DIAGNOSTIC LOGS & SPARES --- */}
+        {activeTab === 'diagnostics' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* Quick Parts Spares Tray */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2">
+              <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-cyan-400 block">
+                Quick Spares Picker
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_PARTS.map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => addQuickPart(item)}
+                    className="px-2 py-1 rounded-[6px] text-[8px] font-mono bg-[#090d16] border border-slate-700 hover:border-cyan-400 text-slate-300 flex items-center gap-1 active:scale-95 transition"
+                  >
+                    <Icons.Plus /> {item.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Allocated Materials List */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-300">
+                  Allocated Consumables & Spares
+                </span>
+                <span className="text-[8px] font-mono text-cyan-400">{parts.length} line items</span>
+              </div>
+
+              <div className="divide-y divide-slate-800/80">
+                {parts.map((p) => (
+                  <div key={p.id} className="py-1.5 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold text-white">{p.name}</p>
+                      <span className="text-[7px] font-mono text-slate-400">{p.unit}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-[4px] bg-[#090d16] text-[10px] font-mono font-bold text-cyan-300 border border-slate-800">
+                        ×{p.qty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePart(p.id)}
+                        className="p-1 text-slate-500 hover:text-red-400 transition"
+                      >
+                        <Icons.Trash />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Diagnostic Log Fields */}
+            <div className="space-y-2.5">
+              <div className="p-3 rounded-[10px] bg-[#111827] border border-slate-800">
+                <label className="block text-[7px] font-mono uppercase text-slate-400 mb-1">
+                  1. Problem Reported by Facility
+                </label>
+                <textarea
+                  rows={2}
+                  value={problemReported}
+                  onChange={(e) => setProblemReported(e.target.value)}
+                  className="w-full bg-[#090d16] p-2 rounded-[6px] text-[10px] text-slate-200 border border-slate-800 focus:border-cyan-500 outline-none resize-none"
+                />
+              </div>
+
+              <div className="p-3 rounded-[10px] bg-[#111827] border border-slate-800">
+                <label className="block text-[7px] font-mono uppercase text-slate-400 mb-1">
+                  2. Root Cause & Defects Found
+                </label>
+                <textarea
+                  rows={2}
+                  value={rootCause}
+                  onChange={(e) => setRootCause(e.target.value)}
+                  className="w-full bg-[#090d16] p-2 rounded-[6px] text-[10px] text-slate-200 border border-slate-800 focus:border-cyan-500 outline-none resize-none"
+                />
+              </div>
+
+              <div className="p-3 rounded-[10px] bg-[#111827] border border-slate-800">
+                <label className="block text-[7px] font-mono uppercase text-cyan-400 font-bold mb-1">
+                  3. Corrective Service Rendered
+                </label>
+                <textarea
+                  rows={3}
+                  value={correctiveAction}
+                  onChange={(e) => setCorrectiveAction(e.target.value)}
+                  className="w-full bg-[#090d16] p-2 rounded-[6px] text-[10px] text-slate-200 border border-slate-800 focus:border-cyan-500 outline-none resize-none"
+                />
+              </div>
+
+              <div className="p-3 rounded-[10px] bg-[#111827] border border-slate-800">
+                <label className="block text-[7px] font-mono uppercase text-slate-400 mb-1">
+                  4. Engineer Recommendations
+                </label>
+                <textarea
+                  rows={2}
+                  value={preventiveAdvice}
+                  onChange={(e) => setPreventiveAdvice(e.target.value)}
+                  className="w-full bg-[#090d16] p-2 rounded-[6px] text-[10px] text-slate-200 border border-slate-800 focus:border-cyan-500 outline-none resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- TAB 3: SIGNOFF & AUTHORIZATION --- */}
+        {activeTab === 'signoff' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* Engineer Identity Certificate */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2">
+              <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-cyan-400 block">
+                Certified Service Engineer
+              </span>
+              <div className="flex items-center justify-between p-2 rounded-[8px] bg-[#090d16] border border-slate-800">
+                <div>
+                  <p className="text-[11px] font-black text-white">{selectedSignatory.name}</p>
+                  <span className="text-[8px] font-mono text-slate-400">{selectedSignatory.stamp}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSignatorySheetOpen(true)}
+                  className="px-2 py-1 rounded-[6px] text-[8px] font-mono font-bold text-cyan-300 bg-cyan-950 border border-cyan-500/40"
+                >
+                  Change
+                </button>
+              </div>
+            </div>
+
+            {/* Client Plant Supervisor */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2">
+              <label className="block text-[8px] font-mono font-bold uppercase tracking-wider text-slate-300">
+                Client Plant Supervisor / Endorser
+              </label>
+              <input
+                type="text"
+                value={clientRepresentative}
+                onChange={(e) => setClientRepresentative(e.target.value)}
+                placeholder="Name & Title"
+                className="w-full h-[36px] px-2.5 rounded-[8px] bg-[#090d16] text-[10px] font-bold text-slate-200 border border-slate-800 focus:border-cyan-500 outline-none"
+              />
+            </div>
+
+            {/* Interactive Signature Touch Surface */}
+            <div className="p-3.5 rounded-[12px] bg-[#111827] border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+                  Digital Signature Pad
+                </span>
+                <button
+                  type="button"
+                  onClick={clearCanvas}
+                  className="text-[8px] font-mono text-red-400 flex items-center gap-1 hover:underline"
+                >
+                  <Icons.RotateCcw /> Clear Pad
+                </button>
+              </div>
+
+              <div className="h-32 rounded-[8px] bg-white relative overflow-hidden border border-slate-700 touch-none">
+                <canvas
+                  ref={canvasRef}
+                  width={380}
+                  height={128}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="w-full h-full cursor-crosshair"
+                />
+                {!signatureDataUri && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-[10px] font-mono text-slate-400">
+                    ✍ Sign directly with finger or stylus
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* --- FLOATING COMMAND CENTER FAB (V2 LIVE GLOW) --- */}
+      <div className="fixed bottom-6 right-5 z-40">
+        <button
+          type="button"
+          onClick={handleFinalSave}
+          className="w-[54px] h-[54px] rounded-[18px] text-white flex items-center justify-center v2-fab-live active:scale-90 transition border border-cyan-400/40 bg-gradient-to-br from-cyan-600 via-cyan-800 to-slate-900 cursor-pointer"
+          title="Certify & Save Dossier"
+        >
+          <Icons.Floppy />
+        </button>
+      </div>
+
+      {/* --- BOTTOM SHEET: CLIENT DISPATCH PICKER --- */}
+      {clientSheetOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-end">
+          <div className="w-full max-w-md mx-auto bg-[#0f172a] rounded-t-[22px] max-h-[75vh] flex flex-col p-4 space-y-3 border-t border-cyan-500/30 animate-in slide-in-from-bottom duration-150">
+            <div className="w-8 h-1 rounded-full bg-slate-700 mx-auto" />
+            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+              <span className="text-[11px] font-mono font-bold uppercase text-white">Select Industrial Client</span>
+              <button
+                onClick={() => setClientSheetOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+                placeholder="Filter by facility name or location..."
+                className="w-full h-[36px] pl-8 pr-3 rounded-[8px] bg-[#090d16] text-[10px] text-white border border-slate-800 focus:border-cyan-500 outline-none"
+              />
+              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500">
+                <Icons.Search />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 overflow-y-auto flex-1">
+              {CLIENTS_DB.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => {
+                    setSelectedClient(c);
+                    setClientSheetOpen(false);
+                    showToast(`Assigned ${c.name}`);
+                  }}
+                  className="p-2.5 rounded-[8px] bg-[#111827] hover:bg-[#1e293b] border border-slate-800 cursor-pointer flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-[11px] font-black text-white">{c.name}</p>
+                    <p className="text-[8px] text-cyan-400 font-mono mt-0.5">{c.plant} · {c.region}</p>
+                  </div>
+                  <span className="text-[8px] font-mono text-slate-400 uppercase">Select</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- BOTTOM SHEET: SIGNATORY ROSTER --- */}
+      {signatorySheetOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-end">
+          <div className="w-full max-w-md mx-auto bg-[#0f172a] rounded-t-[22px] max-h-[75vh] flex flex-col p-4 space-y-3 border-t border-cyan-500/30 animate-in slide-in-from-bottom duration-150">
+            <div className="w-8 h-1 rounded-full bg-slate-700 mx-auto" />
+            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+              <span className="text-[11px] font-mono font-bold uppercase text-white">Authorized Engineer Roster</span>
+              <button
+                onClick={() => setSignatorySheetOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1.5 overflow-y-auto flex-1">
+              {SIGNATORIES_DB.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => {
+                    setSelectedSignatory(s);
+                    setSignatorySheetOpen(false);
+                    showToast(`Assigned ${s.name}`);
+                  }}
+                  className={`p-2.5 rounded-[8px] bg-[#111827] hover:bg-[#1e293b] border cursor-pointer flex items-center justify-between ${
+                    selectedSignatory.id === s.id ? 'border-cyan-500 text-cyan-300' : 'border-slate-800 text-white'
+                  }`}
+                >
+                  <div>
+                    <p className="text-[11px] font-bold">{s.name}</p>
+                    <p className="text-[8px] font-mono text-slate-400">{s.stamp}</p>
+                  </div>
+                  {selectedSignatory.id === s.id && <Icons.CheckCircle />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- TELEPORT ERROR TOAST --- */}
+      {toast && (
+        <div
+          className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 text-[9px] font-bold px-3.5 py-2 rounded-[10px] shadow-2xl max-w-[88vw] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 ${
+            toast.isError
+              ? 'bg-red-950 text-red-200 border border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.3)]'
+              : 'bg-cyan-950 text-cyan-200 border border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+          }`}
+        >
+          {toast.isError && <Icons.AlertOctagon />}
+          <span className="truncate">{toast.text}</span>
+        </div>
+      )}
+
+    </div>
+  );
+}

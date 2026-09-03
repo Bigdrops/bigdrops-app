@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#030306" />
+    <title>BIGDROPS · Liquid Onyx</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           LIQUID ONYX — Chrome Silver Metallic on Pure Black
+           Extractable token system for dashboard + forms
+           WCAG AAA compliant contrast ratios
+           ══════════════════════════════════════════════════════════════ */
+
+        :root {
+            /* ── SURFACE HIERARCHY ── */
+            --bg-void:        #020204;
+            --bg-base:        #050508;
+            --bg-elevated:    #0a0a10;
+            --bg-surface:     #0c0c14;
+            --bg-raised:      #12121c;
+            --bg-overlay:     #1a1a26;
+            --bg-hover:       #22222e;
+
+            /* ── TEXT HIERARCHY ── */
+            --text-primary:   #e8e8f0;
+            --text-secondary: #9898ac;
+            --text-tertiary:  #585870;
+            --text-disabled:  #34344a;
+            --text-inverse:   #050508;
+
+            /* ── ACCENT: CHROME SILVER ── */
+            --accent:         #c0c0d0;
+            --accent-bright:  #e0e0ea;
+            --accent-dim:     #9090a0;
+            --accent-soft:    rgba(192, 192, 208, 0.10);
+            --accent-softer:  rgba(192, 192, 208, 0.05);
+
+            /* ── ACCENT SECONDARY: ICE BLUE ── */
+            --secondary:       #5ea8e8;
+            --secondary-bright:#82c4ff;
+            --secondary-soft:  rgba(94, 168, 232, 0.12);
+
+            /* ── STATUS COLORS ── */
+            --success:        #4ad890;
+            --success-soft:   rgba(74, 216, 144, 0.10);
+            --warning:        #e8b840;
+            --warning-soft:   rgba(232, 184, 64, 0.10);
+            --error:          #e85060;
+            --error-soft:     rgba(232, 80, 96, 0.12);
+            --info:           #5ea8e8;
+            --info-soft:      rgba(94, 168, 232, 0.10);
+
+            /* ── BORDERS ── */
+            --border-subtle:  rgba(192, 192, 208, 0.06);
+            --border-default: rgba(192, 192, 208, 0.12);
+            --border-strong:  rgba(192, 192, 208, 0.22);
+            --border-focus:   var(--accent);
+
+            /* ── SHADOWS ── */
+            --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.6);
+            --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.7);
+            --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.8);
+            --shadow-xl:   0 16px 48px rgba(0, 0, 0, 0.85);
+            --shadow-glow: 0 0 24px rgba(192, 192, 208, 0.08);
+
+            /* ── GRADIENTS ── */
+            --gradient-accent:   linear-gradient(135deg, #c0c0d0, #5ea8e8);
+            --gradient-surface:  linear-gradient(180deg, var(--bg-surface), var(--bg-base));
+            --gradient-glow:     radial-gradient(ellipse at 50% 0%, rgba(192, 192, 208, 0.04), transparent 70%);
+
+            /* ── SPACING ── */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
+
+            /* ── TYPOGRAPHY ── */
+            --font:      Manrope, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            --number:    "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+
+        body {
+            margin: 0;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        button:active { transform: scale(0.97); }
+        button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .app { width: 100%; max-width: 430px; height: 100dvh; position: relative; margin: 0 auto; overflow: hidden; background: var(--bg-base); }
+
+        .grain { pointer-events: none; position: absolute; inset: 0; z-index: 0; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E"); mix-blend-mode: soft-light; }
+
+        .glow { pointer-events: none; position: absolute; top: -160px; left: 50%; transform: translateX(-50%); width: 500px; height: 350px; background: radial-gradient(ellipse, rgba(192, 192, 208, 0.03), transparent 70%); z-index: 0; }
+
+        .shell { height: 100%; position: relative; z-index: 1; }
+
+        .scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 0 14px calc(106px + env(safe-area-inset-bottom)); }
+        .scroll::-webkit-scrollbar { display: none; }
+
+        .topbar { position: sticky; top: 0; z-index: 10; height: calc(58px + env(safe-area-inset-top)); padding: calc(8px + env(safe-area-inset-top)) 0 8px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, var(--bg-base) 72%, transparent); }
+        .top-left, .top-right { display: flex; align-items: center; gap: 5px; min-width: 0; }
+        .top-right { gap: 4px; }
+
+        .top-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-surface); position: relative; transition: background 0.2s, border-color 0.2s; }
+        .top-btn:hover { background: var(--bg-raised); border-color: var(--border-default); }
+        .top-btn svg { width: 17px; height: 17px; }
+        .top-btn.active { background: var(--gradient-accent); color: var(--text-inverse); border-color: transparent; box-shadow: var(--shadow-glow); }
+
+        .identity { min-width: 0; margin-left: 1px; }
+        .workspace { color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.075em; font-size: 7px; font-weight: 800; white-space: nowrap; }
+        .owner { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; font-size: 13px; font-weight: 800; letter-spacing: -0.045em; color: var(--accent-bright); }
+
+        .notif-pip { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--error); border: 1.5px solid var(--bg-surface); }
+
+        .dashboard { padding-top: 6px; }
+
+        .eyebrow { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 8px; }
+        .eyebrow span { font-size: 8px; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-tertiary); }
+        .eyebrow button { font-size: 9px; color: var(--accent); font-weight: 800; }
+
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .metric { min-height: 108px; padding: 11px 12px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); background: var(--bg-surface); display: flex; flex-direction: column; position: relative; overflow: hidden; text-align: left; transition: border-color 0.2s, box-shadow 0.2s; }
+        .metric:hover { border-color: var(--border-default); box-shadow: var(--shadow-md); }
+        .metric:after { content: ""; width: 84px; height: 84px; position: absolute; right: -36px; bottom: -42px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--metric-soft), transparent); opacity: 0.5; }
+        .metric:before { content: ""; width: 34px; height: 34px; position: absolute; right: 10px; top: -14px; border-radius: 50%; border: 2px solid var(--metric-soft); opacity: 0.35; }
+        .metric > * { position: relative; z-index: 1; }
+
+        .metric.collect { --metric: var(--accent); --metric-soft: var(--accent-soft); background: var(--gradient-accent); border-color: transparent; box-shadow: var(--shadow-glow); color: var(--text-inverse); }
+        .metric.collect .metric-label, .metric.collect .metric-trend { color: rgba(5,5,8,0.7); }
+        .metric.collect .metric-value { color: var(--text-inverse); }
+        .metric.collect .metric-trend b { color: var(--text-inverse); }
+        .metric.collect:after { background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.35), transparent); opacity: 1; }
+        .metric.collect:before { border-color: rgba(5,5,8,0.15); }
+
+        .metric.overdue { --metric: var(--error); --metric-soft: var(--error-soft); }
+        .metric.awaiting { --metric: var(--secondary); --metric-soft: var(--secondary-soft); }
+        .metric.due { --metric: var(--info); --metric-soft: var(--info-soft); }
+
+        .metric-label { font-size: 8px; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 800; color: var(--text-secondary); }
+
+        .tickbar { display: flex; align-items: center; gap: 2.5px; height: 9px; margin: 8px 0 7px; }
+        .tickbar i { display: block; flex: 0 0 3px; width: 3px; height: 9px; border-radius: 1.5px; background: var(--border-strong); }
+        .tickbar i.on { background: var(--metric); }
+        .metric.collect .tickbar i { background: rgba(5,5,8,0.15); }
+        .metric.collect .tickbar i.on { background: var(--text-inverse); }
+
+        .metric-value { font-family: var(--number); font-size: 17px; font-weight: 500; letter-spacing: -0.075em; color: var(--text-primary); white-space: nowrap; }
+        .metric-trend { margin-top: auto; font-size: 8px; color: var(--text-tertiary); line-height: 1.3; }
+        .metric-trend b { color: var(--metric); font-weight: 800; }
+        .metric-trend:not(.neutral) b:before { content: "▲"; display: inline-block; font-size: 6px; color: var(--success); margin-right: 3px; transform: translateY(-1px); }
+        .metric.collect .metric-trend:not(.neutral) b:before { color: var(--text-inverse); }
+        .metric-trend.neutral b { color: var(--text-secondary); }
+
+        .section { margin-top: 14px; }
+        .section-title { margin: 0 2px 8px; font-size: 9px; letter-spacing: 0.105em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 800; }
+        .card { border: 1px solid var(--border-subtle); background: var(--bg-surface); border-radius: var(--radius-xl); overflow: hidden; }
+
+        .activity-row { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 11px; text-align: left; border-top: 1px solid var(--border-subtle); transition: background 0.15s; }
+        .activity-row:first-child { border-top: 0; }
+        .activity-row:hover { background: var(--bg-hover); }
+        .activity-icon { height: 32px; width: 32px; border-radius: 11px; display: grid; place-items: center; flex: 0 0 32px; background: var(--icon-bg); color: var(--icon); }
+        .activity-icon svg { height: 15px; width: 15px; }
+        .invoice { --icon: var(--accent); --icon-bg: var(--accent-soft); }
+        .quote { --icon: var(--secondary); --icon-bg: var(--secondary-soft); }
+        .waybill { --icon: var(--info); --icon-bg: var(--info-soft); }
+
+        .act-copy { min-width: 0; flex: 1; }
+        .act-primary { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: -0.025em; }
+        .act-meta { font-size: 8px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .act-value { text-align: right; flex-shrink: 0; font-family: var(--number); font-size: 10px; font-weight: 500; letter-spacing: -0.045em; }
+        .act-date { font-family: var(--font); font-size: 7px; color: var(--text-tertiary); margin-top: 3px; }
+
+        .status { border-radius: 5px; font-size: 6px; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 5px; background: var(--secondary-soft); color: var(--secondary); font-weight: 800; }
+        .status.draft { background: var(--accent-soft); color: var(--accent-bright); }
+        .status.delivered { background: var(--bg-overlay); color: var(--text-secondary); }
+
+        .reminder { padding: 12px; position: relative; overflow: hidden; }
+        .reminder:after { content: ""; position: absolute; right: -36px; top: -48px; width: 120px; height: 120px; border: 18px solid transparent; background: conic-gradient(from 180deg, var(--accent-soft), var(--secondary-soft), var(--accent-soft)) border-box; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px)); mask: radial-gradient(farthest-side, transparent calc(100% - 18px), #000 calc(100% - 18px)); opacity: 0.6; border-radius: 50%; }
+        .reminder-row { display: flex; align-items: flex-start; gap: 9px; position: relative; z-index: 1; }
+        .reminder-icon { height: 34px; width: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--gradient-accent); color: var(--text-inverse); }
+        .reminder-icon svg { width: 16px; height: 16px; }
+        .reminder-copy { min-width: 0; flex: 1; }
+        .reminder-kicker { font-size: 7px; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-tertiary); }
+        .reminder h2 { font-size: 12px; letter-spacing: -0.04em; margin: 3px 0 2px; }
+        .reminder p { font-size: 9px; line-height: 1.4; color: var(--text-secondary); margin: 0; }
+        .reminder-actions { display: flex; gap: 6px; align-items: center; margin-top: 9px; position: relative; z-index: 1; }
+        .primary-sm { border-radius: 10px; padding: 7px 10px; background: var(--gradient-accent); color: var(--text-inverse); font-size: 8px; text-transform: uppercase; letter-spacing: 0.065em; font-weight: 800; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-glow); }
+        .primary-sm svg { width: 12px; height: 12px; }
+        .evergreen { font-size: 7px; color: var(--text-secondary); font-weight: 700; display: flex; align-items: center; gap: 3px; }
+        .evergreen svg { width: 11px; height: 11px; }
+        .dismiss { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--text-tertiary); }
+        .dismiss svg { width: 14px; height: 14px; }
+
+        .alerts { padding: 11px 0 11px 11px; }
+        .alerts-head { margin-right: 11px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .alerts-head .section-title { margin: 0; }
+        .alerts-sub { font-size: 9px; line-height: 1.3; color: var(--text-secondary); margin-top: 3px; }
+        .alerts-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 9px 11px 1px 0; scrollbar-width: none; }
+        .alerts-scroll::-webkit-scrollbar { display: none; }
+        .alert-item { min-width: 200px; width: 200px; text-align: left; padding: 10px; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); background: var(--bg-raised); transition: border-color 0.2s, box-shadow 0.2s; }
+        .alert-item:hover { border-color: var(--border-default); box-shadow: var(--shadow-md); }
+        .alert-head { display: flex; gap: 7px; align-items: flex-start; }
+        .alert-symbol { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 10px; background: var(--accent-soft); color: var(--accent); flex-shrink: 0; }
+        .alert-symbol.warn { background: var(--error-soft); color: var(--error); }
+        .alert-symbol svg { width: 14px; height: 14px; }
+        .alert-overline { font-size: 6px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 800; }
+        .alert-name { font-size: 10px; line-height: 1.25; font-weight: 800; margin-top: 2px; }
+        .alert-body { margin: 6px 0 8px; font-size: 8px; line-height: 1.4; color: var(--text-secondary); }
+        .alert-foot { display: flex; justify-content: space-between; color: var(--text-tertiary); font-size: 7px; font-weight: 700; }
+
+        .audit { padding: 0 11px; }
+        .audit-row { display: flex; gap: 8px; padding: 9px 0; border-top: 1px solid var(--border-subtle); }
+        .audit-row:first-child { border-top: 0; }
+        .audit-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 3px; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); flex: 0 0 6px; }
+        .audit-dot.copper { background: var(--secondary); box-shadow: 0 0 0 3px var(--secondary-soft); }
+        .audit-main { font-size: 9px; font-weight: 700; line-height: 1.25; }
+        .audit-meta { font-size: 7px; color: var(--text-tertiary); margin-top: 2px; }
+
+        /* ── FORM ELEMENTS ── */
+        .form-section { margin-top: 14px; }
+        .form-card { border: 1px solid var(--border-subtle); background: var(--bg-surface); border-radius: var(--radius-xl); padding: 14px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label { display: block; font-size: 8px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 5px; }
+        .form-input { width: 100%; height: 40px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-elevated); color: var(--text-primary); font-family: var(--font); font-size: 12px; padding: 0 12px; outline: 0; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input::placeholder { color: var(--text-disabled); }
+        .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .form-input:disabled { opacity: 0.4; cursor: not-allowed; }
+        .form-select { width: 100%; height: 40px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-elevated); color: var(--text-primary); font-family: var(--font); font-size: 12px; padding: 0 12px; outline: 0; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23585870' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .form-textarea { width: 100%; min-height: 80px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-elevated); color: var(--text-primary); font-family: var(--font); font-size: 12px; padding: 10px 12px; outline: 0; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-textarea::placeholder { color: var(--text-disabled); }
+        .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .form-error .form-input, .form-error .form-select { border-color: var(--error); box-shadow: 0 0 0 3px var(--error-soft); }
+        .form-error-msg { font-size: 8px; color: var(--error); margin-top: 4px; font-weight: 600; }
+        .form-hint { font-size: 8px; color: var(--text-tertiary); margin-top: 4px; }
+
+        .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+        .btn { height: 38px; padding: 0 16px; border-radius: var(--radius-md); font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s, box-shadow 0.2s, transform 0.1s; }
+        .btn:active { transform: scale(0.97); }
+        .btn svg { width: 14px; height: 14px; }
+        .btn-primary { background: var(--gradient-accent); color: var(--text-inverse); box-shadow: var(--shadow-glow); }
+        .btn-primary:hover { box-shadow: 0 0 28px rgba(192, 192, 208, 0.15); }
+        .btn-secondary { background: var(--bg-overlay); color: var(--text-primary); border: 1px solid var(--border-default); }
+        .btn-secondary:hover { background: var(--bg-hover); }
+        .btn-danger { background: var(--error-soft); color: var(--error); border: 1px solid rgba(232, 80, 96, 0.2); }
+        .btn-ghost { background: transparent; color: var(--text-secondary); }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+        .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radius-full); font-size: 8px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+        .badge-accent { background: var(--accent-soft); color: var(--accent-bright); }
+        .badge-success { background: var(--success-soft); color: var(--success); }
+        .badge-warning { background: var(--warning-soft); color: var(--warning); }
+        .badge-error { background: var(--error-soft); color: var(--error); }
+        .badge-info { background: var(--info-soft); color: var(--info); }
+        .badge-neutral { background: var(--bg-overlay); color: var(--text-secondary); }
+
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); }
+        .toggle-row:last-child { border-bottom: 0; }
+        .toggle-label { font-size: 10px; font-weight: 700; }
+        .toggle-sub { font-size: 8px; color: var(--text-secondary); margin-top: 1px; }
+        .toggle { width: 40px; height: 22px; border-radius: 11px; background: var(--bg-overlay); border: 1px solid var(--border-default); position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+        .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-tertiary); transition: transform 0.2s, background 0.2s; }
+        .toggle.on { background: var(--accent); border-color: var(--accent); }
+        .toggle.on::after { transform: translateX(18px); background: var(--text-inverse); }
+
+        .bottom { position: absolute; z-index: 30; left: 10px; right: 10px; bottom: max(8px, env(safe-area-inset-bottom)); height: 62px; padding: 4px; display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(5, 5, 8, 0.88); backdrop-filter: blur(23px) saturate(150%); box-shadow: var(--shadow-xl); }
+        .tab { color: var(--text-tertiary); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 7px; font-weight: 800; transition: color 0.2s, background 0.2s; }
+        .tab svg { height: 17px; width: 17px; }
+        .tab.active { color: var(--text-inverse); background: var(--gradient-accent); box-shadow: 0 5px 12px rgba(192, 192, 208, 0.2); }
+
+        .fab { position: absolute; z-index: 31; right: 16px; bottom: calc(82px + env(safe-area-inset-bottom)); width: 50px; height: 50px; border-radius: 18px; background: var(--gradient-accent); color: var(--text-inverse); display: grid; place-items: center; box-shadow: 0 10px 24px rgba(192, 192, 208, 0.2); }
+        .fab svg { width: 21px; height: 21px; }
+
+        @media (min-width: 560px) {
+            .app { height: 880px; margin-top: 22px; border: 1px solid var(--border-subtle); border-radius: 40px; box-shadow: var(--shadow-xl); }
+            body { min-height: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <div class="grain"></div>
+        <div class="glow"></div>
+        <div class="shell">
+            <div class="scroll" id="scroll">
+                <header class="topbar">
+                    <div class="top-left">
+                        <button class="top-btn" aria-label="Open navigation"><i data-lucide="panel-left"></i></button>
+                        <div class="identity">
+                            <div class="workspace">BIGDROPS WORKSPACE</div>
+                            <div class="owner">Milad A.</div>
+                        </div>
+                    </div>
+                    <div class="top-right">
+                        <button class="top-btn active" aria-label="Dark mode active"><i data-lucide="moon"></i></button>
+                        <button class="top-btn" aria-label="Notifications"><i data-lucide="bell"></i><i class="notif-pip"></i></button>
+                        <button class="top-btn" aria-label="Search"><i data-lucide="search"></i></button>
+                        <button class="top-btn" aria-label="AI" style="background:var(--gradient-accent);border-color:transparent;color:var(--text-inverse);font-size:10px;font-weight:800">AI</button>
+                    </div>
+                </header>
+                <main class="dashboard">
+                    <div class="eyebrow"><span>Finance pulse · August 2026</span><button>Edit metrics</button></div>
+                    <section class="metric-grid" aria-label="Dashboard metrics">
+                        <button class="metric collect"><span class="metric-label">Collected this month</span><div class="tickbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div><span class="metric-value">₦89,000</span><span class="metric-trend"><b>+18%</b> vs last month</span></button>
+                        <button class="metric overdue"><span class="metric-label">Overdue balance</span><div class="tickbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="metric-value">₦56,000</span><span class="metric-trend neutral"><b>Past due</b> awaiting collection</span></button>
+                        <button class="metric awaiting"><span class="metric-label">Awaiting payment</span><div class="tickbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="metric-value">12</span><span class="metric-trend neutral"><b>Invoices</b> still unpaid</span></button>
+                        <button class="metric due"><span class="metric-label">Due this week</span><div class="tickbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="metric-value">₦120,000</span><span class="metric-trend neutral"><b>7 days</b> upcoming due date</span></button>
+                    </section>
+                    <section class="section"><h2 class="section-title">Recent activity</h2><div class="card"><button class="activity-row"><span class="activity-icon invoice"><i data-lucide="receipt-text"></i></span><span class="act-copy"><span class="act-primary">INV-0045 <i class="status">Pending</i></span><span class="act-meta">Lagos Steel Works · Aug 15</span></span><span><span class="act-value">₦120,000</span><span class="act-date">Aug 15</span></span></button><button class="activity-row"><span class="activity-icon quote"><i data-lucide="file-signature"></i></span><span class="act-copy"><span class="act-primary">QTN-0109 <i class="status draft">Draft</i></span><span class="act-meta">Westfield Corp · Aug 14</span></span><span><span class="act-value">₦340,000</span><span class="act-date">Aug 14</span></span></button><button class="activity-row"><span class="activity-icon waybill"><i data-lucide="truck"></i></span><span class="act-copy"><span class="act-primary">WB-0028 <i class="status delivered">Delivered</i></span><span class="act-meta">Site Alpha · Aug 13</span></span><span><span class="act-value">Delivered</span><span class="act-date">Aug 13</span></span></button></div></section>
+                    <section class="section"><h2 class="section-title">Payment reminder</h2><div class="card reminder"><div class="reminder-row"><div class="reminder-icon"><i data-lucide="bell-ring"></i></div><div class="reminder-copy"><div class="reminder-kicker">Smart banner</div><h2>Keep payments recorded as they land</h2><p>Record each invoice payment promptly so your books stay accurate.</p><div class="reminder-actions"><button class="primary-sm">Record payments <i data-lucide="arrow-right"></i></button><span class="evergreen"><i data-lucide="circle-dot-dashed"></i>Evergreen</span></div></div><button class="dismiss" aria-label="Dismiss"><i data-lucide="x"></i></button></div></div></section>
+                    <section class="section"><h2 class="section-title">Recent alerts</h2><div class="card alerts"><div class="alerts-head"><div><div class="section-title">Notifications feed</div><p class="alerts-sub">What needs a response, not just a read.</p></div></div><div class="alerts-scroll"><button class="alert-item"><div class="alert-head"><div class="alert-symbol warn"><i data-lucide="triangle-alert"></i></div><div><div class="alert-overline">Alert</div><div class="alert-name">INV-0042 is overdue</div></div></div><p class="alert-body">7 days past due. Open to record payment or follow-up.</p><div class="alert-foot"><span>2h ago</span><span>Unread</span></div></button><button class="alert-item"><div class="alert-head"><div class="alert-symbol"><i data-lucide="circle-check"></i></div><div><div class="alert-overline">Update</div><div class="alert-name">QTN-0108 accepted</div></div></div><p class="alert-body">Acme Ltd accepted. Ready to convert to invoice.</p><div class="alert-foot"><span>5h ago</span><span>Unread</span></div></button><button class="alert-item"><div class="alert-head"><div class="alert-symbol"><i data-lucide="receipt"></i></div><div><div class="alert-overline">Payment</div><div class="alert-name">Payment for INV-0039</div></div></div><p class="alert-body">₦45,000 received. Reconcile against invoice.</p><div class="alert-foot"><span>Yesterday</span><span>Read</span></div></button></div></div></section>
+                    <section class="section"><h2 class="section-title">Audit trail</h2><div class="card audit"><div class="audit-row"><i class="audit-dot"></i><div><div class="audit-main">INV-0045 created by Milad</div><div class="audit-meta">Today, 10:32 AM</div></div></div><div class="audit-row"><i class="audit-dot copper"></i><div><div class="audit-main">INV-0042 overdue reminder sent</div><div class="audit-meta">Today, 09:15 AM</div></div></div><div class="audit-row"><i class="audit-dot"></i><div><div class="audit-main">QTN-0108 accepted by client</div><div class="audit-meta">Yesterday, 4:20 PM</div></div></div></div></section>
+                    <section class="form-section"><h2 class="section-title">Form elements</h2><div class="form-card"><div class="form-group"><label class="form-label">Client name</label><input class="form-input" type="text" placeholder="Lagos Steel Works" /></div><div class="form-group"><label class="form-label">Invoice amount</label><input class="form-input" type="text" placeholder="₦0.00" style="font-family:var(--number)" /></div><div class="form-group"><label class="form-label">Document type</label><select class="form-select"><option>Select type</option><option>Invoice</option><option>Quotation</option><option>Waybill</option><option>CSR</option></select></div><div class="form-group form-error"><label class="form-label">Due date</label><input class="form-input" type="text" placeholder="Required" /><div class="form-error-msg">Due date is required</div></div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Optional notes…"></textarea><div class="form-hint">Visible on the document PDF</div></div><div class="form-group"><label class="form-label">Disabled input</label><input class="form-input" type="text" value="Auto-generated" disabled /></div><div class="badge-row"><span class="badge badge-accent">Invoice</span><span class="badge badge-success">Paid</span><span class="badge badge-warning">Pending</span><span class="badge badge-error">Overdue</span><span class="badge badge-info">Quotation</span><span class="badge badge-neutral">Draft</span></div><div style="margin-top:12px"><div class="toggle-row"><div><div class="toggle-label">Include VAT</div><div class="toggle-sub">7.5% charged on line items</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="toggle-row"><div><div class="toggle-label">Send email copy</div><div class="toggle-sub">Auto-send to client on creation</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div></div><div class="btn-row"><button class="btn btn-primary">Save <i data-lucide="check"></i></button><button class="btn btn-secondary">Cancel</button></div><div class="btn-row"><button class="btn btn-danger">Delete <i data-lucide="trash-2"></i></button><button class="btn btn-ghost">Duplicate</button></div></div></section>
+                    <div style="height:6px"></div>
+                </main>
+            </div>
+            <button class="fab" aria-label="Create new"><i data-lucide="plus"></i></button>
+            <nav class="bottom" aria-label="Main navigation"><button class="tab active"><i data-lucide="house"></i><span>Home</span></button><button class="tab"><i data-lucide="folder-kanban"></i><span>Projects</span></button><button class="tab"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button><button class="tab"><i data-lucide="contact-round"></i><span>Clients</span></button><button class="tab"><i data-lucide="ellipsis"></i><span>More</span></button></nav>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

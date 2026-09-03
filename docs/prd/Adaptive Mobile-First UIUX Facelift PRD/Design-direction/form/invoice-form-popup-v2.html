@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f0f4f8"><title>BIGDROPS — Invoice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --canvas: #f0f4f8; --paper: #fff; --ink: #0f172a; --sub: #64748b; --line: rgba(15,23,42,.08);
+      --soft: #f8fafc; --rust: #1e3a5f; --rust-soft: #eef2ff;
+      --red: #ef4444; --red-soft: #fee2e2; --amber: #b45309; --green: #059669;
+      --mono: "DM Mono", monospace; --body: Manrope, sans-serif; --display: Syne, sans-serif;
+      --ease: cubic-bezier(.2,.8,.2,1);
+      --nav-offset: 88px;
+    }
+    [data-theme="dark"] {
+      --canvas: #0b1120; --paper: #111827; --ink: #e2e8f0; --sub: #94a3b8; --line: rgba(148,163,184,.12);
+      --soft: #1e293b; --rust: #60a5fa; --rust-soft: rgba(96,165,250,.12);
+      --red: #f87171; --red-soft: rgba(248,113,113,.1); --amber: #fbbf24; --green: #34d399;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html, body { background: var(--canvas); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+    button, input, textarea, select { font: inherit; border: 0; outline: 0; background: none; color: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(.97); }
+    svg { width: 18px; height: 18px; stroke-width: 1.8; }
+
+    /* Phone frame */
+    .phone { width: min(100%, 420px); height: 100dvh; margin: auto; background: var(--paper); position: relative; overflow: hidden; }
+    main { height: 100dvh; overflow-y: auto; padding: 0 16px calc(var(--nav-offset) + env(safe-area-inset-bottom)); scrollbar-width: none; }
+    main::-webkit-scrollbar { display: none; }
+
+    /* Nav */
+    .nav { display: flex; align-items: center; height: 52px; padding: 0 4px; gap: 4px; position: sticky; top: 0; z-index: 10; background: var(--paper); }
+    .nav-btn { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--ink); }
+    .nav-btn:hover { background: var(--soft); }
+    .nav h1 { flex: 1; text-align: center; font: 800 15px var(--display); letter-spacing: -.04em; }
+    .nav-save { width: 40px; height: 40px; border-radius: 12px; background: var(--rust); color: #fff; display: grid; place-items: center; }
+    .nav-save:hover { opacity: .9; }
+
+    /* Sections — flat, no cards */
+    .section { margin-bottom: 20px; }
+    .section-title { font: 700 9px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--sub); margin-bottom: 8px; padding-left: 2px; }
+
+    /* Client card — single tap target */
+    .client-card { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s; }
+    .client-card:hover { border-color: var(--rust); }
+    .client-avatar { width: 40px; height: 40px; border-radius: 12px; background: var(--rust-soft); color: var(--rust); display: grid; place-items: center; font: 800 14px var(--display); flex-shrink: 0; }
+    .client-info { flex: 1; min-width: 0; }
+    .client-name { font: 700 13px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .client-detail { font: 500 10px var(--body); color: var(--sub); margin-top: 2px; }
+    .client-arrow { color: var(--sub); flex-shrink: 0; }
+    .client-empty { font: 600 12px var(--body); color: var(--sub); }
+
+    /* Quick actions row — above items */
+    .quick-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .quick-row::-webkit-scrollbar { display: none; }
+    .quick-chip { display: flex; align-items: center; gap: 5px; height: 34px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); font: 600 10px var(--body); color: var(--ink); white-space: nowrap; flex-shrink: 0; transition: background .12s; }
+    .quick-chip:hover { background: var(--soft); }
+    .quick-chip svg { width: 14px; height: 14px; }
+    .quick-chip.accent { background: var(--rust); color: #fff; border-color: var(--rust); }
+
+    /* Item cards */
+    .item-card { border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; overflow: hidden; transition: box-shadow .15s; }
+    .item-card.invalid { box-shadow: inset 3px 0 0 var(--red); }
+    .item-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    .item-num { width: 24px; height: 24px; border-radius: 7px; background: var(--soft); display: grid; place-items: center; font: 700 9px var(--mono); color: var(--sub); flex-shrink: 0; }
+    .item-name { flex: 1; min-width: 0; font: 600 12px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-amount { font: 700 12px var(--mono); color: var(--rust); flex-shrink: 0; }
+    .item-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .item-actions button { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; color: var(--sub); }
+    .item-actions button:hover { background: var(--soft); color: var(--ink); }
+    .item-actions .del:hover { color: var(--red); }
+    .item-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 10px; }
+    .item-fields .full { grid-column: 1 / -1; }
+    .ifield label { display: block; font: 600 8px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--sub); margin-bottom: 3px; }
+    .ifield input, .ifield select { width: 100%; height: 34px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; font-size: 12px; background: var(--soft); }
+    .ifield input:focus, .ifield select:focus { border-color: var(--rust); background: var(--paper); }
+
+    /* Group header */
+    .group-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 8px; border-radius: 10px; background: linear-gradient(115deg, #0f172a 0%, #1e3a5f 55%, #334155 100%); color: #fff; }
+    .group-bar .g-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,.15); display: grid; place-items: center; }
+    .group-bar .g-name { flex: 1; font: 700 11px var(--body); }
+    .group-bar .g-toggle { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; color: rgba(255,255,255,.7); }
+    .group-bar .g-toggle:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .group-bar.collapsed .g-icon { background: rgba(255,255,255,.08); }
+
+    /* Totals bar — always visible, compact */
+    .totals-bar { position: sticky; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: var(--paper); border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; z-index: 5; }
+    .totals-left { flex: 1; }
+    .totals-label { font: 500 9px var(--body); color: var(--sub); }
+    .totals-amount { font: 800 20px var(--mono); color: var(--ink); letter-spacing: -.02em; }
+    .totals-vat { font: 500 10px var(--mono); color: var(--sub); margin-top: 1px; }
+    .totals-btn { height: 44px; padding: 0 20px; border-radius: 12px; background: var(--rust); color: #fff; font: 800 12px var(--body); display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(30,58,95,.25); }
+    .totals-btn svg { width: 16px; }
+
+    /* Overlay / Sheet */
+    .overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.4); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s var(--ease); }
+    .overlay.open { opacity: 1; pointer-events: auto; }
+    .sheet { width: min(100%, 420px); max-height: 80dvh; background: var(--paper); border-radius: 20px 20px 0 0; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform .28s var(--ease); overflow-y: auto; }
+    .overlay.open .sheet { transform: translateY(0); }
+    .sheet-grip { width: 36px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 12px; }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .sheet-head h2 { font: 800 17px var(--display); letter-spacing: -.04em; }
+    .sheet-close { width: 32px; height: 32px; border-radius: 9px; background: var(--soft); display: grid; place-items: center; }
+    .sheet-field { margin-bottom: 12px; }
+    .sheet-field label { display: block; font: 600 9px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--sub); margin-bottom: 4px; }
+    .sheet-field input, .sheet-field textarea, .sheet-field select { width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; font-size: 13px; background: var(--soft); }
+    .sheet-field textarea { height: 80px; padding: 10px 12px; resize: vertical; }
+    .sheet-field input:focus, .sheet-field textarea:focus { border-color: var(--rust); background: var(--paper); }
+    .sheet-btn { width: 100%; height: 44px; border-radius: 12px; font: 700 12px var(--body); display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .sheet-btn.primary { background: var(--rust); color: #fff; }
+    .sheet-btn.ghost { border: 1px solid var(--line); color: var(--ink); margin-top: 8px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 100px; left: 50%; transform: translate(-50%, 10px); padding: 8px 16px; border-radius: 99px; background: var(--ink); color: var(--paper); font: 700 11px var(--body); opacity: 0; transition: all .2s var(--ease); z-index: 100; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 32px 16px; }
+    .empty svg { width: 36px; height: 36px; color: var(--line); margin-bottom: 10px; }
+    .empty p { font: 500 12px var(--body); color: var(--sub); }
+  </style>
+</head>
+<body>
+  <div class="phone" data-theme="light">
+    <main id="app"></main>
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+    const I = n => '<i data-lucide="' + n + '"></i>';
+    const uid = () => Math.random().toString(36).slice(2, 9);
+    const money = n => '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = s => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    const q = s => document.querySelector(s);
+
+    /* ── State ── */
+    const state = {
+      sheet: null,  // null | 'client' | 'clientCreate' | 'type' | 'more' | 'vat' | 'signatory' | 'links' | 'bank' | 'pdf' | 'actions' | 'import' | 'preview'
+      sheetArg: null,
+      mode: 'create',
+      searchClient: '',
+      openGroups: {},
+
+      invoice: {
+        type: 'service', title: 'Service Invoice', number: 'INV-0047',
+        date: '2026-09-02', dueDate: '2026-09-16',
+        client: null,
+        items: [
+          { id: 'i1', name: 'UI/UX Design Sprint', qty: 1, rate: 250000, discount: 0, groupId: null, image: null },
+          { id: 'i2', name: 'Frontend Development', qty: 1, rate: 450000, discount: 0, groupId: 'g1', image: null },
+          { id: 'i3', name: 'API Integration', qty: 1, rate: 180000, discount: 0, groupId: 'g1', image: null }
+        ],
+        groups: [{ id: 'g1', name: 'Development Phase', collapsed: false }],
+        vat: 7.5, wht: 0, discount: 0, discountType: 'percent',
+        workmanship: 0, transportation: 0, shipping: 0,
+        notes: '', terms: '',
+        signatory: { name: '', title: '', image: null },
+        links: [], bank: { name: '', number: '', sortCode: '' },
+        commercial: { subtotal: 0, vat: 0, wht: 0, total: 0 }
+      },
+
+      savedClients: [
+        { name: 'Andela Nigeria', email: 'billing@andela.com', phone: '+234 801 234 5678', address: '14 Broad St, Lagos Island, Lagos' },
+        { name: 'Flutterwave Inc', email: 'pay@flutterwave.com', phone: '+234 908 765 4321', address: '21 Ozumba Mbadiwe Ave, Victoria Island, Lagos' },
+        { name: 'Kuda Microfinance Bank', email: 'accounts@kuda.com', phone: '+234 700 111 2233', address: '15 Adeola Odeku St, Victoria Island, Lagos' },
+        { name: 'Paystack', email: 'finance@paystack.com', phone: '+234 812 345 6789', address: '42 Saka Tinubu St, Victoria Island, Lagos' },
+        { name: 'Interswitch', email: 'ops@interswitch.com', phone: '+234 803 456 7890', address: '164 Broad St, Lagos Island, Lagos' }
+      ]
+    };
+
+    /* ── Helpers ── */
+    function openSheet(name, arg) { state.sheet = name; state.sheetArg = arg; render(); }
+    function closeSheet() { state.sheet = null; state.sheetArg = null; render(); }
+    function toast(msg) { const t = q('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+    function committed() { toast('Invoice saved'); }
+
+    /* ── Totals ── */
+    function calcTotals() {
+      const x = state.invoice;
+      let itemsTotal = x.items.reduce((s, a) => s + (a.qty * a.rate) - (a.discount || 0), 0);
+      let subtotal = itemsTotal + (x.workmanship || 0) + (x.transportation || 0) + (x.shipping || 0);
+      if (x.discountType === 'percent') subtotal -= subtotal * (x.discount || 0) / 100;
+      else subtotal -= (x.discount || 0);
+      const vat = subtotal * (x.vat || 0) / 100;
+      const wht = subtotal * (x.wht || 0) / 100;
+      return { subtotal, vat, wht, total: subtotal + vat - wht };
+    }
+
+    /* ── Main Render ── */
+    function render() {
+      const x = state.invoice;
+      const t = calcTotals();
+      const client = x.client;
+
+      let html = '<div class="nav">'
+        + '<button class="nav-btn" onclick="closeSheet()" aria-label="Back">' + I('arrow-left') + '</button>'
+        + '<h1>' + esc(x.title || 'Invoice') + '</h1>'
+        + '<button class="nav-save" onclick="committed()" aria-label="Save">' + I('check') + '</button>'
+        + '</div>';
+
+      /* ── Client ── */
+      html += '<div class="section"><div class="section-title">Client</div>';
+      if (client) {
+        html += '<div class="client-card" onclick="openSheet(\'client\')">'
+          + '<div class="client-avatar">' + esc((client.name || '?')[0]) + '</div>'
+          + '<div class="client-info"><div class="client-name">' + esc(client.name) + '</div>'
+          + '<div class="client-detail">' + esc(client.email || '') + '</div></div>'
+          + '<span class="client-arrow">' + I('chevron-right') + '</span></div>';
+      } else {
+        html += '<div class="client-card" onclick="openSheet(\'client\')">'
+          + '<div class="client-avatar">?</div>'
+          + '<div class="client-empty">Tap to select client</div>'
+          + '<span class="client-arrow">' + I('chevron-right') + '</span></div>';
+      }
+      html += '</div>';
+
+      /* ── Quick actions ── */
+      html += '<div class="quick-row">'
+        + '<button class="quick-chip" onclick="openSheet(\'type\')">' + I('file-text') + esc(x.type) + '</button>'
+        + '<button class="quick-chip" onclick="openSheet(\'more\')">' + I('settings-2') + 'More</button>'
+        + '<button class="quick-chip accent" onclick="openSheet(\'actions\')">' + I('send') + 'Actions</button>'
+        + '</div>';
+
+      /* ── Items ── */
+      html += '<div class="section"><div class="section-title">Items</div>';
+
+      const grouped = {};
+      const ungrouped = [];
+      x.items.forEach((it, idx) => {
+        const num = idx + 1;
+        const row = itemCard(it, num, idx);
+        if (it.groupId) { (grouped[it.groupId] = grouped[it.groupId] || []).push(row); }
+        else { ungrouped.push(row); }
+      });
+
+      /* Ungrouped */
+      ungrouped.forEach(r => { html += r; });
+
+      /* Grouped */
+      x.groups.forEach(g => {
+        const items = grouped[g.id] || [];
+        const collapsed = g.collapsed;
+        html += '<div class="group-bar' + (collapsed ? ' collapsed' : '') + '">'
+          + '<span class="g-icon">' + I('package') + '</span>'
+          + '<span class="g-name">' + esc(g.name) + ' (' + items.length + ')</span>'
+          + '<button class="g-toggle" onclick="toggleGroup(\'' + g.id + '\')">' + I(collapsed ? 'chevron-down' : 'chevron-up') + '</button>'
+          + '<button class="g-toggle" onclick="ungroup(\'' + g.id + '\')" title="Ungroup">' + I('unlink') + '</button>'
+          + '</div>';
+        if (!collapsed) items.forEach(r => { html += r; });
+      });
+
+      if (x.items.length === 0) {
+        html += '<div class="empty">' + I('package-open') + '<p>No items yet</p></div>';
+      }
+
+      html += '<button class="quick-chip" onclick="addItem()" style="width:100%;justify-content:center;height:38px">' + I('plus') + 'Add Item</button>';
+      html += '</div>';
+
+      /* ── Totals ── */
+      html += '<div class="totals-bar">'
+        + '<div class="totals-left">'
+        + '<div class="totals-label">Total</div>'
+        + '<div class="totals-amount">' + money(t.total) + '</div>'
+        + '<div class="totals-vat">VAT ' + (x.vat || 0) + '%: ' + money(t.vat) + (x.wht ? ' · WHT ' + x.wht + '%: -' + money(t.wht) : '') + '</div>'
+        + '</div>'
+        + '<button class="totals-btn" onclick="openSheet(\'actions\')">' + I('send') + ' Send</button>'
+        + '</div>';
+
+      q('#app').innerHTML = html;
+      lucide.createIcons();
+      renderSheet();
+    }
+
+    /* ── Item Card ── */
+    function itemCard(it, num, idx) {
+      const invalid = it.qty <= 0 || it.rate <= 0;
+      return '<div class="item-card' + (invalid ? ' invalid' : '') + '">'
+        + '<div class="item-head">'
+        + '<span class="item-num">' + num + '</span>'
+        + '<span class="item-name">' + esc(it.name || 'Untitled') + '</span>'
+        + '<span class="item-amount">' + money(it.qty * it.rate - (it.discount || 0)) + '</span>'
+        + '<span class="item-actions">'
+        + '<button onclick="editItem(\'' + it.id + '\')" title="Edit">' + I('pencil') + '</button>'
+        + '<button class="del" onclick="removeItem(\'' + it.id + '\')" title="Remove">' + I('trash-2') + '</button>'
+        + '</span></div></div>';
+    }
+
+    /* ── Sheet Renderer ── */
+    function renderSheet() {
+      if (!state.sheet) return;
+      const map = { client: sheetClient, clientCreate: sheetClientCreate, type: sheetType, more: sheetMore, vat: sheetVat, signatory: sheetSignatory, links: sheetLinks, bank: sheetBank, pdf: sheetPdf, actions: sheetActions, import: sheetImport, preview: sheetPreview, editItem: sheetEditItem };
+      const fn = map[state.sheet];
+      if (!fn) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay open';
+      overlay.onclick = e => { if (e.target === overlay) closeSheet(); };
+      overlay.innerHTML = '<div class="sheet"><div class="sheet-grip"></div>' + fn() + '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    /* ── Sheet: Client Picker ── */
+    function sheetClient() {
+      const clients = state.savedClients.filter(c => !state.searchClient || c.name.toLowerCase().includes(state.searchClient.toLowerCase()) || (c.email || '').toLowerCase().includes(state.searchClient.toLowerCase()));
+      let h = '<div class="sheet-head"><h2>Select Client</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><input placeholder="Search clients..." oninput="state.searchClient=this.value;rerenderSheet()" value="' + esc(state.searchClient) + '"></div>';
+      clients.forEach((c, i) => {
+        h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;gap:10px;margin-bottom:6px" onclick="pickClient(' + i + ')">'
+          + '<span style="width:32px;height:32px;border-radius:8px;background:var(--rust-soft);color:var(--rust);display:grid;place-items:center;font:800 12px var(--display)">' + esc(c.name[0]) + '</span>'
+          + '<span><b style="display:block;font-size:12px">' + esc(c.name) + '</b><small style="font-size:10px;color:var(--sub)">' + esc(c.email || '') + '</small></span></button>';
+      });
+      h += '<button class="sheet-btn primary" onclick="openSheet(\'clientCreate\');rerenderSheet()">' + I('plus') + ' New Client</button>';
+      return h;
+    }
+
+    function sheetClientCreate() {
+      let h = '<div class="sheet-head"><h2>New Client</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Company Name</label><input id="cName" placeholder="e.g. Acme Corp"></div>';
+      h += '<div class="sheet-field"><label>Email</label><input id="cEmail" type="email" placeholder="billing@company.com"></div>';
+      h += '<div class="sheet-field"><label>Phone</label><input id="cPhone" type="tel" placeholder="+234..."></div>';
+      h += '<div class="sheet-field"><label>Address</label><input id="cAddr" placeholder="Full address"></div>';
+      h += '<button class="sheet-btn primary" onclick="createClient()">' + I('check') + ' Save Client</button>';
+      return h;
+    }
+
+    /* ── Sheet: Type ── */
+    function sheetType() {
+      const types = ['service', 'product', 'proforma', 'receipt', 'quotation'];
+      let h = '<div class="sheet-head"><h2>Document Type</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      types.forEach(t => {
+        const active = state.invoice.type === t;
+        h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px;font-weight:' + (active ? '800' : '600') + ';color:' + (active ? 'var(--rust)' : 'var(--ink)') + '" onclick="setType(\'' + t + '\')">'
+          + I(active ? 'check-circle-2' : 'circle') + ' ' + t.charAt(0).toUpperCase() + t.slice(1) + '</button>';
+      });
+      return h;
+    }
+
+    /* ── Sheet: More Options ── */
+    function sheetMore() {
+      const x = state.invoice;
+      let h = '<div class="sheet-head"><h2>More Options</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'vat\');rerenderSheet()">' + I('percent') + ' VAT & Discounts</button>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'signatory\');rerenderSheet()">' + I('pen-tool') + ' Signatory</button>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'links\');rerenderSheet()">' + I('link-2') + ' Reference Links</button>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'bank\');rerenderSheet()">' + I('landmark') + ' Bank Details</button>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'pdf\');rerenderSheet()">' + I('file-output') + ' PDF Settings</button>';
+      h += '<button class="sheet-btn ghost" style="text-align:left;justify-content:flex-start;margin-bottom:6px" onclick="openSheet(\'import\');rerenderSheet()">' + I('upload') + ' Import JSON</button>';
+      return h;
+    }
+
+    /* ── Sheet: VAT & Discounts ── */
+    function sheetVat() {
+      const x = state.invoice;
+      let h = '<div class="sheet-head"><h2>VAT & Discounts</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>VAT (%)</label><input id="sVat" type="number" min="0" max="100" step="0.5" value="' + (x.vat || 0) + '"></div>';
+      h += '<div class="sheet-field"><label>Withholding Tax (%)</label><input id="sWht" type="number" min="0" max="100" step="0.5" value="' + (x.wht || 0) + '"></div>';
+      h += '<div class="sheet-field"><label>Discount</label><div style="display:flex;gap:6px"><input id="sDiscount" type="number" min="0" value="' + (x.discount || 0) + '" style="flex:1"><select id="sDiscountType" style="width:80px;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px"><option value="percent"' + (x.discountType === 'percent' ? ' selected' : '') + '>%</option><option value="fixed"' + (x.discountType === 'fixed' ? ' selected' : '') + '>\u20A6</option></select></div></div>';
+      h += '<div class="sheet-field"><label>Workmanship (\u20A6)</label><input id="sWork" type="number" min="0" value="' + (x.workmanship || 0) + '"></div>';
+      h += '<div class="sheet-field"><label>Transportation (\u20A6)</label><input id="sTransport" type="number" min="0" value="' + (x.transportation || 0) + '"></div>';
+      h += '<div class="sheet-field"><label>Shipping (\u20A6)</label><input id="sShipping" type="number" min="0" value="' + (x.shipping || 0) + '"></div>';
+      h += '<button class="sheet-btn primary" onclick="saveVat()">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Sheet: Signatory ── */
+    function sheetSignatory() {
+      const s = state.invoice.signatory;
+      let h = '<div class="sheet-head"><h2>Signatory</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Name</label><input id="sSigName" value="' + esc(s.name) + '" placeholder="Full name"></div>';
+      h += '<div class="sheet-field"><label>Title</label><input id="sSigTitle" value="' + esc(s.title) + '" placeholder="e.g. CEO, CFO"></div>';
+      h += '<button class="sheet-btn ghost" style="margin-bottom:12px" onclick="toast(\'Photo picker would open\')">' + I('image') + ' Upload Signature Image</button>';
+      h += '<button class="sheet-btn primary" onclick="saveSignatory()">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Sheet: Links ── */
+    function sheetLinks() {
+      const links = state.invoice.links;
+      let h = '<div class="sheet-head"><h2>Reference Links</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      links.forEach((l, i) => {
+        h += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">'
+          + '<input id="link' + i + '" value="' + esc(l) + '" style="flex:1;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:11px;background:var(--soft)">'
+          + '<button style="width:34px;height:34px;border-radius:8px;background:var(--red-soft);color:var(--red);display:grid;place-items:center" onclick="removeLink(' + i + ')">' + I('trash-2') + '</button></div>';
+      });
+      h += '<button class="sheet-btn ghost" onclick="addLink()">' + I('plus') + ' Add Link</button>';
+      h += '<button class="sheet-btn primary" onclick="saveLinks()" style="margin-top:12px">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Sheet: Bank Details ── */
+    function sheetBank() {
+      const b = state.invoice.bank;
+      let h = '<div class="sheet-head"><h2>Bank Details</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Bank Name</label><input id="sBankName" value="' + esc(b.name) + '" placeholder="e.g. GTBank"></div>';
+      h += '<div class="sheet-field"><label>Account Number</label><input id="sBankNum" value="' + esc(b.number) + '" placeholder="0123456789" maxlength="10"></div>';
+      h += '<div class="sheet-field"><label>Sort Code</label><input id="sBankSort" value="' + esc(b.sortCode) + '" placeholder="012-345-678"></div>';
+      h += '<button class="sheet-btn primary" onclick="saveBank()">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Sheet: PDF Settings ── */
+    function sheetPdf() {
+      let h = '<div class="sheet-head"><h2>PDF Settings</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Show Bank Details</label><select id="sPdfBank" style="height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px"><option value="1">Yes</option><option value="0">No</option></select></div>';
+      h += '<div class="sheet-field"><label>Show Signatory</label><select id="sPdfSig" style="height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px"><option value="1">Yes</option><option value="0">No</option></select></div>';
+      h += '<div class="sheet-field"><label>Show Commercial Terms</label><select id="sPdfComm" style="height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px"><option value="1">Yes</option><option value="0">No</option></select></div>';
+      h += '<div class="sheet-field"><label>Show Links</label><select id="sPdfLinks" style="height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px"><option value="1">Yes</option><option value="0">No</option></select></div>';
+      h += '<button class="sheet-btn primary" onclick="toast(\'PDF settings saved\');closeSheet()">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Sheet: Actions ── */
+    function sheetActions() {
+      let h = '<div class="sheet-head"><h2>Actions</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<button class="sheet-btn primary" onclick="toast(\'Invoice sent!\');closeSheet()">' + I('send') + ' Send Invoice</button>';
+      h += '<button class="sheet-btn ghost" onclick="openSheet(\'preview\');rerenderSheet()">' + I('eye') + ' Preview PDF</button>';
+      h += '<button class="sheet-btn ghost" onclick="toast(\'Duplicate created\');closeSheet()">' + I('copy') + ' Duplicate</button>';
+      h += '<button class="sheet-btn ghost" onclick="toast(\'Link copied\');closeSheet()">' + I('share-2') + ' Copy Share Link</button>';
+      h += '<button class="sheet-btn ghost" onclick="toast(\'Invoice deleted\');closeSheet()" style="color:var(--red)">' + I('trash-2') + ' Delete Invoice</button>';
+      return h;
+    }
+
+    /* ── Sheet: Preview ── */
+    function sheetPreview() {
+      const t = calcTotals();
+      const x = state.invoice;
+      let h = '<div class="sheet-head"><h2>Preview</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div style="padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:11px;line-height:1.6">';
+      h += '<div style="font:800 16px var(--display);margin-bottom:8px">' + esc(x.title) + '</div>';
+      h += '<div style="color:var(--sub);margin-bottom:12px">' + esc(x.number) + ' · ' + esc(x.date) + '</div>';
+      if (x.client) h += '<div style="margin-bottom:12px"><b>' + esc(x.client.name) + '</b><br><span style="color:var(--sub)">' + esc(x.client.email || '') + '</span></div>';
+      h += '<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">';
+      x.items.forEach(it => {
+        h += '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>' + esc(it.name) + '</span><span style="font-family:var(--mono)">' + money(it.qty * it.rate - (it.discount || 0)) + '</span></div>';
+      });
+      h += '<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">';
+      h += '<div style="display:flex;justify-content:space-between"><span>Subtotal</span><span style="font-family:var(--mono)">' + money(t.subtotal) + '</span></div>';
+      if (x.vat) h += '<div style="display:flex;justify-content:space-between"><span>VAT ' + x.vat + '%</span><span style="font-family:var(--mono)">' + money(t.vat) + '</span></div>';
+      if (x.wht) h += '<div style="display:flex;justify-content:space-between"><span>WHT -' + x.wht + '%</span><span style="font-family:var(--mono)">-' + money(t.wht) + '</span></div>';
+      h += '<div style="display:flex;justify-content:space-between;font:800 14px var(--mono);margin-top:8px"><span>Total</span><span>' + money(t.total) + '</span></div>';
+      h += '</div>';
+      h += '<button class="sheet-btn ghost" onclick="toast(\'Downloaded\');closeSheet()" style="margin-top:12px">' + I('download') + ' Download PDF</button>';
+      return h;
+    }
+
+    /* ── Sheet: Import JSON ── */
+    function sheetImport() {
+      let h = '<div class="sheet-head"><h2>Import JSON</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Paste JSON</label><textarea id="sJsonImport" style="height:160px;font-family:var(--mono);font-size:10px" placeholder=\'{"items":[{"name":"Item","qty":1,"rate":1000}]}\'></textarea></div>';
+      h += '<button class="sheet-btn primary" onclick="parseJsonImport()">' + I('upload') + ' Import</button>';
+      return h;
+    }
+
+    /* ── Sheet: Edit Item ── */
+    function sheetEditItem() {
+      const id = state.sheetArg;
+      const it = state.invoice.items.find(a => a.id === id);
+      if (!it) return '<p>Item not found</p>';
+      const groups = state.invoice.groups;
+      let h = '<div class="sheet-head"><h2>Edit Item</h2><button class="sheet-close" onclick="closeSheet()">' + I('x') + '</button></div>';
+      h += '<div class="sheet-field"><label>Name</label><input id="eName" value="' + esc(it.name) + '"></div>';
+      h += '<div class="sheet-field"><label>Qty</label><input id="eQty" type="number" min="1" value="' + it.qty + '"></div>';
+      h += '<div class="sheet-field"><label>Rate (\u20A6)</label><input id="eRate" type="number" min="0" value="' + it.rate + '"></div>';
+      h += '<div class="sheet-field"><label>Discount (\u20A6)</label><input id="eDiscount" type="number" min="0" value="' + (it.discount || 0) + '"></div>';
+      h += '<div class="sheet-field"><label>Group</label><select id="eGroup" style="height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px"><option value="">None</option>';
+      groups.forEach(g => { h += '<option value="' + g.id + '"' + (it.groupId === g.id ? ' selected' : '') + '>' + esc(g.name) + '</option>'; });
+      h += '</select></div>';
+      h += '<button class="sheet-btn ghost" onclick="toast(\'Photo picker would open\')">' + I('image') + ' Add Photo</button>';
+      h += '<button class="sheet-btn primary" onclick="saveItemEdit(\'' + id + '\')" style="margin-top:8px">' + I('check') + ' Save</button>';
+      return h;
+    }
+
+    /* ── Actions ── */
+    function pickClient(i) { state.invoice.client = { ...state.savedClients[i] }; closeSheet(); toast('Client selected'); }
+    function createClient() {
+      const name = q('#cName').value.trim();
+      if (!name) { toast('Name required'); return; }
+      const c = { name, email: q('#cEmail').value.trim(), phone: q('#cPhone').value.trim(), address: q('#cAddr').value.trim() };
+      state.savedClients.push(c);
+      state.invoice.client = c;
+      closeSheet(); toast('Client created');
+    }
+    function setType(t) { state.invoice.type = t; state.invoice.title = t.charAt(0).toUpperCase() + t.slice(1) + ' Invoice'; closeSheet(); }
+    function saveVat() {
+      const x = state.invoice;
+      x.vat = Number(q('#sVat').value); x.wht = Number(q('#sWht').value);
+      x.discount = Number(q('#sDiscount').value); x.discountType = q('#sDiscountType').value;
+      x.workmanship = Number(q('#sWork').value); x.transportation = Number(q('#sTransport').value); x.shipping = Number(q('#sShipping').value);
+      closeSheet(); toast('VAT & charges saved');
+    }
+    function saveSignatory() { state.invoice.signatory.name = q('#sSigName').value.trim(); state.invoice.signatory.title = q('#sSigTitle').value.trim(); closeSheet(); toast('Signatory saved'); }
+    function saveLinks() { state.invoice.links = state.invoice.links.map((_, i) => q('#link' + i).value.trim()).filter(Boolean); closeSheet(); toast('Links saved'); }
+    function addLink() { state.invoice.links.push(''); rerenderSheet(); }
+    function removeLink(i) { state.invoice.links.splice(i, 1); rerenderSheet(); }
+    function saveBank() { const b = state.invoice.bank; b.name = q('#sBankName').value.trim(); b.number = q('#sBankNum').value.trim(); b.sortCode = q('#sBankSort').value.trim(); closeSheet(); toast('Bank details saved'); }
+    function addItem() {
+      const id = 'i' + uid();
+      state.invoice.items.push({ id, name: 'New Item', qty: 1, rate: 0, discount: 0, groupId: null, image: null });
+      openSheet('editItem', id);
+    }
+    function editItem(id) { openSheet('editItem', id); }
+    function removeItem(id) { state.invoice.items = state.invoice.items.filter(a => a.id !== id); render(); toast('Item removed'); }
+    function saveItemEdit(id) {
+      const it = state.invoice.items.find(a => a.id === id);
+      if (!it) return;
+      it.name = q('#eName').value.trim() || 'Untitled';
+      it.qty = Math.max(1, Number(q('#eQty').value));
+      it.rate = Math.max(0, Number(q('#eRate').value));
+      it.discount = Math.max(0, Number(q('#eDiscount').value));
+      it.groupId = q('#eGroup').value || null;
+      closeSheet(); toast('Item saved');
+    }
+    function toggleGroup(id) { const g = state.invoice.groups.find(a => a.id === id); if (g) g.collapsed = !g.collapsed; render(); }
+    function ungroup(id) { state.invoice.items.forEach(a => { if (a.groupId === id) a.groupId = null; }); state.invoice.groups = state.invoice.groups.filter(a => a.id !== id); render(); toast('Group dissolved'); }
+    function parseJsonImport() {
+      try {
+        const data = JSON.parse(q('#sJsonImport').value);
+        if (data.items) data.items.forEach(it => {
+          state.invoice.items.push({ id: 'i' + uid(), name: it.name || 'Imported', qty: it.qty || 1, rate: it.rate || 0, discount: it.discount || 0, groupId: null, image: null });
+        });
+        closeSheet(); toast('Items imported');
+      } catch (e) { toast('Invalid JSON: ' + e.message); }
+    }
+    function rerenderSheet() { document.querySelectorAll('.overlay').forEach(o => o.remove()); renderSheet(); }
+
+    /* ── Init ── */
+    render();
+  </script>
+</body>
+</html>

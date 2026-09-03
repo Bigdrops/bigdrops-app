@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waybill Live Form — Neutral Wireframe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+  .form-shell { max-width: 780px; margin: 0 auto; padding: 16px 12px 200px; }
+  .section-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin-bottom: 12px; padding: 0 2px; }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .section-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 24px; margin-bottom: 24px; }
+  .field-label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; margin-bottom: 4px; }
+  .field-input { width: 100%; height: 44px; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0 12px; font-size: 14px; background: #f8fafc; outline: none; }
+  .field-input:focus { border-color: #6366f1; }
+  .field-input.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-weight: 700; }
+  .field-input:disabled { opacity: 0.5; background: #f1f5f9; }
+  .field-input::placeholder { color: #cbd5e1; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .field-full { margin-bottom: 16px; }
+  .type-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; border: 1px solid; padding: 6px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+  .type-badge.external { border-color: #6366f133; background: #6366f110; color: #6366f1; }
+  .type-badge.internal { border-color: #f59e0b33; background: #f59e0b10; color: #d97706; }
+  .type-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .type-badge.external .dot { background: #6366f1; }
+  .type-badge.internal .dot { background: #d97706; }
+
+  /* Client selector button */
+  .selector-btn { display: flex; align-items: center; gap: 12px; width: 100%; border: 1.5px dashed #e2e8f0; border-radius: 16px; background: #fff; padding: 12px 16px; text-align: left; cursor: pointer; transition: all 0.15s; }
+  .selector-btn:hover { border-color: #6366f1; background: #eef2ff; }
+  .selector-btn .icon-box { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; flex-shrink: 0; font-size: 18px; }
+  .selector-btn .label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; }
+  .selector-btn .value { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
+  .selector-btn .chevron { margin-left: auto; color: #cbd5e1; }
+
+  /* Linked invoice */
+  .linked-invoice { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 12px 16px; margin-top: 16px; }
+  .linked-invoice .icon-box { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; flex-shrink: 0; font-size: 18px; }
+  .linked-invoice .unlink-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; flex-shrink: 0; margin-left: auto; }
+  .linked-invoice .unlink-btn:hover { background: #fef2f2; color: #ef4444; }
+
+  /* Compact select */
+  .compact-select { width: 100%; height: 44px; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0 12px; font-size: 14px; background: #f8fafc; appearance: none; cursor: pointer; outline: none; }
+  .compact-select:focus { border-color: #6366f1; }
+
+  /* Section label inline */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 2px; }
+  .section-header .section-label { margin-bottom: 0; }
+
+  /* Line items toolbar */
+  .toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 12px; }
+  .toolbar-btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #475569; }
+  .toolbar-btn:hover { background: #f8fafc; }
+  .toolbar-btn.danger:hover { background: #fef2f2; color: #ef4444; }
+  .item-count { margin-left: auto; font-family: monospace; font-size: 11px; font-weight: 700; color: #94a3b8; }
+
+  /* Line item row */
+  .item-row { border: 1px solid #f1f5f9; border-radius: 12px; background: #fff; padding: 12px; margin-bottom: 8px; }
+  .item-row-header { display: flex; align-items: start; gap: 8px; }
+  .item-number { font-size: 10px; font-weight: 700; color: #94a3b8; padding-top: 8px; min-width: 16px; }
+  .item-grip { color: #cbd5e1; cursor: grab; padding-top: 6px; }
+  .item-fields { flex: 1; min-width: 0; }
+  .item-fields textarea { width: 100%; min-height: 38px; border: 1px solid #f1f5f9; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 500; resize: none; outline: none; background: #f8fafc; }
+  .item-fields textarea:focus { border-color: #6366f1; background: #fff; }
+  .item-qty-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .item-qty-row .mini-input { height: 36px; border: 1px solid #f1f5f9; border-radius: 8px; padding: 0 8px; font-size: 13px; font-weight: 700; text-align: center; outline: none; }
+  .item-qty-row .mini-input:focus { border-color: #6366f1; }
+  .item-actions { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+  .item-action-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: #64748b; }
+  .item-action-btn:hover { background: #f8fafc; }
+  .item-action-btn.remove { border-color: #fecdd3; background: #fef2f2; color: #ef4444; }
+  .item-action-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+  .insert-below { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #cbd5e1; cursor: pointer; padding: 4px 0 0 24px; }
+  .insert-below:hover { color: #6366f1; }
+
+  /* Add item button */
+  .add-item-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; border: 1.5px dashed #e2e8f0; border-radius: 12px; background: #fff; font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; margin-top: 12px; }
+  .add-item-btn:hover { border-color: #f59e0b; background: #fffbeb; color: #d97706; }
+
+  /* Signatures */
+  .sig-card { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; margin-bottom: 12px; }
+  .sig-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+  .sig-card-header .title { font-size: 13px; font-weight: 600; }
+  .sig-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sig-badge.captured { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .sig-badge.empty { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+  .sig-card-body { padding: 16px; }
+  .sig-preview-empty { border: 1.5px dashed #e2e8f0; border-radius: 12px; background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; }
+  .sig-btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .sig-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .sig-btn.primary { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+  .sig-btn:hover { background: #f8fafc; }
+  .sig-btn.danger { border-color: #fecdd3; color: #ef4444; margin-left: auto; }
+  .show-toggle { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .show-toggle.active { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+  .show-toggle.inactive { border-color: #e2e8f0; background: #fff; color: #94a3b8; }
+
+  /* Collapse card */
+  .collapse-card { border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; margin-bottom: 12px; overflow: hidden; }
+  .collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; }
+  .collapse-header .title-group { display: flex; align-items: center; gap: 10px; }
+  .collapse-header .icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .collapse-header .title { font-size: 14px; font-weight: 700; }
+  .collapse-header .chevron { color: #94a3b8; }
+  .collapse-body { padding: 0 20px 20px; }
+
+  /* Footer */
+  .form-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .footer-inner { max-width: 780px; margin: 0 auto; }
+  .footer-btns { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+  .footer-btn { height: 44px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
+  .footer-btn.cancel { border: 1px solid #e2e8f0; background: #fff; color: #1a1a1a; }
+  .footer-btn.draft { border: 1px solid #e2e8f0; background: #f1f5f9; color: #1a1a1a; }
+  .footer-btn.save { background: #6366f1; color: #fff; font-weight: 900; font-size: 14px; }
+  .floating-save { position: fixed; bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 16px); right: 16px; z-index: 60; width: 56px; height: 56px; border-radius: 16px; background: #6366f1; color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(99,102,241,0.4); cursor: pointer; }
+
+  /* Overlay base */
+  .overlay-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.6); display: flex; align-items: end; justify-content: center; }
+  .overlay-backdrop.hidden { display: none; }
+  .overlay-sheet { width: 100%; max-width: 512px; max-height: 85vh; background: #fff; border-radius: 24px 24px 0 0; overflow-y: auto; }
+  .overlay-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; background: #fff; z-index: 1; }
+  .overlay-header .title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.16em; color: #94a3b8; }
+  .overlay-close { width: 32px; height: 32px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; }
+  .overlay-body { padding: 20px 24px 40px; }
+
+  /* Dialog (center) */
+  .dialog-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .dialog-backdrop.hidden { display: none; }
+  .dialog { width: 100%; max-width: 512px; background: #fff; border-radius: 20px; padding: 24px; }
+
+  /* Gate options */
+  .gate-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .gate-option { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; text-align: left; background: #fff; }
+  .gate-option:hover { border-color: #6366f1; }
+  .gate-option .badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: #94a3b8; font-family: monospace; }
+  .gate-option .label { font-size: 15px; font-weight: 600; margin-top: 4px; }
+  .gate-option .desc { font-size: 12px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+  .gate-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+  .gate-divider .line { flex: 1; height: 1px; background: #e2e8f0; }
+  .gate-divider .text { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: #94a3b8; font-family: monospace; white-space: nowrap; }
+  .gate-blank { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gate-blank-btn { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; background: transparent; text-align: left; }
+  .gate-blank-btn:hover { background: #f8fafc; }
+  .gate-blank-btn .badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: #94a3b8; font-family: monospace; }
+  .gate-blank-btn .label { font-size: 12px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
+  .gate-note { display: flex; align-items: start; gap: 8px; background: #f8fafc; border-radius: 12px; padding: 12px; margin-top: 16px; font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .gate-note strong { color: #1a1a1a; }
+
+  /* More Settings modal */
+  .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-overlay.hidden { display: none; }
+  .modal { width: 100%; max-width: 380px; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-close { background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 18px; }
+  .modal-check { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .modal-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: #6366f1; }
+  .modal-check label { font-size: 13px; font-weight: 600; }
+  .modal-done { width: 100%; height: 40px; border-radius: 12px; background: #6366f1; color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; margin-top: 20px; }
+
+  /* Alert dialog */
+  .alert-overlay { position: fixed; inset: 0; z-index: 110; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .alert-overlay.hidden { display: none; }
+  .alert-box { width: 100%; max-width: 380px; background: #fff; border-radius: 16px; padding: 24px; }
+  .alert-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .alert-box p { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+  .alert-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .alert-btn { height: 36px; padding: 0 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
+  .alert-btn.destructive { background: #ef4444; color: #fff; border: none; }
+  .alert-btn.destructive:hover { background: #dc2626; }
+
+  /* Draw pad */
+  .draw-pad { border: 1.5px dashed #e2e8f0; border-radius: 12px; background: #f8fafc; padding: 12px; margin-top: 12px; }
+  .draw-canvas { width: 100%; height: 140px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }
+  .draw-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #94a3b8; }
+  .draw-btn { height: 28px; padding: 0 10px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
+  .draw-btn.save { background: #6366f1; color: #fff; border: none; font-weight: 700; }
+
+  /* Toast placeholder */
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; z-index: 200; display: none; }
+  .toast.visible { display: block; }
+
+  /* Rich text placeholder */
+  .rte-placeholder { min-height: 100px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #f8fafc; color: #94a3b8; font-size: 13px; font-style: italic; }
+
+  /* Conditional hidden */
+  .conditional { display: none; }
+  .conditional.visible { display: block; }
+  .conditional-flex { display: none; }
+  .conditional-flex.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- GATEWAY OVERLAY (Create mode only) -->
+<div class="dialog-backdrop" id="gatewayOverlay">
+  <div class="dialog">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3em;color:#94a3b8;font-family:monospace;">Create Document</div>
+    <h1 style="font-size:32px;font-weight:900;line-height:1.1;margin:8px 0 4px;">New <span style="color:#6366f1">Waybill</span></h1>
+    <div style="font-size:12px;letter-spacing:0.1em;color:#94a3b8;">Select document type</div>
+
+    <div class="gate-options">
+      <button class="gate-option" onclick="selectGatewayType('external')">
+        <div class="badge">Type 01 / Outbound</div>
+        <div class="label">External Delivery Note</div>
+        <div class="desc">Outbound shipment to clients and vendors. Links to invoice on record.</div>
+      </button>
+      <button class="gate-option" onclick="selectGatewayType('internal')">
+        <div class="badge">Type 02 / Internal</div>
+        <div class="label">Internal Transfer Note</div>
+        <div class="desc">Stock movement between depots, workshops, and service centers.</div>
+      </button>
+    </div>
+
+    <div class="gate-divider">
+      <div class="line"></div>
+      <div class="text">or download blank</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="gate-blank">
+      <button class="gate-blank-btn" onclick="showToast('Blank External PDF downloaded')">
+        <div class="badge">Blank Template</div>
+        <div class="label">External (PDF)</div>
+      </button>
+      <button class="gate-blank-btn" onclick="showToast('Blank Internal PDF downloaded')">
+        <div class="badge">Blank Template</div>
+        <div class="label">Internal (PDF)</div>
+      </button>
+    </div>
+
+    <div class="gate-note">
+      <span>📄</span>
+      <span>Waybill numbering follows <strong>WB-{6-digit serial}</strong> — auto-generated on creation.</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN FORM (hidden until type selected) -->
+<div class="form-shell" id="mainForm" style="display:none;">
+
+  <!-- Section 1: Waybill Header -->
+  <div>
+    <div class="section-label"><span class="section-dot" style="background:#6366f1"></span> Waybill Header</div>
+    <div class="section-card">
+
+      <div class="type-badge" id="typeBadge">
+        <span class="dot"></span>
+        <span id="typeLabel">EXTERNAL DELIVERY NOTE</span>
+      </div>
+
+      <!-- Client Selector (external only) -->
+      <div class="conditional visible" id="clientSection">
+        <button class="selector-btn" onclick="openClientPicker()">
+          <div class="icon-box">👤</div>
+          <div style="flex:1;min-width:0;">
+            <div class="label">Client</div>
+            <div class="value" id="clientDisplay">Select a client</div>
+          </div>
+          <div class="chevron">›</div>
+        </button>
+      </div>
+
+      <div class="field-row" style="margin-top:16px;">
+        <div>
+          <label class="field-label">WAYBILL NO</label>
+          <input class="field-input mono" id="waybillNo" value="WBL-E-000001" readonly>
+        </div>
+        <div class="conditional visible" id="poSection">
+          <label class="field-label">P.O. NUMBER</label>
+          <input class="field-input" placeholder="PO #">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div>
+          <label class="field-label">DATE</label>
+          <input class="field-input" type="date" value="2026-09-02">
+        </div>
+        <div>
+          <label class="field-label">TIME</label>
+          <input class="field-input" type="time">
+        </div>
+      </div>
+    </div>
+
+    <!-- Linked Invoice (external only) -->
+    <div class="conditional visible" id="invoiceSection">
+      <div id="invoiceEmpty">
+        <button class="selector-btn" id="invoiceLinkBtn" onclick="openInvoiceLink()" style="margin-top:16px;">
+          <div class="icon-box">📄</div>
+          <div style="flex:1;min-width:0;">
+            <div class="label">Linked Invoice</div>
+            <div class="value" style="color:#94a3b8;" id="invoiceLinkText">Select a client first</div>
+          </div>
+          <div class="chevron">›</div>
+        </button>
+      </div>
+      <div id="invoiceLinked" style="display:none;">
+        <div class="linked-invoice" style="margin-top:16px;">
+          <div class="icon-box">📄</div>
+          <div style="flex:1;min-width:0;">
+            <div class="label">Linked Invoice</div>
+            <div class="value mono" id="invoiceNumber" style="font-family:monospace;">INV-000042</div>
+          </div>
+          <button class="unlink-btn" onclick="unlinkInvoice()">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Transport Details -->
+  <div>
+    <div class="section-label"><span class="section-dot" style="background:#f59e0b"></span> Transport Details</div>
+    <div class="section-card">
+      <div class="field-full">
+        <label class="field-label">Transport Mode</label>
+        <select class="compact-select" id="transportMode" onchange="onTransportModeChange()">
+          <option value="By Vehicle">By Vehicle</option>
+          <option value="By Hand">By Hand</option>
+          <option value="Courier">Courier</option>
+          <option value="Blank">Blank</option>
+        </select>
+      </div>
+      <div class="field-full">
+        <label class="field-label">Purpose</label>
+        <select class="compact-select" id="purposeSelect">
+          <option value="">Blank</option>
+          <option value="Supply">Supply</option>
+          <option value="Return">Return</option>
+          <option value="Repair">Repair</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="conditional visible" id="plateSection">
+          <label class="field-label">Vehicle Plate</label>
+          <input class="field-input mono" style="text-transform:uppercase;" placeholder="ABC-123">
+        </div>
+        <div>
+          <label class="field-label">Driver Name</label>
+          <input class="field-input">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Line Items -->
+  <div>
+    <div class="section-label" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:6px;"><span class="section-dot" style="background:#059669"></span> Line Items</span>
+      <span style="font-family:monospace;font-size:11px;font-weight:700;color:#94a3b8;" id="itemCountDisplay">1 item</span>
+    </div>
+
+    <div class="toolbar">
+      <button class="toolbar-btn" onclick="openImportSheet()">📥 Import</button>
+      <button class="toolbar-btn" onclick="openMoreSettings()">⚙ Settings</button>
+      <button class="toolbar-btn danger" onclick="openClearConfirm()" style="margin-left:auto;">🗑 Clear</button>
+    </div>
+
+    <div id="lineItemsContainer">
+      <!-- Item row 1 (default) -->
+      <div class="item-row" data-index="0">
+        <div class="item-row-header">
+          <div class="item-number">1</div>
+          <div class="item-grip">⋮⋮</div>
+          <div class="item-fields">
+            <textarea placeholder="Item description..."></textarea>
+            <div class="item-qty-row">
+              <input class="mini-input" type="number" value="1" min="1" placeholder="Qty">
+              <input class="mini-input" placeholder="Unit">
+              <input class="mini-input" placeholder="Condition" style="text-align:left;font-weight:400;">
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="item-action-btn disabled">▲</button>
+            <button class="item-action-btn disabled">▼</button>
+            <button class="item-action-btn remove" onclick="removeItem(0)">✕</button>
+          </div>
+        </div>
+        <div class="insert-below" onclick="insertItemAfter(0)">+ Insert below</div>
+      </div>
+    </div>
+
+    <button class="add-item-btn" onclick="addItem()">＋ Add item</button>
+  </div>
+
+  <!-- Section 4: Custody Details -->
+  <div>
+    <div class="section-label"><span class="section-dot" style="background:#6366f1"></span> Custody Details</div>
+    <div class="field-row">
+      <div>
+        <label class="field-label">DELIVERED BY</label>
+        <input class="field-input">
+      </div>
+      <div>
+        <label class="field-label">RECEIVED BY</label>
+        <input class="field-input">
+      </div>
+    </div>
+    <div class="field-full">
+      <label class="field-label" id="locationLabel">DELIVERY LOCATION</label>
+      <input class="field-input" id="locationPlaceholder" placeholder="Client address, site, or drop-off location">
+    </div>
+  </div>
+
+  <!-- Section 5: Signatures -->
+  <div>
+    <div class="section-label" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:6px;"><span class="section-dot" style="background:#059669"></span> Signatures</span>
+      <span style="font-size:12px;color:#94a3b8;" id="sigCount">0 of 2 captured</span>
+    </div>
+
+    <!-- Sender Signature -->
+    <div class="sig-card">
+      <div class="sig-card-header">
+        <span class="title">Delivered By</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sig-badge empty" id="senderBadge"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#94a3b8;"></span> Empty</span>
+          <button class="show-toggle active" onclick="toggleSig('sender')">👁 Shown</button>
+        </div>
+      </div>
+      <div class="sig-card-body" id="senderBody">
+        <div class="sig-preview-empty">No signature captured yet</div>
+        <div class="sig-btn-row">
+          <button class="sig-btn">📤 Upload</button>
+          <button class="sig-btn" onclick="toggleDrawPad('sender')">✏️ Draw</button>
+          <button class="sig-btn primary">👤 Pick</button>
+        </div>
+        <div id="senderDrawPad" style="display:none;">
+          <div class="draw-pad">
+            <canvas class="draw-canvas" id="senderCanvas"></canvas>
+            <div class="draw-controls">
+              <span>Draw with mouse or finger</span>
+              <div style="display:flex;gap:6px;">
+                <button class="draw-btn">Reset</button>
+                <button class="draw-btn" onclick="toggleDrawPad('sender')">Cancel</button>
+                <button class="draw-btn save" onclick="saveDrawing('sender')">Save drawing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receiver Signature -->
+    <div class="sig-card">
+      <div class="sig-card-header">
+        <span class="title">Collected By</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sig-badge empty" id="receiverBadge"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#94a3b8;"></span> Empty</span>
+          <button class="show-toggle active" onclick="toggleSig('receiver')">👁 Shown</button>
+        </div>
+      </div>
+      <div class="sig-card-body" id="receiverBody">
+        <div class="sig-preview-empty">No signature captured yet</div>
+        <div class="sig-btn-row">
+          <button class="sig-btn">📤 Upload</button>
+          <button class="sig-btn" onclick="toggleDrawPad('receiver')">✏️ Draw</button>
+        </div>
+        <div id="receiverDrawPad" style="display:none;">
+          <div class="draw-pad">
+            <canvas class="draw-canvas"></canvas>
+            <div class="draw-controls">
+              <span>Draw with mouse or finger</span>
+              <div style="display:flex;gap:6px;">
+                <button class="draw-btn">Reset</button>
+                <button class="draw-btn" onclick="toggleDrawPad('receiver')">Cancel</button>
+                <button class="draw-btn save">Save drawing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Notes -->
+  <div class="collapse-card">
+    <div class="collapse-header" onclick="toggleCollapse('notes')">
+      <div class="title-group">
+        <div class="icon" style="background:#eef2ff;color:#6366f1;">📝</div>
+        <span class="title" id="notesTitle">Notes</span>
+      </div>
+      <span class="chevron" id="notesChevron">▾</span>
+    </div>
+    <div class="collapse-body" id="notesBody" style="display:none;">
+      <input class="field-input" style="margin-bottom:12px;" value="Notes" placeholder="Notes title" id="notesTitleInput">
+      <div class="rte-placeholder">Rich text editor placeholder</div>
+    </div>
+  </div>
+
+  <!-- Section 7: Terms (conditional) -->
+  <div class="collapse-card conditional" id="termsSection">
+    <div class="collapse-header" onclick="toggleCollapse('terms')">
+      <div class="title-group">
+        <div class="icon" style="background:#f5f3ff;color:#8b5cf6;">📋</div>
+        <span class="title">Terms & Conditions</span>
+      </div>
+      <span class="chevron" id="termsChevron">▸</span>
+    </div>
+    <div class="collapse-body" id="termsBody" style="display:none;">
+      <div class="rte-placeholder">Rich text editor placeholder</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER (shown after type selection) -->
+<div class="form-footer" id="formFooter" style="display:none;">
+  <div class="footer-inner">
+    <div class="footer-btns">
+      <button class="footer-btn cancel" onclick="showToast('Cancelled')">Cancel</button>
+      <button class="footer-btn draft" onclick="showToast('Saved as draft')">Draft</button>
+      <button class="footer-btn save" onclick="showToast('Waybill saved!')">Save Waybill</button>
+    </div>
+  </div>
+</div>
+<button class="floating-save" id="floatingSave" style="display:none;" onclick="showToast('Waybill saved!')">💾</button>
+
+<!-- CLIENT PICKER OVERLAY -->
+<div class="overlay-backdrop hidden" id="clientPickerOverlay" onclick="closeClientPicker(event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Select Client</div>
+      <button class="overlay-close" onclick="closeClientPicker()">✕</button>
+    </div>
+    <div class="overlay-body">
+      <input class="field-input" placeholder="Search clients..." style="margin-bottom:16px;">
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="selectClient('Acme Corp')">
+        <div style="font-weight:700;font-size:14px;">Acme Corp</div>
+        <div style="font-size:12px;color:#94a3b8;">Lagos, Nigeria</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;" onclick="selectClient('Beta Industries')">
+        <div style="font-weight:700;font-size:14px;">Beta Industries</div>
+        <div style="font-size:12px;color:#94a3b8;">Abuja, Nigeria</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE LINK OVERLAY -->
+<div class="overlay-backdrop hidden" id="invoiceLinkOverlay" onclick="closeInvoiceLink(event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Link Invoice</div>
+      <button class="overlay-close" onclick="closeInvoiceLink()">✕</button>
+    </div>
+    <div class="overlay-body">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px;">Search for an invoice to link to this waybill</div>
+      <input class="field-input" placeholder="Search invoices by number, client, or PO..." style="margin-bottom:16px;">
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;cursor:pointer;" onclick="linkInvoice('INV-000042')">
+        <div style="font-weight:700;font-size:14px;font-family:monospace;">INV-000042</div>
+        <div style="font-size:12px;color:#94a3b8;">Acme Corp · PO-2024-001</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT SHEET OVERLAY -->
+<div class="overlay-backdrop hidden" id="importSheetOverlay" onclick="closeImportSheet(event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Import Waybill</div>
+      <button class="overlay-close" onclick="closeImportSheet()">✕</button>
+    </div>
+    <div class="overlay-body">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px;">Capture a paper waybill by pasting its JSON extraction.</div>
+      <textarea class="field-input" style="height:160px;padding:12px;font-family:monospace;font-size:12px;resize:vertical;" placeholder="Paste JSON here..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="footer-btn draft" style="flex:1;" onclick="showToast('Import applied');closeImportSheet()">Preview</button>
+        <button class="footer-btn save" style="flex:1;" onclick="showToast('Import applied');closeImportSheet()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MORE SETTINGS MODAL -->
+<div class="modal-overlay hidden" id="moreSettingsModal">
+  <div class="modal">
+    <h3>
+      More Settings
+      <button class="modal-close" onclick="closeMoreSettings()">✕</button>
+    </h3>
+    <div class="modal-check">
+      <input type="checkbox" id="termsToggle" onchange="toggleTermsSection()">
+      <label for="termsToggle">Show Terms & Conditions</label>
+    </div>
+    <button class="modal-done" onclick="closeMoreSettings()">Done</button>
+  </div>
+</div>
+
+<!-- CLEAR ALL ALERT -->
+<div class="alert-overlay hidden" id="clearAlert">
+  <div class="alert-box">
+    <h3>Clear all items?</h3>
+    <p>This will remove all 1 line items and 0 groups from this document. This action cannot be undone.</p>
+    <div class="alert-btns">
+      <button class="alert-btn" onclick="closeClearConfirm()">Cancel</button>
+      <button class="alert-btn destructive" onclick="clearAllItems()">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- PICK SIGNATORY SHEET -->
+<div class="overlay-backdrop hidden" id="signatorySheet" onclick="closeSignatorySheet(event)">
+  <div class="overlay-sheet" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div class="title">Pick a signatory</div>
+      <button class="overlay-close" onclick="closeSignatorySheet()">✕</button>
+    </div>
+    <div class="overlay-body">
+      <div style="font-size:13px;color:#64748b;margin-bottom:12px;">People who signed for you before. Tap to attach.</div>
+      <input class="field-input" placeholder="Search by name or role…" style="margin-bottom:12px;">
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;cursor:pointer;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:14px;">John Doe</div>
+        <div style="font-size:12px;color:#94a3b8;">Dispatch Officer</div>
+      </div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;cursor:pointer;">
+        <div style="font-weight:700;font-size:14px;">Jane Smith</div>
+        <div style="font-size:12px;color:#94a3b8;">Warehouse Manager</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentType = null;
+  let itemCount = 1;
+
+  function selectGatewayType(type) {
+    currentType = type;
+    document.getElementById('gatewayOverlay').classList.add('hidden');
+    document.getElementById('mainForm').style.display = 'block';
+    document.getElementById('formFooter').style.display = 'block';
+    document.getElementById('floatingSave').style.display = 'flex';
+
+    const badge = document.getElementById('typeBadge');
+    const label = document.getElementById('typeLabel');
+    if (type === 'external') {
+      badge.className = 'type-badge external';
+      label.textContent = 'EXTERNAL DELIVERY NOTE';
+      document.getElementById('clientSection').classList.add('visible');
+      document.getElementById('poSection').classList.add('visible');
+      document.getElementById('invoiceSection').classList.add('visible');
+      document.getElementById('waybillNo').value = 'WBL-E-000001';
+      document.getElementById('locationLabel').textContent = 'DELIVERY LOCATION';
+      document.getElementById('locationPlaceholder').placeholder = 'Client address, site, or drop-off location';
+      // Update purpose options for external
+      document.getElementById('purposeSelect').innerHTML = '<option value="">Blank</option><option value="Supply">Supply</option><option value="Return">Return</option><option value="Repair">Repair</option><option value="Other">Other</option>';
+    } else {
+      badge.className = 'type-badge internal';
+      label.textContent = 'INTERNAL TRANSFER NOTE';
+      document.getElementById('clientSection').classList.remove('visible');
+      document.getElementById('poSection').classList.remove('visible');
+      document.getElementById('invoiceSection').classList.remove('visible');
+      document.getElementById('waybillNo').value = 'WBL-I-000001';
+      document.getElementById('locationLabel').textContent = 'MOVEMENT ROUTE / DESTINATION';
+      document.getElementById('locationPlaceholder').placeholder = 'Where the items are moving within operations';
+      document.getElementById('purposeSelect').innerHTML = '<option value="">Blank</option><option value="Transfer">Transfer</option><option value="Repair">Repair</option><option value="Other">Other</option>';
+    }
+  }
+
+  function onTransportModeChange() {
+    const mode = document.getElementById('transportMode').value;
+    const plateSection = document.getElementById('plateSection');
+    if (mode === 'By Hand' || mode === 'Courier') {
+      plateSection.classList.remove('visible');
+    } else {
+      plateSection.classList.add('visible');
+    }
+  }
+
+  function openClientPicker() {
+    document.getElementById('clientPickerOverlay').classList.remove('hidden');
+  }
+  function closeClientPicker(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('clientPickerOverlay').classList.add('hidden');
+  }
+  function selectClient(name) {
+    document.getElementById('clientDisplay').textContent = name;
+    document.getElementById('invoiceLinkText').textContent = 'Tap to link an invoice';
+    document.getElementById('invoiceLinkBtn').style.opacity = '1';
+    document.getElementById('invoiceLinkBtn').style.cursor = 'pointer';
+    closeClientPicker();
+  }
+
+  function openInvoiceLink() {
+    document.getElementById('invoiceLinkOverlay').classList.remove('hidden');
+  }
+  function closeInvoiceLink(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('invoiceLinkOverlay').classList.add('hidden');
+  }
+  function linkInvoice(num) {
+    document.getElementById('invoiceEmpty').style.display = 'none';
+    document.getElementById('invoiceLinked').style.display = 'block';
+    document.getElementById('invoiceNumber').textContent = num;
+    closeInvoiceLink();
+    showToast('Invoice linked: ' + num);
+  }
+  function unlinkInvoice() {
+    document.getElementById('invoiceEmpty').style.display = 'block';
+    document.getElementById('invoiceLinked').style.display = 'none';
+    showToast('Invoice unlinked');
+  }
+
+  function openImportSheet() {
+    document.getElementById('importSheetOverlay').classList.remove('hidden');
+  }
+  function closeImportSheet(e) {
+    if (e && e.target && e.target !== e.currentTarget && !e.target.closest('.overlay-close')) return;
+    document.getElementById('importSheetOverlay').classList.add('hidden');
+  }
+
+  function openMoreSettings() {
+    document.getElementById('moreSettingsModal').classList.remove('hidden');
+  }
+  function closeMoreSettings() {
+    document.getElementById('moreSettingsModal').classList.add('hidden');
+  }
+  function toggleTermsSection() {
+    const checked = document.getElementById('termsToggle').checked;
+    if (checked) {
+      document.getElementById('termsSection').classList.add('visible');
+    } else {
+      document.getElementById('termsSection').classList.remove('visible');
+    }
+  }
+
+  function openClearConfirm() {
+    document.getElementById('clearAlert').classList.remove('hidden');
+  }
+  function closeClearConfirm() {
+    document.getElementById('clearAlert').classList.add('hidden');
+  }
+  function clearAllItems() {
+    const container = document.getElementById('lineItemsContainer');
+    container.innerHTML = createItemRow(0);
+    itemCount = 1;
+    document.getElementById('itemCountDisplay').textContent = '1 item';
+    closeClearConfirm();
+    showToast('All items cleared');
+  }
+
+  function addItem() {
+    const container = document.getElementById('lineItemsContainer');
+    container.insertAdjacentHTML('beforeend', createItemRow(itemCount));
+    itemCount++;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+  }
+  function removeItem(idx) {
+    if (itemCount <= 1) return;
+    const rows = document.querySelectorAll('.item-row');
+    if (rows[idx]) rows[idx].remove();
+    itemCount--;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+    renumberItems();
+  }
+  function insertItemAfter(idx) {
+    const rows = document.querySelectorAll('.item-row');
+    const newRow = document.createElement('div');
+    newRow.innerHTML = createItemRow(idx + 1);
+    const firstChild = newRow.firstElementChild;
+    if (rows[idx]) {
+      rows[idx].after(firstChild);
+    }
+    itemCount++;
+    document.getElementById('itemCountDisplay').textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+    renumberItems();
+  }
+  function createItemRow(idx) {
+    return `<div class="item-row" data-index="${idx}"><div class="item-row-header"><div class="item-number">${idx + 1}</div><div class="item-grip">⋮⋮</div><div class="item-fields"><textarea placeholder="Item description..."></textarea><div class="item-qty-row"><input class="mini-input" type="number" value="1" min="1" placeholder="Qty"><input class="mini-input" placeholder="Unit"><input class="mini-input" placeholder="Condition" style="text-align:left;font-weight:400;"></div></div><div class="item-actions"><button class="item-action-btn disabled">▲</button><button class="item-action-btn disabled">▼</button><button class="item-action-btn remove" onclick="removeItem(${idx})">✕</button></div></div><div class="insert-below" onclick="insertItemAfter(${idx})">+ Insert below</div></div>`;
+  }
+  function renumberItems() {
+    document.querySelectorAll('.item-row').forEach((row, i) => {
+      row.querySelector('.item-number').textContent = i + 1;
+    });
+  }
+
+  function toggleCollapse(section) {
+    const body = document.getElementById(section + 'Body');
+    const chevron = document.getElementById(section + 'Chevron');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      chevron.textContent = '▴';
+    } else {
+      body.style.display = 'none';
+      chevron.textContent = '▸';
+    }
+  }
+
+  function toggleSig(role) {
+    const body = document.getElementById(role + 'Body');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+    } else {
+      body.style.display = 'none';
+    }
+  }
+
+  function toggleDrawPad(role) {
+    const pad = document.getElementById(role + 'DrawPad');
+    if (pad.style.display === 'none') {
+      pad.style.display = 'block';
+    } else {
+      pad.style.display = 'none';
+    }
+  }
+
+  function saveDrawing(role) {
+    toggleDrawPad(role);
+    document.getElementById(role + 'Badge').className = 'sig-badge captured';
+    document.getElementById(role + 'Badge').innerHTML = '<span class="dot" style="width:6px;height:6px;border-radius:50%;background:#059669;"></span> Captured';
+    showToast('Signature saved');
+  }
+
+  function openSignatorySheet() {
+    document.getElementById('signatorySheet').classList.remove('hidden');
+  }
+  function closeSignatorySheet(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('signatorySheet').classList.add('hidden');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 2500);
+  }
+</script>
+</body>
+</html>
