@@ -47,7 +47,10 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
   ].filter((row) => String(row.value || "").trim().length > 0);
   const previewTableSettings = resolveQuotationPreviewTableSettings(items, customFields);
 
-  const previewSummaryLabels = getPdfSummaryLabels(quotation);
+  const previewSummaryLabels = getPdfSummaryLabels(quotation, {
+    discountType: (customFields?.calculationInputs?.discountType ?? customFields?.discountType) as 'fixed' | 'percent' | undefined,
+    discountPercentEquivalent: totals?.discountPercentEquivalent,
+  });
   const previewTotals = [
     ...buildSummaryRows({
       invoice: quotation || {},

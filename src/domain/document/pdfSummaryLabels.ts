@@ -18,14 +18,47 @@ function buildLabel(baseLabel: string, percentage: number | null): string {
   return `${baseLabel} (${formatPercentage(percentage)})`
 }
 
-export function getPdfSummaryLabels(document: SupportedDocument) {
+/**
+ * Discount label extras.
+ *
+ * For a percent discount, discountPercentEquals the configured discount
+ * percentage (e.g. 5 means 5%).
+ *
+ * For a fixed discount, discountPercentEquivalent is the equivalent
+ * percentage the calculation engine already derived from its own
+ * discount base. This value is display-only and must not be
+ * recalculated at this layer.
+ */
+export type DiscountLabelExtras = {
+  discountType?: 'percent' | 'fixed'
+  discountPercentEquivalent?: number
+}
+
+export function getPdfSummaryLabels(
+  document: SupportedDocument,
+  extras?: DiscountLabelExtras,
+) {
   const customFields = parseCustomFields(document?.custom_fields)
   const calculationInputs = customFields.calculationInputs || {}
   const vatPercentage = toFiniteNumber(calculationInputs.vatPercent ?? customFields.vatPercent)
-  const discountPercentage =
-    (calculationInputs.discountType ?? customFields.discountType) === 'percent'
-      ? toFiniteNumber(calculationInputs.discountValue ?? customFields.discountValue)
-      : null
+  const discountType =
+    (calculationInputs.discountType ?? customFields.discountType) as string | undefined
+
+  // Determine the discount percentage to display.
+  // For percent discounts, read the configured rate directly.
+  // For fixed discounts, use the pre-computed equivalent from the
+  // calculation engine. Never derive the percentage here.
+  let discountPercentage: number | null = null
+  if (discountType === 'percent') {
+    discountPercentage = toFiniteNumber(calculationInputs.discountValue ?? customFields.discountValue)
+  } else if (
+    extras?.discountType === 'fixed' &&
+    extras?.discountPercentEquivalent != null &&
+    extras.discountPercentEquivalent > 0
+  ) {
+    discountPercentage = extras.discountPercentEquivalent
+  }
+
   const whtPercentage =
     (calculationInputs.whtType ?? customFields.whtType) === 'percent'
       ? toFiniteNumber(calculationInputs.whtValue ?? customFields.whtValue)

@@ -127,6 +127,7 @@ export interface DocumentResult {
   extraChargesTotal: number   // sum of all extra charge values
   taxableBase:       number   // PRECISE: sum of actual VAT bases truly taxed
   discount:          number   // total discount amount
+  discountPercentEquivalent: number   // display-only equivalent %; never used as a calc input
   vat:               number   // total VAT amount
   wht:               number   // total WHT amount
   grandTotal:        number   // total before WHT
@@ -462,6 +463,22 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
     totalDiscount = totalDiscount.plus(afterTaxFixedDiscount)
   }
 
+  // ── 4b. Discount percent equivalent (display only — never feeds
+  //        back into any calculation) ──────────────────────────────
+  const discountDenominator: Decimal =
+    discountTiming === 'before_tax'
+      ? (eligibleVatBase.greaterThan(0)
+          ? eligibleVatBase
+          : docSubtotal.plus(docInstallTotal))
+      : docSubtotal.plus(docInstallTotal)
+
+  const discountPercentEquivalent: Decimal =
+    discountType === 'percent'
+      ? D(discountValue)
+      : discountDenominator.greaterThan(0)
+        ? totalDiscount.dividedBy(discountDenominator).times(100)
+        : new Decimal(0)
+
   // ── 5. Extra charges ──────────────────────────────────────────────────────
 
   let extraChargesTotal    = new Decimal(0)
@@ -542,6 +559,7 @@ export function calculateDocument(input: DocumentInput): DocumentResult {
     extraChargesTotal: extraChargesTotal.toNumber(),
     taxableBase:       preciseTaxableBase.toNumber(),
     discount:          totalDiscount.toNumber(),
+    discountPercentEquivalent: discountPercentEquivalent.toNumber(),
     vat:               totalVat.toNumber(),
     wht:               whtAmount.toNumber(),
     grandTotal:        grandTotal.toNumber(),

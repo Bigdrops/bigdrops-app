@@ -73,6 +73,7 @@ export const downloadInvoicePdfDocument = async ({
       discountAmount: totals.discount,
       whtAmount: totals.wht,
       installRateTotal: totals.installRateTotal,
+      discountPercentEquivalent: totals.discountPercentEquivalent,
     },
     formatMoney: (value) => formatNaira(value, { preserveFraction: true }),
   });

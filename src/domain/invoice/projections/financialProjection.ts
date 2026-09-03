@@ -19,6 +19,7 @@ export type TotalsProjectionInput = {
     discountAmount?: number
     whtAmount?: number
     installRateTotal?: number
+    discountPercentEquivalent?: number
   }
   customFieldObject?: CustomFieldObjectLike
   invoiceTotal: number
@@ -31,7 +32,10 @@ export function buildTotalsProjection(
   input: TotalsProjectionInput,
 ): PreviewTotalRow[] {
   const { invoice, totals, customFieldObject, invoiceTotal, formatMoney } = input
-  const summaryLabels = getPdfSummaryLabels(invoice)
+  const summaryLabels = getPdfSummaryLabels(invoice, {
+    discountType: (customFieldObject?.calculationInputs?.discountType ?? customFieldObject?.discountType) as 'fixed' | 'percent' | undefined,
+    discountPercentEquivalent: totals?.discountPercentEquivalent,
+  })
 
   return [
     ...buildSummaryRows({
