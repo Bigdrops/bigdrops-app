@@ -74,7 +74,14 @@ Financial calculations
 
 src/lib/Calculations.ts is the financial source of truth.
 
-· Use calcTotals() and resolveRowVat() for financial calculations.
+· Use computeDocument() for financial calculations. It wraps
+  normalizeDocumentInput() and calculateDocument() and is the
+  only entry point used in production.
+· calcTotals() and resolveRowVat(), in
+  src/domain/invoice/calculations.ts, are deprecated. They have
+  no production callers as of 2026-09-04. Do not call them in
+  new code. Do not remove them without a separate, explicit task —
+  this patch does not authorize deletion.
 · Do not duplicate financial calculation logic.
 · Do not bypass Calculations.ts.
 · Quotations must reuse the invoice/domain financial layer.
