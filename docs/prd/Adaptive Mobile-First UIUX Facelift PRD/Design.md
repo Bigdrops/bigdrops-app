@@ -105,6 +105,7 @@ Colours are semantic. Each colour has a purpose, not just a value. A downstream 
 | Muted surface | Inactive states, backgrounds for controls | `--surface-muted` | `--surface-muted` |
 | Strong surface | Grab handles, strong dividers | `--surface-strong` | `--surface-strong` |
 | Primary text | Body text, headings, primary information | `--ink` | `--ink` |
+| Muted UI text | One standardized UI text tone layer used by a recent facelift pass for consistent text/icon color across a subset of surfaces | `--bd-ink-muted` (implementation bridge) | `--bd-ink-muted` (implementation bridge) |
 | Secondary text | Supporting text, descriptions | `--ink-2` | `--ink-2` |
 | Tertiary text | Labels, metadata, timestamps | `--ink-3` | `--ink-3` |
 | Primary accent | Brand colour, active states, key CTAs | `--primary` | `--primary` |
@@ -419,6 +420,7 @@ These are rules, not tokens. They reference semantic tokens. They do not change 
 | Component | Rule |
 |-----------|------|
 | Card | `1px solid var(--line)`, `var(--surface)` bg, `var(--shadow)`, 18px radius |
+| Implementation bridge tokens from a recent facelift pass | `--bd-ink`, `--bd-ink-muted`, `--bd-ink-icon` were introduced in `src/index.css` for UI text and icon color across a subset of surfaces. These are coverage artifacts, not new design authority. | No | No |
 | Sheet | `var(--surface)` bg, `0 -16px 40px rgba(0,0,0,.24)` shadow, 24px top radius |
 | Drawer | `var(--surface)` bg, `var(--shadow-float)`, `0 24px 24px 0` radius |
 | Active tab | `var(--gradient)` bg, white/ink text, `0 5px 12px` primary shadow |

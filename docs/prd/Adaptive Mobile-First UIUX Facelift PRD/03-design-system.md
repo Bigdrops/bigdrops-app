@@ -103,6 +103,21 @@ See [04-theme-system.md](./04-theme-system.md) for colour tokens.
 | `--shadow` | `0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)` | Cards, standard surfaces |
 | `--shadow-float` | `0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07)` | Floating elements (bottom nav, FAB) |
 
+### Coverage Note
+
+A facelift pass recorded in `22-facelift-pass-coverage-note.md` applied elevation and inset-highlight treatment to a subset of surfaces, including:
+
+- KPI cards
+- recent activity rows
+- payment reminder banner
+- recent alerts carousel
+- audit trail rows and skeletons
+- document top nav icon buttons
+- document action buttons, sheets, and related controls
+- project document card and its action buttons
+
+This note records implementation coverage only. It does not change the structural shadow tokens above.
+
 ### Elevation Rules
 
 - Cards use `--shadow`

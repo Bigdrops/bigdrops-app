@@ -40,6 +40,16 @@ Document reusable visual and interaction patterns visible in the canonical v6 re
 | Layout | Flex column |
 | Grid | 2-column (`1fr 1fr`), gap 8px |
 
+### Coverage Note
+
+A facelift pass recorded in `22-facelift-pass-coverage-note.md` extended the canonical KPI card surface beyond the structural spec to include:
+
+- layered box-shadow + subtle inset highlight in place of a single stroke on standard cards;
+- KPI label and value typography tightened within the locked type scale;
+- inactive tick color switched to a semantic UI text tone token (`--bd-ink-muted`) rather than a one-off variable.
+
+This note is coverage status only. It does not change the structural properties above.
+
 ### Variants — Shipped Model (locked)
 
 | Metric ID | Label | Format | Tone | Background | Use |

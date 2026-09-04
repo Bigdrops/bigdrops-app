@@ -167,6 +167,18 @@ The v6 naming convention is the standard:
 
 This convention must be used consistently across all themes. Do NOT introduce alternative naming (e.g. `--text-primary`, `--accent`, `--bg-base`) in new theme definitions.
 
+### Coverage Note
+
+A facelift pass recorded in `22-facelift-pass-coverage-note.md` introduced a small set of standardized UI text tone tokens in `src/index.css` for this codebase:
+
+- `--bd-ink`
+- `--bd-ink-muted`
+- `--bd-ink-icon`
+
+These are implementation-level bridge tokens for UI text and icon color. They map to the existing semantic ink hierarchy rather than replacing it. Their addition does not change the color-only theme contract established above.
+
+Covered surfaces in this pass: globals plus a subset of dashboard and document-view components. Broader token normalization across the whole codebase remains open.
+
 ---
 
 ## Do Not

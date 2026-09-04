@@ -23,7 +23,7 @@ const TICK_FILLED: Record<KpiTone, string> = {
   violet: 'bg-[hsl(var(--primary))]',
   amber: 'bg-[hsl(var(--secondary))]',
   sky: 'bg-[hsl(var(--primary))]',
-  slate: 'bg-[hsl(var(--ink-3))]',
+  slate: 'bg-[hsl(var(--bd-ink-muted))]',
 }
 
 // ponytail: segment fill color per metric tone — single source for bar coloring
@@ -89,7 +89,7 @@ function TrendIndicator({ card, isCollect }: { card: KpiCardViewModel; isCollect
   return (
     <div className={cn(
       'mt-auto flex items-center gap-1 text-[8px] leading-[1.3]',
-      isCollect ? 'text-white/78' : 'text-[hsl(var(--ink-3))]',
+      isCollect ? 'text-white/78' : 'text-[hsl(var(--bd-ink-muted))]',
     )}>
       <span
         className={cn(
@@ -120,20 +120,15 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
   return (
     <article
       className={cn(
-        'relative flex min-h-[108px] flex-col overflow-hidden rounded-[18px] border p-[11px_12px_10px] text-left transition-all md:min-h-[116px] md:p-[12px_14px_11px] lg:min-h-[120px] lg:p-[14px_16px_12px]',
+        'relative flex min-h-[108px] flex-col overflow-hidden rounded-[18px] p-[11px_12px_10px] text-left transition-all md:min-h-[116px] md:p-[12px_14px_11px] lg:min-h-[120px] lg:p-[14px_16px_12px]',
         isCollect
-          ? 'border-transparent bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] text-white shadow-lg'
+          ? 'bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] text-white shadow-lg'
           : isOverdue
-            ? 'border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md'
+            ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--attention)_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
             : isAwaiting
-              ? 'border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md'
-              : 'border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md',
+              ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--secondary)_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
+              : 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.22)]',
       )}
-      style={{
-        boxShadow: isCollect
-          ? undefined
-          : '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
-      }}
     >
       {/* V6 decorative circles */}
       <div
@@ -142,16 +137,15 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
           background: isCollect
             ? 'radial-gradient(circle at 35% 35%, rgba(255,255,255,.35), rgba(255,255,255,0) 140%)'
             : isOverdue
-              ? 'radial-gradient(circle at 35% 35%, hsl(var(--attention-soft)), hsl(var(--attention)) 140%)'
+              ? 'radial-gradient(circle at 35% 35%, hsl(var(--bd-attention-soft)), hsl(var(--bd-attention)) 140%)'
               : isAwaiting
-                ? 'radial-gradient(circle at 35% 35%, hsl(var(--secondary-soft, var(--secondary) / 0.13)), hsl(var(--secondary)) 140%)'
-                : 'radial-gradient(circle at 35% 35%, hsl(var(--primary) / 0.14), hsl(var(--primary)) 140%)',
+                ? 'radial-gradient(circle at 35% 35%, hsl(var(--bd-secondary-soft, var(--bd-secondary) / 0.13)), hsl(var(--bd-secondary)) 140%)'
+                : 'radial-gradient(circle at 35% 35%, hsl(var(--bd-primary) / 0.14), hsl(var(--bd-primary)) 140%)',
         }}
-      />
-      <div
+      />      <div
         className={cn(
           'pointer-events-none absolute -top-[14px] right-[10px] h-[34px] w-[34px] rounded-full border-2 opacity-55',
-          isCollect ? 'border-white/40' : 'border-[hsl(var(--primary))]/20',
+          isCollect ? 'border-white/40' : 'border-[hsl(var(--bd-primary))]/20',
         )}
       />
 
@@ -159,10 +153,9 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
       <div className="relative z-10 flex flex-1 flex-col gap-2">
         <div
           className={cn(
-            'truncate text-[8px] font-[800] uppercase leading-[1.2] tracking-[0.07em]',
-            isCollect ? 'text-white/78' : 'text-[hsl(var(--ink-2))]',
-          )}
-        >
+            'truncate text-[8px] font-[800] uppercase leading-[1.2] tracking-[0.055em]',
+            isCollect ? 'text-white/80' : 'text-[hsl(var(--bd-ink-muted))]',
+          )}>
           {card.label}
         </div>
 
@@ -170,8 +163,8 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
 
         <div
           className={cn(
-            'font-[\'DM_Mono\',ui-monospace,SFMono-Regular,Menlo,monospace] text-[17px] font-medium tracking-[-.075em] whitespace-nowrap',
-            isCollect ? 'text-white' : 'text-[hsl(var(--ink))]',
+            'font-[\'DM_Mono\',ui-monospace,SFMono-Regular,Menlo,monospace] text-[17px] font-medium tracking-[-.05em] whitespace-nowrap',
+            isCollect ? 'text-white' : 'text-[hsl(var(--bd-ink))]',
           )}
         >
           {card.valueText}

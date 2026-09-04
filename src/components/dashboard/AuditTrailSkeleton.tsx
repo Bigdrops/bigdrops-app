@@ -15,7 +15,7 @@ function AuditRow({
   variant?: 'primary' | 'copper'
 }) {
   return (
-    <div className="flex gap-[8px] border-t border-[hsl(var(--line))] py-[9px] first:border-t-0 md:py-3">
+    <div className="flex gap-[8px] border-t border-[hsl(var(--bd-border))/60] py-[9px] first:border-t-0 md:py-3">
       {/* V6 timeline dot */}
       <div
         className={cn(
@@ -43,12 +43,12 @@ function AuditTrailLoadingSkeleton() {
       {Array.from({ length: 3 }).map((_, index) => (
         <div
           key={index}
-          className="flex gap-[8px] border-t border-[hsl(var(--line))] py-[9px] first:border-t-0"
+          className="flex gap-[8px] border-t border-[hsl(var(--bd-border))/60] py-[9px] first:border-t-0"
         >
-          <div className="mt-[3px] h-[6px] w-[6px] shrink-0 rounded-full bg-[hsl(var(--surface-muted))]" />
+          <div className="mt-[3px] h-[6px] w-[6px] shrink-0 rounded-full bg-[hsl(var(--bd-ink-muted))]" />
           <div className="flex-1">
-            <div className="h-2.5 w-48 rounded bg-[hsl(var(--surface-muted))]/80" />
-            <div className="mt-1.5 h-2 w-24 rounded bg-[hsl(var(--surface-muted))]/60" />
+            <div className="h-2.5 w-48 rounded bg-[hsl(var(--bd-ink-muted))]/80" />
+            <div className="mt-1.5 h-2 w-24 rounded bg-[hsl(var(--bd-ink-muted))]/60" />
           </div>
         </div>
       ))}
@@ -133,7 +133,7 @@ export function AuditTrailSkeleton() {
 
   if (loading) {
     return (
-      <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md">
+      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
         <AuditTrailLoadingSkeleton />
       </div>
     )
@@ -165,10 +165,7 @@ export function AuditTrailSkeleton() {
   const entries = auditEntries.length > 0 ? auditEntries : fallbackEntries
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md"
-      style={{
-        boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
-      }}
+    <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
     >
       <div className="px-[11px] md:px-4">
         {entries.map((entry) => (

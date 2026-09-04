@@ -31,10 +31,7 @@ export function PaymentReminderBanner() {
   return (
     <section
       aria-label="Payment reminder"
-      className="relative overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] shadow-md"
-      style={{
-        boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
-      }}
+      className="relative overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
     >
       {/* V6 decorative corner ring */}
       <div
@@ -56,13 +53,13 @@ export function PaymentReminderBanner() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[7px] font-[800] uppercase tracking-[0.11em] text-[hsl(var(--ink-3))]">
+          <div className="text-[7px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))]">
             Smart banner
           </div>
-          <h2 className="mt-[3px] text-[12px] font-[800] tracking-[-.04em] text-[hsl(var(--ink))] md:text-[14px]">
+          <h2 className="mt-[3px] text-[12px] font-[800] tracking-[-.045em] text-[hsl(var(--bd-ink))] md:text-[14px]">
             Keep payments recorded as they land
           </h2>
-          <p className="mt-[2px] text-[9px] leading-[1.4] text-[hsl(var(--ink-2))] md:text-[11px]">
+          <p className="mt-[2px] text-[9px] leading-[1.4] text-[hsl(var(--bd-ink-muted))] md:text-[11px]">
             Record each invoice payment promptly so your books stay accurate.
           </p>
 
@@ -87,7 +84,10 @@ export function PaymentReminderBanner() {
           type="button"
           aria-label="Dismiss payment reminder"
           onClick={dismiss}
-          className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full text-[hsl(var(--ink-3))] transition hover:text-[hsl(var(--ink-2))] active:scale-95"
+          className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.25)] transition hover:scale-105 active:scale-95"
+          style={{
+            color: 'hsl(var(--bd-ink-muted))',
+          }}
         >
           <X size={14} strokeWidth={1.9} />
         </button>

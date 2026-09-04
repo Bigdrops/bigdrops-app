@@ -17,7 +17,7 @@
 .section:not(:first-child) {
   margin-top: 0.5rem;
   padding-top: 0.625rem;
-  border-top: 1px solid hsl(var(--bd-border));
+  border-top: 1px solid hsl(var(--bd-border) / 0.62);
 }
 
 .sectionLabel {
@@ -62,7 +62,7 @@
 }
 
 .action + .action {
-  border-top: 1px solid hsl(var(--bd-border) / 0.5);
+  border-top: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .action:hover:not(:disabled) {
@@ -151,7 +151,6 @@
   justify-content: center;
   min-width: 2.75rem;
   border-radius: 999px;
-  border: 1px solid hsl(var(--bd-border));
   background: hsl(var(--bd-card-bg));
   padding: 0.1875rem 0.5rem;
   font-size: 0.5625rem;
@@ -159,6 +158,9 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: hsl(var(--bd-text-muted));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-surface) / 0.32) 0px 0px 0px 1px inset;
 }
 
 .pillActive {

@@ -1,8 +1,6 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
-
-/* Core theme tokens */
+@tailwind utilities;  /* Core theme tokens */
 :root {
   color-scheme: light;
   /* BigDrops bridge fallbacks (safety net — overridden by formTheme.css and theme presets) */
@@ -11,6 +9,11 @@
   --bd-text: var(--foreground, 222 47% 11%);
   --bd-surface: var(--card, 0 0% 100%);
   --bd-border: var(--border, 214 30% 88%);
+
+  /* Standardised UI text tone tokens — ink / muted / icon */
+  --bd-ink: var(--bd-text);
+  --bd-ink-muted: var(--bd-text-muted);
+  --bd-ink-icon: var(--primary);
 
   --background: 210 40% 98%;
   --foreground: 222 47% 11%;
@@ -92,6 +95,11 @@
   color-scheme: dark;
   --background: 222 25% 8%;
   --foreground: 210 35% 96%;
+
+  /* Standardised UI text tone tokens — ink / muted / icon */
+  --bd-ink: var(--bd-text);
+  --bd-ink-muted: var(--bd-text-muted);
+  --bd-ink-icon: var(--primary);
 
   --card: 222 25% 10%;
   --card-foreground: 210 35% 96%;

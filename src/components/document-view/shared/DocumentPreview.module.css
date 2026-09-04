@@ -4,8 +4,9 @@
     background: hsl(var(--bd-surface));
     border-radius: var(--bd-radius-lg);
     overflow: hidden;
-    border: 1px solid hsl(var(--bd-border));
-    box-shadow: var(--bd-shadow-md);
+    box-shadow:
+        rgba(15, 23, 42, 0.06) 0px 4px 12px 0px,
+        hsl(var(--bd-surface-muted) / 0.4) 0px 0px 0px 1px inset;
 }
 
 .invCard[data-orientation="landscape"] {
@@ -19,6 +20,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 14px;
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .brandBlock {
@@ -38,7 +40,9 @@
     font-weight: 700;
     font-size: 13px;
     letter-spacing: -0.26px;
-    box-shadow: hsl(var(--bd-brand) / 0.2) 0px 2px 4px 0px;
+    box-shadow:
+        hsl(var(--bd-brand) / 0.24) 0px 4px 12px 0px,
+        hsl(var(--bd-surface) / 0.4) 0px 0px 0px 1px inset;
 }
 
 .brandLogoImg {
@@ -70,11 +74,13 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    border: 1.5px solid hsl(var(--bd-status-warning-border));
     background: hsl(var(--bd-status-warning-bg));
     color: hsl(var(--bd-status-warning-text));
     white-space: nowrap;
     flex-shrink: 0;
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+        hsl(var(--bd-status-warning-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .invBody {
@@ -106,14 +112,16 @@
     border-radius: var(--bd-radius-md);
     background: hsl(var(--bd-surface-muted));
     color: hsl(var(--bd-text-muted));
-    border: 1px solid hsl(var(--bd-border));
     letter-spacing: -0.24px;
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+        hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .infoGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border-top: 1px solid hsl(var(--bd-border));
+    border-top: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .infoCell {
@@ -121,7 +129,7 @@
 }
 
 .infoCell:first-child {
-    border-right: 1px solid hsl(var(--bd-border));
+    border-right: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .infoLabel {
@@ -143,12 +151,12 @@
 /* ── Item list ── */
 
 .itemList {
-    border-top: 1px solid hsl(var(--bd-border));
+    border-top: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .itemRow {
     padding: 14px 18px;
-    border-bottom: 1px solid hsl(var(--bd-border));
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.42);
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -205,9 +213,11 @@
     font-weight: 500;
     color: hsl(var(--bd-text-muted));
     background: hsl(var(--bd-surface-muted));
-    border: 1px solid hsl(var(--bd-border));
     padding: 3px 8px;
     border-radius: var(--bd-radius-md);
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+        hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .itemAmount {
@@ -225,10 +235,12 @@
     height: 120px;
     border-radius: var(--bd-radius-md);
     object-fit: cover;
-    border: 1px solid hsl(var(--bd-border));
     background: hsl(var(--bd-surface-muted));
     margin-top: 8px;
     display: block;
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 2px 4px 0px,
+        hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 /* ── Totals ── */
@@ -241,6 +253,9 @@
     gap: 4px;
     border-top: 2px solid hsl(var(--bd-text));
     background: hsl(var(--bd-surface-muted));
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 2px 4px 0px,
+        hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .totalsRow {
@@ -301,7 +316,7 @@
 /* ── Signatory ── */
 
 .signatoryBlock {
-    border-top: 1px solid hsl(var(--bd-border));
+    border-top: 1px solid hsl(var(--bd-border) / 0.42);
     padding: 16px 18px;
     display: flex;
     gap: 16px;
@@ -342,7 +357,9 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border: 1px solid hsl(var(--bd-border));
+    box-shadow:
+        rgba(15, 23, 42, 0.04) 0px 2px 4px 0px,
+        hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .bankDetail .lbl {
@@ -379,7 +396,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid hsl(var(--bd-border));
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.42);
     background: hsl(var(--bd-accent) / 0.06);
 }
 
@@ -437,7 +454,7 @@
 
 .progressTrack {
     height: 6px;
-    background: hsl(var(--bd-border));
+    background: hsl(var(--bd-border) / 0.5);
     border-radius: 10px;
     overflow: hidden;
 }

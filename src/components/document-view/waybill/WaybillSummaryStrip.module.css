@@ -1,11 +1,12 @@
 .strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border: 1px solid hsl(var(--bd-border));
   border-radius: var(--bd-radius-lg);
   overflow: hidden;
   background: hsl(var(--bd-card-bg));
-  box-shadow: var(--bd-shadow-sm);
+  box-shadow:
+      rgba(15, 23, 42, 0.05) 0px 2px 4px 0px,
+      hsl(var(--bd-surface-muted) / 0.4) 0px 0px 0px 1px inset;
 }
 
 .cell {
@@ -13,7 +14,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  border-right: 1px solid hsl(var(--bd-border) / 0.5);
+  border-right: 1px solid hsl(var(--bd-border) / 0.42);
 }
 
 .cell:last-child {

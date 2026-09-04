@@ -4,10 +4,11 @@
   flex-direction: column;
   gap: 14px;
   margin-top: 16px;
-  border: 1px solid hsl(var(--bd-border));
   border-radius: var(--bd-radius-xl);
   background: hsl(var(--bd-card-bg));
-  box-shadow: var(--bd-shadow-sm);
+  box-shadow:
+      rgba(15, 23, 42, 0.05) 0px 4px 12px 0px,
+      hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 @media (min-width: 640px) {
@@ -102,31 +103,41 @@
 .partial {
   background: hsl(var(--bd-status-warning-bg));
   color: hsl(var(--bd-status-warning-text));
-  border-color: hsl(var(--bd-status-warning-border));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-status-warning-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .paid {
   background: hsl(var(--bd-status-success-bg));
   color: hsl(var(--bd-status-success-text));
-  border-color: hsl(var(--bd-status-success-border));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-status-success-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .unpaid {
   background: hsl(var(--bd-status-danger-bg));
   color: hsl(var(--bd-status-danger-text));
-  border-color: hsl(var(--bd-status-danger-border));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-status-danger-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .draft {
   background: hsl(var(--bd-surface-muted));
   color: hsl(var(--bd-text-muted));
-  border-color: hsl(var(--bd-border));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .default {
   background: hsl(var(--bd-status-info-bg));
   color: hsl(var(--bd-status-info-text));
-  border-color: hsl(var(--bd-status-info-border));
+  box-shadow:
+      rgba(15, 23, 42, 0.04) 0px 1px 2px 0px,
+      hsl(var(--bd-status-info-border) / 0.42) 0px 0px 0px 1px inset;
 }
 
 @media (max-width: 639px) {

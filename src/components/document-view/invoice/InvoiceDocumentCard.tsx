@@ -49,7 +49,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
             {companyName && <div className={styles.brandName}>{companyName}</div>}
             {companySub && <div className={styles.brandSub}>{companySub}</div>}
             {companyLines.length > 0 && companyLines.map((line, i) => (
-              <div key={i} style={{ fontSize: 11, color: "hsl(var(--bd-text-muted))", marginTop: i === 0 ? 4 : 0, lineHeight: 1.4 }}>{line}</div>
+              <div key={i} style={{ fontSize: 11, color: "hsl(var(--bd-ink-muted))", marginTop: i === 0 ? 4 : 0, lineHeight: 1.4 }}>{line}</div>
             ))}
           </div>
         </div>
@@ -77,7 +77,7 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
           <div className={styles.infoLabel}>Client</div>
           <div className={styles.infoValue}>{invoice?.client_name || "—"}</div>
           {clientLines.length > 0 && (
-            <div style={{ marginTop: 6, fontSize: 12, color: "hsl(var(--bd-text-muted))", lineHeight: 1.5 }}>
+            <div style={{ marginTop: 6, fontSize: 12, color: "hsl(var(--bd-ink-muted))", lineHeight: 1.5 }}>
               {clientLines.map((line, i) => <div key={i}>{line}</div>)}
             </div>
           )}
@@ -88,8 +88,8 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
             {detailRows
               .filter((row: any) => row?.label !== 'PO Number')
               .map((row: any, index: number) => (
-                <div key={index} style={{ fontSize: 12, color: "hsl(var(--bd-text))", lineHeight: 1.6 }}>
-                  <span style={{ color: "hsl(var(--bd-text-muted))" }}>{row.label}:</span>{" "}
+                <div key={index} style={{ fontSize: 12, color: "hsl(var(--bd-ink))", lineHeight: 1.6 }}>
+                  <span style={{ color: "hsl(var(--bd-ink-muted))" }}>{row.label}:</span>{" "}
                   {String(row?.value || '').trim() || "—"}
                 </div>
               ))}

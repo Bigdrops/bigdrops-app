@@ -32,12 +32,21 @@ export default function MobileBottomNav({
             onClick={() => onSelect(item.key)}
             className={cn(
               "flex flex-col items-center justify-center gap-[2px] rounded-[15px] font-[800] text-[7px] uppercase transition-all duration-200 outline-none active:scale-[0.965]",
-              isActive 
-                ? "bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] text-white shadow-[0_5px_12px_color-mix(in_srgb,var(--primary)_35%,transparent)]" 
-                : "text-[var(--ink-3)] hover:bg-[var(--surface-muted)]/50"
+              isActive
+                ? "bg-[hsl(var(--bd-nav-active-bg))] text-[hsl(var(--bd-nav-active-text))] shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.25)]"
+                : "text-[hsl(var(--bd-text-muted))] hover:bg-[hsl(var(--bd-nav-hover-bg))]"
             )}
           >
-            <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
+            <Icon
+              className="h-[17px] w-[17px]"
+              strokeWidth={1.9}
+              style={{
+                color:
+                  isActive
+                    ? 'hsl(var(--bd-nav-active-icon))'
+                    : undefined,
+              }}
+            />
             <span className="tracking-tight">{item.label}</span>
           </button>
         )

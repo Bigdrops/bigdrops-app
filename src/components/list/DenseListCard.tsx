@@ -15,20 +15,20 @@ type Row = {
 
 export default function DenseListCard({ rows }: { rows: Row[] }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+    <div className="overflow-hidden rounded-[22px] bg-card shadow-[0_2px_4px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.22)]">
       {rows.map((row, index) => (
         <div
           key={row.key}
           onClick={row.onClick}
           className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-[14px]"
-          style={{ borderTop: index === 0 ? 'none' : '1px solid hsl(214,32%,91%)' }}
+          style={{ borderTop: index === 0 ? 'none' : '1px solid hsl(var(--bd-border) / 0.42)' }}
         >
           <div className="min-w-0">
-            <div className="truncate text-base font-bold tracking-[-0.03em] text-slate-950">{row.title}</div>
-            <div className="mt-1 text-[13px] leading-5 text-slate-500">{row.meta}</div>
+            <div className="truncate text-base font-bold tracking-[-0.04em] text-[hsl(var(--bd-ink))]">{row.title}</div>
+            <div className="mt-1 text-[13px] leading-5 text-[hsl(var(--bd-ink-muted))]">{row.meta}</div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <div className="text-base font-extrabold tracking-[-0.03em] text-slate-950">{row.amount}</div>
+            <div className="text-base font-extrabold tracking-[-0.04em] text-[hsl(var(--bd-ink))]">{row.amount}</div>
             <StatusChip label={row.statusLabel} tone={row.statusTone} />
             {row.roleBadge ? <span className={row.roleBadge.className}>{row.roleBadge.label}</span> : null}
           </div>
@@ -38,7 +38,7 @@ export default function DenseListCard({ rows }: { rows: Row[] }) {
               event.stopPropagation()
               row.onAction()
             }}
-            className="grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-card text-slate-900"
+            className="grid h-10 w-10 place-items-center rounded-[14px] bg-card shadow-[0_2px_4px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.25)] text-[hsl(var(--bd-ink))] transition active:scale-95"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>

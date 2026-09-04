@@ -76,10 +76,7 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-md md:px-4 md:py-4"
-      style={{
-        boxShadow: '0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04)',
-      }}
+    <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)] md:px-4 md:py-4"
     >
       {loading ? (
         <AlertsSkeleton />
@@ -136,7 +133,7 @@ export function RecentAlertsCarousel() {
               return (
                 <article
                   key={notification.id}
-                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
+                  className="min-w-[200px] w-[200px] rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
                 >
                   {card}
                 </article>
@@ -148,7 +145,7 @@ export function RecentAlertsCarousel() {
                 key={notification.id}
                 type="button"
                 onClick={() => void handleSelect(notification)}
-                className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
+                className="min-w-[200px] w-[200px] rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99] shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
               >
                 {card}
               </button>

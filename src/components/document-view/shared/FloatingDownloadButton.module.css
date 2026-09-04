@@ -1,25 +1,31 @@
 .button {
     width: 52px;
     height: 52px;
-    border-radius: 8px;
+    border-radius: 14px;
     background: hsl(var(--primary));
-    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: hsl(var(--primary) / 0.3) 0px 6px 20px 0px;
-    transition: all 0.15s;
+    box-shadow:
+        hsl(var(--primary) / 0.32) 0px 8px 24px 0px,
+        hsl(var(--bd-surface) / 0.42) 0px 0px 0px 1px inset;
+    transition: transform 150ms ease, box-shadow 150ms ease;
     color: hsl(var(--primary-foreground));
 }
 
 .button:hover {
     transform: translateY(-2px);
-    box-shadow: hsl(var(--primary) / 0.4) 0px 8px 24px 0px;
+    box-shadow:
+        hsl(var(--primary) / 0.42) 0px 12px 28px 0px,
+        hsl(var(--bd-surface) / 0.42) 0px 0px 0px 1px inset;
 }
 
 .button:active {
     transform: translateY(0);
+    box-shadow:
+        hsl(var(--primary) / 0.28) 0px 4px 12px 0px,
+        hsl(var(--bd-surface) / 0.3) 0px 0px 0px 1px inset;
 }
 
 .button svg {
@@ -32,7 +38,8 @@
     opacity: 0.5;
     cursor: not-allowed;
     transform: none !important;
-    box-shadow: hsl(var(--primary) / 0.15) 0px 4px 12px 0px !important;
+    box-shadow: hsl(var(--primary) / 0.16) 0px 4px 12px 0px,
+        hsl(var(--bd-surface) / 0.28) 0px 0px 0px 1px inset !important;
 }
 
 .srOnly {

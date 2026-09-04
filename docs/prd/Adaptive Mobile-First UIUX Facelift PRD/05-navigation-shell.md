@@ -58,6 +58,15 @@ BIGDROPS uses a **5-tab bottom navigation** on phone. The tabs are:
 - Active tab has gradient background with primary-tinted shadow
 - Tab bar is always visible (not hidden on scroll)
 
+### Implementation Note — Active Tab Visibility
+
+A pass on `src/components/layout/MobileBottomNav.tsx` confirmed that all five tabs always render and that the reported "active tab disappears" symptom was a contrast/rendering effect rather than a conditional unmount.
+
+Implementation detail recorded in `22-facelift-pass-coverage-note.md`.
+
+Covered surface: MobileBottomNav (active tab visual state, icon color, label presence).
+Status in this pass: fixed, not restructured.
+
 ---
 
 ## Top Bar
