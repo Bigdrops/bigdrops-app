@@ -129,9 +129,6 @@ export type PdfOutputLike = {
   bankAccountId?: string | null
   showBalanceDue?: boolean
   showAmountInWords?: boolean
-  showVatPercentage?: boolean
-  showWhtPercentage?: boolean
-  showDiscountPercentage?: boolean
 }
 
 export type BuildInvoicePreviewModelInput = {
@@ -153,6 +150,7 @@ export type BuildInvoicePreviewModelInput = {
     discountAmount?: number
     whtAmount?: number
     installRateTotal?: number
+    discountPercentEquivalent?: number
   }
   formatMoney: (value: number) => string
 }

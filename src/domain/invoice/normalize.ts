@@ -101,9 +101,6 @@ export const DEFAULT_INVOICE_PDF_OUTPUT: InvoicePdfOutput = {
   showTagline: true,
   showBalanceDue: true,
   showAmountInWords: true,
-  showVatPercentage: true,
-  showWhtPercentage: true,
-  showDiscountPercentage: true,
   compact: false,
 }
 
@@ -183,18 +180,6 @@ export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
       typeof savedPdfOutput.showAmountInWords === 'boolean'
         ? savedPdfOutput.showAmountInWords
         : DEFAULT_INVOICE_PDF_OUTPUT.showAmountInWords,
-    showVatPercentage:
-      typeof savedPdfOutput.showVatPercentage === 'boolean'
-        ? savedPdfOutput.showVatPercentage
-        : DEFAULT_INVOICE_PDF_OUTPUT.showVatPercentage,
-    showWhtPercentage:
-      typeof savedPdfOutput.showWhtPercentage === 'boolean'
-        ? savedPdfOutput.showWhtPercentage
-        : DEFAULT_INVOICE_PDF_OUTPUT.showWhtPercentage,
-    showDiscountPercentage:
-      typeof savedPdfOutput.showDiscountPercentage === 'boolean'
-        ? savedPdfOutput.showDiscountPercentage
-        : DEFAULT_INVOICE_PDF_OUTPUT.showDiscountPercentage,
     compact:
       typeof savedPdfOutput.compact === 'boolean'
         ? savedPdfOutput.compact

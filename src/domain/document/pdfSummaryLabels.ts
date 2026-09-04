@@ -21,8 +21,8 @@ function buildLabel(baseLabel: string, percentage: number | null): string {
 /**
  * Discount label extras.
  *
- * For a percent discount, discountPercentEquals the configured discount
- * percentage (e.g. 5 means 5%).
+ * For a percent discount, discountPercentEquivalent equals the configured
+ * discount percentage (e.g. 5 means 5%).
  *
  * For a fixed discount, discountPercentEquivalent is the equivalent
  * percentage the calculation engine already derived from its own

@@ -13,9 +13,6 @@ export const defaultPdfOutput: PdfOutputSettingsValue = {
   showTagline: true,
   showBalanceDue: false,
   showAmountInWords: true,
-  showVatPercentage: true,
-  showWhtPercentage: true,
-  showDiscountPercentage: true,
   compact: false,
 };
 

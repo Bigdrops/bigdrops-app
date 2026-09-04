@@ -91,6 +91,7 @@ export default function ViewInvoice() {
       discountAmount: documentTotals.discount,
       whtAmount: documentTotals.wht,
       installRateTotal: documentTotals.installRateTotal,
+      discountPercentEquivalent: documentTotals.discountPercentEquivalent,
     },
     formatMoney: (v) => formatNaira(v, { preserveFraction: true })
   }), [invoice, items, client, settings, bankAccounts, customFields, pdfOutput, resolvedSignatory, viewModel, documentTotals]);

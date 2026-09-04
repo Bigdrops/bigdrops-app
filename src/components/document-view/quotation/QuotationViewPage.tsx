@@ -64,6 +64,7 @@ export default function QuotationViewPage({
         onOutputChange={onOutputChange}
         onCustomize={onCustomize}
         hideMergeQty
+        hideBalanceDue
       />
 
       {guardedRelatedDocuments.length > 0 && (

@@ -12,6 +12,8 @@ interface DocumentOptionsCardProps {
   onCustomize?: () => void;
   /** Hide mergeQtyUnit row (quotation doesn't use it) */
   hideMergeQty?: boolean;
+  /** Hide balance-due row (quotation PDFs have no balance-due concept) */
+  hideBalanceDue?: boolean;
 }
 
 function defaults(v?: Partial<PdfOutputSettingsValue>): PdfOutputSettingsValue {
@@ -22,9 +24,6 @@ function defaults(v?: Partial<PdfOutputSettingsValue>): PdfOutputSettingsValue {
     showTagline: v?.showTagline ?? true,
     showBalanceDue: v?.showBalanceDue ?? false,
     showAmountInWords: v?.showAmountInWords ?? true,
-    showVatPercentage: v?.showVatPercentage ?? true,
-    showWhtPercentage: v?.showWhtPercentage ?? true,
-    showDiscountPercentage: v?.showDiscountPercentage ?? true,
     compact: v?.compact ?? false,
   };
 }
@@ -55,6 +54,7 @@ export const DocumentOptionsCard: React.FC<DocumentOptionsCardProps> = ({
   mergeQtyUnit,
   onCustomize,
   hideMergeQty = false,
+  hideBalanceDue = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const state = defaults(pdfOutput);
@@ -101,6 +101,18 @@ export const DocumentOptionsCard: React.FC<DocumentOptionsCardProps> = ({
             label="Show Footer"
             checked={state.showFooter}
             onToggle={() => patch("showFooter", !state.showFooter)}
+          />
+          {!hideBalanceDue && (
+            <ToggleRow
+              label="Show Balance Due"
+              checked={state.showBalanceDue}
+              onToggle={() => patch("showBalanceDue", !state.showBalanceDue)}
+            />
+          )}
+          <ToggleRow
+            label="Show Amount in Words"
+            checked={state.showAmountInWords}
+            onToggle={() => patch("showAmountInWords", !state.showAmountInWords)}
           />
           {!hideMergeQty && onToggleMergeQtyUnit && (
             <ToggleRow

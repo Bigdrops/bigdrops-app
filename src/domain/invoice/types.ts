@@ -71,9 +71,6 @@ export interface InvoicePdfOutput {
   showTagline: boolean
   showBalanceDue: boolean
   showAmountInWords: boolean
-  showVatPercentage: boolean
-  showWhtPercentage: boolean
-  showDiscountPercentage: boolean
   compact: boolean
 }
 

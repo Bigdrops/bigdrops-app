@@ -28,9 +28,6 @@ type PdfOutputSettingsValue = {
   showTagline: boolean
   showBalanceDue: boolean
   showAmountInWords: boolean
-  showVatPercentage: boolean
-  showWhtPercentage: boolean
-  showDiscountPercentage: boolean
   compact: boolean
   landscapeLayout?: boolean
 }
@@ -96,9 +93,6 @@ function mergeOutputState(value: Partial<PdfOutputSettingsValue> | undefined, de
     showTagline: value?.showTagline ?? false,
     showBalanceDue: value?.showBalanceDue ?? true,
     showAmountInWords: value?.showAmountInWords ?? true,
-    showVatPercentage: value?.showVatPercentage ?? true,
-    showWhtPercentage: value?.showWhtPercentage ?? true,
-    showDiscountPercentage: value?.showDiscountPercentage ?? true,
     compact: value?.compact ?? false,
     landscapeLayout: value?.landscapeLayout ?? false,
   }
@@ -280,22 +274,21 @@ export function PdfSupportingOptions(props: Pick<PdfOutputSettingsProps, 'value'
   return <PdfDocumentOptionsCard {...props} defaultOpen />
 }
 
+/**
+ * Create/edit form PDF output section.
+ *
+ * Only the Bank Details picker renders here. The document option
+ * switches (footer, tagline, balance due, amount in words) are
+ * View-page-only controls and must not appear on create/edit forms.
+ */
 export function PdfOutputSettings({
   value,
   onChange,
   bankAccounts,
-  companyTagline = "Reliable power for every site",
-  footerText = "Thank you for your business. Payment is due within 7 days unless otherwise agreed.",
 }: PdfOutputSettingsProps) {
   return (
     <div className="space-y-3">
       <PdfBankControls value={value} onChange={onChange} bankAccounts={bankAccounts} />
-      <PdfDocumentOptionsCard
-        value={value}
-        onChange={onChange}
-        companyTagline={companyTagline}
-        footerText={footerText}
-      />
     </div>
   )
 }
