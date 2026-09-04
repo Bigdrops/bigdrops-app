@@ -24,12 +24,15 @@ BIGDROPS is a private internal operations tool used exclusively by company staff
 |---|---|
 | **Invoices** | Create, edit, and view invoices with JSONB line items, tax, extra charges, and PDF generation (`INV-000001`) |
 | **Quotations** | Quote generation reusing the invoice domain layer for consistent pricing, items, and PDF output |
+| **Letters** | Formal correspondence documents with letterhead, PDF export, and project/document linking |
 | **CSR** | Customer Service Reports with service date tracking, problem/service logs, technician remarks, and PDF export |
 | **Waybills (External)** | Client delivery notes with prefix engine numbering (`WBL-E-000001`), custody sign-off, and field-masked PDFs |
 | **Waybills (Internal)** | Internal transfer notes (`WBL-ME-000001`) with `purpose` field enforced as NULL by database constraint |
 | **Payments** | Record payments against invoices with amount, method, date, and automatic outstanding balance computation |
+| **Receipts** | Immutable payment receipts with sequential numbering and PDF output |
 | **Projects** | Project-centric aggregation of invoices, payments, quotations, and CSRs under a single client engagement |
 | **Client Management** | Add, edit, view, and link clients to projects and documents |
+| **Workspaces & Companies** | Multi-company organization: workspace selection and creation, entity (company) switching, invitations, and role-based access |
 | **Reports** | Aggregated reporting views across documents and financials |
 | **Compliance Hub** | Compliance tracking and regulatory document management |
 | **Item Library** | Centralized catalog of reusable line items across documents |
@@ -68,14 +71,16 @@ src/
 ├── components/    Shared UI, document components, module-specific components
 ├── config/        Module adapters, filter configs, quick tiles
 ├── context/       React contexts (DocumentQueryContext)
+├── contexts/      Additional React contexts
 ├── domain/        Domain logic per module (invoice, quotation, waybill, csr, boq, rfq, audit, compliance)
 ├── hooks/         Custom React hooks
-├── lib/           Calculations.ts (single source of truth), fonts, icons, PDF, themes, utilities
+├── lib/           Calculations.ts (single source of truth), fonts, icons, PDF, themes, tenant client, utilities
 ├── modules/       Module-specific logic (invoices, quotations, compliance, item-library)
 ├── pages/         Route-level page components
 ├── services/      External service integrations
 ├── styles/        Global CSS
-├── supabase/      Supabase client config
+├── supabase.ts    Supabase client bootstrap
+├── supabase/      Supabase policies
 ├── tests/         Critical path tests
 ├── types/         Shared type definitions
 └── utils/         Utility functions (export compilers, number formatting)
@@ -117,11 +122,12 @@ Both are required — the Supabase client in `src/supabase.ts` will not initiali
 
 ## Architecture Highlights
 
-- **Single source of truth for calculations.** `src/lib/Calculations.ts` owns all pricing, tax, and total computations. `calcTotals()` and `resolveRowVat()` are the core pipelines. No duplicate logic exists elsewhere.
+- **Single source of truth for calculations.** `src/lib/Calculations.ts` owns all pricing, tax, and total computations. `computeDocument()` is the only entry point used in production. `calcTotals()` and `resolveRowVat()` in `src/domain/invoice/calculations.ts` are deprecated with no production callers as of 2026-09-04. No duplicate logic exists elsewhere.
 - **Field masking rules.** Waybill PDFs render blank pen-and-ink lines for empty fields while the on-screen view hides them. Inline eye toggles let operators hide fields from PDF output without deleting data.
 - **Prefix engine with `MAX(suffix)` sequence logic.** Document numbers are generated dynamically (`WBL-E-000001`, `WBL-ME-000001`, `INV-000001`) with a permanent blank token audit log that prevents number reuse.
-- **JSONB structural validation at DB level.** Postgres CHECK constraints enforce structural integrity on `items` arrays: non-empty, each item must have `description` + `qty`, and `qty > 0`.
+- **JSONB structural validation at DB level.** Waybill `items` arrays are enforced by a Postgres CHECK constraint (`validate_waybill_items`): the array must be non-empty and every item must have a `description` and a numeric `qty` greater than 0.
 - **Invoice-to-waybill spawning pipeline.** A transform pipeline extracts item descriptions, quantities, and units from invoices, strips all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`), and binds the new waybill to the parent document.
+- **Schema-per-entity multi-tenancy.** Every company (entity) owns an isolated Postgres schema. The app resolves the active workspace and entity at startup and routes all queries through a tenant-scoped Supabase client using `supabase.schema()`. Row-level security and action-based permissions enforce isolation. The authoritative model is `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`.
 
 ## Agent Workflow
 
