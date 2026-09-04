@@ -16,6 +16,7 @@
 | bigdrops-tax-ux-vision-v1.md | 🔄 Draft | Product, UX, Discovery | Companion vision document — payment recording as first-class record, "Why?" explanation layer, unrecorded activity loop. Not yet buildable |
 | Openai-ux-contribution.md | 🔄 Draft | Product, UX | UX review and product philosophy — reframes the product from "NRS compliance engine" to "make tax easy for Nigerian businesses" |
 | Waterfall-roadmap.md | ⛔ Pending | Project Management | Execution sequence and milestone tracker — currently all phases pending, awaiting PRD sign-off |
+| NRS-docs/ | ✅ Active | All | Reference source material — official Nigeria Tax Act 2025 gazette text in Markdown and JSON forms, plus the obligation lookup index |
 | Readme.md | ✅ Active | All | This file — master index and navigation hub |
 
 ---
@@ -37,6 +38,15 @@
 ### 5. Waterfall-roadmap.md
 **TL;DR:** A living execution-sequence document with a milestone tracker, phased execution steps, and a changelog. Currently all milestones and phases are set to PENDING. It becomes the single source of truth for execution order once the PRD and Technical Plan are signed off. No work has been started or sequenced yet.
 
+### 6. NRS-docs/
+**TL;DR:** Reference source material for the compliance work. Contains the official Nigeria Tax Act, 2025 (Act No. 7, Official Gazette No. 117, 26th June 2025):
+- `NIGERIA-TAX-ACT-2025.md` — the gazette text converted to Markdown. Canonical reference.
+- `NIGERIA-TAX-ACT-2025.json` — the same document as structured page data (page numbers, text blocks, bounding boxes) for programmatic lookup.
+- `Cable-Ngn-tax-act-2025-v2.md` — a second Markdown conversion of the Act for cross-checking. Section numbers drift by minus one from the official numbering. Use with care.
+- `OBLIGATION-LOOKUP-INDEX.md` — maps every PRD obligation rule to its gazette page, JSON page, and MD line. Read this first when implementing a tax rule.
+
+These are source-of-truth reference documents. Do not edit the Act conversions. The lookup index is the navigation aid; update it when a PRD rule or the Act text changes.
+
 ---
 
 ## IMPORTANT DECISIONS / DEPENDENCIES
@@ -47,6 +57,8 @@
 - `Waterfall-roadmap.md` **depends on** `Technical-plan-v1.1.md` and `Openai-ux-contribution.md` being signed off. No phases will be sequenced until both are finalised.
 - The NRS transmission adapter (section 7 of the engineering PRD) **depends on** selecting an Access Point Provider (APP). This decision is still open and blocks Module 4 implementation.
 - The "Unrecorded Business Activity" loop from `bigdrops-tax-ux-vision-v1.md` **depends on** answers to six audit questions (section 6 of that file) about the current Payments module, expense modules, and evidence upload pipeline.
+- `NRS-docs/` **is the reference authority** for tax rates, deadlines, and obligations. When a PRD requirement conflicts with the Act text, the Act text wins. Flag the conflict, do not silently follow the PRD.
+- `NRS-docs/OBLIGATION-LOOKUP-INDEX.md` **depends on** the Act conversions and on `Technical-plan.md` / `Technical-plan-v1.1.md`. Keep it in sync when either side changes. It currently flags three open items: the VAT remittance date (14th in the Act vs 21st in the PRD table), the small-company turnover threshold (₦50,000,000 in the Act vs ₦100,000,000 in the PRD), and the missing NTAA 2025 text that holds the WHT rate table and the 21st-day return deadline.
 
 ---
 
@@ -54,6 +66,8 @@
 
 | Date | Action Taken | Changed File |
 |------|--------------|--------------|
+| 2026-09-04 | Readme.md updated — NRS-docs/ reference folder added to file directory, summaries, and dependencies | Readme.md |
+| 2026-09-04 | NRS-docs/OBLIGATION-LOOKUP-INDEX.md created — PRD obligation rules mapped to gazette pages, JSON pages, and MD lines | OBLIGATION-LOOKUP-INDEX.md |
 | 2026-09-03 | Readme.md populated — file directory, summaries, dependencies, update log | Readme.md |
 | 2026-09-03 | Technical-plan-v1.1.md created — patches v1.0 with WHT rate fix, numeric precision guardrail, deadline restructure | Technical-plan-v1.1.md |
 | 2026-09-03 | bigdrops-tax-ux-vision-v1.md created — discovery-stage companion vision document | bigdrops-tax-ux-vision-v1.md |
