@@ -23,6 +23,7 @@ import BiometricGate from '@/components/app/BiometricGate'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
+import { triggerPostgrestExposure } from '@/domain/tenant/tenantCreation'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
@@ -472,6 +473,10 @@ function App() {
         }
 
         await runSyncBootstrap('app bootstrap')
+
+        // Recovery: process any pending PostgREST schema exposures
+        // Non-blocking — external cron handles anything missed
+        triggerPostgrestExposure().catch(() => {})
       } finally {
         if (isActive) {
           setAuthLoading(false)

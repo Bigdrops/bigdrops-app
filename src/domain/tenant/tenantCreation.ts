@@ -7,6 +7,8 @@ import type { ProvisioningStatus } from './tenantGate'
 import { slugify } from './tenantGate'
 export { slugify }
 
+const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/postgrest-schema-exposure`
+
 export interface CreatedWorkspace {
   id: string
   slug: string | null
@@ -64,7 +66,39 @@ export async function provisionEntity(entityId: string): Promise<{ status: strin
   const { data, error } = await supabase.rpc('provision_entity', { p_entity_id: entityId })
 
   if (error) throw error
-  return (data ?? { status: 'creating' }) as { status: string }
+  const result = (data ?? { status: 'creating' }) as { status: string }
+
+  // If ready, trigger PostgREST schema exposure (fire-and-forget)
+  if (result.status === 'ready') {
+    triggerPostgrestExposure().catch(() => {
+      // Non-blocking: external cron will pick up any missed schemas
+    })
+  }
+
+  return result
+}
+
+/**
+ * Trigger PostgREST schema exposure via Edge Function.
+ * Called immediately after provisioning + on app open for recovery.
+ * Non-blocking: failures are silent, queue persists for external cron.
+ */
+export async function triggerPostgrestExposure(): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+
+    await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: '{}',
+    })
+  } catch {
+    // Non-blocking: external cron will retry
+  }
 }
 
 /**
