@@ -155,8 +155,8 @@ export async function convertQuotationToInvoice(
   tenantClient: TenantClient,
   entityId?: string | null,
 ) {
-  // Phase 3: invoices/invoice_items are aggregate → tenant. The quotation
-  // read/write remains public (quotations are not in the aggregate).
+  // Phase 3: invoices/invoice_items are aggregate → tenant. Quotation
+  // read/write also routes through the tenant schema.
   const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
     tenantClient.from('invoices').select('invoice_number'),
     tenantClient.from('quotations').select('custom_fields').eq('id', id).single(),

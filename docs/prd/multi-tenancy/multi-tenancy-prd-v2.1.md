@@ -92,6 +92,18 @@ cross companies; the same user may hold different roles in different
 companies. This is a documentation-only update: no table shape, RPC, or
 authorization model change. See §3.11.
 
+Amendment note (2026-09-05): Documentation update — added §8A (Entity
+Lifecycle) to formally define entity-level soft-delete semantics mirroring
+the workspace deletion pattern (§8). Entity lifecycle states (active,
+archived, purging, purged), archive/restore/purge workflows, 30-day
+retention, hard-delete policy, permissions, workspace interaction,
+provisioning status interaction, PostgREST interaction, audit
+requirements, product/UI expectations, and open questions. Introduces
+a status column and archived_at timestamp on the entities table;
+retains is_active for backward compatibility. This is a specification-only
+update: no table shape, RPC, or authorization model change; implementation
+is a separate future task.
+
 Illustration: An interactive HTML reference illustrating this document's model
 alongside the other two PRDs in this set (workspace resolution, entity provisioning,
 action-based permissions, invite acceptance). Not a spec — if it and this document
@@ -717,6 +729,241 @@ explicit purge workflow:
    principle, since it's schema-existence, not data access) can restore
    status = 'active'.
 
+8A. Entity Lifecycle — Soft Delete Only
+Entities follow the same soft-delete pattern as workspaces (§8) but are
+scoped to the workspace owner or a member with the archive_entity permission
+toggle (§3.2). An entity lifecycle event never triggers DROP SCHEMA
+synchronously. Physical teardown is a separate, explicit purge workflow.
+
+8A.1 Entity Lifecycle States
+
+The entities table gains a status column and an archived_at timestamp:
+
+CREATE TABLE public.entities (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id uuid NOT NULL REFERENCES public.workspaces(id),
+    slug         text NOT NULL,
+    display_name text NOT NULL,
+    entity_type  text NOT NULL,
+    status       text NOT NULL DEFAULT 'active'
+                 CHECK (status IN ('active','archived','purging','purged')),
+    archived_at  timestamptz,
+    is_active    boolean NOT NULL DEFAULT true,  -- retained for backward compatibility; derived from status
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, slug)
+);
+
+The existing is_active boolean column is retained for backward compatibility.
+Application code SHOULD migrate to reading entities.status. During the
+transition, is_active MUST be kept in sync: status = 'active' implies
+is_active = true; any other status implies is_active = false. A CHECK
+constraint or trigger may enforce this invariant once the migration is
+complete.
+
+Entity lifecycle state diagram:
+
+  active ──────────> archived ──────────> purging ──────────> purged
+    │                   │
+    │                   ├──> active  (restore, before purge)
+    │                   │
+    │                   └──> purged  (hard-delete, only after purge completes)
+    │
+    └──> purging  (only via workspace purge cascade)
+
+A workspace in status = 'archived' automatically forces all its entities to
+status = 'archived' (or prevents new active entities from being created).
+An entity cannot be active if its workspace is archived.
+
+8A.2 Archive Semantics
+
+Archive is a soft-delete: the entity becomes invisible and inaccessible but
+its data is untouched.
+
+When an entity is archived:
+ * Entity status transitions from 'active' to 'archived'.
+ * archived_at is set to now().
+ * is_active is set to false.
+ * The entity disappears from the entity switcher (CompanyManageSection).
+ * The entity is excluded from EntityProvider's active-entity query
+   (src/lib/tenant/contexts.tsx:303 already filters is_active = true).
+ * RLS on the entity's tenant schema denies all access for non-owner members.
+   The workspace owner retains read access for recovery purposes.
+ * entity_permissions rows are preserved but dormant — they are not revoked,
+   so restoring the entity reactivates the original permission set without
+   re-assignment.
+ * entity_provisioning_status is unchanged. The entity schema and all
+   business data remain physically present.
+ * The entity does NOT count toward any active-entity limits or billing
+   metrics.
+ * Provisioning status for the entity remains whatever it was (typically
+   'ready'). No provisioning transition occurs on archive.
+
+Archive permission:
+ * The workspace owner may always archive any entity in the workspace.
+ * A member with the archive_entity permission toggle (§3.2) may archive
+   entities within their workspace.
+ * A member without archive_entity cannot archive.
+ * Archiving an entity is a workspace-governance action, not an entity-level
+   business permission.
+
+8A.3 Restore Semantics
+
+Restore reverses an archive before the purge workflow begins. It is the
+entity-level equivalent of §8's "restore status = 'active'" for workspaces.
+
+When an entity is restored:
+ * Entity status transitions from 'archived' to 'active'.
+ * archived_at is set to NULL.
+ * is_active is set to true.
+ * The entity reappears in the entity switcher.
+ * entity_permissions rows become active again (they were preserved, not
+   revoked).
+ * RLS on the entity's tenant schema resumes normal operation.
+ * The entity resumes counting toward active-entity limits and billing.
+ * No data is lost. No schema recreation occurs.
+
+Restore permission:
+ * The workspace owner may always restore any archived entity.
+ * A member with the archive_entity permission toggle may restore entities
+   within their workspace.
+ * Restore is not available once the purge workflow has begun (status =
+   'purging' or 'purged').
+
+8A.4 Purge Workflow — Physical Teardown
+
+Purge destroys the entity's tenant schema and all business data. It is
+irreversible once complete.
+
+After a retention period (default 30 days from archive), a privileged
+background job performs the following sequence per archived entity:
+
+ 1. Set entity status = 'purging'.
+ 2. Set entity_provisioning_status.status = 'purging'.
+ 3. Execute DROP SCHEMA entity_<ws_slug>_<entity_slug> CASCADE.
+ 4. Delete entity_permissions rows for this entity.
+ 5. Delete entity_provisioning_status row for this entity.
+ 6. Set entity status = 'purged'.
+ 7. After a secondary retention window (default 7 days), delete the
+    entities row entirely.
+
+The purge workflow is identical to the workspace purge (§8) but scoped to
+a single entity. It may run independently per entity — purging one entity
+in a workspace does not affect other entities in that workspace.
+
+Purge is NOT triggered by archive alone. Archive is safe and reversible.
+Purge is a separate, explicit, privileged operation.
+
+8A.5 Hard-Delete Policy
+
+Hard-delete of an entity row (DELETE FROM public.entities) is prohibited
+through normal application paths. It is permitted ONLY:
+ * After the purge workflow has completed (status = 'purged' and the
+   secondary retention window has elapsed).
+ * Via a Platform Operator emergency action (§3.8) for data-corruption
+   recovery, documented in an incident record.
+
+The existing RLS policy `entities_delete_member` (which allows workspace
+members with create_entity permission to DELETE entity rows) is a gap.
+It MUST be replaced with a policy that denies hard-delete unless the
+entity is in status = 'purged'. This is a migration requirement, not a
+PRD-only concern — the implementation task must address this.
+
+8A.6 Workspace Interaction
+
+When a workspace is archived (§8):
+ * All entities in that workspace are effectively inaccessible regardless
+   of their individual status, because RLS denies access to non-active
+   workspaces.
+ * Entity statuses remain unchanged — they are not automatically set to
+   'archived'. This preserves the ability to restore individual entities
+   when the workspace itself is restored.
+ * If the workspace purge workflow begins (§8), it cascades to all entities:
+   each entity transitions through purging → purged independently.
+
+When a workspace is restored from 'archived':
+ * All entities that were 'active' before the workspace archival resume
+   normal operation.
+ * Entities that were independently archived before the workspace archival
+   remain archived — they require separate restore actions.
+
+8A.7 Provisioning Status Interaction
+
+entity_provisioning_status (§9.1) tracks the physical schema lifecycle,
+independent of the logical entity lifecycle:
+
+| Entity Status | Provisioning Status | Meaning |
+|---|---|---|
+| active | ready | Normal operation. Entity accessible. |
+| active | creating | Entity is being provisioned. Transitional. |
+| active | failed | Provisioning failed. Entity visible but inaccessible. |
+| archived | ready | Entity archived. Schema preserved. Restore possible. |
+| archived | creating | Edge case: entity archived during provisioning. Restore resumes provisioning. |
+| purging | purging | Schema teardown in progress. |
+| purged | purged | Schema destroyed. Entity row pending deletion. |
+
+The purge workflow writes entity_provisioning_status.status = 'purging'
+before DROP SCHEMA and 'purged' after, mirroring §8's workspace pattern.
+
+8A.8 PostgREST Interaction
+
+PostgREST must not expose archived entity schemas. When an entity is
+archived:
+ * The entity's tenant schema remains registered in PostgREST's schema
+   list but is unreachable because RLS denies all access.
+ * No PostgREST configuration change is required — RLS is the enforcement
+   mechanism.
+ * When the purge workflow executes DROP SCHEMA CASCADE, PostgREST
+   automatically removes the schema from its catalog.
+
+8A.9 Audit Requirements
+
+Entity lifecycle transitions MUST be auditable:
+ * Every archive, restore, and purge action must be recorded with the
+   acting user, timestamp, and target entity.
+ * The audit trail may use the existing entity_permission_audit pattern
+   (§3.9) or a dedicated entity_lifecycle_audit table — the choice is an
+   implementation detail.
+ * The Platform Office operations console MAY surface entity lifecycle
+   events alongside provisioning status.
+
+8A.10 Product / UI Expectations
+
+Company Management (CompanyManageSection):
+ * Active entities appear in the entity switcher.
+ * Archived entities are hidden from the switcher.
+ * A "View Archived" toggle or separate section MAY surface archived
+   entities to the workspace owner for restore purposes.
+ * Archive action requires confirmation: "Archive [entity name]? This
+   entity will become inaccessible. Data is preserved and can be restored
+   within 30 days."
+ * Restore action requires confirmation: "Restore [entity name]? All
+   documents and permissions will be reactivated."
+
+Entity Settings (future):
+ * An entity-level settings page MAY display the entity's lifecycle status
+   and archived_at timestamp.
+ * The purge countdown (days remaining before purge) MAY be displayed to
+   the workspace owner.
+
+Notifications:
+ * When an entity enters the purge countdown, the workspace owner SHOULD
+   receive a notification (email or in-app) warning of imminent data loss.
+ * When purge completes, the workspace owner SHOULD receive a confirmation
+ * notification.
+
+8A.11 Open Questions
+
+ * Should entity archival be reversible by the workspace owner alone, or
+   should Platform Operators also have restore authority?
+ * Should archived entities count toward a workspace's entity limit?
+ * Should the 30-day retention period be configurable per workspace?
+ * Should the entity purge workflow run as a pg_cron job, a Supabase
+   Edge Function, or a manual Platform Office action?
+ * Should the entity_lifecycle_audit table be built in Phase 1 or deferred
+   to Phase 2?
+ * Should the "View Archived" section in CompanyManageSection be included
+   in Phase 1 or deferred?
+
 9. Zero-Entity Onboarding UX
 Upon approve_workspace(), the new Owner has a workspace with no companies
 yet. The application must route them directly into a "Create your first
@@ -928,8 +1175,28 @@ must never depend on it.
     company; roles never cross companies (§3.11).
   * Company Admin is a company-scoped role: assigning it in Company A
     grants no administrative capability in Company B (§3.11).
-  * Deleting a role never revokes permissions already expanded for users
-    (§3.11).
+   * Deleting a role never revokes permissions already expanded for users
+     (§3.11).
+   * Archiving an entity sets is_active = false and entities.status =
+     'archived' without triggering DROP SCHEMA; entity data is preserved
+     and the entity is excluded from active-entity queries (§8A.2).
+   * An archived entity's entity_permissions rows are preserved but dormant;
+     restoring the entity reactivates the original permission set without
+     re-assignment (§8A.2, §8A.3).
+   * An entity in status = 'archived' or 'purging' is inaccessible to
+     non-owner members via RLS regardless of entity_permissions (§8A.2).
+   * Entity purge workflow transitions entity_provisioning_status through
+     purging → purged before executing DROP SCHEMA CASCADE, mirroring the
+     workspace purge pattern (§8A.4).
+   * Once entity purge completes (status = 'purged'), the entity row is
+     deleted after a secondary retention window; hard-delete is prohibited
+     before purge completion (§8A.5).
+   * Archiving a workspace does not automatically change individual entity
+     statuses; entities retain their pre-archival status for independent
+     restore (§8A.6).
+   * A workspace owner or member with the archive_entity permission toggle
+     may archive/restore entities; members without the toggle cannot (§8A.2,
+     §8A.3, §3.2).
 
 14. Summary of Amendments Applied (v2.1)
 | Amendment | Source | Section |
@@ -972,3 +1239,4 @@ must never depend on it.
 | Roles & administration model resolved: roles are editable ability bundles over permission templates; Workspace Admin and Company Admin are preloaded role bundles; no separate authority layer | Product decision | §3.11 |
 | Role assignment limited to existing company members; roles never cross companies; Company Admin is company-scoped | Product decision | §3.11, §13 |
 | Role edit semantics (live vs snapshot) deferred; template "reapply" behavior remains authoritative | Product decision | §12 |
+| Entity lifecycle (active → archived → purging → purged) with 30-day retention, archive/restore semantics, hard-delete policy, provisioning interaction, workspace cascade, permissions, audit, UI expectations, and open questions | Internal | §8A |

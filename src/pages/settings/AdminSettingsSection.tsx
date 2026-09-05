@@ -16,7 +16,7 @@ import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useTeamInvitations } from '@/hooks/useTeamInvitations'
 import { usePermissionTemplates, coversTemplate } from '@/hooks/usePermissionTemplates'
 import type { PermissionTemplate } from '@/hooks/usePermissionTemplates'
-import { createWorkspaceInvitation, revokeWorkspaceInvitation, assignRoleToCompanyMember, removeRoleFromCompanyMember } from '@/domain/tenant/tenantCreation'
+import { createWorkspaceInvitation, revokeWorkspaceInvitation, assignRoleToCompanyMember, removeRoleFromCompanyMember, transferWorkspaceOwnership } from '@/domain/tenant/tenantCreation'
 import type { TeamMember, TeamInvitation } from '@/domain/team/teamTypes'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -84,8 +84,62 @@ function RemoveConfirmModal({
   )
 }
 
+function TransferConfirmModal({
+  member,
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  member: TeamMember
+  onConfirm: () => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const [emailInput, setEmailInput] = useState('')
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const emailMatch = emailInput.trim().toLowerCase() === member.email.toLowerCase()
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
+      <div className="w-full max-w-sm overflow-hidden rounded-[var(--bd-radius-xl)] bg-bd-card-bg shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="flex items-center gap-3 px-5 pb-4 pt-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50">
+            <ShieldCheck size={22} className="text-purple-600" />
+          </div>
+          <h3 className="text-base font-black text-foreground">Transfer ownership</h3>
+        </div>
+        <div className="px-5 pb-5">
+          <p className="text-sm leading-relaxed text-slate-700">
+            Transfer ownership to <span className="font-bold text-foreground">{member.email}</span>. You will become a <span className="font-bold">member</span> of this workspace.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">This action is immediate and cannot be undone from the UI. The new owner can transfer it back.</p>
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+            <span className="mt-0.5 text-sm text-purple-500">!</span>
+            <p className="text-xs font-semibold text-purple-700">You will lose owner privileges. Type the email to confirm.</p>
+          </div>
+          <input ref={inputRef} value={emailInput} onChange={(e) => setEmailInput(e.target.value)} placeholder={member.email} className="mt-3 w-full rounded-lg border border-input px-3 py-2.5 text-sm font-mono focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20" />
+          {emailInput && !emailMatch ? <p className="mt-1 text-[11px] font-bold text-red-500">Email doesn&apos;t match</p> : null}
+        </div>
+        <div className="flex gap-2 px-5 pb-5">
+          <button onClick={onCancel} disabled={loading} className="flex-1 rounded-xl border border-bd-border py-2.5 text-sm font-bold text-muted-foreground hover:bg-muted/50 disabled:opacity-50">Cancel</button>
+          <button onClick={emailMatch ? onConfirm : undefined} disabled={!emailMatch || loading} className={cn('flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold', emailMatch ? 'bg-purple-600 text-white hover:bg-purple-700' : 'cursor-not-allowed bg-slate-200 text-slate-400')}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+            {loading ? 'Transferring…' : 'Transfer ownership'}
+          </button>
+        </div>
+        <p className="pb-3 text-center text-[10px] font-bold text-slate-300">Press Esc to cancel</p>
+      </div>
+    </div>
+  )
+}
+
 export function TeamSettingsSection({ session }: { session: SettingsSession }) {
-  const { workspace } = useWorkspace()
+  const { workspace, refresh: refreshWorkspace } = useWorkspace()
   const workspaceId = workspace?.id ?? null
   const isOwner = workspace?.role === 'owner'
   const currentUserId = session?.user?.id ?? null
@@ -104,6 +158,8 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
   const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [transferMember, setTransferMember] = useState<TeamMember | null>(null)
+  const [transferring, setTransferring] = useState(false)
 
   const closeModal = useCallback(() => setModalMember(null), [])
 
@@ -176,6 +232,22 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
     setModalMember(null)
   }
 
+  const handleTransfer = async () => {
+    if (!transferMember || !workspaceId) return
+    setTransferring(true)
+    try {
+      await transferWorkspaceOwnership({ workspaceId, newOwnerId: transferMember.userId })
+      feedback.success(`Ownership transferred to ${transferMember.name}`)
+      setTransferMember(null)
+      refreshWorkspace()
+      await refresh()
+    } catch (e) {
+      feedback.error('Error: ' + getErrorMessage(e))
+    } finally {
+      setTransferring(false)
+    }
+  }
+
   const handleToggleRole = async (m: TeamMember, template: PermissionTemplate) => {
     if (!entityId) return
     // Effective coverage decides which direction to toggle; the backend RPCs
@@ -222,6 +294,7 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {modalMember ? <RemoveConfirmModal member={modalMember} onConfirm={handleRemove} onCancel={closeModal} loading={!!actionId} /> : null}
+      {transferMember ? <TransferConfirmModal member={transferMember} onConfirm={() => void handleTransfer()} onCancel={() => setTransferMember(null)} loading={transferring} /> : null}
 
       <Dialog open={inviteOpen} onOpenChange={(open) => (open ? setInviteOpen(true) : closeInvite())}>
         <DialogContent>
@@ -367,6 +440,12 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
 
               {!m.isCurrentUser && isOwner ? (
                 <div className="flex gap-2 pt-2 border-t border-[hsl(var(--bd-border)/0.3)] justify-end">
+                  {m.role !== 'owner' ? (
+                    <Button variant="ghost" size="sm" onClick={() => setTransferMember(m)} disabled={!!actionId || transferring} className="h-8 px-3 text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-lg text-[11px] font-bold">
+                      <ShieldCheck size={12} className="mr-1" />
+                      Transfer Ownership
+                    </Button>
+                  ) : null}
                   <Button variant="ghost" size="sm" onClick={() => setModalMember(m)} disabled={!!actionId} className="h-8 px-3 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg text-[11px] font-bold">
                     {actionId === m.membershipId ? <Loader2 size={12} className="animate-spin mr-1" /> : <Trash2 size={12} className="mr-1" />}
                     Remove

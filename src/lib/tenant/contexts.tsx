@@ -300,7 +300,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
           .from('entities')
           .select('id, slug, display_name')
           .eq('workspace_id', workspace.id)
-          .eq('is_active', true)
+          .eq('status', 'active')
 
         if (cancelled) return
         if (error) throw error

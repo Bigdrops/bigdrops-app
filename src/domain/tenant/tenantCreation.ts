@@ -181,6 +181,22 @@ export async function removeRoleFromCompanyMember(input: {
 }
 
 /**
+ * Transfer workspace ownership. The RPC is SECURITY DEFINER and validates
+ * that the caller is the current owner. Atomically demotes the old owner
+ * to member and promotes the target — never a two-owner or zero-owner state.
+ */
+export async function transferWorkspaceOwnership(input: {
+  workspaceId: string
+  newOwnerId: string
+}): Promise<void> {
+  const { error } = await supabase.rpc('transfer_workspace_ownership', {
+    p_workspace_id: input.workspaceId,
+    p_new_owner_id: input.newOwnerId,
+  })
+  if (error) throw error
+}
+
+/**
  * Read provisioning status. The RPC is SECURITY DEFINER and returns zero rows
  * to callers without permission, so normalize array/empty into a nullable row.
  */
@@ -197,4 +213,31 @@ export async function getEntityProvisioningStatus(entityId: string): Promise<Pro
   // Validation of the status string happens in contexts.tsx; here we only
   // normalize the shape and carry the raw value through.
   return { status: (row.status ?? null) as ProvisioningStatus | null, lastError: row.last_error ?? null }
+}
+
+/**
+ * Archive an entity. Sets status=archived, archived_at=now().
+ * §8A.2: caller must be workspace owner or hold archive_entity permission.
+ */
+export async function archiveEntity(entityId: string): Promise<void> {
+  const { error } = await supabase.rpc('archive_entity', { p_entity_id: entityId })
+  if (error) throw error
+}
+
+/**
+ * Restore an archived entity. Sets status=active, archived_at=NULL.
+ * §8A.3: caller must be workspace owner or hold archive_entity permission.
+ */
+export async function restoreEntity(entityId: string): Promise<void> {
+  const { error } = await supabase.rpc('restore_entity', { p_entity_id: entityId })
+  if (error) throw error
+}
+
+/**
+ * Purge an entity. Irreversible: DROP SCHEMA CASCADE, delete permissions.
+ * §8A.4: caller must be workspace owner or platform operator.
+ */
+export async function purgeEntity(entityId: string): Promise<void> {
+  const { error } = await supabase.rpc('purge_entity', { p_entity_id: entityId })
+  if (error) throw error
 }

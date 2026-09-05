@@ -21,8 +21,7 @@ export async function revertInvoiceToQuotationService(
   tenantClient: TenantClient,
   entityId?: string | null,
 ) {
-  // Phase 3: quotations remain public; the invoice source read targets the
-  // tenant schema (invoices is part of the aggregate).
+  // Phase 3: quotation and invoice reads route through the tenant schema.
   const [{ data: quotationRows }, { data: latestInvoice }] = await Promise.all([
     tenantClient.from('quotations').select('quotation_number'),
     tenantClient.from('invoices').select('custom_fields').eq('id', invoice.id).single(),
