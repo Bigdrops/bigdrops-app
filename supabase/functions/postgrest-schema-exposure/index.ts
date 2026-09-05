@@ -51,11 +51,6 @@ interface ClaimedRow {
   locked_at: string | null;
 }
 
-/** pg_namespace row */
-interface PgNamespaceRow {
-  nspname: string;
-}
-
 Deno.serve(async (req) => {
   const headers = {
     "Content-Type": "application/json",
@@ -88,15 +83,16 @@ Deno.serve(async (req) => {
     const claimedRows = pending as ClaimedRow[];
     console.log(`Claimed ${claimedRows.length} pending schema(s):`, claimedRows.map((r) => r.schema_name));
 
-    // 2. Establish authoritative DB state via pg_namespace.
-    //    FAIL-CLOSED: if this query fails, abort entirely — no PATCH.
-    const { data: allEntitySchemas, error: nsErr } = await supabase
-      .from("pg_namespace")
-      .select("nspname")
-      .like("nspname", "entity_%");
+    // 2. Establish authoritative DB state via a read-only RPC.
+    //    pg_namespace is a system catalog, not a PostgREST-servable table,
+    //    so it must be read server-side (get_entity_schema_names).
+    //    FAIL-CLOSED: if this call fails, abort entirely — no PATCH.
+    const { data: entitySchemaNames, error: nsErr } = await supabase.rpc(
+      "get_entity_schema_names"
+    );
 
     if (nsErr) {
-      console.error("Failed to query pg_namespace (authoritative state unknown):", nsErr);
+      console.error("Failed to list entity schemas (authoritative state unknown):", nsErr);
       await supabase.rpc("release_pgrst_locks", { p_ids: claimedRows.map((r) => r.id) });
       return new Response(
         JSON.stringify({ error: "Cannot establish authoritative DB state", details: nsErr.message }),
@@ -104,7 +100,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    const dbEntitySchemas = new Set((allEntitySchemas || []).map((r: PgNamespaceRow) => r.nspname));
+    const dbEntitySchemas = new Set(
+      (Array.isArray(entitySchemaNames) ? entitySchemaNames : []).filter(
+        (s): s is string => typeof s === "string"
+      )
+    );
     console.log(`Found ${dbEntitySchemas.size} entity schema(s) in DB`);
 
     // 3. GET current PostgREST config from Management API (untrusted).
