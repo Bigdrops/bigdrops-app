@@ -1,11 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft,
-  BookOpenText,
-  CalendarDays,
   ChevronRight,
-  CircleDollarSign,
   ClipboardList,
   FileText,
   Landmark,
@@ -13,11 +9,9 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
-  UserRound,
   LogOut,
 } from 'lucide-react'
-import Layout from '@/components/Layout'
-import NotificationBell from '@/components/notifications/NotificationBell'
+import Layout, { MobileChromeContext } from '@/components/Layout'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,15 +22,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
+import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
+import { useAuthorization } from '@/lib/tenant/contexts'
 import { supabase } from '@/supabase'
-import { cn } from '@/lib/utils'
 
 interface MoreLink {
   key: string
   label: string
-  subtitle: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: string | number }>
   path?: string
   action?: () => void
 }
@@ -52,15 +45,10 @@ function MoreRow({ item, onNavigate }: { item: MoreLink; onNavigate: (item: More
     <button
       type="button"
       onClick={() => onNavigate(item)}
-      className="flex w-full items-center gap-3 rounded-[var(--bd-radius-md)] border border-transparent px-3 py-3 text-left transition-colors hover:border-bd-border hover:bg-bd-surface-muted active:scale-[0.99]"
+      className="flex min-h-[52px] w-full items-center gap-3 px-4 py-2.5 text-left transition-colors outline-none active:bg-bd-surface-muted"
     >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-bd-surface-muted text-bd-text">
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold text-bd-text">{item.label}</span>
-        <span className="block truncate text-xs text-bd-text-muted">{item.subtitle}</span>
-      </span>
+      <Icon className="h-5 w-5 shrink-0 text-bd-text-muted" strokeWidth={1.9} />
+      <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-bd-text">{item.label}</span>
       <ChevronRight className="h-4 w-4 shrink-0 text-bd-text-muted" />
     </button>
   )
@@ -68,7 +56,7 @@ function MoreRow({ item, onNavigate }: { item: MoreLink; onNavigate: (item: More
 
 export default function MoreOptions() {
   const navigate = useNavigate()
-  const { entity } = useEntity()
+  const { openSidebar } = React.useContext(MobileChromeContext)
   const { hasAuthorization } = useAuthorization()
   const [signOutOpen, setSignOutOpen] = React.useState(false)
 
@@ -101,39 +89,10 @@ export default function MoreOptions() {
             group: 'Accounting',
             items: [
               {
-                key: 'accounting-overview',
-                label: 'Accounting Overview',
-                subtitle: entity?.name ? `Books for ${entity.name}` : 'Entity books and posting status',
+                key: 'accounting',
+                label: 'Accounting',
                 icon: Landmark,
                 path: '/accounting',
-              },
-              {
-                key: 'chart-of-accounts',
-                label: 'Chart of Accounts',
-                subtitle: 'All accounts in this entity book',
-                icon: BookOpenText,
-                path: '/accounting/accounts',
-              },
-              {
-                key: 'accounting-periods',
-                label: 'Accounting Periods',
-                subtitle: 'Open, close, and track periods',
-                icon: CalendarDays,
-                path: '/accounting/periods',
-              },
-              {
-                key: 'journal',
-                label: 'Journal',
-                subtitle: 'Posted entries and lines',
-                icon: NotebookPen,
-                path: '/accounting/journal',
-              },
-              {
-                key: 'journal-new',
-                label: 'Create Journal Entry',
-                subtitle: 'Post a balanced entry',
-                icon: CircleDollarSign,
-                path: '/accounting/journal/new',
               },
             ],
           } satisfies MoreGroup,
@@ -142,57 +101,20 @@ export default function MoreOptions() {
     {
       group: 'Finance & reporting',
       items: [
-        {
-          key: 'letters',
-          label: 'Letters',
-          subtitle: 'Official correspondence and notices',
-          icon: FileText,
-          path: '/letters',
-        },
-        {
-          key: 'reports',
-          label: 'Reports',
-          subtitle: 'Revenue, collections, workload, and trends',
-          icon: ClipboardList,
-          path: '/reports',
-        },
-        {
-          key: 'compliance',
-          label: 'Compliance Hub',
-          subtitle: 'Approvals, policy logs, and audit trail',
-          icon: ShieldCheck,
-          path: '/compliance',
-        },
-        {
-          key: 'receipts',
-          label: 'Receipts',
-          subtitle: 'Payment receipts and PDFs',
-          icon: Receipt,
-          path: '/receipts',
-        },
-        {
-          key: 'item-library',
-          label: 'Item Library',
-          subtitle: 'Price history and master items',
-          icon: BookOpenText,
-          path: '/item-library',
-        },
+        { key: 'letters', label: 'Letters', icon: FileText, path: '/letters' },
+        { key: 'reports', label: 'Reports', icon: ClipboardList, path: '/reports' },
+        { key: 'compliance', label: 'Compliance Hub', icon: ShieldCheck, path: '/compliance' },
+        { key: 'receipts', label: 'Receipts', icon: Receipt, path: '/receipts' },
+        { key: 'item-library', label: 'Item Library', icon: NotebookPen, path: '/item-library' },
       ],
     },
     {
       group: 'Workspace',
       items: [
-        {
-          key: 'settings',
-          label: 'Settings',
-          subtitle: 'Roles, preferences, notifications, and controls',
-          icon: Settings,
-          path: '/settings',
-        },
+        { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
         {
           key: 'signout',
           label: 'Sign Out',
-          subtitle: 'Exit this workspace securely',
           icon: LogOut,
           action: () => setSignOutOpen(true),
         },
@@ -202,44 +124,36 @@ export default function MoreOptions() {
 
   return (
     <Layout title="More Options" hidePageHeader>
-      <div className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
-        <div className="flex items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] px-[var(--bd-space-md)] py-3 shadow-sm">
+      <div className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-4 pt-2 md:px-[var(--bd-layout-padding,1.5rem)]">
+        <div className="flex items-center gap-1 py-1">
           <button
             type="button"
-            onClick={() => navigate(-1)}
-            aria-label="Go back"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-bd-border bg-transparent transition-colors hover:bg-bd-surface-muted"
+            onClick={openSidebar}
+            aria-label="Open navigation menu"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-bd-text transition-colors outline-none active:bg-bd-surface-muted"
           >
-            <ArrowLeft className="h-4 w-4 text-bd-text" />
+            <SidebarToggleIcon isOpen={false} strokeWidth={2} className="h-5 w-5" />
           </button>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-bd-text">
-              More Options
-            </div>
-            <div className="mt-px truncate text-[11px] text-bd-text-muted">
-              Secondary capabilities for this workspace
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <NotificationBell />
-            <button
-              type="button"
-              onClick={() => navigate('/settings')}
-              aria-label="Profile and settings"
-              className="grid h-9 w-9 place-items-center rounded-lg border border-bd-border bg-transparent transition-colors hover:bg-bd-surface-muted"
-            >
-              <UserRound className="h-4 w-4 text-bd-text" />
-            </button>
-          </div>
+          <h1 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-[-0.02em] text-bd-text">
+            More Options
+          </h1>
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            aria-label="Settings"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-bd-text transition-colors outline-none active:bg-bd-surface-muted"
+          >
+            <Settings className="h-5 w-5" strokeWidth={1.9} />
+          </button>
         </div>
 
-        <div className={cn('mt-4 space-y-5 pb-4')}>
+        <div className="mt-1 space-y-5 pb-4">
           {groups.map((group) => (
             <section key={group.group} aria-label={group.group}>
-              <h2 className="px-1 text-[10px] font-black uppercase tracking-[var(--bd-label-letter-spacing)] text-bd-text-muted">
+              <h2 className="px-4 text-[11px] font-bold uppercase tracking-[0.08em] text-bd-text-muted">
                 {group.group}
               </h2>
-              <div className="mt-2 divide-y divide-bd-border/60 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] p-1.5 shadow-sm">
+              <div className="mt-1.5 divide-y divide-bd-border/60 overflow-hidden rounded-2xl border border-bd-border/60 bg-bd-surface">
                 {group.items.map((item) => (
                   <MoreRow key={item.key} item={item} onNavigate={handleNavigate} />
                 ))}
