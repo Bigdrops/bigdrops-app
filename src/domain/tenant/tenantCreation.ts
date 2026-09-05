@@ -4,7 +4,16 @@
 
 import { supabase } from '@/supabase'
 import type { ProvisioningStatus } from './tenantGate'
-import { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput } from './tenantGate'
+import {
+  slugify,
+  buildInitialCompanyInput,
+  buildInitialWorkspaceInput,
+  errorMessage as describeError,
+  isPermissionError,
+  isUniqueViolation,
+  resolveWorkspaceBootstrapDecision,
+  mapCreatedWorkspaceStatus,
+} from './tenantGate'
 export { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput }
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/postgrest-schema-exposure`
@@ -276,24 +285,7 @@ export class InitialCompanyError extends Error {
 }
 
 function initialCompanyMessage(error: unknown): string {
-  return String((error as Error)?.message ?? error)
-}
-
-function isPermissionError(error: unknown): boolean {
-  const code = String((error as { code?: unknown })?.code ?? '')
-  const message = initialCompanyMessage(error).toLowerCase()
-  return (
-    code === '42501' ||
-    message.includes('row-level security') ||
-    message.includes('permission denied') ||
-    message.includes('insufficient permissions')
-  )
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  const code = String((error as { code?: unknown })?.code ?? '')
-  const message = initialCompanyMessage(error).toLowerCase()
-  return code === '23505' || message.includes('duplicate key')
+  return describeError(error)
 }
 
 async function listActiveEntities(
@@ -531,10 +523,14 @@ export async function ensureInitialWorkspace(): Promise<InitialWorkspaceResult> 
     )
   }
 
-  if (state.active.length > 0) {
+  const precheck = resolveWorkspaceBootstrapDecision({
+    activeCount: state.active.length,
+    hasPending: state.pending !== null,
+  })
+  if (precheck === 'reuse-active') {
     return { outcome: 'reused', workspace: state.active[0], workspaceCount: state.active.length }
   }
-  if (state.pending) {
+  if (precheck === 'reuse-pending') {
     return { outcome: 'pending', workspace: state.pending, workspaceCount: 0 }
   }
 
@@ -559,10 +555,14 @@ export async function ensureInitialWorkspace(): Promise<InitialWorkspaceResult> 
         initialCompanyMessage(rereadError),
       )
     }
-    if (state.active.length > 0) {
+    const retry = resolveWorkspaceBootstrapDecision({
+      activeCount: state.active.length,
+      hasPending: state.pending !== null,
+    })
+    if (retry === 'reuse-active') {
       return { outcome: 'reused', workspace: state.active[0], workspaceCount: state.active.length }
     }
-    if (state.pending) {
+    if (retry === 'reuse-pending') {
       return { outcome: 'pending', workspace: state.pending, workspaceCount: 0 }
     }
     throw new InitialWorkspaceError(
@@ -574,8 +574,10 @@ export async function ensureInitialWorkspace(): Promise<InitialWorkspaceResult> 
   // Status-driven outcome: only 'active' is usable. A fresh insert is
   // pending_approval by DB default; if that ever changes, this follows the
   // database rather than assuming pending.
-  if (created.status === 'active') {
-    return { outcome: 'reused', workspace: created, workspaceCount: 1 }
+  const createdOutcome = mapCreatedWorkspaceStatus(created.status)
+  return {
+    outcome: createdOutcome,
+    workspace: created,
+    workspaceCount: createdOutcome === 'reused' ? 1 : 0,
   }
-  return { outcome: 'created-pending', workspace: created, workspaceCount: 0 }
 }

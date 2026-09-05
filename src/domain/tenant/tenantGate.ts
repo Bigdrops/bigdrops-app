@@ -59,6 +59,63 @@ export function buildInitialWorkspaceInput(
   return { name, slug: `ws-${userId.slice(0, 8).toLowerCase()}` }
 }
 
+/** Extract a readable message from any thrown value. */
+export function errorMessage(error: unknown): string {
+  return String((error as Error)?.message ?? error)
+}
+
+/** Detect Postgres/RLS authorization failures without touching the database. */
+export function isPermissionError(error: unknown): boolean {
+  const code = String((error as { code?: unknown })?.code ?? '')
+  const message = errorMessage(error).toLowerCase()
+  return (
+    code === '42501' ||
+    message.includes('row-level security') ||
+    message.includes('permission denied') ||
+    message.includes('insufficient permissions')
+  )
+}
+
+/** Detect unique-constraint violations (Postgres 23505). */
+export function isUniqueViolation(error: unknown): boolean {
+  const code = String((error as { code?: unknown })?.code ?? '')
+  const message = errorMessage(error).toLowerCase()
+  return code === '23505' || message.includes('duplicate key')
+}
+
+export type WorkspaceBootstrapDecision = 'reuse-active' | 'reuse-pending' | 'create'
+
+export interface WorkspaceBootstrapSnapshot {
+  activeCount: number
+  hasPending: boolean
+}
+
+/**
+ * Pure workspace-bootstrap decision table. Existing usable membership wins;
+ * an own pending workspace is reused; only a clean zero-state creates.
+ * ensureInitialWorkspace applies exactly this table after every
+ * authoritative database re-read (initial, race retry, post-create).
+ */
+export function resolveWorkspaceBootstrapDecision(
+  snapshot: WorkspaceBootstrapSnapshot,
+): WorkspaceBootstrapDecision {
+  if (snapshot.activeCount > 0) return 'reuse-active'
+  if (snapshot.hasPending) return 'reuse-pending'
+  return 'create'
+}
+
+/**
+ * Map a freshly created workspace row to its bootstrap outcome from its
+ * stored status. Only 'active' counts as usable; every other status
+ * (including the pending_approval default) stays pending so approval
+ * remains authoritative.
+ */
+export function mapCreatedWorkspaceStatus(
+  status: string | null,
+): 'reused' | 'created-pending' {
+  return status === 'active' ? 'reused' : 'created-pending'
+}
+
 export function isProvisioningStatus(value: unknown): value is ProvisioningStatus {
   return typeof value === 'string' && VALID_PROVISIONING_STATES.has(value as ProvisioningStatus)
 }
