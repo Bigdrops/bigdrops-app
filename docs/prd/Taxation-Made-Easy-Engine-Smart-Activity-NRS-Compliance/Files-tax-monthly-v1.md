@@ -4,9 +4,9 @@
 
 **Objective:** Generate one compliance document per calendar month for each tenant. The document shows the VAT position, the WHT position, the upcoming deadlines, and the items that need attention. The VAT section must also provide VAT filing support: the user must be able to trace the VAT figure to its contributing transactions and supporting evidence (section 4).
 
-**Scope:** This feature is downstream of, and depends on, `Technical-plan-v1.2.md` and the existing invoice and payment tables. This document links to those sources. It does not restate their content.
+**Scope:** This feature is downstream of, and depends on, `Technical-plan-v1.1.md` and the existing invoice and payment tables. This document links to those sources. It does not restate their content.
 
-- `Technical-plan-v1.2.md` is the next revision of the compliance engine PRD. It is not yet finalized. Its reconciliation items live in `NRS-docs/OBLIGATION-LOOKUP-INDEX.md` and in the reconciliation report `docs/reports/invoice-quote/nrs-obligation-reconciliation-2026-09-04.md`.
+- `Technical-plan-v1.1.md` is the current active technical baseline. Its reconciliation items live in `NRS-docs/OBLIGATION-LOOKUP-INDEX.md` and in the reconciliation report `docs/reports/invoice-quote/nrs-obligation-reconciliation-2026-09-04.md`.
 - The statutory authority is `NRS-docs/`. The Nigeria Tax Act 2025 (NTA) text is in the repository. The Nigeria Tax Administration Act 2025 (NTAA) text is confirmed from the official gazette but is not yet committed to `NRS-docs/`. This gap is tracked below.
 
 **Out of scope:** NRS e-invoicing transmission, the general notification system, the WHT subsidiary regulation sourcing, and the VAT filing delivery mechanism (section 4.11). Those are separate decisions.
@@ -305,7 +305,7 @@ Ranked by what the audit and the data mapping show is ready.
 ## 8. Dependencies
 
 - `Record-capture-v1.md` — **hard blocking dependency.** The "deducted by you" WHT field and the running-cost/expense data cannot be produced without the record-capture surface. This is a hard dependency, not an optional enhancement. Until a supplier payment or expense can be recorded, those two fields stay blocked. Note: the WHT remittance deadline field remains blocked on the missing subsidiary regulation; a capture surface cannot unblock a missing regulation.
-- `Technical-plan-v1.2.md` — the engine PRD this feature consumes. Not yet finalized.
+- `Technical-plan-v1.1.md` — the engine PRD this feature consumes.
 - `NRS-docs/OBLIGATION-LOOKUP-INDEX.md` — the obligation-to-citation map. The NTAA-dependent rows are still open.
 - `docs/reports/invoice-quote/nrs-obligation-reconciliation-2026-09-04.md` — the evidence base for the deadline and threshold values.
 - Invoice and payment tables (`invoices`, `payments`, `wht_receipts`, `tax_input_entries`, `tax_filings`, `tax_reminders`).

@@ -17,6 +17,13 @@ Administering body: Nigeria Revenue Service (NRS)
 0.3 Sections 1 to 11 below are unchanged from v1.0 unless this
     document states a change. Read v1.0 first if you have not
     already.
+0.4 Evidence corrections applied 2026-09-05. The baseline audit
+    against the approved PRD set found three statements that needed
+    correction: the small-company turnover threshold (section 8.3),
+    the statutory status of the 21st-day deadlines (section 8.1),
+    and the statutory status of the WHT rate table (section 5.7).
+    These corrections are factual status fixes only. They do not
+    change the architecture.
 
 ----------------------------------------------------------------
 5. CALCULATION ENGINE CHANGES — PATCHED
@@ -51,6 +58,18 @@ Administering body: Nigeria Revenue Service (NRS)
       was unclear on this point. This patch removes that ambiguity.
     - Open question 11.2 from v1.0 is now closed. Remove it from
       the open questions list.
+    - Statutory status of the rate table (corrected 2026-09-05):
+      the v1.0 rate values (goods 2%, construction 2%/5%, services
+      5%/10%, rent 10%, exempt 0%) are working assumptions, not
+      verified statutory rates. The rate source is the subsidiary
+      regulation "regulations relating to deduction of tax at
+      source" (Files-tax open decision 1). The regulation is not
+      yet sourced. Do not ship these rates as statutory authority.
+    - Carried-forward note conflict (corrected 2026-09-05): v1.0
+      section 5.7 states that the Corporate/Individual rate column
+      reads the client's entity type. This patch supersedes that
+      statement: the rate column reads the tenant's own legal form
+      (SP-12). Read this patch as authoritative over the v1.0 note.
 
 ----------------------------------------------------------------
 8. COMPLIANCE HUB DASHBOARD — PATCHED
@@ -72,6 +91,33 @@ Administering body: Nigeria Revenue Service (NRS)
     - If your compliance advisor identifies a case where the two
       dates genuinely differ, add a new row to the lookup table.
       Do not add a special case in code.
+    - Statutory status of the 21st (corrected 2026-09-05): the 21st
+      is the PRD default only. It is not verified statutory
+      authority in this repository. The general VAT return deadline
+      is delegated by NTA section 156(1) to the NTAA 2025, whose
+      text is absent from NRS-docs/. The verified NTA section
+      155(4) day-14 applies only to a designated VAT withholding
+      agent (Files-tax open decision 3). The WHT remittance
+      deadline depends on the unsourced subsidiary regulation
+      (Files-tax open decision 1). Name the lookup column
+      default_due_day instead of statutory_due_day when the table
+      is created, so the unresolved status is not misrepresented.
+
+----------------------------------------------------------------
+8.3 SMALL COMPANY TURNOVER THRESHOLD — CORRECTED
+
+    - v1.0 section 8.3 stated "Financial statement turnover is
+      ₦100,000,000 or below" as a legal condition for small company
+      status. The verified Nigeria Tax Act 2025 text defines small
+      company by gross turnover of ₦50,000,000 or below per annum
+      (section 202, NRS-docs/NIGERIA-TAX-ACT-2025.md line 4502).
+    - The fixed-assets condition (₦250,000,000 or below) and the
+      professional-services exclusion are unchanged and verified.
+    - Use ₦50,000,000 in the dashboard indicator. Keep the
+      "Internal Estimate" label and the three-condition display.
+    - The VAT registration threshold (₦25,000,000, v1.0 section
+      8.4) remains unresolved in this repository. No primary source
+      for it is present. Do not present it as verified.
 
 ----------------------------------------------------------------
 11. OPEN QUESTIONS — UPDATED
@@ -82,8 +128,9 @@ Administering body: Nigeria Revenue Service (NRS)
      registration? Still open.
 11.4 Confirm the mapping in field IH-5 (Reference) against the
      existing PO Number field before implementation. Still open.
-11.5 NEW. Does Calculations.ts already use fixed-point or decimal
-     math? Answer this before writing section 5.1's guardrail.
+11.5 ANSWERED in the 2026-09-05 baseline audit. Calculations.ts
+     uses decimal.js, precision 20, ROUND_HALF_UP (line 38). No
+     second library is needed. Section 5.1's guardrail applies.
 11.6 NEW. Confirm the tenant's legal form (corporate or individual)
      is not already stored somewhere before adding SP-12.
 
@@ -106,4 +153,17 @@ Administering body: Nigeria Revenue Service (NRS)
 
     Not changed: sections 1 to 4, 6, 7, 9, 10 carry forward from
     v1.0 without edits. Re-read v1.0 for their full text.
+
+    Evidence corrections added 2026-09-05 (baseline audit):
+    0.4       Added evidence-correction note.
+    5.7       Added statutory-status note for the rate table;
+              flagged the carried-forward client-entity-type note
+              as superseded.
+    8.1       Added statutory-status note for the 21st-day
+              defaults; recommended the lookup column name
+              default_due_day.
+    8.3       Corrected the small-company turnover threshold to
+              ₦50,000,000 per verified NTA 2025 section 202.
+    11.5      Answered: Calculations.ts uses decimal.js, precision
+              20, ROUND_HALF_UP.
 ================================================================

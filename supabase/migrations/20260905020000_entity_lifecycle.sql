@@ -49,6 +49,24 @@ SET status = CASE WHEN is_active THEN 'active' ELSE 'archived' END
 WHERE status IS DISTINCT FROM CASE WHEN is_active THEN 'active' ELSE 'archived' END;
 
 -- ──────────────────────────────────────────────────────────────────────────────
+-- 1B. AUDIT TABLE (created before §2: the LANGUAGE sql getter in §2.4 is
+-- validated at CREATE time, so its referenced table must already exist)
+-- ──────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.entity_lifecycle_audit (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_id     uuid NOT NULL REFERENCES public.entities(id) ON DELETE CASCADE,
+    action        text NOT NULL CHECK (action IN ('archived', 'restored', 'purging', 'purged')),
+    performed_by  uuid NOT NULL,
+    performed_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_entity_lifecycle_audit_entity_id
+    ON public.entity_lifecycle_audit USING btree (entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_lifecycle_audit_performed_at
+    ON public.entity_lifecycle_audit USING btree (performed_at);
+
+-- ──────────────────────────────────────────────────────────────────────────────
 -- 2. LIFECYCLE RPCs
 -- ──────────────────────────────────────────────────────────────────────────────
 
@@ -304,18 +322,6 @@ CREATE POLICY entities_delete_purged ON public.entities FOR DELETE TO authentica
     );
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 4. AUDIT TABLE
+-- 4. AUDIT TABLE — moved to §1B above (LANGUAGE sql validation order).
+-- Table definition lives there; nothing remains to create here.
 -- ──────────────────────────────────────────────────────────────────────────────
-
-CREATE TABLE IF NOT EXISTS public.entity_lifecycle_audit (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    entity_id     uuid NOT NULL REFERENCES public.entities(id) ON DELETE CASCADE,
-    action        text NOT NULL CHECK (action IN ('archived', 'restored', 'purging', 'purged')),
-    performed_by  uuid NOT NULL,
-    performed_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_entity_lifecycle_audit_entity_id
-    ON public.entity_lifecycle_audit USING btree (entity_id);
-CREATE INDEX IF NOT EXISTS idx_entity_lifecycle_audit_performed_at
-    ON public.entity_lifecycle_audit USING btree (performed_at);

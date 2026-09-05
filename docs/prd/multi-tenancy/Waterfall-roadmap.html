@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waterfall Roadmap — BIGDROPS Multi-Tenancy</title>
+<!--
+  Design sign: AREA 17 (docs/templates/design-docs/Designs/Area17.md)
+  Monochrome editorial, single electric-yellow accent, hairline borders,
+  8px radii, no shadows, left-aligned type.
+  Motion: CSS transitions/animations + IntersectionObserver reveals.
+  transform/opacity only. Reduced-motion variant ships inline.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-pure-white: #ffffff;
+    --color-graphite: #1a1a1a;
+    --color-true-black: #000000;
+    --color-hairline: #e6e6e6;
+    --color-fog: #f2f2f2;
+    --color-cream-stone: #f2ede9;
+    --color-muted: #949494;
+    --color-dim: #757575;
+    --color-electric-yellow: #fdf313;
+    --font-suisse-intl: 'Suisse Intl', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --page-max-width: 1100px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--color-pure-white);
+    color: var(--color-graphite);
+    font-family: var(--font-suisse-intl);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 56px;
+  }
+  /* ---------- nav ---------- */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 48px; max-width: var(--page-max-width); margin: 0 auto;
+  }
+  .nav .mark { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; text-decoration: none; color: var(--color-graphite); }
+  .nav .links { display: flex; gap: 28px; align-items: center; }
+  .nav .links a {
+    font-size: 16px; font-weight: 500; color: var(--color-graphite);
+    text-decoration: none; transition: color 180ms ease;
+  }
+  .nav .date-pill {
+    font-size: 14px; font-weight: 500; background: var(--color-fog);
+    border-radius: 9999px; padding: 6px 14px; color: var(--color-graphite);
+  }
+  /* ---------- hero ---------- */
+  .hero { max-width: var(--page-max-width); margin: 0 auto; padding: 96px 48px 0; }
+  .eyebrow {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--color-dim); margin-bottom: 24px;
+  }
+  .eyebrow .tick { display: inline-block; background: var(--color-electric-yellow); padding: 2px 10px; border-radius: 9999px; color: var(--color-graphite); margin-right: 12px; letter-spacing: 0.22em; }
+  h1.display {
+    font-size: clamp(42px, 7vw, 88px); font-weight: 400; line-height: 1.05;
+    letter-spacing: -0.015em; max-width: 900px;
+  }
+  h1.display em { font-style: normal; background: var(--color-electric-yellow); padding: 0 12px; }
+  .lede { margin-top: 24px; max-width: 640px; color: var(--color-dim); font-size: 18px; line-height: 1.55; }
+  .lede a { color: var(--color-graphite); font-weight: 500; text-decoration: none; border-bottom: 1px solid var(--color-graphite); transition: color 180ms ease, border-color 180ms ease; }
+  /* ---------- progress ---------- */
+  .progress-block { margin-top: 64px; border-top: 1px solid var(--color-hairline); padding-top: 32px; }
+  .progress-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .progress-meta .pct { font-size: 42px; font-weight: 400; letter-spacing: -0.02em; }
+  .progress-meta .cap { font-size: 14px; color: var(--color-muted); font-weight: 500; }
+  .progress-track { height: 10px; background: var(--color-fog); border-radius: 9999px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; width: 100%; background: var(--color-graphite); border-radius: 9999px;
+    transform: scaleX(0); transform-origin: left;
+  }
+  .progress-fill.go { transform: scaleX(0.8); transition: transform 1400ms var(--ease-out); }
+  .progress-fill .sheen {
+    display: block; height: 100%; width: 25%; background: var(--color-electric-yellow);
+    margin-left: 75%;
+  }
+  /* ---------- sections ---------- */
+  section.block { max-width: var(--page-max-width); margin: 0 auto; padding: 96px 48px 0; }
+  h2.sec {
+    font-size: clamp(28px, 4vw, 42px); font-weight: 400; line-height: 1.15;
+    letter-spacing: -0.014em; margin-bottom: 12px;
+  }
+  .sec-sub { color: var(--color-dim); max-width: 640px; margin-bottom: 40px; }
+  /* ---------- legend ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; }
+  .legend span {
+    font-size: 14px; font-weight: 500; border: 1px solid var(--color-hairline);
+    border-radius: 9999px; padding: 8px 16px; background: var(--color-pure-white);
+  }
+  /* ---------- milestones ---------- */
+  .filters { display: flex; gap: 12px; margin-bottom: 24px; }
+  .filters button {
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    background: transparent; border: 1px solid var(--color-graphite); border-radius: 8px;
+    padding: 10px 20px; cursor: pointer; color: var(--color-graphite);
+    transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out);
+  }
+  .filters button[aria-pressed="true"] { background: var(--color-graphite); color: var(--color-pure-white); }
+  .ms-row {
+    display: grid; grid-template-columns: 64px 1fr auto; gap: 24px; align-items: baseline;
+    border-top: 1px solid var(--color-hairline); padding: 24px 0;
+    transition: opacity 250ms var(--ease-out);
+  }
+  .ms-row:last-child { border-bottom: 1px solid var(--color-hairline); }
+  .ms-row.hidden { display: none; }
+  .ms-id { font-weight: 700; font-size: 16px; }
+  .ms-name { font-size: 20px; letter-spacing: -0.01em; }
+  .ms-meta { font-size: 14px; color: var(--color-muted); margin-top: 4px; }
+  .pill {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 9999px; padding: 6px 14px; white-space: nowrap;
+  }
+  .pill.done { background: var(--color-fog); color: var(--color-graphite); }
+  .pill.fixed { background: var(--color-electric-yellow); color: var(--color-graphite); }
+  .pill.pending { background: transparent; border: 1px solid var(--color-hairline); color: var(--color-dim); }
+  .ms-row.featured { background: var(--color-cream-stone); border-radius: 8px; padding-left: 24px; padding-right: 24px; border-top: none; }
+  .ms-row.featured + .ms-row { border-top: 1px solid var(--color-hairline); }
+  /* ---------- phases ---------- */
+  .phase { border: 1px solid var(--color-hairline); border-radius: 8px; padding: 32px; margin-bottom: 24px; background: var(--color-pure-white); }
+  .phase h3 { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .phase .ph-sub { font-size: 14px; color: var(--color-muted); margin-bottom: 20px; }
+  .step { display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--color-fog); font-size: 16px; }
+  .step .box {
+    flex: none; width: 22px; height: 22px; border-radius: 4px; margin-top: 2px;
+    border: 1px solid var(--color-graphite); position: relative;
+  }
+  .step.done .box { background: var(--color-graphite); }
+  .step.done .box::after {
+    content: ''; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+    border: solid var(--color-pure-white); border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .step.pending .box { border-style: dashed; border-color: var(--color-muted); }
+  .step small { display: block; color: var(--color-dim); font-size: 14px; }
+  /* ---------- changelog ---------- */
+  .log-row {
+    display: grid; grid-template-columns: 130px 1fr auto; gap: 24px;
+    padding: 16px 0; border-top: 1px solid var(--color-hairline); font-size: 15px;
+  }
+  .log-row:last-child { border-bottom: 1px solid var(--color-hairline); }
+  .log-row time { font-weight: 700; white-space: nowrap; }
+  .log-row .tag { font-size: 13px; color: var(--color-muted); font-weight: 500; white-space: nowrap; }
+  /* ---------- footer ---------- */
+  footer { max-width: var(--page-max-width); margin: 0 auto; padding: 96px 48px 64px; }
+  footer .rule { border-top: 1px solid var(--color-hairline); padding-top: 24px; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer p { font-size: 14px; color: var(--color-muted); max-width: 560px; }
+  footer a { color: var(--color-graphite); font-weight: 500; text-decoration: none; }
+  /* ---------- yellow bar ---------- */
+  .announce {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: var(--color-electric-yellow); color: var(--color-graphite);
+    font-size: 15px; font-weight: 500; padding: 12px 24px;
+    display: flex; justify-content: center; gap: 12px; align-items: center;
+    transform: translateY(100%);
+  }
+  .announce.go { transform: translateY(0); transition: transform 450ms var(--ease-out); }
+  .announce a { color: inherit; font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--color-graphite); }
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(24px); }
+  .reveal.in { opacity: 1; transform: translateY(0); transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out); }
+  /* ---------- hover gating + reduced motion ---------- */
+  @media (hover: hover) and (pointer: fine) {
+    .nav .links a:hover { color: var(--color-muted); }
+    .lede a:hover { color: var(--color-muted); border-color: var(--color-muted); }
+    .filters button:hover { background: var(--color-fog); }
+    .filters button[aria-pressed="true"]:hover { background: var(--color-graphite); }
+    .ms-row:hover .ms-name { text-decoration: underline; text-underline-offset: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; }
+    .reveal.in { transition: none; }
+    .progress-fill.go { transition: transform 200ms ease-out; }
+    .announce.go { transition: none; transform: translateY(0); }
+  }
+  @media (max-width: 720px) {
+    .nav, .hero, section.block, footer { padding-left: 24px; padding-right: 24px; }
+    .nav .links a:not(.keep) { display: none; }
+    .ms-row { grid-template-columns: 1fr auto; }
+    .ms-id { display: none; }
+    .log-row { grid-template-columns: 1fr; gap: 4px; }
+    h1.display { letter-spacing: -0.01em; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Roadmap sections">
+  <a class="mark" href="#top">B/ Roadmap</a>
+  <div class="links">
+    <a href="#milestones">Milestones</a>
+    <a href="#phases">Phases</a>
+    <a href="#changelog">Changelog</a>
+    <span class="date-pill">2026-09-05</span>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <p class="eyebrow"><span class="tick">In execution</span>Bigdrops · Multi-tenancy</p>
+  <h1 class="display">Waterfall roadmap, <em>at 80%.</em></h1>
+  <p class="lede">The execution sequence for tenancy rollout. Authority:
+    <a href="multi-tenancy-prd-v2.1.md">PRD v2.1</a> for tenancy decisions,
+    <a href="erp-frontend-prd-v1.5.md">frontend PRD v1.5</a> for UI behavior.
+    Seven of eight milestones are live; hardening is pending.</p>
+
+  <div class="progress-block reveal">
+    <div class="progress-meta">
+      <span class="pct">80%</span>
+      <span class="cap">8 milestones · current phase M8 · owner: platform engineering</span>
+    </div>
+    <div class="progress-track" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-label="Rollout progress">
+      <div class="progress-fill" id="progressFill"><span class="sheen"></span></div>
+    </div>
+  </div>
+</header>
+
+<section class="block reveal" aria-label="Status legend">
+  <h2 class="sec">How to read the ticks.</h2>
+  <div class="legend">
+    <span>✅ Implemented</span><span>🔄 Improved</span><span>🛠️ Corrected</span><span>⏭️ Superseded</span><span>⛔ Pending</span>
+  </div>
+</section>
+
+<section class="block" id="milestones" aria-label="Milestones">
+  <h2 class="sec reveal">Milestones.</h2>
+  <p class="sec-sub reveal">Seven shipped, one open. Filter to see what is left.</p>
+  <div class="filters reveal" role="group" aria-label="Filter milestones">
+    <button type="button" data-filter="all" aria-pressed="true">All</button>
+    <button type="button" data-filter="done" aria-pressed="false">Shipped</button>
+    <button type="button" data-filter="pending" aria-pressed="false">Open</button>
+  </div>
+  <div id="msList">
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M1</span><div><div class="ms-name">PRD &amp; architecture sign-off</div><div class="ms-meta">v2.1 + frontend v1.5 · high · 2026-08-17</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M2</span><div><div class="ms-name">Core schema, RLS, provisioning engine — live</div><div class="ms-meta">migrations through 20260905020000 · critical · 2026-09-05</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M3</span><div><div class="ms-name">Workspace lifecycle: approval, invitations, ownership</div><div class="ms-meta">approval stays with Platform Office · high · 2026-09-05</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M4</span><div><div class="ms-name">Entity lifecycle §8A: archive / restore / purge — live</div><div class="ms-meta">30-day retention · high · 2026-09-05</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M5</span><div><div class="ms-name">First-user bootstrap: auto workspace + auto company</div><div class="ms-meta">idempotent, approval-preserving · high · 2026-09-05</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row reveal" data-state="done"><span class="ms-id">M6</span><div><div class="ms-name">Manual creation + switching intact</div><div class="ms-meta">no behavior change · high · 2026-09-05</div></div><span class="pill done">✅ Shipped</span></div>
+    <div class="ms-row featured reveal" data-state="done"><span class="ms-id">M7</span><div><div class="ms-name">Production recovery: entities.status repaired</div><div class="ms-meta">migration reorder + push · 7/7 rows active · 2026-09-05</div></div><span class="pill fixed">🛠️ Fixed</span></div>
+    <div class="ms-row reveal" data-state="pending"><span class="ms-id">M8</span><div><div class="ms-name">Hardening &amp; deferred verification</div><div class="ms-meta">test fix + safe-env provisioning test · medium · open</div></div><span class="pill pending">⛔ Open</span></div>
+  </div>
+</section>
+
+<section class="block" id="phases" aria-label="Execution phases">
+  <h2 class="sec reveal">Phases, in order.</h2>
+  <p class="sec-sub reveal">Each phase depends on the one before it. No step runs ahead of its gate.</p>
+
+  <div class="phase reveal">
+    <h3>Phase 1 — Spec</h3><p class="ph-sub">M1 · PRD v2.1 + frontend v1.5</p>
+    <div class="step done"><span class="box"></span><div>Sign off PRD v2.1<small>Permissions §3 · roles §3.11 · RLS §6 · onboarding §7–§9</small></div></div>
+    <div class="step done"><span class="box"></span><div>Sign off frontend PRD v1.5<small>Workspace/company UI · switcher · invitation lifecycle</small></div></div>
+    <div class="step done"><span class="box"></span><div>Resolve the roles model<small>Editable bundles · Workspace Admin ceiling · Company Admin scoped</small></div></div>
+  </div>
+
+  <div class="phase reveal">
+    <h3>Phase 2 — Backend</h3><p class="ph-sub">M2 · M3 · M4 · live on Main</p>
+    <div class="step done"><span class="box"></span><div>Core tenancy migrations + RLS<small>Workspaces · members · entities · permissions · invitations</small></div></div>
+    <div class="step done"><span class="box"></span><div>Provisioning engine<small>provision_entity · tenant-neutral clone · exposure step</small></div></div>
+    <div class="step done"><span class="box"></span><div>Workspace management gaps<small>Ownership transfer · template uniqueness · operator hierarchy</small></div></div>
+    <div class="step done"><span class="box"></span><div>Entity lifecycle §8A<small>Status · archived_at · archive/restore/purge · audit</small></div></div>
+  </div>
+
+  <div class="phase reveal">
+    <h3>Phase 3 — Bootstrap</h3><p class="ph-sub">M5 · M6 · approval-preserving</p>
+    <div class="step done"><span class="box"></span><div>First-company bootstrap<small>ensureInitialCompany · deterministic slug · converges on retry</small></div></div>
+    <div class="step done"><span class="box"></span><div>First-workspace bootstrap<small>ensureInitialWorkspace · pending stays pending</small></div></div>
+    <div class="step done"><span class="box"></span><div>Manual flows unchanged<small>Creation · switching · archive/restore · invitations</small></div></div>
+  </div>
+
+  <div class="phase reveal">
+    <h3>Phase 4 — Recovery</h3><p class="ph-sub">M7 · M8 · two items open</p>
+    <div class="step done"><span class="box"></span><div>Repair entities.status mismatch<small>Reorder + push · 7/7 rows active · verified live</small></div></div>
+    <div class="step pending"><span class="box"></span><div>Fix the multi-entity test expectation<small>Pre-existing · tenantGate suite</small></div></div>
+    <div class="step pending"><span class="box"></span><div>Live provisioning test in a safe environment<small>Never against production tenants</small></div></div>
+  </div>
+</section>
+
+<section class="block" id="changelog" aria-label="Changelog">
+  <h2 class="sec reveal">Changelog.</h2>
+  <p class="sec-sub reveal">Every tick, with its date and reason.</p>
+  <div class="reveal">
+    <div class="log-row"><time>2026-07-14</time><div>v2.0 written — workspace layer, CRUD permissions.</div><span class="tag">superseded</span></div>
+    <div class="log-row"><time>2026-07-17</time><div>v2.1 initial — owner model, roles, deletion, open items.</div><span class="tag">baseline</span></div>
+    <div class="log-row"><time>2026-08-16</time><div>Invitation lifecycle formalized; approval stays with Platform Office.</div><span class="tag">rule</span></div>
+    <div class="log-row"><time>2026-08-17</time><div>Roles resolved as editable ability bundles (§3.11).</div><span class="tag">decision</span></div>
+    <div class="log-row"><time>2026-09-05</time><div>§8A entity lifecycle added — archive, restore, purge, 30-day retention.</div><span class="tag">amendment</span></div>
+    <div class="log-row"><time>2026-09-05</time><div>Migrations 20260905010000 + 20260905020000 applied; 7/7 entities active.</div><span class="tag">verified live</span></div>
+    <div class="log-row"><time>2026-09-05</time><div>First-company + first-workspace bootstrap shipped, approval-preserving.</div><span class="tag">feature</span></div>
+    <div class="log-row"><time>2026-09-05</time><div>Production status mismatch repaired — ordering defect, clean rollback, fix, push.</div><span class="tag">recovery</span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="rule">
+    <p>Single source of truth for tenancy rollout order. Markdown original:
+      <a href="Waterfall-roadmap.md">Waterfall-roadmap.md</a>.
+      Design sign: AREA 17 — monochrome editorial, one yellow.</p>
+    <p>BIGDROPS · multi-tenancy track · 2026-09-05</p>
+  </div>
+</footer>
+
+<div class="announce" id="announce" role="status">M8 hardening pending — 2 items open. <a href="#phases">View the plan →</a></div>
+
+<script>
+  // Progress fill: state indication, fires once on load.
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      document.getElementById('progressFill').classList.add('go');
+      document.getElementById('announce').classList.add('go');
+    });
+  });
+
+  // Scroll reveals: staggered entrances, transform/opacity only.
+  (function () {
+    var rows = document.querySelectorAll('#msList .ms-row');
+    rows.forEach(function (row, i) { row.style.transitionDelay = (i * 60) + 'ms'; });
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  })();
+
+  // Milestone filter: instant state toggle, no animation on the action itself.
+  (function () {
+    var buttons = document.querySelectorAll('.filters button');
+    var rows = document.querySelectorAll('#msList .ms-row');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        buttons.forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+        btn.setAttribute('aria-pressed', 'true');
+        var f = btn.getAttribute('data-filter');
+        rows.forEach(function (row) {
+          row.classList.toggle('hidden', f !== 'all' && row.getAttribute('data-state') !== f);
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
