@@ -20,11 +20,12 @@ It does NOT answer: How should the codebase be cleaned up to get there? That is 
 
 These agent skills are directly relevant to implementing this PRD. Load them when working on mobile UI, component design, or animation.
 
+> Primary UI/UX skill: **apple-design** — the designated skill for UI/UX work under this PRD.
+
 | Skill | Use When | Path |
 |-------|----------|------|
 | **mobile-app-ui-design** | Designing or reviewing mobile screens, flows, onboarding, navigation, or any mobile-first UI work | `.agents/skills/mobile-app-ui-design/SKILL.md` |
 | **appllama-app-design-skill** | Building native-feeling Expo/React Native screens with Apple HIG fidelity, semantic colors, Reanimated motion | `.agents/skills/appllama-app-design-skill/SKILL.md` |
-| **frontend-design** | Creating distinctive, production-grade web interfaces — anti-generic aesthetics, creative typography, spatial composition | `.agents/skills/frontend-design/SKILL.md` |
 | **redesign-existing-projects** | Upgrading existing screens to premium quality — audits current design, identifies generic patterns, applies high-end standards | `.agents/skills/redesign-existing-projects/SKILL.md` |
 | **shadcn** | shadcn/ui component patterns — CLI, composition, forms, styling, registry management | `.agents/skills/shadcn/SKILL.md` |
 | **tailwind-css-patterns** | Tailwind CSS utility-first styling — responsive design, flexbox/grid, dark mode, component extraction | `.agents/skills/tailwind-css-patterns/SKILL.md` |
