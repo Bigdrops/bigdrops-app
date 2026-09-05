@@ -3,12 +3,41 @@ import { supabase } from '../supabase'
 import { useEntity } from '../lib/tenant/contexts'
 import { useSafeAsyncTask } from './useSafeAsyncTask'
 
-let cachedSettings = null
-let listeners = []
-let lastLocalUpdateAt = 0
+import {
+  settingsCacheKey,
+  readSettingsEntry,
+  writeSettingsEntry,
+  subscribeSettingsEntries,
+  isEntryForKey,
+  getSettingsUpdatedAt,
+  touchSettingsUpdatedAt,
+} from '@/lib/tenant/settingsCache'
 const THEME_KEYS = ['app_theme_preset_id', 'app_background_color', 'app_card_color', 'app_theme_tokens']
 const LOCAL_THEME_GRACE_MS = 6000
 const unsupportedSettingsColumns = new Set()
+
+// Tenant isolation: settings are keyed by the active tenant schema (see
+// lib/tenant/settingsCache). A null key means no usable tenant context —
+// it never reads or writes another entity's entry. No cross-tenant fallback.
+function entryKey(tenantClient) {
+  return settingsCacheKey(tenantClient ? tenantClient.schemaName : null)
+}
+
+function getEntry(key) {
+  return readSettingsEntry(key)
+}
+
+function setEntry(key, data) {
+  writeSettingsEntry(key, data)
+}
+
+function getLastLocalUpdateAt(key) {
+  return getSettingsUpdatedAt(key)
+}
+
+function setLastLocalUpdateAt(key, value) {
+  touchSettingsUpdatedAt(key, value)
+}
 
 function isPlainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -198,6 +227,7 @@ export function normalizeSettings(data) {
 export async function fetchSettings(options = {}, tenantClient) {
   const { force = false } = options
   const requestStartedAt = Date.now()
+  const key = entryKey(tenantClient)
   console.log('[useSettings] fetchSettings start (force:', force, ')')
   
   // READ path: schema-aware tenant client (Phase 2).
@@ -209,59 +239,75 @@ export async function fetchSettings(options = {}, tenantClient) {
     console.log('[useSettings] Fetch success from Supabase, raw data:', data)
   }
 
-  if (!force && lastLocalUpdateAt > requestStartedAt) {
+  const cachedForKey = getEntry(key)
+  if (!force && getLastLocalUpdateAt(key) > requestStartedAt) {
     console.log('[useSettings] Returning cached settings due to recent local update (Cache wins over Stale Fetch)')
-    return cachedSettings || {}
+    return cachedForKey || {}
   }
   
   const nextData = normalizeSettings(data || {})
 
-  const hasLocalTheme = THEME_KEYS.some((key) => cachedSettings?.[key] != null)
-  const withinThemeGrace = Date.now() - lastLocalUpdateAt < LOCAL_THEME_GRACE_MS
+  const hasLocalTheme = THEME_KEYS.some((k) => cachedForKey?.[k] != null)
+  const withinThemeGrace = Date.now() - getLastLocalUpdateAt(key) < LOCAL_THEME_GRACE_MS
   const merged = { ...nextData }
 
-  if (!force && cachedSettings && (hasLocalTheme || withinThemeGrace)) {
+  if (!force && cachedForKey && (hasLocalTheme || withinThemeGrace)) {
     console.log('[useSettings] Merging local theme/grace settings into fetched data')
-    THEME_KEYS.forEach((key) => {
-      const cachedValue = cachedSettings?.[key]
-      const incomingValue = nextData?.[key]
+    THEME_KEYS.forEach((k) => {
+      const cachedValue = cachedForKey?.[k]
+      const incomingValue = nextData?.[k]
       if (cachedValue != null && (incomingValue == null || withinThemeGrace)) {
-        merged[key] = cachedValue
+        merged[k] = cachedValue
       }
     })
   }
 
-  cachedSettings = normalizeThemeSettings(merged)
-  console.log('[useSettings] Update listeners with:', cachedSettings)
-  listeners.forEach(fn => fn(cachedSettings))
-  return cachedSettings
+  const normalized = normalizeThemeSettings(merged)
+  console.log('[useSettings] Update listeners with:', normalized)
+  setEntry(key, normalized)
+  return normalized
 }
 
 // Requires EntityProvider (useEntity). Both reads and writes resolve through
 // the active entity's tenant schema (Phase 3). persistSettings/saveSettings
 // require the caller to pass the tenantClient from useEntity().
+// Isolation: each tenant schema has its own cache entry. Switching entities
+// never serves the previous entity's settings; an unknown key starts empty
+// and refetches (fail-closed, no cross-tenant fallback).
 export function useSettings() {
   const { tenantClient } = useEntity()
-  const [settings, setSettings] = useState(cachedSettings || {})
-  const [loading, setLoading] = useState(!cachedSettings)
+  const key = entryKey(tenantClient)
+  const [settings, setSettings] = useState(getEntry(key) || {})
+  const [loading, setLoading] = useState(!getEntry(key))
   const { runLatest, cancel } = useSafeAsyncTask()
+  const keyRef = { current: key }
+  keyRef.current = key
 
   useEffect(() => {
-    listeners.push(setSettings)
-    if (cachedSettings) {
-      setSettings(cachedSettings)
+    const onEntry = (entry) => {
+      if (isEntryForKey(entry, keyRef.current)) setSettings(entry.data)
+    }
+    const unsubscribe = subscribeSettingsEntries(onEntry)
+    const currentKey = keyRef.current
+    const entry = getEntry(currentKey)
+    if (entry) {
+      setSettings(entry)
       setLoading(false)
-    } else if (tenantClient.isReady) {
+    } else if (tenantClient.isReady && currentKey) {
       void runLatest(() => fetchSettings({}, tenantClient), {
         onSuccess: (nextSettings) => setSettings(nextSettings),
-        onError: () => setSettings(cachedSettings || {}),
+        onError: () => setSettings({}),
         onSettled: () => setLoading(false),
       })
+    } else {
+      // No usable tenant context: expose nothing (fail-closed).
+      setSettings({})
+      setLoading(false)
     }
 
     return () => {
       cancel()
-      listeners = listeners.filter(fn => fn !== setSettings)
+      unsubscribe()
     }
   }, [runLatest, cancel, tenantClient])
 
@@ -289,7 +335,11 @@ export async function uploadFile(bucket, path, file) {
 
 export async function saveSettings(updates, tenantClient) {
   console.log('>>> [useSettings:saveSettings] START:', JSON.stringify(updates, null, 2))
-  const previousSettings = cachedSettings || {}
+  const key = entryKey(tenantClient)
+  if (!key) {
+    throw new Error('Tenant settings are not available yet. Cannot save settings.')
+  }
+  const previousSettings = getEntry(key) || {}
   
   // We NO LONGER update the cache before persistence (Optimistic UI disabled for better debugging)
   // We will update it only after persistSettings succeeds.
@@ -300,14 +350,13 @@ export async function saveSettings(updates, tenantClient) {
     console.log('>>> [useSettings:saveSettings] Persistence confirmed. Updating local state.')
     
     const nextSettings = normalizeSettings({ ...previousSettings, ...updates })
-    lastLocalUpdateAt = Date.now()
-    cachedSettings = nextSettings
-    listeners.forEach(fn => fn(cachedSettings))
+    setLastLocalUpdateAt(key, Date.now())
+    setEntry(key, nextSettings)
     
-    return cachedSettings
+    return nextSettings
   } catch (error) {
     console.error('>>> [useSettings:saveSettings] FAILURE:', error)
-    // No need to revert cachedSettings as we didn't update it yet
+    // No need to revert the cache entry as we didn't update it yet
     throw error
   }
 }

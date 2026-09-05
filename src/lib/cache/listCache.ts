@@ -15,6 +15,17 @@ export function clientListCacheKey(schemaName: string): string {
   return `bd:list:clients:v1:${schemaName}`
 }
 
+/**
+ * Entity-scoped cache key for the Item Library summary list.
+ * A null key means no usable tenant context — callers must not read or
+ * write any entry (fail-closed). The previous global key
+ * ("bd:item-library:summary:v1") is deliberately abandoned: it served one
+ * entity's rows under every other entity.
+ */
+export function itemLibraryCacheKey(schemaName: string | null | undefined): string | null {
+  return typeof schemaName === 'string' && schemaName ? `bd:list:item-library:v1:${schemaName}` : null
+}
+
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined"
 }

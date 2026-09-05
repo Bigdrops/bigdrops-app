@@ -1,5 +1,12 @@
 import * as React from 'react'
 import { supabase } from '@/supabase'
+import { useEntity } from '@/lib/tenant/contexts'
+import {
+  groupNotificationIdsByTable,
+  isEntityBound,
+  isNotificationVisibleInTenant,
+  notificationOwnerTable,
+} from '@/domain/notifications/notificationScope'
 
 export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success' | string
 
@@ -49,6 +56,7 @@ export function isNotificationUnread(notification: Pick<AppNotification, 'read_a
 }
 
 export function useNotifications(limit = 30): UseNotificationsResult {
+  const { tenantClient } = useEntity()
   const [notifications, setNotifications] = React.useState<AppNotification[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -58,6 +66,13 @@ export function useNotifications(limit = 30): UseNotificationsResult {
     setError(null)
 
     try {
+      // Fail closed: without a usable tenant context no notification is
+      // shown, so one entity's rows can never render under another entity.
+      if (!tenantClient.isReady) {
+        setNotifications([])
+        return
+      }
+
       const { data, error: fetchError } = await supabase
         .from('notifications')
         .select(NOTIFICATION_COLUMNS)
@@ -66,14 +81,44 @@ export function useNotifications(limit = 30): UseNotificationsResult {
 
       if (fetchError) throw fetchError
 
-      setNotifications(Array.isArray(data) ? (data as AppNotification[]) : [])
+      const rows = (Array.isArray(data) ? data : []) as AppNotification[]
+
+      // Tenant ownership check at the query layer: an entity-bound
+      // notification is visible only when its referenced record exists in
+      // the ACTIVE tenant's schema. Genuinely global rows (no entity
+      // reference) pass through. Unknown entity types stay hidden.
+      const groups = groupNotificationIdsByTable(rows)
+      const existingIds: Record<string, Set<string>> = {}
+      for (const [table, ids] of Object.entries(groups)) {
+        try {
+          const { data: found, error: lookupError } = await tenantClient
+            .from(table)
+            .select('id')
+            .in('id', ids)
+          if (lookupError) throw lookupError
+          existingIds[table] = new Set((found || []).map((row: { id: string }) => String(row.id)))
+        } catch (lookupError) {
+          console.warn('[notifications] tenant ownership check failed for table', table, lookupError)
+          existingIds[table] = new Set()
+        }
+      }
+
+      const visible = rows.filter((row) => {
+        const ok = isNotificationVisibleInTenant(row, existingIds)
+        if (!ok && isEntityBound(row) && !notificationOwnerTable(row.entity_type)) {
+          console.warn('[notifications] hiding row with unknown entity type', row.entity_type)
+        }
+        return ok
+      })
+
+      setNotifications(visible)
     } catch (requestError) {
       console.error('[notifications] fetch failed', requestError)
       setError(getErrorMessage(requestError))
     } finally {
       setLoading(false)
     }
-  }, [limit])
+  }, [limit, tenantClient])
 
   React.useEffect(() => {
     void refresh()

@@ -6,7 +6,11 @@ import {
   type ProvisioningStatus,
   isProvisioningStatus,
 } from '@/domain/tenant/tenantGate'
-import { getEntityProvisioningStatus as readProvisioningStatus } from '@/domain/tenant/tenantCreation'
+import {
+  getEntityProvisioningStatus as readProvisioningStatus,
+  isTenantSchemaExposed as checkSchemaExposure,
+  triggerPostgrestExposure,
+} from '@/domain/tenant/tenantCreation'
 
 export { type ProvisioningStatus, isProvisioningStatus } from '@/domain/tenant/tenantGate'
 
@@ -375,7 +379,53 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   const expectedSchema =
     workspace && entity ? `entity_${workspace.slug}_${entity.slug}` : null
 
-  const schemaName = provisioningStatus === 'ready' ? expectedSchema : null
+  // PostgREST exposure gate: provisioning 'ready' alone does not make a
+  // tenant usable. schemaName stays null (tenantClient not ready, every
+  // data path fail-closes) until the read-only exposure probe confirms
+  // PostgREST actually serves the schema. Unknown/unchecked also means
+  // not ready — never assume exposure.
+  const [isExposed, setIsExposed] = useState<boolean | null>(null)
+  const exposureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function checkExposure() {
+      if (provisioningStatus !== 'ready' || !expectedSchema) {
+        setIsExposed(null)
+        return
+      }
+
+      setIsExposed(null)
+      const exposed = await checkSchemaExposure(expectedSchema)
+      if (cancelled) return
+      setIsExposed(exposed)
+
+      if (!exposed) {
+        // Retry exposure processing, then re-probe once. The queue row
+        // persists, so a missed Edge Function run recovers here instead of
+        // masquerading as a usable tenant.
+        await triggerPostgrestExposure().catch(() => ({ ok: false }))
+        if (cancelled) return
+        if (exposureTimerRef.current) clearTimeout(exposureTimerRef.current)
+        exposureTimerRef.current = setTimeout(async () => {
+          if (cancelled) return
+          setIsExposed(await checkSchemaExposure(expectedSchema))
+        }, 10000)
+      }
+    }
+
+    void checkExposure()
+    return () => {
+      cancelled = true
+      if (exposureTimerRef.current) {
+        clearTimeout(exposureTimerRef.current)
+        exposureTimerRef.current = null
+      }
+    }
+  }, [expectedSchema, provisioningStatus, refreshKey])
+
+  const schemaName = provisioningStatus === 'ready' && isExposed === true ? expectedSchema : null
 
   const tenantClient = useMemo(() => createTenantClient(supabase, schemaName), [schemaName])
 

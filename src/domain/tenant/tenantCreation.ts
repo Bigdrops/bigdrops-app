@@ -90,14 +90,20 @@ export async function provisionEntity(entityId: string): Promise<{ status: strin
 /**
  * Trigger PostgREST schema exposure via Edge Function.
  * Called immediately after provisioning + on app open for recovery.
- * Non-blocking: failures are silent, queue persists for external cron.
+ * Best-effort and non-blocking, but the outcome is now reported so a
+ * missed exposure can be diagnosed instead of failing silently: callers
+ * should treat `ok: false` as "queue row still pending" and keep the
+ * tenant in a not-ready state rather than assuming exposure happened.
  */
-export async function triggerPostgrestExposure(): Promise<void> {
+export async function triggerPostgrestExposure(): Promise<{ ok: boolean }> {
   try {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+    if (!session?.access_token) {
+      console.warn('[tenancy] PostgREST exposure skipped: no session.')
+      return { ok: false }
+    }
 
-    await fetch(EDGE_FUNCTION_URL, {
+    const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -105,8 +111,35 @@ export async function triggerPostgrestExposure(): Promise<void> {
       },
       body: '{}',
     })
-  } catch {
-    // Non-blocking: external cron will retry
+
+    if (!response.ok) {
+      console.warn('[tenancy] PostgREST exposure request failed:', response.status)
+      return { ok: false }
+    }
+
+    return { ok: true }
+  } catch (error) {
+    console.warn('[tenancy] PostgREST exposure request errored:', error)
+    return { ok: false }
+  }
+}
+
+/**
+ * Read-only exposure probe: TRUE only when the caller's workspace owns the
+ * schema, the schema exists, and PostgREST lists it. Fail-closed (FALSE)
+ * on any error — callers must treat FALSE as "not usable yet".
+ */
+export async function isTenantSchemaExposed(schemaName: string): Promise<boolean> {
+  if (!schemaName) return false
+  try {
+    const { data, error } = await supabase.rpc('is_tenant_schema_exposed', {
+      p_schema_name: schemaName,
+    })
+    if (error) throw error
+    return data === true
+  } catch (error) {
+    console.warn('[tenancy] Schema exposure check failed:', error)
+    return false
   }
 }
 

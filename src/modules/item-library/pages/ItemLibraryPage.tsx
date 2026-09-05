@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import Layout from '@/components/Layout'
 import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
 import { ItemLibraryAdvancedCleanupPanel } from '../components/ItemLibraryAdvancedCleanupPanel'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
@@ -69,6 +70,7 @@ function BackArrow() {
 }
 
 export default function ItemLibraryPage() {
+  const { schemaName } = useEntity()
   const [searchText, setSearchText] = useState('')
   const [workflowMode, setWorkflowMode] = useState<'library' | 'cleanup'>('library')
   const [viewMode, setViewMode] = useState<ItemLibraryViewMode>('catalog')
@@ -224,11 +226,12 @@ export default function ItemLibraryPage() {
     setPendingHistoryRefreshItemId(result.winner_item_id)
     if (window.innerWidth < 768) setMobileDetailOpen(true)
     
-    // Optimistic Patch
+    // Optimistic Patch (entity-keyed: never writes another tenant's entry)
     const nextItems = summaryItems.filter(item => !result.retired_item_ids.includes(item.item_id))
     setSummaryItems(nextItems)
-    const { writeListCache } = await import('@/lib/cache/listCache')
-    writeListCache("bd:item-library:summary:v1", nextItems)
+    const { writeListCache, itemLibraryCacheKey } = await import('@/lib/cache/listCache')
+    const mergeCacheKey = itemLibraryCacheKey(schemaName)
+    if (mergeCacheKey) writeListCache(mergeCacheKey, nextItems)
 
     reloadMergeHistory()
 
@@ -298,8 +301,9 @@ export default function ItemLibraryPage() {
     if (appliedItemIds.size > 0) {
       const nextItems = summaryItems.filter(item => !appliedItemIds.has(item.item_id))
       setSummaryItems(nextItems)
-      const { writeListCache } = await import('@/lib/cache/listCache')
-      writeListCache("bd:item-library:summary:v1", nextItems)
+      const { writeListCache, itemLibraryCacheKey } = await import('@/lib/cache/listCache')
+      const cleanupCacheKey = itemLibraryCacheKey(schemaName)
+      if (cleanupCacheKey) writeListCache(cleanupCacheKey, nextItems)
     }
 
     reloadMergeHistory()

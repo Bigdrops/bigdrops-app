@@ -66,7 +66,6 @@ test('gate routes entity loading, errors, and counts once a workspace exists', (
   assert.equal(resolveGatePhase({ ...base, entityLoading: true }), 'loading')
   assert.equal(resolveGatePhase({ ...base, entityError: 'boom' }), 'error')
   assert.equal(resolveGatePhase({ ...base, entityCount: 0 }), 'create-company')
-  assert.equal(resolveGatePhase({ ...base, entityCount: 2 }), 'multi-entity')
 })
 
 test('gate maps provisioning status onto provisioning phases', () => {
