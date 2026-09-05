@@ -231,7 +231,11 @@ export function getActiveTab(pathname: string): TabKey {
     pathname.startsWith('/reports') ||
     pathname.startsWith('/compliance') ||
     pathname.startsWith('/item-library') ||
-    pathname.startsWith('/settings')
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/letters') ||
+    pathname === '/more' ||
+    pathname.startsWith('/more/') ||
+    pathname.startsWith('/accounting')
   ) return 'more'
   return 'home'
 }

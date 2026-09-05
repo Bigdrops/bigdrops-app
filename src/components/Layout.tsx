@@ -53,7 +53,6 @@ import {
 import { MobileSidebar } from './layout/MobileSidebar'
 import { DesktopSidebar } from './layout/DesktopSidebar'
 import { MobileSalesSheet } from './layout/MobileSalesSheet'
-import { MobileMoreSheet } from './layout/MobileMoreSheet'
 
 export interface MobileChromeContextValue {
   openSidebar: () => void
@@ -143,7 +142,12 @@ export default function Layout({
 
   const onTabClick = (key: string) => {
     if (key === 'sales') return setSalesOpen(true)
-    if (key === 'more') return setMoreOpen(true)
+    if (key === 'more') {
+      setMoreOpen(false)
+      setSidebarOpen(false)
+      navigate('/more')
+      return
+    }
     
     const pathByKey: Record<string, string> = {
       home: '/',
@@ -271,12 +275,6 @@ export default function Layout({
             open={salesOpen}
             onOpenChange={setSalesOpen}
             handleSalesPick={handleSalesPick}
-          />
-
-          <MobileMoreSheet
-            open={moreOpen}
-            onOpenChange={setMoreOpen}
-            handleMorePick={handleMorePick}
           />
         </div>
       )}
