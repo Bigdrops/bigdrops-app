@@ -128,10 +128,25 @@ Both are required — the Supabase client in `src/supabase.ts` will not initiali
 - **JSONB structural validation at DB level.** Waybill `items` arrays are enforced by a Postgres CHECK constraint (`validate_waybill_items`): the array must be non-empty and every item must have a `description` and a numeric `qty` greater than 0.
 - **Invoice-to-waybill spawning pipeline.** A transform pipeline extracts item descriptions, quantities, and units from invoices, strips all monetary values (`unit_price`, `rate`, `vat`, `discount`, `subtotal`, `grand_total`), and binds the new waybill to the parent document.
 - **Schema-per-entity multi-tenancy.** Every company (entity) owns an isolated Postgres schema. The app resolves the active workspace and entity at startup and routes all queries through a tenant-scoped Supabase client using `supabase.schema()`. Row-level security and action-based permissions enforce isolation. The authoritative model is `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`.
+- **Entity lifecycle (§8A).** Entities follow a state machine: `active → archived → purging → purged`. Archive is reversible (30-day retention enforced server-side). Purge is irreversible. Every transition is logged to `entity_lifecycle_audit`. DB migration: `supabase/migrations/20260905020000_entity_lifecycle.sql`.
+- **Action-based permissions (§3).** Workspace abilities are action-based (`invoice:create`, `entity:manage`), not CRUD verbs. Role bundles are editable via `workspace_roles` + `workspace_role_abilities`. Owner role is immutable.
 
 ## Agent Workflow
 
 All coding agents must read `AGENTS.md` at the project root before modifying any file and consult the relevant skill files in `.agents/skills/` before writing code. The full skills registry is cataloged at `docs/PROJECTSKILLINDEX.md`.
+
+## Documentation
+
+| Document | Location |
+|---|---|
+| Multi-tenancy PRD v2.1 (authoritative) | `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` |
+| External reference map | `docs/prd/multi-tenancy/Refrences/base.md` |
+| Individual reference files (31) | `docs/prd/multi-tenancy/Refrences/` |
+| Entity lifecycle migration | `supabase/migrations/20260905020000_entity_lifecycle.sql` |
+| Workspace management migration | `supabase/migrations/20260905010000_workspace_management_gaps.sql` |
+| Taxation PRD & references | `docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/` |
+| Reports | `docs/Reports/` |
+| Project skill index | `docs/PROJECTSKILLINDEX.md` |
 
 ## License
 
