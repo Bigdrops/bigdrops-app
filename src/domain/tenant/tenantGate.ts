@@ -22,6 +22,43 @@ export function slugify(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+/**
+ * Derive the deterministic default name/slug for the automatically created
+ * first company of a workspace. Pure: the same workspace name always yields
+ * the same slug, so repeated or concurrent bootstrap attempts converge on
+ * one row via the UNIQUE (workspace_id, slug) constraint instead of
+ * duplicating. The name stays editable later in Company Settings.
+ */
+export function buildInitialCompanyInput(workspaceName: string | null | undefined): {
+  displayName: string
+  slug: string
+} {
+  const base = (workspaceName ?? '').trim()
+  const displayName = base ? `${base} Company` : 'My Company'
+  return { displayName, slug: slugify(displayName) || 'my-company' }
+}
+
+/**
+ * Derive the deterministic default name/slug for the automatically created
+ * first workspace of a user. Pure: the same user always yields the same
+ * slug, so repeated or concurrent bootstrap attempts converge on one row
+ * via the UNIQUE slug constraint and the unique pending-per-creator index
+ * instead of duplicating. The name stays editable later in workspace
+ * settings. The slug is user-id derived (not name derived) because
+ * workspaces.slug is globally unique and names collide across users.
+ */
+export function buildInitialWorkspaceInput(
+  email: string | null | undefined,
+  userId: string,
+): {
+  name: string
+  slug: string
+} {
+  const prefix = (email ?? '').split('@')[0].trim()
+  const name = prefix ? `${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}'s Workspace` : 'My Workspace'
+  return { name, slug: `ws-${userId.slice(0, 8).toLowerCase()}` }
+}
+
 export function isProvisioningStatus(value: unknown): value is ProvisioningStatus {
   return typeof value === 'string' && VALID_PROVISIONING_STATES.has(value as ProvisioningStatus)
 }

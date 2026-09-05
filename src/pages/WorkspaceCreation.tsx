@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type ChangeEvent, type FormEvent } from 'react'
 import { Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,7 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ButtonLoading } from '@/components/loading/AppLoadingStates'
 import { useWorkspace } from '@/lib/tenant/contexts'
-import { createWorkspace, slugify } from '@/domain/tenant/tenantCreation'
+import {
+  createWorkspace,
+  ensureInitialWorkspace,
+  slugify,
+} from '@/domain/tenant/tenantCreation'
 
 export default function WorkspaceCreation() {
   const workspaceCtx = useWorkspace()
@@ -14,6 +18,44 @@ export default function WorkspaceCreation() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [autoRunning, setAutoRunning] = useState(true)
+  const autoAttemptedRef = useRef(false)
+
+  // First-workspace bootstrap: this screen only renders when the user has
+  // no active workspace, so automatically ensure the initial workspace
+  // instead of requiring a manual form submit. Creation reuses the existing
+  // insert path, therefore the row lands in pending_approval and the
+  // existing pending-approval page/approval flow continues unchanged.
+  // An auto failure falls back to the manual form below. Concurrent mounts
+  // converge via ensureInitialWorkspace idempotency (deterministic slug +
+  // database uniqueness, loser re-reads the winner).
+  useEffect(() => {
+    if (autoAttemptedRef.current) return
+    autoAttemptedRef.current = true
+    let active = true
+
+    const runAutoBootstrap = async () => {
+      setError('')
+      try {
+        await ensureInitialWorkspace()
+        if (!active) return
+        // Any outcome (reused/pending/created-pending) changes what the
+        // providers resolve; refresh so the tenant gate re-routes:
+        // active membership onward, pending to the approval page.
+        workspaceCtx.refresh()
+      } catch (e) {
+        if (!active) return
+        setError(String((e as Error)?.message ?? e))
+        setAutoRunning(false)
+      }
+    }
+
+    void runAutoBootstrap()
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -87,6 +129,17 @@ export default function WorkspaceCreation() {
                 Once an invitation is sent, it appears automatically the next time you sign in and
                 you can accept it from your invitation screen.
               </p>
+            </div>
+          ) : autoRunning && !error ? (
+            <div className="mt-6 flex items-center gap-3 rounded-xl border border-black/10 bg-background px-4 py-3">
+              <span
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-black/10 border-t-black"
+              />
+              <div>
+                <div className="text-sm font-semibold text-foreground">Setting up your workspace…</div>
+                <div className="text-xs text-muted-foreground">This usually takes a few seconds.</div>
+              </div>
             </div>
           ) : (
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

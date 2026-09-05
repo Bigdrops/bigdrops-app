@@ -4,8 +4,8 @@
 
 import { supabase } from '@/supabase'
 import type { ProvisioningStatus } from './tenantGate'
-import { slugify } from './tenantGate'
-export { slugify }
+import { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput } from './tenantGate'
+export { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput }
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/postgrest-schema-exposure`
 
@@ -240,4 +240,342 @@ export async function restoreEntity(entityId: string): Promise<void> {
 export async function purgeEntity(entityId: string): Promise<void> {
   const { error } = await supabase.rpc('purge_entity', { p_entity_id: entityId })
   if (error) throw error
+}
+
+/* ------------------------------------------------------------------ */
+/* First-company bootstrap (entity-only automatic creation)           */
+/* ------------------------------------------------------------------ */
+// Orchestration around the existing primitives above: reuse an active
+// entity when one exists, otherwise create + provision the deterministic
+// initial company. No workspace lifecycle change, no PostgREST handling
+// here (provisionEntity already triggers the hardened exposure path).
+
+export type InitialCompanyOutcome = 'created' | 'reused' | 'provisioning-failed'
+
+export interface InitialCompanyResult {
+  outcome: InitialCompanyOutcome
+  entity: CreatedEntity
+  lastError: string | null
+}
+
+export type InitialCompanyErrorCode =
+  | 'auth/unavailable'
+  | 'workspace/unavailable'
+  | 'entity/creation-failure'
+  | 'provisioning/failure'
+  | 'permission/failure'
+  | 'tenant/resolution-failure'
+
+export class InitialCompanyError extends Error {
+  code: InitialCompanyErrorCode
+  constructor(code: InitialCompanyErrorCode, message: string) {
+    super(message)
+    this.name = 'InitialCompanyError'
+    this.code = code
+  }
+}
+
+function initialCompanyMessage(error: unknown): string {
+  return String((error as Error)?.message ?? error)
+}
+
+function isPermissionError(error: unknown): boolean {
+  const code = String((error as { code?: unknown })?.code ?? '')
+  const message = initialCompanyMessage(error).toLowerCase()
+  return (
+    code === '42501' ||
+    message.includes('row-level security') ||
+    message.includes('permission denied') ||
+    message.includes('insufficient permissions')
+  )
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const code = String((error as { code?: unknown })?.code ?? '')
+  const message = initialCompanyMessage(error).toLowerCase()
+  return code === '23505' || message.includes('duplicate key')
+}
+
+async function listActiveEntities(
+  workspaceId: string,
+): Promise<Array<{ id: string; slug: string | null; display_name: string | null }>> {
+  const { data, error } = await supabase
+    .from('entities')
+    .select('id, slug, display_name')
+    .eq('workspace_id', workspaceId)
+    .eq('status', 'active')
+  if (error) throw error
+  return (data ?? []) as Array<{ id: string; slug: string | null; display_name: string | null }>
+}
+
+/**
+ * Idempotent first-company bootstrap for one active workspace.
+ *
+ * - Database state is authoritative: every call re-reads active entities.
+ * - Existing active entity → reused, zero writes.
+ * - Concurrent calls converge: deterministic slug + UNIQUE (workspace_id,
+ *   slug) means the loser of a race re-reads and reuses the winner's row.
+ * - A provisioning failure is reported, never masked by creating another row.
+ * - Archived entities are never resurrected; a new row needs insert
+ *   permission (owner or create_entity toggle) or a permission error results.
+ */
+export async function ensureInitialCompany(input: {
+  workspaceId: string
+  workspaceName?: string | null
+}): Promise<InitialCompanyResult> {
+  const workspaceId = (input.workspaceId ?? '').trim()
+  if (!workspaceId) {
+    throw new InitialCompanyError('workspace/unavailable', 'No active workspace.')
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session?.user) {
+    throw new InitialCompanyError('auth/unavailable', 'No authenticated session.')
+  }
+
+  let current: Awaited<ReturnType<typeof listActiveEntities>>
+  try {
+    current = await listActiveEntities(workspaceId)
+  } catch (error) {
+    throw new InitialCompanyError(
+      isPermissionError(error) ? 'permission/failure' : 'tenant/resolution-failure',
+      initialCompanyMessage(error),
+    )
+  }
+  if (current.length > 0) {
+    const first = current[0]
+    return {
+      outcome: 'reused',
+      entity: { id: first.id, slug: first.slug, display_name: first.display_name },
+      lastError: null,
+    }
+  }
+
+  const base = buildInitialCompanyInput(input.workspaceName)
+  let created: CreatedEntity | null = null
+  let lastInsertError: unknown = null
+
+  // ponytail: bounded suffix retries cover archived-row slug collisions
+  // (the unique index ignores status). Active-row races converge via re-read.
+  for (let attempt = 0; attempt < 5 && !created; attempt += 1) {
+    const displayName = attempt === 0 ? base.displayName : `${base.displayName} ${attempt + 1}`
+    const slug = attempt === 0 ? base.slug : `${base.slug}-${attempt + 1}`
+    try {
+      created = await createEntity({ workspaceId, displayName, slug })
+    } catch (error) {
+      lastInsertError = error
+      if (!isUniqueViolation(error)) {
+        throw new InitialCompanyError(
+          isPermissionError(error) ? 'permission/failure' : 'entity/creation-failure',
+          initialCompanyMessage(error),
+        )
+      }
+      try {
+        const reread = await listActiveEntities(workspaceId)
+        if (reread.length > 0) {
+          const first = reread[0]
+          return {
+            outcome: 'reused',
+            entity: { id: first.id, slug: first.slug, display_name: first.display_name },
+            lastError: null,
+          }
+        }
+      } catch (rereadError) {
+        throw new InitialCompanyError(
+          'tenant/resolution-failure',
+          initialCompanyMessage(rereadError),
+        )
+      }
+    }
+  }
+
+  if (!created) {
+    throw new InitialCompanyError(
+      isPermissionError(lastInsertError) ? 'permission/failure' : 'entity/creation-failure',
+      initialCompanyMessage(lastInsertError),
+    )
+  }
+
+  let provisionStatus: string
+  try {
+    provisionStatus = (await provisionEntity(created.id)).status
+  } catch (error) {
+    throw new InitialCompanyError(
+      isPermissionError(error) ? 'permission/failure' : 'provisioning/failure',
+      initialCompanyMessage(error),
+    )
+  }
+
+  if (provisionStatus === 'failed') {
+    let lastError: string | null = null
+    try {
+      lastError = (await getEntityProvisioningStatus(created.id)).lastError
+    } catch {
+      lastError = null
+    }
+    return { outcome: 'provisioning-failed', entity: created, lastError }
+  }
+
+  return { outcome: 'created', entity: created, lastError: null }
+}
+
+/* ------------------------------------------------------------------ */
+/* First-workspace bootstrap (automatic creation, approval-preserving) */
+/* ------------------------------------------------------------------ */
+// Authoritative creation path is the direct workspaces insert reused below
+// (createWorkspace): new rows land in pending_approval and only the
+// external Platform Office approval (approve_workspace) flips them to
+// active and inserts the owner membership. This bootstrap never activates
+// a workspace and never writes workspace_members itself.
+
+export type InitialWorkspaceOutcome = 'reused' | 'created-pending' | 'pending'
+
+export interface InitialWorkspaceResult {
+  outcome: InitialWorkspaceOutcome
+  workspace: CreatedWorkspace
+  /** Active membership count, so callers keep existing selection semantics. */
+  workspaceCount: number
+}
+
+export type InitialWorkspaceErrorCode =
+  | 'auth/unavailable'
+  | 'workspace/creation-failure'
+  | 'permission/failure'
+  | 'tenant/resolution-failure'
+
+export class InitialWorkspaceError extends Error {
+  code: InitialWorkspaceErrorCode
+  constructor(code: InitialWorkspaceErrorCode, message: string) {
+    super(message)
+    this.name = 'InitialWorkspaceError'
+    this.code = code
+  }
+}
+
+interface WorkspaceState {
+  active: CreatedWorkspace[]
+  pending: CreatedWorkspace | null
+}
+
+async function resolveWorkspaceState(userId: string): Promise<WorkspaceState> {
+  const { data: pendingRows, error: pendingError } = await supabase
+    .from('workspaces')
+    .select('id, slug, name, status')
+    .eq('created_by', userId)
+    .eq('status', 'pending_approval')
+    .limit(1)
+  if (pendingError) throw pendingError
+
+  const { data: memberRows, error: memberError } = await supabase
+    .from('workspace_members')
+    .select('role, workspace:workspaces(id, slug, name, status)')
+    .eq('user_id', userId)
+  if (memberError) throw memberError
+
+  const rows = (memberRows ?? []) as unknown as Array<{
+    role: string | null
+    workspace: { id: string; slug: string | null; name: string | null; status: string | null } | null
+  }>
+  const active = rows
+    .filter((row) => row.workspace && row.workspace.status === 'active')
+    .map((row) => ({
+      id: row.workspace!.id,
+      slug: row.workspace!.slug,
+      name: row.workspace!.name,
+      status: row.workspace!.status,
+    }))
+  const pendingRow = (pendingRows ?? [])[0] as
+    | { id: string; slug: string | null; name: string | null; status: string | null }
+    | undefined
+  return {
+    active,
+    pending: pendingRow
+      ? { id: pendingRow.id, slug: pendingRow.slug, name: pendingRow.name, status: pendingRow.status }
+      : null,
+  }
+}
+
+/**
+ * Idempotent first-workspace bootstrap for an authenticated user.
+ *
+ * - Database state is authoritative: every call re-reads memberships and
+ *   the own pending workspace. Existing users get zero writes.
+ * - Multiple active memberships are never collapsed: outcome 'reused'
+ *   carries the count so the existing selection UI keeps working.
+ * - A new workspace is created through the existing createWorkspace insert
+ *   and therefore lands in pending_approval. The outcome is status-driven:
+ *   only an 'active' row counts as usable ('reused'); anything else stays
+ *   pending and the existing pending-approval UI/approval flow continues.
+ * - Concurrent calls converge: deterministic per-user slug + UNIQUE slug
+ *   and the unique pending-per-creator index reject duplicates; the loser
+ *   re-reads and reuses the winner's row.
+ */
+export async function ensureInitialWorkspace(): Promise<InitialWorkspaceResult> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const userId = session?.user?.id ?? null
+  if (!userId) {
+    throw new InitialWorkspaceError('auth/unavailable', 'No authenticated session.')
+  }
+
+  let state: WorkspaceState
+  try {
+    state = await resolveWorkspaceState(userId)
+  } catch (error) {
+    throw new InitialWorkspaceError(
+      isPermissionError(error) ? 'permission/failure' : 'tenant/resolution-failure',
+      initialCompanyMessage(error),
+    )
+  }
+
+  if (state.active.length > 0) {
+    return { outcome: 'reused', workspace: state.active[0], workspaceCount: state.active.length }
+  }
+  if (state.pending) {
+    return { outcome: 'pending', workspace: state.pending, workspaceCount: 0 }
+  }
+
+  const seed = buildInitialWorkspaceInput(session.user.email ?? null, userId)
+  let created: CreatedWorkspace
+  try {
+    created = await createWorkspace({ name: seed.name, slug: seed.slug })
+  } catch (error) {
+    if (!isUniqueViolation(error)) {
+      throw new InitialWorkspaceError(
+        isPermissionError(error) ? 'permission/failure' : 'workspace/creation-failure',
+        initialCompanyMessage(error),
+      )
+    }
+    // Lost a creation race (slug or pending-per-creator uniqueness):
+    // re-read and converge on the winner instead of retrying a new row.
+    try {
+      state = await resolveWorkspaceState(userId)
+    } catch (rereadError) {
+      throw new InitialWorkspaceError(
+        'tenant/resolution-failure',
+        initialCompanyMessage(rereadError),
+      )
+    }
+    if (state.active.length > 0) {
+      return { outcome: 'reused', workspace: state.active[0], workspaceCount: state.active.length }
+    }
+    if (state.pending) {
+      return { outcome: 'pending', workspace: state.pending, workspaceCount: 0 }
+    }
+    throw new InitialWorkspaceError(
+      'workspace/creation-failure',
+      initialCompanyMessage(error),
+    )
+  }
+
+  // Status-driven outcome: only 'active' is usable. A fresh insert is
+  // pending_approval by DB default; if that ever changes, this follows the
+  // database rather than assuming pending.
+  if (created.status === 'active') {
+    return { outcome: 'reused', workspace: created, workspaceCount: 1 }
+  }
+  return { outcome: 'created-pending', workspace: created, workspaceCount: 0 }
 }

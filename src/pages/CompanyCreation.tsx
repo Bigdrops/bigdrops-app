@@ -9,6 +9,8 @@ import {
   createEntity,
   provisionEntity,
   getEntityProvisioningStatus,
+  ensureInitialCompany,
+  InitialCompanyError,
   slugify,
 } from '@/domain/tenant/tenantCreation'
 
@@ -22,17 +24,12 @@ export default function CompanyCreation() {
   const entityCtx = useEntity()
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState('')
-  const [phase, setPhase] = useState<Phase>('form')
+  const [phase, setPhase] = useState<Phase>('creating')
   const cancelledRef = useRef(false)
 
   const workspaceId = workspaceCtx.workspace?.id
   const workspaceName = workspaceCtx.workspace?.name || 'your workspace'
-
-  useEffect(() => {
-    return () => {
-      cancelledRef.current = true
-    }
-  }, [])
+  const autoAttemptedRef = useRef<string | null>(null)
 
   const pollProvisioning = async (
     entityId: string,
@@ -60,6 +57,97 @@ export default function CompanyCreation() {
 
     return { status: 'timeout' }
   }
+
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true
+    }
+  }, [])
+
+  // First-company bootstrap: this screen only renders when the active
+  // workspace has zero active entities, so automatically ensure the initial
+  // company instead of requiring a manual form submit. The manual form below
+  // remains as the fallback when automatic creation fails. Concurrent mounts
+  // converge via ensureInitialCompany idempotency (deterministic slug +
+  // UNIQUE (workspace_id, slug)).
+  useEffect(() => {
+    if (!workspaceId || autoAttemptedRef.current === workspaceId) return
+    autoAttemptedRef.current = workspaceId
+    let active = true
+
+    const runAutoBootstrap = async () => {
+      setError('')
+      setPhase('creating')
+      try {
+        const result = await ensureInitialCompany({
+          workspaceId,
+          workspaceName: workspaceCtx.workspace?.name ?? null,
+        })
+        if (!active || cancelledRef.current) return
+
+        if (result.outcome === 'provisioning-failed') {
+          setDisplayName(result.entity.display_name ?? '')
+          setPhase('error')
+          setError(
+            result.lastError ||
+              'Provisioning failed. The company was created but is not ready to use.',
+          )
+          return
+        }
+
+        setDisplayName(result.entity.display_name ?? '')
+        setPhase('provisioning')
+
+        const status = await getEntityProvisioningStatus(result.entity.id)
+        if (!active || cancelledRef.current) return
+
+        if (status.status === 'ready') {
+          entityCtx.selectEntity(result.entity.id)
+          entityCtx.refresh()
+          setPhase('success')
+          return
+        }
+        if (status.status === 'failed') {
+          setPhase('error')
+          setError(status.lastError || 'Provisioning failed. The company was created but is not ready to use.')
+          return
+        }
+
+        const pollResult = await pollProvisioning(result.entity.id)
+        if (!active || cancelledRef.current) return
+
+        if (pollResult.status === 'ready') {
+          entityCtx.selectEntity(result.entity.id)
+          entityCtx.refresh()
+          setPhase('success')
+        } else if (pollResult.status === 'failed') {
+          setPhase('error')
+          setError(
+            pollResult.error ||
+              'Provisioning failed. The company was created but is not ready to use.',
+          )
+        } else if (pollResult.status === 'timeout') {
+          entityCtx.selectEntity(result.entity.id)
+          entityCtx.refresh()
+          setPhase('success')
+        }
+      } catch (e) {
+        if (!active || cancelledRef.current) return
+        setPhase('error')
+        if (e instanceof InitialCompanyError && e.code === 'permission/failure') {
+          setError('You do not have permission to create a company in this workspace.')
+        } else {
+          setError(String((e as Error)?.message ?? e))
+        }
+      }
+    }
+
+    void runAutoBootstrap()
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId])
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
