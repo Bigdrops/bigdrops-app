@@ -106,7 +106,7 @@ Each record must carry, at minimum:
 
 The system maps the plain-language record to tax treatment. This mapping is a later implementation concern, but the PRD fixes the boundary now:
 
-- The mapping must derive the net/VAT split from the total amount using the authoritative calculation layer (`src/lib/Calculations.ts`). The presentation layer must not recompute tax values.
+- The mapping must derive the net/VAT split from the total amount. The authoritative calculation layer (`src/lib/Calculations.ts`) currently provides the forward calculation path only (net line price to VAT). It does not expose a gross-to-net/VAT reverse function. A reverse derivation would require new calculation-engine work, not reuse. The presentation layer must not recompute tax values.
 - The mapping must decide input-VAT recoverability using an explicit business rule, never silently. The default for an unknown case is "needs review," not "recoverable."
 - WHT treatment (whether WHT applies, at what rate) depends on the payee type, the category, and the WHT rate table. The WHT rate table is not yet sourced (Files-tax open decision 1). Until it is, the mapping must render WHT as "pending," never zero and never a guessed rate.
 - "Why" explanations (vision section 3.4) attach to each derived value. The user sees "Why is this recoverable?" and gets a plain-language answer.
@@ -143,19 +143,32 @@ If a later implementation finds that the extension fights the existing shape, th
 
 ## 5. Non-Goals
 
-This PRD is deliberately narrow. It does not build:
+This PRD is deliberately narrow. Record Capture is the user-facing recording surface. It is not a general-ledger interface. It does not implement accounting infrastructure.
 
-- A general ledger.
-- A chart of accounts.
-- A depreciation or asset register.
-- A full bookkeeping system.
+Correction note (2026-09-05): the approved BIGDROPS scope now includes profit-based CIT capability. That capability requires a real accounting foundation. `Accounting-foundation-blueprint-v1.md` establishes that foundation as approved downstream architecture. The accounting items formerly excluded here as project-wide non-goals are now downstream Accounting Foundation capabilities. Record Capture itself remains out of scope for them. This PRD points to the blueprint; it does not duplicate its architecture.
+
+### 5.1 Superseded project exclusions (now Accounting Foundation capabilities)
+
+These items were formerly broader project exclusions. `Accounting-foundation-blueprint-v1.md` now establishes them as approved downstream architecture. Record Capture does not implement them:
+
+- A general ledger — now defined by the Accounting Foundation Blueprint section 8 (Journal / Posting Kernel).
+- A chart of accounts — now defined by the Accounting Foundation Blueprint section 7 (Chart of Accounts).
+- A depreciation or asset register — now defined by the Accounting Foundation Blueprint section 15 (Fixed Assets and Depreciation).
+- A full bookkeeping system — now defined by the Accounting Foundation Blueprint sections 8, 10 (Accounting Periods), 11 (Accounting Reporting), and 16 (Corrections / Reversals / Idempotency).
+
+The accounting foundation turns confirmed recorded activity into accounting facts and journal postings. Record Capture records the activity. The two layers stay separate.
+
+### 5.2 Record Capture-specific non-goals (unchanged)
+
+These exclusions remain valid for Record Capture itself:
+
 - The full event taxonomy from `bigdrops-tax-ux-vision-v1.md` (SALE, PAYMENT_RECEIVED, SUPPLIER_PAYMENT, EXPENSE, and the rest). That document itself defers this to a schema redesign (its section 4.1).
 - The business-dashboard reframe of the Compliance Hub. The vision document defers this too (its section 4.2).
-- A new VAT calculation engine. `src/lib/Calculations.ts` stays the financial source of truth.
+- A new VAT calculation engine. `src/lib/Calculations.ts` stays the financial source of truth. The Accounting Foundation Blueprint section 9 (Money Precision and Rounding) applies the same rule to the ledger.
 - A new notification or scheduling system. Files.tax propagation decisions stay in `Files-tax-monthly-v1.md`.
-- An automatic bank feed or receipt OCR.
+- An automatic bank feed or receipt OCR. The Accounting Foundation Blueprint section 24 (Non-Goals (v1)) defers bank feeds for the foundation as well.
 
-The exclusion list is a hard boundary, not a wish list.
+These exclusions are a hard boundary for Record Capture, not a wish list.
 
 ## 6. Open Decisions
 
@@ -168,7 +181,7 @@ These decisions need a call from the project lead. They are consolidated here.
 | 3 | Plain-language category set | A fixed starter list, free text, or a fixed list plus free text. The category drives tax mapping. | Tax mapping quality. |
 | 4 | Money-out payment linkage | When a recorded expense matches a real bank outflow, does the system create a `payments`-table row, or keep expenses separate from invoice payments? The `payments` table is invoice-keyed today; a money-out payment does not fit that shape. | Reconciliation of expenses to bank outflows. |
 | 5 | Where the entry point lives | Compliance Hub tab, dashboard action, or both. Files-tax propagation (section 5) decides how the monthly document surfaces attention items; the capture entry point should sit beside that. | User discoverability. |
-| 6 | Small-business exemption | NTAA §22(4) exempts a small business from the monthly VAT return rule. The expense record feeds the running-cost basis, which is relevant to the CIT estimate. Confirm the tenant classification before the CIT-side consumption is specified. | CIT-side consumption. |
+| 6 | Small-business exemption | Unresolved statutory question pending the NTAA 2025 primary source. The NTAA text is absent from NRS-docs/, so section 22(4) cannot be quoted or treated as verified. Do not introduce a separate small business classification; the verified NTA 2025 classification is small company (section 202). The expense record feeds the running-cost basis, which is relevant to the CIT estimate. Confirm the tenant classification before the CIT-side consumption is specified. | CIT-side consumption. |
 
 ## 7. Dependencies
 

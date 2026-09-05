@@ -1,5 +1,11 @@
 # Luca V0.5 Accounting Architecture Reference
 
+REFERENCE ONLY — NOT STATUTORY AUTHORITY
+
+This document is not a statutory source. The canonical NTA 2025
+materials in NRS-docs/ remain the source of truth. Do not copy Luca
+source code. Luca is licensed under the Luca Community License v1.0.
+
 ## Source
 
 - Repository: `roger296/lucaV0.5` (https://github.com/roger296/lucaV0.5)

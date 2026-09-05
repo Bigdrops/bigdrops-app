@@ -33,7 +33,7 @@
 |---|---|---|
 | Technical-plan-v1.1.md | Aligned | WHT rate selection driven by the tenant/entity's type — consistent with entity-scoped permissions. |
 | Files-tax-monthly-v1.md | Aligned | One document per tenant; all figures drawn from tenant-scoped records. |
-| Record-capture-v1.md | Aligned | Extends `tax_input_entries`, an entity-scoped table. |
+| Record-capture-v1.md | Aligned | Extends `tax_input_entries`, which is scoped by `settings_id` in its base definition (migration `20260520090009_tax.sql`). |
 | Record-engagement-plan-v1.md | Aligned | Engagement data scoped to workspace and entity; AI features permission-gated per v2.1 §3. |
 | ai-integration.md | Aligned — verify at implementation | Gateway keys per workspace; edge-function proxy must enforce scope server-side. |
 | NRS-docs/ | N/A | Statutory reference material, not tenancy-scoped. |
