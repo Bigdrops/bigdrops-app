@@ -184,6 +184,7 @@ export function getInvoicePdfOutput(value: unknown): InvoicePdfOutput {
       typeof savedPdfOutput.compact === 'boolean'
         ? savedPdfOutput.compact
         : DEFAULT_INVOICE_PDF_OUTPUT.compact,
+    landscapeLayout: savedPdfOutput.landscapeLayout === true,
   }
 }
 

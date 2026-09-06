@@ -25,11 +25,6 @@ interface HandwritingFont {
   label: string
 }
 
-interface TemplateOption {
-  id: string
-  label: string
-}
-
 interface DocumentCustomizeCardProps {
   /** Currently resolved customization from usePdfCustomization */
   customization: ResolvedPdfCustomization
@@ -70,13 +65,6 @@ interface DocumentCustomizeCardProps {
   onLandscapeChange?: (landscape: boolean) => void
   showLandscape?: boolean
 
-  // ── Commercial document extras (invoice/quotation) ────────────
-  bankAccountSelector?: ReactNode
-  companyTagline?: string
-  footerText?: string
-  showOutputOptions?: boolean
-  outputOptions?: ReactNode
-
   // ── Save ──────────────────────────────────────────────────────
   saving?: boolean
   onSave: () => void
@@ -107,40 +95,18 @@ export default function DocumentCustomizeCard({
   landscape,
   onLandscapeChange,
   showLandscape = false,
-  bankAccountSelector,
-  companyTagline,
-  footerText,
-  showOutputOptions = false,
-  outputOptions,
   saving = false,
   onSave,
 }: DocumentCustomizeCardProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* ── Template ─────────────────────────────────────────── */}
-      <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
-        <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
+      <div className="rounded-[20px] border border-bd-border bg-bd-surface p-3">
+        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
           Template
         </div>
         {templatePicker}
       </div>
-
-      {/* ── Bank Account (invoice/quotation) ─────────────────── */}
-      {bankAccountSelector ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
-          <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
-            Bank Details
-          </div>
-          {bankAccountSelector}
-        </div>
-      ) : null}
-
-      {/* ── Output Options (invoice/quotation) ───────────────── */}
-      {showOutputOptions && outputOptions ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
-          {outputOptions}
-        </div>
-      ) : null}
 
       {/* ── Accent Color ─────────────────────────────────────── */}
       {showAccentColor && onAccentColorChange && accentColor != null ? (
@@ -153,8 +119,8 @@ export default function DocumentCustomizeCard({
 
       {/* ── Document Font ─────────────────────────────────────── */}
       {showDocumentFont ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+        <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
             <Type className="h-4 w-4 text-bd-button-primary-bg" />
             Document Font
           </div>
@@ -173,23 +139,27 @@ export default function DocumentCustomizeCard({
         </div>
       ) : null}
 
-      {/* ── Ink Color ─────────────────────────────────────────── */}
-      <InkColorSection
-        customColor={customColor}
-        onCustomColorChange={onCustomColorChange}
-        colorSwatches={colorSwatches}
-      />
+      {/* ── Ink Color (service documents only) ─────────────────── */}
+      {colorSwatches.length > 0 ? (
+        <InkColorSection
+          customColor={customColor}
+          onCustomColorChange={onCustomColorChange}
+          colorSwatches={colorSwatches}
+        />
+      ) : null}
 
-      {/* ── Handwriting Font ──────────────────────────────────── */}
-      <HandwritingFontSection
-        customFont={customFont}
-        onCustomFontChange={onCustomFontChange}
-        handwritingFonts={handwritingFonts}
-      />
+      {/* ── Handwriting Font (service documents only) ────────────── */}
+      {handwritingFonts.length > 0 ? (
+        <HandwritingFontSection
+          customFont={customFont}
+          onCustomFontChange={onCustomFontChange}
+          handwritingFonts={handwritingFonts}
+        />
+      ) : null}
 
       {/* ── Compact / Landscape ───────────────────────────────── */}
       {(showCompact || showLandscape) ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4 space-y-2">
+        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-3 space-y-2">
           {showCompact && compact != null && onCompactChange ? (
             <ToggleRow
               label="Compact Layout"
@@ -234,12 +204,12 @@ function AccentColorSection({
   swatches: string[]
 }) {
   return (
-    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-bd-text">
+    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
         <Palette className="h-4 w-4 text-bd-button-primary-bg" />
         Accent Color
       </div>
-      <p className="mb-3 text-xs text-bd-text-muted">
+      <p className="mb-2 text-xs text-bd-text-muted">
         Override the template accent color used in headers and rules.
       </p>
       <div className="flex flex-wrap gap-2">
@@ -262,7 +232,7 @@ function AccentColorSection({
         type="color"
         value={accentColor}
         onChange={(e) => onAccentColorChange(e.target.value)}
-        className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
+        className="mt-2 h-9 w-full cursor-pointer rounded-[12px]"
       />
     </div>
   )
@@ -280,7 +250,7 @@ function InkColorSection({
   const active = customColor !== 'auto'
 
   return (
-    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
       <div
         className="flex cursor-pointer items-center justify-between select-none"
         onClick={() => onCustomColorChange(active ? 'auto' : colorSwatches[0])}
@@ -304,7 +274,7 @@ function InkColorSection({
       </div>
 
       {active ? (
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2">
           <div className="flex flex-wrap gap-2">
             {colorSwatches.map((swatch) => (
               <button
@@ -325,7 +295,7 @@ function InkColorSection({
             type="color"
             value={active ? customColor : '#000000'}
             onChange={(e) => onCustomColorChange(e.target.value)}
-            className="mt-3 h-9 w-full cursor-pointer rounded-[12px]"
+            className="mt-2 h-9 w-full cursor-pointer rounded-[12px]"
           />
         </div>
       ) : null}
@@ -345,7 +315,7 @@ function HandwritingFontSection({
   const active = customFont !== 'auto'
 
   return (
-    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-4">
+    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
       <div
         className="flex cursor-pointer items-center justify-between select-none"
         onClick={() => onCustomFontChange(active ? 'auto' : handwritingFonts[0]?.value || ('Caveat' as PdfFillableFontChoice))}
@@ -369,7 +339,7 @@ function HandwritingFontSection({
       </div>
 
       {active ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {handwritingFonts.map((font) => (
             <button
               key={font.value}

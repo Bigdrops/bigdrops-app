@@ -91,6 +91,11 @@ export function useQuotationViewData() {
     setBankAccounts(data.bankAccounts);
     setResolvedSignatory(data.signatory || null);
     setCustomFields(data.customFields);
+    setPdfOutput({
+      ...defaultPdfOutput,
+      ...(data.customFields?.pdfOutput || {}),
+      showBalanceDue: false,
+    });
     setLinkedProject(
       data.quotation?.project_id
         ? await fetchProjectSummary(data.quotation.project_id, tenantClient)

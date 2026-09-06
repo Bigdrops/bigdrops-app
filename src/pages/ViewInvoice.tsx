@@ -4,7 +4,6 @@ import { useInvoiceDetailData } from "@/hooks/useInvoiceDetailData";
 import { useDocumentUIState } from "@/components/document-view/hooks/useDocumentUIState";
 import { buildInvoiceViewModel } from "@/domain/invoice/viewModel";
 import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/invoice/previewModel";
-import { buildBankAccountsProjection } from "@/domain/invoice/projections/partyProjection";
 import { 
   parseCustomFields, 
   BUILTIN_COLUMNS,
@@ -123,8 +122,6 @@ export default function ViewInvoice() {
 
   const logoUrl = useMemo(() => resolveCanonicalLogoUrl(settings), [settings]);
 
-  const previewBankAccounts = useMemo(() => buildBankAccountsProjection(bankAccounts || []), [bankAccounts]);
-
   if (!validId) {
     return (
       <DocumentPage topNav={<DocumentTopNav title="Invoice" onBack={() => navigate("/invoices")} />}>
@@ -204,8 +201,6 @@ export default function ViewInvoice() {
           viewModel={viewModel}
           pdfOutput={pdfOutput}
           pdfTemplateId={pdfTemplateId}
-          previewBankAccounts={previewBankAccounts}
-          settingsData={settings}
           customFields={customFields}
           id={id!}
           contractValue={invoice.total || 0}

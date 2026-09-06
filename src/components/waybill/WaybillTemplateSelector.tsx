@@ -1,15 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { CheckCircle2 } from 'lucide-react'
-
-type TemplateTheme = {
-  pageBg: string
-  headerBg: string
-  headerFg: string
-  accent: string
-  border: string
-  mutedBg: string
-}
+import TemplateMiniPreview, { type TemplateMiniTheme } from '@/components/document-view/shared/TemplateMiniPreview'
 
 const TEMPLATE_OPTIONS = [
   { id: 'evergreen', label: 'Evergreen', desc: 'Clean green header' },
@@ -20,7 +12,7 @@ const TEMPLATE_OPTIONS = [
   { id: 'slate', label: 'Slate', desc: 'Industrial style' },
 ] as const
 
-const THEMES: Record<string, TemplateTheme> = {
+const THEMES: Record<string, TemplateMiniTheme> = {
   evergreen:{ pageBg: '#ffffff', headerBg: '#1f6e5c', headerFg: '#ffffff', accent: '#c9d9cf', border: '#e0ece4', mutedBg: '#f0f6f2' },
   minimal:  { pageBg: '#ffffff', headerBg: '#f4f4f4', headerFg: '#000000', accent: '#94a3b8', border: '#e2e8f0', mutedBg: '#fafafa' },
   thermal:  { pageBg: '#f7f3ea', headerBg: '#2d2a26', headerFg: '#ffffff', accent: '#d7cfbf', border: '#e8e4db', mutedBg: '#fffdf8' },
@@ -29,30 +21,8 @@ const THEMES: Record<string, TemplateTheme> = {
   slate:    { pageBg: '#ffffff', headerBg: '#7d8a88', headerFg: '#ffffff', accent: '#4a5a57', border: '#ecf0ee', mutedBg: '#f9fbfa' },
 }
 
-function MiniWaybillPreview({ theme }: { theme: TemplateTheme }) {
-  return (
-    <div
-      className="flex h-[80px] flex-col overflow-hidden rounded-[16px] border"
-      style={{ backgroundColor: theme.pageBg, borderColor: theme.border }}
-    >
-      <div
-        className="flex h-[18px] items-center gap-1.5 px-2"
-        style={{ backgroundColor: theme.headerBg }}
-      >
-        <div className="size-2 rounded-full" style={{ backgroundColor: theme.headerFg, opacity: 0.8 }} />
-        <div className="h-[4px] w-[40%] rounded-full" style={{ backgroundColor: theme.headerFg, opacity: 0.6 }} />
-      </div>
-      <div className="h-[3px]" style={{ backgroundColor: theme.accent }} />
-      <div className="flex flex-1 flex-col justify-center gap-1.5 px-2 pb-1.5">
-        <div className="h-[3px] w-full rounded-full" style={{ backgroundColor: theme.border }} />
-        <div className="h-[3px] w-[65%] rounded-full" style={{ backgroundColor: theme.accent, opacity: 0.5 }} />
-        <div className="flex gap-1.5">
-          <div className="h-[3px] flex-1 rounded-full" style={{ backgroundColor: theme.border, opacity: 0.4 }} />
-          <div className="h-[3px] w-[30%] rounded-full" style={{ backgroundColor: theme.mutedBg }} />
-        </div>
-      </div>
-    </div>
-  )
+function MiniWaybillPreview({ theme }: { theme: TemplateMiniTheme }) {
+  return <TemplateMiniPreview theme={theme} layout="service" accentRule />
 }
 
 interface WaybillTemplateSelectorProps {

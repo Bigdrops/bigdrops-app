@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DocumentSheet from "@/components/document-view/shared/DocumentSheet";
 import DocumentCustomizeCard from "@/components/document-view/shared/DocumentCustomizeCard";
@@ -11,10 +11,10 @@ import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 import VoidPaymentDialog from "@/components/document-view/invoice/VoidPaymentDialog";
 import { buildWaybillPrefill } from "@/pages/view-invoice-actions";
 import { usePdfCustomization } from "@/domain/pdf/customization/hooks";
-import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, persistCommercialDesignPreset, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
 import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
 import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
-import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
+import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { normalizeInvoicePdfTemplateId } from "@/domain/invoice";
 
 interface InvoiceOverlaysProps {
@@ -23,8 +23,6 @@ interface InvoiceOverlaysProps {
   viewModel: any;
   pdfOutput: any;
   pdfTemplateId: any;
-  previewBankAccounts: any[];
-  settingsData: any;
   customFields: any;
   id: string;
   contractValue: number;
@@ -92,8 +90,6 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
   viewModel,
   pdfOutput,
   pdfTemplateId,
-  previewBankAccounts,
-  settingsData,
   customFields,
   id,
   contractValue,
@@ -157,7 +153,17 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
   );
   const [draftPdfOutput, setDraftPdfOutput] = useState<PdfOutputSettingsValue>(pdfOutput);
 
+  // Resync drafts when the sheet opens so inline page edits are not overwritten.
+  const customizeOpen = ui.isSheetOpen(SHEET_CUSTOMIZE);
+  useEffect(() => {
+    if (!customizeOpen) return;
+    setDraftTemplateId(normalizeInvoicePdfTemplateId(pdfTemplateId) || "industry");
+    setDraftPdfOutput(pdfOutput);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customizeOpen]);
+
   const handleSave = async () => {
+    persistCommercialDesignPreset('invoice', customization);
     await handleSaveCustomization(draftPdfOutput, undefined, draftTemplateId);
     ui.closeSheet();
   };
@@ -191,23 +197,15 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
           accentColor={customization.accentColor}
           onAccentColorChange={setAccentColor}
           accentColorSwatches={PDF_ACCENT_SWATCHES}
-          bankAccountSelector={
-            <PdfBankControls
-              value={draftPdfOutput}
-              onChange={setDraftPdfOutput}
-              bankAccounts={previewBankAccounts}
-            />
+          showCompact
+          compact={draftPdfOutput?.compact ?? false}
+          onCompactChange={(compact) =>
+            setDraftPdfOutput((prev: PdfOutputSettingsValue) => ({ ...prev, compact }))
           }
-          companyTagline={String(settingsData?.company_tagline || "")}
-          footerText={String(settingsData?.footer_text || "")}
-          showOutputOptions
-          outputOptions={
-            <PdfDocumentOptionsCard
-              value={draftPdfOutput}
-              onChange={setDraftPdfOutput}
-              companyTagline={String(settingsData?.company_tagline || "")}
-              footerText={String(settingsData?.footer_text || "")}
-            />
+          showLandscape
+          landscape={draftPdfOutput?.landscapeLayout ?? false}
+          onLandscapeChange={(landscapeLayout) =>
+            setDraftPdfOutput((prev: PdfOutputSettingsValue) => ({ ...prev, landscapeLayout }))
           }
           onSave={handleSave}
         />

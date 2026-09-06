@@ -20,7 +20,7 @@ import type {
   ResolvedPdfCustomization,
 } from './types'
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
-import { getPdfDesignPreset, hasSavedPdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { getPdfDesignPreset, hasSavedPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { resolveFull } from './resolver'
 
 const STORAGE_PREFIX = 'bigdrops_pdf_customization_'
@@ -84,6 +84,34 @@ export function bridgeToCommercialDesignPreset(
     headerFont: customization.documentFont as PdfDesignPreset['headerFont'],
     bodyFont: customization.documentFont as PdfDesignPreset['bodyFont'],
   }
+}
+
+/**
+ * Commit the engine's accent/font values into the persisted design preset.
+ *
+ * Restores the pre-unification save contract: tapping Save writes the
+ * design preset (previously via `setPdfDesignPreset` in the old sheet).
+ * Without this, the preset store freezes and a legacy preset saved with
+ * customization toggles OFF vetoes new engine edits in downloads while
+ * the popup shows them — popup/PDF divergence.
+ *
+ * Saving means customized, so the toggles go ON. Other preset fields
+ * (text, muted, border, surface, fillable) are preserved untouched.
+ */
+export function persistCommercialDesignPreset(
+  documentType: PdfDesignPresetDocument,
+  customization: Pick<ResolvedPdfCustomization, 'accentColor' | 'documentFont'>,
+): void {
+  const docType: PdfDesignPresetDocument = documentType === 'quotation' ? 'quotation' : 'invoice'
+  const base = getPdfDesignPreset(docType)
+  setPdfDesignPreset(docType, {
+    ...base,
+    useCustomColors: true,
+    useCustomFonts: true,
+    accentColor: customization.accentColor,
+    headerFont: customization.documentFont as PdfDesignPreset['headerFont'],
+    bodyFont: customization.documentFont as PdfDesignPreset['bodyFont'],
+  })
 }
 
 /**

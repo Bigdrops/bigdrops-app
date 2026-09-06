@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Edit3, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -27,10 +27,10 @@ import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 import { useQuotationViewData } from "@/hooks/useQuotationViewData";
 import { useQuotationActions } from "@/hooks/useQuotationActions";
 import { usePdfCustomization } from "@/domain/pdf/customization/hooks";
-import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, persistCommercialDesignPreset, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
 import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
 import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
-import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
+import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { buildQuotationPreviewModel } from "@/domain/quotation/previewModel";
 import { handleDownloadQuotationPdf } from "@/domain/quotation/pdfDownloadHandler";
 
@@ -101,7 +101,17 @@ export default function ViewQuotation() {
   );
   const [draftPdfOutput, setDraftPdfOutput] = useState<PdfOutputSettingsValue>(pdfOutput);
 
+  // Resync drafts when the sheet opens so inline page edits are not overwritten.
+  const customizeOpen = ui.isSheetOpen(SHEET_CUSTOMIZE);
+  useEffect(() => {
+    if (!customizeOpen) return;
+    setDraftTemplateId(normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry");
+    setDraftPdfOutput(pdfOutput);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customizeOpen]);
+
   const handleSave = async () => {
+    persistCommercialDesignPreset('quotation', customization);
     await actions.handleSaveCustomization(draftPdfOutput, undefined, draftTemplateId as any);
     ui.closeSheet();
   };
@@ -245,23 +255,15 @@ export default function ViewQuotation() {
                 accentColor={customization.accentColor}
                 onAccentColorChange={setAccentColor}
                 accentColorSwatches={PDF_ACCENT_SWATCHES}
-                bankAccountSelector={
-                  <PdfBankControls
-                    value={draftPdfOutput}
-                    onChange={setDraftPdfOutput}
-                    bankAccounts={previewModel.previewBankAccounts}
-                  />
+                showCompact
+                compact={draftPdfOutput?.compact ?? false}
+                onCompactChange={(compact) =>
+                  setDraftPdfOutput((prev: PdfOutputSettingsValue) => ({ ...prev, compact }))
                 }
-                companyTagline={String(settings?.company_tagline || "")}
-                footerText={String(settings?.footer_text || "")}
-                showOutputOptions
-                outputOptions={
-                  <PdfDocumentOptionsCard
-                    value={draftPdfOutput}
-                    onChange={setDraftPdfOutput}
-                    companyTagline={String(settings?.company_tagline || "")}
-                    footerText={String(settings?.footer_text || "")}
-                  />
+                showLandscape
+                landscape={draftPdfOutput?.landscapeLayout ?? false}
+                onLandscapeChange={(landscapeLayout) =>
+                  setDraftPdfOutput((prev: PdfOutputSettingsValue) => ({ ...prev, landscapeLayout }))
                 }
                 onSave={handleSave}
               />

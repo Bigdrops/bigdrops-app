@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import TemplateMiniPreview, { type TemplateMiniTheme } from '@/components/document-view/shared/TemplateMiniPreview'
 import { CSR_TEMPLATE_OPTIONS, CSR_TEMPLATE_VARIANTS } from './CSRPreviewContent'
 
 type TemplateOption = {
@@ -7,18 +8,6 @@ type TemplateOption = {
   label: string
   blurb: string
   accent: string
-}
-
-type TemplateTheme = {
-  headerBg: string
-  headerFg: string
-  accent: string
-  border: string
-  mutedBg: string
-  sectionBg?: string
-  sectionTitleBg?: string
-  sectionTitleFg?: string
-  pageBg: string
 }
 
 function getCsrVariantKey(key: string) {
@@ -30,34 +19,8 @@ function getCsrVariantKey(key: string) {
   return 'zinc'
 }
 
-function MiniTemplatePreview({ theme }: { theme: TemplateTheme }) {
-  return (
-    <div
-      className="flex h-[80px] flex-col overflow-hidden rounded-[12px] border"
-      style={{ backgroundColor: theme.pageBg, borderColor: theme.border }}
-    >
-      {/* Header bar */}
-      <div
-        className="flex h-[18px] items-center px-2"
-        style={{ backgroundColor: theme.headerBg }}
-      >
-        <div className="h-[4px] w-[40%] rounded-full" style={{ backgroundColor: theme.headerFg, opacity: 0.8 }} />
-      </div>
-      {/* Section title */}
-      <div className="px-2 pt-1.5">
-        <div
-          className="h-[6px] w-[55%] rounded-sm"
-          style={{ backgroundColor: theme.sectionTitleBg || theme.accent }}
-        />
-      </div>
-      {/* Content lines */}
-      <div className="flex flex-1 flex-col justify-center gap-1 px-2 pb-1.5">
-        <div className="h-[3px] w-full rounded-full" style={{ backgroundColor: theme.border }} />
-        <div className="h-[3px] w-[75%] rounded-full" style={{ backgroundColor: theme.border, opacity: 0.6 }} />
-        <div className="h-[3px] w-[60%] rounded-full" style={{ backgroundColor: theme.border, opacity: 0.4 }} />
-      </div>
-    </div>
-  )
+function MiniTemplatePreview({ theme }: { theme: TemplateMiniTheme }) {
+  return <TemplateMiniPreview theme={theme} layout="service" />
 }
 
 interface CsrTemplateCarouselProps {
@@ -68,7 +31,7 @@ interface CsrTemplateCarouselProps {
 export default function CsrTemplateCarousel({ value, onChange }: CsrTemplateCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const options = CSR_TEMPLATE_OPTIONS as TemplateOption[]
-  const variants = CSR_TEMPLATE_VARIANTS as Record<string, TemplateTheme>
+  const variants = CSR_TEMPLATE_VARIANTS as Record<string, TemplateMiniTheme>
 
   // Scroll selected card into view on mount
   useEffect(() => {

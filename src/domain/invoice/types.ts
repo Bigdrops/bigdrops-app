@@ -72,6 +72,7 @@ export interface InvoicePdfOutput {
   showBalanceDue: boolean
   showAmountInWords: boolean
   compact: boolean
+  landscapeLayout?: boolean
 }
 
 export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const

@@ -147,6 +147,23 @@ export default function ViewWaybill() {
     }
   }, [template])
 
+  // Restore the per-document saved template when it arrives from the
+  // database. The initializer above only sees the global key, so without
+  // this a saved template reverts to whichever document wrote last.
+  const customizeOpen = ui.isSheetOpen(SHEET_CUSTOMIZE)
+  const savedDbTemplate = parseWaybillCustomFields((waybill as any)?.custom_fields)?.pdfTemplateId
+  useEffect(() => {
+    if (customizeOpen) return
+    if (
+      typeof savedDbTemplate === 'string' &&
+      (['evergreen', 'minimal', 'thermal', 'classic', 'premium', 'slate'] as string[]).includes(savedDbTemplate) &&
+      (savedDbTemplate as typeof template) !== template
+    ) {
+      setTemplate(savedDbTemplate as typeof template)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customizeOpen, savedDbTemplate])
+
   const [saving, setSaving] = useState(false)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
 
