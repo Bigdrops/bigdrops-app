@@ -1,5 +1,4 @@
 import React from "react";
-import { Download } from "lucide-react";
 import DocumentPage from "../shared/DocumentPage";
 import styles from "./InvoiceWorkspace.module.css";
 import { InvoiceTopNav } from "./InvoiceTopNav";
@@ -8,7 +7,7 @@ import { InvoiceDocumentCard } from "./InvoiceDocumentCard";
 import { BankDetailsCard } from "../shared/BankDetailsCard";
 import { DocumentOptionsCard } from "../shared/DocumentOptionsCard";
 import { InvoiceOperationalSections } from "./InvoiceOperationalSections";
-import FloatingDocumentButton from "../shared/FloatingDocumentButton";
+import FloatingDownloadButton from "../shared/FloatingDownloadButton";
 
 interface InvoiceWorkspaceProps {
   // Data
@@ -108,12 +107,7 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
         />
       }
       floating={
-        <FloatingDocumentButton
-          onClick={onFabClick}
-          icon={<Download size={22} />}
-          label="Download"
-          className={styles.fab}
-        />
+        <FloatingDownloadButton onClick={onFabClick} />
       }
       overlays={overlays}
     >

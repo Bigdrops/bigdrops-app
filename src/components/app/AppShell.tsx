@@ -76,6 +76,7 @@ const Journal = lazy(() => import('@/pages/accounting/Journal'))
 const NewJournalEntry = lazy(() => import('@/pages/accounting/NewJournalEntry'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 const TenantDebug = lazy(() => import('@/pages/debug/TenantDebug'))
+const ErrorsDashboard = lazy(() => import('@/pages/debug/ErrorsDashboard'))
 
 type Profile = {
   id: string
@@ -325,6 +326,9 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/letters/edit/:id" element={withBoundary(<EditLetter />)} />
           <Route path="/letters/:id" element={withBoundary(<ViewLetter />)} />
           <Route path="/debug/tenant" element={withBoundary(<TenantDebug session={session} />)} />
+          {window.location.hostname === 'localhost' && (
+            <Route path="/debug/errors" element={withBoundary(<ErrorsDashboard />)} />
+          )}
             </Routes>
           </AuthorizationProvider>
         </ThemePreferenceProvider>
