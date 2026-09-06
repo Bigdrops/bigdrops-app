@@ -141,7 +141,7 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
 
   // ── PDF customization engine ──
   const docFamily = resolveCommercialDocumentFamily('invoice' as PdfDesignPresetDocument);
-  const { customization, setAccentColor, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
+  const { customization, setAccentColor, setAccentEnabled, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
     documentFamily: docFamily,
     templateDefaults: COMMERCIAL_TEMPLATE_DEFAULTS,
     capabilities: COMMERCIAL_CAPABILITIES,
@@ -195,7 +195,12 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
           onCustomFontChange={() => {}}
           showAccentColor
           accentColor={customization.accentColor}
+          accentEnabled={customization.accentEnabled}
           onAccentColorChange={setAccentColor}
+          onAccentEnabledChange={(enabled) => {
+            setAccentEnabled(enabled)
+            if (enabled) setAccentColor(PDF_ACCENT_SWATCHES[0])
+          }}
           accentColorSwatches={PDF_ACCENT_SWATCHES}
           showCompact
           compact={draftPdfOutput?.compact ?? false}

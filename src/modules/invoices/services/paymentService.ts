@@ -109,6 +109,24 @@ export async function recordInvoicePayment(
       const paymentId = (rpcResult as { id?: string })?.id
       if (!paymentId) throw new Error('RPC returned no payment id')
 
+      // ── Increment 4B: payment accounting event (receivable settlement).
+      // Flows through the source-transaction boundary to the posting kernel.
+      // Best-effort; never blocks or breaks payment recording.
+      try {
+        const { syncPaymentAccountingEvent } = await import(
+          '@/modules/invoices/services/paymentAccountingService'
+        )
+        await syncPaymentAccountingEvent({
+          entityId: input.entityId,
+          payment: { ...payload, id: paymentId },
+          invoiceNumber: input.invoiceNumber ?? null,
+          clientName: input.clientName ?? null,
+          tenantClient,
+        })
+      } catch (accountingErr) {
+        console.error('[payment-accounting] event dispatch failed:', accountingErr)
+      }
+
       // ── Client-side: audit trail (fire-and-forget) ────────────────────
       try {
         const bankAccountName = input.bankAccountId

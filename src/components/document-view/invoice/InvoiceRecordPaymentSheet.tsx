@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Banknote, Check, CircleCheck } from 'lucide-react'
+import { Loader2, Banknote, Check, CircleCheck, Paperclip, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { PaymentAttachmentUploader } from '@/components/ui/PaymentAttachmentUploader'
 import type { PaymentAttachment } from '@/lib/attachmentTypes'
 import DocumentSheet from '../shared/DocumentSheet'
@@ -71,6 +72,7 @@ export default function InvoiceRecordPaymentSheet({
   const [attachments, setAttachments] = useState<File[]>([])
   const [uploadResults, setUploadResults] = useState<PaymentAttachment[] | null>(null)
   const [paymentRecorded, setPaymentRecorded] = useState(false)
+  const [attachOpen, setAttachOpen] = useState(false)
 
   useEffect(() => {
     if (!open || !invoice?.id) return
@@ -81,6 +83,7 @@ export default function InvoiceRecordPaymentSheet({
     setAttachments([])
     setUploadResults(null)
     setPaymentRecorded(false)
+    setAttachOpen(false)
 
     let cancelled = false
     const loadData = async () => {
@@ -190,20 +193,15 @@ export default function InvoiceRecordPaymentSheet({
           <span>Loading balance...</span>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 min-h-0">
-          {/* Amount Hero */}
-          <div className="text-center pt-2 pb-1">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted/60 mb-0.5">
-              Balance Due
-            </div>
-            <div className="text-[13px] text-bd-text-soft">
+        <div className="flex flex-col gap-3 min-h-0">
+          {/* Amount — consolidated card */}
+          <div className="rounded-2xl border border-bd-border bg-bd-surface p-3 space-y-2.5">
+            <div className="flex items-baseline justify-between text-xs text-bd-text-muted">
+              <span>Balance due</span>
               <span className="font-mono font-bold text-bd-text">{formatNaira(currentBalance)}</span>
             </div>
-          </div>
 
-          {/* Amount Input — hero */}
-          <div className="flex justify-center">
-            <div className="relative w-full max-w-[260px]">
+            <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-semibold text-bd-text-muted/50 pointer-events-none">
                 ₦
               </span>
@@ -217,51 +215,52 @@ export default function InvoiceRecordPaymentSheet({
                   handleCashChange(num)
                 }}
                 placeholder="0"
-                className={`h-13 w-full rounded-xl border-[1.5px] bg-bd-surface text-center text-[26px] font-bold font-mono text-bd-text outline-none transition-all
+                aria-label="Payment amount"
+                className={`h-[52px] w-full rounded-xl border-[1.5px] bg-bd-surface text-center text-[26px] font-bold font-mono text-bd-text outline-none transition-all
                   ${amountFieldHasError
                     ? 'border-bd-status-danger-border ring-2 ring-bd-status-danger-border/20'
                     : 'border-bd-border focus:border-bd-focus-ring focus:ring-2 focus:ring-bd-focus-ring/10'
                   }`}
               />
             </div>
-          </div>
 
-          {/* Quick picks */}
-          <div className="flex gap-2 justify-center">
-            {QUICK_PCTS.map((pct) => (
-              <button
-                key={pct}
-                type="button"
-                onClick={() => applyPct(pct)}
-                className={`h-9 px-4 rounded-[10px] border text-[13px] font-semibold transition-all active:scale-[0.95]
-                  ${form.cashReceived != null && form.cashReceived === Math.round(currentBalance * pct / 100)
-                    ? 'border-bd-focus-ring/25 bg-bd-focus-ring/8 text-bd-focus-ring'
-                    : 'border-bd-border bg-bd-surface text-bd-text-soft'
-                  }`}
-              >
-                {pct === 100 ? 'Full' : `${pct}%`}
-              </button>
-            ))}
-          </div>
+            {/* Quick picks */}
+            <div className="flex gap-1.5">
+              {QUICK_PCTS.map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => applyPct(pct)}
+                  className={`h-9 flex-1 rounded-[10px] border text-[13px] font-semibold transition-all active:scale-[0.95]
+                    ${form.cashReceived != null && form.cashReceived === Math.round(currentBalance * pct / 100)
+                      ? 'border-bd-focus-ring/25 bg-bd-focus-ring/8 text-bd-focus-ring'
+                      : 'border-bd-border bg-bd-surface text-bd-text-soft'
+                    }`}
+                >
+                  {pct === 100 ? 'Full' : `${pct}%`}
+                </button>
+              ))}
+            </div>
 
-          {/* Settlement inline */}
-          <div className="flex items-center justify-center gap-4 h-10 rounded-xl bg-bd-surface-muted/50 px-4 text-[13px]">
-            <span className="text-bd-text-soft">
-              Paid <span className="font-mono font-semibold text-bd-text">{formatNaira(cashAmount)}</span>
-            </span>
-            <span className="w-[3px] h-[3px] rounded-full bg-bd-text-muted/40" />
-            <span className="text-bd-text-soft">
-              Left{' '}
-              <span className={`font-mono font-semibold ${remaining === 0 ? 'text-bd-status-success-text' : 'text-bd-text'}`}>
-                {formatNaira(remaining)}
+            {/* Settlement inline */}
+            <div className="flex items-center justify-center gap-4 h-10 rounded-xl bg-bd-surface-muted/50 px-4 text-[13px]">
+              <span className="text-bd-text-soft">
+                Paid <span className="font-mono font-semibold text-bd-text">{formatNaira(cashAmount)}</span>
               </span>
-            </span>
-          </div>
-          <div className="h-[3px] rounded-full bg-bd-border/30 -mt-3 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-bd-status-success-text/80 transition-all duration-200"
-              style={{ width: `${progressPct}%` }}
-            />
+              <span className="w-[3px] h-[3px] rounded-full bg-bd-text-muted/40" />
+              <span className="text-bd-text-soft">
+                Left{' '}
+                <span className={`font-mono font-semibold ${remaining === 0 ? 'text-bd-status-success-text' : 'text-bd-text'}`}>
+                  {formatNaira(remaining)}
+                </span>
+              </span>
+            </div>
+            <div className="h-[3px] rounded-full bg-bd-border/30 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-bd-status-success-text/80 transition-all duration-200"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
           </div>
 
           {/* Details grid — no card wrapper */}
@@ -333,11 +332,40 @@ export default function InvoiceRecordPaymentSheet({
             </div>
           </div>
 
-          {/* Attachment row */}
-          <PaymentAttachmentUploader
-            files={attachments}
-            onFilesChanged={setAttachments}
-          />
+          {/* Attach receipt — inline expandable section.
+              Collapsed trigger adds no height beyond its row.
+              Only expanding grows the sheet. */}
+          <div className="rounded-2xl border border-bd-border bg-bd-surface">
+            <button
+              type="button"
+              onClick={() => setAttachOpen((current) => !current)}
+              aria-expanded={attachOpen}
+              className="flex h-11 w-full items-center gap-2 px-3 text-[13px] font-semibold text-bd-text transition-transform active:scale-[0.99]"
+            >
+              <Paperclip size={16} className="shrink-0 text-bd-text-muted" />
+              <span className="flex-1 text-left">
+                Attach receipt
+                {attachments.length > 0 ? (
+                  <span className="ml-1.5 rounded-full bg-bd-surface-muted px-1.5 py-0.5 text-[11px] font-bold text-bd-text-soft">
+                    {attachments.length}
+                  </span>
+                ) : null}
+              </span>
+              <ChevronDown
+                size={16}
+                className={cn('shrink-0 text-bd-text-muted transition-transform', attachOpen && 'rotate-180')}
+              />
+            </button>
+            {attachOpen ? (
+              <div className="px-3 pb-3">
+                <PaymentAttachmentUploader
+                  files={attachments}
+                  onFilesChanged={setAttachments}
+                  hideHeading
+                />
+              </div>
+            ) : null}
+          </div>
           {uploadResults ? (
             <div className="space-y-1">
               {uploadResults.map((r) => {
@@ -377,34 +405,35 @@ export default function InvoiceRecordPaymentSheet({
             </div>
           ) : null}
 
-          {/* Submit — single floating pill */}
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={saving || paymentRecorded}
-            className={`h-[52px] rounded-2xl text-[16px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
-              ${paymentRecorded
-                ? 'bg-bd-status-success-text text-white shadow-[0_4px_16px_rgba(52,199,89,0.25)]'
-                : 'bg-bd-button-primary-bg text-bd-button-primary-text shadow-[0_4px_16px_rgba(0,0,0,0.08)]'
-              }`}
-          >
-            {saving ? (
-              <><Loader2 className="animate-spin" size={18} /> Recording...</>
-            ) : paymentRecorded ? (
-              <><Check size={18} /> Done</>
-            ) : (
-              <><Banknote size={18} /> Record Payment</>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="text-center text-[14px] text-bd-text-soft font-medium py-1"
-          >
-            Cancel
-          </button>
+          {/* Action area — single compact row */}
+          <div className="flex gap-2 border-t border-bd-border/60 pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 h-12 rounded-2xl text-[15px] text-bd-text-soft font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving || paymentRecorded}
+              className={`flex-[1.7] h-12 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+                ${paymentRecorded
+                  ? 'bg-bd-status-success-text text-white shadow-[0_4px_16px_rgba(52,199,89,0.25)]'
+                  : 'bg-bd-button-primary-bg text-bd-button-primary-text shadow-[0_4px_16px_rgba(0,0,0,0.08)]'
+                }`}
+            >
+              {saving ? (
+                <><Loader2 className="animate-spin" size={18} /> Recording...</>
+              ) : paymentRecorded ? (
+                <><Check size={18} /> Done</>
+              ) : (
+                <><Banknote size={18} /> Record Payment</>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </DocumentSheet>

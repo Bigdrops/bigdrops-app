@@ -50,7 +50,9 @@ interface DocumentCustomizeCardProps {
   // ── Accent color (commercial documents) ───────────────────────
   showAccentColor?: boolean
   accentColor?: string
+  accentEnabled?: boolean
   onAccentColorChange?: (color: string) => void
+  onAccentEnabledChange?: (enabled: boolean) => void
   accentColorSwatches?: string[]
 
   // ── Document font (optional — hidden when capability disabled) ─
@@ -86,7 +88,9 @@ export default function DocumentCustomizeCard({
   onCustomFontChange,
   showAccentColor = false,
   accentColor,
+  accentEnabled,
   onAccentColorChange,
+  onAccentEnabledChange,
   accentColorSwatches,
   showDocumentFont = true,
   compact,
@@ -109,10 +113,12 @@ export default function DocumentCustomizeCard({
       </div>
 
       {/* ── Accent Color ─────────────────────────────────────── */}
-      {showAccentColor && onAccentColorChange && accentColor != null ? (
+      {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null ? (
         <AccentColorSection
           accentColor={accentColor}
+          accentEnabled={accentEnabled ?? true}
           onAccentColorChange={onAccentColorChange}
+          onAccentEnabledChange={onAccentEnabledChange}
           swatches={accentColorSwatches ?? ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']}
         />
       ) : null}
@@ -196,44 +202,65 @@ export default function DocumentCustomizeCard({
 
 function AccentColorSection({
   accentColor,
+  accentEnabled,
   onAccentColorChange,
+  onAccentEnabledChange,
   swatches,
 }: {
   accentColor: string
+  accentEnabled: boolean
   onAccentColorChange: (color: string) => void
+  onAccentEnabledChange: (enabled: boolean) => void
   swatches: string[]
 }) {
   return (
     <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
-        <Palette className="h-4 w-4 text-bd-button-primary-bg" />
-        Accent Color
+      <div
+        className="flex cursor-pointer items-center justify-between select-none"
+        onClick={() => onAccentEnabledChange(!accentEnabled)}
+      >
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-bd-text">
+            <Palette className="h-4 w-4 text-bd-button-primary-bg" />
+            Accent Color
+          </div>
+          <p className="text-xs text-bd-text-muted">
+            Override the template accent color used in headers and rules.
+          </p>
+        </div>
+        <Switch
+          checked={accentEnabled}
+          onCheckedChange={onAccentEnabledChange}
+          onClick={(e) => e.stopPropagation()}
+        />
       </div>
-      <p className="mb-2 text-xs text-bd-text-muted">
-        Override the template accent color used in headers and rules.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {swatches.map((swatch) => (
-          <button
-            key={swatch}
-            type="button"
-            onClick={() => onAccentColorChange(swatch)}
-            className={cn(
-              'h-8 w-8 rounded-lg border-2 shadow-sm transition',
-              accentColor.toLowerCase() === swatch.toLowerCase()
-                ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
-                : 'border-transparent hover:border-bd-text-muted/40',
-            )}
-            style={{ backgroundColor: swatch }}
+
+      {accentEnabled ? (
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {swatches.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                onClick={() => onAccentColorChange(swatch)}
+                className={cn(
+                  'h-8 w-8 rounded-lg border-2 shadow-sm transition',
+                  accentColor.toLowerCase() === swatch.toLowerCase()
+                    ? 'border-bd-text scale-110 ring-2 ring-bd-text/20'
+                    : 'border-transparent hover:border-bd-text-muted/40',
+                )}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
+          <Input
+            type="color"
+            value={accentColor}
+            onChange={(e) => onAccentColorChange(e.target.value)}
+            className="mt-2 h-9 w-full cursor-pointer rounded-[12px]"
           />
-        ))}
-      </div>
-      <Input
-        type="color"
-        value={accentColor}
-        onChange={(e) => onAccentColorChange(e.target.value)}
-        className="mt-2 h-9 w-full cursor-pointer rounded-[12px]"
-      />
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -56,6 +56,7 @@ export interface UsePdfCustomizationReturn {
   customization: ResolvedPdfCustomization
   settings: ResolvedPdfCustomizationSettings
   setAccentColor: (color: string) => void
+  setAccentEnabled: (enabled: boolean) => void
   setDocumentFont: (font: string) => void
   setInkFont: (font: string) => void
   setInkColour: (color: string) => void
@@ -105,6 +106,7 @@ export function usePdfCustomization({
   )
 
   const setAccentColor = useCallback((color: string) => update({ accentColor: color }), [update])
+  const setAccentEnabled = useCallback((enabled: boolean) => update({ accentEnabled: enabled }), [update])
   const setDocumentFont = useCallback((font: string) => update({ documentFont: font }), [update])
   const setInkFont = useCallback((font: string) => update({ inkFont: font }), [update])
   const setInkColour = useCallback((color: string) => update({ inkColour: color }), [update])
@@ -120,6 +122,7 @@ export function usePdfCustomization({
     customization,
     settings,
     setAccentColor,
+    setAccentEnabled,
     setDocumentFont,
     setInkFont,
     setInkColour,

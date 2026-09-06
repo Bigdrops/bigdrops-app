@@ -88,7 +88,7 @@ export default function ViewQuotation() {
 
   // ── PDF customization engine (accent color, document font, ink) ──
   const docFamily = resolveCommercialDocumentFamily('quotation' as PdfDesignPresetDocument);
-  const { customization, setAccentColor, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
+  const { customization, setAccentColor, setAccentEnabled, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
     documentFamily: docFamily,
     templateDefaults: COMMERCIAL_TEMPLATE_DEFAULTS,
     capabilities: COMMERCIAL_CAPABILITIES,
@@ -253,7 +253,12 @@ export default function ViewQuotation() {
                 onCustomFontChange={() => {}}
                 showAccentColor
                 accentColor={customization.accentColor}
+                accentEnabled={customization.accentEnabled}
                 onAccentColorChange={setAccentColor}
+                onAccentEnabledChange={(enabled) => {
+                  setAccentEnabled(enabled)
+                  if (enabled) setAccentColor(PDF_ACCENT_SWATCHES[0])
+                }}
                 accentColorSwatches={PDF_ACCENT_SWATCHES}
                 showCompact
                 compact={draftPdfOutput?.compact ?? false}

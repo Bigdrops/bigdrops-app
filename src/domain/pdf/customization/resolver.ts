@@ -40,6 +40,11 @@ export function resolveSettings(
     accentColor: canUse('accentColor')
       ? (user.accentColor ?? defaults.accentColor)
       : defaults.accentColor,
+    // Explicit flag wins. Migration: a stored custom color with no flag
+    // means the user customized before the switch existed → enabled.
+    accentEnabled: canUse('accentColor')
+      ? (user.accentEnabled ?? (user.accentColor != null))
+      : false,
     documentFont: canUse('documentFont')
       ? (user.documentFont ?? defaults.documentFont)
       : defaults.documentFont,
@@ -62,6 +67,7 @@ export function resolvePdfCustomization(
 ): ResolvedPdfCustomization {
   return {
     accentColor: resolvedSettings.accentColor,
+    accentEnabled: resolvedSettings.accentEnabled,
     documentFont: resolvedSettings.documentFont,
     handwritingFont: resolvedSettings.inkFont,
     handwritingColor: resolvedSettings.inkColour,

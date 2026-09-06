@@ -95,18 +95,19 @@ export function bridgeToCommercialDesignPreset(
  * customization toggles OFF vetoes new engine edits in downloads while
  * the popup shows them — popup/PDF divergence.
  *
- * Saving means customized, so the toggles go ON. Other preset fields
+ * Saving commits the switch state: accent ON writes the toggle ON,
+ * accent OFF writes it OFF. Other preset fields
  * (text, muted, border, surface, fillable) are preserved untouched.
  */
 export function persistCommercialDesignPreset(
   documentType: PdfDesignPresetDocument,
-  customization: Pick<ResolvedPdfCustomization, 'accentColor' | 'documentFont'>,
+  customization: Pick<ResolvedPdfCustomization, 'accentColor' | 'accentEnabled' | 'documentFont'>,
 ): void {
   const docType: PdfDesignPresetDocument = documentType === 'quotation' ? 'quotation' : 'invoice'
   const base = getPdfDesignPreset(docType)
   setPdfDesignPreset(docType, {
     ...base,
-    useCustomColors: true,
+    useCustomColors: customization.accentEnabled,
     useCustomFonts: true,
     accentColor: customization.accentColor,
     headerFont: customization.documentFont as PdfDesignPreset['headerFont'],
@@ -142,9 +143,10 @@ export function resolveCommercialDocumentFamily(
  * when present (the customization modal keeps them in sync).
  *
  * Legacy default: when the engine holds saved accent/font values but the user
- * has never explicitly saved a design preset, the toggles default ON (the
- * historical behavior before presets were persisted). Once a preset is saved,
- * its explicit toggle state is honored — including an intentionally saved OFF.
+ * has never explicitly saved a design preset, the font toggle defaults ON
+ * (the historical behavior before presets were persisted). The color toggle
+ * always follows the explicit accent switch: ON renders the custom accent,
+ * OFF renders the selected template's canonical default accent.
  */
 export function resolveCommercialDesignPreset(
   documentType: PdfCustomizationDocumentFamily,
@@ -153,7 +155,7 @@ export function resolveCommercialDesignPreset(
   const base = getPdfDesignPreset(docType)
   const engineSettings = loadEngineSettings(documentType)
   if (!engineSettings) return base
-  const { customization } = resolveFull(
+  const { customization, settings } = resolveFull(
     COMMERCIAL_TEMPLATE_DEFAULTS,
     COMMERCIAL_CAPABILITIES,
     COMMERCIAL_POLICY,
@@ -161,8 +163,8 @@ export function resolveCommercialDesignPreset(
   )
   const preset = bridgeToCommercialDesignPreset(base, customization)
   if (!hasSavedPdfDesignPreset(docType)) {
-    preset.useCustomColors = true
     preset.useCustomFonts = true
   }
+  preset.useCustomColors = settings.accentEnabled
   return preset
 }

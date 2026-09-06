@@ -8,6 +8,8 @@ interface PaymentAttachmentUploaderProps {
   onFilesChanged: (files: File[]) => void
   maxSize?: number
   accept?: string
+  /** Hide the section heading when the parent already labels the control. */
+  hideHeading?: boolean
 }
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024
@@ -17,6 +19,7 @@ export function PaymentAttachmentUploader({
   onFilesChanged,
   maxSize = DEFAULT_MAX_SIZE,
   accept = DOCUMENT_ATTACHMENT_ACCEPT_ATTRIBUTE,
+  hideHeading = false,
 }: PaymentAttachmentUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -52,9 +55,11 @@ export function PaymentAttachmentUploader({
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted/70">
-        Attachments
-      </div>
+      {hideHeading ? null : (
+        <div className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted/70">
+          Attachments
+        </div>
+      )}
 
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}

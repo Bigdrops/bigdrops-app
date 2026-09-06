@@ -195,6 +195,60 @@ test('8. All capabilities disabled — all user settings stripped', () => {
   assert.equal(customization.handwritingColor, TEMPLATE_DEFAULTS.handwritingColor)
 })
 
+// ── Scenario 10: Explicit accentEnabled=false → disabled, color value preserved ──
+
+test('10. Accent explicitly disabled — flag false, template default renders', () => {
+  const user: PdfCustomizationSettings = {
+    version: 1,
+    accentColor: '#FF0000',
+    accentEnabled: false,
+  }
+
+  const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, user, TEMPLATE_DEFAULTS)
+  const customization = resolvePdfCustomization(TEMPLATE_DEFAULTS, settings)
+
+  assert.equal(settings.accentEnabled, false, 'accentEnabled should be false')
+  assert.equal(customization.accentEnabled, false, 'customization should carry the disabled flag')
+  assert.equal(customization.accentColor, '#FF0000', 'stored color value is preserved but gated by the flag')
+})
+
+// ── Scenario 11: Stored custom color without flag → migration enables ──
+
+test('11. Stored custom color without flag — migration treats as enabled', () => {
+  const user: PdfCustomizationSettings = {
+    version: 1,
+    accentColor: '#FF0000',
+  }
+
+  const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, user, TEMPLATE_DEFAULTS)
+
+  assert.equal(settings.accentEnabled, true, 'pre-switch custom color migrates to enabled')
+})
+
+// ── Scenario 12: No stored color and no flag → disabled (template default) ──
+
+test('12. Fresh settings — accent disabled, template default renders', () => {
+  const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, undefined, TEMPLATE_DEFAULTS)
+  const customization = resolvePdfCustomization(TEMPLATE_DEFAULTS, settings)
+
+  assert.equal(settings.accentEnabled, false, 'fresh settings resolve to disabled')
+  assert.equal(customization.accentEnabled, false, 'customization should carry the disabled flag')
+})
+
+// ── Scenario 13: Explicit accentEnabled=true with no stored color → enabled ──
+
+test('13. Explicit enabled without stored color — enabled with template default color', () => {
+  const user: PdfCustomizationSettings = {
+    version: 1,
+    accentEnabled: true,
+  }
+
+  const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, user, TEMPLATE_DEFAULTS)
+
+  assert.equal(settings.accentEnabled, true, 'explicit flag wins')
+  assert.equal(settings.accentColor, TEMPLATE_DEFAULTS.accentColor, 'color falls back to template default')
+})
+
 // ── Scenario 9: Determinism — same input produces identical output ──
 
 test('9. Determinism — same input produces identical output', () => {

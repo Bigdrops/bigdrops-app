@@ -64,6 +64,8 @@ export const FALLBACK_TEMPLATE_DEFAULTS: PdfTemplateDefaults = {
 export interface PdfCustomizationSettings {
   version: 1
   accentColor?: string
+  /** False disables custom accent coloring (template default renders). */
+  accentEnabled?: boolean
   documentFont?: string
   inkFont?: string
   inkColour?: string
@@ -73,6 +75,7 @@ export interface PdfCustomizationSettings {
 export interface ResolvedPdfCustomizationSettings {
   version: 1
   accentColor: string
+  accentEnabled: boolean
   documentFont: string
   inkFont: string
   inkColour: string
@@ -87,6 +90,8 @@ export interface ResolvedPdfCustomizationSettings {
  */
 export interface ResolvedPdfCustomization {
   accentColor: string
+  /** False means the template's canonical default accent renders. */
+  accentEnabled: boolean
   documentFont: string
   handwritingFont: string
   handwritingColor: string
