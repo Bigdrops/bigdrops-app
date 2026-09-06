@@ -194,8 +194,9 @@ export default function InvoiceRecordPaymentSheet({
         </div>
       ) : (
         <div className="flex flex-col gap-3 min-h-0">
-          {/* Amount — consolidated card */}
-          <div className="rounded-2xl border border-bd-border bg-bd-surface p-3 space-y-2.5">
+          {/* Amount — chromeless block matching the reference composition.
+              Balance row, hero input, chips, settlement strip, progress. */}
+          <div className="space-y-2.5">
             <div className="flex items-baseline justify-between text-xs text-bd-text-muted">
               <span>Balance due</span>
               <span className="font-mono font-bold text-bd-text">{formatNaira(currentBalance)}</span>
@@ -326,21 +327,19 @@ export default function InvoiceRecordPaymentSheet({
                 value={form.notes}
                 onChange={(e) => setField('notes', e.target.value)}
                 placeholder="Optional"
-                rows={2}
-                className="w-full resize-none rounded-lg border border-bd-border bg-bd-surface px-2.5 py-2 text-xs outline-none focus:border-bd-focus-ring"
+                className="h-11 w-full resize-none rounded-lg border border-bd-border bg-bd-surface px-2.5 py-2 text-xs outline-none focus:border-bd-focus-ring"
               />
             </div>
           </div>
 
-          {/* Attach receipt — inline expandable section.
-              Collapsed trigger adds no height beyond its row.
+          {/* Attach receipt — chromeless trigger row + inline expander.
               Only expanding grows the sheet. */}
-          <div className="rounded-2xl border border-bd-border bg-bd-surface">
+          <div>
             <button
               type="button"
               onClick={() => setAttachOpen((current) => !current)}
               aria-expanded={attachOpen}
-              className="flex h-11 w-full items-center gap-2 px-3 text-[13px] font-semibold text-bd-text transition-transform active:scale-[0.99]"
+              className="flex h-10 w-full items-center gap-2 px-1 text-[13px] font-semibold text-bd-text transition-transform active:scale-[0.99]"
             >
               <Paperclip size={16} className="shrink-0 text-bd-text-muted" />
               <span className="flex-1 text-left">
@@ -357,7 +356,7 @@ export default function InvoiceRecordPaymentSheet({
               />
             </button>
             {attachOpen ? (
-              <div className="px-3 pb-3">
+              <div className="pt-1">
                 <PaymentAttachmentUploader
                   files={attachments}
                   onFilesChanged={setAttachments}
@@ -405,13 +404,13 @@ export default function InvoiceRecordPaymentSheet({
             </div>
           ) : null}
 
-          {/* Action area — single compact row */}
-          <div className="flex gap-2 border-t border-bd-border/60 pt-3">
+          {/* Action area — single compact row at HIG minimum height */}
+          <div className="flex gap-2 border-t border-bd-border/60 pt-2">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex-1 h-12 rounded-2xl text-[15px] text-bd-text-soft font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
+              className="flex-1 h-11 rounded-2xl text-[15px] text-bd-text-soft font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
             >
               Cancel
             </button>
@@ -419,7 +418,7 @@ export default function InvoiceRecordPaymentSheet({
               type="button"
               onClick={() => void handleSave()}
               disabled={saving || paymentRecorded}
-              className={`flex-[1.7] h-12 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+              className={`flex-[1.7] h-11 rounded-2xl text-[15px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
                 ${paymentRecorded
                   ? 'bg-bd-status-success-text text-white shadow-[0_4px_16px_rgba(52,199,89,0.25)]'
                   : 'bg-bd-button-primary-bg text-bd-button-primary-text shadow-[0_4px_16px_rgba(0,0,0,0.08)]'
