@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { getNotificationRoute } from '@/domain/notifications/notificationRoutes'
 import { isNotificationUnread, useNotifications, type AppNotification } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 
 function getIcon(notification: AppNotification) {
   const severity = String(notification.severity || '').toLowerCase()
@@ -94,10 +93,8 @@ export function RecentAlertsCarousel() {
           </div>
         </div>
       ) : (
-        <div className="relative">
-          <Carousel opts={{ align: 'start', loop: false }}>
-            <CarouselContent className="-ml-2">
-              {alerts.map((notification) => {
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch] md:gap-3">
+          {alerts.map((notification) => {
                 const Icon = getIcon(notification)
                 const route = getNotificationRoute(notification)
                 const unread = isNotificationUnread(notification)
@@ -141,7 +138,7 @@ export function RecentAlertsCarousel() {
                 )
 
                 const content = (
-                  <CarouselItem key={notification.id} className="pl-2 md:basis-1/2 lg:basis-1/3">
+                  <div key={notification.id} className="min-w-[200px] w-[200px] shrink-0 md:min-w-[220px] md:w-[220px]">
                     {route ? (
                       <button
                         type="button"
@@ -155,15 +152,11 @@ export function RecentAlertsCarousel() {
                         {card}
                       </article>
                     )}
-                  </CarouselItem>
+                  </div>
                 )
 
                 return content
               })}
-            </CarouselContent>
-            <CarouselPrevious className="hidden sm:flex" />
-            <CarouselNext className="hidden sm:flex" />
-          </Carousel>
         </div>
       )}
     </div>
