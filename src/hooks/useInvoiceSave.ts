@@ -286,6 +286,28 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
           // PostgREST wraps jsonb function returns in an array.
           const rpcResult = Array.isArray(data) ? data[0] : data
           const resolved = rpcResult?.invoice ?? rpcResult
+          // Increment 4A: first creation is the invoice accounting event.
+          // Flows through the source-transaction boundary to the posting kernel.
+          // Best-effort; never blocks or breaks invoice creation.
+          try {
+            const { syncInvoiceAccountingEvent } = await import(
+              '@/modules/invoices/services/invoiceAccountingService'
+            )
+            await syncInvoiceAccountingEvent({
+              entityId,
+              invoice: {
+                id: resolved?.id ?? rpcResult?.id,
+                invoice_number: resolved?.invoice_number ?? payload.invoice_number,
+                client_name: payload.client_name,
+                issue_date: payload.issue_date,
+                total: payload.total,
+              },
+              tenantClient,
+            })
+          } catch (accountingErr) {
+            console.error('[invoice-accounting] event dispatch failed:', accountingErr)
+          }
+
           return {
             data: {
               id: resolved?.id ?? rpcResult?.id,
