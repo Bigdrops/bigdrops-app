@@ -112,36 +112,41 @@ export default function DocumentCustomizeCard({
         {templatePicker}
       </div>
 
-      {/* ── Accent Color ─────────────────────────────────────── */}
-      {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null ? (
-        <AccentColorSection
-          accentColor={accentColor}
-          accentEnabled={accentEnabled ?? true}
-          onAccentColorChange={onAccentColorChange}
-          onAccentEnabledChange={onAccentEnabledChange}
-          swatches={accentColorSwatches ?? ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']}
-        />
-      ) : null}
-
-      {/* ── Document Font ─────────────────────────────────────── */}
-      {showDocumentFont ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
-            <Type className="h-4 w-4 text-bd-button-primary-bg" />
-            Document Font
-          </div>
-          <Select value={customization.documentFont} onValueChange={setDocumentFont}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PDF_FONT_OPTIONS.map((font) => (
-                <SelectItem key={font.value} value={font.value}>
-                  {font.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* ── Appearance (accent + document font share one card) ─── */}
+      {((showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null) || showDocumentFont) ? (
+        <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3 space-y-3">
+          {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null ? (
+            <AccentColorSection
+              accentColor={accentColor}
+              accentEnabled={accentEnabled ?? true}
+              onAccentColorChange={onAccentColorChange}
+              onAccentEnabledChange={onAccentEnabledChange}
+              swatches={accentColorSwatches ?? ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']}
+            />
+          ) : null}
+          {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null && showDocumentFont ? (
+            <div className="border-t border-bd-border" />
+          ) : null}
+          {showDocumentFont ? (
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
+                <Type className="h-4 w-4 text-bd-button-primary-bg" />
+                Document Font
+              </div>
+              <Select value={customization.documentFont} onValueChange={setDocumentFont}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PDF_FONT_OPTIONS.map((font) => (
+                    <SelectItem key={font.value} value={font.value}>
+                      {font.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -163,9 +168,9 @@ export default function DocumentCustomizeCard({
         />
       ) : null}
 
-      {/* ── Compact / Landscape ───────────────────────────────── */}
+      {/* ── Compact / Landscape (self-bordered rows need no wrapper card) ── */}
       {(showCompact || showLandscape) ? (
-        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-3 space-y-2">
+        <>
           {showCompact && compact != null && onCompactChange ? (
             <ToggleRow
               label="Compact Layout"
@@ -182,7 +187,7 @@ export default function DocumentCustomizeCard({
               onToggle={() => onLandscapeChange(!landscape)}
             />
           ) : null}
-        </div>
+        </>
       ) : null}
 
       {/* ── Save ──────────────────────────────────────────────── */}
@@ -214,7 +219,7 @@ function AccentColorSection({
   swatches: string[]
 }) {
   return (
-    <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3">
+    <>
       <div
         className="flex cursor-pointer items-center justify-between select-none"
         onClick={() => onAccentEnabledChange(!accentEnabled)}
@@ -261,7 +266,7 @@ function AccentColorSection({
           />
         </div>
       ) : null}
-    </div>
+    </>
   )
 }
 
