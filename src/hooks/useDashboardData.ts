@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
-import { listBoqs } from '@/domain/boq/storage'
+
 import {
   readDashboardCache,
   writeDashboardCache,
@@ -123,7 +123,7 @@ function mergeRecentDocs(docs: RecentDoc[]) {
     .slice(0, 6)
 }
 
-function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], boqs: any[], opts?: { useIssueDate?: boolean }) {
+function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybills: any[], rfqs: any[], opts?: { useIssueDate?: boolean }) {
   const useIssueDate = opts?.useIssueDate ?? false
 
   const docs = [
@@ -177,16 +177,6 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
       status: 'Open',
       amount: null,
       path: `/rfqs/${doc.id}`,
-    })),
-    ...boqs.map((doc) => ({
-      id: doc.id,
-      type: 'BOQ' as const,
-      number: doc.boq_number || 'BOQ',
-      client: doc.vendor_name || 'No vendor',
-      date: doc.created_at,
-      status: 'Local',
-      amount: null,
-      path: `/boqs/${doc.id}`,
     })),
   ]
 
@@ -381,7 +371,6 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
         const csrs = csrRes.data || []
         const waybills = waybillRes.data || []
         const rfqs = rfqRes.data || []
-        const boqs = listBoqs()
         const projects = (projectsRes.data || []) as RecentProject[]
         // ponytail: reuse Reports pipe — same tenant view, unfiltered for global KPIs
         const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
@@ -419,7 +408,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
 
         const kpiAggregates = computeKpiAggregates(invoiceFinancials, invoiceMap, now, startOfMonth)
 
-        const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs)
+        const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs)
         const nextHeroStats = {
           collections: thisMonthCollections,
           openWork: pendingFollowUp,
@@ -502,7 +491,6 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       const csrs = csrRes.data || []
       const waybills = waybillRes.data || []
       const rfqs = rfqRes.data || []
-      const boqs = listBoqs()
       const projects = (projectsRes.data || []) as RecentProject[]
       // ponytail: same pipe as Reports — unfiltered for global KPIs, no date-range clipping
       const invoiceFinancials = await fetchInvoiceFinancials(tenantClient, null, null)
@@ -546,7 +534,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
       ).length
       const kpiAggregates = computeKpiAggregates(invoiceFinancials, invoiceMap, now, startOfMonth)
 
-      const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, boqs, { useIssueDate: false })
+      const nextRecentDocs = buildRecentDocs(invoices, quotations, csrs, waybills, rfqs, { useIssueDate: false })
       const nextHeroStats = {
         collections: thisMonthCollections,
         openWork: pendingFollowUp,

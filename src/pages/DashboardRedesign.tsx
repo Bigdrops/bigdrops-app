@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
 import { useSettings } from '@/hooks/useSettings'
+import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useDashboardData, type RecentDoc } from '@/hooks/useDashboardData'
 import { buildKpiCards, loadStoredKpiCards } from '@/config/kpiCards'
@@ -21,6 +22,8 @@ type DashboardRedesignProps = {
 export default function DashboardRedesign({ session, preference, saveThemePref }: DashboardRedesignProps) {
   const navigate = useNavigate()
   const { settings } = useSettings()
+  const { workspace } = useWorkspace()
+  const { entity } = useEntity()
   const { widthClass } = useLayoutMode()
   const { loading, recentDocs, kpiStats } = useDashboardData()
   const [createOpen, setCreateOpen] = React.useState(false)
@@ -46,7 +49,7 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
   }, [createOpen])
 
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || ''
-  const businessName = settings?.company_name || 'Bigdrops Workspace'
+  const businessName = entity?.name || settings?.company_name || ''
 
   const handleRecentDocSelect = React.useCallback(
     (doc: RecentDoc) => {
@@ -74,6 +77,7 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
       data-bd-page="dashboard"
     >
       <DashboardOverview
+        workspaceName={workspace?.name || ''}
         businessName={businessName}
         userName={userName}
         userId={session.user.id}

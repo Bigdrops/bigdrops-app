@@ -10,6 +10,7 @@ import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { isPermissionError } from '@/domain/tenant/tenantGate'
 import { useEntity } from '@/lib/tenant/contexts'
 
 interface WaybillFormPageProps {
@@ -130,7 +131,14 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         throw new Error(logError.message || 'Failed to reserve waybill number')
       }
     } catch (err) {
-      feedback.error(err instanceof Error ? err.message : 'Download failed')
+      // Distinguish authorization from system failure: an RLS denial here
+      // means this user holds no ('waybill', 'create') grant on the active
+      // entity (deny-by-default), not that tenant provisioning is broken.
+      if (isPermissionError(err)) {
+        feedback.error('You do not have permission to reserve waybill numbers in this company.')
+      } else {
+        feedback.error(err instanceof Error ? err.message : 'Download failed')
+      }
     }
   }
 

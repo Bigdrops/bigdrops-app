@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
@@ -14,6 +16,13 @@ type MobilePageHeaderProps = {
   actions?: ReactNode
   className?: string
   hideGlobalSearch?: boolean
+  /**
+   * True when the page is the home/dashboard surface (drawer/menu leading icon).
+   * False or undefined renders the sub-section pattern: back navigation only.
+   */
+  isHome?: boolean
+  /** Custom back handler. Defaults to history back when isHome is false. */
+  onBackClick?: () => void
 }
 
 export default function MobilePageHeader({
@@ -27,7 +36,10 @@ export default function MobilePageHeader({
   actions,
   className,
   hideGlobalSearch = false,
+  isHome = false,
+  onBackClick,
 }: MobilePageHeaderProps) {
+  const navigate = useNavigate()
   return (
     <div
       className={cn(
@@ -37,18 +49,32 @@ export default function MobilePageHeader({
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <div className="flex items-center gap-[var(--bd-row-gap)] w-full">
-        <button
-          type="button"
-          onClick={onMenuClick}
-          className="h-9 w-9 shrink-0 border border-bd-border bg-transparent hover:bg-bd-surface-muted rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bd-app-bg"
-          aria-label="Open navigation menu"
-        >
-          <SidebarToggleIcon
-            isOpen={isOpen}
-            strokeWidth={2}
-            className="w-4 h-4 text-bd-text"
-          />
-        </button>
+        {isHome ? (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="h-9 w-9 shrink-0 border border-bd-border bg-transparent hover:bg-bd-surface-muted rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bd-app-bg"
+            aria-label="Open navigation menu"
+          >
+            <SidebarToggleIcon
+              isOpen={isOpen}
+              strokeWidth={2}
+              className="w-4 h-4 text-bd-text"
+            />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onBackClick ?? (() => navigate(-1))}
+            className="h-9 w-9 shrink-0 border border-bd-border bg-transparent hover:bg-bd-surface-muted rounded-lg flex items-center justify-center transition-colors outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bd-app-bg"
+            aria-label="Go back"
+          >
+            <ArrowLeft
+              strokeWidth={2}
+              className="w-4 h-4 text-bd-text"
+            />
+          </button>
+        )}
 
         <div className="min-w-0 flex-1">
           {eyebrow ? (

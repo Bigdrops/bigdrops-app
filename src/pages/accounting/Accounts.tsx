@@ -43,7 +43,7 @@ export default function Accounts() {
   })
 
   return (
-    <Layout title="Chart of Accounts">
+    <Layout title="Chart of Accounts" hidePageHeader>
       <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
         <ModuleShell
           eyebrow="Accounting"

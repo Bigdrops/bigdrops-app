@@ -31,6 +31,7 @@ import { PaymentReminderBanner } from '@/components/dashboard/PaymentReminderBan
 import { RecentAlertsCarousel } from '@/components/dashboard/RecentAlertsCarousel'
 
 type DashboardOverviewProps = {
+  workspaceName: string
   businessName: string
   userName: string
   userId?: string
@@ -70,11 +71,6 @@ const ACTIVITY_ICON_STYLE: Record<string, { bg: string; color: string; border: s
     color: 'text-[hsl(var(--primary))]',
     border: 'border-[hsl(var(--primary)/0.12)]',
   },
-  BOQ: {
-    bg: 'bg-[hsl(var(--sage-soft,hsl(var(--sage)/0.1)))]',
-    color: 'text-[hsl(var(--sage))]',
-    border: 'border-[hsl(var(--sage)/0.12)]',
-  },
 }
 
 const ACTIVITY_ICON: Record<string, ComponentType<{ size?: number; strokeWidth?: number }>> = {
@@ -83,7 +79,6 @@ const ACTIVITY_ICON: Record<string, ComponentType<{ size?: number; strokeWidth?:
   CSR: ClipboardCheck,
   Waybill: Truck,
   RFQ: FileText,
-  BOQ: ClipboardList,
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -152,6 +147,7 @@ function RecentActivitySkeleton() {
 }
 
 export function DashboardOverview({
+  workspaceName,
   businessName,
   userName,
   userId,
@@ -224,10 +220,10 @@ export function DashboardOverview({
 
           <div className="min-w-0">
             <div className="text-[7px] font-[800] uppercase tracking-[0.075em] text-[hsl(var(--bd-ink-muted))]">
-              BIGDROPS WORKSPACE
+              {workspaceName || 'Workspace'}
             </div>
             <div className="mt-px truncate text-[13px] font-[800] tracking-[-.045em] text-[hsl(var(--bd-ink))]">
-              {userName || businessName || 'Bigdrops'}
+              {userName || businessName || 'Dashboard'}
             </div>
           </div>
         </div>
@@ -287,8 +283,16 @@ export function DashboardOverview({
             ) : (
               <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--bd-surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
                 {recentDocs.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-[12px] text-[hsl(var(--bd-ink-muted))]">
-                    No recent activity.
+                  <div className="flex flex-col items-center px-4 py-10 text-center">
+                    <div className="grid h-[58px] w-[58px] place-items-center rounded-[20px] bg-[hsl(var(--primary)/0.1)]">
+                      <ClipboardList className="size-[26px] text-[hsl(var(--primary))]" strokeWidth={1.5} />
+                    </div>
+                    <div className="mt-4 text-[16px] font-[800] tracking-[-0.05em] text-[hsl(var(--bd-ink))]">
+                      No recent activity
+                    </div>
+                    <div className="mt-1 max-w-[200px] text-[10px] leading-[1.45] text-[hsl(var(--bd-ink-muted))]">
+                      Documents you create will appear here
+                    </div>
                   </div>
                 ) : (
                   recentDocs.slice(0, 6).map((doc) => {

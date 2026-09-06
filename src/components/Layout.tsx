@@ -57,11 +57,14 @@ import { MobileSalesSheet } from './layout/MobileSalesSheet'
 export interface MobileChromeContextValue {
   openSidebar: () => void
   sidebarOpen: boolean
+  /** True when the page is the home/dashboard surface. Sub-section pages must render back navigation instead. */
+  dashboard?: boolean
 }
 
-export const MobileChromeContext = React.createContext<MobileChromeContextValue>({ 
+export const MobileChromeContext = React.createContext<MobileChromeContextValue>({
   openSidebar: () => {},
-  sidebarOpen: false
+  sidebarOpen: false,
+  dashboard: false,
 })
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -168,8 +171,9 @@ export default function Layout({
     () => ({
       openSidebar,
       sidebarOpen,
+      dashboard: isHome,
     }),
-    [openSidebar, sidebarOpen]
+    [openSidebar, isHome, sidebarOpen]
   )
 
   React.useEffect(() => {

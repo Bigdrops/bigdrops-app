@@ -133,7 +133,7 @@ export default function Journal() {
   }
 
   return (
-    <Layout title="Journal">
+    <Layout title="Journal" hidePageHeader>
       <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
         {canCreate && (
           <div className="mx-auto mb-3 w-full max-w-[var(--bd-layout-content-max,1200px)]">

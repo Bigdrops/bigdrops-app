@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Landmark } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Landmark } from 'lucide-react'
 import Layout from '@/components/Layout'
 import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
 
@@ -18,17 +18,20 @@ export default function AccountingOverview() {
   const visible = links.filter((link) => hasAuthorization(link.permission[0], link.permission[1]))
 
   return (
-    <Layout title="Accounting">
+    <Layout title="Accounting" hidePageHeader>
       <div className="mx-auto w-full max-w-[var(--bd-layout-content-max,1200px)] px-4 pt-2 md:px-[var(--bd-layout-padding,1.5rem)]">
-        <div className="flex items-center gap-3 py-1">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-bd-surface-muted text-bd-text">
-            <Landmark className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[16px] font-bold tracking-[-0.02em] text-bd-text">
-              {entity?.name ?? 'Accounting'}
-            </h1>
-          </div>
+        <div className="flex items-center gap-1 py-1">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-bd-text transition-colors outline-none active:bg-bd-surface-muted"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-[-0.02em] text-bd-text">
+            Accounting
+          </h1>
         </div>
 
         <div className="mt-3 space-y-5 pb-4">
@@ -58,6 +61,10 @@ export default function AccountingOverview() {
             )}
           </section>
         </div>
+
+        {entity?.name && (
+          <p className="pt-2 pb-4 text-center text-[11px] text-bd-text-muted">{entity.name}</p>
+        )}
       </div>
     </Layout>
   )

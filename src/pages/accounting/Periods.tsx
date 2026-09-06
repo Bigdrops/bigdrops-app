@@ -80,7 +80,7 @@ export default function Periods() {
   })
 
   return (
-    <Layout title="Accounting Periods">
+    <Layout title="Accounting Periods" hidePageHeader>
       <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
         {canCreate && (
           <div className="mx-auto mb-3 w-full max-w-[var(--bd-layout-content-max,1200px)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] p-4 shadow-sm">
