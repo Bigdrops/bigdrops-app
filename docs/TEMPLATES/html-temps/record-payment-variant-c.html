@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Record Payment — Variant C: Two-Step</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --card-glass: rgba(255,255,255,0.88);
+    --border: rgba(0,0,0,0.06);
+    --text: #1c1c1e;
+    --text2: #8e8e93;
+    --text3: #c7c7cc;
+    --accent: #007aff;
+    --accent-soft: rgba(0,122,255,0.08);
+    --success: #34c759;
+    --success-soft: rgba(52,199,89,0.08);
+    --danger: #ff3b30;
+    --danger-soft: rgba(255,59,48,0.08);
+    --scrim: rgba(0,0,0,0.4);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .demo-trigger {
+    padding: 14px 28px; border-radius: 12px;
+    background: var(--accent); color: white;
+    font-size: 15px; font-weight: 600; border: none; cursor: pointer;
+    transition: transform 120ms;
+  }
+  .demo-trigger:active { transform: scale(0.97); opacity: 0.85; }
+
+  .scrim {
+    position: fixed; inset: 0; background: var(--scrim);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 90; opacity: 0; pointer-events: none;
+    transition: opacity 320ms var(--ease);
+  }
+  .scrim.active { opacity: 1; pointer-events: auto; }
+
+  .popup {
+    position: fixed; z-index: 100; overflow: hidden;
+    opacity: 0; pointer-events: none;
+  }
+  .popup.mobile {
+    left: 0; right: 0; bottom: 0;
+    background: var(--card-glass);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border-radius: 20px 20px 0 0;
+    max-height: 85dvh;
+    transform: translateY(100%);
+    transition: transform 400ms var(--ease), opacity 280ms var(--ease);
+  }
+  .popup.mobile.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .popup.desktop {
+    top: 50%; left: 50%;
+    width: 420px; max-height: 80dvh;
+    background: var(--card-glass);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border-radius: 22px;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: transform 360ms var(--ease), opacity 260ms var(--ease);
+    box-shadow: 0 32px 100px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(0,0,0,0.04);
+  }
+  .popup.desktop.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+
+  .drag-handle {
+    display: flex; justify-content: center; padding: 10px 0 2px; cursor: grab;
+  }
+  .drag-handle::after {
+    content: ''; width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1);
+  }
+
+  /* Header */
+  .hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 20px 14px;
+  }
+  .hdr h2 { font-size: 17px; font-weight: 650; letter-spacing: -0.02em; }
+  .hdr .sub { font-size: 13px; color: var(--text2); margin-top: 1px; }
+  .x { width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.06); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .x:active { background: rgba(0,0,0,0.12); }
+  .x svg { width: 13px; height: 13px; color: var(--text2); }
+
+  .body {
+    overflow: hidden; position: relative;
+    padding: 0 20px 20px;
+    padding-bottom: calc(20px + var(--safe-bottom));
+  }
+
+  /* Step panels */
+  .step {
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    transition: opacity 300ms var(--ease), transform 300ms var(--ease);
+    position: absolute; left: 20px; right: 20px;
+    pointer-events: none; opacity: 0;
+  }
+  .step.active {
+    position: relative; left: 0; right: 0;
+    pointer-events: auto; opacity: 1;
+    transform: translateX(0);
+  }
+  .step.exit-left {
+    transform: translateX(-30px); opacity: 0;
+  }
+  .step.enter-right {
+    transform: translateX(30px); opacity: 0;
+  }
+
+  /* ===== STEP 1: Amount only ===== */
+  .s1-balance {
+    font-size: 13px; color: var(--text2); font-weight: 500; text-align: center; padding-top: 8px;
+  }
+  .s1-balance strong {
+    font-family: 'SF Mono', Menlo, monospace; font-weight: 700; color: var(--text);
+  }
+
+  .s1-input-wrap { position: relative; width: 100%; text-align: center; }
+  .s1-input-wrap .sym {
+    position: absolute; left: 50%; bottom: 10px;
+    transform: translateX(calc(-50% - 80px));
+    font-size: 32px; font-weight: 300; color: var(--text3);
+    pointer-events: none; transition: color 150ms;
+  }
+  .s1-input {
+    width: 100%; max-width: 280px; margin: 0 auto;
+    border: none; border-bottom: 2px solid var(--border);
+    background: transparent; outline: none;
+    font-size: 48px; font-weight: 700;
+    font-family: 'SF Mono', Menlo, monospace;
+    color: var(--text); text-align: center;
+    padding: 0 0 8px 36px;
+    transition: border-color 180ms;
+  }
+  .s1-input:focus { border-color: var(--accent); }
+  .s1-input:focus ~ .sym { color: var(--accent); }
+  .s1-input::placeholder { color: var(--text3); font-weight: 300; }
+
+  .s1-chips { display: flex; gap: 8px; justify-content: center; }
+  .s1-chip {
+    height: 34px; padding: 0 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--card);
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    cursor: pointer; transition: all 120ms;
+  }
+  .s1-chip:active { transform: scale(0.95); }
+  .s1-chip.on { background: var(--accent-soft); border-color: rgba(0,122,255,0.2); color: var(--accent); }
+
+  .s1-next {
+    width: 100%; height: 50px; border: none; border-radius: 14px;
+    background: var(--accent); color: white;
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; transition: transform 100ms, opacity 100ms;
+    box-shadow: 0 4px 16px rgba(0,122,255,0.25);
+  }
+  .s1-next:active { transform: scale(0.98); opacity: 0.85; }
+  .s1-next:disabled { opacity: 0.4; pointer-events: none; }
+
+  .s1-cancel {
+    font-size: 14px; color: var(--text2); background: none;
+    border: none; cursor: pointer; font-weight: 500; padding: 4px;
+  }
+
+  /* ===== STEP 2: Details ===== */
+  .s2-header {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding-bottom: 4px;
+  }
+  .s2-back {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(0,0,0,0.04); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: background 100ms;
+  }
+  .s2-back:active { background: rgba(0,0,0,0.08); }
+  .s2-back svg { width: 16px; height: 16px; color: var(--text2); }
+  .s2-title { font-size: 15px; font-weight: 600; }
+  .s2-amount {
+    margin-left: auto;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 15px; font-weight: 700; color: var(--accent);
+  }
+
+  .s2-fields {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
+  }
+  .f { display: flex; flex-direction: column; gap: 3px; }
+  .f.span { grid-column: 1 / -1; }
+  .f label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text3);
+  }
+  .f input, .f select, .f textarea {
+    height: 38px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card); font-size: 14px; color: var(--text);
+    padding: 0 10px; outline: none; width: 100%;
+    transition: border-color 150ms; -webkit-appearance: none; appearance: none;
+  }
+  .f select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+  }
+  .f input:focus, .f select:focus, .f textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,122,255,0.08);
+  }
+  .f textarea { height: 56px; padding: 8px 10px; resize: none; font-size: 13px; line-height: 1.4; }
+
+  .s2-attach {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px;
+    font-size: 13px; color: var(--text2); cursor: pointer; transition: border-color 120ms;
+  }
+  .s2-attach:active { border-color: var(--accent); background: var(--accent-soft); }
+  .s2-attach svg { width: 14px; height: 14px; }
+
+  .s2-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .s2-submit {
+    width: 100%; height: 48px; border: none; border-radius: 12px;
+    background: var(--accent); color: white;
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; transition: transform 100ms, opacity 100ms;
+    box-shadow: 0 4px 14px rgba(0,122,255,0.25);
+  }
+  .s2-submit:active { transform: scale(0.98); opacity: 0.85; }
+  .s2-submit.ok { background: var(--success); box-shadow: 0 4px 14px rgba(52,199,89,0.25); }
+
+  .s2-cancel {
+    font-size: 14px; color: var(--text2); background: none;
+    border: none; cursor: pointer; font-weight: 500; padding: 4px; text-align: center;
+  }
+
+  .error {
+    width: 100%; background: var(--danger-soft); color: var(--danger);
+    font-size: 13px; font-weight: 500; padding: 10px 14px; border-radius: 10px;
+    display: none;
+  }
+  .error.show { display: block; }
+
+  .success-line {
+    width: 100%; display: none; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--success);
+  }
+  .success-line.show { display: flex; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .popup.mobile, .popup.desktop, .scrim, .step { transition: opacity 160ms; transform: none !important; }
+    .popup.mobile { transform: translateY(0) !important; }
+    .popup.desktop { transform: translate(-50%, -50%) !important; }
+  }
+
+  .demo-note {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: var(--text3); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<button class="demo-trigger" onclick="openPopup()">Record Payment</button>
+
+<div class="scrim" id="scrim" onclick="closePopup()"></div>
+
+<div class="popup mobile" id="popup">
+  <div class="drag-handle" id="handle"></div>
+
+  <div class="hdr">
+    <div>
+      <h2 id="title">Record Payment</h2>
+      <div class="sub">INV-2026-0042</div>
+    </div>
+    <button class="x" onclick="closePopup()" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="body">
+    <!-- STEP 1: Amount -->
+    <div class="step active" id="step1">
+      <div class="s1-balance">Balance due: <strong>₦450,000</strong></div>
+
+      <div class="s1-input-wrap">
+        <input class="s1-input" type="text" inputmode="decimal" placeholder="0" id="amt" oninput="onAmt(this.value)">
+        <span class="sym">₦</span>
+      </div>
+
+      <div class="s1-chips">
+        <button class="s1-chip" onclick="pick(25,this)">25%</button>
+        <button class="s1-chip" onclick="pick(50,this)">50%</button>
+        <button class="s1-chip" onclick="pick(75,this)">75%</button>
+        <button class="s1-chip" onclick="pick(100,this)">Full</button>
+      </div>
+
+      <button class="s1-next" id="nextBtn" onclick="goStep2()" disabled>
+        Continue
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="s1-cancel" onclick="closePopup()">Cancel</button>
+    </div>
+
+    <!-- STEP 2: Details -->
+    <div class="step" id="step2">
+      <div class="s2-header">
+        <button class="s2-back" onclick="goStep1()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="s2-title">Details</span>
+        <span class="s2-amount" id="s2Amt">₦0</span>
+      </div>
+
+      <div class="s2-fields">
+        <div class="f">
+          <label>Date</label>
+          <input type="date" id="date">
+        </div>
+        <div class="f">
+          <label>Method</label>
+          <select id="method" onchange="toggleBank()">
+            <option>Transfer</option><option>Cash</option><option>POS</option><option>Cheque</option><option>Other</option>
+          </select>
+        </div>
+        <div class="f span" id="bankRow" style="display:none">
+          <label>Destination Account</label>
+          <select><option>GTBank — 0123456789</option><option>Access — 9876543210</option></select>
+        </div>
+        <div class="f span">
+          <label>Reference</label>
+          <input type="text" placeholder="Transaction ID">
+        </div>
+        <div class="f span">
+          <label>Notes</label>
+          <textarea placeholder="Optional"></textarea>
+        </div>
+      </div>
+
+      <div class="s2-attach">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+        Attach receipt
+      </div>
+
+      <div class="error" id="err"></div>
+      <div class="success-line" id="ok">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Payment recorded
+      </div>
+
+      <div class="s2-actions">
+        <button class="s2-submit" id="btn" onclick="save()">Record Payment</button>
+        <button class="s2-cancel" onclick="closePopup()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-note">Variant C — Two-step progressive disclosure</div>
+
+<script>
+  const B=450000; let A=0;
+  const fmt=n=>'₦'+n.toLocaleString('en-NG');
+
+  function openPopup(){
+    document.getElementById('scrim').classList.add('active');
+    document.getElementById('popup').classList.add('active');
+    document.getElementById('date').valueAsDate=new Date();
+    goStep1();
+  }
+  function closePopup(){
+    document.getElementById('scrim').classList.remove('active');
+    document.getElementById('popup').classList.remove('active');
+  }
+
+  function onAmt(r){
+    A=Math.min(parseFloat(r.replace(/[^0-9.]/g,''))||0,B);
+    document.getElementById('nextBtn').disabled=A<=0;
+  }
+  function pick(p,el){
+    A=Math.round(B*p/100);
+    document.getElementById('amt').value=A>0?A.toLocaleString('en-NG'):'';
+    document.querySelectorAll('.s1-chip').forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById('nextBtn').disabled=A<=0;
+  }
+
+  function goStep2(){
+    document.getElementById('s2Amt').textContent=fmt(A);
+    const s1=document.getElementById('step1'), s2=document.getElementById('step2');
+    s1.classList.remove('active'); s1.classList.add('exit-left');
+    s2.classList.remove('enter-right'); s2.classList.add('active');
+    setTimeout(()=>{s1.classList.remove('exit-left')},350);
+  }
+  function goStep1(){
+    const s1=document.getElementById('step1'), s2=document.getElementById('step2');
+    s2.classList.remove('active'); s2.classList.add('enter-right');
+    s1.classList.remove('exit-left'); s1.classList.add('active');
+    setTimeout(()=>{s2.classList.remove('enter-right')},350);
+  }
+
+  function toggleBank(){
+    document.getElementById('bankRow').style.display=document.getElementById('method').value==='Transfer'?'':'none';
+  }
+
+  function save(){
+    if(!A){const e=document.getElementById('err');e.textContent='Enter an amount';e.classList.add('show');return}
+    document.getElementById('err').classList.remove('show');
+    const b=document.getElementById('btn');
+    b.textContent='✓ Done'; b.classList.add('ok');
+    document.getElementById('ok').classList.add('show');
+    setTimeout(closePopup,1100);
+  }
+
+  // Drag dismiss
+  let sy=0,cy=0,drag=false;const p=document.getElementById('popup'),h=document.getElementById('handle');
+  h.addEventListener('touchstart',e=>{if(!p.classList.contains('active'))return;sy=e.touches[0].clientY;drag=true;p.style.transition='none'},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!drag)return;cy=e.touches[0].clientY-sy;if(cy>0){p.style.transform=`translateY(${cy}px)`;p.style.opacity=Math.max(0,1-cy/300)}},{passive:true});
+  document.addEventListener('touchend',()=>{if(!drag)return;drag=false;p.style.transition='';if(cy>120)closePopup();else{p.style.transform='';p.style.opacity=''}cy=0});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePopup()});
+</script>
+</body>
+</html>

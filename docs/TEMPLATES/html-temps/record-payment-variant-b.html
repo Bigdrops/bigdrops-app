@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Record Payment — Variant B: Ultra-Minimal</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f2f2f7;
+    --surface: rgba(255,255,255,0.72);
+    --surface-solid: #ffffff;
+    --border: rgba(0,0,0,0.04);
+    --text: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --text-tertiary: #c7c7cc;
+    --accent: #007aff;
+    --accent-soft: rgba(0,122,255,0.08);
+    --success: #34c759;
+    --success-soft: rgba(52,199,89,0.08);
+    --danger: #ff3b30;
+    --danger-soft: rgba(255,59,48,0.08);
+    --scrim: rgba(0,0,0,0.4);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .demo-trigger {
+    padding: 14px 28px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: transform 120ms ease;
+  }
+  .demo-trigger:active { transform: scale(0.97); opacity: 0.85; }
+
+  .scrim {
+    position: fixed; inset: 0;
+    background: var(--scrim);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 90;
+    opacity: 0; pointer-events: none;
+    transition: opacity 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .scrim.active { opacity: 1; pointer-events: auto; }
+
+  .popup {
+    position: fixed; z-index: 100;
+    overflow: hidden;
+    opacity: 0; pointer-events: none;
+  }
+  .popup.mobile {
+    left: 0; right: 0; bottom: 0;
+    background: var(--surface);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border-radius: 20px 20px 0 0;
+    max-height: 88dvh;
+    transform: translateY(100%);
+    transition: transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
+                opacity 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .popup.mobile.active {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+  }
+  .popup.desktop {
+    top: 50%; left: 50%;
+    width: 400px; max-height: 80dvh;
+    background: var(--surface);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border-radius: 22px;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1),
+                opacity 260ms cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 32px 100px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(0,0,0,0.04);
+  }
+  .popup.desktop.active {
+    opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* Drag handle */
+  .drag-handle {
+    display: flex; justify-content: center; padding: 10px 0 2px; cursor: grab;
+  }
+  .drag-handle::after {
+    content: ''; width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1);
+  }
+
+  /* Header — zero chrome */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 20px 14px;
+  }
+  .header-left h2 {
+    font-size: 17px; font-weight: 650; letter-spacing: -0.02em;
+  }
+  .header-left .sub {
+    font-size: 13px; color: var(--text-secondary); margin-top: 1px;
+  }
+  .x-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.06); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 100ms;
+  }
+  .x-btn:active { background: rgba(0,0,0,0.12); }
+  .x-btn svg { width: 13px; height: 13px; color: var(--text-secondary); }
+
+  .body {
+    overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 20px;
+    padding-bottom: calc(20px + var(--safe-bottom));
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  /* ===== Zero-chrome fields ===== */
+  .amount-section {
+    text-align: center; padding: 8px 0 0;
+  }
+  .amount-section .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 2px;
+  }
+  .amount-section .balance {
+    font-size: 13px; color: var(--text-secondary); font-weight: 500;
+  }
+  .amount-section .balance strong {
+    font-family: 'SF Mono', Menlo, monospace; font-weight: 700; color: var(--text);
+  }
+
+  .big-input-wrap {
+    position: relative; max-width: 240px; margin: 10px auto 0;
+  }
+  .big-input-wrap .sym {
+    position: absolute; left: 0; bottom: 12px;
+    font-size: 28px; font-weight: 300; color: var(--text-tertiary);
+    pointer-events: none; transition: color 150ms;
+  }
+  .big-input {
+    width: 100%; border: none; border-bottom: 2px solid var(--border);
+    background: transparent; outline: none;
+    font-size: 42px; font-weight: 700;
+    font-family: 'SF Mono', Menlo, monospace;
+    color: var(--text); text-align: center;
+    padding: 0 0 6px 28px;
+    transition: border-color 180ms;
+  }
+  .big-input:focus { border-color: var(--accent); }
+  .big-input:focus ~ .sym { color: var(--accent); }
+  .big-input::placeholder { color: var(--text-tertiary); font-weight: 300; }
+
+  /* Chips — pill style, no borders */
+  .chips {
+    display: flex; gap: 8px; justify-content: center;
+  }
+  .chip {
+    height: 32px; padding: 0 16px;
+    border-radius: 16px; border: none;
+    background: rgba(0,0,0,0.04);
+    font-size: 13px; font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer; transition: all 120ms;
+  }
+  .chip:active { transform: scale(0.94); }
+  .chip.on {
+    background: var(--accent-soft); color: var(--accent);
+  }
+
+  /* Settlement — just two numbers */
+  .settlement {
+    display: flex; justify-content: center; gap: 24px;
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .settlement strong {
+    font-family: 'SF Mono', Menlo, monospace; font-weight: 600; color: var(--text);
+  }
+  .settlement .ok strong { color: var(--success); }
+
+  /* Thin progress */
+  .bar { height: 2px; background: rgba(0,0,0,0.04); border-radius: 1px; overflow: hidden; margin-top: -8px; }
+  .bar-fill { height: 100%; background: var(--success); border-radius: 1px; transition: width 220ms cubic-bezier(0.32,0.72,0,1); }
+
+  /* Separator — invisible but structural */
+  .sep { height: 1px; background: rgba(0,0,0,0.04); margin: 0; }
+
+  /* Details — pure input rows, no labels, no borders */
+  .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .field {
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .field.span { grid-column: 1 / -1; }
+  .field label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-tertiary);
+    margin-bottom: 4px;
+  }
+  .field input, .field select, .field textarea {
+    height: 40px; border: none; border-radius: 10px;
+    background: rgba(0,0,0,0.035);
+    font-size: 15px; color: var(--text);
+    padding: 0 12px; outline: none; width: 100%;
+    transition: background 150ms;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    background: rgba(0,0,0,0.06);
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 28px;
+  }
+  .field textarea {
+    height: 60px; padding: 10px 12px; resize: none;
+    font-size: 14px; line-height: 1.4;
+  }
+
+  /* Attachment — ghost row */
+  .attach {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(0,0,0,0.025);
+    font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; transition: background 120ms;
+  }
+  .attach:active { background: rgba(0,0,0,0.06); }
+  .attach svg { width: 15px; height: 15px; }
+
+  /* Submit — full-width pill */
+  .submit-pill {
+    width: 100%; height: 52px; border: none;
+    border-radius: 14px; background: var(--accent);
+    color: white; font-size: 16px; font-weight: 600;
+    letter-spacing: -0.01em;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; transition: transform 100ms, opacity 100ms;
+    box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+  }
+  .submit-pill:active { transform: scale(0.98); opacity: 0.85; }
+  .submit-pill.ok {
+    background: var(--success);
+    box-shadow: 0 4px 16px rgba(52,199,89,0.3);
+  }
+
+  .cancel-row {
+    text-align: center; padding-top: 2px;
+  }
+  .cancel-link {
+    font-size: 14px; color: var(--text-secondary);
+    background: none; border: none; cursor: pointer;
+    font-weight: 500; padding: 4px 12px;
+  }
+  .cancel-link:active { color: var(--text); }
+
+  .error {
+    background: var(--danger-soft); color: var(--danger);
+    font-size: 13px; font-weight: 500;
+    padding: 10px 14px; border-radius: 10px;
+    display: none;
+  }
+  .error.show { display: block; }
+
+  .success-line {
+    display: none; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--success);
+  }
+  .success-line.show { display: flex; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .popup.mobile, .popup.desktop, .scrim { transition: opacity 160ms; transform: none !important; }
+    .popup.mobile { transform: translateY(0) !important; }
+    .popup.desktop { transform: translate(-50%, -50%) !important; }
+  }
+
+  .demo-note {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: var(--text-tertiary); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<button class="demo-trigger" onclick="open()">Record Payment</button>
+
+<div class="scrim" id="scrim" onclick="close()"></div>
+
+<div class="popup mobile" id="popup">
+  <div class="drag-handle" id="handle"></div>
+
+  <div class="header">
+    <div class="header-left">
+      <h2>Record Payment</h2>
+      <div class="sub">INV-2026-0042</div>
+    </div>
+    <button class="x-btn" onclick="close()" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="body">
+    <!-- Amount — the hero, nothing else competing -->
+    <div class="amount-section">
+      <div class="label">Balance Due</div>
+      <div class="balance">₦ <strong>450,000</strong></div>
+      <div class="big-input-wrap">
+        <input class="big-input" type="text" inputmode="decimal" placeholder="0" id="amt" oninput="onAmt(this.value)">
+        <span class="sym">₦</span>
+      </div>
+    </div>
+
+    <div class="chips">
+      <button class="chip" onclick="pick(25,this)">25%</button>
+      <button class="chip" onclick="pick(50,this)">50%</button>
+      <button class="chip" onclick="pick(75,this)">75%</button>
+      <button class="chip" onclick="pick(100,this)">Full</button>
+    </div>
+
+    <div class="settlement">
+      <span>Paid <strong id="paid">₦0</strong></span>
+      <span class="ok">Left <strong id="left">₦450,000</strong></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="fill" style="width:0%"></div></div>
+
+    <div class="sep"></div>
+
+    <!-- Details — no cards, just fields on the surface -->
+    <div class="row">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="date">
+      </div>
+      <div class="field">
+        <label>Method</label>
+        <select id="method" onchange="toggleBank()">
+          <option>Transfer</option><option>Cash</option><option>POS</option><option>Cheque</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field span" id="bankRow" style="display:none">
+        <label>Destination Account</label>
+        <select><option>GTBank — 0123456789</option><option>Access — 9876543210</option></select>
+      </div>
+      <div class="field span">
+        <label>Reference</label>
+        <input type="text" placeholder="Transaction ID">
+      </div>
+      <div class="field span">
+        <label>Notes</label>
+        <textarea placeholder="Optional"></textarea>
+      </div>
+    </div>
+
+    <div class="attach">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+      Attach receipt
+    </div>
+
+    <div class="error" id="err"></div>
+    <div class="success-line" id="ok">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      Payment recorded
+    </div>
+
+    <button class="submit-pill" id="btn" onclick="save()">Record Payment</button>
+    <div class="cancel-row"><button class="cancel-link" onclick="close()">Cancel</button></div>
+  </div>
+</div>
+
+<div class="demo-note">Variant B — Ultra-minimal, zero chrome</div>
+
+<script>
+  const B=450000; let A=0;
+  const fmt=n=>'₦'+n.toLocaleString('en-NG');
+  function open(){document.getElementById('scrim').classList.add('active');document.getElementById('popup').classList.add('active');document.getElementById('date').valueAsDate=new Date()}
+  function close(){document.getElementById('scrim').classList.remove('active');document.getElementById('popup').classList.remove('active')}
+  function onAmt(r){A=Math.min(parseFloat(r.replace(/[^0-9.]/g,''))||0,B);upd()}
+  function pick(p,el){A=Math.round(B*p/100);document.getElementById('amt').value=A>0?A.toLocaleString('en-NG'):'';document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');upd()}
+  function upd(){const l=Math.max(0,B-A),p=B>0?Math.min(100,A/B*100):0;document.getElementById('paid').textContent=fmt(A);const le=document.getElementById('left');le.textContent=fmt(l);le.style.color=l===0?'var(--success)':'';document.getElementById('fill').style.width=p+'%'}
+  function toggleBank(){document.getElementById('bankRow').style.display=document.getElementById('method').value==='Transfer'?'':'none'}
+  function save(){if(!A){const e=document.getElementById('err');e.textContent='Enter an amount';e.classList.add('show');return}document.getElementById('err').classList.remove('show');const b=document.getElementById('btn');b.textContent='✓ Done';b.classList.add('ok');document.getElementById('ok').classList.add('show');setTimeout(close,1100)}
+
+  let sy=0,cy=0,drag=false;const p=document.getElementById('popup'),h=document.getElementById('handle');
+  h.addEventListener('touchstart',e=>{if(!p.classList.contains('active'))return;sy=e.touches[0].clientY;drag=true;p.style.transition='none'},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!drag)return;cy=e.touches[0].clientY-sy;if(cy>0){p.style.transform=`translateY(${cy}px)`;p.style.opacity=Math.max(0,1-cy/300)}},{passive:true});
+  document.addEventListener('touchend',()=>{if(!drag)return;drag=false;p.style.transition='';if(cy>120)close();else{p.style.transform='';p.style.opacity=''}cy=0});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+</script>
+</body>
+</html>

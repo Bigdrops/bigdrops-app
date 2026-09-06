@@ -3,111 +3,669 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>What is accounting?</title>
+<title>What is accounting? — BIGDROPS Accounting Guide</title>
 <style>
-  html, body { background: #ffffff; color: #111111; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.6; margin: 0; padding: 24px; }
-  h1 { font-size: 1.6rem; margin: 0 0 12px; }
-  h2 { font-size: 1.2rem; margin: 28px 0 8px; border-top: 1px solid #dddddd; padding-top: 12px; }
-  p { margin: 0 0 12px; }
-  ul, ol { margin: 0 0 12px; padding-left: 20px; }
-  li { margin: 0 0 6px; }
-  .sep { border: 0; border-top: 1px solid #dddddd; margin: 20px 0; }
-  .note { background: #f4f4f4; border: 1px solid #dddddd; padding: 12px; }
+  :root{
+    --forest: #003329;
+    --moss-deep: #042725;
+    --chartreuse: #e6ffa3;
+    --lime-bright: #9bff48;
+    --paper: #f4f3ec;
+    --paper-near: #e5e7eb;
+    --sheet: #ffffff;
+    --ink-soft: #52756e;
+    --ink-faint: #33544c;
+    --rule: #d9d3c4;
+  }
+
+  *{box-sizing: border-box;}
+  html,body{
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--forest);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body{
+    padding: 40px 20px 80px;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(155,255,72,0.06) 0, transparent 38%),
+      radial-gradient(circle at 88% 8%, rgba(230,255,163,0.10) 0, transparent 42%);
+  }
+
+  .wrap{
+    max-width: 780px;
+    margin: 0 auto;
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    padding: 40px 44px 52px;
+    box-shadow: 0 1px 2px rgba(4,39,37,0.02), 0 12px 30px -18px rgba(4,39,37,0.22);
+  }
+
+  h1{
+    font-size: 42px;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+    font-weight: 700;
+    color: var(--forest);
+  }
+
+  .eyebrow{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+
+  .eyebrow::before{
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--chartreuse);
+    box-shadow: 0 0 0 3px rgba(155,255,72,0.18);
+  }
+
+  .lede{
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--moss-deep);
+    margin: 0 0 22px;
+    max-width: 62ch;
+  }
+
+  .split{
+    display: grid;
+    gap: 16px;
+    align-items: center;
+    margin: 6px 0 22px;
+  }
+
+  .muted{
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  h2{
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    margin: 40px 0 10px;
+    font-weight: 700;
+    color: var(--forest);
+  }
+
+  h2 .dot{
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--chartreuse);
+    margin-right: 10px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 3px rgba(155,255,72,0.18);
+  }
+
+  p{margin: 0 0 14px;}
+  p + p{margin-top: 14px;}
+
+  ul,ol{margin: 6px 0 16px; padding-left: 22px;}
+  li{margin: 0 0 8px;}
+
+  .journal{
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 18px;
+    align-items: center;
+    margin: 18px 0 26px;
+    padding: 22px 0;
+    border-top: 1px dashed var(--rule);
+    border-bottom: 1px dashed var(--rule);
+  }
+
+  .jar-diagram{
+    display: grid;
+    place-items: center;
+    width: 118px;
+    height: 150px;
+  }
+
+  .jar{
+    width: 96px;
+    height: 128px;
+    border-radius: 14px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(4,39,37,0.04);
+  }
+
+  .jar .code{
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 700;
+  }
+
+  .jar .name{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--forest);
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+
+  .jar::after{
+    content:"";
+    position:absolute;
+    left: 14px;
+    right:14px;
+    top: 22px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(4,39,37,0.06), transparent);
+  }
+
+  .jar-asset{
+    background: #eef5ee;
+    border-color: #c6ddcb;
+  }
+
+  .jar-liability{
+    background: #fbf3ee;
+    border-color: #e1cdb6;
+  }
+
+  .jar-equity{
+    background: #f3f0e7;
+    border-color: #d8cdb5;
+  }
+
+  .jar-revenue{
+    background: #e7f4ec;
+    border-color: #bcd9c6;
+  }
+
+  .jar-expense{
+    background: #f5ecec;
+    border-color: #dfcfd4;
+  }
+
+  .arrow-flow{
+    position: relative;
+    width: 46px;
+    height: 64px;
+  }
+
+  .arrow-flow svg{
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .flow-label{
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-faint);
+    margin-top: 6px;
+  }
+
+  .cards{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 18px 0 6px;
+  }
+
+  .card{
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--rule);
+    background: var(--sheet);
+    position: relative;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  .card:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -10px rgba(4,39,37,0.18);
+  }
+
+  .card .code{
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .card h3{
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--forest);
+    letter-spacing: -0.005em;
+  }
+
+  .card .desc{
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .card .chip{
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-top: 10px;
+    color: var(--forest);
+  }
+
+  .chip-asset{background:#eef5ee;color:#1f4d3a;border:1px solid #c6ddcb;}
+  .chip-liability{background:#fbf3ee;color:#7b4a2f;border:1px solid #e1cdb6;}
+  .chip-equity{background:#f3f0e7;color:#5a5333;border:1px solid #d8cdb5;}
+  .chip-revenue{background:#e7f4ec;color:#1f4d3a;border:1px solid #bcd9c6;}
+  .chip-expense{background:#f5ecec;color:#7b4a2f;border:1px solid #dfcfd4;}
+
+  .note{
+    border-radius: 14px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 22px 24px;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .note::before{
+    content:"";
+    position:absolute;
+    left: 24px;
+    right: 24px;
+    top: 0;
+    height: 6px;
+    background: var(--chartreuse);
+    border-radius: 999px 999px 0 0;
+  }
+
+  .note .badge{
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 4px 10px;
+    margin-bottom: 12px;
+  }
+
+  .note h2{margin: 0 0 14px; padding-top: 4px;}
+  .note ul{margin: 0 0 8px;}
+  .note li{margin: 0 0 10px;}
+
+  .steps{
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 10px;
+  }
+
+  .steps li{
+    position: relative;
+    padding: 10px 14px 10px 46px;
+    border-radius: 10px;
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    margin: 0 0 10px;
+    counter-increment: step;
+  }
+
+  .steps li::before{
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--chartreuse);
+    color: var(--forest);
+    font-size: 13px;
+    font-weight: 700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 0 0 3px rgba(155,255,72,0.18);
+  }
+
+  .closer{
+    margin: 26px 0 6px;
+    padding: 22px;
+    border-radius: 14px;
+    background: var(--chartreuse);
+    border: 1px solid #d7ef96;
+    color: var(--forest);
+  }
+
+  .closer h2,.closer h2 .dot{color: var(--forest);}
+  .closer h2 .dot{background: var(--forest); box-shadow: 0 0 0 3px rgba(0,51,41,0.18);}
+  .closer p{margin: 0 0 10px;}
+
+  .footer{
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--rule);
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  a{color: var(--forest); text-decoration: none; border-bottom: 1px solid rgba(0,51,41,0.25);}
+  a:hover{border-bottom-color: var(--forest);}
+
+  @media (max-width: 680px){
+    .wrap{padding: 28px 22px;}
+    h1{font-size: 34px;}
+    .cards{grid-template-columns: 1fr;}
+    .journal{grid-template-columns: 1fr; gap: 12px;}
+    .jar-diagram{width: 100%; height: auto;}
+    .arrow-flow{display: none;}
+  }
 </style>
 </head>
 <body>
-<h1>What is accounting?</h1>
-<p>Accounting is a way to keep track of every bit of money that comes in and goes out of a business. Think of it like a notebook where you write down every naira that comes in or goes out, so you always know where your money is.</p>
-<p>A simple way to picture it is this: imagine you have a row of labeled jars on a shelf. One jar is for cash in your hand. One jar is for money in the bank. One jar is for money other people owe you. One jar is for money you owe others. Every time money moves, you write down which jar it came from and which jar it went into. Accounting is the notebook plus the labeled jars.</p>
-<p>That is all accounting really is at this point in BIGDROPS: a place to record what happened with your money, and a way to group those records into time periods so you can look back later and ask, "What happened in September?"</p>
+  <main class="wrap">
+    <span class="eyebrow">BIGDROPS Accounting</span>
+    <h1>What is accounting?</h1>
 
-<hr class="sep" />
+    <p class="lede">
+      Accounting is a way to keep track of every bit of money that comes in and goes out of a business.
+      Think of it like a notebook where you write down every naira that comes in or goes out, so you always
+      know where your money is.
+    </p>
 
-<h2>Why BIGDROPS added this</h2>
-<p>BIGDROPS added accounting because taxes depend on it. You cannot know what tax you owe if you do not know what actually happened with your money.</p>
-<p>A business may sell things, buy things, receive payments, and pay suppliers. All of that changes how much money the business has, and all of that matters when it is time to figure out tax. If you only look at your bank balance, you miss a lot. Accounting gives you the full picture.</p>
+    <div class="split">
+      <div class="jar-diagram" aria-hidden="true">
+        <div class="jar jar-asset">
+          <span class="code">1000</span>
+          <span class="name">Cash</span>
+          <svg width="46" height="10" viewBox="0 0 46 10" aria-hidden="true">
+            <path d="M4 5h38" stroke="#9bff48" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <p class="muted" style="margin:0;">
+          A simple way to picture it is this: imagine you have a row of labeled jars on a shelf. One jar
+          is for cash in your hand. One jar is for money in the bank. One jar is for money other people owe
+          you. One jar is for money you owe others. Every time money moves, you write down which jar it came
+          from and which jar it went into.
+        </p>
+        <p class="muted" style="margin-top:10px;">
+          Accounting is the notebook plus the labeled jars.
+        </p>
+      </div>
+    </div>
 
-<hr class="sep" />
+    <p>
+      That is all accounting really is at this point in BIGDROPS: a place to record what happened with your
+      money, and a way to group those records into time periods so you can look back later and ask, “What
+      happened in September?”
+    </p>
 
-<h2>What "Chart of Accounts" means</h2>
-<p>The Chart of Accounts is the list of labeled jars.</p>
-<p>Each jar has a name and a code, and each one stands for a kind of money or a kind of transaction. In BIGDROPS, the starting set of jars is fixed. It is the seed chart of accounts, and it has 11 jars:</p>
-<ol>
-  <li>1000 Cash — money you hold in hand.</li>
-  <li>1100 Bank — money you hold in a bank account.</li>
-  <li>1200 Accounts Receivable — money customers owe you.</li>
-  <li>1500 Fixed Assets — long-term things your business owns, like equipment.</li>
-  <li>1510 Accumulated Depreciation — the part of those long-term things that has been used up over time.</li>
-  <li>2000 Accounts Payable — money you owe other people.</li>
-  <li>2100 VAT Control — VAT you collected from customers but have not sent to the tax authority yet.</li>
-  <li>2200 WHT Control — withholding tax you took from payments and have not yet remitted.</li>
-  <li>3000 Equity — the part of the business that belongs to the owner.</li>
-  <li>4000 Revenue — money you earned from selling goods or services.</li>
-  <li>5000 Operating Expenses — money you spent to run the business.</li>
-</ol>
-<p>Those jars are not ideas. They are the actual accounts the app starts with. When the app says "Chart of Accounts," it means this list.</p>
+    <h2><span class="dot"></span>Why BIGDROPS added this</h2>
+    <p>
+      BIGDROPS added accounting because taxes depend on it. You cannot know what tax you owe if you do not
+      know what actually happened with your money.
+    </p>
+    <p>
+      A business may sell things, buy things, receive payments, and pay suppliers. All of that changes how
+      much money the business has, and all of that matters when it is time to figure out tax. If you only
+      look at your bank balance, you miss a lot. Accounting gives you the full picture.
+    </p>
 
-<hr class="sep" />
+    <h2><span class="dot"></span>What “Chart of Accounts” means</h2>
+    <p>
+      The Chart of Accounts is the list of labeled jars.
+    </p>
+    <p>
+      Each jar has a name and a code, and each one stands for a kind of money or a kind of transaction. In
+      BIGDROPS, the starting set of jars is fixed. It is the seed chart of accounts, and it has 11 jars:
+    </p>
 
-<h2>What "Journal" and "journal entry" mean</h2>
-<p>The Journal is the notebook.</p>
-<p>Every time something happens with money, it gets written down in the journal as a journal entry. A journal entry always has two sides. Money does not just appear or disappear. It moves from one jar to another.</p>
-<p>For example, if a customer pays you, money moves from "Accounts Receivable" into "Cash." That is one entry with two sides.</p>
-<p>In accounting, the two sides are called debit and credit. In BIGDROPS, you do not need to think of debit and credit as fancy accounting words. Think of them as:</p>
-<ul>
-  <li>which jar the money left</li>
-  <li>which jar the money landed in</li>
-</ul>
-<p>Every journal entry must balance. That means the amount leaving the jars must equal the amount landing in the jars. If it does not balance, the entry is not allowed.</p>
-<p>Journal entries in BIGDROPS come from places like manual entries or other transaction sources. Once posted, they are kept as records. Corrections are made with reversal entries, not by editing old entries.</p>
+    <div class="cards" aria-label="Seed chart of accounts">
+      <div class="card" style="border-left:4px solid #2f7d4f;">
+        <span class="code">1000</span>
+        <h3>Cash</h3>
+        <p class="desc">Money you hold in hand.</p>
+        <span class="chip chip-asset">Asset</span>
+      </div>
+      <div class="card" style="border-left:4px solid #2f7d4f;">
+        <span class="code">1100</span>
+        <h3>Bank</h3>
+        <p class="desc">Money you hold in a bank account.</p>
+        <span class="chip chip-asset">Asset</span>
+      </div>
+      <div class="card" style="border-left:4px solid #2f7d4f;">
+        <span class="code">1200</span>
+        <h3>Accounts Receivable</h3>
+        <p class="desc">Money customers owe you.</p>
+        <span class="chip chip-asset">Asset</span>
+      </div>
+      <div class="card" style="border-left:4px solid #2f7d4f;">
+        <span class="code">1500</span>
+        <h3>Fixed Assets</h3>
+        <p class="desc">Long-term things your business owns, like equipment.</p>
+        <span class="chip chip-asset">Asset</span>
+      </div>
+      <div class="card" style="border-left:4px solid #9b7a3f;">
+        <span class="code">1510</span>
+        <h3>Accumulated Depreciation</h3>
+        <p class="desc">The part of those long-term things that has been used up over time.</p>
+        <span class="chip chip-asset">Asset</span>
+      </div>
+      <div class="card" style="border-left:4px solid #a96c3a;">
+        <span class="code">2000</span>
+        <h3>Accounts Payable</h3>
+        <p class="desc">Money you owe other people.</p>
+        <span class="chip chip-liability">Liability</span>
+      </div>
+      <div class="card" style="border-left:4px solid #a96c3a;">
+        <span class="code">2100</span>
+        <h3>VAT Control</h3>
+        <p class="desc">VAT you collected from customers but have not sent to the tax authority yet.</p>
+        <span class="chip chip-liability">Liability</span>
+      </div>
+      <div class="card" style="border-left:4px solid #a96c3a;">
+        <span class="code">2200</span>
+        <h3>WHT Control</h3>
+        <p class="desc">Withholding tax you took from payments and have not yet remitted.</p>
+        <span class="chip chip-liability">Liability</span>
+      </div>
+      <div class="card" style="border-left:4px solid #6f5e2a;">
+        <span class="code">3000</span>
+        <h3>Equity</h3>
+        <p class="desc">The part of the business that belongs to the owner.</p>
+        <span class="chip chip-equity">Equity</span>
+      </div>
+      <div class="card" style="border-left:4px solid #2f7d4f;">
+        <span class="code">4000</span>
+        <h3>Revenue</h3>
+        <p class="desc">Money you earned from selling goods or services.</p>
+        <span class="chip chip-revenue">Revenue</span>
+      </div>
+      <div class="card" style="border-left:4px solid #a96c3a;">
+        <span class="code">5000</span>
+        <h3>Operating Expenses</h3>
+        <p class="desc">Money you spent to run the business.</p>
+        <span class="chip chip-expense">Expense</span>
+      </div>
+    </div>
+    <p class="muted" style="margin:14px 0 0; font-size:14px;">
+      Those jars are not ideas. They are the actual accounts the app starts with. When the app says “Chart of
+      Accounts,” it means this list.
+    </p>
 
-<hr class="sep" />
+    <h2><span class="dot"></span>What “Journal” and “journal entry” mean</h2>
+    <p>
+      The Journal is the notebook.
+    </p>
+    <p>
+      Every time something happens with money, it gets written down in the journal as a journal entry. A
+      journal entry always has two sides. Money does not just appear or disappear. It moves from one jar to
+      another.
+    </p>
+    <p>
+      For example, if a customer pays you, money moves from Accounts Receivable into Cash. That is one entry
+      with two sides.
+    </p>
 
-<h2>What an "Accounting Period" means</h2>
-<p>An Accounting Period is a named stretch of time.</p>
-<p>Think of it like a school term. Instead of all journal entries being mixed together forever, you group them by period. A period has a code, a start date, and an end date.</p>
-<p>For example, you might have a period called "2026-09" that covers 1 September to 30 September. Then, when you look at the journal, you can ask, "What happened in September?" without everything being jumbled together all the time.</p>
-<p>Periods also have states:</p>
-<ul>
-  <li>planned — created but not yet open for posting</li>
-  <li>open — ready to accept journal entries</li>
-  <li>closed — finished</li>
-  <li>locked — no more changes allowed</li>
-</ul>
-<p>Right now, BIGDROPS lets you create a planned period and then open it so it can accept postings.</p>
+    <div class="journal" aria-label="Journal entry example">
+      <div class="jar-diagram" aria-hidden="true">
+        <div class="jar jar-liability">
+          <span class="code">1200</span>
+          <span class="name">Accounts<br/>Receivable</span>
+        </div>
+      </div>
 
-<hr class="sep" />
+      <div class="arrow-flow" aria-hidden="true">
+        <svg viewBox="0 0 46 70" fill="none">
+          <path d="M22 4v52" stroke="#9bff48" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M14 44l8 8 8-8" stroke="#003329" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
 
-<h2>How you would actually use this in the app today</h2>
-<p>This is the part that exists right now in BIGDROPS:</p>
-<ol>
-  <li>Open Accounting from More Options.</li>
-  <li>Tap Accounting Periods.</li>
-  <li>Create a new period by giving it a code, a start date, and an end date.</li>
-  <li>Open the period when you are ready to record journal entries.</li>
-  <li>Go back to More Options and tap Journal.</li>
-  <li>Tap the plus button to create a new journal entry.</li>
-  <li>Choose an open period, enter a transaction date, and give the entry a source reference.</li>
-  <li>Add at least one debit line and one credit line, choosing accounts from the chart of accounts and entering amounts.</li>
-  <li>Check that the entry balances, then post it.</li>
-</ol>
-<p>That is the whole flow available today. It lets you create periods and record journal entries against them.</p>
+      <div class="jar-diagram" aria-hidden="true">
+        <div class="jar jar-asset">
+          <span class="code">1000</span>
+          <span class="name">Cash</span>
+        </div>
+      </div>
+    </div>
 
-<hr class="sep" />
+    <p style="text-align:center; margin-top:-6px;" class="muted">
+      Customer pays what they owe → money moves from Accounts Receivable into Cash
+    </p>
 
-<h2>What is not built yet</h2>
-<div class="note">
-<p>A few things are not available yet, and this document says so plainly so you do not expect them:</p>
-<ul>
-  <li>You cannot tap an account in the Chart of Accounts to see its history or a ledger view. The accounts are displayed as a list only.</li>
-  <li>There is no separate account creation flow exposed in the Accounting section yet.</li>
-  <li>Not every possible accounting report or tax workflow is present. The accounting section is being built step by step.</li>
-</ul>
-<p>If a screen or feature is not listed here, it is not there yet.</p>
-</div>
+    <p>
+      In accounting, the two sides are called debit and credit. In BIGDROPS, you do not need to think of
+      debit and credit as fancy accounting words. Think of them as:
+    </p>
+    <ul>
+      <li>which jar the money left</li>
+      <li>which jar the money landed in</li>
+    </ul>
+    <p>
+      Every journal entry must balance. That means the amount leaving the jars must equal the amount landing
+      in the jars. If it does not balance, the entry is not allowed.
+    </p>
+    <p>
+      Journal entries in BIGDROPS come from places like manual entries or other transaction sources. Once
+      posted, they are kept as records. Corrections are made with reversal entries, not by editing old
+      entries.
+    </p>
 
-<hr class="sep" />
+    <h2><span class="dot"></span>What an “Accounting Period” means</h2>
+    <p>
+      An Accounting Period is a named stretch of time.
+    </p>
+    <p>
+      Think of it like a school term. Instead of all journal entries being mixed together forever, you group
+      them by period. A period has a code, a start date, and an end date.
+    </p>
+    <p>
+      For example, you might have a period called “2026-09” that covers 1 September to 30 September. Then,
+      when you look at the journal, you can ask, “What happened in September?” without everything being
+      jumbled together all the time.
+    </p>
+    <p>Periods also have states:</p>
+    <ul>
+      <li>planned — created but not yet open for posting</li>
+      <li>open — ready to accept journal entries</li>
+      <li>closed — finished</li>
+      <li>locked — no more changes allowed</li>
+    </ul>
+    <p>
+      Right now, BIGDROPS lets you create a planned period and then open it so it can accept postings.
+    </p>
 
-<p>That is the whole idea in plain terms: labeled jars, a notebook that records every move, and named time periods so you can look back later. Accounting in BIGDROPS starts there, and the reason it is there is simple: you need to know what happened with your money before you can know what tax you owe.</p>
+    <h2><span class="dot"></span>How you would actually use this in the app today</h2>
+    <p style="margin-bottom:14px;">
+      This is the part that exists right now in BIGDROPS:
+    </p>
+    <ol class="steps">
+      <li>Open Accounting from More Options.</li>
+      <li>Tap Accounting Periods.</li>
+      <li>Create a new period by giving it a code, a start date, and an end date.</li>
+      <li>Open the period when you are ready to record journal entries.</li>
+      <li>Go back to More Options and tap Journal.</li>
+      <li>Tap the plus button to create a new journal entry.</li>
+      <li>Choose an open period, enter a transaction date, and give the entry a source reference.</li>
+      <li>Add at least one debit line and one credit line, choosing accounts from the chart of accounts and entering amounts.</li>
+      <li>Check that the entry balances, then post it.</li>
+    </ol>
+    <p>
+      That is the whole flow available today. It lets you create periods and record journal entries against
+      them.
+    </p>
+
+    <aside class="note">
+      <span class="badge">Not built yet</span>
+      <h2>What is not built yet</h2>
+      <p style="margin-bottom:8px;">
+        A few things are not available yet, and this document says so plainly so you do not expect them:
+      </p>
+      <ul>
+        <li>You cannot tap an account in the Chart of Accounts to see its history or a ledger view. The accounts are displayed as a list only.</li>
+        <li>There is no separate account creation flow exposed in the Accounting section yet.</li>
+        <li>Not every possible accounting report or tax workflow is present. The accounting section is being built step by step.</li>
+      </ul>
+      <p>If a screen or feature is not listed here, it is not there yet.</p>
+    </aside>
+
+    <div class="closer">
+      <h2><span class="dot"></span>That is the whole idea</h2>
+      <p>
+        Labeled jars, a notebook that records every move, and named time periods so you can look back later.
+        Accounting in BIGDROPS starts there, and the reason it is there is simple: you need to know what
+        happened with your money before you can know what tax you owe.
+      </p>
+    </div>
+
+    <div class="footer">
+      From the BIGDROPS Accounting Guide · plain-language explainer for beginners
+    </div>
+  </main>
 </body>
 </html>
