@@ -255,7 +255,7 @@ BEGIN
                         SELECT 1 FROM %I.payments p WHERE p.id::text = st.source_id)
                   END
         ) t
-    $q$, p_entity_id::text, v_schema, v_schema)
+    $q$, p_entity_id::text, v_schema, v_schema, v_schema)
     INTO v_batch;
     v_findings := v_findings || v_batch;
 
