@@ -353,9 +353,6 @@ export function DashboardOverview({
 
           {/* Payment Reminder — 2/5 on tablet+ */}
           <section className="md:col-span-2">
-            <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))] md:mb-3 md:text-[10px]">
-              Payment reminder
-            </h2>
             <PaymentReminderBanner />
           </section>
         </div>

@@ -1,10 +1,11 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Decimal from 'decimal.js'
-import { NotebookPen, Plus } from 'lucide-react'
+import { NotebookPen } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
+import MobileFab from '@/components/layout/MobileFab'
 import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import { formatNaira } from '@/lib/formatters/money'
@@ -85,7 +86,7 @@ export default function Journal() {
 
   const renderRow = (entry: JournalEntryRow) => {
     const lines = linesByEntry[entry.id] ?? []
-    // Display-only total with exact decimal arithmetic; never persisted.
+    // Display-only totals; never persisted.
     const debitTotal = lines
       .filter((l) => l.side === 'debit')
       .reduce((sum, l) => sum.plus(new Decimal(l.amount)), new Decimal(0))
@@ -133,42 +134,38 @@ export default function Journal() {
   }
 
   return (
-    <Layout title="Journal" hidePageHeader>
-      <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
-        {canCreate && (
-          <div className="mx-auto mb-3 w-full max-w-[var(--bd-layout-content-max,1200px)]">
-            <button
-              type="button"
-              onClick={() => navigate('/accounting/journal/new')}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--bd-nav-active-bg))] text-sm font-bold text-[hsl(var(--bd-nav-active-text))]"
-            >
-              <Plus className="h-4 w-4" /> New Journal Entry
-            </button>
-          </div>
-        )}
-        <ModuleShell
-          eyebrow="Accounting"
-          title="Journal"
-          summary={loading ? 'Loading entries…' : `${filtered.length} entries`}
-          tone="blue"
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search source or memo…"
-          records={filtered}
-          renderRow={renderRow}
-          emptyState={
-            <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
-              <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
-                <NotebookPen className="h-6 w-6" />
+    <>
+      <Layout title="Journal" hidePageHeader>
+        <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
+          <ModuleShell
+            eyebrow="Accounting"
+            title="Journal"
+            summary={loading ? 'Loading entries…' : `${filtered.length} entries`}
+            tone="blue"
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search source or memo…"
+            onPrimaryAction={() => navigate('/accounting/journal/new')}
+            primaryActionLabel="New entry"
+            records={filtered}
+            renderRow={renderRow}
+            emptyState={
+              <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
+                  <NotebookPen className="h-6 w-6" />
+                </div>
+                <div className="mt-4 text-sm font-bold text-bd-text">No Journal Entries</div>
+                <div className="mx-auto mt-1 max-w-[280px] text-xs text-bd-text-muted">
+                  Posted entries appear here. Tap an entry to inspect its lines.
+                </div>
               </div>
-              <div className="mt-4 text-sm font-bold text-bd-text">No Journal Entries</div>
-              <div className="mx-auto mt-1 max-w-[280px] text-xs text-bd-text-muted">
-                Posted entries appear here. Tap an entry to inspect its lines.
-              </div>
-            </div>
-          }
-        />
-      </div>
-    </Layout>
+            }
+          />
+        </div>
+      </Layout>
+      {canCreate && (
+        <MobileFab onClick={() => navigate('/accounting/journal/new')} ariaLabel="Create journal entry" />
+      )}
+    </>
   )
 }

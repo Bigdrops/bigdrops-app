@@ -1,0 +1,109 @@
+What is accounting?
+
+Accounting is a way to keep track of every bit of money that comes in and goes out of a business. Think of it like a notebook where you write down every naira that comes in or goes out, so you always know where your money is.
+
+A simple way to picture it is this: imagine you have a row of labeled jars on a shelf. One jar is for cash in your hand. One jar is for money in the bank. One jar is for money other people owe you. One jar is for money you owe others. Every time money moves, you write down which jar it came from and which jar it went into. Accounting is the notebook plus the labeled jars.
+
+That is all accounting really is at this point in BIGDROPS: a place to record what happened with your money, and a way to group those records into time periods so you can look back later and ask, "What happened in September?"
+
+---
+
+Why BIGDROPS added this
+
+BIGDROPS added accounting because taxes depend on it. You cannot know what tax you owe if you do not know what actually happened with your money.
+
+A business may sell things, buy things, receive payments, and pay suppliers. All of that changes how much money the business has, and all of that matters when it is time to figure out tax. If you only look at your bank balance, you miss a lot. Accounting gives you the full picture.
+
+---
+
+What "Chart of Accounts" means
+
+The Chart of Accounts is the list of labeled jars.
+
+Each jar has a name and a code, and each one stands for a kind of money or a kind of transaction. In BIGDROPS, the starting set of jars is fixed. It is the seed chart of accounts, and it has 11 jars:
+
+1. 1000 Cash — money you hold in hand.
+2. 1100 Bank — money you hold in a bank account.
+3. 1200 Accounts Receivable — money customers owe you.
+4. 1500 Fixed Assets — long-term things your business owns, like equipment.
+5. 1510 Accumulated Depreciation — the part of those long-term things that has been used up over time.
+6. 2000 Accounts Payable — money you owe other people.
+7. 2100 VAT Control — VAT you collected from customers but have not sent to the tax authority yet.
+8. 2200 WHT Control — withholding tax you took from payments and have not yet remitted.
+9. 3000 Equity — the part of the business that belongs to the owner.
+10. 4000 Revenue — money you earned from selling goods or services.
+11. 5000 Operating Expenses — money you spent to run the business.
+
+Those jars are not ideas. They are the actual accounts the app starts with. When the app says "Chart of Accounts," it means this list.
+
+---
+
+What "Journal" and "journal entry" mean
+
+The Journal is the notebook.
+
+Every time something happens with money, it gets written down in the journal as a journal entry. A journal entry always has two sides. Money does not just appear or disappear. It moves from one jar to another.
+
+For example, if a customer pays you, money moves from "Accounts Receivable" into "Cash." That is one entry with two sides.
+
+In accounting, the two sides are called debit and credit. In BIGDROPS, you do not need to think of debit and credit as fancy accounting words. Think of them as:
+
+- which jar the money left
+- which jar the money landed in
+
+Every journal entry must balance. That means the amount leaving the jars must equal the amount landing in the jars. If it does not balance, the entry is not allowed.
+
+Journal entries in BIGDROPS come from places like manual entries or other transaction sources. Once posted, they are kept as records. Corrections are made with reversal entries, not by editing old entries.
+
+---
+
+What an "Accounting Period" means
+
+An Accounting Period is a named stretch of time.
+
+Think of it like a school term. Instead of all journal entries being mixed together forever, you group them by period. A period has a code, a start date, and an end date.
+
+For example, you might have a period called "2026-09" that covers 1 September to 30 September. Then, when you look at the journal, you can ask, "What happened in September?" without everything being jumbled together all the time.
+
+Periods also have states:
+
+- planned — created but not yet open for posting
+- open — ready to accept journal entries
+- closed — finished
+- locked — no more changes allowed
+
+Right now, BIGDROPS lets you create a planned period and then open it so it can accept postings.
+
+---
+
+How you would actually use this in the app today
+
+This is the part that exists right now in BIGDROPS:
+
+1. Open Accounting from More Options.
+2. Tap Accounting Periods.
+3. Create a new period by giving it a code, a start date, and an end date.
+4. Open the period when you are ready to record journal entries.
+5. Go back to More Options and tap Journal.
+6. Tap the plus button to create a new journal entry.
+7. Choose an open period, enter a transaction date, and give the entry a source reference.
+8. Add at least one debit line and one credit line, choosing accounts from the chart of accounts and entering amounts.
+9. Check that the entry balances, then post it.
+
+That is the whole flow available today. It lets you create periods and record journal entries against them.
+
+---
+
+What is not built yet
+
+A few things are not available yet, and this document says so plainly so you do not expect them:
+
+- You cannot tap an account in the Chart of Accounts to see its history or a ledger view. The accounts are displayed as a list only.
+- There is no separate account creation flow exposed in the Accounting section yet.
+- Not every possible accounting report or tax workflow is present. The accounting section is being built step by step.
+
+If a screen or feature is not listed here, it is not there yet.
+
+---
+
+That is the whole idea in plain terms: labeled jars, a notebook that records every move, and named time periods so you can look back later. Accounting in BIGDROPS starts there, and the reason it is there is simple: you need to know what happened with your money before you can know what tax you owe.

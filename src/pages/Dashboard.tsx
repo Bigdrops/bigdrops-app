@@ -77,7 +77,7 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
       data-bd-page="dashboard"
     >
       <DashboardOverview
-        workspaceName={workspace?.name || ''}
+        workspaceName={workspace?.slug || workspace?.name || ''}
         businessName={businessName}
         userName={userName}
         userId={session.user.id}

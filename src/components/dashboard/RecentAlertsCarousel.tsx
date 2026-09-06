@@ -93,7 +93,7 @@ export function RecentAlertsCarousel() {
           </div>
         </div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
           {alerts.map((notification) => {
             const Icon = getIcon(notification)
             const route = getNotificationRoute(notification)

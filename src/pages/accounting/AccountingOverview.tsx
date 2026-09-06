@@ -7,7 +7,6 @@ const links = [
   { key: 'accounts', label: 'Chart of Accounts', subtitle: 'All accounts like Cash, Sales, Expenses', icon: Landmark, path: '/accounting/accounts', permission: ['account', 'view'] as const },
   { key: 'periods', label: 'Accounting Periods', subtitle: 'Open or close months and years', icon: Landmark, path: '/accounting/periods', permission: ['period', 'view'] as const },
   { key: 'journal', label: 'Journal', subtitle: 'View all posted transactions', icon: Landmark, path: '/accounting/journal', permission: ['journal', 'view'] as const },
-  { key: 'journal-new', label: 'Create Journal Entry', subtitle: 'Record a new transaction', icon: Landmark, path: '/accounting/journal/new', permission: ['journal', 'create'] as const },
 ]
 
 export default function AccountingOverview() {

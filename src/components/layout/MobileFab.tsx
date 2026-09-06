@@ -46,10 +46,10 @@ export default function MobileFab({ onClick, icon: Icon = Plus, ariaLabel, disab
           onClick={onClick}
           aria-label={ariaLabel}
           disabled={disabled}
-          className="csr-fab-float relative grid h-14 w-14 place-items-center rounded-full bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:shadow-lg dark:shadow-black/20 dark:focus-visible:ring-offset-slate-950"
+          className="csr-fab-float relative grid h-[50px] w-[50px] place-items-center rounded-[18px] bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 outline-none active:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:shadow-lg dark:shadow-black/20 dark:focus-visible:ring-offset-slate-950"
           style={{ animation: 'csrFabFloat 4s ease-in-out infinite' }}
         >
-          <Icon aria-hidden="true" className="h-7 w-7 stroke-[2.4]" />
+          <Icon aria-hidden="true" className="h-5 w-5 stroke-[2]" />
         </button>
       </div>
     </>

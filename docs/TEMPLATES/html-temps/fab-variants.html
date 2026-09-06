@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS FAB Icon Variants — Pick & Match</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #0a0f1a; color: #e2e8f0; }
+  .fab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; }
+  @media (max-width: 700px) { .fab-grid { grid-template-columns: 1fr 1fr; } }
+  .fab-card {
+    background: #111827; border: 1px solid #1e293b; border-radius: 14px;
+    padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .fab-card:hover { border-color: #334155; }
+  .fab-card.selected { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
+  .fab-card .id { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+  .fab-card .name { font-size: 11px; font-weight: 600; color: #cbd5e1; text-align: center; }
+  .fab-card .tag { font-size: 9px; background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #64748b; }
+  .section-title { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 36px 0 12px; }
+  .fab-preview {
+    width: 72px; height: 72px; display: grid; place-items: center;
+    background: #0f172a; border-radius: 10px; border: 1px dashed #1e293b;
+  }
+  /* All FABs identical container — only icon differs */
+  .fab-btn {
+    display: grid; place-items: center; width: 52px; height: 52px;
+    border-radius: 9999px; color: white; border: none; cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .fab-btn:hover { transform: scale(1.06); }
+  .fab-btn:active { transform: scale(0.95); }
+  .fab-btn svg { width: 22px; height: 22px; stroke-width: 2; }
+  /* Color variants */
+  .fab-blue { background: #2563eb; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+  .fab-green { background: #059669; box-shadow: 0 4px 14px rgba(5,150,105,0.35); }
+  .fab-amber { background: #d97706; box-shadow: 0 4px 14px rgba(217,119,6,0.35); }
+</style>
+</head>
+<body class="px-6 py-10 max-w-[960px] mx-auto">
+
+<div class="mb-6">
+  <h1 class="text-xl font-extrabold tracking-tight text-white">FAB Icon Picker</h1>
+  <p class="text-xs text-slate-400 mt-1">Same container (56px circle, shadow). Different icons. Pick one from each row.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DOWNLOAD — D1–D9                                   -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-title text-blue-400">Download — D1–D9</div>
+<div class="fab-grid">
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D1</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="download"></i></button></div>
+    <span class="name">download</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D2</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="arrow-down-to-line"></i></button></div>
+    <span class="name">arrow-down-to-line</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D3</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="download-cloud"></i></button></div>
+    <span class="name">download-cloud</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D4</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="hard-drive-download"></i></button></div>
+    <span class="name">hard-drive-download</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D5</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="package-down"></i></button></div>
+    <span class="name">package-down</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D6</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="file-down"></i></button></div>
+    <span class="name">file-down</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D7</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="arrow-down-circle"></i></button></div>
+    <span class="name">arrow-down-circle</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D8</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="circle-arrow-down"></i></button></div>
+    <span class="name">circle-arrow-down</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D9</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue"><i data-lucide="cloud-download"></i></button></div>
+    <span class="name">cloud-download</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">D10</span>
+    <div class="fab-preview"><button class="fab-btn fab-blue" style="padding:0">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;fill:currentColor"><path d="M10.98 0c-.235 0-.425.2-.425.446V8.92c0 .246-.19.446-.425.446h-.704c-.346 0-.547.41-.346.705l2.574 3.782c.17.25.522.25.692 0l2.574-3.782c.201-.295 0-.705-.346-.705h-.704a.436.436 0 0 1-.425-.446V.446A.436.436 0 0 0 13.02 0ZM7.387 1.562a.732.732 0 0 0-.405.161l-1.096.883a.77.77 0 0 0-.123 1.066.735.735 0 0 0 1.045.126l1.096-.882a.77.77 0 0 0 .123-1.067.738.738 0 0 0-.64-.287Zm9.346 0a.737.737 0 0 0-.64.287.77.77 0 0 0 .123 1.067l1.096.882c.323.26.79.204 1.045-.126a.77.77 0 0 0-.123-1.066l-1.096-.883a.733.733 0 0 0-.405-.16ZM3.039 6.036a.745.745 0 0 0-.675.48l-.512 1.326c-.15.39.037.831.42.985a.74.74 0 0 0 .965-.428l.512-1.325a.765.765 0 0 0-.419-.985.728.728 0 0 0-.291-.053Zm18.042 0a.738.738 0 0 0-.29.053.765.765 0 0 0-.42.985l.512 1.325a.74.74 0 0 0 .965.428.765.765 0 0 0 .42-.985l-.512-1.325a.745.745 0 0 0-.675-.481ZM0 12a12 12 0 0 0 .913 4.592 11.997 11.997 0 0 0 2.42 3.703c.684-.681 1.565-1 2.489-1.053.925-.055 1.893.156 2.745.532a8.497 8.497 0 0 0 6.866 0c1.702-.751 3.865-.843 5.234.52a11.997 11.997 0 0 0 2.42-3.702A12 12 0 0 0 24 12h-3.687c-1.301 0-2.315 1.094-2.813 2.296a6 6 0 0 1-11.087 0C5.915 13.094 4.902 12 3.601 12Zm5.875 7.769c-.727.04-1.407.275-1.957.727-.073.06-.14.119-.204.18a11.997 11.997 0 0 0 3.694 2.41 12 12 0 0 0 9.184 0 11.997 11.997 0 0 0 3.694-2.41 3.977 3.977 0 0 0-.204-.18c-1.173-.963-2.96-.892-4.436-.24a9.023 9.023 0 0 1-7.292 0c-.478-.211-1.418-.546-2.48-.487Z"/></svg>
+    </button></div>
+    <span class="name">your custom SVG</span>
+    <span class="tag">custom</span>
+  </div>
+
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SAVE — S1–S9                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-title text-emerald-400">Save — S1–S9</div>
+<div class="fab-grid">
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S1</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="save"></i></button></div>
+    <span class="name">save</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S2</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="check-circle"></i></button></div>
+    <span class="name">check-circle</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S3</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="bookmark"></i></button></div>
+    <span class="name">bookmark</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S4</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="archive"></i></button></div>
+    <span class="name">archive</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S5</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="hard-drive"></i></button></div>
+    <span class="name">hard-drive</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S6</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="file-check"></i></button></div>
+    <span class="name">file-check</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S7</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="database"></i></button></div>
+    <span class="name">database</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S8</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="shield-check"></i></button></div>
+    <span class="name">shield-check</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">S9</span>
+    <div class="fab-preview"><button class="fab-btn fab-green"><i data-lucide="save-all"></i></button></div>
+    <span class="name">save-all</span>
+    <span class="tag">lucide</span>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PLUS / CREATE — P1–P9                              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="section-title text-amber-400">Plus / Create — P1–P9</div>
+<div class="fab-grid">
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P1</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="plus"></i></button></div>
+    <span class="name">plus</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P2</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="plus-circle"></i></button></div>
+    <span class="name">plus-circle</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P3</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="circle-plus"></i></button></div>
+    <span class="name">circle-plus</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P4</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="sparkles"></i></button></div>
+    <span class="name">sparkles</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P5</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="zap"></i></button></div>
+    <span class="name">zap</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P6</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="wand-2"></i></button></div>
+    <span class="name">wand-2</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P7</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="layers"></i></button></div>
+    <span class="name">layers</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P8</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="rocket"></i></button></div>
+    <span class="name">rocket</span>
+    <span class="tag">lucide</span>
+  </div>
+
+  <div class="fab-card" onclick="pick(this)">
+    <span class="id">P9</span>
+    <div class="fab-preview"><button class="fab-btn fab-amber"><i data-lucide="square-plus"></i></button></div>
+    <span class="name">square-plus</span>
+    <span class="tag">lucide</span>
+  </div>
+
+</div>
+
+<!-- ── Selection ──────────────────────────────────── -->
+<div class="mt-8 p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+  <p class="text-xs text-slate-400">Selected:</p>
+  <p id="sel" class="text-sm text-white mt-1 font-mono">None</p>
+</div>
+
+<script>
+  lucide.createIcons();
+  function pick(card) {
+    card.classList.toggle('selected');
+    const ids = [...document.querySelectorAll('.fab-card.selected')]
+      .map(c => c.querySelector('.id')?.textContent).filter(Boolean);
+    document.getElementById('sel').textContent = ids.length ? ids.join(', ') : 'None';
+  }
+</script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 import * as React from 'react'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, X } from 'lucide-react'
 import Layout from '@/components/Layout'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
+import MobileFab from '@/components/layout/MobileFab'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetFooter } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
 import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import { createPeriod, listPeriods, openPeriod, type AccountingPeriod } from '@/modules/accounting/accountingService'
@@ -20,6 +23,7 @@ export default function Periods() {
   const [periods, setPeriods] = React.useState<AccountingPeriod[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState('')
+  const [sheetOpen, setSheetOpen] = React.useState(false)
   const [code, setCode] = React.useState('')
   const [startDate, setStartDate] = React.useState('')
   const [endDate, setEndDate] = React.useState('')
@@ -28,24 +32,27 @@ export default function Periods() {
   const canCreate = hasAuthorization('period', 'create')
   const canEdit = hasAuthorization('period', 'edit')
 
-  const refresh = React.useCallback(async () => {
-    if (!tenantClient.isReady) {
-      setLoading(false)
-      return
+  React.useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (!tenantClient.isReady) {
+        setLoading(false)
+        return
+      }
+      setLoading(true)
+      try {
+        setPeriods(await listPeriods(tenantClient))
+      } catch (e) {
+        if (!cancelled) feedback.error(e as Error)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-    setLoading(true)
-    try {
-      setPeriods(await listPeriods(tenantClient))
-    } catch (e) {
-      feedback.error(e as Error)
-    } finally {
-      setLoading(false)
+    load()
+    return () => {
+      cancelled = true
     }
   }, [tenantClient])
-
-  React.useEffect(() => {
-    refresh()
-  }, [refresh])
 
   const handleCreate = async () => {
     setSaving(true)
@@ -55,6 +62,7 @@ export default function Periods() {
       setStartDate('')
       setEndDate('')
       feedback.success('Period created as planned.')
+      setSheetOpen(false)
       await refresh()
     } catch (e) {
       feedback.error(e as Error)
@@ -80,76 +88,145 @@ export default function Periods() {
   })
 
   return (
-    <Layout title="Accounting Periods" hidePageHeader>
-      <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
-        {canCreate && (
-          <div className="mx-auto mb-3 w-full max-w-[var(--bd-layout-content-max,1200px)] rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)_/_0.8)] bg-[hsl(var(--bd-surface)_/_0.95)] p-4 shadow-sm">
-            <div className="text-sm font-bold text-bd-text">New period</div>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-4">
+    <>
+      <Layout title="Accounting Periods" hidePageHeader>
+        <div className="px-4 pt-3 md:px-[var(--bd-layout-padding,1.5rem)]">
+          <ModuleShell
+            eyebrow="Accounting"
+            title="Accounting Periods"
+            summary={loading ? 'Loading periods…' : `${filtered.length} periods`}
+            tone="blue"
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search period code…"
+            onPrimaryAction={() => setSheetOpen(true)}
+            primaryActionLabel="New period"
+            records={filtered}
+            renderRow={(period: AccountingPeriod) => (
+              <ModuleRowCard
+                key={period.id}
+                title={period.code}
+                subtitle={`${period.start_date} → ${period.end_date}`}
+                statusLabel={period.state.toUpperCase()}
+                statusClassName={stateTone[period.state]}
+                onActionClick={period.state === 'planned' && canEdit ? () => handleOpen(period.id) : undefined}
+                actionAriaLabel={period.state === 'planned' && canEdit ? 'Open period' : undefined}
+              />
+            )}
+            emptyState={
+              <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
+                  <CalendarDays className="h-6 w-6" />
+                </div>
+                <div className="mt-4 text-sm font-bold text-bd-text">No Periods Found</div>
+                <div className="mx-auto mt-1 max-w-[280px] text-xs text-bd-text-muted">
+                  Create a planned period below, then open it to accept postings.
+                </div>
+              </div>
+            }
+          />
+        </div>
+      </Layout>
+      {canCreate && (
+        <MobileFab onClick={() => setSheetOpen(true)} ariaLabel="Create period" />
+      )}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="p-0">
+          <SheetHeader className="px-5 pb-3 pt-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle className="text-[17px] font-[800] tracking-[-0.05em] text-bd-overlay-text">
+                  New period
+                </SheetTitle>
+                <SheetDescription className="mt-0.5 text-[11px] font-[700] text-bd-overlay-muted">
+                  Create a planned period, then open it to accept postings.
+                </SheetDescription>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setSheetOpen(false)}
+                className="h-7 w-7"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
+          </SheetHeader>
+          <div className="px-5 pb-5 space-y-3">
+            <div className="grid gap-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-bd-overlay-muted">
+                Code
+              </label>
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Code e.g. 2026-09"
-                className="h-11 rounded-xl border border-bd-border bg-transparent px-3 text-sm text-bd-text outline-none"
+                className="h-11 w-full rounded-xl border border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text outline-none focus:ring-2 focus:ring-bd-overlay-ring"
               />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-bd-overlay-muted">
+                Start date
+              </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 aria-label="Start date"
-                className="h-11 rounded-xl border border-bd-border bg-transparent px-3 text-sm text-bd-text outline-none"
+                className="h-11 w-full rounded-xl border border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text outline-none focus:ring-2 focus:ring-bd-overlay-ring"
               />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-[10px] font-black uppercase tracking-wider text-bd-overlay-muted">
+                End date
+              </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 aria-label="End date"
-                className="h-11 rounded-xl border border-bd-border bg-transparent px-3 text-sm text-bd-text outline-none"
+                className="h-11 w-full rounded-xl border border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text outline-none focus:ring-2 focus:ring-bd-overlay-ring"
               />
-              <button
-                type="button"
-                disabled={saving}
-                onClick={handleCreate}
-                className="h-11 rounded-xl bg-[hsl(var(--bd-nav-active-bg))] px-4 text-sm font-bold text-[hsl(var(--bd-nav-active-text))] disabled:opacity-50"
-              >
-                {saving ? 'Saving…' : 'Create'}
-              </button>
             </div>
           </div>
-        )}
-        <ModuleShell
-          eyebrow="Accounting"
-          title="Accounting Periods"
-          summary={loading ? 'Loading periods…' : `${filtered.length} periods`}
-          tone="blue"
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search period code…"
-          records={filtered}
-          renderRow={(period: AccountingPeriod) => (
-            <ModuleRowCard
-              key={period.id}
-              title={period.code}
-              subtitle={`${period.start_date} → ${period.end_date}`}
-              statusLabel={period.state.toUpperCase()}
-              statusClassName={stateTone[period.state]}
-              onActionClick={period.state === 'planned' && canEdit ? () => handleOpen(period.id) : undefined}
-              actionAriaLabel={period.state === 'planned' && canEdit ? 'Open period' : undefined}
-            />
-          )}
-          emptyState={
-            <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
-              <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
-                <CalendarDays className="h-6 w-6" />
-              </div>
-              <div className="mt-4 text-sm font-bold text-bd-text">No Periods Found</div>
-              <div className="mx-auto mt-1 max-w-[280px] text-xs text-bd-text-muted">
-                Create a planned period above, then open it to accept postings.
-              </div>
-            </div>
-          }
-        />
-      </div>
-    </Layout>
+          <SheetFooter className="px-5 pb-5 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSheetOpen(false)}
+              className="h-11 w-full"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={saving || !code || !startDate || !endDate}
+              onClick={handleCreate}
+              className="h-11 w-full"
+            >
+              {saving ? 'Saving…' : 'Create'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   )
+
+  async function refresh() {
+    if (!tenantClient.isReady) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    try {
+      setPeriods(await listPeriods(tenantClient))
+    } catch (e) {
+      feedback.error(e as Error)
+    } finally {
+      setLoading(false)
+    }
+  }
 }

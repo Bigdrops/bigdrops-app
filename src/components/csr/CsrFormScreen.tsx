@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronDown, ChevronUp, Download, Hash, Lock, Loader2, MoreHorizontal, Save, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download, Hash, Lock, Loader2, MoreHorizontal, SaveAll, X } from 'lucide-react'
 
 import { useEntity } from '@/lib/tenant/contexts'
 import ClientSelector from '@/components/ClientSelector'
@@ -983,7 +983,7 @@ export default function CsrFormScreen({
       <div className="sm:hidden">
         <MobileFab
           onClick={onSave}
-          icon={saving ? Loader2 : Save}
+          icon={saving ? Loader2 : SaveAll}
           ariaLabel="Save CSR"
           disabled={saveDisabled}
         />
@@ -994,7 +994,7 @@ export default function CsrFormScreen({
         {onDownloadBlank && (
           <button
             onClick={onDownloadBlank}
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
+            className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
             title="Download blank CSR"
           >
             <Download className="h-6 w-6" />
@@ -1003,9 +1003,9 @@ export default function CsrFormScreen({
         <button
           onClick={onSave}
           disabled={saveDisabled}
-          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+          className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
         >
-          {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
+          {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <SaveAll className="h-6 w-6" />}
         </button>
       </div>
 
