@@ -1,4 +1,4 @@
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import { getAdditionalFields } from '../additionalFields'
 import type {
   PreviewDetailRow,

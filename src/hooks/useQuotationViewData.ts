@@ -4,7 +4,7 @@ import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { resolveDocumentSignatory } from "@/domain/invoice/previewModel";
 import { fetchProjectSummary } from "@/domain/documentRelationships";
 import { useEntity } from "@/lib/tenant/contexts";
-import { loadQuotationViewData } from "../pages/viewQuotationActions";
+import { loadQuotationViewData } from "../pages/view-quotation-actions";
 
 export const defaultPdfOutput: PdfOutputSettingsValue = {
   showBankDetails: true,

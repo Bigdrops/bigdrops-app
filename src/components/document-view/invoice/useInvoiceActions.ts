@@ -9,7 +9,7 @@ import {
   ADVANCE_PRIMARY_LABEL_DEFAULT,
   ADVANCE_SECONDARY_LABEL_DEFAULT,
 } from "@/domain/invoice/advanceChildFlow";
-import { downloadInvoiceCsvFile, createAdvanceInvoiceRecord, updateAdvanceInvoiceRecord, deleteAdvanceInvoiceRecord } from "@/pages/viewInvoiceActions";
+import { downloadInvoiceCsvFile, createAdvanceInvoiceRecord, updateAdvanceInvoiceRecord, deleteAdvanceInvoiceRecord } from "@/pages/view-invoice-actions";
 import { archiveInvoice, deleteInvoice, duplicateInvoice, syncAndGetInvoiceStatus } from "@/modules/invoices/services/invoiceLifecycleService";
 import { voidInvoicePayment } from "@/modules/invoices/services/paymentService";
 import { revertInvoiceToQuotationService } from "@/modules/invoices/services/invoiceConversionService";

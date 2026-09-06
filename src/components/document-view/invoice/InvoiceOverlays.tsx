@@ -7,7 +7,7 @@ import InvoiceMoreSheet from "@/components/document-view/invoice/InvoiceMoreShee
 import DocumentConfirmDialog from "@/components/document-view/shared/DocumentConfirmDialog";
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 import VoidPaymentDialog from "@/components/document-view/invoice/VoidPaymentDialog";
-import { buildWaybillPrefill } from "@/pages/viewInvoiceActions";
+import { buildWaybillPrefill } from "@/pages/view-invoice-actions";
 
 interface InvoiceOverlaysProps {
   invoice: any;

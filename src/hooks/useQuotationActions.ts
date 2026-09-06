@@ -14,7 +14,7 @@ import {
   downloadQuotationCsvFile,
   duplicateQuotationRecord,
   updateQuotationStatus,
-} from "../pages/viewQuotationActions";
+} from "../pages/view-quotation-actions";
 import { useSettings } from "@/hooks/useSettings";
 
 export function useQuotationActions(input: {

@@ -34,7 +34,7 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
 import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
-import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './viewCSRActions'
+import { archiveCSRRecord, deleteCSRRecord, duplicateCSRRecord, updateCSRStatus } from './view-csr-actions'
 import { CsrActivityCard } from '@/components/document-view/csr/sections/ActivityCard'
 
 const SHEET_MORE = 'more-actions'

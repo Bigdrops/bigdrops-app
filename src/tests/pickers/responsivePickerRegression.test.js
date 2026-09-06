@@ -13,7 +13,7 @@ const unifiedActionSheetPath = path.resolve('src/components/actions/UnifiedActio
 const invoiceListActionSheetPath = path.resolve('src/components/invoice/InvoiceListActionSheet.tsx')
 const mobileSalesSheetPath = path.resolve('src/components/layout/MobileSalesSheet.tsx')
 const listActionSheetPath = path.resolve('src/components/layout/ListActionSheet.tsx')
-const dashboardRedesignPath = path.resolve('src/pages/DashboardRedesign.tsx')
+const dashboardRedesignPath = path.resolve('src/pages/Dashboard.tsx')
 
 test('combobox owns responsive auto strategy with drawer on mobile and popover on desktop', () => {
   const source = fs.readFileSync(comboboxPath, 'utf8')

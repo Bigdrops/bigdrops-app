@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const adapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
-const helperPath = path.resolve('src/components/pdf-new/pdfCurrency.tsx')
+const adapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
+const helperPath = path.resolve('src/components/pdf/pdfCurrency.tsx')
 const projectDocumentsPath = path.resolve('src/domain/projectDocuments.ts')
 const sharedFontsPath = path.resolve('src/lib/pdfSharedFonts.ts')
 const formatterPath = path.resolve('src/lib/formatters/pdfCurrency.ts')

@@ -11,7 +11,7 @@ import type {
 } from '@/domain/invoice'
 import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'

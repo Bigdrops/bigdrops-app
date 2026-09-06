@@ -16,7 +16,7 @@ import type {
 import { numberToWords } from './useInvoiceForm'
 import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'

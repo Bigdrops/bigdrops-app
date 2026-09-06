@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useEntity } from "@/lib/tenant/contexts"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
-import ReceiptPdf from "@/components/pdf-new/ReceiptPdf"
+import ReceiptPdf from "@/components/pdf/ReceiptPdf"
 import { registerPdfFonts } from "@/lib/pdfFontRegistry"
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset"
 import {

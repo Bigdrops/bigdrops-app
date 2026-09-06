@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const tablePath = path.resolve('src/components/pdf-new/table.ts')
-const typesPath = path.resolve('src/components/pdf-new/types.ts')
-const adapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
+const tablePath = path.resolve('src/components/pdf/table.ts')
+const typesPath = path.resolve('src/components/pdf/types.ts')
+const adapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 const invoiceDownloadPath = path.resolve('src/components/document-view/invoice/invoicePdfActions.ts')
 const quotationDownloadPath = path.resolve('src/domain/quotation/pdfDownloadHandler.ts')
 const invoicePreviewPath = path.resolve('src/components/document-view/invoice/InvoiceDocumentCard.tsx')
@@ -14,10 +14,10 @@ const invoicePreviewCssPath = path.resolve('src/components/document-view/shared/
 const quotationPreviewCssPath = path.resolve('src/components/document-view/quotation/QuotationDocumentPreview.css')
 
 const templatePaths = [
-  path.resolve('src/components/pdf-new/templates/Industry.tsx'),
-  path.resolve('src/components/pdf-new/templates/Ledger.tsx'),
-  path.resolve('src/components/pdf-new/templates/Bolt.tsx'),
-  path.resolve('src/components/pdf-new/templates/ObsidianReceipt.tsx'),
+  path.resolve('src/components/pdf/templates/Industry.tsx'),
+  path.resolve('src/components/pdf/templates/Ledger.tsx'),
+  path.resolve('src/components/pdf/templates/Bolt.tsx'),
+  path.resolve('src/components/pdf/templates/ObsidianReceipt.tsx'),
 ]
 
 test('table settings expose the computed pdf page layout', () => {

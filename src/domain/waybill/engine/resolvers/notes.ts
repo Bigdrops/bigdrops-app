@@ -1,4 +1,4 @@
-import { richTextToPlainText } from '@/components/pdf-new/core/richText'
+import { richTextToPlainText } from '@/components/pdf/core/richText'
 import { normalizeBlank } from '../normalizeBlank'
 
 export function resolveNotes(rawNotes: unknown): string {

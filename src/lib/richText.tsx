@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify'
-import { normalizeRichTextHtml, richTextToPlainText } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml, richTextToPlainText } from '@/components/pdf/core/richText'
 
 function canUseDomPurify() {
   return typeof window !== 'undefined' && typeof window.document !== 'undefined'

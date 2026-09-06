@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { History } from 'lucide-react'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { cn } from '@/lib/utils'
 
@@ -155,20 +156,29 @@ export function AuditTrailSkeleton() {
     }
   })
 
-  // Fallback V6 entries if no events found in the database
-  const fallbackEntries = [
-    { id: 'welcome-1', text: 'INV-0045 created by Milad', meta: 'Today, 10:32 AM', variant: 'primary' as const },
-    { id: 'welcome-2', text: 'INV-0042 overdue reminder sent', meta: 'Today, 09:15 AM', variant: 'primary' as const },
-    { id: 'welcome-3', text: 'QTN-0108 accepted by client', meta: 'Yesterday, 4:20 PM', variant: 'copper' as const },
-  ]
-
-  const entries = auditEntries.length > 0 ? auditEntries : fallbackEntries
+  if (auditEntries.length === 0) {
+    return (
+      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
+        <div className="flex flex-col items-center px-4 py-10 text-center">
+          <div className="grid h-[58px] w-[58px] place-items-center rounded-[20px] bg-[hsl(var(--primary)/0.1)]">
+            <History className="size-[26px] text-[hsl(var(--primary))]" strokeWidth={1.5} />
+          </div>
+          <div className="mt-4 text-[16px] font-[800] tracking-[-0.05em] text-[hsl(var(--bd-ink))]">
+            No audit trail yet
+          </div>
+          <div className="mt-1 max-w-[200px] text-[10px] leading-[1.45] text-[hsl(var(--bd-ink-muted))]">
+            Activity on your documents will appear here
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
     >
       <div className="px-[11px] md:px-4">
-        {entries.map((entry) => (
+        {auditEntries.map((entry) => (
           <AuditRow
             key={entry.id}
             text={entry.text}

@@ -14,7 +14,7 @@ import {
 
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
 const advanceSheetPath = path.resolve('src/components/invoice/view/InvoiceAdvanceSheet.tsx')
-const viewInvoiceActionsPath = path.resolve('src/pages/viewInvoiceActions.ts')
+const viewInvoiceActionsPath = path.resolve('src/pages/view-invoice-actions.ts')
 
 test('advance child flow defaults match the restored popup copy', () => {
   assert.equal(ADVANCE_SUFFIX_DEFAULT, 'A')

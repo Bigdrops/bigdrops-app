@@ -6,7 +6,7 @@ import {
   buildPdfTableColumns,
   interpretPdfTableSettings,
   resolvePdfPageLayout,
-} from '../../components/pdf-new/table.ts'
+} from '../../components/pdf/table.ts'
 
 test('interpretPdfTableSettings keeps fixed pdf columns and visible configurable columns', () => {
   const resolved = interpretPdfTableSettings([

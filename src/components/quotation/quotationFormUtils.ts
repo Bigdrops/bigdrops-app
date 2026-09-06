@@ -3,7 +3,7 @@ import type { ColumnConfig, ExtraCharge, InvoiceFieldEntry } from '@/domain/invo
 import { toDbItem } from '@/domain/invoice'
 import { buildCalculationInputs } from '@/components/useInvoiceColumns.jsx'
 import { filterPopulatedAdditionalFields } from '@/components/useInvoiceColumns.jsx'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import type { QuotationEditorState } from './quotationFormTypes'
 import type { PdfOutputState } from './quotationFormTypes'
 

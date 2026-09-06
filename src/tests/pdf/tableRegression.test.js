@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const tablePath = path.resolve('src/components/pdf-new/table.ts')
+const tablePath = path.resolve('src/components/pdf/table.ts')
 const source = fs.readFileSync(tablePath, 'utf8')
 
 assert.match(source, /if \(mergeQtyUnit && key === 'unit'\) return/)

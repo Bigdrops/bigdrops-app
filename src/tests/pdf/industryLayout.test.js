@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { styles } from '../../components/pdf-new/presentation/industry/industryStyles.ts'
-import { adaptCommercialDocumentData } from '../../components/pdf-new/industryAdapter.ts'
+import { styles } from '../../components/pdf/presentation/industry/industryStyles.ts'
+import { adaptCommercialDocumentData } from '../../components/pdf/industryAdapter.ts'
 
-const industryTemplatePath = path.resolve('src/components/pdf-new/presentation/industry/IndustryTemplate.tsx')
+const industryTemplatePath = path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx')
 
 test('Industry pdf layout keeps the footer reserve compact instead of leaving a large dead zone', () => {
   assert.equal(styles.page.paddingBottom, 64)

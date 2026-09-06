@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { adaptCommercialDocumentData } from '../../components/pdf-new/industryAdapter.ts'
+import { adaptCommercialDocumentData } from '../../components/pdf/industryAdapter.ts'
 
 function createPdfModel(kind) {
   return {

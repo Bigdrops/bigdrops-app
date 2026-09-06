@@ -1,8 +1,8 @@
 import { formatNaira } from "@/lib/formatters/money";
 import { resolveCanonicalItemImageUrl } from "@/domain/documentMedia";
-import { adaptCommercialDocumentData } from "@/components/pdf-new/industryAdapter";
-import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf-new/table";
-import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf-new/types";
+import { adaptCommercialDocumentData } from "@/components/pdf/industryAdapter";
+import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf/table";
+import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
 import { buildSummaryRows } from "@/domain/invoice";
 import {

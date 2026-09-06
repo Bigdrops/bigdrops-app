@@ -7,7 +7,7 @@
 import { Document, Image, Page, Text, View, pdf } from '@react-pdf/renderer'
 import type { WaybillItem, WaybillType } from './waybillUtils'
 import { minimalStyles } from './waybillMinimalStyles'
-import { richTextToPlainText } from '@/components/pdf-new/core/richText'
+import { richTextToPlainText } from '@/components/pdf/core/richText'
 
 export interface MinimalContentData {
   type: WaybillType

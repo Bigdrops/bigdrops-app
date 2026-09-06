@@ -35,7 +35,7 @@ export const downloadInvoicePdfDocument = async ({
   pdfTemplateId: InvoicePdfTemplateId;
   settingsData: any;
 }) => {
-  const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import("@/components/pdf-new");
+  const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import("@/components/pdf");
   
   const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields);
   const targetTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(targetCustomFields?.pdfTemplateId) || pdfTemplateId;

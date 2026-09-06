@@ -8,8 +8,8 @@ const read = (relativePath) => fs.readFileSync(path.resolve(relativePath), 'utf8
 test('invoice and quotation flows no longer default to legacy workflow statuses', () => {
   const newInvoiceSource = read('src/pages/NewInvoice.tsx')
   const editInvoiceSource = read('src/pages/EditInvoice.tsx')
-  const invoiceActionsSource = read('src/pages/viewInvoiceActions.ts')
-  const quotationActionsSource = read('src/pages/viewQuotationActions.ts')
+  const invoiceActionsSource = read('src/pages/view-invoice-actions.ts')
+  const quotationActionsSource = read('src/pages/view-quotation-actions.ts')
   const quotationStatusSource = read('src/components/quotation/quotationStatus.ts')
 
   assert.match(newInvoiceSource, /status:\s*'unpaid'/)
@@ -32,10 +32,10 @@ test('legacy invoice and quotation UI actions are removed from primary surfaces'
 })
 
 test('other document clones do not silently create new draft records', () => {
-  const rfqActionsSource = read('src/pages/viewRFQActions.ts')
-  const boqActionsSource = read('src/pages/viewBOQActions.ts')
-  const csrActionsSource = read('src/pages/viewCSRActions.ts')
-  const waybillActionsSource = read('src/pages/viewWaybillActions.ts')
+  const rfqActionsSource = read('src/pages/view-rfq-actions.ts')
+  const boqActionsSource = read('src/pages/view-boq-actions.ts')
+  const csrActionsSource = read('src/pages/view-csr-actions.ts')
+  const waybillActionsSource = read('src/pages/view-waybill-actions.ts')
   const advanceChildFlowSource = read('src/domain/invoice/advanceChildFlow.ts')
 
   assert.doesNotMatch(rfqActionsSource, /status:\s*'draft'/)

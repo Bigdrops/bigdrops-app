@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
-const viewInvoiceActionsPath = path.resolve('src/pages/viewInvoiceActions.ts')
+const viewInvoiceActionsPath = path.resolve('src/pages/view-invoice-actions.ts')
 const advanceSummaryPath = path.resolve('src/domain/invoice/advanceSummary.ts')
 const advanceChildFlowPath = path.resolve('src/domain/invoice/advanceChildFlow.ts')
 
@@ -38,7 +38,7 @@ test('advance invoice pdf download reuses parent items and removes legacy advanc
 
 test('advance invoice creation flow opens the existing child and skips duplicate creation attempts', () => {
   const viewInvoiceSource = fs.readFileSync(viewInvoicePath, 'utf8')
-  const viewInvoiceActionsSource = fs.readFileSync(viewInvoiceActionsPath, 'utf8')
+  const viewInvoiceActionsSource = fs.readFileSync(view-invoice-actionsPath, 'utf8')
 
   assert.match(viewInvoiceSource, /visibleAdvanceInvoices\.length\s*>\s*0/)
   assert.match(viewInvoiceActionsSource, /select\('id,\s*invoice_number,\s*invoice_title,\s*total,\s*custom_fields'\)/)
@@ -47,7 +47,7 @@ test('advance invoice creation flow opens the existing child and skips duplicate
 
 test('advance invoice delete flow logs the real rpc error, validates the child id, and falls back to parent cleanup', () => {
   const viewInvoiceSource = fs.readFileSync(viewInvoicePath, 'utf8')
-  const viewInvoiceActionsSource = fs.readFileSync(viewInvoiceActionsPath, 'utf8')
+  const viewInvoiceActionsSource = fs.readFileSync(view-invoice-actionsPath, 'utf8')
 
   assert.match(viewInvoiceActionsSource, /console\.log\('advance delete id',\s*advanceInvoiceId\)/)
   assert.match(viewInvoiceActionsSource, /console\.error\('advance child delete failed \(continuing anyway\):',\s*deleteError\)/)

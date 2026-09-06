@@ -11,7 +11,7 @@ import {
   Eraser,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { normalizeRichTextHtml } from '@/components/pdf-new/core/richText'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 
 interface ToolbarBtnProps {
   onClick: () => void

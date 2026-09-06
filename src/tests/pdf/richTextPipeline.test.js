@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { normalizeRichTextHtml, richTextToPlainText } from '../../components/pdf-new/core/richText.ts'
+import { normalizeRichTextHtml, richTextToPlainText } from '../../components/pdf/core/richText.ts'
 
-const industryTemplatePath = path.resolve('src/components/pdf-new/templates/Industry.tsx')
-const industryAdapterPath = path.resolve('src/components/pdf-new/industryAdapter.ts')
+const industryTemplatePath = path.resolve('src/components/pdf/templates/Industry.tsx')
+const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 
 const sampleRichText = [
   '<p><strong>Bold</strong></p>',

@@ -1,6 +1,6 @@
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
-import { adaptCommercialDocumentData } from '@/components/pdf-new/industryAdapter'
-import { buildPdfRowCells, interpretPdfTableSettings } from '@/components/pdf-new/table'
+import { adaptCommercialDocumentData } from '@/components/pdf/industryAdapter'
+import { buildPdfRowCells, interpretPdfTableSettings } from '@/components/pdf/table'
 
 import type {
   PreviewBankAccount,
@@ -18,7 +18,7 @@ import type {
   PdfOutputLike,
   BuildInvoicePreviewModelInput,
 } from './renderTypes'
-import type { PdfDocumentModel, PdfResolvedTableSettings } from '@/components/pdf-new/types'
+import type { PdfDocumentModel, PdfResolvedTableSettings } from '@/components/pdf/types'
 
 import {
   buildBankAccountsProjection,

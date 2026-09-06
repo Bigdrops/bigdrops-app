@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { styles } from '../../components/pdf-new/templates/LedgerStyles.ts'
+import { styles } from '../../components/pdf/templates/LedgerStyles.ts'
 
-const ledgerTemplatePath = path.resolve('src/components/pdf-new/templates/Ledger.tsx')
+const ledgerTemplatePath = path.resolve('src/components/pdf/templates/Ledger.tsx')
 
 test('Ledger page shell stays white and continuation pages do not inherit top inset padding from the table wrapper', () => {
   assert.equal(styles.page.backgroundColor, '#ffffff')

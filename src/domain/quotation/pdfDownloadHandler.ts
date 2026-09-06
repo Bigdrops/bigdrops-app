@@ -36,7 +36,7 @@ export async function handleDownloadQuotationPdf(input: {
       buildPdfRowCells,
       generateQuotationPdf,
       interpretPdfTableSettings,
-    } = await import("@/components/pdf-new");
+    } = await import("@/components/pdf");
     const pdfDesignPreset = resolveCommercialDesignPreset("quotation");
     const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS;
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {

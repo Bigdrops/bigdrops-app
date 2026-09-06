@@ -76,13 +76,21 @@ export function RecentAlertsCarousel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)] md:px-4 md:py-4"
+    <div className="rounded-[18px] bg-[hsl(var(--surface))] px-[11px] py-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)] md:px-4 md:py-4"
     >
       {loading ? (
         <AlertsSkeleton />
       ) : alerts.length === 0 ? (
-        <div className="rounded-[16px] border border-dashed border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] px-4 py-8 text-center text-[12px] text-[hsl(var(--ink-2))]">
-          No recent alerts.
+        <div className="flex flex-col items-center px-4 py-10 text-center">
+          <div className="grid h-[58px] w-[58px] place-items-center rounded-[20px] bg-[hsl(var(--primary)/0.1)]">
+            <Bell className="size-[26px] text-[hsl(var(--primary))]" strokeWidth={1.5} />
+          </div>
+          <div className="mt-4 text-[16px] font-[800] tracking-[-0.05em] text-[hsl(var(--ink))]">
+            No recent alerts
+          </div>
+          <div className="mt-1 max-w-[200px] text-[10px] leading-[1.45] text-[hsl(var(--ink-2))]">
+            Alerts from your documents will appear here
+          </div>
         </div>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">

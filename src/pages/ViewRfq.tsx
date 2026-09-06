@@ -23,7 +23,7 @@ import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './viewRFQActions'
+import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './view-rfq-actions'
 import { useSettings } from '@/hooks/useSettings'
 
 const SHEET_MORE = 'more-actions'

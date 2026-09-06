@@ -35,7 +35,7 @@ import {
 import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 
 import WaybillPDF from '@/components/waybill/WaybillPDF'
-import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './viewWaybillActions'
+import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './view-waybill-actions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
 import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'

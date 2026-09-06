@@ -1,1 +1,1 @@
-export { richTextToPlainText } from '@/components/pdf-new/core/richText'
+export { richTextToPlainText } from '@/components/pdf/core/richText'

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import { PdfCurrencyText } from '@/components/pdf-new/pdfCurrency'
+import { PdfCurrencyText } from '@/components/pdf/pdfCurrency'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
 
