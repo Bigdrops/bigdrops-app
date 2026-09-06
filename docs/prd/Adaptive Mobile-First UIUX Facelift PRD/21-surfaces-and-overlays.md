@@ -65,7 +65,7 @@ Counts may represent any of these levels. The inventory notes which level each c
 | DocumentActionSheets | bottom | Via Sheet | Via Sheet | — | Yes | ⚠️ No explicit |
 | JsonImportLayout | bottom | Via Sheet | Via Sheet | — | Yes | ⚠️ No explicit |
 
-**Additional wrapper-based consumers** (render Sheet UI through `DocumentSheet`, `UnifiedActionSheet`, etc. — not listed individually): `WaybillMoreSheet`, `RfqMoreSheet`, `CsrMoreSheet`, `BoqMoreSheet`, `InvoiceMoreSheet`, `InvoiceRecordPaymentSheet`, `PdfOutputCustomizeSheet`, `DocumentMoreSheet`, `DocumentActionSheet`, `DocumentPage`, `ListActionSheet`, `MobileMoreSheet`, `MobileSalesSheet`, `InvoiceListActionSheet`, `ActionsSheet`, `CsrImportSheet`, `RfqImportSheet`.
+**Additional wrapper-based consumers** (render Sheet UI through `DocumentSheet`, `UnifiedActionSheet`, etc. — not listed individually): `WaybillMoreSheet`, `RfqMoreSheet`, `CsrMoreSheet`, `BoqMoreSheet`, `InvoiceMoreSheet`, `InvoiceRecordPaymentSheet`, `DocumentCustomizeCard`, `DocumentMoreSheet`, `DocumentActionSheet`, `DocumentPage`, `ListActionSheet`, `MobileMoreSheet`, `MobileSalesSheet`, `InvoiceListActionSheet`, `ActionsSheet`, `CsrImportSheet`, `RfqImportSheet`.
 
 **Observation:** Radius values are inconsistent (26px, 28px, 30px, `var(--bd-overlay-radius)`). Shadow treatment varies (some use `shadow-2xl`, ColumnManager uses a custom shadow). No sheets explicitly integrate with the Android back-button handler — they rely on Radix's default `onOpenChange` behavior combined with `AndroidBackHandler.tsx`'s global Escape dispatch.
 
@@ -263,6 +263,22 @@ BIGDROPS defines six canonical overlay types. Every overlay in the app MUST be o
 | Contextual action (export, combobox) | Floating Popover | Anchored to trigger, lightweight |
 | Document preview (peek card) | Inline Overlay | Lightweight, non-blocking |
 | Sidebar navigation (drawer) | Bottom Sheet (mobile) / Side Sheet (desktop) | Drawer is a special case — see §7 |
+
+### 5.1A Document Customization Sheets
+
+CSR, Waybill, Quotation, and Invoice share one customization interaction model: the same sheet type, responsive behavior, spacing, section hierarchy, typography, control treatment, template-selection interaction, and save interaction. The shared system covers presentation customization. Document-specific controls are allowed where genuinely applicable. Documents do not expose identical controls for symmetry.
+
+Rules:
+
+- The customization surface stays compact and mobile-first.
+- Document customization sheets use a compact mobile-first density. Additional document-specific controls may increase height, but shared controls use the same spacing and hierarchy.
+- Shared controls use the same visual hierarchy and component patterns.
+- Bank account selection and document or output configuration do not automatically belong in the presentation customization popup.
+- Existing inline settings stay inline. Do not duplicate them inside the customization popup.
+- Template selectors use miniature visual representations of the actual templates, not abstract color-only indicators.
+- Template preview cards keep the compact footprint of the established CSR/Waybill customization UI.
+- Template previews stay lightweight. Do not generate full PDFs for every picker option.
+- Previews use deterministic sample styling, not live customer data, and stay faithful to the actual templates.
 
 ### 5.2 Corner Radius
 

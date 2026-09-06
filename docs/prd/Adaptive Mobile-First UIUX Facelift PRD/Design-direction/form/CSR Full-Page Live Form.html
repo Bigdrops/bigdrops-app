@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Customer Service Report — BIGDROPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --apple-blue: #0071e3;
+    --apple-blue-dark: #0a84ff;
+    --green: #34c759;
+    --red: #ff3b30;
+    --orange: #ff9500;
+    --surface: rgba(255,255,255,0.72);
+    --surface-solid: #ffffff;
+    --surface-secondary: rgba(255,255,255,0.55);
+    --bg: #f2f2f7;
+    --text: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --text-tertiary: #aeaeb2;
+    --separator: rgba(60,60,67,0.12);
+    --blur: 20px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --apple-blue: #0a84ff;
+      --apple-blue-dark: #409cff;
+      --green: #30d158;
+      --red: #ff453a;
+      --orange: #ff9f0a;
+      --surface: rgba(28,28,30,0.72);
+      --surface-solid: #1c1c1e;
+      --surface-secondary: rgba(44,44,46,0.65);
+      --bg: #000000;
+      --text: #ffffff;
+      --text-secondary: #98989d;
+      --text-tertiary: #636366;
+      --separator: rgba(84,84,88,0.65);
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    :root {
+      --surface: var(--surface-solid);
+      --surface-secondary: var(--surface-solid);
+      --blur: 0px;
+    }
+  }
+  @media (prefers-contrast: more) {
+    :root {
+      --separator: rgba(60,60,67,0.36);
+      --text-secondary: #636366;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  ::selection { background: rgba(0,113,227,0.18); }
+  @media (prefers-color-scheme: dark) {
+    ::selection { background: rgba(10,132,255,0.28); }
+  }
+
+  /* --- FORM SHELL --- */
+  .form-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 12px 16px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* --- TOP BAR --- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid var(--separator);
+    margin-bottom: 16px;
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 8px; }
+  .top-bar-title { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+  .mode-badge {
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--mono);
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--separator);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .mode-badge:active { transform: scale(0.92); }
+  .top-bar-right { display: flex; align-items: center; gap: 6px; }
+  .top-btn {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), background 120ms ease;
+  }
+  .top-btn:active { transform: scale(0.92); }
+  .top-btn-standard { background: var(--separator); color: var(--text-secondary); }
+  .top-btn-standard.active { background: rgba(0,113,227,0.12); color: var(--apple-blue); }
+  .top-btn-clear { background: rgba(255,59,48,0.12); color: var(--red); }
+  .top-btn-icon {
+    width: 28px; height: 28px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .top-btn-icon:active { transform: scale(0.88); }
+
+  /* --- SECTIONS --- */
+  .section { padding-top: 16px; }
+  .section + .section { border-top: 0.5px solid var(--separator); }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+  .section-value {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--apple-blue);
+  }
+
+  /* --- FORM CONTROLS --- */
+  .field-group { margin-bottom: 10px; }
+  .field-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .field-label .req { color: var(--red); }
+  .field-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    transition: border-color 80ms ease, box-shadow 80ms ease, transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .field-input:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.12);
+  }
+  .field-input::placeholder { color: var(--text-tertiary); font-weight: 500; }
+  .field-input.mono { font-family: var(--mono); font-size: 12px; }
+  .field-input:active { transform: scale(0.985); }
+  .field-input.error-highlight {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(255,59,48,0.15);
+    animation: errorPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes errorPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(255,59,48,0.15); }
+  }
+  textarea.field-input {
+    height: auto;
+    min-height: 80px;
+    padding: 10px 12px;
+    resize: none;
+    line-height: 1.45;
+  }
+  select.field-input {
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  /* --- GRID --- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* --- SELECTOR BUTTON (Client, Signatory) --- */
+  .selector-btn {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), border-color 80ms ease;
+  }
+  .selector-btn:active { transform: scale(0.98); }
+  .selector-btn.error-highlight {
+    border-color: var(--red);
+    animation: errorPulse 1.2s ease-in-out infinite;
+  }
+  .selector-btn-label { font-size: 13px; font-weight: 700; }
+  .selector-btn-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .selector-btn-placeholder { color: var(--red); }
+  .selector-btn-arrow { color: var(--text-tertiary); flex-shrink: 0; }
+  .selector-btn.locked { cursor: default; opacity: 0.7; }
+
+  /* --- SECTION TOGGLE --- */
+  .section-toggle {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), color 120ms ease, border-color 120ms ease;
+  }
+  .section-toggle:active { transform: scale(0.92); }
+  .section-toggle.included { color: var(--green); border-color: rgba(52,199,89,0.3); }
+  .section-toggle.excluded { color: var(--red); border-color: rgba(255,59,48,0.3); }
+  .section-toggle svg { width: 10px; height: 10px; }
+
+  /* --- MATERIALS TABLE --- */
+  .materials-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .materials-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    font-family: var(--font);
+    outline: none;
+  }
+  .materials-title:focus { color: var(--text); }
+  .materials-count { font-size: 10px; font-weight: 500; font-family: var(--mono); color: var(--text-secondary); }
+  .material-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--separator);
+  }
+  .material-row:last-child { border-bottom: none; }
+  .material-idx {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--separator);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+  }
+  .material-fields { flex: 1; display: grid; grid-template-columns: 6fr 3fr 3fr; gap: 6px; }
+  .material-field {
+    height: 36px;
+    padding: 0 8px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    transition: border-color 80ms ease;
+  }
+  .material-field:focus { border-color: var(--apple-blue); }
+  .material-field.center { text-align: center; }
+  .material-field.mono { font-family: var(--mono); font-size: 11px; }
+  .material-remove {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), color 120ms ease, background 120ms ease;
+  }
+  .material-remove:active { transform: scale(0.85); }
+  .material-remove:hover { color: var(--red); background: rgba(255,59,48,0.08); }
+  .material-remove svg { width: 12px; height: 12px; }
+  .add-material-btn {
+    width: 100%;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 0.5px dashed var(--separator);
+    background: transparent;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), color 120ms ease, border-color 120ms ease;
+  }
+  .add-material-btn:active { transform: scale(0.97); }
+  .add-material-btn:hover { color: var(--apple-blue); border-color: rgba(0,113,227,0.3); }
+  .add-material-btn svg { width: 12px; height: 12px; }
+
+  /* --- SIGNATORY CARD --- */
+  .signatory-card {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .signatory-name { font-size: 12px; font-weight: 700; }
+  .signatory-role { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+  .signatory-actions { display: flex; gap: 6px; }
+  .signatory-btn {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .signatory-btn:active { transform: scale(0.92); }
+  .signatory-btn-primary { background: var(--apple-blue); color: #fff; }
+  .signatory-btn-ghost { background: transparent; color: var(--text-secondary); border: 0.5px solid var(--separator); }
+
+  /* --- SIGNATURE AREA --- */
+  .signature-box {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+  }
+  .signature-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .signature-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+  .signature-status { font-size: 9px; font-family: var(--mono); color: var(--text-secondary); }
+  .signature-preview {
+    height: 64px;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    position: relative;
+    border: 0.5px solid var(--separator);
+  }
+  .signature-preview img { max-height: 100%; object-fit: contain; }
+  .signature-preview-remove {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface-solid);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+  .signature-preview-remove:hover { color: var(--red); }
+  .signature-preview-remove svg { width: 10px; height: 10px; }
+  .signature-empty {
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    border: 0.5px dashed var(--separator);
+    margin-bottom: 8px;
+  }
+  .signature-upload-btn {
+    width: 100%;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .signature-upload-btn:active { transform: scale(0.97); }
+  .signature-upload-btn svg { width: 12px; height: 12px; }
+
+  /* --- IMPORT BUTTON --- */
+  .import-btn {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--separator);
+    background: var(--surface-solid);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .import-btn:active { transform: scale(0.95); }
+  .import-btn svg { width: 12px; height: 12px; }
+
+  /* --- FAB --- */
+  .fab-container {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 40;
+  }
+  .fab {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    border: none;
+    background: var(--apple-blue);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0,113,227,0.35), 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), box-shadow 120ms ease;
+  }
+  .fab:active { transform: scale(0.88); }
+  @media (prefers-color-scheme: dark) {
+    .fab { box-shadow: 0 8px 32px rgba(10,132,255,0.4), 0 2px 8px rgba(0,0,0,0.3); }
+  }
+  .fab svg { width: 22px; height: 22px; }
+
+  /* --- BOTTOM SHEETS --- */
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .sheet-overlay.open { opacity: 1; }
+  .sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface-solid);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    transform: translateY(100%);
+    transition: transform 300ms cubic-bezier(.25,.1,.25,1);
+  }
+  .sheet-overlay.open .sheet { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    border-radius: 2px;
+    background: var(--text-tertiary);
+    margin: 0 auto 12px;
+    opacity: 0.4;
+  }
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--separator);
+    margin-bottom: 12px;
+  }
+  .sheet-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sheet-subtitle { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+  .sheet-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--separator);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .sheet-close:active { transform: scale(0.88); }
+  .sheet-close svg { width: 12px; height: 12px; }
+  .sheet-search {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .sheet-search input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--bg);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+  }
+  .sheet-search input:focus { box-shadow: 0 0 0 2px rgba(0,113,227,0.2); }
+  .sheet-search-icon {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+  }
+  .sheet-search-icon svg { width: 14px; height: 14px; }
+  .sheet-list { overflow-y: auto; flex: 1; }
+  .sheet-list-item {
+    padding: 10px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1), background 120ms ease;
+  }
+  .sheet-list-item:active { transform: scale(0.97); }
+  .sheet-list-item:hover { background: var(--bg); }
+  .sheet-list-item.selected { background: rgba(0,113,227,0.06); border: 0.5px solid var(--apple-blue); }
+  .sheet-list-item-name { font-size: 13px; font-weight: 700; }
+  .sheet-list-item-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+  .sheet-list-item-arrow { color: var(--text-tertiary); }
+  .sheet-list-item-arrow svg { width: 12px; height: 12px; }
+  .sheet-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--separator);
+    background: var(--bg);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    margin-bottom: 10px;
+  }
+  .sheet-textarea:focus { background: var(--surface-solid); border-color: var(--apple-blue); }
+  .sheet-actions { display: flex; gap: 8px; }
+  .sheet-action {
+    flex: 1;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .sheet-action:active { transform: scale(0.95); }
+  .sheet-action-secondary { background: var(--bg); color: var(--text); }
+  .sheet-action-primary { background: var(--apple-blue); color: #fff; }
+
+  /* --- DIALOG --- */
+  .dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .dialog-overlay.open { opacity: 1; }
+  .dialog {
+    width: 100%;
+    max-width: 300px;
+    background: var(--surface-solid);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+    transform: scale(0.92);
+    transition: transform 250ms cubic-bezier(.25,.1,.25,1);
+  }
+  .dialog-overlay.open .dialog { transform: scale(1); }
+  .dialog-title { font-size: 14px; font-weight: 800; }
+  .dialog-body { font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .dialog-btn {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 80ms cubic-bezier(.25,.1,.25,1);
+  }
+  .dialog-btn:active { transform: scale(0.92); }
+  .dialog-btn-ghost { background: transparent; color: var(--text-secondary); }
+  .dialog-btn-primary { background: var(--apple-blue); color: #fff; }
+
+  /* --- TOAST --- */
+  .toast {
+    position: fixed;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 55;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 200ms ease, transform 200ms cubic-bezier(.25,.1,.25,1);
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 88vw;
+  }
+  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red); color: #fff; }
+  .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* --- OFFLINE BAR --- */
+  .offline-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--orange);
+    color: #000;
+    text-align: center;
+    padding: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    z-index: 60;
+    display: none;
+  }
+  .offline-bar.visible { display: block; }
+
+  /* --- HIDDEN --- */
+  .hidden { display: none !important; }
+  input[type="file"] { display: none; }
+
+  /* --- REDUCED MOTION --- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="form-shell" id="formShell">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">Customer Service Report</span>
+      <span class="mode-badge" id="modeBadge" onclick="toggleFormMode()">CREATE</span>
+    </div>
+    <div class="top-bar-right">
+      <button class="top-btn top-btn-clear hidden" id="clearClientBtn" onclick="clearClient()">Clear Client</button>
+      <button class="top-btn top-btn-standard" id="fieldModeBtn" onclick="toggleFieldMode()">Standard</button>
+      <button class="top-btn-icon" id="downloadBtn" onclick="showToast('Blank CSR PDF downloaded')" title="Download Blank">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTIONS CONTAINER -->
+  <div id="sectionsContainer">
+
+    <!-- 01. DOCUMENT DETAILS -->
+    <div class="section" id="sec-doc">
+      <div class="section-header">
+        <span class="section-label">01. Document Details</span>
+        <span class="section-value" id="csrDisplay">CSR-2026-0084</span>
+      </div>
+
+      <div class="field-group" id="clientFieldGroup">
+        <label class="field-label">Client Account <span class="req" id="clientReq">*</span></label>
+        <button class="selector-btn" id="clientSelectorBtn" onclick="openClientSheet()">
+          <div>
+            <div class="selector-btn-label" id="clientName">Select client account (Required)</div>
+            <div class="selector-btn-sub" id="clientAddr">Tap to search client records</div>
+          </div>
+          <span class="selector-btn-arrow"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+        </button>
+      </div>
+
+      <div class="grid-2">
+        <div class="field-group" id="csrFieldGroup">
+          <label class="field-label">CSR Number <span class="req">*</span></label>
+          <input type="text" class="field-input mono" id="csrInput" value="CSR-2026-0084" oninput="updateCsr()">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Report Date</label>
+          <input type="date" class="field-input mono" id="dateInput" value="2026-09-02">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Customer Contact</label>
+          <input type="text" class="field-input" id="contactInput" placeholder="Contact person">
+        </div>
+        <div class="field-group">
+          <label class="field-label">P.O. Number</label>
+          <input type="text" class="field-input" id="poInput" placeholder="PO #">
+        </div>
+      </div>
+    </div>
+
+    <!-- 02. ITEM CONTROLS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">02. Item Controls</span>
+        <button class="import-btn" onclick="openImportSheet()">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Import JSON Payload
+        </button>
+      </div>
+    </div>
+
+    <!-- 03. SERVICE PARAMETERS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">03. Service Parameters</span>
+      </div>
+      <div class="grid-3">
+        <div class="field-group">
+          <label class="field-label">Call Type</label>
+          <select class="field-input" id="callTypeSelect">
+            <option>Breakdown</option>
+            <option>Preventive Maintenance</option>
+            <option>Installation</option>
+            <option>Commissioning</option>
+            <option>Inspection</option>
+            <option>Emergency Repair</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Service Basis</label>
+          <select class="field-input" id="serviceBasisSelect">
+            <option>Paid Service</option>
+            <option>AMC</option>
+            <option selected>Warranty</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">System Down?</label>
+          <select class="field-input" id="systemDownSelect">
+            <option selected>Yes</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04. EQUIPMENT SPECIFICATIONS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">04. Equipment Specifications</span>
+      </div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Equipment Type</label>
+          <input type="text" class="field-input" id="equipType" value="Diesel Generator Set" placeholder="e.g. Diesel Generator">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Equipment Location</label>
+          <input type="text" class="field-input" id="equipLoc" value="Main Powerhouse, Bay 2" placeholder="e.g. Bay 2">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Make</label>
+          <input type="text" class="field-input" id="equipMake" value="Cummins Power" placeholder="Manufacturer">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Capacity</label>
+          <input type="text" class="field-input" id="equipCap" value="500 kVA" placeholder="e.g. 500 kVA">
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="field-group">
+          <label class="field-label">Model</label>
+          <input type="text" class="field-input" id="equipModel" value="QSK19-G4" placeholder="Model ID">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Serial No.</label>
+          <input type="text" class="field-input mono" id="equipSerial" value="CU-8849201-NG" placeholder="Serial #">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Engine No</label>
+          <input type="text" class="field-input mono" id="equipEngine" value="ENG-99420-X" placeholder="Engine #">
+        </div>
+      </div>
+    </div>
+
+    <!-- 05. PROBLEM & SERVICE -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">05. Problem & Service Details</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Problem Reported</label>
+        <textarea class="field-input" id="problemReported" rows="3" placeholder="Client complaint or initial defect description...">Unit tripping intermittently on high coolant temperature alarm during peak plant load.</textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Service Rendered</label>
+        <textarea class="field-input" id="serviceRendered" rows="3" placeholder="Corrective actions taken by engineer...">Flushed closed-loop cooling system, replaced faulty thermostat assembly, and bled fuel rails. Conducted 45-minute step load testing at 80% capacity.</textarea>
+      </div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Defects Found</label>
+          <textarea class="field-input" id="defectsFound" rows="2" placeholder="Root causes...">Debris build-up in radiator fins and degraded thermostat bypass gasket.</textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Engineer Remarks</label>
+          <textarea class="field-input" id="engineerRemarks" rows="2" placeholder="Recommendations...">Operating temperatures stabilized at 86°C under full load. Recommended scheduled coolant replacement in 250 running hours.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06. EXECUTION TIMELINE -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">06. Execution Timeline & Status</span>
+      </div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Start Date & Time</label>
+          <div style="display:flex;gap:6px;">
+            <input type="date" class="field-input mono" id="startDate" value="2026-09-02" style="flex:3;">
+            <input type="time" class="field-input mono" id="startTime" value="08:30" style="flex:2;">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">End Date & Time</label>
+          <div style="display:flex;gap:6px;">
+            <input type="date" class="field-input mono" id="endDate" value="2026-09-02" style="flex:3;">
+            <input type="time" class="field-input mono" id="endTime" value="14:15" style="flex:2;">
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Status After Service</label>
+        <select class="field-input" id="statusSelect">
+          <option selected>Complete</option>
+          <option>Incomplete</option>
+          <option>Pending for spares</option>
+          <option>Under observation</option>
+          <option>Working solution provided</option>
+          <option>Field Entry Pending</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 07. OPERATIONAL READINGS -->
+    <div class="section" id="sec-readings">
+      <div class="section-header">
+        <span class="section-label">07. Operational Readings</span>
+        <button class="section-toggle included" id="readingsToggle" onclick="toggleReadings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          Included
+        </button>
+      </div>
+      <div id="readingsGrid" class="grid-3">
+        <div class="field-group">
+          <label class="field-label">Voltage</label>
+          <input type="text" class="field-input mono" id="voltage" value="415 V" placeholder="415 V">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Frequency</label>
+          <input type="text" class="field-input mono" id="frequency" value="50.2 Hz" placeholder="50 Hz">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Battery</label>
+          <input type="text" class="field-input mono" id="battery" value="26.4 VDC" placeholder="24 VDC">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Temperature</label>
+          <input type="text" class="field-input mono" id="temperature" value="86 °C" placeholder="85 °C">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Pressure</label>
+          <input type="text" class="field-input mono" id="pressure" value="4.8 Bar" placeholder="4.5 Bar">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Hours</label>
+          <input type="text" class="field-input mono" id="hours" value="4,821.5 Hrs" placeholder="Running Hrs">
+        </div>
+      </div>
+    </div>
+
+    <!-- 08. MATERIALS USED -->
+    <div class="section">
+      <div class="materials-header">
+        <input type="text" class="materials-title" id="materialsTitle" value="Materials Used">
+        <span class="materials-count" id="materialsCount">3 items</span>
+      </div>
+      <div id="materialsList">
+        <!-- Populated by JS -->
+      </div>
+      <button class="add-material-btn" onclick="addMaterial()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add material row
+      </button>
+    </div>
+
+    <!-- 09. TECHNICIAN ENDORSEMENT -->
+    <div class="section" id="sec-technician">
+      <div class="section-header">
+        <span class="section-label">09. Technician Endorsement</span>
+        <button class="section-toggle included" id="techToggle" onclick="toggleTechnician()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          Included
+        </button>
+      </div>
+      <div id="technicianContent">
+        <div class="field-group">
+          <label class="field-label">Technician Name</label>
+          <input type="text" class="field-input" id="techName" value="Engr. Babatunde Lawal">
+        </div>
+        <div class="signatory-card">
+          <div>
+            <div class="signature-label" style="margin-bottom:2px;">Technician Signature</div>
+            <div class="signatory-name" id="signatoryDisplay">Engr. Babatunde Lawal</div>
+            <div class="signatory-role" id="signatoryRole">Lead Field Service Engineer</div>
+          </div>
+          <div class="signatory-actions">
+            <button class="signatory-btn signatory-btn-primary" id="signatoryBtn" onclick="openSignatorySheet()">Change</button>
+            <button class="signatory-btn signatory-btn-ghost" onclick="clearSignatory()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. CUSTOMER ACKNOWLEDGEMENT -->
+    <div class="section" id="sec-ack">
+      <div class="section-header">
+        <span class="section-label">10. Customer Acknowledgement</span>
+        <button class="section-toggle included" id="ackToggle" onclick="toggleAcknowledgement()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+          Included
+        </button>
+      </div>
+      <div id="ackContent">
+        <div class="field-group">
+          <label class="field-label">Recipient Name & Title</label>
+          <input type="text" class="field-input" id="recipientName" value="Adewale Balogun (Plant Engineer)" placeholder="e.g. John Doe (Plant Manager)">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Feedback / Endorsement Note</label>
+          <textarea class="field-input" id="feedback" rows="2" placeholder="Client feedback notes...">Generator ran continuously through production shift without temperature deviation.</textarea>
+        </div>
+        <div class="signature-box">
+          <div class="signature-header">
+            <span class="signature-label">Recipient Signature</span>
+            <span class="signature-status" id="sigStatus">Offline Blank</span>
+          </div>
+          <div id="sigPreviewArea">
+            <div class="signature-empty" id="sigEmpty">No signature attached (leave blank for physical sign)</div>
+          </div>
+          <button class="signature-upload-btn" onclick="document.getElementById('sigFileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            Upload Signature Image
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FAB -->
+<div class="fab-container">
+  <button class="fab" onclick="handleSave()" title="Save Customer Service Report">
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
+  </button>
+</div>
+
+<!-- OFFLINE BAR -->
+<div class="offline-bar" id="offlineBar">Offline Mode Active: Draft saved locally for synchronization.</div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="sigFileInput" accept="image/*" onchange="handleSignatureUpload(event)">
+
+<!-- SHEET: CLIENT SELECTOR -->
+<div class="sheet-overlay" id="clientSheet" onclick="closeClientSheet(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Select Client Account</div>
+      <button class="sheet-close" onclick="closeClientSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sheet-search">
+      <input type="text" placeholder="Search registered clients..." id="clientSearchInput" oninput="filterClients()">
+      <span class="sheet-search-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></span>
+    </div>
+    <div class="sheet-list" id="clientList"></div>
+  </div>
+</div>
+
+<!-- SHEET: SIGNATORY PICKER -->
+<div class="sheet-overlay" id="signatorySheet" onclick="closeSignatorySheet(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title">Choose Signatory</div>
+        <div class="sheet-subtitle">Select authorized engineer</div>
+      </div>
+      <button class="sheet-close" onclick="closeSignatorySheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sheet-list" id="signatoryList"></div>
+  </div>
+</div>
+
+<!-- SHEET: IMPORT JSON -->
+<div class="sheet-overlay" id="importSheet" onclick="closeImportSheet(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title">Import CSR</div>
+        <div class="sheet-subtitle">Update fields from a JSON extraction</div>
+      </div>
+      <button class="sheet-close" onclick="closeImportSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <textarea class="sheet-textarea" id="importJsonInput" placeholder="Paste raw CSR JSON object here..."></textarea>
+    <div class="sheet-actions">
+      <button class="sheet-action sheet-action-secondary" onclick="handleImport()">Preview</button>
+      <button class="sheet-action sheet-action-primary" onclick="handleImport()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIALOG: IDENTITY LOCK -->
+<div class="dialog-overlay" id="identityDialog" onclick="closeIdentityDialog(event)">
+  <div class="dialog" onclick="event.stopPropagation()">
+    <div class="dialog-title">Identity Fields Locked</div>
+    <div class="dialog-body">Client and CSR number are locked in edit mode to preserve audit history. Duplicate to create a new draft.</div>
+    <div class="dialog-actions">
+      <button class="dialog-btn dialog-btn-ghost" onclick="closeIdentityDialog()">Cancel</button>
+      <button class="dialog-btn dialog-btn-primary" onclick="duplicateDraft()">Duplicate Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // --- DATA ---
+  const CLIENTS_DB = [
+    { id: 'c1', name: 'Dangote Sugar Refinery Plc', address: 'Apapa Port Complex, Wharf Road, Lagos' },
+    { id: 'c2', name: 'Flour Mills of Nigeria', address: 'Old Dock Road, Apapa, Lagos' },
+    { id: 'c3', name: 'TotalEnergies Exploration E&P', address: 'Plot 25 Trans Amadi Ind. Layout, Port Harcourt' },
+    { id: 'c4', name: 'Guinness Nigeria Brewery', address: '24 Oba Akran Avenue, Ikeja, Lagos' }
+  ];
+
+  const SIGNATORIES_DB = [
+    { id: 'sig1', name: 'Engr. Babatunde Lawal', role: 'Lead Field Service Engineer' },
+    { id: 'sig2', name: 'Chukwuemeka Obi', role: 'Senior Electromechanical Specialist' },
+    { id: 'sig3', name: 'Farouk Usman', role: 'Technical Services Supervisor' }
+  ];
+
+  let materials = [
+    { id: 'm1', item: 'Thermostat Assembly 82°C Kit', quantity: '1', unit: 'Set' },
+    { id: 'm2', item: 'Heavy-Duty Coolant Concentrate (20L)', quantity: '2', unit: 'Cans' },
+    { id: 'm3', item: 'High-Temp Bypass Silicone Gasket', quantity: '1', unit: 'Pcs' }
+  ];
+
+  let formMode = 'create';
+  let isFieldMode = false;
+  let selectedClient = null;
+  let selectedSignatory = SIGNATORIES_DB[0];
+  let showReadings = true;
+  let showTechnician = true;
+  let showAck = true;
+  let highlightedField = null;
+  let toastTimeout = null;
+
+  // --- INIT ---
+  renderMaterials();
+  renderClientList();
+  renderSignatoryList();
+
+  // --- FORM MODE ---
+  function toggleFormMode() {
+    formMode = formMode === 'create' ? 'edit' : 'create';
+    document.getElementById('modeBadge').textContent = formMode.toUpperCase();
+    const csrInput = document.getElementById('csrInput');
+    const clientBtn = document.getElementById('clientSelectorBtn');
+    if (formMode === 'edit') {
+      csrInput.readOnly = true;
+      clientBtn.classList.add('locked');
+      clientBtn.onclick = () => openIdentityDialog();
+    } else {
+      csrInput.readOnly = false;
+      clientBtn.classList.remove('locked');
+      clientBtn.onclick = () => openClientSheet();
+    }
+    showToast('Mode: ' + formMode.toUpperCase());
+  }
+
+  // --- FIELD MODE ---
+  function toggleFieldMode() {
+    isFieldMode = !isFieldMode;
+    const btn = document.getElementById('fieldModeBtn');
+    const clientReq = document.getElementById('clientReq');
+    if (isFieldMode) {
+      btn.textContent = 'Field';
+      btn.classList.add('active');
+      document.getElementById('statusSelect').value = 'Field Entry Pending';
+      clientReq.style.display = 'none';
+    } else {
+      btn.textContent = 'Standard';
+      btn.classList.remove('active');
+      if (document.getElementById('statusSelect').value === 'Field Entry Pending') {
+        document.getElementById('statusSelect').value = 'Complete';
+      }
+      clientReq.style.display = '';
+    }
+    showToast(isFieldMode ? 'Field mode active' : 'Standard mode active');
+  }
+
+  // --- CSR UPDATE ---
+  function updateCsr() {
+    document.getElementById('csrDisplay').textContent = document.getElementById('csrInput').value;
+  }
+
+  // --- CLEAR CLIENT ---
+  function clearClient() {
+    selectedClient = null;
+    document.getElementById('clientName').textContent = 'Select client account (Required)';
+    document.getElementById('clientName').classList.add('selector-btn-placeholder');
+    document.getElementById('clientAddr').textContent = isFieldMode ? 'Optional in field mode' : 'Tap to search client records';
+    document.getElementById('contactInput').value = '';
+    document.getElementById('clearClientBtn').classList.add('hidden');
+    showToast('Client cleared to demonstrate Save Blocker');
+  }
+
+  // --- TOAST ---
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.innerHTML = (isError ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' : '') + '<span>' + msg + '</span>';
+    t.className = 'toast' + (isError ? ' error' : '');
+    requestAnimationFrame(() => t.classList.add('visible'));
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => t.classList.remove('visible'), 3200);
+  }
+
+  // --- VALIDATION ALERT ---
+  function triggerValidation(fieldId, msg) {
+    showToast(msg, true);
+    clearHighlight();
+    highlightedField = fieldId;
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.classList.add('error-highlight');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setTimeout(clearHighlight, 2800);
+  }
+  function clearHighlight() {
+    if (highlightedField) {
+      const el = document.getElementById(highlightedField);
+      if (el) el.classList.remove('error-highlight');
+      highlightedField = null;
+    }
+  }
+
+  // --- SAVE ---
+  function handleSave() {
+    const csr = document.getElementById('csrInput').value.trim();
+    if (!csr) {
+      triggerValidation('csrInput', 'Save Requirement Missing: CSR Serial Number required');
+      return;
+    }
+    if (!selectedClient && !isFieldMode) {
+      triggerValidation('clientSelectorBtn', 'Save Requirement Missing: Client account must be selected');
+      return;
+    }
+    showToast(isFieldMode
+      ? 'CSR ' + csr + ' saved in Field Mode! Generating PDF...'
+      : 'CSR ' + csr + ' saved successfully (' + document.getElementById('statusSelect').value + ')');
+  }
+
+  // --- READINGS TOGGLE ---
+  function toggleReadings() {
+    showReadings = !showReadings;
+    const btn = document.getElementById('readingsToggle');
+    const grid = document.getElementById('readingsGrid');
+    if (showReadings) {
+      btn.className = 'section-toggle included';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg> Included';
+      grid.classList.remove('hidden');
+    } else {
+      btn.className = 'section-toggle excluded';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg> Excluded';
+      grid.classList.add('hidden');
+    }
+  }
+
+  // --- TECHNICIAN TOGGLE ---
+  function toggleTechnician() {
+    showTechnician = !showTechnician;
+    const btn = document.getElementById('techToggle');
+    const content = document.getElementById('technicianContent');
+    if (showTechnician) {
+      btn.className = 'section-toggle included';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg> Included';
+      content.classList.remove('hidden');
+    } else {
+      btn.className = 'section-toggle excluded';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg> Excluded';
+      content.classList.add('hidden');
+    }
+  }
+
+  // --- ACK TOGGLE ---
+  function toggleAcknowledgement() {
+    showAck = !showAck;
+    const btn = document.getElementById('ackToggle');
+    const content = document.getElementById('ackContent');
+    if (showAck) {
+      btn.className = 'section-toggle included';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg> Included';
+      content.classList.remove('hidden');
+    } else {
+      btn.className = 'section-toggle excluded';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg> Excluded';
+      content.classList.add('hidden');
+    }
+  }
+
+  // --- MATERIALS ---
+  function renderMaterials() {
+    const list = document.getElementById('materialsList');
+    list.innerHTML = '';
+    materials.forEach((m, i) => {
+      const row = document.createElement('div');
+      row.className = 'material-row';
+      row.innerHTML =
+        '<span class="material-idx">' + (i + 1) + '</span>' +
+        '<div class="material-fields">' +
+          '<input class="material-field" placeholder="Material specification" value="' + escHtml(m.item) + '" oninput="updateMaterial(' + i + ',\'item\',this.value)">' +
+          '<input class="material-field center mono" type="number" placeholder="Qty" value="' + escHtml(m.quantity) + '" oninput="updateMaterial(' + i + ',\'quantity\',this.value)">' +
+          '<input class="material-field center" placeholder="Unit" value="' + escHtml(m.unit) + '" oninput="updateMaterial(' + i + ',\'unit\',this.value)">' +
+        '</div>' +
+        (materials.length > 1 ? '<button class="material-remove" onclick="removeMaterial(' + i + ')" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>' : '');
+      list.appendChild(row);
+    });
+    document.getElementById('materialsCount').textContent = materials.filter(m => m.item.trim()).length + ' items';
+  }
+  function addMaterial() {
+    materials.push({ id: 'mat-' + Date.now(), item: '', quantity: '', unit: 'Units' });
+    renderMaterials();
+    showToast('Material row added');
+  }
+  function updateMaterial(idx, field, val) {
+    materials[idx][field] = val;
+    document.getElementById('materialsCount').textContent = materials.filter(m => m.item.trim()).length + ' items';
+  }
+  function removeMaterial(idx) {
+    if (materials.length <= 1) {
+      materials = [{ id: 'mat-' + Date.now(), item: '', quantity: '', unit: 'Units' }];
+      renderMaterials();
+      showToast('Reset row to blank');
+      return;
+    }
+    materials.splice(idx, 1);
+    renderMaterials();
+  }
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // --- SIGNATURE UPLOAD ---
+  function handleSignatureUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Unsupported file format', true); return; }
+    const reader = new FileReader();
+    reader.onload = function() {
+      document.getElementById('sigPreviewArea').innerHTML =
+        '<div class="signature-preview">' +
+          '<img src="' + reader.result + '" alt="Sign">' +
+          '<button class="signature-preview-remove" onclick="removeSignature()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>' +
+        '</div>';
+      document.getElementById('sigStatus').textContent = 'Attached';
+      showToast('Signature attached');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+  function removeSignature() {
+    document.getElementById('sigPreviewArea').innerHTML = '<div class="signature-empty" id="sigEmpty">No signature attached (leave blank for physical sign)</div>';
+    document.getElementById('sigStatus').textContent = 'Offline Blank';
+    showToast('Signature removed');
+  }
+
+  // --- CLIENT SHEET ---
+  function openClientSheet() {
+    document.getElementById('clientSheet').classList.add('open');
+    document.getElementById('clientSearchInput').value = '';
+    renderClientList();
+    setTimeout(() => document.getElementById('clientSearchInput').focus(), 100);
+  }
+  function closeClientSheet(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('clientSheet').classList.remove('open');
+  }
+  function renderClientList() {
+    const q = (document.getElementById('clientSearchInput')?.value || '').toLowerCase();
+    const list = document.getElementById('clientList');
+    const filtered = CLIENTS_DB.filter(c => c.name.toLowerCase().includes(q));
+    list.innerHTML = filtered.map(c =>
+      '<div class="sheet-list-item' + (selectedClient?.id === c.id ? ' selected' : '') + '" onclick="selectClient(\'' + c.id + '\')">' +
+        '<div><div class="sheet-list-item-name">' + c.name + '</div><div class="sheet-list-item-sub">' + c.address + '</div></div>' +
+        '<span class="sheet-list-item-arrow"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>' +
+      '</div>'
+    ).join('');
+  }
+  function filterClients() { renderClientList(); }
+  function selectClient(id) {
+    selectedClient = CLIENTS_DB.find(c => c.id === id);
+    document.getElementById('clientName').textContent = selectedClient.name;
+    document.getElementById('clientName').classList.remove('selector-btn-placeholder');
+    document.getElementById('clientAddr').textContent = selectedClient.address;
+    document.getElementById('contactInput').value = selectedClient.name;
+    document.getElementById('clearClientBtn').classList.remove('hidden');
+    closeClientSheet();
+    showToast('Selected ' + selectedClient.name);
+  }
+
+  // --- SIGNATORY SHEET ---
+  function openSignatorySheet() {
+    document.getElementById('signatorySheet').classList.add('open');
+    renderSignatoryList();
+  }
+  function closeSignatorySheet(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('signatorySheet').classList.remove('open');
+  }
+  function renderSignatoryList() {
+    const list = document.getElementById('signatoryList');
+    list.innerHTML = SIGNATORIES_DB.map(p =>
+      '<div class="sheet-list-item' + (selectedSignatory?.id === p.id ? ' selected' : '') + '" onclick="selectSignatory(\'' + p.id + '\')">' +
+        '<div><div class="sheet-list-item-name">' + p.name + '</div><div class="sheet-list-item-sub">' + p.role + '</div></div>' +
+        (selectedSignatory?.id === p.id
+          ? '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#34c759" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
+          : '<span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--apple-blue)">Select</span>') +
+      '</div>'
+    ).join('');
+  }
+  function selectSignatory(id) {
+    selectedSignatory = SIGNATORIES_DB.find(p => p.id === id);
+    document.getElementById('techName').value = selectedSignatory.name;
+    document.getElementById('signatoryDisplay').textContent = selectedSignatory.name;
+    document.getElementById('signatoryRole').textContent = selectedSignatory.role;
+    document.getElementById('signatoryBtn').textContent = 'Change';
+    closeSignatorySheet();
+    showToast('Assigned ' + selectedSignatory.name);
+  }
+  function clearSignatory() {
+    selectedSignatory = null;
+    document.getElementById('signatoryDisplay').textContent = 'Leave blank for offline sign.';
+    document.getElementById('signatoryRole').textContent = '';
+    document.getElementById('signatoryBtn').textContent = 'Choose';
+    showToast('Signatory cleared');
+  }
+
+  // --- IMPORT SHEET ---
+  function openImportSheet() {
+    document.getElementById('importSheet').classList.add('open');
+    document.getElementById('importJsonInput').value = '';
+  }
+  function closeImportSheet(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('importSheet').classList.remove('open');
+  }
+  function handleImport() {
+    try {
+      const text = document.getElementById('importJsonInput').value;
+      const parsed = JSON.parse(text);
+      if (parsed.csrNumber) { document.getElementById('csrInput').value = parsed.csrNumber; updateCsr(); }
+      if (parsed.customerName) document.getElementById('contactInput').value = parsed.customerName;
+      if (parsed.callType) document.getElementById('callTypeSelect').value = parsed.callType;
+      if (parsed.serviceBasis) document.getElementById('serviceBasisSelect').value = parsed.serviceBasis;
+      if (parsed.systemDown) document.getElementById('systemDownSelect').value = parsed.systemDown ? 'Yes' : 'No';
+      if (parsed.equipmentType) document.getElementById('equipType').value = parsed.equipmentType;
+      if (parsed.location) document.getElementById('equipLoc').value = parsed.location;
+      if (parsed.make) document.getElementById('equipMake').value = parsed.make;
+      if (parsed.capacity) document.getElementById('equipCap').value = parsed.capacity;
+      if (parsed.model) document.getElementById('equipModel').value = parsed.model;
+      if (parsed.serialNo) document.getElementById('equipSerial').value = parsed.serialNo;
+      if (parsed.problemReported) document.getElementById('problemReported').value = parsed.problemReported;
+      if (parsed.serviceRendered) document.getElementById('serviceRendered').value = parsed.serviceRendered;
+      if (parsed.defectsFound) document.getElementById('defectsFound').value = parsed.defectsFound;
+      if (parsed.engineerRemarks) document.getElementById('engineerRemarks').value = parsed.engineerRemarks;
+      if (parsed.readings) {
+        if (!showReadings) toggleReadings();
+        if (parsed.readings.voltage) document.getElementById('voltage').value = parsed.readings.voltage;
+        if (parsed.readings.frequency) document.getElementById('frequency').value = parsed.readings.frequency;
+        if (parsed.readings.battery) document.getElementById('battery').value = parsed.readings.battery;
+        if (parsed.readings.temperature) document.getElementById('temperature').value = parsed.readings.temperature;
+        if (parsed.readings.pressure) document.getElementById('pressure').value = parsed.readings.pressure;
+        if (parsed.readings.hours) document.getElementById('hours').value = parsed.readings.hours;
+      }
+      if (parsed.materials && Array.isArray(parsed.materials)) {
+        materials = parsed.materials.map((m, i) => ({ id: 'mat-' + Date.now() + '-' + i, item: m.item || '', quantity: String(m.quantity || ''), unit: m.unit || 'Units' }));
+        renderMaterials();
+      }
+      closeImportSheet();
+      showToast('CSR imported');
+    } catch {
+      showToast('Import Failed: Invalid JSON schema', true);
+    }
+  }
+
+  // --- IDENTITY DIALOG ---
+  function openIdentityDialog() {
+    document.getElementById('identityDialog').classList.add('open');
+  }
+  function closeIdentityDialog(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('identityDialog').classList.remove('open');
+  }
+  function duplicateDraft() {
+    formMode = 'create';
+    document.getElementById('modeBadge').textContent = 'CREATE';
+    document.getElementById('csrInput').value = 'CSR-' + String(Date.now()).slice(-4);
+    document.getElementById('csrInput').readOnly = false;
+    updateCsr();
+    selectedClient = null;
+    document.getElementById('clientName').textContent = 'Select client account (Required)';
+    document.getElementById('clientName').classList.add('selector-btn-placeholder');
+    document.getElementById('clientAddr').textContent = 'Tap to search client records';
+    document.getElementById('contactInput').value = '';
+    document.getElementById('clientSelectorBtn').classList.remove('locked');
+    document.getElementById('clientSelectorBtn').onclick = () => openClientSheet();
+    closeIdentityDialog();
+    showToast('Duplicated to new draft');
+  }
+</script>
+</body>
+</html>
