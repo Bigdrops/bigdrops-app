@@ -87,9 +87,30 @@ export const LEGACY_THEME_IDS = [
   "modern-minimalist",
 ] as const
 
+/**
+ * ShadcnBlocks registry themes (chisled, color-only per PRD).
+ * Source: https://www.shadcnblocks.com/r/theme/{name} (light + dark tokens).
+ * Alpine (Pro) excluded: registry returns 401 without a license key.
+ */
+export const SHADCN_THEME_IDS = [
+  "citrus",
+  "vercel",
+  "supabase",
+  "linear",
+  "claude",
+  "claymorphism",
+  "amber-minimal",
+  "cleanslate",
+  "falcon",
+  "modern-minimal",
+  "shadcnblocks",
+  "shadcn-default",
+] as const
+
 export const ALL_THEME_IDS = [
   ...CANONICAL_THEME_IDS,
   ...ADDITIONAL_THEME_IDS,
+  ...SHADCN_THEME_IDS,
   ...LEGACY_THEME_IDS,
 ] as const
 
@@ -672,6 +693,452 @@ const COCOA_DARK: CoreColors = {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// SHADCNBLOCKS REGISTRY THEMES — chiseled light/dark CoreColors
+// Source: https://www.shadcnblocks.com/r/theme/{name} (official tokens).
+// Mapping rules (documented, deterministic):
+// - bg/surface/ink/primary/secondary/muted/attention/line/nav: official values.
+// - surfaceRaised = card. surfaceStrong/sageSoft = muted. sage/secondary share.
+// - ink2 = official muted-foreground. ink3 = oklch midpoint of
+//   muted-foreground and border (computed once, stored as hex).
+// - line/lineStrong = rgba(ink, .07/.14) light, .08/.15 dark (codebase rule).
+// - nav = rgba(255,255,255,.88) light, rgba(bg,.88) dark (codebase rule).
+// - attentionSoft = #fee2e2 light / #3b1518 dark (codebase constants).
+// - Fonts, radius, spacing, shadows: theme-invariant per PRD (excluded).
+// ════════════════════════════════════════════════════════════════════
+
+const CITRUS_LIGHT: CoreColors = {
+  bg: "#fafafa",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f5f5f5",
+  surfaceStrong: "#f5f5f5",
+  ink: "#262626",
+  ink2: "#525252",
+  ink3: "#989898",
+  primary: "#b8e954",
+  secondary: "#45807a",
+  attention: "#141414",
+  attentionSoft: "#fee2e2",
+  line: "rgba(38,38,38,.07)",
+  lineStrong: "rgba(38,38,38,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const CITRUS_DARK: CoreColors = {
+  bg: "#0a0a0a",
+  surface: "#171717",
+  surfaceRaised: "#171717",
+  surfaceMuted: "#262626",
+  surfaceStrong: "#262626",
+  ink: "#e5e5e5",
+  ink2: "#d4d4d4",
+  ink3: "#777777",
+  primary: "#b8e954",
+  secondary: "#45807a",
+  attention: "#f14444",
+  attentionSoft: "#3b1518",
+  line: "rgba(229,229,229,.08)",
+  lineStrong: "rgba(229,229,229,.15)",
+  nav: "rgba(10,10,10,.88)",
+}
+
+const VERCEL_LIGHT: CoreColors = {
+  bg: "#fcfcfc",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f5f5f5",
+  surfaceStrong: "#f5f5f5",
+  ink: "#000000",
+  ink2: "#525252",
+  ink3: "#989898",
+  primary: "#000000",
+  secondary: "#ebebeb",
+  attention: "#e54b4f",
+  attentionSoft: "#fee2e2",
+  line: "rgba(0,0,0,.07)",
+  lineStrong: "rgba(0,0,0,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const VERCEL_DARK: CoreColors = {
+  bg: "#000000",
+  surface: "#090909",
+  surfaceRaised: "#090909",
+  surfaceMuted: "#1d1d1d",
+  surfaceStrong: "#1d1d1d",
+  ink: "#ffffff",
+  ink2: "#a4a4a4",
+  ink3: "#606060",
+  primary: "#ffffff",
+  secondary: "#222222",
+  attention: "#ff5b5b",
+  attentionSoft: "#3b1518",
+  line: "rgba(255,255,255,.08)",
+  lineStrong: "rgba(255,255,255,.15)",
+  nav: "rgba(0,0,0,.88)",
+}
+
+const SUPABASE_LIGHT: CoreColors = {
+  bg: "#fcfcfc",
+  surface: "#fcfcfc",
+  surfaceRaised: "#fcfcfc",
+  surfaceMuted: "#eeeeee",
+  surfaceStrong: "#eeeeee",
+  ink: "#161616",
+  ink2: "#1f1f1f",
+  ink3: "#777777",
+  primary: "#71e1ac",
+  secondary: "#fcfcfc",
+  attention: "#c83316",
+  attentionSoft: "#fee2e2",
+  line: "rgba(22,22,22,.07)",
+  lineStrong: "rgba(22,22,22,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const SUPABASE_DARK: CoreColors = {
+  bg: "#121212",
+  surface: "#161616",
+  surfaceRaised: "#161616",
+  surfaceMuted: "#1f1f1f",
+  surfaceStrong: "#1f1f1f",
+  ink: "#e4e8ef",
+  ink2: "#a1a1a1",
+  ink3: "#626262",
+  primary: "#0d623b",
+  secondary: "#242424",
+  attention: "#551912",
+  attentionSoft: "#3b1518",
+  line: "rgba(228,232,239,.08)",
+  lineStrong: "rgba(228,232,239,.15)",
+  nav: "rgba(18,18,18,.88)",
+}
+
+const LINEAR_LIGHT: CoreColors = {
+  bg: "#fbfbfb",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#ececef",
+  surfaceStrong: "#ececef",
+  ink: "#1b1b1b",
+  ink2: "#71737a",
+  ink3: "#aaada9",
+  primary: "#6e78d5",
+  secondary: "#1b1b1b",
+  attention: "#92681b",
+  attentionSoft: "#fee2e2",
+  line: "rgba(27,27,27,.07)",
+  lineStrong: "rgba(27,27,27,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const LINEAR_DARK: CoreColors = {
+  bg: "#101011",
+  surface: "#17181a",
+  surfaceRaised: "#17181a",
+  surfaceMuted: "#141415",
+  surfaceStrong: "#141415",
+  ink: "#e3e4e6",
+  ink2: "#a1a2a5",
+  ink3: "#5f6064",
+  primary: "#e6e6e6",
+  secondary: "#7987e1",
+  attention: "#bba44a",
+  attentionSoft: "#3b1518",
+  line: "rgba(227,228,230,.08)",
+  lineStrong: "rgba(227,228,230,.15)",
+  nav: "rgba(16,16,17,.88)",
+}
+
+const CLAUDE_LIGHT: CoreColors = {
+  bg: "#faf8f1",
+  surface: "#fcfcfc",
+  surfaceRaised: "#fcfcfc",
+  surfaceMuted: "#ede8d9",
+  surfaceStrong: "#ede8d9",
+  ink: "#3d3826",
+  ink2: "#85837d",
+  ink3: "#aeaca5",
+  primary: "#cb6441",
+  secondary: "#e7e4dd",
+  attention: "#141414",
+  attentionSoft: "#fee2e2",
+  line: "rgba(61,56,38,.07)",
+  lineStrong: "rgba(61,56,38,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const CLAUDE_DARK: CoreColors = {
+  bg: "#262626",
+  surface: "#262626",
+  surfaceRaised: "#262626",
+  surfaceMuted: "#1b1b1b",
+  surfaceStrong: "#1b1b1b",
+  ink: "#c3c1ba",
+  ink2: "#b7b5a6",
+  ink3: "#77766c",
+  primary: "#d87757",
+  secondary: "#faf8f1",
+  attention: "#f14444",
+  attentionSoft: "#3b1518",
+  line: "rgba(195,193,186,.08)",
+  lineStrong: "rgba(195,193,186,.15)",
+  nav: "rgba(38,38,38,.88)",
+}
+
+const CLAYMORPHISM_LIGHT: CoreColors = {
+  bg: "#e0e0e0",
+  surface: "#fafafa",
+  surfaceRaised: "#fafafa",
+  surfaceMuted: "#ededed",
+  surfaceStrong: "#ededed",
+  ink: "#1d293d",
+  ink2: "#6c727e",
+  ink3: "#9ca39f",
+  primary: "#6468f0",
+  secondary: "#d4d4d4",
+  attention: "#f14444",
+  attentionSoft: "#fee2e2",
+  line: "rgba(29,41,61,.07)",
+  lineStrong: "rgba(29,41,61,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const CLAYMORPHISM_DARK: CoreColors = {
+  bg: "#1e1a16",
+  surface: "#1e1a16",
+  surfaceRaised: "#1e1a16",
+  surfaceMuted: "#2d2824",
+  surfaceStrong: "#2d2824",
+  ink: "#e4e8ef",
+  ink2: "#9ba2ae",
+  ink3: "#636d67",
+  primary: "#818cf9",
+  secondary: "#3c3733",
+  attention: "#f14444",
+  attentionSoft: "#3b1518",
+  line: "rgba(228,232,239,.08)",
+  lineStrong: "rgba(228,232,239,.15)",
+  nav: "rgba(30,26,22,.88)",
+}
+
+const AMBER_MINIMAL_LIGHT: CoreColors = {
+  bg: "#ffffff",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f8f8f8",
+  surfaceStrong: "#f8f8f8",
+  ink: "#262626",
+  ink2: "#6c727e",
+  ink3: "#a6abb5",
+  primary: "#f49f1e",
+  secondary: "#f5f5f5",
+  attention: "#f14444",
+  attentionSoft: "#fee2e2",
+  line: "rgba(38,38,38,.07)",
+  lineStrong: "rgba(38,38,38,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const AMBER_MINIMAL_DARK: CoreColors = {
+  bg: "#161616",
+  surface: "#262626",
+  surfaceRaised: "#262626",
+  surfaceMuted: "#262626",
+  surfaceStrong: "#262626",
+  ink: "#e4e4e4",
+  ink2: "#a4a4a4",
+  ink3: "#707070",
+  primary: "#f49f1e",
+  secondary: "#262626",
+  attention: "#f14444",
+  attentionSoft: "#3b1518",
+  line: "rgba(228,228,228,.08)",
+  lineStrong: "rgba(228,228,228,.15)",
+  nav: "rgba(22,22,22,.88)",
+}
+
+const CLEANSLATE_LIGHT: CoreColors = {
+  bg: "#f8f8f8",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f5f5f5",
+  surfaceStrong: "#f5f5f5",
+  ink: "#1d293d",
+  ink2: "#6c727e",
+  ink3: "#9ca2ab",
+  primary: "#6468f0",
+  secondary: "#e4e8ef",
+  attention: "#f14444",
+  attentionSoft: "#fee2e2",
+  line: "rgba(29,41,61,.07)",
+  lineStrong: "rgba(29,41,61,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const CLEANSLATE_DARK: CoreColors = {
+  bg: "#0f182b",
+  surface: "#1d293d",
+  surfaceRaised: "#1d293d",
+  surfaceMuted: "#1d293d",
+  surfaceStrong: "#1d293d",
+  ink: "#e4e8ef",
+  ink2: "#9ba2ae",
+  ink3: "#727b8a",
+  primary: "#818cf9",
+  secondary: "#2f3848",
+  attention: "#f14444",
+  attentionSoft: "#3b1518",
+  line: "rgba(228,232,239,.08)",
+  lineStrong: "rgba(228,232,239,.15)",
+  nav: "rgba(15,24,43,.88)",
+}
+
+const FALCON_LIGHT: CoreColors = {
+  bg: "#f6f7f9",
+  surface: "#feffff",
+  surfaceRaised: "#feffff",
+  surfaceMuted: "#eceff4",
+  surfaceStrong: "#eceff4",
+  ink: "#464c65",
+  ink2: "#686c75",
+  ink3: "#a2a6ae",
+  primary: "#464c65",
+  secondary: "#6a7f8b",
+  attention: "#af6a65",
+  attentionSoft: "#fee2e2",
+  line: "rgba(70,76,101,.07)",
+  lineStrong: "rgba(70,76,101,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const FALCON_DARK: CoreColors = {
+  bg: "#121212",
+  surface: "#0c0c0c",
+  surfaceRaised: "#0c0c0c",
+  surfaceMuted: "#1c1516",
+  surfaceStrong: "#1c1516",
+  ink: "#ffffff",
+  ink2: "#a5a2a2",
+  ink3: "#626060",
+  primary: "#99b6b2",
+  secondary: "#799db1",
+  attention: "#bd9c9c",
+  attentionSoft: "#3b1518",
+  line: "rgba(255,255,255,.08)",
+  lineStrong: "rgba(255,255,255,.15)",
+  nav: "rgba(18,18,18,.88)",
+}
+
+const MODERN_MINIMAL_LIGHT: CoreColors = {
+  bg: "#ffffff",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f9fafb",
+  surfaceStrong: "#f9fafb",
+  ink: "#333333",
+  ink2: "#6b7280",
+  ink3: "#a6abb4",
+  primary: "#3b82f6",
+  secondary: "#f3f4f6",
+  attention: "#ef4444",
+  attentionSoft: "#fee2e2",
+  line: "rgba(51,51,51,.07)",
+  lineStrong: "rgba(51,51,51,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const MODERN_MINIMAL_DARK: CoreColors = {
+  bg: "#171717",
+  surface: "#262626",
+  surfaceRaised: "#262626",
+  surfaceMuted: "#1f1f1f",
+  surfaceStrong: "#1f1f1f",
+  ink: "#e5e5e5",
+  ink2: "#a3a3a3",
+  ink3: "#707070",
+  primary: "#3b82f6",
+  secondary: "#262626",
+  attention: "#ef4444",
+  attentionSoft: "#3b1518",
+  line: "rgba(229,229,229,.08)",
+  lineStrong: "rgba(229,229,229,.15)",
+  nav: "rgba(23,23,23,.88)",
+}
+
+const SHADCNBLOCKS_LIGHT: CoreColors = {
+  bg: "#ffffff",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f5f5f5",
+  surfaceStrong: "#f5f5f5",
+  ink: "#0a0a0a",
+  ink2: "#737373",
+  ink3: "#aaaaaa",
+  primary: "#171717",
+  secondary: "#f5f5f5",
+  attention: "#e7000b",
+  attentionSoft: "#fee2e2",
+  line: "rgba(10,10,10,.07)",
+  lineStrong: "rgba(10,10,10,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const SHADCNBLOCKS_DARK: CoreColors = {
+  bg: "#0a0a0a",
+  surface: "#0a0a0a",
+  surfaceRaised: "#0a0a0a",
+  surfaceMuted: "#262626",
+  surfaceStrong: "#262626",
+  ink: "#fafafa",
+  ink2: "#a1a1a1",
+  ink3: "#cfcfcf",
+  primary: "#e5e5e5",
+  secondary: "#262626",
+  attention: "#ff6467",
+  attentionSoft: "#3b1518",
+  line: "rgba(250,250,250,.08)",
+  lineStrong: "rgba(250,250,250,.15)",
+  nav: "rgba(10,10,10,.88)",
+}
+
+const SHADCN_DEFAULT_LIGHT: CoreColors = {
+  bg: "#ffffff",
+  surface: "#ffffff",
+  surfaceRaised: "#ffffff",
+  surfaceMuted: "#f5f5f5",
+  surfaceStrong: "#f5f5f5",
+  ink: "#0a0a0a",
+  ink2: "#737373",
+  ink3: "#aaaaaa",
+  primary: "#171717",
+  secondary: "#f5f5f5",
+  attention: "#e7000b",
+  attentionSoft: "#fee2e2",
+  line: "rgba(10,10,10,.07)",
+  lineStrong: "rgba(10,10,10,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const SHADCN_DEFAULT_DARK: CoreColors = {
+  bg: "#0a0a0a",
+  surface: "#171717",
+  surfaceRaised: "#171717",
+  surfaceMuted: "#262626",
+  surfaceStrong: "#262626",
+  ink: "#fafafa",
+  ink2: "#a1a1a1",
+  ink3: "#cfcfcf",
+  primary: "#e5e5e5",
+  secondary: "#262626",
+  attention: "#ff6467",
+  attentionSoft: "#3b1518",
+  line: "rgba(250,250,250,.08)",
+  lineStrong: "rgba(250,250,250,.15)",
+  nav: "rgba(10,10,10,.88)",
+}
+
+// ════════════════════════════════════════════════════════════════════
 // LEGACY PRESETS (backward compatibility)
 // ════════════════════════════════════════════════════════════════════
 
@@ -730,8 +1197,9 @@ function makePreset(
   isDark: boolean,
   core: CoreColors,
   preview?: { background: string; card: string; primary: string; accent: string },
+  overrides?: ThemeTokenBundle,
 ): ThemePresetDefinition {
-  const bundle = normalizeThemeTokenBundle(buildBundle(core), { allowRadius: true })
+  const bundle = normalizeThemeTokenBundle({ ...buildBundle(core), ...overrides }, { allowRadius: true })
   const semantic = prdSemanticTokens(core)
   return {
     id,
@@ -758,6 +1226,33 @@ export const THEME_PRESETS: ThemePresetDefinition[] = [
   makePreset("forest-green", "Forest Green", "Natural green palette inspired by lush forests.", false, FOREST_LIGHT),
   makePreset("warm-cocoa", "Warm Cocoa", "Earthy brown palette with warm, inviting tones.", false, COCOA_LIGHT),
 
+  // ShadcnBlocks registry themes (chisled; official light tokens, PRD color-only).
+  // Official *-foreground overrides preserve published contrast pairs.
+  makePreset("citrus", "Citrus", "Electric lime energy with deep teal depth.", false, CITRUS_LIGHT,
+    undefined, { "primary-foreground": "#000000", "secondary-foreground": "#ffffff" }),
+  makePreset("vercel", "Vercel", "High-contrast monochrome precision.", false, VERCEL_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#000000" }),
+  makePreset("supabase", "Supabase", "Emerald developer energy.", false, SUPABASE_LIGHT,
+    undefined, { "primary-foreground": "#202623", "secondary-foreground": "#161616" }),
+  makePreset("linear", "Linear", "Indigo product-tool polish.", false, LINEAR_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#fbfbfb" }),
+  makePreset("claude", "Claude", "Warm parchment with terracotta warmth.", false, CLAUDE_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#525044" }),
+  makePreset("claymorphism", "Claymorphism", "Soft dimensional violet surfaces.", false, CLAYMORPHISM_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#4b5666" }),
+  makePreset("amber-minimal", "Amber Minimal", "Warm amber accents on clean neutrals.", false, AMBER_MINIMAL_LIGHT,
+    undefined, { "primary-foreground": "#000000", "secondary-foreground": "#4b5666" }),
+  makePreset("cleanslate", "Cleanslate", "Clean coastal slate neutrals.", false, CLEANSLATE_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#364050" }),
+  makePreset("falcon", "Falcon", "Sharp slate contrast with steel blue.", false, FALCON_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#000000" }),
+  makePreset("modern-minimal", "Modern Minimal", "Architectural blue calm.", false, MODERN_MINIMAL_LIGHT,
+    undefined, { "primary-foreground": "#ffffff", "secondary-foreground": "#4b5563" }),
+  makePreset("shadcnblocks", "Shadcnblocks", "Neutral monochrome registry default.", false, SHADCNBLOCKS_LIGHT,
+    undefined, { "primary-foreground": "#fafafa", "secondary-foreground": "#171717" }),
+  makePreset("shadcn-default", "Shadcn Default", "Stock shadcn monochrome base.", false, SHADCN_DEFAULT_LIGHT,
+    undefined, { "primary-foreground": "#fafafa", "secondary-foreground": "#171717" }),
+
   // Legacy presets (backward compatibility — both migrate to slate-navy)
   makePreset("bmw", "BMW (Legacy)", "Legacy preset. Migrates to Slate Navy.", true, BMW_CORE),
   makePreset("modern-minimalist", "Modern Minimalist (Legacy)", "Legacy preset. Migrates to Slate Navy.", false, MINIMALIST_CORE),
@@ -779,8 +1274,39 @@ const DARK_VARIANTS: Record<string, CoreColors> = {
   "rose-gold": ROSE_DARK,
   "forest-green": FOREST_DARK,
   "warm-cocoa": COCOA_DARK,
+  "citrus": CITRUS_DARK,
+  "vercel": VERCEL_DARK,
+  "supabase": SUPABASE_DARK,
+  "linear": LINEAR_DARK,
+  "claude": CLAUDE_DARK,
+  "claymorphism": CLAYMORPHISM_DARK,
+  "amber-minimal": AMBER_MINIMAL_DARK,
+  "cleanslate": CLEANSLATE_DARK,
+  "falcon": FALCON_DARK,
+  "modern-minimal": MODERN_MINIMAL_DARK,
+  "shadcnblocks": SHADCNBLOCKS_DARK,
+  "shadcn-default": SHADCN_DEFAULT_DARK,
   "bmw": BMW_CORE,
   "modern-minimalist": MINIMALIST_CORE,
+}
+
+/**
+ * Official dark-mode foreground pairs for chiseled themes.
+ * Merged over the derived bundle so published contrast pairs survive.
+ */
+const DARK_FOREGROUND_OVERRIDES: Record<string, ThemeTokenBundle> = {
+  "citrus": { "primary-foreground": "#000000", "secondary-foreground": "#ffffff" },
+  "vercel": { "primary-foreground": "#000000", "secondary-foreground": "#ffffff" },
+  "supabase": { "primary-foreground": "#dfe7e3", "secondary-foreground": "#fcfcfc" },
+  "linear": { "primary-foreground": "#000000", "secondary-foreground": "#e3e4e6" },
+  "claude": { "primary-foreground": "#ffffff", "secondary-foreground": "#303030" },
+  "claymorphism": { "primary-foreground": "#1e1a16", "secondary-foreground": "#d0d4db" },
+  "amber-minimal": { "primary-foreground": "#000000", "secondary-foreground": "#e4e4e4" },
+  "cleanslate": { "primary-foreground": "#0f182b", "secondary-foreground": "#d0d4db" },
+  "falcon": { "primary-foreground": "#000000", "secondary-foreground": "#000000" },
+  "modern-minimal": { "primary-foreground": "#ffffff", "secondary-foreground": "#e5e5e5" },
+  "shadcnblocks": { "primary-foreground": "#171717", "secondary-foreground": "#fafafa" },
+  "shadcn-default": { "primary-foreground": "#171717", "secondary-foreground": "#fafafa" },
 }
 
 /**
@@ -790,7 +1316,7 @@ const DARK_VARIANTS: Record<string, CoreColors> = {
 export function getDarkVariantBundle(themeId: ThemePresetId): ThemeTokenBundle | null {
   const core = DARK_VARIANTS[themeId]
   if (!core) return null
-  return normalizeThemeTokenBundle(buildBundle(core), { allowRadius: true })
+  return normalizeThemeTokenBundle({ ...buildBundle(core), ...(DARK_FOREGROUND_OVERRIDES[themeId] ?? {}) }, { allowRadius: true })
 }
 
 /**
