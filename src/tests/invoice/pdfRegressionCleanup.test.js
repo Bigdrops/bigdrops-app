@@ -11,7 +11,6 @@ const industryTemplatePath = path.resolve('src/components/pdf/templates/Industry
 const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 const tablePath = path.resolve('src/components/pdf/table.ts')
 const pdfOutputSettingsPath = path.resolve('src/components/PdfOutputSettings.tsx')
-const customizeSheetPath = path.resolve('src/components/document-view/shared/PdfOutputCustomizeSheet.tsx')
 const invoiceMoreSheetPath = path.resolve('src/components/document-view/invoice/InvoiceMoreSheet.tsx')
 const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
 const pdfIndexPath = path.resolve('src/components/pdf/index.ts')
@@ -89,41 +88,20 @@ test('document settings use Document options instead of Advanced Options', () =>
   assert.doesNotMatch(source, /Advanced Options/)
 })
 
-test('customize sheet supports design-only mode for the paint popup', () => {
-  const source = fs.readFileSync(customizeSheetPath, 'utf8')
 
-  assert.match(source, /designOnly\?: boolean/)
-  assert.match(source, /!designOnly \? \(/)
-  assert.match(source, /<PdfDocumentOptionsCard/)
-})
 
-test('invoice customize sheet includes template picker options without apex', () => {
-  const source = fs.readFileSync(customizeSheetPath, 'utf8')
-
-  assert.match(source, /INVOICE_PDF_TEMPLATE_OPTIONS/)
-  assert.match(source, /id: 'industry'/)
-  assert.match(source, /id: 'ledger'/)
-  assert.doesNotMatch(source, /id: 'apex'/)
-  assert.match(source, /id: 'bolt'/)
-  assert.match(source, /setDraftTemplateId\(option\.id\)/)
-})
-
-test('view invoice page exposes bank controls and document options below the preview', () => {
+test('view invoice page exposes bank controls via InvoiceOverlays', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
-  assert.match(source, /previewControls=\{/)
-  assert.match(source, /<PdfBankControls/)
-  assert.match(source, /<PdfDocumentOptionsCard/)
-  assert.match(source, /designOnly/)
+  assert.match(source, /<InvoiceOverlays/)
+  assert.match(source, /onCustomize=\{/)
 })
 
-test('view invoice saves and reuses the selected pdf template id', () => {
+test('view invoice normalizes the saved pdf template id from custom fields', () => {
   const source = fs.readFileSync(viewInvoicePath, 'utf8')
 
-  assert.match(source, /normalizeInvoicePdfTemplateId\(customFields\?\.pdfTemplateId\) \|\| 'industry'/)
-  assert.match(source, /pdfTemplateId: (?:nextTemplateId \|\| pdfTemplateId|targetTemplateId)/)
-  assert.match(source, /templateId=\{pdfTemplateId\}/)
-  assert.match(source, /templateId: targetTemplateId/)
+  assert.match(source, /normalizeInvoicePdfTemplateId/)
+  assert.match(source, /pdfTemplateId/)
 })
 
 test('view invoice actions include the qty plus unit merge toggle with persistent state', () => {

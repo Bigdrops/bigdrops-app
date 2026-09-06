@@ -25,6 +25,11 @@ interface HandwritingFont {
   label: string
 }
 
+interface TemplateOption {
+  id: string
+  label: string
+}
+
 interface DocumentCustomizeCardProps {
   /** Currently resolved customization from usePdfCustomization */
   customization: ResolvedPdfCustomization
@@ -65,6 +70,13 @@ interface DocumentCustomizeCardProps {
   onLandscapeChange?: (landscape: boolean) => void
   showLandscape?: boolean
 
+  // ── Commercial document extras (invoice/quotation) ────────────
+  bankAccountSelector?: ReactNode
+  companyTagline?: string
+  footerText?: string
+  showOutputOptions?: boolean
+  outputOptions?: ReactNode
+
   // ── Save ──────────────────────────────────────────────────────
   saving?: boolean
   onSave: () => void
@@ -95,6 +107,11 @@ export default function DocumentCustomizeCard({
   landscape,
   onLandscapeChange,
   showLandscape = false,
+  bankAccountSelector,
+  companyTagline,
+  footerText,
+  showOutputOptions = false,
+  outputOptions,
   saving = false,
   onSave,
 }: DocumentCustomizeCardProps) {
@@ -107,6 +124,23 @@ export default function DocumentCustomizeCard({
         </div>
         {templatePicker}
       </div>
+
+      {/* ── Bank Account (invoice/quotation) ─────────────────── */}
+      {bankAccountSelector ? (
+        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
+          <div className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
+            Bank Details
+          </div>
+          {bankAccountSelector}
+        </div>
+      ) : null}
+
+      {/* ── Output Options (invoice/quotation) ───────────────── */}
+      {showOutputOptions && outputOptions ? (
+        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4">
+          {outputOptions}
+        </div>
+      ) : null}
 
       {/* ── Accent Color ─────────────────────────────────────── */}
       {showAccentColor && onAccentColorChange && accentColor != null ? (
@@ -155,7 +189,7 @@ export default function DocumentCustomizeCard({
 
       {/* ── Compact / Landscape ───────────────────────────────── */}
       {(showCompact || showLandscape) ? (
-        <div className="space-y-2">
+        <div className="rounded-[20px] border border-bd-border bg-bd-surface p-4 space-y-2">
           {showCompact && compact != null && onCompactChange ? (
             <ToggleRow
               label="Compact Layout"

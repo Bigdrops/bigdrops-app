@@ -2,15 +2,16 @@ import { useMemo, useState } from "react";
 import { Download, Edit3, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { PdfDocumentOptionsCard } from "@/components/PdfOutputSettings";
 import { QuotationActivityCard } from "@/components/document-view/quotation/QuotationActivityCard";
 import QuotationDocumentPreview from "@/components/document-view/quotation/QuotationDocumentPreview";
-import PdfOutputCustomizeSheet from "@/components/document-view/shared/PdfOutputCustomizeSheet";
 import { useDocumentUIState } from "@/components/document-view/hooks/useDocumentUIState";
 import QuotationMoreSheet from "@/components/document-view/quotation/QuotationMoreSheet";
 import QuotationViewPage from "@/components/document-view/quotation/QuotationViewPage";
 import DocumentConfirmDialog from "@/components/document-view/shared/DocumentConfirmDialog";
 import DocumentPage from "@/components/document-view/shared/DocumentPage";
+import DocumentSheet from "@/components/document-view/shared/DocumentSheet";
+import DocumentCustomizeCard from "@/components/document-view/shared/DocumentCustomizeCard";
+import CommercialTemplatePicker from "@/components/document-view/shared/CommercialTemplatePicker";
 import type { RelatedDocumentItem } from "@/components/document-view/shared/DocumentRelatedDocsSection";
 import FloatingDownloadButton from "@/components/document-view/shared/FloatingDownloadButton";
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav";
@@ -25,6 +26,11 @@ import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 
 import { useQuotationViewData } from "@/hooks/useQuotationViewData";
 import { useQuotationActions } from "@/hooks/useQuotationActions";
+import { usePdfCustomization } from "@/domain/pdf/customization/hooks";
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
+import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
+import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
+import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { buildQuotationPreviewModel } from "@/domain/quotation/previewModel";
 import { handleDownloadQuotationPdf } from "@/domain/quotation/pdfDownloadHandler";
 
@@ -79,6 +85,26 @@ export default function ViewQuotation() {
     setQuotation: data.setQuotation,
     refreshQuotation, pdfOutput, ui,
   });
+
+  // ── PDF customization engine (accent color, document font, ink) ──
+  const docFamily = resolveCommercialDocumentFamily('quotation' as PdfDesignPresetDocument);
+  const { customization, setAccentColor, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
+    documentFamily: docFamily,
+    templateDefaults: COMMERCIAL_TEMPLATE_DEFAULTS,
+    capabilities: COMMERCIAL_CAPABILITIES,
+    policy: COMMERCIAL_POLICY,
+  });
+
+  // ── Local draft state for the customize card ──
+  const [draftTemplateId, setDraftTemplateId] = useState<string>(
+    () => normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry",
+  );
+  const [draftPdfOutput, setDraftPdfOutput] = useState<PdfOutputSettingsValue>(pdfOutput);
+
+  const handleSave = async () => {
+    await actions.handleSaveCustomization(draftPdfOutput, undefined, draftTemplateId as any);
+    ui.closeSheet();
+  };
 
   const previewModel = useMemo(
     () => buildQuotationPreviewModel({
@@ -135,12 +161,7 @@ export default function ViewQuotation() {
     return nextItems;
   }, [linkedProject?.id, linkedProject?.name, navigate, quotation, quotation?.project_id]);
 
-  const previewControls = useMemo(
-    () => (
-      <PdfDocumentOptionsCard value={pdfOutput} onChange={actions.handleInlinePdfOutputChange} companyTagline={String(settings?.company_tagline || "")} footerText={String(settings?.footer_text || "")} />
-    ),
-    [actions.handleInlinePdfOutputChange, pdfOutput, settings?.company_tagline, settings?.footer_text],
-  );
+  const previewControls = null;
 
   if (loading) {
     return (
@@ -198,16 +219,53 @@ export default function ViewQuotation() {
         floating={<FloatingDownloadButton onClick={downloadPdf} disabled={actions.downloading} />}
         overlays={
           <>
-            <PdfOutputCustomizeSheet
+            <DocumentSheet
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)} onClose={ui.closeSheet}
               title="Customize Quotation PDF"
               subtitle="These controls update the same PDF output settings used by quotation download."
-              documentType="quotation" value={pdfOutput} bankAccounts={previewModel.previewBankAccounts}
-              companyTagline={String(settings?.company_tagline || "")} footerText={String(settings?.footer_text || "")}
-              templateId={normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry"}
-              designOnly
-              onSave={(nextValue, nextPreset, nextTemplateId) => actions.handleSaveCustomization(nextValue, nextPreset, nextTemplateId)}
-            />
+            >
+              <DocumentCustomizeCard
+                customization={customization}
+                setDocumentFont={setDocumentFont}
+                setInkFont={setInkFont}
+                setInkColour={setInkColour}
+                templatePicker={
+                  <CommercialTemplatePicker
+                    value={draftTemplateId}
+                    onChange={setDraftTemplateId}
+                  />
+                }
+                colorSwatches={[]}
+                customColor="auto"
+                onCustomColorChange={() => {}}
+                handwritingFonts={[]}
+                customFont="auto"
+                onCustomFontChange={() => {}}
+                showAccentColor
+                accentColor={customization.accentColor}
+                onAccentColorChange={setAccentColor}
+                accentColorSwatches={PDF_ACCENT_SWATCHES}
+                bankAccountSelector={
+                  <PdfBankControls
+                    value={draftPdfOutput}
+                    onChange={setDraftPdfOutput}
+                    bankAccounts={previewModel.previewBankAccounts}
+                  />
+                }
+                companyTagline={String(settings?.company_tagline || "")}
+                footerText={String(settings?.footer_text || "")}
+                showOutputOptions
+                outputOptions={
+                  <PdfDocumentOptionsCard
+                    value={draftPdfOutput}
+                    onChange={setDraftPdfOutput}
+                    companyTagline={String(settings?.company_tagline || "")}
+                    footerText={String(settings?.footer_text || "")}
+                  />
+                }
+                onSave={handleSave}
+              />
+            </DocumentSheet>
             <QuotationMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)} onClose={ui.closeSheet}
               onConvertToInvoice={() => ui.openModal(MODAL_CONVERT)} onLinkProject={() => setProjectLinkOpen(true)}

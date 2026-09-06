@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import PdfOutputCustomizeSheet from "@/components/document-view/shared/PdfOutputCustomizeSheet";
+import DocumentSheet from "@/components/document-view/shared/DocumentSheet";
+import DocumentCustomizeCard from "@/components/document-view/shared/DocumentCustomizeCard";
+import CommercialTemplatePicker from "@/components/document-view/shared/CommercialTemplatePicker";
 import InvoiceRecordPaymentSheet from "@/components/document-view/invoice/InvoiceRecordPaymentSheet";
 import InvoiceAdvanceSheet from "@/components/invoice/view/InvoiceAdvanceSheet";
 import InvoiceMoreSheet from "@/components/document-view/invoice/InvoiceMoreSheet";
@@ -8,6 +10,12 @@ import DocumentConfirmDialog from "@/components/document-view/shared/DocumentCon
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 import VoidPaymentDialog from "@/components/document-view/invoice/VoidPaymentDialog";
 import { buildWaybillPrefill } from "@/pages/view-invoice-actions";
+import { usePdfCustomization } from "@/domain/pdf/customization/hooks";
+import { COMMERCIAL_CAPABILITIES, COMMERCIAL_POLICY, COMMERCIAL_TEMPLATE_DEFAULTS, resolveCommercialDocumentFamily } from "@/domain/pdf/customization/commercial";
+import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
+import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
+import { PdfBankControls, PdfDocumentOptionsCard, type PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
+import { normalizeInvoicePdfTemplateId } from "@/domain/invoice";
 
 interface InvoiceOverlaysProps {
   invoice: any;
@@ -135,22 +143,75 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // ── PDF customization engine ──
+  const docFamily = resolveCommercialDocumentFamily('invoice' as PdfDesignPresetDocument);
+  const { customization, setAccentColor, setDocumentFont, setInkFont, setInkColour } = usePdfCustomization({
+    documentFamily: docFamily,
+    templateDefaults: COMMERCIAL_TEMPLATE_DEFAULTS,
+    capabilities: COMMERCIAL_CAPABILITIES,
+    policy: COMMERCIAL_POLICY,
+  });
+
+  const [draftTemplateId, setDraftTemplateId] = useState<string>(
+    () => normalizeInvoicePdfTemplateId(pdfTemplateId) || "industry",
+  );
+  const [draftPdfOutput, setDraftPdfOutput] = useState<PdfOutputSettingsValue>(pdfOutput);
+
+  const handleSave = async () => {
+    await handleSaveCustomization(draftPdfOutput, undefined, draftTemplateId);
+    ui.closeSheet();
+  };
+
   return (
     <>
-      <PdfOutputCustomizeSheet
+      <DocumentSheet
         open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
         onClose={ui.closeSheet}
         title="Customize Invoice PDF"
         subtitle="Adjust template, font, and color styling for this invoice PDF."
-        documentType="invoice"
-        value={pdfOutput}
-        bankAccounts={previewBankAccounts}
-        companyTagline={String(settingsData?.company_tagline || "")}
-        footerText={String(settingsData?.footer_text || "")}
-        designOnly
-        templateId={pdfTemplateId}
-        onSave={handleSaveCustomization}
-      />
+      >
+        <DocumentCustomizeCard
+          customization={customization}
+          setDocumentFont={setDocumentFont}
+          setInkFont={setInkFont}
+          setInkColour={setInkColour}
+          templatePicker={
+            <CommercialTemplatePicker
+              value={draftTemplateId}
+              onChange={setDraftTemplateId}
+            />
+          }
+          colorSwatches={[]}
+          customColor="auto"
+          onCustomColorChange={() => {}}
+          handwritingFonts={[]}
+          customFont="auto"
+          onCustomFontChange={() => {}}
+          showAccentColor
+          accentColor={customization.accentColor}
+          onAccentColorChange={setAccentColor}
+          accentColorSwatches={PDF_ACCENT_SWATCHES}
+          bankAccountSelector={
+            <PdfBankControls
+              value={draftPdfOutput}
+              onChange={setDraftPdfOutput}
+              bankAccounts={previewBankAccounts}
+            />
+          }
+          companyTagline={String(settingsData?.company_tagline || "")}
+          footerText={String(settingsData?.footer_text || "")}
+          showOutputOptions
+          outputOptions={
+            <PdfDocumentOptionsCard
+              value={draftPdfOutput}
+              onChange={setDraftPdfOutput}
+              companyTagline={String(settingsData?.company_tagline || "")}
+              footerText={String(settingsData?.footer_text || "")}
+            />
+          }
+          onSave={handleSave}
+        />
+      </DocumentSheet>
 
       <InvoiceRecordPaymentSheet
         open={ui.isSheetOpen(SHEET_RECORD_PAYMENT)}

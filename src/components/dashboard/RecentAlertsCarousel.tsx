@@ -1,10 +1,10 @@
-import * as React from 'react'
 import { AlertTriangle, CheckCircle2, Info, ReceiptText, Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { getNotificationRoute } from '@/domain/notifications/notificationRoutes'
 import { isNotificationUnread, useNotifications, type AppNotification } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 
 function getIcon(notification: AppNotification) {
   const severity = String(notification.severity || '').toLowerCase()
@@ -40,10 +40,11 @@ function formatRelativeTime(value: string) {
 
 function AlertsSkeleton() {
   return (
-    <div className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+    <div className="flex gap-2 overflow-hidden">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div                  key={index}
-                  className="min-w-[200px] w-[200px] rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
+        <div
+          key={index}
+          className="min-w-[200px] shrink-0 rounded-[16px] border border-[hsl(var(--line))] bg-[hsl(var(--surface-raised))] p-[10px] md:min-w-[220px] md:p-3"
         >
           <div className="h-2 w-16 rounded bg-[hsl(var(--surface-muted))]/80" />
           <div className="mt-2 h-3 w-32 rounded bg-[hsl(var(--surface-muted))]/80" />
@@ -93,72 +94,76 @@ export function RecentAlertsCarousel() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] md:gap-3 lg:grid lg:grid-cols-2 lg:overflow-x-visible lg:pb-0">
-          {alerts.map((notification) => {
-            const Icon = getIcon(notification)
-            const route = getNotificationRoute(notification)
-            const unread = isNotificationUnread(notification)
-            const body = notification.message || 'Open the notification to review the linked record.'
-            const time = formatRelativeTime(notification.created_at)
-            const isWarning = String(notification.severity || '').toLowerCase() === 'critical' ||
-              String(notification.severity || '').toLowerCase() === 'warning'
+        <div className="relative">
+          <Carousel opts={{ align: 'start', loop: false }}>
+            <CarouselContent className="-ml-2">
+              {alerts.map((notification) => {
+                const Icon = getIcon(notification)
+                const route = getNotificationRoute(notification)
+                const unread = isNotificationUnread(notification)
+                const body = notification.message || 'Open the notification to review the linked record.'
+                const time = formatRelativeTime(notification.created_at)
+                const isWarning = String(notification.severity || '').toLowerCase() === 'critical' ||
+                  String(notification.severity || '').toLowerCase() === 'warning'
 
-            const card = (
-              <>
-                <div className="flex items-start gap-[7px]">
-                  <div
-                    className={cn(
-                      'grid h-[29px] w-[29px] shrink-0 place-items-center rounded-[10px]',
-                      isWarning
-                        ? 'bg-[hsl(var(--attention-soft,hsl(var(--attention)/0.1)))] text-[hsl(var(--attention))]'
-                        : 'bg-[hsl(var(--primary)/0.14)] text-[hsl(var(--primary))]',
+                const card = (
+                  <>
+                    <div className="flex items-start gap-[7px]">
+                      <div
+                        className={cn(
+                          'grid h-[29px] w-[29px] shrink-0 place-items-center rounded-[10px]',
+                          isWarning
+                            ? 'bg-[hsl(var(--attention-soft,hsl(var(--attention)/0.1)))] text-[hsl(var(--attention))]'
+                            : 'bg-[hsl(var(--primary)/0.14)] text-[hsl(var(--primary))]',
+                        )}
+                      >
+                        <Icon size={14} strokeWidth={1.9} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[6px] font-[800] uppercase tracking-[0.13em] text-[hsl(var(--ink-3))] md:text-[7px]">
+                          Alert
+                        </div>
+                        <div className="mt-[2px] line-clamp-2 text-[10px] font-[800] leading-[1.25] text-[hsl(var(--ink))] md:text-[11px]">
+                          {notification.title}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="mt-[6px] line-clamp-3 text-[8px] leading-[1.4] text-[hsl(var(--ink-2))] md:text-[9px]">
+                      {body}
+                    </p>
+
+                    <div className="mt-[8px] flex items-center justify-between text-[7px] font-[700] text-[hsl(var(--ink-3))]">
+                      <span>{time || 'Just now'}</span>
+                      <span>{unread ? 'Unread' : 'Read'}</span>
+                    </div>
+                  </>
+                )
+
+                const content = (
+                  <CarouselItem key={notification.id} className="pl-2 md:basis-1/2 lg:basis-1/3">
+                    {route ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleSelect(notification)}
+                        className="h-full w-full rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99] shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:p-3"
+                      >
+                        {card}
+                      </button>
+                    ) : (
+                      <article className="h-full w-full rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:p-3">
+                        {card}
+                      </article>
                     )}
-                  >
-                    <Icon size={14} strokeWidth={1.9} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[6px] font-[800] uppercase tracking-[0.13em] text-[hsl(var(--ink-3))] md:text-[7px]">
-                      Alert
-                    </div>
-                    <div className="mt-[2px] line-clamp-2 text-[10px] font-[800] leading-[1.25] text-[hsl(var(--ink))] md:text-[11px]">
-                      {notification.title}
-                    </div>
-                  </div>
-                </div>
+                  </CarouselItem>
+                )
 
-                <p className="mt-[6px] line-clamp-3 text-[8px] leading-[1.4] text-[hsl(var(--ink-2))] md:text-[9px]">
-                  {body}
-                </p>
-
-                <div className="mt-[8px] flex items-center justify-between text-[7px] font-[700] text-[hsl(var(--ink-3))]">
-                  <span>{time || 'Just now'}</span>
-                  <span>{unread ? 'Unread' : 'Read'}</span>
-                </div>
-              </>
-            )
-
-            if (!route) {
-              return (
-                <article
-                  key={notification.id}
-                  className="min-w-[200px] w-[200px] rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
-                >
-                  {card}
-                </article>
-              )
-            }
-
-            return (
-              <button
-                key={notification.id}
-                type="button"
-                onClick={() => void handleSelect(notification)}
-                className="min-w-[200px] w-[200px] rounded-[16px] bg-[hsl(var(--surface-raised))] p-[10px] text-left transition active:scale-[0.99] shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.2)] md:min-w-[220px] md:w-[220px] md:p-3 lg:min-w-0 lg:w-auto"
-              >
-                {card}
-              </button>
-            )
-          })}
+                return content
+              })}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex" />
+            <CarouselNext className="hidden sm:flex" />
+          </Carousel>
         </div>
       )}
     </div>
