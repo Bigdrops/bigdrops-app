@@ -1,0 +1,77 @@
+TASK: Reconcile the new PDF Rendering Migration PRD ("docs/prd/pdf-rendering-migration/Draft.md") with the existing standards in "docs/standard/".
+
+READ-ONLY. Do not modify, rename, move, or delete any existing file. Produce ONE markdown reconciliation report only.
+
+STEP 1: Read "docs/prd/pdf-rendering-migration/Draft.md".
+
+Focus on:
+
+- §8 Customisation Engine
+- §9 Orientation Requirements
+- §10 Pagination Requirements
+- §11 "1 Page" Mode
+- §14 Existing PDF Pipeline
+- §16 Regression Requirements
+- §21 Non-Goals
+
+STEP 2: Read "docs/standard/" and list every file.
+
+Read the contents of every standard file. Pay particular attention to standards containing:
+
+- PDF
+- render
+- customization
+- document-column
+- commercial-party
+- receipt
+- audit-trail
+
+Do not assume a standard is relevant or irrelevant from its filename alone.
+
+STEP 3: Produce a reconciliation table with these exact columns:
+
+| Standard File | Is it used by React-PDF pipeline today? (YES/NO/UNKNOWN) | Does the PRD require it to be factored in? (YES/NO) | Verdict: KEEP / REWRITE / RETIRE / MERGE | Reason with evidence (quote relevant PRD § or standard line) |
+
+Use UNKNOWN when the repository evidence does not prove current React-PDF usage. Do not guess.
+
+STEP 4: Provide three clearly separated conclusions:
+
+A. Standards that map to the new pdfcn architecture
+
+Identify standards that must remain authoritative and either be preserved directly or rewritten to work with the new renderer.
+
+B. React-PDF-specific standards or workarounds
+
+Identify standards that exist only because of React-PDF limitations and could potentially be retired after Phase 4.
+
+Do not classify a standard as a workaround without repository evidence.
+
+C. Core business standards
+
+Identify standards that are renderer-independent business rules and MUST NOT be changed as part of this migration.
+
+Examples include:
+
+- audit-trail architecture
+- commercial-party architecture
+- document numbering
+- locked business calculations
+- other authoritative business rules discovered in "docs/standard/"
+
+STEP 5: End the report with:
+
+Overall Reconciliation Verdict
+
+State whether the current PDF Rendering Migration PRD is:
+
+- ALIGNED
+- ALIGNED WITH REQUIRED AMENDMENTS
+- or NOT ALIGNED
+
+List only the specific amendments required before implementation.
+
+STEP 6: STOP.
+
+Do not modify any code, PRD, standard, configuration, dependency, or other repository file.
+
+Wait for further instruction.
