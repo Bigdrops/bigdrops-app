@@ -28,6 +28,7 @@ import VatInputsPanel from '@/components/compliance/VatInputsPanel'
 import TaxFilingsPanel from '@/components/compliance/TaxFilingsPanel'
 import TaxRemindersPanel from '@/components/compliance/TaxRemindersPanel'
 import ComplianceSettingsPanel from '@/components/compliance/ComplianceSettingsPanel'
+import RecordCaptureSheet from '@/components/compliance/RecordCaptureSheet'
 
 type ComplianceSection = 'today' | 'vat' | 'wht' | 'filings' | 'obligations'
 
@@ -64,6 +65,7 @@ export default function ComplianceHub() {
   const { tenantClient } = useEntity()
   const [section, setSection] = useState<ComplianceSection>('today')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [recordSheetOpen, setRecordSheetOpen] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [receipts, setReceipts] = useState<any[]>([])
@@ -233,6 +235,16 @@ export default function ComplianceHub() {
                 type="button"
                 variant="outline"
                 className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+                onClick={() => setRecordSheetOpen(true)}
+              >
+                <Receipt className="h-4 w-4" />
+                Record Expense
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
                 onClick={() => setSettingsOpen(true)}
               >
                 <Settings2 className="h-4 w-4" />
@@ -344,6 +356,14 @@ export default function ComplianceHub() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <RecordCaptureSheet
+        open={recordSheetOpen}
+        onOpenChange={setRecordSheetOpen}
+        onSaved={() => {
+          fetchTaxInputEntries(tenantClient).then(setTaxInputs)
+        }}
+      />
     </Layout>
   )
 }

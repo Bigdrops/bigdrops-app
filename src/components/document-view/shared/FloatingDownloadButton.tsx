@@ -1,5 +1,6 @@
 import FloatingDocumentButton from './FloatingDocumentButton'
 import styles from './FloatingDownloadButton.module.css'
+import '@/components/layout/fabFloat.css'
 
 function DownloadIcon({ size = 22 }: { size?: number }) {
   return (
@@ -43,17 +44,19 @@ export default function FloatingDownloadButton({
   }
 
   return (
-    <FloatingDocumentButton
-      disabled={disabled}
-      onClick={handleClick}
-      className={`${styles.button} ${disabled ? styles.disabled : ''}`.trim()}
-      label={accessibleLabel}
-      icon={
-        <>
-          <DownloadIcon size={22} />
-          <span className={styles.srOnly}>{label}</span>
-        </>
-      }
-    />
+    <span className="csr-fab-float inline-flex">
+      <FloatingDocumentButton
+        disabled={disabled}
+        onClick={handleClick}
+        className={`${styles.button} ${disabled ? styles.disabled : ''}`.trim()}
+        label={accessibleLabel}
+        icon={
+          <>
+            <DownloadIcon size={22} />
+            <span className={styles.srOnly}>{label}</span>
+          </>
+        }
+      />
+    </span>
   )
 }

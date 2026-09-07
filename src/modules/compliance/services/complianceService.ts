@@ -133,7 +133,7 @@ export async function fetchTaxInputEntries(tenantClient: TenantClient): Promise<
   return repo.fetchTaxInputEntries(tenantClient)
 }
 
-export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, tenantClient: TenantClient): Promise<void> {
+export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, tenantClient: TenantClient): Promise<TaxInputEntry> {
   return repo.insertTaxInputEntry({ ...record, created_at: now(), updated_at: now() } as Partial<TaxInputEntry>, tenantClient)
 }
 

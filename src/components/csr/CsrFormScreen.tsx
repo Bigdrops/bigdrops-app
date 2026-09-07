@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { ParsedCsrImport } from '@/components/csr/csrImport'
 import MobileFab from '@/components/layout/MobileFab'
+import '@/components/layout/fabFloat.css'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
@@ -992,21 +993,25 @@ export default function CsrFormScreen({
       {/* ── Desktop Save Buttons ────────────────────────────────────── */}
       <div className="hidden sm:block fixed bottom-6 right-6 z-30 flex items-center gap-3">
         {onDownloadBlank && (
-          <button
-            onClick={onDownloadBlank}
-            className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
-            title="Download blank CSR"
-          >
-            <Download className="h-6 w-6" />
-          </button>
+          <span className="csr-fab-float inline-flex">
+            <button
+              onClick={onDownloadBlank}
+              className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
+              title="Download blank CSR"
+            >
+              <Download className="h-6 w-6" />
+            </button>
+          </span>
         )}
-        <button
-          onClick={onSave}
-          disabled={saveDisabled}
-          className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <SaveAll className="h-6 w-6" />}
-        </button>
+        <span className="csr-fab-float inline-flex">
+          <button
+            onClick={onSave}
+            disabled={saveDisabled}
+            className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <SaveAll className="h-6 w-6" />}
+          </button>
+        </span>
       </div>
 
       {/* ── Signatory Sheet ─────────────────────────────────────────── */}

@@ -1,0 +1,35 @@
+/**
+ * Shared CSR FAB ambient motion.
+ *
+ * Extracted verbatim from MobileFab (commit 314cefed): a continuous,
+ * mount-triggered float (translateY 0 → -3px, 4s ease-in-out infinite)
+ * plus the halo pulse it pairs with. Motion stays on transform/opacity
+ * only. Respects prefers-reduced-motion.
+ *
+ * Usage: apply `csr-fab-float` to a WRAPPER around the button, never to
+ * the button itself — a running transform animation overrides the
+ * button's own hover/active transforms, so the float must live on an
+ * ancestor to preserve existing press feedback.
+ */
+@keyframes csrFabFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes csrFabHaloPulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.08); }
+}
+
+.csr-fab-float {
+  animation: csrFabFloat 4s ease-in-out infinite;
+}
+
+.csr-fab-halo {
+  animation: csrFabHaloPulse 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .csr-fab-float { animation: none !important; }
+  .csr-fab-halo { animation: none !important; opacity: 0.4; }
+}

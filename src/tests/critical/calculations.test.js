@@ -871,3 +871,33 @@ test('Block 17c: all visibleRowEffects false', () => {
   }))
   assert.equal(result.items[0].visible_line_total, 1000) // subtotal only
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Block 18 — reverseVat: gross → net + VAT
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { reverseVat } from '../../lib/Calculations.ts'
+
+test('Block 18a: reverseVat with 7.5% on ₦118,000', () => {
+  const { net, vat } = reverseVat(118000, 7.5)
+  assert.equal(Math.round(net * 100) / 100, 109767.44)
+  assert.equal(Math.round(vat * 100) / 100, 8232.56)
+})
+
+test('Block 18b: reverseVat with 0% returns full amount as net', () => {
+  const { net, vat } = reverseVat(1000, 0)
+  assert.equal(net, 1000)
+  assert.equal(vat, 0)
+})
+
+test('Block 18c: reverseVat with zero gross', () => {
+  const { net, vat } = reverseVat(0, 7.5)
+  assert.equal(net, 0)
+  assert.equal(vat, 0)
+})
+
+test('Block 18d: reverseVat symmetry — net + vat = gross', () => {
+  const gross = 250000
+  const { net, vat } = reverseVat(gross, 7.5)
+  assert.equal(Math.round((net + vat) * 100) / 100, gross)
+})

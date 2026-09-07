@@ -30,9 +30,10 @@ export async function fetchTaxInputEntries(client: TenantClient): Promise<TaxInp
   return (data || []) as TaxInputEntry[]
 }
 
-export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, client: TenantClient): Promise<void> {
-  const { error } = await client.from('tax_input_entries').insert([record])
+export async function insertTaxInputEntry(record: Partial<TaxInputEntry>, client: TenantClient): Promise<TaxInputEntry> {
+  const { data, error } = await client.from('tax_input_entries').insert([record]).select().single()
   if (error) throw error
+  return data as TaxInputEntry
 }
 
 export async function updateTaxInputEntry(id: string, updates: Partial<TaxInputEntry>, client: TenantClient): Promise<void> {

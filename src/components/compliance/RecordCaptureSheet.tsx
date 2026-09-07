@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Sheet,
@@ -37,6 +36,9 @@ const EXPENSE_CATEGORIES = [
   'Other',
 ]
 
+// ponytail: 7.5% is Nigeria's standard VAT rate — hard-coded per PRD system-derives-tax-treatment
+const DEFAULT_VAT_RATE = 7.5
+
 interface RecordCaptureSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -52,54 +54,25 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
   const [category, setCategory] = useState(entry?.category ?? '')
   const [reference, setReference] = useState(entry?.reference ?? '')
   const [paymentReference, setPaymentReference] = useState(entry?.payment_reference ?? '')
-  const [grossAmount, setGrossAmount] = useState(entry ? entry.net_amount + entry.vat_amount : 0)
-  const [isVatInclusive, setIsVatInclusive] = useState(false)
-  const [vatRate, setVatRate] = useState(7.5)
-  const [netAmount, setNetAmount] = useState(entry?.net_amount ?? 0)
-  const [vatAmount, setVatAmount] = useState(entry?.vat_amount ?? 0)
-  const [isRecoverable, setIsRecoverable] = useState(entry?.is_recoverable ?? true)
+  const [amount, setAmount] = useState(entry ? entry.net_amount + entry.vat_amount : 0)
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
 
   const isEditing = !!entry?.id
 
-  const handleGrossChange = (value: number) => {
-    setGrossAmount(value)
-    if (isVatInclusive && value > 0) {
-      const { net, vat } = reverseVat(value, vatRate)
-      setNetAmount(Math.round(net * 100) / 100)
-      setVatAmount(Math.round(vat * 100) / 100)
-    }
-  }
-
-  const handleVatRateChange = (value: number) => {
-    setVatRate(value)
-    if (isVatInclusive && grossAmount > 0) {
-      const { net, vat } = reverseVat(grossAmount, value)
-      setNetAmount(Math.round(net * 100) / 100)
-      setVatAmount(Math.round(vat * 100) / 100)
-    }
-  }
-
-  const handleVatInclusiveToggle = (checked: boolean) => {
-    setIsVatInclusive(checked)
-    if (checked && grossAmount > 0) {
-      const { net, vat } = reverseVat(grossAmount, vatRate)
-      setNetAmount(Math.round(net * 100) / 100)
-      setVatAmount(Math.round(vat * 100) / 100)
-    }
-  }
-
   const handleSave = async () => {
-    if (!date || netAmount <= 0) {
-      feedback.error('Date and net amount are required')
+    if (!date || amount <= 0) {
+      feedback.error('Date and amount are required')
       return
     }
 
     try {
       setSaving(true)
 
-      // Upload evidence files and collect URLs
+      const { net, vat } = reverseVat(amount, DEFAULT_VAT_RATE)
+      const roundedNet = Math.round(net * 100) / 100
+      const roundedVat = Math.round(vat * 100) / 100
+
       const uploadedEvidence: EvidenceFile[] = entry?.evidence ?? []
       for (const file of evidenceFiles) {
         const url = await complianceService.uploadReceiptFile(file)
@@ -112,9 +85,9 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
         vendor_name: vendorName || null,
         category: category || null,
         reference: reference || null,
-        net_amount: netAmount,
-        vat_amount: vatAmount,
-        is_recoverable: isRecoverable,
+        net_amount: roundedNet,
+        vat_amount: roundedVat,
+        is_recoverable: false,
         notes: notes || null,
         payment_reference: paymentReference || null,
         evidence: uploadedEvidence,
@@ -124,11 +97,9 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
         await complianceService.updateTaxInputEntry(entry.id, recordToSave, tenantClient)
         feedback.success('Record updated')
       } else {
-        await complianceService.insertTaxInputEntry(recordToSave, tenantClient)
+        const inserted = await complianceService.insertTaxInputEntry(recordToSave, tenantClient)
         feedback.success('Record captured')
-        // Audit trail: use the inserted entry's ID
-        // (insertTaxInputEntry doesn't return the ID, so we fire and forget)
-        recordExpenseRecorded(tenantClient, crypto.randomUUID(), netAmount + vatAmount, category || 'Uncategorized').catch(() => {})
+        recordExpenseRecorded(tenantClient, inserted.id, amount, category || 'Uncategorized').catch(() => {})
       }
 
       onSaved()
@@ -200,75 +171,14 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
             </div>
           </div>
 
-          {/* Amount section */}
-          <div className="mt-4 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface-muted px-4 py-3">
-            <div className="flex items-center justify-between gap-4 mb-3">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold text-bd-text">VAT Inclusive Amount</Label>
-                <p className="text-xs text-bd-text-muted">Toggle on if the amount entered includes VAT.</p>
-              </div>
-              <Switch
-                checked={isVatInclusive}
-                onCheckedChange={handleVatInclusiveToggle}
-              />
-            </div>
-
-            {isVatInclusive && (
-              <div className="space-y-2 mb-3">
-                <Label className="text-[11px] font-bold text-bd-text-muted">VAT Rate (%)</Label>
-                <NumericInput
-                  className="h-10"
-                  value={vatRate}
-                  onChange={handleVatRateChange}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {isVatInclusive && (
-              <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-bd-text-muted">Gross Amount (₦)</Label>
-                <NumericInput
-                  className="h-10"
-                  value={grossAmount}
-                  onChange={handleGrossChange}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-bd-text-muted">Net Amount (₦)</Label>
-              <NumericInput
-                className="h-10"
-                value={netAmount}
-                onChange={setNetAmount}
-                disabled={isVatInclusive}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-bd-text-muted">VAT Amount (₦)</Label>
-              <NumericInput
-                className="h-10"
-                value={vatAmount}
-                onChange={setVatAmount}
-                disabled={isVatInclusive}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-surface-muted px-4 py-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold text-bd-text">Recoverable VAT</Label>
-                <p className="text-xs text-bd-text-muted">Deduct this amount from output VAT when applicable.</p>
-              </div>
-              <Switch
-                checked={isRecoverable}
-                onCheckedChange={setIsRecoverable}
-              />
-            </div>
+          <div className="mt-4 space-y-2">
+            <Label className="text-[11px] font-bold text-bd-text-muted">Amount (₦)</Label>
+            <NumericInput
+              className="h-10"
+              value={amount}
+              onChange={setAmount}
+            />
+            <p className="text-[11px] text-bd-text-muted">Total amount paid. Tax treatment is derived automatically.</p>
           </div>
 
           <div className="mt-4 space-y-2">
@@ -290,7 +200,6 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
             />
           </div>
 
-          {/* Evidence uploads */}
           <div className="mt-4 space-y-2">
             <Label className="text-[11px] font-bold text-bd-text-muted flex items-center gap-1.5">
               <Camera className="h-3 w-3" />
