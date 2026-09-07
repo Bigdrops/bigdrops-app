@@ -1,0 +1,1 @@
+adhere to ADS-STE100 Simplified Technical English
