@@ -1,0 +1,453 @@
+You are performing a read-only architectural audit for the BIGDROPS PDF rendering migration.
+
+IMPORTANT CONTEXT:
+
+The previous PDF standards reconciliation report was accidentally merged with an older report/workstream. Do NOT treat that merged report as the clean capability-replacement audit.
+
+Your first task is to separate the relevant PDF renderer capability-replacement findings from the older/irrelevant material.
+
+Then extend that capability-replacement investigation with a new requirement: faithful miniature template previews for the document template picker.
+
+This is an AUDIT ONLY.
+
+Do not modify application code, PRDs, standards, package.json, dependencies, configuration, database files, or templates.
+
+====================================================================
+CORE QUESTION
+
+Determine whether the new pdfcn-based PDF architecture provides enough capability to justify progressively retiring "@react-pdf/renderer".
+
+The comparison must be based on:
+
+1. BIGDROPS standards and required business/document behavior.
+2. The strongest existing BIGDROPS Invoice industry template.
+3. The strongest existing BIGDROPS Quotation industry template.
+4. The current React-PDF implementation supporting those templates.
+5. pdfcn and its actual underlying renderer capabilities.
+6. The new requirement for faithful miniature template previews.
+
+Do not assume pdfcn is better simply because it is the proposed replacement.
+
+The audit must determine what the new stack actually replaces.
+
+====================================================================
+PART 1 — SEPARATE THE PREVIOUS REPORT
+
+Locate the previous PDF standards reconciliation report and identify where its content combines:
+
+A. the actual PDF rendering migration / capability findings
+
+with
+
+B. older or unrelated report material.
+
+Do not rewrite or modify that report.
+
+In the new audit, only carry forward findings that are demonstrably relevant to the PDF renderer replacement question.
+
+Do not silently merge unrelated historical conclusions into this audit.
+
+Clearly state in the new report that the previous report was a merged artifact and that this audit establishes a clean capability-replacement baseline.
+
+====================================================================
+PART 2 — STANDARDS AS THE REQUIREMENT BASELINE
+
+Read the relevant files under:
+
+"docs/standard/"
+
+Do not modify them.
+
+Use them to establish what BIGDROPS actually requires.
+
+For each relevant requirement determine:
+
+- what behavior is required
+- why BIGDROPS requires it
+- where it is currently implemented
+- whether React-PDF provides it
+- whether pdfcn provides it
+- whether Takumi/Forme provides it
+- whether BIGDROPS itself must continue owning it
+
+Do not assume a standard becomes obsolete merely because pdfcn offers a feature.
+
+The purpose is to determine whether the underlying implementation capability can be replaced while preserving the established BIGDROPS contract.
+
+====================================================================
+PART 3 — IDENTIFY THE STRONGEST TEMPLATE BENCHMARKS
+
+Inspect the current Invoice and Quotation PDF implementations.
+
+Identify the strongest production/industry template for each.
+
+Do not assume the answer.
+
+Select the templates based on the breadth and importance of the capabilities they exercise.
+
+Document why each selected template is the benchmark.
+
+Trace each benchmark through:
+
+Business data
+→ prepared document/render model
+→ customization
+→ template
+→ PDF renderer
+→ delivery/output
+
+Identify hidden infrastructure required to make the templates work.
+
+====================================================================
+PART 4 — CAPABILITY REPLACEMENT MATRIX
+
+Create a capability matrix covering everything required by the standards and exercised by the benchmark templates.
+
+At minimum include:
+
+- document generation
+- A4 output
+- portrait
+- landscape
+- physical page dimensions
+- margins
+- typography
+- fonts
+- logos
+- images/assets
+- headers
+- footers
+- page numbers
+- commercial-party presentation
+- document metadata
+- configurable columns
+- column visibility
+- column ordering
+- row numbering
+- tables
+- long tables
+- table pagination
+- repeated table headers
+- keep-together behavior
+- explicit page breaks
+- totals placement
+- VAT/tax presentation
+- discounts
+- payment information
+- notes/terms
+- signatures
+- QR codes
+- customization
+- themes/design presets
+- compact mode
+- one-page / fit-to-page behavior
+- preview
+- generation
+- delivery
+- prepared-data ownership
+- business-logic separation
+- document identity
+- lineage
+- audit-related requirements
+- asset handling
+- error handling
+
+Add any additional capabilities discovered during inspection.
+
+Use:
+
+Capability| BIGDROPS Requirement| Current React-PDF Implementation| pdfcn| Takumi/Forme| BIGDROPS-Owned Layer| Replacement Status| Evidence
+
+Use explicit statuses such as:
+
+- REPLACED
+- PARTIALLY REPLACED
+- BIGDROPS-OWNED
+- UNPROVEN
+- MISSING
+- NOT APPLICABLE
+
+Do not infer physical PDF behavior from TypeScript declarations or marketing/documentation claims.
+
+====================================================================
+PART 5 — FAITHFUL MINIATURE TEMPLATE PREVIEW AUDIT
+
+Add a dedicated investigation for the new feature requested by the Adaptive Mobile-First UI/UX architect.
+
+Requirement:
+
+The document template picker should eventually show a faithful miniature representation of the actual document template.
+
+For example, an Invoice preview should visually represent the actual template's:
+
+- header structure
+- logo/header placement
+- document title
+- customer/vendor areas
+- table structure
+- totals
+- typography hierarchy
+- major spacing/layout characteristics
+- template-specific visual treatment
+
+The same principle applies to Quotation and other supported document templates.
+
+The requirement is NOT merely:
+
+"show the template's colours."
+
+The requirement is:
+
+«The miniature should be recognizably derived from the actual template structure.»
+
+====================================================================
+PART 6 — THE IMPORTANT QUESTION
+
+The previous implementation agent reportedly found faithful miniature template previews difficult under the current architecture.
+
+Investigate whether pdfcn materially changes that situation.
+
+Do NOT assume that pdfcn makes it effortless.
+
+Determine whether the new architecture can support:
+
+ONE TEMPLATE DEFINITION
+→ PRODUCTION PDF
+→ FAITHFUL MINIATURE PREVIEW
+
+without maintaining two independently authored template implementations.
+
+Investigate all credible approaches:
+
+1. Reusing the same template/layout definitions.
+2. Reusing pdfcn components/primitives.
+3. Rendering the template into lightweight HTML/DOM for preview.
+4. A renderer-independent intermediate template/layout representation.
+5. Dedicated miniature representation.
+6. Generated/static preview images.
+7. Rendering actual PDF output and generating a thumbnail.
+8. Any cleaner architecture discovered during research.
+
+For each approach evaluate:
+
+- visual fidelity
+- structural fidelity
+- typography fidelity
+- table fidelity
+- spacing fidelity
+- branding/assets
+- mobile performance
+- rendering cost
+- caching
+- number of templates
+- responsiveness
+- template evolution
+- stale-preview risk
+- duplication
+- maintenance cost
+- renderer coupling
+- implementation complexity
+- migration compatibility
+
+====================================================================
+PART 7 — DO NOT CONFUSE PDF PREVIEW WITH TEMPLATE MINIATURE
+
+Explicitly distinguish:
+
+A. Previewing an actual generated PDF
+
+from
+
+B. Rendering a miniature representation of a template.
+
+The audit must determine whether pdfcn provides architectural primitives useful for B, not merely whether it can display a generated PDF.
+
+A PDF viewer/thumbnail alone does not prove that the template picker can efficiently render faithful miniature templates.
+
+====================================================================
+PART 8 — TEMPLATE ARCHITECTURE QUESTION
+
+Investigate whether the target pdfcn architecture encourages or enables source-owned reusable components/blocks that could serve as the canonical template structure.
+
+Determine whether the same source-owned template components could theoretically support:
+
+- production PDF rendering
+- miniature preview rendering
+
+without coupling the picker directly to Takumi/Forme internals.
+
+If this is possible, describe the architectural boundary.
+
+For example, determine whether the clean model is closer to:
+
+Canonical Document Model
+→ BIGDROPS Template Definition
+→ PDF Renderer Adapter
+→ PDF
+
+and separately:
+
+Canonical Document Model
+→ BIGDROPS Template Definition
+→ Preview Renderer
+→ Miniature DOM/Card
+
+rather than:
+
+Template Picker
+→ PDF Renderer internals
+
+Do not prescribe this architecture unless the evidence supports it.
+
+====================================================================
+PART 9 — INVOICE AND QUOTATION MINIATURE BENCHMARK
+
+For the selected strongest Invoice and Quotation templates, determine what a faithful miniature would actually need to reproduce.
+
+Identify:
+
+- structural regions
+- layout hierarchy
+- table geometry
+- totals geometry
+- typography hierarchy
+- branding
+- spacing
+- orientation
+- template-specific visual characteristics
+
+Then determine whether the target architecture can derive these characteristics from the actual template instead of manually recreating them.
+
+====================================================================
+PART 10 — BUSINESS LOGIC BOUNDARY
+
+PDF/template rendering must not become the owner of BIGDROPS business logic.
+
+Do not recommend moving:
+
+- financial calculations
+- VAT/tax calculations
+- discounts
+- WHT
+- payment state
+- numbering
+- document identity
+- document lineage
+- commercial-party authority
+- audit behavior
+- permissions
+- saved document state
+
+into pdfcn templates or preview components.
+
+Both production rendering and miniature previews should consume appropriate prepared data.
+
+If pdfcn examples calculate values inside render components, explicitly identify that as an upstream example rather than a BIGDROPS architecture to copy.
+
+====================================================================
+PART 11 — REACT-PDF RETIREMENT DECISION
+
+Answer explicitly:
+
+1. What capabilities does React-PDF currently provide?
+2. Which are now provided by pdfcn?
+3. Which are provided by Takumi/Forme underneath pdfcn?
+4. Which remain BIGDROPS-owned?
+5. Which React-PDF-specific workarounds become unnecessary?
+6. Which capabilities remain unmatched?
+7. Which capabilities require a BIGDROPS adapter?
+8. Can the strongest Invoice template be reproduced without React-PDF?
+9. Can the strongest Quotation template be reproduced without React-PDF?
+10. Can the standards still be satisfied without React-PDF?
+11. Does the target architecture make faithful miniature template previews materially easier?
+12. Does miniature-preview capability strengthen the case for retiring React-PDF?
+
+Then give one final verdict:
+
+REACT-PDF CAN BE RETIRED
+
+or
+
+REACT-PDF CAN BE RETIRED AFTER SPECIFIC GAPS ARE CLOSED
+
+or
+
+REACT-PDF CANNOT YET BE RETIRED
+
+====================================================================
+PART 12 — OUTPUT
+
+Create exactly ONE new markdown report under:
+
+"docs/reports/pdf/"
+
+Use a descriptive filename such as:
+
+"pdf-renderer-capability-replacement-and-template-preview-audit.md"
+
+The report must contain:
+
+1. Executive Summary
+2. Previous Report Separation / Clean Baseline
+3. Standards Capability Baseline
+4. Benchmark Template Selection
+5. Invoice Capability Audit
+6. Quotation Capability Audit
+7. Current React-PDF Capability Inventory
+8. pdfcn + Underlying Renderer Capability Inventory
+9. Capability Replacement Matrix
+10. Faithful Miniature Template Preview Audit
+11. Preview Architecture Options
+12. Invoice Miniature Benchmark
+13. Quotation Miniature Benchmark
+14. Business Logic Ownership Boundary
+15. React-PDF Retirement Assessment
+16. Final Verdict
+17. Required Proof-of-Concept Work
+18. Recommendations for the Adaptive UI/UX Architect
+
+The final section must provide a concise architectural recommendation that the UI/UX architect can use when updating the Adaptive Mobile-First UI/UX PRD.
+
+====================================================================
+SCOPE AND VERIFICATION
+
+READ-ONLY.
+
+Do not modify:
+
+- application source
+- PDF templates
+- standards
+- PRDs
+- package.json
+- dependencies
+- configuration
+- database
+- migrations
+
+Do not install anything.
+
+Do not run:
+
+- "bun run build"
+- "bun run typecheck"
+- linting
+- runtime validation
+
+Read the relevant skills from:
+
+"docs/PROJECTSKILLINDEX.md"
+
+Use applicable PDF-rendering, architecture/audit, and documentation skills.
+
+Run "git status" immediately before the audit and immediately after.
+
+The ONLY permitted new file is the single markdown report under "docs/reports/pdf/".
+
+Explicitly confirm in the report that no other files were modified.
+
+If evidence is insufficient, mark the capability UNKNOWN or UNPROVEN.
+
+Do not turn assumptions into architectural conclusions.
+
+Stop after producing the report.
